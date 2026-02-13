@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Performance • ScopedLabs</title>
+  <meta name="description" content="Headroom, response time, caching, and bottleneck planning tools." />
+  <link rel="stylesheet" href="/assets/style.css?v=perf-cat-0208" />
+  <script src="/assets/app.js?v=perf-cat-0208" defer></script>
+</head>
+
+<body data-protected="true">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">ScopedLabs</span>
+    </a>
+
+    <nav class="nav">
+      <a class="nav-link" href="/">Home</a>
+      <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+      <a class="nav-link" href="/about/">About</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="crumbs">
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <span>Performance</span>
+  </div>
+
+  <section class="page-head">
+    <h1 class="h1">Performance</h1>
+    <p class="subhead">Headroom, response time, caching, and bottleneck planning tools.</p>
+  </section>
+
+  <section class="card">
+    <p class="muted">
+      Performance problems show up as random slowdowns, unstable response times, and failures under peak load.
+      These tools help you plan headroom, define targets, and identify bottlenecks before they go viral.
+    </p>
+  </section>
+
+  <!-- HERO (Free tool) -->
+  <section class="card tool-hero">
+    <div class="pill pill-ok">Free tool</div>
+    <h2 class="h2">Headroom Target</h2>
+    <p class="muted">Pick safe utilization targets and understand what headroom actually buys you.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="/tools/performance/headroom-target/">Launch Tool</a>
+    </div>
+  </section>
+
+  <!-- FREE -->
+  <h3 class="section-divider">Free Tier</h3>
+
+  <a class="tool-row" href="/tools/performance/cache-hit-ratio/">
+    <div class="tool-row-left">
+      <div class="tool-title">Cache Hit Ratio</div>
+      <div class="tool-desc muted">Estimate the impact of cache hit rate on backend load and latency.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill free">Free Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row" href="/tools/performance/response-time-sla/">
+    <div class="tool-row-left">
+      <div class="tool-title">Response Time SLA</div>
+      <div class="tool-desc muted">Define response time targets and translate them into planning constraints.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill free">Free Tier</span>
+    </div>
+  </a>
+
+  <!-- PRO -->
+  <h3 class="section-divider">Pro Tier</h3>
+
+  <a class="tool-row pro" href="/upgrade/?category=performance#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Bottleneck Analyzer</div>
+      <div class="tool-desc muted">Identify likely bottlenecks based on symptoms and load profile.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=performance#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Concurrency Scaling</div>
+      <div class="tool-desc muted">Estimate throughput vs concurrency and where contention starts.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=performance#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>CPU Utilization Impact</div>
+      <div class="tool-desc muted">Model response-time degradation as CPU utilization climbs.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=performance#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Disk Saturation</div>
+      <div class="tool-desc muted">Estimate risk of saturation from IOPS/throughput demand.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=performance#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Latency vs Throughput</div>
+      <div class="tool-desc muted">Model the tradeoff curve: faster responses vs more throughput.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=performance#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Network Congestion</div>
+      <div class="tool-desc muted">Congestion risk estimator based on utilization and burst profile.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=performance#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Queue Depth</div>
+      <div class="tool-desc muted">Queueing model helper to spot unstable queue growth conditions.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <footer class="site-footer">
+    <a class="muted" href="/tools/">← Back to Tools</a>
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
+
+</main>
+</body>
+</html>

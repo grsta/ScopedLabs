@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reader Type Selector *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+</head>
+
+<body data-tier="free">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/access-control/">Access Control</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/access-control/">Access Control</a>
+      <span class="sep">/</span>
+      <span>Reader Type Selector</span>
+    </div>
+
+    <h1>Reader Type Selector</h1>
+    <p class="subhead">Quick guidance for choosing reader technology and interface based on risk, environment, and UX.</p>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Security Level</span>
+          <select id="sec">
+            <option value="low" selected>Low (basic access)</option>
+            <option value="med">Medium</option>
+            <option value="high">High (restricted / sensitive)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Credential Preference</span>
+          <select id="cred">
+            <option value="card" selected>Card / Fob</option>
+            <option value="mobile">Mobile (NFC/BLE)</option>
+            <option value="pin">PIN / keypad</option>
+            <option value="multi">Multi-factor</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Environment</span>
+          <select id="env">
+            <option value="indoor" selected>Indoor</option>
+            <option value="outdoor">Outdoor</option>
+            <option value="harsh">Harsh (dust/water/industrial)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Distance / Throughput</span>
+          <select id="throughput">
+            <option value="standard" selected>Standard (tap/short range)</option>
+            <option value="fast">Fast (high throughput)</option>
+            <option value="handsfree">Hands-free / longer range</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Panel Interface</span>
+          <select id="iface">
+            <option value="wg" selected>Wiegand</option>
+            <option value="osdp">OSDP (recommended)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Recommend</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Recommendation</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Recommend.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/app.js?v=1"></script>
+  <script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+
+

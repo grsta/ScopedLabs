@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PoE Budget & Switch Margin Analyzer *ScopedLabs</title>
+
+  <!-- Global site CSS -->
+  <link rel="stylesheet" href="/assets/style.css?v=poe-logic-002" />
+
+  <!-- Global JS (nav/help modal/etc.) -->
+  <script src="/assets/app.js?v=poe-logic-002" defer></script>
+</head>
+
+<body data-tier="free">
+  <!-- Site header (matches your tool template) -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Page head -->
+    <div class="page-head">
+      <div class="breadcrumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/network/">Network &amp; Throughput</a>
+        <span class="sep">/</span>
+        <span>PoE Budget</span>
+      </div>
+
+      <h1 class="h1">PoE Budget &amp; Switch Margin Analyzer</h1>
+      <p class="subhead">
+        Size PoE headroom before the install  total draw, margin, and safe capacity checks.
+      </p>
+    </div>
+
+    <!-- Intro blurb card -->
+    <section class="card">
+      <p class="muted" style="margin:0;">
+        Use this to estimate total Power-over-Ethernet demand from connected devices and verify you have enough headroom.
+        Results are planning math real draw can vary by device class, temperature, cable loss, and load spikes.
+      </p>
+    </section>
+
+    <!-- INPUTS CARD -->
+    <section class="card tool-card" style="margin-top: 18px;">
+      <div class="pill pill-ok">Free tool</div>
+
+      <h2 class="h2" style="margin-top: .5rem;">Switch Budget Inputs</h2>
+      <p class="muted" style="margin-top: .25rem;">
+        Enter your switch budget and device mix. (Planner math not a controller simulator.)
+      </p>
+
+      <div class="form-grid" style="margin-top: 1rem;">
+        <!-- Switch PoE budget -->
+        <div class="field">
+          <div class="label-row">
+            <label for="poeBudgetW">Switch PoE budget (W)</label>
+            <button type="button" class="hint" data-title="Switch PoE budget"
+              data-help="The total PoE power budget for the switch (or injector). Check the datasheet this is not the switch PSU rating."
+              aria-label="Help: Switch PoE budget">?</button>
+          </div>
+          <input id="poeBudgetW" type="number" inputmode="decimal" min="0" step="1" value="370" />
+        </div>
+
+        <!-- Safety margin -->
+        <div class="field">
+          <div class="label-row">
+            <label for="marginPct">Safety margin (%)</label>
+            <button type="button" class="hint" data-title="Safety margin"
+              data-help="Reserves headroom for spikes, cold starts, IR, heaters, and cable loss. Typical planning: 15-30%."
+              aria-label="Help: Safety margin">?</button>
+          </div>
+          <input id="marginPct" type="number" inputmode="decimal" min="0" step="1" value="20" />
+        </div>
+
+        <!-- PoE standard -->
+        <div class="field">
+          <div class="label-row">
+            <label for="poeStandard">PoE standard (assumption)</label>
+            <button type="button" class="hint" data-title="PoE standard"
+              data-help="Used as a note/assumption. This tool does not enforce per-port class limits yet."
+              aria-label="Help: PoE standard">?</button>
+          </div>
+          <select id="poeStandard">
+            <option value="af">802.3af (PoE)</option>
+            <option value="at" selected>802.3at (PoE+)</option>
+            <option value="bt">802.3bt (PoE++)</option>
+          </select>
+        </div>
+
+        <!-- Ports used -->
+        <div class="field">
+          <div class="label-row">
+            <label for="poePorts">PoE ports used (count)</label>
+            <button type="button" class="hint" data-title="Ports used"
+              data-help="How many PoE ports will be actively powering devices. Future: we can add per-port checks and class limits."
+              aria-label="Help: Ports used">?</button>
+          </div>
+          <input id="poePorts" type="number" inputmode="numeric" min="0" step="1" value="16" />
+        </div>
+      </div>
+
+      <hr class="divider" style="margin: 1.25rem 0;" />
+
+      <h3 class="h3">Device mix</h3>
+      <p class="muted" style="margin-top: .25rem;">
+        Add your device counts and typical watts. Keep it conservative (IR on, heaters, etc.) when in doubt.
+      </p>
+
+      <div class="form-grid" style="margin-top: 1rem;">
+        <!-- Cameras -->
+        <div class="field">
+          <div class="label-row">
+            <label for="camsCount">Cameras (count)</label>
+            <button type="button" class="hint" data-title="Cameras"
+              data-help="Total number of PoE cameras on this switch."
+              aria-label="Help: Cameras count">?</button>
+          </div>
+          <input id="camsCount" type="number" inputmode="numeric" min="0" step="1" value="12" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="camsW">Camera watts (each)</label>
+            <button type="button" class="hint" data-title="Camera watts"
+              data-help="Typical draw per camera. If IR/heater is present, budget higher."
+              aria-label="Help: Camera watts">?</button>
+          </div>
+          <input id="camsW" type="number" inputmode="decimal" min="0" step="0.5" value="12" />
+        </div>
+
+        <!-- APs -->
+        <div class="field">
+          <div class="label-row">
+            <label for="apsCount">Wireless APs (count)</label>
+            <button type="button" class="hint" data-title="Wireless APs"
+              data-help="Number of access points powered by this switch."
+              aria-label="Help: APs count">?</button>
+          </div>
+          <input id="apsCount" type="number" inputmode="numeric" min="0" step="1" value="2" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="apsW">AP watts (each)</label>
+            <button type="button" class="hint" data-title="AP watts"
+              data-help="Typical draw per AP. Wi-Fi 6/6E models can be 15-30W or more depending on radios."
+              aria-label="Help: AP watts">?</button>
+          </div>
+          <input id="apsW" type="number" inputmode="decimal" min="0" step="0.5" value="15" />
+        </div>
+
+        <!-- Phones -->
+        <div class="field">
+          <div class="label-row">
+            <label for="phonesCount">VoIP phones (count)</label>
+            <button type="button" class="hint" data-title="VoIP phones"
+              data-help="Number of PoE phones on this switch."
+              aria-label="Help: Phones count">?</button>
+          </div>
+          <input id="phonesCount" type="number" inputmode="numeric" min="0" step="1" value="0" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="phonesW">Phone watts (each)</label>
+            <button type="button" class="hint" data-title="Phone watts"
+              data-help="Typical phone draw. Many are 3-7W depending on display and accessories."
+              aria-label="Help: Phone watts">?</button>
+          </div>
+          <input id="phonesW" type="number" inputmode="decimal" min="0" step="0.5" value="5" />
+        </div>
+
+        <!-- Other -->
+        <div class="field">
+          <div class="label-row">
+            <label for="otherCount">Other devices (count)</label>
+            <button type="button" class="hint" data-title="Other devices"
+              data-help="Anything else drawing PoE (intercoms, door controllers, sensors, etc.)."
+              aria-label="Help: Other devices count">?</button>
+          </div>
+          <input id="otherCount" type="number" inputmode="numeric" min="0" step="1" value="0" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="otherW">Other watts (each)</label>
+            <button type="button" class="hint" data-title="Other watts"
+              data-help="Typical draw per 0ther device."
+              aria-label="Help: Other watts">?</button>
+          </div>
+          <input id="otherW" type="number" inputmode="decimal" min="0" step="0.5" value="10" />
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top: 1rem;">
+        <button id="calc" class="btn primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+      </div>
+
+      <p class="tip" style="margin-top: 1rem;">
+        Tip: If you're close to the line, budget higher IR/heaters, cold starts, and long cable runs can shift real draw.
+      </p>
+    </section>
+
+    <!-- RESULTS CARD -->
+    <section class="card tool-card" style="margin-top: 18px;">
+      <h2 class="h2">Capacity &amp; Margin Results</h2>
+
+      <div class="results-grid" style="margin-top: .75rem;">
+        <div class="result-row">
+          <div class="k">Total device draw</div>
+          <div class="v" id="totalDrawW"></div>
+        </div>
+
+        <div class="result-row">
+          <div class="k">Safe budget (after margin)</div>
+          <div class="v" id="safeBudgetW"></div>
+        </div>
+
+        <div class="result-row">
+          <div class="k">Headroom</div>
+          <div class="v" id="headroomW"></div>
+        </div>
+
+        <div class="result-row">
+          <div class="k">Utilization (vs switch budget)</div>
+          <div class="v" id="utilPct"></div>
+        </div>
+
+        <div class="result-row">
+          <div class="k">Status</div>
+          <div class="v" id="statusText">Enter values and calculate.</div>
+        </div>
+      </div>
+
+      <p class="muted" style="margin-top: 1rem;">
+        Note: This is planning math only. It does not model per-port limits, negotiation/class behavior, or injector efficiency (yet).
+      </p>
+
+      <p style="margin-top: 1.25rem;">
+        <a class="back-link" href="/tools/network/">Back to Network &amp; Throughput</a>
+      </p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+
+      function n(id) {
+        const v = Number($(id).value);
+        return Number.isFinite(v) ? v : 0;
+      }
+
+      function clamp(v, min, max) {
+        return Math.max(min, Math.min(max, v));
+      }
+
+      function fmtW(w) {
+        if (!Number.isFinite(w)) return "";
+        return `${w.toFixed(1)} W`;
+      }
+
+      function fmtPct(p) {
+        if (!Number.isFinite(p)) return "";
+        return `${p.toFixed(1)}%`;
+      }
+
+      function calc() {
+        const poeBudgetW = Math.max(0, n("poeBudgetW"));
+        const marginPct = clamp(n("marginPct"), 0, 80);
+        const poePorts = Math.max(0, Math.floor(n("poePorts")));
+
+        const camsCount = Math.max(0, Math.floor(n("camsCount")));
+        const camsW = Math.max(0, n("camsW"));
+
+        const apsCount = Math.max(0, Math.floor(n("apsCount")));
+        const apsW = Math.max(0, n("apsW"));
+
+        const phonesCount = Math.max(0, Math.floor(n("phonesCount")));
+        const phonesW = Math.max(0, n("phonesW"));
+
+        const otherCount = Math.max(0, Math.floor(n("otherCount")));
+        const otherW = Math.max(0, n("otherW"));
+
+        const totalDevices = camsCount + apsCount + phonesCount + otherCount;
+
+        const totalDrawW =
+          (camsCount * camsW) +
+          (apsCount * apsW) +
+          (phonesCount * phonesW) +
+          (otherCount * otherW);
+
+        const safeBudgetW = poeBudgetW * (1 - (marginPct / 100));
+        const headroomW = safeBudgetW - totalDrawW;
+
+        const utilPct = poeBudgetW > 0 ? (totalDrawW / poeBudgetW) * 100 : 0;
+
+        $("totalDrawW").textContent = fmtW(totalDrawW);
+        $("safeBudgetW").textContent = fmtW(safeBudgetW);
+        $("headroomW").textContent = fmtW(headroomW);
+        $("utilPct").textContent = fmtPct(utilPct);
+
+        // Status logic (serious + explicit)
+        let status = "";
+        const portWarn = (poePorts > 0 && totalDevices > poePorts);
+
+        if (poeBudgetW === 0) {
+          status = "Enter a switch PoE budget above 0 W.";
+        } else if (totalDevices === 0) {
+          status = "Add at least one powered device to estimate draw.";
+        } else if (headroomW < 0) {
+          status = " Over budget after margin. Reduce load, reduce margin, or choose a higher PoE budget switch.";
+        } else if (headroomW === 0) {
+          status = " Exactly at safe budget. Increase headroom IR/heaters and cold starts can push you over.";
+        } else {
+          status = " Within safe budget after margin.";
+        }
+
+        if (portWarn) {
+          status += `   Port count warning: devices (${totalDevices}) exceed active PoE ports (${poePorts}).`;
+        }
+
+        $("statusText").textContent = status;
+      }
+
+      function reset() {
+        $("poeBudgetW").value = "370";
+        $("marginPct").value = "20";
+        $("poeStandard").value = "at";
+        $("poePorts").value = "16";
+        $("camsCount").value = "12";
+        $("camsW").value = "12";
+        $("apsCount").value = "2";
+        $("apsW").value = "15";
+        $("phonesCount").value = "0";
+        $("phonesW").value = "5";
+        $("otherCount").value = "0";
+        $("otherW").value = "10";
+
+        $("totalDrawW").textContent = "";
+        $("safeBudgetW").textContent = "";
+        $("headroomW").textContent = "";
+        $("utilPct").textContent = "";
+        $("statusText").textContent = "Enter values and calculate.";
+      }
+
+      $("calc").addEventListener("click", calc);
+      $("reset").addEventListener("click", reset);
+
+      // Optional: auto-calc on Enter for speed
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const t = e.target;
+          if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+            e.preventDefault();
+            calc();
+          }
+        }
+      });
+    })();
+  </script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+
+

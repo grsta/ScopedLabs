@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MTU & Fragmentation Helper *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+</head>
+
+<body data-tier="free">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/network/">Network</a>
+      <span class="sep">/</span>
+      <span>MTU & Fragmentation</span>
+    </div>
+
+    <h1>MTU & Fragmentation Helper</h1>
+    <p class="subhead">Estimate max payload size and whether a given payload will fragment.</p>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">MTU (bytes)</span>
+          <input id="mtu" type="number" min="576" step="1" value="1500" />
+        </label>
+
+        <label class="field">
+          <span class="label">IP Version</span>
+          <select id="ipver">
+            <option value="4" selected>IPv4</option>
+            <option value="6">IPv6</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Transport</span>
+          <select id="l4">
+            <option value="tcp" selected>TCP</option>
+            <option value="udp">UDP</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Extra Overhead (bytes)</span>
+          <input id="extra" type="number" min="0" step="1" value="0" />
+        </label>
+
+        <label class="field">
+          <span class="label">Test Payload (bytes)</span>
+          <input id="payload" type="number" min="0" step="1" value="1400" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/app.js?v=1"></script>
+  <script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+
+

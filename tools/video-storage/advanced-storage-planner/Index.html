@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Storage Planner *ScopedLabs</title>
+  <meta name="description" content="Estimate storage ingest and retention (average vs peak) for video systems." />
+
+  <link rel="stylesheet" href="/assets/style.css?v=vs-storage-pro-002" />
+  <script src="/assets/app.js?v=vs-storage-pro-002" defer></script>
+
+  <style>
+    /* Small, scoped helpers so we donÃ¢â‚¬â„¢t fight your global CSS */
+    .intro-card, #proView.grid { max-width: 1120px; margin-left: auto; margin-right: auto; }
+    #proView.grid { width: 100%; 
+    }
+
+    .results-grid { display: grid; gap: 10px; margin-top: 14px; }
+    .result-row {
+      display:flex; justify-content:space-between; gap:12px;
+      padding:10px 12px; border-radius:12px;
+      border: 1px solid rgba(120,255,120,.14);
+      background: rgba(0,0,0,.18);
+    }
+    .result-row .k { color: rgba(255,255,255,.70); }
+    .result-row .v { font-weight: 800; }
+    .flag-ok { color: rgba(140,255,170,.95); font-weight: 900; }
+    .flag-warn { color: rgba(255,210,140,.95); font-weight: 900; }
+    .flag-bad { color: rgba(255,180,140,.95); font-weight: 900; }
+    .mini-note { margin-top: 12px; color: rgba(255,255,255,.56); font-size: .92rem; line-height: 1.5; }
+  </style>
+</head>
+<script src="/assets/pro.js"></script>
+
+<body data-protected="true" data-tier="pro">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/video-storage/">Video &amp; Storage</a>
+      <span class="sep">/</span>
+      <span>Storage Planner</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Storage Planner</h1>
+      <p class="subhead">Estimate ingest and retention (average vs peak) with clean, planning-grade assumptions.</p>
+    </section>
+
+    <!-- Intro card (kept simple + serious) -->
+    <section class="card tool-card intro-card">
+      <p class="muted">
+        This planner converts camera bitrate into <strong>GB/day</strong> and estimates retention based on usable storage.
+        It also shows <strong>peak</strong> behavior using a multiplier to highlight worst-case retention cliffs.
+      </p>
+    </section>
+
+    <!-- =========================
+         LOCKED CONTENT (default)
+         ========================= -->
+    <section id="lockedView" class="card tool-card">
+      <div class="pill-row">
+        <span class="pill pill--pro">Pro / Advanced</span>
+      </div>
+
+      <h2 class="h2">Ã°Å¸â€â€™ Locked</h2>
+      <p class="muted">This planner is included with Pro access for the Video &amp; Storage category.</p>
+
+      <p class="muted"><strong>What this tool includes</strong></p>
+      <ul class="muted">
+        <li>Average vs peak ingest (GB/day)</li>
+        <li>Retention estimate (average vs peak)</li>
+        <li>Pass/fail against retention target</li>
+        <li>Max sustainable load at a target retention</li>
+      </ul>
+
+      <div class="actions">
+        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+        <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Video &amp; Storage</a>
+      </div>
+    </section>
+
+    <!-- =========================
+         PRO TOOL (?pro=1)
+         ========================= -->
+    <section id="proView" class="grid" style="display:none;">
+      <!-- INPUT CARD -->
+      <section class="card tool-card" style="display:block;">
+        <div class="pill-row">
+          <span class="pill pill--pro">Pro / Advanced</span>
+        </div>
+
+        <h2 class="h2">Inputs</h2>
+        <p class="muted" style="margin-top:-4px;">
+          Use Ã¢â‚¬Å“average bitrateÃ¢â‚¬Â as your typical steady-state number. Motion % scales average load.
+          Peak multiplier models spikes (scene complexity, noise, FPS/IR changes).
+        </p>
+
+        <div class="form-grid" style="margin-top:14px;">
+          <div class="field">
+            <div class="label-row">
+              <label class="muted" for="cams">Camera count</label>
+              <button class="hint" type="button"
+                data-title="Camera count"
+                data-help="Total cameras contributing to recording.">?</button>
+            </div>
+            <input id="cams" type="number" min="1" step="1" value="16" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label class="muted" for="avgMbps">Average bitrate per camera (Mbps)</label>
+              <button class="hint" type="button"
+                data-title="Average bitrate (Mbps)"
+                data-help="Typical sustained bitrate for the selected codec/settings. Planning ranges: 2Ã¢â‚¬â€œ4 Mbps (1080p H.265), 4Ã¢â‚¬â€œ8 Mbps (1080p H.264), 8Ã¢â‚¬â€œ16 Mbps (4MP/4K depending on settings).">?</button>
+            </div>
+            <input id="avgMbps" type="number" min="0.1" step="0.1" value="4" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label class="muted" for="motionPct">Motion / recording duty (%)</label>
+              <button class="hint" type="button"
+                data-title="Motion / duty (%)"
+                data-help="If you record continuously, set 100%. If motion-based recording, this approximates the fraction of time you record at the given average bitrate.">?</button>
+            </div>
+            <input id="motionPct" type="number" min="1" max="100" step="1" value="100" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label class="muted" for="peakMult">Peak multiplier (x)</label>
+              <button class="hint" type="button"
+                data-title="Peak multiplier"
+                data-help="How much higher bitrate can spike vs average. Typical: 1.2Ã¢â‚¬â€œ2.0 depending on scene complexity, noise, IR, fps, and codec behavior.">?</button>
+            </div>
+            <input id="peakMult" type="number" min="1" step="0.05" value="1.5" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label class="muted" for="usableTb">Usable storage (TB)</label>
+              <button class="hint" type="button"
+                data-title="Usable storage (TB)"
+                data-help="Usable storage after RAID and platform overhead. Use the RAID tool output if available. Input is decimal TB as labeled (e.g., 10 TB drives).">?</button>
+            </div>
+            <input id="usableTb" type="number" min="0.1" step="0.1" value="40" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label class="muted" for="targetDays">Target retention (days)</label>
+              <button class="hint" type="button"
+                data-title="Target retention (days)"
+                data-help="The minimum retention requirement. The tool will pass/fail average retention and warn if peak retention drops below target.">?</button>
+            </div>
+            <input id="targetDays" type="number" min="1" step="1" value="30" />
+          </div>
+        </div>
+
+        <div class="actions" style="margin-top:14px;">
+          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+          <button id="reset" class="btn btn-ghost" type="button">Reset</button>
+          <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+        </div>
+
+        <p class="mini-note">
+          Unit note: Bitrates are treated using decimal GB/day for network-style reporting (what people expect).
+          Storage input uses decimal TB (drive label). Internally we convert cleanly so results stay realistic.
+        </p>
+      </section>
+
+      <!-- RESULTS CARD -->
+      <section class="card tool-card" style="display:block;">
+        <div class="pill-row">
+          <span class="pill">Results</span>
+        </div>
+
+        <h2 class="h2">Ingest &amp; retention</h2>
+        <p class="muted" style="margin-top:-4px;">
+          Average retention is your steady-state expectation. Peak retention shows Ã¢â‚¬Å“worst caseÃ¢â‚¬Â if bitrate spikes persist.
+        </p>
+
+        <div class="results-grid" id="results" aria-live="polite"></div>
+
+        <p class="mini-note" id="narrative">
+          Enter values and calculate.
+        </p>
+      </section>
+    </section>
+
+    <footer class="site-footer" style="margin-top:22px;">
+      <div class="muted">Ã‚Â© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      // Gate: show Pro tool only when ?pro=1
+      const qs = new URLSearchParams(window.location.search);
+      const isPro = qs.get("pro") === "1";
+      const locked = document.getElementById("lockedView");
+      const pro = document.getElementById("proView");
+
+      if (isPro) {
+        locked.style.display = "none";
+        pro.style.display = "";
+      } else {
+        locked.style.display = "";
+        pro.style.display = "none";
+        return;
+      }
+
+      const $ = (id) => document.getElementById(id);
+      const resultsEl = $("results");
+      const narrativeEl = $("narrative");
+
+      function clamp(n, a, b) { return Math.min(Math.max(n, a), b); }
+      function num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+
+      // Mbps -> GB/day (decimal)
+      // Mbps = 1e6 bits/sec. bytes/sec = Mbps*1e6/8. bytes/day = *86400. GB/day = /1e9.
+      function mbpsToGBPerDay(mbps) {
+        return (mbps * 1e6 / 8) * 86400 / 1e9;
+      }
+
+      function render(rows) {
+        resultsEl.innerHTML = rows.map(r => `
+          <div class="result-row">
+            <div class="k">${r.k}</div>
+            <div class="v ${r.cls || ""}">${r.v}</div>
+          </div>
+        `).join("");
+      }
+
+      function calculate() {
+        const cams = Math.max(1, Math.floor(num($("cams").value)));
+        const avgMbps = Math.max(0.01, num($("avgMbps").value));
+        const motionPct = clamp(num($("motionPct").value), 1, 100);
+        const peakMult = Math.max(1, num($("peakMult").value));
+
+        const usableTb = Math.max(0.01, num($("usableTb").value));
+        const targetDays = Math.max(1, Math.floor(num($("targetDays").value)));
+
+        const duty = motionPct / 100;
+
+        // Total average bitrate across all cams (scaled by duty)
+        const totalAvgMbps = cams * avgMbps * duty;
+
+        // Peak model: bitrate spikes on top of the per-cam average, still scaled by duty
+        const totalPeakMbps = cams * (avgMbps * peakMult) * duty;
+
+        const avgGBday = mbpsToGBPerDay(totalAvgMbps);
+        const peakGBday = mbpsToGBPerDay(totalPeakMbps);
+
+        // Storage: decimal TB -> decimal GB
+        const usableGB = usableTb * 1000;
+
+        const retentionAvgDays = usableGB / Math.max(0.00001, avgGBday);
+        const retentionPeakDays = usableGB / Math.max(0.00001, peakGBday);
+
+        // Pass/fail logic:
+        // - FAIL if average retention < target
+        // - WARN if average passes but peak < target
+        // - OK if both >= target
+        let status = "OK";
+        let statusCls = "flag-ok";
+        if (retentionAvgDays < targetDays) { status = "FAIL"; statusCls = "flag-bad"; }
+        else if (retentionPeakDays < targetDays) { status = "WARNING"; statusCls = "flag-warn"; }
+
+        // Max sustainable load at target retention:
+        // usableGB = avgGBday * targetDays => avgGBday_max = usableGB/targetDays
+        // Convert back to Mbps:
+        // avgGBday = mbps * 1e6/8 *86400 /1e9 => mbps = avgGBday *1e9*8/(86400*1e6)
+        const avgGBdayMax = usableGB / targetDays;
+        const maxTotalMbpsAtTarget = avgGBdayMax * 1e9 * 8 / (86400 * 1e6);
+
+        // Convert that to per-camera avg Mbps (undo duty)
+        const maxPerCamMbpsAtTarget = (maxTotalMbpsAtTarget / cams) / duty;
+
+        // Margins
+        const marginAvg = retentionAvgDays - targetDays;
+        const marginPeak = retentionPeakDays - targetDays;
+
+        render([
+          { k: "Total average bitrate", v: `${totalAvgMbps.toFixed(2)} Mbps` },
+          { k: "Total peak bitrate", v: `${totalPeakMbps.toFixed(2)} Mbps` },
+
+          { k: "Average ingest", v: `${avgGBday.toFixed(1)} GB/day` },
+          { k: "Peak ingest", v: `${peakGBday.toFixed(1)} GB/day` },
+
+          { k: "Usable storage", v: `${usableGB.toFixed(0)} GB  (${usableTb.toFixed(1)} TB)` },
+
+          { k: "Retention (average)", v: `${retentionAvgDays.toFixed(1)} days` },
+          { k: "Retention (peak)", v: `${retentionPeakDays.toFixed(1)} days` },
+
+          { k: `Target retention`, v: `${targetDays} days` },
+          { k: "Margin vs target (avg)", v: `${marginAvg.toFixed(1)} days`, cls: marginAvg >= 0 ? "flag-ok" : "flag-bad" },
+          { k: "Margin vs target (peak)", v: `${marginPeak.toFixed(1)} days`, cls: marginPeak >= 0 ? "flag-ok" : "flag-warn" },
+
+          { k: "Status", v: status, cls: statusCls },
+
+          { k: `Max total avg bitrate @ ${targetDays}d`, v: `${maxTotalMbpsAtTarget.toFixed(2)} Mbps` },
+          { k: `Max per-cam avg bitrate @ ${targetDays}d`, v: `${maxPerCamMbpsAtTarget.toFixed(2)} Mbps` },
+        ]);
+
+        // Narrative (serious + short)
+        if (status === "FAIL") {
+          narrativeEl.textContent =
+            `Average retention falls below the ${targetDays}-day target. Reduce bitrate, reduce camera count, increase usable storage, or raise the duty/motion assumption accuracy.`;
+        } else if (status === "WARNING") {
+          narrativeEl.textContent =
+            `Average meets the target, but peak conditions reduce retention below ${targetDays} days. Consider adding headroom, lowering peak behavior (scene/codec), or increasing storage.`;
+        } else {
+          narrativeEl.textContent =
+            `You meet the ${targetDays}-day target under both average and peak assumptions with usable margin. Keep headroom disciplined as the system evolves.`;
+        }
+      }
+
+      function reset() {
+        $("cams").value = "16";
+        $("avgMbps").value = "4";
+        $("motionPct").value = "100";
+        $("peakMult").value = "1.5";
+        $("usableTb").value = "40";
+        $("targetDays").value = "30";
+        resultsEl.innerHTML = "";
+        narrativeEl.textContent = "Enter values and calculate.";
+        calculate();
+      }
+
+      $("calc").addEventListener("click", calculate);
+      $("reset").addEventListener("click", reset);
+
+      // Auto-run so it looks alive
+      calculate();
+    })();
+  </script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+

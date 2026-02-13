@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Compute • ScopedLabs</title>
+  <meta name="description" content="CPU, GPU, RAM sizing, virtualization, and workload modeling." />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-cat-0208" />
+  <script src="/assets/app.js?v=compute-cat-0208" defer></script>
+</head>
+
+<body data-protected="true">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">ScopedLabs</span>
+    </a>
+
+    <nav class="nav">
+      <a class="nav-link" href="/">Home</a>
+      <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+      <a class="nav-link" href="/about/">About</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="crumbs">
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <span>Compute</span>
+  </div>
+
+  <section class="page-head">
+    <h1 class="h1">Compute</h1>
+    <p class="subhead">CPU, GPU, RAM sizing, virtualization, and workload modeling.</p>
+  </section>
+
+  <section class="card">
+    <p class="muted">
+      Compute problems show up as dropped frames, slow exports, choppy playback, or unstable VMs under load.
+      These tools help you size hardware with safe utilization targets and real headroom.
+    </p>
+  </section>
+
+  <!-- HERO (Free tool) -->
+  <section class="card tool-hero">
+    <div class="pill pill-ok">Free tool</div>
+    <h2 class="h2">CPU Sizing</h2>
+    <p class="muted">Quick CPU sizing baseline to avoid bottlenecks and leave growth room.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="/tools/compute/cpu-sizing/">Launch Tool</a>
+    </div>
+  </section>
+
+  <!-- FREE -->
+  <h3 class="section-divider">Free Tier</h3>
+
+  <a class="tool-row" href="/tools/compute/ram-sizing/">
+    <div class="tool-row-left">
+      <div class="tool-title">RAM Sizing</div>
+      <div class="tool-desc muted">Estimate RAM needs for OS, apps, and workload buffers.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill free">Free Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row" href="/tools/compute/storage-iops/">
+    <div class="tool-row-left">
+      <div class="tool-title">Storage IOPS</div>
+      <div class="tool-desc muted">IOPS sanity check and “red flag” thresholds for common workloads.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill free">Free Tier</span>
+    </div>
+  </a>
+
+  <!-- PRO -->
+  <h3 class="section-divider">Pro Tier</h3>
+
+  <a class="tool-row pro" href="/upgrade/?category=compute#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Backup Window</div>
+      <div class="tool-desc muted">Estimate backup window based on dataset size and throughput constraints.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=compute#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>GPU VRAM</div>
+      <div class="tool-desc muted">VRAM sizing helper for workloads that are memory-bound on GPU.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=compute#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>NIC Bonding</div>
+      <div class="tool-desc muted">Link aggregation/bonding model: capacity, failover, and bottleneck notes.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=compute#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Power &amp; Thermal</div>
+      <div class="tool-desc muted">Estimate power draw/heat output and when cooling becomes the constraint.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=compute#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>RAID Rebuild Time</div>
+      <div class="tool-desc muted">Estimate rebuild time and risk window based on disk size and throughput.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=compute#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Storage Throughput</div>
+      <div class="tool-desc muted">Throughput model for ingest/export workloads and peak concurrency.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=compute#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>VM Density</div>
+      <div class="tool-desc muted">Estimate VM density based on CPU/RAM targets and utilization safety bands.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <footer class="site-footer">
+    <a class="muted" href="/tools/">← Back to Tools</a>
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
+
+</main>
+</body>
+</html>
+

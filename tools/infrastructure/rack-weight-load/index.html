@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rack Weight Load Calculator *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+</head>
+
+<body data-tier="free">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/infrastructure/">Infrastructure</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+  <div class="crumbs">
+    <a href="/tools/">Tools</a> /
+    <a href="/tools/infrastructure/">Infrastructure</a> /
+    Rack Weight Load
+  </div>
+
+  <h1>Rack Weight Load Calculator</h1>
+  <p class="subhead">Estimate total rack weight and check against capacity.</p>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="label">Number of Devices</span>
+        <input id="count" type="number" value="20">
+      </label>
+
+      <label class="field">
+        <span class="label">Average Device Weight (lbs)</span>
+        <input id="each" type="number" value="35">
+      </label>
+
+      <label class="field">
+        <span class="label">Rack Rated Capacity (lbs)</span>
+        <input id="cap" type="number" value="3000">
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results" class="results"></div>
+  </section>
+</main>
+
+<script src="/assets/app.js"></script>
+<script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+

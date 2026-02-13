@@ -1,0 +1,125 @@
+$ErrorActionPreference = "Stop"
+
+$ROOT  = "E:\ScopedLabs"
+$TOOLS = Join-Path $ROOT "tools"
+$LIST  = Join-Path $ROOT "tools\_factory\maintenance\free_vs_pro_tools.txt"
+
+if (!(Test-Path $LIST))  { throw "List file not found: $LIST" }
+if (!(Test-Path $TOOLS)) { throw "Tools folder not found: $TOOLS" }
+
+# ---------- Parse list blocks:
+# ⚡ POWER
+# FREE
+# <slugs>
+# PRO
+# <slugs>
+$proSet = New-Object System.Collections.Generic.HashSet[string] ([StringComparer]::OrdinalIgnoreCase)
+
+$currentCat = $null
+$mode = $null  # "free" or "pro"
+
+function Normalize-Cat([string]$s) {
+  $t = $s.Trim().ToLower()
+  # strip leading emojis/symbols
+  while ($t.Length -gt 0 -and ($t[0] -lt 'a' -or $t[0] -gt 'z') -and ($t[0] -lt '0' -or $t[0] -gt '9')) {
+    $t = $t.Substring(1).Trim()
+  }
+  switch ($t) {
+    "power" { "power" ; break }
+    "network" { "network" ; break }
+    "video & storage" { "video-storage" ; break }
+    "video and storage" { "video-storage" ; break }
+    "access control" { "access-control" ; break }
+    "performance" { "performance" ; break }
+    "infrastructure" { "infrastructure" ; break }
+    "thermal" { "thermal" ; break }
+    "wireless" { "wireless" ; break }
+    default { ($t -replace "\s+", "-") }
+  }
+}
+
+$lines = Get-Content -LiteralPath $LIST
+foreach ($raw in $lines) {
+  $line = $raw.Trim()
+  if ($line -eq "" -or $line.StartsWith("#")) { continue }
+
+  $u = $line.ToUpperInvariant()
+  if ($u -eq "FREE") { $mode = "free"; continue }
+  if ($u -eq "PRO")  { $mode = "pro";  continue }
+
+  # Category headers are NOT pure slug lines (your slugs are a-z0-9- only)
+  if ($line -notmatch "^[a-z0-9\-]+$") {
+    $currentCat = Normalize-Cat $line
+    $mode = $null
+    continue
+  }
+
+  # Slug line
+  if ($currentCat -and $mode -eq "pro") {
+    [void]$proSet.Add("$currentCat/$line")
+  }
+}
+
+Write-Host ("PRO tools loaded: {0}" -f $proSet.Count)
+
+# ---------- Safe UTF-8 no BOM writer
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+function Write-Utf8NoBom([string]$path, [string]$text) {
+  [System.IO.File]::WriteAllText($path, $text, $utf8NoBom)
+}
+
+$scriptTag = '<script src="/assets/pro.js?v=0207"></script>'
+
+$updated = 0
+$injected = 0
+$protected = 0
+$skipped = 0
+
+Get-ChildItem -Path $TOOLS -Recurse -Filter "index.html" | ForEach-Object {
+  $path = $_.FullName
+
+  # Expect tools\<cat>\<slug>\index.html
+  $rel = $path.Substring($TOOLS.Length).TrimStart("\")
+  $parts = $rel.Split([char[]]"\", [System.StringSplitOptions]::RemoveEmptyEntries)
+  if ($parts.Length -lt 3) { $skipped++; return }
+
+  $cat  = $parts[0].ToLower()
+  $slug = $parts[1].ToLower()
+  $key  = "$cat/$slug"
+
+  $text = [System.IO.File]::ReadAllText($path)
+  $changed = $false
+
+  # Inject pro.js if missing
+  if ($text -notlike "*$scriptTag*") {
+    if ($text -match "(?i)</body>") {
+      $text = [regex]::Replace($text, "(?i)</body>", "$scriptTag`r`n</body>", 1)
+      $changed = $true
+      $injected++
+    }
+  }
+
+  # Mark PRO pages protected
+  if ($proSet.Contains($key)) {
+    if ($text -match "(?i)<body\b" -and $text -notmatch "(?i)data-protected\s*=\s*['""]true['""]") {
+      $text = [regex]::Replace($text, "(?i)<body\b", '<body data-protected="true"', 1)
+      $changed = $true
+      $protected++
+    }
+  }
+
+  if ($changed) {
+    Write-Utf8NoBom $path $text
+    $updated++
+    Write-Host "Updated -> $key"
+  } else {
+    $skipped++
+  }
+}
+
+Write-Host ""
+Write-Host "DONE"
+Write-Host ("Updated files: {0}" -f $updated)
+Write-Host ("Injected script: {0}" -f $injected)
+Write-Host ("Marked protected: {0}" -f $protected)
+Write-Host ("Skipped/no change: {0}" -f $skipped)

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bandwidth Planner • ScopedLabs</title>
+  <meta name="description" content="Estimate total stream throughput and uplink requirements by device count and bitrate." />
+  <link rel="stylesheet" href="/assets/style.css?v=bandwidth-001" />
+  <script src="/assets/app.js?v=bandwidth-001" defer></script>
+  <script src="./script.js?v=bandwidth-001" defer></script>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-head">
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/network/">Network &amp; Throughput</a>
+        <span class="sep">/</span>
+        <span>Bandwidth Planner</span>
+      </div>
+
+      <h1 class="h1">Bandwidth Planner</h1>
+      <p class="subhead">
+        Estimate total stream throughput and uplink requirements by device count and bitrate.
+      </p>
+    </section>
+
+    <section class="card">
+      <p class="muted">
+        Planning-grade throughput math: model average and peak stream demand, apply explicit overhead,
+        account for other traffic, and verify utilization against safe bands.
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <div class="pill-row">
+        <span class="pill pill-ok">Free</span>
+      </div>
+
+      <h2 class="h2" style="margin-top: 10px;">Inputs</h2>
+
+      <div class="form-grid">
+        <div class="field">
+          <div class="label-row">
+            <label for="devices">Stream count (devices)</label>
+          </div>
+          <input id="devices" type="number" min="1" step="1" value="16" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="bitrate">Average bitrate per stream (Mbps)</label>
+          </div>
+          <input id="bitrate" type="number" min="0" step="0.1" value="4" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="peakFactor">Peak factor (motion / scene complexity)</label>
+          </div>
+          <input id="peakFactor" type="number" min="1" step="0.05" value="1.5" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="overheadPct">Protocol overhead (%)</label>
+          </div>
+          <input id="overheadPct" type="number" min="0" step="1" value="12" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="otherTraffic">Other traffic allowance (Mbps)</label>
+          </div>
+          <input id="otherTraffic" type="number" min="0" step="0.1" value="25" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="uplinkMbps">Uplink capacity (Mbps)</label>
+          </div>
+          <input id="uplinkMbps" type="number" min="0" step="1" value="1000" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="safeUtil">Target max utilization (%)</label>
+          </div>
+          <input id="safeUtil" type="number" min="1" max="99" step="1" value="70" />
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top: 14px;">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card results-card" id="resultsCard" style="display:none;">
+      <h2 class="h2">Results</h2>
+
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="result-label">Average stream load</div>
+          <div class="result-value" id="avgLoad">—</div>
+        </div>
+
+        <div class="result-item">
+          <div class="result-label">Peak stream load</div>
+          <div class="result-value" id="peakLoad">—</div>
+        </div>
+
+        <div class="result-item">
+          <div class="result-label">Total average incl. overhead + other traffic</div>
+          <div class="result-value" id="avgTotal">—</div>
+        </div>
+
+        <div class="result-item">
+          <div class="result-label">Total peak incl. overhead + other traffic</div>
+          <div class="result-value" id="peakTotal">—</div>
+        </div>
+
+        <div class="result-item">
+          <div class="result-label">Uplink utilization (avg)</div>
+          <div class="result-value" id="utilAvg">—</div>
+        </div>
+
+        <div class="result-item">
+          <div class="result-label">Uplink utilization (peak)</div>
+          <div class="result-value" id="utilPeak">—</div>
+        </div>
+
+        <div class="result-item">
+          <div class="result-label">Recommended uplink (target utilization)</div>
+          <div class="result-value" id="recUplink">—</div>
+        </div>
+      </div>
+
+      <p class="muted" id="modelNote" style="margin-top: 12px;">
+        Model: avg = devices × bitrate. peak = avg × peakFactor. Overhead applied to stream load.
+        “Other traffic” added after overhead. Utilization computed vs. uplink capacity.
+      </p>
+
+      <div class="actions" style="margin-top: 10px;">
+        <a class="btn" href="/tools/network/">Back to Network &amp; Throughput</a>
+      </div>
+    </section>
+
+    <section class="card" id="errorCard" style="display:none;">
+      <h3 class="card-title">Fix This</h3>
+      <p class="muted" id="errorMsg">Enter valid inputs.</p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
+
+  <style>
+    .result-grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 10px;
+    }
+    .result-item{
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(110,255,120,0.18);
+      background: rgba(0,0,0,0.18);
+    }
+    .result-label{ opacity: 0.85; font-size: 0.92rem; margin-bottom: 6px; }
+    .result-value{ font-weight: 700; font-size: 1.1rem; }
+    @media (max-width: 720px){
+      .result-grid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</body>
+</html>
+
+

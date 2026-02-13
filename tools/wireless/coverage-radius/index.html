@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coverage Radius Estimator *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1">
+</head>
+
+<body data-tier="free">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/wireless/">Wireless</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+  <div class="crumbs">
+    <a href="/tools/">Tools</a> /
+    <a href="/tools/wireless/">Wireless</a> /
+    Coverage Radius
+  </div>
+
+  <h1>Coverage Radius Estimator</h1>
+  <p class="subhead">Planning-level radius based on band, environment, and minimum RSSI target.</p>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="label">Band</span>
+        <select id="band">
+          <option value="24" selected>2.4 GHz</option>
+          <option value="5">5 GHz</option>
+          <option value="6">6 GHz</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="label">Environment</span>
+        <select id="env">
+          <option value="open" selected>Open / Outdoor</option>
+          <option value="office">Office / Light walls</option>
+          <option value="dense">Dense / Many walls</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="label">Minimum RSSI Target (dBm)</span>
+        <input id="rssi" type="number" value="-67">
+      </label>
+
+      <label class="field">
+        <span class="label">AP Power Level</span>
+        <select id="pwr">
+          <option value="low">Low</option>
+          <option value="med" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Estimate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results" class="results"></div>
+  </section>
+</main>
+
+<script src="/assets/app.js"></script>
+<script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+
+

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Compute Power & Heat ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+</head>
+
+<body data-protected="true" data-tier="pro">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/compute/">Compute</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/compute/">Compute</a>
+      <span class="sep">/</span>
+      <span>Power Heat</span>
+    </div>
+
+    <h1>Compute Power & Heat</h1>
+    <p class="subhead">Convert estimated server power draw to heat load (BTU/hr) for cooling planning.</p>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Servers / Nodes</span>
+          <input id="nodes" type="number" min="1" step="1" value="10" />
+        </label>
+
+        <label class="field">
+          <span class="label">Avg Power per Node (W)</span>
+          <input id="watts" type="number" min="0" step="1" value="450" />
+        </label>
+
+        <label class="field">
+          <span class="label">Peak Factor</span>
+          <select id="peak">
+            <option value="1.0">1.0 (steady)</option>
+            <option value="1.15" selected>1.15</option>
+            <option value="1.30">1.30</option>
+            <option value="1.50">1.50</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">PDU / UPS Overhead (%)</span>
+          <input id="overhead" type="number" min="0" step="1" value="8" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/app.js?v=1"></script>
+  <script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fan CFM Sizing *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1">
+</head>
+
+<body data-protected="true" data-tier="pro">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/thermal/">Thermal</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+  <div class="crumbs">
+    <a href="/tools/">Tools</a> /
+    <a href="/tools/thermal/">Thermal</a> /
+    Fan CFM Sizing
+  </div>
+
+  <h1>Fan CFM Sizing</h1>
+  <p class="subhead">Estimate how many fans you need based on required airflow and per-fan CFM.</p>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="label">Required Airflow (CFM)</span>
+        <input id="req" type="number" value="800">
+      </label>
+
+      <label class="field">
+        <span class="label">Fan Rated CFM (each)</span>
+        <input id="fan" type="number" value="120">
+      </label>
+
+      <label class="field">
+        <span class="label">Derate for Restriction (%)</span>
+        <input id="derate" type="number" value="25">
+      </label>
+
+      <label class="field">
+        <span class="label">Redundancy</span>
+        <select id="red">
+          <option value="0" selected>None</option>
+          <option value="1">N+1</option>
+          <option value="2">N+2</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results" class="results"></div>
+  </section>
+</main>
+
+<script src="/assets/app.js"></script>
+<script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+

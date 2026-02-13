@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scenario Comparator • ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=0207sc" />
+  <script src="/assets/app.js?v=0207sc" defer></script>
+</head>
+
+<body data-protected="true" data-tier="pro">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+
+    <nav class="site-nav" aria-label="Primary">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/about/">About</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+  <div class="crumbs">
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <a href="/tools/power/">Power &amp; Runtime</a>
+    <span class="sep">/</span>
+    <span>Scenario Comparator</span>
+  </div>
+
+  <h1>Scenario Comparator</h1>
+  <p class="subhead">
+    Compare two UPS/battery scenarios side-by-side (load, capacity, efficiency, reserve) and see runtime impact instantly.
+  </p>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <!-- Scenario A -->
+      <div class="card" style="background:rgba(0,0,0,.14);">
+        <div class="muted" style="font-weight:600; margin-bottom:.5rem;">Scenario A</div>
+
+        <label class="field">
+          <span class="label">Load (Watts)</span>
+          <input id="a_load_w" type="number" min="0" step="1" value="800" />
+        </label>
+
+        <label class="field">
+          <span class="label">Battery Capacity (Wh)</span>
+          <input id="a_batt_wh" type="number" min="0" step="1" value="2000" />
+        </label>
+
+        <label class="field">
+          <span class="label">Efficiency (%)</span>
+          <input id="a_eff_pct" type="number" min="1" max="100" step="0.1" value="90" />
+        </label>
+
+        <label class="field">
+          <span class="label">Reserve / Derate (%)</span>
+          <input id="a_reserve_pct" type="number" min="0" max="99" step="0.1" value="20" />
+        </label>
+      </div>
+
+      <!-- Scenario B -->
+      <div class="card" style="background:rgba(0,0,0,.14);">
+        <div class="muted" style="font-weight:600; margin-bottom:.5rem;">Scenario B</div>
+
+        <label class="field">
+          <span class="label">Load (Watts)</span>
+          <input id="b_load_w" type="number" min="0" step="1" value="800" />
+        </label>
+
+        <label class="field">
+          <span class="label">Battery Capacity (Wh)</span>
+          <input id="b_batt_wh" type="number" min="0" step="1" value="3000" />
+        </label>
+
+        <label class="field">
+          <span class="label">Efficiency (%)</span>
+          <input id="b_eff_pct" type="number" min="1" max="100" step="0.1" value="92" />
+        </label>
+
+        <label class="field">
+          <span class="label">Reserve / Derate (%)</span>
+          <input id="b_reserve_pct" type="number" min="0" max="99" step="0.1" value="20" />
+        </label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
+  </section>
+    <div class="spacer-xl"></div>
+
+  <div class="container">
+    <div class="breadcrumbs muted" style="margin-bottom:.75rem;">
+      <a href="/tools/power/">← Back to Power & Runtime</a>
+    </div>
+
+    <footer class="site-footer muted">
+      © 2026 ScopedLabs
+    </footer>
+  </div>
+
+</main>
+
+<script src="./script.js?v=0207sc"></script>
+<script src="/assets/pro.js?v=0207sc"></script>
+</body>
+</html>
+
+

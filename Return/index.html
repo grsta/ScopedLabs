@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Finishing up…</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+  <main class="container" style="max-width:760px; padding:48px 16px;">
+    <div class="card" style="padding:24px;">
+      <h1 style="margin:0 0 8px;">Finishing up…</h1>
+      <p id="msg" style="margin:0 0 16px; opacity:.85;">
+        Confirming your unlock. This usually takes a few seconds.
+      </p>
+      <div class="actions">
+        <a id="fallback" class="btn btn-primary" href="/tools/">Go to tools</a>
+      </div>
+      <p id="detail" style="margin:16px 0 0; font-size:.9rem; opacity:.7;"></p>
+    </div>
+  </main>
+
+  <script>
+    (async function () {
+      const params = new URLSearchParams(location.search);
+      const category = (params.get("category") || "").trim();
+      const target = category ? `/tools/${encodeURIComponent(category)}/` : "/tools/";
+      document.getElementById("fallback").href = target;
+
+      // If you have a backend endpoint to confirm unlock, use it:
+      // It should return { ok:true, unlocked:true } once webhook has landed.
+      const msg = document.getElementById("msg");
+      const detail = document.getElementById("detail");
+
+      const MAX_MS = 15000;
+      const STEP_MS = 1200;
+      const start = Date.now();
+
+      // If you don’t have an API yet, you can skip polling and just redirect after a short delay.
+      const CONFIRM_URL = category ? `/api/unlocks/has?category=${encodeURIComponent(category)}` : "";
+
+      async function check() {
+        if (!CONFIRM_URL) return { unlocked: false };
+        const r = await fetch(CONFIRM_URL, { credentials: "include" });
+        if (!r.ok) return { unlocked: false };
+        return await r.json();
+      }
+
+      try {
+        while (Date.now() - start < MAX_MS) {
+          detail.textContent = category ? `Category: ${category}` : "";
+          const data = await check();
+
+          // Expecting { unlocked: true } once it’s live
+          if (data && data.unlocked) {
+            msg.textContent = "Unlocked. Sending you back…";
+            location.replace(target);
+            return;
+          }
+
+          msg.textContent = "Confirming your unlock…";
+          await new Promise(res => setTimeout(res, STEP_MS));
+        }
+
+        // Timeout fallback
+        msg.textContent = "Almost done. If you don’t see it unlocked yet, refresh the category page in a moment.";
+        location.replace(target);
+
+      } catch (e) {
+        msg.textContent = "Couldn’t verify automatically — sending you back now.";
+        location.replace(target);
+      }
+    })();
+  </script>
+</body>
+</html>

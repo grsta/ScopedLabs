@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Account • ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=acct-001" />
+
+  <!-- Supabase client (v2) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Auth / checkout UI glue -->
+  <script defer src="/assets/auth.js?v=acct-001"></script>
+</head>
+
+<body class="page-account">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/">Tools</a>
+        <a class="nav-link" href="/upgrade/">Upgrade</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container spacer-xl">
+    <section class="card tool-card">
+      <span class="pill">Account</span>
+      <h1 style="margin-top:.6rem;">Your unlocks</h1>
+      <p class="muted" id="sl-whoami">Not signed in</p>
+
+      <div class="spacer-md"></div>
+
+      <div id="sl-login-card" class="card" style="background:rgba(0,0,0,.16);">
+        <h3 style="margin-top:0;">Sign in</h3>
+        <p class="muted">We’ll email you a magic link (no password).</p>
+
+        <div class="form-grid" style="margin-top:.75rem;">
+          <label class="muted">
+            Email
+            <input id="sl-email" type="email" placeholder="you@company.com" />
+          </label>
+        </div>
+
+        <div class="actions" style="margin-top: .85rem;">
+          <button id="sl-sendlink" class="btn btn-primary">Send magic link</button>
+        </div>
+
+        <div class="muted" id="sl-email-hint" style="font-size:.9rem; margin-top:.6rem;"></div>
+      </div>
+
+      <div id="sl-checkout-card" class="card" style="background:rgba(0,0,0,.16); display:none;">
+        <h3 style="margin-top:0;">Unlocked categories</h3>
+        <p class="muted" id="sl-entitlements">Loading…</p>
+
+        <div class="actions" style="margin-top: .85rem;">
+          <a class="btn btn-primary" href="/upgrade/">Unlock another category</a>
+          <button id="sl-signout" class="btn" style="display:none;">Sign out</button>
+        </div>
+      </div>
+
+      <div class="muted" id="sl-status" style="font-size:.9rem; margin-top: .85rem;"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="muted">© <span class="year"></span> ScopedLabs</div>
+    </div>
+  </footer>
+</body>
+</html>

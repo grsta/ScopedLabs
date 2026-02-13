@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Failure Days Lost *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+</head>
+
+<body data-protected="true" data-tier="pro">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/video-storage/">Video & Storage</a>
+      <span class="sep">/</span>
+      <span>Failure Days Lost</span>
+    </div>
+
+    <h1>Failure Days Lost</h1>
+    <p class="subhead">Estimate retention loss (days) when a recording system is down or storage fails.</p>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Total Retention (days)</span>
+          <input id="retentionDays" type="number" min="0" step="1" value="30" />
+        </label>
+
+        <label class="field">
+          <span class="label">Outage / Recording Gap (hours)</span>
+          <input id="gapHours" type="number" min="0" step="0.1" value="8" />
+        </label>
+
+        <label class="field">
+          <span class="label">Restore Time (hours)</span>
+          <input id="restoreHours" type="number" min="0" step="0.1" value="4" />
+        </label>
+
+        <label class="field">
+          <span class="label">Risk: Overwrite Speed</span>
+          <select id="overwrite">
+            <option value="normal" selected>Normal</option>
+            <option value="fast">Fast (high motion / high bitrate)</option>
+            <option value="slow">Slow (low motion / low bitrate)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/app.js?v=1"></script>
+  <script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+
+

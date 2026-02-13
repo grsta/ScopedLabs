@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PtP Wireless Link Planner *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1">
+</head>
+
+<body data-protected="true" data-tier="pro">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/wireless/">Wireless</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+  <div class="crumbs">
+    <a href="/tools/">Tools</a> /
+    <a href="/tools/wireless/">Wireless</a> /
+    PtP Wireless Link
+  </div>
+
+  <h1>PtP Wireless Link Planner</h1>
+  <p class="subhead">Planning check for line-of-sight margin and estimated throughput.</p>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="label">Distance (ft)</span>
+        <input id="dist" type="number" value="1500">
+      </label>
+
+      <label class="field">
+        <span class="label">Frequency (GHz)</span>
+        <input id="ghz" type="number" step="0.1" value="5.8">
+      </label>
+
+      <label class="field">
+        <span class="label">TX Power (dBm)</span>
+        <input id="tx" type="number" value="23">
+      </label>
+
+      <label class="field">
+        <span class="label">TX Antenna Gain (dBi)</span>
+        <input id="txg" type="number" value="16">
+      </label>
+
+      <label class="field">
+        <span class="label">RX Antenna Gain (dBi)</span>
+        <input id="rxg" type="number" value="16">
+      </label>
+
+      <label class="field">
+        <span class="label">Other Losses (dB)</span>
+        <input id="loss" type="number" value="4">
+      </label>
+
+      <label class="field">
+        <span class="label">Noise Floor (dBm)</span>
+        <input id="noise" type="number" value="-95">
+      </label>
+
+      <label class="field">
+        <span class="label">Target SNR (dB)</span>
+        <input id="snr" type="number" value="25">
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results" class="results"></div>
+  </section>
+</main>
+
+<script src="/assets/app.js"></script>
+<script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+
+

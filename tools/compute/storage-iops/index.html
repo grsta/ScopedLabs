@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Storage IOPS Estimator *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+</head>
+
+<body data-tier="free">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/compute/">Compute</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/compute/">Compute</a>
+      <span class="sep">/</span>
+      <span>Storage IOPS</span>
+    </div>
+
+    <h1>Storage IOPS Estimator</h1>
+    <p class="subhead">Estimate read/write IOPS required for your workload.</p>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Transactions per Second</span>
+          <input id="tps" type="number" min="0" step="1" value="2000" />
+        </label>
+
+        <label class="field">
+          <span class="label">Reads per Transaction</span>
+          <input id="reads" type="number" min="0" step="1" value="2" />
+        </label>
+
+        <label class="field">
+          <span class="label">Writes per Transaction</span>
+          <input id="writes" type="number" min="0" step="1" value="1" />
+        </label>
+
+        <label class="field">
+          <span class="label">RAID Write Penalty</span>
+          <select id="penalty">
+            <option value="1">None / JBOD</option>
+            <option value="2">RAID 1 / 10 (Ã—2)</option>
+            <option value="4" selected>RAID 5 (Ã—4)</option>
+            <option value="6">RAID 6 (Ã—6)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Headroom (%)</span>
+          <input id="headroom" type="number" min="0" step="1" value="30" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/app.js?v=1"></script>
+  <script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+

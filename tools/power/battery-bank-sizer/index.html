@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Battery Bank Sizer *ScopedLabs</title>
+
+
+  <!-- IMPORTANT: absolute paths so nested tools always load the same CSS -->
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+</head>
+
+<body data-protected="true" data-tier="pro">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/power/">Power &amp; Runtime</a>
+      <span class="sep">/</span>
+      <span>Battery Bank Sizer</span>
+    </div>
+
+    <h1>Battery Bank Sizer</h1>
+    <p class="subhead">Estimate required battery capacity based on load, runtime, depth of discharge, and efficiency.</p>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Load (Watts)</span>
+          <input id="load" type="number" min="0" step="1" value="300" />
+        </label>
+
+        <label class="field">
+          <span class="label">Desired Runtime (Hours)</span>
+          <input id="hours" type="number" min="0" step="0.1" value="8" />
+        </label>
+
+        <label class="field">
+          <span class="label">System Voltage (V)</span>
+          <input id="voltage" type="number" min="1" step="1" value="12" />
+        </label>
+
+        <label class="field">
+          <span class="label">Max Depth of Discharge (%)</span>
+          <input id="dod" type="number" min="1" max="100" step="1" value="80" />
+        </label>
+
+        <label class="field">
+          <span class="label">System Efficiency (%)</span>
+          <input id="efficiency" type="number" min="1" max="100" step="1" value="85" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results muted">Enter your inputs and press Calculate.</div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="margin-top:2rem; text-align:left;">
+      <div style="margin-bottom:.5rem;">
+        <a href="/tools/power/" class="muted">← Back to Power Tools</a>
+      </div>
+  <span class="muted">© ScopedLabs</span>
+</footer>
+
+
+  </main>
+
+  <!-- IMPORTANT: load app.js before tool script so nav pill behavior matches everywhere -->
+  <script src="/assets/app.js?v=2"></script>
+  <script src="./script.js?v=2"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+

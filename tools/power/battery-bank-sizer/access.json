@@ -1,0 +1,16 @@
+﻿{
+    "slug":  "battery-bank-sizer",
+    "title":  "Battery Bank Sizer",
+    "category":  "power",
+    "access":  "Free",
+    "tags":  [
+                 "battery",
+                 "runtime",
+                 "dc",
+                 "inverter",
+                 "ah",
+                 "wh"
+             ],
+    "version":  "0.1.0",
+    "created":  "2026-02-03T21:33:50"
+}

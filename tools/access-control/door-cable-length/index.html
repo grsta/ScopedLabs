@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Door Cable Length Estimator *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+</head>
+
+<body data-protected="true" data-tier="pro">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/access-control/">Access Control</a>
+      <span class="sep">/</span>
+      <span>Door Cable Length</span>
+    </div>
+
+    <h1>Door Cable Length Estimator</h1>
+    <p class="subhead">Estimate total cable run per door (panel to door) including slack, routing, and service loops.</p>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Straight-Line Distance (ft)</span>
+          <input id="distance" type="number" min="0" step="1" value="120" />
+        </label>
+
+        <label class="field">
+          <span class="label">Routing Factor</span>
+          <select id="routing">
+            <option value="1.15">Light (open ceiling) ~15%</option>
+            <option value="1.30" selected>Normal (mixed) ~30%</option>
+            <option value="1.50">Heavy (conduit/around obstacles) ~50%</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Service Slack (ft)</span>
+          <input id="slack" type="number" min="0" step="1" value="15" />
+        </label>
+
+        <label class="field">
+          <span class="label">Door Count</span>
+          <input id="doors" type="number" min="1" step="1" value="8" />
+        </label>
+
+        <label class="field">
+          <span class="label">Separate Runs?</span>
+          <select id="runs">
+            <option value="single" selected>Single (combined cable)</option>
+            <option value="multi">Multiple (reader + DPS + REX + lock)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Number of Separate Cables (if multiple)</span>
+          <input id="cables" type="number" min="1" step="1" value="4" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/app.js?v=1"></script>
+  <script src="./script.js"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+
+

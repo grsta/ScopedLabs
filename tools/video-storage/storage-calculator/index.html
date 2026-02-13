@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Storage & Retention Estimator *ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=storage-004" />
+  <script src="/assets/app.js?v=storage-004" defer></script>
+</head>
+
+<body data-tier="free">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/video-storage/">Video &amp; Storage</a>
+        <span class="sep">/</span>
+        <span>Storage Calculator</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill">Free tool</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Storage &amp; Retention Estimator</h1>
+      <p class="subhead">Quick planning math real-world results vary by codec, FPS, VBR behavior, and scene motion.</p>
+
+      <!--  TOP CARD (THIS IS WHAT WAS MISSING) -->
+      <section class="card" style="margin-top: 14px;">
+        <p class="muted" style="margin: 0;">
+          Estimate <strong>per-camera daily storage</strong>, <strong>total daily load</strong>, and
+          <strong>retention storage</strong> from bitrate + recording mode.
+          Add overhead reserve to stay conservative against VBR spikes and real-world variance.
+        </p>
+      </section>
+
+      <!-- TOOL CARD -->
+      <section class="card" style="margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+
+        <div class="form-grid" style="margin-top: 14px;">
+          <div class="field">
+            <div class="label-row">
+              <label for="cams">Camera count</label>
+              <button type="button" class="hint"
+                data-title="Camera count"
+                data-help="Total number of cameras included in this storage estimate."
+                aria-label="Help: Camera count">?</button>
+            </div>
+            <input id="cams" type="number" min="0" step="1" value="1" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="bitrate">Bitrate per camera (Mbps)</label>
+              <button type="button" class="hint"
+                data-title="Bitrate"
+                data-help="Average sustained bitrate per camera. If your scene is high motion or low light, plan higher."
+                aria-label="Help: Bitrate">?</button>
+            </div>
+            <input id="bitrate" type="number" min="0" step="0.1" value="4" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="mode">Recording mode</label>
+              <button type="button" class="hint"
+                data-title="Recording mode"
+                data-help="Continuous assumes 24/7. Motion uses Motion activity % as the average duty cycle."
+                aria-label="Help: Recording mode">?</button>
+            </div>
+            <select id="mode">
+              <option value="continuous" selected>Continuous (24/7)</option>
+              <option value="motion">Motion-based</option>
+            </select>
+          </div>
+
+          <div class="field" id="motionField" style="display:none;">
+            <div class="label-row">
+              <label for="motionPct">Motion activity (%)</label>
+              <button type="button" class="hint"
+                data-title="Motion activity"
+                data-help="Average percent of the day recording (e.g., 15-35% typical, but can be higher)."
+                aria-label="Help: Motion activity">?</button>
+            </div>
+            <input id="motionPct" type="number" min="0" max="100" step="1" value="25" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="retention">Retention (days)</label>
+              <button type="button" class="hint"
+                data-title="Retention"
+                data-help="How many days of footage you want to keep before overwriting."
+                aria-label="Help: Retention">?</button>
+            </div>
+            <input id="retention" type="number" min="0" step="1" value="30" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="overhead">Overhead reserve (%)</label>
+              <button type="button" class="hint"
+                data-title="Overhead reserve"
+                data-help="Adds headroom for VBR spikes, metadata, filesystem overhead, and variance. Typical: 10-25%."
+                aria-label="Help: Overhead reserve">?</button>
+            </div>
+            <input id="overhead" type="number" min="0" step="1" value="15" />
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+          <button id="reset" class="btn" type="button">Reset</button>
+        </div>
+
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top:0;">Results</h3>
+
+          <div class="results-grid" style="margin-top: .75rem;">
+            <div class="result-row">
+              <div class="k">Per-camera storage per day</div>
+              <div class="v" id="perCamDay"></div>
+            </div>
+
+            <div class="result-row">
+              <div class="k">Total storage per day</div>
+              <div class="v" id="totalDay"></div>
+            </div>
+
+            <div class="result-row">
+              <div class="k">Total retention storage</div>
+              <div class="v" id="totalRetention"></div>
+            </div>
+
+            <div class="result-row">
+              <div class="k">Status</div>
+              <div class="v" id="statusText">Enter values and calculate.</div>
+            </div>
+          </div>
+
+          <p class="muted" style="margin-top: 1rem;">
+            Assumptions: 1 byte = 8 bits. Uses GiB/TiB style math (1024 base) for results.
+            Real systems vary by codec efficiency, VBR behavior, keyframe interval, and motion complexity.
+          </p>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+
+    </div>
+  </main>
+
+  <!-- Global Help Modal -->
+  <div id="helpModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" type="button" aria-label="Close help"></button>
+      <h3 id="helpTitle"></h3>
+      <p id="helpBody"></p>
+    </div>
+  </div>
+
+  <!-- Local tool logic -->
+  <script src="./script.js?v=storage-004"></script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+
+

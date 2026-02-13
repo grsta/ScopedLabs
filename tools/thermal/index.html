@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Thermal • ScopedLabs</title>
+  <meta name="description" content="Heat load, airflow, and cooling capacity planning tools." />
+  <link rel="stylesheet" href="/assets/style.css?v=thermal-cat-0208" />
+  <script src="/assets/app.js?v=thermal-cat-0208" defer></script>
+</head>
+
+<body data-protected="true">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">ScopedLabs</span>
+    </a>
+
+    <nav class="nav">
+      <a class="nav-link" href="/">Home</a>
+      <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+      <a class="nav-link" href="/about/">About</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="crumbs">
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <span>Thermal</span>
+  </div>
+
+  <section class="page-head">
+    <h1 class="h1">Thermal</h1>
+    <p class="subhead">Heat load, airflow, and cooling capacity planning tools.</p>
+  </section>
+
+  <section class="card">
+    <p class="muted">
+      Thermal problems show up as random reboots, degraded performance, and early hardware failure.
+      These tools help you estimate heat output and plan airflow and cooling headroom before things cook.
+    </p>
+  </section>
+
+  <!-- HERO (Free tool) -->
+  <section class="card tool-hero">
+    <div class="pill pill-ok">Free tool</div>
+    <h2 class="h2">Heat Load Estimator</h2>
+    <p class="muted">Estimate total heat output from power draw and device counts.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="/tools/thermal/heat-load-estimator/">Launch Tool</a>
+    </div>
+  </section>
+
+  <!-- FREE -->
+  <h3 class="section-divider">Free Tier</h3>
+
+  <a class="tool-row" href="/tools/thermal/airflow-requirement/">
+    <div class="tool-row-left">
+      <div class="tool-title">Airflow Requirement</div>
+      <div class="tool-desc muted">Estimate airflow needs and flag risky enclosure assumptions.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill free">Free Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row" href="/tools/thermal/btu-converter/">
+    <div class="tool-row-left">
+      <div class="tool-title">BTU Converter</div>
+      <div class="tool-desc muted">Convert watts to BTU/hr (and reverse) for quick planning.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill free">Free Tier</span>
+    </div>
+  </a>
+
+  <!-- PRO -->
+  <h3 class="section-divider">Pro Tier</h3>
+
+  <a class="tool-row pro" href="/upgrade/?category=thermal#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Ambient Rise</div>
+      <div class="tool-desc muted">Estimate temperature rise based on load and airflow/cooling assumptions.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=thermal#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Exhaust Temperature</div>
+      <div class="tool-desc muted">Estimate exhaust temps and when components approach risky thresholds.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=thermal#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Fan CFM Sizing</div>
+      <div class="tool-desc muted">Fan CFM sizing helper with practical margin targets.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=thermal#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Hot / Cold Aisle</div>
+      <div class="tool-desc muted">Planning notes and risk flags for rack airflow strategy.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=thermal#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>PSU Efficiency Heat</div>
+      <div class="tool-desc muted">Estimate waste heat from PSU efficiency at load.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=thermal#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Rack Thermal Density</div>
+      <div class="tool-desc muted">Watts per rack model with risk bands and headroom targets.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <a class="tool-row pro" href="/upgrade/?category=thermal#checkout">
+    <div class="tool-row-left">
+      <div class="tool-title"><span class="lock-icon"></span>Room Cooling Capacity</div>
+      <div class="tool-desc muted">Estimate required cooling capacity and safe buffer.</div>
+    </div>
+    <div class="tool-row-right">
+      <span class="pill pro">Pro Tier</span>
+    </div>
+  </a>
+
+  <footer class="site-footer">
+    <a class="muted" href="/tools/">← Back to Tools</a>
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
+
+</main>
+</body>
+</html>

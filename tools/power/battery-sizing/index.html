@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Battery Sizing *ScopedLabs</title>
+
+  <!-- Global site styles -->
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+
+<body data-tier="free">
+
+  <main class="container">
+
+    <!-- Back link -->
+    <div style="margin-bottom:1rem;">
+      <a href="/tools/power/" class="muted">← Back to Power Tools</a>
+    </div>
+
+    <section class="card tool-card">
+      <div class="tool-head">
+        <h1 class="tool-title">Battery Sizing</h1>
+        <p class="muted">
+          Estimate required battery capacity (Ah) based on voltage, load, runtime, and efficiency.
+        </p>
+      </div>
+
+      <div class="form-grid">
+        <label class="muted">
+          System Voltage (V)
+          <select id="voltage">
+            <option value="" selected disabled>Select voltage</option>
+            <option value="12">12 V</option>
+            <option value="24">24 V</option>
+            <option value="48">48 V</option>
+          </select>
+
+        </label>
+
+        <label class="muted">
+          Load Watts (W)
+          <input id="watts" type="number" step="0.1" min="0" placeholder="Load watts (W)" />
+        </label>
+
+        <label class="muted">
+          Load Amps (A)
+          <input id="amps" type="number" step="0.1" min="0" placeholder="Load amps (A)" />
+        </label>
+
+        <label class="muted">
+          Runtime (hours)
+          <input id="hours" type="number" step="0.1" min="0" placeholder="Runtime hours" />
+        </label>
+
+        <label class="muted">
+          Efficiency (%)
+          <input id="eff" type="number" step="1" min="1" max="100" placeholder="Efficiency % (e.g. 85)" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+
+      <div class="results card">
+        <h2 class="muted" style="margin:0 0 .5rem 0;">Results</h2>
+        <div id="results" class="results-grid">
+          <div class="muted">Enter values and press Calculate.</div>
+        </div>
+      </div>
+
+      <details class="card" style="margin-top:1rem;">
+        <summary class="muted">Notes / Assumptions</summary>
+        <div class="muted" style="margin-top:.75rem;">
+          <ul>
+            <li>If you enter Watts, amps are derived as: Amps = Watts ÷ Volts</li>
+            <li>If you enter Amps, watts are derived as: Watts = Volts × Amps</li>
+            <li>Efficiency accounts for inverter/driver losses and battery discharge inefficiency.</li>
+          </ul>
+        </div>
+      </details>
+
+    </section>
+
+    <!-- Footer -->
+    <footer style="margin-top:2rem; text-align:left;">
+      <div style="margin-bottom:.5rem;">
+        <a href="/tools/power/" class="muted">← Back to Power Tools</a>
+      </div>
+  <span class="muted">© ScopedLabs</span>
+</footer>
+
+
+  </main>
+
+  <!-- Global JS -->
+  <script src="/assets/app.js"></script>
+
+  <!-- Tool logic -->
+  <script src="./script.js"></script>
+
+  <!-- Pro gating (future use) -->
+  <script src="/assets/pro.js?v=0207"></script>
+
+</body>
+</html>
+
+
+

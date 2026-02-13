@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title><!-- TOOL TITLE --> • ScopedLabs</title>
+  <meta name="description" content="<!-- SHORT TOOL DESCRIPTION -->" />
+
+  <!-- Global assets only -->
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+  <script src="/assets/app.js?v=1" defer></script>
+</head>
+
+<body>
+  <!-- Site header (canonical) -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Breadcrumbs (canonical) -->
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="<!-- CATEGORY HREF -->"> <!-- CATEGORY NAME --> </a>
+      <span class="sep">/</span>
+      <span><!-- TOOL CRUMB NAME --></span>
+    </div>
+
+    <!-- Page head (canonical) -->
+    <section class="page-head">
+      <h1 class="h1"><!-- TOOL TITLE --></h1>
+      <p class="subhead"><!-- TOOL SUBHEAD / ONE-LINER --></p>
+    </section>
+
+    <!-- Optional: intro callout (matches your category pages style) -->
+    <section class="card">
+      <p class="muted" style="margin:0">
+        <!-- TOOL INTRO PARAGRAPH (2–3 sentences max) -->
+      </p>
+    </section>
+
+    <!-- Tool body -->
+    <section class="tool-two">
+      <!-- LEFT: Inputs -->
+      <section class="card tool-card">
+        <div class="card-top">
+          <span class="pill pill-ghost">Inputs</span>
+        </div>
+
+        <!-- Keep this as a grid-like block; labels above inputs = consistent scan -->
+        <div class="form">
+          <label class="field">
+            <span class="label">Input label</span>
+            <input id="in_example" type="number" inputmode="decimal" value="0" />
+          </label>
+
+          <label class="field">
+            <span class="label">Select label</span>
+            <select id="in_mode">
+              <option value="a">Option A</option>
+              <option value="b">Option B</option>
+            </select>
+          </label>
+
+          <!-- Add more fields as needed -->
+        </div>
+
+        <!-- Buttons: include only if they actually DO something -->
+        <div class="btn-row">
+          <button id="btn_calc" class="btn" type="button">Calculate</button>
+          <button id="btn_reset" class="btn btn-ghost" type="button">Reset</button>
+        </div>
+      </section>
+
+      <!-- RIGHT: Results -->
+      <section class="card tool-card">
+        <div class="card-top">
+          <span class="pill pill-ghost">Results</span>
+        </div>
+
+        <div class="results">
+          <div class="result-row">
+            <div class="muted">Primary output</div>
+            <div id="out_primary" class="result-val">—</div>
+          </div>
+
+          <div class="result-row">
+            <div class="muted">Secondary output</div>
+            <div id="out_secondary" class="result-val">—</div>
+          </div>
+
+          <div class="result-row">
+            <div class="muted">Status</div>
+            <div id="out_status" class="result-val muted">Enter values and calculate.</div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Optional: “What is this?” / notes block -->
+    <section class="card" style="margin-top:16px">
+      <div class="card-top">
+        <span class="pill pill-ghost">Notes</span>
+      </div>
+      <p class="muted" style="margin:0">
+        <!-- Short “what this is” explanation. Disclaimers come later in polish phase. -->
+      </p>
+    </section>
+
+    <!-- Footer (canonical) -->
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
+
+  <!-- Optional inline tool logic (keeps “global assets only” promise) -->
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+
+      // Inputs
+      const inExample = $("in_example");
+      const inMode = $("in_mode");
+
+      // Outputs
+      const outPrimary = $("out_primary");
+      const outSecondary = $("out_secondary");
+      const outStatus = $("out_status");
+
+      // Buttons
+      const btnCalc = $("btn_calc");
+      const btnReset = $("btn_reset");
+
+      function toNum(v, fallback = 0) {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : fallback;
+      }
+
+      function calculate() {
+        // TODO: Replace with real math
+        const x = toNum(inExample.value, 0);
+
+        outPrimary.textContent = (x * 2).toFixed(2);
+        outSecondary.textContent = (x * 3).toFixed(2);
+
+        // Status: keep simple; normalized threshold colors later (polish phase)
+        outStatus.textContent = "OK — calculation complete";
+      }
+
+      function reset() {
+        inExample.value = 0;
+        inMode.value = "a";
+        outPrimary.textContent = "—";
+        outSecondary.textContent = "—";
+        outStatus.textContent = "Enter values and calculate.";
+      }
+
+      // If you want real-time outputs, call calculate() on input events and
+      // REMOVE the Calculate button entirely. Otherwise keep button-driven.
+      btnCalc?.addEventListener("click", calculate);
+      btnReset?.addEventListener("click", reset);
+    })();
+  </script>
+</body>
+</html>

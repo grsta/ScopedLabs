@@ -1,0 +1,348 @@
+🧭 The safest possible handoff (do this exactly)
+Step 1 — Close this tab (you need to)
+
+You’re right to do it. 1.3 GB means Chrome is choking.
+
+Step 2 — Open a new chat
+
+First message:
+Atlas resume: SCOPEDLABS_CORE_PROJECT_SCOPE_v1.0
+
+Then immediately follow with:
+
+“This document is authoritative.
+Resume context, do not redesign, do not expand scope.”
+
+We are locking the Camera Storage Calculator template.
+I will paste the authoritative project scope next.
+
+Step 3 — Paste the scope
+
+Then we continue exactly where you left off, but without:
+
+CSS ghosts
+
+Whack-a-mole regressions
+
+Browser instability
+
+🧠 Why this actually works (important)
+
+You’re not asking me to “remember everything”.
+
+You’re doing something smarter:
+
+Freezing intent
+
+Freezing design philosophy
+
+Freezing tool boundaries
+
+That’s how senior engineers hand off projects — not by dumping files.
+
+
+
+SCOPEDLABS_CORE_PROJECT_SCOPE_v1.0
+ScopedLabs
+Project Scope, Objectives, Architecture & Design Specification
+
+Version: 1.0 (Foundation Lock)
+Status: Authoritative Reset Document
+
+1. Project Overview
+
+ScopedLabs is a professional-grade, web-based toolkit platform designed for security professionals, system designers, and technicians to plan, validate, and communicate infrastructure decisions before installation.
+
+The platform focuses on engineering reality, not vendor marketing:
+
+Storage sizing
+
+Retention planning
+
+RAID impact
+
+Survivability under failure
+
+Bandwidth & performance modeling
+
+Power & infrastructure planning (future phases)
+
+The goal is to eliminate late-stage surprises like:
+
+“Retention is short”
+“Exports don’t fit”
+“We need more drives”
+“This NVR can’t handle peak load”
+
+2. Core Philosophy
+Design Principles
+
+Clarity over cleverness
+
+Engineering realism over theoretical maximums
+
+Progressive complexity
+
+Free tools = anchors & education
+
+Pro tools = risk modeling & edge cases
+
+One tool = one responsibility
+
+Templates first, features second
+
+Non-Goals
+
+No scraping
+
+No vendor lock-in
+
+No product recommendations
+
+No accounts or logins (Phase 1)
+
+No real-time integrations
+
+3. Target Users
+
+Security system designers
+
+CCTV / NVR technicians
+
+Consultants
+
+Engineers doing pre-sales validation
+
+Advanced DIY users who want correct math
+
+4. Site Architecture (High Level)
+/
+├── Home
+├── Tools
+│   ├── Video & Storage
+│   │   ├── Camera Storage Calculator (FREE)
+│   │   ├── Advanced Storage Planner (PRO)
+│   │   ├── RAID Capacity & Failure Impact (PRO)
+│   │   └── Retention Survivability Estimator (PRO)
+│   ├── Network (future)
+│   ├── Power (future)
+│   └── Infrastructure (future)
+├── About
+└── Legal (later)
+
+5. Visual & UI Design Lock
+Color Scheme
+
+Primary background: Near-black / graphite
+
+Accent color: Neon green (status, pills, buttons)
+
+Text: Off-white / muted gray
+
+Borders: Subtle green glow
+
+Philosophy: “Dark lab console”, not SaaS dashboard
+
+UI Components (Standardized)
+
+.card — content container
+
+.tool-row — clickable category tool
+
+.pill — status label (Free / Pro / Advanced)
+
+.label-row — input label + help hint
+
+.hint — contextual help modal trigger
+
+.form-grid — two-column inputs
+
+.results — structured output block
+
+No per-tool styling deviations.
+All tools inherit the same template.
+
+6. Global Behavior (Locked)
+Help System
+
+Every input label has a ? hint
+
+Uses a single global modal
+
+Help text explains:
+
+What the input means
+
+What typical values are
+
+When the user should use a different tool
+
+Script Loading
+
+/assets/app.js — global UI logic (nav, modals, helpers)
+
+Tool-specific script.js — calculation logic only
+
+Tool logic must not touch layout
+
+7. Tool Definitions (Authoritative)
+7.1 Camera Storage Calculator (FREE)
+
+Purpose:
+Provide a fast, realistic storage estimate using average bitrate, recording mode, and retention.
+
+Inputs
+
+Camera count
+
+Average bitrate per camera (Mbps)
+
+Recording mode (Continuous / Motion-based)
+
+Motion active percentage (only if motion-based)
+
+Retention days
+
+Overhead / safety margin %
+
+Outputs
+
+Per-camera storage per day
+
+Total storage per day
+
+Total retention storage
+
+Status indicator (OK / Moderate / Heavy)
+
+Rules
+
+Uses average bitrate only
+
+Explicitly warns against peak bitrate misuse
+
+Acts as the anchor tool for the category
+
+7.2 Advanced Storage Planner (PRO)
+
+Purpose:
+Model non-average scenarios that break systems in real life.
+
+Planned Capabilities
+
+Peak bitrate modeling
+
+Export workload simulation
+
+Mixed codec scenarios
+
+Burst activity windows
+
+Retention compression under load
+
+Multiple profile comparisons
+
+Status
+
+Placeholder shell page
+
+Clearly labeled “Pro / Advanced”
+
+No broken links
+
+7.3 RAID Capacity & Failure Impact (PRO)
+
+Purpose:
+Explain what RAID actually does to usable capacity and survivability.
+
+Planned Inputs
+
+Drive count
+
+Drive size
+
+RAID level
+
+Hot spare presence
+
+Outputs
+
+Usable capacity
+
+Fault tolerance
+
+Capacity loss during rebuild
+
+Risk notes
+
+7.4 Retention Survivability Estimator (PRO)
+
+Purpose:
+Show how failures degrade effective retention, not just capacity.
+
+Concept
+
+“You sized for 30 days — what happens when a drive fails?”
+
+Time-based survivability modeling
+
+8. Category Page Rules (Where Current Issues Came From)
+Category pages (like Video & Storage) MUST:
+
+Use only .tool-row links
+
+Never embed cards or alternate layouts
+
+Never include tool logic
+
+Never differ in row structure
+
+Each tool row has:
+
+[ Tool Name + Description ]        [ Pill ]
+
+
+Any deviation = layout instability.
+
+9. Implementation Order (Reset Plan)
+
+Lock Camera Storage Calculator template
+
+Freeze Video & Storage category layout
+
+Confirm all tool links resolve (even placeholders)
+
+Duplicate template for next categories
+
+Add Pro tool logic later without touching layout
+
+10. End Goal (Very Important)
+
+ScopedLabs is not a “calculator site.”
+
+It is:
+
+A reference platform
+
+A design validation companion
+
+A pre-install risk detector
+
+If someone uses ScopedLabs and says:
+
+“This caught something before it became a problem”
+
+Then the project is successful.
+
+11. Hand-Off Summary (for another agent)
+
+Build a dark-themed engineering tool platform called ScopedLabs.
+Follow strict layout templates.
+No per-tool UI creativity.
+One global help system.
+One responsibility per tool.
+Free tools educate.
+Pro tools model risk.
+Never mix layouts.
+Never fix logic with CSS.
+Templates are sacred.

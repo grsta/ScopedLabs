@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redundancy Impact Model *ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=power-pro-003" />
+  <script src="/assets/app.js?v=power-pro-003" defer></script>
+</head>
+
+<body data-protected="true" data-tier="pro">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">ScopedLabs</span>
+    </a>
+
+    <nav class="nav">
+      <a class="nav-link" href="/">Home</a>
+      <a class="nav-link" href="/tools/">Tools</a>
+      <a class="nav-link" href="/about/">About</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container">
+    <div class="breadcrumbs muted">
+      <a href="/tools/">Tools</a> /
+      <a href="/tools/power/">Power &amp; Runtime</a> /
+      <span>Redundancy Impact Model</span>
+    </div>
+
+    <h1 class="page-title">Redundancy Impact Model</h1>
+    <p class="page-subtitle">
+      Quantify how redundancy actually changes risk, downtime, and availability.
+    </p>
+
+    <!-- ================= LOCKED ================= -->
+    <section id="lockedCard" class="card tool-card locked-card">
+      <div class="pill-row">
+        <span class="pill pro">Pro / Advanced</span>
+      </div>
+
+      <h2 class="tool-title"> Locked</h2>
+      <p class="tool-desc">
+        This advanced model is included with Pro access for the Power &amp; Runtime category.
+      </p>
+
+      <div class="locked-box">
+        <div class="locked-row">
+          <div class="locked-label">What this tool does</div>
+          <ul class="locked-list">
+            <li>Compare single, N+1, and dual independent UPS designs</li>
+            <li>Model planned maintenance downtime</li>
+            <li>Account for failover efficiency penalties</li>
+            <li>Compute expected downtime and availability</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <a class="btn" href="/tools/power/">Back to Power &amp; Runtime</a>
+        <a class="btn btn-primary" href="/upgrade/?category=power">Unlock Pro</a>
+      </div>
+
+      <div class="muted" style="font-size:.85rem; margin-top:.75rem;">
+        Dev unlock: add <code>?pro=1</code> to the URL.
+      </div>
+    </section>
+
+    <!-- ================= UNLOCKED ================= -->
+    <section id="toolCard" class="card tool-card" style="display:none;">
+      <div class="pill-row">
+        <span class="pill pro">Pro / Advanced</span>
+      </div>
+
+      <h2 class="tool-title">Redundancy Impact Model</h2>
+      <p class="tool-desc">
+        Enter failure and maintenance assumptions to compare real-world availability.
+      </p>
+
+      <div class="spacer-md"></div>
+
+      <!-- INPUTS -->
+      <div class="card" style="background:rgba(0,0,0,.16);">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem;">
+
+          <label class="muted">
+            UPS MTBF (hours)
+            <input id="mtbf" type="number" value="200000" />
+          </label>
+
+          <label class="muted">
+            Repair Time per Failure (hours)
+            <input id="mttr" type="number" value="4" />
+          </label>
+
+          <label class="muted">
+            Maintenance Events / Year
+            <input id="maintN" type="number" value="2" />
+          </label>
+
+          <label class="muted">
+            Maintenance Duration (hours)
+            <input id="maintH" type="number" value="1" />
+          </label>
+
+          <label class="muted">
+            Failover Efficiency Penalty (%)
+            <input id="penalty" type="number" value="3" />
+          </label>
+
+          <label class="muted">
+            Redundancy Architecture
+            <select id="arch">
+              <option value="single">Single UPS</option>
+              <option value="nplus1">N+1</option>
+              <option value="dual">Dual Independent</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="btn-row" style="margin-top:1rem;">
+          <button id="calc" class="btn btn-primary">Run Model</button>
+          <button id="reset" class="btn">Reset</button>
+        </div>
+      </div>
+
+      <div class="spacer-md"></div>
+
+      <!-- OUTPUT -->
+      <div id="out" class="card" style="background:rgba(0,0,0,.14);">
+        <div class="muted">Run the model to see results.</div>
+      </div>
+    </section>
+
+    <div class="spacer-xl"></div>
+    <footer class="site-footer muted">© 2026 ScopedLabs</footer>
+  </div>
+</main>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const unlocked =
+    params.get("pro") === "1" ||
+    localStorage.getItem("scopedlabs_pro_power") === "1";
+
+  const locked = document.getElementById("lockedCard");
+  const tool = document.getElementById("toolCard");
+  if (unlocked) { locked.style.display="none"; tool.style.display=""; }
+
+  function num(id){ return Number(document.getElementById(id).value)||0; }
+
+  document.getElementById("calc").onclick = () => {
+    const mtbf = num("mtbf");
+    const mttr = num("mttr");
+    const maintN = num("maintN");
+    const maintH = num("maintH");
+    const penalty = num("penalty")/100;
+    const arch = document.getElementById("arch").value;
+
+    let failureDowntime = (8760 / mtbf) * mttr;
+    let maintenanceDowntime = maintN * maintH;
+
+    if (arch === "nplus1") {
+      failureDowntime *= 0.3;
+      maintenanceDowntime *= 0.5;
+    }
+    if (arch === "dual") {
+      failureDowntime *= 0.1;
+      maintenanceDowntime *= 0.2;
+    }
+
+    const efficiencyLoss = penalty * 8760;
+    const totalDowntime = failureDowntime + maintenanceDowntime + efficiencyLoss;
+    const availability = ((8760 - totalDowntime) / 8760) * 100;
+
+    document.getElementById("out").innerHTML = `
+      <div class="pill">Architecture: ${arch.toUpperCase()}</div>
+      <div class="spacer-sm"></div>
+      <div class="muted">Expected downtime/year: <strong>${totalDowntime.toFixed(2)} hrs</strong></div>
+      <div class="muted">Availability: <strong>${availability.toFixed(4)}%</strong></div>
+    `;
+  };
+
+  document.getElementById("reset").onclick = ()=>location.reload();
+})();
+</script>
+<script src="/assets/pro.js?v=0207"></script>
+</body>
+</html>
+
+

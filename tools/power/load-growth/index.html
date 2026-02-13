@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Load Growth Estimator </title>
+  <link rel="stylesheet" href="/assets/style.css?v=1" />
+</head>
+
+<body>
+  <!-- Shared site header/nav comes from your template structure -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/tools/">
+        <span class="brand-dot"></span>
+        <span>ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a href="/tools/power/">Power</a>
+        <a href="/upgrade/">Upgrade</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-head">
+      <h1>Load Growth Estimator</h1>
+      <p class="muted">
+        Estimate future electrical load based on annual growth. Useful for capacity planning and “will this panel/UPS still hold up?”
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <div class="field">
+          <div class="label-row">
+            <label for="baseLoad">Current Load (kW)</label>
+            <button class="hint" type="button"
+              data-title="Current Load (kW)"
+              data-help="Enter your present measured or estimated load in kilowatts. Example: 12.5">
+              ?
+            </button>
+          </div>
+          <input id="baseLoad" type="number" inputmode="decimal" step="0.01" min="0" placeholder="e.g., 12.5" />
+          <div class="muted small">Tip: If you only have amps, use your Power tools to convert to kW.</div>
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="growthPct">Annual Growth (%)</label>
+            <button class="hint" type="button"
+              data-title="Annual Growth (%)"
+              data-help="Expected yearly growth rate. Example: 6 means 6% growth per year.">
+              ?
+            </button>
+          </div>
+          <input id="growthPct" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g., 6" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="years">Time Horizon (Years)</label>
+            <button class="hint" type="button"
+              data-title="Time Horizon (Years)"
+              data-help="How many years out you want to estimate. Example: 5 years.">
+              ?
+            </button>
+          </div>
+          <input id="years" type="number" inputmode="numeric" step="1" min="1" max="50" placeholder="e.g., 5" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="headroomPct">Planning Headroom (%)</label>
+            <button class="hint" type="button"
+              data-title="Planning Headroom (%)"
+              data-help="Optional buffer above projected load for safer planning (future unknowns, inrush, etc.). Common: 15–25%.">
+              ?
+            </button>
+          </div>
+          <input id="headroomPct" type="number" inputmode="decimal" step="0.1" min="0" placeholder="e.g., 20" />
+          <div class="muted small">Used to compute “Recommended Capacity.”</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card" id="resultsCard" hidden>
+      <h2>Results</h2>
+
+      <div class="result-grid">
+        <div class="result">
+          <div class="muted small">Projected Load (Final Year)</div>
+          <div class="value" id="finalLoad">—</div>
+        </div>
+        <div class="result">
+          <div class="muted small">Total Increase</div>
+          <div class="value" id="totalIncrease">—</div>
+        </div>
+        <div class="result">
+          <div class="muted small">Recommended Capacity (with headroom)</div>
+          <div class="value" id="recommendedCapacity">—</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3>Year-by-Year Table</h3>
+      <div class="table-wrap">
+        <table class="table" id="yearTable">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Projected Load (kW)</th>
+              <th>Increase vs. Current (kW)</th>
+              <th>Increase (%)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="muted small" id="notes"></div>
+    </section>
+
+    <section class="card tool-card" id="errorCard" hidden>
+      <h2>Fix This</h2>
+      <p id="errorText" class="muted"></p>
+    </section>
+  </main>
+
+  <!-- Shared UI behaviors (help modal, nav, etc.) -->
+  <script src="/assets/app.js?v=1"></script>
+  <!-- Local tool logic -->
+  <script src="./script.js?v=1"></script>
+</body>
+</html>
+
+

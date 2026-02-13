@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Failure Runtime Loss • ScopedLabs</title>
+
+  <!-- site globals -->
+  <link rel="stylesheet" href="/assets/style.css" />
+  \1
+  <script src="/assets/pro.js?v=0210" defer></script>
+</head>
+
+<body data-protected="true">
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark"></span>
+      <span class="brand-name">ScopedLabs</span>
+    </a>
+
+    <nav class="nav">
+      <a class="nav-link" href="/">Home</a>
+      <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+      <a class="nav-link" href="/about/">About</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page tool-page">
+
+  <div class="crumbs">Tools › Power &amp; Runtime</div>
+
+  <h1 class="page-title">Failure Runtime Loss</h1>
+  <p class="page-subtitle">Model how failures reduce usable runtime and resilience.</p>
+
+  <!-- INPUT CARD -->
+  <section class="card tool-card">
+
+    <div class="form-grid">
+
+      <div class="field">
+        <label>Baseline Load (W)</label>
+        <input id="baselineLoad" type="number" value="300">
+      </div>
+
+      <div class="field">
+        <label>Failure Load (W)</label>
+        <input id="failureLoad" type="number" value="360">
+      </div>
+
+      <div class="field">
+        <label>Battery Capacity (Wh)</label>
+        <input id="batteryWh" type="number" value="1200">
+      </div>
+
+      <div class="field">
+        <label>System Voltage</label>
+        <select id="voltage">
+          <option value="12" selected>12 V</option>
+          <option value="24">24 V</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Efficiency (%)</label>
+        <input id="efficiency" type="number" value="75">
+      </div>
+
+      <div class="field">
+        <label>Max Depth of Discharge (%)</label>
+        <input id="dod" type="number" value="70">
+      </div>
+
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+
+  </section>
+
+  <!-- RESULTS -->
+  <section class="card">
+    <h2 class="muted">Results</h2>
+    <div id="results" class="results-grid"></div>
+  </section>
+
+  <!-- NOTES -->
+  <details class="card">
+    <summary class="muted">Notes / Assumptions</summary>
+    <ul style="margin-top:10px;">
+      <li>Runtime = (BatteryWh × Efficiency × Usable DoD) ÷ Load</li>
+      <li>Failure scenario uses higher load</li>
+    </ul>
+  </details>
+
+  <!-- FOOTER -->
+  <footer class="page-footer">
+    <div style="margin-bottom:.5rem;">
+      <a href="/tools/power/" class="muted">← Back to Power Tools</a>
+    </div>
+    <span class="muted">© ScopedLabs</span>
+  </footer>
+
+</main>
+
+<script src="./script.js" defer></script>
+</body>
+</html>
+
+

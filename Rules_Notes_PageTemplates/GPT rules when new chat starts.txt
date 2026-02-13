@@ -1,0 +1,45 @@
+Project: ScopedLabs
+Status: In-progress
+Rules:
+- Categories are cloned, not redesigned
+- Canonical Pro badge: <span class="pill pill-ghost">Pro / Advanced</span>
+- One free anchor per category
+- 3+ tools per category
+- No new CSS/JS patterns unless approved
+- Use existing files as source of truth
+
+Current focus:
+- Category pages + tool structure
+
+
+# ScopedLabs — Design & Product Intent
+
+ScopedLabs is a professional, technical tool platform.
+It is NOT a marketing site, not a SaaS dashboard, and not flashy.
+
+Design goals:
+- Calm, premium, restrained
+- Confidence through clarity, not animations
+- Feels like an engineer’s tool, not a startup pitch
+
+Structural intent:
+- Categories are disciplines, not features
+- Each category stands on its own
+- One free anchor builds trust
+- Pro tools answer the next uncomfortable question
+- Long horizontal rows imply depth and seriousness
+
+What this site should feel like:
+- “This was built by someone who’s done this in the field”
+- “I trust these numbers”
+- “Nothing here is accidental”
+
+What we avoid:
+- Gamification
+- Bright colors for attention
+- Redundant UI patterns
+- Reinventing layouts per page
+- Over-explaining obvious things
+
+If something feels flashy, clever, or salesy — it’s wrong.
+If something feels boring but solid — it’s probably right.
