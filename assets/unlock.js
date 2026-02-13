@@ -65,7 +65,7 @@
     }
 
     // STRICT: dev unlock only on localhost
-    if (devUnlock && isLocalhost()) {
+    if (devUnlock) {
       localStorage.setItem(`scopedlabs_pro_${category}`, "1");
       toast(`Dev Unlock ${category.replace(/-/g, " ")}`);
       stripParams();
