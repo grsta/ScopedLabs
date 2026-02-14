@@ -1,161 +1,127 @@
-/* /assets/app.js
-   ScopedLabs Upgrade page logic (category selection + checkout)
+/* ScopedLabs Upgrade App Logic — FULL FILE OVERWRITE
+   - Uses window.SL_AUTH.sb from auth.js
+   - Reads ?category= from URL
+   - Enables checkout only if:
+       (signed in AND category selected)
+   - Creates Stripe Checkout Session
+   - Scrolls to #checkout on return
 */
+
 (() => {
-  const byId = (id) => document.getElementById(id);
+  "use strict";
 
-  // Must exist (auth.js sets SL_AUTH.sb)
-  function getSB() {
-    const sb = window.SL_AUTH?.sb;
-    if (!sb) console.error("[app] Missing window.SL_AUTH.sb — is /assets/auth.js loaded first?");
-    return sb;
+  const sb = window.SL_AUTH?.sb;
+  if (!sb) {
+    console.error("[app] Supabase client not found. auth.js must load first.");
+    return;
   }
 
-  function getCategoryFromUrl() {
-    const sp = new URLSearchParams(location.search);
-    return (sp.get("category") || "").trim() || null;
+  // ===== Helpers =====
+  const $ = (sel) => document.querySelector(sel);
+
+  function getCategoryFromURL() {
+    const url = new URL(window.location.href);
+    return url.searchParams.get("category");
   }
 
-  function setCategoryInUI(cat) {
-    const label = byId("sl-category-label");
-    if (label) label.textContent = cat ? (cat[0].toUpperCase() + cat.slice(1)) : "None selected";
-
-    // If you have hidden input or data attrs, keep them in sync
-    const hid = byId("sl-category");
-    if (hid) hid.value = cat || "";
+  function setText(el, txt) {
+    if (el) el.textContent = txt || "";
   }
 
-  function shouldScrollToCheckout() {
-    const sp = new URLSearchParams(location.search);
-    return location.hash === "#checkout" || sp.get("checkout") === "1";
-  }
-
-  function scrollToCheckout() {
-    const el = byId("checkout");
+  function enable(el, on) {
     if (!el) return;
-    // small delay lets layout settle
-    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    el.disabled = !on;
+    el.classList.toggle("disabled", !on);
   }
 
-  async function getUserEmail() {
-    const sb = getSB();
-    if (!sb) return null;
+  // ===== Elements =====
+  const els = {
+    categoryLabel: $("#selectedCategory"),
+    checkoutBtn: $("#checkoutBtn"),
+    checkoutStatus: $("#checkoutStatus"),
+  };
+
+  // ===== State =====
+  let currentCategory = getCategoryFromURL();
+
+  // ===== UI =====
+  function updateCategoryUI() {
+    if (currentCategory) {
+      setText(els.categoryLabel, currentCategory);
+    } else {
+      setText(els.categoryLabel, "None");
+    }
+  }
+
+  async function isSignedIn() {
     const { data } = await sb.auth.getSession();
-    return data?.session?.user?.email || null;
+    return !!data?.session;
   }
 
-  async function updateCheckoutButtons() {
-    const email = await getUserEmail();
-    const cat = getCategoryFromUrl();
-
-    setCategoryInUI(cat);
-
-    const checkoutBtn = byId("sl-checkout");
-    if (checkoutBtn) checkoutBtn.disabled = !(email && cat);
-
-    // Optional: if signed in but no category, show a hint
-    const msg = byId("sl-msg");
-    if (msg) {
-      if (!email) msg.textContent = "";
-      else if (!cat) msg.textContent = "Pick a category first.";
-      else msg.textContent = "";
-    }
+  async function updateCheckoutState() {
+    const signedIn = await isSignedIn();
+    const ready = signedIn && !!currentCategory;
+    enable(els.checkoutBtn, ready);
   }
 
-  async function createCheckoutSession() {
-    const sb = getSB();
-    const msg = byId("sl-msg");
-    const setMsg = (t) => { if (msg) msg.textContent = t; };
-
-    const email = await getUserEmail();
-    const category = getCategoryFromUrl();
-
-    if (!email) {
-      setMsg("Please sign in first.");
-      return;
-    }
-    if (!category) {
-      setMsg("Choose a category first.");
-      return;
-    }
-
-    // priceId lookup should come from your stripe-map.js
-    // Expect: window.STRIPE_MAP[category].priceId
-    const map = window.STRIPE_MAP || window.STRIPE_PRICE_MAP || null;
-    const priceId = map?.[category]?.priceId;
-
-    if (!priceId) {
-      console.error("[app] Missing priceId for category:", category, map);
-      setMsg("PriceId missing for this category.");
-      return;
-    }
-
-    setMsg("Starting checkout…");
-
+  // ===== Checkout =====
+  async function startCheckout() {
     try {
+      if (!(await isSignedIn())) {
+        els.checkoutStatus.textContent = "Please sign in first.";
+        return;
+      }
+      if (!currentCategory) {
+        els.checkoutStatus.textContent = "Select a category first.";
+        return;
+      }
+
+      els.checkoutStatus.textContent = "Redirecting to checkout…";
+
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          category,
-          priceId
-        })
+          category: currentCategory,
+        }),
       });
 
-      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error("Checkout session failed");
 
-      if (!res.ok || !json?.ok) {
-        console.error("[app] checkout error:", res.status, json);
-        setMsg("Checkout error. Try again.");
-        return;
-      }
+      const data = await res.json();
+      if (!data?.url) throw new Error("Missing Stripe URL");
 
-      // Worker should return a Stripe Checkout URL
-      if (json.url) {
-        window.location.href = json.url;
-        return;
-      }
-
-      setMsg("Checkout error. Missing session URL.");
-    } catch (e) {
-      console.error("[app] checkout exception:", e);
-      setMsg("Checkout error. Try again.");
+      window.location.href = data.url;
+    } catch (err) {
+      console.error(err);
+      els.checkoutStatus.textContent =
+        "Checkout failed. Please try again.";
     }
   }
 
-  function wireUI() {
-    const checkoutBtn = byId("sl-checkout");
-    if (checkoutBtn) {
-      checkoutBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        createCheckoutSession();
-      });
-    }
+  // ===== Init =====
+  function wireEvents() {
+    els.checkoutBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      startCheckout();
+    });
 
-    const acctBtn = byId("sl-account");
-    if (acctBtn) {
-      acctBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        // optional: send them to /account/ or show modal
-        window.location.href = "/account/";
-      });
-    }
+    // Update state if auth changes
+    sb.auth.onAuthStateChange(() => {
+      updateCheckoutState();
+    });
   }
 
   (async () => {
-    wireUI();
+    updateCategoryUI();
+    await updateCheckoutState();
 
-    // update on load + whenever auth state changes
-    await updateCheckoutButtons();
-
-    const sb = getSB();
-    if (sb) {
-      sb.auth.onAuthStateChange(async () => {
-        await updateCheckoutButtons();
-        if (shouldScrollToCheckout()) scrollToCheckout();
-      });
+    // If returning from Stripe success, jump user to checkout section
+    if (window.location.hash === "#checkout") {
+      const el = document.getElementById("checkout");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
     }
 
-    if (shouldScrollToCheckout()) scrollToCheckout();
+    wireEvents();
   })();
 })();
