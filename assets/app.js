@@ -1,149 +1,109 @@
-/* ScopedLabs Upgrade Page App
-   - Reads stripe-map.js: window.SCOPEDLABS_STRIPE_MAP (category -> {label, priceId, unlockKey})
-   - Uses auth.js: window.SCOPEDLABS_AUTH + window.SCOPEDLABS_SB
-   - Wires: #sl-checkout, #sl-category-label, #sl-category-pill
-   - Posts to Worker: POST /api/create-checkout-session
+/* /assets/app.js
+   ScopedLabs global UI helpers only.
+   - No tool math
+   - No auth
+   - No checkout
 */
 
 (function () {
   "use strict";
 
-  function $(id) { return document.getElementById(id); }
-
-  function setText(id, text) {
-    const el = $(id);
-    if (el) el.textContent = text;
-  }
-
-  function status(msg, isError) {
-    const el = $("sl-status");
-    if (!el) return;
-    el.textContent = msg || "";
-    el.style.opacity = msg ? "1" : "0";
-    el.style.color = isError ? "#ffb4b4" : "";
-  }
-
-  function getCategory() {
-    const u = new URL(window.location.href);
-    return (u.searchParams.get("category") || "").trim();
-  }
-
-  function getStripeMap() {
-    return window.SCOPEDLABS_STRIPE_MAP || null;
-  }
-
-  function getStripeEntry(category) {
-    const map = getStripeMap();
-    if (!map) return null;
-    return map[category] || null;
-  }
-
-  function setCategoryUI(category) {
-    const entry = getStripeEntry(category);
-
-    if (!category || !entry) {
-      setText("sl-category-label", "a category");
-      setText("sl-category-pill", "None selected");
-      status("Pick a category above to continue.", false);
-      return;
+  function onReady(fn) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn);
+    } else {
+      fn();
     }
-
-    setText("sl-category-label", entry.label || category);
-    setText("sl-category-pill", entry.label || category);
-    status("", false);
   }
 
-  async function getSessionToken() {
-    const sb = window.SCOPEDLABS_AUTH?.getClient?.();
-    if (!sb) return null;
-    const { data } = await sb.auth.getSession();
-    return data?.session?.access_token || null;
+  function qs(sel, root = document) {
+    return root.querySelector(sel);
   }
 
-  async function createCheckoutSession(category) {
-    const entry = getStripeEntry(category);
-    if (!entry || !entry.priceId) {
-      status("Missing price configuration for this category.", true);
-      return null;
-    }
+  function qsa(sel, root = document) {
+    return Array.from(root.querySelectorAll(sel));
+  }
 
-    const token = await getSessionToken();
-    if (!token) {
-      status("Please sign in first (magic link).", true);
-      return null;
-    }
+  function ensureHelpModal() {
+    // If your HTML already has a modal, we won't duplicate it.
+    // We look for an element with id="help-modal".
+    let modal = document.getElementById("help-modal");
+    if (modal) return modal;
 
-    const origin = window.location.origin;
+    // Minimal modal shell (dark/lab style should be coming from your CSS)
+    modal = document.createElement("div");
+    modal.id = "help-modal";
+    modal.className = "modal";
+    modal.innerHTML = `
+      <div class="modal-backdrop" data-close="1"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <div class="modal-head">
+          <div id="help-title" class="modal-title">Help</div>
+          <button class="btn btn-sm" id="help-close" type="button">Close</button>
+        </div>
+        <div class="modal-body">
+          <div id="help-body" class="muted"></div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
 
-    // Stripe should return here after payment
-    const successUrl = `${origin}/tools/?unlocked=1&category=${encodeURIComponent(category)}`;
-    const cancelUrl  = `${origin}/upgrade/?category=${encodeURIComponent(category)}#checkout`;
-
-    status("Creating checkout…");
-
-    const res = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        category,
-        priceId: entry.priceId,
-        unlockKey: entry.unlockKey || null,
-        successUrl,
-        cancelUrl,
-      }),
+    // close handlers
+    modal.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!t) return;
+      if (t.id === "help-close") hideHelp();
+      if (t.getAttribute && t.getAttribute("data-close") === "1") hideHelp();
     });
 
-    let body = null;
-    try { body = await res.json(); } catch (_) {}
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") hideHelp();
+    });
 
-    if (!res.ok || !body?.ok) {
-      const detail = body?.detail || body?.error || `HTTP ${res.status}`;
-      status(`Checkout error: ${detail}`, true);
-      return null;
+    function hideHelp() {
+      modal.classList.remove("open");
+      document.body.classList.remove("modal-open");
     }
 
-    if (!body.url) {
-      status("Checkout error: missing redirect url.", true);
-      return null;
-    }
-
-    status("Redirecting to Stripe…");
-    return body.url;
+    return modal;
   }
 
-  function wireCheckoutButton() {
-    const btn = $("sl-checkout");
-    if (!btn) return;
+  function openHelp(title, body) {
+    const modal = ensureHelpModal();
+    const t = document.getElementById("help-title");
+    const b = document.getElementById("help-body");
+    if (t) t.textContent = title || "Help";
+    if (b) b.textContent = body || "";
+    modal.classList.add("open");
+    document.body.classList.add("modal-open");
+  }
 
-    btn.addEventListener("click", async () => {
-      try {
-        const category = getCategory();
-        const url = await createCheckoutSession(category);
-        if (url) window.location.href = url;
-      } catch (err) {
-        console.error(err);
-        status(`Checkout error: ${err?.message || err}`, true);
-      }
+  function wireHintButtons() {
+    // Your hint buttons use: button.hint with data-title / data-help
+    qsa("button.hint").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const title = btn.getAttribute("data-title") || "Help";
+        const help = btn.getAttribute("data-help") || "";
+        openHelp(title, help);
+      });
     });
   }
 
-  function wireCategoryUI() {
-    const category = getCategory();
-    setCategoryUI(category);
-
-    // If user lands on /upgrade/ with #checkout, keep them there
-    if (window.location.hash === "#checkout") {
-      const el = $("checkout");
-      if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
-    }
+  function setFooterYear() {
+    const y = String(new Date().getFullYear());
+    qsa("[data-year]").forEach((el) => (el.textContent = y));
+    // Also support: <span id="year"></span>
+    const yearEl = document.getElementById("year");
+    if (yearEl) yearEl.textContent = y;
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    wireCategoryUI();
-    wireCheckoutButton();
+  onReady(() => {
+    setFooterYear();
+    wireHintButtons();
   });
-})();
 
+  // Expose minimal help API if needed elsewhere
+  window.SCOPEDLABS_UI = window.SCOPEDLABS_UI || {};
+  window.SCOPEDLABS_UI.openHelp = openHelp;
+})();
