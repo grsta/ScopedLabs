@@ -1,40 +1,29 @@
 /* ScopedLabs Auth (Supabase v2) — FULL FILE OVERWRITE
+   - Waits for Supabase config to exist before initializing
    - Creates ONE Supabase client and exposes it as: window.SL_AUTH.sb
-   - Handles magic-link sign-in
-   - Exchanges auth code for session on return
-   - Accepts BOTH config naming schemes:
-       SL_SUPABASE_URL / SL_SUPABASE_ANON_KEY  (preferred)
-       SUPABASE_URL / SUPABASE_ANON_KEY        (legacy)
+   - Magic link send uses the actual email input (no placeholders)
+   - Uses a clean redirect URL to avoid allowlist/callback weirdness
 */
 
 (() => {
   "use strict";
 
-  // ====== CONFIG (accept both names) ======
-  const SUPABASE_URL =
-    window.SL_SUPABASE_URL ||
-    window.SUPABASE_URL ||
-    window.SUPABASE_URL; // (redundant safe)
+  const waitForConfig = () =>
+    new Promise((resolve) => {
+      const check = () => {
+        if (
+          window.SL_SUPABASE_URL &&
+          window.SL_SUPABASE_ANON_KEY &&
+          window.supabase?.createClient
+        ) {
+          return resolve();
+        }
+        setTimeout(check, 50);
+      };
+      check();
+    });
 
-  const SUPABASE_ANON_KEY =
-    window.SL_SUPABASE_ANON_KEY ||
-    window.SUPABASE_ANON_KEY ||
-    window.SUPABASE_ANON_KEY;
-
-  const DEFAULT_REDIRECT = window.SL_AUTH_REDIRECT || window.location.href;
-
-  // ====== HELPERS ======
-  const $ = (sel) => document.querySelector(sel);
-
-  function safeText(el, text) {
-    if (!el) return;
-    el.textContent = String(text ?? "");
-  }
-
-  function show(el, on) {
-    if (!el) return;
-    el.style.display = on ? "" : "none";
-  }
+  const $ = (s) => document.querySelector(s);
 
   const UI = {
     emailInput: () => $("#authEmail"),
@@ -45,157 +34,144 @@
     signOutBtn: () => $("#signOutBtn"),
   };
 
-  function setStatus(msg, isError = false) {
+  function show(el, on) {
+    if (el) el.style.display = on ? "" : "none";
+  }
+
+  function setStatus(msg, err = false) {
     const el = UI.status();
     if (!el) return;
     el.textContent = msg || "";
-    el.style.opacity = msg ? "1" : "0.85";
-    el.style.color = isError ? "#ff6b6b" : "";
+    el.style.color = err ? "#ff6b6b" : "";
   }
 
-  function setSignedInUI(email) {
+  function setSignedIn(email) {
     show(UI.emailInput(), false);
     show(UI.sendBtn(), false);
     show(UI.signedInRow(), true);
-    safeText(UI.signedInEmail(), email || "Signed in");
+    if (UI.signedInEmail()) UI.signedInEmail().textContent = email || "";
     setStatus("");
   }
 
-  function setSignedOutUI() {
+  function setSignedOut() {
     show(UI.emailInput(), true);
     show(UI.sendBtn(), true);
     show(UI.signedInRow(), false);
-    safeText(UI.signedInEmail(), "");
+    if (UI.signedInEmail()) UI.signedInEmail().textContent = "";
   }
 
-  // ====== VALIDATION ======
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.warn(
-      "[auth] Missing Supabase config. Set window.SL_SUPABASE_URL / window.SL_SUPABASE_ANON_KEY (preferred) or window.SUPABASE_URL / window.SUPABASE_ANON_KEY (legacy).",
-      { SUPABASE_URL: !!SUPABASE_URL, SUPABASE_ANON_KEY: !!SUPABASE_ANON_KEY }
-    );
-  }
-
-  if (!window.supabase || !window.supabase.createClient) {
-    console.error("[auth] Supabase JS v2 not loaded. Ensure CDN script is included first.");
-    return;
-  }
-
-  // ====== CREATE ONE CLIENT ======
   let sb;
-  try {
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: false,
-      },
-    });
-  } catch (e) {
-    console.error("[auth] Failed to create Supabase client:", e);
-    return;
-  }
 
-  window.SL_AUTH = window.SL_AUTH || {};
-  window.SL_AUTH.sb = sb;
+  async function init() {
+    await waitForConfig();
 
-  async function refreshAuthUI() {
-    try {
-      const { data, error } = await sb.auth.getSession();
-      if (error) throw error;
-
-      const session = data?.session || null;
-      const email = session?.user?.email || "";
-
-      if (session && email) setSignedInUI(email);
-      else {
-        setSignedOutUI();
-        setStatus("");
+    sb = window.supabase.createClient(
+      window.SL_SUPABASE_URL,
+      window.SL_SUPABASE_ANON_KEY,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: false,
+        },
       }
-    } catch (err) {
-      console.warn("[auth] refreshAuthUI error:", err);
-      setSignedOutUI();
-      setStatus("Auth error. Refresh the page.", true);
-    }
+    );
+
+    window.SL_AUTH = { sb };
+
+    sb.auth.onAuthStateChange(refreshUI);
+
+    wire();
+    await handleReturn();
+    await refreshUI();
   }
 
-  async function sendMagicLink() {
-    const email = (UI.emailInput()?.value || "").trim();
+  async function refreshUI() {
+    const { data } = await sb.auth.getSession();
+    const email = data?.session?.user?.email;
+    if (email) setSignedIn(email);
+    else setSignedOut();
+  }
+
+  function sanitizeEmail(raw) {
+    return String(raw || "")
+      .replace(/\u00A0/g, " ") // nbsp -> space
+      .trim()
+      .toLowerCase();
+  }
+
+  async function sendLink() {
+    const raw = UI.emailInput()?.value || "";
+    const email = sanitizeEmail(raw);
+
     if (!email || !email.includes("@")) {
-      setStatus("Enter a valid email address.", true);
+      setStatus("Enter a valid email address", true);
       return;
     }
 
-    try {
-      setStatus("Sending magic link…");
-      UI.sendBtn()?.setAttribute("disabled", "disabled");
+    setStatus("Sending magic link…");
+    UI.sendBtn()?.setAttribute("disabled", "disabled");
 
-      const { error } = await sb.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: DEFAULT_REDIRECT },
-      });
+    // IMPORTANT: clean redirect (avoid query/hash allowlist weirdness)
+    const redirectTo = "https://scopedlabs.com/upgrade/";
 
-      if (error) throw error;
-      setStatus("Check your email for the sign-in link.");
-    } catch (err) {
-      console.warn("[auth] sendMagicLink error:", err);
-      setStatus("Could not send link. Try again in a moment.", true);
-    } finally {
-      UI.sendBtn()?.removeAttribute("disabled");
+    // Debug: proves what is actually being sent
+    console.log("[auth] sending email:", JSON.stringify(email), "redirect:", redirectTo);
+
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo },
+    });
+
+    UI.sendBtn()?.removeAttribute("disabled");
+
+    if (error) {
+      console.error("[auth] OTP error:", error);
+      setStatus(error.message || "Failed to send link", true);
+      return;
     }
+
+    setStatus("Check your email for the sign-in link.");
   }
 
-  async function handleAuthReturn() {
-    try {
-      const url = new URL(window.location.href);
-      const code = url.searchParams.get("code");
-      if (!code) return;
+  async function handleReturn() {
+    const url = new URL(location.href);
+    const code = url.searchParams.get("code");
+    if (!code) return;
 
-      setStatus("Signing you in…");
+    setStatus("Signing you in…");
 
-      const { data, error } = await sb.auth.exchangeCodeForSession(code);
-      if (error) throw error;
-
+    const { error } = await sb.auth.exchangeCodeForSession(code);
+    if (!error) {
       url.searchParams.delete("code");
       url.searchParams.delete("type");
       url.searchParams.delete("redirect_to");
-      url.searchParams.delete("access_token");
-      url.searchParams.delete("refresh_token");
-
-      window.history.replaceState({}, document.title, url.toString());
-
-      const email = data?.session?.user?.email || "";
-      if (email) setSignedInUI(email);
-
-      setStatus("");
-    } catch (err) {
-      console.warn("[auth] handleAuthReturn error:", err);
-      setStatus("Sign-in failed. Please try the link again.", true);
+      history.replaceState({}, "", url.toString());
+    } else {
+      console.error("[auth] exchangeCodeForSession error:", error);
+      setStatus("Sign-in failed. Try the link again.", true);
     }
   }
 
   async function signOut() {
     try {
-      setStatus("Signing out…");
       await sb.auth.signOut();
-      setSignedOutUI();
+    } finally {
+      setSignedOut();
       setStatus("");
-    } catch (err) {
-      console.warn("[auth] signOut error:", err);
-      setStatus("Could not sign out. Refresh and try again.", true);
     }
   }
 
-  function wireEvents() {
+  function wire() {
     UI.sendBtn()?.addEventListener("click", (e) => {
       e.preventDefault();
-      sendMagicLink();
+      sendLink();
     });
 
     UI.emailInput()?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        sendMagicLink();
+        sendLink();
       }
     });
 
@@ -203,13 +179,7 @@
       e.preventDefault();
       signOut();
     });
-
-    sb.auth.onAuthStateChange(() => refreshAuthUI());
   }
 
-  (async () => {
-    wireEvents();
-    await handleAuthReturn();
-    await refreshAuthUI();
-  })();
+  init();
 })();
