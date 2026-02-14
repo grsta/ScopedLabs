@@ -1,89 +1,50 @@
-// assets/auth.js
-// Handles magic-link login + session restore
+document.addEventListener("DOMContentLoaded", () => {
 
-(function () {
-  const $ = (id) => document.getElementById(id);
+  if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+    console.error("Supabase env vars missing");
+    return;
+  }
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    console.log("[auth] loaded");
+  if (!window.supabase) {
+    console.error("Supabase library not loaded");
+    return;
+  }
 
-    // Validate globals
-    if (!window.supabase?.createClient) {
-      alert("Supabase library not loaded");
-      return;
-    }
-    if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
-      alert("Missing SUPABASE keys");
-      return;
-    }
+  const { createClient } = window.supabase;
+  const supabase = createClient(
+    window.SUPABASE_URL,
+    window.SUPABASE_ANON_KEY
+  );
 
-    const sb = window.supabase.createClient(
-      window.SUPABASE_URL,
-      window.SUPABASE_ANON_KEY
-    );
+  window.supabaseClient = supabase;
 
-    // -------- MAGIC LINK BUTTON ----------
-    const sendBtn = $("sl-sendlink");
-    const emailInput = $("sl-email");
+  const btn = document.getElementById("sl-sendlink");
+  const emailInput = document.getElementById("sl-email");
 
-    if (sendBtn && emailInput) {
-      sendBtn.addEventListener("click", async () => {
-        const email = emailInput.value.trim();
-        if (!email) {
-          alert("Enter your email");
-          return;
-        }
+  if (!btn || !emailInput) return;
 
-        sendBtn.disabled = true;
-        sendBtn.textContent = "Sending...";
+  btn.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    if (!email) return alert("Enter email");
 
-        const { error } = await sb.auth.signInWithOtp({
-          email,
-          options: {
-            emailRedirectTo: `${location.origin}/upgrade/`
-          }
-        });
+    btn.disabled = true;
 
-        sendBtn.disabled = false;
-        sendBtn.textContent = "Send magic link";
-
-        if (error) {
-          console.error(error);
-          alert("Failed to send link");
-        } else {
-          alert("Magic link sent! Check your email.");
-        }
-      });
-    }
-
-    // -------- HANDLE CALLBACK CODE --------
-    try {
-      const url = new URL(window.location.href);
-      const code = url.searchParams.get("code");
-
-      if (code) {
-        console.log("[auth] exchanging code...");
-        const { error } = await sb.auth.exchangeCodeForSession(code);
-        if (error) console.error(error);
-
-        url.searchParams.delete("code");
-        history.replaceState({}, document.title, url.pathname);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin + "/upgrade/"
       }
-    } catch (e) {
-      console.warn("Callback skipped", e);
-    }
+    });
 
-    // -------- SESSION STATUS -------------
-    const { data } = await sb.auth.getSession();
-    const user = data?.session?.user;
+    btn.disabled = false;
 
-    if (user) {
-      console.log("[auth] signed in as", user.email);
-
-      const who = $("sl-whoami");
-      if (who) who.textContent = `Signed in as ${user.email}`;
+    if (error) {
+      console.error(error);
+      alert(error.message);
     } else {
-      console.log("[auth] not signed in");
+      alert("Magic link sent!");
     }
   });
-})();
+
+});
+
