@@ -2,24 +2,28 @@
    - Creates ONE Supabase client and exposes it as: window.SL_AUTH.sb
    - Handles magic-link sign-in
    - Exchanges auth code for session on return
-   - Updates upgrade UI (signed in / signed out states)
+   - Accepts BOTH config naming schemes:
+       SL_SUPABASE_URL / SL_SUPABASE_ANON_KEY  (preferred)
+       SUPABASE_URL / SUPABASE_ANON_KEY        (legacy)
 */
 
 (() => {
   "use strict";
 
-  // ====== CONFIG ======
-  // These must exist on window (recommended set in /assets/stripe-map.js or a small config script)
-  // window.SL_SUPABASE_URL
-  // window.SL_SUPABASE_ANON_KEY
-  const SUPABASE_URL = window.SL_SUPABASE_URL;
-  const SUPABASE_ANON_KEY = window.SL_SUPABASE_ANON_KEY;
+  // ====== CONFIG (accept both names) ======
+  const SUPABASE_URL =
+    window.SL_SUPABASE_URL ||
+    window.SUPABASE_URL ||
+    window.SUPABASE_URL; // (redundant safe)
 
-  // Optional: where to send users after login (defaults to current page)
-  // You can override by setting window.SL_AUTH_REDIRECT to a full URL.
+  const SUPABASE_ANON_KEY =
+    window.SL_SUPABASE_ANON_KEY ||
+    window.SUPABASE_ANON_KEY ||
+    window.SUPABASE_ANON_KEY;
+
   const DEFAULT_REDIRECT = window.SL_AUTH_REDIRECT || window.location.href;
 
-  // ====== SIMPLE HELPERS ======
+  // ====== HELPERS ======
   const $ = (sel) => document.querySelector(sel);
 
   function safeText(el, text) {
@@ -32,14 +36,6 @@
     el.style.display = on ? "" : "none";
   }
 
-  // Expected upgrade page elements (we handle missing gracefully):
-  // #authEmail (input)
-  // #authSendLink (button)
-  // #authStatus (small status line)
-  // #signedInRow (container row)
-  // #signedInEmail (span)
-  // #signOutBtn (button)
-  // #checkoutBtn (button)  (app.js also touches this)
   const UI = {
     emailInput: () => $("#authEmail"),
     sendBtn: () => $("#authSendLink"),
@@ -49,60 +45,59 @@
     signOutBtn: () => $("#signOutBtn"),
   };
 
-  // ====== VALIDATION ======
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.warn(
-      "[auth] Missing Supabase config. Set window.SL_SUPABASE_URL and window.SL_SUPABASE_ANON_KEY."
-    );
-  }
-  if (!window.supabase || !window.supabase.createClient) {
-    console.error("[auth] Supabase JS v2 not loaded. Ensure CDN script is included first.");
-    return;
-  }
-
-  // ====== CREATE ONE CLIENT ======
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: false, // we manually exchange code for session
-    },
-  });
-
-  // Expose single client to app.js
-  window.SL_AUTH = window.SL_AUTH || {};
-  window.SL_AUTH.sb = sb;
-
-  // ====== UI STATE ======
   function setStatus(msg, isError = false) {
     const el = UI.status();
     if (!el) return;
     el.textContent = msg || "";
     el.style.opacity = msg ? "1" : "0.85";
-    el.style.color = isError ? "#ff6b6b" : ""; // subtle red on error
+    el.style.color = isError ? "#ff6b6b" : "";
   }
 
   function setSignedInUI(email) {
-    // Hide magic link controls if signed in
-    const input = UI.emailInput();
-    const sendBtn = UI.sendBtn();
-    show(input, false);
-    show(sendBtn, false);
-
+    show(UI.emailInput(), false);
+    show(UI.sendBtn(), false);
     show(UI.signedInRow(), true);
     safeText(UI.signedInEmail(), email || "Signed in");
     setStatus("");
   }
 
   function setSignedOutUI() {
-    const input = UI.emailInput();
-    const sendBtn = UI.sendBtn();
-    show(input, true);
-    show(sendBtn, true);
-
+    show(UI.emailInput(), true);
+    show(UI.sendBtn(), true);
     show(UI.signedInRow(), false);
     safeText(UI.signedInEmail(), "");
   }
+
+  // ====== VALIDATION ======
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.warn(
+      "[auth] Missing Supabase config. Set window.SL_SUPABASE_URL / window.SL_SUPABASE_ANON_KEY (preferred) or window.SUPABASE_URL / window.SUPABASE_ANON_KEY (legacy).",
+      { SUPABASE_URL: !!SUPABASE_URL, SUPABASE_ANON_KEY: !!SUPABASE_ANON_KEY }
+    );
+  }
+
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error("[auth] Supabase JS v2 not loaded. Ensure CDN script is included first.");
+    return;
+  }
+
+  // ====== CREATE ONE CLIENT ======
+  let sb;
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false,
+      },
+    });
+  } catch (e) {
+    console.error("[auth] Failed to create Supabase client:", e);
+    return;
+  }
+
+  window.SL_AUTH = window.SL_AUTH || {};
+  window.SL_AUTH.sb = sb;
 
   async function refreshAuthUI() {
     try {
@@ -112,9 +107,8 @@
       const session = data?.session || null;
       const email = session?.user?.email || "";
 
-      if (session && email) {
-        setSignedInUI(email);
-      } else {
+      if (session && email) setSignedInUI(email);
+      else {
         setSignedOutUI();
         setStatus("");
       }
@@ -125,11 +119,8 @@
     }
   }
 
-  // ====== MAGIC LINK SEND ======
   async function sendMagicLink() {
-    const input = UI.emailInput();
-    const email = (input?.value || "").trim();
-
+    const email = (UI.emailInput()?.value || "").trim();
     if (!email || !email.includes("@")) {
       setStatus("Enter a valid email address.", true);
       return;
@@ -139,20 +130,12 @@
       setStatus("Sending magic link…");
       UI.sendBtn()?.setAttribute("disabled", "disabled");
 
-      // Build a redirect URL that preserves category & hash
-      // Stripe / upgrade flow likes to keep #checkout
-      // We use current URL unless overridden
-      const redirectTo = DEFAULT_REDIRECT;
-
       const { error } = await sb.auth.signInWithOtp({
         email,
-        options: {
-          emailRedirectTo: redirectTo,
-        },
+        options: { emailRedirectTo: DEFAULT_REDIRECT },
       });
 
       if (error) throw error;
-
       setStatus("Check your email for the sign-in link.");
     } catch (err) {
       console.warn("[auth] sendMagicLink error:", err);
@@ -162,13 +145,9 @@
     }
   }
 
-  // ====== RETURN HANDLER: EXCHANGE CODE FOR SESSION ======
   async function handleAuthReturn() {
     try {
       const url = new URL(window.location.href);
-
-      // Supabase magic link can return with:
-      // ?code=... (PKCE flow)
       const code = url.searchParams.get("code");
       if (!code) return;
 
@@ -177,18 +156,14 @@
       const { data, error } = await sb.auth.exchangeCodeForSession(code);
       if (error) throw error;
 
-      // Clean the URL (remove ?code=... and any auth params) but preserve category + hash
       url.searchParams.delete("code");
       url.searchParams.delete("type");
       url.searchParams.delete("redirect_to");
       url.searchParams.delete("access_token");
       url.searchParams.delete("refresh_token");
 
-      // Keep whatever else existed (like ?category=network)
-      // Replace without reloading
       window.history.replaceState({}, document.title, url.toString());
 
-      // Update UI immediately
       const email = data?.session?.user?.email || "";
       if (email) setSignedInUI(email);
 
@@ -199,7 +174,6 @@
     }
   }
 
-  // ====== SIGN OUT ======
   async function signOut() {
     try {
       setStatus("Signing out…");
@@ -212,7 +186,6 @@
     }
   }
 
-  // ====== WIRE EVENTS ======
   function wireEvents() {
     UI.sendBtn()?.addEventListener("click", (e) => {
       e.preventDefault();
@@ -231,13 +204,9 @@
       signOut();
     });
 
-    // Listen for auth changes (other tabs, refresh tokens, etc.)
-    sb.auth.onAuthStateChange((_event, _session) => {
-      refreshAuthUI();
-    });
+    sb.auth.onAuthStateChange(() => refreshAuthUI());
   }
 
-  // ====== INIT ======
   (async () => {
     wireEvents();
     await handleAuthReturn();

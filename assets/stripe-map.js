@@ -2,6 +2,13 @@
 // Single source of truth for Stripe wiring.
 // Fill in productId + priceId (and optionally paymentLink).
 
+// ===============================
+// Supabase Config
+// ===============================
+window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+
+
 window.SCOPEDLABS_STRIPE = {
   // slug: MUST match ?category=<slug> and your folder naming convention (kebab-case)
   "power": {

@@ -6,19 +6,28 @@
   <title>Upgrade • ScopedLabs</title>
 
 <script>
-  window.SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  // Names expected by /assets/auth.js
+  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+
+  // Backwards-compat aliases (optional, safe)
+  window.SUPABASE_URL = window.SL_SUPABASE_URL;
+  window.SUPABASE_ANON_KEY = window.SL_SUPABASE_ANON_KEY;
 </script>
 
+
+// Optional backwards-compat aliases (safe)
+  window.SUPABASE_URL = window.SL_SUPABASE_URL;
+  window.SUPABASE_ANON_KEY = window.SL_SUPABASE_ANON_KEY;
 
   <!-- Use absolute paths so this works from /upgrade/ -->
   <link rel="stylesheet" href="/assets/style.css?v=upgrade-004" />
   <!-- Supabase client (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Auth / checkout UI glue -->
-  <script src="/assets/stripe-map.js?v=upgrade-009"></script>
-  <script defer src="/assets/auth.js?v=upgrade-009"></script>
-  <script defer src="/assets/app.js?v=upgrade-009"></script>
+  <script src="/assets/stripe-map.js?v=upgrade-012"></script>
+  <script defer src="/assets/auth.js?v=upgrade-012"></script>
+  <script defer src="/assets/app.js?v=upgrade-012"></script>
 </head>
 
 <body class="page-upgrade">
