@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="robots" content="noindex" />
+  <title>Signing you in…</title>
+</head>
+<body>
+  <p>Signing you in…</p>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const SUPABASE_URL = window.__SUPABASE_URL__ || "";   // if you already inject these somewhere
+    const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || "";
+
+    // If you already have a global supabase client in /assets/app.js, use that instead.
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // PKCE / "code" flow (modern default)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+
+    if (error) {
+      console.error("Auth callback error:", error);
+      window.location.href = "/upgrade/?err=auth_callback";
+    } else {
+      // Optional: return user to where they were trying to go (category purchase)
+      const url = new URL(window.location.href);
+      const next = url.searchParams.get("next") || "/tools/";
+      window.location.href = next;
+    }
+  </script>
+</body>
+</html>

@@ -109,7 +109,7 @@
     // Send them back to the EXACT page they’re on (incl. query/hash).
     // This is why you were seeing localhost unreachable earlier:
     // you must have the site running at the same origin when you click the email.
-    const emailRedirectTo = window.location.href;
+    const emailRedirectTo ="https://scopedlabs.com" + window.location.pathname + window.location.search;
 
     const { error } = await sb.auth.signInWithOtp({
       email,
