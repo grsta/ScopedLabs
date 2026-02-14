@@ -44,7 +44,7 @@
   }
 
   function cleanUrlAfterAuth() {
-    // Remove Supabase auth params from URL after exchange so it doesn’t look like “same page reload confusion”
+    // Remove Supabase auth params from URL after exchange
     const u = new URL(window.location.href);
     const changed =
       u.searchParams.has("code") ||
@@ -52,12 +52,11 @@
       u.searchParams.has("redirect_to") ||
       u.hash.includes("access_token");
 
-    // Supabase uses ?code=... for PKCE; it may also use hash fragments in some flows.
     u.searchParams.delete("code");
     u.searchParams.delete("type");
     u.searchParams.delete("redirect_to");
 
-    // Keep your hash (like #checkout) if you want — but for checkout page we typically keep clean.
+    // On checkout page, keep URL clean (no hash)
     if (isCheckoutPage()) u.hash = "";
 
     if (changed) {
@@ -72,6 +71,7 @@
       if (!$("#sl-email") && $("#authEmail")) $("#authEmail").id = "sl-email";
       if (!$("#sl-sendlink") && $("#authSendLink")) $("#authSendLink").id = "sl-sendlink";
       if (!$("#sl-status") && $("#authStatus")) $("#authStatus").id = "sl-status";
+      if (!$("#sl-email-hint") && $("#authHint")) $("#authHint").id = "sl-email-hint";
     } catch (_) {}
   }
 
@@ -97,8 +97,6 @@
   }
 
   async function exchangeIfNeeded(sb) {
-    // With supabase-js v2 + detectSessionInUrl, getSession() will usually “just work”
-    // BUT exchangeCodeForSession is still recommended for PKCE code flow.
     const u = new URL(window.location.href);
     const code = u.searchParams.get("code");
     if (!code) return;
@@ -116,12 +114,15 @@
     }
   }
 
+  // ✅ UPDATED: always redirect to the NEW checkout page
   function computeEmailRedirectTo(category) {
-    // The whole point: after clicking email link, land on the NEW checkout page.
-    const origin = window.location.origin;
+    // Use absolute production origin so Supabase redirect allowlist is clean.
+    const origin = "https://scopedlabs.com";
     const base = `${origin}/upgrade/checkout/`;
 
+    // If category exists, preserve it so checkout page can render the correct card immediately.
     if (category) return `${base}?category=${encodeURIComponent(category)}`;
+
     return base;
   }
 
@@ -131,12 +132,10 @@
 
     const category = getCategoryFromUrl();
 
-    // Elements present on upgrade page
+    // Elements present on upgrade/checkout pages
     const loginCard = $("sl-login-card");
     const checkoutCard = $("sl-checkout-card");
-
-    // Optional “whoami” line (where you want it displayed)
-    const whoami = $("sl-whoami");
+    const whoami = $("sl-whoami"); // optional "signed in as..."
 
     if (!session) {
       if (whoami) whoami.textContent = "";
@@ -146,9 +145,8 @@
       setText("sl-status", "");
       setDisabled("sl-checkout", true);
 
-      // On checkout page, if not signed in, explain what to do
       if (isCheckoutPage()) {
-        setText("sl-status", "Not signed in. Please return to Upgrade and request a magic link.");
+        setText("sl-status", "Not signed in. Please request a magic link.");
       }
       return;
     }
@@ -157,14 +155,13 @@
     if (whoami) whoami.textContent = `Signed in as ${session.user.email}`;
     setText("sl-status", "");
 
-    // On /upgrade/: keep login visible until category chosen (your call).
-    // On /upgrade/checkout/: hide login always.
+    // On checkout page, hide login card and show checkout card
     if (isCheckoutPage()) {
       if (loginCard) loginCard.style.display = "none";
       if (checkoutCard) checkoutCard.style.display = "";
     } else {
-      // upgrade page
-      if (loginCard) loginCard.style.display = ""; // still show, but user is signed in
+      // On upgrade page, keep login visible (fine) and show checkout card only if category chosen
+      if (loginCard) loginCard.style.display = "";
       if (checkoutCard) checkoutCard.style.display = category ? "" : "none";
     }
 
@@ -187,13 +184,9 @@
       return;
     }
 
-    // Exchange code if present
     await exchangeIfNeeded(sb);
-
-    // Initial UI refresh
     await refreshUi(sb);
 
-    // Listen for auth changes
     sb.auth.onAuthStateChange(async () => {
       await refreshUi(sb);
     });
@@ -216,15 +209,13 @@
         setText("sl-email-hint", "Sending magic link…");
 
         try {
-          const { data, error } = await sb.auth.signInWithOtp({
+          const { error } = await sb.auth.signInWithOtp({
             email,
-            options: {
-              emailRedirectTo
-            }
+            options: { emailRedirectTo }
           });
           if (error) throw error;
 
-          log("Magic link sent");
+          log("Magic link sent ->", emailRedirectTo);
           setText("sl-email-hint", "Check your email for the sign-in link.");
         } catch (e) {
           err("signInWithOtp failed:", e);
