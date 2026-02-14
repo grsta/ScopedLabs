@@ -1,166 +1,251 @@
-/* ScopedLabs Auth + Checkout glue (magic link + checkout button)
-   - Requires in HTML (in this order):
-     1) window.SUPABASE_URL + window.SUPABASE_ANON_KEY set in <script>
-     2) https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2
-     3) /assets/stripe-map.js
-     4) /assets/auth.js
+/* /assets/auth.js
+   ScopedLabs upgrade/auth controller
+   - Magic-link sign in (Supabase)
+   - Persisted sessions
+   - Auto-scroll back to #checkout after magic link / reload
+   - Checkout button -> POST /api/create-checkout-session (Cloudflare Worker)
+   - Exposes Supabase client as: window.SCOPEDLABS_SB
+   - Stripe mapping from /assets/stripe-map.js: window.SCOPEDLABS_STRIPE
 */
 
-(() => {
+(function () {
+  // ---------- Config injected by upgrade/index.html ----------
+  const SUPABASE_URL = (window.SUPABASE_URL || "").trim();
+  const SUPABASE_ANON_KEY = (window.SUPABASE_ANON_KEY || "").trim();
+
+  // Cloudflare route: scopedlabs.com/api/* -> Worker
   const API_BASE = ""; // same-origin
 
-  const $ = (id) => document.getElementById(id);
+  // ---------- DOM helpers ----------
+  const $ = (sel) => document.querySelector(sel);
 
-  // Singleton Supabase client
-  function getSupabase() {
-    if (window.__sb) return window.__sb;
-
-    if (!window.supabase?.createClient) throw new Error("Supabase JS not loaded");
-    if (!window.SUPABASE_URL || !/^https?:\/\//.test(window.SUPABASE_URL)) {
-      throw new Error("Invalid SUPABASE_URL (must be a valid http/https URL)");
-    }
-    if (!window.SUPABASE_ANON_KEY) throw new Error("Missing SUPABASE_ANON_KEY");
-
-    const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        storageKey: "scopedlabs-auth", // avoid collisions
-      },
-    });
-
-    window.__sb = sb; // debug: use __sb.from(...) etc
-    return sb;
-  }
-
-  function getCategoryFromURL() {
+  function getCategory() {
     const u = new URL(window.location.href);
     return (u.searchParams.get("category") || "").trim();
   }
 
-  function getStripeMap() {
-    return window.SCOPEDLABS_STRIPE_MAP || window.STRIPE_MAP || null;
+  function wantsCheckoutFocus() {
+    const u = new URL(window.location.href);
+    if (u.hash === "#checkout") return true;
+    if (u.searchParams.get("checkout") === "1") return true;
+    return false;
+  }
+
+  function focusCheckout() {
+    const el = document.getElementById("checkout");
+    if (!el) return;
+    // small delay so layout settles
+    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  }
+
+  function setMsg(text) {
+    const el = $("#checkout-msg") || $("#auth-msg");
+    if (el) el.textContent = text || "";
+  }
+
+  function setBusy(btn, busy) {
+    if (!btn) return;
+    btn.disabled = !!busy;
+    btn.dataset._oldText = btn.dataset._oldText || btn.textContent;
+    btn.textContent = busy ? "Working..." : btn.dataset._oldText;
   }
 
   function getPriceIdForCategory(category) {
-    const map = getStripeMap();
-    if (!map) return null;
-    return map?.[category]?.priceId || map?.[category]?.priceid || null;
+    const map = window.SCOPEDLABS_STRIPE || {};
+    const entry = map[category];
+    return entry && entry.priceId ? entry.priceId : "";
   }
 
-  function setStatus(msg) {
-    const el = $("sl-status");
-    if (el) el.textContent = msg || "";
+  function getUnlockKeyForCategory(category) {
+    const map = window.SCOPEDLABS_STRIPE || {};
+    const entry = map[category];
+    return entry && entry.unlockKey ? entry.unlockKey : "";
   }
 
-  function showSignedOut() {
-    const authCard = $("sl-auth-card");
-    const checkoutCard = $("sl-checkout-card");
-    const signoutBtn = $("sl-signout");
-
-    if (authCard) authCard.style.display = "";
-    if (checkoutCard) checkoutCard.style.display = "none";
-    if (signoutBtn) signoutBtn.style.display = "none";
-
-    setStatus("Not signed in");
+  // ---------- Supabase init ----------
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error("Missing SUPABASE_URL or SUPABASE_ANON_KEY on window.*");
+    setMsg("Config error: Supabase keys missing.");
+    return;
+  }
+  if (!window.supabase || typeof window.supabase.createClient !== "function") {
+    console.error("Supabase JS not loaded. Ensure supabase-js script tag is before auth.js.");
+    setMsg("Config error: Supabase client library missing.");
+    return;
   }
 
-  function showSignedIn(email) {
-    const authCard = $("sl-auth-card");
-    const checkoutCard = $("sl-checkout-card");
-    const signoutBtn = $("sl-signout");
-
-    if (authCard) authCard.style.display = "none";
-    if (checkoutCard) checkoutCard.style.display = "";
-    if (signoutBtn) signoutBtn.style.display = "";
-
-    setStatus(email ? `Signed in as ${email}` : "Signed in");
-  }
-
-  async function refreshSessionUI() {
-    const sb = getSupabase();
-    const { data } = await sb.auth.getSession();
-    const email = data?.session?.user?.email || "";
-    if (data?.session) showSignedIn(email);
-    else showSignedOut();
-  }
-
-  async function sendMagicLink() {
-    const sb = getSupabase();
-    const emailEl = $("sl-email");
-    const email = (emailEl?.value || "").trim();
-    if (!email) return setStatus("Enter an email.");
-
-    setStatus("Sending magic link…");
-
-    const redirectTo = `${window.location.origin}/upgrade/`; // lands back on upgrade
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: redirectTo },
+  // Create ONE client and expose it globally
+  const sb =
+    window.SCOPEDLABS_SB ||
+    window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
     });
 
-    if (error) {
-      setStatus(`Error: ${error.message}`);
+  window.SCOPEDLABS_SB = sb;
+
+  // ---------- UI wiring ----------
+  const emailInput = $("#sl-email");
+  const sendLinkBtn = $("#sl-sendlink");
+  const checkoutBtn = $("#sl-checkout");
+  const accountBtn = $("#sl-account");
+  const signOutBtn = $("#sl-signout");
+
+  const loginRow = $("#sl-login-row");
+  const authedRow = $("#sl-authed-row");
+  const whoEl = $("#sl-who");
+
+  async function refreshAuthUI() {
+    const { data } = await sb.auth.getSession();
+    const session = data?.session || null;
+
+    if (session?.user) {
+      if (loginRow) loginRow.style.display = "none";
+      if (authedRow) authedRow.style.display = "";
+      if (whoEl) whoEl.textContent = `Signed in as ${session.user.email || "verified user"}`;
+      setMsg("");
+
+      // If user just returned from magic link (or page has #checkout), keep them at checkout
+      if (wantsCheckoutFocus()) focusCheckout();
+    } else {
+      if (loginRow) loginRow.style.display = "";
+      if (authedRow) authedRow.style.display = "none";
+      if (whoEl) whoEl.textContent = "Not signed in";
+    }
+  }
+
+  // Keep UI live
+  sb.auth.onAuthStateChange((_event, _session) => {
+    refreshAuthUI().catch(() => {});
+  });
+
+  // ---------- Magic link ----------
+  async function sendMagicLink() {
+    const category = getCategory();
+    const email = (emailInput?.value || "").trim();
+
+    if (!email) {
+      setMsg("Enter an email first.");
       return;
     }
-    setStatus("Magic link sent. Check your email.");
+
+    // Keep the user on the same category + checkout section when they click the email link
+    const redirectUrl = new URL(`${window.location.origin}/upgrade/`);
+    if (category) redirectUrl.searchParams.set("category", category);
+    redirectUrl.searchParams.set("checkout", "1");
+    redirectUrl.hash = "checkout";
+
+    setMsg("");
+    setBusy(sendLinkBtn, true);
+
+    try {
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: redirectUrl.toString() },
+      });
+
+      if (error) throw error;
+      setMsg("Magic link sent. Check your inbox.");
+    } catch (e) {
+      console.error(e);
+      setMsg(`Error: ${e?.message || "Failed to send link"}`);
+    } finally {
+      setBusy(sendLinkBtn, false);
+    }
+  }
+
+  // ---------- Checkout ----------
+  async function startCheckout() {
+    const category = getCategory();
+    if (!category) {
+      setMsg("Pick a category first.");
+      return;
+    }
+
+    const priceId = getPriceIdForCategory(category);
+    if (!priceId) {
+      setMsg("Stripe mapping missing for this category (priceId).");
+      return;
+    }
+
+    setMsg("");
+    setBusy(checkoutBtn, true);
+
+    try {
+      // You MUST be authed before checkout (so we can attach purchase to user)
+      const { data } = await sb.auth.getSession();
+      const session = data?.session || null;
+
+      if (!session?.access_token) {
+        setMsg("Sign in first (magic link).");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/api/create-checkout-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Worker should verify token with Supabase (or pass it through)
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          category,
+          priceId,
+          unlockKey: getUnlockKeyForCategory(category), // optional, but useful
+          // Where Stripe should return AFTER payment:
+          returnUrl: `${window.location.origin}/tools/?unlocked=1&category=${encodeURIComponent(category)}`,
+        }),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.detail || json?.error || `Checkout failed (${res.status})`);
+      }
+
+      if (!json.url) throw new Error("Worker did not return a checkout URL.");
+      window.location.href = json.url;
+    } catch (e) {
+      console.error(e);
+      setMsg(`Checkout error. Try again. (${e?.message || "unknown"})`);
+    } finally {
+      setBusy(checkoutBtn, false);
+    }
+  }
+
+  // ---------- Account + Sign out ----------
+  function goAccount() {
+    // You can later wire /account/ page; for now we keep it simple:
+    window.location.href = "/account/";
   }
 
   async function signOut() {
-    const sb = getSupabase();
-    await sb.auth.signOut();
-    showSignedOut();
-  }
-
-  async function startCheckout() {
-    const category = getCategoryFromURL();
-    const priceId = getPriceIdForCategory(category);
-
-    if (!category) return setStatus("Missing category.");
-    if (!priceId) return setStatus("No priceId configured for this category.");
-
-    setStatus("Starting checkout…");
-
-    const resp = await fetch(`${API_BASE}/api/create-checkout-session`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ category, priceId }),
-    });
-
-    const data = await resp.json().catch(() => ({}));
-
-    if (!resp.ok || !data?.ok || !data?.url) {
-      setStatus(`Checkout error. ${data?.detail ? "Try again." : ""}`);
-      console.error("checkout error:", data);
-      return;
-    }
-
-    window.location.href = data.url;
-  }
-
-  // Boot
-  document.addEventListener("DOMContentLoaded", async () => {
+    setMsg("");
     try {
-      // Wire buttons
-      $("sl-sendlink")?.addEventListener("click", sendMagicLink);
-      $("sl-checkout")?.addEventListener("click", startCheckout);
-      $("sl-signout")?.addEventListener("click", signOut);
-
-      const sb = getSupabase();
-
-      // Handle auth changes
-      sb.auth.onAuthStateChange(() => refreshSessionUI());
-
-      await refreshSessionUI();
-
-      // If URL has #checkout, scroll there (fix “lands at top” confusion)
-      if (window.location.hash === "#checkout") {
-        const el = document.getElementById("checkout");
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      await sb.auth.signOut();
+      await refreshAuthUI();
+      // Keep them on the same category page after signout
+      const category = getCategory();
+      const u = new URL(`${window.location.origin}/upgrade/`);
+      if (category) u.searchParams.set("category", category);
+      u.hash = "checkout";
+      window.location.href = u.toString();
     } catch (e) {
       console.error(e);
-      alert("Auth init failed. Check console.");
+      setMsg("Sign out failed.");
     }
-  });
+  }
+
+  // ---------- Bind buttons ----------
+  if (sendLinkBtn) sendLinkBtn.addEventListener("click", (e) => { e.preventDefault(); sendMagicLink(); });
+  if (checkoutBtn) checkoutBtn.addEventListener("click", (e) => { e.preventDefault(); startCheckout(); });
+  if (accountBtn) accountBtn.addEventListener("click", (e) => { e.preventDefault(); goAccount(); });
+  if (signOutBtn) signOutBtn.addEventListener("click", (e) => { e.preventDefault(); signOut(); });
+
+  // Initial paint
+  refreshAuthUI().catch(() => {});
+  // If they land with #checkout, keep it focused even before auth resolves
+  if (wantsCheckoutFocus()) focusCheckout();
 })();
