@@ -1,305 +1,218 @@
 /* /assets/auth.js
-   Upgrade/Auth controller for /upgrade/
-   - Magic link sign-in
-   - Keeps category + scroll position (#checkout)
-   - Shows Checkout / Account / Sign out when signed in
+   ScopedLabs auth controller (Supabase magic-link)
+   - Preserves ?category= and ?checkout=1 across magic-link login
+   - Scrolls back to #checkout after login
+   - Shows/hides login vs checkout UI
 */
 
-(function () {
-  "use strict";
+(() => {
+  const APP_TAG = "global-ui";
+  window.SCOPEDLABS_UI = APP_TAG;
 
-  // ---- REQUIRED: injected in HTML before this file ----
-  // window.SUPABASE_URL
-  // window.SUPABASE_ANON_KEY
+  function $(id) { return document.getElementById(id); }
 
-  const LS_LAST_CAT = "sl_last_category";
-  const LS_PENDING_CAT = "sl_pending_category";
-  const LS_PENDING_SCROLL = "sl_pending_scroll"; // "checkout" marker
-
-  const $ = (id) => document.getElementById(id);
-
-  const elEmail = $("sl-email");
-  const elSend = $("sl-sendlink");
-  const elCheckout = $("sl-checkout");
-  const elAccount = $("sl-account");
-  const elSignOut = $("sl-signout");
-  const elStatus = $("sl-status");
-
-  const elCatPill = $("sl-category-pill");
-  const elPrice = $("sl-price");
-  const elTitle = $("sl-title");
-
-  function setStatus(msg) {
-    if (elStatus) elStatus.textContent = msg || "";
+  function getSearchParam(name) {
+    try { return new URLSearchParams(location.search).get(name); }
+    catch { return null; }
   }
 
-  function getUrl() {
-    return new URL(window.location.href);
+  // Some providers append auth tokens into the hash. Also your page uses #checkout.
+  // We may see hashes like: "#checkout#access_token=...&refresh_token=...&type=magiclink"
+  function hashContainsCheckout() {
+    const h = (location.hash || "").toLowerCase();
+    return h.includes("checkout");
   }
 
-  function getCategoryFromUrlOrStorage() {
-    const url = getUrl();
-    const cat = url.searchParams.get("category");
-    if (cat) return cat;
+  function buildReturnUrl({ keepCheckout = true } = {}) {
+    const url = new URL(location.href);
+    const category = getSearchParam("category");
+    const checkout = keepCheckout ? (getSearchParam("checkout") || "1") : getSearchParam("checkout");
 
-    // If magic-link nuked the query, restore the last/pending category
-    return (
-      localStorage.getItem(LS_PENDING_CAT) ||
-      localStorage.getItem(LS_LAST_CAT) ||
-      ""
-    );
+    // Preserve category + checkout in query
+    url.searchParams.delete("category");
+    url.searchParams.delete("checkout");
+    if (category) url.searchParams.set("category", category);
+    if (checkout) url.searchParams.set("checkout", checkout);
+
+    // Use a simple hash anchor so we land back on the checkout card
+    url.hash = keepCheckout ? "#checkout" : "";
+
+    // IMPORTANT: Supabase will append tokens in the URL hash on return.
+    // Returning a clean hash (#checkout) is fine; Supabase still appends its tokens when needed.
+    return url.toString();
   }
 
-  function saveCategory(cat) {
-    if (!cat) return;
-    localStorage.setItem(LS_LAST_CAT, cat);
+  // After Supabase processes the magic-link, clean the URL so category stays readable and user doesn’t get dumped.
+  function cleanUrlKeepState({ keepCheckoutHash = true } = {}) {
+    const url = new URL(location.href);
+    // Remove any supabase token fragments that might still be hanging around
+    // Keep only "#checkout" if desired.
+    url.hash = keepCheckoutHash ? "#checkout" : "";
+    history.replaceState({}, document.title, url.toString());
   }
 
-  function normalizeHashToCheckout() {
-    // Always drive the user back to checkout area after auth
-    // but don't break the page if there's no anchor.
-    if (window.location.hash !== "#checkout") {
-      window.location.hash = "#checkout";
+  function setText(id, txt) {
+    const el = $(id);
+    if (el) el.textContent = txt || "";
+  }
+
+  function show(el, on) {
+    if (!el) return;
+    el.style.display = on ? "" : "none";
+  }
+
+  function scrollToCheckout() {
+    const target = $("checkout") || $("sl-checkout-card") || $("sl-checkout") || $("checkout-card");
+    if (target && target.scrollIntoView) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      return true;
     }
-    const node = document.getElementById("checkout");
-    if (node && node.scrollIntoView) {
-      node.scrollIntoView({ behavior: "smooth", block: "start" });
+    return false;
+  }
+
+  function getCategory() {
+    return getSearchParam("category") || "";
+  }
+
+  function shouldAutoCheckout() {
+    return getSearchParam("checkout") === "1" || hashContainsCheckout();
+  }
+
+  function getSupabaseClient() {
+    // Avoid multiple GoTrueClient instances (that warning you saw)
+    if (window.__SCOPEDLABS_SUPABASE) return window.__SCOPEDLABS_SUPABASE;
+
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      throw new Error("Supabase client library not loaded (window.supabase.createClient missing).");
     }
-  }
-
-  function ensureCategoryParam(cat) {
-    if (!cat) return;
-
-    const url = getUrl();
-    if (url.searchParams.get("category") === cat) return;
-
-    url.searchParams.set("category", cat);
-
-    // Keep any existing hash (may include tokens temporarily) — we will clean later.
-    history.replaceState({}, "", url.toString());
-  }
-
-  function cleanAuthTokensFromHashKeepCheckout() {
-    // Supabase implicit flow drops tokens in the hash (#access_token=...)
-    // After getSession() stores it, we can clean it for UX + safety.
-    const url = new URL(window.location.href);
-    // Preserve query string, force hash to #checkout if user was headed there
-    url.hash = "#checkout";
-    history.replaceState({}, "", url.toString());
-  }
-
-  function priceForCategory(cat) {
-    // Your upgrade page shows $19.99 — keep single price for now
-    // (Stripe priceId mapping is in /assets/stripe-map.js used elsewhere)
-    return "$19.99";
-  }
-
-  function titleForCategory(cat) {
-    if (!cat) return "Unlock a category";
-    // Human-ish title
-    return "Unlock " + cat.charAt(0).toUpperCase() + cat.slice(1);
-  }
-
-  function updateCheckoutUI(cat) {
-    const pretty = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : "None selected";
-
-    if (elTitle) elTitle.textContent = titleForCategory(cat);
-    if (elCatPill) elCatPill.textContent = pretty;
-    if (elPrice) elPrice.textContent = priceForCategory(cat);
-
-    if (cat) saveCategory(cat);
-  }
-
-  function mustHaveSupabaseConfig() {
     if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
-      setStatus("Missing Supabase config (SUPABASE_URL / SUPABASE_ANON_KEY).");
-      return false;
+      throw new Error("Missing window.SUPABASE_URL / window.SUPABASE_ANON_KEY on this page.");
     }
-    if (!window.supabase || !window.supabase.createClient) {
-      setStatus("Supabase client library not loaded.");
-      return false;
-    }
-    return true;
-  }
 
-  function createClientOnce() {
-    // Prevent “Multiple GoTrueClient instances detected”
-    if (window.__SCOPEDLABS_SB) return window.__SCOPEDLABS_SB;
-
-    window.__SCOPEDLABS_SB = window.supabase.createClient(
+    window.__SCOPEDLABS_SUPABASE = window.supabase.createClient(
       window.SUPABASE_URL,
       window.SUPABASE_ANON_KEY
     );
-    return window.__SCOPEDLABS_SB;
+    return window.__SCOPEDLABS_SUPABASE;
   }
 
-  async function refreshAuthUI(sb) {
-    const { data, error } = await sb.auth.getSession();
-    if (error) {
-      setStatus("Auth error: " + error.message);
-      return { signedIn: false, email: "" };
-    }
+  function getUiRefs() {
+    return {
+      email: $("sl-email"),
+      sendLink: $("sl-sendlink"),
+      hint: $("sl-email-hint"),
+      who: $("sl-who"),
+      signOut: $("sl-signout"),
+      checkoutBtn: $("sl-checkout"),
+      checkoutCard: $("sl-checkout-card"),
+      loginCard: $("sl-login-card"),
+      status: $("sl-status"),
+      accountBtn: $("sl-account"), // optional
+    };
+  }
 
-    const session = data?.session;
-    const signedIn = !!session?.user;
-    const email = session?.user?.email || "";
+  async function renderAuthState(sb, ui) {
+    const { data } = await sb.auth.getSession();
+    const session = data?.session || null;
 
-    // Toggle controls
-    if (signedIn) {
-      setStatus(`Signed in as ${email}`);
-      if (elSend) elSend.style.display = "none";
-      if (elEmail) elEmail.style.display = "none";
-      if (elCheckout) elCheckout.style.display = "";
-      if (elAccount) elAccount.style.display = "";
-      if (elSignOut) elSignOut.style.display = "";
+    if (session?.user) {
+      const email = session.user.email || "(signed in)";
+      setText("sl-who", `Signed in as ${email}`);
+      show(ui.loginCard, false);
+      show(ui.checkoutCard, true);
+      show(ui.signOut, true);
+      show(ui.accountBtn, true);
+      setText("sl-email-hint", "");
+      if (shouldAutoCheckout()) {
+        // Land them back where they expect
+        setTimeout(() => scrollToCheckout(), 150);
+      }
+      return true;
     } else {
-      setStatus("Not signed in");
-      if (elSend) elSend.style.display = "";
-      if (elEmail) elEmail.style.display = "";
-      if (elCheckout) elCheckout.style.display = "none";
-      if (elAccount) elAccount.style.display = "none";
-      if (elSignOut) elSignOut.style.display = "none";
+      setText("sl-who", "Not signed in");
+      show(ui.loginCard, true);
+      show(ui.checkoutCard, false);
+      show(ui.signOut, false);
+      show(ui.accountBtn, false);
+      return false;
     }
-
-    return { signedIn, email };
   }
 
-  async function sendMagicLink(sb, cat) {
-    const email = (elEmail?.value || "").trim();
+  async function sendMagicLink(sb, ui) {
+    const email = (ui.email?.value || "").trim();
     if (!email) {
-      setStatus("Enter your email first.");
+      setText("sl-email-hint", "Enter your email first.");
       return;
     }
 
-    // Preserve category + intent across the email click
-    localStorage.setItem(LS_PENDING_CAT, cat || "");
-    localStorage.setItem(LS_PENDING_SCROLL, "checkout");
+    ui.sendLink.disabled = true;
+    setText("sl-email-hint", "Sending magic link…");
 
-    // Build redirect with category + checkout anchor
-    const redirectTo = new URL(window.location.origin + "/upgrade/");
-    if (cat) redirectTo.searchParams.set("category", cat);
-    redirectTo.hash = "#checkout";
-
-    setStatus("Sending magic link...");
+    const emailRedirectTo = buildReturnUrl({ keepCheckout: true });
 
     const { error } = await sb.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: redirectTo.toString(),
-      },
+      options: { emailRedirectTo },
     });
+
+    ui.sendLink.disabled = false;
 
     if (error) {
-      setStatus("Error: " + error.message);
-      return;
-    }
-
-    setStatus("Magic link sent. Check your email.");
-  }
-
-  async function goToCheckout(sb, cat) {
-    // This function only navigates to Stripe (your Worker endpoint creates the session)
-    // It assumes your Worker uses STRIPE_SECRET_KEY and SITE_ORIGIN.
-    if (!cat) {
-      setStatus("Pick a category first.");
-      return;
-    }
-
-    setStatus("Creating checkout session...");
-
-    try {
-      const resp = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: cat }),
-      });
-
-      const json = await resp.json().catch(() => ({}));
-
-      if (!resp.ok || !json?.url) {
-        const detail = json?.detail || json?.error || resp.statusText;
-        setStatus("Checkout error: " + detail);
-        return;
-      }
-
-      window.location.href = json.url;
-    } catch (e) {
-      setStatus("Checkout error: " + (e?.message || "Try again."));
-    }
-  }
-
-  async function main() {
-    if (!mustHaveSupabaseConfig()) return;
-    const sb = createClientOnce();
-
-    // Restore category if the email link came back without ?category=
-    const cat = getCategoryFromUrlOrStorage();
-    if (cat) {
-      ensureCategoryParam(cat);
-      updateCheckoutUI(cat);
+      setText("sl-email-hint", `Error: ${error.message || "Failed to send link"}`);
     } else {
-      updateCheckoutUI("");
+      setText("sl-email-hint", "Magic link sent. Open the email and click the link.");
+    }
+  }
+
+  async function signOut(sb) {
+    await sb.auth.signOut();
+  }
+
+  // OPTIONAL: If you have an Account page/modal later, hook it here.
+  function openAccount() {
+    // placeholder for future
+    alert("Account: coming soon.");
+  }
+
+  async function boot() {
+    const ui = getUiRefs();
+
+    let sb;
+    try {
+      sb = getSupabaseClient();
+    } catch (e) {
+      console.error(e);
+      setText("sl-email-hint", `Auth init error: ${e.message || e}`);
+      return;
     }
 
-    // If we returned from auth, Supabase will parse tokens from hash.
-    // After session is stored, clean the URL + return to checkout.
-    const authState = await refreshAuthUI(sb);
+    // First paint
+    await renderAuthState(sb, ui);
 
-    if (authState.signedIn) {
-      // If we had a pending scroll intent, honor it
-      if (localStorage.getItem(LS_PENDING_SCROLL) === "checkout") {
-        // clear the flag so it doesn't keep firing
-        localStorage.removeItem(LS_PENDING_SCROLL);
-        localStorage.removeItem(LS_PENDING_CAT);
-        cleanAuthTokensFromHashKeepCheckout();
-        normalizeHashToCheckout();
+    // Listen for session changes (magic-link completion, signout, etc.)
+    sb.auth.onAuthStateChange(async (event) => {
+      // After magic-link, Supabase may leave token fragments; clean it.
+      if (event === "SIGNED_IN") {
+        // Keep #checkout if user came for checkout
+        cleanUrlKeepState({ keepCheckoutHash: true });
       }
-    }
-
-    // Button wiring
-    if (elSend) {
-      elSend.addEventListener("click", (e) => {
-        e.preventDefault();
-        const c = getCategoryFromUrlOrStorage();
-        sendMagicLink(sb, c);
-      });
-    }
-
-    if (elCheckout) {
-      elCheckout.addEventListener("click", (e) => {
-        e.preventDefault();
-        const c = getCategoryFromUrlOrStorage();
-        goToCheckout(sb, c);
-      });
-    }
-
-    if (elAccount) {
-      elAccount.addEventListener("click", (e) => {
-        e.preventDefault();
-        // For now: just show session email in status
-        refreshAuthUI(sb);
-        normalizeHashToCheckout();
-      });
-    }
-
-    if (elSignOut) {
-      elSignOut.addEventListener("click", async (e) => {
-        e.preventDefault();
-        await sb.auth.signOut();
-        await refreshAuthUI(sb);
-        setStatus("Signed out");
-      });
-    }
-
-    // React to auth changes (magic link completes in same tab sometimes)
-    sb.auth.onAuthStateChange(async () => {
-      await refreshAuthUI(sb);
+      await renderAuthState(sb, ui);
     });
+
+    // Wire UI
+    if (ui.sendLink) ui.sendLink.addEventListener("click", () => sendMagicLink(sb, ui));
+    if (ui.signOut) ui.signOut.addEventListener("click", () => signOut(sb));
+    if (ui.accountBtn) ui.accountBtn.addEventListener("click", openAccount);
+
+    // If user landed here with checkout intent, scroll there (even before signed in)
+    if (shouldAutoCheckout()) {
+      setTimeout(() => scrollToCheckout(), 200);
+    }
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", main);
+    document.addEventListener("DOMContentLoaded", boot);
   } else {
-    main();
+    boot();
   }
 })();
