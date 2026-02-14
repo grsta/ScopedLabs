@@ -1,268 +1,270 @@
 /* /assets/auth.js
    ScopedLabs upgrade/auth controller
    - Magic-link sign in (Supabase)
-   - Checkout button uses your Worker endpoint
+   - Checkout button calls your Worker endpoint via /api/create-checkout-session
    - Stripe wiring comes from /assets/stripe-map.js (window.SCOPEDLABS_STRIPE)
+
+   Required on upgrade page BEFORE this script:
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+     <script src="/assets/stripe-map.js"></script>
+
+   And you must set:
+     window.SUPABASE_URL = "https://xxxx.supabase.co";
+     window.SUPABASE_ANON_KEY = "eyJ....";
 */
 
 (function () {
-  // -----------------------------
-  // CONFIG (keep your real values)
-  // -----------------------------
-  const SUPABASE_URL = window.SUPABASE_URL || "REPLACE_WITH_SUPABASE_URL";
-  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "REPLACE_WITH_SUPABASE_ANON_KEY";
+  "use strict";
 
-  // Your Cloudflare Worker route (you added scopedlabs.com/api/* -> worker)
-  // So front-end calls /api/* and CF routes it to the worker.
-  const API_BASE = ""; // empty = same-origin
+  const API_BASE = ""; // same-origin; CF route /api/* -> Worker
 
-  // -----------------------------------------
-  // OPTIONAL fallback mapping (not preferred)
-  // (Prefer stripe-map.js as source of truth)
-  // -----------------------------------------
-  const PRICE_MAP = {
-    // "thermal": "price_XXXX",
-    // "wireless": "price_XXXX",
-    // "compute": "price_XXXX",
-    // "access-control": "price_XXXX",
-  };
-
-  // -----------------------------
-  // Helpers
-  // -----------------------------
-  function $(sel) { return document.querySelector(sel); }
-  function setText(sel, txt) { const el = $(sel); if (el) el.textContent = txt; }
-  function setHTML(sel, html) { const el = $(sel); if (el) el.innerHTML = html; }
-
-  function notConfigured() {
-    return !SUPABASE_URL || SUPABASE_URL.startsWith("REPLACE_WITH_") ||
-           !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.startsWith("REPLACE_WITH_");
-  }
-
-  async function loadSupabase() {
-    if (!window.supabase || !window.supabase.createClient) {
-      throw new Error("Supabase JS not loaded. Make sure supabase-js v2 script is included before auth.js");
-    }
-    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
+  const $id = (id) => document.getElementById(id);
 
   function getCategoryFromURL() {
-    const url = new URL(window.location.href);
-    // supports /upgrade/?category=thermal and /upgrade/#?category=thermal
-    const qp = url.searchParams.get("category");
-    if (qp) return qp;
-
-    if (url.hash) {
-      const hash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
-      // hash may be "checkout" or "?category=thermal#checkout" etc
-      const hashUrl = new URL("https://x.local/" + hash.replace(/^\/?/, ""));
-      const hcat = hashUrl.searchParams.get("category");
-      if (hcat) return hcat;
+    // canonical: /upgrade/?category=wireless#checkout
+    try {
+      const url = new URL(window.location.href);
+      return (url.searchParams.get("category") || "").trim();
+    } catch {
+      return "";
     }
-    return null;
+  }
+
+  function setText(id, txt) {
+    const el = $id(id);
+    if (el) el.textContent = txt || "";
+  }
+
+  function setVisible(id, show) {
+    const el = $id(id);
+    if (el) el.style.display = show ? "" : "none";
   }
 
   function getStripeConfig(category) {
-    // Preferred: /assets/stripe-map.js defines window.SCOPEDLABS_STRIPE
-    const stripeMap = window.SCOPEDLABS_STRIPE || window.SCOPEDLABS_STRIPE_MAP || null;
+    const map = window.SCOPEDLABS_STRIPE || null;
+    if (!map) return { error: "stripe-map missing (window.SCOPEDLABS_STRIPE is undefined)" };
+    const cfg = map[category];
+    if (!cfg) return { error: `No stripe-map entry for category "${category}"` };
 
-    if (stripeMap && stripeMap[category]) {
-      const cfg = stripeMap[category];
-      return {
-        label: cfg.label || category,
-        priceId: cfg.priceId || cfg.priceid || cfg.price || null,
-        productId: cfg.productId || cfg.productid || null,
-        unlockKey: cfg.unlockKey || cfg.unlockkey || null
-      };
-    }
+    // tolerate different key casing to prevent “I see it with my eyes” issues
+    const priceId =
+      cfg.priceId ||
+      cfg.priceID ||
+      cfg.priceid ||
+      cfg.price ||
+      null;
 
-    // Fallback: legacy PRICE_MAP
-    return {
-      label: category,
-      priceId: PRICE_MAP[category] || null,
-      productId: null,
-      unlockKey: null
-    };
+    return { cfg, priceId, error: null };
   }
 
-  function money(num) {
-    try {
-      return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(num);
-    } catch {
-      return "$" + String(num);
+  function requireSupabaseConfig() {
+    const url = (window.SUPABASE_URL || "").trim();
+    const key = (window.SUPABASE_ANON_KEY || "").trim();
+
+    if (!url || !/^https:\/\/.+\.supabase\.co\/?$/.test(url)) {
+      return { ok: false, error: "Missing/invalid window.SUPABASE_URL on this page." };
     }
+    if (!key || key.length < 40) {
+      return { ok: false, error: "Missing/invalid window.SUPABASE_ANON_KEY on this page." };
+    }
+    return { ok: true, url, key };
   }
 
-  // -----------------------------
-  // Auth callback (magic link)
-  // -----------------------------
-  async function handleAuthCallback(sb) {
-    // Supabase magic links can return either:
-    // - PKCE: ?code=...
-    // - hash: #access_token=...
-    try {
-      const url = new URL(window.location.href);
-      const code = url.searchParams.get("code");
-
-      if (code) {
-        const { error } = await sb.auth.exchangeCodeForSession(code);
-        if (error) console.error("exchangeCodeForSession:", error);
-
-        // Clean URL so refresh doesn't re-run exchange
-        url.searchParams.delete("code");
-        url.searchParams.delete("type");
-        url.searchParams.delete("redirect_to");
-        window.history.replaceState({}, document.title, url.pathname + (url.search || "") + (url.hash || ""));
-      }
-    } catch (e) {
-      console.warn("Auth callback handler skipped:", e);
-    }
-  }
-
-  async function refreshUI(sb, category) {
-    const { data } = await sb.auth.getSession();
-    const session = data?.session || null;
-
-    if (session?.user?.email) {
-      setText("#sl-whoami", session.user.email);
-      setText("#sl-status", `Signed in as ${session.user.email}`);
-      document.body.classList.add("is-signed-in");
-      document.body.classList.remove("is-signed-out");
-    } else {
-      setText("#sl-whoami", "");
-      setText("#sl-status", "Not signed in");
-      document.body.classList.add("is-signed-out");
-      document.body.classList.remove("is-signed-in");
+  async function loadSupabaseClient() {
+    if (!window.supabase || !window.supabase.createClient) {
+      throw new Error("Supabase client library missing. Ensure supabase-js v2 script loads BEFORE auth.js.");
     }
 
-    // category label / price config message
-    if (category) {
-      const cfg = getStripeConfig(category);
-      setText("#sl-category", cfg.label || category);
+    const cfg = requireSupabaseConfig();
+    if (!cfg.ok) throw new Error(cfg.error);
 
-      if (!cfg.priceId) {
-        setText("#sl-checkout-msg", `No Stripe priceId configured for "${category}". Add it to /assets/stripe-map.js (priceId).`);
-        const btn = $("#sl-checkout");
-        if (btn) btn.disabled = true;
-      } else {
-        setText("#sl-checkout-msg", "");
-        const btn = $("#sl-checkout");
-        if (btn) btn.disabled = false;
-      }
-    }
-  }
-
-  // -----------------------------
-  // Actions
-  // -----------------------------
-  async function sendMagicLink(sb) {
-    const email = ($("#sl-email")?.value || "").trim();
-    if (!email) return alert("Enter your email.");
-
-    // IMPORTANT: must be in Supabase Auth -> URL Configuration as an allowed redirect
-    const redirectTo = `${window.location.origin}/upgrade/`;
-
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: redirectTo }
-    });
-
-    if (error) {
-      console.error(error);
-      alert("Failed to send magic link: " + error.message);
-      return;
-    }
-
-    setText("#sl-email-hint", "Magic link sent. Check your inbox.");
-  }
-
-  async function signOut(sb) {
-    await sb.auth.signOut();
-    window.location.reload();
-  }
-
-  async function startCheckout(sb, category) {
-    const cfg = getStripeConfig(category);
-    if (!cfg.priceId) {
-      alert(`No Stripe priceId configured for "${category}". Add it to stripe-map.js.`);
-      return;
-    }
-
-    // Get session
-    const { data } = await sb.auth.getSession();
-    const session = data?.session || null;
-    if (!session) {
-      alert("Please sign in first.");
-      return;
-    }
-
-    // Call your worker to create Stripe Checkout Session
-    const res = await fetch(`${API_BASE}/api/create-checkout-session`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        // pass Supabase JWT so Worker can identify the user
-        "authorization": `Bearer ${session.access_token}`
+    return window.supabase.createClient(cfg.url, cfg.key, {
+      auth: {
+        flowType: "pkce",
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: "scopedlabs_auth_v1",
       },
-      body: JSON.stringify({
-        category,
-        priceId: cfg.priceId,
-        // where to return after payment
-        successUrl: `${window.location.origin}/tools/?unlocked=1&category=${encodeURIComponent(category)}`,
-        cancelUrl: `${window.location.origin}/upgrade/?category=${encodeURIComponent(category)}`
-      })
     });
-
-    const out = await res.json().catch(() => ({}));
-    if (!res.ok || !out?.url) {
-      console.error("checkout error:", out);
-      alert(out?.error || "Failed to start checkout.");
-      return;
-    }
-
-    window.location.href = out.url;
   }
 
-  // -----------------------------
-  // Boot
-  // -----------------------------
-  async function boot() {
-    if (notConfigured()) {
-      console.warn("Supabase config placeholders detected in auth.js");
-    }
+  function buildEmailRedirectTo(category) {
+    // Preserve category + land on checkout panel after auth.
+    const base = `${window.location.origin}/upgrade/`;
+    const q = category ? `?category=${encodeURIComponent(category)}` : "";
+    return `${base}${q}#checkout`;
+  }
 
+  async function refreshUI(sb) {
+    const { data } = await sb.auth.getSession();
+    const session = data?.session || null;
+
+    const who = $id("sl-whoami");
+    if (who) who.textContent = session?.user?.email ? `Signed in as ${session.user.email}` : "Not signed in";
+
+    // Toggle button visibility if present
+    setVisible("sl-signout", !!session);
+    setVisible("sl-account", !!session);
+    setVisible("sl-checkout", !!session);
+
+    return session;
+  }
+
+  async function handleMagicLinkSend(sb) {
     const category = getCategoryFromURL();
+    const emailEl = $id("sl-email");
+    const btn = $id("sl-sendlink");
 
-    // reflect selected category in UI (if you have element IDs)
-    if (category) setText("#sl-category", category);
+    if (!emailEl || !btn) return;
 
-    const sb = await loadSupabase();
+    btn.addEventListener("click", async () => {
+      try {
+        const email = (emailEl.value || "").trim();
+        if (!email || !email.includes("@")) {
+          setText("sl-status", "Enter a valid email.");
+          return;
+        }
 
-    await handleAuthCallback(sb);
+        setText("sl-status", "Sending magic link…");
 
-    // keep UI synced if auth state changes
-    sb.auth.onAuthStateChange(async () => {
-      await refreshUI(sb, category);
-    });
+        const emailRedirectTo = buildEmailRedirectTo(category);
 
-    await refreshUI(sb, category);
+        const { error } = await sb.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo },
+        });
 
-    // Wire buttons if they exist
-    $("#sl-send-link")?.addEventListener("click", () => sendMagicLink(sb));
-    $("#sl-signout")?.addEventListener("click", () => signOut(sb));
-    $("#sl-checkout")?.addEventListener("click", () => startCheckout(sb, category));
+        if (error) {
+          console.error("signInWithOtp error:", error);
+          setText("sl-status", `Failed: ${error.message || "error"}`);
+          return;
+        }
 
-    // enter-to-send magic link
-    $("#sl-email")?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") sendMagicLink(sb);
+        setText("sl-status", "Check your email for the magic link.");
+      } catch (e) {
+        console.error(e);
+        setText("sl-status", "Failed to send magic link. Check console.");
+      }
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    boot().catch(err => {
-      console.error(err);
-      alert("Auth init failed. Check console.");
-    });
-  });
-})();
+  async function handleSignOut(sb) {
+    const btn = $id("sl-signout");
+    if (!btn) return;
 
+    btn.addEventListener("click", async () => {
+      await sb.auth.signOut();
+      setText("sl-status", "Signed out.");
+      await refreshUI(sb);
+    });
+  }
+
+  async function handleCheckout(sb) {
+    const btn = $id("sl-checkout");
+    if (!btn) return;
+
+    btn.addEventListener("click", async () => {
+      try {
+        const category = getCategoryFromURL();
+        if (!category) {
+          setText("sl-status", "Missing category in URL (?category=...).");
+          return;
+        }
+
+        const { priceId, error } = getStripeConfig(category);
+        if (error) {
+          console.error("stripe-map error:", error);
+          setText("sl-status", `Checkout not configured: ${error}`);
+          return;
+        }
+        if (!priceId || String(priceId).includes("price_XXX")) {
+          setText("sl-status", `No Stripe priceId configured for "${category}" in /assets/stripe-map.js`);
+          return;
+        }
+
+        const { data } = await sb.auth.getSession();
+        const token = data?.session?.access_token;
+        if (!token) {
+          setText("sl-status", "Not signed in.");
+          return;
+        }
+
+        setText("sl-status", "Starting checkout…");
+
+        const res = await fetch(`${API_BASE}/api/create-checkout-session`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ category, priceId }),
+        });
+
+        const payload = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          console.error("checkout-session error:", res.status, payload);
+          setText("sl-status", payload?.error || `Checkout failed (${res.status}). Check console.`);
+          return;
+        }
+
+        const url = payload?.url;
+        if (!url) {
+          console.error("missing url in response:", payload);
+          setText("sl-status", "Checkout failed: missing redirect URL.");
+          return;
+        }
+
+        window.location.href = url;
+      } catch (e) {
+        console.error(e);
+        setText("sl-status", "Checkout failed. Check console.");
+      }
+    });
+  }
+
+  async function main() {
+    try {
+      // Hard fail early (no placeholders)
+      const cfg = requireSupabaseConfig();
+      if (!cfg.ok) {
+        console.error(cfg.error);
+        alert("Auth init failed. Missing SUPABASE_URL / SUPABASE_ANON_KEY on this page.");
+        return;
+      }
+
+      const sb = await loadSupabaseClient();
+
+      // Exchange code for session (PKCE) if present; supabase-js usually does this automatically,
+      // but detectSessionInUrl handles it. Refresh UI after.
+      await refreshUI(sb);
+
+      // Wire buttons
+      await handleMagicLinkSend(sb);
+      await handleSignOut(sb);
+      await handleCheckout(sb);
+
+      // Keep UI in sync
+      sb.auth.onAuthStateChange(async () => {
+        await refreshUI(sb);
+      });
+
+      // Optional: show category label / price label if elements exist
+      const category = getCategoryFromURL();
+      const catLabel = $id("sl-category");
+      if (catLabel && category) catLabel.textContent = category;
+
+      setText("sl-status", "");
+    } catch (e) {
+      console.error(e);
+      alert("Auth init failed. Check console.");
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", main);
+  } else {
+    main();
+  }
+})();
