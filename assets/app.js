@@ -1,109 +1,161 @@
 /* /assets/app.js
-   ScopedLabs global UI helpers only.
-   - No tool math
-   - No auth
-   - No checkout
+   ScopedLabs Upgrade page logic (category selection + checkout)
 */
+(() => {
+  const byId = (id) => document.getElementById(id);
 
-(function () {
-  "use strict";
+  // Must exist (auth.js sets SL_AUTH.sb)
+  function getSB() {
+    const sb = window.SL_AUTH?.sb;
+    if (!sb) console.error("[app] Missing window.SL_AUTH.sb — is /assets/auth.js loaded first?");
+    return sb;
+  }
 
-  function onReady(fn) {
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", fn);
-    } else {
-      fn();
+  function getCategoryFromUrl() {
+    const sp = new URLSearchParams(location.search);
+    return (sp.get("category") || "").trim() || null;
+  }
+
+  function setCategoryInUI(cat) {
+    const label = byId("sl-category-label");
+    if (label) label.textContent = cat ? (cat[0].toUpperCase() + cat.slice(1)) : "None selected";
+
+    // If you have hidden input or data attrs, keep them in sync
+    const hid = byId("sl-category");
+    if (hid) hid.value = cat || "";
+  }
+
+  function shouldScrollToCheckout() {
+    const sp = new URLSearchParams(location.search);
+    return location.hash === "#checkout" || sp.get("checkout") === "1";
+  }
+
+  function scrollToCheckout() {
+    const el = byId("checkout");
+    if (!el) return;
+    // small delay lets layout settle
+    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
+
+  async function getUserEmail() {
+    const sb = getSB();
+    if (!sb) return null;
+    const { data } = await sb.auth.getSession();
+    return data?.session?.user?.email || null;
+  }
+
+  async function updateCheckoutButtons() {
+    const email = await getUserEmail();
+    const cat = getCategoryFromUrl();
+
+    setCategoryInUI(cat);
+
+    const checkoutBtn = byId("sl-checkout");
+    if (checkoutBtn) checkoutBtn.disabled = !(email && cat);
+
+    // Optional: if signed in but no category, show a hint
+    const msg = byId("sl-msg");
+    if (msg) {
+      if (!email) msg.textContent = "";
+      else if (!cat) msg.textContent = "Pick a category first.";
+      else msg.textContent = "";
     }
   }
 
-  function qs(sel, root = document) {
-    return root.querySelector(sel);
-  }
+  async function createCheckoutSession() {
+    const sb = getSB();
+    const msg = byId("sl-msg");
+    const setMsg = (t) => { if (msg) msg.textContent = t; };
 
-  function qsa(sel, root = document) {
-    return Array.from(root.querySelectorAll(sel));
-  }
+    const email = await getUserEmail();
+    const category = getCategoryFromUrl();
 
-  function ensureHelpModal() {
-    // If your HTML already has a modal, we won't duplicate it.
-    // We look for an element with id="help-modal".
-    let modal = document.getElementById("help-modal");
-    if (modal) return modal;
-
-    // Minimal modal shell (dark/lab style should be coming from your CSS)
-    modal = document.createElement("div");
-    modal.id = "help-modal";
-    modal.className = "modal";
-    modal.innerHTML = `
-      <div class="modal-backdrop" data-close="1"></div>
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="help-title">
-        <div class="modal-head">
-          <div id="help-title" class="modal-title">Help</div>
-          <button class="btn btn-sm" id="help-close" type="button">Close</button>
-        </div>
-        <div class="modal-body">
-          <div id="help-body" class="muted"></div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    // close handlers
-    modal.addEventListener("click", (e) => {
-      const t = e.target;
-      if (!t) return;
-      if (t.id === "help-close") hideHelp();
-      if (t.getAttribute && t.getAttribute("data-close") === "1") hideHelp();
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") hideHelp();
-    });
-
-    function hideHelp() {
-      modal.classList.remove("open");
-      document.body.classList.remove("modal-open");
+    if (!email) {
+      setMsg("Please sign in first.");
+      return;
+    }
+    if (!category) {
+      setMsg("Choose a category first.");
+      return;
     }
 
-    return modal;
-  }
+    // priceId lookup should come from your stripe-map.js
+    // Expect: window.STRIPE_MAP[category].priceId
+    const map = window.STRIPE_MAP || window.STRIPE_PRICE_MAP || null;
+    const priceId = map?.[category]?.priceId;
 
-  function openHelp(title, body) {
-    const modal = ensureHelpModal();
-    const t = document.getElementById("help-title");
-    const b = document.getElementById("help-body");
-    if (t) t.textContent = title || "Help";
-    if (b) b.textContent = body || "";
-    modal.classList.add("open");
-    document.body.classList.add("modal-open");
-  }
+    if (!priceId) {
+      console.error("[app] Missing priceId for category:", category, map);
+      setMsg("PriceId missing for this category.");
+      return;
+    }
 
-  function wireHintButtons() {
-    // Your hint buttons use: button.hint with data-title / data-help
-    qsa("button.hint").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        const title = btn.getAttribute("data-title") || "Help";
-        const help = btn.getAttribute("data-help") || "";
-        openHelp(title, help);
+    setMsg("Starting checkout…");
+
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category,
+          priceId
+        })
       });
-    });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json?.ok) {
+        console.error("[app] checkout error:", res.status, json);
+        setMsg("Checkout error. Try again.");
+        return;
+      }
+
+      // Worker should return a Stripe Checkout URL
+      if (json.url) {
+        window.location.href = json.url;
+        return;
+      }
+
+      setMsg("Checkout error. Missing session URL.");
+    } catch (e) {
+      console.error("[app] checkout exception:", e);
+      setMsg("Checkout error. Try again.");
+    }
   }
 
-  function setFooterYear() {
-    const y = String(new Date().getFullYear());
-    qsa("[data-year]").forEach((el) => (el.textContent = y));
-    // Also support: <span id="year"></span>
-    const yearEl = document.getElementById("year");
-    if (yearEl) yearEl.textContent = y;
+  function wireUI() {
+    const checkoutBtn = byId("sl-checkout");
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        createCheckoutSession();
+      });
+    }
+
+    const acctBtn = byId("sl-account");
+    if (acctBtn) {
+      acctBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        // optional: send them to /account/ or show modal
+        window.location.href = "/account/";
+      });
+    }
   }
 
-  onReady(() => {
-    setFooterYear();
-    wireHintButtons();
-  });
+  (async () => {
+    wireUI();
 
-  // Expose minimal help API if needed elsewhere
-  window.SCOPEDLABS_UI = window.SCOPEDLABS_UI || {};
-  window.SCOPEDLABS_UI.openHelp = openHelp;
+    // update on load + whenever auth state changes
+    await updateCheckoutButtons();
+
+    const sb = getSB();
+    if (sb) {
+      sb.auth.onAuthStateChange(async () => {
+        await updateCheckoutButtons();
+        if (shouldScrollToCheckout()) scrollToCheckout();
+      });
+    }
+
+    if (shouldScrollToCheckout()) scrollToCheckout();
+  })();
 })();

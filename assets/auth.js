@@ -1,218 +1,188 @@
 /* /assets/auth.js
-   ScopedLabs auth controller (Supabase magic-link)
-   - Preserves ?category= and ?checkout=1 across magic-link login
-   - Scrolls back to #checkout after login
-   - Shows/hides login vs checkout UI
+   ScopedLabs Auth (Supabase v2) — single client, magic link, session restore, UI hooks
 */
-
 (() => {
-  const APP_TAG = "global-ui";
-  window.SCOPEDLABS_UI = APP_TAG;
+  // ---- helpers
+  const byId = (id) => document.getElementById(id);
+  const qs = (k) => new URLSearchParams(location.search).get(k);
+  const setText = (id, txt) => { const el = byId(id); if (el) el.textContent = txt; };
 
-  function $(id) { return document.getElementById(id); }
+  // ---- required globals injected by HTML <script> block
+  const SUPABASE_URL = window.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
-  function getSearchParam(name) {
-    try { return new URLSearchParams(location.search).get(name); }
-    catch { return null; }
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error("[auth] Missing SUPABASE_URL / SUPABASE_ANON_KEY on window.");
+    return;
+  }
+  if (!window.supabase || typeof window.supabase.createClient !== "function") {
+    console.error("[auth] Supabase CDN client not loaded. Did you include supabase-js v2 script tag?");
+    return;
   }
 
-  // Some providers append auth tokens into the hash. Also your page uses #checkout.
-  // We may see hashes like: "#checkout#access_token=...&refresh_token=...&type=magiclink"
-  function hashContainsCheckout() {
-    const h = (location.hash || "").toLowerCase();
-    return h.includes("checkout");
-  }
-
-  function buildReturnUrl({ keepCheckout = true } = {}) {
-    const url = new URL(location.href);
-    const category = getSearchParam("category");
-    const checkout = keepCheckout ? (getSearchParam("checkout") || "1") : getSearchParam("checkout");
-
-    // Preserve category + checkout in query
-    url.searchParams.delete("category");
-    url.searchParams.delete("checkout");
-    if (category) url.searchParams.set("category", category);
-    if (checkout) url.searchParams.set("checkout", checkout);
-
-    // Use a simple hash anchor so we land back on the checkout card
-    url.hash = keepCheckout ? "#checkout" : "";
-
-    // IMPORTANT: Supabase will append tokens in the URL hash on return.
-    // Returning a clean hash (#checkout) is fine; Supabase still appends its tokens when needed.
-    return url.toString();
-  }
-
-  // After Supabase processes the magic-link, clean the URL so category stays readable and user doesn’t get dumped.
-  function cleanUrlKeepState({ keepCheckoutHash = true } = {}) {
-    const url = new URL(location.href);
-    // Remove any supabase token fragments that might still be hanging around
-    // Keep only "#checkout" if desired.
-    url.hash = keepCheckoutHash ? "#checkout" : "";
-    history.replaceState({}, document.title, url.toString());
-  }
-
-  function setText(id, txt) {
-    const el = $(id);
-    if (el) el.textContent = txt || "";
-  }
-
-  function show(el, on) {
-    if (!el) return;
-    el.style.display = on ? "" : "none";
-  }
-
-  function scrollToCheckout() {
-    const target = $("checkout") || $("sl-checkout-card") || $("sl-checkout") || $("checkout-card");
-    if (target && target.scrollIntoView) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-      return true;
+  // ---- SINGLE supabase client for the whole page
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      // We do our own code-exchange below, but leaving this on is harmless:
+      detectSessionInUrl: true
     }
-    return false;
+  });
+
+  // Expose ONE canonical client for app.js to use
+  window.SL_AUTH = window.SL_AUTH || {};
+  window.SL_AUTH.sb = sb;
+
+  // ---- preserve where user was (so magic-link return doesn’t dump them at top)
+  function saveReturnState() {
+    try {
+      sessionStorage.setItem("sl_return_path", location.pathname + location.search + location.hash);
+    } catch (_) {}
   }
-
-  function getCategory() {
-    return getSearchParam("category") || "";
-  }
-
-  function shouldAutoCheckout() {
-    return getSearchParam("checkout") === "1" || hashContainsCheckout();
-  }
-
-  function getSupabaseClient() {
-    // Avoid multiple GoTrueClient instances (that warning you saw)
-    if (window.__SCOPEDLABS_SUPABASE) return window.__SCOPEDLABS_SUPABASE;
-
-    if (!window.supabase || typeof window.supabase.createClient !== "function") {
-      throw new Error("Supabase client library not loaded (window.supabase.createClient missing).");
+  function restoreReturnState() {
+    try {
+      const p = sessionStorage.getItem("sl_return_path");
+      if (p) sessionStorage.removeItem("sl_return_path");
+      return p;
+    } catch (_) {
+      return null;
     }
-    if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
-      throw new Error("Missing window.SUPABASE_URL / window.SUPABASE_ANON_KEY on this page.");
-    }
-
-    window.__SCOPEDLABS_SUPABASE = window.supabase.createClient(
-      window.SUPABASE_URL,
-      window.SUPABASE_ANON_KEY
-    );
-    return window.__SCOPEDLABS_SUPABASE;
   }
 
-  function getUiRefs() {
-    return {
-      email: $("sl-email"),
-      sendLink: $("sl-sendlink"),
-      hint: $("sl-email-hint"),
-      who: $("sl-who"),
-      signOut: $("sl-signout"),
-      checkoutBtn: $("sl-checkout"),
-      checkoutCard: $("sl-checkout-card"),
-      loginCard: $("sl-login-card"),
-      status: $("sl-status"),
-      accountBtn: $("sl-account"), // optional
-    };
-  }
-
-  async function renderAuthState(sb, ui) {
+  // ---- keep UI in sync
+  async function refreshUI() {
     const { data } = await sb.auth.getSession();
-    const session = data?.session || null;
+    const email = data?.session?.user?.email || null;
 
-    if (session?.user) {
-      const email = session.user.email || "(signed in)";
-      setText("sl-who", `Signed in as ${email}`);
-      show(ui.loginCard, false);
-      show(ui.checkoutCard, true);
-      show(ui.signOut, true);
-      show(ui.accountBtn, true);
-      setText("sl-email-hint", "");
-      if (shouldAutoCheckout()) {
-        // Land them back where they expect
-        setTimeout(() => scrollToCheckout(), 150);
-      }
-      return true;
-    } else {
-      setText("sl-who", "Not signed in");
-      show(ui.loginCard, true);
-      show(ui.checkoutCard, false);
-      show(ui.signOut, false);
-      show(ui.accountBtn, false);
-      return false;
-    }
+    // Status line
+    setText("sl-auth-status", email ? `Signed in as ${email}` : "Not signed in");
+
+    // Toggle login vs checkout blocks (if your HTML uses these ids)
+    const loginCard = byId("sl-login-card");
+    const checkoutCard = byId("sl-checkout-card");
+    if (loginCard) loginCard.style.display = email ? "none" : "";
+    if (checkoutCard) checkoutCard.style.display = email ? "" : "none";
+
+    // Buttons
+    const sendBtn = byId("sl-sendlink");
+    if (sendBtn) sendBtn.style.display = email ? "none" : "";
+
+    const acctBtn = byId("sl-account");
+    if (acctBtn) acctBtn.style.display = email ? "" : "none";
+
+    const signOutBtn = byId("sl-signout");
+    if (signOutBtn) signOutBtn.style.display = email ? "" : "none";
+
+    return email;
   }
 
-  async function sendMagicLink(sb, ui) {
-    const email = (ui.email?.value || "").trim();
+  // ---- magic link send
+  async function sendMagicLink(email) {
+    const msg = byId("sl-msg");
+    const setMsg = (t) => { if (msg) msg.textContent = t; };
+
     if (!email) {
-      setText("sl-email-hint", "Enter your email first.");
+      setMsg("Enter an email.");
       return;
     }
 
-    ui.sendLink.disabled = true;
-    setText("sl-email-hint", "Sending magic link…");
+    // Keep category + checkout intent when they come back
+    const u = new URL(location.href);
+    // Ensure we always return to checkout section
+    u.hash = "#checkout";
+    u.searchParams.set("checkout", "1");
 
-    const emailRedirectTo = buildReturnUrl({ keepCheckout: true });
+    saveReturnState();
+
+    setMsg("Sending magic link…");
 
     const { error } = await sb.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo },
+      options: {
+        emailRedirectTo: u.toString()
+      }
     });
 
-    ui.sendLink.disabled = false;
-
     if (error) {
-      setText("sl-email-hint", `Error: ${error.message || "Failed to send link"}`);
-    } else {
-      setText("sl-email-hint", "Magic link sent. Open the email and click the link.");
-    }
-  }
-
-  async function signOut(sb) {
-    await sb.auth.signOut();
-  }
-
-  // OPTIONAL: If you have an Account page/modal later, hook it here.
-  function openAccount() {
-    // placeholder for future
-    alert("Account: coming soon.");
-  }
-
-  async function boot() {
-    const ui = getUiRefs();
-
-    let sb;
-    try {
-      sb = getSupabaseClient();
-    } catch (e) {
-      console.error(e);
-      setText("sl-email-hint", `Auth init error: ${e.message || e}`);
+      console.error("[auth] signInWithOtp error:", error);
+      setMsg(`Error: ${error.message || "Failed to send link"}`);
       return;
     }
 
-    // First paint
-    await renderAuthState(sb, ui);
+    setMsg("Magic link sent — check your email.");
+  }
 
-    // Listen for session changes (magic-link completion, signout, etc.)
-    sb.auth.onAuthStateChange(async (event) => {
-      // After magic-link, Supabase may leave token fragments; clean it.
-      if (event === "SIGNED_IN") {
-        // Keep #checkout if user came for checkout
-        cleanUrlKeepState({ keepCheckoutHash: true });
-      }
-      await renderAuthState(sb, ui);
-    });
-
-    // Wire UI
-    if (ui.sendLink) ui.sendLink.addEventListener("click", () => sendMagicLink(sb, ui));
-    if (ui.signOut) ui.signOut.addEventListener("click", () => signOut(sb));
-    if (ui.accountBtn) ui.accountBtn.addEventListener("click", openAccount);
-
-    // If user landed here with checkout intent, scroll there (even before signed in)
-    if (shouldAutoCheckout()) {
-      setTimeout(() => scrollToCheckout(), 200);
+  // ---- sign out
+  async function signOut() {
+    try {
+      await sb.auth.signOut();
+    } finally {
+      await refreshUI();
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
+  // ---- Supabase PKCE return handler (critical)
+  async function handleAuthCallbackIfPresent() {
+    const url = new URL(location.href);
+
+    // Supabase magic links typically return with ?code=... (PKCE)
+    const code = url.searchParams.get("code");
+    if (!code) return;
+
+    try {
+      // Exchange code for session
+      const { error } = await sb.auth.exchangeCodeForSession(code);
+      if (error) {
+        console.error("[auth] exchangeCodeForSession error:", error);
+      }
+    } catch (e) {
+      console.error("[auth] exchangeCodeForSession exception:", e);
+    }
+
+    // Clean URL (remove code param so refreshes don’t re-run callback)
+    url.searchParams.delete("code");
+    history.replaceState({}, "", url.pathname + url.search + url.hash);
   }
+
+  // ---- wire UI
+  function wireUI() {
+    const sendBtn = byId("sl-sendlink");
+    const emailEl = byId("sl-email");
+    if (sendBtn && emailEl) {
+      sendBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        sendMagicLink((emailEl.value || "").trim());
+      });
+    }
+
+    const signOutBtn = byId("sl-signout");
+    if (signOutBtn) {
+      signOutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        signOut();
+      });
+    }
+  }
+
+  // ---- boot
+  (async () => {
+    // Handle PKCE return first
+    await handleAuthCallbackIfPresent();
+
+    // Sync UI now + on changes
+    await refreshUI();
+    sb.auth.onAuthStateChange(async () => {
+      await refreshUI();
+
+      // If they came back from magic-link and we saved a return path, restore it
+      const ret = restoreReturnState();
+      if (ret && ret.includes("/upgrade/")) {
+        // Don’t cause loops; just ensure checkout area is shown and scrolled
+        // (app.js will also do the scroll)
+      }
+    });
+
+    wireUI();
+  })();
 })();
