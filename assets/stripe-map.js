@@ -60,8 +60,8 @@ window.SCOPEDLABS_STRIPE = {
   },
   "infrastructure": {
     label: "Infrastructure",
-    productId: "prod_ToPVri8FwgDdTn",
-    priceId: "price_1SqmgrJcSGIDDXHx6VNhWqE7",
+    productId: "prod_Tx1fZSoTKtRtQy",
+    priceId: "price_1Sz7cWJcSGIDDXHxmBoB7dfo",
     unlockKey: "scopedlabs_pro_infrastructure",
   },
 };
