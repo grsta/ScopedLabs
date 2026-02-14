@@ -1,98 +1,65 @@
-// Cloudflare Pages Function: POST /api/create-checkout-session
-// Expects: Authorization: Bearer <supabase_access_token>
-// Body: { category: "power" }
-// Returns: { url: "https://checkout.stripe.com/..." }
-
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost(ctx) {
   try {
-    const SUPABASE_URL = env.SUPABASE_URL;
-    const SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY;
-    const STRIPE_SECRET_KEY = env.STRIPE_SECRET_KEY;
-    const STRIPE_PRICE_ID_CATEGORY = env.STRIPE_PRICE_ID_CATEGORY; // same price for all categories
+    const { request, env } = ctx;
 
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !STRIPE_SECRET_KEY || !STRIPE_PRICE_ID_CATEGORY) {
-      return new Response(JSON.stringify({ error: "Server not configured" }), { status: 500, headers: { "Content-Type": "application/json" }});
-    }
+    // REQUIRED ENV
+    const SITE_ORIGIN = env.SITE_ORIGIN;                 // e.g. https://scopedlabs.com
+    const STRIPE_SECRET_KEY = env.STRIPE_SECRET_KEY;     // sk_live_...
+    if (!SITE_ORIGIN) throw new Error("Missing env var: SITE_ORIGIN");
+    if (!STRIPE_SECRET_KEY) throw new Error("Missing env var: STRIPE_SECRET_KEY");
 
-    const auth = request.headers.get("Authorization") || "";
-    const m = auth.match(/^Bearer\s+(.+)$/i);
-    if (!m) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" }});
-
-    const token = m[1];
-
-    // Validate token + get user from Supabase Auth
-    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "apikey": SUPABASE_ANON_KEY
-      }
-    });
-
-    if (!userRes.ok) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" }});
-    }
-
-    const user = await userRes.json();
-    const userId = user?.id;
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" }});
-    }
-
+    // Parse body
     const body = await request.json().catch(() => ({}));
-    const category = String(body.category || "").toLowerCase().trim();
+    const priceId = body?.priceId;
+    const category = body?.category;
 
-    const allowed = new Set([
-      "access-control",
-      "compute",
-      "infrastructure",
-      "network",
-      "performance",
-      "physical-security",
-      "power",
-      "thermal",
-      "video-storage",
-      "wireless"
-    ]);
-
-    if (!allowed.has(category)) {
-      return new Response(JSON.stringify({ error: "Invalid category" }), { status: 400, headers: { "Content-Type": "application/json" }});
+    if (!priceId) {
+      return json({ ok: false, error: "missing_priceId" }, 400);
     }
 
-    const origin = new URL(request.url).origin;
-    const successUrl = `${origin}/account/?success=1&category=${encodeURIComponent(category)}`;
-    const cancelUrl  = `${origin}/upgrade/?canceled=1&category=${encodeURIComponent(category)}#checkout`;
+    // IMPORTANT:
+    // Since this is static-site checkout, we use Stripe Checkout Session.
+    // Success returns to your site; the actual "unlock" should be done by webhook later.
+    const success_url =
+      `${SITE_ORIGIN}/tools/?unlocked=1&category=${encodeURIComponent(category || "")}&session_id={CHECKOUT_SESSION_ID}`;
+    const cancel_url =
+      `${SITE_ORIGIN}/upgrade/?category=${encodeURIComponent(category || "")}#checkout`;
 
-    const params = new URLSearchParams();
-    params.set("mode", "payment");
-    params.set("success_url", successUrl);
-    params.set("cancel_url", cancelUrl);
-    params.set("client_reference_id", userId);
-    params.set("metadata[category]", category);
+    // Create Checkout Session (Stripe API)
+    const form = new URLSearchParams();
+    form.set("mode", "payment");
+    form.append("line_items[0][price]", priceId);
+    form.append("line_items[0][quantity]", "1");
+    form.set("success_url", success_url);
+    form.set("cancel_url", cancel_url);
 
-    // single shared price id (same price for all categories)
-    params.set("line_items[0][price]", STRIPE_PRICE_ID_CATEGORY);
-    params.set("line_items[0][quantity]", "1");
+    // Optional: allow promotion codes, tax, etc
+    // form.set("allow_promotion_codes", "true");
 
-    // Optionally collect billing address:
-    // params.set("billing_address_collection", "auto");
-
-    const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    const resp = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${STRIPE_SECRET_KEY}`,
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: params.toString()
+      body: form.toString(),
     });
 
-    if (!stripeRes.ok) {
-      const errText = await stripeRes.text();
-      return new Response(JSON.stringify({ error: "Stripe error", detail: errText.slice(0, 300) }), { status: 502, headers: { "Content-Type": "application/json" }});
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      return json({ ok: false, error: "stripe_error", detail: data }, 502);
     }
 
-    const session = await stripeRes.json();
-    return new Response(JSON.stringify({ url: session.url }), { status: 200, headers: { "Content-Type": "application/json" }});
+    return json({ ok: true, url: data.url });
   } catch (e) {
-    return new Response(JSON.stringify({ error: "Server error" }), { status: 500, headers: { "Content-Type": "application/json" }});
+    return json({ ok: false, error: "worker_exception", detail: String(e?.message || e) }, 500);
   }
+}
+
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8" },
+  });
 }
