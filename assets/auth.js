@@ -60,6 +60,18 @@
     };
   }
 
+  function looksLikePlaceholderPriceId(priceId) {
+    if (!priceId) return true;
+    const p = String(priceId).trim();
+    // Common placeholder patterns you (or earlier code) used
+    return (
+      p.includes("price_XXX") ||
+      p.includes("price_XXXX") ||
+      p.includes("price_TEST") ||
+      p.endsWith("_REPLACE_ME")
+    );
+  }
+
   function scrollToCheckout() {
     const el = byId("checkout");
     if (!el) return;
@@ -160,8 +172,8 @@
     setText("sl-category-pill", cat ? cfg.label : "None selected");
 
     // priceId sanity (so checkout doesn’t do nothing silently)
-    if (cat && !cfg.priceId) {
-      setEmailHint(`No Stripe priceId configured for "${cat}". Add it in /assets/stripe-map.js (priceId).`);
+    if (cat && (!cfg.priceId || looksLikePlaceholderPriceId(cfg.priceId))) {
+      setEmailHint(`Stripe priceId is not set for "${cat}". Update /assets/stripe-map.js (priceId).`);
     } else {
       setEmailHint("");
     }
@@ -203,7 +215,7 @@
 
     if (error) {
       console.error("signInWithOtp:", error);
-      setStatus("Could not send link. Try again.");
+      setStatus(`Could not send link: ${error.message || "unknown error"}`);
       return;
     }
 
@@ -226,8 +238,8 @@
     }
 
     const cfg = getStripeConfig(category);
-    if (!cfg.priceId) {
-      setStatus(`No Stripe priceId configured for "${category}". Add it in /assets/stripe-map.js (priceId).`);
+    if (!cfg.priceId || looksLikePlaceholderPriceId(cfg.priceId)) {
+      setStatus(`Stripe priceId not set for "${category}". Update /assets/stripe-map.js (priceId).`);
       return;
     }
 
@@ -257,16 +269,19 @@
     });
 
     if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      console.error("checkout error:", res.status, t);
-      setStatus("Checkout error. Try again.");
+      const text = await res.text().catch(() => "");
+      console.error("checkout error:", res.status, text);
+
+      // Show something useful without dumping secrets.
+      const snippet = (text || "").replace(/\s+/g, " ").slice(0, 220);
+      setStatus(`Checkout error (${res.status}): ${snippet || "no response body"}`);
       return;
     }
 
     const out = await res.json().catch(() => ({}));
     if (!out?.url) {
       console.error("checkout response missing url:", out);
-      setStatus("Checkout error. Try again.");
+      setStatus("Checkout error: missing redirect URL.");
       return;
     }
 
