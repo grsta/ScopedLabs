@@ -4,11 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Checkout • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=checkout-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=checkout-010" />
 </head>
 
 <body>
-  <!-- Site header should match your standard template -->
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -31,16 +30,17 @@
         You’re about to unlock the selected category forever (one-time purchase).
       </p>
 
-      <div class="row" style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin:.75rem 0 1rem;">
+      <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin:.75rem 0 1rem;">
         <div class="muted">Selected category:</div>
         <div class="pill" id="sl-selected-category">None selected</div>
         <button id="sl-change-category" class="btn" type="button">Choose a different category</button>
       </div>
 
       <div class="muted" style="margin:.25rem 0 .5rem;">Price:</div>
-      <div style="font-size:2rem; font-weight:800; margin:0 0 .25rem;">$19.99 <span class="muted" style="font-size:1rem; font-weight:600;">one-time</span></div>
+      <div style="font-size:2rem; font-weight:800; margin:0 0 .25rem;">
+        $19.99 <span class="muted" style="font-size:1rem; font-weight:600;">one-time</span>
+      </div>
 
-      <!-- Login card (same look as your signup card) -->
       <div id="sl-login-card" style="margin-top:1rem;">
         <div class="muted" style="font-size:.95rem;">Sign in to purchase (magic link — no password)</div>
 
@@ -59,7 +59,6 @@
         <div class="muted" id="sl-email-hint" style="font-size:.9rem; margin-top:.6rem;"></div>
       </div>
 
-      <!-- Checkout -->
       <div id="sl-checkout-card" style="margin-top:1rem;">
         <div class="actions">
           <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Checkout</button>
@@ -70,11 +69,10 @@
     </section>
   </main>
 
-  <!-- Scripts: REQUIRED ORDER -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/assets/stripe-map.js"></script>
-  <script defer src="/assets/auth.js?v=checkout-001"></script>
-  <script defer src="/assets/app.js?v=checkout-001"></script>
+  <script defer src="/assets/auth.js?v=checkout-010"></script>
+  <script defer src="/assets/app.js?v=checkout-010"></script>
 </body>
 </html>
 
