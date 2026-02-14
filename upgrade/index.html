@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upgrade • ScopedLabs</title>
 
+  <script>
+/* If we are on /upgrade/checkout/, do NOT run upgrade router */
+if (window.location.pathname.startsWith("/upgrade/checkout")) {
+  console.log("Checkout page detected, skipping upgrade router");
+  throw new Error("STOP_UPGRADE_ROUTER");
+}
+</script>
+
+
   <!-- Use absolute paths so this works from /upgrade/ -->
   <link rel="stylesheet" href="/assets/style.css?v=upgrade-0215" />
 

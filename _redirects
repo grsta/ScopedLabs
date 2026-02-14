@@ -1,0 +1,2 @@
+/upgrade/checkout/*  /upgrade/checkout/index.html  200
+/upgrade/checkout    /upgrade/checkout/           301

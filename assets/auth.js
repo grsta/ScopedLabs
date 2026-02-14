@@ -1,227 +1,166 @@
-/* ScopedLabs Auth (Supabase v2)
-   - Single supabase client exposed as: window.SL_AUTH.sb
-   - Handles magic link send + code exchange on callback
-   - Works on both /upgrade/ and /upgrade/checkout/
+/* /assets/auth.js
+   Single source of truth for Supabase auth + magic link flow.
+   Exposes: window.SL_AUTH.sb (Supabase client)
+
+   Works with NEW IDs:
+     #sl-email, #sl-sendlink, #sl-email-hint, #sl-status
+     #sl-signout (optional)
+   Also supports legacy IDs if they exist.
 */
-(() => {
+
+(function () {
   "use strict";
 
-  const LOG_PREFIX = "[auth]";
-  const $ = (id) => document.getElementById(id);
-
+  // --- Guardrails ---
   const SUPABASE_URL =
-    window.SL_SUPABASE_URL || window.SUPABASE_URL || window.supabaseUrl;
+    window.SL_SUPABASE_URL || window.SUPABASE_URL || window.SCOPEDLABS_SUPABASE_URL;
   const SUPABASE_ANON_KEY =
-    window.SL_SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY || window.supabaseAnonKey;
+    window.SL_SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY || window.SCOPEDLABS_SUPABASE_ANON_KEY;
 
-  function log(...args) { console.log(LOG_PREFIX, ...args); }
-  function warn(...args) { console.warn(LOG_PREFIX, ...args); }
-  function err(...args) { console.error(LOG_PREFIX, ...args); }
-
-  function getCategoryFromUrl() {
-    const u = new URL(window.location.href);
-    return (u.searchParams.get("category") || "").trim() || null;
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error("[auth] Missing Supabase URL/Anon key. Ensure stripe-map.js loads before auth.js");
+    return;
   }
 
-  function isCheckoutPage() {
-    return window.location.pathname.startsWith("/upgrade/checkout");
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error("[auth] Supabase JS SDK not found. Ensure supabase-js v2 is loaded before auth.js");
+    return;
   }
 
-  function setText(id, text) {
-    const el = $(id);
-    if (el) el.textContent = text ?? "";
-  }
+  // --- Supabase client (ONE instance) ---
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
 
-  function setVisible(id, on) {
-    const el = $(id);
-    if (el) el.style.display = on ? "" : "none";
-  }
+  window.SL_AUTH = window.SL_AUTH || {};
+  window.SL_AUTH.sb = sb;
 
-  function setDisabled(id, disabled) {
-    const el = $(id);
-    if (el) el.disabled = !!disabled;
-  }
+  // Back-compat aliases (safe)
+  window.SUPABASE_URL = window.SUPABASE_URL || SUPABASE_URL;
+  window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
 
-  function cleanUrlAfterAuth() {
-    const u = new URL(window.location.href);
-    const changed =
-      u.searchParams.has("code") ||
-      u.searchParams.has("type") ||
-      u.searchParams.has("redirect_to") ||
-      u.hash.includes("access_token");
+  // --- Helpers ---
+  const $ = (sel) => document.querySelector(sel);
 
-    u.searchParams.delete("code");
-    u.searchParams.delete("type");
-    u.searchParams.delete("redirect_to");
-
-    if (isCheckoutPage()) u.hash = "";
-
-    if (changed) {
-      window.history.replaceState({}, document.title, u.toString());
+  function getEl(...ids) {
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el) return el;
     }
+    return null;
   }
 
-  function bindLegacyIdsToNewIds() {
+  function setText(el, txt) {
+    if (!el) return;
+    el.textContent = txt == null ? "" : String(txt);
+  }
+
+  function getSelectedCategoryFromUrlOrStorage() {
+    const url = new URL(window.location.href);
+    const c = url.searchParams.get("category");
+    if (c) return c;
     try {
-      if (!$("#sl-email") && $("#authEmail")) $("#authEmail").id = "sl-email";
-      if (!$("#sl-sendlink") && $("#authSendLink")) $("#authSendLink").id = "sl-sendlink";
-      if (!$("#sl-status") && $("#authStatus")) $("#authStatus").id = "sl-status";
-    } catch (_) {}
+      return localStorage.getItem("sl_category") || "";
+    } catch {
+      return "";
+    }
   }
 
-  async function initSupabase() {
-    if (!window.supabase || !window.supabase.createClient) {
-      throw new Error("Supabase JS v2 not loaded. Ensure supabase-js script loads BEFORE /assets/auth.js");
-    }
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      throw new Error("Missing Supabase config. Ensure stripe-map.js sets window.SL_SUPABASE_URL and window.SL_SUPABASE_ANON_KEY.");
+  function setSelectedCategoryStorage(category) {
+    try {
+      if (category) localStorage.setItem("sl_category", category);
+    } catch {}
+  }
+
+  // IMPORTANT: send users to the CHECKOUT PAGE after clicking email link
+  function computeEmailRedirectTo() {
+    const base = `${window.location.origin}`;
+    const category = getSelectedCategoryFromUrlOrStorage();
+    if (category) return `${base}/upgrade/checkout/?category=${encodeURIComponent(category)}`;
+    return `${base}/upgrade/checkout/`;
+  }
+
+  // --- UI bindings (new + legacy) ---
+  const elEmail = getEl("sl-email", "authEmail", "email", "loginEmail");
+  const elSend = getEl("sl-sendlink", "sendMagicLink", "sendLink", "loginBtn");
+  const elHint = getEl("sl-email-hint", "emailHint", "loginHint");
+  const elStatus = getEl("sl-status", "statusText", "authStatus");
+  const elSignout = getEl("sl-signout", "signOutBtn", "logoutBtn");
+
+  function normalizeEmail(s) {
+    return String(s || "").trim();
+  }
+
+  async function sendMagicLink() {
+    const email = normalizeEmail(elEmail && elEmail.value);
+    if (!email) {
+      setText(elHint, "Enter an email address first.");
+      return;
     }
 
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
+    // Save category if present on this page, so redirect_to can include it next time
+    const cat = getSelectedCategoryFromUrlOrStorage();
+    if (cat) setSelectedCategoryStorage(cat);
+
+    setText(elHint, "Sending magic link…");
+    setText(elStatus, "");
+
+    const emailRedirectTo = computeEmailRedirectTo();
+
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo,
+        shouldCreateUser: true,
+      },
     });
 
-    window.SL_AUTH = { sb };
-    log("Supabase client ready");
-    return sb;
-  }
-
-  async function exchangeIfNeeded(sb) {
-    const u = new URL(window.location.href);
-    const code = u.searchParams.get("code");
-    if (!code) return;
-
-    try {
-      log("Exchanging code for session…");
-      const { data, error } = await sb.auth.exchangeCodeForSession(code);
-      if (error) throw error;
-      log("Session established");
-      cleanUrlAfterAuth();
-      return data?.session || null;
-    } catch (e) {
-      err("exchangeCodeForSession failed:", e);
-      setText("sl-status", "Sign-in failed. Please request a new magic link.");
+    if (error) {
+      console.error("[auth] signInWithOtp error:", error);
+      setText(elHint, `Could not send link: ${error.message || "unknown error"}`);
+      return;
     }
+
+    setText(elHint, "Check your email for the sign-in link.");
   }
 
-  // ✅ UPDATED: hard-force absolute production URL (no origin ambiguity)
-  function computeEmailRedirectTo(category) {
-    const base = "https://scopedlabs.com/upgrade/checkout/";
-    if (category) return `${base}?category=${encodeURIComponent(category)}`;
-    return base;
+  async function signOut() {
+    await sb.auth.signOut();
   }
 
-  async function refreshUi(sb) {
+  // --- Session UI refresh hook ---
+  function emitAuthState(session) {
+    window.dispatchEvent(
+      new CustomEvent("sl:auth", {
+        detail: {
+          session,
+          user: session?.user || null,
+          email: session?.user?.email || null,
+        },
+      })
+    );
+  }
+
+  async function refreshSessionUI() {
     const { data } = await sb.auth.getSession();
-    const session = data?.session || null;
-
-    const category = getCategoryFromUrl();
-
-    const loginCard = $("sl-login-card");
-    const checkoutCard = $("sl-checkout-card");
-    const whoami = $("sl-whoami");
-
-    if (!session) {
-      if (whoami) whoami.textContent = "";
-      if (loginCard) loginCard.style.display = "";
-      if (checkoutCard) checkoutCard.style.display = "none";
-
-      setText("sl-status", "");
-      setDisabled("sl-checkout", true);
-
-      if (isCheckoutPage()) {
-        setText("sl-status", "Not signed in. Please request a magic link.");
-      }
-      return;
-    }
-
-    if (whoami) whoami.textContent = `Signed in as ${session.user.email}`;
-    setText("sl-status", "");
-
-    if (isCheckoutPage()) {
-      if (loginCard) loginCard.style.display = "none";
-      if (checkoutCard) checkoutCard.style.display = "";
-    } else {
-      if (loginCard) loginCard.style.display = "";
-      if (checkoutCard) checkoutCard.style.display = category ? "" : "none";
-    }
-
-    setDisabled("sl-checkout", !category);
-    setVisible("sl-signout", true);
+    emitAuthState(data?.session || null);
   }
 
-  async function main() {
-    bindLegacyIdsToNewIds();
+  // --- Wire events ---
+  if (elSend) elSend.addEventListener("click", sendMagicLink);
+  if (elSignout) elSignout.addEventListener("click", signOut);
 
-    let sb;
-    try {
-      sb = await initSupabase();
-    } catch (e) {
-      err(e);
-      setText("sl-status", "Auth is unavailable (Supabase not configured).");
-      return;
-    }
+  sb.auth.onAuthStateChange((_event, session) => {
+    emitAuthState(session || null);
+  });
 
-    await exchangeIfNeeded(sb);
-    await refreshUi(sb);
+  // initial
+  refreshSessionUI();
 
-    sb.auth.onAuthStateChange(async () => {
-      await refreshUi(sb);
-    });
-
-    const btnSend = $("sl-sendlink");
-    if (btnSend) {
-      btnSend.addEventListener("click", async () => {
-        const emailEl = $("sl-email");
-        const email = (emailEl?.value || "").trim();
-
-        if (!email) {
-          setText("sl-email-hint", "Enter an email address first.");
-          return;
-        }
-
-        const category = getCategoryFromUrl();
-        const emailRedirectTo = computeEmailRedirectTo(category);
-
-        setText("sl-email-hint", "Sending magic link…");
-        log("Magic link redirect target:", emailRedirectTo);
-
-        try {
-          const { error } = await sb.auth.signInWithOtp({
-            email,
-            options: { emailRedirectTo }
-          });
-          if (error) throw error;
-
-          setText("sl-email-hint", "Check your email for the sign-in link.");
-        } catch (e) {
-          err("signInWithOtp failed:", e);
-          setText("sl-email-hint", `Could not send link: ${e?.message || e}`);
-        }
-      });
-    }
-
-    const btnOut = $("sl-signout");
-    if (btnOut) {
-      btnOut.addEventListener("click", async () => {
-        try {
-          await sb.auth.signOut();
-          setText("sl-status", "Signed out.");
-        } catch (e) {
-          err("signOut failed:", e);
-        }
-      });
-    }
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", main);
-  } else {
-    main();
-  }
+  console.log("[auth] Supabase client ready");
 })();
 
