@@ -5,6 +5,7 @@
    - Results: expects existing result element IDs (do not change HTML)
 */
 
+
 document.addEventListener("DOMContentLoaded", () => {
   // --- helpers (logic only) ---
   const $ = (id) => document.getElementById(id);
