@@ -1,128 +1,135 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Upgrade • ScopedLabs</title>
 
-<!-- Global styles -->
-<link rel="stylesheet" href="/assets/style.css?v=upgrade-021" />
+<link rel="stylesheet" href="/assets/style.css">
 
-<!-- Supabase JS -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Stripe + Supabase config -->
-<script src="/assets/stripe-map.js?v=upgrade-021"></script>
-
-<!-- Auth + App -->
-<script defer src="/assets/auth.js?v=upgrade-021"></script>
-<script defer src="/assets/app.js?v=upgrade-021"></script>
 </head>
+<body>
 
-<body class="page-upgrade">
-
+<!-- ================= HEADER ================= -->
 <header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-mark"></span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
-
-    <nav class="nav">
-      <a class="nav-link" href="/">Home</a>
-      <a class="nav-link" href="/tools/">Tools</a>
-      <a class="nav-link" href="/about/">About</a>
-    </nav>
+  <div class="logo">
+    <span class="dot"></span>
+    ScopedLabs
   </div>
+
+  <nav>
+    <a href="/">Home</a>
+    <a href="/tools/">Tools</a>
+    <a href="/about/">About</a>
+  </nav>
 </header>
 
+<!-- ================= MAIN ================= -->
 <main class="container">
 
-<!-- ================= AUTH ================= -->
-
-<section class="card">
-  <span class="pill">Checkout</span>
-  <h1>Unlock a category</h1>
-  <p class="muted">
-    You’ll unlock the selected category forever (one-time purchase).
+<section class="hero">
+  <span class="pill">Upgrade</span>
+  <h1>Upgrade Pro Access</h1>
+  <p>
+    Pro access is unlocked by <b>category</b>. Pick the lane you work in,
+    unlock advanced tools for that category, and you’ll automatically receive
+    future Pro tools added to the same category.
   </p>
 
-  <div class="row gap">
-
-    <div>
-      <label class="muted">Email</label>
-      <input
-        id="authEmail"
-        type="email"
-        placeholder="you@company.com"
-        autocomplete="email"
-      />
-    </div>
-
-    <div>
-      <button id="authSendLink" class="btn btn-primary">
-        Send magic link
-      </button>
-    </div>
-
-  </div>
-
-  <div id="authStatus" class="muted"></div>
-
-  <div id="signedInRow" style="display:none">
-    <p class="muted">
-      Signed in as <strong id="signedInEmail"></strong>
-    </p>
-    <button id="signOutBtn" class="btn">Sign out</button>
+  <div class="actions">
+    <a href="/tools/" class="btn">Browse tools</a>
+    <a href="/upgrade/" class="btn btn-primary">Choose a category</a>
   </div>
 </section>
 
-<!-- ================= CATEGORY PICKER ================= -->
+<!-- ================= CHECKOUT CARD ================= -->
+<section class="card checkout-card" id="checkout">
 
+  <span class="pill">Checkout</span>
+  <h2>Unlock a category</h2>
+
+  <p>You’ll unlock the selected category forever (one-time purchase).</p>
+
+  <div class="kv">
+    <div>Selected category:</div>
+    <div id="selectedCategory">None selected</div>
+
+    <div>Price:</div>
+    <div id="selectedPrice">$19.99 one-time</div>
+
+    <div>Status:</div>
+    <div id="authStatus">Not signed in</div>
+  </div>
+
+  <hr/>
+
+  <h3>Sign in to purchase (magic link — no password)</h3>
+
+  <input
+    id="authEmail"
+    type="email"
+    placeholder="you@company.com"
+    autocomplete="email"
+  />
+
+  <button
+    id="authSendLink"
+    class="btn btn-primary"
+  >
+    Send magic link
+  </button>
+
+  <p class="muted">
+    We’ll email you a secure sign-in link.
+  </p>
+
+  <button
+    id="checkoutBtn"
+    class="btn btn-primary"
+    disabled
+  >
+    Continue to checkout
+  </button>
+
+</section>
+
+<!-- ================= INFO ================= -->
 <section class="card">
-  <h2>Choose a category to unlock</h2>
+  <span class="pill">Important notes</span>
 
   <div class="grid-3">
-
-    <div class="tool-card">
-      <span class="pill pill-lock">Pro — Category Unlock</span>
-      <h3>Access Control</h3>
-      <p class="muted">
-        Door hardware, credential formats, PoE power budgets, and deployment
-        planning.
-      </p>
-      <button class="btn btn-primary" data-category="access-control">
-        Unlock Access Control Pro
-      </button>
+    <div>
+      <h4>Do I need an account?</h4>
+      <p>Yes — a login is how ScopedLabs remembers what you’ve unlocked.</p>
     </div>
 
-    <div class="tool-card">
-      <span class="pill pill-lock">Pro — Category Unlock</span>
-      <h3>Compute</h3>
-      <p class="muted">
-        Server sizing, workload estimates, and resource headroom planning.
-      </p>
-      <button class="btn btn-primary" data-category="compute">
-        Unlock Compute Pro
-      </button>
+    <div>
+      <h4>What happens when new tools ship?</h4>
+      <p>They’re automatically added to your unlocked category.</p>
     </div>
 
-    <div class="tool-card">
-      <span class="pill pill-lock">Pro — Category Unlock</span>
-      <h3>Infrastructure</h3>
-      <p class="muted">
-        Rack density, power/space/cooling checks, and deployment readiness.
-      </p>
-      <button class="btn btn-primary" data-category="infrastructure">
-        Unlock Infrastructure Pro
-      </button>
+    <div>
+      <h4>Can I unlock more than one category?</h4>
+      <p>Yes. Unlock more later as your work expands.</p>
     </div>
-
   </div>
 </section>
 
 </main>
+
+<!-- ================= SCRIPTS ================= -->
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Stripe map -->
+<script src="/assets/stripe-map.js"></script>
+
+<!-- Auth (MUST load before app.js) -->
+<script defer src="/assets/auth.js?v=upgrade-101"></script>
+
+<!-- App -->
+<script defer src="/assets/app.js?v=upgrade-101"></script>
 
 </body>
 </html>
