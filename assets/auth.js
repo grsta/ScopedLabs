@@ -1,188 +1,246 @@
-/* /assets/auth.js
-   ScopedLabs Auth (Supabase v2) — single client, magic link, session restore, UI hooks
+/* ScopedLabs Auth (Supabase v2) — FULL FILE OVERWRITE
+   - Creates ONE Supabase client and exposes it as: window.SL_AUTH.sb
+   - Handles magic-link sign-in
+   - Exchanges auth code for session on return
+   - Updates upgrade UI (signed in / signed out states)
 */
+
 (() => {
-  // ---- helpers
-  const byId = (id) => document.getElementById(id);
-  const qs = (k) => new URLSearchParams(location.search).get(k);
-  const setText = (id, txt) => { const el = byId(id); if (el) el.textContent = txt; };
+  "use strict";
 
-  // ---- required globals injected by HTML <script> block
-  const SUPABASE_URL = window.SUPABASE_URL;
-  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+  // ====== CONFIG ======
+  // These must exist on window (recommended set in /assets/stripe-map.js or a small config script)
+  // window.SL_SUPABASE_URL
+  // window.SL_SUPABASE_ANON_KEY
+  const SUPABASE_URL = window.SL_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.SL_SUPABASE_ANON_KEY;
 
+  // Optional: where to send users after login (defaults to current page)
+  // You can override by setting window.SL_AUTH_REDIRECT to a full URL.
+  const DEFAULT_REDIRECT = window.SL_AUTH_REDIRECT || window.location.href;
+
+  // ====== SIMPLE HELPERS ======
+  const $ = (sel) => document.querySelector(sel);
+
+  function safeText(el, text) {
+    if (!el) return;
+    el.textContent = String(text ?? "");
+  }
+
+  function show(el, on) {
+    if (!el) return;
+    el.style.display = on ? "" : "none";
+  }
+
+  // Expected upgrade page elements (we handle missing gracefully):
+  // #authEmail (input)
+  // #authSendLink (button)
+  // #authStatus (small status line)
+  // #signedInRow (container row)
+  // #signedInEmail (span)
+  // #signOutBtn (button)
+  // #checkoutBtn (button)  (app.js also touches this)
+  const UI = {
+    emailInput: () => $("#authEmail"),
+    sendBtn: () => $("#authSendLink"),
+    status: () => $("#authStatus"),
+    signedInRow: () => $("#signedInRow"),
+    signedInEmail: () => $("#signedInEmail"),
+    signOutBtn: () => $("#signOutBtn"),
+  };
+
+  // ====== VALIDATION ======
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("[auth] Missing SUPABASE_URL / SUPABASE_ANON_KEY on window.");
-    return;
+    console.warn(
+      "[auth] Missing Supabase config. Set window.SL_SUPABASE_URL and window.SL_SUPABASE_ANON_KEY."
+    );
   }
-  if (!window.supabase || typeof window.supabase.createClient !== "function") {
-    console.error("[auth] Supabase CDN client not loaded. Did you include supabase-js v2 script tag?");
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error("[auth] Supabase JS v2 not loaded. Ensure CDN script is included first.");
     return;
   }
 
-  // ---- SINGLE supabase client for the whole page
+  // ====== CREATE ONE CLIENT ======
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      // We do our own code-exchange below, but leaving this on is harmless:
-      detectSessionInUrl: true
-    }
+      detectSessionInUrl: false, // we manually exchange code for session
+    },
   });
 
-  // Expose ONE canonical client for app.js to use
+  // Expose single client to app.js
   window.SL_AUTH = window.SL_AUTH || {};
   window.SL_AUTH.sb = sb;
 
-  // ---- preserve where user was (so magic-link return doesn’t dump them at top)
-  function saveReturnState() {
+  // ====== UI STATE ======
+  function setStatus(msg, isError = false) {
+    const el = UI.status();
+    if (!el) return;
+    el.textContent = msg || "";
+    el.style.opacity = msg ? "1" : "0.85";
+    el.style.color = isError ? "#ff6b6b" : ""; // subtle red on error
+  }
+
+  function setSignedInUI(email) {
+    // Hide magic link controls if signed in
+    const input = UI.emailInput();
+    const sendBtn = UI.sendBtn();
+    show(input, false);
+    show(sendBtn, false);
+
+    show(UI.signedInRow(), true);
+    safeText(UI.signedInEmail(), email || "Signed in");
+    setStatus("");
+  }
+
+  function setSignedOutUI() {
+    const input = UI.emailInput();
+    const sendBtn = UI.sendBtn();
+    show(input, true);
+    show(sendBtn, true);
+
+    show(UI.signedInRow(), false);
+    safeText(UI.signedInEmail(), "");
+  }
+
+  async function refreshAuthUI() {
     try {
-      sessionStorage.setItem("sl_return_path", location.pathname + location.search + location.hash);
-    } catch (_) {}
-  }
-  function restoreReturnState() {
-    try {
-      const p = sessionStorage.getItem("sl_return_path");
-      if (p) sessionStorage.removeItem("sl_return_path");
-      return p;
-    } catch (_) {
-      return null;
-    }
-  }
+      const { data, error } = await sb.auth.getSession();
+      if (error) throw error;
 
-  // ---- keep UI in sync
-  async function refreshUI() {
-    const { data } = await sb.auth.getSession();
-    const email = data?.session?.user?.email || null;
+      const session = data?.session || null;
+      const email = session?.user?.email || "";
 
-    // Status line
-    setText("sl-auth-status", email ? `Signed in as ${email}` : "Not signed in");
-
-    // Toggle login vs checkout blocks (if your HTML uses these ids)
-    const loginCard = byId("sl-login-card");
-    const checkoutCard = byId("sl-checkout-card");
-    if (loginCard) loginCard.style.display = email ? "none" : "";
-    if (checkoutCard) checkoutCard.style.display = email ? "" : "none";
-
-    // Buttons
-    const sendBtn = byId("sl-sendlink");
-    if (sendBtn) sendBtn.style.display = email ? "none" : "";
-
-    const acctBtn = byId("sl-account");
-    if (acctBtn) acctBtn.style.display = email ? "" : "none";
-
-    const signOutBtn = byId("sl-signout");
-    if (signOutBtn) signOutBtn.style.display = email ? "" : "none";
-
-    return email;
-  }
-
-  // ---- magic link send
-  async function sendMagicLink(email) {
-    const msg = byId("sl-msg");
-    const setMsg = (t) => { if (msg) msg.textContent = t; };
-
-    if (!email) {
-      setMsg("Enter an email.");
-      return;
-    }
-
-    // Keep category + checkout intent when they come back
-    const u = new URL(location.href);
-    // Ensure we always return to checkout section
-    u.hash = "#checkout";
-    u.searchParams.set("checkout", "1");
-
-    saveReturnState();
-
-    setMsg("Sending magic link…");
-
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: u.toString()
+      if (session && email) {
+        setSignedInUI(email);
+      } else {
+        setSignedOutUI();
+        setStatus("");
       }
-    });
+    } catch (err) {
+      console.warn("[auth] refreshAuthUI error:", err);
+      setSignedOutUI();
+      setStatus("Auth error. Refresh the page.", true);
+    }
+  }
 
-    if (error) {
-      console.error("[auth] signInWithOtp error:", error);
-      setMsg(`Error: ${error.message || "Failed to send link"}`);
+  // ====== MAGIC LINK SEND ======
+  async function sendMagicLink() {
+    const input = UI.emailInput();
+    const email = (input?.value || "").trim();
+
+    if (!email || !email.includes("@")) {
+      setStatus("Enter a valid email address.", true);
       return;
     }
 
-    setMsg("Magic link sent — check your email.");
+    try {
+      setStatus("Sending magic link…");
+      UI.sendBtn()?.setAttribute("disabled", "disabled");
+
+      // Build a redirect URL that preserves category & hash
+      // Stripe / upgrade flow likes to keep #checkout
+      // We use current URL unless overridden
+      const redirectTo = DEFAULT_REDIRECT;
+
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo,
+        },
+      });
+
+      if (error) throw error;
+
+      setStatus("Check your email for the sign-in link.");
+    } catch (err) {
+      console.warn("[auth] sendMagicLink error:", err);
+      setStatus("Could not send link. Try again in a moment.", true);
+    } finally {
+      UI.sendBtn()?.removeAttribute("disabled");
+    }
   }
 
-  // ---- sign out
+  // ====== RETURN HANDLER: EXCHANGE CODE FOR SESSION ======
+  async function handleAuthReturn() {
+    try {
+      const url = new URL(window.location.href);
+
+      // Supabase magic link can return with:
+      // ?code=... (PKCE flow)
+      const code = url.searchParams.get("code");
+      if (!code) return;
+
+      setStatus("Signing you in…");
+
+      const { data, error } = await sb.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+
+      // Clean the URL (remove ?code=... and any auth params) but preserve category + hash
+      url.searchParams.delete("code");
+      url.searchParams.delete("type");
+      url.searchParams.delete("redirect_to");
+      url.searchParams.delete("access_token");
+      url.searchParams.delete("refresh_token");
+
+      // Keep whatever else existed (like ?category=network)
+      // Replace without reloading
+      window.history.replaceState({}, document.title, url.toString());
+
+      // Update UI immediately
+      const email = data?.session?.user?.email || "";
+      if (email) setSignedInUI(email);
+
+      setStatus("");
+    } catch (err) {
+      console.warn("[auth] handleAuthReturn error:", err);
+      setStatus("Sign-in failed. Please try the link again.", true);
+    }
+  }
+
+  // ====== SIGN OUT ======
   async function signOut() {
     try {
+      setStatus("Signing out…");
       await sb.auth.signOut();
-    } finally {
-      await refreshUI();
+      setSignedOutUI();
+      setStatus("");
+    } catch (err) {
+      console.warn("[auth] signOut error:", err);
+      setStatus("Could not sign out. Refresh and try again.", true);
     }
   }
 
-  // ---- Supabase PKCE return handler (critical)
-  async function handleAuthCallbackIfPresent() {
-    const url = new URL(location.href);
+  // ====== WIRE EVENTS ======
+  function wireEvents() {
+    UI.sendBtn()?.addEventListener("click", (e) => {
+      e.preventDefault();
+      sendMagicLink();
+    });
 
-    // Supabase magic links typically return with ?code=... (PKCE)
-    const code = url.searchParams.get("code");
-    if (!code) return;
-
-    try {
-      // Exchange code for session
-      const { error } = await sb.auth.exchangeCodeForSession(code);
-      if (error) {
-        console.error("[auth] exchangeCodeForSession error:", error);
-      }
-    } catch (e) {
-      console.error("[auth] exchangeCodeForSession exception:", e);
-    }
-
-    // Clean URL (remove code param so refreshes don’t re-run callback)
-    url.searchParams.delete("code");
-    history.replaceState({}, "", url.pathname + url.search + url.hash);
-  }
-
-  // ---- wire UI
-  function wireUI() {
-    const sendBtn = byId("sl-sendlink");
-    const emailEl = byId("sl-email");
-    if (sendBtn && emailEl) {
-      sendBtn.addEventListener("click", (e) => {
+    UI.emailInput()?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
         e.preventDefault();
-        sendMagicLink((emailEl.value || "").trim());
-      });
-    }
-
-    const signOutBtn = byId("sl-signout");
-    if (signOutBtn) {
-      signOutBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        signOut();
-      });
-    }
-  }
-
-  // ---- boot
-  (async () => {
-    // Handle PKCE return first
-    await handleAuthCallbackIfPresent();
-
-    // Sync UI now + on changes
-    await refreshUI();
-    sb.auth.onAuthStateChange(async () => {
-      await refreshUI();
-
-      // If they came back from magic-link and we saved a return path, restore it
-      const ret = restoreReturnState();
-      if (ret && ret.includes("/upgrade/")) {
-        // Don’t cause loops; just ensure checkout area is shown and scrolled
-        // (app.js will also do the scroll)
+        sendMagicLink();
       }
     });
 
-    wireUI();
+    UI.signOutBtn()?.addEventListener("click", (e) => {
+      e.preventDefault();
+      signOut();
+    });
+
+    // Listen for auth changes (other tabs, refresh tokens, etc.)
+    sb.auth.onAuthStateChange((_event, _session) => {
+      refreshAuthUI();
+    });
+  }
+
+  // ====== INIT ======
+  (async () => {
+    wireEvents();
+    await handleAuthReturn();
+    await refreshAuthUI();
   })();
 })();
