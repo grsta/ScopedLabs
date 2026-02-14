@@ -28,12 +28,6 @@ window.SCOPEDLABS_STRIPE = {
     priceId: "price_1SykEjJcSGIDDXHx2PvT5bG5",
     unlockKey: "scopedlabs_pro_access-control",
   },
-  "intrusion-alarm": {
-    label: "Intrusion / Alarm",
-    productId: "prod_XXXX",
-    priceId: "price_XXXX",
-    unlockKey: "scopedlabs_pro_intrusion-alarm",
-  },
   "physical-security": {
     label: "Physical Security",
     productId: "prod_Tx1GkjsOhy5eG9",
