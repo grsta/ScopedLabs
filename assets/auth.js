@@ -9,7 +9,6 @@
   const LOG_PREFIX = "[auth]";
   const $ = (id) => document.getElementById(id);
 
-  // Back-compat (your stripe-map sets SL_SUPABASE_* on window)
   const SUPABASE_URL =
     window.SL_SUPABASE_URL || window.SUPABASE_URL || window.supabaseUrl;
   const SUPABASE_ANON_KEY =
@@ -44,7 +43,6 @@
   }
 
   function cleanUrlAfterAuth() {
-    // Remove Supabase auth params from URL after exchange
     const u = new URL(window.location.href);
     const changed =
       u.searchParams.has("code") ||
@@ -56,7 +54,6 @@
     u.searchParams.delete("type");
     u.searchParams.delete("redirect_to");
 
-    // On checkout page, keep URL clean (no hash)
     if (isCheckoutPage()) u.hash = "";
 
     if (changed) {
@@ -65,13 +62,10 @@
   }
 
   function bindLegacyIdsToNewIds() {
-    // If older HTML exists somewhere, don’t break — just mirror values.
-    // NOTE: DO NOT output anything to the DOM here (no stray text at top of page).
     try {
       if (!$("#sl-email") && $("#authEmail")) $("#authEmail").id = "sl-email";
       if (!$("#sl-sendlink") && $("#authSendLink")) $("#authSendLink").id = "sl-sendlink";
       if (!$("#sl-status") && $("#authStatus")) $("#authStatus").id = "sl-status";
-      if (!$("#sl-email-hint") && $("#authHint")) $("#authHint").id = "sl-email-hint";
     } catch (_) {}
   }
 
@@ -114,15 +108,10 @@
     }
   }
 
-  // ✅ UPDATED: always redirect to the NEW checkout page
+  // ✅ UPDATED: hard-force absolute production URL (no origin ambiguity)
   function computeEmailRedirectTo(category) {
-    // Use absolute production origin so Supabase redirect allowlist is clean.
-    const origin = "https://scopedlabs.com";
-    const base = `${origin}/upgrade/checkout/`;
-
-    // If category exists, preserve it so checkout page can render the correct card immediately.
+    const base = "https://scopedlabs.com/upgrade/checkout/";
     if (category) return `${base}?category=${encodeURIComponent(category)}`;
-
     return base;
   }
 
@@ -132,10 +121,9 @@
 
     const category = getCategoryFromUrl();
 
-    // Elements present on upgrade/checkout pages
     const loginCard = $("sl-login-card");
     const checkoutCard = $("sl-checkout-card");
-    const whoami = $("sl-whoami"); // optional "signed in as..."
+    const whoami = $("sl-whoami");
 
     if (!session) {
       if (whoami) whoami.textContent = "";
@@ -151,24 +139,18 @@
       return;
     }
 
-    // Signed in
     if (whoami) whoami.textContent = `Signed in as ${session.user.email}`;
     setText("sl-status", "");
 
-    // On checkout page, hide login card and show checkout card
     if (isCheckoutPage()) {
       if (loginCard) loginCard.style.display = "none";
       if (checkoutCard) checkoutCard.style.display = "";
     } else {
-      // On upgrade page, keep login visible (fine) and show checkout card only if category chosen
       if (loginCard) loginCard.style.display = "";
       if (checkoutCard) checkoutCard.style.display = category ? "" : "none";
     }
 
-    // Enable checkout only when category exists
     setDisabled("sl-checkout", !category);
-
-    // Show signout button if present
     setVisible("sl-signout", true);
   }
 
@@ -191,7 +173,6 @@
       await refreshUi(sb);
     });
 
-    // Wire send link
     const btnSend = $("sl-sendlink");
     if (btnSend) {
       btnSend.addEventListener("click", async () => {
@@ -207,6 +188,7 @@
         const emailRedirectTo = computeEmailRedirectTo(category);
 
         setText("sl-email-hint", "Sending magic link…");
+        log("Magic link redirect target:", emailRedirectTo);
 
         try {
           const { error } = await sb.auth.signInWithOtp({
@@ -215,7 +197,6 @@
           });
           if (error) throw error;
 
-          log("Magic link sent ->", emailRedirectTo);
           setText("sl-email-hint", "Check your email for the sign-in link.");
         } catch (e) {
           err("signInWithOtp failed:", e);
@@ -224,7 +205,6 @@
       });
     }
 
-    // Wire signout
     const btnOut = $("sl-signout");
     if (btnOut) {
       btnOut.addEventListener("click", async () => {
