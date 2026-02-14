@@ -1,151 +1,313 @@
-/* /assets/app.js — FULL FILE OVERWRITE
-   - Works on /upgrade/ and /upgrade/checkout/
-   - Uses window.SL_AUTH.sb from auth.js (must load first)
-   - Category source: URL ?category= OR localStorage(sl_selected_category)
-   - Enables checkout only if signed in AND category is set
+/* /assets/app.js
+   ScopedLabs Upgrade/Checkout controller.
+
+   - Reads ?category= from URL (or saved selection)
+   - On /upgrade/: shows category picker + login + checkout gating
+   - On /upgrade/checkout/: SESSION-ONLY checkout view (no email box)
+     * If not signed in -> redirect back to /upgrade/?category=...#checkout
 */
 
 (() => {
   "use strict";
 
-  const sb = window.SL_AUTH?.sb;
-  if (!sb) {
-    console.error("[app] Supabase client not found. auth.js must load first.");
-    return;
+  const IS_CHECKOUT_PAGE = location.pathname.startsWith("/upgrade/checkout");
+
+  // Must be created by /assets/auth.js (loaded BEFORE this)
+  const sb =
+    (window.SL_AUTH && window.SL_AUTH.sb) ||
+    (window.SL_AUTH && window.SL_AUTH.client) ||
+    null;
+
+  const $ = (id) => document.getElementById(id);
+
+  // Elements (IDs may or may not exist depending on page)
+  const els = {
+    // Category UI
+    selectedLabel: $("sl-selected-category"),
+    catPill: $("sl-category-pill"),
+    catCardSelected: $("sl-checkout-selected"),
+    changeCatBtn: $("sl-change-category"),
+    chooseCatBtn: $("sl-choose-category"),
+
+    // Auth UI
+    loginCard: $("sl-login-card"),
+    emailInput: $("sl-email"),
+    sendLinkBtn: $("sl-sendlink"),
+    emailHint: $("sl-email-hint"),
+
+    // Checkout UI
+    checkoutCard: $("sl-checkout-card"),
+    checkoutBtn: $("sl-checkout"),
+    signoutBtn: $("sl-signout"),
+    status: $("sl-status"),
+  };
+
+  // State
+  let currentCategory = "";
+  let currentSession = null;
+
+  function log(...args) {
+    // keep quiet in prod; uncomment if needed
+    // console.log("[app]", ...args);
   }
 
-  const LS_CAT = "sl_selected_category";
-  const $ = (sel) => document.querySelector(sel);
+  function normCategory(v) {
+    return (v || "").toString().trim().toLowerCase();
+  }
 
   function getCategoryFromURL() {
+    const u = new URL(location.href);
+    return normCategory(u.searchParams.get("category"));
+  }
+
+  function getCategoryFromStorage() {
     try {
-      const u = new URL(window.location.href);
-      return u.searchParams.get("category") || "";
+      return normCategory(localStorage.getItem("sl_selected_category"));
     } catch {
       return "";
     }
   }
 
-  function getCategory() {
-    return getCategoryFromURL() || localStorage.getItem(LS_CAT) || "";
-  }
-
   function setCategory(cat) {
-    const c = (cat || "").trim();
-    if (!c) return;
-    localStorage.setItem(LS_CAT, c);
+    currentCategory = normCategory(cat);
+    try {
+      if (currentCategory) localStorage.setItem("sl_selected_category", currentCategory);
+    } catch {}
   }
 
-  function setText(el, txt) { if (el) el.textContent = txt || ""; }
-
-  function enable(el, on) {
-    if (!el) return;
-    el.disabled = !on;
-    el.classList.toggle("disabled", !on);
+  function setStatus(msg) {
+    if (els.status) els.status.textContent = msg || "";
   }
-
-  async function isSignedIn() {
-    const { data } = await sb.auth.getSession();
-    return !!data?.session;
-  }
-
-  // ===== Elements (support BOTH) =====
-  const els = {
-    // New checkout page IDs
-    categoryLabelNew: $("#sl-selected-category"),
-    statusNew: $("#sl-status"),
-    checkoutBtnNew: $("#sl-checkout"),
-
-    // Upgrade page IDs (old)
-    categoryLabelOld: $("#selectedCategory"),
-    statusOld: $("#checkoutStatus"),
-    checkoutBtnOld: $("#checkoutBtn"),
-
-    // Optional "change category" button on checkout page
-    changeCategoryBtn: $("#sl-change-category"),
-  };
-
-  let currentCategory = getCategory();
 
   function updateCategoryUI() {
-    const label = currentCategory || "None selected";
-    setText(els.categoryLabelNew, label);
-    setText(els.categoryLabelOld, currentCategory || "None");
+    const cat = currentCategory || "";
+
+    if (els.selectedLabel) els.selectedLabel.textContent = cat ? cat : "None selected";
+    if (els.catPill) els.catPill.textContent = cat ? cat : "None selected";
+    if (els.catCardSelected) els.catCardSelected.textContent = cat ? cat : "None selected";
+
+    // On checkout page, "change category" should always exist (if the element is present)
+    // but the main "choose category" button should usually be hidden there.
+    if (IS_CHECKOUT_PAGE) {
+      if (els.chooseCatBtn) els.chooseCatBtn.style.display = "none";
+      if (els.changeCatBtn) els.changeCatBtn.style.display = "";
+    }
+  }
+
+  async function refreshSession() {
+    if (!sb) return null;
+    const { data, error } = await sb.auth.getSession();
+    if (error) {
+      log("getSession error", error);
+      return null;
+    }
+    return data ? data.session : null;
+  }
+
+  function redirectToUpgrade(reason) {
+    // Preserve category if we have it
+    const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
+    const url = cat ? `/upgrade/?category=${encodeURIComponent(cat)}#checkout` : `/upgrade/#categories`;
+    log("redirectToUpgrade:", reason, "->", url);
+    location.replace(url);
+  }
+
+  function hideLoginUIOnCheckout() {
+    // Checkout page: no email box, no send-link flow. That step happens on /upgrade/.
+    if (els.loginCard) els.loginCard.style.display = "none";
+    if (els.emailInput) els.emailInput.value = "";
   }
 
   async function updateCheckoutState() {
-    const signedIn = await isSignedIn();
-    const ready = signedIn && !!currentCategory;
+    // Always keep category UI synced
+    updateCategoryUI();
 
-    enable(els.checkoutBtnNew, ready);
-    enable(els.checkoutBtnOld, ready);
+    // Require a category on checkout page
+    if (IS_CHECKOUT_PAGE) {
+      const urlCat = getCategoryFromURL();
+      if (urlCat) setCategory(urlCat);
 
-    if (els.statusNew && signedIn && currentCategory) {
-      // keep status subtle; auth.js already prints "Signed in as"
-      // only show errors here if needed
+      if (!currentCategory) {
+        redirectToUpgrade("checkout page without category");
+        return;
+      }
     }
+
+    currentSession = await refreshSession();
+
+    // If this is the dedicated checkout page, require session.
+    if (IS_CHECKOUT_PAGE) {
+      hideLoginUIOnCheckout();
+
+      if (!currentSession) {
+        redirectToUpgrade("checkout page requires session");
+        return;
+      }
+
+      // Signed in: show only checkout controls
+      if (els.checkoutCard) els.checkoutCard.style.display = "";
+      if (els.signoutBtn) els.signoutBtn.style.display = ""; // optional
+
+      const email = currentSession.user?.email || "Signed in";
+      setStatus(`Signed in as ${email}`);
+      return;
+    }
+
+    // Otherwise (normal /upgrade/ page): show/hide login + checkout based on session
+    if (currentSession) {
+      // hide login
+      if (els.loginCard) els.loginCard.style.display = "none";
+      if (els.checkoutCard) els.checkoutCard.style.display = "";
+      if (els.signoutBtn) els.signoutBtn.style.display = "";
+      const email = currentSession.user?.email || "Signed in";
+      setStatus(`Signed in as ${email}`);
+    } else {
+      // show login
+      if (els.loginCard) els.loginCard.style.display = "";
+      if (els.checkoutCard) els.checkoutCard.style.display = "none";
+      if (els.signoutBtn) els.signoutBtn.style.display = "none";
+      setStatus("Not signed in");
+    }
+  }
+
+  async function sendMagicLink() {
+    if (!sb) {
+      setStatus("Auth not ready (Supabase client missing).");
+      return;
+    }
+    const email = (els.emailInput?.value || "").trim();
+    if (!email) {
+      setStatus("Enter an email address first.");
+      return;
+    }
+
+    // Send link that returns to /upgrade/checkout/ with the chosen category
+    const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
+    const redirectTo = cat
+      ? `${location.origin}/upgrade/checkout/?category=${encodeURIComponent(cat)}`
+      : `${location.origin}/upgrade/checkout/`;
+
+    setStatus("Sending magic link…");
+
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo },
+    });
+
+    if (error) {
+      setStatus(`Error: ${error.message}`);
+      return;
+    }
+
+    if (els.emailHint) els.emailHint.textContent = "Check your email for the sign-in link.";
+    setStatus("Magic link sent.");
   }
 
   async function startCheckout() {
+    const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
+    if (!cat) {
+      setStatus("Select a category first.");
+      return;
+    }
+
+    // On checkout page we *should* already have a session; on upgrade page we still gate
+    currentSession = await refreshSession();
+    if (!currentSession) {
+      if (IS_CHECKOUT_PAGE) {
+        redirectToUpgrade("checkout clicked without session");
+      } else {
+        setStatus("Sign in first.");
+      }
+      return;
+    }
+
+    setStatus("Starting checkout…");
+
+    // Your backend should use session to associate customer + category, then return Stripe URL
     try {
-      const signedIn = await isSignedIn();
-      if (!signedIn) {
-        setText(els.statusNew, "Please sign in first.");
-        setText(els.statusOld, "Please sign in first.");
-        return;
-      }
-      if (!currentCategory) {
-        setText(els.statusNew, "Select a category first.");
-        setText(els.statusOld, "Select a category first.");
-        return;
-      }
-
-      setText(els.statusNew, "Redirecting to checkout…");
-      setText(els.statusOld, "Redirecting to checkout…");
-
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: currentCategory }),
+        body: JSON.stringify({ category: cat }),
       });
 
-      if (!res.ok) throw new Error("Checkout session failed");
+      if (!res.ok) {
+        const t = await res.text().catch(() => "");
+        setStatus(`Checkout failed (${res.status}). ${t}`);
+        return;
+      }
 
-      const data = await res.json();
-      if (!data?.url) throw new Error("Missing Stripe URL");
+      const data = await res.json().catch(() => ({}));
+      const url = data?.url || data?.checkout_url;
+      if (!url) {
+        setStatus("Checkout failed: missing URL in response.");
+        return;
+      }
 
-      window.location.href = data.url;
+      location.href = url;
     } catch (e) {
-      console.error(e);
-      setText(els.statusNew, "Checkout failed. Please try again.");
-      setText(els.statusOld, "Checkout failed. Please try again.");
+      setStatus(`Checkout error: ${e.message || e}`);
     }
+  }
+
+  async function signOut() {
+    if (!sb) return;
+    await sb.auth.signOut();
+    setStatus("Signed out.");
+    // If on checkout page, bounce to upgrade (since checkout requires session)
+    if (IS_CHECKOUT_PAGE) redirectToUpgrade("signed out from checkout page");
+    else await updateCheckoutState();
   }
 
   function wire() {
-    els.checkoutBtnNew?.addEventListener("click", (e) => { e.preventDefault(); startCheckout(); });
-    els.checkoutBtnOld?.addEventListener("click", (e) => { e.preventDefault(); startCheckout(); });
-
-    els.changeCategoryBtn?.addEventListener("click", (e) => {
-      e.preventDefault();
-      // Send back to upgrade page category picker
-      const cat = getCategory();
-      const url = cat ? `/upgrade/?category=${encodeURIComponent(cat)}#categories` : `/upgrade/#categories`;
-      window.location.href = url;
-    });
-
-    sb.auth.onAuthStateChange(() => updateCheckoutState());
-  }
-
-  (async () => {
-    // Save category from URL if present
-    const urlCat = getCategoryFromURL();
-    if (urlCat) {
-      setCategory(urlCat);
-      currentCategory = urlCat;
+    // Category change buttons
+    if (els.changeCatBtn) {
+      els.changeCatBtn.addEventListener("click", () => {
+        const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
+        const url = cat ? `/upgrade/?category=${encodeURIComponent(cat)}#categories` : `/upgrade/#categories`;
+        location.href = url;
+      });
     }
 
-    updateCategoryUI();
+    if (els.chooseCatBtn) {
+      els.chooseCatBtn.addEventListener("click", () => {
+        location.href = "/upgrade/#categories";
+      });
+    }
+
+    // Auth
+    if (els.sendLinkBtn) els.sendLinkBtn.addEventListener("click", sendMagicLink);
+
+    // Checkout
+    if (els.checkoutBtn) els.checkoutBtn.addEventListener("click", startCheckout);
+
+    // Sign out (optional)
+    if (els.signoutBtn) els.signoutBtn.addEventListener("click", signOut);
+
+    // React to auth state changes
+    if (sb) {
+      sb.auth.onAuthStateChange(async () => {
+        await updateCheckoutState();
+      });
+    }
+  }
+
+  (async function init() {
+    // Sync category from URL or storage
+    const urlCat = getCategoryFromURL();
+    if (urlCat) setCategory(urlCat);
+    else setCategory(getCategoryFromStorage());
+
+    // If Supabase client isn't ready, we can still render category, but auth won't work
+    if (!sb) {
+      // On checkout page, if auth is missing, still redirect (otherwise it's a dead end)
+      if (IS_CHECKOUT_PAGE) {
+        redirectToUpgrade("Supabase client missing on checkout page");
+        return;
+      }
+      setStatus("Auth not ready. (auth.js must load before app.js)");
+    }
+
     await updateCheckoutState();
     wire();
   })();
