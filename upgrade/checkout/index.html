@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Checkout • ScopedLabs</title>
-
   <link rel="stylesheet" href="/assets/style.css?v=checkout-001" />
 </head>
+
 <body>
-  <!-- site header (keep your existing header markup style) -->
+  <!-- Site header should match your standard template -->
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -23,63 +23,56 @@
     </div>
   </header>
 
-  <main class="container" style="padding-top:1.25rem; padding-bottom:2.25rem;">
-    <section class="card" style="max-width:920px; margin:0 auto;">
-      <div class="pill">Checkout</div>
-      <h1 style="margin-top:.65rem;">Unlock a category</h1>
-      <p class="muted" style="margin-top:.25rem;">
-        You’re about to unlock one category forever (one-time purchase).
+  <main class="container" style="padding:2.25rem 0 4rem;">
+    <section class="card" style="max-width:760px; margin:0 auto;">
+      <div class="pill" style="margin-bottom:.75rem;">Checkout</div>
+      <h1 style="margin:0 0 .5rem;">Unlock a category</h1>
+      <p class="muted" style="margin:0 0 1rem;">
+        You’re about to unlock the selected category forever (one-time purchase).
       </p>
 
-      <!-- Signed in line -->
-      <div class="muted" id="sl-signedin-line" style="margin-top:.75rem;"></div>
-
-      <!-- Selected category card -->
-      <div id="sl-selected-wrap" style="margin-top:1rem; display:none;">
-        <div class="card" style="padding:1rem;">
-          <div class="pill" style="display:inline-block;">Selected category</div>
-          <div style="margin-top:.6rem; font-size:1.15rem; font-weight:700;" id="sl-selected-label">—</div>
-          <div class="muted" style="margin-top:.25rem;" id="sl-selected-sub">—</div>
-
-          <div class="actions" style="margin-top:.9rem;">
-            <a class="btn" id="sl-change-category" href="/upgrade/#categories">Choose a different category</a>
-          </div>
-        </div>
+      <div class="row" style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin:.75rem 0 1rem;">
+        <div class="muted">Selected category:</div>
+        <div class="pill" id="sl-selected-category">None selected</div>
+        <button id="sl-change-category" class="btn" type="button">Choose a different category</button>
       </div>
 
-      <!-- Login (only shown if not signed in) -->
-      <div id="sl-login-card" style="margin-top:1rem; display:none;">
+      <div class="muted" style="margin:.25rem 0 .5rem;">Price:</div>
+      <div style="font-size:2rem; font-weight:800; margin:0 0 .25rem;">$19.99 <span class="muted" style="font-size:1rem; font-weight:600;">one-time</span></div>
+
+      <!-- Login card (same look as your signup card) -->
+      <div id="sl-login-card" style="margin-top:1rem;">
         <div class="muted" style="font-size:.95rem;">Sign in to purchase (magic link — no password)</div>
+
         <div class="form-grid" style="margin-top:.75rem;">
           <label class="muted">
             Email
             <input id="sl-email" type="email" placeholder="you@company.com" />
           </label>
         </div>
+
         <div class="actions" style="margin-top:.85rem;">
           <button id="sl-sendlink" type="button" class="btn btn-primary">Send magic link</button>
+          <button id="sl-signout" class="btn" type="button" style="display:none;">Sign out</button>
         </div>
+
         <div class="muted" id="sl-email-hint" style="font-size:.9rem; margin-top:.6rem;"></div>
       </div>
 
-      <!-- Checkout button (only shown if signed in + category selected) -->
-      <div id="sl-checkout-card" style="margin-top:1rem; display:none;">
+      <!-- Checkout -->
+      <div id="sl-checkout-card" style="margin-top:1rem;">
         <div class="actions">
-          <button id="sl-checkout" class="btn btn-primary">Checkout</button>
+          <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Checkout</button>
           <a class="btn" href="/account/">Account</a>
-          <button id="sl-signout" class="btn" style="display:none;">Sign out</button>
         </div>
+        <div class="muted" id="sl-status" style="font-size:.9rem; margin-top:.85rem;"></div>
       </div>
-
-      <div class="muted" id="sl-status" style="font-size:.9rem; margin-top:.85rem;"></div>
     </section>
   </main>
 
-  <!-- scripts (ORDER MATTERS) -->
+  <!-- Scripts: REQUIRED ORDER -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/assets/stripe-map.js?v=checkout-001"></script>
-
-  <!-- auth must be before app -->
+  <script src="/assets/stripe-map.js"></script>
   <script defer src="/assets/auth.js?v=checkout-001"></script>
   <script defer src="/assets/app.js?v=checkout-001"></script>
 </body>

@@ -1,166 +1,200 @@
-/* /assets/auth.js
-   Single source of truth for Supabase auth + magic link flow.
-   Exposes: window.SL_AUTH.sb (Supabase client)
-
-   Works with NEW IDs:
-     #sl-email, #sl-sendlink, #sl-email-hint, #sl-status
-     #sl-signout (optional)
-   Also supports legacy IDs if they exist.
+/* /assets/auth.js — FULL FILE OVERWRITE (Supabase v2)
+   - Single Supabase client exposed as: window.SL_AUTH.sb
+   - Magic link send redirects to /upgrade/checkout/
+   - Stores/reads selected category via URL + localStorage
 */
 
-(function () {
+(() => {
   "use strict";
 
-  // --- Guardrails ---
+  const LS_CAT = "sl_selected_category";
+
+  function log(...a) { console.log("[auth]", ...a); }
+  function warn(...a) { console.warn("[auth]", ...a); }
+  function err(...a) { console.error("[auth]", ...a); }
+
+  // ===== Helpers =====
+  const $ = (sel) => document.querySelector(sel);
+
+  function getCategoryFromURL() {
+    try {
+      const u = new URL(window.location.href);
+      return u.searchParams.get("category") || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function setCategory(cat) {
+    const c = (cat || "").trim();
+    if (!c) return;
+    localStorage.setItem(LS_CAT, c);
+  }
+
+  function getCategory() {
+    return getCategoryFromURL() || localStorage.getItem(LS_CAT) || "";
+  }
+
+  function setText(el, txt) {
+    if (el) el.textContent = txt || "";
+  }
+
+  function show(el, on) {
+    if (!el) return;
+    el.style.display = on ? "" : "none";
+  }
+
+  // ===== Read Supabase config from stripe-map.js or globals =====
   const SUPABASE_URL =
-    window.SL_SUPABASE_URL || window.SUPABASE_URL || window.SCOPEDLABS_SUPABASE_URL;
+    window.SL_SUPABASE_URL ||
+    window.SUPABASE_URL ||
+    window.__SL_SUPABASE_URL;
+
   const SUPABASE_ANON_KEY =
-    window.SL_SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY || window.SCOPEDLABS_SUPABASE_ANON_KEY;
+    window.SL_SUPABASE_ANON_KEY ||
+    window.SUPABASE_ANON_KEY ||
+    window.__SL_SUPABASE_ANON_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("[auth] Missing Supabase URL/Anon key. Ensure stripe-map.js loads before auth.js");
+    err("Missing Supabase URL / ANON KEY. Ensure /assets/stripe-map.js defines SL_SUPABASE_URL + SL_SUPABASE_ANON_KEY.");
     return;
   }
 
-  if (!window.supabase || !window.supabase.createClient) {
-    console.error("[auth] Supabase JS SDK not found. Ensure supabase-js v2 is loaded before auth.js");
-    return;
-  }
-
-  // --- Supabase client (ONE instance) ---
+  // ===== Create client =====
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      flowType: "pkce",
     },
   });
 
   window.SL_AUTH = window.SL_AUTH || {};
   window.SL_AUTH.sb = sb;
 
-  // Back-compat aliases (safe)
-  window.SUPABASE_URL = window.SUPABASE_URL || SUPABASE_URL;
-  window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
+  // Back-compat aliases (harmless)
+  window.SL_SUPABASE_URL = SUPABASE_URL;
+  window.SL_SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
-  // --- Helpers ---
-  const $ = (sel) => document.querySelector(sel);
+  // ===== New-ID elements (preferred) =====
+  const elNew = {
+    email: $("#sl-email"),
+    send: $("#sl-sendlink"),
+    hint: $("#sl-email-hint"),
+    status: $("#sl-status"),
+    signout: $("#sl-signout"),
+  };
 
-  function getEl(...ids) {
-    for (const id of ids) {
-      const el = document.getElementById(id);
-      if (el) return el;
+  // ===== Legacy-ID elements (if any old page still exists) =====
+  const elOld = {
+    email: $("#authEmail"),
+    send: $("#sendLink"),
+    hint: $("#authHint"),
+    status: $("#authStatus"),
+    signout: $("#signOutBtn"),
+    signedInLine: $("#signedInLine"),
+    signedInAs: $("#signedInAs"),
+  };
+
+  function uiSetStatus(msg) {
+    setText(elNew.status, msg);
+    setText(elOld.status, msg);
+  }
+
+  function uiSetHint(msg) {
+    setText(elNew.hint, msg);
+    setText(elOld.hint, msg);
+  }
+
+  function uiGetEmail() {
+    return (elNew.email?.value || elOld.email?.value || "").trim();
+  }
+
+  function uiSetSignedIn(email) {
+    // New pages: just show status line if you want
+    if (email) {
+      uiSetStatus(`Signed in as ${email}`);
+      show(elNew.signout, true);
+      show(elOld.signout, true);
+    } else {
+      show(elNew.signout, false);
+      show(elOld.signout, false);
     }
-    return null;
+
+    // Legacy explicit fields if present
+    if (elOld.signedInLine) show(elOld.signedInLine, !!email);
+    if (elOld.signedInAs) setText(elOld.signedInAs, email || "");
   }
 
-  function setText(el, txt) {
-    if (!el) return;
-    el.textContent = txt == null ? "" : String(txt);
-  }
-
-  function getSelectedCategoryFromUrlOrStorage() {
-    const url = new URL(window.location.href);
-    const c = url.searchParams.get("category");
-    if (c) return c;
-    try {
-      return localStorage.getItem("sl_category") || "";
-    } catch {
-      return "";
-    }
-  }
-
-  function setSelectedCategoryStorage(category) {
-    try {
-      if (category) localStorage.setItem("sl_category", category);
-    } catch {}
-  }
-
-  // IMPORTANT: send users to the CHECKOUT PAGE after clicking email link
-  function computeEmailRedirectTo() {
-    const base = `${window.location.origin}`;
-    const category = getSelectedCategoryFromUrlOrStorage();
-    if (category) return `${base}/upgrade/checkout/?category=${encodeURIComponent(category)}`;
-    return `${base}/upgrade/checkout/`;
-  }
-
-  // --- UI bindings (new + legacy) ---
-  const elEmail = getEl("sl-email", "authEmail", "email", "loginEmail");
-  const elSend = getEl("sl-sendlink", "sendMagicLink", "sendLink", "loginBtn");
-  const elHint = getEl("sl-email-hint", "emailHint", "loginHint");
-  const elStatus = getEl("sl-status", "statusText", "authStatus");
-  const elSignout = getEl("sl-signout", "signOutBtn", "logoutBtn");
-
-  function normalizeEmail(s) {
-    return String(s || "").trim();
-  }
-
+  // ===== Magic link send =====
   async function sendMagicLink() {
-    const email = normalizeEmail(elEmail && elEmail.value);
-    if (!email) {
-      setText(elHint, "Enter an email address first.");
-      return;
-    }
+    try {
+      uiSetHint("");
+      const email = uiGetEmail();
+      if (!email) {
+        uiSetHint("Enter an email address first.");
+        return;
+      }
 
-    // Save category if present on this page, so redirect_to can include it next time
-    const cat = getSelectedCategoryFromUrlOrStorage();
-    if (cat) setSelectedCategoryStorage(cat);
+      // Capture category (URL or stored)
+      const cat = getCategory();
+      if (cat) setCategory(cat);
 
-    setText(elHint, "Sending magic link…");
-    setText(elStatus, "");
+      const redirectTo = `${window.location.origin}/upgrade/checkout/?category=${encodeURIComponent(cat || "")}`;
 
-    const emailRedirectTo = computeEmailRedirectTo();
+      uiSetStatus("Sending magic link…");
 
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo,
-        shouldCreateUser: true,
-      },
-    });
-
-    if (error) {
-      console.error("[auth] signInWithOtp error:", error);
-      setText(elHint, `Could not send link: ${error.message || "unknown error"}`);
-      return;
-    }
-
-    setText(elHint, "Check your email for the sign-in link.");
-  }
-
-  async function signOut() {
-    await sb.auth.signOut();
-  }
-
-  // --- Session UI refresh hook ---
-  function emitAuthState(session) {
-    window.dispatchEvent(
-      new CustomEvent("sl:auth", {
-        detail: {
-          session,
-          user: session?.user || null,
-          email: session?.user?.email || null,
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo,
         },
-      })
-    );
+      });
+
+      if (error) throw error;
+
+      uiSetStatus("Check your email for the sign-in link.");
+    } catch (e) {
+      err(e);
+      uiSetStatus("Could not send magic link. Check console for details.");
+      uiSetHint(String(e?.message || e));
+    }
   }
 
   async function refreshSessionUI() {
     const { data } = await sb.auth.getSession();
-    emitAuthState(data?.session || null);
+    const email = data?.session?.user?.email || "";
+    uiSetSignedIn(email);
   }
 
-  // --- Wire events ---
-  if (elSend) elSend.addEventListener("click", sendMagicLink);
-  if (elSignout) elSignout.addEventListener("click", signOut);
+  async function signOut() {
+    await sb.auth.signOut();
+    uiSetStatus("Signed out.");
+    uiSetSignedIn("");
+  }
 
-  sb.auth.onAuthStateChange((_event, session) => {
-    emitAuthState(session || null);
-  });
+  function wire() {
+    elNew.send?.addEventListener("click", (e) => { e.preventDefault(); sendMagicLink(); });
+    elOld.send?.addEventListener("click", (e) => { e.preventDefault(); sendMagicLink(); });
 
-  // initial
-  refreshSessionUI();
+    elNew.signout?.addEventListener("click", (e) => { e.preventDefault(); signOut(); });
+    elOld.signout?.addEventListener("click", (e) => { e.preventDefault(); signOut(); });
 
-  console.log("[auth] Supabase client ready");
+    sb.auth.onAuthStateChange((_event) => {
+      refreshSessionUI();
+    });
+  }
+
+  (async () => {
+    wire();
+
+    // If category exists in URL, store it (helps checkout page)
+    const urlCat = getCategoryFromURL();
+    if (urlCat) setCategory(urlCat);
+
+    await refreshSessionUI();
+    log("Supabase client ready");
+  })();
 })();
 
