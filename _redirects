@@ -1,7 +1,5 @@
-# --- Upgrade Checkout must win BEFORE /upgrade/* ---
-/upgrade/checkout/*   /upgrade/checkout/index.html   200
-/upgrade/checkout     /upgrade/checkout/            301
+/upgrade/checkout    /upgrade/checkout/            301
+/upgrade/checkout/   /upgrade/checkout/index.html  200
+/upgrade/checkout/*  /upgrade/checkout/index.html  200
 
-# --- Upgrade SPA fallback (if you need it) ---
-/upgrade/*            /upgrade/index.html           200
 
