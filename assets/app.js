@@ -68,6 +68,11 @@
     return normCategory(u.searchParams.get("category"));
   }
 
+  function getReturnFromURL() {
+    const u = new URL(location.href);
+    return (u.searchParams.get("return") || "").toString().trim().toLowerCase();
+  }
+
   function getCategoryFromStorage() {
     try {
       return normCategory(localStorage.getItem("sl_selected_category"));
@@ -194,6 +199,36 @@
     });
   }
 
+  function extractCategoryFromClickTarget(target) {
+    if (!target) return "";
+
+    const node = target.closest ? target.closest("[data-category],a,button") : target;
+    if (!node) return "";
+
+    // Preferred: data-category attribute
+    const dc = node.getAttribute && node.getAttribute("data-category");
+    if (dc) return normCategory(dc);
+
+    // Next: href containing ?category=
+    const href = node.getAttribute && node.getAttribute("href");
+    if (href && href.indexOf("category=") !== -1) {
+      try {
+        const url = new URL(href, location.origin);
+        return normCategory(url.searchParams.get("category"));
+      } catch (_) {
+        // Fallback for relative-ish parsing
+        const m = href.match(/[?&]category=([^&#]+)/i);
+        if (m && m[1]) return normCategory(decodeURIComponent(m[1]));
+      }
+    }
+
+    // Next: value attribute (common on buttons)
+    const val = node.getAttribute && node.getAttribute("value");
+    if (val) return normCategory(val);
+
+    return "";
+  }
+
   async function init() {
     if (!sb) {
       setStatus("Auth not ready. (auth.js must load before app.js)");
@@ -209,6 +244,9 @@
     els.sendLinkBtn = $("sl-sendlink");
     els.status = $("sl-status");
 
+    const returnMode = getReturnFromURL();
+    const isReturnCheckout = returnMode === "checkout";
+
     // Category resolution
     const urlCat = getCategoryFromURL();
     const storedCat = getCategoryFromStorage();
@@ -218,9 +256,8 @@
     // Change category buttons
     if (els.changeCatBtn) {
       els.changeCatBtn.addEventListener("click", () => {
-        const cat = currentCategory || getCategoryFromStorage();
-        const url = cat ? `/upgrade/?category=${encodeURIComponent(cat)}#categories` : `/upgrade/#categories`;
-        location.href = url;
+        // Seamless return-to-checkout flow
+        location.href = `/upgrade/?return=checkout#categories`;
       });
     }
 
@@ -284,6 +321,17 @@
 
     // UPGRADE PAGE BEHAVIOR
     currentSession = await refreshSession();
+
+    // Return-to-checkout flow: if already signed in and already have a category, bounce immediately.
+    if (isReturnCheckout && currentSession) {
+      const cat = currentCategory || getCategoryFromStorage();
+      if (cat) {
+        setCategory(cat);
+        location.replace(`/upgrade/checkout/?category=${encodeURIComponent(cat)}`);
+        return;
+      }
+    }
+
     if (currentSession) {
       setStatus(`Signed in as ${currentSession.user?.email || "user"}`);
       if (els.checkoutCard) els.checkoutCard.style.display = "";
@@ -294,6 +342,26 @@
       if (els.checkoutCard) els.checkoutCard.style.display = "none";
       if (els.signoutBtn) els.signoutBtn.style.display = "none";
       if (els.loginCard) els.loginCard.style.display = "";
+    }
+
+    // Return-to-checkout flow: hide login UI (if session exists) and auto-redirect when category is selected.
+    if (isReturnCheckout && currentSession) {
+      if (els.loginCard) els.loginCard.style.display = "none";
+
+      // Intercept category selections and send back to checkout with the selected category.
+      document.addEventListener(
+        "click",
+        (e) => {
+          const cat = extractCategoryFromClickTarget(e.target);
+          if (!cat) return;
+
+          // Only auto-redirect when return=checkout is active and session exists.
+          e.preventDefault();
+          setCategory(cat);
+          location.href = `/upgrade/checkout/?category=${encodeURIComponent(cat)}`;
+        },
+        true
+      );
     }
   }
 
