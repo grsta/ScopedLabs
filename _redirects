@@ -1,2 +1,10 @@
-/upgrade/checkout  /upgrade/checkout/  301
-/upgrade/checkout/  /upgrade/checkout/index.html  200
+# --- Checkout MUST come first ---
+/upgrade/checkout/*   /upgrade/checkout/index.html   200
+/upgrade/checkout     /upgrade/checkout/             301
+
+# --- Upgrade page catch-all ---
+/upgrade/*            /upgrade/index.html            200
+
+# (Optional) if your site is an SPA, keep your global catch-all LAST
+/*                   /index.html                     200
+
