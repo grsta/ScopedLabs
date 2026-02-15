@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Checkout • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=checkout-012" />
+  <link rel="stylesheet" href="/assets/style.css?v=checkout-013" />
 </head>
 
 <body>
@@ -32,7 +32,7 @@
 
       <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin:.75rem 0 1rem;">
         <div class="muted">Selected category:</div>
-        <div class="pill" id="sl-selected-category">None selected</div>
+        <div class="pill" id="sl-category-pill">None selected</div>
         <button id="sl-change-category" class="btn" type="button">Choose a different category</button>
       </div>
 
@@ -41,38 +41,32 @@
         $19.99 <span class="muted" style="font-size:1rem; font-weight:600;">one-time</span>
       </div>
 
-      <div id="sl-login-card" style="margin-top:1rem;">
-        <div class="muted" style="font-size:.95rem;">Sign in to purchase (magic link — no password)</div>
-
-        <div class="form-grid" style="margin-top:.75rem;">
-          <label class="muted">
-            Email
-            <input id="sl-email" type="email" placeholder="you@company.com" />
-          </label>
-        </div>
-
-        <div class="actions" style="margin-top:.85rem;">
-          <button id="sl-sendlink" type="button" class="btn btn-primary">Send magic link</button>
-          <button id="sl-signout" class="btn" type="button" style="display:none;">Sign out</button>
-        </div>
-
-        <div class="muted" id="sl-email-hint" style="font-size:.9rem; margin-top:.6rem;"></div>
-      </div>
-
-      <div id="sl-checkout-card" style="margin-top:1rem;">
+      <!-- Session-only checkout view:
+           auth/app.js will:
+           - hide this if not signed in
+           - redirect back to /upgrade/#checkout if needed
+      -->
+      <div id="sl-checkout-card" style="margin-top:1rem; display:none;">
         <div class="actions">
           <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Checkout</button>
           <a class="btn" href="/account/">Account</a>
+          <button id="sl-signout" class="btn" type="button" style="display:none;">Sign out</button>
         </div>
-        <div class="muted" id="sl-status" style="font-size:.9rem; margin-top:.85rem;"></div>
+        <div id="sl-status" class="muted" style="margin-top:.6rem;"></div>
+      </div>
+
+      <!-- OPTIONAL: if you want a fallback message while app.js evaluates session -->
+      <div id="sl-boot-hint" class="muted" style="margin-top:1rem;">
+        Signing you in…
       </div>
     </section>
   </main>
 
+  <!-- Required script order -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/assets/stripe-map.js"></script>
-  <script defer src="/assets/auth.js?v=checkout-010"></script>
-  <script defer src="/assets/app.js?v=checkout-010"></script>
+  <script defer src="/assets/auth.js?v=upgrade-111"></script>
+  <script defer src="/assets/app.js?v=upgrade-111"></script>
 </body>
 </html>
 
