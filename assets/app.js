@@ -20,6 +20,19 @@
 
   const $ = (id) => document.getElementById(id);
 
+  // Some pages still have legacy IDs; support both.
+  function bindLegacyIdsToNewIds() {
+    try {
+      // Auth legacy -> new IDs
+      if (!$("#sl-email") && $("#authEmail")) $("#authEmail").id = "sl-email";
+      if (!$("#sl-sendlink") && $("#authSendLink")) $("#authSendLink").id = "sl-sendlink";
+      if (!$("#sl-status") && $("#authStatus")) $("#authStatus").id = "sl-status";
+
+      // Optional legacy containers (if they exist)
+      if (!$("#sl-login-card") && $("#authCard")) $("#authCard").id = "sl-login-card";
+    } catch (_) {}
+  }
+
   // Elements (IDs may or may not exist depending on page)
   const els = {
     // Category UI
@@ -94,14 +107,24 @@
     return data ? data.session : null;
   }
 
-  function redirectToUpgrade(reason) {
+  function redirectToUpgrade() {
     const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
     const url = cat ? `/upgrade/?category=${encodeURIComponent(cat)}#checkout` : `/upgrade/#categories`;
     location.replace(url);
   }
 
   function hideLoginUIOnCheckout() {
+    // Hide the whole login card if present
     if (els.loginCard) els.loginCard.style.display = "none";
+
+    // Hide individual legacy/new auth controls if they exist (belt + suspenders)
+    const hideIds = ["sl-email", "sl-sendlink", "sl-email-hint", "authEmail", "authSendLink"];
+    hideIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    });
+
+    // Clear email field if present
     if (els.emailInput) els.emailInput.value = "";
   }
 
@@ -123,7 +146,7 @@
     return false;
   }
 
-  async function waitForSessionExchange(timeoutMs = 7000) {
+  async function waitForSessionExchange(timeoutMs = 8000) {
     // Wait for auth.js to exchange the code for a session.
     // Use onAuthStateChange + polling fallback.
     if (!sb) return null;
@@ -140,7 +163,9 @@
       const finish = (val) => {
         if (done) return;
         done = true;
-        try { unsub && unsub(); } catch {}
+        try {
+          unsub && unsub();
+        } catch {}
         resolve(val || null);
       };
 
@@ -148,9 +173,10 @@
         if (session) finish(session);
       });
 
-      const unsub = data && data.subscription && data.subscription.unsubscribe
-        ? () => data.subscription.unsubscribe()
-        : null;
+      const unsub =
+        data && data.subscription && data.subscription.unsubscribe
+          ? () => data.subscription.unsubscribe()
+          : null;
 
       const tick = async () => {
         if (done) return;
@@ -174,13 +200,22 @@
       return;
     }
 
+    // Make legacy IDs behave like the new ones (important!)
+    bindLegacyIdsToNewIds();
+
+    // Refresh element refs after binding legacy IDs
+    els.loginCard = $("sl-login-card");
+    els.emailInput = $("sl-email");
+    els.sendLinkBtn = $("sl-sendlink");
+    els.status = $("sl-status");
+
     // Category resolution
     const urlCat = getCategoryFromURL();
     const storedCat = getCategoryFromStorage();
     setCategory(urlCat || storedCat || "");
     updateCategoryUI();
 
-    // Change category buttons (both pages can use these IDs if present)
+    // Change category buttons
     if (els.changeCatBtn) {
       els.changeCatBtn.addEventListener("click", () => {
         const cat = currentCategory || getCategoryFromStorage();
@@ -198,18 +233,26 @@
     // CHECKOUT PAGE BEHAVIOR
     if (IS_CHECKOUT_PAGE) {
       hideLoginUIOnCheckout();
+      updateCategoryUI();
+
+      const cameFromAuth = hasSupabaseAuthParams();
 
       // If we arrived from the magic link, don't bounce immediately.
-      if (hasSupabaseAuthParams()) {
+      if (cameFromAuth) {
         setStatus("Signing you in…");
-        currentSession = await waitForSessionExchange(8000);
+        currentSession = await waitForSessionExchange(9000);
       } else {
+        // Normal visit: require existing session
         currentSession = await refreshSession();
+        if (!currentSession) {
+          // tiny grace window in case auth params were already cleaned by auth.js
+          currentSession = await waitForSessionExchange(2500);
+        }
       }
 
-      // Still not signed in? THEN go back to upgrade checkout section.
+      // Still not signed in? send them back to upgrade
       if (!currentSession) {
-        redirectToUpgrade("checkout_requires_session");
+        redirectToUpgrade();
         return;
       }
 
@@ -219,7 +262,7 @@
       if (els.checkoutCard) els.checkoutCard.style.display = "";
       if (els.signoutBtn) els.signoutBtn.style.display = "";
 
-      // If category missing, force them to choose (but don't hard-bounce instantly)
+      // If category missing, force them to choose
       if (!currentCategory) {
         setStatus(`Signed in as ${currentSession.user?.email || "user"} — choose a category to continue.`);
         if (els.checkoutBtn) els.checkoutBtn.disabled = true;
@@ -229,7 +272,9 @@
 
       if (els.signoutBtn) {
         els.signoutBtn.addEventListener("click", async () => {
-          try { await sb.auth.signOut(); } catch {}
+          try {
+            await sb.auth.signOut();
+          } catch {}
           location.href = "/upgrade/#checkout";
         });
       }
@@ -237,7 +282,7 @@
       return; // checkout page done
     }
 
-    // UPGRADE PAGE BEHAVIOR (existing flow)
+    // UPGRADE PAGE BEHAVIOR
     currentSession = await refreshSession();
     if (currentSession) {
       setStatus(`Signed in as ${currentSession.user?.email || "user"}`);
