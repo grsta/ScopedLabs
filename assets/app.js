@@ -216,13 +216,33 @@
     setCategory(urlCat || storedCat || "");
     updateCategoryUI();
 
+    // If user selected category on upgrade page and we came from checkout,
+// automatically return to checkout
+try {
+  const returnFlag = localStorage.getItem("sl_return_to_checkout");
+  if (returnFlag === "1" && currentCategory) {
+    localStorage.removeItem("sl_return_to_checkout");
+    location.href = "/upgrade/checkout/?category=" + encodeURIComponent(currentCategory);
+    return;
+  }
+} catch {}
+
+
     // Change category buttons
     if (els.changeCatBtn) {
       els.changeCatBtn.addEventListener("click", (e) => {
         e.preventDefault();
-        goToUpgradeCategories();
-      });
-    }
+
+        
+    // remember we came from checkout
+        try {
+          localStorage.setItem("sl_return_to_checkout", "1");
+    } catch {}
+
+    goToUpgradeCategories();
+  });
+}
+
     if (els.chooseCatBtn) {
       els.chooseCatBtn.addEventListener("click", (e) => {
         e.preventDefault();
