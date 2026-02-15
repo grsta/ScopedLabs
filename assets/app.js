@@ -221,14 +221,45 @@
       }
 
       // SIGN OUT BUTTON
-      if (els.signoutBtn) {
-        els.signoutBtn.onclick = async () => {
-          try {
-            await sb.auth.signOut();
-          } catch {}
-          location.href = "/upgrade/#checkout";
-        };
-      }
+      // SIGN OUT BUTTON (works on both pages, even if initially hidden)
+(function bindSignOut() {
+  const btn = document.getElementById("sl-signout");
+  if (!btn) return;
+
+  // Make sure it’s visible when signed in
+  btn.style.display = "";
+
+  // Prevent double-binding
+  if (btn.dataset.boundSignout) return;
+  btn.dataset.boundSignout = "1";
+
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      setStatus("Signing out…");
+    } catch {}
+
+    try {
+      // Supabase signout
+      await sb.auth.signOut();
+    } catch (err) {
+      console.warn("signOut failed:", err);
+    }
+
+    // Hard clear local state
+    try {
+      localStorage.removeItem("sl_selected_category");
+      localStorage.removeItem("sb-access-token");
+      localStorage.removeItem("sb-refresh-token");
+    } catch {}
+
+    // Force a clean reload path
+    location.href = "/upgrade/#checkout";
+  });
+})();
+
 
       return;
     }
