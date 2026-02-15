@@ -135,7 +135,7 @@
     }
   }
 
-  async function waitForSessionExchange(timeoutMs = 8000) {
+  async function waitForSessionExchange(timeoutMs = 9000) {
     if (!sb) return null;
 
     const start = Date.now();
@@ -146,24 +146,35 @@
 
     return await new Promise((resolve) => {
       let done = false;
+      let unsub = null; // MUST exist before finish()
 
       const finish = (val) => {
         if (done) return;
         done = true;
+
         try {
-          unsub && unsub();
+          if (unsub) unsub();
         } catch {}
+
         resolve(val || null);
       };
 
-      const { data } = sb.auth.onAuthStateChange((_event, session) => {
+      const sub = sb.auth.onAuthStateChange((_event, session) => {
         if (session) finish(session);
       });
 
-      const unsub =
-        data && data.subscription && data.subscription.unsubscribe
-          ? () => data.subscription.unsubscribe()
-          : null;
+      // attach unsubscribe safely
+      try {
+        unsub =
+          sub &&
+          sub.data &&
+          sub.data.subscription &&
+          sub.data.subscription.unsubscribe
+            ? () => sub.data.subscription.unsubscribe()
+            : null;
+      } catch {
+        unsub = null;
+      }
 
       const tick = async () => {
         if (done) return;
