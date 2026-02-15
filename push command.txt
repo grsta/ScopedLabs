@@ -1,0 +1,7 @@
+push command
+
+git add -A
+git commit -m "Remove stale auth label from checkout UI"
+git push origin main
+
+

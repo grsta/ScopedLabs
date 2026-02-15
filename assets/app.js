@@ -97,7 +97,9 @@
 
   function redirectToUpgrade(_reason) {
     const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
-    const url = cat ? `/upgrade/?category=${encodeURIComponent(cat)}#checkout` : `/upgrade/#categories`;
+    const url = cat
+      ? `/upgrade/?category=${encodeURIComponent(cat)}#checkout`
+      : `/upgrade/#categories`;
     location.replace(url);
   }
 
@@ -107,7 +109,6 @@
   }
 
   function hasSupabaseAuthParams() {
-    // Supabase magic link / OTP exchange can arrive via query params or hash fragments
     const u = new URL(location.href);
     const qp = u.searchParams;
 
@@ -117,21 +118,22 @@
     if (qp.has("access_token")) return true;
     if (qp.has("refresh_token")) return true;
 
-    // Some flows use hash fragments like #access_token=...
     const h = (location.hash || "").toLowerCase();
-    if (h.includes("access_token=") || h.includes("refresh_token=") || h.includes("type=recovery")) return true;
+    if (
+      h.includes("access_token=") ||
+      h.includes("refresh_token=") ||
+      h.includes("type=recovery")
+    )
+      return true;
 
     return false;
   }
 
   async function waitForSessionExchange(timeoutMs = 7000) {
-    // Wait for auth.js to exchange the code for a session.
-    // Use onAuthStateChange + polling fallback.
     if (!sb) return null;
 
     const start = Date.now();
 
-    // quick check
     let s = await refreshSession();
     if (s) return s;
 
@@ -193,19 +195,17 @@
       return;
     }
 
-    // Category resolution
     const urlCat = getCategoryFromURL();
     const storedCat = getCategoryFromStorage();
     setCategory(urlCat || storedCat || "");
     updateCategoryUI();
 
-    // Change category buttons (both pages can use these IDs if present)
     if (els.changeCatBtn) {
       els.changeCatBtn.addEventListener("click", () => {
-        // Send them back to the category list WITHOUT requiring a new magic link.
-        // Session should persist; upgrade page will now wait briefly before claiming signed-out.
         const cat = currentCategory || getCategoryFromStorage();
-        const url = cat ? `/upgrade/?category=${encodeURIComponent(cat)}#categories` : `/upgrade/#categories`;
+        const url = cat
+          ? `/upgrade/?category=${encodeURIComponent(cat)}#categories`
+          : `/upgrade/#categories`;
         location.href = url;
       });
     }
@@ -216,51 +216,86 @@
       });
     }
 
-    // Live update if Supabase finishes restoring session after page load
     sb.auth.onAuthStateChange((_event, session) => {
-      if (IS_CHECKOUT_PAGE) return; // checkout has its own flow below
+      if (IS_CHECKOUT_PAGE) return;
       if (session) {
         currentSession = session;
         applySignedInUI(session);
       }
     });
 
+    // =============================
     // CHECKOUT PAGE BEHAVIOR
+    // =============================
     if (IS_CHECKOUT_PAGE) {
       hideLoginUIOnCheckout();
 
       const cameFromAuth = hasSupabaseAuthParams();
 
-      // If we arrived from the magic link, don't bounce immediately.
       if (cameFromAuth) {
         setStatus("Signing you in…");
         currentSession = await waitForSessionExchange(8000);
       } else {
         currentSession = await refreshSession();
-        // Avoid immediate bounce when auth params were already cleaned but session exchange is still in-flight.
         if (!currentSession) {
           currentSession = await waitForSessionExchange(2500);
         }
       }
 
-      // Still not signed in? THEN go back to upgrade checkout section.
       if (!currentSession) {
         redirectToUpgrade("checkout_requires_session");
         return;
       }
 
-      // Signed in: show checkout UI
       setStatus(`Signed in as ${currentSession.user?.email || "user"}`);
 
       if (els.checkoutCard) els.checkoutCard.style.display = "";
       if (els.signoutBtn) els.signoutBtn.style.display = "";
 
-      // If category missing, force them to choose (but don't hard-bounce instantly)
       if (!currentCategory) {
-        setStatus(`Signed in as ${currentSession.user?.email || "user"} — choose a category to continue.`);
+        setStatus(
+          `Signed in as ${currentSession.user?.email || "user"} — choose a category to continue.`
+        );
         if (els.checkoutBtn) els.checkoutBtn.disabled = true;
       } else {
         if (els.checkoutBtn) els.checkoutBtn.disabled = false;
+      }
+
+      // =============================
+      // 🔥 CHECKOUT BUTTON WIRING
+      // =============================
+      if (els.checkoutBtn && !els.checkoutBtn.dataset.boundCheckout) {
+        els.checkoutBtn.dataset.boundCheckout = "1";
+
+        els.checkoutBtn.addEventListener("click", async () => {
+          if (!currentSession) return;
+          if (!currentCategory) return;
+
+          els.checkoutBtn.disabled = true;
+          setStatus("Opening Stripe Checkout…");
+
+          try {
+            const res = await fetch("/api/create-checkout-session", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                category: currentCategory,
+                email:
+                  (currentSession.user && currentSession.user.email) || null,
+              }),
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const data = await res.json();
+            if (!data || !data.url) throw new Error("Missing url");
+
+            location.href = data.url;
+          } catch {
+            els.checkoutBtn.disabled = false;
+            setStatus("Failed to start checkout");
+          }
+        });
       }
 
       if (els.signoutBtn) {
@@ -272,13 +307,14 @@
         });
       }
 
-      return; // checkout page done
+      return;
     }
 
+    // =============================
     // UPGRADE PAGE BEHAVIOR
+    // =============================
     currentSession = await refreshSession();
 
-    // 🔥 IMPORTANT: if session is null, wait briefly before calling it "signed out"
     if (!currentSession) {
       currentSession = await waitForSessionExchange(2500);
     }
@@ -290,7 +326,6 @@
     }
   }
 
-  // boot
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
