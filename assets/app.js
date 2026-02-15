@@ -5,6 +5,7 @@
    - On /upgrade/: shows category picker + login + checkout gating
    - On /upgrade/checkout/: SESSION-ONLY checkout view (no email box)
      * If not signed in -> redirect back to /upgrade/?category=...#checkout
+     * BUT: if arriving from magic-link and auth params exist, wait for exchange first
 */
 
 (() => {
@@ -45,11 +46,7 @@
   // State
   let currentCategory = "";
   let currentSession = null;
-
-  function log(...args) {
-    // keep quiet in prod; uncomment if needed
-    // console.log("[app]", ...args);
-  }
+  let sendingLink = false;
 
   function normCategory(v) {
     return (v || "").toString().trim().toLowerCase();
@@ -86,8 +83,6 @@
     if (els.catPill) els.catPill.textContent = cat ? cat : "None selected";
     if (els.catCardSelected) els.catCardSelected.textContent = cat ? cat : "None selected";
 
-    // On checkout page, "change category" should always exist (if the element is present)
-    // but the main "choose category" button should usually be hidden there.
     if (IS_CHECKOUT_PAGE) {
       if (els.chooseCatBtn) els.chooseCatBtn.style.display = "none";
       if (els.changeCatBtn) els.changeCatBtn.style.display = "";
@@ -97,25 +92,50 @@
   async function refreshSession() {
     if (!sb) return null;
     const { data, error } = await sb.auth.getSession();
-    if (error) {
-      log("getSession error", error);
-      return null;
-    }
+    if (error) return null;
     return data ? data.session : null;
   }
 
   function redirectToUpgrade(reason) {
-    // Preserve category if we have it
     const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
     const url = cat ? `/upgrade/?category=${encodeURIComponent(cat)}#checkout` : `/upgrade/#categories`;
-    log("redirectToUpgrade:", reason, "->", url);
+    // console.log("[app] redirectToUpgrade:", reason, "->", url);
     location.replace(url);
   }
 
   function hideLoginUIOnCheckout() {
-    // Checkout page: no email box, no send-link flow. That step happens on /upgrade/.
+    // Checkout page: no email box, no send-link flow.
     if (els.loginCard) els.loginCard.style.display = "none";
     if (els.emailInput) els.emailInput.value = "";
+  }
+
+  function hasAuthParamsInURL() {
+    // Supabase magic-link can arrive with different param styles depending on config:
+    // - query: ?code=... or ?token_hash=...&type=magiclink
+    // - hash: #access_token=...&refresh_token=...
+    const u = new URL(location.href);
+
+    const q = u.searchParams;
+    if (q.get("code")) return true;
+    if (q.get("token_hash")) return true;
+    if (q.get("type")) return true;
+
+    const h = (location.hash || "").toLowerCase();
+    if (h.includes("access_token=")) return true;
+    if (h.includes("refresh_token=")) return true;
+    if (h.includes("token_hash=")) return true;
+
+    return false;
+  }
+
+  async function waitForSessionExchange({ tries = 25, delayMs = 200 } = {}) {
+    // ~5 seconds max (25 * 200ms)
+    for (let i = 0; i < tries; i++) {
+      const s = await refreshSession();
+      if (s) return s;
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+    return null;
   }
 
   async function updateCheckoutState() {
@@ -133,18 +153,23 @@
       }
     }
 
-    currentSession = await refreshSession();
-
     // If this is the dedicated checkout page, require session.
     if (IS_CHECKOUT_PAGE) {
       hideLoginUIOnCheckout();
+
+      // IMPORTANT: arriving from magic-link? wait for auth.js exchange to finish
+      if (hasAuthParamsInURL()) {
+        setStatus("Finishing sign-in…");
+        currentSession = await waitForSessionExchange();
+      } else {
+        currentSession = await refreshSession();
+      }
 
       if (!currentSession) {
         redirectToUpgrade("checkout page requires session");
         return;
       }
 
-      // Signed in: show only checkout controls
       if (els.checkoutCard) els.checkoutCard.style.display = "";
       if (els.signoutBtn) els.signoutBtn.style.display = ""; // optional
 
@@ -153,16 +178,16 @@
       return;
     }
 
-    // Otherwise (normal /upgrade/ page): show/hide login + checkout based on session
+    // Otherwise (normal /upgrade/ page)
+    currentSession = await refreshSession();
+
     if (currentSession) {
-      // hide login
       if (els.loginCard) els.loginCard.style.display = "none";
       if (els.checkoutCard) els.checkoutCard.style.display = "";
       if (els.signoutBtn) els.signoutBtn.style.display = "";
       const email = currentSession.user?.email || "Signed in";
       setStatus(`Signed in as ${email}`);
     } else {
-      // show login
       if (els.loginCard) els.loginCard.style.display = "";
       if (els.checkoutCard) els.checkoutCard.style.display = "none";
       if (els.signoutBtn) els.signoutBtn.style.display = "none";
@@ -175,11 +200,17 @@
       setStatus("Auth not ready (Supabase client missing).");
       return;
     }
+    if (sendingLink) return;
+
     const email = (els.emailInput?.value || "").trim();
     if (!email) {
       setStatus("Enter an email address first.");
       return;
     }
+
+    // lock button to prevent double-send
+    sendingLink = true;
+    if (els.sendLinkBtn) els.sendLinkBtn.disabled = true;
 
     // Send link that returns to /upgrade/checkout/ with the chosen category
     const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
@@ -196,11 +227,19 @@
 
     if (error) {
       setStatus(`Error: ${error.message}`);
+      sendingLink = false;
+      if (els.sendLinkBtn) els.sendLinkBtn.disabled = false;
       return;
     }
 
     if (els.emailHint) els.emailHint.textContent = "Check your email for the sign-in link.";
     setStatus("Magic link sent.");
+
+    // unlock after a short cooldown (prevents accidental double click spam)
+    setTimeout(() => {
+      sendingLink = false;
+      if (els.sendLinkBtn) els.sendLinkBtn.disabled = false;
+    }, 1500);
   }
 
   async function startCheckout() {
@@ -210,20 +249,15 @@
       return;
     }
 
-    // On checkout page we *should* already have a session; on upgrade page we still gate
     currentSession = await refreshSession();
     if (!currentSession) {
-      if (IS_CHECKOUT_PAGE) {
-        redirectToUpgrade("checkout clicked without session");
-      } else {
-        setStatus("Sign in first.");
-      }
+      if (IS_CHECKOUT_PAGE) redirectToUpgrade("checkout clicked without session");
+      else setStatus("Sign in first.");
       return;
     }
 
     setStatus("Starting checkout…");
 
-    // Your backend should use session to associate customer + category, then return Stripe URL
     try {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -254,13 +288,11 @@
     if (!sb) return;
     await sb.auth.signOut();
     setStatus("Signed out.");
-    // If on checkout page, bounce to upgrade (since checkout requires session)
     if (IS_CHECKOUT_PAGE) redirectToUpgrade("signed out from checkout page");
     else await updateCheckoutState();
   }
 
   function wire() {
-    // Category change buttons
     if (els.changeCatBtn) {
       els.changeCatBtn.addEventListener("click", () => {
         const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
@@ -275,16 +307,10 @@
       });
     }
 
-    // Auth
     if (els.sendLinkBtn) els.sendLinkBtn.addEventListener("click", sendMagicLink);
-
-    // Checkout
     if (els.checkoutBtn) els.checkoutBtn.addEventListener("click", startCheckout);
-
-    // Sign out (optional)
     if (els.signoutBtn) els.signoutBtn.addEventListener("click", signOut);
 
-    // React to auth state changes
     if (sb) {
       sb.auth.onAuthStateChange(async () => {
         await updateCheckoutState();
@@ -293,14 +319,11 @@
   }
 
   (async function init() {
-    // Sync category from URL or storage
     const urlCat = getCategoryFromURL();
     if (urlCat) setCategory(urlCat);
     else setCategory(getCategoryFromStorage());
 
-    // If Supabase client isn't ready, we can still render category, but auth won't work
     if (!sb) {
-      // On checkout page, if auth is missing, still redirect (otherwise it's a dead end)
       if (IS_CHECKOUT_PAGE) {
         redirectToUpgrade("Supabase client missing on checkout page");
         return;
