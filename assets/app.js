@@ -98,9 +98,21 @@
     const labelNode = findCategoryLabelNode();
 
     // Update any known nodes
-    if (els.selectedLabel) els.selectedLabel.textContent = cat ? cat : "None selected";
-    if (els.catPill) els.catPill.textContent = cat ? cat : "None selected";
-    if (els.catCardSelected) els.catCardSelected.textContent = cat ? cat : "None selected";
+    if (els.selectedLabel) {
+  const inner = els.selectedLabel.querySelector(".value") || els.selectedLabel;
+  inner.textContent = cat ? cat : "None selected";
+}
+
+if (els.catPill) {
+  const inner = els.catPill.querySelector(".value") || els.catPill;
+  inner.textContent = cat ? cat : "None selected";
+}
+
+if (els.catCardSelected) {
+  const inner = els.catCardSelected.querySelector(".value") || els.catCardSelected;
+  inner.textContent = cat ? cat : "None selected";
+}
+
 
     // Update fallback node if needed
     if (labelNode && !els.selectedLabel && !els.catPill && !els.catCardSelected) {
