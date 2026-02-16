@@ -1,13 +1,13 @@
 /* /assets/app.js
    ScopedLabs Upgrade/Checkout controller.
 
-   Fixes:
-   - Robustly finds the "Selected category" label/pill even if IDs drifted
-   - Binds category unlock buttons/links via:
-       data-category OR id="sl-unlock-<cat>" OR href contains ?category=
-   - Syncs category across URL, localStorage, and UI
-   - Checkout page requires session; otherwise bounces to /upgrade/#checkout
-   - Sign out button wired
+   Rules:
+   - Category is synced between: URL ?category=, localStorage(sl_selected_category), and UI label(s)
+   - Clicking a category unlock:
+       * If signed in -> /upgrade/checkout/?category=CAT
+       * If not signed in -> /upgrade/?category=CAT#checkout
+   - Checkout page requires session; otherwise bounce to /upgrade/#checkout
+   - Sign out button works (sb.auth.signOut()) and returns to /upgrade/#checkout
 */
 
 (() => {
@@ -15,7 +15,6 @@
 
   const IS_CHECKOUT_PAGE = location.pathname.startsWith("/upgrade/checkout");
 
-  // Must be created by /assets/auth.js (loaded BEFORE this)
   const sb =
     (window.SL_AUTH && window.SL_AUTH.sb) ||
     (window.SL_AUTH && window.SL_AUTH.client) ||
@@ -23,7 +22,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // Elements (best-guess IDs)
   const els = {
     selectedLabel: $("sl-selected-category"),
     catPill: $("sl-category-pill"),
@@ -31,37 +29,13 @@
     changeCatBtn: $("sl-change-category"),
 
     loginCard: $("sl-login-card"),
+
     checkoutCard: $("sl-checkout-card"),
     checkoutBtn: $("sl-checkout"),
     signoutBtn: $("sl-signout"),
     status: $("sl-status"),
   };
 
-  // Fallback finder for "None selected" pill if IDs don’t match
-  function findCategoryLabelNode() {
-    // If your HTML uses one of these IDs, we’ll catch it
-    const byId =
-      els.selectedLabel ||
-      els.catPill ||
-      els.catCardSelected ||
-      $("sl-selected") ||
-      $("selected-category") ||
-      $("selectedCategory");
-
-    if (byId) return byId;
-
-    // Fallback: look for a pill-like element near “Selected category:”
-    // (tries to avoid redesigning HTML)
-    const candidates = document.querySelectorAll("span,div");
-    for (const n of candidates) {
-      const t = (n.textContent || "").trim().toLowerCase();
-      if (t === "none selected") return n;
-    }
-
-    return null;
-  }
-
-  // State
   let currentCategory = "";
   let currentSession = null;
 
@@ -75,11 +49,7 @@
   }
 
   function getCategoryFromStorage() {
-    try {
-      return normCategory(localStorage.getItem("sl_selected_category"));
-    } catch {
-      return "";
-    }
+    try { return normCategory(localStorage.getItem("sl_selected_category")); } catch { return ""; }
   }
 
   function setCategory(cat) {
@@ -95,29 +65,11 @@
 
   function updateCategoryUI() {
     const cat = currentCategory || "";
-    const labelNode = findCategoryLabelNode();
+    const label = cat ? cat : "None selected";
 
-    // Update any known nodes
-    if (els.selectedLabel) {
-  const inner = els.selectedLabel.querySelector(".value") || els.selectedLabel;
-  inner.textContent = cat ? cat : "None selected";
-}
-
-if (els.catPill) {
-  const inner = els.catPill.querySelector(".value") || els.catPill;
-  inner.textContent = cat ? cat : "None selected";
-}
-
-if (els.catCardSelected) {
-  const inner = els.catCardSelected.querySelector(".value") || els.catCardSelected;
-  inner.textContent = cat ? cat : "None selected";
-}
-
-
-    // Update fallback node if needed
-    if (labelNode && !els.selectedLabel && !els.catPill && !els.catCardSelected) {
-      labelNode.textContent = cat ? cat : "None selected";
-    }
+    if (els.selectedLabel) els.selectedLabel.textContent = label;
+    if (els.catPill) els.catPill.textContent = label;
+    if (els.catCardSelected) els.catCardSelected.textContent = label;
 
     if (IS_CHECKOUT_PAGE && els.checkoutBtn) {
       els.checkoutBtn.disabled = !cat;
@@ -128,13 +80,12 @@ if (els.catCardSelected) {
     if (!sb) return null;
     const { data, error } = await sb.auth.getSession();
     if (error) return null;
-    return data ? data.session : null;
+    return data?.session || null;
   }
 
   function applySignedInUI(session) {
     const email = session?.user?.email || "user";
     setStatus(`Signed in as ${email}`);
-
     if (els.checkoutCard) els.checkoutCard.style.display = "";
     if (els.signoutBtn) els.signoutBtn.style.display = "";
     if (els.loginCard) els.loginCard.style.display = "none";
@@ -142,23 +93,20 @@ if (els.catCardSelected) {
 
   function applySignedOutUI() {
     setStatus("Not signed in");
-    if (els.checkoutCard) els.checkoutCard.style.display = IS_CHECKOUT_PAGE ? "" : "none";
     if (els.signoutBtn) els.signoutBtn.style.display = "none";
     if (els.loginCard) els.loginCard.style.display = IS_CHECKOUT_PAGE ? "none" : "";
+    if (els.checkoutCard) els.checkoutCard.style.display = IS_CHECKOUT_PAGE ? "" : "none";
   }
 
   function extractCategoryFromNode(node) {
     if (!node) return "";
 
-    // 1) data-category
     const dc = normCategory(node.dataset && node.dataset.category);
     if (dc) return dc;
 
-    // 2) id="sl-unlock-thermal"
     const id = (node.id || "").trim();
     if (id.startsWith("sl-unlock-")) return normCategory(id.slice("sl-unlock-".length));
 
-    // 3) href with ?category=
     const href = (node.getAttribute && node.getAttribute("href")) || "";
     if (href && href.includes("category=")) {
       try {
@@ -171,20 +119,11 @@ if (els.catCardSelected) {
     return "";
   }
 
-  function setURLCategory(cat) {
-    // Keep URL consistent so reload reflects selection
-    const u = new URL(location.href);
-    if (cat) u.searchParams.set("category", cat);
-    else u.searchParams.delete("category");
-    history.replaceState({}, "", u.toString());
-  }
-
   function goToCheckoutFor(cat) {
     const c = normCategory(cat);
     if (!c) return;
 
     setCategory(c);
-    setURLCategory(c);
     updateCategoryUI();
 
     if (currentSession) {
@@ -195,34 +134,22 @@ if (els.catCardSelected) {
   }
 
   function bindCategoryUnlockButtons() {
+    // Delegation; only intercept if we can extract a category.
     document.addEventListener("click", (e) => {
-      const target = e.target && e.target.closest ? e.target.closest("a,button") : null;
-      if (!target) return;
+      const t = e.target && e.target.closest ? e.target.closest("a,button") : null;
+      if (!t) return;
 
-      const cat = extractCategoryFromNode(target);
+      const cat = extractCategoryFromNode(t);
       if (!cat) return;
 
-      // Hard stop: we own this click
-      try {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      } catch {}
-
+      try { e.preventDefault(); } catch {}
       goToCheckoutFor(cat);
     });
   }
 
   function bindChangeCategoryButton() {
     if (!els.changeCatBtn) return;
-
-    els.changeCatBtn.addEventListener("click", (e) => {
-      try {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      } catch {}
-
+    els.changeCatBtn.addEventListener("click", () => {
       const known = normCategory(currentCategory || getCategoryFromStorage());
       const url = known
         ? `/upgrade/?category=${encodeURIComponent(known)}#categories`
@@ -236,13 +163,7 @@ if (els.catCardSelected) {
     if (els.checkoutBtn.dataset.boundCheckout) return;
     els.checkoutBtn.dataset.boundCheckout = "1";
 
-    els.checkoutBtn.addEventListener("click", async (e) => {
-      try {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      } catch {}
-
+    els.checkoutBtn.addEventListener("click", async () => {
       if (!currentSession) return;
       if (!currentCategory) return;
 
@@ -255,20 +176,19 @@ if (els.catCardSelected) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             category: currentCategory,
-            email: (currentSession.user && currentSession.user.email) || null,
+            email: currentSession?.user?.email || null,
           }),
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
         const data = await res.json();
-        if (!data || !data.url) throw new Error("Missing url");
+        if (!data?.url) throw new Error("Missing url");
 
         location.href = data.url;
       } catch (err) {
+        console.error("[checkout] create session failed:", err);
         els.checkoutBtn.disabled = false;
         setStatus("Failed to start checkout");
-        console.error("[checkout] create session failed:", err);
       }
     });
   }
@@ -277,27 +197,17 @@ if (els.catCardSelected) {
     if (!els.signoutBtn) return;
 
     els.signoutBtn.addEventListener("click", async (e) => {
-      try {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      } catch {}
+      try { e.preventDefault(); } catch {}
+      if (!sb) return;
 
       setStatus("Signing out…");
-      try {
-        await sb.auth.signOut();
-      } catch (err) {
-        console.error("[auth] signOut failed:", err);
-      }
+      try { await sb.auth.signOut(); } catch (err) { console.error("[auth] signOut failed:", err); }
 
       currentSession = null;
       applySignedOutUI();
 
       const known = normCategory(currentCategory || getCategoryFromStorage());
-      const url = known
-        ? `/upgrade/?category=${encodeURIComponent(known)}#checkout`
-        : `/upgrade/#checkout`;
-      location.href = url;
+      location.href = known ? `/upgrade/?category=${encodeURIComponent(known)}#checkout` : `/upgrade/#checkout`;
     });
   }
 
@@ -308,60 +218,38 @@ if (els.catCardSelected) {
     }
 
     // Category sync on load
-    const urlCat = getCategoryFromURL();
-    const storedCat = getCategoryFromStorage();
-    setCategory(urlCat || storedCat || "");
+    setCategory(getCategoryFromURL() || getCategoryFromStorage() || "");
     updateCategoryUI();
 
-    // Upgrade page: bind category buttons
     if (!IS_CHECKOUT_PAGE) bindCategoryUnlockButtons();
-
-    // Checkout page: change category
     bindChangeCategoryButton();
 
-    // Session restore
+    // session restore (auth.js handles exchange; here we only read)
     currentSession = await refreshSession();
-
-    if (currentSession) applySignedInUI(currentSession);
-    else applySignedOutUI();
 
     if (IS_CHECKOUT_PAGE) {
       if (!currentSession) {
         const known = normCategory(currentCategory || getCategoryFromStorage());
-        const url = known
-          ? `/upgrade/?category=${encodeURIComponent(known)}#checkout`
-          : `/upgrade/#checkout`;
-        location.replace(url);
+        location.replace(known ? `/upgrade/?category=${encodeURIComponent(known)}#checkout` : `/upgrade/#checkout`);
         return;
       }
 
-      if (!currentCategory) setStatus("Choose a category to continue.");
-      else setStatus(`Signed in as ${currentSession.user?.email || "user"}`);
-
+      applySignedInUI(currentSession);
+      updateCategoryUI();
       bindCheckoutButton();
       bindSignOut();
       return;
     }
 
-    // Upgrade page final UI state
+    // upgrade page
     if (currentSession) applySignedInUI(currentSession);
     else applySignedOutUI();
 
-    // Debug helper
-    window.SL_APP = {
-      debug() {
-        return {
-          IS_CHECKOUT_PAGE,
-          urlCategory: getCategoryFromURL(),
-          storageCategory: getCategoryFromStorage(),
-          currentCategory,
-          hasLabelNode: !!findCategoryLabelNode(),
-          labelNodeId: findCategoryLabelNode()?.id || null,
-          signedIn: !!currentSession,
-          email: currentSession?.user?.email || null,
-        };
-      },
-    };
+    sb.auth.onAuthStateChange((_evt, sess) => {
+      currentSession = sess || null;
+      if (currentSession) applySignedInUI(currentSession);
+      else applySignedOutUI();
+    });
   }
 
   if (document.readyState === "loading") {
