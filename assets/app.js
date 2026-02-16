@@ -1,4 +1,3 @@
-// FILE: /assets/app.js
 /* /assets/app.js
    ScopedLabs Upgrade/Checkout controller — FULL FILE OVERWRITE
 */
@@ -7,6 +6,7 @@
   "use strict";
 
   const PATH = location.pathname || "/";
+  const IS_UPGRADE_PAGE = PATH.startsWith("/upgrade/");
   const IS_CHECKOUT_PAGE = PATH.startsWith("/upgrade/checkout");
 
   const $ = (id) => document.getElementById(id);
@@ -24,10 +24,12 @@
     status: $("sl-status"),
   };
 
-  const readyPromise = (window.SL_AUTH && window.SL_AUTH.ready) || Promise.resolve();
-  const sb = (window.SL_AUTH && window.SL_AUTH.sb) || null;
+  const sb = window.SL_AUTH && window.SL_AUTH.sb
+    ? window.SL_AUTH.sb
+    : null;
 
   let currentCategory = "";
+  let currentSession = null;
 
   function normCategory(v) {
     return (v || "").toString().trim().toLowerCase();
@@ -53,7 +55,9 @@
   function setCategory(cat) {
     currentCategory = normCategory(cat);
     try {
-      if (currentCategory) localStorage.setItem("sl_selected_category", currentCategory);
+      if (currentCategory) {
+        localStorage.setItem("sl_selected_category", currentCategory);
+      }
     } catch {}
   }
 
@@ -62,9 +66,17 @@
   }
 
   function updateCategoryUI() {
-    const label = currentCategory ? currentCategory : "None selected";
-    if (els.selectedLabel) els.selectedLabel.textContent = label;
-    if (els.checkoutBtn) els.checkoutBtn.disabled = !currentCategory;
+    const label = currentCategory || "None selected";
+    if (els.selectedLabel) {
+      els.selectedLabel.textContent = label;
+    }
+    updateCheckoutEnabled();
+  }
+
+  function updateCheckoutEnabled() {
+    if (!els.checkoutBtn) return;
+    const enabled = !!currentSession && !!currentCategory;
+    els.checkoutBtn.disabled = !enabled;
   }
 
   async function getSession() {
@@ -73,19 +85,20 @@
     return data?.session || null;
   }
 
-  async function waitForSession(timeoutMs = 7000) {
-    const start = Date.now();
-    while (Date.now() - start < timeoutMs) {
-      const s = await getSession();
-      if (s) return s;
-      await new Promise((r) => setTimeout(r, 250));
+  async function restoreSession() {
+    currentSession = await getSession();
+    if (currentSession) {
+      applySignedInUI(currentSession);
+    } else {
+      applySignedOutUI();
     }
-    return null;
+    updateCheckoutEnabled();
   }
 
   function applySignedInUI(session) {
     const email = session?.user?.email || "user";
     setStatus(`Signed in as ${email}`);
+
     if (els.checkoutCard) els.checkoutCard.style.display = "";
     if (els.signoutBtn) els.signoutBtn.style.display = "";
     if (els.loginCard) els.loginCard.style.display = "none";
@@ -93,25 +106,20 @@
 
   function applySignedOutUI() {
     setStatus("Not signed in");
+
     if (els.checkoutCard) els.checkoutCard.style.display = "none";
     if (els.signoutBtn) els.signoutBtn.style.display = "none";
     if (els.loginCard) els.loginCard.style.display = "";
   }
 
-  function redirectToUpgradeCheckout() {
-    location.href = "/upgrade/#checkout";
-  }
-
   async function startCheckout() {
-    if (!currentCategory) {
-      setStatus("None selected");
+    if (!currentSession) {
+      setStatus("Not signed in");
       return;
     }
 
-    const session = await getSession();
-    if (!session) {
-      if (IS_CHECKOUT_PAGE) redirectToUpgradeCheckout();
-      else setStatus("Not signed in");
+    if (!currentCategory) {
+      setStatus("None selected");
       return;
     }
 
@@ -126,38 +134,34 @@
       });
 
       const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
         setStatus(data?.error || `Checkout failed (${res.status}).`);
-        if (els.checkoutBtn) els.checkoutBtn.disabled = false;
+        updateCheckoutEnabled();
         return;
       }
 
-      const url = data?.url;
-      if (!url) {
-        setStatus("Checkout failed: missing URL in response.");
-        if (els.checkoutBtn) els.checkoutBtn.disabled = false;
+      if (!data?.url) {
+        setStatus("Checkout failed: missing URL.");
+        updateCheckoutEnabled();
         return;
       }
 
-      location.href = url;
+      location.href = data.url;
     } catch (e) {
       setStatus(`Checkout error: ${e?.message || e}`);
-      if (els.checkoutBtn) els.checkoutBtn.disabled = false;
+      updateCheckoutEnabled();
     }
   }
 
-  async function signOutAndRedirect() {
-    if (!sb) {
-      redirectToUpgradeCheckout();
-      return;
-    }
+  async function signOut() {
+    if (!sb) return;
     try {
       await sb.auth.signOut();
-    } catch (e) {
-      setStatus(`Sign out failed: ${e?.message || e}`);
-      return;
-    }
-    redirectToUpgradeCheckout();
+    } catch {}
+    currentSession = null;
+    applySignedOutUI();
+    updateCheckoutEnabled();
   }
 
   function wireOnce() {
@@ -181,51 +185,35 @@
       els.signoutBtn.__slBound = true;
       els.signoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
-        signOutAndRedirect();
+        signOut();
       });
     }
 
     if (sb) {
       sb.auth.onAuthStateChange(async () => {
-        const s = await getSession();
-        if (s) applySignedInUI(s);
+        currentSession = await getSession();
+        if (currentSession) applySignedInUI(currentSession);
         else applySignedOutUI();
+        updateCheckoutEnabled();
       });
     }
   }
 
   async function init() {
-    if (!sb) {
-      if (IS_CHECKOUT_PAGE) redirectToUpgradeCheckout();
-      return;
-    }
+    if (!IS_UPGRADE_PAGE) return;
+    if (!sb) return;
 
-    const urlCat = getCategoryFromURL();
-    const storedCat = getCategoryFromStorage();
-    setCategory(urlCat || storedCat || "");
-    updateCategoryUI();
+  await restoreSession();
 
-    await readyPromise;
+// Re-resolve category AFTER session restore (fix redirect race)
+const urlCat = getCategoryFromURL();
+const storedCat = getCategoryFromStorage();
 
-    if (IS_CHECKOUT_PAGE) {
-      setStatus("Signing you in…");
-      const session = await waitForSession(7000);
-      if (!session) {
-        redirectToUpgradeCheckout();
-        return;
-      }
-      applySignedInUI(session);
-      updateCategoryUI();
-      wireOnce();
-      return;
-    }
+setCategory(urlCat || storedCat || "");
+updateCategoryUI();
 
-    const session = await getSession();
-    if (session) applySignedInUI(session);
-    else applySignedOutUI();
+wireOnce();
 
-    wireOnce();
-  }
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init, { once: true });

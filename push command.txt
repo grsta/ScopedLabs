@@ -1,7 +1,7 @@
 push command
 
 git add -A
-git commit -m "using implicit flow instead for magic link"
+git commit -m "Updating UI properly during the auth redirect"
 git push origin main
 
 
