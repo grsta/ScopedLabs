@@ -1,8 +1,7 @@
-/* ScopedLabs Upgrade App
+/* ScopedLabs Upgrade App (Race-safe + selector-safe)
    - Waits for sl-auth-ready before gating checkout
    - Reads ?category= from URL and reflects in UI
    - Enables checkout only if: signed in AND category selected
-   - Calls /api/create-checkout-session and redirects to Stripe
 */
 
 (function () {
@@ -10,16 +9,35 @@
 
   const $ = (sel) => document.querySelector(sel);
 
-  // Upgrade page elements (only exist on /upgrade/)
-  const elCategory = () => $("#selected-category");
-  const elCheckoutBtn = () => $("#btn-checkout");
-  const elCheckoutStatus = () => $("#checkout-status");
+  // ---------- Robust element finders ----------
+  function findSelectedCategoryEl() {
+    return (
+      $("#selected-category") ||
+      $("#selectedCategory") ||
+      document.querySelector("[data-selected-category]") ||
+      document.querySelector(".selected-category")
+    );
+  }
 
-  // Optional: category picker buttons
-  const elCategoryBtns = () => document.querySelectorAll("[data-category]");
+  function findCheckoutBtn() {
+    return (
+      $("#btn-checkout") ||
+      $("#checkout-btn") ||
+      $("#checkoutBtn") ||
+      document.querySelector("[data-checkout]")
+    );
+  }
+
+  function findCheckoutStatusEl() {
+    return (
+      $("#checkout-status") ||
+      $("#checkoutStatus") ||
+      document.querySelector("[data-checkout-status]")
+    );
+  }
 
   function setCheckoutStatus(msg, isError = false) {
-    const s = elCheckoutStatus();
+    const s = findCheckoutStatusEl();
     if (!s) return;
     s.textContent = msg || "";
     s.classList.toggle("error", !!isError);
@@ -27,8 +45,7 @@
 
   function getCategoryFromUrl() {
     const url = new URL(window.location.href);
-    const c = url.searchParams.get("category");
-    return (c || "").trim().toLowerCase();
+    return (url.searchParams.get("category") || "").trim().toLowerCase();
   }
 
   function setCategoryInUrl(category) {
@@ -39,20 +56,22 @@
   }
 
   function reflectCategory(category) {
-    const el = elCategory();
-    if (!el) return;
-    el.textContent = category ? category : "None selected";
-    el.classList.toggle("muted", !category);
-  }
+    // Primary: known targets
+    const el = findSelectedCategoryEl();
+    if (el) {
+      el.textContent = category ? category : "None selected";
+      el.classList.toggle("muted", !category);
+      return;
+    }
 
-  function getSignedInEmail() {
-    const sb = window.SL_AUTH?.sb;
-    // If auth isn't available, treat as signed out
-    if (!sb) return "";
-    // We rely on getSession() for current truth (async), but for quick gating
-    // we can use the signed-in UI value (auth.js keeps it updated).
-    const emailEl = $("#auth-user-email");
-    return (emailEl?.textContent || "").trim();
+    // Fallback: find the element currently showing "None selected" and update it
+    const fallback = Array.from(document.querySelectorAll("button, span, div, p, a"))
+      .find((n) => (n.textContent || "").trim() === "None selected");
+
+    if (fallback) {
+      fallback.textContent = category ? category : "None selected";
+      fallback.classList.toggle("muted", !category);
+    }
   }
 
   async function isSignedIn() {
@@ -67,16 +86,18 @@
   }
 
   async function refreshGateState() {
-    const btn = elCheckoutBtn();
-    if (!btn) return; // not on this page
-
+    const btn = findCheckoutBtn();
     const category = getCategoryFromUrl();
+
     reflectCategory(category);
 
-    // Disable by default until checks complete
+    if (!btn) {
+      // Not signed in yet? The button may not be rendered. That’s fine.
+      return;
+    }
+
     btn.disabled = true;
 
-    // Wait on real auth truth
     const signedIn = await isSignedIn();
 
     if (!category) {
@@ -88,7 +109,6 @@
       return;
     }
 
-    // All good
     setCheckoutStatus("");
     btn.disabled = false;
   }
@@ -106,13 +126,12 @@
     }
 
     const data = await res.json();
-    // Expect: { url: "https://checkout.stripe.com/..." }
     if (!data || !data.url) throw new Error("Checkout session did not return a URL.");
     return data.url;
   }
 
   function wireCategoryButtons() {
-    const buttons = elCategoryBtns();
+    const buttons = document.querySelectorAll("[data-category]");
     if (!buttons || !buttons.length) return;
 
     buttons.forEach((btn) => {
@@ -121,7 +140,7 @@
         if (!category) return;
         setCategoryInUrl(category);
         refreshGateState();
-        // If you have a checkout section, we can scroll to it
+
         const checkout = $("#checkout");
         if (checkout) checkout.scrollIntoView({ behavior: "smooth", block: "start" });
       });
@@ -129,7 +148,7 @@
   }
 
   function wireCheckoutButton() {
-    const btn = elCheckoutBtn();
+    const btn = findCheckoutBtn();
     if (!btn) return;
 
     btn.addEventListener("click", async () => {
@@ -153,49 +172,29 @@
     });
   }
 
-  function scrollToCheckoutIfHash() {
-    // If returning or linking directly to #checkout, honor it.
-    if (window.location.hash === "#checkout") {
-      const el = $("#checkout");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }
-
-  async function init() {
-    // Only run on upgrade pages that have checkout UI
-    if (!elCheckoutBtn() && !elCategory()) return;
-
+  function boot() {
+    // Run even if signed out — category reflection should still work.
     wireCategoryButtons();
     wireCheckoutButton();
-    scrollToCheckoutIfHash();
-    await refreshGateState();
+    refreshGateState();
 
-    // Re-check whenever auth changes
-    window.addEventListener("sl-auth-changed", () => {
-      refreshGateState();
-    });
-
-    // If URL changes via replaceState elsewhere, a manual call is enough
-    window.addEventListener("popstate", () => {
-      refreshGateState();
-    });
+    window.addEventListener("sl-auth-changed", () => refreshGateState());
+    window.addEventListener("popstate", () => refreshGateState());
   }
 
-  // IMPORTANT: Wait for sl-auth-ready to kill the race condition
   function bootWhenAuthReady() {
-    // If auth already ready, go now
-    if (window.SL_AUTH?.ready) {
-      init();
+    // If auth is missing, still boot for URL/category reflection
+    if (!window.SL_AUTH) {
+      boot();
       return;
     }
-    // Otherwise wait once
-    window.addEventListener(
-      "sl-auth-ready",
-      () => {
-        init();
-      },
-      { once: true }
-    );
+
+    if (window.SL_AUTH.ready) {
+      boot();
+      return;
+    }
+
+    window.addEventListener("sl-auth-ready", () => boot(), { once: true });
   }
 
   if (document.readyState === "loading") {
@@ -204,4 +203,5 @@
     bootWhenAuthReady();
   }
 })();
+
 
