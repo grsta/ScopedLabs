@@ -1,9 +1,6 @@
 /* /assets/app.js
    ScopedLabs Upgrade/Checkout controller — FULL FILE OVERWRITE
-
-   - Requires /assets/auth.js to load first (window.SL_AUTH.sb)
-   - Wires Checkout + Sign out reliably
-   - Prevents “ghost logged-in” UI by depending on real session presence
+   Works with auth.js implicit flow + waits for SL_AUTH.ready so no race conditions.
 */
 
 (() => {
@@ -17,6 +14,8 @@
     (window.SL_AUTH && window.SL_AUTH.client) ||
     null;
 
+  const readyPromise = (window.SL_AUTH && window.SL_AUTH.ready) || Promise.resolve();
+
   const $ = (id) => document.getElementById(id);
 
   const els = {
@@ -26,10 +25,6 @@
     chooseCatBtn: $("sl-choose-category"),
 
     loginCard: $("sl-login-card"),
-    emailInput: $("sl-email"),
-    sendLinkBtn: $("sl-sendlink"),
-    emailHint: $("sl-email-hint"),
-
     checkoutCard: $("sl-checkout-card"),
     checkoutBtn: $("sl-checkout"),
     signoutBtn: $("sl-signout"),
@@ -72,13 +67,10 @@
   }
 
   function updateCategoryUI() {
-    const cat = currentCategory || "";
-    const label = cat ? cat : "None selected";
-
+    const label = currentCategory ? currentCategory : "None selected";
     if (els.selectedLabel) els.selectedLabel.textContent = label;
     if (els.catPill) els.catPill.textContent = label;
-
-    if (els.checkoutBtn) els.checkoutBtn.disabled = !cat;
+    if (els.checkoutBtn) els.checkoutBtn.disabled = !currentCategory;
   }
 
   async function refreshSession() {
@@ -87,9 +79,14 @@
     return data?.session || null;
   }
 
-  function hideLoginUIOnCheckout() {
-    if (els.loginCard) els.loginCard.style.display = "none";
-    if (els.emailInput) els.emailInput.value = "";
+  async function waitForSession(timeoutMs = 6000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const s = await refreshSession();
+      if (s) return s;
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    return null;
   }
 
   function applySignedInUI(session) {
@@ -117,31 +114,32 @@
   }
 
   async function startCheckout() {
-    const cat = currentCategory || getCategoryFromURL() || getCategoryFromStorage();
-    if (!cat) {
+    if (!currentCategory) {
       setStatus("Select a category first.");
       return;
     }
 
     currentSession = await refreshSession();
     if (!currentSession) {
+      setStatus("Sign in first.");
       if (IS_CHECKOUT_PAGE) redirectToUpgrade("checkout clicked without session");
-      else setStatus("Sign in first.");
       return;
     }
 
     setStatus("Starting checkout…");
+    if (els.checkoutBtn) els.checkoutBtn.disabled = true;
 
     try {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: cat }),
+        body: JSON.stringify({ category: currentCategory }),
       });
 
       if (!res.ok) {
         const t = await res.text().catch(() => "");
         setStatus(`Checkout failed (${res.status}). ${t}`);
+        if (els.checkoutBtn) els.checkoutBtn.disabled = false;
         return;
       }
 
@@ -149,12 +147,14 @@
       const url = data?.url || data?.checkout_url;
       if (!url) {
         setStatus("Checkout failed: missing URL in response.");
+        if (els.checkoutBtn) els.checkoutBtn.disabled = false;
         return;
       }
 
       location.href = url;
     } catch (e) {
       setStatus(`Checkout error: ${e.message || e}`);
+      if (els.checkoutBtn) els.checkoutBtn.disabled = false;
     }
   }
 
@@ -216,28 +216,40 @@
   }
 
   async function init() {
-    // Category
-    const urlCat = getCategoryFromURL();
-    const storedCat = getCategoryFromStorage();
-    setCategory(urlCat || storedCat || "");
-    updateCategoryUI();
-
     if (!sb) {
       setStatus("Auth not ready. (auth.js must load before app.js)");
       if (IS_CHECKOUT_PAGE) redirectToUpgrade("Supabase client missing on checkout page");
       return;
     }
 
-    if (IS_CHECKOUT_PAGE) hideLoginUIOnCheckout();
+    // Category
+    const urlCat = getCategoryFromURL();
+    const storedCat = getCategoryFromStorage();
+    setCategory(urlCat || storedCat || "");
+    updateCategoryUI();
 
-    // Session
-    currentSession = await refreshSession();
-    if (IS_CHECKOUT_PAGE && !currentSession) {
-      // On checkout, session is required
-      redirectToUpgrade("checkout_requires_session");
+    // ✅ Wait for auth.js to finish its own initialization
+    await readyPromise;
+
+    if (IS_CHECKOUT_PAGE) {
+      // ✅ After clicking email link, session may appear a moment later
+      setStatus("Signing you in…");
+      currentSession = await waitForSession(7000);
+
+      if (!currentSession) {
+        // If still no session, send them back to the upgrade page.
+        redirectToUpgrade("checkout session not established");
+        return;
+      }
+
+      applySignedInUI(currentSession);
+      updateCategoryUI();
+      wireOnce();
       return;
     }
 
+    // Upgrade page
+    currentSession = await refreshSession();
     if (currentSession) applySignedInUI(currentSession);
     else applySignedOutUI();
 
