@@ -1,7 +1,7 @@
 push command
 
 git add -A
-git commit -m "Updating UI properly during the auth redirect"
+git commit -m "rename the none selected ID"
 git push origin main
 
 
