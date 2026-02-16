@@ -1,7 +1,7 @@
 push command
 
 git add -A
-git commit -m "rename the none selected ID"
+git commit -m "feat(upgrade): add selected category card highlight and checkout preview"
 git push origin main
 
 

@@ -4,6 +4,53 @@
    - Enables checkout only if: signed in AND category selected
 */
 
+
+function clearSelectedCard() {
+  document
+    .querySelectorAll(".sl-category-card.is-selected")
+    .forEach(el => el.classList.remove("is-selected"));
+}
+
+function findCategoryCard(category) {
+  if (!category) return null;
+  return document.querySelector(
+    `.sl-category-card[data-category="${category}"]`
+  );
+}
+
+function renderSelectedCategoryPreview(cardEl) {
+  const mount = document.getElementById("selected-category-preview");
+  if (!mount) return;
+
+  if (!cardEl) {
+    mount.innerHTML = "";
+    return;
+  }
+
+  const clone = cardEl.cloneNode(true);
+
+  clone.classList.remove("is-selected");
+
+  // Remove unlock button inside preview
+  clone.querySelectorAll("a, button").forEach(b => b.remove());
+
+  clone.style.marginTop = "1rem";
+
+  mount.innerHTML = `
+    <div class="muted" style="margin-bottom:.35rem;">
+      You are unlocking:
+    </div>
+  `;
+  mount.appendChild(clone);
+}
+
+function syncSelectedCategoryUI(category) {
+  clearSelectedCard();
+  const card = findCategoryCard(category);
+  if (card) card.classList.add("is-selected");
+  renderSelectedCategoryPreview(card);
+}
+
 (function () {
   "use strict";
 
@@ -101,6 +148,8 @@
     const category = getCategoryFromUrl();
 
     reflectCategory(category);
+    syncSelectedCategoryUI(category);
+
 
     if (!btn) {
       // Not signed in yet? The button may not be rendered. That’s fine.
