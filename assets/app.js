@@ -44,9 +44,20 @@
   }
 
   function getCategoryFromUrl() {
-    const url = new URL(window.location.href);
-    return (url.searchParams.get("category") || "").trim().toLowerCase();
+  const url = new URL(window.location.href);
+  const c = (url.searchParams.get("category") || "").trim().toLowerCase();
+  if (c) {
+    try { localStorage.setItem("sl_last_category", c); } catch (_) {}
+    return c;
   }
+  
+  try {
+    return (localStorage.getItem("sl_last_category") || "").trim().toLowerCase();
+  } catch (_) {
+    return "";
+  }
+}
+
 
   function setCategoryInUrl(category) {
     const url = new URL(window.location.href);
