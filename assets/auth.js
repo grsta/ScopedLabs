@@ -141,37 +141,55 @@
     refreshUI(session);
 
     // Send magic link
-    const sendBtn = elSendBtn();
-    if (sendBtn) {
-      sendBtn.addEventListener("click", async () => {
-        const email = normalizeEmail(elEmail()?.value);
-        if (!email || !email.includes("@")) {
-          setStatus("Enter a valid email address.", true);
-          return;
-        }
-        setStatus("Sending magic link…");
-        sendBtn.disabled = true;
-        try {
-          const { error } = await sb.auth.signInWithOtp({
-            email,
-            options: {
-              emailRedirectTo: getRedirectTo()
-            }
-          });
-          if (error) {
-            console.warn("[SL_AUTH] signInWithOtp error:", error);
-            setStatus("Could not send link. Try again.", true);
-          } else {
-            setStatus("Magic link sent. Check your email.");
-          }
-        } catch (e) {
-          console.warn("[SL_AUTH] signInWithOtp exception:", e);
-          setStatus("Could not send link. Try again.", true);
-        } finally {
-          sendBtn.disabled = false;
+   // Send magic link
+const sendBtn = elSendBtn();
+if (sendBtn) {
+  sendBtn.addEventListener("click", async () => {
+
+    // 🔴 Block if no category selected
+    const catEl =
+      document.getElementById("selected-category") ||
+      document.getElementById("sl-category-pill");
+
+    const catText = (catEl?.textContent || "").trim().toLowerCase();
+
+    if (!catText || catText === "none selected") {
+      alert("Please choose a category before signing in.");
+      return;
+    }
+
+    const email = normalizeEmail(elEmail()?.value);
+    if (!email || !email.includes("@")) {
+      setStatus("Enter a valid email address.", true);
+      return;
+    }
+
+    setStatus("Sending magic link…");
+    sendBtn.disabled = true;
+
+    try {
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: getRedirectTo()
         }
       });
+
+      if (error) {
+        console.warn("[SL_AUTH] signInWithOtp error:", error);
+        setStatus("Could not send link. Try again.", true);
+      } else {
+        setStatus("Magic link sent. Check your email.");
+      }
+    } catch (e) {
+      console.warn("[SL_AUTH] signInWithOtp exception:", e);
+      setStatus("Could not send link. Try again.", true);
+    } finally {
+      sendBtn.disabled = false;
     }
+  });
+}
+
 
     // Sign out
     const signOutBtn = elSignOutBtn();
