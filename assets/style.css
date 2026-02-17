@@ -1569,3 +1569,15 @@ main h3.section-title {
     0 0 0 4px rgba(80,255,120,.12),
     0 0 18px rgba(80,255,120,.25);
 }
+/* Upgrade page – Selected category card width clamp */
+#checkout .pro-category-card,
+#checkout .selected-category-card {
+  max-width: 420px;
+  width: 100%;
+}
+
+/* Center it nicely in its column */
+#checkout .pro-category-card {
+  margin-left: auto;
+  margin-right: auto;
+}
