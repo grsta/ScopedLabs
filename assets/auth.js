@@ -16,12 +16,13 @@
   const $ = (sel) => document.querySelector(sel);
 
   // Auth UI elements (upgrade page)
-  const elEmail = () => $("#auth-email");
-  const elSendBtn = () => $("#auth-send-link");
-  const elStatus = () => $("#auth-status");
-  const elSignedInWrap = () => $("#auth-signed-in");
-  const elSignedOutWrap = () => $("#auth-signed-out");
-  const elSignOutBtn = () => $("#auth-signout");
+  const elEmail = () => $("#sl-email");
+  const elSendBtn = () => $("#sl-send-btn");
+  const elStatus = () => $("#sl-status");
+  const elSignedInWrap = () => $("#sl-checkout-card");
+  const elSignedOutWrap = () => $("#sl-login-card");
+  const elSignOutBtn = () => $("#sl-signout");
+
 
   function setStatus(msg, isError = false) {
     const s = elStatus();
