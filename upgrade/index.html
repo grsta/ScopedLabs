@@ -15,45 +15,20 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
 
 
   <!-- Use absolute paths so this works from /upgrade/ -->
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0227" />
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0225" />
 
   <!-- Supabase client (v2) MUST load before auth.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Stripe map + Supabase config -->
-  <script src="/assets/stripe-map.js?v=upgrade-0239"></script>
+  <script src="/assets/stripe-map.js?v=upgrade-0240"></script>
 
   <!-- Auth MUST load before app.js -->
-  <script defer src="/assets/auth.js?v=upgrade-0239"></script>
+  <script defer src="/assets/auth.js?v=upgrade-0240"></script>
 
   <!-- App last -->
-  <script defer src="/assets/app.js?v=upgrade-0239"></script>
+  <script defer src="/assets/app.js?v=upgrade-0240"></script>
 </head>
-<style>
-.checkout-flex {
-  display: grid;
-  grid-template-columns: 1fr 440px;
-  gap: 24px;
-  align-items: start;
-  margin-top: -10px;
-}
-</style>
-<style>
-  #sl-checkout-grid{
-    display:grid;
-    grid-template-columns: 1.1fr .9fr;
-    gap:24px;
-    align-items:start; /* <- this is the key */
-  }
-  #selected-category-preview{
-    align-self:start;
-    margin-top:0 !important;
-  }
-  @media (max-width: 900px){
-    #sl-checkout-grid{ grid-template-columns: 1fr; }
-  }
-</style>
-
 
 </head>
 
@@ -363,70 +338,60 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
     </section>
 
     <!-- Checkout -->
-    <section id="checkout" class="spacer-xl" aria-label="Checkout">
-      <div class="card">
+<section id="checkout" class="spacer-xl" aria-label="Checkout">
+  <div class="card">
+    <div id="sl-checkout-grid" style="display:grid; grid-template-columns: 1fr 440px; gap:24px; align-items:start;">
+      <!-- Left column: purchase + auth -->
+      <div>
         <span class="pill">Checkout</span>
-        <h2 style="margin-top:.6rem;">Unlock <span id="sl-category-label">a category</span></h2>
-        <p class="muted" style="max-width:75ch;">
-          You’ll unlock the selected category forever (one-time purchase).
+        <h2 style="margin-top:.6rem;" id="sl-checkout-title">Unlock a category</h2>
+        <p class="muted" style="max-width: 62ch;">
+          You’ll unlock the selected category forever (one‑time purchase).
         </p>
-        <div class="spacer-md"></div>
 
-        <!-- Keep the preview card INSIDE this checkout card, but at the TOP-RIGHT to reduce overall height -->
-        <div id="sl-checkout-grid" style="display:flex; gap:1.25rem; align-items:flex-start; flex-wrap:wrap;">
-          <!-- Left column: selection + price + login/checkout -->
-          <div style="flex: 1 1 420px; min-width: 320px;">
-            <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.25rem; flex-wrap:wrap;">
-              <div class="muted" style="font-size:.95rem;">Selected category:</div>
-              <span class="pill" id="selected-category">None selected</span>
-              <a class="btn" href="#choose">Change Category</a>
-            </div>
+        <div class="muted" style="margin-top:1rem;">
+          Selected category:
+          <span id="selected-category" class="pill" style="margin-left:.35rem;">None selected</span>
+          <button id="sl-change-category" class="btn" style="margin-left:.35rem;">Change Category</button>
+        </div>
 
-            <div class="spacer-md"></div>
+        <div style="margin-top:1rem;">
+          <div class="muted">Price:</div>
+          <div style="font-size:1.65rem; font-weight:800;">$19.99 <span class="muted" style="font-weight:600; font-size:.95rem;">one‑time</span></div>
+        </div>
 
-            <div class="muted" style="font-size:.95rem; margin-bottom:.35rem;">Price:</div>
-            <div style="font-size:1.35rem; font-weight:700; letter-spacing:.2px;">$19.99 <span class="muted" style="font-weight:500; font-size:.95rem;">one-time</span></div>
+        <div class="muted" style="margin-top:.85rem;">Sign in to purchase (magic link — no password)</div>
 
-            <div class="spacer-md"></div>
+        <div style="margin-top:.5rem;">
+          <label class="muted" for="sl-email">Email</label>
+          <input id="sl-email" type="email" placeholder="you@company.com" autocomplete="email" />
+        </div>
 
-            <!-- Login -->
-            <div id="sl-login-card" style="margin-top:.25rem;">
-              <div class="muted" style="font-size:.95rem;">Sign in to purchase (magic link — no password)</div>
+        <div class="actions" style="margin-top:.85rem;">
+          <button id="sl-sendlink" class="btn btn-primary">Send magic link</button>
+        </div>
 
-              <div class="form-grid" style="margin-top:.75rem;">
-                <label class="muted">
-                  Email
-                  <input id="sl-email" type="email" placeholder="you@company.com" />
-                </label>
-              </div>
+        <!-- Signed-in / checkout actions -->
+        <div id="sl-checkout-card" style="display:none; margin-top:.75rem;">
+          <div class="actions">
+            <button id="sl-checkout" class="btn btn-primary">Checkout</button>
+            <a class="btn" href="/account/">Account</a>
+            <button id="sl-signout" class="btn" style="display:none;">Sign out</button>
+          </div>
+          <div class="muted" id="sl-status" style="font-size:.9rem; margin-top:.85rem;"></div>
+        </div>
 
-              <div class="actions" style="margin-top:.85rem;">
-                <button id="sl-send-btn" class="btn btn-primary">Send magic link</button>
-              </div>
-
-              <div class="muted" id="sl-email-hint" style="font-size:.9rem; margin-top:.6rem;"></div>
-            </div>
-
-            <!-- Checkout -->
-           <div id="sl-checkout-card" style="display:none; margin-top:.75rem;">
-  <div id="sl-checkout-grid">
-    <div id="sl-checkout-left">
-      <div class="actions">
-        <button id="sl-checkout" class="btn btn-primary">Checkout</button>
-        <a class="btn" href="/account/">Account</a>
-        <button id="sl-signout" class="btn" style="display:none;">Sign out</button>
+        <div class="muted" id="sl-email-hint" style="font-size:.9rem; margin-top:.6rem;"></div>
       </div>
 
-      <div class="muted" id="sl-status" style="font-size:.9rem; margin-top:.85rem;"></div>
-    </div>
-
-    <div id="selected-category-preview" style="margin-top:0;">
-      <!-- app.js injects the preview card here -->
+      <!-- Right column: selected category preview -->
+      <div id="sl-selected-category-preview" style="margin-top:0; max-width:440px; width:100%; align-self:start; justify-self:end;">
+        <!-- app.js injects the preview card here -->
+      </div>
     </div>
   </div>
-</div>
+</section>
 
-    </section>
 
     <!-- Notes -->
     <section class="spacer-xl" aria-label="Notes">
