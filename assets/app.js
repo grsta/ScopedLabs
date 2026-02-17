@@ -1,290 +1,278 @@
-/* ScopedLabs Upgrade App (Race-safe + selector-safe)
-   - Waits for sl-auth-ready before gating checkout
-   - Reads ?category= from URL and reflects in UI
-   - Enables checkout only if: signed in AND category selected
+/* /assets/app.js
+   ScopedLabs Upgrade controller (stable)
+
+   Fixes:
+   - Keeps category in sync: URL ?category= OR localStorage
+   - Updates BOTH:
+       #selected-category  (pill)
+       #sl-category-label  (heading span)
+   - Highlights selected category card (by id)
+   - Renders selected category preview into #selected-category-preview
+   - Enables Checkout only when signed-in + category selected
 */
-
-
-function clearSelectedCard() {
-  document
-    .querySelectorAll(".sl-category-card.is-selected")
-    .forEach(el => el.classList.remove("is-selected"));
-}
-
-function findCategoryCard(category) {
-  if (!category) return null;
-  return document.querySelector(
-    `.sl-category-card[data-category="${category}"]`
-  );
-}
-
-function renderSelectedCategoryPreview(cardEl) {
-  const mount = document.getElementById("selected-category-preview");
-  if (!mount) return;
-
-  if (!cardEl) {
-    mount.innerHTML = "";
-    return;
-  }
-
-  const clone = cardEl.cloneNode(true);
-
-  clone.classList.remove("is-selected");
-
-  // Remove unlock button inside preview
-  clone.querySelectorAll("a, button").forEach(b => b.remove());
-
-  clone.style.marginTop = "1rem";
-
-  mount.innerHTML = `
-    <div class="muted" style="margin-bottom:.35rem;">
-      You are unlocking:
-    </div>
-  `;
-  mount.appendChild(clone);
-}
-
-function syncSelectedCategoryUI(category) {
-  clearSelectedCard();
-  const card = findCategoryCard(category);
-  if (card) card.classList.add("is-selected");
-  renderSelectedCategoryPreview(card);
-}
 
 (function () {
   "use strict";
 
   const $ = (sel) => document.querySelector(sel);
 
-  // ---------- Robust element finders ----------
-  function findSelectedCategoryEl() {
-    return (
-      $("#selected-category") ||
-      $("#selectedCategory") ||
-      document.querySelector("[data-selected-category]") ||
-      document.querySelector(".selected-category")
-    );
+  // ---------- UI element helpers ----------
+  function elCategoryPill() {
+    return $("#selected-category");
   }
 
-  function findCheckoutBtn() {
-    return (
-      $("#btn-checkout") ||
-      $("#checkout-btn") ||
-      $("#checkoutBtn") ||
-      document.querySelector("[data-checkout]")
-    );
+  function elCategoryLabel() {
+    return $("#sl-category-label");
   }
 
-  function findCheckoutStatusEl() {
-    return (
-      $("#checkout-status") ||
-      $("#checkoutStatus") ||
-      document.querySelector("[data-checkout-status]")
-    );
+  function elPreviewMount() {
+    return $("#selected-category-preview");
   }
 
-  function setCheckoutStatus(msg, isError = false) {
-    const s = findCheckoutStatusEl();
-    if (!s) return;
-    s.textContent = msg || "";
-    s.classList.toggle("error", !!isError);
+  function elCheckoutBtn() {
+    return $("#sl-checkout") || $("#checkout-btn") || $("#btn-checkout");
   }
 
+  function elStatus() {
+    return $("#sl-status") || $("#checkout-status");
+  }
+
+  function setStatus(msg, isError = false) {
+    const el = elStatus();
+    if (!el) return;
+    el.textContent = msg || "";
+    el.style.color = isError ? "#ffb3b3" : "";
+  }
+
+  // ---------- Category state ----------
   function getCategoryFromUrl() {
-  const url = new URL(window.location.href);
-  const c = (url.searchParams.get("category") || "").trim().toLowerCase();
-  if (c) {
-    try { localStorage.setItem("sl_last_category", c); } catch (_) {}
+    const url = new URL(window.location.href);
+    const c = (url.searchParams.get("category") || "").trim().toLowerCase();
     return c;
   }
-  
-  try {
-    return (localStorage.getItem("sl_last_category") || "").trim().toLowerCase();
-  } catch (_) {
-    return "";
+
+  function getCategoryFromStorage() {
+    try {
+      // prefer the “official” key you’ve been using
+      const a = (localStorage.getItem("sl_selected_category") || "").trim().toLowerCase();
+      if (a) return a;
+
+      // fallback for older experiments
+      const b = (localStorage.getItem("sl_last_category") || "").trim().toLowerCase();
+      return b;
+    } catch {
+      return "";
+    }
   }
-}
 
-
-  function setCategoryInUrl(category) {
-    const url = new URL(window.location.href);
-    if (category) url.searchParams.set("category", category);
-    else url.searchParams.delete("category");
-    window.history.replaceState({}, "", url.toString());
+  function setCategoryToStorage(cat) {
+    try {
+      localStorage.setItem("sl_selected_category", cat || "");
+      localStorage.setItem("sl_last_category", cat || "");
+    } catch {}
   }
 
+  function getCurrentCategory() {
+    return getCategoryFromUrl() || getCategoryFromStorage() || "";
+  }
+
+  // ---------- Category UI ----------
   function reflectCategory(category) {
-    // Primary: known targets
-    const el = findSelectedCategoryEl();
-    if (el) {
-      el.textContent = category ? category : "None selected";
-      el.classList.toggle("muted", !category);
+    const cat = (category || "").trim();
+
+    const pill = elCategoryPill();
+    if (pill) pill.textContent = cat ? cat : "None selected";
+
+    const label = elCategoryLabel();
+    if (label) label.textContent = cat ? cat : "a category";
+  }
+
+  function clearSelectedCardHighlight() {
+    document.querySelectorAll(".upgrade-card.is-selected").forEach((el) => {
+      el.classList.remove("is-selected");
+    });
+  }
+
+  function findCategoryCard(category) {
+    if (!category) return null;
+
+    // Your choose-grid cards are <div class="card upgrade-card" id="wireless"> ...
+    const byId = document.getElementById(category);
+    if (byId && byId.classList.contains("upgrade-card")) return byId;
+
+    // fallback
+    return document.querySelector(`.upgrade-card#${CSS.escape(category)}`);
+  }
+
+  function renderSelectedCategoryPreview(category) {
+    const mount = elPreviewMount();
+    if (!mount) return;
+
+    if (!category) {
+      mount.innerHTML = "";
       return;
     }
 
-    // Fallback: find the element currently showing "None selected" and update it
-    const fallback = Array.from(document.querySelectorAll("button, span, div, p, a"))
-      .find((n) => (n.textContent || "").trim() === "None selected");
-
-    if (fallback) {
-      fallback.textContent = category ? category : "None selected";
-      fallback.classList.toggle("muted", !category);
+    const sourceCard = findCategoryCard(category);
+    if (!sourceCard) {
+      // if card not found, still show a small confirmation box
+      mount.innerHTML = `
+        <div class="card" style="max-width: 520px;">
+          <div class="muted" style="margin-bottom:.35rem;">You are unlocking:</div>
+          <div style="font-weight:700;">${escapeHtml(category)}</div>
+        </div>
+      `;
+      return;
     }
+
+    const clone = sourceCard.cloneNode(true);
+
+    // remove CTA(s) inside the preview so users don’t “click buy” again
+    clone.querySelectorAll("a, button").forEach((n) => n.remove());
+
+    // keep it visually “confirmation-like”
+    clone.classList.add("is-preview");
+    clone.style.pointerEvents = "none";
+
+    mount.innerHTML = "";
+    mount.appendChild(clone);
   }
 
+  function syncSelectedCategoryUI(category) {
+    clearSelectedCardHighlight();
+
+    const card = findCategoryCard(category);
+    if (card) card.classList.add("is-selected");
+
+    renderSelectedCategoryPreview(category);
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // ---------- Auth / checkout gating ----------
   async function isSignedIn() {
     const sb = window.SL_AUTH?.sb;
     if (!sb) return false;
     try {
       const { data } = await sb.auth.getSession();
       return !!data?.session?.user;
-    } catch (_e) {
+    } catch {
       return false;
     }
   }
 
   async function refreshGateState() {
-    const btn = findCheckoutBtn();
-    const category = getCategoryFromUrl();
+    const btn = elCheckoutBtn();
+    const cat = getCurrentCategory();
 
-    reflectCategory(category);
-    syncSelectedCategoryUI(category);
+    // always keep UI in sync
+    reflectCategory(cat);
+    syncSelectedCategoryUI(cat);
 
-
-    if (!btn) {
-      // Not signed in yet? The button may not be rendered. That’s fine.
-      return;
-    }
+    if (!btn) return;
 
     btn.disabled = true;
 
+    if (!cat) {
+      setStatus("Select a category to continue.");
+      return;
+    }
+
     const signedIn = await isSignedIn();
-
-    if (!category) {
-      setCheckoutStatus("Select a category to continue.");
-      return;
-    }
     if (!signedIn) {
-      setCheckoutStatus("Sign in to unlock Pro access.");
+      setStatus("Sign in to unlock Pro access.");
       return;
     }
 
-    setCheckoutStatus("");
+    setStatus("");
     btn.disabled = false;
   }
 
-  async function createCheckoutSession(category) {
-    const res = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category })
-    });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(`Checkout session failed (${res.status}): ${txt}`);
-    }
-
-    const data = await res.json();
-    if (!data || !data.url) throw new Error("Checkout session did not return a URL.");
-    return data.url;
-  }
-
-  function wireCategoryButtons() {
-    const buttons = document.querySelectorAll("[data-category]");
-    if (!buttons || !buttons.length) return;
-
-    buttons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const category = (btn.getAttribute("data-category") || "").trim().toLowerCase();
-        if (!category) return;
-        setCategoryInUrl(category);
-        await refreshGateState();
-
-    // After magic-link sign-in, land user on the checkout section (not page top).
-    try {
-      const signedIn = await isSignedIn();
-      const cat = getSelectedCategory();
-      const checkout = document.getElementById("checkout");
-
-      const url = String(location.href || "");
-      const looksLikeAuthReturn =
-        /access_token=|refresh_token=|type=magiclink|type=recovery|code=|error=/.test(url) ||
-        location.hash === "#checkout";
-
-      if (signedIn && cat && checkout && looksLikeAuthReturn) {
-        // Only once per tab/session.
-        if (!sessionStorage.getItem("sl_checkout_autoscroll")) {
-          sessionStorage.setItem("sl_checkout_autoscroll", "1");
-          if (location.hash !== "#checkout") {
-            history.replaceState({}, "", location.pathname + location.search + "#checkout");
-          }
-          checkout.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }
-    } catch {}
-
-
-        const checkout = $("#checkout");
-        if (checkout) checkout.scrollIntoView({ behavior: "smooth", block: "start" });
+  // ---------- Persist category when user clicks a category CTA link ----------
+  function wireCategoryLinks() {
+    // Any link that contains ?category=...
+    document.querySelectorAll('a[href*="category="]').forEach((a) => {
+      a.addEventListener("click", () => {
+        try {
+          const u = new URL(a.getAttribute("href") || "", window.location.origin);
+          const c = (u.searchParams.get("category") || "").trim().toLowerCase();
+          if (c) setCategoryToStorage(c);
+        } catch {}
       });
     });
   }
 
+  // ---------- Wire checkout button ----------
   function wireCheckoutButton() {
-    const btn = findCheckoutBtn();
+    const btn = elCheckoutBtn();
     if (!btn) return;
 
     btn.addEventListener("click", async () => {
-      const category = getCategoryFromUrl();
+      const category = getCurrentCategory();
       if (!category) {
-        setCheckoutStatus("Select a category first.", true);
+        alert("Please choose a category before checking out.");
+        setStatus("Select a category to continue.", true);
         return;
       }
 
+      const signedIn = await isSignedIn();
+      if (!signedIn) {
+        alert("Please sign in before checking out.");
+        setStatus("Sign in to unlock Pro access.", true);
+        return;
+      }
+
+      // OPTIONAL: explicit confirmation to reduce refunds
+      const ok = confirm(`You are about to unlock: "${category}".\n\nClick OK to continue.`);
+      if (!ok) return;
+
       btn.disabled = true;
-      setCheckoutStatus("Redirecting to checkout…");
+      setStatus("Opening Stripe Checkout…");
 
       try {
-        const url = await createCheckoutSession(category);
-        window.location.href = url;
+        const res = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        if (!data || !data.url) throw new Error("Missing checkout url");
+
+        window.location.href = data.url;
       } catch (e) {
         console.warn("[SL_APP] checkout error:", e);
-        setCheckoutStatus("Could not start checkout. Try again.", true);
+        setStatus("Failed to start checkout.", true);
         btn.disabled = false;
       }
     });
   }
 
-  async function boot() {
-    // Run even if signed out — category reflection should still work.
-    wireCategoryButtons();
+  // ---------- Boot ----------
+  function boot() {
+    wireCategoryLinks();
     wireCheckoutButton();
     refreshGateState();
 
-    window.addEventListener("sl-auth-changed", () => refreshGateState());
-    window.addEventListener("popstate", () => refreshGateState());
-  }
-
-  function bootWhenAuthReady() {
-    // If auth is missing, still boot for URL/category reflection
-    if (!window.SL_AUTH) {
-      boot();
-      return;
-    }
-
-    if (window.SL_AUTH.ready) {
-      boot();
-      return;
-    }
-
-    window.addEventListener("sl-auth-ready", () => boot(), { once: true });
+    // When auth restores after magic link, auth.js should ideally dispatch sl-auth-changed.
+    // But we also refresh on load and popstate.
+    window.addEventListener("sl-auth-changed", refreshGateState);
+    window.addEventListener("popstate", refreshGateState);
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bootWhenAuthReady);
+    document.addEventListener("DOMContentLoaded", boot);
   } else {
-    bootWhenAuthReady();
+    boot();
   }
 })();
 
