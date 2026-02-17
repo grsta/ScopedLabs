@@ -9,11 +9,11 @@
   // Otherwise, paste them here.
   const SUPABASE_URL =
     (window.SL_SUPABASE && window.SL_SUPABASE.url) ||
-    "PASTE_YOUR_SUPABASE_URL_HERE";
+    "https://ybnzjtuecirzajraddft.supabase.co";
 
   const SUPABASE_ANON_KEY =
     (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) ||
-    "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+    "public key:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
 
   // ====== Helpers ======
   const $ = (id) => document.getElementById(id);
@@ -81,13 +81,15 @@
     }
 
     if (!SUPABASE_URL || SUPABASE_URL.includes("PASTE_")) {
-      console.warn("[SL_AUTH] https://ybnzjtuecirzajraddft.supabase.co/assets/auth.js");
-      return;
-    }
-    if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
-      console.warn("[SL_AUTH] public key:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM/assets/auth.js");
-      return;
-    }
+  console.warn("[SL_AUTH] Missing SUPABASE_URL in /assets/auth.js");
+  return;
+}
+
+if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
+  console.warn("[SL_AUTH] Missing SUPABASE_ANON_KEY in /assets/auth.js");
+  return;
+}
+
 
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
