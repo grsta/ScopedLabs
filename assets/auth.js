@@ -105,7 +105,7 @@ if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
       const code = url.searchParams.get("code");
       if (code) {
         setStatus("Signing you in…");
-        const { error } = await sb.auth.exchangeCodeForSession(window.location.href);
+        const { error } = await sb.auth.exchangeCodeForSession(code);
         if (error) {
           console.warn("[SL_AUTH] exchangeCodeForSession error:", error);
           setStatus("Sign-in link expired. Please request a new one.", true);
