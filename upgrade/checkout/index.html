@@ -1,5 +1,21 @@
 <!doctype html>
 <html lang="en">
+
+<!-- Supabase v2 -->
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Stripe map (provides window.SL_SUPABASE if present) -->
+<script defer src="/assets/stripe-map.js?v=upgrade-999"></script>
+
+<!-- Auth MUST load before app -->
+<script defer src="/assets/auth.js?v=upgrade-999"></script>
+
+<!-- App last -->
+<script defer src="/assets/app.js?v=upgrade-999"></script>
+
+<!-- Styles -->
+<link rel="stylesheet" href="/assets/style.css?v=upgrade-999" />
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />

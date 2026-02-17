@@ -13,21 +13,21 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
 }
 </script>
 
+<!-- Supabase v2 -->
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Use absolute paths so this works from /upgrade/ -->
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0235" />
+<!-- Stripe map (provides window.SL_SUPABASE if present) -->
+<script defer src="/assets/stripe-map.js?v=upgrade-999"></script>
 
-  <!-- Supabase client (v2) MUST load before auth.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Auth MUST load before app -->
+<script defer src="/assets/auth.js?v=upgrade-999"></script>
 
-  <!-- Stripe map + Supabase config -->
-  <script src="/assets/stripe-map.js?v=upgrade-0250"></script>
+<!-- App last -->
+<script defer src="/assets/app.js?v=upgrade-999"></script>
 
-  <!-- Auth MUST load before app.js -->
-  <script defer src="/assets/auth.js?v=upgrade-0250"></script>
+<!-- Styles -->
+<link rel="stylesheet" href="/assets/style.css?v=upgrade-999" />
 
-  <!-- App last -->
-  <script defer src="/assets/app.js?v=upgrade-0250"></script>
 </head>
 
 </head>
