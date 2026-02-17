@@ -5,7 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upgrade • ScopedLabs</title>
 
-  <script>
+  
+<style>
+  /* Upgrade checkout layout: keep preview card beside the form (desktop), stacked (mobile) */
+  .sl-checkout-grid{display:grid;grid-template-columns:1fr;gap:1.25rem;align-items:start;}
+  .sl-checkout-right{min-width:0;}
+  @media (min-width: 920px){
+    .sl-checkout-grid{grid-template-columns:1.05fr .95fr;}
+  }
+  /* cap preview card width so it doesn't feel like a second full-width card */
+  #selected-category-preview .card{max-width:520px;}
+  @media (min-width: 920px){
+    #selected-category-preview .card{max-width:520px;margin-left:auto;}
+  }
+</style>
+<script>
 /* If we are on /upgrade/checkout/, do NOT run upgrade router */
 if (window.location.pathname.startsWith("/upgrade/checkout")) {
   console.log("Checkout page detected, skipping upgrade router");
@@ -15,19 +29,19 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
 
 
   <!-- Use absolute paths so this works from /upgrade/ -->
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0224" />
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0225" />
 
   <!-- Supabase client (v2) MUST load before auth.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Stripe map + Supabase config -->
-  <script src="/assets/stripe-map.js?v=upgrade-0236"></script>
+  <script src="/assets/stripe-map.js?v=upgrade-0234"></script>
 
   <!-- Auth MUST load before app.js -->
-  <script defer src="/assets/auth.js?v=upgrade-0236"></script>
+  <script defer src="/assets/auth.js?v=upgrade-0234"></script>
 
   <!-- App last -->
-  <script defer src="/assets/app.js?v=upgrade-0236"></script>
+  <script defer src="/assets/app.js?v=upgrade-0234"></script>
 </head>
 
 </head>
@@ -340,7 +354,10 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
     <!-- Checkout -->
     <section id="checkout" class="spacer-xl" aria-label="Checkout">
       <div class="card">
-        <span class="pill">Checkout</span>
+
+<div class="sl-checkout-grid">
+  <div class="sl-checkout-left">
+<span class="pill">Checkout</span>
         <h2 style="margin-top:.6rem;">Unlock <span id="sl-category-label">a category</span></h2>
         <p class="muted" style="max-width:75ch;">
           You’ll unlock the selected category forever (one-time purchase).
@@ -355,13 +372,7 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
           <span class="pill" id="selected-category">None selected</span>
           <a class="btn" href="#choose">Change Category</a>
 
-          </div>
-
-          <div class="selected-category-preview-wrapper">
-          <div id="selected-category-preview"></div>
-          </div>
-          
-          </div>
+          </div></div>
 
           <div class="spacer-md"></div>
 
@@ -401,7 +412,13 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
 
           <div class="muted" id="sl-status" style="font-size:.9rem; margin-top:.85rem;"></div>
         </div>
-      </div>
+  </div>
+  <div class="sl-checkout-right">
+<div id="selected-category-preview"></div>
+  </div>
+</div>
+
+</div>
     </section>
 
     <!-- Notes -->

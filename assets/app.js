@@ -2,26 +2,20 @@
    - Waits for sl-auth-ready before gating checkout
    - Reads ?category= from URL and reflects in UI
    - Enables checkout only if: signed in AND category selected
-   - Shows selected category preview card in checkout
 */
+
 
 function clearSelectedCard() {
   document
-    .querySelectorAll(".upgrade-card.is-selected")
+    .querySelectorAll(".sl-category-card.is-selected")
     .forEach(el => el.classList.remove("is-selected"));
 }
 
 function findCategoryCard(category) {
   if (!category) return null;
-
-  // Your cards are: <div class="card upgrade-card" id="wireless"> ... </div>
-  // So the simplest, most reliable lookup is by id.
-  const byId = document.getElementById(category);
-  if (byId && byId.classList.contains("upgrade-card")) return byId;
-
-  // Fallback: just in case class/id drift
-  const sel = `.upgrade-card#${CSS.escape(category)}`;
-  return document.querySelector(sel);
+  return document.querySelector(
+    `.sl-category-card[data-category="${category}"]`
+  );
 }
 
 function renderSelectedCategoryPreview(cardEl) {
@@ -37,14 +31,13 @@ function renderSelectedCategoryPreview(cardEl) {
 
   clone.classList.remove("is-selected");
 
-  // Remove unlock button + any links/buttons in preview
-  clone.querySelectorAll(".upgrade-cta").forEach(n => n.remove());
+  // Remove unlock button inside preview
   clone.querySelectorAll("a, button").forEach(b => b.remove());
 
-  clone.style.marginTop = "0.75rem";
+  clone.style.marginTop = "1rem";
 
   mount.innerHTML = `
-    <div class="muted" style="margin-top:.5rem; margin-bottom:.35rem;">
+    <div class="muted" style="margin-bottom:.35rem;">
       You are unlocking:
     </div>
   `;
@@ -63,6 +56,7 @@ function syncSelectedCategoryUI(category) {
 
   const $ = (sel) => document.querySelector(sel);
 
+  // ---------- Robust element finders ----------
   function findSelectedCategoryEl() {
     return (
       $("#selected-category") ||
@@ -74,7 +68,6 @@ function syncSelectedCategoryUI(category) {
 
   function findCheckoutBtn() {
     return (
-      $("#sl-checkout") || // YOUR button id in HTML
       $("#btn-checkout") ||
       $("#checkout-btn") ||
       $("#checkoutBtn") ||
@@ -84,7 +77,6 @@ function syncSelectedCategoryUI(category) {
 
   function findCheckoutStatusEl() {
     return (
-      $("#sl-status") || // YOUR status id in HTML
       $("#checkout-status") ||
       $("#checkoutStatus") ||
       document.querySelector("[data-checkout-status]")
@@ -99,29 +91,45 @@ function syncSelectedCategoryUI(category) {
   }
 
   function getCategoryFromUrl() {
+  const url = new URL(window.location.href);
+  const c = (url.searchParams.get("category") || "").trim().toLowerCase();
+  if (c) {
+    try { localStorage.setItem("sl_last_category", c); } catch (_) {}
+    return c;
+  }
+  
+  try {
+    return (localStorage.getItem("sl_last_category") || "").trim().toLowerCase();
+  } catch (_) {
+    return "";
+  }
+}
+
+
+  function setCategoryInUrl(category) {
     const url = new URL(window.location.href);
-    const c = (url.searchParams.get("category") || "").trim().toLowerCase();
-    if (c) {
-      try { localStorage.setItem("sl_last_category", c); } catch (_) {}
-      return c;
-    }
-    try {
-      return (localStorage.getItem("sl_last_category") || "").trim().toLowerCase();
-    } catch (_) {
-      return "";
-    }
+    if (category) url.searchParams.set("category", category);
+    else url.searchParams.delete("category");
+    window.history.replaceState({}, "", url.toString());
   }
 
   function reflectCategory(category) {
+    // Primary: known targets
     const el = findSelectedCategoryEl();
     if (el) {
       el.textContent = category ? category : "None selected";
       el.classList.toggle("muted", !category);
+      return;
     }
 
-    // Also update the title label if present
-    const hLabel = $("#sl-category-label");
-    if (hLabel) hLabel.textContent = category ? category : "a category";
+    // Fallback: find the element currently showing "None selected" and update it
+    const fallback = Array.from(document.querySelectorAll("button, span, div, p, a"))
+      .find((n) => (n.textContent || "").trim() === "None selected");
+
+    if (fallback) {
+      fallback.textContent = category ? category : "None selected";
+      fallback.classList.toggle("muted", !category);
+    }
   }
 
   async function isSignedIn() {
@@ -133,6 +141,36 @@ function syncSelectedCategoryUI(category) {
     } catch (_e) {
       return false;
     }
+  }
+
+  async function refreshGateState() {
+    const btn = findCheckoutBtn();
+    const category = getCategoryFromUrl();
+
+    reflectCategory(category);
+    syncSelectedCategoryUI(category);
+
+
+    if (!btn) {
+      // Not signed in yet? The button may not be rendered. That’s fine.
+      return;
+    }
+
+    btn.disabled = true;
+
+    const signedIn = await isSignedIn();
+
+    if (!category) {
+      setCheckoutStatus("Select a category to continue.");
+      return;
+    }
+    if (!signedIn) {
+      setCheckoutStatus("Sign in to unlock Pro access.");
+      return;
+    }
+
+    setCheckoutStatus("");
+    btn.disabled = false;
   }
 
   async function createCheckoutSession(category) {
@@ -152,30 +190,45 @@ function syncSelectedCategoryUI(category) {
     return data.url;
   }
 
-  async function refreshGateState() {
-    const btn = findCheckoutBtn();
-    const category = getCategoryFromUrl();
+  function wireCategoryButtons() {
+    const buttons = document.querySelectorAll("[data-category]");
+    if (!buttons || !buttons.length) return;
 
-    reflectCategory(category);
-    syncSelectedCategoryUI(category);
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const category = (btn.getAttribute("data-category") || "").trim().toLowerCase();
+        if (!category) return;
+        setCategoryInUrl(category);
+        await refreshGateState();
 
-    if (!btn) return;
+    // After magic-link sign-in, land user on the checkout section (not page top).
+    try {
+      const signedIn = await isSignedIn();
+      const cat = getSelectedCategory();
+      const checkout = document.getElementById("checkout");
 
-    btn.disabled = true;
+      const url = String(location.href || "");
+      const looksLikeAuthReturn =
+        /access_token=|refresh_token=|type=magiclink|type=recovery|code=|error=/.test(url) ||
+        location.hash === "#checkout";
 
-    const signedIn = await isSignedIn();
+      if (signedIn && cat && checkout && looksLikeAuthReturn) {
+        // Only once per tab/session.
+        if (!sessionStorage.getItem("sl_checkout_autoscroll")) {
+          sessionStorage.setItem("sl_checkout_autoscroll", "1");
+          if (location.hash !== "#checkout") {
+            history.replaceState({}, "", location.pathname + location.search + "#checkout");
+          }
+          checkout.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    } catch {}
 
-    if (!category) {
-      setCheckoutStatus("Select a category to continue.");
-      return;
-    }
-    if (!signedIn) {
-      setCheckoutStatus("Sign in to unlock Pro access.");
-      return;
-    }
 
-    setCheckoutStatus("");
-    btn.disabled = false;
+        const checkout = $("#checkout");
+        if (checkout) checkout.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
   }
 
   function wireCheckoutButton() {
@@ -203,7 +256,9 @@ function syncSelectedCategoryUI(category) {
     });
   }
 
-  function boot() {
+  async function boot() {
+    // Run even if signed out — category reflection should still work.
+    wireCategoryButtons();
     wireCheckoutButton();
     refreshGateState();
 
@@ -212,6 +267,7 @@ function syncSelectedCategoryUI(category) {
   }
 
   function bootWhenAuthReady() {
+    // If auth is missing, still boot for URL/category reflection
     if (!window.SL_AUTH) {
       boot();
       return;
