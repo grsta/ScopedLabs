@@ -60,11 +60,14 @@
   }
 
   // ---- Supabase config ----
+  // Prefer window.SL_SUPABASE injected by stripe-map.js, but fall back to hardcoded values.
   const SUPABASE_URL =
-    (window.SL_SUPABASE && window.SL_SUPABASE.url) || "";
+    (window.SL_SUPABASE && window.SL_SUPABASE.url) ||
+    "https://ybnzjtuecirzajraddft.supabase.co";
 
   let SUPABASE_ANON_KEY =
-    (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) || "";
+    (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) ||
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
 
   // If someone pasted "public key:xxxxx" (it happens), strip the prefix.
   if (SUPABASE_ANON_KEY && /public\s*key\s*:/i.test(SUPABASE_ANON_KEY)) {
@@ -112,7 +115,10 @@
       const { data } = await sb.auth.getSession();
       if (data && data.session) {
         // Remove access_token hash clutter after restore
-        if (window.location.hash && window.location.hash.includes("access_token")) {
+        if (
+          window.location.hash &&
+          window.location.hash.includes("access_token")
+        ) {
           const clean = new URL(window.location.href);
           clean.hash = ""; // we’ll re-add #checkout below if needed
           const cat = getCategory();
@@ -162,7 +168,10 @@
 
           if (error) {
             console.warn("[SL_AUTH] signInWithOtp error:", error);
-            setStatus("Could not send link: " + (error.message || "Unknown error"), true);
+            setStatus(
+              "Could not send link: " + (error.message || "Unknown error"),
+              true
+            );
             btn.disabled = false;
             return;
           }
@@ -176,7 +185,9 @@
         }
       });
     } else {
-      console.warn("[SL_AUTH] Send button not found (expected #sl-sendlink or #sl-send-btn).");
+      console.warn(
+        "[SL_AUTH] Send button not found (expected #sl-sendlink or #sl-send-btn)."
+      );
     }
 
     // Bind sign out
