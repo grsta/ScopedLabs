@@ -15,19 +15,19 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
 
 
   <!-- Use absolute paths so this works from /upgrade/ -->
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0226" />
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0227" />
 
   <!-- Supabase client (v2) MUST load before auth.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Stripe map + Supabase config -->
-  <script src="/assets/stripe-map.js?v=upgrade-0238"></script>
+  <script src="/assets/stripe-map.js?v=upgrade-0239"></script>
 
   <!-- Auth MUST load before app.js -->
-  <script defer src="/assets/auth.js?v=upgrade-0238"></script>
+  <script defer src="/assets/auth.js?v=upgrade-0239"></script>
 
   <!-- App last -->
-  <script defer src="/assets/app.js?v=upgrade-0238"></script>
+  <script defer src="/assets/app.js?v=upgrade-0239"></script>
 </head>
 <style>
 .checkout-flex {
@@ -38,6 +38,22 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
   margin-top: -10px;
 }
 </style>
+<style>
+  #sl-checkout-grid{
+    display:grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap:24px;
+    align-items:start; /* <- this is the key */
+  }
+  #selected-category-preview{
+    align-self:start;
+    margin-top:0 !important;
+  }
+  @media (max-width: 900px){
+    #sl-checkout-grid{ grid-template-columns: 1fr; }
+  }
+</style>
+
 
 </head>
 
@@ -392,24 +408,24 @@ if (window.location.pathname.startsWith("/upgrade/checkout")) {
             </div>
 
             <!-- Checkout -->
-            <div id="sl-checkout-card" style="display:none; margin-top:.75rem;">
-              <div class="actions">
-                <button id="sl-checkout" class="btn btn-primary">Checkout</button>
-                <a class="btn" href="/account/">Account</a>
-                <button id="sl-signout" class="btn" style="display:none;">Sign out</button>
-              </div>
-            </div>
-
-            <div class="muted" id="sl-status" style="font-size:.9rem; margin-top:.85rem;"></div>
-          </div>
-
-          <!-- Right column: selected category preview card (injected by app.js) -->
-          <div id="selected-category-preview" style="flex: 0 1 440px; max-width: 440px; width: 100%;">
-            <!-- app.js injects the preview card here -->
-          </div>
-        </div>
-
+           <div id="sl-checkout-card" style="display:none; margin-top:.75rem;">
+  <div id="sl-checkout-grid">
+    <div id="sl-checkout-left">
+      <div class="actions">
+        <button id="sl-checkout" class="btn btn-primary">Checkout</button>
+        <a class="btn" href="/account/">Account</a>
+        <button id="sl-signout" class="btn" style="display:none;">Sign out</button>
       </div>
+
+      <div class="muted" id="sl-status" style="font-size:.9rem; margin-top:.85rem;"></div>
+    </div>
+
+    <div id="selected-category-preview" style="margin-top:0;">
+      <!-- app.js injects the preview card here -->
+    </div>
+  </div>
+</div>
+
     </section>
 
     <!-- Notes -->
