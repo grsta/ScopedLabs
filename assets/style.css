@@ -1600,3 +1600,18 @@ main h3.section-title {
 .selected-category-preview-wrapper .card {
   margin-top: .5rem;
 }
+/* Upgrade checkout: keep preview card pinned to the top-right */
+#sl-checkout-grid {
+  align-items: flex-start;
+}
+
+#selected-category-preview {
+  align-self: flex-start;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* If the injected preview uses a .card wrapper, kill any top margin it brings */
+#selected-category-preview .card {
+  margin-top: 0 !important;
+}
