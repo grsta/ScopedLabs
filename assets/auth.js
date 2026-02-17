@@ -94,7 +94,8 @@
     // Expose globally
     window.SL_AUTH = { sb, ready: true };
 
-    console.log("[SL_AUTH] loaded + ready ✅"); // <-- YOU SHOULD SEE THIS
+  console.log("[SL_AUTH] ready");
+
 
     // Handle PKCE code exchange if present
     try {
@@ -139,7 +140,7 @@
     // Bind Send magic link
     const sendBtn = elSendBtn();
     if (!sendBtn) {
-      console.warn('[SL_AUTH] Could not find #sl-send-btn (check HTML id).');
+      console.warn("[SL_AUTH] Could not find #sl-send-btn (check HTML id).");
     } else {
       sendBtn.addEventListener("click", async () => {
         // Category gate (optional — keeps your new behavior)
