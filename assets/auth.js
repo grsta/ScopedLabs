@@ -4,30 +4,13 @@
    Robust bindings:
    - Works with button ids: #sl-sendlink OR #sl-send-btn OR #sl-send
    - Email input: #sl-email OR first email input on page
-   - Status: #sl-status OR #sl-email-hint OR #sl-auth-status
+   - Status targets: #sl-status, #sl-email-hint, #sl-auth-status, #sl-auth-hint
 */
 
 (() => {
   "use strict";
 
-  // ---- helpers ----
   const $ = (sel) => document.querySelector(sel);
-
-  function safeText(el, msg) {
-    if (!el) return;
-    el.textContent = msg || "";
-  }
-
-  function setStatus(msg, isError = false) {
-    const el =
-      $("#sl-status") ||
-      $("#sl-email-hint") ||
-      $("#sl-auth-status") ||
-      $("#sl-auth-hint");
-    if (!el) return;
-    el.style.color = isError ? "#ffb3b3" : "";
-    el.textContent = msg || "";
-  }
 
   function normalizeEmail(s) {
     return String(s || "")
@@ -55,8 +38,23 @@
     return $("#sl-sendlink") || $("#sl-send-btn") || $("#sl-send");
   }
 
-  function getSignoutBtn() {
-    return $("#sl-signout");
+  function setStatus(msg, isError = false) {
+    const targets = [
+      $("#sl-status"),
+      $("#sl-email-hint"),
+      $("#sl-auth-status"),
+      $("#sl-auth-hint"),
+    ].filter(Boolean);
+
+    if (!targets.length) return;
+
+    for (const el of targets) {
+      el.textContent = msg || "";
+      el.style.color = isError ? "#ffb3b3" : "";
+      // ensure it isn't hidden by accident
+      if (el.style && el.style.display === "none") el.style.display = "";
+      if (el.style && el.style.visibility === "hidden") el.style.visibility = "";
+    }
   }
 
   // ---- Supabase config ----
@@ -69,13 +67,12 @@
     (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) ||
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
 
-  // If someone pasted "public key:xxxxx" (it happens), strip the prefix.
+  // If someone pasted "public key:xxxxx" strip prefix
   if (SUPABASE_ANON_KEY && /public\s*key\s*:/i.test(SUPABASE_ANON_KEY)) {
     SUPABASE_ANON_KEY = SUPABASE_ANON_KEY.replace(/.*public\s*key\s*:\s*/i, "");
   }
 
   const ready = (async () => {
-    // Ensure supabase-js v2 is loaded
     if (!window.supabase || !window.supabase.createClient) {
       console.warn("[SL_AUTH] supabase-js not loaded (check script order).");
       setStatus("Auth library not loaded.", true);
@@ -89,9 +86,7 @@
     }
 
     if (!SUPABASE_ANON_KEY) {
-      console.warn(
-        "[SL_AUTH] Missing SUPABASE_ANON_KEY (window.SL_SUPABASE.anonKey)."
-      );
+      console.warn("[SL_AUTH] Missing SUPABASE_ANON_KEY.");
       setStatus("Auth not configured (missing key).", true);
       return null;
     }
@@ -105,35 +100,22 @@
       },
     });
 
-    // expose globally
-    window.SL_AUTH = { sb, ready: Promise.resolve(sb) };
+    // expose globally (ready is a Promise, not boolean)
+    window.SL_AUTH = window.SL_AUTH || {};
+    window.SL_AUTH.sb = sb;
+    window.SL_AUTH.ready = Promise.resolve(sb);
 
     console.log("[SL_AUTH] ready");
 
-    // If we landed here with token hash params, let supabase process them, then clean URL hash.
+    // If the magic link landed here, supabase will restore session.
+    // We don't do UI flips here; app.js handles UI state via getSession/onAuthStateChange.
     try {
-      const { data } = await sb.auth.getSession();
-      if (data && data.session) {
-        // Remove access_token hash clutter after restore
-        if (
-          window.location.hash &&
-          window.location.hash.includes("access_token")
-        ) {
-          const clean = new URL(window.location.href);
-          clean.hash = ""; // we’ll re-add #checkout below if needed
-          const cat = getCategory();
-          if (cat) clean.searchParams.set("category", cat);
-          // land at checkout section
-          clean.hash = "checkout";
-          history.replaceState({}, "", clean.toString());
-        }
-      }
+      await sb.auth.getSession();
     } catch (e) {
-      // non-fatal
       console.warn("[SL_AUTH] getSession error:", e);
     }
 
-    // Bind send magic link button
+    // Bind send magic link
     const btn = getSendBtn();
     const emailEl = getEmailInput();
 
@@ -141,8 +123,7 @@
       btn.addEventListener("click", async (e) => {
         e.preventDefault();
 
-        const rawEmail = emailEl ? emailEl.value : "";
-        const email = normalizeEmail(rawEmail);
+        const email = normalizeEmail(emailEl ? emailEl.value : "");
         if (!email || !email.includes("@")) {
           setStatus("Enter a valid email address.", true);
           if (emailEl) emailEl.focus();
@@ -150,7 +131,7 @@
         }
 
         const cat = getCategory();
-        // Always return user to the checkout card on upgrade page
+        // Always return to upgrade checkout card
         const redirectTo = `${window.location.origin}/upgrade/?${
           cat ? `category=${encodeURIComponent(cat)}&` : ""
         }r=ml#checkout`;
@@ -161,9 +142,7 @@
 
           const { error } = await sb.auth.signInWithOtp({
             email,
-            options: {
-              emailRedirectTo: redirectTo,
-            },
+            options: { emailRedirectTo: redirectTo },
           });
 
           if (error) {
@@ -186,32 +165,14 @@
       });
     } else {
       console.warn(
-        "[SL_AUTH] Send button not found (expected #sl-sendlink or #sl-send-btn)."
+        "[SL_AUTH] Send button not found (#sl-sendlink or #sl-send-btn)."
       );
-    }
-
-    // Bind sign out
-    const signoutBtn = getSignoutBtn();
-    if (signoutBtn) {
-      signoutBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        try {
-          await sb.auth.signOut();
-        } catch {}
-        localStorage.removeItem("sl_selected_category");
-        setStatus("Signed out.");
-        // keep them on checkout section
-        const u = new URL(window.location.href);
-        u.hash = "checkout";
-        history.replaceState({}, "", u.toString());
-        window.location.reload();
-      });
     }
 
     return sb;
   })();
 
-  // expose readiness even if config missing
+  // Ensure globals exist even if init fails
   window.SL_AUTH = window.SL_AUTH || {};
   window.SL_AUTH.ready = ready;
 })();
