@@ -15,9 +15,13 @@
   // Preferred: provided by /assets/stripe-map.js as window.SL_SUPABASE = { url, anonKey }
   // Fallback: you MAY hardcode here if needed.
   const SUPABASE_URL =
-    (window.SL_SUPABASE && window.SL_SUPABASE.url) || "";
-  const SUPABASE_ANON_KEY =
-    (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) || "";
+  (window.SL_SUPABASE && window.SL_SUPABASE.url) ||
+  "https://ybnzjtuecirzajraddft.supabase.co";
+
+const SUPABASE_ANON_KEY =
+  (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+
 
   function $(sel) {
     return document.querySelector(sel);
