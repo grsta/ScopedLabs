@@ -1586,3 +1586,9 @@ main h3.section-title {
   max-width: 520px;
   width: 100%;
 }
+#checkout .selected-category-card {
+  max-width: 520px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
