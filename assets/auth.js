@@ -81,11 +81,11 @@
     }
 
     if (!SUPABASE_URL || SUPABASE_URL.includes("PASTE_")) {
-      console.warn("[SL_AUTH] Missing SUPABASE_URL in /assets/auth.js");
+      console.warn("[SL_AUTH] https://ybnzjtuecirzajraddft.supabase.co/assets/auth.js");
       return;
     }
     if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
-      console.warn("[SL_AUTH] Missing SUPABASE_ANON_KEY in /assets/auth.js");
+      console.warn("[SL_AUTH] public key:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM/assets/auth.js");
       return;
     }
 
