@@ -1,51 +1,53 @@
 /* /assets/auth.js
-   ScopedLabs Magic Link Auth — reliable status + no-submit-click
+   ScopedLabs Auth Controller (Supabase v2 UMD)
 
-   Exposes:
-     window.SL_AUTH = { sb, ready }
-
-   Requires (in HTML, before this file):
-     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
-   Config:
-   - Prefer window.SL_SUPABASE injected by /assets/stripe-map.js (url + anonKey).
-   - Fallback to constants if you insist (not recommended to hardcode keys in public repos).
+   Goals:
+   - Create exactly ONE Supabase client
+   - Expose: window.SL_AUTH = { sb, ready }
+   - Use implicit flow for magic links (no PKCE mismatches)
+   - Update a status line immediately:
+       * "Sending magic link…"
+       * "Check your email…"
+       * "Signing you in…"
+       * Clear "Signing you in…" once session exists
+   - Broadcast auth changes for app.js:
+       window.dispatchEvent(new CustomEvent("sl-auth", { detail: { session } }))
 */
 
 (() => {
   "use strict";
 
-  // Prefer stripe-map injection if present
+  const $ = (id) => document.getElementById(id);
+  const pick = (...els) => els.find(Boolean) || null;
+
+  // Prefer stripe-map injection if present:
+  // window.SL_SUPABASE = { url, anonKey }
   const SUPABASE_URL =
     (window.SL_SUPABASE && window.SL_SUPABASE.url) ||
     "https://ybnzjtuecirzajraddft.supabase.co";
 
-  // IMPORTANT: best practice is to let stripe-map inject this at runtime.
-  // If you are not using stripe-map, paste your anon key here.
   const SUPABASE_ANON_KEY =
     (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) ||
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM"; 
-
-  const $ = (id) => document.getElementById(id);
-  const pick = (...els) => els.find(Boolean) || null;
-
-  const els = {
-    email: () => pick($("sl-email"), $("sl-email-input"), $("email")),
-    send: () => pick($("sl-sendlink"), $("sl-send-btn")),
-    status: () => pick($("sl-status"), $("sl-auth-status"), $("status")),
-    signout: () => $("sl-signout"),
-    loginCard: () => $("sl-login-card"),
-  };
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM"; // keep your real key in your repo; you already have it
 
   function ensureStatusEl() {
-    let st = els.status();
+    // Prefer existing status lines
+    let st =
+      pick(
+        $("sl-auth-status"),
+        $("sl-status"),
+        $("status"),
+        document.querySelector('[data-role="auth-status"]')
+      ) || null;
+
     if (st) return st;
 
-    const btn = els.send();
+    // Otherwise, create one below the send button if possible
+    const btn = pick($("sl-sendlink"), $("sl-send-btn"), $("sl-send"), $("sl-sendlink-btn"));
     if (!btn || !btn.parentElement) return null;
 
     st = document.createElement("div");
-    st.id = "sl-status";
+    st.id = "sl-auth-status";
     st.className = "muted";
     st.style.marginTop = "10px";
     st.style.fontSize = "0.95rem";
@@ -57,136 +59,77 @@
   function setStatus(msg, kind = "info") {
     const st = ensureStatusEl();
     if (!st) return;
+
     st.textContent = msg || "";
+    st.dataset.kind = kind;
+
+    // Optional subtle styling (safe defaults)
     st.style.color =
-      kind === "error" ? "#ffb3b3" : kind === "ok" ? "#bfffd0" : "";
+      kind === "error" ? "var(--danger, #ff6b6b)" : "var(--text-muted, rgba(255,255,255,.8))";
   }
 
-  function normalizeEmail(v) {
-    return (v || "").trim().toLowerCase();
+  function clearStatusIfSigningIn() {
+    const st = ensureStatusEl();
+    if (!st) return;
+    if ((st.textContent || "").toLowerCase().includes("signing you in")) st.textContent = "";
   }
 
-  function getCategory() {
+  function hasAuthHashOrError() {
+    const h = (location.hash || "").toLowerCase();
+    const q = location.search.toLowerCase();
+    return (
+      h.includes("access_token=") ||
+      h.includes("refresh_token=") ||
+      h.includes("type=magiclink") ||
+      h.includes("error=") ||
+      q.includes("error=") ||
+      q.includes("error_code=")
+    );
+  }
+
+  function readCategoryForRedirect() {
     try {
-      const u = new URL(location.href);
-      const q = (u.searchParams.get("category") || "").trim();
-      if (q) return q;
+      const url = new URL(location.href);
+      const cat = url.searchParams.get("category");
+      if (cat) return cat;
     } catch {}
     try {
-      const ls = (localStorage.getItem("sl_selected_category") || "").trim();
+      const ls = localStorage.getItem("sl_selected_category");
       if (ls) return ls;
     } catch {}
     return "";
   }
 
-  function buildRedirectTo() {
-    const origin = location.origin;
-    const cat = getCategory();
-    return cat
-      ? `${origin}/upgrade/checkout/?category=${encodeURIComponent(cat)}`
-      : `${origin}/upgrade/#checkout`;
-  }
-
-  function cleanAuthParams() {
+  function emitAuth(session) {
     try {
-      const u = new URL(location.href);
-      const keepCat = u.searchParams.get("category");
-      const keepHash = u.hash || "";
-
-      ["code", "error", "error_code", "error_description", "type"].forEach((k) =>
-        u.searchParams.delete(k)
-      );
-
-      // If the hash contains implicit tokens, wipe it
-      const h = (u.hash || "").toLowerCase();
-      const hasTokens =
-        h.includes("access_token=") ||
-        h.includes("refresh_token=") ||
-        h.includes("token_type=") ||
-        h.includes("expires_in=");
-      u.hash = hasTokens ? "" : keepHash;
-
-      if (keepCat) u.searchParams.set("category", keepCat);
-      history.replaceState({}, "", u.toString());
+      window.dispatchEvent(new CustomEvent("sl-auth", { detail: { session: session || null } }));
     } catch {}
   }
 
-  function showReturnErrorIfAny() {
-    try {
-      const u = new URL(location.href);
-      const code = u.searchParams.get("error_code") || "";
-      const desc = u.searchParams.get("error_description") || "";
-      const err = u.searchParams.get("error") || "";
-      if (!code && !err) return;
+  function showSignedInUI(session) {
+    const email = session && session.user && session.user.email ? session.user.email : "";
+    const emailLabel = pick($("sl-user-email"), document.querySelector('[data-role="user-email"]'));
+    if (emailLabel) emailLabel.textContent = email || "";
 
-      if (code === "otp_expired") {
-        setStatus(
-          "That email link expired (or was already used). Send a new magic link.",
-          "error"
-        );
-      } else {
-        const msg = desc
-          ? decodeURIComponent(desc).replace(/\+/g, " ")
-          : code || err;
-        setStatus(`Sign-in failed: ${msg}`, "error");
-      }
+    // Toggle common elements if they exist
+    const signout = pick($("sl-signout"), $("sl-sign-out"));
+    if (signout) signout.style.display = "";
 
-      cleanAuthParams();
-    } catch {}
+    // Don’t hide the whole card anymore; app.js handles button visibility too
+    clearStatusIfSigningIn();
+    if (email) setStatus(`Signed in as ${email}`, "info");
   }
 
-  function waitForSupabase(timeoutMs = 9000) {
-    const start = Date.now();
-    return new Promise((resolve, reject) => {
-      const tick = () => {
-        if (window.supabase && typeof window.supabase.createClient === "function")
-          return resolve(true);
-        if (Date.now() - start > timeoutMs)
-          return reject(new Error("supabase-js not loaded"));
-        setTimeout(tick, 50);
-      };
-      tick();
-    });
+  function showSignedOutUI() {
+    const signout = pick($("sl-signout"), $("sl-sign-out"));
+    if (signout) signout.style.display = "none";
   }
 
-  async function refreshSessionStatus(sb) {
-    try {
-      const { data } = await sb.auth.getSession();
-      const sess = data?.session || null;
+  function createClient() {
+    // UMD build exposes: window.supabase.createClient
+    if (!window.supabase || !window.supabase.createClient) return null;
 
-      if (sess?.user?.email) {
-        setStatus(`Signed in as ${sess.user.email}`, "ok");
-        return sess;
-      }
-
-      setStatus("Not signed in.");
-      return null;
-    } catch {
-      setStatus("Not signed in.");
-      return null;
-    }
-  }
-
-  async function init() {
-    setStatus("Auth loading…");
-
-    try {
-      await waitForSupabase();
-    } catch (e) {
-      console.warn("[SL_AUTH] supabase-js not loaded:", e);
-      setStatus("Auth failed to load (Supabase script missing).", "error");
-      return;
-    }
-
-    // If key is missing, DO NOT silently die; show it.
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      console.warn("[SL_AUTH] Missing SUPABASE_URL or SUPABASE_ANON_KEY.");
-      setStatus("Auth not configured (missing Supabase key).", "error");
-      return;
-    }
-
-    // Implicit flow is most reliable for magic links on static sites
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         flowType: "implicit",
         detectSessionInUrl: true,
@@ -194,109 +137,142 @@
         autoRefreshToken: true,
       },
     });
+  }
 
-    window.SL_AUTH = window.SL_AUTH || {};
-    window.SL_AUTH.sb = sb;
-
-    // show any return errors (otp_expired, etc)
-    showReturnErrorIfAny();
-
-    // settle status immediately (clears any stale “Signing you in…”)
-    await refreshSessionStatus(sb);
-
-    // stay in sync on changes
-    try {
-      sb.auth.onAuthStateChange((_evt, session) => {
-        if (session?.user?.email) setStatus(`Signed in as ${session.user.email}`, "ok");
-        else setStatus("Not signed in.");
-        cleanAuthParams();
-      });
-    } catch {}
-
-    // wire send button (with preventDefault so it never becomes a dead submit)
-    const btn = els.send();
-    const emailEl = els.email();
-
-    if (!btn) {
-      console.warn("[SL_AUTH] Send button not found (#sl-sendlink or #sl-send-btn).");
-      setStatus("Login UI missing send button.", "error");
+  async function init() {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === "REPLACE_ME_IF_NEEDED") {
+      console.warn("[SL_AUTH] Missing SUPABASE_URL or SUPABASE_ANON_KEY.");
+      setStatus("Auth not configured (missing Supabase keys).", "error");
       return;
     }
 
-    btn.addEventListener("click", async (e) => {
-      // THIS is the critical fix: stop form submits / page refresh
-      try {
-        e.preventDefault();
-        e.stopPropagation();
-      } catch {}
+    const sb = createClient();
+    if (!sb) {
+      console.warn("[SL_AUTH] supabase-js not loaded (check script order).");
+      setStatus("Auth failed to load (Supabase script missing).", "error");
+      return;
+    }
 
-      const email = normalizeEmail(emailEl?.value);
-      if (!email || !email.includes("@")) {
-        setStatus("Enter a valid email.", "error");
-        return;
+    // Expose globally (exactly one client)
+    let readyResolve;
+    const ready = new Promise((r) => (readyResolve = r));
+    window.SL_AUTH = { sb, ready };
+    readyResolve(true);
+
+    // If returning from magic link, show immediate feedback
+    if (hasAuthHashOrError()) {
+      const url = new URL(location.href);
+      const err = url.searchParams.get("error_description") || url.searchParams.get("error");
+      const errCode = url.searchParams.get("error_code");
+
+      if (err || errCode) {
+        setStatus(
+          errCode === "otp_expired"
+            ? "That sign-in link expired. Please request a new one."
+            : `Sign-in failed. ${err || "Please try again."}`,
+          "error"
+        );
+      } else {
+        setStatus("Signing you in…", "info");
       }
+    }
 
-      btn.disabled = true;
-      setStatus("Sending magic link…");
+    // Wire "Send magic link"
+    const emailInput = pick($("sl-email"), $("sl-email-input"), $("email"));
+    const sendBtn = pick($("sl-sendlink"), $("sl-send-btn"), $("sl-send"), $("sl-sendlink-btn"));
 
-      try {
-        const redirectTo = buildRedirectTo();
+    if (sendBtn && emailInput) {
+      sendBtn.addEventListener("click", async () => {
+        const email = (emailInput.value || "").trim();
+        if (!email || !email.includes("@")) {
+          setStatus("Enter a valid email address.", "error");
+          emailInput.focus();
+          return;
+        }
 
-        const { error } = await sb.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: redirectTo },
-        });
+        const cat = readCategoryForRedirect();
+        const redirectTo = `https://scopedlabs.com/upgrade/checkout/?category=${encodeURIComponent(
+          cat || "wireless"
+        )}`;
 
-        if (error) throw error;
+        sendBtn.disabled = true;
+        setStatus("Sending magic link…", "info");
 
-        setStatus("Magic link sent. Check your email (and spam/junk).", "ok");
-      } catch (err) {
-        console.warn("[SL_AUTH] signInWithOtp error:", err);
-        setStatus("Could not send link. Try again.", "error");
-      } finally {
-        btn.disabled = false;
-      }
-    });
-
-    // sign out (optional)
-    const outBtn = els.signout();
-    if (outBtn) {
-      outBtn.addEventListener("click", async (e) => {
         try {
-          e.preventDefault();
-        } catch {}
-        try {
-          outBtn.disabled = true;
-          await sb.auth.signOut();
-        } catch {}
-        try {
-          localStorage.removeItem("sl_selected_category");
-        } catch {}
-        setStatus("Signed out.");
-        outBtn.disabled = false;
-        location.href = "/upgrade/#checkout";
+          const { error } = await sb.auth.signInWithOtp({
+            email,
+            options: {
+              emailRedirectTo: redirectTo,
+            },
+          });
+
+          if (error) {
+            console.warn("[SL_AUTH] signInWithOtp error:", error);
+            setStatus(`Could not send link: ${error.message || "Unknown error"}`, "error");
+            sendBtn.disabled = false;
+            return;
+          }
+
+          setStatus("Check your email for the sign-in link.", "info");
+
+          // small cooldown to prevent double sends
+          setTimeout(() => {
+            sendBtn.disabled = false;
+          }, 1500);
+        } catch (e) {
+          console.warn("[SL_AUTH] signInWithOtp failed:", e);
+          setStatus("Could not send link. Please try again.", "error");
+          sendBtn.disabled = false;
+        }
       });
     }
 
-    // final settle
-    // (keeps it from showing “Auth loading…” forever on upgrade page)
-    const sess = await refreshSessionStatus(sb);
-    if (!sess) {
-      // keep a helpful hint on upgrade page
-      // (so it never looks like “nothing”)
-      setStatus("Enter your email to receive a sign-in link.");
+    // Wire sign out (if present)
+    const signout = pick($("sl-signout"), $("sl-sign-out"));
+    if (signout) {
+      signout.addEventListener("click", async () => {
+        try {
+          await sb.auth.signOut();
+        } catch {}
+        showSignedOutUI();
+        setStatus("", "info");
+        emitAuth(null);
+      });
     }
+
+    // Initial session check
+    let session = null;
+    try {
+      const res = await sb.auth.getSession();
+      session = res && res.data ? res.data.session : null;
+    } catch {}
+
+    if (session) {
+      showSignedInUI(session);
+      emitAuth(session);
+    } else {
+      showSignedOutUI();
+      emitAuth(null);
+    }
+
+    // Live auth updates
+    sb.auth.onAuthStateChange((_event, newSession) => {
+      if (newSession) {
+        showSignedInUI(newSession);
+        emitAuth(newSession);
+      } else {
+        showSignedOutUI();
+        emitAuth(null);
+      }
+    });
   }
 
-  // expose readiness
-  window.SL_AUTH = window.SL_AUTH || {};
-  window.SL_AUTH.ready =
-    (document.readyState === "loading"
-      ? new Promise((resolve) =>
-          document.addEventListener("DOMContentLoaded", resolve, { once: true })
-        )
-      : Promise.resolve()
-    ).then(init);
+  // DOM ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })();
 
 
