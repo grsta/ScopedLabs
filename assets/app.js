@@ -7,10 +7,6 @@
    - Handle "Change Category" return flow (scroll back to #categories)
    - After magic-link login, scroll to #checkout if URL includes #checkout (or if we were already in checkout mode)
    - Wire checkout button: POST /api/create-checkout-session {category,email} -> redirect to returned url
-
-   PATCH 0217:
-   - Force checkout layout: left column (price + email + button) | right column (preview card)
-     WITHOUT changing HTML/CSS files by building a wrapper at runtime.
 */
 
 (() => {
@@ -40,79 +36,111 @@
       .join(" ");
   }
 
-  function readCategoryFromUrl() {
+  function getUrlParam(name) {
     try {
-      const url = new URL(window.location.href);
-      return safeSlug(url.searchParams.get("category"));
+      return new URL(location.href).searchParams.get(name);
     } catch {
-      return "";
+      return null;
     }
   }
 
-  function writeCategoryToUrl(cat) {
+  function setUrlParam(name, value) {
     try {
-      const url = new URL(window.location.href);
-      if (cat) url.searchParams.set("category", cat);
-      else url.searchParams.delete("category");
-      // preserve hash (#checkout / #categories)
-      history.replaceState({}, "", url.toString());
+      const u = new URL(location.href);
+      if (!value) u.searchParams.delete(name);
+      else u.searchParams.set(name, value);
+      history.replaceState({}, "", u.toString());
     } catch {}
   }
 
-  function getCategory() {
-    return readCategoryFromUrl() || safeSlug(localStorage.getItem(LS_KEY)) || "";
-  }
-
-  function setCategory(cat) {
-    const slug = safeSlug(cat);
-    if (slug) localStorage.setItem(LS_KEY, slug);
-    else localStorage.removeItem(LS_KEY);
-    writeCategoryToUrl(slug);
-    return slug;
-  }
-
-  function scrollToId(id) {
+  function scrollToHash(hash) {
+    const id = (hash || "").replace(/^#/, "");
+    if (!id) return;
     const el = document.getElementById(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  // ---------- category preview ----------
+  // ---------- category copy ----------
   const CATEGORY_COPY = {
-    wireless: {
-      desc: "Link planning, channel assumptions, and reliability headroom.",
-      bullets: ["Link budget & margin checks", "Coverage + capacity planning", "Interference risk helpers"],
-    },
     thermal: {
       desc: "Heat load planning, airflow assumptions, and environment constraints.",
       bullets: ["BTU/Watt conversion helpers", "Room/rack thermal planning", "Cooling headroom checks"],
     },
-    "access-control": {
-      desc: "Door + credential planning, strike/maglock basics, and power sizing.",
-      bullets: ["Door hardware checklists", "Power + battery sizing", "Basic compliance reminders"],
+    wireless: {
+      desc: "Link planning, channel assumptions, and reliability headroom.",
+      bullets: ["Link budget & margin checks", "Coverage + capacity planning", "Interference risk helpers"],
     },
     power: {
-      desc: "UPS sizing, runtime planning, load growth, and redundancy checks.",
-      bullets: ["UPS runtime helpers", "Battery/VA/Watt conversions", "Load growth planning"],
+      desc: "UPS sizing, runtime margin, redundancy, and failure planning.",
+      bullets: ["Load growth simulation", "Redundancy / N+1 impact modeling", "Worst-case runtime stress tests"],
     },
     network: {
-      desc: "Bandwidth planning, oversubscription, and latency budgeting.",
-      bullets: ["Bandwidth planner", "Oversubscription estimator", "Latency budget calculator"],
+      desc: "Bandwidth planning, latency budgets, and congestion headroom.",
+      bullets: ["Oversubscription analysis", "Latency budget calculators", "Uplink capacity planning"],
     },
     "video-storage": {
-      desc: "Retention planning, bitrate assumptions, and storage overhead.",
-      bullets: ["Storage calculator", "Retention helpers", "RAID impact estimates"],
+      desc: "Retention planning, storage survivability, and failure behavior.",
+      bullets: ["Advanced storage scenarios", "RAID impact + rebuild risk", "Retention survivability modeling"],
+    },
+    compute: {
+      desc: "Server sizing, workload estimates, and resource headroom planning.",
+      bullets: ["Capacity planning (CPU/RAM/IO)", "Growth projections", "Performance vs cost trade-offs"],
+    },
+    infrastructure: {
+      desc: "Power chain planning, rack/room constraints, and deployment readiness checks.",
+      bullets: ["Rack density & load planning", "Constraint checks", "Failure impact planning"],
+    },
+    performance: {
+      desc: "Sizing targets, efficiency assumptions, and stress-test planning tools.",
+      bullets: ["Baseline vs peak modeling", "Headroom targets", "Bottleneck risk checks"],
+    },
+    "physical-security": {
+      desc: "Coverage planning, deployment assumptions, and survivability checks.",
+      bullets: ["Coverage + risk planners", "Runtime/storage survivability", "Readiness scoring"],
+    },
+    "access-control": {
+      desc: "Door hardware, credential formats, PoE power budgets, and deployment planning.",
+      bullets: ["Controller sizing", "Power/cabling headroom", "Fail-safe impact modeling"],
     },
   };
 
+  // ---------- category state ----------
+  function getCategory() {
+    const fromUrl = safeSlug(getUrlParam("category"));
+    if (fromUrl) return fromUrl;
+
+    try {
+      const fromLs = safeSlug(localStorage.getItem(LS_KEY));
+      if (fromLs) return fromLs;
+    } catch {}
+
+    return "";
+  }
+
+  function setCategory(cat) {
+    const slug = safeSlug(cat);
+    try {
+      if (slug) localStorage.setItem(LS_KEY, slug);
+      else localStorage.removeItem(LS_KEY);
+    } catch {}
+
+    if (slug) setUrlParam("category", slug);
+    return slug;
+  }
+
+  function findSelectedCategoryEl() {
+    return $("#selected-category") || $("#sl-category-pill") || $("#sl-selected-category");
+  }
+
+  // ---------- preview renderer ----------
   function renderSelectedPreview(mount, cat) {
     if (!mount) return;
 
-    // Right-column card constraints
+    // Align top-right
     mount.style.marginTop = "0px";
     mount.style.alignSelf = "start";
     mount.style.justifySelf = "end";
-    mount.style.minWidth = "320px";
+    mount.style.display = "";
 
     mount.innerHTML = "";
 
@@ -131,102 +159,82 @@
     card.style.maxWidth = "440px";
 
     card.innerHTML = `
-      <span class="pill pro" style="display:inline-flex; align-items:center; gap:.35rem;">
-        <span aria-hidden="true">🔒</span>
-        <span>Pro — Category Unlock</span>
+      <span class="pill pro" style="display:inline-flex; align-items:center; gap:.45rem;">
+        🔒 <span>Pro — Category Unlock</span>
       </span>
-      <h3 style="margin-top:.6rem; font-size:1.25rem;">${title}</h3>
-      <p class="muted" style="margin-top:.35rem;">${copy.desc}</p>
-      <div class="muted" style="margin-top:.65rem; font-weight:700;">Includes examples like:</div>
-      <ul class="muted" style="margin-top:.5rem; padding-left:1.1rem;">
-        ${copy.bullets.map((b) => `<li>${b}</li>`).join("")}
+      <h3 style="margin-top:.6rem;">${escapeHtml(title)}</h3>
+      <p class="muted">${escapeHtml(copy.desc)}</p>
+
+      <div class="muted" style="font-size:.95rem; margin-top:.65rem;">
+        <strong>Includes examples like:</strong>
+      </div>
+      <ul class="muted" style="margin:.5rem 0 0 1.15rem;">
+        ${(copy.bullets || []).map((b) => `<li>${escapeHtml(b)}</li>`).join("")}
       </ul>
-      <div class="muted" style="margin-top:.65rem;">You’ll also receive future Pro tools added to <em>${title}</em>.</div>
+
+      <div class="muted" style="font-size:.85rem; margin-top:.85rem;">
+        You’ll also receive future Pro tools added to <em>${escapeHtml(title)}</em>.
+      </div>
     `;
 
     mount.appendChild(card);
   }
 
-  // ---------- checkout layout (runtime wrapper; no HTML edits) ----------
-  function ensureCheckoutTwoColumnLayout() {
-    const card = $("#sl-checkout-card");
-    if (!card) return;
+  function escapeHtml(s) {
+    return (s || "")
+      .toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
-    const mount =
+  // NEW: ensure the preview mount exists (creates it if HTML doesn’t have it)
+  function ensurePreviewMount() {
+    // Prefer existing mounts (upgrade page + any legacy ids)
+    let mount =
       $("#sl-selected-category-preview") ||
       $("#selected-category-preview") ||
       $("#sl-selected-category-preview-checkout") ||
       null;
 
-    if (!mount) return;
-
-    // Already wrapped?
-    if (card.querySelector('[data-sl="checkout-grid"]')) return;
-
-    // Build a two-column layout wrapper
-    const grid = document.createElement("div");
-    grid.setAttribute("data-sl", "checkout-grid");
-
-    // Use flex with wrap so mobile stays sane
-    grid.style.display = "flex";
-    grid.style.gap = "18px";
-    grid.style.alignItems = "flex-start";
-    grid.style.justifyContent = "space-between";
-    grid.style.flexWrap = "wrap";
-
-    const left = document.createElement("div");
-    left.setAttribute("data-sl", "checkout-left");
-    left.style.flex = "1 1 360px";
-    left.style.minWidth = "280px";
-
-    const right = document.createElement("div");
-    right.setAttribute("data-sl", "checkout-right");
-    right.style.flex = "0 0 440px";
-    right.style.maxWidth = "440px";
-    right.style.marginLeft = "auto";
-
-    // Move children: everything except the preview mount goes left.
-    // Then put the preview mount into the right column.
-    const kids = Array.from(card.children);
-    for (const k of kids) {
-      if (k === mount) continue;
-      left.appendChild(k);
+    if (mount) {
+      mount.style.display = "";
+      return mount;
     }
-    right.appendChild(mount);
 
-    // Replace card content with wrapper
-    card.innerHTML = "";
-    grid.appendChild(left);
-    grid.appendChild(right);
-    card.appendChild(grid);
-  }
+    // If missing, create it inside the checkout grid/card.
+    const host =
+      $("#sl-checkout-grid") || // preferred (our new upgrade HTML)
+      $("#checkout-grid") ||
+      $("#checkout") ||
+      null;
 
-  // ---------- UI sync ----------
-  function findSelectedCategoryEl() {
-    return (
-      $("#selected-category") ||
-      $("#sl-selected-category") ||
-      $("#sl-selected-cat") ||
-      $('[data-role="selected-category"]')
-    );
+    if (!host) return null;
+
+    mount = document.createElement("div");
+    mount.id = "sl-selected-category-preview";
+    mount.style.marginTop = "0px";
+    mount.style.maxWidth = "440px";
+    mount.style.width = "100%";
+    mount.style.alignSelf = "start";
+    mount.style.justifySelf = "end";
+
+    host.appendChild(mount);
+    return mount;
   }
 
   function syncCategoryUI(cat) {
     const labelEl = findSelectedCategoryEl();
     if (labelEl) labelEl.textContent = cat || "None selected";
 
+    // Title tweak
     const h = $("#sl-checkout-title");
     if (h) h.textContent = cat ? `Unlock ${cat}` : "Unlock a category";
 
-    // Ensure layout wrapper exists before rendering (so mount is in right column)
-    ensureCheckoutTwoColumnLayout();
-
-    const mount =
-      $("#sl-selected-category-preview") ||
-      $("#selected-category-preview") ||
-      $("#sl-selected-category-preview-checkout") ||
-      null;
-
+    // Preview card (self-healing)
+    const mount = ensurePreviewMount();
     renderSelectedPreview(mount, cat);
   }
 
@@ -248,9 +256,6 @@
     if (card) card.style.display = "";
     if (status) status.textContent = email ? `Signed in as ${email}` : "Signed in.";
     if (signout) signout.style.display = "";
-
-    // Re-apply layout after we unhide the card (prevents “preview drops below”)
-    ensureCheckoutTwoColumnLayout();
   }
 
   function showSignedOut() {
@@ -263,104 +268,47 @@
     if (signout) signout.style.display = "none";
   }
 
-  function wireCategoryPickers(sb) {
-    const candidates = [
-      ...$$("[data-category]"),
-      ...$$('a[href*="/upgrade/?category="]'),
-      ...$$('[id^="sl-unlock-"]'),
-    ];
-
-    const seen = new Set();
-    for (const el of candidates) {
-      if (seen.has(el)) continue;
-      seen.add(el);
-
-      el.addEventListener("click", async (e) => {
-        const fromData = safeSlug(el.getAttribute("data-category"));
-        const fromId = safeSlug((el.id || "").replace(/^sl-unlock-/, ""));
-        let fromHref = "";
-        try {
-          const href = el.getAttribute("href") || "";
-          if (href.includes("category=")) {
-            const u = new URL(href, window.location.origin);
-            fromHref = safeSlug(u.searchParams.get("category"));
-          }
-        } catch {}
-
-        const cat = fromData || fromId || fromHref;
-        if (!cat) return;
-
-        setCategory(cat);
-        syncCategoryUI(cat);
-
-        const url = new URL(window.location.href);
-        const wantsCheckout = url.hash === "#checkout" || url.searchParams.get("return") === "checkout";
-        if (wantsCheckout && sb) {
-          const s = await getSession(sb);
-          if (s) {
-            e.preventDefault();
-            scrollToId("checkout");
-          }
-        }
-      });
-    }
-  }
-
-  async function wireCheckout(sb) {
-    const checkoutBtn = $("#sl-checkout");
-    const status = $("#sl-status");
-    const emailInput = $("#sl-email");
-
-    if (!checkoutBtn) return;
-
-    checkoutBtn.addEventListener("click", async () => {
-      const cat = getCategory();
-      const s = await getSession(sb);
-
-      if (!s) return;
-      if (!cat) {
-        if (status) status.textContent = "Choose a category to continue.";
-        return;
-      }
-
-      checkoutBtn.disabled = true;
-      if (status) status.textContent = "Opening Stripe Checkout…";
-
-      const email = (s.user && s.user.email) || (emailInput ? emailInput.value.trim() : "");
-
-      try {
-        const r = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category: cat, email }),
-        });
-
-        if (!r.ok) throw new Error("bad_status");
-        const data = await r.json();
-        if (!data || !data.url) throw new Error("no_url");
-
-        window.location.href = data.url;
-      } catch (err) {
-        checkoutBtn.disabled = false;
-        if (status) status.textContent = "Failed to start checkout";
-        console.warn("[SL_APP] checkout error", err);
-      }
+  async function postJson(url, body) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body || {}),
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
   }
 
-  async function wireSignout(sb) {
-    const btn = $("#sl-signout");
+  function wireCheckoutButton(sb) {
+    const btn = $("#sl-checkout");
+    const status = $("#sl-status");
     if (!btn) return;
 
     btn.addEventListener("click", async () => {
+      const currentCategory = getCategory();
+      const session = sb ? await getSession(sb) : null;
+
+      if (!session || !session.user) return;
+      if (!currentCategory) return;
+
+      btn.disabled = true;
+      if (status) status.textContent = "Opening Stripe Checkout…";
+
       try {
-        await sb.auth.signOut();
-      } catch {}
-      localStorage.removeItem(LS_KEY);
-      const url = new URL(window.location.href);
-      url.searchParams.delete("category");
-      url.hash = "#checkout";
-      window.location.href = url.toString();
+        const data = await postJson("/api/create-checkout-session", {
+          category: currentCategory,
+          email: session.user.email,
+        });
+
+        if (data && data.url) {
+          location.href = data.url;
+          return;
+        }
+
+        throw new Error("No checkout url returned");
+      } catch (e) {
+        if (status) status.textContent = "Failed to start checkout";
+        btn.disabled = false;
+      }
     });
   }
 
@@ -369,18 +317,81 @@
     if (!btn) return;
 
     btn.addEventListener("click", () => {
-      const url = new URL(window.location.href);
-      url.searchParams.set("return", "checkout");
-      url.hash = "#categories";
-      window.location.href = url.toString();
+      // preserve return flow to categories on upgrade page
+      try {
+        const u = new URL(location.href);
+        u.searchParams.set("return", "checkout");
+        u.hash = "#categories";
+        location.href = u.toString();
+      } catch {
+        location.href = "/upgrade/?return=checkout#categories";
+      }
     });
   }
 
-  // ---------- init ----------
-  async function init() {
-    // 0) ensure checkout layout wrapper exists early (doesn't break anything if hidden)
-    ensureCheckoutTwoColumnLayout();
+  function wireCategoryButtons() {
+    // Any element with data-category or id sl-unlock-<cat>
+    const btns = $$("[data-category], a[href*='?category='], button[id^='sl-unlock-']");
+    btns.forEach((el) => {
+      const cat =
+        safeSlug(el.getAttribute("data-category")) ||
+        safeSlug((el.id || "").replace(/^sl-unlock-/, "")) ||
+        safeSlug(getCategoryFromHref(el.getAttribute("href")));
 
+      if (!cat) return;
+
+      el.addEventListener("click", (e) => {
+        // Let normal nav happen, but make sure we persist the category
+        setCategory(cat);
+      });
+    });
+  }
+
+  function getCategoryFromHref(href) {
+    if (!href) return "";
+    try {
+      const u = new URL(href, location.origin);
+      return u.searchParams.get("category") || "";
+    } catch {
+      return "";
+    }
+  }
+
+  async function goToCheckoutFor(cat, sessionExists) {
+    const c = setCategory(cat);
+
+    if (sessionExists) {
+      location.href = "/upgrade/checkout/?category=" + encodeURIComponent(c);
+    } else {
+      location.href = "/upgrade/?category=" + encodeURIComponent(c) + "#checkout";
+    }
+  }
+
+  function isCheckoutPage() {
+    return location.pathname.startsWith("/upgrade/checkout");
+  }
+
+  async function handleReturnFlow(sb) {
+    const returnMode = safeSlug(getUrlParam("return"));
+    const currentCategory = getCategory();
+    const session = sb ? await getSession(sb) : null;
+
+    // If we’re on upgrade and return=checkout and already have session + category -> go straight to checkout page
+    if (!isCheckoutPage() && returnMode === "checkout" && session && currentCategory) {
+      location.href = "/upgrade/checkout/?category=" + encodeURIComponent(currentCategory);
+      return true;
+    }
+
+    // If we’re on checkout page and no session -> kick back to upgrade checkout section
+    if (isCheckoutPage() && !session) {
+      location.href = "/upgrade/?category=" + encodeURIComponent(currentCategory || "") + "#checkout";
+      return true;
+    }
+
+    return false;
+  }
+
+  async function init() {
     // 1) category sync
     const cat = setCategory(getCategory());
     syncCategoryUI(cat);
@@ -388,7 +399,10 @@
     // 2) change-category return flow
     wireChangeCategoryButton();
 
-    // 3) auth readiness
+    // 3) wire category buttons (persist selection)
+    wireCategoryButtons();
+
+    // 4) auth readiness
     const auth = window.SL_AUTH || {};
     const sb = auth.sb || null;
 
@@ -399,10 +413,16 @@
     }
 
     if (sb) {
+      // return flow may navigate away
+      const navigated = await handleReturnFlow(sb);
+      if (navigated) return;
+
+      // reflect initial signed-in state
       const s = await getSession(sb);
       if (s) showSignedIn(s.user && s.user.email);
       else showSignedOut();
 
+      // keep UI in sync on auth state changes
       try {
         sb.auth.onAuthStateChange((_event, session) => {
           if (session) showSignedIn(session.user && session.user.email);
@@ -410,18 +430,57 @@
         });
       } catch {}
 
-      wireCategoryPickers(sb);
-      wireCheckout(sb);
-      wireSignout(sb);
-    } else {
-      wireCategoryPickers(null);
+      // sign out button (if present)
+      const signout = $("#sl-signout");
+      if (signout) {
+        signout.addEventListener("click", async () => {
+          try {
+            await sb.auth.signOut();
+          } catch {}
+          try {
+            localStorage.removeItem(LS_KEY);
+          } catch {}
+          location.href = "/upgrade/#checkout";
+        });
+      }
+
+      // checkout wiring
+      wireCheckoutButton(sb);
+
+      // If on upgrade page and user clicks a category unlock while signed in, go straight to checkout page
+      const unlockedBtns = $$("[data-category], button[id^='sl-unlock-']");
+      unlockedBtns.forEach((btn) => {
+        const cat =
+          safeSlug(btn.getAttribute("data-category")) ||
+          safeSlug((btn.id || "").replace(/^sl-unlock-/, ""));
+        if (!cat) return;
+
+        btn.addEventListener("click", async (e) => {
+          // Only take over if we’re on /upgrade and signed in
+          if (isCheckoutPage()) return;
+
+          const s = await getSession(sb);
+          if (!s) return;
+
+          e.preventDefault();
+          await goToCheckoutFor(cat, true);
+        });
+      });
     }
 
-    if (window.location.hash === "#checkout") {
-      setTimeout(() => scrollToId("checkout"), 150);
+    // 5) If URL has #checkout, scroll there
+    if (location.hash === "#checkout") {
+      setTimeout(() => scrollToHash("#checkout"), 50);
     }
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  // Boot
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      init().catch(() => {});
+    });
+  } else {
+    init().catch(() => {});
+  }
 })();
 
