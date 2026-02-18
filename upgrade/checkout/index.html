@@ -1,26 +1,24 @@
 <!doctype html>
 <html lang="en">
-
-<!-- Supabase v2 (MUST load first) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Stripe map (optional; provides window.SL_SUPABASE if present) -->
-<script defer src="/assets/stripe-map.js?v=upgrade-0243"></script>
-
-<!-- Auth MUST load before app -->
-<script defer src="/assets/auth.js?v=upgrade-0243"></script>
-
-<!-- App last -->
-<script defer src="/assets/app.js?v=upgrade-0243"></script>
-
-<!-- Styles -->
-<link rel="stylesheet" href="/assets/style.css?v=upgrade-001" />
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Checkout • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=checkout-017" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/assets/style.css?v=checkout-0244" />
+
+  <!-- Supabase v2 (MUST load first; no defer) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Stripe map (optional; provides window.SL_SUPABASE if present) -->
+  <script defer src="/assets/stripe-map.js?v=checkout-0244"></script>
+
+  <!-- Auth MUST load before app -->
+  <script defer src="/assets/auth.js?v=checkout-0244"></script>
+
+  <!-- App last -->
+  <script defer src="/assets/app.js?v=checkout-0244"></script>
 </head>
 
 <body>
@@ -57,11 +55,7 @@
         $19.99 <span class="muted" style="font-size:1rem; font-weight:600;">one-time</span>
       </div>
 
-      <!-- Session-only checkout view:
-           auth/app.js will:
-           - hide this if not signed in
-           - redirect back to /upgrade/#checkout if needed
-      -->
+      <!-- Signed-in / checkout actions (app/auth will show/hide) -->
       <div id="sl-checkout-card" style="margin-top:1rem; display:none;">
         <div class="actions">
           <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Checkout</button>
@@ -71,18 +65,13 @@
         <div id="sl-status" class="muted" style="margin-top:.6rem;"></div>
       </div>
 
-      <!-- OPTIONAL: if you want a fallback message while app.js evaluates session -->
+      <!-- Boot hint while session loads -->
       <div id="sl-boot-hint" class="muted" style="margin-top:1rem;">
         Signing you in…
       </div>
     </section>
   </main>
-
-  <!-- Required script order -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/assets/stripe-map.js"></script>
-  <script defer src="/assets/auth.js?v=upgrade-129"></script>
-  <script defer src="/assets/app.js?v=upgrade-129"></script>
 </body>
 </html>
+
 
