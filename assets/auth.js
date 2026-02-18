@@ -1,57 +1,50 @@
 /* /assets/auth.js
-   ScopedLabs Supabase magic-link auth (v2, implicit flow)
+   ScopedLabs magic-link auth (Supabase v2) — Upgrade flow
 
-   - Creates exactly ONE Supabase client
-   - Exposes: window.SL_AUTH = { sb, ready }
-   - Binds Send magic link button(s)
-   - Restores session from magic link URL (detectSessionInUrl: true)
-   - Dispatches "sl-auth-changed" when session changes
+   - Wires Send magic link button(s): #sl-send-btn OR #sl-sendlink
+   - Uses implicit flow (no PKCE)
+   - Restores session from magic-link URL (detectSessionInUrl: true)
+   - Updates UI + dispatches "sl-auth-changed" event
 */
 
 (() => {
   "use strict";
 
-  const $ = (sel) => document.querySelector(sel);
+  // ---- Supabase config ----
+  // Preferred: provided by /assets/stripe-map.js as window.SL_SUPABASE = { url, anonKey }
+  // Fallback: hardcode here if needed.
+  const SUPABASE_URL =
+    (window.SL_SUPABASE && window.SL_SUPABASE.url) ||
+    "PASTE_YOUR_SUPABASE_URL_HERE";
 
-  function setStatus(msg, isError = false) {
-    const el =
-      $("#sl-status") ||
-      $("#sl-email-hint") ||
-      $("#sl-auth-status") ||
-      $("#sl-auth-hint");
-    if (!el) return;
-    el.style.color = isError ? "#ffb3b3" : "";
-    el.textContent = msg || "";
+  const SUPABASE_ANON_KEY =
+    (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) ||
+    "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+
+  // ---- DOM helpers ----
+  function $(sel) {
+    return document.querySelector(sel);
   }
 
-  function normalizeEmail(s) {
-    return String(s || "")
-      .trim()
-      .replace(/\s+/g, "")
-      .toLowerCase();
+  const els = {
+    email: $("#sl-email"),
+    sendBtn: $("#sl-send-btn") || $("#sl-sendlink"),
+    hint: $("#sl-email-hint"),
+    signout: $("#sl-signout"),
+    signedInAs: $("#sl-signed-in-as"),
+  };
+
+  function setHint(msg, isError = false) {
+    if (!els.hint) return;
+    els.hint.textContent = msg || "";
+    els.hint.style.opacity = msg ? "1" : "";
+    els.hint.style.color = isError ? "#ffb4b4" : "";
   }
 
-  function getCategory() {
-    const u = new URL(window.location.href);
-    const q = (u.searchParams.get("category") || "").trim();
-    const ls = (localStorage.getItem("sl_selected_category") || "").trim();
-    return q || ls || "";
-  }
-
-  function getEmailInput() {
-    return (
-      $("#sl-email") ||
-      $("#sl-email-input") ||
-      document.querySelector('input[type="email"]')
-    );
-  }
-
-  function getSendBtn() {
-    return $("#sl-sendlink") || $("#sl-send-btn") || $("#sl-send");
-  }
-
-  function getSignoutBtn() {
-    return $("#sl-signout");
+  function setSignedInAs(email) {
+    if (!els.signedInAs) return;
+    els.signedInAs.textContent = email ? `Signed in as ${email}` : "";
+    els.signedInAs.style.display = email ? "block" : "none";
   }
 
   function dispatchAuthChanged(session) {
@@ -62,157 +55,166 @@
     } catch {}
   }
 
-  // ---- Supabase config ----
-  // Prefer window.SL_SUPABASE (from /assets/stripe-map.js), but allow hardcode fallback.
-  const SUPABASE_URL =
-    (window.SL_SUPABASE && window.SL_SUPABASE.url) ||
-    "https://ybnzjtuecirzajraddft.supabase.co";
+  function currentCategoryFromUrlOrStorage() {
+    const u = new URL(window.location.href);
+    const cat = (u.searchParams.get("category") || "").trim();
+    if (cat) return cat;
+    try {
+      return (localStorage.getItem("sl_selected_category") || "").trim();
+    } catch {
+      return "";
+    }
+  }
 
-  let SUPABASE_ANON_KEY =
-    (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) ||
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  function buildEmailRedirectTo() {
+    // Always land on the checkout page after email click
+    // Keep category if we have it.
+    const cat = currentCategoryFromUrlOrStorage();
+    const url = new URL("/upgrade/checkout/", window.location.origin);
+    if (cat) url.searchParams.set("category", cat);
+    return url.toString();
+  }
 
-  if (SUPABASE_ANON_KEY && /public\s*key\s*:/i.test(SUPABASE_ANON_KEY)) {
-    SUPABASE_ANON_KEY = SUPABASE_ANON_KEY.replace(/.*public\s*key\s*:\s*/i, "");
+  function stripAuthHashPreserveIntent() {
+    // With implicit flow, tokens arrive in URL hash.
+    // After Supabase reads them, we should clean the URL.
+    const href = window.location.href;
+    if (!href.includes("#")) return;
+
+    const hash = window.location.hash || "";
+    const hasTokens =
+      hash.includes("access_token=") ||
+      hash.includes("refresh_token=") ||
+      hash.includes("type=") ||
+      hash.includes("expires_in=");
+
+    if (!hasTokens) return;
+
+    const u = new URL(window.location.href);
+    // Remove hash tokens; keep checkout intent
+    u.hash = ""; // checkout page doesn't need #checkout
+    history.replaceState({}, document.title, u.toString());
+  }
+
+  async function ensureSupabaseLoaded() {
+    if (!window.supabase || !window.supabase.createClient) {
+      console.warn("[SL_AUTH] supabase-js not loaded (check script order).");
+      return false;
+    }
+    if (!SUPABASE_URL || SUPABASE_URL.includes("PASTE_")) {
+      console.warn("[SL_AUTH] Missing SUPABASE_URL.");
+      setHint("Auth not configured (missing URL).", true);
+      return false;
+    }
+    if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
+      console.warn("[SL_AUTH] Missing SUPABASE_ANON_KEY.");
+      setHint("Auth not configured (missing key).", true);
+      return false;
+    }
+    return true;
   }
 
   const ready = (async () => {
-    if (!window.supabase || !window.supabase.createClient) {
-      console.warn("[SL_AUTH] supabase-js not loaded (check script order).");
-      setStatus("Auth library not loaded.", true);
-      return null;
-    }
-
-    if (!SUPABASE_URL || SUPABASE_URL.includes("PASTE_YOUR_SUPABASE_URL_HERE")) {
-      console.warn("[SL_AUTH] Missing SUPABASE_URL.");
-      setStatus("Auth not configured (missing URL).", true);
-      return null;
-    }
-
-    if (
-      !SUPABASE_ANON_KEY ||
-      SUPABASE_ANON_KEY.includes("PASTE_YOUR_SUPABASE_ANON_KEY_HERE")
-    ) {
-      console.warn("[SL_AUTH] Missing SUPABASE_ANON_KEY.");
-      setStatus("Auth not configured (missing key).", true);
-      return null;
-    }
+    const ok = await ensureSupabaseLoaded();
+    if (!ok) return null;
 
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         flowType: "implicit",
-        persistSession: true,
-        autoRefreshToken: true,
         detectSessionInUrl: true,
+        autoRefreshToken: true,
+        persistSession: true,
       },
     });
 
-    // expose globally (exactly one client)
+    // expose globally for app.js
     window.SL_AUTH = window.SL_AUTH || {};
     window.SL_AUTH.sb = sb;
-    window.SL_AUTH.ready = Promise.resolve(sb);
 
-    // Initial session check (after magic link restore, this may become valid)
+    // Initial session check (may already be present)
     try {
       const { data } = await sb.auth.getSession();
-      dispatchAuthChanged(data ? data.session : null);
-    } catch (e) {
-      console.warn("[SL_AUTH] getSession error:", e);
+      const session = data && data.session ? data.session : null;
+      if (session && session.user && session.user.email) {
+        setSignedInAs(session.user.email);
+        dispatchAuthChanged(session);
+      } else {
+        setSignedInAs("");
+        dispatchAuthChanged(null);
+      }
+    } catch {
+      setSignedInAs("");
+      dispatchAuthChanged(null);
     }
 
-    // Keep app updated on auth changes
+    // Clean token hash after Supabase consumes it
+    try {
+      stripAuthHashPreserveIntent();
+    } catch {}
+
+    // Keep UI synced
     try {
       sb.auth.onAuthStateChange((_event, session) => {
+        const email = session && session.user ? session.user.email : "";
+        setSignedInAs(email);
         dispatchAuthChanged(session || null);
 
-        // If we landed with a token fragment, clean it up after session appears
-        if (session && window.location.hash && window.location.hash.includes("access_token")) {
-          const clean = new URL(window.location.href);
-          // Preserve category
-          const cat = getCategory();
-          if (cat) clean.searchParams.set("category", cat);
-          // Remove token fragment + land nicely
-          clean.hash = clean.pathname.startsWith("/upgrade/checkout") ? "" : "checkout";
-          history.replaceState({}, "", clean.toString());
-        }
+        // If we just signed in, clear any old hint
+        if (email) setHint("");
       });
     } catch {}
 
-    // Bind send magic link
-    const btn = getSendBtn();
-    const emailEl = getEmailInput();
-
-    if (btn) {
-      btn.addEventListener("click", async (e) => {
-        e.preventDefault();
-
-        const rawEmail = emailEl ? emailEl.value : "";
-        const email = normalizeEmail(rawEmail);
-
-        if (!email || !email.includes("@")) {
-          setStatus("Enter a valid email address.", true);
-          if (emailEl) emailEl.focus();
+    // Wire Send magic link
+    if (els.sendBtn) {
+      els.sendBtn.addEventListener("click", async () => {
+        const email = (els.email && els.email.value ? els.email.value : "").trim();
+        if (!email) {
+          setHint("Enter your email first.", true);
           return;
         }
 
-        const cat = getCategory();
-        if (cat) localStorage.setItem("sl_selected_category", cat);
-
-        // IMPORTANT: redirect directly to checkout page to simplify restore flow
-        const redirectTo = `${window.location.origin}/upgrade/checkout/?${
-          cat ? `category=${encodeURIComponent(cat)}` : ""
-        }`;
+        els.sendBtn.disabled = true;
+        setHint("Sending magic link…");
 
         try {
-          btn.disabled = true;
-          setStatus("Sending magic link…");
-
+          const redirectTo = buildEmailRedirectTo();
           const { error } = await sb.auth.signInWithOtp({
             email,
-            options: {
-              emailRedirectTo: redirectTo,
-            },
+            options: { emailRedirectTo: redirectTo },
           });
 
-          if (error) {
-            console.warn("[SL_AUTH] signInWithOtp error:", error);
-            setStatus("Could not send link: " + (error.message || "Unknown error"), true);
-            btn.disabled = false;
-            return;
-          }
+          if (error) throw error;
 
-          setStatus("Magic link sent. Check your inbox.");
-          btn.disabled = false;
+          setHint("Magic link sent. Check your inbox.");
         } catch (err) {
-          console.warn("[SL_AUTH] send exception:", err);
-          setStatus("Could not send link (error).", true);
-          btn.disabled = false;
+          console.warn("[SL_AUTH] send link failed", err);
+          setHint("Failed to send link. Try again.", true);
+        } finally {
+          els.sendBtn.disabled = false;
         }
       });
-    } else {
-      console.warn("[SL_AUTH] Send button not found.");
     }
 
-    // Bind sign out
-    const signoutBtn = getSignoutBtn();
-    if (signoutBtn) {
-      signoutBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
+    // Wire Sign out
+    if (els.signout) {
+      els.signout.addEventListener("click", async () => {
         try {
           await sb.auth.signOut();
         } catch {}
-        localStorage.removeItem("sl_selected_category");
-        setStatus("Signed out.");
-        // Keep them in upgrade flow
-        window.location.href = "/upgrade/#checkout";
+        try {
+          localStorage.removeItem("sl_selected_category");
+        } catch {}
+        setSignedInAs("");
+        dispatchAuthChanged(null);
+        setHint("Signed out.");
       });
     }
 
     return sb;
   })();
 
-  // Always expose ready promise (even before it resolves)
   window.SL_AUTH = window.SL_AUTH || {};
   window.SL_AUTH.ready = ready;
 })();
+
 
