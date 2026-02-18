@@ -1,40 +1,29 @@
 /* /assets/auth.js
-   ScopedLabs Magic Link Auth (Supabase v2) — single source of truth
+   ScopedLabs Supabase auth controller (UMD / supabase-js v2).
 
-   - Creates exactly ONE Supabase client
-   - Exposes: window.SL_AUTH = { sb, ready, getSession }
-   - Always updates a status line immediately:
-       * on Send
-       * on session restore
-       * on errors
-   - Clears "Signing you in..." once session exists (via event + status update)
-
-   REQUIREMENTS:
-   - Supabase UMD loaded BEFORE this file:
-     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   Goals:
+   - Create exactly ONE Supabase client
+   - Support config from either:
+       window.SL_SUPABASE = { url, anonKey }
+     OR:
+       window.SL_SUPABASE_URL / window.SL_SUPABASE_ANON_KEY   (your stripe-map.js)
+   - Wire magic link send with immediate status updates
+   - Restore session from URL (implicit flow), then CLEAR "Signing you in..."
+   - Expose:
+       window.SL_AUTH = { sb, ready }
 */
 
 (() => {
   "use strict";
 
-  // --- HARDWIRED CONFIG (stable; does not depend on stripe-map) ---
-  const SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-
-  const LS_EMAIL = "sl_last_email";
-  const LS_CAT = "sl_selected_category";
-
+  const $ = (id) => document.getElementById(id);
   const pick = (...els) => els.find(Boolean) || null;
-  const $id = (id) => document.getElementById(id);
 
-  // These IDs exist across your upgrade + checkout pages (with some legacy fallbacks)
   const els = {
-    email: () => pick($id("sl-email"), $id("sl-email-input"), $id("email")),
-    send: () => pick($id("sl-sendlink"), $id("sl-send-btn")),
-    signout: () => pick($id("sl-signout"), $id("sl-logout")),
-    status: () => pick($id("sl-status"), $id("sl-auth-status"), $id("status")),
-    signedAs: () => pick($id("sl-signedas"), $id("sl-signed-in-as")),
+    email: () => pick($("sl-email"), $("sl-email-input"), $("email")),
+    send: () => pick($("sl-sendlink"), $("sl-send-btn"), $("sl-sendlink-btn"), $("sl-send-magic")),
+    signout: () => $("sl-signout"),
+    status: () => pick($("sl-status"), $("sl-auth-status"), $("status")),
   };
 
   function ensureStatusEl() {
@@ -61,237 +50,244 @@
     st.textContent = msg || "";
     st.dataset.kind = kind;
 
-    // mild styling using existing theme; don’t fight CSS
+    // optional subtle coloring if your CSS doesn't handle [data-kind]
     if (kind === "error") st.style.opacity = "1";
-    else st.style.opacity = "0.9";
   }
 
-  function normalizeEmail(v) {
-    return (v || "").trim().toLowerCase();
-  }
-
-  function currentCategory() {
-    // URL ?category= wins, else localStorage
-    const url = new URL(location.href);
-    const q = (url.searchParams.get("category") || "").trim();
-    if (q) return q;
+  function getCategoryFromUrlOrStorage() {
     try {
-      return (localStorage.getItem(LS_CAT) || "").trim();
-    } catch {
-      return "";
-    }
+      const u = new URL(location.href);
+      const cat = (u.searchParams.get("category") || "").trim();
+      if (cat) return cat;
+    } catch {}
+    try {
+      const ls = localStorage.getItem("sl_selected_category");
+      return (ls || "").trim();
+    } catch {}
+    return "";
   }
 
-  function buildRedirectToCheckout() {
-    const cat = encodeURIComponent(currentCategory() || "");
-    // Always send magic link to checkout page so session restore is deterministic
-    // (Category is preserved to keep the user in the right lane.)
-    return `https://scopedlabs.com/upgrade/checkout/?category=${cat}`;
+  function buildEmailRedirectTo() {
+    const cat = getCategoryFromUrlOrStorage();
+    const base = "https://scopedlabs.com/upgrade/checkout/";
+    const u = new URL(base);
+    if (cat) u.searchParams.set("category", cat);
+    return u.toString();
+  }
+
+  function readSupabaseConfig() {
+    // Prefer stripe-map style globals
+    const urlA = (window.SL_SUPABASE_URL || "").trim();
+    const keyA = (window.SL_SUPABASE_ANON_KEY || "").trim();
+    if (urlA && keyA) return { url: urlA, anonKey: keyA };
+
+    // Fallback to object style
+    const obj = window.SL_SUPABASE || null;
+    if (obj && typeof obj === "object") {
+      const urlB = (obj.url || "").trim();
+      const keyB = (obj.anonKey || obj.anon_key || "").trim();
+      if (urlB && keyB) return { url: urlB, anonKey: keyB };
+    }
+
+    return { url: "", anonKey: "" };
   }
 
   function stripAuthParamsFromUrl() {
-    // Remove #access_token / etc after restore (clean UX, prevents re-processing)
+    // For implicit flow, Supabase may put tokens in hash. Remove them for cleanliness.
     try {
-      const hasHash = location.hash && location.hash.length > 1;
-      if (!hasHash) return;
-      const h = location.hash.toLowerCase();
-      if (h.includes("access_token") || h.includes("refresh_token") || h.includes("type=recovery")) {
-        history.replaceState({}, document.title, location.pathname + location.search);
+      const url = new URL(location.href);
+      const hasError =
+        url.searchParams.has("error") ||
+        url.searchParams.has("error_code") ||
+        url.searchParams.has("error_description");
+
+      // Keep category + return params; remove auth errors if present (we'll show status)
+      if (hasError) {
+        // leave them for setStatus() below, then strip after
+      }
+
+      if (location.hash && location.hash.includes("access_token")) {
+        history.replaceState({}, document.title, url.pathname + url.search);
+      } else if (hasError) {
+        // remove error params
+        url.searchParams.delete("error");
+        url.searchParams.delete("error_code");
+        url.searchParams.delete("error_description");
+        history.replaceState({}, document.title, url.pathname + url.search + location.hash);
       }
     } catch {}
   }
 
-  // ---- Supabase client creation (single instance) ----
-  function createClientOnce() {
-    if (!window.supabase || !window.supabase.createClient) {
-      setStatus("Auth failed to load (Supabase script missing).", "error");
+  function readAuthErrorFromUrl() {
+    try {
+      const u = new URL(location.href);
+      const desc = u.searchParams.get("error_description");
+      const code = u.searchParams.get("error_code") || u.searchParams.get("error");
+      if (desc || code) {
+        return `${desc || "Sign-in error"}${code ? ` (${code})` : ""}`;
+      }
+    } catch {}
+    return "";
+  }
+
+  function createClientOrNull() {
+    const cfg = readSupabaseConfig();
+
+    if (!cfg.url || !cfg.anonKey) {
+      setStatus("Auth not configured (missing Supabase keys).", "error");
+      console.warn("[SL_AUTH] Missing SUPABASE URL / ANON KEY.");
       return null;
     }
 
-    // Prevent accidental double-clients across hot reload / duplicate tags
-    if (window.SL_AUTH && window.SL_AUTH.sb) {
-      return window.SL_AUTH.sb;
+    const supa = window.supabase;
+    if (!supa || typeof supa.createClient !== "function") {
+      setStatus("Auth failed to load (Supabase script missing).", "error");
+      console.warn("[SL_AUTH] supabase-js not loaded (check script order).");
+      return null;
     }
 
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    // One client only.
+    return supa.createClient(cfg.url, cfg.anonKey, {
       auth: {
         flowType: "implicit",
         detectSessionInUrl: true,
         persistSession: true,
         autoRefreshToken: true,
       },
+      global: {
+        headers: { "X-Client-Info": "scopedlabs-upgrade" },
+      },
     });
-
-    return sb;
   }
 
-  const sb = createClientOnce();
+  const sb = createClientOrNull();
 
-  // Expose immediately (so app.js can wait on ready)
+  // Expose immediately (even if null) so app.js can behave safely
   if (!window.SL_AUTH) window.SL_AUTH = {};
   window.SL_AUTH.sb = sb;
 
-  window.SL_AUTH.getSession = async () => {
-    if (!sb) return null;
-    const { data } = await sb.auth.getSession();
-    return data && data.session ? data.session : null;
-  };
-
-  // READY promise resolves once we’ve attempted session restore
   window.SL_AUTH.ready = (async () => {
+    const errMsg = readAuthErrorFromUrl();
+    if (errMsg) setStatus(errMsg, "error");
+
     if (!sb) return null;
 
-    // If we landed here from an email link, show immediate feedback
+    // Always show something immediately on load
+    setStatus("Checking session…", "info");
+
+    // Subscribe early so we catch restores
+    const sub = sb.auth.onAuthStateChange((_event, session) => {
+      if (session && session.user && session.user.email) {
+        setStatus(`Signed in as ${session.user.email}`, "ok");
+      }
+    });
+
+    // Attempt restore/get session (implicit flow will be detected here)
+    let session = null;
+    try {
+      const res = await sb.auth.getSession();
+      session = res && res.data ? res.data.session : null;
+    } catch (e) {
+      console.warn("[SL_AUTH] getSession failed", e);
+    }
+
+    // If we arrived with access_token in hash, we are “signing you in…”
     if (location.hash && location.hash.includes("access_token")) {
       setStatus("Signing you in…", "info");
     }
 
-    // Attempt initial session load
-    try {
-      const s = await window.SL_AUTH.getSession();
-      if (s && s.user && s.user.email) {
-        setStatus(`Signed in as ${s.user.email}`, "info");
-        const signed = els.signedAs();
-        if (signed) signed.textContent = `Signed in as ${s.user.email}`;
-        stripAuthParamsFromUrl();
-        window.dispatchEvent(new CustomEvent("sl:session", { detail: { session: s } }));
-        return s;
-      }
-    } catch (e) {
-      setStatus("Auth init error (check console).", "error");
-      console.warn("[SL_AUTH] init error", e);
+    // One more short wait for onAuthStateChange to fire if needed
+    if (!session) {
+      await new Promise((r) => setTimeout(r, 300));
+      try {
+        const res2 = await sb.auth.getSession();
+        session = res2 && res2.data ? res2.data.session : null;
+      } catch {}
     }
 
-    // Listen for auth changes
-    sb.auth.onAuthStateChange((event, session) => {
-      if (session && session.user && session.user.email) {
-        setStatus(`Signed in as ${session.user.email}`, "info");
-        const signed = els.signedAs();
-        if (signed) signed.textContent = `Signed in as ${session.user.email}`;
-        stripAuthParamsFromUrl();
-        window.dispatchEvent(new CustomEvent("sl:session", { detail: { session } }));
-      } else if (event === "SIGNED_OUT") {
-        setStatus("Signed out.", "info");
-        const signed = els.signedAs();
-        if (signed) signed.textContent = "";
-        window.dispatchEvent(new CustomEvent("sl:session", { detail: { session: null } }));
-      }
-    });
+    if (session && session.user && session.user.email) {
+      setStatus(`Signed in as ${session.user.email}`, "ok");
+      stripAuthParamsFromUrl();
+    } else {
+      // Only show signed-out text if there is NOT an auth error in URL
+      if (!errMsg) setStatus("Not signed in.", "info");
+      stripAuthParamsFromUrl();
+    }
 
-    // Handle explicit error params from OTP links
-    try {
-      const u = new URL(location.href);
-      const err = u.searchParams.get("error_description") || "";
-      const code = u.searchParams.get("error_code") || "";
-      if (err) {
-        setStatus(decodeURIComponent(err).replace(/\+/g, " "), "error");
-        if (code) console.warn("[SL_AUTH] error_code:", code);
-      }
-    } catch {}
-
-    return null;
-  })();
-
-  // ---- Wire Send Magic Link ----
-  function wireSend() {
+    // Wire send magic link
     const btn = els.send();
-    if (!btn || !sb) return;
+    if (btn) {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
 
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
+        const emailEl = els.email();
+        const email = (emailEl && emailEl.value ? emailEl.value : "").trim();
 
-      const input = els.email();
-      const email = normalizeEmail(input ? input.value : "");
-      if (!email) {
-        setStatus("Enter your email to continue.", "error");
-        if (input) input.focus();
-        return;
-      }
-
-      try {
-        localStorage.setItem(LS_EMAIL, email);
-      } catch {}
-
-      btn.disabled = true;
-      setStatus("Sending magic link…", "info");
-
-      try {
-        const { error } = await sb.auth.signInWithOtp({
-          email,
-          options: {
-            emailRedirectTo: buildRedirectToCheckout(),
-            shouldCreateUser: true,
-          },
-        });
-
-        if (error) {
-          console.warn("[SL_AUTH] signInWithOtp error", error);
-          setStatus(error.message || "Failed to send magic link.", "error");
-          btn.disabled = false;
+        if (!email) {
+          setStatus("Enter your email first.", "error");
+          if (emailEl) emailEl.focus();
           return;
         }
 
-        setStatus("✅ Check your email for the magic link.", "info");
-        btn.disabled = false;
-      } catch (err) {
-        console.warn("[SL_AUTH] unexpected send error", err);
-        setStatus("Failed to send magic link (unexpected error).", "error");
-        btn.disabled = false;
-      }
-    });
-  }
+        btn.disabled = true;
+        setStatus("Sending magic link…", "info");
 
-  // ---- Wire Sign Out ----
-  function wireSignOut() {
-    const btn = els.signout();
-    if (!btn || !sb) return;
+        try {
+          const redirectTo = buildEmailRedirectTo();
 
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      btn.disabled = true;
+          const { error } = await sb.auth.signInWithOtp({
+            email,
+            options: {
+              emailRedirectTo: redirectTo,
+              shouldCreateUser: true,
+            },
+          });
 
-      try {
-        await sb.auth.signOut();
-      } catch (err) {
-        console.warn("[SL_AUTH] signOut error", err);
-      }
+          if (error) throw error;
 
-      // Keep category (your call), but clear last email to reduce confusion
-      try {
-        localStorage.removeItem(LS_EMAIL);
-      } catch {}
+          setStatus("Magic link sent — check your email.", "ok");
+        } catch (e) {
+          console.warn("[SL_AUTH] signInWithOtp failed", e);
+          setStatus("Failed to send magic link. Try again.", "error");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
 
-      setStatus("Signed out.", "info");
-      btn.disabled = false;
+    // Wire signout (if present on this page)
+    const so = els.signout();
+    if (so) {
+      so.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        try {
+          await sb.auth.signOut();
+        } catch {}
+        try {
+          localStorage.removeItem("sl_selected_category");
+        } catch {}
+        setStatus("Signed out.", "info");
+        // Keep user on upgrade flow
+        if (location.pathname.startsWith("/upgrade/checkout")) {
+          location.href = "/upgrade/#checkout";
+        } else {
+          location.href = "/upgrade/#checkout";
+        }
+      });
+    }
 
-      // If on checkout page, return to upgrade checkout section
-      if (location.pathname.startsWith("/upgrade/checkout")) {
-        const cat = encodeURIComponent(currentCategory() || "");
-        location.href = `/upgrade/?category=${cat}#checkout`;
-      } else {
-        // stay on upgrade
-        const cat = encodeURIComponent(currentCategory() || "");
-        location.href = `/upgrade/?category=${cat}#checkout`;
-      }
-    });
-  }
+    // Cleanup subscription? We keep it active; UMD is lightweight.
+    // But ensure no leaks if page stays long:
+    try {
+      window.addEventListener("beforeunload", () => {
+        try {
+          sub && sub.data && sub.data.subscription && sub.data.subscription.unsubscribe();
+        } catch {}
+      });
+    } catch {}
 
-  // ---- Init ----
-  wireSend();
-  wireSignOut();
-
-  // Restore last email into input (nice UX)
-  try {
-    const last = localStorage.getItem(LS_EMAIL) || "";
-    const input = els.email();
-    if (input && last && !input.value) input.value = last;
-  } catch {}
-
-  console.log("[SL_AUTH] loaded", {
-    url_ok: !!SUPABASE_URL,
-    anon_len: (SUPABASE_ANON_KEY || "").length,
-    script: document.currentScript && document.currentScript.src,
-  });
+    return session;
+  })();
 })();
 
 

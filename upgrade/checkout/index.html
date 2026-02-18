@@ -5,73 +5,75 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Checkout • ScopedLabs</title>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="/assets/style.css?v=checkout-0302" />
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0306" />
 
-  <!-- Supabase v2 (MUST load first; no defer) -->
+  <!-- Supabase v2 UMD -->
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
+  <!-- Optional injection -->
+  <script defer src="/assets/stripe-map.js?v=upgrade-0306"></script>
 
-  <!-- Stripe map (optional; provides window.SL_SUPABASE if present) -->
-  <script defer src="/assets/stripe-map.js?v=checkout-0302"></script>
-
-  <!-- Auth MUST load before app -->
-  <script defer src="/assets/auth.js?v=checkout-0302"></script>
-
-  <!-- App last -->
-  <script defer src="/assets/app.js?v=checkout-0302"></script>
+  <script defer src="/assets/auth.js?v=upgrade-0306"></script>
+  <script defer src="/assets/app.js?v=upgrade-0306"></script>
 </head>
 
-<body>
+<body class="page-upgrade">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
-        <span class="brand-dot"></span>
-        <span>ScopedLabs</span>
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
       </a>
+
       <nav class="nav">
-        <a href="/">Home</a>
-        <a href="/tools/">Tools</a>
-        <a href="/about/">About</a>
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
       </nav>
     </div>
   </header>
 
-  <main class="container" style="padding:2.25rem 0 4rem;">
-    <section class="card" style="max-width:760px; margin:0 auto;">
-      <div class="pill" style="margin-bottom:.75rem;">Checkout</div>
-      <h1 style="margin:0 0 .5rem;">Unlock a category</h1>
-      <p class="muted" style="margin:0 0 1rem;">
-        You’re about to unlock the selected category forever (one-time purchase).
-      </p>
+  <main class="container" style="padding-top:2rem;">
+    <section>
+      <div class="card">
+        <div class="pill">Checkout</div>
 
-      <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin:.75rem 0 1rem;">
-        <div class="muted">Selected category:</div>
-        <div class="pill" id="sl-category-pill">None selected</div>
-        <button id="sl-change-category" class="btn" type="button">Choose a different category</button>
-      </div>
+        <h1 style="margin:.75rem 0 .25rem;">Unlock a category</h1>
+        <p class="muted" style="margin:0 0 1rem;">
+          You’re about to unlock the selected category forever (one-time purchase).
+        </p>
 
-      <div class="muted" style="margin:.25rem 0 .5rem;">Price:</div>
-      <div style="font-size:2rem; font-weight:800; margin:0 0 .25rem;">
-        $19.99 <span class="muted" style="font-size:1rem; font-weight:600;">one-time</span>
-      </div>
-
-      <!-- Signed-in / checkout actions (app/auth will show/hide) -->
-      <div id="sl-checkout-card" style="margin-top:1rem; display:none;">
-        <div class="actions">
-          <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Checkout</button>
-          <a class="btn" href="/account/">Account</a>
-          <button id="sl-signout" class="btn" type="button" style="display:none;">Sign out</button>
+        <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin:.75rem 0 1rem;">
+          <div class="muted">Selected category:</div>
+          <div class="pill" id="sl-category-pill">None selected</div>
+          <button id="sl-change-category" class="btn" type="button">Choose a different category</button>
         </div>
-        <div id="sl-status" class="muted" style="margin-top:.6rem;"></div>
-      </div>
 
-      <!-- Boot hint while session loads -->
-      <div id="sl-boot-hint" class="muted" style="margin-top:1rem;">
-        Signing you in…
+        <div class="muted" style="margin:.25rem 0 .5rem;">Price:</div>
+        <div style="font-size:2rem; font-weight:800; margin:0 0 .25rem;">
+          $19.99 <span class="muted" style="font-size:1rem; font-weight:600;">one-time</span>
+        </div>
+
+        <div id="sl-auth-signedin" class="muted" style="margin:.75rem 0 0; display:none;"></div>
+
+        <div id="sl-checkout-card" style="margin-top:1rem; display:none;">
+          <div class="actions" style="display:flex; gap:.75rem; flex-wrap:wrap;">
+            <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Checkout</button>
+            <a class="btn" href="/account/">Account</a>
+            <button id="sl-signout" class="btn" type="button" style="display:none;">Sign out</button>
+          </div>
+        </div>
+
+        <div id="sl-status" class="muted" style="margin-top:.8rem;">Signing you in…</div>
       </div>
     </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="muted">© <span id="sl-year"></span> ScopedLabs</div>
+    </div>
+  </footer>
 </body>
 </html>
 
