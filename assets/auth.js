@@ -1,19 +1,24 @@
 /* /assets/auth.js
    ScopedLabs Upgrade Auth (Magic Link) — stable wiring
    Exposes: window.SL_AUTH.sb
+
+   PATCH 0217:
+   - Fix Send button binding: support BOTH ids:
+       #sl-send-btn   (older)
+       #sl-sendlink   (newer)
+       #sl-sendlink-btn (just in case)
+   - Keep everything else the same (no redesign).
 */
 
 (() => {
   // ====== CONFIG (keep YOUR existing values if already set) ======
-  // If you already have SUPABASE_URL / SUPABASE_ANON_KEY in this file, keep them.
-  // Otherwise, paste them here.
   const SUPABASE_URL =
     (window.SL_SUPABASE && window.SL_SUPABASE.url) ||
     "https://ybnzjtuecirzajraddft.supabase.co";
 
   const SUPABASE_ANON_KEY =
     (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) ||
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
 
   // ====== Helpers ======
   const $ = (id) => document.getElementById(id);
@@ -24,8 +29,6 @@
 
   const normalizeEmail = (v) => (v || "").trim().toLowerCase();
 
-  // If you keep category gating in auth.js, this supports BOTH ids:
-  // selected-category (new) and sl-category-pill (old)
   function getSelectedCategoryText() {
     const catEl = $("selected-category") || $("sl-category-pill");
     return (catEl?.textContent || "").trim();
@@ -33,7 +36,6 @@
 
   // Redirect back to Upgrade after clicking the email link
   function getRedirectTo() {
-    // Keep the current category in the redirect if present
     const url = new URL(window.location.href);
     const category = (url.searchParams.get("category") || "").trim();
     const base = `${window.location.origin}/upgrade/`;
@@ -43,10 +45,14 @@
 
   // ====== DOM handles ======
   const elEmail = () => $("sl-email");
-  const elSendBtn = () => $("sl-send-btn");
+
+  // IMPORTANT: support multiple possible ids for the send button
+  const elSendBtn = () =>
+    $("sl-send-btn") || $("sl-sendlink") || $("sl-sendlink-btn") || $("sl-send-link") || null;
+
   const elStatus = () => $("sl-status");
-  const elSignedOutWrap = () => $("sl-login-card");     // login UI
-  const elSignedInWrap = () => $("sl-checkout-card");   // checkout UI
+  const elSignedOutWrap = () => $("sl-login-card"); // login UI
+  const elSignedInWrap = () => $("sl-checkout-card"); // checkout UI
   const elSignOutBtn = () => $("sl-signout");
 
   function showSignedOut() {
@@ -74,30 +80,26 @@
   }
 
   async function init() {
-    // Ensure Supabase is available
     if (!window.supabase || !window.supabase.createClient) {
       console.warn("[SL_AUTH] supabase-js not loaded (check script order).");
       return;
     }
 
     if (!SUPABASE_URL || SUPABASE_URL.includes("PASTE_")) {
-  console.warn("[SL_AUTH] Missing SUPABASE_URL in /assets/auth.js");
-  return;
-}
+      console.warn("[SL_AUTH] Missing SUPABASE_URL in /assets/auth.js");
+      return;
+    }
 
-if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
-  console.warn("[SL_AUTH] Missing SUPABASE_ANON_KEY in /assets/auth.js");
-  return;
-}
-
+    if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
+      console.warn("[SL_AUTH] Missing SUPABASE_ANON_KEY in /assets/auth.js");
+      return;
+    }
 
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Expose globally
     window.SL_AUTH = { sb, ready: true };
-
-  console.log("[SL_AUTH] ready");
-
+    console.log("[SL_AUTH] ready");
 
     // Handle PKCE code exchange if present
     try {
@@ -110,7 +112,6 @@ if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
           console.warn("[SL_AUTH] exchangeCodeForSession error:", error);
           setStatus("Sign-in link expired. Please request a new one.", true);
         } else {
-          // Clean the code param out of URL (optional)
           url.searchParams.delete("code");
           url.searchParams.delete("type");
           url.searchParams.delete("error");
@@ -142,10 +143,9 @@ if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
     // Bind Send magic link
     const sendBtn = elSendBtn();
     if (!sendBtn) {
-      console.warn("[SL_AUTH] Could not find #sl-send-btn (check HTML id).");
+      console.warn("[SL_AUTH] Could not find send button. Expected one of: #sl-send-btn, #sl-sendlink");
     } else {
       sendBtn.addEventListener("click", async () => {
-        // Category gate (optional — keeps your new behavior)
         const catText = getSelectedCategoryText().toLowerCase();
         if (!catText || catText === "none selected") {
           alert("Please choose a category before signing in.");
@@ -164,7 +164,7 @@ if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
         try {
           const { error } = await sb.auth.signInWithOtp({
             email,
-            options: { emailRedirectTo: getRedirectTo() }
+            options: { emailRedirectTo: getRedirectTo() },
           });
 
           if (error) {
@@ -198,7 +198,6 @@ if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
     }
   }
 
-  // Run after DOM is ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {

@@ -7,6 +7,10 @@
    - Handle "Change Category" return flow (scroll back to #categories)
    - After magic-link login, scroll to #checkout if URL includes #checkout (or if we were already in checkout mode)
    - Wire checkout button: POST /api/create-checkout-session {category,email} -> redirect to returned url
+
+   PATCH 0217:
+   - Force checkout layout: left column (price + email + button) | right column (preview card)
+     WITHOUT changing HTML/CSS files by building a wrapper at runtime.
 */
 
 (() => {
@@ -77,27 +81,15 @@
   const CATEGORY_COPY = {
     wireless: {
       desc: "Link planning, channel assumptions, and reliability headroom.",
-      bullets: [
-        "Link budget & margin checks",
-        "Coverage + capacity planning",
-        "Interference risk helpers",
-      ],
+      bullets: ["Link budget & margin checks", "Coverage + capacity planning", "Interference risk helpers"],
     },
     thermal: {
       desc: "Heat load planning, airflow assumptions, and environment constraints.",
-      bullets: [
-        "BTU/Watt conversion helpers",
-        "Room/rack thermal planning",
-        "Cooling headroom checks",
-      ],
+      bullets: ["BTU/Watt conversion helpers", "Room/rack thermal planning", "Cooling headroom checks"],
     },
     "access-control": {
       desc: "Door + credential planning, strike/maglock basics, and power sizing.",
-      bullets: [
-        "Door hardware checklists",
-        "Power + battery sizing",
-        "Basic compliance reminders",
-      ],
+      bullets: ["Door hardware checklists", "Power + battery sizing", "Basic compliance reminders"],
     },
     power: {
       desc: "UPS sizing, runtime planning, load growth, and redundancy checks.",
@@ -116,10 +108,11 @@
   function renderSelectedPreview(mount, cat) {
     if (!mount) return;
 
-    // Align top-right (the whole point of this cosmetic pass)
+    // Right-column card constraints
     mount.style.marginTop = "0px";
     mount.style.alignSelf = "start";
     mount.style.justifySelf = "end";
+    mount.style.minWidth = "320px";
 
     mount.innerHTML = "";
 
@@ -154,6 +147,60 @@
     mount.appendChild(card);
   }
 
+  // ---------- checkout layout (runtime wrapper; no HTML edits) ----------
+  function ensureCheckoutTwoColumnLayout() {
+    const card = $("#sl-checkout-card");
+    if (!card) return;
+
+    const mount =
+      $("#sl-selected-category-preview") ||
+      $("#selected-category-preview") ||
+      $("#sl-selected-category-preview-checkout") ||
+      null;
+
+    if (!mount) return;
+
+    // Already wrapped?
+    if (card.querySelector('[data-sl="checkout-grid"]')) return;
+
+    // Build a two-column layout wrapper
+    const grid = document.createElement("div");
+    grid.setAttribute("data-sl", "checkout-grid");
+
+    // Use flex with wrap so mobile stays sane
+    grid.style.display = "flex";
+    grid.style.gap = "18px";
+    grid.style.alignItems = "flex-start";
+    grid.style.justifyContent = "space-between";
+    grid.style.flexWrap = "wrap";
+
+    const left = document.createElement("div");
+    left.setAttribute("data-sl", "checkout-left");
+    left.style.flex = "1 1 360px";
+    left.style.minWidth = "280px";
+
+    const right = document.createElement("div");
+    right.setAttribute("data-sl", "checkout-right");
+    right.style.flex = "0 0 440px";
+    right.style.maxWidth = "440px";
+    right.style.marginLeft = "auto";
+
+    // Move children: everything except the preview mount goes left.
+    // Then put the preview mount into the right column.
+    const kids = Array.from(card.children);
+    for (const k of kids) {
+      if (k === mount) continue;
+      left.appendChild(k);
+    }
+    right.appendChild(mount);
+
+    // Replace card content with wrapper
+    card.innerHTML = "";
+    grid.appendChild(left);
+    grid.appendChild(right);
+    card.appendChild(grid);
+  }
+
   // ---------- UI sync ----------
   function findSelectedCategoryEl() {
     return (
@@ -168,11 +215,12 @@
     const labelEl = findSelectedCategoryEl();
     if (labelEl) labelEl.textContent = cat || "None selected";
 
-    // Title tweak (optional but nice)
     const h = $("#sl-checkout-title");
     if (h) h.textContent = cat ? `Unlock ${cat}` : "Unlock a category";
 
-    // Preview card
+    // Ensure layout wrapper exists before rendering (so mount is in right column)
+    ensureCheckoutTwoColumnLayout();
+
     const mount =
       $("#sl-selected-category-preview") ||
       $("#selected-category-preview") ||
@@ -200,6 +248,9 @@
     if (card) card.style.display = "";
     if (status) status.textContent = email ? `Signed in as ${email}` : "Signed in.";
     if (signout) signout.style.display = "";
+
+    // Re-apply layout after we unhide the card (prevents “preview drops below”)
+    ensureCheckoutTwoColumnLayout();
   }
 
   function showSignedOut() {
@@ -213,11 +264,6 @@
   }
 
   function wireCategoryPickers(sb) {
-    // Any element that declares a category should set it.
-    // Supports:
-    // - data-category="wireless"
-    // - id="sl-unlock-wireless"
-    // - href="/upgrade/?category=wireless#checkout"
     const candidates = [
       ...$$("[data-category]"),
       ...$$('a[href*="/upgrade/?category="]'),
@@ -247,14 +293,12 @@
         setCategory(cat);
         syncCategoryUI(cat);
 
-        // If we're in "return=checkout" mode AND signed in, jump straight to checkout section.
         const url = new URL(window.location.href);
         const wantsCheckout = url.hash === "#checkout" || url.searchParams.get("return") === "checkout";
         if (wantsCheckout && sb) {
           const s = await getSession(sb);
           if (s) {
             e.preventDefault();
-            // Keep user on upgrade page; just scroll to checkout.
             scrollToId("checkout");
           }
         }
@@ -313,7 +357,6 @@
         await sb.auth.signOut();
       } catch {}
       localStorage.removeItem(LS_KEY);
-      // Keep them on the checkout section so it's obvious what to do next
       const url = new URL(window.location.href);
       url.searchParams.delete("category");
       url.hash = "#checkout";
@@ -335,6 +378,9 @@
 
   // ---------- init ----------
   async function init() {
+    // 0) ensure checkout layout wrapper exists early (doesn't break anything if hidden)
+    ensureCheckoutTwoColumnLayout();
+
     // 1) category sync
     const cat = setCategory(getCategory());
     syncCategoryUI(cat);
@@ -353,12 +399,10 @@
     }
 
     if (sb) {
-      // reflect initial signed-in state
       const s = await getSession(sb);
       if (s) showSignedIn(s.user && s.user.email);
       else showSignedOut();
 
-      // keep UI in sync on auth state changes
       try {
         sb.auth.onAuthStateChange((_event, session) => {
           if (session) showSignedIn(session.user && session.user.email);
@@ -370,13 +414,10 @@
       wireCheckout(sb);
       wireSignout(sb);
     } else {
-      // still wire category pickers; checkout won't function without auth.
       wireCategoryPickers(null);
     }
 
-    // 4) if URL says #checkout, land there after everything is ready
     if (window.location.hash === "#checkout") {
-      // small delay so layout settles
       setTimeout(() => scrollToId("checkout"), 150);
     }
   }
