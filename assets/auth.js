@@ -24,7 +24,7 @@
   // If you are not using stripe-map, paste your anon key here.
   const SUPABASE_ANON_KEY =
     (window.SL_SUPABASE && window.SL_SUPABASE.anonKey) ||
-    ""; // <-- if blank at runtime, send link won't work
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM"; // <-- if blank at runtime, send link won't work
 
   const $ = (id) => document.getElementById(id);
   const pick = (...els) => els.find(Boolean) || null;
