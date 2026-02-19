@@ -1,80 +1,84 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Checkout • ScopedLabs</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout - ScopedLabs</title>
+    <link rel="stylesheet" href="/assets/style.css?v=site-0249" />
+    <link rel="icon" href="/assets/favicon.png" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-001" />
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script defer src="/assets/stripe-map.js?v=upgrade-0252"></script>
+    <script defer src="/assets/auth.js?v=upgrade-0252"></script>
+    <script defer src="/assets/app.js?v=upgrade-0252"></script>
+  </head>
 
-  <!-- Supabase v2 UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <body>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a href="/" class="brand">
+          <span class="dot"></span>
+          <span class="brand-name">ScopedLabs</span>
+        </a>
+        <nav class="site-nav">
+          <a href="/">Home</a>
+          <a href="/tools/">Tools</a>
+          <a href="/about/">About</a>
+        </nav>
+      </div>
+    </header>
 
-  <!-- Optional injection -->
-  <script defer src="/assets/stripe-map.js?v=upgrade-ROLL1"></script>
-
-  <script defer src="/assets/auth.js?v=upgrade-ROLL1"></script>
-  <script defer src="/assets/app.js?v=upgrade-ROLL1"></script>
-</head>
-
-<body class="page-upgrade">
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="/">
-        <span class="brand-mark" aria-hidden="true"></span>
-        <span class="brand-name">ScopedLabs</span>
-      </a>
-
-      <nav class="nav">
-        <a class="nav-link" href="/">Home</a>
-        <a class="nav-link" href="/tools/">Tools</a>
-        <a class="nav-link" href="/about/">About</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="container" style="padding-top:2rem;">
-    <section>
-      <div class="card">
+    <main class="page">
+      <section class="tool-card" style="max-width: 860px; margin: 0 auto;">
         <div class="pill">Checkout</div>
-
-        <h1 style="margin:.75rem 0 .25rem;">Unlock a category</h1>
-        <p class="muted" style="margin:0 0 1rem;">
-          You’re about to unlock the selected category forever (one-time purchase).
+        <h1>Unlock a category</h1>
+        <p class="muted">
+          You're about to unlock the selected category forever (one-time purchase).
         </p>
 
-        <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin:.75rem 0 1rem;">
-          <div class="muted">Selected category:</div>
-          <div class="pill" id="sl-category-pill">None selected</div>
-          <button id="sl-change-category" class="btn" type="button">Choose a different category</button>
-        </div>
-
-        <div class="muted" style="margin:.25rem 0 .5rem;">Price:</div>
-        <div style="font-size:2rem; font-weight:800; margin:0 0 .25rem;">
-          $19.99 <span class="muted" style="font-size:1rem; font-weight:600;">one-time</span>
-        </div>
-
-        <div id="sl-auth-signedin" class="muted" style="margin:.75rem 0 0; display:none;"></div>
-
-        <div id="sl-checkout-card" style="margin-top:1rem; display:none;">
-          <div class="actions" style="display:flex; gap:.75rem; flex-wrap:wrap;">
-            <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Checkout</button>
-            <a class="btn" href="/account/">Account</a>
-            <button id="sl-signout" class="btn" type="button" style="display:none;">Sign out</button>
+        <div class="kv-row" style="margin-top: 14px;">
+          <div class="kv">
+            <div class="kv-label">Selected category:</div>
+            <div class="kv-value">
+              <span class="pill" id="sl-selected-category-preview">None</span>
+            </div>
+          </div>
+          <div class="kv">
+            <button id="sl-change-category" class="btn" type="button">
+              Choose a different category
+            </button>
           </div>
         </div>
 
-        <div id="sl-status" class="muted" style="margin-top:.8rem;">Signing you in…</div>
-      </div>
-    </section>
-  </main>
+        <div class="kv-row">
+          <div class="kv">
+            <div class="kv-label">Price:</div>
+            <div class="kv-value">
+              <div class="price">
+                <span class="price-main">$19.99</span>
+                <span class="price-sub">one-time</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <div class="muted">© <span id="sl-year"></span> ScopedLabs</div>
-    </div>
-  </footer>
-</body>
+        <div style="margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button id="sl-checkout" class="btn btn-primary" type="button">
+            Checkout
+          </button>
+          <button id="sl-account" class="btn" type="button">
+            Account
+          </button>
+          <button id="sl-signout" class="btn" type="button">
+            Sign out
+          </button>
+        </div>
+
+        <div class="muted" id="sl-signed-in-as" style="margin-top: 10px;"></div>
+        <div id="sl-status" class="muted" style="margin-top: 10px;"></div>
+      </section>
+    </main>
+  </body>
 </html>
 
 
