@@ -5,16 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upgrade • ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0350" />
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0351" />
   <link rel="icon" href="/assets/favicon.ico" />
 
-  <style>
-    /* Keep this page self-contained (your file already had these helpers) */
-    .muted { opacity: 0.85; }
-    .pill { display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; }
-    .btn { cursor:pointer; }
-    .btn[disabled] { opacity: 0.6; cursor: not-allowed; }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=upgrade-0351"></script>
+  <script defer src="/assets/app.js?v=upgrade-0351"></script>
 </head>
 
 <body>
@@ -31,14 +27,13 @@
   </header>
 
   <main class="page">
-
     <section class="page-head">
       <h1>Upgrade</h1>
       <p class="muted">Unlock a category once and keep it forever.</p>
     </section>
 
     <!-- CHECKOUT CARD -->
-    <section id="checkout" class="card" style="max-width: 980px; margin: 24px auto;">
+    <section id="checkout" class="card" style="max-width: 980px; margin: 24px auto 48px;">
       <div class="pill" style="margin-bottom:12px;">Checkout</div>
 
       <h2 style="margin:0 0 8px 0;">
@@ -49,74 +44,65 @@
         You’ll unlock this category forever (one-time purchase).
       </p>
 
-      <div id="sl-checkout-card">
-        <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; margin-top: 14px;">
-          <div style="min-width: 260px;">
-            <div class="muted" style="font-size: 12px; margin-bottom: 6px;">Selected category:</div>
-            <span id="sl-category-pill" class="pill">None</span>
-          </div>
-
-          <button id="sl-change-category" class="btn" type="button">Change Category</button>
-
-          <div style="flex:1;"></div>
-
-          <div style="min-width: 220px;">
-            <div class="muted" style="font-size: 12px; margin-bottom: 6px;">Price:</div>
-            <div style="font-size: 20px; font-weight: 700;">$19.99 <span class="muted" style="font-weight: 500;">one-time</span></div>
-          </div>
+      <div class="grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start;">
+        <div>
+          <div class="muted" style="font-size:12px; margin-bottom:6px;">Selected category:</div>
+          <span id="sl-selected-category-pill" class="pill">None</span>
+          <button id="sl-change-category" class="btn" type="button" style="margin-left:10px;">Change Category</button>
         </div>
 
-        <div style="margin-top: 16px;">
-          <div class="muted" style="margin-bottom: 8px;">Sign in to purchase (magic link — no password)</div>
-
-          <label class="muted" for="sl-email" style="display:block; font-size: 12px; margin-bottom: 6px;">Email</label>
-          <input id="sl-email" type="email" autocomplete="email" placeholder="you@company.com" style="width:100%; max-width:520px;" />
-
-          <div style="margin-top: 10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <button id="sl-sendlink" class="btn btn-primary" type="button">Send magic link</button>
-            <div id="sl-auth-status" class="muted" aria-live="polite"></div>
-          </div>
-
-          <div style="margin-top: 12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <button id="sl-continue" class="btn btn-primary" type="button">Continue to checkout</button>
-            <a id="sl-account" class="btn" href="/account/" role="button">Account</a>
-            <button id="sl-signout" class="btn" type="button">Sign out</button>
-          </div>
-
-          <div class="muted" style="margin-top: 8px;">
-            <span id="sl-signedin"></span>
-          </div>
+        <div style="text-align:right;">
+          <div class="muted" style="font-size:12px; margin-bottom:6px;">Price:</div>
+          <div style="font-size:22px; font-weight:800;">$19.99 <span class="muted" style="font-weight:500; font-size:14px;">one-time</span></div>
         </div>
       </div>
 
-      <div style="margin-top: 18px;">
-        <div class="pill">🔒 Pro — Category Unlock</div>
+      <hr class="hr" style="margin:18px 0;" />
+
+      <div class="muted" style="margin-bottom:6px;">Sign in to purchase (magic link — no password)</div>
+
+      <label class="muted" style="display:block; font-size:12px; margin-bottom:6px;">Email</label>
+      <input id="sl-email" type="email" class="input" placeholder="you@company.com" style="width:100%; max-width:520px;" />
+
+      <div style="margin-top:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button id="sl-sendlink" class="btn btn-primary" type="button">Send magic link</button>
+        <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Continue to checkout</button>
+        <a id="sl-account" class="btn" href="/account/">Account</a>
+        <button id="sl-signout" class="btn" type="button" style="display:none;">Sign out</button>
       </div>
 
-      <hr style="margin: 18px 0; opacity: 0.25;" />
+      <div id="sl-status" class="muted" style="margin-top:10px;"></div>
 
-      <div id="sl-preview" class="card" style="max-width: 520px;">
-        <h3 style="margin-top:0;"><span id="sl-preview-title">Category</span></h3>
-        <p class="muted" id="sl-preview-desc">
-          Includes examples like:
-        </p>
-        <ul class="muted" id="sl-preview-bullets" style="margin-top: 10px;"></ul>
-        <p class="muted" id="sl-preview-foot" style="margin-bottom:0;">
-          You’ll also receive future Pro tools added to this category.
-        </p>
+      <div class="pill" style="margin-top:14px;">🔒 Pro — Category Unlock</div>
+
+      <div class="card" style="margin-top:14px;">
+        <h3 style="margin:0 0 6px 0;">Category</h3>
+        <p class="muted" style="margin:0;">Includes examples like:</p>
+        <ul class="muted" style="margin:10px 0 0 18px;">
+          <li>Category-specific calculators</li>
+          <li>Coverage + capacity planning</li>
+          <li>Reliability + margin helpers</li>
+        </ul>
+        <p class="muted" style="margin:10px 0 0 0;">You’ll also receive future Pro tools added to this category.</p>
       </div>
     </section>
 
-    <!-- CATEGORY CHOOSER -->
-    <section id="categories" class="card" style="max-width: 980px; margin: 24px auto;">
-      <h2 style="margin-top:0;">Choose a category</h2>
+    <!-- CHOOSER -->
+    <section id="choose" class="card" style="max-width: 980px; margin: 0 auto 80px;">
+      <h2 style="margin:0 0 6px 0;">Choose a category</h2>
       <p class="muted" style="margin-top:0;">Pick the lane you want to unlock.</p>
 
-      <!-- Your full category cards list stays here EXACTLY as you had it -->
-      <!-- IMPORTANT: every “Unlock ___ Pro” button should have data-category="slug" -->
-      <!-- If your buttons already have data-category, app.js will bind them automatically. -->
+      <!-- YOUR CATEGORY CARDS / LINKS (unchanged) -->
+      <!-- NOTE: Your existing file already has all categories listed below. -->
+      <!-- Paste/keep the rest of your category list exactly as-is under here. -->
 
-      <!-- (PASTE YOUR EXISTING CATEGORY GRID/CARDS HERE — unchanged) -->
+      <!-- (Keep your existing category blocks from your uploaded HTML below this line) -->
+
+      section class="spacer-xl" id="choose" aria-label="Choose a category">
+      <h2>Choose a category to unlock</h2>
+      <p class="muted" style="max-width:75ch;">
+        Pick based on the kind of planning you do most often. You can add additional categories later.
+      </p>
 
       <div class="grid upgrade-grid" style="margin-top:1rem;">
         <!-- (Your category cards unchanged) -->
@@ -321,43 +307,11 @@
         </div>
 
       </div>
+    
     </section>
-
-    <section class="card" style="max-width: 980px; margin: 24px auto;">
-      <div class="pill">Important notes</div>
-      <h2 style="margin: 10px 0;">Keep it simple</h2>
-
-      <div class="grid-3" style="margin-top: 12px;">
-        <div class="card">
-          <h3 style="margin-top:0;">Do I need an account?</h3>
-          <p class="muted" style="margin-bottom:0;">
-            Yes — a login is how ScopedLabs remembers what you’ve unlocked.
-            (No account means the site can’t reliably recognize a returning customer.)
-          </p>
-        </div>
-
-        <div class="card">
-          <h3 style="margin-top:0;">What happens when new tools ship?</h3>
-          <p class="muted" style="margin-bottom:0;">
-            If you’ve unlocked that category, new Pro tools added to it are automatically included — no extra purchase.
-          </p>
-        </div>
-
-        <div class="card">
-          <h3 style="margin-top:0;">Can I unlock more than one category?</h3>
-          <p class="muted" style="margin-bottom:0;">
-            Yep. Unlock the category you need now, then add others later as your work expands.
-          </p>
-        </div>
-      </div>
-    </section>
-
   </main>
-
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script defer src="/assets/stripe-map.js?v=upgrade-0350"></script>
-  <script defer src="/assets/auth.js?v=upgrade-0350"></script>
-  <script defer src="/assets/app.js?v=upgrade-0350"></script>
 </body>
 </html>
+
+
 

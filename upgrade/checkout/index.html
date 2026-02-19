@@ -1,84 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Checkout - ScopedLabs</title>
-    <link rel="stylesheet" href="/assets/style.css?v=site-0249" />
-    <link rel="icon" href="/assets/favicon.png" />
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Checkout • ScopedLabs</title>
 
-    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script defer src="/assets/stripe-map.js?v=upgrade-0130"></script>
-    <script defer src="/assets/auth.js?v=upgrade-0130"></script>
-    <script defer src="/assets/app.js?v=upgrade-0130"></script>
-  </head>
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0351" />
+  <link rel="icon" href="/assets/favicon.ico" />
 
-  <body>
-    <header class="site-header">
-      <div class="site-header-inner">
-        <a href="/" class="brand">
-          <span class="dot"></span>
-          <span class="brand-name">ScopedLabs</span>
-        </a>
-        <nav class="site-nav">
-          <a href="/">Home</a>
-          <a href="/tools/">Tools</a>
-          <a href="/about/">About</a>
-        </nav>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=upgrade-0351"></script>
+  <script defer src="/assets/app.js?v=upgrade-0351"></script>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="dot"></span>
+      <a href="/" class="brand-link">ScopedLabs</a>
+    </div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/tools/">Tools</a>
+      <a href="/about/">About</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="page-head">
+      <h1>Checkout</h1>
+      <p class="muted">Complete your category unlock purchase.</p>
+    </section>
+
+    <section id="sl-boot-hint" class="card" style="max-width: 900px; margin: 24px auto;">
+      <p class="muted" style="margin:0;">Signing you in…</p>
+    </section>
+
+    <section id="sl-checkout-card" class="card" style="max-width: 900px; margin: 24px auto; display:none;">
+      <div class="pill" style="margin-bottom:12px;">Checkout</div>
+
+      <h2 style="margin:0 0 8px 0;">Unlock <span id="sl-selected-category-label">None selected</span></h2>
+      <p class="muted" style="margin-top:0;">You’ll unlock the selected category forever (one-time purchase).</p>
+
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:12px 0;">
+        <span class="muted" style="font-size:12px;">Selected category:</span>
+        <span id="sl-selected-category-pill" class="pill">None</span>
+        <button id="sl-change-category" class="btn" type="button">Choose a different category</button>
       </div>
-    </header>
 
-    <main class="page">
-      <section class="tool-card" style="max-width: 860px; margin: 0 auto;">
-        <div class="pill">Checkout</div>
-        <h1>Unlock a category</h1>
-        <p class="muted">
-          You're about to unlock the selected category forever (one-time purchase).
-        </p>
+      <div style="margin:12px 0;">
+        <div class="muted" style="font-size:12px;">Price:</div>
+        <div style="font-size:22px; font-weight:800;">$19.99 <span class="muted" style="font-weight:500; font-size:14px;">one-time</span></div>
+      </div>
 
-        <div class="kv-row" style="margin-top: 14px;">
-          <div class="kv">
-            <div class="kv-label">Selected category:</div>
-            <div class="kv-value">
-              <span class="pill" id="sl-selected-category-preview">None</span>
-            </div>
-          </div>
-          <div class="kv">
-            <button id="sl-change-category" class="btn" type="button">
-              Choose a different category
-            </button>
-          </div>
-        </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px;">
+        <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Checkout</button>
+        <a id="sl-account" class="btn" href="/account/">Account</a>
+        <button id="sl-signout" class="btn" type="button">Sign out</button>
+      </div>
 
-        <div class="kv-row">
-          <div class="kv">
-            <div class="kv-label">Price:</div>
-            <div class="kv-value">
-              <div class="price">
-                <span class="price-main">$19.99</span>
-                <span class="price-sub">one-time</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button id="sl-checkout" class="btn btn-primary" type="button">
-            Checkout
-          </button>
-          <button id="sl-account" class="btn" type="button">
-            Account
-          </button>
-          <button id="sl-signout" class="btn" type="button">
-            Sign out
-          </button>
-        </div>
-
-        <div class="muted" id="sl-signed-in-as" style="margin-top: 10px;"></div>
-        <div id="sl-status" class="muted" style="margin-top: 10px;"></div>
-      </section>
-    </main>
-  </body>
+      <div id="sl-status" class="muted" style="margin-top:10px;"></div>
+    </section>
+  </main>
+</body>
 </html>
+
 
 
