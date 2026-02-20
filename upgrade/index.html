@@ -16,6 +16,23 @@
     .btn { cursor:pointer; }
     .btn[disabled] { opacity: 0.6; cursor: not-allowed; }
   </style>
+
+  <style>
+  /* ScopedLabs Upgrade pages: align header + title with the upgrade cards */
+  :root { --upgrade-max: 980px; }
+
+  /* Make header container match card width */
+  body .site-header .container.header-inner {
+    max-width: var(--upgrade-max) !important;
+  }
+
+  /* Make the title/hero container match card width */
+  body .page-head .container,
+  body .hero .container,
+  body .section > .container {
+    max-width: var(--upgrade-max) !important;
+  }
+</style>
 </head>
 
 <body>
