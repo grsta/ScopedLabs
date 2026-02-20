@@ -5,64 +5,56 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upgrade • ScopedLabs</title>
 
-  <!-- ✅ MUST be style.css (NOT styles.css) -->
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-ui-219" />
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0351" />
   <link rel="icon" href="/assets/favicon.ico" />
 
   <style>
-    /* Keep this page self-contained (your file already had these helpers) */
+    /* local helpers (keep) */
     .muted { opacity: 0.85; }
     .pill { display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; }
     .btn { cursor:pointer; }
     .btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+    /* Align header + title with the same width as the cards */
+    :root { --upgrade-max: 980px; }
+    body .site-header .container.header-inner { max-width: var(--upgrade-max) !important; }
+    body .page-head .container { max-width: var(--upgrade-max) !important; }
+
+    /* === Checkout + Preview side-by-side === */
+    .sl-upgrade-grid{
+      display:grid;
+      grid-template-columns: 1fr 420px; /* left flexible, right fixed */
+      gap:20px;
+      align-items:start;
+      margin-top:14px;
+    }
+    .sl-upgrade-left,
+    .sl-upgrade-right{ min-width:0; }
+
+    /* Tighten the top row so it doesn't push layout wide */
+    .sl-top-row{
+      display:flex;
+      gap:12px;
+      align-items:flex-end;
+      flex-wrap:wrap;
+      margin-top: 6px;
+    }
+    .sl-selected{ min-width: 220px; }
+    .sl-price{
+      margin-left:auto;
+      text-align:right;
+      min-width:160px;
+    }
+
+    @media (max-width: 900px){
+      .sl-upgrade-grid{ grid-template-columns: 1fr; }
+      .sl-price{ margin-left:0; text-align:left; }
+    }
   </style>
-
-  <style>
-  /* ScopedLabs Upgrade pages: align header + title with the upgrade cards */
-  :root { --upgrade-max: 980px; }
-
-  /* Make header container match card width */
-  body .site-header .container.header-inner {
-    max-width: var(--upgrade-max) !important;
-  }
-
-  /* Make the title/hero container match card width */
-  body .page-head .container,
-  body .hero .container,
-  body .section > .container {
-    max-width: var(--upgrade-max) !important;
-  }
-</style>
-
-<style>
-  /* Upgrade: checkout + preview side-by-side */
-  .sl-upgrade-grid{
-    display:grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap:16px;
-    align-items:start;
-    margin-top: 14px;
-  }
-  .sl-top-row{
-    display:flex;
-    gap:14px;
-    flex-wrap:wrap;
-    align-items:flex-end;
-    margin-top: 6px;
-  }
-  .sl-selected{ min-width: 220px; }
-  .sl-price{ margin-left:auto; min-width: 200px; text-align:right; }
-
-  /* Responsive: stack preview under checkout on smaller screens */
-  @media (max-width: 900px){
-    .sl-upgrade-grid{ grid-template-columns: 1fr; }
-    .sl-price{ margin-left:0; text-align:left; }
-  }
-</style>
 </head>
 
 <body>
-  <!-- ✅ FIXED HEADER (matches ScopedLabs global template) -->
+  <!-- Header (your screenshot version: container/header-inner + nav-link) -->
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -80,7 +72,7 @@
 
   <main class="page">
 
-    <!-- ✅ Wrap in container so title styles/layout apply -->
+    <!-- Title wrapped in container so it lines up with card edge -->
     <section class="page-head">
       <div class="container">
         <h1>Upgrade</h1>
@@ -89,96 +81,103 @@
     </section>
 
     <!-- CHECKOUT CARD -->
-    <!-- === CHECKOUT CARD INNER (REPLACE THIS SECTION) === -->
-<div class="pill" style="margin-bottom:12px;">Checkout</div>
+    <section id="checkout" class="card" style="max-width: 980px; margin: 24px auto;">
+      <div class="pill" style="margin-bottom:12px;">Checkout</div>
 
-<h2 style="margin:0 0 8px 0;">
-  Unlock <span id="sl-selected-category-label">None selected</span>
-</h2>
+      <h2 style="margin:0 0 8px 0;">
+        Unlock <span id="sl-selected-category-label">None selected</span>
+      </h2>
 
-<p class="muted" style="margin-top:0;">
-  You’ll unlock this category forever (one-time purchase).
-</p>
+      <p class="muted" style="margin-top:0;">
+        You’ll unlock this category forever (one-time purchase).
+      </p>
 
-<div class="sl-upgrade-grid">
-  <!-- LEFT: checkout controls -->
-  <div class="sl-upgrade-left">
-    <div class="sl-top-row">
-      <div class="sl-selected">
-        <div class="muted" style="font-size:12px; margin-bottom:6px;">Selected category:</div>
-        <span id="sl-category-pill" class="pill">None</span>
-      </div>
+      <!-- Two-column layout: LEFT controls + RIGHT preview -->
+      <div class="sl-upgrade-grid">
 
-      <button id="sl-change-category" class="btn" type="button">Change Category</button>
+        <!-- LEFT: checkout controls -->
+        <div class="sl-upgrade-left">
 
-      <div class="sl-price">
-        <div class="muted" style="font-size:12px; margin-bottom:6px;">Price:</div>
-        <div style="font-size:20px; font-weight:700;">
-          $19.99 <span class="muted" style="font-weight:500;">one-time</span>
+          <div class="sl-top-row">
+            <div class="sl-selected">
+              <div class="muted" style="font-size:12px; margin-bottom:6px;">Selected category:</div>
+              <span id="sl-category-pill" class="pill">None</span>
+            </div>
+
+            <button id="sl-change-category" class="btn" type="button">Change Category</button>
+
+            <div class="sl-price">
+              <div class="muted" style="font-size:12px; margin-bottom:6px;">Price:</div>
+              <div style="font-size:20px; font-weight:700;">
+                $19.99 <span class="muted" style="font-weight:500;">one-time</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px;">
+            <div class="muted" style="margin-bottom: 8px;">Sign in to purchase (magic link — no password)</div>
+
+            <label class="muted" for="sl-email" style="display:block; font-size:12px; margin-bottom: 6px;">Email</label>
+            <input id="sl-email" type="email" autocomplete="email" placeholder="you@company.com" style="width:100%; max-width:520px;" />
+
+            <div style="margin-top: 10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <button id="sl-sendlink" class="btn btn-primary" type="button">Send magic link</button>
+              <div id="sl-auth-status" class="muted" aria-live="polite"></div>
+            </div>
+
+            <div style="margin-top: 12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <button id="sl-continue" class="btn btn-primary" type="button">Continue to checkout</button>
+              <a id="sl-account" class="btn" href="/account/" role="button">Account</a>
+              <button id="sl-signout" class="btn" type="button">Sign out</button>
+            </div>
+
+            <div class="muted" style="margin-top: 8px;">
+              <span id="sl-signedin"></span>
+            </div>
+
+            <div style="margin-top: 18px;">
+              <div class="pill">🔒 Pro — Category Unlock</div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <div style="margin-top:16px;">
-      <div class="muted" style="margin-bottom:8px;">Sign in to purchase (magic link — no password)</div>
+        <!-- RIGHT: preview card -->
+        <div class="sl-upgrade-right">
+          <div id="sl-preview" class="card" style="height:100%;">
+            <div class="pill" style="margin-bottom:12px;">Preview</div>
 
-      <label class="muted" for="sl-email" style="display:block; font-size:12px; margin-bottom:6px;">Email</label>
-      <input id="sl-email" type="email" autocomplete="email" placeholder="you@company.com" style="width:100%; max-width:520px;" />
+            <h3 style="margin-top:0;"><span id="sl-preview-title">Category</span></h3>
 
-      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <button id="sl-sendlink" class="btn btn-primary" type="button">Send magic link</button>
-        <div id="sl-auth-status" class="muted" aria-live="polite"></div>
-      </div>
+            <p class="muted" id="sl-preview-desc">
+              Includes examples like:
+            </p>
 
-      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <button id="sl-continue" class="btn btn-primary" type="button">Continue to checkout</button>
-        <a id="sl-account" class="btn" href="/account/" role="button">Account</a>
-        <button id="sl-signout" class="btn" type="button">Sign out</button>
-      </div>
+            <ul class="muted" id="sl-preview-bullets" style="margin-top: 10px;"></ul>
 
-      <div class="muted" style="margin-top:8px;">
-        <span id="sl-signedin"></span>
+            <p class="muted" id="sl-preview-foot" style="margin-bottom:0;">
+              You’ll also receive future Pro tools added to this category.
+            </p>
+          </div>
+        </div>
+
       </div>
 
-      <div style="margin-top:14px;">
-        <div class="pill">🔒 Pro — Category Unlock</div>
+      <hr style="margin: 18px 0; opacity: 0.25;" />
+
+      <div class="card" style="max-width: 520px;">
+        <h3 style="margin-top:0;">Category</h3>
+        <p class="muted" style="margin-bottom:0;">
+          This preview updates based on the selected category.
+        </p>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- RIGHT: preview card -->
-  <div class="sl-upgrade-right">
-    <div id="sl-preview" class="card" style="height:100%;">
-      <div class="pill" style="margin-bottom:12px;">Preview</div>
-
-      <h3 style="margin-top:0;"><span id="sl-preview-title">Category</span></h3>
-      <p class="muted" id="sl-preview-desc">
-        Bandwidth, latency budgets, uplink planning, and throughput checks.
-      </p>
-
-      <div class="muted" style="margin-top:12px;">Includes examples like:</div>
-      <ul class="muted" id="sl-preview-bullets" style="margin-top: 10px;"></ul>
-
-      <p class="muted" id="sl-preview-foot" style="margin-top:14px; margin-bottom:0;">
-        You’ll also receive future Pro tools added to this category.
-      </p>
-    </div>
-  </div>
-</div>
-<!-- === /CHECKOUT CARD INNER === -->
-
-    <!-- CATEGORY CHOOSER -->
+    <!-- CATEGORY CHOOSER (unchanged from your last full file) -->
     <section id="categories" class="card" style="max-width: 980px; margin: 24px auto;">
       <h2 style="margin-top:0;">Choose a category</h2>
       <p class="muted" style="margin-top:0;">Pick the lane you want to unlock.</p>
 
-      <!-- Your full category cards list stays here EXACTLY as you had it -->
-      <!-- IMPORTANT: every “Unlock ___ Pro” button should have data-category="slug" -->
-      <!-- If your buttons already have data-category, app.js will bind them automatically. -->
-      <!-- (PASTE YOUR EXISTING CATEGORY GRID/CARDS HERE — unchanged) -->
-
       <div class="grid upgrade-grid" style="margin-top:1rem;">
-        <!-- (Your category cards unchanged) -->
         <!-- access-control -->
         <div class="card upgrade-card" id="access-control">
           <span class="pill">🔒 Pro — Category Unlock</span>
@@ -382,12 +381,6 @@
       </div>
     </section>
 
-      <div class="grid upgrade-grid" style="margin-top:1rem;">
-        <!-- (Your category cards unchanged) -->
-        <!-- ... keep your existing category cards exactly as-is ... -->
-      </div>
-    </section>
-
     <section class="card" style="max-width: 980px; margin: 24px auto;">
       <div class="pill">Important notes</div>
       <h2 style="margin: 10px 0;">Keep it simple</h2>
@@ -419,11 +412,11 @@
 
   </main>
 
-  <!-- ✅ FIXED SCRIPT LOAD ORDER -->
+  <!-- Script order: Supabase + stripe-map NOT defer -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/assets/stripe-map.js?v=upgrade-ui-219"></script>
-  <script defer src="/assets/auth.js?v=upgrade-ui-219"></script>
-  <script defer src="/assets/app.js?v=upgrade-ui-219"></script>
+  <script src="/assets/stripe-map.js?v=upgrade-0351"></script>
+  <script defer src="/assets/auth.js?v=upgrade-0351"></script>
+  <script defer src="/assets/app.js?v=upgrade-0351"></script>
 </body>
 </html>
 
