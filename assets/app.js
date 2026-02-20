@@ -53,6 +53,94 @@
     },
   };
 
+  /* === ScopedLabs: Category persistence BEFORE sign-in === */
+(function () {
+  "use strict";
+
+  const LS_KEY = "sl_selected_category";
+
+  function readCategory() {
+    const urlCat = new URLSearchParams(location.search).get("category");
+    const lsCat = localStorage.getItem(LS_KEY);
+    return (urlCat || lsCat || "").trim();
+  }
+
+  function writeCategory(cat) {
+    const c = (cat || "").trim();
+    if (!c) return;
+    localStorage.setItem(LS_KEY, c);
+
+    // Update UI immediately (even signed out)
+    const label = document.getElementById("sl-selected-category-label");
+    if (label) label.textContent = c;
+
+    const pill = document.getElementById("sl-category-pill");
+    if (pill) pill.textContent = c;
+
+    // Optional: preview title mirrors category
+    const prevTitle = document.getElementById("sl-preview-title");
+    if (prevTitle) prevTitle.textContent = c;
+  }
+
+  function extractCategoryFromEl(el) {
+    if (!el) return "";
+
+    // 1) data-category="network"
+    const dc = el.getAttribute("data-category");
+    if (dc) return dc;
+
+    // 2) href="/upgrade/?category=network#checkout"
+    const href = el.getAttribute("href");
+    if (href && href.includes("category=")) {
+      try {
+        const u = new URL(href, location.origin);
+        return (u.searchParams.get("category") || "").trim();
+      } catch {
+        // relative href without URL() support: fallback parse
+        const m = href.match(/[?&]category=([^&#]+)/);
+        return m ? decodeURIComponent(m[1]) : "";
+      }
+    }
+
+    // 3) id="sl-unlock-network"
+    const id = el.id || "";
+    if (id.startsWith("sl-unlock-")) return id.replace("sl-unlock-", "");
+
+    return "";
+  }
+
+  function bindCategoryClicks() {
+    // Any element explicitly tagged
+    document.querySelectorAll("[data-category], a[href*='?category='], a[href*='&category=']")
+      .forEach((el) => {
+        el.addEventListener("click", () => {
+          const cat = extractCategoryFromEl(el);
+          if (cat) writeCategory(cat);
+        }, { passive: true });
+      });
+  }
+
+  function applyCategoryOnLoad() {
+    const cat = readCategory();
+    if (cat) writeCategory(cat);
+  }
+
+  function initCategoryPersistence() {
+    applyCategoryOnLoad();
+    bindCategoryClicks();
+  }
+
+  // Run on normal load
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCategoryPersistence);
+  } else {
+    initCategoryPersistence();
+  }
+
+  // Run again when BFCache restores the page
+  window.addEventListener("pageshow", initCategoryPersistence);
+})();
+
   let currentCategory = null;
   let currentSession = null;
 
