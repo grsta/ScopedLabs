@@ -63,74 +63,83 @@
     </section>
 
     <!-- CHECKOUT CARD -->
-    <section id="checkout" class="card" style="max-width: 980px; margin: 24px auto;">
-      <div class="pill" style="margin-bottom:12px;">Checkout</div>
+    <!-- === CHECKOUT CARD INNER (REPLACE THIS SECTION) === -->
+<div class="pill" style="margin-bottom:12px;">Checkout</div>
 
-      <h2 style="margin:0 0 8px 0;">
-        Unlock <span id="sl-selected-category-label">None selected</span>
-      </h2>
+<h2 style="margin:0 0 8px 0;">
+  Unlock <span id="sl-selected-category-label">None selected</span>
+</h2>
 
-      <p class="muted" style="margin-top:0;">
-        You’ll unlock this category forever (one-time purchase).
-      </p>
+<p class="muted" style="margin-top:0;">
+  You’ll unlock this category forever (one-time purchase).
+</p>
 
-      <div id="sl-checkout-card">
-        <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; margin-top: 14px;">
-          <div style="min-width: 260px;">
-            <div class="muted" style="font-size: 12px; margin-bottom: 6px;">Selected category:</div>
-            <span id="sl-category-pill" class="pill">None</span>
-          </div>
-
-          <button id="sl-change-category" class="btn" type="button">Change Category</button>
-
-          <div style="flex:1;"></div>
-
-          <div style="min-width: 220px;">
-            <div class="muted" style="font-size: 12px; margin-bottom: 6px;">Price:</div>
-            <div style="font-size: 20px; font-weight: 700;">$19.99 <span class="muted" style="font-weight: 500;">one-time</span></div>
-          </div>
-        </div>
-
-        <div style="margin-top: 16px;">
-          <div class="muted" style="margin-bottom: 8px;">Sign in to purchase (magic link — no password)</div>
-
-          <label class="muted" for="sl-email" style="display:block; font-size: 12px; margin-bottom: 6px;">Email</label>
-          <input id="sl-email" type="email" autocomplete="email" placeholder="you@company.com" style="width:100%; max-width:520px;" />
-
-          <div style="margin-top: 10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <button id="sl-sendlink" class="btn btn-primary" type="button">Send magic link</button>
-            <div id="sl-auth-status" class="muted" aria-live="polite"></div>
-          </div>
-
-          <div style="margin-top: 12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <button id="sl-continue" class="btn btn-primary" type="button">Continue to checkout</button>
-            <a id="sl-account" class="btn" href="/account/" role="button">Account</a>
-            <button id="sl-signout" class="btn" type="button">Sign out</button>
-          </div>
-
-          <div class="muted" style="margin-top: 8px;">
-            <span id="sl-signedin"></span>
-          </div>
-        </div>
+<div class="sl-upgrade-grid">
+  <!-- LEFT: checkout controls -->
+  <div class="sl-upgrade-left">
+    <div class="sl-top-row">
+      <div class="sl-selected">
+        <div class="muted" style="font-size:12px; margin-bottom:6px;">Selected category:</div>
+        <span id="sl-category-pill" class="pill">None</span>
       </div>
 
-      <div style="margin-top: 18px;">
+      <button id="sl-change-category" class="btn" type="button">Change Category</button>
+
+      <div class="sl-price">
+        <div class="muted" style="font-size:12px; margin-bottom:6px;">Price:</div>
+        <div style="font-size:20px; font-weight:700;">
+          $19.99 <span class="muted" style="font-weight:500;">one-time</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="muted" style="margin-bottom:8px;">Sign in to purchase (magic link — no password)</div>
+
+      <label class="muted" for="sl-email" style="display:block; font-size:12px; margin-bottom:6px;">Email</label>
+      <input id="sl-email" type="email" autocomplete="email" placeholder="you@company.com" style="width:100%; max-width:520px;" />
+
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button id="sl-sendlink" class="btn btn-primary" type="button">Send magic link</button>
+        <div id="sl-auth-status" class="muted" aria-live="polite"></div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button id="sl-continue" class="btn btn-primary" type="button">Continue to checkout</button>
+        <a id="sl-account" class="btn" href="/account/" role="button">Account</a>
+        <button id="sl-signout" class="btn" type="button">Sign out</button>
+      </div>
+
+      <div class="muted" style="margin-top:8px;">
+        <span id="sl-signedin"></span>
+      </div>
+
+      <div style="margin-top:14px;">
         <div class="pill">🔒 Pro — Category Unlock</div>
       </div>
+    </div>
+  </div>
 
-      <hr style="margin: 18px 0; opacity: 0.25;" />
+  <!-- RIGHT: preview card -->
+  <div class="sl-upgrade-right">
+    <div id="sl-preview" class="card" style="height:100%;">
+      <div class="pill" style="margin-bottom:12px;">Preview</div>
 
-      <div id="sl-preview" class="card" style="max-width: 520px;">
-        <h3 style="margin-top:0;"><span id="sl-preview-title">Category</span></h3>
-        <p class="muted" id="sl-preview-desc">
-          Includes examples like:
-        </p>
-        <ul class="muted" id="sl-preview-bullets" style="margin-top: 10px;"></ul>
-        <p class="muted" id="sl-preview-foot" style="margin-bottom:0;">
-          You’ll also receive future Pro tools added to this category.
-        </p>
-      </div>
-    </section>
+      <h3 style="margin-top:0;"><span id="sl-preview-title">Category</span></h3>
+      <p class="muted" id="sl-preview-desc">
+        Bandwidth, latency budgets, uplink planning, and throughput checks.
+      </p>
+
+      <div class="muted" style="margin-top:12px;">Includes examples like:</div>
+      <ul class="muted" id="sl-preview-bullets" style="margin-top: 10px;"></ul>
+
+      <p class="muted" id="sl-preview-foot" style="margin-top:14px; margin-bottom:0;">
+        You’ll also receive future Pro tools added to this category.
+      </p>
+    </div>
+  </div>
+</div>
+<!-- === /CHECKOUT CARD INNER === -->
 
     <!-- CATEGORY CHOOSER -->
     <section id="categories" class="card" style="max-width: 980px; margin: 24px auto;">
