@@ -5,12 +5,20 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Checkout • ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0351" />
+  <link rel="stylesheet" href="/assets/style.css?v=checkout-0246" />
   <link rel="icon" href="/assets/favicon.ico" />
 
+  <style>
+    .page { max-width: 980px; margin: 0 auto; padding: 0 18px 60px; }
+    .card { padding: 22px; border-radius: 18px; }
+    .actions { display:flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+    .actions .btn { white-space: nowrap; }
+    #sl-status { min-height: 1.2em; }
+  </style>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="/assets/auth.js?v=upgrade-0351"></script>
-  <script defer src="/assets/app.js?v=upgrade-0351"></script>
+  <script defer src="/assets/auth.js?v=checkout-0246"></script>
+  <script defer src="/assets/app.js?v=checkout-0246"></script>
 </head>
 
 <body>
@@ -32,34 +40,27 @@
       <p class="muted">Complete your category unlock purchase.</p>
     </section>
 
-    <section id="sl-boot-hint" class="card" style="max-width: 900px; margin: 24px auto;">
-      <p class="muted" style="margin:0;">Signing you in…</p>
-    </section>
+    <section class="card" aria-label="Checkout card">
+      <span class="pill">Checkout</span>
 
-    <section id="sl-checkout-card" class="card" style="max-width: 900px; margin: 24px auto; display:none;">
-      <div class="pill" style="margin-bottom:12px;">Checkout</div>
+      <div style="margin-top:.8rem;">
+        <div class="muted" style="margin-bottom:.35rem;">
+          Selected category:
+          <span id="selected-category" class="pill" style="margin-left:.35rem;">None selected</span>
+          <button id="sl-change-category" class="btn" style="margin-left:.35rem;" type="button">Choose a different category</button>
+        </div>
 
-      <h2 style="margin:0 0 8px 0;">Unlock <span id="sl-selected-category-label">None selected</span></h2>
-      <p class="muted" style="margin-top:0;">You’ll unlock the selected category forever (one-time purchase).</p>
+        <div class="actions">
+          <button id="sl-checkout" class="btn btn-primary" type="button">Checkout</button>
 
-      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:12px 0;">
-        <span class="muted" style="font-size:12px;">Selected category:</span>
-        <span id="sl-selected-category-pill" class="pill">None</span>
-        <button id="sl-change-category" class="btn" type="button">Choose a different category</button>
+          <!-- ✅ Account wired by ID now -->
+          <a id="sl-account" class="btn" href="/account/">Account</a>
+
+          <button id="sl-signout" class="btn" type="button" style="display:none;">Sign out</button>
+        </div>
+
+        <div class="muted" id="sl-status" style="font-size:.9rem; margin-top:.85rem;"></div>
       </div>
-
-      <div style="margin:12px 0;">
-        <div class="muted" style="font-size:12px;">Price:</div>
-        <div style="font-size:22px; font-weight:800;">$19.99 <span class="muted" style="font-weight:500; font-size:14px;">one-time</span></div>
-      </div>
-
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px;">
-        <button id="sl-checkout" class="btn btn-primary" type="button" disabled>Checkout</button>
-        <a id="sl-account" class="btn" href="/account/">Account</a>
-        <button id="sl-signout" class="btn" type="button">Sign out</button>
-      </div>
-
-      <div id="sl-status" class="muted" style="margin-top:10px;"></div>
     </section>
   </main>
 </body>
