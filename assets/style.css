@@ -1615,3 +1615,14 @@ main h3.section-title {
 #selected-category-preview .card {
   margin-top: 0 !important;
 }
+/* Upgrade category card CTA normalization */
+.upgrade-card .upgrade-cta a.btn,
+.upgrade-card .upgrade-cta a.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  width: 100%;
+  white-space: normal;
+  text-align: center;
+}
