@@ -78,6 +78,24 @@
     show(els.sendlink(), !isSignedIn);
   }
 
+  const hint = document.getElementById("sl-login-hint");
+
+if (hint) {
+  if (isSignedIn) {
+    // try to show the signed-in email if we have it
+    const email =
+      (window.__SL_USER_EMAIL) ||
+      (window.SL_AUTH && window.SL_AUTH._email) ||
+      "";
+
+    hint.textContent = email
+      ? `Signed in as ${email}`
+      : "Signed in";
+  } else {
+    hint.textContent = "Sign in to purchase (magic link — no password)";
+  }
+}
+
   async function refreshAuthUI() {
     const sb = window.SL_AUTH && window.SL_AUTH.sb;
     const ready = window.SL_AUTH && window.SL_AUTH.ready;
@@ -96,6 +114,7 @@
     try {
       const { data } = await sb.auth.getSession();
       const session = data && data.session ? data.session : null;
+      window.__SL_USER_EMAIL = session && session.user ? session.user.email : "";
       setSignedInUI(!!session);
     } catch {
       setSignedInUI(false);
@@ -118,6 +137,7 @@
 
     try { await ready; } catch {}
     sb.auth.onAuthStateChange((_evt, session) => {
+      window.__SL_USER_EMAIL = session && session.user ? session.user.email : "";
       setSignedInUI(!!session);
     });
   })();
