@@ -53,6 +53,77 @@
     },
   };
 
+  // === ScopedLabs: Hide signed-in buttons until authenticated ===
+(function () {
+  "use strict";
+
+  const els = {
+    continueBtn: () => document.getElementById("sl-continue"),
+    account: () => document.getElementById("sl-account"),
+    signout: () => document.getElementById("sl-signout"),
+    email: () => document.getElementById("sl-email"),
+    sendlink: () => document.getElementById("sl-sendlink"),
+  };
+
+  function setSignedInUI(isSignedIn) {
+    const show = (el, on) => { if (el) el.style.display = on ? "" : "none"; };
+
+    // Only show these when signed in
+    show(els.continueBtn(), !!isSignedIn);
+    show(els.account(), !!isSignedIn);
+    show(els.signout(), !!isSignedIn);
+
+    // Only show email + magic link when NOT signed in
+    show(els.email(), !isSignedIn);
+    show(els.sendlink(), !isSignedIn);
+  }
+
+  async function refreshAuthUI() {
+    const sb = window.SL_AUTH && window.SL_AUTH.sb;
+    const ready = window.SL_AUTH && window.SL_AUTH.ready;
+
+    if (!sb || !ready) {
+      // Safe default: hide signed-in buttons until we know
+      setSignedInUI(false);
+      return;
+    }
+
+    try { await ready; } catch {}
+
+    // Default to signed-out until proven otherwise
+    setSignedInUI(false);
+
+    try {
+      const { data } = await sb.auth.getSession();
+      const session = data && data.session ? data.session : null;
+      setSignedInUI(!!session);
+    } catch {
+      setSignedInUI(false);
+    }
+  }
+
+  // Run on load + BFCache restores
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", refreshAuthUI);
+  } else {
+    refreshAuthUI();
+  }
+  window.addEventListener("pageshow", refreshAuthUI);
+
+  // Also react to auth changes
+  (async () => {
+    const sb = window.SL_AUTH && window.SL_AUTH.sb;
+    const ready = window.SL_AUTH && window.SL_AUTH.ready;
+    if (!sb || !ready) return;
+
+    try { await ready; } catch {}
+    sb.auth.onAuthStateChange((_evt, session) => {
+      setSignedInUI(!!session);
+    });
+  })();
+})();
+
+
   /* === ScopedLabs: Category persistence BEFORE sign-in === */
 (function () {
   "use strict";
