@@ -1626,3 +1626,16 @@ main h3.section-title {
   white-space: normal;
   text-align: center;
 }
+/* === UPGRADE: Normalize all category CTA buttons === */
+#categories .upgrade-cta a,
+#categories a.btn,
+#categories a.btn-primary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  text-align: center !important;
+  white-space: normal !important;
+  line-height: 1.2 !important;
+}
