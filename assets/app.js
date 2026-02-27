@@ -275,7 +275,11 @@
   }
 
   function bindCategoryLinks() {
-    const buttons = Array.from(document.querySelectorAll("[data-category], [id^='sl-unlock-'], a[href*='?category=']"));
+    const buttons = Array.from(
+      document.querySelectorAll(
+        "[data-category], [id^='sl-unlock-'], a.btn[href*='?category='], a.btn-primary[href*='?category=']"
+  )
+);
 
     buttons.forEach((btn) => {
       let cat = btn.getAttribute("data-category") || null;
@@ -296,8 +300,11 @@
       if (!cat) return;
 
       btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        goToCheckoutFor(cat);
+        // keep layout stable: only intercept if we're on upgrade/ pages
+    if (location.pathname.startsWith("/upgrade")) {
+     e.preventDefault();
+     goToCheckoutFor(cat);
+    }
       });
     });
   }
