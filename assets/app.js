@@ -54,8 +54,8 @@
   };
 
   // === ScopedLabs: Hide signed-in buttons until authenticated ===
-(function () {
-  "use strict";
+  function () {
+    "use strict";
 
   const els = {
     continueBtn: () => document.getElementById("sl-continue"),
@@ -66,34 +66,17 @@
   };
 
   function setSignedInUI(isSignedIn) {
-    const show = (el, on) => { if (el) el.style.display = on ? "" : "none"; };
+  const show = (el, on) => { if (el) el.style.display = on ? "" : "none"; };
 
-    // Only show these when signed in
-    show(els.continueBtn(), !!isSignedIn);
-    show(els.account(), !!isSignedIn);
-    show(els.signout(), !!isSignedIn);
+  // Only show these when signed in
+  show(els.continueBtn(), !!isSignedIn);
+  show(els.account(), !!isSignedIn);
+  show(els.signout(), !!isSignedIn);
 
-    // Only show email + magic link when NOT signed in
-    show(els.email(), !isSignedIn);
-    show(els.sendlink(), !isSignedIn);
-  }
-
-  const hint = document.getElementById("sl-login-hint");
-
-if (hint) {
-  if (isSignedIn) {
-    // try to show the signed-in email if we have it
-    const email =
-      (window.__SL_USER_EMAIL) ||
-      (window.SL_AUTH && window.SL_AUTH._email) ||
-      "";
-
-    hint.textContent = email
-      ? `Signed in as ${email}`
-      : "Signed in";
-  } else {
-    hint.textContent = "Sign in to purchase (magic link — no password)";
-  }
+  // Only show email + magic link when NOT signed in
+  show(els.email(), !isSignedIn);
+  show(els.sendlink(), !isSignedIn);
+}
 }
 
   async function refreshAuthUI() {
