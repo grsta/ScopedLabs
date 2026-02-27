@@ -1,109 +1,110 @@
 /* /assets/app.js
-   ScopedLabs Upgrade/Checkout controller.
+   ScopedLabs Upgrade controller (matches your current upgrade HTML).
 
-   Goals:
-   - Keep "current category" in sync between:
-     URL ?category=, localStorage(sl_selected_category), and UI label(s)
-   - Bind all category unlock buttons/links (data-category OR id sl-unlock-<cat> OR href ?category=)
-   - Routing rules:
-       * If signed in: clicking a category unlock goes straight to /upgrade/checkout/?category=CAT
-       * If NOT signed in: clicking a category unlock goes to /upgrade/?category=CAT#checkout
-   - Checkout page:
-       * Requires a valid session
-       * Checkout button calls /api/create-checkout-session
+   Works with:
+   - #sl-category-pill
+   - #sl-selected-category-label
+   - #sl-preview-title / #sl-preview-desc / #sl-preview-bullets
+   - #sl-sendlink / #sl-email (handled by auth.js, we just manage UI)
 */
-
-/* /assets/app.js */
 
 (() => {
   "use strict";
 
-  const IS_CHECKOUT_PAGE = location.pathname.startsWith("/upgrade/checkout");
   const STORAGE_KEY = "sl_selected_category";
 
   const sb = () => (window.SL_AUTH && window.SL_AUTH.sb ? window.SL_AUTH.sb : null);
   const ready = () => (window.SL_AUTH && window.SL_AUTH.ready ? window.SL_AUTH.ready : Promise.resolve());
 
   const CATEGORY_DEFS = {
-    power: {
-      title: "Power",
-      desc: "UPS runtime, battery bank sizing, generator headroom, and redundancy planning.",
+    "access-control": {
+      title: "Access Control",
+      desc: "Door hardware, credential formats, PoE power budgets, and deployment planning.",
       bullets: [
-        "UPS runtime + load growth modeling",
-        "Battery bank sizer",
-        "Generator capacity planning"
-      ]
-    },
-    network: {
-      title: "Network & Throughput",
-      desc: "Bandwidth budgets, latency envelopes, uplink sizing and oversubscription modeling.",
-      bullets: [
-        "Bandwidth planner",
-        "Latency budget calculator",
-        "Oversubscription estimator"
-      ]
-    },
-    video: {
-      title: "Video & Storage",
-      desc: "Retention modeling, bitrate math, RAID impact, and storage planning.",
-      bullets: [
-        "Storage calculator",
-        "Retention planner",
-        "RAID impact estimator"
-      ]
-    },
-    infrastructure: {
-      title: "Infrastructure",
-      desc: "Rack power, PoE budgets, redundancy modeling, and deployment headroom.",
-      bullets: [
-        "Rack power estimator",
-        "PoE budget planner",
-        "Redundancy planning tools"
+        "Controller sizing + expansion planning",
+        "Power & cabling headroom checks",
+        "Fail-safe / fail-secure impact modeling"
       ]
     },
     compute: {
       title: "Compute",
-      desc: "Workload sizing, headroom modeling, and compute growth planning.",
+      desc: "Server sizing, workload estimates, and resource headroom planning.",
       bullets: [
-        "Compute capacity estimator",
-        "Virtualization density planner",
-        "CPU + memory growth modeling"
+        "Capacity planning (CPU/RAM/IO)",
+        "Growth projections + utilization targets",
+        "Performance vs. cost trade-offs"
+      ]
+    },
+    infrastructure: {
+      title: "Infrastructure",
+      desc: "Power chain planning, rack/room constraints, and deployment readiness checks.",
+      bullets: [
+        "Rack density & load planning",
+        "Power/space/cooling constraint checks",
+        "Failure impact + contingency planning"
+      ]
+    },
+    network: {
+      title: "Network & Throughput",
+      desc: "Bandwidth planning, latency budgets, and congestion headroom.",
+      bullets: [
+        "Oversubscription analysis",
+        "Latency budget calculators",
+        "Uplink capacity planning"
       ]
     },
     performance: {
       title: "Performance",
-      desc: "System bottleneck detection and throughput modeling.",
+      desc: "Sizing targets, efficiency assumptions, and stress-test planning tools.",
       bullets: [
-        "Throughput modeling",
-        "Bottleneck estimator",
-        "Performance margin calculator"
+        "Baseline vs. peak load modeling",
+        "Headroom targets + scenario tests",
+        "Risk checks for bottlenecks"
       ]
     },
-    physical: {
+    "physical-security": {
       title: "Physical Security",
-      desc: "Deployment modeling for field hardware and site planning.",
+      desc: "Coverage planning, deployment assumptions, and survivability checks.",
       bullets: [
-        "Coverage estimators",
-        "Hardware capacity planning",
-        "Deployment scaling tools"
+        "Coverage + risk trade-off planners",
+        "Storage/runtime survivability checks",
+        "Operational readiness scoring"
+      ]
+    },
+    power: {
+      title: "Power & Runtime",
+      desc: "UPS sizing, runtime margin, redundancy, and failure planning.",
+      bullets: [
+        "Load growth simulation (staged adds over time)",
+        "Redundancy / N+1 impact modeling",
+        "Worst-case runtime stress tests"
       ]
     },
     thermal: {
       title: "Thermal",
-      desc: "Heat load estimation and cooling envelope planning.",
+      desc: "Heat load planning, airflow assumptions, and environment constraints.",
       bullets: [
-        "Thermal load estimator",
-        "Cooling margin planner",
-        "Rack heat modeling"
+        "BTU/Watt conversion helpers",
+        "Room/rack thermal planning",
+        "Cooling headroom checks"
       ]
     },
-    "access-control": {
-      title: "Access Control",
-      desc: "Controller sizing, door hardware modeling, and credential planning.",
+    "video-storage": {
+      title: "Video & Storage",
+      desc: "Retention planning, storage survivability, and failure behavior.",
       bullets: [
-        "Controller expansion modeling",
-        "Door hardware capacity planning",
-        "Credential format planning"
+        "Advanced storage planning scenarios",
+        "RAID impact + rebuild risk",
+        "Retention survivability modeling"
+      ]
+    },
+    wireless: {
+      title: "Wireless",
+      desc: "Link planning, channel assumptions, and reliability headroom.",
+      bullets: [
+        "Link budget & margin checks",
+        "Coverage + capacity planning",
+        "Interference risk helpers"
       ]
     }
   };
@@ -111,58 +112,127 @@
   let currentCategory = null;
   let currentSession = null;
 
-  /* -------------------------- */
-  /* Helpers                    */
-  /* -------------------------- */
+  /* -----------------------------
+     Small helpers
+  ----------------------------- */
 
-  function normalize(cat) {
-    return cat ? String(cat).trim().toLowerCase() : null;
+  function normalizeCategory(cat) {
+    if (!cat) return null;
+    const c = String(cat).trim().toLowerCase();
+    return c || null;
   }
 
   function qs(name) {
-    try { return new URLSearchParams(location.search).get(name); }
-    catch { return null; }
+    try {
+      return new URLSearchParams(location.search).get(name);
+    } catch {
+      return null;
+    }
   }
 
-  function setStored(cat) {
-    if (cat) localStorage.setItem(STORAGE_KEY, cat);
-    else localStorage.removeItem(STORAGE_KEY);
-  }
-
-  function getStored() {
-    return localStorage.getItem(STORAGE_KEY);
-  }
-
-  function setUrl(cat) {
+  function setUrlCategory(cat) {
     const u = new URL(location.href);
     if (cat) u.searchParams.set("category", cat);
     else u.searchParams.delete("category");
     history.replaceState({}, "", u.toString());
   }
 
-  function escapeHtml(s) {
-    return String(s || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  function setStoredCategory(cat) {
+    try {
+      if (cat) localStorage.setItem(STORAGE_KEY, cat);
+      else localStorage.removeItem(STORAGE_KEY);
+    } catch {}
   }
 
-  /* -------------------------- */
-  /* Auth UI                    */
-  /* -------------------------- */
+  function getStoredCategory() {
+    try {
+      return localStorage.getItem(STORAGE_KEY) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function extractCategoryFromHref(href) {
+    if (!href || !href.includes("category=")) return "";
+    try {
+      const u = new URL(href, location.origin);
+      return (u.searchParams.get("category") || "").trim();
+    } catch {
+      const m = href.match(/[?&]category=([^&#]+)/);
+      return m ? decodeURIComponent(m[1]) : "";
+    }
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function show(id, on) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = on ? "" : "none";
+  }
+
+  /* -----------------------------
+     Preview renderer (YOUR IDs)
+  ----------------------------- */
+
+  function renderPreview() {
+    const def = CATEGORY_DEFS[currentCategory] || null;
+
+    const title = def ? def.title : (currentCategory ? currentCategory : "Category");
+    const desc = def ? def.desc : "Choose a category to see what you’ll unlock.";
+    const bullets = def
+      ? def.bullets
+      : ["Pick a lane to unlock Pro tools.", "One-time purchase per category.", "Keep it forever."];
+
+    setText("sl-preview-title", title);
+
+    const descEl = document.getElementById("sl-preview-desc");
+    if (descEl) descEl.textContent = desc;
+
+    const ul = document.getElementById("sl-preview-bullets");
+    if (ul) {
+      ul.innerHTML = "";
+      bullets.forEach((b) => {
+        const li = document.createElement("li");
+        li.textContent = b;
+        ul.appendChild(li);
+      });
+    }
+  }
+
+  function updateCategoryUI() {
+    setText("sl-category-pill", currentCategory || "None");
+    setText("sl-selected-category-label", currentCategory || "None selected");
+    renderPreview();
+  }
+
+  function writeCategory(cat) {
+    const c = normalizeCategory(cat);
+    if (!c) return;
+
+    currentCategory = c;
+    setStoredCategory(c);
+    setUrlCategory(c);
+    updateCategoryUI();
+  }
+
+  function readCategory() {
+    return normalizeCategory(qs("category")) || normalizeCategory(getStoredCategory());
+  }
+
+  /* -----------------------------
+     Auth-driven UI (buttons + hint)
+  ----------------------------- */
 
   function setSignedInUI(isSignedIn, email) {
-    const show = (id, on) => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = on ? "" : "none";
-    };
-
+    // Hide / show the buttons you asked for
     show("sl-continue", isSignedIn);
     show("sl-account", isSignedIn);
     show("sl-signout", isSignedIn);
 
+    // Show email + sendlink only when signed out
     show("sl-email", !isSignedIn);
     show("sl-sendlink", !isSignedIn);
 
@@ -172,10 +242,15 @@
         ? (email ? `Signed in as ${email}` : "Signed in")
         : "Sign in to purchase (magic link — no password)";
     }
+
+    // Optional signed-in line (your HTML has this span)
+    setText("sl-signedin", isSignedIn ? (email ? `Signed in as ${email}` : "Signed in") : "");
   }
 
   async function refreshAuth() {
+    // default to signed-out until proven otherwise
     setSignedInUI(false, "");
+    currentSession = null;
 
     const client = sb();
     if (!client) return;
@@ -192,124 +267,102 @@
     }
   }
 
-  function attachAuthListener() {
+  function attachAuthListenerOnce() {
     const client = sb();
     if (!client) return;
+
+    // Avoid multiple subscriptions on pageshow
+    if (window.__SL_APP_AUTH_SUBBED) return;
+    window.__SL_APP_AUTH_SUBBED = true;
 
     ready().then(() => {
       client.auth.onAuthStateChange((_evt, session) => {
         currentSession = session || null;
         const email = session?.user?.email || "";
         setSignedInUI(!!session, email);
-        updateCategoryUI();
       });
     });
   }
 
-  /* -------------------------- */
-  /* Category UI                */
-  /* -------------------------- */
+  /* -----------------------------
+     Click bindings (cards + CTAs)
+  ----------------------------- */
 
-  function renderPreview() {
-    const mount =
-      document.getElementById("sl-selected-category-preview") ||
-      document.getElementById("sl-selected-category-preview-checkout");
+  function bindCategoryClicks() {
+    // 1) Clicking a whole category CARD should select that category (no navigation)
+    document.querySelectorAll(".upgrade-card").forEach((card) => {
+      card.addEventListener("click", (e) => {
+        // if they clicked the CTA link, let the CTA handler below manage navigation
+        const a = e.target && e.target.closest ? e.target.closest("a[href*='category=']") : null;
+        if (a) return;
 
-    if (!mount) return;
+        // extract category from the CTA link inside this card
+        const link = card.querySelector("a[href*='category=']");
+        const cat = link ? extractCategoryFromHref(link.getAttribute("href")) : "";
+        if (cat) writeCategory(cat);
+      });
+    });
 
-    const def = CATEGORY_DEFS[currentCategory];
-    if (!def) {
-      mount.innerHTML = "";
-      return;
+    // 2) CTA links (Unlock ___ Pro) should store selection, then navigate
+    document.querySelectorAll("a[href*='?category='], a[href*='&category=']").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        const href = a.getAttribute("href") || "";
+        const cat = extractCategoryFromHref(href);
+        if (cat) writeCategory(cat);
+        // allow the navigation to proceed (no preventDefault)
+      });
+    });
+
+    // Change Category button -> scroll to chooser
+    const changeBtn = document.getElementById("sl-change-category");
+    if (changeBtn) {
+      changeBtn.addEventListener("click", () => {
+        const sec = document.getElementById("categories");
+        if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+        location.hash = "#categories";
+      });
     }
 
-    mount.innerHTML = `
-      <div class="card">
-        <div class="pill" style="margin-bottom:10px;">Preview</div>
-        <h3>${escapeHtml(def.title)}</h3>
-        <p class="muted">${escapeHtml(def.desc)}</p>
-        <ul class="muted">
-          ${def.bullets.map(b => `<li>${escapeHtml(b)}</li>`).join("")}
-        </ul>
-      </div>
-    `;
-  }
+    // Continue to checkout -> only meaningful when signed in and category selected
+    const contBtn = document.getElementById("sl-continue");
+    if (contBtn) {
+      contBtn.addEventListener("click", () => {
+        const cat = currentCategory || readCategory();
+        if (!cat) return;
 
-  function updateCategoryUI() {
-    const pill = document.getElementById("sl-selected-category");
-    const label = document.getElementById("sl-selected-category-label");
-
-    if (pill) pill.textContent = currentCategory || "None";
-    if (label) label.textContent = currentCategory || "None selected";
-
-    renderPreview();
-
-    const checkoutBtn = document.getElementById("sl-checkout");
-    if (checkoutBtn) checkoutBtn.disabled = !currentCategory || !currentSession;
-  }
-
-  function selectCategory(cat) {
-    currentCategory = normalize(cat);
-    setStored(currentCategory);
-    setUrl(currentCategory);
-    updateCategoryUI();
-  }
-
-  function goToCheckout(cat) {
-    selectCategory(cat);
-
-    if (currentSession) {
-      location.href = "/upgrade/checkout/?category=" + encodeURIComponent(cat);
-    } else {
-      location.href = "/upgrade/?category=" + encodeURIComponent(cat) + "#checkout";
+        // If signed in, go to checkout page. If signed out, jump to checkout section.
+        if (currentSession) {
+          location.href = "/upgrade/checkout/?category=" + encodeURIComponent(cat);
+        } else {
+          location.href = "/upgrade/?category=" + encodeURIComponent(cat) + "#checkout";
+        }
+      });
     }
   }
 
-  /* -------------------------- */
-  /* Bindings                   */
-  /* -------------------------- */
-
-  function bindCategoryCards() {
-    document.querySelectorAll("[data-category-card]").forEach(card => {
-      card.addEventListener("click", () => {
-        const cat = card.getAttribute("data-category-card");
-        if (cat) selectCategory(cat);
-      });
-    });
-
-    document.querySelectorAll("[data-category]").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        const cat = btn.getAttribute("data-category");
-        if (cat) goToCheckout(cat);
-      });
-    });
-  }
-
-  /* -------------------------- */
-  /* Init                       */
-  /* -------------------------- */
+  /* -----------------------------
+     Init
+  ----------------------------- */
 
   async function init() {
-    currentCategory = normalize(qs("category")) || normalize(getStored());
-    if (currentCategory) {
-      setStored(currentCategory);
-      setUrl(currentCategory);
-    }
+    const cat = readCategory();
+    if (cat) writeCategory(cat);
+    else updateCategoryUI(); // renders default preview state
 
-    bindCategoryCards();
+    bindCategoryClicks();
+    attachAuthListenerOnce();
     await refreshAuth();
-    updateCategoryUI();
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    attachAuthListener();
+  // Normal load
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
     init();
-  });
+  }
 
+  // BFCache restores
   window.addEventListener("pageshow", () => {
-    attachAuthListener();
     init();
   });
-
 })();
