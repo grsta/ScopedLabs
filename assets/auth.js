@@ -48,16 +48,16 @@
     }
   }
 
-  function buildRedirectUrl() {
-    // Hybrid A target: single account/upgrade surface
-    // If you haven't created /account/ yet, temporarily use /upgrade/ here.
-    const basePath = "/account/"; // <-- change to "/upgrade/" if needed short-term
-    const cat = getCategoryForRedirect();
-    const url = new URL(basePath, location.origin);
-    if (cat) url.searchParams.set("category", cat);
-    url.hash = "#checkout";
-    return url.toString();
-  }
+function buildRedirectUrl() {
+  const basePath = "/account/"; // keep trailing slash
+  const cat = getCategoryForRedirect();
+
+  const url = new URL(basePath, location.origin);
+  if (cat) url.searchParams.set("category", cat);
+
+  // DO NOT set url.hash here (Supabase uses hash for tokens in implicit flow)
+  return url.toString();
+}
 
   async function wireSendLink() {
     const btn = document.getElementById("sl-sendlink");

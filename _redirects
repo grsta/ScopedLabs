@@ -1,5 +1,6 @@
 /upgrade/checkout    /upgrade/checkout/            301
 /upgrade/checkout/   /upgrade/checkout/index.html  200
 /upgrade/checkout/*  /upgrade/checkout/index.html  200
-
+/account        /account/         301
+/upgrade/checkout  /upgrade/checkout/  301
 
