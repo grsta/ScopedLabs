@@ -269,8 +269,9 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          category: cat,
-          email: currentSession.user.email,
+          priceId,
+          category: currentCategory,
+          userId: currentSession.user.id
         }),
       });
 

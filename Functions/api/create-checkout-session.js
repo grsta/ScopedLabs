@@ -10,15 +10,16 @@ export async function onRequestPost(ctx) {
     const body = await request.json().catch(() => ({}));
     const priceId = body?.priceId;
     const category = String(body?.category || "").toLowerCase().trim();
-    const userId = String(body?.userId || "").trim(); // optional for now
+    const userId = String(body?.userId || "").trim(); // optional, but REQUIRED for unlock
 
     if (!priceId) return json({ ok: false, error: "missing_priceId" }, 400);
     if (!category) return json({ ok: false, error: "missing_category" }, 400);
 
+    // After purchase, always send them to /account/ so they can see unlocks.
     const success_url =
       `${SITE_ORIGIN}/account/?success=1&category=${encodeURIComponent(category)}&session_id={CHECKOUT_SESSION_ID}#checkout`;
     const cancel_url =
-      `${SITE_ORIGIN}/account/?canceled=1&category=${encodeURIComponent(category)}#checkout`;
+      `${SITE_ORIGIN}/upgrade/?category=${encodeURIComponent(category)}#checkout`;
 
     const form = new URLSearchParams();
     form.set("mode", "payment");
@@ -27,10 +28,11 @@ export async function onRequestPost(ctx) {
     form.set("success_url", success_url);
     form.set("cancel_url", cancel_url);
 
-    // IMPORTANT: webhook unlock needs these.
-    // If userId isn't provided yet, we simply won't set it.
-    if (userId) form.set("client_reference_id", userId);
+    // ✅ What your webhook needs:
+    // - metadata.category
+    // - client_reference_id (user id)
     form.set("metadata[category]", category);
+    if (userId) form.set("client_reference_id", userId);
 
     const resp = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",

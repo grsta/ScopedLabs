@@ -1,51 +1,45 @@
 export async function onRequest({ request, env }) {
-  try {
-    const SUPABASE_URL = env.SUPABASE_URL;
-    const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = env.SUPABASE_URL;
+  const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      return json({ categories: [], error: "Server not configured" }, 500);
-    }
-
-    // Bearer <access_token>
-    const auth = request.headers.get("Authorization") || "";
-    const m = auth.match(/^Bearer\s+(.+)$/i);
-    const token = m ? m[1].trim() : "";
-    if (!token) return json({ categories: [] }, 200);
-
-    // Resolve user from access token
-    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: SUPABASE_SERVICE_ROLE_KEY,
-      },
-    });
-
-    if (!userRes.ok) return json({ categories: [] }, 200);
-    const user = await userRes.json();
-    const userId = user?.id;
-    if (!userId) return json({ categories: [] }, 200);
-
-    // Fetch entitlements
-    const entRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/entitlements?select=category&user_id=eq.${userId}&active=eq.true`,
-      {
-        headers: {
-          apikey: SUPABASE_SERVICE_ROLE_KEY,
-          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          Accept: "application/json",
-        },
-      }
-    );
-
-    if (!entRes.ok) return json({ categories: [] }, 200);
-    const rows = await entRes.json();
-    const categories = Array.isArray(rows) ? rows.map((r) => r.category).filter(Boolean) : [];
-
-    return json({ categories }, 200);
-  } catch (e) {
-    return json({ categories: [], error: String(e?.message || e) }, 500);
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    return json({ categories: [], error: "Server not configured" }, 500);
   }
+
+  const auth = request.headers.get("Authorization") || "";
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  const token = m ? m[1].trim() : "";
+  if (!token) return json({ categories: [] }, 200);
+
+  // Resolve user from access token
+  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+    },
+  });
+
+  if (!userRes.ok) return json({ categories: [] }, 200);
+  const user = await userRes.json();
+  const userId = user?.id;
+  if (!userId) return json({ categories: [] }, 200);
+
+  const entRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/entitlements?select=category&user_id=eq.${userId}&active=eq.true`,
+    {
+      headers: {
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        Accept: "application/json",
+      },
+    }
+  );
+
+  if (!entRes.ok) return json({ categories: [] }, 200);
+  const rows = await entRes.json();
+  const categories = Array.isArray(rows) ? rows.map((r) => r.category).filter(Boolean) : [];
+
+  return json({ categories }, 200);
 }
 
 function json(obj, status = 200) {
