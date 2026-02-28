@@ -9,9 +9,12 @@ export async function onRequest({ request, env }) {
   const auth = request.headers.get("Authorization") || "";
   const m = auth.match(/^Bearer\s+(.+)$/i);
   const token = m ? m[1].trim() : "";
-  if (!token) return json({ categories: [] }, 200);
 
-  // Resolve user from access token
+  if (!token) {
+    return json({ categories: [] }, 200);
+  }
+
+  // Get user from Supabase token
   const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -19,11 +22,18 @@ export async function onRequest({ request, env }) {
     },
   });
 
-  if (!userRes.ok) return json({ categories: [] }, 200);
+  if (!userRes.ok) {
+    return json({ categories: [] }, 200);
+  }
+
   const user = await userRes.json();
   const userId = user?.id;
-  if (!userId) return json({ categories: [] }, 200);
 
+  if (!userId) {
+    return json({ categories: [] }, 200);
+  }
+
+  // Read entitlements
   const entRes = await fetch(
     `${SUPABASE_URL}/rest/v1/entitlements?select=category&user_id=eq.${userId}&active=eq.true`,
     {
@@ -35,9 +45,15 @@ export async function onRequest({ request, env }) {
     }
   );
 
-  if (!entRes.ok) return json({ categories: [] }, 200);
+  if (!entRes.ok) {
+    return json({ categories: [] }, 200);
+  }
+
   const rows = await entRes.json();
-  const categories = Array.isArray(rows) ? rows.map((r) => r.category).filter(Boolean) : [];
+
+  const categories = Array.isArray(rows)
+    ? rows.map(r => r.category).filter(Boolean)
+    : [];
 
   return json({ categories }, 200);
 }
@@ -45,6 +61,8 @@ export async function onRequest({ request, env }) {
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8" },
+    headers: {
+      "content-type": "application/json",
+    },
   });
 }

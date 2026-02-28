@@ -321,7 +321,9 @@
       });
     }
 
-    const contBtn = document.getElementById("sl-continue");
+    const contBtn =
+      document.getElementById("sl-continue") ||
+      document.getElementById("sl-checkout");
     if (contBtn) {
       contBtn.addEventListener("click", (e) => {
         e.preventDefault();
