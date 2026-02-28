@@ -1,11 +1,10 @@
 /* /assets/app.js
-   ScopedLabs Upgrade controller (matches your current upgrade HTML).
+   ScopedLabs Account/Upgrade controller (Hybrid Option A).
 
-   Works with:
-   - #sl-category-pill
-   - #sl-selected-category-label
-   - #sl-preview-title / #sl-preview-desc / #sl-preview-bullets
-   - #sl-sendlink / #sl-email (handled by auth.js, we just manage UI)
+   Goals:
+   - Category selection stays stable (URL + localStorage)
+   - Auth UI stable (no duplicate listeners on BFCache)
+   - Start Stripe Checkout from THIS page (no separate checkout hop)
 */
 
 (() => {
@@ -13,8 +12,9 @@
 
   const STORAGE_KEY = "sl_selected_category";
 
-  const sb = () => (window.SL_AUTH && window.SL_AUTH.sb ? window.SL_AUTH.sb : null);
-  const ready = () => (window.SL_AUTH && window.SL_AUTH.ready ? window.SL_AUTH.ready : Promise.resolve());
+  const getSb = () => (window.SL_AUTH && window.SL_AUTH.sb ? window.SL_AUTH.sb : null);
+  const ready = () =>
+    window.SL_AUTH && window.SL_AUTH.ready ? window.SL_AUTH.ready : Promise.resolve();
 
   const CATEGORY_DEFS = {
     "access-control": {
@@ -23,99 +23,60 @@
       bullets: [
         "Controller sizing + expansion planning",
         "Power & cabling headroom checks",
-        "Fail-safe / fail-secure impact modeling"
-      ]
+        "Fail-safe / fail-secure impact modeling",
+      ],
     },
     compute: {
       title: "Compute",
       desc: "Server sizing, workload estimates, and resource headroom planning.",
-      bullets: [
-        "Capacity planning (CPU/RAM/IO)",
-        "Growth projections + utilization targets",
-        "Performance vs. cost trade-offs"
-      ]
+      bullets: ["Capacity planning (CPU/RAM/IO)", "Growth projections + utilization targets", "Performance vs. cost trade-offs"],
     },
     infrastructure: {
       title: "Infrastructure",
       desc: "Power chain planning, rack/room constraints, and deployment readiness checks.",
-      bullets: [
-        "Rack density & load planning",
-        "Power/space/cooling constraint checks",
-        "Failure impact + contingency planning"
-      ]
+      bullets: ["Rack density & load planning", "Power/space/cooling constraint checks", "Failure impact + contingency planning"],
     },
     network: {
       title: "Network & Throughput",
       desc: "Bandwidth planning, latency budgets, and congestion headroom.",
-      bullets: [
-        "Oversubscription analysis",
-        "Latency budget calculators",
-        "Uplink capacity planning"
-      ]
+      bullets: ["Oversubscription analysis", "Latency budget calculators", "Uplink capacity planning"],
     },
     performance: {
       title: "Performance",
       desc: "Sizing targets, efficiency assumptions, and stress-test planning tools.",
-      bullets: [
-        "Baseline vs. peak load modeling",
-        "Headroom targets + scenario tests",
-        "Risk checks for bottlenecks"
-      ]
+      bullets: ["Baseline vs. peak load modeling", "Headroom targets + scenario tests", "Risk checks for bottlenecks"],
     },
     "physical-security": {
       title: "Physical Security",
       desc: "Coverage planning, deployment assumptions, and survivability checks.",
-      bullets: [
-        "Coverage + risk trade-off planners",
-        "Storage/runtime survivability checks",
-        "Operational readiness scoring"
-      ]
+      bullets: ["Coverage + risk trade-off planners", "Storage/runtime survivability checks", "Operational readiness scoring"],
     },
     power: {
       title: "Power & Runtime",
       desc: "UPS sizing, runtime margin, redundancy, and failure planning.",
-      bullets: [
-        "Load growth simulation (staged adds over time)",
-        "Redundancy / N+1 impact modeling",
-        "Worst-case runtime stress tests"
-      ]
+      bullets: ["Load growth simulation (staged adds over time)", "Redundancy / N+1 impact modeling", "Worst-case runtime stress tests"],
     },
     thermal: {
       title: "Thermal",
       desc: "Heat load planning, airflow assumptions, and environment constraints.",
-      bullets: [
-        "BTU/Watt conversion helpers",
-        "Room/rack thermal planning",
-        "Cooling headroom checks"
-      ]
+      bullets: ["BTU/Watt conversion helpers", "Room/rack thermal planning", "Cooling headroom checks"],
     },
     "video-storage": {
       title: "Video & Storage",
       desc: "Retention planning, storage survivability, and failure behavior.",
-      bullets: [
-        "Advanced storage planning scenarios",
-        "RAID impact + rebuild risk",
-        "Retention survivability modeling"
-      ]
+      bullets: ["Advanced storage planning scenarios", "RAID impact + rebuild risk", "Retention survivability modeling"],
     },
     wireless: {
       title: "Wireless",
       desc: "Link planning, channel assumptions, and reliability headroom.",
-      bullets: [
-        "Link budget & margin checks",
-        "Coverage + capacity planning",
-        "Interference risk helpers"
-      ]
-    }
+      bullets: ["Link budget & margin checks", "Coverage + capacity planning", "Interference risk helpers"],
+    },
   };
 
   let currentCategory = null;
   let currentSession = null;
 
-  /* -----------------------------
-     Small helpers
-  ----------------------------- */
-
+  // ---------- util ----------
   function normalizeCategory(cat) {
     if (!cat) return null;
     const c = String(cat).trim().toLowerCase();
@@ -152,6 +113,10 @@
     }
   }
 
+  function readCategory() {
+    return normalizeCategory(qs("category")) || normalizeCategory(getStoredCategory());
+  }
+
   function extractCategoryFromHref(href) {
     if (!href || !href.includes("category=")) return "";
     try {
@@ -173,21 +138,22 @@
     if (el) el.style.display = on ? "" : "none";
   }
 
-  /* -----------------------------
-     Preview renderer (YOUR IDs)
-  ----------------------------- */
+  function setStatus(msg) {
+    const el = document.getElementById("sl-status");
+    if (el) el.textContent = msg || "";
+  }
 
+  // ---------- preview ----------
   function renderPreview() {
     const def = CATEGORY_DEFS[currentCategory] || null;
 
-    const title = def ? def.title : (currentCategory ? currentCategory : "Category");
+    const title = def ? def.title : currentCategory ? currentCategory : "Category";
     const desc = def ? def.desc : "Choose a category to see what you’ll unlock.";
     const bullets = def
       ? def.bullets
-      : ["Pick a lane to unlock Pro tools.", "One-time purchase per category.", "Keep it forever."];
+      : ["Pick a lane to unlock Pro tools.", "One-time purchase per category.", "Entitlements are account-based (no link sharing)."];
 
     setText("sl-preview-title", title);
-
     const descEl = document.getElementById("sl-preview-desc");
     if (descEl) descEl.textContent = desc;
 
@@ -211,69 +177,58 @@
   function writeCategory(cat) {
     const c = normalizeCategory(cat);
     if (!c) return;
-
     currentCategory = c;
     setStoredCategory(c);
     setUrlCategory(c);
     updateCategoryUI();
   }
 
-  function readCategory() {
-    return normalizeCategory(qs("category")) || normalizeCategory(getStoredCategory());
-  }
-
-  /* -----------------------------
-     Auth-driven UI (buttons + hint)
-  ----------------------------- */
-
+  // ---------- auth UI ----------
   function setSignedInUI(isSignedIn, email) {
-    // Hide / show the buttons you asked for
-    show("sl-continue", isSignedIn);
+    show("sl-continue", true); // continue exists; we gate behavior in click handler
     show("sl-account", isSignedIn);
     show("sl-signout", isSignedIn);
 
-    // Show email + sendlink only when signed out
     show("sl-email", !isSignedIn);
     show("sl-sendlink", !isSignedIn);
 
     const hint = document.getElementById("sl-login-hint");
     if (hint) {
       hint.textContent = isSignedIn
-        ? (email ? `Signed in as ${email}` : "Signed in")
+        ? email
+          ? `Signed in as ${email}`
+          : "Signed in"
         : "Sign in to purchase (magic link — no password)";
     }
 
-    // Optional signed-in line (your HTML has this span)
     setText("sl-signedin", isSignedIn ? (email ? `Signed in as ${email}` : "Signed in") : "");
   }
 
   async function refreshAuth() {
-    // default to signed-out until proven otherwise
     setSignedInUI(false, "");
     currentSession = null;
 
-    const client = sb();
+    const client = getSb();
     if (!client) return;
 
-    try { await ready(); } catch {}
-
     try {
+      await ready();
       const { data } = await client.auth.getSession();
       currentSession = data?.session || null;
       const email = currentSession?.user?.email || "";
       setSignedInUI(!!currentSession, email);
     } catch {
       setSignedInUI(false, "");
+      currentSession = null;
     }
   }
 
   function attachAuthListenerOnce() {
-    const client = sb();
-    if (!client) return;
-
-    // Avoid multiple subscriptions on pageshow
     if (window.__SL_APP_AUTH_SUBBED) return;
     window.__SL_APP_AUTH_SUBBED = true;
+
+    const client = getSb();
+    if (!client) return;
 
     ready().then(() => {
       client.auth.onAuthStateChange((_evt, session) => {
@@ -284,36 +239,78 @@
     });
   }
 
-  /* -----------------------------
-     Click bindings (cards + CTAs)
-  ----------------------------- */
+  // ---------- checkout (Hybrid A: start Stripe from this page) ----------
+  async function startCheckout() {
+    setStatus("");
 
-  function bindCategoryClicks() {
-    // 1) Clicking a whole category CARD should select that category (no navigation)
+    const cat = currentCategory || readCategory();
+    if (!cat) {
+      setStatus("Choose a category to continue.");
+      return;
+    }
+
+    if (!currentSession) {
+      // Not signed in yet — just scroll to checkout/sign-in area
+      setStatus("Sign in first, then click Continue.");
+      try {
+        const sec = document.getElementById("checkout");
+        if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch {}
+      return;
+    }
+
+    const btn = document.getElementById("sl-continue");
+    if (btn) btn.disabled = true;
+
+    try {
+      setStatus("Opening Stripe Checkout…");
+
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: cat,
+          email: currentSession.user.email,
+        }),
+      });
+
+      if (!res.ok) throw new Error("bad_status_" + res.status);
+      const data = await res.json();
+      if (!data || !data.url) throw new Error("missing_url");
+
+      location.href = data.url;
+    } catch (e) {
+      console.error("[app.js] startCheckout failed", e);
+      setStatus("Failed to start checkout. Try again.");
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  // ---------- click bindings (bind ONCE) ----------
+  function bindClicksOnce() {
+    if (window.__SL_APP_CLICKS_BOUND) return;
+    window.__SL_APP_CLICKS_BOUND = true;
+
+    // Card click selects category
     document.querySelectorAll(".upgrade-card").forEach((card) => {
       card.addEventListener("click", (e) => {
-        // if they clicked the CTA link, let the CTA handler below manage navigation
         const a = e.target && e.target.closest ? e.target.closest("a[href*='category=']") : null;
         if (a) return;
-
-        // extract category from the CTA link inside this card
         const link = card.querySelector("a[href*='category=']");
         const cat = link ? extractCategoryFromHref(link.getAttribute("href")) : "";
         if (cat) writeCategory(cat);
       });
     });
 
-    // 2) CTA links (Unlock ___ Pro) should store selection, then navigate
+    // CTA links store selection but allow navigation (if your HTML still navigates)
     document.querySelectorAll("a[href*='?category='], a[href*='&category=']").forEach((a) => {
-      a.addEventListener("click", (e) => {
+      a.addEventListener("click", () => {
         const href = a.getAttribute("href") || "";
         const cat = extractCategoryFromHref(href);
         if (cat) writeCategory(cat);
-        // allow the navigation to proceed (no preventDefault)
       });
     });
 
-    // Change Category button -> scroll to chooser
     const changeBtn = document.getElementById("sl-change-category");
     if (changeBtn) {
       changeBtn.addEventListener("click", () => {
@@ -323,46 +320,41 @@
       });
     }
 
-    // Continue to checkout -> only meaningful when signed in and category selected
     const contBtn = document.getElementById("sl-continue");
     if (contBtn) {
-      contBtn.addEventListener("click", () => {
-        const cat = currentCategory || readCategory();
-        if (!cat) return;
-
-        // If signed in, go to checkout page. If signed out, jump to checkout section.
-        if (currentSession) {
-          location.href = "/upgrade/checkout/?category=" + encodeURIComponent(cat);
-        } else {
-          location.href = "/upgrade/?category=" + encodeURIComponent(cat) + "#checkout";
-        }
+      contBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        startCheckout();
       });
     }
   }
 
-  /* -----------------------------
-     Init
-  ----------------------------- */
+  // ---------- init ----------
+  async function initOnce() {
+    if (window.__SL_APP_INIT_DONE) return;
+    window.__SL_APP_INIT_DONE = true;
 
-  async function init() {
     const cat = readCategory();
     if (cat) writeCategory(cat);
-    else updateCategoryUI(); // renders default preview state
+    else updateCategoryUI();
 
-    bindCategoryClicks();
+    bindClicksOnce();
     attachAuthListenerOnce();
     await refreshAuth();
   }
 
   // Normal load
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", initOnce);
   } else {
-    init();
+    initOnce();
   }
 
-  // BFCache restores
+  // BFCache restore: refresh auth + category UI only (DO NOT rebind clicks)
   window.addEventListener("pageshow", () => {
-    init();
+    const cat = readCategory();
+    if (cat) writeCategory(cat);
+    else updateCategoryUI();
+    refreshAuth();
   });
 })();

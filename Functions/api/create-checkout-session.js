@@ -2,30 +2,24 @@ export async function onRequestPost(ctx) {
   try {
     const { request, env } = ctx;
 
-    // REQUIRED ENV
-    const SITE_ORIGIN = env.SITE_ORIGIN;                 // e.g. https://scopedlabs.com
+    const SITE_ORIGIN = env.SITE_ORIGIN;                 // https://scopedlabs.com
     const STRIPE_SECRET_KEY = env.STRIPE_SECRET_KEY;     // sk_live_...
     if (!SITE_ORIGIN) throw new Error("Missing env var: SITE_ORIGIN");
     if (!STRIPE_SECRET_KEY) throw new Error("Missing env var: STRIPE_SECRET_KEY");
 
-    // Parse body
     const body = await request.json().catch(() => ({}));
     const priceId = body?.priceId;
-    const category = body?.category;
+    const category = String(body?.category || "").toLowerCase().trim();
+    const userId = String(body?.userId || "").trim(); // optional for now
 
-    if (!priceId) {
-      return json({ ok: false, error: "missing_priceId" }, 400);
-    }
+    if (!priceId) return json({ ok: false, error: "missing_priceId" }, 400);
+    if (!category) return json({ ok: false, error: "missing_category" }, 400);
 
-    // IMPORTANT:
-    // Since this is static-site checkout, we use Stripe Checkout Session.
-    // Success returns to your site; the actual "unlock" should be done by webhook later.
     const success_url =
-      `${SITE_ORIGIN}/tools/?unlocked=1&category=${encodeURIComponent(category || "")}&session_id={CHECKOUT_SESSION_ID}`;
+      `${SITE_ORIGIN}/account/?success=1&category=${encodeURIComponent(category)}&session_id={CHECKOUT_SESSION_ID}#checkout`;
     const cancel_url =
-      `${SITE_ORIGIN}/upgrade/?category=${encodeURIComponent(category || "")}#checkout`;
+      `${SITE_ORIGIN}/account/?canceled=1&category=${encodeURIComponent(category)}#checkout`;
 
-    // Create Checkout Session (Stripe API)
     const form = new URLSearchParams();
     form.set("mode", "payment");
     form.append("line_items[0][price]", priceId);
@@ -33,8 +27,10 @@ export async function onRequestPost(ctx) {
     form.set("success_url", success_url);
     form.set("cancel_url", cancel_url);
 
-    // Optional: allow promotion codes, tax, etc
-    // form.set("allow_promotion_codes", "true");
+    // IMPORTANT: webhook unlock needs these.
+    // If userId isn't provided yet, we simply won't set it.
+    if (userId) form.set("client_reference_id", userId);
+    form.set("metadata[category]", category);
 
     const resp = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
@@ -46,10 +42,7 @@ export async function onRequestPost(ctx) {
     });
 
     const data = await resp.json();
-
-    if (!resp.ok) {
-      return json({ ok: false, error: "stripe_error", detail: data }, 502);
-    }
+    if (!resp.ok) return json({ ok: false, error: "stripe_error", detail: data }, 502);
 
     return json({ ok: true, url: data.url });
   } catch (e) {

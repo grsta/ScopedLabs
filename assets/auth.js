@@ -12,19 +12,13 @@
 
   if (!window.supabase || !window.supabase.createClient) {
     console.error("[auth.js] Supabase v2 not loaded");
-    window.SL_AUTH = {
-      sb: null,
-      ready: Promise.resolve(),
-    };
+    window.SL_AUTH = { sb: null, ready: Promise.resolve() };
     return;
   }
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.error("[auth.js] Missing SUPABASE_URL / SUPABASE_ANON_KEY");
-    window.SL_AUTH = {
-      sb: null,
-      ready: Promise.resolve(),
-    };
+    window.SL_AUTH = { sb: null, ready: Promise.resolve() };
     return;
   }
 
@@ -39,16 +33,30 @@
 
   let readyResolve;
   const ready = new Promise((resolve) => (readyResolve = resolve));
-
   window.SL_AUTH = { sb, ready };
 
   function getCategoryForRedirect() {
     try {
       const u = new URL(location.href);
-      return u.searchParams.get("category") || localStorage.getItem("sl_selected_category") || "";
+      return (
+        (u.searchParams.get("category") || "").trim() ||
+        (localStorage.getItem("sl_selected_category") || "").trim() ||
+        ""
+      );
     } catch {
-      return localStorage.getItem("sl_selected_category") || "";
+      return (localStorage.getItem("sl_selected_category") || "").trim() || "";
     }
+  }
+
+  function buildRedirectUrl() {
+    // Hybrid A target: single account/upgrade surface
+    // If you haven't created /account/ yet, temporarily use /upgrade/ here.
+    const basePath = "/account/"; // <-- change to "/upgrade/" if needed short-term
+    const cat = getCategoryForRedirect();
+    const url = new URL(basePath, location.origin);
+    if (cat) url.searchParams.set("category", cat);
+    url.hash = "#checkout";
+    return url.toString();
   }
 
   async function wireSendLink() {
@@ -63,15 +71,11 @@
       btn.disabled = true;
 
       try {
-        const cat = getCategoryForRedirect();
-        const redirectTo =
-          "https://scopedlabs.com/upgrade/checkout/?category=" + encodeURIComponent(cat || "");
-
+        const redirectTo = buildRedirectUrl();
         const { error } = await sb.auth.signInWithOtp({
           email,
           options: { emailRedirectTo: redirectTo },
         });
-
         if (error) throw error;
       } catch (e) {
         console.error("[auth.js] signInWithOtp failed", e);
@@ -94,12 +98,11 @@
     });
   }
 
-  async function restoreSessionFromUrlIfNeeded() {
-    // detectSessionInUrl handles it; we just clean the URL hash afterwards
+  async function cleanupTokenHashIfPresent() {
+    // detectSessionInUrl restores; we just clean URL hash afterwards if it contains tokens
     try {
       const { data } = await sb.auth.getSession();
       if (data && data.session) {
-        // Strip token hash
         if (location.hash && location.hash.includes("access_token")) {
           history.replaceState({}, "", location.pathname + location.search);
         }
@@ -109,7 +112,7 @@
 
   (async () => {
     try {
-      await restoreSessionFromUrlIfNeeded();
+      await cleanupTokenHashIfPresent();
       await wireSendLink();
       await wireSignOut();
     } finally {
