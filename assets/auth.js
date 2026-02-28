@@ -49,13 +49,12 @@
   }
 
 function buildRedirectUrl() {
-  const basePath = "/account/"; // keep trailing slash
+  const basePath = "/account/";
   const cat = getCategoryForRedirect();
-
   const url = new URL(basePath, location.origin);
   if (cat) url.searchParams.set("category", cat);
 
-  // DO NOT set url.hash here (Supabase uses hash for tokens in implicit flow)
+  // IMPORTANT: do not set url.hash at all
   return url.toString();
 }
 
