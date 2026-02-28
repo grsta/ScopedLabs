@@ -262,7 +262,7 @@
     const contBtn =
       document.getElementById("sl-continue") ||
       document.getElementById("sl-checkout");
-    if (btn) btn.disabled = true;
+    if (contBtn) contBtn.disabled = true;
 
     try {
       setStatus("Opening Stripe Checkout…");
