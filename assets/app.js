@@ -259,7 +259,9 @@
       return;
     }
 
-    const btn = document.getElementById("sl-continue");
+    const contBtn =
+      document.getElementById("sl-continue") ||
+      document.getElementById("sl-checkout");
     if (btn) btn.disabled = true;
 
     try {
