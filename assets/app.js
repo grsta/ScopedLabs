@@ -29,12 +29,20 @@
     compute: {
       title: "Compute",
       desc: "Server sizing, workload estimates, and resource headroom planning.",
-      bullets: ["Capacity planning (CPU/RAM/IO)", "Growth projections + utilization targets", "Performance vs. cost trade-offs"],
+      bullets: [
+        "Capacity planning (CPU/RAM/IO)",
+        "Growth projections + utilization targets",
+        "Performance vs. cost trade-offs",
+      ],
     },
     infrastructure: {
       title: "Infrastructure",
       desc: "Power chain planning, rack/room constraints, and deployment readiness checks.",
-      bullets: ["Rack density & load planning", "Power/space/cooling constraint checks", "Failure impact + contingency planning"],
+      bullets: [
+        "Rack density & load planning",
+        "Power/space/cooling constraint checks",
+        "Failure impact + contingency planning",
+      ],
     },
     network: {
       title: "Network & Throughput",
@@ -185,7 +193,7 @@
 
   // ---------- auth UI ----------
   function setSignedInUI(isSignedIn, email) {
-    show("sl-continue", true); // continue exists; we gate behavior in click handler
+    show("sl-continue", true); // button exists; we gate behavior in handler
     show("sl-account", isSignedIn);
     show("sl-signout", isSignedIn);
 
@@ -250,7 +258,6 @@
     }
 
     if (!currentSession) {
-      // Not signed in yet — just scroll to checkout/sign-in area
       setStatus("Sign in first, then click Continue.");
       try {
         const sec = document.getElementById("checkout");
@@ -267,13 +274,13 @@
     try {
       setStatus("Opening Stripe Checkout…");
 
+      // IMPORTANT: Worker is mounted at /api/*
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          priceId,
-          category: currentCategory,
-          userId: currentSession.user.id
+          category: cat,
+          email: currentSession.user.email,
         }),
       });
 
@@ -285,7 +292,7 @@
     } catch (e) {
       console.error("[app.js] startCheckout failed", e);
       setStatus("Failed to start checkout. Try again.");
-      if (btn) btn.disabled = false;
+      if (contBtn) contBtn.disabled = false;
     }
   }
 
@@ -294,7 +301,6 @@
     if (window.__SL_APP_CLICKS_BOUND) return;
     window.__SL_APP_CLICKS_BOUND = true;
 
-    // Card click selects category
     document.querySelectorAll(".upgrade-card").forEach((card) => {
       card.addEventListener("click", (e) => {
         const a = e.target && e.target.closest ? e.target.closest("a[href*='category=']") : null;
@@ -305,7 +311,6 @@
       });
     });
 
-    // CTA links store selection but allow navigation (if your HTML still navigates)
     document.querySelectorAll("a[href*='?category='], a[href*='&category=']").forEach((a) => {
       a.addEventListener("click", () => {
         const href = a.getAttribute("href") || "";
@@ -348,14 +353,12 @@
     await refreshAuth();
   }
 
-  // Normal load
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initOnce);
   } else {
     initOnce();
   }
 
-  // BFCache restore: refresh auth + category UI only (DO NOT rebind clicks)
   window.addEventListener("pageshow", () => {
     const cat = readCategory();
     if (cat) writeCategory(cat);
