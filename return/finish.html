@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Finishing up…</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+  <main class="container" style="max-width:760px; padding:48px 16px;">
+    <div class="card" style="padding:24px;">
+      <h1 style="margin:0 0 8px;">Finishing up…</h1>
+      <p id="msg" class="muted" style="margin:0 0 10px;">
+        Confirming your unlock…
+      </p>
+      <p id="detail" class="muted" style="margin:0 0 18px;"></p>
+
+      <div class="row" style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a id="fallback" class="btn btn-primary" href="/tools/">Continue</a>
+        <a class="btn btn-ghost" href="/account/">Go to account</a>
+      </div>
+
+      <p class="muted" style="margin:18px 0 0;">
+        If this takes more than a few seconds, your payment may still be processing. You can always return here from your account page.
+      </p>
+    </div>
+  </main>
+
+  <!-- Supabase + Auth (must match your site) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=finish-401"></script>
+
+  <script>
+    (async function () {
+      const params = new URLSearchParams(location.search);
+      const category = (params.get("category") || "").trim().toLowerCase();
+      const target = category ? `/tools/${encodeURIComponent(category)}/` : "/tools/";
+      document.getElementById("fallback").href = target;
+
+      const msg = document.getElementById("msg");
+      const detail = document.getElementById("detail");
+
+      detail.textContent = category ? `Category: ${category}` : "";
+
+      const MAX_MS = 20000;
+      const STEP_MS = 1200;
+      const start = Date.now();
+
+      // Wait for auth.js to be ready (sets window.SL_AUTH)
+      if (!window.SL_AUTH || !window.SL_AUTH.ready) {
+        msg.textContent = "Loading…";
+        await new Promise(r => setTimeout(r, 600));
+      }
+      if (window.SL_AUTH && window.SL_AUTH.ready) {
+        await window.SL_AUTH.ready;
+      }
+
+      const sb = window.SL_AUTH && window.SL_AUTH.sb ? window.SL_AUTH.sb : null;
+      if (!sb) {
+        msg.textContent = "Auth not available — sending you back…";
+        location.replace(target);
+        return;
+      }
+
+      async function getToken() {
+        const { data } = await sb.auth.getSession();
+        return data && data.session && data.session.access_token ? data.session.access_token : "";
+      }
+
+      async function checkUnlock(token) {
+        if (!category) return { ok: false, has: false };
+        const r = await fetch(`/api/unlocks/has?category=${encodeURIComponent(category)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!r.ok) return { ok: false, has: false };
+        return await r.json();
+      }
+
+      try {
+        // If user isn't signed in, bounce them to account to sign in
+        const token0 = await getToken();
+        if (!token0) {
+          msg.textContent = "Please sign in to finish unlocking…";
+          location.replace(`/account/?category=${encodeURIComponent(category) || ""}#checkout`);
+          return;
+        }
+
+        while (Date.now() - start < MAX_MS) {
+          const token = await getToken();
+          const data = await checkUnlock(token);
+
+          // Worker returns: { ok:true, category, has:true/false }
+          if (data && data.ok && data.has) {
+            msg.textContent = "Unlocked. Sending you back…";
+            location.replace(target);
+            return;
+          }
+
+          msg.textContent = "Confirming your unlock…";
+          await new Promise(res => setTimeout(res, STEP_MS));
+        }
+
+        msg.textContent = "Almost done. If you don’t see it unlocked yet, refresh in a moment.";
+        location.replace(target);
+
+      } catch (e) {
+        msg.textContent = "Couldn’t verify automatically — sending you back now.";
+        location.replace(target);
+      }
+    })();
+  </script>
+</body>
+</html>
