@@ -106,7 +106,7 @@
       const token = session?.access_token || "";
       if (!token) throw new Error("missing_token");
 
-      const res = await fetch("/api/entitlements", {
+      const res = await fetch("/api/unlocks/list", {
         method: "GET",
         headers: {
           Authorization: "Bearer " + token,
