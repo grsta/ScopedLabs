@@ -255,21 +255,16 @@
   }
 
   function routeUpgradeToCheckoutIfReady() {
-    // After magic-link login, you're on /upgrade/?category=...#checkout
-    // Once session exists, route into /upgrade/checkout/?category=...
-    if (!IS_UPGRADE_PAGE) return;
-    if (!session || !currentCategory) return;
+  // Only auto-route when the user is on the checkout section of the upgrade page.
+  // This prevents "Change category" (#categories) from snapping back to checkout.
+  if (!IS_UPGRADE_PAGE) return;
+  if (!session || !currentCategory) return;
 
-    // Only auto-route when the user is in the checkout flow section or explicitly returning.
-    const u = new URL(location.href);
-    const wantsCheckout =
-      (u.hash || "") === "#checkout" ||
-      u.searchParams.get("return") === "checkout";
+  const hash = String(location.hash || "");
+  if (hash !== "#checkout") return;
 
-    if (wantsCheckout) {
-      location.href = "/upgrade/checkout/?category=" + encodeURIComponent(currentCategory);
-    }
-  }
+  location.href = "/upgrade/checkout/?category=" + encodeURIComponent(currentCategory);
+}
 
   function wireChangeCategory() {
     if (!els.changeCategory) return;
