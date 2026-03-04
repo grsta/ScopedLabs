@@ -1,24 +1,15 @@
 /* /assets/app.js
-   ScopedLabs Upgrade + Checkout controller
+   ScopedLabs Upgrade + Checkout controller (hardened)
 
-   Works with your current HTML IDs:
-   Upgrade page:
-     - #sl-selected-category-label
-     - #sl-category-pill
-     - #sl-change-category
-     - #sl-continue
-     - #sl-email, #sl-sendlink, #sl-account, #sl-signout
-     - #sl-auth-status, #sl-signedin
-     - preview: #sl-preview-title/#sl-preview-desc/#sl-preview-bullets/#sl-preview-foot
-
-   Checkout page:
-     - #sl-selected-category-label
-     - #sl-selected-category
-     - #sl-change-category
-     - #sl-continue
-     - #sl-account, #sl-signout
-     - #sl-status, #sl-auth-state
-     - preview container: #sl-selected-category-preview-checkout
+   Behavior:
+   - Category source of truth: URL ?category= then localStorage sl_selected_category
+   - Upgrade page is the landing point after magic link:
+       /upgrade/?category=<cat>#checkout (+ implicit hash tokens)
+     Once session exists -> auto route to:
+       /upgrade/checkout/?category=<cat>
+   - Checkout page:
+       requires session; if missing/otp error -> bounce back to /upgrade/?category=<cat>#checkout
+   - BFCache safe: re-init on pageshow
 */
 
 (() => {
@@ -28,17 +19,13 @@
   const IS_UPGRADE_PAGE = PATH === "/upgrade/" || PATH === "/upgrade/index.html";
   const IS_CHECKOUT_PAGE = PATH.startsWith("/upgrade/checkout");
 
-  const sbReady = window.SL_AUTH?.ready;
-  const getSb = () => window.SL_AUTH?.sb || null;
-
-  // Elements (shared-ish)
   const els = {
-    // labels
+    // shared-ish labels
     selectedLabel: document.getElementById("sl-selected-category-label"),
-    selectedPillCheckout: document.getElementById("sl-selected-category"), // checkout page pill
-    categoryPillUpgrade: document.getElementById("sl-category-pill"),       // upgrade page pill
+    selectedPillCheckout: document.getElementById("sl-selected-category"), // checkout pill
+    categoryPillUpgrade: document.getElementById("sl-category-pill"),      // upgrade pill
 
-    // actions
+    // buttons
     changeCategory: document.getElementById("sl-change-category"),
     continueBtn: document.getElementById("sl-continue"),
     accountBtn: document.getElementById("sl-account"),
@@ -54,14 +41,13 @@
     // checkout ui
     checkoutStatus: document.getElementById("sl-status"),
     checkoutAuthState: document.getElementById("sl-auth-state"),
+    mustSignin: document.getElementById("sl-must-signin"),
 
-    // preview (upgrade)
+    // previews
     previewTitle: document.getElementById("sl-preview-title"),
     previewDesc: document.getElementById("sl-preview-desc"),
     previewBullets: document.getElementById("sl-preview-bullets"),
     previewFoot: document.getElementById("sl-preview-foot"),
-
-    // preview (checkout)
     checkoutPreview: document.getElementById("sl-selected-category-preview-checkout"),
   };
 
@@ -69,9 +55,7 @@
   let session = null;
   let currentCategory = "";
 
-  // ---------- category helpers ----------
   function normKebab(cat) {
-    // Site uses kebab-case; tolerate underscore inputs.
     return String(cat || "").trim().toLowerCase().replace(/_/g, "-");
   }
 
@@ -92,6 +76,15 @@
     } catch {}
   }
 
+  function hasAuthErrorParams() {
+    try {
+      const u = new URL(location.href);
+      return !!(u.searchParams.get("error") || u.searchParams.get("error_code"));
+    } catch {
+      return false;
+    }
+  }
+
   function loadCategory() {
     const fromUrl = getUrlCategory();
     const fromLs = normKebab(localStorage.getItem("sl_selected_category"));
@@ -105,15 +98,6 @@
     }
   }
 
-  function setCategory(cat) {
-    const c = normKebab(cat);
-    if (!c) return;
-    currentCategory = c;
-    localStorage.setItem("sl_selected_category", c);
-    setUrlCategory(c);
-    updateCategoryUI();
-  }
-
   function updateCategoryUI() {
     const label = currentCategory || "None selected";
     const pill = currentCategory || "None";
@@ -123,14 +107,12 @@
     if (els.categoryPillUpgrade) els.categoryPillUpgrade.textContent = pill;
 
     updatePreviewUI();
-    updateContinueState();
+    updateButtonsAndStatus();
   }
 
-  // ---------- preview helpers ----------
   function getCategoryData(cat) {
     const c = normKebab(cat);
     const m = window.SL_STRIPE_MAP || window.STRIPE_MAP || null;
-
     if (m?.categories?.[c]) return m.categories[c];
     if (m?.[c]) return m[c];
     if (window.STRIPE_CATEGORIES?.[c]) return window.STRIPE_CATEGORIES[c];
@@ -140,51 +122,7 @@
       desc: "Includes examples like:",
       bullets: [],
       foot: "You’ll also receive future Pro tools added to this category.",
-      price: null,
     };
-  }
-
-  function updatePreviewUI() {
-    if (!currentCategory) return;
-
-    const data = getCategoryData(currentCategory);
-
-    // Upgrade preview card
-    if (els.previewTitle) els.previewTitle.textContent = data.title || "Category";
-    if (els.previewDesc) els.previewDesc.textContent = data.desc || "Includes examples like:";
-
-    if (els.previewBullets) {
-      els.previewBullets.innerHTML = "";
-      const bullets = Array.isArray(data.bullets) ? data.bullets : [];
-      bullets.forEach((t) => {
-        const li = document.createElement("li");
-        li.textContent = String(t);
-        els.previewBullets.appendChild(li);
-      });
-    }
-
-    if (els.previewFoot) {
-      els.previewFoot.textContent =
-        data.foot || "You’ll also receive future Pro tools added to this category.";
-    }
-
-    // Checkout preview container — simplest: reuse same formatting if map has html,
-    // otherwise create a small card.
-    if (els.checkoutPreview) {
-      const title = data.title || currentCategory.replace(/-/g, " ");
-      const desc = data.desc || "Includes examples like:";
-      const bullets = Array.isArray(data.bullets) ? data.bullets : [];
-
-      els.checkoutPreview.innerHTML = `
-        <div class="card" style="height:100%;">
-          <div class="pill" style="margin-bottom:12px;">Included</div>
-          <h3 style="margin:0 0 8px 0;">${escapeHtml(title)}</h3>
-          <p class="muted" style="margin-top:0;">${escapeHtml(desc)}</p>
-          ${bullets.length ? `<ul style="margin:0; padding-left:18px;">${bullets.map(b => `<li>${escapeHtml(String(b))}</li>`).join("")}</ul>` : ""}
-          <div class="muted" style="margin-top:12px;">${escapeHtml(data.foot || "Future Pro tools included.")}</div>
-        </div>
-      `;
-    }
   }
 
   function escapeHtml(s) {
@@ -196,39 +134,56 @@
       .replace(/'/g, "&#039;");
   }
 
-  // ---------- auth/session ----------
-  async function refreshSession() {
-    if (!sb) return null;
-    const { data } = await sb.auth.getSession();
-    session = data?.session || null;
+  function updatePreviewUI() {
+    if (!currentCategory) return;
 
-    // Update upgrade auth UI
-    if (IS_UPGRADE_PAGE) {
-      const signedIn = !!session;
-      toggleUpgradeAuthUi(signedIn);
-      if (signedIn && session?.user?.email && els.signedInLine) {
-        els.signedInLine.textContent = `Signed in as ${session.user.email}`;
-      }
+    const data = getCategoryData(currentCategory);
+    const title = data.title || currentCategory.replace(/-/g, " ");
+    const desc = data.desc || "Includes examples like:";
+    const bullets = Array.isArray(data.bullets) ? data.bullets : [];
+    const foot = data.foot || "You’ll also receive future Pro tools added to this category.";
+
+    // upgrade preview
+    if (els.previewTitle) els.previewTitle.textContent = title;
+    if (els.previewDesc) els.previewDesc.textContent = desc;
+    if (els.previewBullets) {
+      els.previewBullets.innerHTML = "";
+      bullets.forEach((t) => {
+        const li = document.createElement("li");
+        li.textContent = String(t);
+        els.previewBullets.appendChild(li);
+      });
     }
+    if (els.previewFoot) els.previewFoot.textContent = foot;
 
-    // Update checkout auth state label
-    if (IS_CHECKOUT_PAGE && els.checkoutAuthState) {
-      els.checkoutAuthState.textContent = session?.user?.email
-        ? `Signed in as ${session.user.email}`
-        : "Not signed in";
+    // checkout preview container
+    if (els.checkoutPreview) {
+      els.checkoutPreview.innerHTML = `
+        <div class="card" style="height:100%;">
+          <div class="pill" style="margin-bottom:12px;">Included</div>
+          <h3 style="margin:0 0 8px 0;">${escapeHtml(title)}</h3>
+          <p class="muted" style="margin-top:0;">${escapeHtml(desc)}</p>
+          ${
+            bullets.length
+              ? `<ul style="margin:0; padding-left:18px;">${bullets
+                  .map((b) => `<li>${escapeHtml(String(b))}</li>`)
+                  .join("")}</ul>`
+              : ""
+          }
+          <div class="muted" style="margin-top:12px;">${escapeHtml(foot)}</div>
+        </div>
+      `;
     }
-
-    updateContinueState();
-    return session;
   }
 
-  function toggleUpgradeAuthUi(isSignedIn) {
+  function setUpgradeAuthUiSignedIn(isSignedIn) {
+    if (!IS_UPGRADE_PAGE) return;
+
     const show = (el, on) => {
       if (!el) return;
       el.style.display = on ? "" : "none";
     };
 
-    // If signed in: hide email + sendlink + hint; show account/signout.
     show(els.loginHint, !isSignedIn);
     show(els.email, !isSignedIn);
     show(els.sendLink, !isSignedIn);
@@ -239,36 +194,92 @@
     if (!isSignedIn && els.signedInLine) els.signedInLine.textContent = "";
   }
 
-  function updateContinueState() {
-    if (!els.continueBtn) return;
+  function updateButtonsAndStatus() {
+    const hasSession = !!session;
+    const hasCat = !!currentCategory;
 
-    const ok = !!session && !!currentCategory;
-    els.continueBtn.disabled = !ok;
+    // Hide "must sign in" notice on checkout if present
+    if (els.mustSignin) els.mustSignin.style.display = hasSession ? "none" : "";
 
+    // Upgrade page status
     if (IS_UPGRADE_PAGE && els.authStatus) {
-      els.authStatus.textContent = session ? "" : "Not signed in";
+      els.authStatus.textContent = hasSession ? "" : "Not signed in";
     }
-    if (IS_CHECKOUT_PAGE && els.checkoutStatus && !ok) {
-      // Keep status minimal; only show when user tries or when missing.
-      if (!session) els.checkoutStatus.textContent = "Sign in required.";
-      else if (!currentCategory) els.checkoutStatus.textContent = "Choose a category to continue.";
+
+    // Checkout auth line
+    if (IS_CHECKOUT_PAGE && els.checkoutAuthState) {
+      els.checkoutAuthState.textContent = hasSession && session?.user?.email
+        ? `Signed in as ${session.user.email}`
+        : "Not signed in";
+    }
+
+    // Button enable logic
+    if (els.continueBtn) {
+      // On upgrade page: Continue means "go to checkout page"
+      // On checkout page: Continue means "start Stripe checkout"
+      const ok = hasSession && hasCat;
+      els.continueBtn.disabled = !ok;
+    }
+
+    // Checkout status text
+    if (IS_CHECKOUT_PAGE && els.checkoutStatus) {
+      if (!hasSession) els.checkoutStatus.textContent = "Sign in required.";
+      else if (!hasCat) els.checkoutStatus.textContent = "Choose a category to continue.";
       else els.checkoutStatus.textContent = "";
     }
   }
 
-  // ---------- navigation ----------
+  async function refreshSession() {
+    if (!sb) return null;
+
+    const { data } = await sb.auth.getSession();
+    session = data?.session || null;
+
+    if (IS_UPGRADE_PAGE) {
+      const signedIn = !!session;
+      setUpgradeAuthUiSignedIn(signedIn);
+      if (signedIn && session?.user?.email && els.signedInLine) {
+        els.signedInLine.textContent = `Signed in as ${session.user.email}`;
+      }
+    }
+
+    updateButtonsAndStatus();
+    return session;
+  }
+
+  function goUpgradeCheckoutAnchor() {
+    const u = new URL("/upgrade/", location.origin);
+    if (currentCategory) u.searchParams.set("category", currentCategory);
+    u.hash = "#checkout";
+    location.href = u.toString();
+  }
+
+  function routeUpgradeToCheckoutIfReady() {
+    // After magic-link login, you're on /upgrade/?category=...#checkout
+    // Once session exists, route into /upgrade/checkout/?category=...
+    if (!IS_UPGRADE_PAGE) return;
+    if (!session || !currentCategory) return;
+
+    // Only auto-route when the user is in the checkout flow section or explicitly returning.
+    const u = new URL(location.href);
+    const wantsCheckout =
+      (u.hash || "") === "#checkout" ||
+      u.searchParams.get("return") === "checkout";
+
+    if (wantsCheckout) {
+      location.href = "/upgrade/checkout/?category=" + encodeURIComponent(currentCategory);
+    }
+  }
+
   function wireChangeCategory() {
     if (!els.changeCategory) return;
 
     els.changeCategory.addEventListener("click", () => {
-      // Always go back to upgrade categories list.
-      // Preserve currently selected category in URL + localStorage.
-      const cat = currentCategory || normKebab(localStorage.getItem("sl_selected_category"));
-      const dest = new URL("/upgrade/", location.origin);
-      if (cat) dest.searchParams.set("category", cat);
-      dest.searchParams.set("return", "checkout");
-      dest.hash = "#categories";
-      location.href = dest.toString();
+      const u = new URL("/upgrade/", location.origin);
+      if (currentCategory) u.searchParams.set("category", currentCategory);
+      u.searchParams.set("return", "checkout");
+      u.hash = "#categories";
+      location.href = u.toString();
     });
   }
 
@@ -290,80 +301,88 @@
       } finally {
         localStorage.removeItem("sl_selected_category");
         session = null;
-        if (IS_CHECKOUT_PAGE) location.href = "/upgrade/#checkout";
-        if (IS_UPGRADE_PAGE) {
-          toggleUpgradeAuthUi(false);
-          updateContinueState();
-        }
+        updateButtonsAndStatus();
+
+        // If on checkout, bounce back to upgrade checkout section
+        if (IS_CHECKOUT_PAGE) goUpgradeCheckoutAnchor();
       }
     });
   }
 
-  // ---------- checkout ----------
-  async function startCheckout() {
-    if (!session) {
-      if (IS_CHECKOUT_PAGE && els.checkoutStatus) els.checkoutStatus.textContent = "Sign in required.";
-      return;
+  let stripeSessionStarting = false;
+
+async function startStripeCheckout() {
+
+  if (stripeSessionStarting) return;
+  stripeSessionStarting = true;
+
+  if (!session || !currentCategory) return;
+
+  if (els.checkoutStatus)
+    els.checkoutStatus.textContent = "Opening secure checkout…";
+
+  if (els.continueBtn)
+    els.continueBtn.disabled = true;
+
+  try {
+
+    const r = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + session.access_token,
+      },
+      body: JSON.stringify({
+        category: currentCategory,
+        email: session.user.email,
+        user_id: session.user.id,
+      }),
+    });
+
+    const data = await r.json();
+
+    if (!data.url) {
+      throw new Error("Stripe session failed");
     }
-    if (!currentCategory) {
-      if (IS_CHECKOUT_PAGE && els.checkoutStatus) els.checkoutStatus.textContent = "Choose a category to continue.";
-      return;
-    }
 
-    if (els.checkoutStatus) els.checkoutStatus.textContent = "Opening Stripe Checkout…";
-    if (els.continueBtn) els.continueBtn.disabled = true;
+    location.href = data.url;
 
-    try {
-      const r = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + session.access_token,
-        },
-        body: JSON.stringify({
-          category: currentCategory, // kebab-case (worker normalizes)
-          email: session.user.email,
-          user_id: session.user.id,
-        }),
-      });
+  } catch (err) {
 
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok || !data.ok || !data.url) {
-        throw new Error(data?.error || `bad_status_${r.status}`);
-      }
+    console.error("Stripe checkout error:", err);
 
-      location.href = data.url;
-    } catch (e) {
-      console.error("[app.js] checkout failed", e);
-      if (els.checkoutStatus) els.checkoutStatus.textContent = "Failed to start checkout.";
-      if (els.continueBtn) els.continueBtn.disabled = false;
-    }
+    if (els.checkoutStatus)
+      els.checkoutStatus.textContent = "Unable to start checkout.";
+
+    if (els.continueBtn)
+      els.continueBtn.disabled = false;
+
+    stripeSessionStarting = false;
   }
+}
 
   function wireContinue() {
     if (!els.continueBtn) return;
 
     els.continueBtn.addEventListener("click", async () => {
+      if (!session || !currentCategory) return;
+
       if (IS_UPGRADE_PAGE) {
-        // Upgrade page "Continue" goes to checkout page
-        if (!session || !currentCategory) return;
         location.href = "/upgrade/checkout/?category=" + encodeURIComponent(currentCategory);
         return;
       }
+
       if (IS_CHECKOUT_PAGE) {
-        await startCheckout();
+        await startStripeCheckout();
       }
     });
   }
 
-  // ---------- upgrade page category selection ----------
   function wireUpgradeCategoryLinks() {
     if (!IS_UPGRADE_PAGE) return;
 
-    // Your category cards are <a href="/upgrade/?category=access-control#checkout"> :contentReference[oaicite:3]{index=3}
-    // We sync localStorage on click so it survives navigation/back/cache.
-    const links = document.querySelectorAll('a[href*="/upgrade/?category="]');
-    links.forEach((a) => {
+    // Sync localStorage on click so state survives navigation/back/cache
+    document.querySelectorAll('a[href*="/upgrade/?category="]').forEach((a) => {
       a.addEventListener("click", () => {
         try {
           const u = new URL(a.href, location.origin);
@@ -374,61 +393,52 @@
     });
   }
 
-  // ---- Hide "You must be signed in" message when user is authenticated ----
-function updateSigninNotice() {
-  const notice = document.getElementById("sl-must-signin");
-  if (!notice) return;
-
-  if (currentSession && currentSession.user) {
-    notice.style.display = "none";
-  } else {
-    notice.style.display = "";
-  }
-}
-
-// run on load
-updateSigninNotice();
-
-// run whenever auth state changes
-if (window.SL_AUTH && window.SL_AUTH.sb) {
-  window.SL_AUTH.sb.auth.onAuthStateChange((_event, session) => {
-    currentSession = session;
-    updateSigninNotice();
-  });
-}
-  // ---------- init ----------
   async function init() {
-    if (!sbReady) return;
+    if (!window.SL_AUTH || !window.SL_AUTH.ready) return;
+    await window.SL_AUTH.ready;
 
-    await sbReady;
-    sb = getSb();
+    sb = window.SL_AUTH.sb;
 
     loadCategory();
     updateCategoryUI();
 
+    // If checkout URL has otp/error params, immediately bounce to upgrade flow
+    if (IS_CHECKOUT_PAGE && hasAuthErrorParams()) {
+      goUpgradeCheckoutAnchor();
+      return;
+    }
+
     await refreshSession();
 
-    wireUpgradeCategoryLinks();
     wireChangeCategory();
     wireContinue();
     wireAccount();
     wireSignOut();
+    wireUpgradeCategoryLinks();
 
-    // On checkout page, if no session, send user back to upgrade checkout section (with category preserved)
+    // If checkout page without session, bounce to upgrade checkout section
     if (IS_CHECKOUT_PAGE && !session) {
-      const cat = currentCategory || normKebab(localStorage.getItem("sl_selected_category"));
-      const dest = new URL("/upgrade/", location.origin);
-      if (cat) dest.searchParams.set("category", cat);
-      dest.hash = "#checkout";
-      location.href = dest.toString();
+      goUpgradeCheckoutAnchor();
       return;
+    }
+
+    // If upgrade page has session + category and is in checkout flow, auto-route to checkout page
+    if (IS_UPGRADE_PAGE) {
+      routeUpgradeToCheckoutIfReady();
+    }
+
+    // Keep UI synced if auth changes (sign-in completes after magic link parse)
+    if (sb && sb.auth && sb.auth.onAuthStateChange) {
+      sb.auth.onAuthStateChange(async () => {
+        await refreshSession();
+        if (IS_UPGRADE_PAGE) routeUpgradeToCheckoutIfReady();
+      });
     }
   }
 
   document.addEventListener("DOMContentLoaded", init);
-
-  // BFCache: re-run init on back/forward restores (fixes “works after refresh only”)
   window.addEventListener("pageshow", (e) => {
+    // BFCache restore
     if (e.persisted) init();
   });
 })();
