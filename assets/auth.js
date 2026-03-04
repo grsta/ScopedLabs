@@ -96,7 +96,7 @@
 
         const { error } = await sb.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo: redirectTo },
+          options: { emailRedirectTo: "https://scopedlabs.com/upgrade/?category=" + category + "#checkout"},
         });
         if (error) throw error;
       } catch (e) {
