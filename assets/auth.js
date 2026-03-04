@@ -1,18 +1,17 @@
 /* /assets/auth.js
-   ScopedLabs Supabase auth (v2) — implicit flow, upgrade/checkout friendly.
+   ScopedLabs Supabase auth (v2) — implicit flow, Upgrade-first redirect.
 
-   Fixes:
-   - If magic link arrives as: #checkout#access_token=...
-     normalize to: #access_token=...
-     BEFORE Supabase reads the hash.
-   - emailRedirectTo NEVER includes UI hashes (implicit flow uses hash for tokens).
-   - Redirect lands back on /upgrade/checkout/?category=... so category state + checkout UI stay consistent.
+   Key behavior:
+   - Magic link always returns to /upgrade/?category=<cat>#checkout (NOT /upgrade/checkout)
+   - Handles poisoned hash "#checkout#access_token=..." by normalizing before Supabase parses
+   - Removes auth hash after session is established (prevents re-processing on refresh/back)
+   - Exposes: window.SL_AUTH = { sb, ready }
 */
 
 (() => {
   "use strict";
 
-  // ---- HARD FIX: normalize poisoned hash BEFORE createClient runs ----
+  // ---- Fix poisoned hash before Supabase reads it ----
   // Example bad hash: "#checkout#access_token=...."
   try {
     const h = String(location.hash || "");
@@ -22,8 +21,9 @@
     }
   } catch {}
 
-  const SUPABASE_URL = (window.SL_SUPABASE_URL || "").trim();
-  const SUPABASE_ANON_KEY = (window.SL_SUPABASE_ANON_KEY || "").trim();
+  // Supabase globals provided by your HTML
+  const SUPABASE_URL = String(window.SL_SUPABASE_URL || "").trim();
+  const SUPABASE_ANON_KEY = String(window.SL_SUPABASE_ANON_KEY || "").trim();
 
   if (!window.supabase || !window.supabase.createClient) {
     console.error("[auth.js] Supabase v2 not loaded");
@@ -32,7 +32,7 @@
   }
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("[auth.js] Missing SL_SUPABASE_URL / SL_SUPABASE_ANON_KEY globals");
+    console.error("[auth.js] Missing SL_SUPABASE_URL / SL_SUPABASE_ANON_KEY");
     window.SL_AUTH = { sb: null, ready: Promise.resolve() };
     return;
   }
@@ -50,31 +50,29 @@
   const ready = new Promise((resolve) => (readyResolve = resolve));
   window.SL_AUTH = { sb, ready };
 
-  function normCategory(cat) {
-    // Your UI uses kebab-case (access-control, video-storage, etc.)
+  function normKebab(cat) {
     return String(cat || "").trim().toLowerCase().replace(/_/g, "-");
   }
 
   function getCategoryForRedirect() {
     try {
       const u = new URL(location.href);
-      return (
-        normCategory(u.searchParams.get("category") || "") ||
-        normCategory(localStorage.getItem("sl_selected_category") || "") ||
-        ""
-      );
+      const fromUrl = normKebab(u.searchParams.get("category"));
+      const fromLs = normKebab(localStorage.getItem("sl_selected_category"));
+      return fromUrl || fromLs || "";
     } catch {
-      return normCategory(localStorage.getItem("sl_selected_category") || "") || "";
+      return normKebab(localStorage.getItem("sl_selected_category")) || "";
     }
   }
 
-  function buildRedirectUrl() {
-    // IMPORTANT: NO HASH HERE. Supabase uses hash for tokens in implicit flow.
-    // Always return to checkout flow after magic-link login.
+  function buildUpgradeRedirectUrl() {
+    // IMPORTANT: No hash other than #checkout.
+    // Implicit flow uses hash for tokens, so DO NOT add other hashes.
     const cat = getCategoryForRedirect();
-    const url = new URL("/upgrade/checkout/", location.origin);
-    if (cat) url.searchParams.set("category", cat);
-    return url.toString();
+    const u = new URL("/upgrade/", location.origin);
+    if (cat) u.searchParams.set("category", cat);
+    u.hash = "#checkout";
+    return u.toString();
   }
 
   async function wireSendLink() {
@@ -83,21 +81,22 @@
     if (!btn || !emailEl) return;
 
     btn.addEventListener("click", async () => {
-      const email = (emailEl.value || "").trim();
+      const email = String(emailEl.value || "").trim();
       if (!email) return;
 
-      // lock in the selected category at send-time so the redirect has it
+      // lock category before sending link
       const cat = getCategoryForRedirect();
       if (cat) localStorage.setItem("sl_selected_category", cat);
 
       btn.disabled = true;
       try {
-        const redirectTo = buildRedirectUrl();
+        const redirectTo = buildUpgradeRedirectUrl();
 
         const { error } = await sb.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo: "https://scopedlabs.com/upgrade/?category=" + category + "#checkout"},
+          options: { emailRedirectTo: redirectTo },
         });
+
         if (error) throw error;
       } catch (e) {
         console.error("[auth.js] signInWithOtp failed", e);
@@ -121,8 +120,8 @@
   }
 
   async function cleanAuthHashOnceSessionExists() {
-    // After Supabase reads tokens and establishes session,
-    // clean the hash so refresh/back doesn't re-trigger weirdness.
+    // After Supabase reads tokens and establishes session, remove hash tokens
+    // so refresh/back doesn't re-run session parsing.
     try {
       const { data } = await sb.auth.getSession();
       if (data?.session && location.hash && location.hash.includes("access_token=")) {
@@ -136,10 +135,8 @@
       await wireSendLink();
       await wireSignOut();
 
-      // Give Supabase a tick to process URL hash if present, then clean it.
-      setTimeout(() => {
-        cleanAuthHashOnceSessionExists();
-      }, 50);
+      // Let Supabase process URL hash first, then clean it
+      setTimeout(() => cleanAuthHashOnceSessionExists(), 50);
     } finally {
       readyResolve();
     }
