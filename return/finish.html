@@ -1,181 +1,153 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ScopedLabs — Finishing…</title>
+<meta charset="UTF-8">
+<title>ScopedLabs — Unlock Complete</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=return-0305a" />
-  <script defer src="/assets/auth.js?v=return-0305a"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <style>
-    .wrap { max-width: 760px; margin: 0 auto; padding: 40px 16px; }
-    .card { margin-top: 18px; }
-    .big { font-size: 20px; font-weight: 700; }
-    .muted { opacity: .8; }
-    .spinner {
-      width: 16px; height: 16px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,.25);
-      border-top-color: rgba(255,255,255,.85);
-      display: inline-block;
-      animation: spin 1s linear infinite;
-      vertical-align: -3px;
-      margin-right: 8px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-  </style>
+<style>
+body{
+  background:#0b0e12;
+  color:#e6edf3;
+  font-family:system-ui,Segoe UI,Roboto,sans-serif;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  margin:0;
+}
+
+.card{
+  background:#12161c;
+  border:1px solid #1f2730;
+  padding:40px;
+  border-radius:10px;
+  text-align:center;
+  width:420px;
+}
+
+h1{
+  font-size:24px;
+  margin-bottom:15px;
+}
+
+p{
+  opacity:.8;
+}
+
+.spinner{
+  margin-top:20px;
+  border:3px solid #1f2730;
+  border-top:3px solid #00ff9c;
+  border-radius:50%;
+  width:30px;
+  height:30px;
+  animation:spin 1s linear infinite;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg);}
+}
+
+button{
+  margin-top:25px;
+  padding:10px 18px;
+  background:#00ff9c;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+</style>
 </head>
 
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="/">
-        <span class="brand-dot"></span>
-        <span>ScopedLabs</span>
-      </a>
-      <nav class="nav">
-        <a href="/tools/">Tools</a>
-        <a href="/account/">Account</a>
-      </nav>
-    </div>
-  </header>
 
-  <main class="wrap">
-    <div class="card tool-card">
-      <div class="big"><span class="spinner" aria-hidden="true"></span>Finishing your unlock…</div>
-      <p id="sl-msg" class="muted" style="margin-top:10px;">
-        Checking your purchase and enabling Pro access.
-      </p>
+<div class="card">
 
-      <div class="muted" style="margin-top:14px;">
-        Category: <code id="sl-cat">—</code>
-      </div>
+<h1>Upgrade Successful</h1>
 
-      <div class="muted" style="margin-top:10px;">
-        If this takes more than a few seconds, keep this tab open — it will redirect automatically.
-      </div>
+<p id="status">
+Confirming your unlock…
+</p>
 
-      <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
-        <a class="btn" href="/account/">Go to Account</a>
-        <a class="btn btn-primary" id="sl-tools" href="/tools/">Go to Tools</a>
-      </div>
-    </div>
-  </main>
+<div class="spinner"></div>
 
-  <script>
-    (function () {
-      "use strict";
+<button id="continue" style="display:none;">
+Continue to tools
+</button>
 
-      const msgEl = document.getElementById("sl-msg");
-      const catEl = document.getElementById("sl-cat");
-      const toolsBtn = document.getElementById("sl-tools");
+</div>
 
-      const qs = new URLSearchParams(location.search);
-      const category = (qs.get("category") || "").trim().toLowerCase();
-      catEl.textContent = category || "—";
+<script>
 
-      // Where we send them after unlock is detected
-      const fallbackTools = "/tools/";
-      const targetTools = category ? `/tools/${encodeURIComponent(category)}/` : fallbackTools;
-      toolsBtn.href = targetTools;
+const params = new URLSearchParams(location.search);
+const category = params.get("category");
 
-      // Basic guard: no category -> send to upgrade
-      if (!category) {
-        msgEl.textContent = "Missing category. Redirecting to upgrade…";
-        setTimeout(() => { location.replace("/upgrade/#checkout"); }, 1200);
-        return;
-      }
+async function checkUnlock(){
 
-      // Wait for auth.js to be ready and session to exist
-      function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  try{
 
-      async function waitForAuthReady(timeoutMs = 8000) {
-        const start = Date.now();
-        while (Date.now() - start < timeoutMs) {
-          if (window.SL_AUTH && window.SL_AUTH.sb && window.SL_AUTH.ready) return true;
-          await sleep(50);
-        }
-        return false;
-      }
+    const token =
+      JSON.parse(localStorage.getItem("supabase.auth.token") || "{}")
+      ?.currentSession?.access_token;
 
-      async function getSession(sb) {
-        try {
-          const { data } = await sb.auth.getSession();
-          return data && data.session ? data.session : null;
-        } catch {
-          return null;
+    if(!token){
+      document.getElementById("status").textContent =
+        "Please sign in to continue.";
+      return;
+    }
+
+    const r = await fetch(
+      "/api/unlocks/has?category=" + encodeURIComponent(category),
+      {
+        headers:{
+          Authorization:"Bearer " + token
         }
       }
+    );
 
-      async function pollUnlock(sb, token, category) {
-        const start = Date.now();
-        const timeoutMs = 45000;          // total patience
-        const fastMs = 9000;              // fast poll window
-        let tries = 0;
+    const data = await r.json();
 
-        while (Date.now() - start < timeoutMs) {
-          tries++;
+    if(data.ok && data.has){
 
-          msgEl.textContent =
-            tries <= 2
-              ? "Checking purchase…"
-              : "Enabling Pro access…";
+      document.getElementById("status").textContent =
+        "Your tools are unlocked.";
 
-          try {
-            const r = await fetch(`/api/unlocks/has?category=${encodeURIComponent(category)}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
+      setTimeout(()=>{
+        location.href = "/tools/" + category + "/";
+      },1200);
 
-            if (r.ok) {
-              const j = await r.json();
-              if (j && j.ok && j.has === true) return true;
-            }
-          } catch {}
+      return;
+    }
 
-          // Backoff: fast early, slower later
-          const elapsed = Date.now() - start;
-          if (elapsed < fastMs) await sleep(700);
-          else await sleep(1500);
-        }
-        return false;
-      }
+    document.getElementById("status").textContent =
+      "Payment received. Finalizing access…";
 
-      (async () => {
-        const ok = await waitForAuthReady();
-        if (!ok) {
-          msgEl.textContent = "Auth not ready. Redirecting to upgrade…";
-          setTimeout(() => { location.replace(`/upgrade/?category=${encodeURIComponent(category)}#checkout`); }, 1400);
-          return;
-        }
+  }catch(err){
 
-        // Wait for auth.js internal ready promise (your existing pattern)
-        try { await window.SL_AUTH.ready; } catch {}
+    console.error(err);
 
-        const sb = window.SL_AUTH.sb;
-        const session = await getSession(sb);
+    document.getElementById("status").textContent =
+      "There was a problem confirming your unlock.";
 
-        if (!session || !session.access_token) {
-          msgEl.textContent = "You’re not signed in. Redirecting to upgrade to sign in…";
-          setTimeout(() => { location.replace(`/upgrade/?category=${encodeURIComponent(category)}#checkout`); }, 1400);
-          return;
-        }
+    document.getElementById("continue").style.display="inline-block";
 
-        // Poll until entitlement is visible
-        const found = await pollUnlock(sb, session.access_token, category);
+  }
 
-        if (found) {
-          msgEl.textContent = "Unlocked. Redirecting…";
-          // Use replace so back button doesn’t re-run finish page
-          setTimeout(() => { location.replace(targetTools); }, 650);
-          return;
-        }
+}
 
-        // Timeout fallback
-        msgEl.textContent =
-          "We couldn’t confirm the unlock yet. It may still be processing. You can open Account to verify, or try Tools.";
-      })();
-    })();
-  </script>
+document.getElementById("continue").onclick = ()=>{
+  location.href = "/tools/" + category + "/";
+};
+
+checkUnlock();
+
+</script>
+
 </body>
 </html>
