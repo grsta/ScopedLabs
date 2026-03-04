@@ -1,12 +1,12 @@
 /* /assets/auth.js
-   ScopedLabs Supabase auth (v2) — bulletproof implicit flow.
+   ScopedLabs Supabase auth (v2) — implicit flow, upgrade/checkout friendly.
 
    Fixes:
    - If magic link arrives as: #checkout#access_token=...
      normalize to: #access_token=...
      BEFORE Supabase reads the hash.
-   - Never appends UI hashes (like #checkout) to emailRedirectTo.
-   - Uses current origin so preview domains / www mismatches don't break.
+   - emailRedirectTo NEVER includes UI hashes (implicit flow uses hash for tokens).
+   - Redirect lands back on /upgrade/checkout/?category=... so category state + checkout UI stay consistent.
 */
 
 (() => {
@@ -50,24 +50,29 @@
   const ready = new Promise((resolve) => (readyResolve = resolve));
   window.SL_AUTH = { sb, ready };
 
+  function normCategory(cat) {
+    // Your UI uses kebab-case (access-control, video-storage, etc.)
+    return String(cat || "").trim().toLowerCase().replace(/_/g, "-");
+  }
+
   function getCategoryForRedirect() {
     try {
       const u = new URL(location.href);
       return (
-        (u.searchParams.get("category") || "").trim() ||
-        (localStorage.getItem("sl_selected_category") || "").trim() ||
+        normCategory(u.searchParams.get("category") || "") ||
+        normCategory(localStorage.getItem("sl_selected_category") || "") ||
         ""
       );
     } catch {
-      return (localStorage.getItem("sl_selected_category") || "").trim() || "";
+      return normCategory(localStorage.getItem("sl_selected_category") || "") || "";
     }
   }
 
   function buildRedirectUrl() {
     // IMPORTANT: NO HASH HERE. Supabase uses hash for tokens in implicit flow.
-    const basePath = "/account/"; // keep trailing slash
+    // Always return to checkout flow after magic-link login.
     const cat = getCategoryForRedirect();
-    const url = new URL(basePath, location.origin);
+    const url = new URL("/upgrade/checkout/", location.origin);
     if (cat) url.searchParams.set("category", cat);
     return url.toString();
   }
@@ -80,6 +85,10 @@
     btn.addEventListener("click", async () => {
       const email = (emailEl.value || "").trim();
       if (!email) return;
+
+      // lock in the selected category at send-time so the redirect has it
+      const cat = getCategoryForRedirect();
+      if (cat) localStorage.setItem("sl_selected_category", cat);
 
       btn.disabled = true;
       try {
@@ -126,14 +135,16 @@
     try {
       await wireSendLink();
       await wireSignOut();
+
       // Give Supabase a tick to process URL hash if present, then clean it.
-      setTimeout(() => { cleanAuthHashOnceSessionExists(); }, 50);
+      setTimeout(() => {
+        cleanAuthHashOnceSessionExists();
+      }, 50);
     } finally {
       readyResolve();
     }
   })();
 })();
-
 
 
 
