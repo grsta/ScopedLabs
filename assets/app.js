@@ -374,6 +374,28 @@
     });
   }
 
+  // ---- Hide "You must be signed in" message when user is authenticated ----
+function updateSigninNotice() {
+  const notice = document.getElementById("sl-must-signin");
+  if (!notice) return;
+
+  if (currentSession && currentSession.user) {
+    notice.style.display = "none";
+  } else {
+    notice.style.display = "";
+  }
+}
+
+// run on load
+updateSigninNotice();
+
+// run whenever auth state changes
+if (window.SL_AUTH && window.SL_AUTH.sb) {
+  window.SL_AUTH.sb.auth.onAuthStateChange((_event, session) => {
+    currentSession = session;
+    updateSigninNotice();
+  });
+}
   // ---------- init ----------
   async function init() {
     if (!sbReady) return;
