@@ -338,23 +338,27 @@
   }
 
   function wireSignOut() {
-    if (!els.signoutBtn) return;
+  if (!els.signoutBtn) return;
 
-    els.signoutBtn.addEventListener("click", async () => {
-      try {
-        if (sb) await sb.auth.signOut();
-      } catch (e) {
-        console.error("[app.js] signOut failed", e);
-      } finally {
-        localStorage.removeItem("sl_selected_category");
-        session = null;
-        updateButtonsAndStatus();
+  els.signoutBtn.addEventListener("click", async () => {
+    try {
+      if (sb) await sb.auth.signOut();
+    } catch (e) {
+      console.error("[app.js] signOut failed", e);
+    } finally {
 
-        // If on checkout, bounce back to upgrade checkout section
-        if (IS_CHECKOUT_PAGE) goUpgradeCheckoutAnchor();
-      }
-    });
-  }
+      // clear category cache
+      localStorage.removeItem("sl_selected_category");
+
+      // force UI reset
+      session = null;
+
+      // reload page to clear Supabase session state
+      window.location.href = "/upgrade/";
+
+    }
+  });
+}
 
   let stripeSessionStarting = false;
 
