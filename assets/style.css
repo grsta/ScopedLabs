@@ -1639,3 +1639,29 @@ main h3.section-title {
   white-space: normal !important;
   line-height: 1.2 !important;
 }
+/* =========================================
+   ScopedLabs Upgrade Card Alignment Fix
+   ========================================= */
+
+/* Make upgrade cards use vertical layout */
+.upgrade-card{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+
+/* Allow text content to expand */
+.upgrade-card p,
+.upgrade-card ul{
+  flex-grow:0;
+}
+
+/* Push CTA section to bottom */
+.upgrade-card .upgrade-cta{
+  margin-top:auto;
+}
+
+/* Keep buttons consistent width */
+.upgrade-card .btn{
+  width:100%;
+}
