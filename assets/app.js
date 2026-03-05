@@ -110,13 +110,66 @@
     updateButtonsAndStatus();
   }
 
+  function extractPreviewFromUpgradeCard(cat) {
+    // Reads bullets/title/desc from the category card in /upgrade/index.html
+    // Card IDs must match slug: #access-control, #compute, #video-storage, etc.
+    if (!IS_UPGRADE_PAGE) return null;
+
+    const c = normKebab(cat);
+    if (!c) return null;
+
+    const card = document.getElementById(c);
+    if (!card) return null;
+
+    // Title
+    const h = card.querySelector("h3");
+    const title = h ? h.textContent.trim() : c.replace(/-/g, " ");
+
+    // Optional: use the first paragraph as a nicer desc if present
+    const p = card.querySelector("p.muted");
+    const desc = "Includes examples like:"; // keep consistent wording
+
+    // Bullets
+    const li = Array.from(card.querySelectorAll("ul li")).map((x) =>
+      String(x.textContent || "").trim()
+    ).filter(Boolean);
+
+    return {
+      title,
+      desc,
+      bullets: li,
+      foot: "You’ll also receive future Pro tools added to this category.",
+    };
+  }
+
   function getCategoryData(cat) {
     const c = normKebab(cat);
-    const m = window.SL_STRIPE_MAP || window.STRIPE_MAP || null;
-    if (m?.categories?.[c]) return m.categories[c];
-    if (m?.[c]) return m[c];
-    if (window.STRIPE_CATEGORIES?.[c]) return window.STRIPE_CATEGORIES[c];
 
+    // 1) Prefer stripe-map.js if it provides the data
+    const m = window.SL_STRIPE_MAP || window.STRIPE_MAP || null;
+    let data = null;
+
+    if (m?.categories?.[c]) data = m.categories[c];
+    else if (m?.[c]) data = m[c];
+    else if (window.STRIPE_CATEGORIES?.[c]) data = window.STRIPE_CATEGORIES[c];
+
+    // Normalize if present
+    if (data && typeof data === "object") {
+      const bullets = Array.isArray(data.bullets) ? data.bullets.filter(Boolean) : [];
+      const title = data.title || (c ? c.replace(/-/g, " ") : "Category");
+      const desc = data.desc || "Includes examples like:";
+      const foot = data.foot || "You’ll also receive future Pro tools added to this category.";
+      // If bullets exist, we're good.
+      if (bullets.length) return { title, desc, bullets, foot };
+      // If bullets are missing, fall through to DOM extraction.
+      data = { title, desc, bullets, foot };
+    }
+
+    // 2) If bullets are missing, pull from the on-page category card markup (deterministic)
+    const fromCard = extractPreviewFromUpgradeCard(c);
+    if (fromCard && Array.isArray(fromCard.bullets) && fromCard.bullets.length) return fromCard;
+
+    // 3) Fallback
     return {
       title: c ? c.replace(/-/g, " ") : "Category",
       desc: "Includes examples like:",
@@ -198,8 +251,8 @@
     const hasSession = !!session;
     const hasCat = !!currentCategory;
 
-    // Hide "must sign in" notice on checkout if present
-    if (els.mustSignin) els.mustSignin.style.display = hasSession ? "none" : "";
+    // Force-hide the "must sign in" box (requested)
+    if (els.mustSignin) els.mustSignin.style.display = "none";
 
     // Upgrade page status
     if (IS_UPGRADE_PAGE && els.authStatus) {
@@ -208,15 +261,14 @@
 
     // Checkout auth line
     if (IS_CHECKOUT_PAGE && els.checkoutAuthState) {
-      els.checkoutAuthState.textContent = hasSession && session?.user?.email
-        ? `Signed in as ${session.user.email}`
-        : "Not signed in";
+      els.checkoutAuthState.textContent =
+        hasSession && session?.user?.email
+          ? `Signed in as ${session.user.email}`
+          : "Not signed in";
     }
 
     // Button enable logic
     if (els.continueBtn) {
-      // On upgrade page: Continue means "go to checkout page"
-      // On checkout page: Continue means "start Stripe checkout"
       const ok = hasSession && hasCat;
       els.continueBtn.disabled = !ok;
     }
@@ -255,16 +307,16 @@
   }
 
   function routeUpgradeToCheckoutIfReady() {
-  // Only auto-route when the user is on the checkout section of the upgrade page.
-  // This prevents "Change category" (#categories) from snapping back to checkout.
-  if (!IS_UPGRADE_PAGE) return;
-  if (!session || !currentCategory) return;
+    // Only auto-route when the user is on the checkout section of the upgrade page.
+    // This prevents "Change category" (#categories) from snapping back to checkout.
+    if (!IS_UPGRADE_PAGE) return;
+    if (!session || !currentCategory) return;
 
-  const hash = String(location.hash || "");
-  if (hash !== "#checkout") return;
+    const hash = String(location.hash || "");
+    if (hash !== "#checkout") return;
 
-  location.href = "/upgrade/checkout/?category=" + encodeURIComponent(currentCategory);
-}
+    location.href = "/upgrade/checkout/?category=" + encodeURIComponent(currentCategory);
+  }
 
   function wireChangeCategory() {
     if (!els.changeCategory) return;
@@ -306,55 +358,45 @@
 
   let stripeSessionStarting = false;
 
-async function startStripeCheckout() {
+  async function startStripeCheckout() {
+    if (stripeSessionStarting) return;
+    stripeSessionStarting = true;
 
-  if (stripeSessionStarting) return;
-  stripeSessionStarting = true;
+    if (!session || !currentCategory) return;
 
-  if (!session || !currentCategory) return;
+    if (els.checkoutStatus) els.checkoutStatus.textContent = "Opening secure checkout…";
+    if (els.continueBtn) els.continueBtn.disabled = true;
 
-  if (els.checkoutStatus)
-    els.checkoutStatus.textContent = "Opening secure checkout…";
+    try {
+      const r = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + session.access_token,
+        },
+        body: JSON.stringify({
+          category: currentCategory,
+          email: session.user.email,
+          user_id: session.user.id,
+        }),
+      });
 
-  if (els.continueBtn)
-    els.continueBtn.disabled = true;
+      const data = await r.json();
 
-  try {
+      if (!data.url) {
+        throw new Error("Stripe session failed");
+      }
 
-    const r = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + session.access_token,
-      },
-      body: JSON.stringify({
-        category: currentCategory,
-        email: session.user.email,
-        user_id: session.user.id,
-      }),
-    });
+      location.href = data.url;
+    } catch (err) {
+      console.error("Stripe checkout error:", err);
 
-    const data = await r.json();
+      if (els.checkoutStatus) els.checkoutStatus.textContent = "Unable to start checkout.";
+      if (els.continueBtn) els.continueBtn.disabled = false;
 
-    if (!data.url) {
-      throw new Error("Stripe session failed");
+      stripeSessionStarting = false;
     }
-
-    location.href = data.url;
-
-  } catch (err) {
-
-    console.error("Stripe checkout error:", err);
-
-    if (els.checkoutStatus)
-      els.checkoutStatus.textContent = "Unable to start checkout.";
-
-    if (els.continueBtn)
-      els.continueBtn.disabled = false;
-
-    stripeSessionStarting = false;
   }
-}
 
   function wireContinue() {
     if (!els.continueBtn) return;
