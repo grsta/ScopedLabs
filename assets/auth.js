@@ -1,96 +1,92 @@
 /* /assets/auth.js
-   ScopedLabs Supabase auth (v2) — implicit flow, Upgrade-first redirect.
-
-   Key behavior:
-   - Magic link always returns to /upgrade/?category=<cat>#checkout (NOT /upgrade/checkout)
-   - Handles poisoned hash "#checkout#access_token=..." by normalizing before Supabase parses
-   - Removes auth hash after session is established (prevents re-processing on refresh/back)
-   - Exposes: window.SL_AUTH = { sb, ready }
+   Supabase v2 implicit magic-link auth.
+   - Creates ONE client and exposes: window.SL_AUTH = { sb, ready }
+   - Handles session restore from email link
+   - Owns Sign out click and forces a clean redirect to avoid stale UI
 */
 
 (() => {
   "use strict";
 
-  // ---- Fix poisoned hash before Supabase reads it ----
-  // Example bad hash: "#checkout#access_token=...."
-  try {
-    const h = String(location.hash || "");
-    if (h.startsWith("#checkout#access_token=")) {
-      const fixed = "#" + h.slice("#checkout#".length); // "#access_token=..."
-      history.replaceState({}, "", location.pathname + location.search + fixed);
-    }
-  } catch {}
+  const SUPABASE_URL = window.SL_SUPABASE_URL || window.SUPABASE_URL || "";
+  const SUPABASE_ANON_KEY = window.SL_SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY || "";
 
-  // Supabase globals provided by your HTML
-  const SUPABASE_URL = String(window.SL_SUPABASE_URL || "").trim();
-  const SUPABASE_ANON_KEY = String(window.SL_SUPABASE_ANON_KEY || "").trim();
-
-  if (!window.supabase || !window.supabase.createClient) {
-    console.error("[auth.js] Supabase v2 not loaded");
-    window.SL_AUTH = { sb: null, ready: Promise.resolve() };
-    return;
-  }
-
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("[auth.js] Missing SL_SUPABASE_URL / SL_SUPABASE_ANON_KEY");
+  if (!window.supabase || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error("[auth.js] Missing Supabase config or library.");
     window.SL_AUTH = { sb: null, ready: Promise.resolve() };
     return;
   }
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
+      flowType: "implicit",
+      detectSessionInUrl: true,
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
-      flowType: "implicit",
     },
   });
 
   let readyResolve;
-  const ready = new Promise((resolve) => (readyResolve = resolve));
+  const ready = new Promise((res) => (readyResolve = res));
+
   window.SL_AUTH = { sb, ready };
 
-  function normKebab(cat) {
-    return String(cat || "").trim().toLowerCase().replace(/_/g, "-");
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function setText(id, v) {
+    const el = $(id);
+    if (el) el.textContent = v == null ? "" : String(v);
   }
 
   function getCategoryForRedirect() {
     try {
       const u = new URL(location.href);
-      const fromUrl = normKebab(u.searchParams.get("category"));
-      const fromLs = normKebab(localStorage.getItem("sl_selected_category"));
-      return fromUrl || fromLs || "";
+      return u.searchParams.get("category") || localStorage.getItem("sl_selected_category") || "";
     } catch {
-      return normKebab(localStorage.getItem("sl_selected_category")) || "";
+      return localStorage.getItem("sl_selected_category") || "";
     }
   }
 
-  function buildUpgradeRedirectUrl() {
-    // IMPORTANT: No hash other than #checkout.
-    // Implicit flow uses hash for tokens, so DO NOT add other hashes.
-    const cat = getCategoryForRedirect();
-    const u = new URL("/upgrade/", location.origin);
-    if (cat) u.searchParams.set("category", cat);
-    u.hash = "#checkout";
-    return u.toString();
+  async function refreshUi() {
+    const { data } = await sb.auth.getSession();
+    const session = data?.session || null;
+    const email = session?.user?.email || "";
+
+    // Upgrade page uses these; checkout page may use a subset
+    const signed = $("sl-signedin");
+    const status = $("sl-auth-status");
+
+    if (signed) signed.textContent = email ? `Signed in as ${email}` : "Not signed in";
+    if (status) status.textContent = email ? `Signed in as ${email}` : "Not signed in";
+
+    // hide email input when signed in (if it exists)
+    const emailWrap = $("sl-email-wrap");
+    const emailInput = $("sl-email");
+    if (emailWrap) emailWrap.style.display = email ? "none" : "";
+    if (emailInput) emailInput.disabled = !!email;
+
+    return session;
   }
 
-  async function wireSendLink() {
-    const btn = document.getElementById("sl-sendlink");
-    const emailEl = document.getElementById("sl-email");
-    if (!btn || !emailEl) return;
+  async function wireMagicLink() {
+    const btn = $("sl-sendlink");
+    if (!btn) return;
 
     btn.addEventListener("click", async () => {
-      const email = String(emailEl.value || "").trim();
+      const emailEl = $("sl-email");
+      const email = emailEl ? String(emailEl.value || "").trim() : "";
       if (!email) return;
 
-      // lock category before sending link
-      const cat = getCategoryForRedirect();
-      if (cat) localStorage.setItem("sl_selected_category", cat);
-
       btn.disabled = true;
+      setText("sl-auth-status", "Sending magic link…");
+
       try {
-        const redirectTo = buildUpgradeRedirectUrl();
+        const cat = getCategoryForRedirect();
+        const redirectTo = `${location.origin}/upgrade/checkout/?category=${encodeURIComponent(
+          cat || ""
+        )}`;
 
         const { error } = await sb.auth.signInWithOtp({
           email,
@@ -98,8 +94,11 @@
         });
 
         if (error) throw error;
+
+        setText("sl-auth-status", "Check your email for the sign-in link.");
       } catch (e) {
-        console.error("[auth.js] signInWithOtp failed", e);
+        console.error(e);
+        setText("sl-auth-status", "Failed to send magic link.");
       } finally {
         btn.disabled = false;
       }
@@ -107,42 +106,64 @@
   }
 
   async function wireSignOut() {
-    const btn = document.getElementById("sl-signout");
+    const btn = $("sl-signout");
     if (!btn) return;
 
     btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      setText("sl-auth-status", "Signing out…");
+
       try {
+        // IMPORTANT: app.js does NOT also sign out (avoids lock/race errors)
         await sb.auth.signOut();
       } catch (e) {
-        console.error("[auth.js] signOut failed", e);
+        console.warn("[auth.js] signOut error (continuing):", e);
+      } finally {
+        try {
+          // Optional: keep category selection, or clear it — your call.
+          // localStorage.removeItem("sl_selected_category");
+        } catch {}
+
+        // Force a clean page load so UI never shows stale "Signed in"
+        location.replace("/upgrade/#checkout");
       }
     });
   }
 
-  async function cleanAuthHashOnceSessionExists() {
-    // After Supabase reads tokens and establishes session, remove hash tokens
-    // so refresh/back doesn't re-run session parsing.
+  async function cleanupAuthHashIfPresent() {
+    // After implicit flow, Supabase tokens may appear in URL hash; clean it.
+    const hash = location.hash || "";
+    if (!hash) return;
+
+    // If it's our normal #checkout/#categories, keep it.
+    if (hash === "#checkout" || hash === "#categories") return;
+
+    // Otherwise remove hash junk while preserving search params
     try {
-      const { data } = await sb.auth.getSession();
-      if (data?.session && location.hash && location.hash.includes("access_token=")) {
-        history.replaceState({}, "", location.pathname + location.search);
-      }
+      const u = new URL(location.href);
+      u.hash = "";
+      history.replaceState({}, "", u.toString());
     } catch {}
   }
 
   (async () => {
     try {
-      await wireSendLink();
-      await wireSignOut();
+      // Ensure session exchange happens
+      await refreshUi();
+      await cleanupAuthHashIfPresent();
 
-      // Let Supabase process URL hash first, then clean it
-      setTimeout(() => cleanAuthHashOnceSessionExists(), 50);
+      // Keep UI in sync
+      sb.auth.onAuthStateChange(async () => {
+        await refreshUi();
+      });
+
+      await wireMagicLink();
+      await wireSignOut();
     } finally {
       readyResolve();
     }
   })();
 })();
-
 
 
 
