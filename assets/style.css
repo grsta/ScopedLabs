@@ -1665,4 +1665,8 @@ main h3.section-title {
 .upgrade-card .btn{
   width:100%;
 }
-align-items: stretch;
+.checkout-grid {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
