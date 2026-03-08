@@ -1,5 +1,6 @@
 // ScopedLabs Pro Gate v3
 // Canonical rule: page is Pro if <body data-tier="pro">
+// Unlock source of truth: localStorage["scopedlabs_pro_<category-slug>"]
 
 (function () {
   function run() {
@@ -31,39 +32,17 @@
       isPerformance ? "performance" :
       isPhysical ? "physical-security" :
       isCompute ? "compute" :
-      "pro";
+      null;
 
-    // -------- Storage keys --------
-    const KEY_POWER = "scopedlabs_pro_power";
-    const KEY_NETWORK = "scopedlabs_pro_network";
-    const KEY_VIDEO = "scopedlabs_pro_video";
-    const KEY_ACCESS = "scopedlabs_pro_access";
-    const KEY_WIRELESS = "scopedlabs_pro_wireless";
-    const KEY_THERMAL = "scopedlabs_pro_thermal";
-    const KEY_INFRA = "scopedlabs_pro_infrastructure";
-    const KEY_PERF = "scopedlabs_pro_performance";
-    const KEY_PHYSICAL = "scopedlabs_pro_physical_security";
-    const KEY_COMPUTE = "scopedlabs_pro_compute";
+    // -------- Canonical storage key --------
     const KEY_GLOBAL = "scopedlabs_pro_all";
+    const categoryKey = cat ? `scopedlabs_pro_${cat}` : null;
 
     // -------- Bridge: ?pro=1 (legacy/dev) --------
     if (qs.get("pro") === "1") {
-      if (isPower) localStorage.setItem(KEY_POWER, "1");
-      if (isNetwork) localStorage.setItem(KEY_NETWORK, "1");
-      if (isVideo) localStorage.setItem(KEY_VIDEO, "1");
-      if (isAccess) localStorage.setItem(KEY_ACCESS, "1");
-      if (isWireless) localStorage.setItem(KEY_WIRELESS, "1");
-      if (isThermal) localStorage.setItem(KEY_THERMAL, "1");
-      if (isInfrastructure) localStorage.setItem(KEY_INFRA, "1");
-      if (isPerformance) localStorage.setItem(KEY_PERF, "1");
-      if (isPhysical) localStorage.setItem(KEY_PHYSICAL, "1");
-      if (isCompute) localStorage.setItem(KEY_COMPUTE, "1");
-
-      if (
-        !isPower && !isNetwork && !isVideo && !isAccess &&
-        !isWireless && !isThermal && !isInfrastructure &&
-        !isPerformance && !isPhysical && !isCompute
-      ) {
+      if (categoryKey) {
+        localStorage.setItem(categoryKey, "1");
+      } else {
         localStorage.setItem(KEY_GLOBAL, "1");
       }
 
@@ -75,16 +54,7 @@
     // -------- Determine if user owns Pro --------
     const hasPro =
       localStorage.getItem(KEY_GLOBAL) === "1" ||
-      (isPower && localStorage.getItem(KEY_POWER) === "1") ||
-      (isNetwork && localStorage.getItem(KEY_NETWORK) === "1") ||
-      (isVideo && localStorage.getItem(KEY_VIDEO) === "1") ||
-      (isAccess && localStorage.getItem(KEY_ACCESS) === "1") ||
-      (isWireless && localStorage.getItem(KEY_WIRELESS) === "1") ||
-      (isThermal && localStorage.getItem(KEY_THERMAL) === "1") ||
-      (isInfrastructure && localStorage.getItem(KEY_INFRA) === "1") ||
-      (isPerformance && localStorage.getItem(KEY_PERF) === "1") ||
-      (isPhysical && localStorage.getItem(KEY_PHYSICAL) === "1") ||
-      (isCompute && localStorage.getItem(KEY_COMPUTE) === "1");
+      (categoryKey && localStorage.getItem(categoryKey) === "1");
 
     const body = document.body;
 
@@ -93,8 +63,9 @@
 
     // -------- Gate direct visits to Pro pages --------
     if (pageIsPro && !hasPro) {
+      const fallbackCat = cat || "pro";
       window.location.href =
-        `/upgrade/?category=${encodeURIComponent(cat)}#checkout`;
+        `/upgrade/?category=${encodeURIComponent(fallbackCat)}#checkout`;
       return;
     }
 
@@ -104,8 +75,9 @@
         btn.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
+          const fallbackCat = cat || "pro";
           window.location.href =
-            `/upgrade/?category=${encodeURIComponent(cat)}#checkout`;
+            `/upgrade/?category=${encodeURIComponent(fallbackCat)}#checkout`;
         });
       }
     });
