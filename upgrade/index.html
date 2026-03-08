@@ -5,31 +5,28 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upgrade • ScopedLabs</title>
 
-  <!-- bump cache-bust after you paste: upgrade-0458 or whatever -->
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0400" />
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0462" />
   <link rel="icon" href="/assets/favicon.ico" />
 
   <style>
-    /* local helpers (keep) */
     .muted { opacity: 0.85; }
     .pill { display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; }
     .btn { cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
 
-    /* Align header + title with the same width as the cards */
     :root { --upgrade-max: 980px; }
     body .site-header .container.header-inner { max-width: var(--upgrade-max) !important; }
     body .page-head .container { max-width: var(--upgrade-max) !important; }
 
-    /* === Checkout + Preview side-by-side === */
     .sl-upgrade-grid{
       display:grid;
-      grid-template-columns: 1fr 420px; /* left flexible, right fixed */
+      grid-template-columns: 1fr 420px;
       gap:20px;
-      align-items:stretch;
+      align-items:start;
       margin-top:14px;
     }
-    .sl-upgrade-right .card{
-      height:100%;}
+
+    .sl-upgrade-left,
+    .sl-upgrade-right{ min-width:0; }
 
     .sl-top-row{
       display:flex;
@@ -38,9 +35,7 @@
       flex-wrap:wrap;
       margin-top: 6px;
     }
-    .sl-selected{ min-width: 220px; }
 
-    /* PRICE: move to the left */
     .sl-price{
       margin-left:0;
       text-align:left;
@@ -52,7 +47,6 @@
       .sl-price{ margin-left:0; text-align:left; }
     }
 
-    /* === ScopedLabs Upgrade polish overrides (button/pill consistency) === */
     .pill{
       display:inline-flex;
       align-items:center;
@@ -64,6 +58,7 @@
       min-height:36px;
       box-sizing:border-box;
     }
+
     .btn{
       display:inline-flex;
       align-items:center;
@@ -74,8 +69,6 @@
       box-sizing:border-box;
       white-space:nowrap;
     }
-    /* Make the selected category pill match button height */
-    #sl-category-pill{ min-height:36px; padding:7px 12px; }
   </style>
 </head>
 
@@ -105,22 +98,21 @@
 
     <!-- CHECKOUT CARD -->
     <section id="checkout" class="card" style="max-width: 980px; margin: 24px auto;">
-      <div class="pill" style="margin-bottom:12px;">Checkout</div>
-
-      <h2 style="margin:0 0 8px 0;">
-        <h2 id="sl-checkout-title">Unlock None selected</h2>
-      </h2>
-
-      <p class="muted" style="margin-top:0;">
-        You’ll unlock this category forever (one-time purchase).
-      </p>
-
       <div class="sl-upgrade-grid">
 
         <!-- LEFT -->
         <div class="sl-upgrade-left">
-          <div class="sl-top-row">
+          <div class="pill" style="margin-bottom:12px;">Checkout</div>
 
+          <h2 id="sl-checkout-title" style="margin:0 0 8px 0;">
+            Unlock None selected
+          </h2>
+
+          <p class="muted" style="margin-top:0;">
+            You’ll unlock this category forever (one-time purchase).
+          </p>
+
+          <div class="sl-top-row">
             <button id="sl-change-category" class="btn" type="button">Change Category</button>
 
             <div class="sl-price">
@@ -137,12 +129,8 @@
             </div>
 
             <div id="sl-email-wrap">
-              <label class="muted" for="sl-email" style="display:block; font-size:12px; margin-bottom:6px;">
-                Email
-              </label>
-
-              <input id="sl-email" type="email" autocomplete="email" placeholder="you@company.com"
-                     style="width:100%; max-width:520px;" />
+              <label class="muted" for="sl-email" style="display:block; font-size:12px; margin-bottom: 6px;">Email</label>
+              <input id="sl-email" type="email" autocomplete="email" placeholder="you@company.com" style="width:100%; max-width:520px;" />
             </div>
 
             <div style="margin-top: 10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
@@ -159,21 +147,18 @@
             <div class="muted" style="margin-top: 8px;">
               <span id="sl-signedin"></span>
             </div>
-
-            
           </div>
         </div>
 
         <!-- RIGHT: preview card -->
         <div class="sl-upgrade-right">
           <div id="sl-preview" class="card" style="height:100%;">
-            <div style="margin-top: 18px;">
-            <div class="pill">🔒 Pro — Category Unlock</div>        
+            <div class="pill" style="margin-bottom:12px;">🔒 Pro — Category Unlock</div>
 
-            <h3 style="margin-top:0;"><span id="sl-preview-title">Category</span></h3>
+            <h3 style="margin-top:0;"><span id="sl-preview-title">None selected</span></h3>
 
             <p class="muted" id="sl-preview-desc">
-              Includes examples like:
+              Select a category to see its preview.
             </p>
 
             <ul class="muted" id="sl-preview-bullets" style="margin-top: 10px;"></ul>
@@ -252,9 +237,6 @@
             </div>
           </div>
         </div>
-
-        <!-- KEEP THE REST OF YOUR CATEGORY CARDS EXACTLY AS THEY WERE BELOW THIS LINE -->
-        <!-- (Your original file has all 10; I’m restoring that full structure here.) -->
 
         <!-- network -->
         <div class="card upgrade-card" id="network">
@@ -401,8 +383,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/assets/stripe-map.js"></script>
-    <script defer src="/assets/auth.js?v=upgrade-0400"></script>
-    <script defer src="/assets/app.js?v=upgrade-0400"></script>
+    <script defer src="/assets/auth.js?v=upgrade-0462"></script>
+    <script defer src="/assets/app.js?v=upgrade-0462"></script>
   </main>
 </body>
 </html>
