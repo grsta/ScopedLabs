@@ -769,6 +769,44 @@
         goToCheckout(currentCategory);
       }
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+  const unlocked = localStorage.getItem("sl_unlocked_categories") || "";
+  const category = document.body.dataset.category;
+
+  if (!category) return;
+
+  if (unlocked.includes(category)) {
+    document.querySelectorAll(".pro-tool").forEach(el => {
+      el.classList.remove("locked");
+    });
+  }
+
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  const unlocked = localStorage.getItem("sl_unlocked_categories") || "";
+  const category = document.body.dataset.category;
+
+  if (!category) return;
+
+  if (!unlocked.includes(category)) return;
+
+  document.querySelectorAll(".pro-tool").forEach(el => {
+
+    const toolLink = el.getAttribute("data-tool");
+
+    if (!toolLink) return;
+
+    const btn = el.querySelector("a");
+
+    if (btn) btn.href = toolLink;
+
+  });
+
+});
   }
 
   start();
