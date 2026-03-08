@@ -15,6 +15,10 @@
   let authSubscribed = false;
   let globalHandlersBound = false;
 
+  function isUpgradePage() {
+    return location.pathname.startsWith("/upgrade/");
+  }
+
   function isCheckoutPage() {
     return (
       location.pathname.startsWith("/upgrade/checkout") ||
@@ -607,14 +611,16 @@
   function handleDocumentClick(event) {
     const target = event.target;
 
-    const categoryTarget = findCategoryTarget(target);
-    if (categoryTarget) {
-      const cat = parseCategoryFromElement(categoryTarget);
-      if (cat) {
-        event.preventDefault();
-        event.stopPropagation();
-        handleCategorySelection(cat);
-        return;
+    if (isUpgradePage()) {
+      const categoryTarget = findCategoryTarget(target);
+      if (categoryTarget) {
+        const cat = parseCategoryFromElement(categoryTarget);
+        if (cat) {
+          event.preventDefault();
+          event.stopPropagation();
+          handleCategorySelection(cat);
+          return;
+        }
       }
     }
 
