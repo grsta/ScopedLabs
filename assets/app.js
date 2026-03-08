@@ -321,35 +321,42 @@
   }
 
   function renderSignedInUi() {
-    const els = getEls();
-    const email =
-      currentSession && currentSession.user && currentSession.user.email
-        ? currentSession.user.email
-        : "";
+  const emailWrap = document.getElementById("sl-email-wrap");
+  const loginHint = document.getElementById("sl-login-hint");
+  const sendLink = document.getElementById("sl-sendlink");
+  const signedIn = document.getElementById("sl-signedin");
+  const authStatus = document.getElementById("sl-auth-status");
 
-    if (els.signedInLine) {
-      setText(els.signedInLine, email ? `Signed in as ${email}` : "");
-      els.signedInLine.style.display = email ? "" : "none";
-    }
+  const email =
+    currentSession &&
+    currentSession.user &&
+    currentSession.user.email
+      ? currentSession.user.email
+      : "";
 
-    if (els.loginHint) {
-      els.loginHint.style.display = email ? "none" : "";
-    }
-
-    if (els.emailWrap) {
-      els.emailWrap.style.display = email ? "none" : "";
-    } else if (els.email) {
-      els.email.style.display = email ? "none" : "";
-    }
-
-    if (els.sendLink) {
-      els.sendLink.style.display = email ? "none" : "";
-    }
-
-    if (els.authStatus && email) {
-      els.authStatus.textContent = "";
-    }
+  if (signedIn) {
+    signedIn.textContent = email ? `Signed in as ${email}` : "";
   }
+
+  /* hide email field + label wrapper when signed in */
+  if (emailWrap) {
+    emailWrap.style.display = email ? "none" : "";
+  }
+
+  /* hide login hint when signed in */
+  if (loginHint) {
+    loginHint.style.display = email ? "none" : "";
+  }
+
+  /* hide send link button when signed in */
+  if (sendLink) {
+    sendLink.style.display = email ? "none" : "";
+  }
+
+  if (authStatus && email) {
+    authStatus.textContent = "";
+  }
+}
 
   function renderButtons() {
     const els = getEls();
