@@ -1,6 +1,9 @@
 /* /assets/app.js
    ScopedLabs Upgrade + Checkout controller
-   Full category-aware version
+   LOCKED-DOWN version:
+   - unlock state comes from backend only
+   - category pages and pro tool pages trust only server-fetched entitlements
+   - localStorage is cache/UI only, not source of truth
 */
 
 (() => {
@@ -9,11 +12,13 @@
   const LS_KEY = "sl_selected_category";
   const UPGRADE_PATH = "/upgrade/";
   const CHECKOUT_PATH = "/upgrade/checkout/";
+  const LS_UNLOCK_CACHE_KEY = "sl_unlocked_categories";
 
   let currentCategory = null;
   let currentSession = null;
   let authSubscribed = false;
   let globalHandlersBound = false;
+  let unlockedCategories = [];
 
   function isUpgradePage() {
     return location.pathname.startsWith("/upgrade/");
@@ -429,6 +434,73 @@
     location.href = `${CHECKOUT_PATH}?category=${encodeURIComponent(slug)}`;
   }
 
+  function getCachedUnlocks() {
+    return [...unlockedCategories];
+  }
+
+  function clearLegacyUnlockKeys() {
+    try {
+      const keysToDelete = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("scopedlabs_pro_")) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach((key) => localStorage.removeItem(key));
+    } catch {}
+  }
+
+  function setUnlockedCategories(list) {
+    unlockedCategories = (Array.isArray(list) ? list : [])
+      .map(cleanSlug)
+      .filter(Boolean);
+
+    try {
+      if (unlockedCategories.length) {
+        localStorage.setItem(LS_UNLOCK_CACHE_KEY, unlockedCategories.join(","));
+      } else {
+        localStorage.removeItem(LS_UNLOCK_CACHE_KEY);
+      }
+    } catch {}
+
+    applyUnlockedCategoryUi();
+  }
+
+  function isCategoryUnlocked(cat) {
+    const slug = cleanSlug(cat);
+    if (!slug) return false;
+    return getCachedUnlocks().includes(slug);
+  }
+
+  function applyUnlockedCategoryUi() {
+    const category = cleanSlug(document.body?.dataset?.category);
+    if (!category) return;
+
+    const rows = document.querySelectorAll("a.tool-row.pro[data-tool]");
+    rows.forEach((row) => {
+      if (!row.dataset.upgradeHref) {
+        row.dataset.upgradeHref = row.getAttribute("href") || "";
+      }
+
+      if (!isCategoryUnlocked(category)) {
+        row.setAttribute("href", row.dataset.upgradeHref);
+        return;
+      }
+
+      row.setAttribute("href", row.dataset.tool);
+
+      const lock = row.querySelector(".lock-icon");
+      if (lock) lock.remove();
+
+      const pill = row.querySelector(".pill");
+      if (pill) {
+        pill.textContent = "Unlocked";
+        pill.classList.add("unlocked-pill");
+      }
+    });
+  }
+
   async function getSB() {
     const auth = window.SL_AUTH;
     if (!auth) return null;
@@ -442,6 +514,41 @@
     return auth.sb || null;
   }
 
+  async function syncUnlockedCategories() {
+    clearLegacyUnlockKeys();
+
+    if (!currentSession || !currentSession.access_token) {
+      setUnlockedCategories([]);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/unlocks/list", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok || !data || !data.ok || !Array.isArray(data.categories)) {
+        setUnlockedCategories([]);
+        return;
+      }
+
+      setUnlockedCategories(data.categories);
+    } catch (err) {
+      console.warn("[app.js] unlock sync error:", err);
+      setUnlockedCategories([]);
+    }
+  }
+
   async function syncSession() {
     try {
       const sb = await getSB();
@@ -449,6 +556,7 @@
       if (!sb) {
         currentSession = null;
         renderAll();
+        await syncUnlockedCategories();
         return;
       }
 
@@ -459,15 +567,17 @@
       window.SL_AUTH.__session = currentSession;
 
       renderAll();
+      await syncUnlockedCategories();
 
       if (!authSubscribed) {
-        sb.auth.onAuthStateChange((_event, session) => {
+        sb.auth.onAuthStateChange(async (_event, session) => {
           currentSession = session || null;
 
           if (!window.SL_AUTH) window.SL_AUTH = {};
           window.SL_AUTH.__session = currentSession;
 
           renderAll();
+          await syncUnlockedCategories();
 
           if (!isCheckoutPage()) {
             const returning = getReturnParam() === "checkout";
@@ -491,6 +601,7 @@
       console.warn("[app.js] auth sync error:", err);
       currentSession = null;
       renderAll();
+      await syncUnlockedCategories();
     }
   }
 
@@ -515,7 +626,11 @@
 
     try {
       localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(LS_UNLOCK_CACHE_KEY);
     } catch {}
+
+    clearLegacyUnlockKeys();
+    setUnlockedCategories([]);
 
     currentCategory = getUrlCategory() || null;
     renderAll();
@@ -616,6 +731,23 @@
   function handleDocumentClick(event) {
     const target = event.target;
 
+    if (target instanceof Element) {
+      const row = target.closest("a.tool-row.pro[data-tool]");
+      if (row) {
+        const category = cleanSlug(document.body?.dataset?.category);
+        if (category && isCategoryUnlocked(category)) {
+          const tool = row.dataset.tool;
+          if (tool) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            event.stopPropagation();
+            window.location.assign(tool);
+            return;
+          }
+        }
+      }
+    }
+
     if (isUpgradePage()) {
       const categoryTarget = findCategoryTarget(target);
       if (categoryTarget) {
@@ -699,6 +831,7 @@
         fromHistory: !!event.persisted,
         replaceUrl: true,
       });
+      applyUnlockedCategoryUi();
     });
 
     globalHandlersBound = true;
@@ -713,6 +846,7 @@
     }
 
     renderAll();
+    applyUnlockedCategoryUi();
 
     if (!isCheckoutPage()) {
       if (location.hash === "#checkout") {
@@ -770,79 +904,10 @@
       }
     }
 
-    
-
-
+    applyUnlockedCategoryUi();
   }
 
   start();
-
-  // UNLOCK CATEGORY UI ON PAGE LOAD
-document.addEventListener("DOMContentLoaded", () => {
-
-  const category = document.body.dataset.category;
-  if (!category) return;
-
-  const unlockedList = (localStorage.getItem("sl_unlocked_categories") || "")
-    .split(",")
-    .map(s => s.trim())
-    .filter(Boolean);
-
-  const unlocked =
-    localStorage.getItem(`scopedlabs_pro_${category}`) === "1" ||
-    localStorage.getItem(`scopedlabs_pro_${category}`) === category ||
-    unlockedList.includes(category);
-
-  if (!unlocked) return;
-
-  document.querySelectorAll(".tool-row.pro[data-tool]").forEach(row => {
-
-    // remove lock icon
-    const lock = row.querySelector(".lock-icon");
-    if (lock) lock.remove();
-
-    // change pill
-    const pill = row.querySelector(".pill");
-    if (pill) {
-      pill.textContent = "Unlocked";
-      pill.classList.add("unlocked-pill");
-    }
-
-    // make link go directly to tool
-    row.href = row.dataset.tool;
-
-  });
-
-});
 })();
-document.addEventListener("click", function (e) {
-  const row = e.target.closest("a.tool-row.pro[data-tool]");
-  if (!row) return;
-
-  const category = document.body.dataset.category;
-  if (!category) return;
-
-  const unlockedList = (localStorage.getItem("sl_unlocked_categories") || "")
-    .split(",")
-    .map(s => s.trim())
-    .filter(Boolean);
-
-  const unlocked =
-    localStorage.getItem(`scopedlabs_pro_${category}`) === "1" ||
-    localStorage.getItem(`scopedlabs_pro_${category}`) === category ||
-    unlockedList.includes(category);
-
-  if (!unlocked) return;
-
-  const tool = row.dataset.tool;
-if (!tool) return;
-
-e.preventDefault();
-e.stopImmediatePropagation();
-e.stopPropagation();
-
-window.location.assign(tool);
-}, true);
-
 
 

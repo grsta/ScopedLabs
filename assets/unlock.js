@@ -1,19 +1,16 @@
-/* ScopedLabs Unlock v2 (STRICT)
-   Unlock source of truth: localStorage.scopedlabs_pro_<category>
-
-   Production unlock requires:
-     ?unlocked=1&category=<slug>
-
-   Dev unlock requires (localhost only):
-     ?devunlock=1&category=<slug>
+/* ScopedLabs Unlock v3 (LOCKED-DOWN)
+   Production unlock-by-URL is DISABLED.
+   Only localhost may use ?devunlock=1&category=<slug>
 */
 
 (function () {
-  function qs() { return new URL(window.location.href).searchParams; }
+  function qs() {
+    return new URL(window.location.href).searchParams;
+  }
 
   function stripParams() {
     const url = new URL(window.location.href);
-    ["unlocked", "devunlock", "category"].forEach(k => url.searchParams.delete(k));
+    ["unlocked", "devunlock", "category"].forEach((k) => url.searchParams.delete(k));
     window.history.replaceState({}, "", url.toString());
   }
 
@@ -43,32 +40,45 @@
   }
 
   function validCategory(cat) {
-    // only allow slugs like "video-storage", "access-control"
     return typeof cat === "string" && /^[a-z0-9-]{2,40}$/.test(cat);
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     const p = qs();
     const category = p.get("category");
+    const prodUnlock = p.get("unlocked") === "1";
+    const devUnlock = p.get("devunlock") === "1";
 
-    const prodUnlock = (p.get("unlocked") === "1");
-    const devUnlock = (p.get("devunlock") === "1");
-
-    // STRICT: do nothing unless the required params are present
-    if (!validCategory(category)) return;
-
+    // Never trust production unlock params.
     if (prodUnlock) {
-      localStorage.setItem(`scopedlabs_pro_${category}`, "1");
-      toast(`Unlocked${category.replace(/-/g, " ")}`);
       stripParams();
       return;
     }
 
-    // STRICT: dev unlock only on localhost
-    if (devUnlock) {
-      localStorage.setItem(`scopedlabs_pro_${category}`, "1");
-      toast(`Dev Unlock ${category.replace(/-/g, " ")}`);
+    // Dev unlock is allowed only on localhost.
+    if (!devUnlock) return;
+    if (!isLocalhost()) {
       stripParams();
+      return;
     }
+    if (!validCategory(category)) {
+      stripParams();
+      return;
+    }
+
+    localStorage.setItem(`scopedlabs_pro_${category}`, "1");
+
+    const existing = (localStorage.getItem("sl_unlocked_categories") || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (!existing.includes(category)) {
+      existing.push(category);
+      localStorage.setItem("sl_unlocked_categories", existing.join(","));
+    }
+
+    toast(`Dev unlock: ${category.replace(/-/g, " ")}`);
+    stripParams();
   });
 })();
