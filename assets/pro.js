@@ -1,69 +1,87 @@
-// ScopedLabs Pro Gate v4
-// Canonical unlock key:
-//   localStorage["scopedlabs_pro_<category-slug>"] = "1"
+// /assets/pro.js
+// ScopedLabs Pro Gate - server-backed version
 
 (function () {
-  function detectCategory(path) {
-    path = (path || "").toLowerCase();
+  "use strict";
 
-    if (path.includes("/tools/power/")) return "power";
-    if (path.includes("/tools/network/")) return "network";
-    if (path.includes("/tools/video-storage/") || path.includes("/tools/video/")) return "video-storage";
+  function cleanSlug(value) {
+    if (!value) return null;
+    return String(value).trim().toLowerCase().replace(/\s+/g, "-");
+  }
+
+  function detectCategoryFromPath(pathname) {
+    const path = (pathname || "").toLowerCase();
+
     if (path.includes("/tools/access-control/")) return "access-control";
-    if (path.includes("/tools/wireless/")) return "wireless";
-    if (path.includes("/tools/thermal/")) return "thermal";
+    if (path.includes("/tools/compute/")) return "compute";
     if (path.includes("/tools/infrastructure/")) return "infrastructure";
+    if (path.includes("/tools/network/")) return "network";
     if (path.includes("/tools/performance/")) return "performance";
     if (path.includes("/tools/physical-security/")) return "physical-security";
-    if (path.includes("/tools/compute/")) return "compute";
+    if (path.includes("/tools/power/")) return "power";
+    if (path.includes("/tools/thermal/")) return "thermal";
+    if (path.includes("/tools/video-storage/")) return "video-storage";
+    if (path.includes("/tools/wireless/")) return "wireless";
 
     return null;
   }
 
-  function run() {
-    const url = new URL(window.location.href);
-    const qs = url.searchParams;
-    const path = (url.pathname || "").toLowerCase();
-    const cat = detectCategory(path);
+  async function getSession() {
+    const auth = window.SL_AUTH;
+    if (!auth) return null;
 
-    const KEY_GLOBAL = "scopedlabs_pro_all";
-    const KEY_CAT = cat ? `scopedlabs_pro_${cat}` : null;
-
-    // legacy/dev bridge
-    if (qs.get("pro") === "1") {
-      if (KEY_CAT) {
-        localStorage.setItem(KEY_CAT, "1");
-      } else {
-        localStorage.setItem(KEY_GLOBAL, "1");
-      }
-      qs.delete("pro");
-      url.search = qs.toString();
-      window.history.replaceState({}, "", url.toString());
+    if (auth.ready && typeof auth.ready.then === "function") {
+      try {
+        await auth.ready;
+      } catch {}
     }
 
-    const hasPro =
-      localStorage.getItem(KEY_GLOBAL) === "1" ||
-      (KEY_CAT && localStorage.getItem(KEY_CAT) === "1");
+    if (auth.__session) return auth.__session;
+    if (auth.sb && auth.sb.auth && auth.sb.auth.getSession) {
+      try {
+        const { data } = await auth.sb.auth.getSession();
+        return data?.session || null;
+      } catch {
+        return null;
+      }
+    }
 
+    return null;
+  }
+
+  async function hasUnlock(category) {
+    const session = await getSession();
+    if (!session?.access_token) return false;
+
+    try {
+      const resp = await fetch(`/api/unlocks/has?category=${encodeURIComponent(category)}`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      const data = await resp.json().catch(() => null);
+      return !!(resp.ok && data && data.ok && data.has);
+    } catch {
+      return false;
+    }
+  }
+
+  async function run() {
     const body = document.body;
-    const pageIsPro = !!(body && body.dataset && body.dataset.tier === "pro");
+    const pageIsPro = body?.dataset?.tier === "pro";
+    if (!pageIsPro) return;
 
-    if (pageIsPro && !hasPro) {
-      const fallbackCat = cat || "pro";
-      window.location.href = `/upgrade/?category=${encodeURIComponent(fallbackCat)}#checkout`;
-      return;
-    }
+    const category =
+      cleanSlug(body?.dataset?.category) ||
+      detectCategoryFromPath(window.location.pathname);
 
-    document.querySelectorAll("[data-pro-only]").forEach((btn) => {
-      if (!hasPro) {
-        btn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const fallbackCat = cat || "pro";
-          window.location.href = `/upgrade/?category=${encodeURIComponent(fallbackCat)}#checkout`;
-        });
-      }
-    });
+    if (!category) return;
+
+    const unlocked = await hasUnlock(category);
+    if (unlocked) return;
+
+    window.location.href = `/upgrade/?category=${encodeURIComponent(category)}#checkout`;
   }
 
   if (document.readyState === "loading") {
