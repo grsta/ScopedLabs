@@ -803,7 +803,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // change pill
     const pill = row.querySelector(".pill");
-    if (pill) pill.textContent = "Unlocked";
+    if (pill) {
+      pill.textContent = "Unlocked";
+      pill.classList.add("unlocked-pill");
+    }
 
     // make link go directly to tool
     row.href = row.dataset.tool;
