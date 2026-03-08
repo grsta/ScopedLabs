@@ -862,37 +862,44 @@
   }
 
   function initPage({ fromHistory = false, replaceUrl = false } = {}) {
+  const bodyCategory = cleanSlug(document.body?.dataset?.category);
+
+  if (isUpgradePage() || isCheckoutPage()) {
     currentCategory = getResolvedCategory();
     setStoredCategory(currentCategory);
 
     if (currentCategory) {
       updateUrlCategory(currentCategory, { replace: true });
     }
-
-    renderAll();
-    applyUnlockedCategoryUi();
-
-    if (!isCheckoutPage()) {
-      if (location.hash === "#checkout") {
-        requestAnimationFrame(() => {
-          scrollToCheckout({ instant: fromHistory });
-        });
-      }
-
-      if (getReturnParam() === "checkout") {
-        requestAnimationFrame(() => {
-          scrollToCategories({ instant: fromHistory });
-        });
-      }
-    } else if (!currentCategory) {
-      const els = getEls();
-      if (els.status) setText(els.status, "Choose a category to continue.");
-    }
-
-    if (replaceUrl && currentCategory) {
-      updateUrlCategory(currentCategory, { replace: true });
-    }
+  } else {
+    currentCategory = bodyCategory || null;
+    cleanNonUpgradeQueryParams();
   }
+
+  renderAll();
+  applyUnlockedCategoryUi();
+
+  if (!isCheckoutPage()) {
+    if (location.hash === "#checkout") {
+      requestAnimationFrame(() => {
+        scrollToCheckout({ instant: fromHistory });
+      });
+    }
+
+    if (getReturnParam() === "checkout") {
+      requestAnimationFrame(() => {
+        scrollToCategories({ instant: fromHistory });
+      });
+    }
+  } else if (!currentCategory) {
+    const els = getEls();
+    if (els.status) setText(els.status, "Choose a category to continue.");
+  }
+
+  if ((isUpgradePage() || isCheckoutPage()) && replaceUrl && currentCategory) {
+    updateUrlCategory(currentCategory, { replace: true });
+  }
+}
 
   async function start() {
     bindGlobalHandlers();
