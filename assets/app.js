@@ -776,6 +776,41 @@
   }
 
   start();
+
+  // UNLOCK CATEGORY UI ON PAGE LOAD
+document.addEventListener("DOMContentLoaded", () => {
+
+  const category = document.body.dataset.category;
+  if (!category) return;
+
+  const unlockedList = (localStorage.getItem("sl_unlocked_categories") || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const unlocked =
+    localStorage.getItem(`scopedlabs_pro_${category}`) === "1" ||
+    localStorage.getItem(`scopedlabs_pro_${category}`) === category ||
+    unlockedList.includes(category);
+
+  if (!unlocked) return;
+
+  document.querySelectorAll(".tool-row.pro[data-tool]").forEach(row => {
+
+    // remove lock icon
+    const lock = row.querySelector(".lock-icon");
+    if (lock) lock.remove();
+
+    // change pill
+    const pill = row.querySelector(".pill");
+    if (pill) pill.textContent = "Unlocked";
+
+    // make link go directly to tool
+    row.href = row.dataset.tool;
+
+  });
+
+});
 })();
 document.addEventListener("click", function (e) {
   const row = e.target.closest("a.tool-row.pro[data-tool]");
@@ -798,9 +833,6 @@ document.addEventListener("click", function (e) {
 
   const tool = row.dataset.tool;
 if (!tool) return;
-
-const lock = row.querySelector(".lock-icon");
-if (lock) lock.classList.add("is-hidden");
 
 e.preventDefault();
 e.stopImmediatePropagation();
