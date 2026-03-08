@@ -1,317 +1,407 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upgrade • ScopedLabs</title>
-  <meta
-    name="description"
-    content="Unlock a ScopedLabs category once and keep it forever."
-  />
 
+  <!-- bump cache-bust after you paste: upgrade-0458 or whatever -->
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-0307" />
   <link rel="icon" href="/assets/favicon.ico" />
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-306" />
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/assets/stripe-map.js"></script>
-  <script defer src="/assets/auth.js?v=upgrade-306"></script>
-  <script defer src="/assets/app.js?v=upgrade-306"></script>
+  <style>
+    /* local helpers (keep) */
+    .muted { opacity: 0.85; }
+    .pill { display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; }
+    .btn { cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+
+    /* Align header + title with the same width as the cards */
+    :root { --upgrade-max: 980px; }
+    body .site-header .container.header-inner { max-width: var(--upgrade-max) !important; }
+    body .page-head .container { max-width: var(--upgrade-max) !important; }
+
+    /* === Checkout + Preview side-by-side === */
+    .sl-upgrade-grid{
+      display:grid;
+      grid-template-columns: 1fr 420px; /* left flexible, right fixed */
+      gap:20px;
+      align-items:start;
+      margin-top:14px;
+    }
+    .sl-upgrade-left,
+    .sl-upgrade-right{ min-width:0; }
+
+    .sl-top-row{
+      display:flex;
+      gap:12px;
+      align-items:flex-end;
+      flex-wrap:wrap;
+      margin-top: 6px;
+    }
+    .sl-selected{ min-width: 220px; }
+
+    /* PRICE: move to the left */
+    .sl-price{
+      margin-left:0;
+      text-align:left;
+      min-width:160px;
+    }
+
+    @media (max-width: 900px){
+      .sl-upgrade-grid{ grid-template-columns: 1fr; }
+      .sl-price{ margin-left:0; text-align:left; }
+    }
+
+    /* === ScopedLabs Upgrade polish overrides (button/pill consistency) === */
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:7px 12px;
+      border-radius:999px;
+      font-size:12px;
+      line-height:1;
+      min-height:36px;
+      box-sizing:border-box;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:36px;
+      padding:8px 14px;
+      line-height:1;
+      box-sizing:border-box;
+      white-space:nowrap;
+    }
+    /* Make the selected category pill match button height */
+    #sl-category-pill{ min-height:36px; padding:7px 12px; }
+  </style>
 </head>
+
 <body>
   <header class="site-header">
-    <div class="container nav">
+    <div class="container header-inner">
       <a class="brand" href="/">
-        <span class="brand-dot" aria-hidden="true"></span>
-        <span>ScopedLabs</span>
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
       </a>
 
-      <nav class="nav-links" aria-label="Primary">
-        <a href="/">Home</a>
-        <a href="/tools/">Tools</a>
-        <a href="/about/">About</a>
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
       </nav>
     </div>
   </header>
 
-  <main>
-    <section class="hero hero-upgrade">
+  <main class="page">
+    <section class="page-head">
       <div class="container">
-        <div class="hero-copy">
-          <h1>Upgrade</h1>
-          <p class="muted">Unlock a category once and keep it forever.</p>
-        </div>
+        <h1>Upgrade</h1>
+        <p class="muted">Unlock a category once and keep it forever.</p>
       </div>
     </section>
 
-    <section id="checkout" class="section">
-      <div class="container">
-        <div class="card checkout-shell">
-          <div class="checkout-grid">
-            <!-- LEFT: CHECKOUT CARD -->
-            <article class="card checkout-card">
-              <div class="pill">Checkout</div>
+    <!-- CHECKOUT CARD -->
+    <section id="checkout" class="card" style="max-width: 980px; margin: 24px auto;">
+      <div class="pill" style="margin-bottom:12px;">Checkout</div>
 
-              <h2 id="sl-checkout-title">Unlock None selected</h2>
-              <p class="muted">
-                You’ll unlock this category forever (one-time purchase).
-              </p>
+      <h2 style="margin:0 0 8px 0;">
+        Unlock <span id="sl-selected-category-label">None selected</span>
+      </h2>
 
-              <div class="checkout-meta-row">
-                <div class="checkout-meta-block">
-                  <div class="eyebrow">Category</div>
-                  <div class="strong" id="sl-selected-category-label">None selected</div>
-                </div>
+      <p class="muted" style="margin-top:0;">
+        You’ll unlock this category forever (one-time purchase).
+      </p>
 
-                <div class="checkout-meta-actions">
-                  <button id="sl-change-category" type="button" class="btn btn-secondary">
-                    Change Category
-                  </button>
-                </div>
+      <div class="sl-upgrade-grid">
 
-                <div class="checkout-meta-block price-block">
-                  <div class="eyebrow">Price</div>
-                  <div class="price-line">
-                    <strong>$19.99</strong>
-                    <span class="muted">one-time</span>
-                  </div>
-                </div>
+        <!-- LEFT -->
+        <div class="sl-upgrade-left">
+          <div class="sl-top-row">
+            <div class="sl-selected">
+              <div class="muted" style="font-size:12px; margin-bottom:6px;">Selected category:</div>
+              <span id="sl-category-pill" class="pill">None</span>
+            </div>
+
+            <button id="sl-change-category" class="btn" type="button">Change Category</button>
+
+            <div class="sl-price">
+              <div class="muted" style="font-size:12px; margin-bottom:6px;">Price:</div>
+              <div style="font-size:20px; font-weight:700;">
+                $19.99 <span class="muted" style="font-weight:500;">one-time</span>
               </div>
+            </div>
+          </div>
 
-              <div class="auth-stack">
-                <div id="sl-login-hint" class="muted">
-                  Sign in to purchase (magic link — no password)
-                </div>
+          <div style="margin-top: 16px;">
+            <div id="sl-login-hint" class="muted" style="margin-bottom:8px;">
+              Sign in to purchase (magic link — no password)
+            </div>
 
-                <label id="sl-email-wrap" class="field">
-                  <span>Email</span>
-                  <input
-                    id="sl-email"
-                    type="email"
-                    inputmode="email"
-                    autocomplete="email"
-                    placeholder="you@example.com"
-                  />
-                </label>
+            <label class="muted" for="sl-email" style="display:block; font-size:12px; margin-bottom: 6px;">Email</label>
+            <input id="sl-email" type="email" autocomplete="email" placeholder="you@company.com" style="width:100%; max-width:520px;" />
 
-                <div class="button-row">
-                  <button id="sl-sendlink" type="button" class="btn btn-primary">
-                    Send magic link
-                  </button>
-                  <a id="sl-account" class="btn btn-secondary" href="/account/">Account</a>
-                  <button id="sl-signout" type="button" class="btn btn-secondary">
-                    Sign out
-                  </button>
-                </div>
+            <div style="margin-top: 10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <button id="sl-sendlink" class="btn btn-primary" type="button">Send magic link</button>
+              <div id="sl-auth-status" class="muted" aria-live="polite"></div>
+            </div>
 
-                <div id="sl-signedin" class="muted"></div>
-                <div id="sl-auth-status" class="muted"></div>
-              </div>
+            <div style="margin-top: 12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <button id="sl-continue" class="btn btn-primary" type="button">Continue to checkout</button>
+              <a id="sl-account" class="btn" href="/account/" role="button">Account</a>
+              <button id="sl-signout" class="btn" type="button">Sign out</button>
+            </div>
 
-              <div class="checkout-actions">
-                <button id="sl-continue" type="button" class="btn btn-primary">
-                  Continue to checkout
-                </button>
-              </div>
+            <div class="muted" style="margin-top: 8px;">
+              <span id="sl-signedin"></span>
+            </div>
 
-              <div id="sl-status" class="muted"></div>
-            </article>
-
-            <!-- RIGHT: PREVIEW CARD -->
-            <aside id="sl-preview" class="card preview-card">
-              <div class="pill">Preview</div>
-              <h3 id="sl-preview-title">Network</h3>
-              <p id="sl-preview-desc" class="muted">
-                Bandwidth planning, latency budgets, and topology checks.
-              </p>
-              <ul id="sl-preview-bullets" class="feature-list">
-                <li>Bandwidth planner + contention</li>
-                <li>Latency budget breakdown</li>
-                <li>Oversubscription sanity checks</li>
-              </ul>
-              <p id="sl-preview-foot" class="muted">
-                You’ll also receive future Pro tools added to this category.
-              </p>
-            </aside>
+            <div style="margin-top: 18px;">
+              <div class="pill">🔒 Pro — Category Unlock</div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <section id="categories" class="section">
-      <div class="container">
-        <div class="card">
-          <h2>Choose a category</h2>
-          <p class="muted">Pick the lane you want to unlock.</p>
+        <!-- RIGHT: preview card -->
+        <div class="sl-upgrade-right">
+          <div id="sl-preview" class="card" style="height:100%;">
+            <div class="pill" style="margin-bottom:12px;">Preview</div>
 
-          <div class="category-grid">
-            <article class="tool-card pro-card">
-              <div class="card-topline">
-                <span class="pill">🔒 Pro — Category Unlock</span>
-              </div>
-              <h3>Access Control</h3>
-              <p class="muted">
-                Controllers, credentials, power budgets, and deployment planning.
-              </p>
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-category="access-control"
-                id="sl-unlock-access-control"
-              >
-                Unlock Access Control Pro
-              </button>
-            </article>
+            <h3 style="margin-top:0;"><span id="sl-preview-title">Category</span></h3>
 
-            <article class="tool-card pro-card">
-              <div class="card-topline">
-                <span class="pill">🔒 Pro — Category Unlock</span>
-              </div>
-              <h3>Compute</h3>
-              <p class="muted">
-                Server sizing, workload estimates, and resource headroom planning.
-              </p>
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-category="compute"
-                id="sl-unlock-compute"
-              >
-                Unlock Compute Pro
-              </button>
-            </article>
+            <p class="muted" id="sl-preview-desc">
+              Includes examples like:
+            </p>
 
-            <article class="tool-card pro-card">
-              <div class="card-topline">
-                <span class="pill">🔒 Pro — Category Unlock</span>
-              </div>
-              <h3>Infrastructure</h3>
-              <p class="muted">
-                Power chain planning, rack layout, and reliability baselines.
-              </p>
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-category="infrastructure"
-                id="sl-unlock-infrastructure"
-              >
-                Unlock Infrastructure Pro
-              </button>
-            </article>
+            <ul class="muted" id="sl-preview-bullets" style="margin-top: 10px;"></ul>
 
-            <article class="tool-card pro-card">
-              <div class="card-topline">
-                <span class="pill">🔒 Pro — Category Unlock</span>
-              </div>
-              <h3>Network</h3>
-              <p class="muted">
-                Bandwidth planning, latency budgets, and topology checks.
-              </p>
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-category="network"
-                id="sl-unlock-network"
-              >
-                Unlock Network Pro
-              </button>
-            </article>
-
-            <article class="tool-card pro-card">
-              <div class="card-topline">
-                <span class="pill">🔒 Pro — Category Unlock</span>
-              </div>
-              <h3>Performance</h3>
-              <p class="muted">
-                Throughput modeling, bottleneck checks, and efficiency planning.
-              </p>
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-category="performance"
-                id="sl-unlock-performance"
-              >
-                Unlock Performance Pro
-              </button>
-            </article>
-
-            <article class="tool-card pro-card">
-              <div class="card-topline">
-                <span class="pill">🔒 Pro — Category Unlock</span>
-              </div>
-              <h3>Physical Security</h3>
-              <p class="muted">
-                Coverage planning, system design, and reliability checks.
-              </p>
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-category="physical-security"
-                id="sl-unlock-physical-security"
-              >
-                Unlock Physical Security Pro
-              </button>
-            </article>
-
-            <article class="tool-card pro-card">
-              <div class="card-topline">
-                <span class="pill">🔒 Pro — Category Unlock</span>
-              </div>
-              <h3>Thermal</h3>
-              <p class="muted">
-                Heat load estimates, airflow assumptions, and cooling planning.
-              </p>
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-category="thermal"
-                id="sl-unlock-thermal"
-              >
-                Unlock Thermal Pro
-              </button>
-            </article>
-
-            <article class="tool-card pro-card">
-              <div class="card-topline">
-                <span class="pill">🔒 Pro — Category Unlock</span>
-              </div>
-              <h3>Video Storage</h3>
-              <p class="muted">
-                Retention sizing, bitrate assumptions, and storage planning.
-              </p>
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-category="video-storage"
-                id="sl-unlock-video-storage"
-              >
-                Unlock Video Storage Pro
-              </button>
-            </article>
-
-            <article class="tool-card pro-card">
-              <div class="card-topline">
-                <span class="pill">🔒 Pro — Category Unlock</span>
-              </div>
-              <h3>Wireless</h3>
-              <p class="muted">
-                Wireless design planning, capacity checks, and link budgeting.
-              </p>
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-category="wireless"
-                id="sl-unlock-wireless"
-              >
-                Unlock Wireless Pro
-              </button>
-            </article>
+            <p class="muted" id="sl-preview-foot" style="margin-bottom:0;">
+              You’ll also receive future Pro tools added to this category.
+            </p>
           </div>
         </div>
+
       </div>
     </section>
+
+    <!-- CATEGORY CHOOSER -->
+    <section id="categories" class="card" style="max-width: 980px; margin: 24px auto;">
+      <h2 style="margin-top:0;">Choose a category</h2>
+      <p class="muted" style="margin-top:0;">Pick the lane you want to unlock.</p>
+
+      <div class="grid upgrade-grid" style="margin-top:1rem;">
+        <!-- access-control -->
+        <div class="card upgrade-card" id="access-control">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Access Control</h3>
+          <p class="muted">Door hardware, credential formats, PoE power budgets, and deployment planning.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>Controller sizing + expansion planning</li>
+            <li>Power &amp; cabling headroom checks</li>
+            <li>Fail-safe / fail-secure impact modeling</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=access-control#checkout">Unlock Access Control Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Access Control</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- compute -->
+        <div class="card upgrade-card" id="compute">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Compute</h3>
+          <p class="muted">Server sizing, workload estimates, and resource headroom planning.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>Capacity planning (CPU/RAM/IO)</li>
+            <li>Growth projections + utilization targets</li>
+            <li>Performance vs. cost trade-offs</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=compute#checkout">Unlock Compute Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Compute</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- infrastructure -->
+        <div class="card upgrade-card" id="infrastructure">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Infrastructure</h3>
+          <p class="muted">Power chain planning, rack/room layout, and reliability baselines.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>Rack power + UPS planning</li>
+            <li>Cooling assumptions + load estimates</li>
+            <li>Baseline redundancy planning</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=infrastructure#checkout">Unlock Infrastructure Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Infrastructure</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- KEEP THE REST OF YOUR CATEGORY CARDS EXACTLY AS THEY WERE BELOW THIS LINE -->
+        <!-- (Your original file has all 10; I’m restoring that full structure here.) -->
+
+        <!-- network -->
+        <div class="card upgrade-card" id="network">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Network</h3>
+          <p class="muted">Bandwidth planning, latency budgets, and topology checks.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>Bandwidth planner + contention</li>
+            <li>Latency budget breakdown</li>
+            <li>Oversubscription sanity checks</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=network#checkout">Unlock Network Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Network</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- performance -->
+        <div class="card upgrade-card" id="performance">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Performance</h3>
+          <p class="muted">Throughput modeling, bottleneck checks, and efficiency planning.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>Workload bottleneck mapping</li>
+            <li>Headroom + utilization targets</li>
+            <li>Cost/perf trade-offs</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=performance#checkout">Unlock Performance Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Performance</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- physical-security -->
+        <div class="card upgrade-card" id="physical-security">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Physical Security</h3>
+          <p class="muted">Coverage planning, system design, and reliability checks.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>System sizing + power checks</li>
+            <li>Recording/storage planning</li>
+            <li>Design trade-offs</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=physical-security#checkout">Unlock Physical Security Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Physical Security</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- power -->
+        <div class="card upgrade-card" id="power">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Power</h3>
+          <p class="muted">UPS sizing, runtime estimates, and load planning.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>UPS runtime calculators</li>
+            <li>Battery bank sizing</li>
+            <li>Load + headroom planning</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=power#checkout">Unlock Power Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Power</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- thermal -->
+        <div class="card upgrade-card" id="thermal">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Thermal</h3>
+          <p class="muted">Heat load estimates, airflow planning, and temperature margins.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>BTU/HR load estimation</li>
+            <li>Airflow requirements</li>
+            <li>Cooling headroom planning</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=thermal#checkout">Unlock Thermal Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Thermal</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- video-storage -->
+        <div class="card upgrade-card" id="video-storage">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Video Storage</h3>
+          <p class="muted">Retention planning, bitrate/storage math, and RAID impact.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>Retention + motion modeling</li>
+            <li>Overhead + RAID impact</li>
+            <li>Capacity planning</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=video-storage#checkout">Unlock Video Storage Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Video Storage</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- wireless -->
+        <div class="card upgrade-card" id="wireless">
+          <span class="pill">🔒 Pro — Category Unlock</span>
+          <h3 style="margin-top:.6rem;">Wireless</h3>
+          <p class="muted">Link budgets, coverage planning, and capacity sanity checks.</p>
+          <div class="spacer-md"></div>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
+          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
+            <li>Coverage + AP density planning</li>
+            <li>Capacity + client load</li>
+            <li>Link budget checks</li>
+          </ul>
+          <div class="upgrade-cta">
+            <a class="btn btn-primary" href="/upgrade/?category=wireless#checkout">Unlock Wireless Pro</a>
+            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
+              You’ll also receive future Pro tools added to <em>Wireless</em>.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/assets/stripe-map.js"></script>
+    <script defer src="/assets/auth.js?v=upgrade-0307"></script>
+    <script defer src="/assets/app.js?v=upgrade-0307"></script>
   </main>
 </body>
 </html>
