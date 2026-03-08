@@ -806,3 +806,5 @@ document.addEventListener("click", function (e) {
   window.location.assign(tool);
 }, true);
 
+if (lock) lock.classList.add("is-hidden");
+

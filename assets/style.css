@@ -1670,3 +1670,5 @@ main h3.section-title {
   gap: 24px;
   align-items: stretch;
 }
+
+.is-hidden { display: none !important; }
