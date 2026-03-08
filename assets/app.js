@@ -622,17 +622,12 @@
       event.preventDefault();
       event.stopPropagation();
 
-      if (isCheckoutPage()) {
-        const cat = currentCategory || getResolvedCategory();
-        const query = cat
-          ? `?category=${encodeURIComponent(cat)}&return=checkout`
-          : "?return=checkout";
-        location.href = `${UPGRADE_PATH}${query}#categories`;
-      } else {
-        requestAnimationFrame(() => {
-          scrollToCategories({ instant: false });
-        });
-      }
+      const cat = currentCategory || getResolvedCategory();
+      const query = cat
+        ? `?category=${encodeURIComponent(cat)}&return=checkout`
+        : "?return=checkout";
+
+      location.href = `${UPGRADE_PATH}${query}#categories`;
       return;
     }
 
