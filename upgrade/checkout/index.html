@@ -5,77 +5,171 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Checkout · ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=upgrade-ui-0462">
+  <link rel="stylesheet" href="/assets/style.css?v=upgrade-ui-0465">
   <link rel="icon" href="/assets/favicon.ico" />
+
+  <style>
+    :root { --checkout-max: 980px; }
+
+    .muted { opacity: 0.85; }
+
+    body .site-header .container.header-inner,
+    body .page-head .container {
+      max-width: var(--checkout-max) !important;
+    }
+
+    .sl-checkout-grid{
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:20px;
+      align-items:start;
+      margin-top:14px;
+    }
+
+    .sl-checkout-left,
+    .sl-checkout-right{
+      min-width:0;
+    }
+
+    .sl-top-row{
+      display:flex;
+      gap:12px;
+      align-items:flex-end;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+
+    .sl-price{
+      margin-left:auto;
+      text-align:right;
+      min-width:160px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:7px 12px;
+      border-radius:999px;
+      font-size:12px;
+      line-height:1;
+      min-height:36px;
+      box-sizing:border-box;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:36px;
+      padding:8px 14px;
+      line-height:1;
+      box-sizing:border-box;
+      white-space:nowrap;
+      cursor:pointer;
+    }
+
+    @media (max-width: 900px){
+      .sl-checkout-grid{
+        grid-template-columns:1fr;
+      }
+
+      .sl-price{
+        margin-left:0;
+        text-align:left;
+      }
+    }
+  </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/assets/stripe-map.js"></script>
-  <script defer src="/assets/auth.js?v=upgrade-ui-0462"></script>
-  <script defer src="/assets/app.js?v=upgrade-ui-0462"></script>
+  <script defer src="/assets/auth.js?v=upgrade-ui-0465"></script>
+  <script defer src="/assets/app.js?v=upgrade-ui-0465"></script>
 </head>
 
 <body>
   <header class="site-header">
-    <div class="brand">
-      <span class="dot"></span>
-      <a href="/" class="brand-link">ScopedLabs</a>
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
     </div>
-    <nav class="nav">
-      <a href="/">Home</a>
-      <a href="/tools/">Tools</a>
-      <a href="/about/">About</a>
-    </nav>
   </header>
 
   <main class="page">
     <section class="page-head">
-      <h1>Checkout</h1>
-      <p class="muted">Complete your one-time category unlock.</p>
+      <div class="container">
+        <h1>Checkout</h1>
+        <p class="muted">Complete your one-time category unlock.</p>
+      </div>
     </section>
 
-    <section id="sl-checkout-card" class="card" style="max-width: 980px; margin: 24px auto;">
-      <div class="pill" style="margin-bottom:12px;">Checkout</div>
+    <section id="checkout" class="card" style="max-width: 980px; margin: 24px auto;">
+      <div class="sl-checkout-grid">
 
-      <div id="sl-checkout-grid" class="grid" style="gap:18px; align-items:start;">
-        <!-- LEFT: action -->
-        <div>
-          <h2 id="sl-checkout-title" style="margin:0 0 8px 0;">Unlock <span id="sl-selected-category-label">None selected</span></h2>
+        <!-- LEFT -->
+        <div class="sl-checkout-left">
+          <div class="pill" style="margin-bottom:12px;">Checkout</div>
+
+          <h2 id="sl-checkout-title" style="margin:0 0 8px 0;">Unlock None selected</h2>
           <p class="muted" style="margin-top:0;">You’ll unlock this category forever (one-time purchase).</p>
 
-          <div class="row" style="gap:10px; flex-wrap:wrap; margin: 12px 0;">
-            <div>
-              <div class="muted" style="font-size:12px;">Selected category</div>
-              <span id="sl-selected-category" class="pill">None</span>
-            </div>
-
+          <div class="sl-top-row">
             <button id="sl-change-category" class="btn" type="button">Choose a different category</button>
 
-            <div style="margin-left:auto;">
-              <div class="muted" style="font-size:12px; text-align:right;">Price</div>
-              <div style="font-size:20px; font-weight:700; text-align:right;">$19.99 <span class="muted" style="font-size:12px;">one-time</span></div>
+            <div class="sl-price">
+              <div class="muted" style="font-size:12px; margin-bottom:6px;">Price</div>
+              <div style="font-size:20px; font-weight:700;">
+                $19.99 <span class="muted" style="font-size:12px;">one-time</span>
+              </div>
             </div>
           </div>
 
           <div class="hr" style="margin: 14px 0;"></div>
 
           <div id="sl-must-signin" class="muted" style="margin: 0 0 8px 0;">You must be signed in to continue.</div>
+          <div id="sl-signedin" class="muted" style="margin: 0 0 8px 0;"></div>
 
           <div class="row" style="gap:10px; flex-wrap:wrap;">
-            <button id="sl-continue" class="btn btn-primary" type="button">Secure Checkout</button>
-            <button id="sl-account" class="btn" type="button">Account</button>
+            <button id="sl-checkout" class="btn btn-primary" type="button">Secure Checkout</button>
+            <a id="sl-account" class="btn" href="/account/" role="button">Account</a>
             <button id="sl-signout" class="btn" type="button">Sign out</button>
           </div>
 
           <div id="sl-status" class="muted" style="margin-top:10px;"></div>
-          <div id="sl-auth-state" class="muted" style="margin-top:6px;"></div>
         </div>
 
-        <!-- RIGHT: preview -->
-        <div id="sl-selected-category-preview-checkout"></div>
+        <!-- RIGHT -->
+        <div class="sl-checkout-right">
+          <div id="sl-preview" class="card" style="height:100%;">
+            <div class="pill" style="margin-bottom:12px;">🔒 Pro — Category Unlock</div>
+
+            <h3 style="margin-top:0;">
+              <span id="sl-preview-title">None selected</span>
+            </h3>
+
+            <p class="muted" id="sl-preview-desc">
+              Select a category to see its preview.
+            </p>
+
+            <ul class="muted" id="sl-preview-bullets" style="margin-top: 10px;"></ul>
+
+            <p class="muted" id="sl-preview-foot" style="margin-bottom:0;">
+              You’ll also receive future Pro tools added to this category.
+            </p>
+          </div>
+        </div>
+
       </div>
     </section>
   </main>
 </body>
 </html>
-
 

@@ -5,11 +5,7 @@
    - browser back/forward cache
    - return-to-checkout loops
    - preview card / heading desync
-
-   Intent:
-   - Upgrade page uses the preview card + main heading as source of truth
-   - Checkout page keeps its selected-category label in sync
-   - No dependency on the old upgrade-page selected-category pill
+   - checkout signed-in UI drift
 */
 
 (() => {
@@ -176,14 +172,12 @@
 
   function getEls() {
     return {
-      // upgrade + checkout shared
       checkoutTitle: document.getElementById("sl-checkout-title"),
       changeCategory: document.getElementById("sl-change-category"),
       continueBtn: document.getElementById("sl-continue"),
       accountBtn: document.getElementById("sl-account"),
       signoutBtn: document.getElementById("sl-signout"),
 
-      // auth UI
       loginHint: document.getElementById("sl-login-hint"),
       emailWrap: document.getElementById("sl-email-wrap"),
       email: document.getElementById("sl-email"),
@@ -191,12 +185,11 @@
       signedInLine: document.getElementById("sl-signedin"),
       authStatus: document.getElementById("sl-auth-status"),
 
-      // checkout specific
       selectedLabelCheckout: document.getElementById("sl-selected-category-label"),
       checkoutBtn: document.getElementById("sl-checkout"),
       status: document.getElementById("sl-status"),
+      mustSignin: document.getElementById("sl-must-signin"),
 
-      // preview card
       preview: document.getElementById("sl-preview"),
       previewTitle: document.getElementById("sl-preview-title"),
       previewDesc: document.getElementById("sl-preview-desc"),
@@ -321,42 +314,39 @@
   }
 
   function renderSignedInUi() {
-  const emailWrap = document.getElementById("sl-email-wrap");
-  const loginHint = document.getElementById("sl-login-hint");
-  const sendLink = document.getElementById("sl-sendlink");
-  const signedIn = document.getElementById("sl-signedin");
-  const authStatus = document.getElementById("sl-auth-status");
+    const els = getEls();
+    const email =
+      currentSession &&
+      currentSession.user &&
+      currentSession.user.email
+        ? currentSession.user.email
+        : "";
 
-  const email =
-    currentSession &&
-    currentSession.user &&
-    currentSession.user.email
-      ? currentSession.user.email
-      : "";
+    if (els.signedInLine) {
+      els.signedInLine.textContent = email ? `Signed in as ${email}` : "";
+      els.signedInLine.style.display = email ? "" : "none";
+    }
 
-  if (signedIn) {
-    signedIn.textContent = email ? `Signed in as ${email}` : "";
+    if (els.mustSignin) {
+      els.mustSignin.style.display = email ? "none" : "";
+    }
+
+    if (els.emailWrap) {
+      els.emailWrap.style.display = email ? "none" : "";
+    }
+
+    if (els.loginHint) {
+      els.loginHint.style.display = email ? "none" : "";
+    }
+
+    if (els.sendLink) {
+      els.sendLink.style.display = email ? "none" : "";
+    }
+
+    if (els.authStatus && email) {
+      els.authStatus.textContent = "";
+    }
   }
-
-  /* hide email field + label wrapper when signed in */
-  if (emailWrap) {
-    emailWrap.style.display = email ? "none" : "";
-  }
-
-  /* hide login hint when signed in */
-  if (loginHint) {
-    loginHint.style.display = email ? "none" : "";
-  }
-
-  /* hide send link button when signed in */
-  if (sendLink) {
-    sendLink.style.display = email ? "none" : "";
-  }
-
-  if (authStatus && email) {
-    authStatus.textContent = "";
-  }
-}
 
   function renderButtons() {
     const els = getEls();
@@ -589,7 +579,6 @@
 
   function handleDocumentClick(event) {
     const target = event.target;
-    const els = getEls();
 
     const categoryTarget = findCategoryTarget(target);
     if (categoryTarget) {
