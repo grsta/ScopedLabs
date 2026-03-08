@@ -68,7 +68,7 @@
       if (!hasPro) {
         btn.addEventListener("click", e => {
           e.preventDefault();
-          window.location.href = "/upgrade/";
+          window.location.href = `/upgrade/?category=${encodeURIComponent(cat)}#checkout`;
         });
       }
     });
