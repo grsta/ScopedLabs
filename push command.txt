@@ -1,7 +1,7 @@
 push command
 
 git add -A
-git commit -m "Hide signed-in buttons until authenticated"
+git commit -m "Removed the selected category pill on upgrade html"
 git push origin main
 
 
