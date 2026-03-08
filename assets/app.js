@@ -237,6 +237,30 @@
     } catch {}
   }
 
+  function cleanNonUpgradeQueryParams() {
+    try {
+      if (isUpgradePage() || isCheckoutPage()) return;
+
+      const url = new URL(location.href);
+      let changed = false;
+
+      if (url.searchParams.has("category")) {
+        url.searchParams.delete("category");
+        changed = true;
+      }
+
+      if (url.searchParams.has("return")) {
+        url.searchParams.delete("return");
+        changed = true;
+      }
+
+      if (!changed) return;
+
+      const next = url.pathname + url.search + url.hash;
+      history.replaceState({}, "", next);
+    } catch {}
+  }
+
   function scrollToCheckout({ instant = false } = {}) {
     const el =
       document.getElementById("checkout") ||
