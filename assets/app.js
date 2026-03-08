@@ -770,66 +770,39 @@
       }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    
 
-  const unlocked = localStorage.getItem("sl_unlocked_categories") || "";
-  const category = document.body.dataset.category;
 
-  if (!category) return;
-
-  if (unlocked.includes(category)) {
-    document.querySelectorAll(".pro-tool").forEach(el => {
-      el.classList.remove("locked");
-    });
-  }
-
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-
-  const unlocked = localStorage.getItem("sl_unlocked_categories") || "";
-  const category = document.body.dataset.category;
-
-  if (!category) return;
-
-  if (!unlocked.includes(category)) return;
-
-  document.querySelectorAll(".pro-tool").forEach(el => {
-
-    const toolLink = el.getAttribute("data-tool");
-
-    if (!toolLink) return;
-
-    const btn = el.querySelector("a");
-
-    if (btn) btn.href = toolLink;
-
-  });
-
-});
   }
 
   start();
 })();
-document.addEventListener("click", (e) => {
-  const row = e.target.closest(".tool-row.pro[data-tool]");
+document.addEventListener("click", function (e) {
+  const row = e.target.closest("a.tool-row.pro[data-tool]");
   if (!row) return;
 
   const category = document.body.dataset.category;
   if (!category) return;
 
+  const unlockedList = (localStorage.getItem("sl_unlocked_categories") || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+
   const unlocked =
     localStorage.getItem(`scopedlabs_pro_${category}`) === "1" ||
-    (localStorage.getItem("sl_unlocked_categories") || "")
-      .split(",")
-      .map(s => s.trim())
-      .includes(category);
+    localStorage.getItem(`scopedlabs_pro_${category}`) === category ||
+    unlockedList.includes(category);
 
   if (!unlocked) return;
 
+  const tool = row.dataset.tool;
+  if (!tool) return;
+
   e.preventDefault();
+  e.stopImmediatePropagation();
   e.stopPropagation();
 
-  window.location.href = row.dataset.tool;
+  window.location.assign(tool);
 }, true);
 
