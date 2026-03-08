@@ -811,3 +811,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   start();
 })();
+document.addEventListener("click", (e) => {
+  const row = e.target.closest(".tool-row.pro[data-tool]");
+  if (!row) return;
+
+  const category = document.body.dataset.category;
+  if (!category) return;
+
+  const unlocked =
+    localStorage.getItem(`scopedlabs_pro_${category}`) === "1" ||
+    (localStorage.getItem("sl_unlocked_categories") || "")
+      .split(",")
+      .map(s => s.trim())
+      .includes(category);
+
+  if (!unlocked) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  window.location.href = row.dataset.tool;
+}, true);
+
