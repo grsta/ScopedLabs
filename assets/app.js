@@ -797,14 +797,17 @@ document.addEventListener("click", function (e) {
   if (!unlocked) return;
 
   const tool = row.dataset.tool;
-  if (!tool) return;
+if (!tool) return;
 
-  e.preventDefault();
-  e.stopImmediatePropagation();
-  e.stopPropagation();
+const lock = row.querySelector(".lock-icon");
+if (lock) lock.classList.add("is-hidden");
 
-  window.location.assign(tool);
+e.preventDefault();
+e.stopImmediatePropagation();
+e.stopPropagation();
+
+window.location.assign(tool);
 }, true);
 
-if (lock) lock.classList.add("is-hidden");
+
 
