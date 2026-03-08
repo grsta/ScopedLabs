@@ -474,7 +474,12 @@
             const signedInNow =
               !!(currentSession && currentSession.user && currentSession.user.email);
 
-            if (returning && signedInNow && currentCategory) {
+            if (
+              returning &&
+              signedInNow &&
+              currentCategory &&
+              location.hash !== "#categories"
+            ) {
               goToCheckout(currentCategory);
             }
           }
@@ -755,7 +760,12 @@
       const signedIn =
         !!(currentSession && currentSession.user && currentSession.user.email);
 
-      if (returning && signedIn && currentCategory) {
+      if (
+        returning &&
+        signedIn &&
+        currentCategory &&
+        location.hash !== "#categories"
+      ) {
         goToCheckout(currentCategory);
       }
     }
