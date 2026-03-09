@@ -32,7 +32,7 @@
 </head>
 
 
-<body data-protected="true" data-tier="pro" data-category="advanced-storage-planner">
+<body data-protected="true" data-tier="pro" data-category="video-storage">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -193,7 +193,7 @@
 
         <h2 class="h2">Ingest &amp; retention</h2>
         <p class="muted" style="margin-top:-4px;">
-          Average retention is your steady-state expectation. Peak retention shows Ã¢â‚¬Å“worst caseÃ¢â‚¬Â if bitrate spikes persist.
+          Average retention is your steady-state expectation. Peak retention shows “worst case" if bitrate spikes persist.
         </p>
 
         <div class="results-grid" id="results" aria-live="polite"></div>
@@ -205,26 +205,18 @@
     </section>
 
     <footer class="site-footer" style="margin-top:22px;">
-      <div class="muted">Ã‚Â© <span data-year></span> ScopedLabs</div>
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
     </footer>
   </main>
 
   <script>
     (function () {
       // Gate: show Pro tool only when ?pro=1
-      const qs = new URLSearchParams(window.location.search);
-      const isPro = qs.get("pro") === "1";
       const locked = document.getElementById("lockedView");
       const pro = document.getElementById("proView");
 
-      if (isPro) {
-        locked.style.display = "none";
-        pro.style.display = "";
-      } else {
-        locked.style.display = "";
-        pro.style.display = "none";
-        return;
-      }
+      if (locked) locked.style.display = "none";
+      if (pro) pro.style.display = "";
 
       const $ = (id) => document.getElementById(id);
       const resultsEl = $("results");
