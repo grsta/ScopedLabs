@@ -186,21 +186,9 @@
 
   <script>
     (function () {
-      const params = new URLSearchParams(window.location.search);
-      const isPro = params.get("pro") === "1";
-      const locked = document.getElementById("lockedView");
-      const pro = document.getElementById("proView");
       const yearEl = document.querySelector("[data-year]");
       if (yearEl) yearEl.textContent = new Date().getFullYear();
-
-      if (isPro) {
-        locked.style.display = "none";
-        pro.style.display = "";
-      } else {
-        locked.style.display = "";
-        pro.style.display = "none";
-        return;
-      }
+   
 
       const $ = (id) => document.getElementById(id);
       const results = $("results");
