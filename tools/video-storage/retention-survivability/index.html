@@ -8,7 +8,9 @@
 
   <!-- Absolute paths so folder depth never breaks -->
   <link rel="stylesheet" href="/assets/style.css?v=vs-ret-pro-001" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>`r`n<script defer src="/assets/auth.js?v=0314"></script>`r`n<script defer src="/assets/app.js?v=0314"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=0314"></script>
+  <script defer src="/assets/app.js?v=0314"></script>
 </head>
 
 <body data-protected="true" data-tier="pro" data-category="video-storage">
@@ -38,7 +40,7 @@
 
     <section class="page-head">
       <h1 class="h1">Retention Survivability Estimator</h1>
-      <p class="subhead">Quantify how degraded arrays or capacity loss reduces effective retention Ã¢â‚¬â€ and flag retention cliffs.</p>
+      <p class="subhead">Quantify how degraded arrays or capacity loss reduces effective retention and flag retention cliffs.</p>
       <p class="tool-best-for">
       <strong>Best for:</strong> analyzing how storage failures or overload conditions affect retention guarantees.
       </p>
@@ -49,7 +51,7 @@
       <p class="muted" style="margin:0; line-height:1.55;">
         This tool converts <strong>usable capacity loss</strong> (failed drive, degraded RAID, reallocation, reserve) into
         <strong>effective retention days</strong>. It also estimates <strong>days lost</strong>, identifies
-        <strong>retention cliffs</strong>, and provides a simple <strong>risk flag</strong> when youÃ¢â‚¬â„¢re operating too close to the edge.
+        <strong>retention cliffs</strong>, and provides a simple <strong>risk flag</strong> when you're operating too close to the edge.
       </p>
     </section>
 
@@ -59,7 +61,7 @@
         <span class="pill pill--pro">Pro / Advanced</span>
       </div>
 
-      <h2 class="h2">Ã°Å¸â€â€™ Locked</h2>
+      <h2 class="h2">Locked</h2>
       <p class="muted">This estimator is included with Pro access for the Video &amp; Storage category.</p>
 
       <p class="muted"><strong>What this models</strong></p>
@@ -179,16 +181,16 @@
         </p>
 
         <div class="result-lines">
-          <div class="row"><span>Baseline retention</span><strong id="outBaseline">Ã¢â‚¬â€</strong></div>
-          <div class="row"><span>Effective retention (degraded)</span><strong id="outEffective">Ã¢â‚¬â€</strong></div>
-          <div class="row"><span>Days lost (effective)</span><strong id="outDaysLost">Ã¢â‚¬â€</strong></div>
-          <div class="row"><span>Meets retention goal?</span><strong id="outMeetsGoal" class="muted">Ã¢â‚¬â€</strong></div>
+          <div class="row"><span>Baseline retention</span><strong id="outBaseline"></strong></div>
+          <div class="row"><span>Effective retention (degraded)</span><strong id="outEffective"></strong></div>
+          <div class="row"><span>Days lost (effective)</span><strong id="outDaysLost"></strong></div>
+          <div class="row"><span>Meets retention goal?</span><strong id="outMeetsGoal" class="muted"></strong></div>
 
-          <div class="row" style="margin-top:10px;"><span>Recommended baseline (with headroom)</span><strong id="outRecommended">Ã¢â‚¬â€</strong></div>
-          <div class="row"><span>Headroom margin required</span><strong id="outHeadroomNeed">Ã¢â‚¬â€</strong></div>
+          <div class="row" style="margin-top:10px;"><span>Recommended baseline (with headroom)</span><strong id="outRecommended"></strong></div>
+          <div class="row"><span>Headroom margin required</span><strong id="outHeadroomNeed"></strong></div>
 
-          <div class="row" style="margin-top:10px;"><span>Degraded period impact (days lost)</span><strong id="outDegradedImpact">Ã¢â‚¬â€</strong></div>
-          <div class="row"><span>Risk flag</span><strong id="outRisk" class="muted">Ã¢â‚¬â€</strong></div>
+          <div class="row" style="margin-top:10px;"><span>Degraded period impact (days lost)</span><strong id="outDegradedImpact"></strong></div>
+          <div class="row"><span>Risk flag</span><strong id="outRisk" class="muted"></strong></div>
 
           <div class="row" style="margin-top:10px;"><span>Status</span><strong id="statusText" class="muted">Enter values and calculate.</strong></div>
         </div>
@@ -198,7 +200,7 @@
             <span class="pill">Interpretation</span>
           </div>
           <p class="muted" id="outNarrative" style="margin:0;">
-            Ã¢â‚¬â€
+  
           </p>
         </div>
 
@@ -209,7 +211,7 @@
     </section>
 
     <footer class="site-footer" style="margin-top:22px;">
-      <div class="muted">Ã‚Â© <span data-year></span> ScopedLabs</div>
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
     </footer>
   </main>
 
