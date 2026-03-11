@@ -1679,3 +1679,8 @@ main h3.section-title {
   color: #22c55e;
   font-weight: 600;
 }
+.tool-best-for{
+  font-size:0.9rem;
+  color:#9aa5b1;
+  margin-top:4px;
+}
