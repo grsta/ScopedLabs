@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Redundancy Impact Model *ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=power-pro-003" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>`r`n<script defer src="/assets/auth.js?v=0314"></script>`r`n<script defer src="/assets/app.js?v=0314"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=power-pro-004" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=0314"></script>
+  <script defer src="/assets/app.js?v=0314"></script>
 </head>
 
 <body data-protected="true" data-tier="pro" data-category="power">
@@ -44,7 +46,7 @@
         <span class="pill pro">Pro / Advanced</span>
       </div>
 
-      <h2 class="tool-title"> Locked</h2>
+      <h2 class="tool-title">Locked</h2>
       <p class="tool-desc">
         This advanced model is included with Pro access for the Power &amp; Runtime category.
       </p>
@@ -64,10 +66,6 @@
       <div class="btn-row">
         <a class="btn" href="/tools/power/">Back to Power &amp; Runtime</a>
         <a class="btn btn-primary" href="/upgrade/?category=power">Unlock Pro</a>
-      </div>
-
-      <div class="muted" style="font-size:.85rem; margin-top:.75rem;">
-        Dev unlock: add <code>?pro=1</code> to the URL.
       </div>
     </section>
 
@@ -124,8 +122,8 @@
         </div>
 
         <div class="btn-row" style="margin-top:1rem;">
-          <button id="calc" class="btn btn-primary">Run Model</button>
-          <button id="reset" class="btn">Reset</button>
+          <button id="calc" class="btn btn-primary" type="button">Run Model</button>
+          <button id="reset" class="btn" type="button">Reset</button>
         </div>
       </div>
 
@@ -144,23 +142,22 @@
 
 <script>
 (function () {
-  const params = new URLSearchParams(location.search);
-  const unlocked =
-    params.get("pro") === "1" ||
-    localStorage.getItem("scopedlabs_pro_power") === "1";
-
   const locked = document.getElementById("lockedCard");
   const tool = document.getElementById("toolCard");
-  if (unlocked) { locked.style.display="none"; tool.style.display=""; }
 
-  function num(id){ return Number(document.getElementById(id).value)||0; }
+  if (locked) locked.style.display = "none";
+  if (tool) tool.style.display = "";
+
+  function num(id) {
+    return Number(document.getElementById(id).value) || 0;
+  }
 
   document.getElementById("calc").onclick = () => {
     const mtbf = num("mtbf");
     const mttr = num("mttr");
     const maintN = num("maintN");
     const maintH = num("maintH");
-    const penalty = num("penalty")/100;
+    const penalty = num("penalty") / 100;
     const arch = document.getElementById("arch").value;
 
     let failureDowntime = (8760 / mtbf) * mttr;
@@ -170,6 +167,7 @@
       failureDowntime *= 0.3;
       maintenanceDowntime *= 0.5;
     }
+
     if (arch === "dual") {
       failureDowntime *= 0.1;
       maintenanceDowntime *= 0.2;
@@ -187,7 +185,7 @@
     `;
   };
 
-  document.getElementById("reset").onclick = ()=>location.reload();
+  document.getElementById("reset").onclick = () => location.reload();
 })();
 </script>
 </body>
