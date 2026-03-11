@@ -6,8 +6,10 @@
   <title>Latency Budget Calculator *ScopedLabs</title>
   <meta name="description" content="Model end-to-end delay and identify where latency contributors are introduced." />
 
-  <link rel="stylesheet" href="/assets/style.css?v=net-latency-003" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>`r`n<script defer src="/assets/auth.js?v=0314"></script>`r`n<script defer src="/assets/app.js?v=0314"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=net-latency-004" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=0314"></script>
+  <script defer src="/assets/app.js?v=0314"></script>
 </head>
 
 <body data-protected="true" data-tier="pro" data-category="network">
@@ -40,6 +42,9 @@
       <p class="subhead">
         Build an end-to-end latency budget and identify where delay is being introduced.
       </p>
+      <p class="tool-best-for">
+        <strong>Best for:</strong> modeling end-to-end delay and identifying which stage dominates latency.
+      </p>
     </section>
 
     <section class="card">
@@ -57,7 +62,7 @@
         <span class="pill pill--pro">Pro / Advanced</span>
       </div>
 
-      <h2 class="h2">Ã°Å¸â€â€™ Locked</h2>
+      <h2 class="h2">🔒 Locked</h2>
       <p class="muted">This tool is included with Pro access for the Network &amp; Throughput category.</p>
 
       <p class="muted"><strong>What this models</strong></p>
@@ -72,10 +77,6 @@
       <div class="actions">
         <a class="btn" href="/tools/network/">Back to Network &amp; Throughput</a>
         <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Network &amp; Throughput</a>
-      </div>
-
-      <div class="muted" style="font-size:.85rem; margin-top:.85rem; opacity:.85;">
-        Dev unlock: add <code>?pro=1</code> to the URL.
       </div>
     </section>
 
@@ -141,8 +142,8 @@
         </div>
 
         <div class="actions" style="margin-top:1rem;">
-          <button id="calc" class="btn btn-primary">Calculate</button>
-          <button id="reset" class="btn">Reset</button>
+          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+          <button id="reset" class="btn" type="button">Reset</button>
           <a class="btn" href="/tools/network/">Back to Network &amp; Throughput</a>
         </div>
 
@@ -160,28 +161,26 @@
     </section>
 
     <footer class="site-footer">
-      <div class="muted">Ã‚Â© <span data-year></span> ScopedLabs</div>
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
     </footer>
   </main>
 
   <script>
     (function () {
-      const params = new URLSearchParams(location.search);
-      const unlocked = params.get("pro") === "1";
-
       const locked = document.getElementById("lockedCard");
       const tool = document.getElementById("toolCard");
-      if (unlocked) {
-        locked.style.display = "none";
-        tool.style.display = "";
-      }
+
+      if (locked) locked.style.display = "none";
+      if (tool) tool.style.display = "";
 
       const y = document.querySelector("[data-year]");
       if (y) y.textContent = new Date().getFullYear();
 
-      function n(id){ return Number(document.getElementById(id).value) || 0; }
+      function n(id) {
+        return Number(document.getElementById(id).value) || 0;
+      }
 
-      function calc(){
+      function calc() {
         const stages = [
           ["Camera encode", n("encodeMs")],
           ["Switching / routing", n("switchMs")],
@@ -194,11 +193,10 @@
 
         const target = n("targetMs");
         const total = stages.reduce((s, v) => s + v[1], 0);
+        const worst = stages.slice().sort((a, b) => b[1] - a[1])[0];
 
-        const worst = stages.slice().sort((a,b)=>b[1]-a[1])[0];
-
-        let status = "Ã¢Å“â€¦ Within target latency budget";
-        if (total > target) status = "Ã¢Å¡Â  Exceeds target latency budget";
+        let status = "✅ Within target latency budget";
+        if (total > target) status = "⚠ Exceeds target latency budget";
 
         document.getElementById("out").innerHTML = `
           <div class="muted" style="line-height:1.6;">
@@ -215,27 +213,29 @@
           <div class="muted">
             Breakdown:
             <ul style="margin:.4rem 0 0 1.15rem;">
-              ${stages.map(s=>`<li>${s[0]}: ${s[1]} ms</li>`).join("")}
+              ${stages.map(s => `<li>${s[0]}: ${s[1]} ms</li>`).join("")}
             </ul>
           </div>
         `;
       }
 
-      function reset(){
-        ["encodeMs","switchMs","uplinkMs","wanMs","decodeMs","renderMs","bufferMs","targetMs"]
-          .forEach(id=>document.getElementById(id).value="");
+      function reset() {
+        document.getElementById("encodeMs").value = "80";
+        document.getElementById("switchMs").value = "5";
+        document.getElementById("uplinkMs").value = "10";
+        document.getElementById("wanMs").value = "40";
+        document.getElementById("decodeMs").value = "60";
+        document.getElementById("renderMs").value = "30";
+        document.getElementById("bufferMs").value = "20";
+        document.getElementById("targetMs").value = "300";
+
         document.getElementById("out").innerHTML =
           '<div class="muted">Run the calculator to see total latency and dominant contributors.</div>';
       }
 
-      document.getElementById("calc").onclick = calc;
-      document.getElementById("reset").onclick = reset;
+      document.getElementById("calc").addEventListener("click", calc);
+      document.getElementById("reset").addEventListener("click", reset);
     })();
   </script>
 </body>
 </html>
-
-
-
-
-
