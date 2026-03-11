@@ -6,7 +6,7 @@
   <title>RAID Capacity &amp; Failure Impact *ScopedLabs</title>
   <meta name="description" content="Compute usable RAID capacity and survivability tradeoffs." />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-002" />
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-003" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="/assets/auth.js?v=0314"></script>
   <script defer src="/assets/app.js?v=0314"></script>
@@ -149,7 +149,7 @@
             <label class="muted" for="overheadPct">Platform overhead (%)</label>
             <button class="hint" type="button"
               data-title="Platform overhead"
-              data-help="Optional: filesystem, metadata, or reserve overhead. Typical planning: 5–15% depending on platform and snapshots.">?</button>
+              data-help="Optional: filesystem, metadata, or reserve overhead. Typical planning: 5-15% depending on platform and snapshots.">?</button>
           </div>
           <input id="overheadPct" type="number" min="0" step="0.5" value="8" />
         </div>
@@ -186,9 +186,14 @@
 
   <script>
     (function () {
+      const locked = document.getElementById("lockedView");
+      const pro = document.getElementById("proView");
       const yearEl = document.querySelector("[data-year]");
+
       if (yearEl) yearEl.textContent = new Date().getFullYear();
-   
+
+      if (locked) locked.style.display = "none";
+      if (pro) pro.style.display = "";
 
       const $ = (id) => document.getElementById(id);
       const results = $("results");
@@ -325,7 +330,3 @@
   </script>
 </body>
 </html>
-
-
-
-
