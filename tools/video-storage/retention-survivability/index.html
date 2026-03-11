@@ -218,18 +218,18 @@
 
   <!-- Gate: show pro tool only when ?pro=1 -->
   <script>
+      
     (function () {
-      const params = new URLSearchParams(window.location.search);
-      const isPro = params.get("pro") === "1";
-      const locked = document.getElementById("lockedView");
-      const pro = document.getElementById("proView");
-      if (isPro) {
-        pro.style.display = "";
-        locked.style.display = "none";
-      } else {
-        locked.style.display = "";
-        pro.style.display = "none";
-      }
+  const locked = document.getElementById("lockedView");
+  const pro = document.getElementById("proView");
+  const yearEl = document.querySelector("[data-year]");
+
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  if (locked) locked.style.display = "none";
+  if (pro) pro.style.display = "";
+
+  const $ = (id) => document.getElementById(id);
     })();
   </script>
 </body>
