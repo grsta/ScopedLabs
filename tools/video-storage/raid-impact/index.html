@@ -7,10 +7,12 @@
   <meta name="description" content="Compute usable RAID capacity and survivability tradeoffs." />
 
   <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-002" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>`r`n<script defer src="/assets/auth.js?v=0314"></script>`r`n<script defer src="/assets/app.js?v=0314"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=0314"></script>
+  <script defer src="/assets/app.js?v=0314"></script>
 
   <style>
-    /* Tight, scoped helpers (wonÃ¢â‚¬â„¢t fight your global UI) */
+    /* Tight, scoped helpers (won't fight your global UI) */
     .results-grid { display: grid; gap: 10px; margin-top: 14px; }
     .result-row { display:flex; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:12px;
       border: 1px solid rgba(120,255,120,.14); background: rgba(0,0,0,.18); }
@@ -52,11 +54,10 @@
       <h1 class="h1">RAID Capacity &amp; Failure Impact</h1>
       <p class="subhead">Understand usable capacity and failure tolerance tradeoffs.</p>
       <p class="tool-best-for">
-      <strong>Best for:</strong> understanding usable capacity and redundancy tradeoffs across RAID levels.
+        <strong>Best for:</strong> understanding usable capacity and redundancy tradeoffs across RAID levels.
       </p>
     </section>
 
-    <!-- Top Ã¢â‚¬Å“plannedÃ¢â‚¬Â card -->
     <section class="card">
       <p class="muted">
         Pro tool: compute usable capacity from common RAID rules and summarize failure tolerance,
@@ -64,20 +65,17 @@
       </p>
     </section>
 
-    <!-- =========================
-         LOCKED CONTENT (default)
-         ========================= -->
     <section id="lockedView" class="card tool-card">
       <div class="pill-row">
         <span class="pill pill--pro">Pro / Advanced</span>
       </div>
 
-      <h2 class="h2">Ã°Å¸â€â€™ Locked</h2>
+      <h2 class="h2">🔒 Locked</h2>
       <p class="muted">This RAID tool is included with Pro access for the Video &amp; Storage category.</p>
 
       <p class="muted"><strong>What this models</strong></p>
       <ul class="muted">
-        <li>Usable capacity (RAID0/1/5/6/10 planning rules)</li>
+        <li>Usable capacity (RAID 0 / 1 / 5 / 6 / 10 planning rules)</li>
         <li>Capacity penalty vs raw disk pool</li>
         <li>Fault tolerance summary (what can fail and stay online)</li>
         <li>Retention survivability considerations when degraded</li>
@@ -89,9 +87,6 @@
       </div>
     </section>
 
-    <!-- =========================
-         PRO TOOL (?pro=1)
-         ========================= -->
     <section id="proView" class="card tool-card" style="display:none;">
       <div class="pill-row">
         <span class="pill pill--pro">Pro / Advanced</span>
@@ -154,12 +149,11 @@
             <label class="muted" for="overheadPct">Platform overhead (%)</label>
             <button class="hint" type="button"
               data-title="Platform overhead"
-              data-help="Optional: filesystem/metadata/reserve overhead. Typical planning: 5Ã¢â‚¬â€œ15% depending on platform and snapshots.">?</button>
+              data-help="Optional: filesystem, metadata, or reserve overhead. Typical planning: 5–15% depending on platform and snapshots.">?</button>
           </div>
           <input id="overheadPct" type="number" min="0" step="0.5" value="8" />
         </div>
 
-        <!-- Ã¢Å“â€¦ NEW: Target Retention Days -->
         <div class="field">
           <div class="label-row">
             <label class="muted" for="targetDays">Target retention (days)</label>
@@ -186,17 +180,18 @@
     </section>
 
     <footer class="site-footer">
-      <div class="muted">Ã‚Â© <span data-year></span> ScopedLabs</div>
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
     </footer>
   </main>
 
-  <!-- Gate: show Pro tool only when ?pro=1 -->
   <script>
     (function () {
       const params = new URLSearchParams(window.location.search);
       const isPro = params.get("pro") === "1";
       const locked = document.getElementById("lockedView");
       const pro = document.getElementById("proView");
+      const yearEl = document.querySelector("[data-year]");
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
 
       if (isPro) {
         locked.style.display = "none";
@@ -214,13 +209,11 @@
       function num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
 
       function toTiBFromTB(tbDecimal) {
-        // Decimal TB -> bytes (1e12), then -> TiB (2^40)
         const bytes = tbDecimal * 1e12;
         return bytes / (1024 ** 4);
       }
 
       function toGiBFromTB(tbDecimal) {
-        // Decimal TB -> bytes (1e12), then -> GiB (2^30)
         const bytes = tbDecimal * 1e12;
         return bytes / (1024 ** 3);
       }
@@ -266,21 +259,21 @@
 
         if (level === "0") {
           usableTB = rawTB;
-          rule = "Usable = N Ãƒâ€” size";
+          rule = "Usable = N × size";
         } else if (level === "1") {
           const pairs = Math.floor(active / 2);
           usableTB = pairs * sizeTB;
-          rule = "Usable Ã¢â€°Ë† floor(N/2) Ãƒâ€” size (mirrors)";
+          rule = "Usable = floor(N/2) × size (mirrors)";
         } else if (level === "5") {
           usableTB = Math.max(0, (active - 1) * sizeTB);
-          rule = "Usable = (N Ã¢Ë†â€™ 1) Ãƒâ€” size";
+          rule = "Usable = (N - 1) × size";
         } else if (level === "6") {
           usableTB = Math.max(0, (active - 2) * sizeTB);
-          rule = "Usable = (N Ã¢Ë†â€™ 2) Ãƒâ€” size";
+          rule = "Usable = (N - 2) × size";
         } else if (level === "10") {
           const pairs = Math.floor(active / 2);
           usableTB = pairs * sizeTB;
-          rule = "Usable Ã¢â€°Ë† floor(N/2) Ãƒâ€” size (striped mirrors)";
+          rule = "Usable = floor(N/2) × size (striped mirrors)";
         }
 
         const usableTB_afterOverhead = usableTB * (1 - overheadPct / 100);
@@ -292,31 +285,36 @@
         const penaltyPct = rawTB > 0 ? (1 - (usableTB / rawTB)) * 100 : 0;
         const tol = toleranceText(level);
 
-        // Ã¢Å“â€¦ NEW: Max daily ingest supported for target retention
-        // Use GiB math for Ã¢â‚¬Å“GB/dayÃ¢â‚¬Â output (planning-style but consistent)
         const netUsableGiB = toGiBFromTB(usableTB_afterOverhead);
         const maxGiBPerDay = netUsableGiB / targetDays;
-        const maxGBPerDay_decimal = (maxGiBPerDay * (1024 ** 3)) / 1e9; // convert GiB -> bytes -> decimal GB
+        const maxGBPerDay_decimal = (maxGiBPerDay * (1024 ** 3)) / 1e9;
 
         let riskNote = "Balanced for general workloads.";
         let riskCls = "flag-ok";
-        if (level === "0") { riskNote = "High risk: any single drive failure = total data loss."; riskCls = "flag-bad"; }
-        if (level === "5" && active >= 10) { riskNote = "Caution: large RAID5 rebuild risk increases with big disks."; riskCls = "flag-warn"; }
-        if (level === "6") { riskNote = "Safer for large disk pools; rebuild risk reduced vs RAID5."; riskCls = "flag-ok"; }
+        if (level === "0") {
+          riskNote = "High risk: any single drive failure means total data loss.";
+          riskCls = "flag-bad";
+        }
+        if (level === "5" && active >= 10) {
+          riskNote = "Caution: large RAID 5 rebuild risk increases with bigger disks and wider arrays.";
+          riskCls = "flag-warn";
+        }
+        if (level === "6") {
+          riskNote = "Safer for large disk pools; rebuild risk is reduced versus RAID 5.";
+          riskCls = "flag-ok";
+        }
 
         render([
           { k: "Active drives (excluding spares)", v: String(active) },
-          { k: "Raw capacity", v: `${rawTB.toFixed(1)} TB  Ã¢â‚¬Â¢  ${rawTiB.toFixed(2)} TiB` },
-          { k: "Usable capacity (rule)", v: `${usableTB.toFixed(1)} TB  Ã¢â‚¬Â¢  ${usableTiB.toFixed(2)} TiB` },
-          { k: "Usable after overhead", v: `${usableTB_afterOverhead.toFixed(1)} TB  Ã¢â‚¬Â¢  ${usableTiB_net.toFixed(2)} TiB` },
+          { k: "Raw capacity", v: `${rawTB.toFixed(1)} TB • ${rawTiB.toFixed(2)} TiB` },
+          { k: "Usable capacity (rule)", v: `${usableTB.toFixed(1)} TB • ${usableTiB.toFixed(2)} TiB` },
+          { k: "Usable after overhead", v: `${usableTB_afterOverhead.toFixed(1)} TB • ${usableTiB_net.toFixed(2)} TiB` },
           { k: "Capacity penalty vs raw", v: `${penaltyPct.toFixed(1)}%` },
           { k: "Fault tolerance", v: tol.t, cls: tol.cls },
           { k: "Rule", v: rule },
-
           { k: `Max daily ingest @ ${targetDays} days retention`, v: `${maxGBPerDay_decimal.toFixed(0)} GB/day` },
           { k: "Max daily ingest (GiB/day)", v: `${maxGiBPerDay.toFixed(0)} GiB/day` },
-
-          { k: "Risk note", v: riskNote, cls: riskCls },
+          { k: "Risk note", v: riskNote, cls: riskCls }
         ]);
       }
 
@@ -334,7 +332,6 @@
       $("calc").addEventListener("click", calculate);
       $("reset").addEventListener("click", reset);
 
-      // Auto-run once so it looks alive
       calculate();
     })();
   </script>
