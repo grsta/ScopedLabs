@@ -1,5 +1,6 @@
 ﻿// Retention Planner
 (() => {
+
   const $ = (id) => document.getElementById(id);
 
   function n(id) {
@@ -11,6 +12,7 @@
   function render(rows) {
     const el = $("results");
     el.innerHTML = "";
+
     rows.forEach(r => {
       const div = document.createElement("div");
       div.className = "result-row";
@@ -29,6 +31,7 @@
   }
 
   function calc() {
+
     const cams = Math.max(1, n("cams"));
     const bitrate = Math.max(0, n("bitrate"));
     const hours = Math.max(0, n("hours"));
@@ -54,8 +57,25 @@
       { label: "Overhead Added", value: `${overhead.toFixed(1)} GB` },
       { label: "Total Storage Required", value: `${finalTotal.toFixed(1)} GB` },
 
-      { label: "Equivalent", value: `${(finalTotal/1000).toFixed(2)} TB` }
+      { label: "Equivalent", value: `${(finalTotal / 1000).toFixed(2)} TB` }
     ]);
+
+    /* -------------------------
+       PIPELINE → RAID IMPACT
+    ------------------------- */
+
+    const params = new URLSearchParams({
+      source: "retention",
+      cams: cams,
+      bitrate: bitrate,
+      days: days,
+      storage_total_gb: finalTotal.toFixed(1)
+    });
+
+    $("to-raid").href =
+      "/tools/video-storage/raid-impact/?" + params.toString();
+
+    $("next-step-row").style.display = "flex";
   }
 
   function reset() {
@@ -64,11 +84,39 @@
     $("hours").value = 24;
     $("days").value = 30;
     $("overhead").value = 10;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+
+    $("results").innerHTML =
+      `<div class="muted">Enter values and press Calculate.</div>`;
+
+    $("next-step-row").style.display = "none";
+  }
+
+  /* -------------------------
+     IMPORT FROM STORAGE
+  ------------------------- */
+
+  function importParams() {
+    const q = new URLSearchParams(window.location.search);
+
+    if (q.get("source") !== "storage") return;
+
+    if (q.get("cams")) $("cams").value = q.get("cams");
+    if (q.get("bitrate")) $("bitrate").value = q.get("bitrate");
+    if (q.get("days")) $("days").value = q.get("days");
+
+    const banner = document.createElement("div");
+    banner.className = "tool-banner";
+    banner.innerHTML = `
+      Imported from Storage Calculator
+    `;
+
+    document.querySelector(".tool-card")?.prepend(banner);
   }
 
   $("calc").addEventListener("click", calc);
   $("reset").addEventListener("click", reset);
 
+  importParams();
   reset();
+
 })();
