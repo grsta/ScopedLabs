@@ -2,6 +2,14 @@
 (() => {
 
   const $ = (id) => document.getElementById(id);
+  
+  function invalidateResult() {
+  const next = document.getElementById("next-step-row");
+  if (next) next.style.display = "none";
+
+  const results = document.getElementById("results");
+  if (results) results.innerHTML = "Enter values and press Calculate.";
+}
 
   function n(id) {
     const el = $(id);
@@ -120,6 +128,18 @@
 
   $("calc").addEventListener("click", calc);
   $("reset").addEventListener("click", reset);
+
+  ["res","w","h","fps","codec","scene","quality"]
+.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("change", invalidateResult);
+});
+
+["w","h","fps"]
+.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("input", invalidateResult);
+});
 
   $("res").addEventListener("change", () => {
   if ($("res").value !== "custom") {
