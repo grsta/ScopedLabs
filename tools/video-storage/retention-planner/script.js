@@ -31,7 +31,6 @@
   }
 
   function calc() {
-
     const cams = Math.max(1, n("cams"));
     const bitrate = Math.max(0, n("bitrate"));
     const hours = Math.max(0, n("hours"));
@@ -52,29 +51,21 @@
       { label: "Cameras", value: cams },
       { label: "Bitrate per Camera", value: `${bitrate.toFixed(2)} Mbps` },
       { label: "Retention", value: `${days} days` },
-
       { label: "Storage (Base)", value: `${baseTotal.toFixed(1)} GB` },
       { label: "Overhead Added", value: `${overhead.toFixed(1)} GB` },
       { label: "Total Storage Required", value: `${finalTotal.toFixed(1)} GB` },
-
       { label: "Equivalent", value: `${(finalTotal / 1000).toFixed(2)} TB` }
     ]);
 
-    /* -------------------------
-       PIPELINE → RAID IMPACT
-    ------------------------- */
-
     const params = new URLSearchParams({
       source: "retention",
-      cams: cams,
-      bitrate: bitrate,
-      days: days,
+      cams: String(cams),
+      bitrate: String(bitrate),
+      days: String(days),
       storage_total_gb: finalTotal.toFixed(1)
     });
 
-    $("to-raid").href =
-      "/tools/video-storage/raid-impact/?" + params.toString();
-
+    $("to-raid").href = "/tools/video-storage/raid-impact/?" + params.toString();
     $("next-step-row").style.display = "flex";
   }
 
@@ -85,15 +76,9 @@
     $("days").value = 30;
     $("overhead").value = 10;
 
-    $("results").innerHTML =
-      `<div class="muted">Enter values and press Calculate.</div>`;
-
+    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     $("next-step-row").style.display = "none";
   }
-
-  /* -------------------------
-     IMPORT FROM STORAGE
-  ------------------------- */
 
   function importParams() {
     const q = new URLSearchParams(window.location.search);
@@ -104,19 +89,20 @@
     if (q.get("bitrate")) $("bitrate").value = q.get("bitrate");
     if (q.get("days")) $("days").value = q.get("days");
 
-    const banner = document.createElement("div");
-    banner.className = "tool-banner";
-    banner.innerHTML = `
-      Imported from Storage Calculator
-    `;
-
-    document.querySelector(".tool-card")?.prepend(banner);
+    const resultsCard = document.querySelectorAll(".tool-card")[1] || document.querySelector(".tool-card");
+    if (resultsCard && !document.getElementById("flow-note")) {
+      const banner = document.createElement("div");
+      banner.id = "flow-note";
+      banner.className = "tool-banner";
+      banner.textContent = "Imported from Storage Calculator";
+      resultsCard.parentNode.insertBefore(banner, resultsCard);
+    }
   }
 
   $("calc").addEventListener("click", calc);
   $("reset").addEventListener("click", reset);
 
-  importParams();
   reset();
+  importParams();
 
 })();
