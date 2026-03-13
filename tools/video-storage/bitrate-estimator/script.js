@@ -122,8 +122,12 @@
   $("reset").addEventListener("click", reset);
 
   $("res").addEventListener("change", () => {
-    if ($("res").value !== "custom") calc();
-  });
+  if ($("res").value !== "custom") {
+    const [rw, rh] = $("res").value.split("x").map(Number);
+    $("w").value = rw;
+    $("h").value = rh;
+  }
+});
 
   reset();
 
