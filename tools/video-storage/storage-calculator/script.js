@@ -6,7 +6,9 @@
   const $ = (id) => document.getElementById(id);
 
   function n(id) {
-    const v = Number($(id).value);
+    const el = $(id);
+    if (!el) return 0;
+    const v = Number(el.value);
     return Number.isFinite(v) ? v : 0;
   }
 
@@ -30,11 +32,24 @@
     motionField.style.display = isMotion ? "" : "none";
   }
 
-  modeEl.addEventListener("change", syncMotion);
-  syncMotion();
+  function importFromBitrate() {
+    if (!window.SL_FLOW) return;
+
+    const source = SL_FLOW.get("source");
+    const bitrate = SL_FLOW.get("bitrate");
+
+    if (source === "bitrate" && bitrate) {
+      $("bitrate").value = bitrate;
+
+      const note = $("flow-note");
+      if (note) {
+        note.hidden = false;
+        note.textContent = "Imported from Bitrate Estimator. Review values and click Calculate.";
+      }
+    }
+  }
 
   function calc() {
-
     const cams = Math.max(0, Math.floor(n("cams")));
     const bitrate = Math.max(0, n("bitrate"));
     const mode = modeEl.value;
@@ -44,11 +59,19 @@
 
     if (cams <= 0) {
       $("statusText").textContent = "Enter a camera count above 0.";
+      $("perCamDay").textContent = "—";
+      $("totalDay").textContent = "—";
+      $("totalRetention").textContent = "—";
+      $("next-step-row").style.display = "none";
       return;
     }
 
     if (bitrate <= 0) {
       $("statusText").textContent = "Enter a bitrate above 0 Mbps.";
+      $("perCamDay").textContent = "—";
+      $("totalDay").textContent = "—";
+      $("totalRetention").textContent = "—";
+      $("next-step-row").style.display = "none";
       return;
     }
 
@@ -59,30 +82,28 @@
     const totalDayGiB = perCamDayGiB * cams;
     const totalRetentionGiB = totalDayGiB * retentionDays;
 
-    $("perCamDay").textContent = fmtGiB(perCamDayGiB) + " / day";
-    $("totalDay").textContent = fmtGiB(totalDayGiB) + " / day";
-    $("totalRetention").textContent =
-      fmtGiB(totalRetentionGiB) + ` (${retentionDays} days)`;
+    $("perCamDay").textContent = `${fmtGiB(perCamDayGiB)} / day`;
+    $("totalDay").textContent = `${fmtGiB(totalDayGiB)} / day`;
+    $("totalRetention").textContent = `${fmtGiB(totalRetentionGiB)} (${retentionDays} days)`;
 
-    $("statusText").textContent = "✅ Calculation complete.";
+    let status = "✅ Calculated.";
+    if (mode === "motion" && motionPct === 0) status = "⚠ Motion mode selected with 0% activity (result will be 0).";
+    if (overheadPct >= 30) status = "✅ Calculated (high overhead reserve — conservative plan).";
+    if (retentionDays === 0) status = "⚠ Retention is 0 days (no storage required beyond daily).";
 
-    /* -------------------------------
-       PIPELINE: STORAGE → RETENTION
-    --------------------------------*/
-
-    const nextBtn = $("to-retention");
+    $("statusText").textContent = status;
 
     const params = new URLSearchParams({
       source: "storage",
-      cams: cams,
-      bitrate: bitrate,
-      days: retentionDays,
+      cams: String(cams),
+      bitrate: String(bitrate),
+      days: String(retentionDays),
       storage_per_day: totalDayGiB.toFixed(2),
       total_storage: totalRetentionGiB.toFixed(2),
       unit: "gib"
     });
 
-    nextBtn.href =
+    $("to-retention").href =
       "/tools/video-storage/retention-planner/?" + params.toString();
 
     $("next-step-row").style.display = "flex";
@@ -102,11 +123,24 @@
     $("totalDay").textContent = "—";
     $("totalRetention").textContent = "—";
     $("statusText").textContent = "Enter values and calculate.";
-
     $("next-step-row").style.display = "none";
   }
 
+  modeEl.addEventListener("change", syncMotion);
   $("calc").addEventListener("click", calc);
   $("reset").addEventListener("click", reset);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        calc();
+      }
+    }
+  });
+
+  reset();
+  importFromBitrate();
 
 })();
