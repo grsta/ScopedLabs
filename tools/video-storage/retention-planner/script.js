@@ -1,7 +1,9 @@
 ﻿// Retention Planner
 (() => {
-
   const $ = (id) => document.getElementById(id);
+
+  const yearEl = document.querySelector("[data-year]");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   function n(id) {
     const el = $(id);
@@ -12,8 +14,7 @@
   function render(rows) {
     const el = $("results");
     el.innerHTML = "";
-
-    rows.forEach(r => {
+    rows.forEach((r) => {
       const div = document.createElement("div");
       div.className = "result-row";
       div.innerHTML = `
@@ -39,6 +40,7 @@
 
     if (bitrate <= 0) {
       render([{ label: "Error", value: "Enter bitrate > 0 Mbps" }]);
+      $("next-step-row").style.display = "none";
       return;
     }
 
@@ -75,7 +77,6 @@
     $("hours").value = 24;
     $("days").value = 30;
     $("overhead").value = 10;
-
     $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     $("next-step-row").style.display = "none";
   }
@@ -89,20 +90,23 @@
     if (q.get("bitrate")) $("bitrate").value = q.get("bitrate");
     if (q.get("days")) $("days").value = q.get("days");
 
-    const resultsCard = document.querySelectorAll(".tool-card")[1] || document.querySelector(".tool-card");
-    if (resultsCard && !document.getElementById("flow-note")) {
-      const banner = document.createElement("div");
-      banner.id = "flow-note";
-      banner.className = "tool-banner";
-      banner.textContent = "Imported from Storage Calculator";
-      resultsCard.parentNode.insertBefore(banner, resultsCard);
-    }
+    const note = $("flow-note");
+    if (note) note.hidden = false;
   }
 
   $("calc").addEventListener("click", calc);
   $("reset").addEventListener("click", reset);
 
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        calc();
+      }
+    }
+  });
+
   reset();
   importParams();
-
 })();
