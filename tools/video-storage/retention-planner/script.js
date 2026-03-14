@@ -1,5 +1,6 @@
 ﻿// Retention Planner
 (() => {
+
   const $ = (id) => document.getElementById(id);
 
   const yearEl = document.querySelector("[data-year]");
@@ -14,6 +15,7 @@
   function render(rows) {
     const el = $("results");
     el.innerHTML = "";
+
     rows.forEach((r) => {
       const div = document.createElement("div");
       div.className = "result-row";
@@ -31,7 +33,20 @@
     return bytes / 1_000_000_000;
   }
 
+  function hideNext() {
+    $("next-step-row").style.display = "none";
+  }
+
+  function showNext() {
+    $("next-step-row").style.display = "flex";
+  }
+
+  function invalidate() {
+    hideNext();
+  }
+
   function calc() {
+
     const cams = Math.max(1, n("cams"));
     const bitrate = Math.max(0, n("bitrate"));
     const hours = Math.max(0, n("hours"));
@@ -40,7 +55,7 @@
 
     if (bitrate <= 0) {
       render([{ label: "Error", value: "Enter bitrate > 0 Mbps" }]);
-      $("next-step-row").style.display = "none";
+      hideNext();
       return;
     }
 
@@ -63,12 +78,16 @@
       source: "retention",
       cams: String(cams),
       bitrate: String(bitrate),
+      hours: String(hours),
       days: String(days),
+      overhead: String(overheadPct),
       storage_total_gb: finalTotal.toFixed(1)
     });
 
-    $("to-raid").href = "/tools/video-storage/raid-impact/?" + params.toString();
-    $("next-step-row").style.display = "flex";
+    $("to-raid").href =
+      "/tools/video-storage/raid-impact/?" + params.toString();
+
+    showNext();
   }
 
   function reset() {
@@ -77,11 +96,15 @@
     $("hours").value = 24;
     $("days").value = 30;
     $("overhead").value = 10;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-    $("next-step-row").style.display = "none";
+
+    $("results").innerHTML =
+      `<div class="muted">Enter values and press Calculate.</div>`;
+
+    hideNext();
   }
 
   function importParams() {
+
     const q = new URLSearchParams(window.location.search);
 
     if (q.get("source") !== "storage") return;
@@ -97,6 +120,11 @@
   $("calc").addEventListener("click", calc);
   $("reset").addEventListener("click", reset);
 
+  ["cams","bitrate","hours","days","overhead"].forEach(id=>{
+    const el = $(id);
+    if (el) el.addEventListener("input", invalidate);
+  });
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       const t = e.target;
@@ -109,4 +137,5 @@
 
   reset();
   importParams();
+
 })();
