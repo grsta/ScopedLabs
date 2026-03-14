@@ -1747,3 +1747,42 @@ main h3.section-title {
 .pipe-step.complete {
   color: #a8ffd8;
 }
+
+/* Pipeline progress line */
+
+.pipeline-steps {
+  position: relative;
+}
+
+.pipeline-steps::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+  z-index: 0;
+}
+
+.pipe-step {
+  position: relative;
+  z-index: 2;
+}
+
+.pipe-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #444;
+  display: inline-block;
+}
+
+.pipe-step.complete .pipe-dot {
+  background: #00ff9c;
+}
+
+.pipe-step.active .pipe-dot {
+  background: #00ff9c;
+  box-shadow: 0 0 6px rgba(0,255,156,.6);
+}
