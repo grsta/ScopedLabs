@@ -17,7 +17,10 @@
   const currentIndex = steps.findIndex(step => step.id === currentStep);
   if (currentIndex === -1) return;
 
-  const h1 = document.querySelector("main .container h1");
+  const h1 =
+  document.querySelector("main .container h1") ||
+  document.querySelector("main.container h1") ||
+  document.querySelector("main h1");
   if (!h1) return;
 
   if (document.getElementById("sl-design-pipeline")) return;
