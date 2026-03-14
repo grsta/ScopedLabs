@@ -2,26 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RAID Capacity &amp; Failure Impact *ScopedLabs</title>
-  <meta name="description" content="Compute usable RAID capacity and survivability tradeoffs." />
+  <meta
+    name="description"
+    content="Compute usable RAID capacity, retention fit, and survivability tradeoffs."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-003" />
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-004" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="/assets/auth.js?v=0314"></script>
   <script defer src="/assets/app.js?v=0314"></script>
 
   <style>
-    /* Tight, scoped helpers (won't fight your global UI) */
-    .results-grid { display: grid; gap: 10px; margin-top: 14px; }
-    .result-row { display:flex; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:12px;
-      border: 1px solid rgba(120,255,120,.14); background: rgba(0,0,0,.18); }
-    .result-row .k { color: rgba(255,255,255,.70); }
-    .result-row .v { font-weight: 800; }
-    .flag-ok { color: rgba(140,255,170,.95); }
-    .flag-warn { color: rgba(255,210,140,.95); }
-    .flag-bad { color: rgba(255,180,140,.95); }
-    .mini-note { margin-top: 12px; color: rgba(255,255,255,.56); font-size: .92rem; line-height: 1.5; }
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .flag-ok {
+      color: rgba(140, 255, 170, 0.95);
+    }
+
+    .flag-warn {
+      color: rgba(255, 210, 140, 0.95);
+    }
+
+    .flag-bad {
+      color: rgba(255, 180, 140, 0.95);
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
   </style>
 </head>
 
@@ -29,7 +65,7 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
-        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-dot" aria-hidden="true"></span>
         <span class="brand-name">ScopedLabs</span>
       </a>
 
@@ -41,293 +77,187 @@
     </div>
   </header>
 
-  <main class="container">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/video-storage/">Video &amp; Storage</a>
-      <span class="sep">/</span>
-      <span>RAID Capacity &amp; Failure Impact</span>
-    </div>
+  <main class="page">
+    <div class="container">
 
-    <section class="page-head">
-      <h1 class="h1">RAID Capacity &amp; Failure Impact</h1>
-      <p class="subhead">Understand usable capacity and failure tolerance tradeoffs.</p>
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/video-storage/">Video &amp; Storage</a>
+        <span class="sep">/</span>
+        <span>RAID Capacity &amp; Failure Impact</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro tool</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">RAID Capacity &amp; Failure Impact</h1>
+      <p class="subhead">Understand usable capacity, failure tolerance, and retention fit.</p>
       <p class="tool-best-for">
-        <strong>Best for:</strong> understanding usable capacity and redundancy tradeoffs across RAID levels.
-      </p>
-    </section>
-
-    <section class="card">
-      <p class="muted">
-        Pro tool: compute usable capacity from common RAID rules and summarize failure tolerance,
-        rebuild risk context, and retention impact when arrays degrade.
-      </p>
-    </section>
-
-    <section id="lockedView" class="card tool-card">
-      <div class="pill-row">
-        <span class="pill pill--pro">Pro / Advanced</span>
-      </div>
-
-      <h2 class="h2">🔒 Locked</h2>
-      <p class="muted">This RAID tool is included with Pro access for the Video &amp; Storage category.</p>
-
-      <p class="muted"><strong>What this models</strong></p>
-      <ul class="muted">
-        <li>Usable capacity (RAID 0 / 1 / 5 / 6 / 10 planning rules)</li>
-        <li>Capacity penalty vs raw disk pool</li>
-        <li>Fault tolerance summary (what can fail and stay online)</li>
-        <li>Retention survivability considerations when degraded</li>
-      </ul>
-
-      <div class="actions">
-        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
-        <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Video &amp; Storage</a>
-      </div>
-    </section>
-
-    <section id="proView" class="card tool-card" style="display:none;">
-      <div class="pill-row">
-        <span class="pill pill--pro">Pro / Advanced</span>
-      </div>
-
-      <h2 class="h2">RAID Capacity Calculator</h2>
-      <p class="muted" style="margin-top:-4px;">
-        Planning-grade math for quick sizing. Assumes equal drive sizes. Results shown in TiB (1024 base).
+        <strong>Best for:</strong> sizing RAID groups against retention requirements and comparing tradeoffs across RAID levels.
       </p>
 
-      <div class="form-grid" style="margin-top:14px;">
-        <div class="field">
-          <div class="label-row">
-            <label class="muted" for="raidLevel">RAID level</label>
-            <button class="hint" type="button"
-              data-title="RAID level"
-              data-help="Select a common RAID planning rule. RAID10 assumes mirrored pairs.">?</button>
-          </div>
-          <select id="raidLevel">
-            <option value="0">RAID 0 (stripe)</option>
-            <option value="1">RAID 1 (mirror)</option>
-            <option value="5" selected>RAID 5 (single parity)</option>
-            <option value="6">RAID 6 (dual parity)</option>
-            <option value="10">RAID 10 (striped mirrors)</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <div class="label-row">
-            <label class="muted" for="driveCount">Drive count</label>
-            <button class="hint" type="button"
-              data-title="Drive count"
-              data-help="Total drives in the array group (excluding any separate spare pool).">?</button>
-          </div>
-          <input id="driveCount" type="number" min="2" step="1" value="8" />
-        </div>
-
-        <div class="field">
-          <div class="label-row">
-            <label class="muted" for="driveSizeTb">Drive size (TB)</label>
-            <button class="hint" type="button"
-              data-title="Drive size"
-              data-help="Per-drive size in decimal TB (as labeled). We convert to TiB-style output for planning consistency.">?</button>
-          </div>
-          <input id="driveSizeTb" type="number" min="0.1" step="0.1" value="10" />
-        </div>
-
-        <div class="field">
-          <div class="label-row">
-            <label class="muted" for="hotSpares">Hot spares (count)</label>
-            <button class="hint" type="button"
-              data-title="Hot spares"
-              data-help="If a spare is reserved within the same chassis/pool, subtract it from active capacity for conservative planning.">?</button>
-          </div>
-          <input id="hotSpares" type="number" min="0" step="1" value="0" />
-        </div>
-
-        <div class="field">
-          <div class="label-row">
-            <label class="muted" for="overheadPct">Platform overhead (%)</label>
-            <button class="hint" type="button"
-              data-title="Platform overhead"
-              data-help="Optional: filesystem, metadata, or reserve overhead. Typical planning: 5-15% depending on platform and snapshots.">?</button>
-          </div>
-          <input id="overheadPct" type="number" min="0" step="0.5" value="8" />
-        </div>
-
-        <div class="field">
-          <div class="label-row">
-            <label class="muted" for="targetDays">Target retention (days)</label>
-            <button class="hint" type="button"
-              data-title="Target retention (days)"
-              data-help="Used to compute the maximum daily ingest your net usable storage can support while still meeting this retention target.">?</button>
-          </div>
-          <input id="targetDays" type="number" min="1" step="1" value="30" />
-        </div>
+      <div id="flow-note" class="flow-note" hidden>
+        Imported from Retention Planner. Review values and click Calculate.
       </div>
 
-      <div class="actions" style="margin-top:14px;">
-        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
-        <button id="reset" class="btn btn-ghost" type="button">Reset</button>
-        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
-      </div>
+      <section class="card" style="margin-top: 14px;">
+        <p class="muted" style="margin: 0;">
+          Planning-grade RAID math for quick storage design. Assumes equal drive sizes.
+          Results show <strong>raw capacity</strong>, <strong>usable capacity</strong>, <strong>fault tolerance</strong>,
+          and whether the array can satisfy the imported retention target.
+        </p>
+      </section>
 
-      <div class="results-grid" id="results" aria-live="polite"></div>
+      <section class="card tool-card" style="margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Uses common RAID planning rules. Final values shown in TB and TiB for easier real-world comparison.
+        </p>
 
-      <p class="mini-note">
-        Notes: This is planning math (not vendor-specific). Many systems reserve capacity for parity,
-        metadata, snapshots, and rebuild behavior. Always validate in the target platform before quoting.
-      </p>
-    </section>
+        <div class="form-grid" style="margin-top: 14px;">
+          <div class="field">
+            <div class="label-row">
+              <label for="raidLevel">RAID level</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="RAID level"
+                data-help="Select a common RAID planning rule. RAID 10 assumes mirrored pairs."
+                aria-label="Help: RAID level"
+              >?</button>
+            </div>
+            <select id="raidLevel">
+              <option value="0">RAID 0 (stripe)</option>
+              <option value="1">RAID 1 (mirror)</option>
+              <option value="5" selected>RAID 5 (single parity)</option>
+              <option value="6">RAID 6 (dual parity)</option>
+              <option value="10">RAID 10 (striped mirrors)</option>
+            </select>
+          </div>
 
-    <footer class="site-footer">
-      <div class="muted">© <span data-year></span> ScopedLabs</div>
-    </footer>
+          <div class="field">
+            <div class="label-row">
+              <label for="driveCount">Drive count</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Drive count"
+                data-help="Total drives in the array group, before subtracting any hot spares."
+                aria-label="Help: Drive count"
+              >?</button>
+            </div>
+            <input id="driveCount" type="number" min="2" step="1" value="8" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="driveSizeTb">Drive size (TB)</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Drive size"
+                data-help="Per-drive decimal TB as labeled by the drive manufacturer."
+                aria-label="Help: Drive size"
+              >?</button>
+            </div>
+            <input id="driveSizeTb" type="number" min="0.1" step="0.1" value="10" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="hotSpares">Hot spares</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Hot spares"
+                data-help="Reserved drives subtracted from active capacity for conservative planning."
+                aria-label="Help: Hot spares"
+              >?</button>
+            </div>
+            <input id="hotSpares" type="number" min="0" step="1" value="0" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="overheadPct">Platform overhead (%)</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Platform overhead"
+                data-help="Filesystem, metadata, snapshots, reserve space, or other platform overhead."
+                aria-label="Help: Platform overhead"
+              >?</button>
+            </div>
+            <input id="overheadPct" type="number" min="0" max="50" step="0.5" value="8" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="targetDays">Target retention (days)</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Target retention"
+                data-help="Used to estimate maximum daily ingest while still meeting the selected retention target."
+                aria-label="Help: Target retention"
+              >?</button>
+            </div>
+            <input id="targetDays" type="number" min="1" step="1" value="30" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="requiredStorageGb">Imported required storage (GB)</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Imported required storage"
+                data-help="If you arrived from Retention Planner, this value is carried in automatically."
+                aria-label="Help: Imported required storage"
+              >?</button>
+            </div>
+            <input id="requiredStorageGb" type="number" min="0" step="0.1" value="0" />
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+          <button id="reset" class="btn" type="button">Reset</button>
+        </div>
+
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">Enter values and press Calculate.</div>
+          </div>
+
+          <p class="mini-note">
+            Notes: This is planning math, not vendor-specific behavior. Real systems may reserve more
+            space for metadata, rebuild safety, snapshots, and filesystem limits.
+          </p>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+        </div>
+
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+          <a id="to-survivability" class="btn btn-primary" href="#">
+            Continue → Retention Survivability
+          </a>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+
+    </div>
   </main>
 
-  <script>
-    (function () {
-      const locked = document.getElementById("lockedView");
-      const pro = document.getElementById("proView");
-      const yearEl = document.querySelector("[data-year]");
-
-      if (yearEl) yearEl.textContent = new Date().getFullYear();
-
-      if (locked) locked.style.display = "none";
-      if (pro) pro.style.display = "";
-
-      const $ = (id) => document.getElementById(id);
-      const results = $("results");
-
-      function clamp(n, a, b) { return Math.min(Math.max(n, a), b); }
-      function num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
-
-      function toTiBFromTB(tbDecimal) {
-        const bytes = tbDecimal * 1e12;
-        return bytes / (1024 ** 4);
-      }
-
-      function toGiBFromTB(tbDecimal) {
-        const bytes = tbDecimal * 1e12;
-        return bytes / (1024 ** 3);
-      }
-
-      function render(rows) {
-        results.innerHTML = rows.map(r => `
-          <div class="result-row">
-            <div class="k">${r.k}</div>
-            <div class="v ${r.cls || ""}">${r.v}</div>
-          </div>
-        `).join("");
-      }
-
-      function toleranceText(level) {
-        switch (level) {
-          case "0": return { t: "0 drives (no redundancy)", cls: "flag-bad" };
-          case "1": return { t: "1 per mirror set", cls: "flag-ok" };
-          case "5": return { t: "1 drive", cls: "flag-ok" };
-          case "6": return { t: "2 drives", cls: "flag-ok" };
-          case "10": return { t: "1 per mirror pair (varies)", cls: "flag-ok" };
-          default: return { t: "Varies", cls: "" };
-        }
-      }
-
-      function calculate() {
-        const level = $("raidLevel").value;
-        const drives = Math.max(0, Math.floor(num($("driveCount").value)));
-        const spares = clamp(Math.floor(num($("hotSpares").value)), 0, Math.max(0, drives - 1));
-        const sizeTB = Math.max(0, num($("driveSizeTb").value));
-        const overheadPct = clamp(num($("overheadPct").value), 0, 50);
-        const targetDays = Math.max(1, Math.floor(num($("targetDays").value)));
-
-        const active = Math.max(0, drives - spares);
-        if (active < 2 || sizeTB <= 0) {
-          render([{ k: "Status", v: "Enter a valid drive count (>=2) and size.", cls: "flag-warn" }]);
-          return;
-        }
-
-        const rawTB = active * sizeTB;
-
-        let usableTB = 0;
-        let rule = "";
-
-        if (level === "0") {
-          usableTB = rawTB;
-          rule = "Usable = N × size";
-        } else if (level === "1") {
-          const pairs = Math.floor(active / 2);
-          usableTB = pairs * sizeTB;
-          rule = "Usable = floor(N/2) × size (mirrors)";
-        } else if (level === "5") {
-          usableTB = Math.max(0, (active - 1) * sizeTB);
-          rule = "Usable = (N - 1) × size";
-        } else if (level === "6") {
-          usableTB = Math.max(0, (active - 2) * sizeTB);
-          rule = "Usable = (N - 2) × size";
-        } else if (level === "10") {
-          const pairs = Math.floor(active / 2);
-          usableTB = pairs * sizeTB;
-          rule = "Usable = floor(N/2) × size (striped mirrors)";
-        }
-
-        const usableTB_afterOverhead = usableTB * (1 - overheadPct / 100);
-
-        const rawTiB = toTiBFromTB(rawTB);
-        const usableTiB = toTiBFromTB(usableTB);
-        const usableTiB_net = toTiBFromTB(usableTB_afterOverhead);
-
-        const penaltyPct = rawTB > 0 ? (1 - (usableTB / rawTB)) * 100 : 0;
-        const tol = toleranceText(level);
-
-        const netUsableGiB = toGiBFromTB(usableTB_afterOverhead);
-        const maxGiBPerDay = netUsableGiB / targetDays;
-        const maxGBPerDay_decimal = (maxGiBPerDay * (1024 ** 3)) / 1e9;
-
-        let riskNote = "Balanced for general workloads.";
-        let riskCls = "flag-ok";
-        if (level === "0") {
-          riskNote = "High risk: any single drive failure means total data loss.";
-          riskCls = "flag-bad";
-        }
-        if (level === "5" && active >= 10) {
-          riskNote = "Caution: large RAID 5 rebuild risk increases with bigger disks and wider arrays.";
-          riskCls = "flag-warn";
-        }
-        if (level === "6") {
-          riskNote = "Safer for large disk pools; rebuild risk is reduced versus RAID 5.";
-          riskCls = "flag-ok";
-        }
-
-        render([
-          { k: "Active drives (excluding spares)", v: String(active) },
-          { k: "Raw capacity", v: `${rawTB.toFixed(1)} TB • ${rawTiB.toFixed(2)} TiB` },
-          { k: "Usable capacity (rule)", v: `${usableTB.toFixed(1)} TB • ${usableTiB.toFixed(2)} TiB` },
-          { k: "Usable after overhead", v: `${usableTB_afterOverhead.toFixed(1)} TB • ${usableTiB_net.toFixed(2)} TiB` },
-          { k: "Capacity penalty vs raw", v: `${penaltyPct.toFixed(1)}%` },
-          { k: "Fault tolerance", v: tol.t, cls: tol.cls },
-          { k: "Rule", v: rule },
-          { k: `Max daily ingest @ ${targetDays} days retention`, v: `${maxGBPerDay_decimal.toFixed(0)} GB/day` },
-          { k: "Max daily ingest (GiB/day)", v: `${maxGiBPerDay.toFixed(0)} GiB/day` },
-          { k: "Risk note", v: riskNote, cls: riskCls }
-        ]);
-      }
-
-      function reset() {
-        $("raidLevel").value = "5";
-        $("driveCount").value = "8";
-        $("driveSizeTb").value = "10";
-        $("hotSpares").value = "0";
-        $("overheadPct").value = "8";
-        $("targetDays").value = "30";
-        results.innerHTML = "";
-        calculate();
-      }
-
-      $("calc").addEventListener("click", calculate);
-      $("reset").addEventListener("click", reset);
-
-      calculate();
-    })();
-  </script>
   <script src="/assets/tool-flow.js?v=1"></script>
+  <script src="./script.js?v=raid-001"></script>
 </body>
 </html>
