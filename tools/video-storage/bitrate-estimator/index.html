@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/assets/style.css?v=5" />
 </head>
 
-<body data-tier="free" data-category="video-storage">
+<body data-tier="free" data-category="video-storage" data-step="bitrate">>
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -31,7 +31,49 @@
       <span class="sep">/</span>
       <span>Bitrate Estimator</span>
     </div>
+    
+    <div class="pipeline-bar" data-pipeline="video-storage">
 
+  <div class="pipeline-title">Design Pipeline</div>
+
+  <div class="pipeline-steps">
+
+    <div class="pipe-step" data-step="bitrate">
+      <span class="pipe-dot"></span>
+      <span class="pipe-label">Bitrate</span>
+    </div>
+
+    <div class="pipe-arrow">→</div>
+
+    <div class="pipe-step" data-step="storage">
+      <span class="pipe-dot"></span>
+      <span class="pipe-label">Storage</span>
+    </div>
+
+    <div class="pipe-arrow">→</div>
+
+    <div class="pipe-step" data-step="retention">
+      <span class="pipe-dot"></span>
+      <span class="pipe-label">Retention</span>
+    </div>
+
+    <div class="pipe-arrow">→</div>
+
+    <div class="pipe-step" data-step="raid">
+      <span class="pipe-dot"></span>
+      <span class="pipe-label">RAID</span>
+    </div>
+
+    <div class="pipe-arrow">→</div>
+
+    <div class="pipe-step" data-step="survivability">
+      <span class="pipe-dot"></span>
+      <span class="pipe-label">Survivability</span>
+    </div>
+
+  </div>
+
+</div>
     <h1>Bitrate Estimator</h1>
     <p class="subhead">Estimate video bitrate from resolution, frame rate, codec efficiency, and scene complexity.</p>
     <p class="tool-best-for">
@@ -117,6 +159,7 @@
 
   <script src="/assets/app.js?v=0005"></script>
   <script src="/assets/tool-flow.js?v=5"></script>
+  <script src="/assets/pipeline.js"></script>
   <script src="./script.js?v=bitrate-005"></script>
 </body>
 </html>

@@ -1684,3 +1684,66 @@ main h3.section-title {
   color:#9aa5b1;
   margin-top:4px;
 }
+
+/* =========================================
+   Pipeline Status Bar
+========================================= */
+
+.pipeline-bar {
+  margin: 18px 0 28px 0;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+}
+
+.pipeline-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #8a8a8a;
+  margin-bottom: 8px;
+}
+
+.pipeline-steps {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pipe-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #777;
+}
+
+.pipe-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #444;
+}
+
+.pipe-arrow {
+  color: #444;
+}
+
+.pipe-step.active {
+  color: #fff;
+}
+
+.pipe-step.active .pipe-dot {
+  background: #00ff9c;
+  box-shadow: 0 0 6px rgba(0,255,156,.6);
+}
+
+.pipe-step.complete .pipe-dot {
+  background: #00ff9c;
+}
+
+.pipe-step.complete {
+  color: #a8ffd8;
+}
