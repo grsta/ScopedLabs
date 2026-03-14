@@ -1686,6 +1686,7 @@ main h3.section-title {
 }
 
 /* =========================================
+ /* =========================================
    Pipeline Status Bar
 ========================================= */
 
@@ -1706,14 +1707,34 @@ main h3.section-title {
 }
 
 .pipeline-steps {
-  display: flex;
+  position: relative;
+  display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+  width: auto;
+}
+
+.pipeline-steps::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 18px;
+  right: 18px;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pipe-step,
+.pipe-arrow {
+  position: relative;
+  z-index: 1;
 }
 
 .pipe-step {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 13px;
@@ -1725,6 +1746,7 @@ main h3.section-title {
   height: 10px;
   border-radius: 50%;
   background: #444;
+  flex: 0 0 auto;
 }
 
 .pipe-arrow {
@@ -1740,35 +1762,15 @@ main h3.section-title {
   box-shadow: 0 0 6px rgba(0,255,156,.6);
 }
 
-.pipe-step.complete .pipe-dot {
-  background: #00ff9c;
-}
-
 .pipe-step.complete {
   color: #a8ffd8;
 }
 
-/* Pipeline progress line */
-
-.pipeline-steps {
-  position: relative;
+.pipe-step.complete .pipe-dot {
+  background: #00ff9c;
 }
 
-/* Pipeline connector line */
-.pipeline-steps::before {
-  content: "";
-  position: absolute;
-  top: 7px;
-  left: 12px;
-  right: 12px;
-  height: 2px;
-  background: rgba(255,255,255,0.08);
-  z-index: 0;
-}
-
-.pipeline-steps {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
+.pipeline-steps::before{
+  content: none !important;
+  display: none !important;
 }
