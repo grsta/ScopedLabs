@@ -19,6 +19,7 @@
   let authSubscribed = false;
   let globalHandlersBound = false;
   let unlockedCategories = [];
+  let unlockSyncComplete = false;
 
   function isUpgradePage() {
     return location.pathname.startsWith("/upgrade/");
@@ -475,6 +476,22 @@
     } catch {}
   }
 
+  function hydrateUnlocksFromCache() {
+    try {
+      const raw = localStorage.getItem(LS_UNLOCK_CACHE_KEY);
+      if (!raw) return;
+
+      const cached = raw
+        .split(",")
+        .map(cleanSlug)
+        .filter(Boolean);
+
+      if (cached.length) {
+        unlockedCategories = cached;
+      }
+    } catch {}
+  }
+
   function setUnlockedCategories(list) {
     unlockedCategories = (Array.isArray(list) ? list : [])
       .map(cleanSlug)
@@ -530,6 +547,10 @@
       return true;
     }
 
+    if (!unlockSyncComplete) {
+      return false;
+    }
+
     if (!isCategoryUnlocked(pageCategory)) {
       redirectToUpgradeForCategory(pageCategory);
       return true;
@@ -583,6 +604,7 @@
     clearLegacyUnlockKeys();
 
     if (!currentSession || !currentSession.access_token) {
+      unlockSyncComplete = true;
       setUnlockedCategories([]);
       return;
     }
@@ -603,14 +625,18 @@
       }
 
       if (!response.ok || !data || !data.ok || !Array.isArray(data.categories)) {
-        setUnlockedCategories([]);
+        console.warn("[app.js] unlock sync returned unexpected response; preserving cached unlocks");
+        unlockSyncComplete = true;
+        applyUnlockedCategoryUi();
         return;
       }
 
+      unlockSyncComplete = true;
       setUnlockedCategories(data.categories);
     } catch (err) {
-      console.warn("[app.js] unlock sync error:", err);
-      setUnlockedCategories([]);
+      console.warn("[app.js] unlock sync error; preserving cached unlocks:", err);
+      unlockSyncComplete = true;
+      applyUnlockedCategoryUi();
     }
   }
 
@@ -641,6 +667,7 @@
           if (!window.SL_AUTH) window.SL_AUTH = {};
           window.SL_AUTH.__session = currentSession;
 
+          unlockSyncComplete = false;
           renderAll();
           await syncUnlockedCategories();
 
@@ -687,6 +714,7 @@
     }
 
     currentSession = null;
+    unlockSyncComplete = false;
 
     if (!window.SL_AUTH) window.SL_AUTH = {};
     window.SL_AUTH.__session = null;
@@ -945,8 +973,10 @@
   }
 
   async function start() {
+    hydrateUnlocksFromCache();
     bindGlobalHandlers();
     initPage({ replaceUrl: true });
+    applyUnlockedCategoryUi();
     await syncSession();
 
     if (enforceProToolAccess()) return;
@@ -985,4 +1015,3 @@
 
   start();
 })();
-
