@@ -4,173 +4,186 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bitrate Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=5" />
+
+  <link rel="stylesheet" href="/assets/style.css?v=6" />
 </head>
 
-<body data-tier="free" data-category="video-storage" data-step="bitrate">>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="/">
-        <span class="brand-dot"></span>
-        <span class="brand-text">ScopedLabs</span>
-      </a>
+<body data-tier="free" data-category="video-storage" data-step="bitrate">
 
-      <nav class="site-nav">
-        <a class="nav-pill" href="/">Home</a>
-        <a class="nav-pill" href="/tools/">Tools</a>
-        <a class="nav-pill" href="/about/">About</a>
-      </nav>
-    </div>
-  </header>
+<header class="site-header">
+  <div class="container header-inner">
 
-  <main class="container page">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/video-storage/">Video & Storage</a>
-      <span class="sep">/</span>
-      <span>Bitrate Estimator</span>
-    </div>
-    
-    <div class="pipeline-bar" data-pipeline="video-storage">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
 
-  <div class="pipeline-title">Design Pipeline</div>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/about/">About</a>
+    </nav>
 
-  <div class="pipeline-steps">
+  </div>
+</header>
 
-    <div class="pipe-step" data-step="bitrate">
-      <span class="pipe-dot"></span>
-      <span class="pipe-label">Bitrate</span>
-    </div>
+<main class="container page">
 
-    <div class="pipe-arrow">→</div>
+  <div class="crumbs">
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <a href="/tools/video-storage/">Video & Storage</a>
+    <span class="sep">/</span>
+    <span>Bitrate Estimator</span>
+  </div>
 
-    <div class="pipe-step" data-step="storage">
-      <span class="pipe-dot"></span>
-      <span class="pipe-label">Storage</span>
-    </div>
+  <h1>Bitrate Estimator</h1>
 
-    <div class="pipe-arrow">→</div>
+  <!-- DESIGN PIPELINE -->
+  <div class="pipeline-bar" data-pipeline="video-storage">
 
-    <div class="pipe-step" data-step="retention">
-      <span class="pipe-dot"></span>
-      <span class="pipe-label">Retention</span>
-    </div>
+    <div class="pipeline-title">Design Pipeline</div>
 
-    <div class="pipe-arrow">→</div>
+    <div class="pipeline-steps">
 
-    <div class="pipe-step" data-step="raid">
-      <span class="pipe-dot"></span>
-      <span class="pipe-label">RAID</span>
-    </div>
+      <div class="pipe-step" data-step="bitrate">
+        <span class="pipe-dot"></span>
+        <span class="pipe-label">Bitrate</span>
+      </div>
 
-    <div class="pipe-arrow">→</div>
+      <div class="pipe-arrow">→</div>
 
-    <div class="pipe-step" data-step="survivability">
-      <span class="pipe-dot"></span>
-      <span class="pipe-label">Survivability</span>
+      <div class="pipe-step" data-step="storage">
+        <span class="pipe-dot"></span>
+        <span class="pipe-label">Storage</span>
+      </div>
+
+      <div class="pipe-arrow">→</div>
+
+      <div class="pipe-step" data-step="retention">
+        <span class="pipe-dot"></span>
+        <span class="pipe-label">Retention</span>
+      </div>
+
+      <div class="pipe-arrow">→</div>
+
+      <div class="pipe-step" data-step="raid">
+        <span class="pipe-dot"></span>
+        <span class="pipe-label">RAID</span>
+      </div>
+
+      <div class="pipe-arrow">→</div>
+
+      <div class="pipe-step" data-step="survivability">
+        <span class="pipe-dot"></span>
+        <span class="pipe-label">Survivability</span>
+      </div>
+
     </div>
 
   </div>
 
-</div>
-    <h1>Bitrate Estimator</h1>
-<div class="pipeline-bar">
-   ...
-</div>
+  <p class="subhead">
+    Estimate video bitrate from resolution, frame rate, codec efficiency, and scene complexity.
+  </p>
 
-<p class="subhead">
-Estimate video bitrate from resolution, frame rate, codec efficiency, and scene complexity.
-</p>
-    <p class="subhead">Estimate video bitrate from resolution, frame rate, codec efficiency, and scene complexity.</p>
-    <p class="tool-best-for">
-      <strong>Best for:</strong> estimating camera bandwidth before planning storage.
-      </p>
-    <section class="card tool-card">
-      <h2>Inputs</h2>
+  <p class="tool-best-for">
+    <strong>Best for:</strong> estimating camera bandwidth before planning storage.
+  </p>
 
-      <div class="form-grid">
-        <label class="field">
-          <span class="label">Resolution</span>
-          <select id="res">
-            <option value="1280x720">720p (1280-720)</option>
-            <option value="1920x1080" selected>1080p (1920-1080)</option>
-            <option value="2560x1440">1440p (2560-1440)</option>
-            <option value="3840x2160">4K (3840—2160)</option>
-            <option value="custom">Custom¦</option>
-          </select>
-        </label>
+  <section class="card tool-card">
+    <h2>Inputs</h2>
 
-        <label class="field">
-          <span class="label">Custom Width (px)</span>
-          <input id="w" type="number" min="16" step="1" value="1920" />
-        </label>
+    <div class="form-grid">
 
-        <label class="field">
-          <span class="label">Custom Height (px)</span>
-          <input id="h" type="number" min="16" step="1" value="1080" />
-        </label>
+      <label class="field">
+        <span class="label">Resolution</span>
+        <select id="res">
+          <option value="1280x720">720p (1280-720)</option>
+          <option value="1920x1080" selected>1080p (1920-1080)</option>
+          <option value="2560x1440">1440p (2560-1440)</option>
+          <option value="3840x2160">4K (3840-2160)</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
 
-        <label class="field">
-          <span class="label">Frame Rate (fps)</span>
-          <input id="fps" type="number" min="1" step="1" value="15" />
-        </label>
+      <label class="field">
+        <span class="label">Custom Width (px)</span>
+        <input id="w" type="number" min="16" step="1" value="1920" />
+      </label>
 
-        <label class="field">
-          <span class="label">Codec</span>
-          <select id="codec">
-            <option value="h264" selected>H.264</option>
-            <option value="h265">H.265 / HEVC</option>
-            <option value="vp9">VP9</option>
-            <option value="av1">AV1</option>
-          </select>
-        </label>
+      <label class="field">
+        <span class="label">Custom Height (px)</span>
+        <input id="h" type="number" min="16" step="1" value="1080" />
+      </label>
 
-        <label class="field">
-          <span class="label">Scene Complexity</span>
-          <select id="scene">
-            <option value="low">Low (static)</option>
-            <option value="med" selected>Medium</option>
-            <option value="high">High (motion / foliage)</option>
-          </select>
-        </label>
+      <label class="field">
+        <span class="label">Frame Rate (fps)</span>
+        <input id="fps" type="number" min="1" step="1" value="15" />
+      </label>
 
-        <label class="field">
-          <span class="label">Quality Target</span>
-          <select id="quality">
-            <option value="conservative">Conservative (higher quality)</option>
-            <option value="balanced" selected>Balanced</option>
-            <option value="aggressive">Aggressive (lower bitrate)</option>
-          </select>
-        </label>
-      </div>
+      <label class="field">
+        <span class="label">Codec</span>
+        <select id="codec">
+          <option value="h264" selected>H.264</option>
+          <option value="h265">H.265 / HEVC</option>
+          <option value="vp9">VP9</option>
+          <option value="av1">AV1</option>
+        </select>
+      </label>
 
-      <div class="actions">
-        <button id="calc" class="btn btn-primary">Calculate</button>
-        <button id="reset" class="btn">Reset</button>
-      </div>
-    </section>
+      <label class="field">
+        <span class="label">Scene Complexity</span>
+        <select id="scene">
+          <option value="low">Low (static)</option>
+          <option value="med" selected>Medium</option>
+          <option value="high">High (motion / foliage)</option>
+        </select>
+      </label>
 
-    <section class="card tool-card">
-      <h2>Results</h2>
-      <div id="results" class="results">
-        <div class="muted">Enter values and press Calculate.</div>
-      </div>
-      <div id="next-step-row" class="actions" style="margin-top:16px; display:none;">
-  <a id="to-storage" class="btn btn-primary">
-    Continue → Storage Calculator
-  </a>
-</div>
-    </section>
-  </main>
+      <label class="field">
+        <span class="label">Quality Target</span>
+        <select id="quality">
+          <option value="conservative">Conservative (higher quality)</option>
+          <option value="balanced" selected>Balanced</option>
+          <option value="aggressive">Aggressive (lower bitrate)</option>
+        </select>
+      </label>
 
-  <script src="/assets/app.js?v=0005"></script>
-  <script src="/assets/tool-flow.js?v=5"></script>
-  <script src="/assets/pipeline.js"></script>
-  <script src="./script.js?v=bitrate-005"></script>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+
+  </section>
+
+  <section class="card tool-card">
+
+    <h2>Results</h2>
+
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
+
+    <div id="next-step-row" class="actions" style="margin-top:16px; display:none;">
+      <a id="to-storage" class="btn btn-primary">
+        Continue → Storage Calculator
+      </a>
+    </div>
+
+  </section>
+
+</main>
+
+<script src="/assets/app.js?v=0005"></script>
+<script src="/assets/tool-flow.js?v=5"></script>
+<script src="/assets/pipeline.js"></script>
+<script src="./script.js?v=bitrate-005"></script>
+
 </body>
 </html>
-
 
 
 
