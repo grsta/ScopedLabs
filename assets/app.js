@@ -566,32 +566,39 @@
 }
 
   function applyUnlockedCategoryUi() {
-    const category = cleanSlug(document.body?.dataset?.category);
-    if (!category) return;
+  const category = cleanSlug(document.body?.dataset?.category);
+  if (!category) return;
 
-    const rows = document.querySelectorAll("a.tool-row.pro[data-tool]");
-    rows.forEach((row) => {
-      if (!row.dataset.upgradeHref) {
-        row.dataset.upgradeHref = row.getAttribute("href") || "";
-      }
+  const links = document.querySelectorAll("a[data-tool]");
 
-      if (!isCategoryUnlocked(category)) {
-        row.setAttribute("href", row.dataset.upgradeHref);
-        return;
-      }
+  links.forEach((row) => {
+    if (!row.dataset.upgradeHref) {
+      row.dataset.upgradeHref = row.getAttribute("href") || "";
+    }
 
-      row.setAttribute("href", row.dataset.tool);
+    const isProLink =
+      row.classList.contains("pro") ||
+      row.dataset.upgradeHref.includes("/upgrade/");
 
-      const lock = row.querySelector(".lock-icon");
-      if (lock) lock.remove();
+    if (!isProLink) return;
 
-      const pill = row.querySelector(".pill");
-      if (pill) {
-        pill.textContent = "Unlocked";
-        pill.classList.add("unlocked-pill");
-      }
-    });
-  }
+    if (!isCategoryUnlocked(category)) {
+      row.setAttribute("href", row.dataset.upgradeHref);
+      return;
+    }
+
+    row.setAttribute("href", row.dataset.tool);
+
+    const lock = row.querySelector(".lock-icon");
+    if (lock) lock.remove();
+
+    const pill = row.querySelector(".pill");
+    if (pill) {
+      pill.textContent = "Unlocked";
+      pill.classList.add("unlocked-pill");
+    }
+  });
+}
 
   async function getSB() {
     const auth = window.SL_AUTH;
@@ -846,24 +853,21 @@
     });
   }
 
-  function handleDocumentClick(event) {
-    const target = event.target;
+  if (target instanceof Element) {
+  const row = target.closest("a[data-tool]");
+  if (row) {
+    const category = cleanSlug(document.body?.dataset?.category);
+    const tool = row.dataset.tool;
 
-    if (target instanceof Element) {
-      const row = target.closest("a.tool-row.pro[data-tool]");
-      if (row) {
-        const category = cleanSlug(document.body?.dataset?.category);
-        if (category && isCategoryUnlocked(category)) {
-          const tool = row.dataset.tool;
-          if (tool) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            event.stopPropagation();
-            window.location.assign(tool);
-            return;
-          }
-        }
-      }
+    if (category && tool && isCategoryUnlocked(category)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      window.location.assign(tool);
+      return;
+    }
+  }
+}
     }
 
     if (isUpgradePage()) {
