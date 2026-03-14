@@ -1715,18 +1715,6 @@ main h3.section-title {
   width: auto;
 }
 
-.pipeline-steps::before {
-  content: "";
-  position: absolute;
-  top: 8px;
-  left: 18px;
-  right: 18px;
-  height: 1px;
-  background: rgba(255,255,255,0.08);
-  z-index: 0;
-  pointer-events: none;
-}
-
 .pipe-step,
 .pipe-arrow {
   position: relative;
