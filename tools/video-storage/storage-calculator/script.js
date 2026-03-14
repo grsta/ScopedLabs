@@ -1,5 +1,4 @@
 (function () {
-
   const y = document.querySelector("[data-year]");
   if (y) y.textContent = new Date().getFullYear();
 
@@ -26,10 +25,25 @@
 
   const modeEl = $("mode");
   const motionField = $("motionField");
+  const nextStepRow = $("next-step-row");
+  const toRetention = $("to-retention");
 
   function syncMotion() {
     const isMotion = modeEl.value === "motion";
     motionField.style.display = isMotion ? "" : "none";
+  }
+
+  function hideNextStep() {
+    if (nextStepRow) nextStepRow.style.display = "none";
+  }
+
+  function showNextStep() {
+    if (nextStepRow) nextStepRow.style.display = "flex";
+  }
+
+  function invalidate() {
+    hideNextStep();
+    $("statusText").textContent = "Values changed. Recalculate to continue.";
   }
 
   function importFromBitrate() {
@@ -62,7 +76,7 @@
       $("perCamDay").textContent = "—";
       $("totalDay").textContent = "—";
       $("totalRetention").textContent = "—";
-      $("next-step-row").style.display = "none";
+      hideNextStep();
       return;
     }
 
@@ -71,11 +85,11 @@
       $("perCamDay").textContent = "—";
       $("totalDay").textContent = "—";
       $("totalRetention").textContent = "—";
-      $("next-step-row").style.display = "none";
+      hideNextStep();
       return;
     }
 
-    const duty = (mode === "motion") ? (motionPct / 100) : 1;
+    const duty = mode === "motion" ? (motionPct / 100) : 1;
     const overheadMult = 1 + (overheadPct / 100);
 
     const perCamDayGiB = bitrate * MbitPerSec_to_GiBperDay * duty * overheadMult;
@@ -87,9 +101,13 @@
     $("totalRetention").textContent = `${fmtGiB(totalRetentionGiB)} (${retentionDays} days)`;
 
     let status = "✅ Calculated.";
-    if (mode === "motion" && motionPct === 0) status = "⚠ Motion mode selected with 0% activity (result will be 0).";
-    if (overheadPct >= 30) status = "✅ Calculated (high overhead reserve — conservative plan).";
-    if (retentionDays === 0) status = "⚠ Retention is 0 days (no storage required beyond daily).";
+    if (mode === "motion" && motionPct === 0) {
+      status = "⚠ Motion mode selected with 0% activity (result will be 0).";
+    } else if (overheadPct >= 30) {
+      status = "✅ Calculated (high overhead reserve — conservative plan).";
+    } else if (retentionDays === 0) {
+      status = "⚠ Retention is 0 days (no storage required beyond daily).";
+    }
 
     $("statusText").textContent = status;
 
@@ -97,21 +115,24 @@
       source: "storage",
       cams: String(cams),
       bitrate: String(bitrate),
+      mode: String(mode),
+      motionPct: String(motionPct),
       days: String(retentionDays),
       storage_per_day: totalDayGiB.toFixed(2),
       total_storage: totalRetentionGiB.toFixed(2),
       unit: "gib"
     });
 
-    $("to-retention").href =
-      "/tools/video-storage/retention-planner/?" + params.toString();
+    if (toRetention) {
+      toRetention.href = "/tools/video-storage/retention-planner/?" + params.toString();
+    }
 
-    $("next-step-row").style.display = "flex";
+    showNextStep();
   }
 
   function reset() {
-    $("cams").value = "16";
-    $("bitrate").value = "4.0";
+    $("cams").value = "1";
+    $("bitrate").value = "4";
     $("mode").value = "continuous";
     $("motionPct").value = "25";
     $("retention").value = "30";
@@ -123,12 +144,21 @@
     $("totalDay").textContent = "—";
     $("totalRetention").textContent = "—";
     $("statusText").textContent = "Enter values and calculate.";
-    $("next-step-row").style.display = "none";
+    hideNextStep();
   }
 
-  modeEl.addEventListener("change", syncMotion);
+  modeEl.addEventListener("change", () => {
+    syncMotion();
+    invalidate();
+  });
+
   $("calc").addEventListener("click", calc);
   $("reset").addEventListener("click", reset);
+
+  ["cams", "bitrate", "motionPct", "retention", "overhead"].forEach((id) => {
+    const el = $(id);
+    if (el) el.addEventListener("input", invalidate);
+  });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -139,17 +169,7 @@
       }
     }
   });
-  
-  function invalidate() {
-  $("next-step-row").style.display = "none";
-}
-
-["cams","bitrate","mode","motionPct","retention","overhead"].forEach(id=>{
-  const el = $(id);
-  if (el) el.addEventListener("input", invalidate);
-});
 
   reset();
   importFromBitrate();
-
 })();
