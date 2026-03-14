@@ -853,21 +853,23 @@
     });
   }
 
-  if (target instanceof Element) {
-  const row = target.closest("a[data-tool]");
-  if (row) {
-    const category = cleanSlug(document.body?.dataset?.category);
-    const tool = row.dataset.tool;
+    function handleDocumentClick(event) {
+    const target = event.target;
 
-    if (category && tool && isCategoryUnlocked(category)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      event.stopPropagation();
-      window.location.assign(tool);
-      return;
-    }
-  }
-}
+    if (target instanceof Element) {
+      const row = target.closest("a[data-tool]");
+      if (row) {
+        const category = cleanSlug(document.body?.dataset?.category);
+        const tool = row.dataset.tool;
+
+        if (category && tool && isCategoryUnlocked(category)) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          event.stopPropagation();
+          window.location.assign(tool);
+          return;
+        }
+      }
     }
 
     if (isUpgradePage()) {
