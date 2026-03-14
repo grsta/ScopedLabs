@@ -99,6 +99,8 @@
     /* PIPELINE: Bitrate → Storage */
 
     const params = new URLSearchParams({
+      flow: "video-storage",
+      step: "bitrate",
       source: "bitrate",
       bitrate: est.toFixed(2)
     });
