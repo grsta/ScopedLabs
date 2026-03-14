@@ -139,6 +139,15 @@
       }
     }
   });
+  
+  function invalidate() {
+  $("next-step-row").style.display = "none";
+}
+
+["cams","bitrate","mode","motionPct","retention","overhead"].forEach(id=>{
+  const el = $(id);
+  if (el) el.addEventListener("input", invalidate);
+});
 
   reset();
   importFromBitrate();
