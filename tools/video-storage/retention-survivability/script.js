@@ -1,36 +1,30 @@
-// Retention Survivability Estimator — ScopedLabs
-// Deterministic planning math (no external data).
-// Shows tool UI only when ?pro=1 (handled in HTML gate).
-
-document.addEventListener("DOMContentLoaded", () => {
+(() => {
   const byId = (id) => document.getElementById(id);
 
-  // Inputs
-  const baselineRetentionEl = byId("baselineRetention");
-  const capacityLossPctEl   = byId("capacityLossPct");
-  const targetRetentionEl   = byId("targetRetention");
-  const stressWritePctEl    = byId("stressWritePct");
-  const degradedDaysEl      = byId("degradedDays");
-  const reserveHeadroomPctEl= byId("reserveHeadroomPct");
+  const yearEl = document.querySelector("[data-year]");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  // Buttons
-  const calcBtn  = byId("calc");
+  const baselineRetentionEl = byId("baselineRetention");
+  const capacityLossPctEl = byId("capacityLossPct");
+  const targetRetentionEl = byId("targetRetention");
+  const stressWritePctEl = byId("stressWritePct");
+  const degradedDaysEl = byId("degradedDays");
+  const reserveHeadroomPctEl = byId("reserveHeadroomPct");
+
+  const calcBtn = byId("calc");
   const resetBtn = byId("reset");
 
-  // Outputs
-  const outBaseline      = byId("outBaseline");
-  const outEffective     = byId("outEffective");
-  const outDaysLost      = byId("outDaysLost");
-  const outMeetsGoal     = byId("outMeetsGoal");
-  const outRecommended   = byId("outRecommended");
-  const outHeadroomNeed  = byId("outHeadroomNeed");
-  const outDegradedImpact= byId("outDegradedImpact");
-  const outRisk          = byId("outRisk");
-  const outNarrative     = byId("outNarrative");
-  const statusText       = byId("statusText");
+  const outBaseline = byId("outBaseline");
+  const outEffective = byId("outEffective");
+  const outDaysLost = byId("outDaysLost");
+  const outMeetsGoal = byId("outMeetsGoal");
+  const outRecommended = byId("outRecommended");
+  const outHeadroomNeed = byId("outHeadroomNeed");
+  const outDegradedImpact = byId("outDegradedImpact");
+  const outRisk = byId("outRisk");
+  const outNarrative = byId("outNarrative");
+  const statusText = byId("statusText");
 
-  // If this page is in locked mode, these elements won't exist (because proView is hidden, but still in DOM).
-  // We still guard in case of future refactors.
   const required = [
     baselineRetentionEl, capacityLossPctEl, targetRetentionEl,
     stressWritePctEl, degradedDaysEl, reserveHeadroomPctEl,
@@ -39,13 +33,16 @@ document.addEventListener("DOMContentLoaded", () => {
     outRecommended, outHeadroomNeed, outDegradedImpact, outRisk,
     outNarrative, statusText
   ];
+
   if (required.some((x) => !x)) return;
 
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
   const round = (v, d = 2) => {
     const p = Math.pow(10, d);
     return Math.round(v * p) / p;
   };
+
   const fmtDays = (v) => `${round(v, 2)} days`;
   const fmtPct = (v) => `${round(v, 1)}%`;
 
@@ -54,43 +51,64 @@ document.addEventListener("DOMContentLoaded", () => {
     return Number.isFinite(v) ? v : fallback;
   };
 
-  const setText = (el, txt) => { el.textContent = txt; };
+  const setText = (el, txt) => {
+    el.textContent = txt;
+  };
 
-  const compute = () => {
+  function importFromRaid() {
+    const q = new URLSearchParams(window.location.search);
+
+    if (q.get("source") !== "raid") return;
+
+    const targetDays = readNum(targetRetentionEl, 30);
+    const importedTargetDays = Number(q.get("targetDays"));
+    const requiredStorageGb = Number(q.get("requiredStorageGb"));
+    const usableTb = Number(q.get("usableTb"));
+
+    if (Number.isFinite(importedTargetDays) && importedTargetDays > 0) {
+      baselineRetentionEl.value = String(importedTargetDays);
+      targetRetentionEl.value = String(importedTargetDays);
+    }
+
+    if (Number.isFinite(requiredStorageGb) && requiredStorageGb > 0 && Number.isFinite(usableTb) && usableTb > 0) {
+      const usableGb = usableTb * 1000;
+      const lossPct = Math.max(0, (1 - (usableGb / requiredStorageGb)) * 100);
+      capacityLossPctEl.value = round(lossPct, 1);
+    }
+
+    const note = byId("flow-note");
+    if (note) {
+      note.hidden = false;
+
+      if (Number.isFinite(requiredStorageGb) && requiredStorageGb > 0 && Number.isFinite(usableTb) && usableTb > 0) {
+        note.textContent =
+          `Imported from RAID Impact. Required storage: ${(requiredStorageGb / 1000).toFixed(2)} TB. Net usable array: ${usableTb.toFixed(2)} TB. Review values and click Calculate.`;
+      } else {
+        note.textContent = "Imported from RAID Impact. Review values and click Calculate.";
+      }
+    }
+  }
+
+  function compute() {
     const baselineDays = Math.max(0.1, readNum(baselineRetentionEl, 30));
-    const lossPct = clamp(readNum(capacityLossPctEl, 0), 0, 95); // 95% max so we don't blow up
+    const lossPct = clamp(readNum(capacityLossPctEl, 0), 0, 95);
     const targetDays = Math.max(0.1, readNum(targetRetentionEl, baselineDays));
     const stressPct = clamp(readNum(stressWritePctEl, 0), 0, 200);
     const degradedDays = clamp(readNum(degradedDaysEl, 0), 0, 365);
     const headroomPct = clamp(readNum(reserveHeadroomPctEl, 0), 0, 200);
 
-    // Model:
-    // Retention is proportional to usable capacity / write rate.
-    // - capacity loss reduces usable capacity (multiplier = 1 - loss)
-    // - stress write penalty increases write rate (multiplier = 1 + stress)
     const capMult = 1 - (lossPct / 100);
     const writeMult = 1 + (stressPct / 100);
 
     const effectiveDays = baselineDays * capMult / writeMult;
     const daysLost = Math.max(0, baselineDays - effectiveDays);
 
-    // Recommended baseline to still meet target under loss+stress:
-    // target <= baseline * capMult / writeMult  => baseline >= target * writeMult / capMult
-    const recommendedBaseline = targetDays * writeMult / capMult;
-
-    // Headroom baseline recommendation (above goal) independent of loss/stress:
+    const strictRequiredBaseline = targetDays * writeMult / Math.max(0.001, capMult);
     const headroomBaseline = targetDays * (1 + headroomPct / 100);
 
-    // Total days of retention "lost" across a degraded period:
-    // This is a heuristic: during the degraded window, you're burning retention faster.
-    // Equivalent extra-retention-consumed per day = (baseline/effective - 1) days/day
-    // Multiply by degradedDays, clamp >=0
     const burnRate = (baselineDays / Math.max(0.001, effectiveDays)) - 1;
     const degradedImpact = Math.max(0, burnRate * degradedDays);
 
-    // Risk flag logic (simple, but useful):
-    // - FAIL if effective < target
-    // - WARNING if effective is within 10% of target OR lossPct >= 20 OR stress >= 15
     const meets = effectiveDays >= targetDays;
     const nearCliff = effectiveDays < targetDays * 1.1;
     const highLoss = lossPct >= 20;
@@ -100,42 +118,58 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!meets) risk = "FAIL (below goal)";
     else if (nearCliff || highLoss || highStress) risk = "WARNING (fragile margin)";
 
-    // Output
     setText(outBaseline, fmtDays(baselineDays));
     setText(outEffective, fmtDays(effectiveDays));
     setText(outDaysLost, fmtDays(daysLost));
     setText(outMeetsGoal, meets ? "YES" : "NO");
-    outMeetsGoal.classList.toggle("muted", true);
 
-    // Show two baselines: strict required (loss+stress) and your general headroom suggestion
-    const strictReq = recommendedBaseline;
-    const impliedHeadroomNeed = Math.max(0, (strictReq - baselineDays));
-    setText(outRecommended, `${fmtDays(strictReq)} (strict) • ${fmtDays(headroomBaseline)} (headroom target)`);
-    setText(outHeadroomNeed, `${fmtDays(impliedHeadroomNeed)} needed to meet goal under loss/stress`);
+    const impliedHeadroomNeed = Math.max(0, strictRequiredBaseline - baselineDays);
 
-    setText(outDegradedImpact, degradedDays > 0 ? `${fmtDays(degradedImpact)} equivalent retention burned` : "—");
+    setText(
+      outRecommended,
+      `${fmtDays(strictRequiredBaseline)} (strict) • ${fmtDays(headroomBaseline)} (headroom target)`
+    );
+    setText(
+      outHeadroomNeed,
+      `${fmtDays(impliedHeadroomNeed)} needed to meet goal under loss/stress`
+    );
+
+    setText(
+      outDegradedImpact,
+      degradedDays > 0 ? `${fmtDays(degradedImpact)} equivalent retention burned` : "—"
+    );
     setText(outRisk, risk);
 
-    // Narrative
     const narrative = [];
-    narrative.push(`With ${fmtPct(lossPct)} usable capacity loss and ${fmtPct(stressPct)} write penalty, your effective retention becomes ${fmtDays(effectiveDays)}.`);
+    narrative.push(
+      `With ${fmtPct(lossPct)} usable capacity loss and ${fmtPct(stressPct)} write penalty, effective retention becomes ${fmtDays(effectiveDays)}.`
+    );
+
     if (!meets) {
-      narrative.push(`This fails your ${fmtDays(targetDays)} goal. To survive this degraded state, baseline retention should be ~${fmtDays(strictReq)} (or increase capacity / reduce bitrate).`);
+      narrative.push(
+        `This fails the ${fmtDays(targetDays)} retention goal. To survive this degraded state, baseline retention should be about ${fmtDays(strictRequiredBaseline)} or capacity/load assumptions should improve.`
+      );
     } else if (nearCliff) {
-      narrative.push(`You technically meet the ${fmtDays(targetDays)} goal, but you are operating near a retention cliff. Add margin or reduce expected loss/stress assumptions.`);
+      narrative.push(
+        `This still meets the ${fmtDays(targetDays)} goal, but it is operating near a retention cliff. Additional margin is recommended.`
+      );
     } else {
-      narrative.push(`You meet the ${fmtDays(targetDays)} goal with margin. Keep headroom disciplined so this remains true as systems age or expand.`);
+      narrative.push(
+        `This meets the ${fmtDays(targetDays)} goal with workable margin. Maintaining disciplined headroom will help preserve that over time.`
+      );
     }
+
     if (degradedDays > 0) {
-      narrative.push(`Over a ${fmtDays(degradedDays)} degraded period, this model estimates ~${fmtDays(degradedImpact)} additional “retention days” effectively consumed (heuristic).`);
+      narrative.push(
+        `Over a degraded period of ${fmtDays(degradedDays)}, this model estimates about ${fmtDays(degradedImpact)} of equivalent retention burn.`
+      );
     }
 
     setText(outNarrative, narrative.join(" "));
+    setText(statusText, "Calculated.");
+  }
 
-    statusText.textContent = "Calculated.";
-  };
-
-  const reset = () => {
+  function reset() {
     baselineRetentionEl.value = "30";
     capacityLossPctEl.value = "12";
     targetRetentionEl.value = "30";
@@ -153,11 +187,30 @@ document.addEventListener("DOMContentLoaded", () => {
     outRisk.textContent = "—";
     outNarrative.textContent = "—";
     statusText.textContent = "Enter values and calculate.";
-  };
+  }
 
   calcBtn.addEventListener("click", compute);
   resetBtn.addEventListener("click", reset);
 
-  // Auto-run once so it looks “alive” in Pro mode
-  compute();
-});
+  ["baselineRetention", "capacityLossPct", "targetRetention", "stressWritePct", "degradedDays", "reserveHeadroomPct"].forEach((id) => {
+    const el = byId(id);
+    if (el) {
+      el.addEventListener("input", () => {
+        statusText.textContent = "Values changed. Recalculate.";
+      });
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        compute();
+      }
+    }
+  });
+
+  reset();
+  importFromRaid();
+})();
