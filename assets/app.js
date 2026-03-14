@@ -497,6 +497,47 @@
     return getCachedUnlocks().includes(slug);
   }
 
+  function isSignedIn() {
+    return !!(currentSession && currentSession.user && currentSession.user.email);
+  }
+
+  function isProtectedProToolPage() {
+    const body = document.body;
+    if (!body) return false;
+
+    if (isUpgradePage() || isCheckoutPage()) return false;
+
+    return body.dataset.tier === "pro";
+  }
+
+  function redirectToUpgradeForCategory(cat) {
+    const slug = cleanSlug(cat || document.body?.dataset?.category || currentCategory);
+    const url = slug
+      ? `${UPGRADE_PATH}?category=${encodeURIComponent(slug)}`
+      : UPGRADE_PATH;
+
+    location.href = url;
+  }
+
+  function enforceProToolAccess() {
+    if (!isProtectedProToolPage()) return false;
+
+    const pageCategory =
+      cleanSlug(document.body?.dataset?.category) || currentCategory;
+
+    if (!isSignedIn()) {
+      redirectToUpgradeForCategory(pageCategory);
+      return true;
+    }
+
+    if (!isCategoryUnlocked(pageCategory)) {
+      redirectToUpgradeForCategory(pageCategory);
+      return true;
+    }
+
+    return false;
+  }
+
   function applyUnlockedCategoryUi() {
     const category = cleanSlug(document.body?.dataset?.category);
     if (!category) return;
@@ -602,6 +643,8 @@
 
           renderAll();
           await syncUnlockedCategories();
+
+          if (enforceProToolAccess()) return;
 
           if (!isCheckoutPage()) {
             const returning = getReturnParam() === "checkout";
@@ -862,49 +905,51 @@
   }
 
   function initPage({ fromHistory = false, replaceUrl = false } = {}) {
-  const bodyCategory = cleanSlug(document.body?.dataset?.category);
+    const bodyCategory = cleanSlug(document.body?.dataset?.category);
 
-  if (isUpgradePage() || isCheckoutPage()) {
-    currentCategory = getResolvedCategory();
-    setStoredCategory(currentCategory);
+    if (isUpgradePage() || isCheckoutPage()) {
+      currentCategory = getResolvedCategory();
+      setStoredCategory(currentCategory);
 
-    if (currentCategory) {
+      if (currentCategory) {
+        updateUrlCategory(currentCategory, { replace: true });
+      }
+    } else {
+      currentCategory = bodyCategory || null;
+      cleanNonUpgradeQueryParams();
+    }
+
+    renderAll();
+    applyUnlockedCategoryUi();
+
+    if (!isCheckoutPage()) {
+      if (location.hash === "#checkout") {
+        requestAnimationFrame(() => {
+          scrollToCheckout({ instant: fromHistory });
+        });
+      }
+
+      if (getReturnParam() === "checkout") {
+        requestAnimationFrame(() => {
+          scrollToCategories({ instant: fromHistory });
+        });
+      }
+    } else if (!currentCategory) {
+      const els = getEls();
+      if (els.status) setText(els.status, "Choose a category to continue.");
+    }
+
+    if ((isUpgradePage() || isCheckoutPage()) && replaceUrl && currentCategory) {
       updateUrlCategory(currentCategory, { replace: true });
     }
-  } else {
-    currentCategory = bodyCategory || null;
-    cleanNonUpgradeQueryParams();
   }
-
-  renderAll();
-  applyUnlockedCategoryUi();
-
-  if (!isCheckoutPage()) {
-    if (location.hash === "#checkout") {
-      requestAnimationFrame(() => {
-        scrollToCheckout({ instant: fromHistory });
-      });
-    }
-
-    if (getReturnParam() === "checkout") {
-      requestAnimationFrame(() => {
-        scrollToCategories({ instant: fromHistory });
-      });
-    }
-  } else if (!currentCategory) {
-    const els = getEls();
-    if (els.status) setText(els.status, "Choose a category to continue.");
-  }
-
-  if ((isUpgradePage() || isCheckoutPage()) && replaceUrl && currentCategory) {
-    updateUrlCategory(currentCategory, { replace: true });
-  }
-}
 
   async function start() {
     bindGlobalHandlers();
     initPage({ replaceUrl: true });
     await syncSession();
+
+    if (enforceProToolAccess()) return;
 
     if (isCheckoutPage()) {
       const signedIn =
@@ -940,5 +985,4 @@
 
   start();
 })();
-
 
