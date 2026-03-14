@@ -537,27 +537,33 @@
   }
 
   function enforceProToolAccess() {
-    if (!isProtectedProToolPage()) return false;
+  if (!isProtectedProToolPage()) return false;
 
-    const pageCategory =
-      cleanSlug(document.body?.dataset?.category) || currentCategory;
+  const pageCategory =
+    cleanSlug(document.body?.dataset?.category) || currentCategory;
 
-    if (!isSignedIn()) {
-      redirectToUpgradeForCategory(pageCategory);
-      return true;
-    }
-
-    if (!unlockSyncComplete) {
-      return false;
-    }
-
-    if (!isCategoryUnlocked(pageCategory)) {
-      redirectToUpgradeForCategory(pageCategory);
-      return true;
-    }
-
+  // If this category is already cached as unlocked, do not bounce.
+  if (isCategoryUnlocked(pageCategory)) {
     return false;
   }
+
+  // If auth/session restore hasn't completed yet, do not hard-fail.
+  if (!unlockSyncComplete) {
+    return false;
+  }
+
+  if (!isSignedIn()) {
+    redirectToUpgradeForCategory(pageCategory);
+    return true;
+  }
+
+  if (!isCategoryUnlocked(pageCategory)) {
+    redirectToUpgradeForCategory(pageCategory);
+    return true;
+  }
+
+  return false;
+}
 
   function applyUnlockedCategoryUi() {
     const category = cleanSlug(document.body?.dataset?.category);
@@ -601,103 +607,120 @@
   }
 
   async function syncUnlockedCategories() {
-    clearLegacyUnlockKeys();
+  clearLegacyUnlockKeys();
 
-    if (!currentSession || !currentSession.access_token) {
+  // If session is not ready yet, preserve cached unlocks.
+  if (!currentSession || !currentSession.access_token) {
+    unlockSyncComplete = false;
+    applyUnlockedCategoryUi();
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/unlocks/list", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${currentSession.access_token}`,
+      },
+    });
+
+    let data = null;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok || !data || !data.ok || !Array.isArray(data.categories)) {
+      console.warn("[app.js] unlock sync returned unexpected response; preserving cached unlocks");
       unlockSyncComplete = true;
-      setUnlockedCategories([]);
+      applyUnlockedCategoryUi();
       return;
     }
 
-    try {
-      const response = await fetch("/api/unlocks/list", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${currentSession.access_token}`,
-        },
-      });
-
-      let data = null;
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
-      }
-
-      if (!response.ok || !data || !data.ok || !Array.isArray(data.categories)) {
-        console.warn("[app.js] unlock sync returned unexpected response; preserving cached unlocks");
-        unlockSyncComplete = true;
-        applyUnlockedCategoryUi();
-        return;
-      }
-
-      unlockSyncComplete = true;
-      setUnlockedCategories(data.categories);
-    } catch (err) {
-      console.warn("[app.js] unlock sync error; preserving cached unlocks:", err);
-      unlockSyncComplete = true;
-      applyUnlockedCategoryUi();
-    }
+    unlockSyncComplete = true;
+    setUnlockedCategories(data.categories);
+  } catch (err) {
+    console.warn("[app.js] unlock sync error; preserving cached unlocks:", err);
+    unlockSyncComplete = true;
+    applyUnlockedCategoryUi();
   }
+}
 
   async function syncSession() {
-    try {
-      const sb = await getSB();
+  try {
+    const sb = await getSB();
 
-      if (!sb) {
-        currentSession = null;
+    if (!sb) {
+      // Preserve any prior session/cache state long enough for tool pages to load.
+      currentSession = (window.SL_AUTH && window.SL_AUTH.__session) || currentSession || null;
+
+      renderAll();
+
+      if (getCachedUnlocks().length) {
+        unlockSyncComplete = false;
+        applyUnlockedCategoryUi();
+      } else {
+        await syncUnlockedCategories();
+      }
+
+      return;
+    }
+
+    const { data } = await sb.auth.getSession();
+    currentSession = data && data.session ? data.session : null;
+
+    if (!window.SL_AUTH) window.SL_AUTH = {};
+    window.SL_AUTH.__session = currentSession;
+
+    renderAll();
+    await syncUnlockedCategories();
+
+    if (!authSubscribed) {
+      sb.auth.onAuthStateChange(async (_event, session) => {
+        currentSession = session || null;
+
+        if (!window.SL_AUTH) window.SL_AUTH = {};
+        window.SL_AUTH.__session = currentSession;
+
+        unlockSyncComplete = false;
         renderAll();
         await syncUnlockedCategories();
-        return;
-      }
 
-      const { data } = await sb.auth.getSession();
-      currentSession = data && data.session ? data.session : null;
+        if (enforceProToolAccess()) return;
 
-      if (!window.SL_AUTH) window.SL_AUTH = {};
-      window.SL_AUTH.__session = currentSession;
+        if (!isCheckoutPage()) {
+          const returning = getReturnParam() === "checkout";
+          const signedInNow =
+            !!(currentSession && currentSession.user && currentSession.user.email);
 
-      renderAll();
-      await syncUnlockedCategories();
-
-      if (!authSubscribed) {
-        sb.auth.onAuthStateChange(async (_event, session) => {
-          currentSession = session || null;
-
-          if (!window.SL_AUTH) window.SL_AUTH = {};
-          window.SL_AUTH.__session = currentSession;
-
-          unlockSyncComplete = false;
-          renderAll();
-          await syncUnlockedCategories();
-
-          if (enforceProToolAccess()) return;
-
-          if (!isCheckoutPage()) {
-            const returning = getReturnParam() === "checkout";
-            const signedInNow =
-              !!(currentSession && currentSession.user && currentSession.user.email);
-
-            if (
-              returning &&
-              signedInNow &&
-              currentCategory &&
-              location.hash !== "#categories"
-            ) {
-              goToCheckout(currentCategory);
-            }
+          if (
+            returning &&
+            signedInNow &&
+            currentCategory &&
+            location.hash !== "#categories"
+          ) {
+            goToCheckout(currentCategory);
           }
-        });
+        }
+      });
 
-        authSubscribed = true;
-      }
-    } catch (err) {
-      console.warn("[app.js] auth sync error:", err);
-      currentSession = null;
-      renderAll();
-      await syncUnlockedCategories();
+      authSubscribed = true;
     }
+  } catch (err) {
+    console.warn("[app.js] auth sync error:", err);
+    renderAll();
+
+    if (getCachedUnlocks().length) {
+      unlockSyncComplete = false;
+      applyUnlockedCategoryUi();
+      return;
+    }
+
+    currentSession = null;
+    await syncUnlockedCategories();
   }
+}
 
   async function handleSignOut() {
     const els = getEls();
