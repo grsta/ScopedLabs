@@ -1747,7 +1747,7 @@ main h3.section-title {
 
 .pipe-step.active .pipe-dot {
   background: #00ff9c;
-  box-shadow: 0 0 6px rgba(0,255,156,.6);
+  box-shadow: 0 0 10px rgba(0,255,156,.8);
 }
 
 .pipe-step.complete {
