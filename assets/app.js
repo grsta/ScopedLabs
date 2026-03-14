@@ -542,28 +542,26 @@
   const pageCategory =
     cleanSlug(document.body?.dataset?.category) || currentCategory;
 
-  // If this category is already cached as unlocked, do not bounce.
-  if (isCategoryUnlocked(pageCategory)) {
-    return false;
-  }
-
-  // If auth/session restore hasn't completed yet, do not hard-fail.
-  if (!unlockSyncComplete) {
-    return false;
-  }
-
+  // Signed-out users should NEVER get pro access.
   if (!isSignedIn()) {
     redirectToUpgradeForCategory(pageCategory);
     return true;
   }
 
-  if (!isCategoryUnlocked(pageCategory)) {
-    redirectToUpgradeForCategory(pageCategory);
-    return true;
+  // Signed-in users can temporarily use cached unlocks while auth/unlock sync finishes.
+  if (isCategoryUnlocked(pageCategory)) {
+    return false;
   }
 
-  return false;
+  // Signed in, but still restoring auth/unlocks — do not hard-fail yet.
+  if (!unlockSyncComplete) {
+    return false;
+  }
+
+  redirectToUpgradeForCategory(pageCategory);
+  return true;
 }
+
 
   function applyUnlockedCategoryUi() {
   const category = cleanSlug(document.body?.dataset?.category);
