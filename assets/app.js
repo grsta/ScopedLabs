@@ -11,7 +11,6 @@
 
   await window.SL_AUTH?.ready;
 
-  // existing code continues below
   const LS_KEY = "sl_selected_category";
   const UPGRADE_PATH = "/upgrade/";
   const CHECKOUT_PATH = "/upgrade/checkout/";
@@ -23,6 +22,27 @@
   let globalHandlersBound = false;
   let unlockedCategories = [];
   let unlockSyncComplete = false;
+
+  function getAuthSessionFallback() {
+    return window.SL_AUTH?.__session || null;
+  }
+
+  function getStoredAccessToken() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return null;
+
+      const raw = JSON.parse(localStorage.getItem(k));
+      return (
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null) ||
+        null
+      );
+    } catch {
+      return null;
+    }
+  }
 
   function isUpgradePage() {
     return location.pathname.startsWith("/upgrade/");
@@ -356,11 +376,12 @@
 
   function renderSignedInUi() {
     const els = getEls();
+    const session = currentSession || getAuthSessionFallback();
     const email =
-      currentSession &&
-      currentSession.user &&
-      currentSession.user.email
-        ? currentSession.user.email
+      session &&
+      session.user &&
+      session.user.email
+        ? session.user.email
         : "";
 
     if (els.signedInLine) {
@@ -391,8 +412,7 @@
 
   function renderButtons() {
     const els = getEls();
-    const signedIn =
-      !!(currentSession && currentSession.user && currentSession.user.email);
+    const signedIn = isSignedIn();
     const hasCategory = !!currentCategory;
 
     if (els.continueBtn && !isCheckoutPage()) {
@@ -518,7 +538,8 @@
   }
 
   function isSignedIn() {
-    return !!(currentSession && currentSession.user && currentSession.user.email);
+    const session = currentSession || getAuthSessionFallback();
+    return !!(session && session.user && session.user.email);
   }
 
   function isProtectedProToolPage() {
@@ -648,7 +669,10 @@
   async function syncUnlockedCategories() {
     clearLegacyUnlockKeys();
 
-    if (!currentSession || !currentSession.access_token) {
+    const session = currentSession || getAuthSessionFallback();
+    const accessToken = session?.access_token || getStoredAccessToken();
+
+    if (!accessToken) {
       unlockSyncComplete = true;
       setUnlockedCategories([]);
       return;
@@ -658,7 +682,7 @@
       const response = await fetch("/api/unlocks/list", {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${currentSession.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
@@ -688,9 +712,10 @@
   async function syncSession() {
     try {
       const sb = await getSB();
+      currentSession = getAuthSessionFallback() || currentSession || null;
 
       if (!sb) {
-        currentSession = null;
+        currentSession = getAuthSessionFallback() || null;
         unlockSyncComplete = true;
         setUnlockedCategories([]);
         renderAll();
@@ -698,7 +723,11 @@
       }
 
       const { data } = await sb.auth.getSession();
-      currentSession = data && data.session ? data.session : null;
+      currentSession =
+        (data && data.session ? data.session : null) ||
+        getAuthSessionFallback() ||
+        currentSession ||
+        null;
 
       if (!window.SL_AUTH) window.SL_AUTH = {};
       window.SL_AUTH.__session = currentSession;
@@ -721,8 +750,7 @@
 
           if (!isCheckoutPage()) {
             const returning = getReturnParam() === "checkout";
-            const signedInNow =
-              !!(currentSession && currentSession.user && currentSession.user.email);
+            const signedInNow = isSignedIn();
 
             if (
               returning &&
@@ -739,9 +767,8 @@
       }
     } catch (err) {
       console.warn("[app.js] auth sync error:", err);
-      currentSession = null;
-      unlockSyncComplete = true;
-      setUnlockedCategories([]);
+      currentSession = getAuthSessionFallback() || null;
+      await syncUnlockedCategories();
       renderAll();
     }
   }
@@ -782,15 +809,16 @@
 
   async function handleCheckout() {
     const els = getEls();
+    const session = currentSession || getAuthSessionFallback();
 
     const email =
-      currentSession && currentSession.user && currentSession.user.email
-        ? currentSession.user.email
+      session && session.user && session.user.email
+        ? session.user.email
         : "";
 
     const user_id =
-      currentSession && currentSession.user && currentSession.user.id
-        ? currentSession.user.id
+      session && session.user && session.user.id
+        ? session.user.id
         : "";
 
     if (!email || !currentCategory || !user_id) {
@@ -857,8 +885,7 @@
     if (isCheckoutPage()) return;
 
     const returningToCheckout = getReturnParam() === "checkout";
-    const signedIn =
-      !!(currentSession && currentSession.user && currentSession.user.email);
+    const signedIn = isSignedIn();
 
     if (returningToCheckout && signedIn) {
       goToCheckout(cat);
@@ -961,10 +988,7 @@
         return;
       }
 
-      const signedIn =
-        !!(currentSession && currentSession.user && currentSession.user.email);
-
-      if (signedIn) {
+      if (isSignedIn()) {
         goToCheckout(currentCategory);
       } else {
         requestAnimationFrame(() => {
@@ -1065,10 +1089,7 @@
     if (enforceProToolAccess()) return;
 
     if (isCheckoutPage()) {
-      const signedIn =
-        !!(currentSession && currentSession.user && currentSession.user.email);
-
-      if (!signedIn) {
+      if (!isSignedIn()) {
         const cat = currentCategory || getResolvedCategory();
         const url = cat
           ? `${UPGRADE_PATH}?category=${encodeURIComponent(cat)}#checkout`
@@ -1080,8 +1101,7 @@
 
     if (!isCheckoutPage()) {
       const returning = getReturnParam() === "checkout";
-      const signedIn =
-        !!(currentSession && currentSession.user && currentSession.user.email);
+      const signedIn = isSignedIn();
 
       if (
         returning &&
