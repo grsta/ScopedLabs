@@ -4,10 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Load Growth Estimator </title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-014" />
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-015" />
+  <script src="/assets/pipelines.js?v=17"></script>
+  <script defer src="/assets/pipeline.js?v=0315"></script>
+  <script src="/assets/tool-flow.js?v=17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=0325"></script>
+  <script defer src="/assets/app.js?v=0325"></script>
 </head>
 
-<body data-category="power">
+<body data-lane="v1" data-step="load-growth" data-category="power">
   <!-- Shared site header/nav comes from your template structure -->
   <header class="site-header">
     <div class="container header-inner">
@@ -137,9 +143,10 @@
   </main>
 
   <!-- Shared UI behaviors (help modal, nav, etc.) -->
-  <script src="/assets/app.js?v=0314"></script>
+  <script src="/assets/app.js?v=0315"></script>
   <!-- Local tool logic -->
   <script src="./script.js?v=1"></script>
+  <script src="./script.js"></script>
 </body>
 </html>
 

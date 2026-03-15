@@ -5,13 +5,13 @@ const ROOT = "E:/ScopedLabs/tools";
 
 // Match the known-good RAID page
 const VERSIONS = {
-  style: "vs-raid-pro-014",
-  auth: "0321",
-  app: "0321",
-  toolFlow: "16",
-  catalog: "16",
-  pipelines: "16",
-  pipeline: "16",
+  style: "vs-raid-pro-015",
+  auth: "0325",
+  app: "0325",
+  toolFlow: "17",
+  catalog: "17",
+  pipelines: "17",
+  pipeline: "17",
 };
 
 function walk(dir) {
