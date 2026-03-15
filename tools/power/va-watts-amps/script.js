@@ -7,15 +7,23 @@ const outWatts = document.getElementById("outWatts");
 const outVA = document.getElementById("outVA");
 const outAmps = document.getElementById("outAmps");
 const note = document.getElementById("note");
+const continueBtn = document.getElementById("continueBtn");
 
 const FLOW_KEY = "scopedlabs:pipeline:last-result";
-
-const continueBtn = document.getElementById("continueBtn");
+const NEXT_URL = "/tools/power/load-growth/";
 
 function setBlank() {
   outWatts.textContent = "--";
   outVA.textContent = "--";
   outAmps.textContent = "--";
+}
+
+function hideContinue() {
+  if (continueBtn) continueBtn.hidden = true;
+}
+
+function showContinue() {
+  if (continueBtn) continueBtn.hidden = false;
 }
 
 function n(x) {
@@ -62,7 +70,6 @@ function interpretation(payload) {
   const {
     volts,
     amps,
-    watts,
     designWatts20,
     continuousWatts125,
     branch80Watts,
@@ -82,11 +89,11 @@ function interpretation(payload) {
       );
     } else if (utilizationPct80 > 80) {
       messages.push(
-        `This load is approaching typical continuous-use planning limits. Leave room for startup surge and future expansion.`
+        "This load is approaching typical continuous-use planning limits. Leave room for startup surge and future expansion."
       );
     } else {
       messages.push(
-        `This load is moderate for branch planning, but design should still include future growth and inverter/UPS losses.`
+        "This load is moderate for branch planning, but design should still include future growth and inverter/UPS losses."
       );
     }
   }
@@ -111,6 +118,8 @@ document.getElementById("calc").onclick = () => {
   const PF = n(pf.value);
   const W = n(watts.value);
   const VAin = n(va.value);
+
+  hideContinue();
 
   if (V <= 0) {
     note.textContent = "Voltage must be greater than 0.";
@@ -151,7 +160,6 @@ document.getElementById("calc").onclick = () => {
 
   const amps = finalVA / V;
 
-  // Added design-oriented values
   const kw = finalWatts / 1000;
   const designWatts20 = finalWatts * 1.2;
   const continuousWatts125 = finalWatts * 1.25;
@@ -181,6 +189,7 @@ document.getElementById("calc").onclick = () => {
 
   savePipelineResult(payload);
   note.textContent = interpretation(payload);
+  showContinue();
 };
 
 document.getElementById("reset").onclick = () => {
@@ -191,13 +200,24 @@ document.getElementById("reset").onclick = () => {
   setBlank();
   note.textContent = "Enter Watts OR VA, then press Calculate.";
   invalidatePipelineResult();
+  hideContinue();
 };
 
 ["volts", "pf", "watts", "va"].forEach((id) => {
   const el = document.getElementById(id);
   if (!el) return;
-  el.addEventListener("input", invalidatePipelineResult);
+  el.addEventListener("input", () => {
+    invalidatePipelineResult();
+    hideContinue();
+  });
 });
 
+if (continueBtn) {
+  continueBtn.addEventListener("click", () => {
+    window.location.href = NEXT_URL;
+  });
+}
+
 setBlank();
+hideContinue();
 console.log("VA/Watts/Amps tool loaded");
