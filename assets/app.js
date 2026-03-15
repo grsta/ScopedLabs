@@ -6,9 +6,12 @@
    - localStorage is cache/UI only, not source of truth
 */
 
-(() => {
+(async () => {
   "use strict";
 
+  await window.SL_AUTH?.ready;
+
+  // existing code continues below
   const LS_KEY = "sl_selected_category";
   const UPGRADE_PATH = "/upgrade/";
   const CHECKOUT_PATH = "/upgrade/checkout/";
