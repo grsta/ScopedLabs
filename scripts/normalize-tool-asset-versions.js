@@ -6,8 +6,8 @@ const ROOT = "E:/ScopedLabs/tools";
 // Match the known-good RAID page
 const VERSIONS = {
   style: "vs-raid-pro-014",
-  auth: "0317",
-  app: "0317",
+  auth: "0318",
+  app: "0318",
   toolFlow: "14",
   catalog: "14",
   pipelines: "14",
