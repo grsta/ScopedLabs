@@ -1856,3 +1856,15 @@ main h3.section-title {
   color: #dfeee5;
   font-weight: 700;
 }
+
+.page-head .best-for {
+  margin: 12px 0 14px;
+  color: rgba(220, 235, 225, 0.78) !important;
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.page-head .best-for strong {
+  color: #dfeee5 !important;
+  font-weight: 700;
+}
