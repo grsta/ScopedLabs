@@ -8,19 +8,22 @@
 
   const category = body.dataset.category;
   const currentStep = body.dataset.step;
+  const laneName = body.dataset.lane || "v1";
 
   if (!category || !currentStep) return;
 
-  const steps = pipelines[category];
+  const steps =
+    pipelines?.categories?.[category]?.lanes?.[laneName] || [];
+
   if (!Array.isArray(steps) || !steps.length) return;
 
   const currentIndex = steps.findIndex(step => step.id === currentStep);
   if (currentIndex === -1) return;
 
   const h1 =
-  document.querySelector("main .container h1") ||
-  document.querySelector("main.container h1") ||
-  document.querySelector("main h1");
+    document.querySelector("main .container h1") ||
+    document.querySelector("main.container h1") ||
+    document.querySelector("main h1");
   if (!h1) return;
 
   if (document.getElementById("sl-design-pipeline")) return;
