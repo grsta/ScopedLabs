@@ -45,12 +45,12 @@
   }
 
   function hasValidStoredAuth() {
-  return !!(
-    currentSession?.access_token ||
-    getAuthSessionFallback()?.access_token ||
-    getStoredAccessToken()
-  );
-}
+    return !!(
+      currentSession?.access_token ||
+      getAuthSessionFallback()?.access_token ||
+      getStoredAccessToken()
+    );
+  }
 
   function isUpgradePage() {
     return location.pathname.startsWith("/upgrade/");
@@ -905,17 +905,26 @@
   }
 
   function handleProtectedCategoryRowClick(row, event) {
-    const category = cleanSlug(document.body?.dataset?.category);
-    const tool = row.dataset.tool;
-    const upgradeHref = row.dataset.upgradeHref || row.getAttribute("href") || "";
+    const category =
+      cleanSlug(row.dataset.category) ||
+      cleanSlug(document.body?.dataset?.category) ||
+      currentCategory;
 
-    if (!category || !tool) return false;
+    if (!row.dataset.upgradeHref) {
+      row.dataset.upgradeHref = row.getAttribute("href") || "";
+    }
 
+    if (!row.dataset.toolHref) {
+      row.dataset.toolHref = row.dataset.tool || "";
+    }
+
+    const toolHref = row.dataset.toolHref || row.dataset.tool || "";
+    const upgradeHref = row.dataset.upgradeHref || "";
     const isProLink =
       row.classList.contains("pro") ||
       upgradeHref.includes("/upgrade/");
 
-    if (!isProLink) return false;
+    if (!category || !toolHref || !isProLink) return false;
 
     if (!unlockSyncComplete) {
       event.preventDefault();
@@ -927,10 +936,12 @@
         applyUnlockedCategoryUi();
 
         if (hasValidStoredAuth() && isCategoryUnlocked(category)) {
-          window.location.assign(tool);
+          row.setAttribute("href", toolHref);
+          window.location.assign(toolHref);
           return;
         }
 
+        row.setAttribute("href", upgradeHref);
         redirectToUpgradeForCategory(category);
       })();
 
@@ -941,10 +952,12 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       event.stopPropagation();
-      window.location.assign(tool);
+      row.setAttribute("href", toolHref);
+      window.location.assign(toolHref);
       return true;
     }
 
+    row.setAttribute("href", upgradeHref);
     return false;
   }
 
