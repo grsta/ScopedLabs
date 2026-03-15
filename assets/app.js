@@ -537,66 +537,97 @@
   }
 
   function enforceProToolAccess() {
-  if (!isProtectedProToolPage()) return false;
+    if (!isProtectedProToolPage()) return false;
 
-  const pageCategory =
-    cleanSlug(document.body?.dataset?.category) || currentCategory;
+    const pageCategory =
+      cleanSlug(document.body?.dataset?.category) || currentCategory;
 
-  // Signed-out users should NEVER get pro access.
-  if (!isSignedIn()) {
+    if (!pageCategory) {
+      redirectToUpgradeForCategory(null);
+      return true;
+    }
+
+    if (!unlockSyncComplete) {
+      return false;
+    }
+
+    if (!isSignedIn()) {
+      redirectToUpgradeForCategory(pageCategory);
+      return true;
+    }
+
+    if (isCategoryUnlocked(pageCategory)) {
+      return false;
+    }
+
     redirectToUpgradeForCategory(pageCategory);
     return true;
   }
 
-  // Signed-in users can temporarily use cached unlocks while auth/unlock sync finishes.
-  if (isCategoryUnlocked(pageCategory)) {
-    return false;
-  }
-
-  // Signed in, but still restoring auth/unlocks — do not hard-fail yet.
-  if (!unlockSyncComplete) {
-    return false;
-  }
-
-  redirectToUpgradeForCategory(pageCategory);
-  return true;
-}
-
-
   function applyUnlockedCategoryUi() {
-  const category = cleanSlug(document.body?.dataset?.category);
-  if (!category) return;
+    const category = cleanSlug(document.body?.dataset?.category);
+    if (!category) return;
 
-  const links = document.querySelectorAll("a[data-tool]");
+    const links = document.querySelectorAll("a[data-tool]");
 
-  links.forEach((row) => {
-    if (!row.dataset.upgradeHref) {
-      row.dataset.upgradeHref = row.getAttribute("href") || "";
-    }
+    links.forEach((row) => {
+      if (!row.dataset.upgradeHref) {
+        row.dataset.upgradeHref = row.getAttribute("href") || "";
+      }
 
-    const isProLink =
-      row.classList.contains("pro") ||
-      row.dataset.upgradeHref.includes("/upgrade/");
+      if (!row.dataset.toolHref) {
+        row.dataset.toolHref = row.dataset.tool || "";
+      }
 
-    if (!isProLink) return;
+      const isProLink =
+        row.classList.contains("pro") ||
+        row.dataset.upgradeHref.includes("/upgrade/");
 
-    if (!isCategoryUnlocked(category)) {
-      row.setAttribute("href", row.dataset.upgradeHref);
-      return;
-    }
+      if (!isProLink) return;
 
-    row.setAttribute("href", row.dataset.tool);
+      const lock = row.querySelector(".lock-icon");
+      const pill = row.querySelector(".pill");
 
-    const lock = row.querySelector(".lock-icon");
-    if (lock) lock.remove();
+      if (lock && !("origDisplay" in lock.dataset)) {
+        lock.dataset.origDisplay = lock.style.display || "";
+      }
 
-    const pill = row.querySelector(".pill");
-    if (pill) {
-      pill.textContent = "Unlocked";
-      pill.classList.add("unlocked-pill");
-    }
-  });
-}
+      if (pill && !pill.dataset.origText) {
+        pill.dataset.origText = (pill.textContent || "").trim() || "Pro";
+      }
+
+      const unlocked =
+        unlockSyncComplete &&
+        isSignedIn() &&
+        isCategoryUnlocked(category);
+
+      if (!unlocked) {
+        row.setAttribute("href", row.dataset.upgradeHref);
+
+        if (lock) {
+          lock.style.display = lock.dataset.origDisplay || "";
+        }
+
+        if (pill) {
+          pill.textContent = pill.dataset.origText || "Pro";
+          pill.classList.remove("unlocked-pill");
+        }
+
+        return;
+      }
+
+      row.setAttribute("href", row.dataset.toolHref);
+
+      if (lock) {
+        lock.style.display = "none";
+      }
+
+      if (pill) {
+        pill.textContent = "Unlocked";
+        pill.classList.add("unlocked-pill");
+      }
+    });
+  }
 
   async function getSB() {
     const auth = window.SL_AUTH;
@@ -612,120 +643,105 @@
   }
 
   async function syncUnlockedCategories() {
-  clearLegacyUnlockKeys();
+    clearLegacyUnlockKeys();
 
-  // If session is not ready yet, preserve cached unlocks.
-  if (!currentSession || !currentSession.access_token) {
-    unlockSyncComplete = false;
-    applyUnlockedCategoryUi();
-    return;
-  }
-
-  try {
-    const response = await fetch("/api/unlocks/list", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${currentSession.access_token}`,
-      },
-    });
-
-    let data = null;
-    try {
-      data = await response.json();
-    } catch {
-      data = null;
-    }
-
-    if (!response.ok || !data || !data.ok || !Array.isArray(data.categories)) {
-      console.warn("[app.js] unlock sync returned unexpected response; preserving cached unlocks");
+    if (!currentSession || !currentSession.access_token) {
       unlockSyncComplete = true;
-      applyUnlockedCategoryUi();
+      setUnlockedCategories([]);
       return;
     }
 
-    unlockSyncComplete = true;
-    setUnlockedCategories(data.categories);
-  } catch (err) {
-    console.warn("[app.js] unlock sync error; preserving cached unlocks:", err);
-    unlockSyncComplete = true;
-    applyUnlockedCategoryUi();
-  }
-}
-
-  async function syncSession() {
-  try {
-    const sb = await getSB();
-
-    if (!sb) {
-      // Preserve any prior session/cache state long enough for tool pages to load.
-      currentSession = (window.SL_AUTH && window.SL_AUTH.__session) || currentSession || null;
-
-      renderAll();
-
-      if (getCachedUnlocks().length) {
-        unlockSyncComplete = false;
-        applyUnlockedCategoryUi();
-      } else {
-        await syncUnlockedCategories();
-      }
-
-      return;
-    }
-
-    const { data } = await sb.auth.getSession();
-    currentSession = data && data.session ? data.session : null;
-
-    if (!window.SL_AUTH) window.SL_AUTH = {};
-    window.SL_AUTH.__session = currentSession;
-
-    renderAll();
-    await syncUnlockedCategories();
-
-    if (!authSubscribed) {
-      sb.auth.onAuthStateChange(async (_event, session) => {
-        currentSession = session || null;
-
-        if (!window.SL_AUTH) window.SL_AUTH = {};
-        window.SL_AUTH.__session = currentSession;
-
-        unlockSyncComplete = false;
-        renderAll();
-        await syncUnlockedCategories();
-
-        if (enforceProToolAccess()) return;
-
-        if (!isCheckoutPage()) {
-          const returning = getReturnParam() === "checkout";
-          const signedInNow =
-            !!(currentSession && currentSession.user && currentSession.user.email);
-
-          if (
-            returning &&
-            signedInNow &&
-            currentCategory &&
-            location.hash !== "#categories"
-          ) {
-            goToCheckout(currentCategory);
-          }
-        }
+    try {
+      const response = await fetch("/api/unlocks/list", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
       });
 
-      authSubscribed = true;
-    }
-  } catch (err) {
-    console.warn("[app.js] auth sync error:", err);
-    renderAll();
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
-    if (getCachedUnlocks().length) {
-      unlockSyncComplete = false;
-      applyUnlockedCategoryUi();
-      return;
-    }
+      if (!response.ok || !data || !data.ok || !Array.isArray(data.categories)) {
+        console.warn("[app.js] unlock sync returned unexpected response");
+        unlockSyncComplete = true;
+        setUnlockedCategories([]);
+        return;
+      }
 
-    currentSession = null;
-    await syncUnlockedCategories();
+      unlockSyncComplete = true;
+      setUnlockedCategories(data.categories);
+    } catch (err) {
+      console.warn("[app.js] unlock sync error:", err);
+      unlockSyncComplete = true;
+      setUnlockedCategories([]);
+    }
   }
-}
+
+  async function syncSession() {
+    try {
+      const sb = await getSB();
+
+      if (!sb) {
+        currentSession = null;
+        unlockSyncComplete = true;
+        setUnlockedCategories([]);
+        renderAll();
+        return;
+      }
+
+      const { data } = await sb.auth.getSession();
+      currentSession = data && data.session ? data.session : null;
+
+      if (!window.SL_AUTH) window.SL_AUTH = {};
+      window.SL_AUTH.__session = currentSession;
+
+      renderAll();
+      await syncUnlockedCategories();
+
+      if (!authSubscribed) {
+        sb.auth.onAuthStateChange(async (_event, session) => {
+          currentSession = session || null;
+
+          if (!window.SL_AUTH) window.SL_AUTH = {};
+          window.SL_AUTH.__session = currentSession;
+
+          unlockSyncComplete = false;
+          renderAll();
+          await syncUnlockedCategories();
+
+          if (enforceProToolAccess()) return;
+
+          if (!isCheckoutPage()) {
+            const returning = getReturnParam() === "checkout";
+            const signedInNow =
+              !!(currentSession && currentSession.user && currentSession.user.email);
+
+            if (
+              returning &&
+              signedInNow &&
+              currentCategory &&
+              location.hash !== "#categories"
+            ) {
+              goToCheckout(currentCategory);
+            }
+          }
+        });
+
+        authSubscribed = true;
+      }
+    } catch (err) {
+      console.warn("[app.js] auth sync error:", err);
+      currentSession = null;
+      unlockSyncComplete = true;
+      setUnlockedCategories([]);
+      renderAll();
+    }
+  }
 
   async function handleSignOut() {
     const els = getEls();
@@ -742,7 +758,7 @@
     }
 
     currentSession = null;
-    unlockSyncComplete = false;
+    unlockSyncComplete = true;
 
     if (!window.SL_AUTH) window.SL_AUTH = {};
     window.SL_AUTH.__session = null;
@@ -851,20 +867,57 @@
     });
   }
 
-    function handleDocumentClick(event) {
+  function handleProtectedCategoryRowClick(row, event) {
+    const category = cleanSlug(document.body?.dataset?.category);
+    const tool = row.dataset.tool;
+    const upgradeHref = row.dataset.upgradeHref || row.getAttribute("href") || "";
+
+    if (!category || !tool) return false;
+
+    const isProLink =
+      row.classList.contains("pro") ||
+      upgradeHref.includes("/upgrade/");
+
+    if (!isProLink) return false;
+
+    if (!unlockSyncComplete) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+
+      (async () => {
+        await syncSession();
+        applyUnlockedCategoryUi();
+
+        if (isSignedIn() && isCategoryUnlocked(category)) {
+          window.location.assign(tool);
+          return;
+        }
+
+        redirectToUpgradeForCategory(category);
+      })();
+
+      return true;
+    }
+
+    if (isSignedIn() && isCategoryUnlocked(category)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      window.location.assign(tool);
+      return true;
+    }
+
+    return false;
+  }
+
+  function handleDocumentClick(event) {
     const target = event.target;
 
     if (target instanceof Element) {
       const row = target.closest("a[data-tool]");
       if (row) {
-        const category = cleanSlug(document.body?.dataset?.category);
-        const tool = row.dataset.tool;
-
-        if (category && tool && isCategoryUnlocked(category)) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          event.stopPropagation();
-          window.location.assign(tool);
+        if (handleProtectedCategoryRowClick(row, event)) {
           return;
         }
       }
@@ -948,11 +1001,12 @@
       initPage({ fromHistory: true, replaceUrl: true });
     });
 
-    window.addEventListener("pageshow", (event) => {
+    window.addEventListener("pageshow", async (event) => {
       initPage({
         fromHistory: !!event.persisted,
         replaceUrl: true,
       });
+      await syncSession();
       applyUnlockedCategoryUi();
     });
 
@@ -1003,7 +1057,6 @@
     hydrateUnlocksFromCache();
     bindGlobalHandlers();
     initPage({ replaceUrl: true });
-    applyUnlockedCategoryUi();
     await syncSession();
 
     if (enforceProToolAccess()) return;
