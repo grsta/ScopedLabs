@@ -10,6 +10,8 @@ const note = document.getElementById("note");
 
 const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
+const continueBtn = document.getElementById("continueBtn");
+
 function setBlank() {
   outWatts.textContent = "--";
   outVA.textContent = "--";
