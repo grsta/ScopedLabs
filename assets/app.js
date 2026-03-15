@@ -558,14 +558,33 @@
     return body.dataset.tier === "pro";
   }
 
-  function redirectToUpgradeForCategory(cat) {
-    const slug = cleanSlug(cat || document.body?.dataset?.category || currentCategory);
-    const url = slug
-      ? `${UPGRADE_PATH}?category=${encodeURIComponent(slug)}`
-      : UPGRADE_PATH;
+  console.log("[ENFORCE DEBUG]", {
+  pageCategory: cleanSlug(document.body?.dataset?.category) || currentCategory,
+  currentCategory,
+  currentSession,
+  slAuthSession: window.SL_AUTH?.__session,
+  unlockedCategories,
+  unlockSyncComplete,
+  hasValidStoredAuth: typeof hasValidStoredAuth === "function" ? hasValidStoredAuth() : "no fn",
+});
 
-    location.href = url;
-  }
+  function redirectToUpgradeForCategory(cat) {
+  const slug = cleanSlug(cat || document.body?.dataset?.category || currentCategory);
+
+  console.log("[REDIRECT DEBUG] slug =", slug);
+  console.log("[REDIRECT DEBUG] currentCategory =", currentCategory);
+  console.log("[REDIRECT DEBUG] currentSession =", currentSession);
+  console.log("[REDIRECT DEBUG] SL_AUTH.__session =", window.SL_AUTH?.__session);
+  console.log("[REDIRECT DEBUG] unlockedCategories =", unlockedCategories);
+  console.log("[REDIRECT DEBUG] unlockSyncComplete =", unlockSyncComplete);
+  console.trace("[REDIRECT DEBUG] stack");
+
+  const url = slug
+    ? `${UPGRADE_PATH}?category=${encodeURIComponent(slug)}`
+    : UPGRADE_PATH;
+
+  location.href = url;
+}
 
   function enforceProToolAccess() {
     if (!isProtectedProToolPage()) return false;
