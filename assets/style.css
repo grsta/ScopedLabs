@@ -1844,3 +1844,15 @@ main h3.section-title {
     font-size: 0.92rem;
   }
 }
+
+.best-for {
+  margin: 12px 0 14px;
+  color: rgba(220, 235, 225, 0.78);
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.best-for strong {
+  color: #dfeee5;
+  font-weight: 700;
+}
