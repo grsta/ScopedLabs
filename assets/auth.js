@@ -1,6 +1,7 @@
 /* /assets/auth.js
    Supabase v2 implicit magic-link auth.
-   - Creates ONE client and exposes: window.SL_AUTH = { sb, ready }
+   - Creates ONE client and exposes: window.SL_AUTH = { sb, ready, __session }
+   - Hydrates stored session on every page load
    - Handles session restore from email link
    - Owns Sign out click and forces a clean redirect to avoid stale UI
 */
@@ -13,7 +14,7 @@
 
   if (!window.supabase || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.error("[auth.js] Missing Supabase config or library.");
-    window.SL_AUTH = { sb: null, ready: Promise.resolve() };
+    window.SL_AUTH = { sb: null, ready: Promise.resolve(), __session: null };
     return;
   }
 
@@ -29,7 +30,11 @@
   let readyResolve;
   const ready = new Promise((res) => (readyResolve = res));
 
-  window.SL_AUTH = { sb, ready };
+  window.SL_AUTH = {
+    sb,
+    ready,
+    __session: null,
+  };
 
   function $(id) {
     return document.getElementById(id);
@@ -50,9 +55,16 @@
   }
 
   async function refreshUi() {
-    const { data } = await sb.auth.getSession();
+    const { data, error } = await sb.auth.getSession();
+
+    if (error) {
+      console.warn("[auth.js] getSession error:", error);
+    }
+
     const session = data?.session || null;
     const email = session?.user?.email || "";
+
+    window.SL_AUTH.__session = session;
 
     // Upgrade page uses these; checkout page may use a subset
     const signed = $("sl-signedin");
@@ -114,31 +126,27 @@
       setText("sl-auth-status", "Signing out…");
 
       try {
-        // IMPORTANT: app.js does NOT also sign out (avoids lock/race errors)
         await sb.auth.signOut();
       } catch (e) {
         console.warn("[auth.js] signOut error (continuing):", e);
       } finally {
+        window.SL_AUTH.__session = null;
+
         try {
-          // Optional: keep category selection, or clear it — your call.
           // localStorage.removeItem("sl_selected_category");
         } catch {}
 
-        // Force a clean page load so UI never shows stale "Signed in"
         location.replace("/upgrade/#checkout");
       }
     });
   }
 
   async function cleanupAuthHashIfPresent() {
-    // After implicit flow, Supabase tokens may appear in URL hash; clean it.
     const hash = location.hash || "";
     if (!hash) return;
 
-    // If it's our normal #checkout/#categories, keep it.
     if (hash === "#checkout" || hash === "#categories") return;
 
-    // Otherwise remove hash junk while preserving search params
     try {
       const u = new URL(location.href);
       u.hash = "";
@@ -148,12 +156,11 @@
 
   (async () => {
     try {
-      // Ensure session exchange happens
       await refreshUi();
       await cleanupAuthHashIfPresent();
 
-      // Keep UI in sync
-      sb.auth.onAuthStateChange(async () => {
+      sb.auth.onAuthStateChange(async (_event, session) => {
+        window.SL_AUTH.__session = session || null;
         await refreshUi();
       });
 
