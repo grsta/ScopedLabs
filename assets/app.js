@@ -44,6 +44,14 @@
     }
   }
 
+  function hasValidStoredAuth() {
+  return !!(
+    currentSession?.access_token ||
+    getAuthSessionFallback()?.access_token ||
+    getStoredAccessToken()
+  );
+}
+
   function isUpgradePage() {
     return location.pathname.startsWith("/upgrade/");
   }
@@ -538,8 +546,7 @@
   }
 
   function isSignedIn() {
-    const session = currentSession || getAuthSessionFallback();
-    return !!(session && session.user && session.user.email);
+    return hasValidStoredAuth();
   }
 
   function isProtectedProToolPage() {
@@ -575,7 +582,7 @@
       return false;
     }
 
-    if (!isSignedIn()) {
+    if (!hasValidStoredAuth()) {
       redirectToUpgradeForCategory(pageCategory);
       return true;
     }
@@ -622,7 +629,7 @@
 
       const unlocked =
         unlockSyncComplete &&
-        isSignedIn() &&
+        hasValidStoredAuth() &&
         isCategoryUnlocked(category);
 
       if (!unlocked) {
@@ -919,7 +926,7 @@
         await syncSession();
         applyUnlockedCategoryUi();
 
-        if (isSignedIn() && isCategoryUnlocked(category)) {
+        if (hasValidStoredAuth() && isCategoryUnlocked(category)) {
           window.location.assign(tool);
           return;
         }
@@ -930,7 +937,7 @@
       return true;
     }
 
-    if (isSignedIn() && isCategoryUnlocked(category)) {
+    if (hasValidStoredAuth() && isCategoryUnlocked(category)) {
       event.preventDefault();
       event.stopImmediatePropagation();
       event.stopPropagation();
