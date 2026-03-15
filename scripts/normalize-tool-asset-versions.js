@@ -8,10 +8,10 @@ const VERSIONS = {
   style: "vs-raid-pro-014",
   auth: "0321",
   app: "0321",
-  toolFlow: "14",
-  catalog: "14",
-  pipelines: "14",
-  pipeline: "14",
+  toolFlow: "16",
+  catalog: "16",
+  pipelines: "16",
+  pipeline: "16",
 };
 
 function walk(dir) {
