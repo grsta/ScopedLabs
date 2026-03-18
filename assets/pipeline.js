@@ -30,14 +30,17 @@
   const currentIndex = steps.findIndex((step) => step.id === currentStep);
   if (currentIndex === -1) return;
 
+  // If already rendered anywhere, stop
   if (document.getElementById("sl-design-pipeline")) return;
+
+  const explicitAnchor = document.getElementById("pipeline");
 
   const h1 =
     document.querySelector("main .container h1") ||
     document.querySelector("main.container h1") ||
     document.querySelector("main h1");
 
-  if (!h1) return;
+  if (!explicitAnchor && !h1) return;
 
   const wrap = document.createElement("section");
   wrap.id = "sl-design-pipeline";
@@ -87,5 +90,12 @@
   });
 
   wrap.appendChild(row);
-  h1.insertAdjacentElement("afterend", wrap);
+
+  if (explicitAnchor) {
+    // Clear any ghost space / leftover manual content
+    explicitAnchor.innerHTML = "";
+    explicitAnchor.appendChild(wrap);
+  } else {
+    h1.insertAdjacentElement("afterend", wrap);
+  }
 })();
