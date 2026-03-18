@@ -5,21 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Load Growth Estimator</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0189" />
+  <link rel="stylesheet" href="/assets/style.css?v=power-loadgrowth-0316" />
 
-  <script src="/assets/pipelines.js?v=23"></script>
-  <script defer src="/assets/pipeline.js?v=0315"></script>
-  <script src="/assets/tool-flow.js?v=23"></script>
-
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co"
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM"
-</script>
+  <!-- Config -->
+  <script>
+  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co"
+  window.SL_SUPABASE_ANON_KEY = "YOUR_KEY"
+  </script>
 
-<script defer src="/assets/auth.js?v=0331"></script>
-<script defer src="/assets/app.js?v=0331"></script>
+  <!-- Core -->
+  <script defer src="/assets/auth.js?v=0316"></script>
+  <script defer src="/assets/app.js?v=0316"></script>
+
+  <!-- Pipeline -->
+  <script src="/assets/tool-flow.js?v=0316"></script>
+  <script src="/assets/pipeline.js?v=0316"></script>
+  <script src="/assets/pipelines.js?v=0316"></script>
 </head>
 
 <body data-lane="v1" data-step="load-growth" data-category="power">
@@ -40,65 +44,64 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
 <main class="container">
 
+<!-- ===================== -->
+<!-- PAGE HEAD (CLEAN) -->
+<!-- ===================== -->
 <section class="page-head">
-<h1>Load Growth Estimator</h1>
+  <h1>Load Growth Estimator</h1>
 
-<p class="muted">
-Estimate future electrical load based on annual growth.
-</p>
+  <p class="muted">
+    Estimate future electrical load based on annual growth.
+  </p>
 
-<p class="best-for">
-<strong>Best for:</strong> projecting future infrastructure load so UPS and battery sizing use realistic design loads.
-</p>
-
-<div id="flowNote" class="flow-note" hidden></div>
-
+  <p class="best-for muted">
+    <strong>Best for:</strong> projecting future infrastructure load so UPS and battery sizing use realistic design loads.
+  </p>
 </section>
 
+<!-- ===================== -->
+<!-- FLOW IMPORT NOTE -->
+<!-- ===================== -->
+<section id="flowNote" class="flow-note card" hidden></section>
 
+<!-- ===================== -->
+<!-- DESCRIPTION CARD -->
+<!-- ===================== -->
+<section class="card intro-card">
+  <h2>What this does</h2>
+  <p>
+    This tool projects how electrical load increases over time using compound growth.
+    It helps determine realistic design loads for downstream UPS systems, battery banks,
+    and infrastructure capacity planning.
+  </p>
+</section>
+
+<!-- ===================== -->
+<!-- INPUT CARD -->
+<!-- ===================== -->
 <section class="card tool-card">
 <h2>Inputs</h2>
 
 <div class="form-grid">
 
 <div class="field">
-<div class="label-row">
 <label for="baseLoad">Current Load (kW)</label>
-<button class="hint" type="button"
-data-title="Current Load (kW)"
-data-help="Enter your present measured or estimated load in kilowatts. Example: 12.5">?</button>
-</div>
-<input id="baseLoad" type="number" step="0.01" min="0" placeholder="e.g., 12.5"/>
+<input id="baseLoad" type="number" step="0.01" min="0" placeholder="12.5"/>
 </div>
 
 <div class="field">
-<div class="label-row">
 <label for="growthPct">Annual Growth (%)</label>
-<button class="hint" type="button"
-data-title="Annual Growth (%)"
-data-help="Expected yearly growth rate. Example: 6 means 6% growth per year.">?</button>
-</div>
-<input id="growthPct" type="number" step="0.1" min="0" placeholder="e.g., 6"/>
+<input id="growthPct" type="number" step="0.1" min="0" placeholder="6"/>
 </div>
 
 <div class="field">
-<div class="label-row">
 <label for="years">Time Horizon (Years)</label>
-<button class="hint" type="button"
-data-title="Time Horizon (Years)"
-data-help="How many years out you want to estimate. Example: 5 years.">?</button>
-</div>
-<input id="years" type="number" step="1" min="1" max="50" placeholder="e.g., 5"/>
+<input id="years" type="number" step="1" min="1" max="50" placeholder="5"/>
 </div>
 
 <div class="field">
-<div class="label-row">
 <label for="headroomPct">Planning Headroom (%)</label>
-<button class="hint" type="button"
-data-title="Planning Headroom (%)"
-data-help="Optional buffer above projected load.">?</button>
-</div>
-<input id="headroomPct" type="number" step="0.1" min="0" placeholder="e.g., 20"/>
+<input id="headroomPct" type="number" step="0.1" min="0" placeholder="20"/>
 </div>
 
 </div>
@@ -110,13 +113,16 @@ data-help="Optional buffer above projected load.">?</button>
 
 </section>
 
-
+<!-- ===================== -->
+<!-- RESULTS -->
+<!-- ===================== -->
 <section class="card tool-card" id="resultsCard" hidden>
+
 <h2>Results</h2>
 
 <div class="result-grid">
 <div class="result">
-<div class="muted small">Projected Load (Final Year)</div>
+<div class="muted small">Projected Load</div>
 <div class="value" id="finalLoad">—</div>
 </div>
 
@@ -135,24 +141,25 @@ data-help="Optional buffer above projected load.">?</button>
 
 <h3>Year-by-Year Table</h3>
 
-<div class="table-wrap">
 <table class="table" id="yearTable">
 <thead>
 <tr>
 <th>Year</th>
-<th>Projected Load (kW)</th>
-<th>Increase vs Current</th>
-<th>Increase (%)</th>
+<th>Load</th>
+<th>Increase</th>
+<th>%</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
-</div>
 
-<div class="muted small" id="notes"></div>
+<div id="notes" class="muted small"></div>
 
 </section>
 
+<!-- ===================== -->
+<!-- ERROR -->
+<!-- ===================== -->
 <section class="card tool-card" id="errorCard" hidden>
 <h2>Fix This</h2>
 <p id="errorText" class="muted"></p>
@@ -160,7 +167,8 @@ data-help="Optional buffer above projected load.">?</button>
 
 </main>
 
-<script src="./script.js?v=2"></script>
+<!-- LOCAL SCRIPT LAST -->
+<script src="./script.js?v=3"></script>
 
 </body>
 </html>
