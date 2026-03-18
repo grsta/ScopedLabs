@@ -1,138 +1,111 @@
 (() => {
-  // --- helpers ---
-  const $ = (sel) => document.querySelector(sel);
 
-  // Try multiple possible selectors (so template variations don't break JS)
-  const pick = (...selectors) => {
-    for (const s of selectors) {
-      const el = $(s);
-      if (el) return el;
-    }
-    return null;
-  };
+const $ = (id) => document.getElementById(id);
 
-  const toNum = (el) => {
-    if (!el) return NaN;
-    const v = parseFloat(el.value);
-    return Number.isFinite(v) ? v : NaN;
-  };
+const els = {
+  load: $("load"),
+  hours: $("hours"),
+  voltage: $("voltage"),
+  dod: $("dod"),
+  eff: $("efficiency"),
+  results: $("results"),
+  calc: $("calc"),
+  reset: $("reset"),
+  next: $("next-step-row")
+};
 
-  // module-scope refs
-  let resultsEl = null;
-  let init = null; // stores initial input values for reset
+let lastResult = null;
 
-  const renderError = (msg) => {
-    if (!resultsEl) return;
-    resultsEl.innerHTML = `<div class="result-error">${escapeHtml(msg)}</div>`;
-  };
+// ===== PIPELINE IMPORT =====
+function loadFromPipeline() {
+  try {
+    const raw = sessionStorage.getItem("sl_pipeline_payload");
+    if (!raw) return;
 
-  const renderHint = (msg) => {
-    if (!resultsEl) return;
-    resultsEl.innerHTML = `<div class="result-hint">${escapeHtml(msg)}</div>`;
-  };
+    const data = JSON.parse(raw);
 
-  const escapeHtml = (s) =>
-    String(s)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    const flow = $("flowNote");
 
-  const renderResultsList = ({
-    whNeeded,
-    whAfterEfficiency,
-    requiredWh,
-    requiredAh,
-    voltage,
-  }) => {
-    if (!resultsEl) return;
+    const load = data.designLoadWatts || data.loadWatts;
+    const runtime = data.runtimeHours || data.targetRuntimeHours;
 
-    // Real HTML list so it never collapses into a "sentence"
-    resultsEl.innerHTML = `
-      <ul class="result-list">
-        <li><strong>Watt-hours needed (load):</strong> ${whNeeded.toFixed(1)} Wh</li>
-        <li><strong>After efficiency loss:</strong> ${whAfterEfficiency.toFixed(1)} Wh</li>
-        <li><strong>After DoD limit:</strong> ${requiredWh.toFixed(1)} Wh</li>
-        <li><strong>Battery Bank Size:</strong> ${requiredAh.toFixed(1)} Ah @ ${Number(voltage).toFixed(0)}V</li>
-      </ul>
+    if (load && els.load) els.load.value = Math.round(load);
+    if (runtime && els.hours) els.hours.value = runtime;
+
+    flow.innerHTML = `
+      <strong>Pipeline Import</strong><br>
+      Imported from ${data.source || "UPS Runtime"}<br><br>
+      ${load ? `Load: ${load} W<br>` : ""}
+      ${runtime ? `Runtime: ${runtime} hrs<br>` : ""}
+      <br>Review and calculate.
     `;
-  };
 
-  const boot = () => {
-    // Buttons
-    const calcBtn = pick("#calculate", "#calc", "#btn-calc", "button[data-action='calc']");
-    const resetBtn = pick("#reset", "#btn-reset", "button[data-action='reset']");
+    flow.hidden = false;
 
-    // Results container (your page currently shows a single wrapped sentence here)
-    resultsEl = pick("#results", "#result", "#output", "#resultsBox", ".results");
-
-    // Inputs (support common naming variants)
-    const loadEl = pick("#load", "#watts", "#loadWatts", "input[name='load']", "input[name='watts']");
-    const runtimeEl = pick("#runtime", "#hours", "#runtimeHours", "input[name='runtime']", "input[name='hours']");
-    const voltageEl = pick("#voltage", "#v", "#systemVoltage", "input[name='voltage']");
-    const dodEl = pick("#dod", "#depth", "#depthOfDischarge", "input[name='dod']");
-    const effEl = pick("#efficiency", "#eff", "#systemEfficiency", "input[name='efficiency']");
-
-    // Hard diagnostics (so we stop “beating a dead horse”)
-    if (!resultsEl) console.error("Battery Bank Sizer: results element not found (#results/#result/#output/#resultsBox/.results)");
-    if (!calcBtn) console.error("Battery Bank Sizer: Calculate button not found (#calculate/#calc/#btn-calc/[data-action='calc'])");
-    if (!resetBtn) console.warn("Battery Bank Sizer: Reset button not found (#reset/#btn-reset/[data-action='reset'])");
-
-    // Capture initial values so Reset returns to defaults (not blanks)
-    init = {
-      load: loadEl ? loadEl.value : "",
-      hours: runtimeEl ? runtimeEl.value : "",
-      voltage: voltageEl ? voltageEl.value : "",
-      dod: dodEl ? dodEl.value : "",
-      eff: effEl ? effEl.value : "",
-    };
-
-    const doCalc = () => {
-      const load = toNum(loadEl);
-      const hours = toNum(runtimeEl);
-      const voltage = toNum(voltageEl);
-      const dod = toNum(dodEl);
-      const eff = toNum(effEl);
-
-      if ([load, hours, voltage, dod, eff].some((n) => !Number.isFinite(n))) {
-        return renderError("Please enter valid numbers in all fields.");
-      }
-      if (voltage <= 0) return renderError("System Voltage must be > 0.");
-      if (dod <= 0 || dod > 100) return renderError("Max Depth of Discharge must be between 1 and 100.");
-      if (eff <= 0 || eff > 100) return renderError("System Efficiency must be between 1 and 100.");
-
-      const whNeeded = load * hours;
-      const effFactor = eff / 100;
-      const whAfterEfficiency = whNeeded / effFactor;
-      const dodFactor = dod / 100;
-      const requiredWh = whAfterEfficiency / dodFactor;
-      const requiredAh = requiredWh / voltage;
-
-      renderResultsList({ whNeeded, whAfterEfficiency, requiredWh, requiredAh, voltage });
-    };
-
-    const doReset = () => {
-      if (loadEl) loadEl.value = init.load;
-      if (runtimeEl) runtimeEl.value = init.hours;
-      if (voltageEl) voltageEl.value = init.voltage;
-      if (dodEl) dodEl.value = init.dod;
-      if (effEl) effEl.value = init.eff;
-
-      renderHint("Enter your inputs and press Calculate.");
-    };
-
-    if (calcBtn) calcBtn.addEventListener("click", doCalc);
-    if (resetBtn) resetBtn.addEventListener("click", doReset);
-
-    // initial hint
-    if (resultsEl) renderHint("Enter your inputs and press Calculate.");
-    console.log("Battery Bank Sizer: JS booted ✅");
-  };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
+  } catch (e) {
+    console.warn(e);
   }
+}
+
+// ===== CALC =====
+function calculate() {
+  const load = parseFloat(els.load.value);
+  const hours = parseFloat(els.hours.value);
+  const voltage = parseFloat(els.voltage.value);
+  const dod = parseFloat(els.dod.value) / 100;
+  const eff = parseFloat(els.eff.value) / 100;
+
+  if ([load, hours, voltage, dod, eff].some(v => !isFinite(v))) {
+    els.results.innerHTML = "Invalid input";
+    return;
+  }
+
+  const wh = load * hours;
+  const adjWh = wh / eff;
+  const totalWh = adjWh / dod;
+  const ah = totalWh / voltage;
+
+  lastResult = { totalWh, ah, load, hours };
+
+  els.results.innerHTML = `
+    <div><strong>Required Energy:</strong> ${totalWh.toFixed(1)} Wh</div>
+    <div><strong>Battery Capacity:</strong> ${ah.toFixed(1)} Ah @ ${voltage}V</div>
+  `;
+
+  els.next.style.display = "block";
+
+  // ===== SAVE PIPELINE =====
+  sessionStorage.setItem("sl_pipeline_payload", JSON.stringify({
+    category: "power",
+    step: "battery-bank-sizer",
+    source: "battery-bank-sizer",
+    ts: Date.now(),
+    designLoadWatts: load,
+    runtimeHours: hours,
+    requiredWh: totalWh
+  }));
+}
+
+// ===== RESET =====
+function reset() {
+  els.results.innerHTML = "Enter values and calculate.";
+  els.next.style.display = "none";
+}
+
+// ===== INPUT CHANGE INVALIDATION =====
+["load","hours","voltage","dod","efficiency"].forEach(id=>{
+  const el = $(id);
+  if (!el) return;
+  el.addEventListener("input", ()=>{
+    els.next.style.display = "none";
+  });
+});
+
+// events
+els.calc.addEventListener("click", calculate);
+els.reset.addEventListener("click", reset);
+
+// init
+loadFromPipeline();
+
 })();
