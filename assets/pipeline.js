@@ -12,21 +12,32 @@
 
   if (!category || !currentStep) return;
 
-  const steps =
-    pipelines?.categories?.[category]?.lanes?.[laneName] || [];
+  // Support BOTH:
+  // 1) new nested structure: SCOPED_PIPELINES.categories[category].lanes[laneName]
+  // 2) old flat structure:   SCOPED_PIPELINES[category]
+  const nestedSteps =
+    pipelines?.categories?.[category]?.lanes?.[laneName];
+
+  const flatSteps =
+    pipelines?.[category];
+
+  const steps = Array.isArray(nestedSteps) && nestedSteps.length
+    ? nestedSteps
+    : (Array.isArray(flatSteps) ? flatSteps : []);
 
   if (!Array.isArray(steps) || !steps.length) return;
 
-  const currentIndex = steps.findIndex(step => step.id === currentStep);
+  const currentIndex = steps.findIndex((step) => step.id === currentStep);
   if (currentIndex === -1) return;
+
+  if (document.getElementById("sl-design-pipeline")) return;
 
   const h1 =
     document.querySelector("main .container h1") ||
     document.querySelector("main.container h1") ||
     document.querySelector("main h1");
-  if (!h1) return;
 
-  if (document.getElementById("sl-design-pipeline")) return;
+  if (!h1) return;
 
   const wrap = document.createElement("section");
   wrap.id = "sl-design-pipeline";
@@ -76,6 +87,5 @@
   });
 
   wrap.appendChild(row);
-
   h1.insertAdjacentElement("afterend", wrap);
 })();
