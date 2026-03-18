@@ -1868,3 +1868,15 @@ main h3.section-title {
   color: #dfeee5 !important;
   font-weight: 700;
 }
+
+.page-head .best-for {
+  margin-top: 10px;
+  color: var(--text-muted, rgba(255,255,255,0.72));
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.page-head .best-for strong {
+  color: inherit;
+  font-weight: 700;
+}
