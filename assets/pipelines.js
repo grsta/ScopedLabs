@@ -47,6 +47,21 @@
 
     },
 
+      network: {
+  label: "Network & Throughput",
+
+  lanes: {
+
+    v1: [
+      { id: "poe-budget", label: "PoE Budget", href: "/tools/network/poe-budget/" },
+      { id: "bandwidth", label: "Bandwidth", href: "/tools/network/bandwidth/" },
+      { id: "oversubscription", label: "Oversubscription", href: "/tools/network/oversubscription/" },
+      { id: "latency", label: "Latency", href: "/tools/network/latency/" }
+    ]
+
+  }
+},
+
 
     // ---------------------------------------------------
     // CROSS-CATEGORY PIPELINES (future Gold tier)
