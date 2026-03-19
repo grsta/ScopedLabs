@@ -1,18 +1,15 @@
 // /assets/pipelines.js
 (() => {
   window.SCOPED_PIPELINES = {
-
     // ---------------------------------------------------
     // CATEGORY PIPELINES (normal design flows)
     // ---------------------------------------------------
     categories: {
-
       // -----------------------------
       // VIDEO & STORAGE
       // -----------------------------
       "video-storage": {
         label: "Video & Storage",
-
         lanes: {
           v1: [
             { id: "bitrate", label: "Bitrate", href: "/tools/video-storage/bitrate-estimator/" },
@@ -29,7 +26,6 @@
       // -----------------------------
       power: {
         label: "Power",
-
         lanes: {
           v1: [
             { id: "va-watts-amps", label: "VA / Watts / Amps", href: "/tools/power/va-watts-amps/" },
@@ -45,7 +41,6 @@
       // -----------------------------
       network: {
         label: "Network & Throughput",
-
         lanes: {
           v1: [
             { id: "poe-budget", label: "PoE Budget", href: "/tools/network/poe-budget/" },
@@ -55,18 +50,15 @@
           ]
         }
       }
-
     },
 
     // ---------------------------------------------------
     // CROSS-CATEGORY PIPELINES (future Gold tier)
     // ---------------------------------------------------
     crossSite: {
-
       "infrastructure-design": {
         label: "Infrastructure Design",
         tier: "gold",
-
         lanes: {
           v1: [
             {
@@ -102,8 +94,6 @@
           ]
         }
       }
-
     }
-
   };
 })();
