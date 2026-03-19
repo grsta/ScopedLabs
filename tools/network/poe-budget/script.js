@@ -1,112 +1,67 @@
-/* PoE Budget tool — lightweight planner math
-   (Not controller simulation; just quick field-sizing.)
-*/
 (function () {
-  const $ = (id) => document.getElementById(id);
 
-  function num(id) {
-    const el = $(id);
-    if (!el) return NaN;
-    const v = Number(el.value);
-    return Number.isFinite(v) ? v : NaN;
+const $ = (id) => document.getElementById(id);
+
+function calc() {
+
+  const poeBudget = Number($("poeBudgetW").value);
+  const margin = Number($("marginPct").value);
+
+  const total =
+    $("camsCount").value * $("camsW").value +
+    $("apsCount").value * $("apsW").value +
+    $("phonesCount").value * $("phonesW").value +
+    $("otherCount").value * $("otherW").value;
+
+  const safe = poeBudget * (1 - margin/100);
+  const headroom = safe - total;
+  const util = (total / poeBudget) * 100;
+
+  let status = "";
+  let meaning = "";
+  let recommendation = "";
+
+  if (headroom < 0) {
+    status = "FAIL — Over budget";
+    meaning = "Your switch cannot support the connected PoE load under safe operating conditions.";
+    recommendation = "Upgrade switch capacity or reduce device load immediately.";
+  }
+  else if (util > 80) {
+    status = "WARNING — High utilization";
+    meaning = "System is operating near capacity. Spikes or IR/heaters may push it over.";
+    recommendation = "Increase PoE budget or redistribute devices.";
+  }
+  else {
+    status = "GOOD — Within safe limits";
+    meaning = "System has adequate headroom for normal operation.";
+    recommendation = "Design is acceptable with current assumptions.";
   }
 
-  function fmtW(x) {
-    if (!Number.isFinite(x)) return "—";
-    return `${x.toFixed(1)} W`;
-  }
+  $("results").innerHTML = `
+    <div class="result-row"><b>Total Load:</b> ${total.toFixed(1)} W</div>
+    <div class="result-row"><b>Safe Budget:</b> ${safe.toFixed(1)} W</div>
+    <div class="result-row"><b>Headroom:</b> ${headroom.toFixed(1)} W</div>
+    <div class="result-row"><b>Utilization:</b> ${util.toFixed(1)}%</div>
 
-  function fmtPct(x) {
-    if (!Number.isFinite(x)) return "—";
-    return `${x.toFixed(1)}%`;
-  }
+    <hr>
 
-  function setText(id, text) {
-    const el = $(id);
-    if (el) el.textContent = text;
-  }
+    <div class="result-row"><b>Status:</b> ${status}</div>
+    <div class="result-row"><b>What this means:</b> ${meaning}</div>
+    <div class="result-row"><b>Recommendation:</b> ${recommendation}</div>
+  `;
 
-  function calc() {
-    const poeBudgetW = num("poeBudgetW");
-    const marginPct = num("marginPct");
+  // 🔗 Save to pipeline
+  sessionStorage.setItem("pipeline:network", JSON.stringify({
+    poeLoad: total
+  }));
 
-    const camsCount = num("camsCount");
-    const camsW = num("camsW");
+}
 
-    const apsCount = num("apsCount");
-    const apsW = num("apsW");
+function next() {
+  window.location.href = "/tools/network/bandwidth/";
+}
 
-    const phonesCount = num("phonesCount");
-    const phonesW = num("phonesW");
+$("calc").addEventListener("click", calc);
+$("continue").addEventListener("click", next);
 
-    const otherCount = num("otherCount");
-    const otherW = num("otherW");
-
-    const required = [poeBudgetW, marginPct, camsCount, camsW, apsCount, apsW, phonesCount, phonesW, otherCount, otherW];
-    if (required.some((v) => !Number.isFinite(v) || v < 0)) {
-      setText("statusText", "Enter valid non-negative values.");
-      setText("totalDrawW", "—");
-      setText("safeBudgetW", "—");
-      setText("headroomW", "—");
-      setText("utilPct", "—");
-      return;
-    }
-
-    const totalDraw =
-      (camsCount * camsW) +
-      (apsCount * apsW) +
-      (phonesCount * phonesW) +
-      (otherCount * otherW);
-
-    const safeBudget = poeBudgetW * (1 - (marginPct / 100));
-    const headroom = safeBudget - totalDraw;
-    const util = poeBudgetW > 0 ? (totalDraw / poeBudgetW) * 100 : NaN;
-
-    setText("totalDrawW", fmtW(totalDraw));
-    setText("safeBudgetW", fmtW(safeBudget));
-    setText("headroomW", fmtW(headroom));
-    setText("utilPct", fmtPct(util));
-
-    let status = "OK: budget headroom looks good.";
-    if (poeBudgetW <= 0) status = "Enter a PoE budget above 0W.";
-    else if (headroom < 0) status = "FAIL: estimated draw exceeds safe budget (after margin).";
-    else if (headroom < poeBudgetW * 0.10) status = "Warning: low headroom — consider higher budget or fewer loads.";
-    else if (util > 80) status = "Warning: high utilization — spikes may bite you.";
-
-    setText("statusText", status);
-  }
-
-  function reset() {
-    // Defaults match the HTML values above — keep them consistent.
-    $("poeBudgetW").value = 370;
-    $("marginPct").value = 20;
-    $("poeStandard").value = "at";
-    $("poePorts").value = 16;
-
-    $("camsCount").value = 12;
-    $("camsW").value = 12;
-
-    $("apsCount").value = 2;
-    $("apsW").value = 15;
-
-    $("phonesCount").value = 0;
-    $("phonesW").value = 5;
-
-    $("otherCount").value = 0;
-    $("otherW").value = 10;
-
-    setText("totalDrawW", "—");
-    setText("safeBudgetW", "—");
-    setText("headroomW", "—");
-    setText("utilPct", "—");
-    setText("statusText", "Enter values and calculate.");
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    const calcBtn = $("calc");
-    const resetBtn = $("reset");
-
-    if (calcBtn) calcBtn.addEventListener("click", calc);
-    if (resetBtn) resetBtn.addEventListener("click", reset);
-  });
 })();
