@@ -1,44 +1,15 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  const els = {
-    devices: $("devices"),
-    bitrate: $("bitrate"),
-    peakFactor: $("peakFactor"),
-    overheadPct: $("overheadPct"),
-    otherTraffic: $("otherTraffic"),
-    uplinkMbps: $("uplinkMbps"),
-    safeUtil: $("safeUtil"),
+  function num(id) {
+    const el = $(id);
+    if (!el) return NaN;
+    const v = Number(el.value);
+    return Number.isFinite(v) ? v : NaN;
+  }
 
-    calc: $("calc"),
-    reset: $("reset"),
-
-    resultsCard: $("resultsCard"),
-    errorCard: $("errorCard"),
-    errorMsg: $("errorMsg"),
-
-    avgLoad: $("avgLoad"),
-    peakLoad: $("peakLoad"),
-    avgTotal: $("avgTotal"),
-    peakTotal: $("peakTotal"),
-    utilAvg: $("utilAvg"),
-    utilPeak: $("utilPeak"),
-    recUplink: $("recUplink"),
-  };
-
-  const defaults = {
-    devices: 16,
-    bitrate: 4,
-    peakFactor: 1.5,
-    overheadPct: 12,
-    otherTraffic: 25,
-    uplinkMbps: 1000,
-    safeUtil: 70,
-  };
-
-  function num(v) {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : NaN;
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
   }
 
   function fmtMbps(x) {
@@ -51,34 +22,136 @@
     return `${x.toFixed(1)}%`;
   }
 
-  function showError(msg) {
-    els.errorMsg.textContent = msg;
-    els.errorCard.style.display = "";
-    els.resultsCard.style.display = "none";
+  function setFlowNote(text) {
+    const note = $("flow-note");
+    if (!note) return;
+    note.hidden = false;
+    note.textContent = text;
   }
 
-  function showResults() {
-    els.errorCard.style.display = "none";
-    els.resultsCard.style.display = "";
+  function readFlow() {
+    try {
+      const raw =
+        sessionStorage.getItem("pipeline:network") ||
+        sessionStorage.getItem("scopedlabs:flow:network");
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
   }
 
-  function calculate() {
-    const devices = num(els.devices.value);
-    const bitrate = num(els.bitrate.value);
-    const peakFactor = num(els.peakFactor.value);
-    const overheadPct = num(els.overheadPct.value);
-    const otherTraffic = num(els.otherTraffic.value);
-    const uplinkMbps = num(els.uplinkMbps.value);
-    const safeUtil = num(els.safeUtil.value);
+  function writeFlow(payload) {
+    try {
+      sessionStorage.setItem("pipeline:network", JSON.stringify(payload));
+      sessionStorage.setItem("scopedlabs:flow:network", JSON.stringify(payload));
+    } catch (_) {
+      // ignore storage issues
+    }
+  }
 
-    // validation
-    if (!(devices > 0)) return showError("Enter a valid stream count (devices). Example: 16");
-    if (!(bitrate >= 0)) return showError("Enter a valid bitrate per stream (Mbps). Example: 4");
-    if (!(peakFactor >= 1)) return showError("Peak factor must be ≥ 1. Example: 1.5");
-    if (!(overheadPct >= 0)) return showError("Overhead must be ≥ 0%. Example: 12");
-    if (!(otherTraffic >= 0)) return showError("Other traffic must be ≥ 0 Mbps. Example: 25");
-    if (!(uplinkMbps > 0)) return showError("Uplink capacity must be > 0 Mbps. Example: 1000");
-    if (!(safeUtil > 0 && safeUtil < 100)) return showError("Target utilization must be 1–99%. Example: 70");
+  function buildRows(rows) {
+    return rows.map((row) => {
+      const cls = row.className ? ` ${row.className}` : "";
+      return `
+        <div class="result-row">
+          <div class="k">${row.label}</div>
+          <div class="v${cls}">${row.value}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function classify(utilPeak, recUplink, uplinkMbps) {
+    if (utilPeak > 100) {
+      return {
+        status: "FAIL — Peak demand exceeds uplink",
+        statusClass: "flag-bad",
+        interpretation: "Projected peak traffic exceeds the available uplink capacity. This design is congestion-prone and may drop or delay traffic under burst conditions.",
+        recommendation: "Increase uplink capacity, segment traffic, or reduce modeled demand before deployment."
+      };
+    }
+
+    if (utilPeak > 85) {
+      return {
+        status: "WARNING — Very high peak utilization",
+        statusClass: "flag-warn",
+        interpretation: "Peak conditions place the uplink near saturation. The network may still function, but margin for burst traffic, retries, and future growth is very thin.",
+        recommendation: "Review uplink sizing now and consider moving to a larger uplink before additional devices are added."
+      };
+    }
+
+    if (utilPeak > 70) {
+      return {
+        status: "CAUTION — Usable but getting tight",
+        statusClass: "flag-warn",
+        interpretation: "Peak demand stays inside the link, but the design is trending toward the upper end of a comfortable operating band.",
+        recommendation: "Validate assumptions carefully and consider whether growth or failover events could push this design beyond target utilization."
+      };
+    }
+
+    return {
+      status: "GOOD — Capacity margin looks healthy",
+      statusClass: "flag-ok",
+      interpretation: "The modeled uplink appears to retain usable headroom under the selected average, peak, and overhead assumptions.",
+      recommendation: "Proceed with this design, then continue into Oversubscription to validate how aggregation behaves when multiple uplinks are combined."
+    };
+  }
+
+  function maybePrefillFromPoe() {
+    const flow = readFlow();
+    if (!flow) {
+      setFlowNote("This is step 2 of the Network pipeline. After confirming edge power, estimate the traffic those devices place on the network.");
+      return;
+    }
+
+    const poweredDevices = Number(flow.poweredDevices);
+    if (Number.isFinite(poweredDevices) && poweredDevices > 0) {
+      $("devices").value = String(poweredDevices);
+      setFlowNote(`Step 1 carried forward ${poweredDevices} powered devices from PoE Budget. Adjust here if only a portion of them contribute meaningful traffic at the same time.`);
+      return;
+    }
+
+    setFlowNote("This is step 2 of the Network pipeline. Estimate average and peak traffic before validating aggregation behavior.");
+  }
+
+  function calculateBandwidth() {
+    const devices = num("devices");
+    const bitrate = num("bitrate");
+    const peakFactor = num("peakFactor");
+    const overheadPct = num("overheadPct");
+    const otherTraffic = num("otherTraffic");
+    const uplinkMbps = num("uplinkMbps");
+    const safeUtil = clamp(num("safeUtil"), 1, 99);
+
+    const required = [devices, bitrate, peakFactor, overheadPct, otherTraffic, uplinkMbps, safeUtil];
+
+    if (required.some((v) => !Number.isFinite(v))) {
+      return { ok: false, message: "Enter valid numeric values." };
+    }
+
+    if (devices <= 0) {
+      return { ok: false, message: "Active streams / devices must be greater than 0." };
+    }
+
+    if (bitrate < 0) {
+      return { ok: false, message: "Average Mbps per stream / device cannot be negative." };
+    }
+
+    if (peakFactor < 1) {
+      return { ok: false, message: "Peak factor must be at least 1." };
+    }
+
+    if (overheadPct < 0) {
+      return { ok: false, message: "Protocol overhead cannot be negative." };
+    }
+
+    if (otherTraffic < 0) {
+      return { ok: false, message: "Other traffic allowance cannot be negative." };
+    }
+
+    if (uplinkMbps <= 0) {
+      return { ok: false, message: "Current uplink capacity must be greater than 0 Mbps." };
+    }
 
     const overheadMult = 1 + (overheadPct / 100);
 
@@ -96,33 +169,130 @@
 
     const recUplink = peakTotal / (safeUtil / 100);
 
-    els.avgLoad.textContent = fmtMbps(avgStream);
-    els.peakLoad.textContent = fmtMbps(peakStream);
-    els.avgTotal.textContent = fmtMbps(avgTotal);
-    els.peakTotal.textContent = fmtMbps(peakTotal);
-    els.utilAvg.textContent = fmtPct(utilAvg);
-    els.utilPeak.textContent = fmtPct(utilPeak);
-    els.recUplink.textContent = fmtMbps(recUplink);
+    const statusPack = classify(utilPeak, recUplink, uplinkMbps);
 
-    showResults();
+    let engineeringTake = `Average modeled demand is ${fmtMbps(avgTotal)}, while peak modeled demand reaches ${fmtMbps(peakTotal)} against a ${fmtMbps(uplinkMbps)} uplink.`;
+
+    if (utilPeak > safeUtil) {
+      engineeringTake += ` Peak demand exceeds your preferred ${safeUtil.toFixed(0)}% operating target, so the current uplink does not preserve your desired headroom.`;
+    } else {
+      engineeringTake += ` Peak demand remains inside your preferred ${safeUtil.toFixed(0)}% operating target, so the current uplink is still aligned with your selected headroom policy.`;
+    }
+
+    return {
+      ok: true,
+      devices,
+      bitrate,
+      peakFactor,
+      overheadPct,
+      otherTraffic,
+      uplinkMbps,
+      safeUtil,
+      avgStream,
+      peakStream,
+      avgTotal,
+      peakTotal,
+      utilAvg,
+      utilPeak,
+      recUplink,
+      ...statusPack,
+      engineeringTake
+    };
+  }
+
+  function renderResults(data) {
+    const results = $("results");
+    if (!results) return;
+
+    if (!data.ok) {
+      results.innerHTML = `<div class="muted">${data.message}</div>`;
+      return;
+    }
+
+    results.innerHTML = buildRows([
+      { label: "Average modeled traffic", value: fmtMbps(data.avgStream) },
+      { label: "Peak modeled traffic", value: fmtMbps(data.peakStream) },
+      { label: "Average total incl. overhead + other traffic", value: fmtMbps(data.avgTotal) },
+      { label: "Peak total incl. overhead + other traffic", value: fmtMbps(data.peakTotal) },
+      { label: "Uplink utilization (average)", value: fmtPct(data.utilAvg) },
+      { label: "Uplink utilization (peak)", value: fmtPct(data.utilPeak) },
+      { label: "Recommended uplink at target utilization", value: fmtMbps(data.recUplink) },
+      { label: "Status", value: data.status, className: data.statusClass },
+      { label: "What this means", value: data.interpretation },
+      { label: "Engineering take", value: data.engineeringTake },
+      { label: "Recommendation", value: data.recommendation }
+    ]);
+  }
+
+  function saveToPipeline(data) {
+    if (!data.ok) return;
+
+    const flow = readFlow() || {};
+
+    flow.category = "network";
+    flow.tool = "bandwidth";
+    flow.step = "bandwidth";
+    flow.lane = "v1";
+    flow.bandwidthAvgMbps = data.avgTotal;
+    flow.bandwidthPeakMbps = data.peakTotal;
+    flow.bandwidthPeakUtilPct = data.utilPeak;
+    flow.uplinkMbps = data.uplinkMbps;
+    flow.recUplinkMbps = data.recUplink;
+    flow.modeledDevices = data.devices;
+    flow.timestamp = Date.now();
+
+    writeFlow(flow);
+  }
+
+  function showNextStep(data) {
+    const row = $("next-step-row");
+    if (!row) return;
+    row.style.display = data && data.ok ? "flex" : "none";
+  }
+
+  function calculate() {
+    const data = calculateBandwidth();
+    renderResults(data);
+    saveToPipeline(data);
+    showNextStep(data);
   }
 
   function reset() {
-    els.devices.value = defaults.devices;
-    els.bitrate.value = defaults.bitrate;
-    els.peakFactor.value = defaults.peakFactor;
-    els.overheadPct.value = defaults.overheadPct;
-    els.otherTraffic.value = defaults.otherTraffic;
-    els.uplinkMbps.value = defaults.uplinkMbps;
-    els.safeUtil.value = defaults.safeUtil;
+    $("devices").value = "16";
+    $("bitrate").value = "4";
+    $("peakFactor").value = "1.5";
+    $("overheadPct").value = "12";
+    $("otherTraffic").value = "25";
+    $("uplinkMbps").value = "1000";
+    $("safeUtil").value = "70";
 
-    els.resultsCard.style.display = "none";
-    els.errorCard.style.display = "none";
+    const results = $("results");
+    if (results) {
+      results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    }
+
+    showNextStep(null);
   }
 
   window.addEventListener("DOMContentLoaded", () => {
-    els.calc.addEventListener("click", calculate);
-    els.reset.addEventListener("click", reset);
+    const calcBtn = $("calc");
+    const resetBtn = $("reset");
+
+    if (calcBtn) calcBtn.addEventListener("click", calculate);
+    if (resetBtn) resetBtn.addEventListener("click", reset);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+          e.preventDefault();
+          calculate();
+        }
+      }
+    });
+
+    maybePrefillFromPoe();
+    reset();
   });
 })();
 
