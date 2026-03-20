@@ -1,141 +1,266 @@
-// tools/network/latency/script.js
 (() => {
   "use strict";
 
-  // ---- Defaults (keep these in sync with HTML initial values) ----
-  const DEFAULTS = {
-    camEncMs: 80,
-    netMs: 20,
-    recProcMs: 120,
-    clientMs: 60,
-  };
+  const $ = (id) => document.getElementById(id);
 
-  // ---- Helpers ----
-  const $ = (sel) => document.querySelector(sel);
-
-  function clampNonNegative(n) {
-    if (!Number.isFinite(n)) return 0;
-    return Math.max(0, n);
+  function num(id) {
+    const el = $(id);
+    if (!el) return NaN;
+    const v = Number(el.value);
+    return Number.isFinite(v) ? Math.max(0, v) : NaN;
   }
 
-  function readNumber(id) {
-    const el = document.getElementById(id);
-    if (!el) return 0;
-    const n = Number(el.value);
-    const safe = clampNonNegative(n);
-    // normalize the field so UI matches what we calculate
-    el.value = String(safe);
-    return safe;
+  function fmt(v, d = 0) {
+    return Number.isFinite(v) ? v.toFixed(d) : "—";
   }
 
-  // Simple, user-facing thresholds:
-  // < 250ms: usually feels snappy
-  // 250–499ms: noticeable to many users
-  // >= 500ms: "laggy" territory
-  function classify(totalMs) {
-    if (totalMs < 250) {
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw
+        .split(",")
+        .map((x) => String(x).trim().toLowerCase())
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const locked = $("lockedCard");
+    const tool = $("toolCard");
+
+    if (!locked || !tool) return;
+
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      locked.style.display = "none";
+      tool.style.display = "";
+      return;
+    }
+
+    locked.style.display = "";
+    tool.style.display = "none";
+  }
+
+  function readFlow() {
+    try {
+      const raw =
+        sessionStorage.getItem("pipeline:network") ||
+        sessionStorage.getItem("scopedlabs:flow:network");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeFlow(payload) {
+    try {
+      sessionStorage.setItem("pipeline:network", JSON.stringify(payload));
+      sessionStorage.setItem("scopedlabs:flow:network", JSON.stringify(payload));
+    } catch {}
+  }
+
+  function setFlowNote(text) {
+    const note = $("flow-note");
+    if (!note) return;
+    note.hidden = false;
+    note.innerHTML = text;
+  }
+
+  function maybePrefillFromOversub() {
+    const flow = readFlow();
+    if (!flow) {
+      setFlowNote("Final step of the Network pipeline. Build a realistic end-to-end latency budget using the transport path you designed upstream.");
+      return;
+    }
+
+    const coreUtil = Number(flow.coreUtilPct);
+    const wanMbps = Number(flow.wanMbps);
+    const coreDemand = Number(flow.coreDemandMbps);
+
+    if (Number.isFinite(coreUtil)) {
+      if (coreUtil > 90) {
+        $("wanMs").value = "70";
+        $("bufferMs").value = "40";
+      } else if (coreUtil > 75) {
+        $("wanMs").value = "55";
+        $("bufferMs").value = "30";
+      } else {
+        $("wanMs").value = "40";
+        $("bufferMs").value = "20";
+      }
+    }
+
+    if (Number.isFinite(coreUtil) && Number.isFinite(wanMbps) && Number.isFinite(coreDemand)) {
+      setFlowNote(
+        `Step 4 → Using Oversubscription results:<br>
+        Core/WAN utilization: <strong>${fmt(coreUtil, 1)}%</strong> |
+        Demand: <strong>${fmt(coreDemand, 1)} Mbps</strong> |
+        Transport: <strong>${fmt(wanMbps, 1)} Mbps</strong>`
+      );
+      return;
+    }
+
+    setFlowNote("Final step of the Network pipeline. Build a realistic end-to-end latency budget using the transport path you designed upstream.");
+  }
+
+  function classify(totalMs, targetMs) {
+    if (totalMs <= targetMs) {
       return {
-        level: "GREEN",
-        text: "Looks good. This should feel responsive for most users.",
+        status: "GOOD — Within target budget",
+        cls: "flag-ok",
+        recommendation: "The modeled path is within the selected latency target. Validate with real traffic if this workflow is operationally sensitive."
       };
     }
-    if (totalMs < 500) {
+
+    if (totalMs <= targetMs * 1.25) {
       return {
-        level: "YELLOW",
-        text: "Noticeable delay for many users. Expect complaints in fast-response workflows.",
+        status: "CAUTION — Slightly above target",
+        cls: "flag-warn",
+        recommendation: "The design is usable in many workflows, but users may start noticing delay in live or interactive viewing."
       };
     }
+
     return {
-      level: "RED",
-      text: "High delay. This will feel laggy. Investigate buffering, codec settings, and processing load.",
+      status: "WARNING — Above practical target",
+      cls: "flag-bad",
+      recommendation: "This path is likely to feel sluggish. Reduce the dominant contributors or adjust buffering, transport, or processing stages."
     };
   }
 
-  function setStatusPill(level) {
-    const pill = $("#statusPill");
-    if (!pill) return;
-
-    // text
-    pill.textContent = level;
-
-    // class reset
-    pill.classList.remove("is-green", "is-yellow", "is-red");
-
-    // attach a class for styling (CSS can map these to colors)
-    if (level === "GREEN") pill.classList.add("is-green");
-    if (level === "YELLOW") pill.classList.add("is-yellow");
-    if (level === "RED") pill.classList.add("is-red");
+  function largestStage(stages) {
+    return stages.slice().sort((a, b) => b.value - a.value)[0];
   }
 
-  function calc() {
-    const camEncMs = readNumber("camEncMs");
-    const netMs = readNumber("netMs");
-    const recProcMs = readNumber("recProcMs");
-    const clientMs = readNumber("clientMs");
+  function calculate() {
+    const stages = [
+      { label: "Source / encode", value: num("encodeMs") },
+      { label: "Switching / routing", value: num("switchMs") },
+      { label: "Uplink / aggregation", value: num("uplinkMs") },
+      { label: "WAN / VPN transport", value: num("wanMs") },
+      { label: "Decode / processing", value: num("decodeMs") },
+      { label: "Client render", value: num("renderMs") },
+      { label: "Jitter buffer / reserve", value: num("bufferMs") }
+    ];
 
-    const totalMs = camEncMs + netMs + recProcMs + clientMs;
+    const targetMs = num("targetMs");
 
-    const totalEl = $("#totalMs");
-    if (totalEl) totalEl.textContent = String(Math.round(totalMs));
+    if (stages.some((s) => !Number.isFinite(s.value)) || !Number.isFinite(targetMs)) {
+      $("out").innerHTML = `<div class="muted">Enter valid non-negative values.</div>`;
+      return;
+    }
 
-    const status = classify(totalMs);
-    setStatusPill(status.level);
+    const totalMs = stages.reduce((sum, s) => sum + s.value, 0);
+    const dominant = largestStage(stages);
+    const statusPack = classify(totalMs, targetMs);
 
-    const statusText = $("#statusText");
-    if (statusText) statusText.textContent = status.text;
+    const breakdown = stages
+      .map((s) => `<li>${s.label}: ${fmt(s.value, 0)} ms</li>`)
+      .join("");
+
+    $("out").innerHTML = `
+      <div class="muted" style="line-height:1.65;">
+        <div><strong>Total end-to-end latency:</strong> ${fmt(totalMs, 0)} ms</div>
+        <div><strong>Target budget:</strong> ${fmt(targetMs, 0)} ms</div>
+        <div><strong>Status:</strong> <span class="${statusPack.cls}">${statusPack.status}</span></div>
+        <div><strong>Largest contributor:</strong> ${dominant.label} (${fmt(dominant.value, 0)} ms)</div>
+      </div>
+
+      <div class="spacer-md"></div>
+
+      <div class="muted" style="line-height:1.6;">
+        <strong>What this means:</strong>
+        ${dominant.label} is currently the dominant source of delay in the path. Optimizing smaller contributors may help, but the biggest wins usually come from addressing the worst stage first.
+      </div>
+
+      <div class="spacer-sm"></div>
+
+      <div class="muted" style="line-height:1.6;">
+        <strong>Recommendation:</strong>
+        ${statusPack.recommendation}
+      </div>
+
+      <div class="spacer-md"></div>
+
+      <div class="muted">
+        Breakdown:
+        <ul style="margin:.4rem 0 0 1.15rem;">
+          ${breakdown}
+        </ul>
+      </div>
+    `;
+
+    const flow = readFlow() || {};
+    flow.category = "network";
+    flow.tool = "latency";
+    flow.step = "latency";
+    flow.lane = "v1";
+    flow.totalLatencyMs = totalMs;
+    flow.targetLatencyMs = targetMs;
+    flow.dominantLatencyStage = dominant.label;
+    flow.timestamp = Date.now();
+    writeFlow(flow);
   }
 
   function reset() {
-    const ids = Object.keys(DEFAULTS);
-    for (const id of ids) {
-      const el = document.getElementById(id);
-      if (el) el.value = String(DEFAULTS[id]);
-    }
+    $("encodeMs").value = "80";
+    $("switchMs").value = "5";
+    $("uplinkMs").value = "10";
+    $("wanMs").value = "40";
+    $("decodeMs").value = "60";
+    $("renderMs").value = "30";
+    $("bufferMs").value = "20";
+    $("targetMs").value = "300";
 
-    const totalEl = $("#totalMs");
-    if (totalEl) totalEl.textContent = "—";
-
-    const statusText = $("#statusText");
-    if (statusText) statusText.textContent = "Enter values and calculate.";
-
-    // Reset pill display
-    const pill = $("#statusPill");
-    if (pill) {
-      pill.textContent = "—";
-      pill.classList.remove("is-green", "is-yellow", "is-red");
-    }
+    $("out").innerHTML =
+      '<div class="muted">Run the calculator to see total latency, dominant contributors, and practical guidance.</div>';
   }
 
-  function wire() {
-    const btnCalc = $("#calc");
-    const btnReset = $("#reset");
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
 
-    if (btnCalc) btnCalc.addEventListener("click", calc);
-    if (btnReset) btnReset.addEventListener("click", reset);
+    unlockCategoryPage();
 
-    // Optional: press Enter in any input to calculate
-    const inputs = ["camEncMs", "netMs", "recProcMs", "clientMs"]
-      .map((id) => document.getElementById(id))
-      .filter(Boolean);
+    const calcBtn = $("calc");
+    const resetBtn = $("reset");
 
-    for (const el of inputs) {
-      el.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
+    if (calcBtn) calcBtn.addEventListener("click", calculate);
+    if (resetBtn) resetBtn.addEventListener("click", reset);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
           e.preventDefault();
-          calc();
+          calculate();
         }
-      });
+      }
+    });
 
-      // normalize negatives immediately
-      el.addEventListener("blur", () => {
-        const n = clampNonNegative(Number(el.value));
-        el.value = String(n);
-      });
+    if ($("toolCard") && $("toolCard").style.display !== "none") {
+      reset();
+      maybePrefillFromOversub();
     }
-  }
-
-  // ---- Boot ----
-  document.addEventListener("DOMContentLoaded", () => {
-    wire();
   });
 })();
