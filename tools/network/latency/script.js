@@ -55,11 +55,12 @@
     if (signedIn && unlocked) {
       locked.style.display = "none";
       tool.style.display = "";
-      return;
+      return true;
     }
 
     locked.style.display = "";
     tool.style.display = "none";
+    return false;
   }
 
   function readFlow() {
@@ -236,11 +237,14 @@
       '<div class="muted">Run the calculator to see total latency, dominant contributors, and practical guidance.</div>';
   }
 
+  function initUnlockedTool() {
+    reset();
+    maybePrefillFromOversub();
+  }
+
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
-
-    unlockCategoryPage();
 
     const calcBtn = $("calc");
     const resetBtn = $("reset");
@@ -258,9 +262,18 @@
       }
     });
 
-    if ($("toolCard") && $("toolCard").style.display !== "none") {
-      reset();
-      maybePrefillFromOversub();
+    // First pass
+    let unlocked = unlockCategoryPage();
+    if (unlocked) {
+      initUnlockedTool();
     }
+
+    // Second pass after auth/session restore settles
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked) {
+        initUnlockedTool();
+      }
+    }, 400);
   });
 })();
