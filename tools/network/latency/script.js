@@ -47,7 +47,7 @@
     const locked = $("lockedCard");
     const tool = $("toolCard");
 
-    if (!locked || !tool) return;
+    if (!locked || !tool) return false;
 
     const signedIn = hasStoredAuth();
     const unlocked = getUnlockedCategories().includes(category);
@@ -90,6 +90,7 @@
 
   function maybePrefillFromOversub() {
     const flow = readFlow();
+
     if (!flow) {
       setFlowNote("Final step of the Network pipeline. Build a realistic end-to-end latency budget using the transport path you designed upstream.");
       return;
@@ -130,7 +131,7 @@
       return {
         status: "GOOD — Within target budget",
         cls: "flag-ok",
-        recommendation: "The modeled path is within the selected latency target. Validate with real traffic if this workflow is operationally sensitive."
+        recommendation: "The modeled path is within the selected latency target. Validate with real traffic if needed."
       };
     }
 
@@ -138,14 +139,14 @@
       return {
         status: "CAUTION — Slightly above target",
         cls: "flag-warn",
-        recommendation: "The design is usable in many workflows, but users may start noticing delay in live or interactive viewing."
+        recommendation: "Usable, but delay may be noticeable in live workflows."
       };
     }
 
     return {
       status: "WARNING — Above practical target",
       cls: "flag-bad",
-      recommendation: "This path is likely to feel sluggish. Reduce the dominant contributors or adjust buffering, transport, or processing stages."
+      recommendation: "Likely to feel slow. Reduce the dominant stage first."
     };
   }
 
@@ -167,7 +168,7 @@
     const targetMs = num("targetMs");
 
     if (stages.some((s) => !Number.isFinite(s.value)) || !Number.isFinite(targetMs)) {
-      $("out").innerHTML = `<div class="muted">Enter valid non-negative values.</div>`;
+      $("out").innerHTML = `<div class="muted">Enter valid values.</div>`;
       return;
     }
 
@@ -175,105 +176,68 @@
     const dominant = largestStage(stages);
     const statusPack = classify(totalMs, targetMs);
 
-    const breakdown = stages
-      .map((s) => `<li>${s.label}: ${fmt(s.value, 0)} ms</li>`)
-      .join("");
+    const breakdown = stages.map(s => `<li>${s.label}: ${fmt(s.value)} ms</li>`).join("");
 
     $("out").innerHTML = `
-      <div class="muted" style="line-height:1.65;">
-        <div><strong>Total end-to-end latency:</strong> ${fmt(totalMs, 0)} ms</div>
-        <div><strong>Target budget:</strong> ${fmt(targetMs, 0)} ms</div>
+      <div class="muted">
+        <div><strong>Total latency:</strong> ${fmt(totalMs)} ms</div>
+        <div><strong>Target:</strong> ${fmt(targetMs)} ms</div>
         <div><strong>Status:</strong> <span class="${statusPack.cls}">${statusPack.status}</span></div>
-        <div><strong>Largest contributor:</strong> ${dominant.label} (${fmt(dominant.value, 0)} ms)</div>
-      </div>
-
-      <div class="spacer-md"></div>
-
-      <div class="muted" style="line-height:1.6;">
-        <strong>What this means:</strong>
-        ${dominant.label} is currently the dominant source of delay in the path. Optimizing smaller contributors may help, but the biggest wins usually come from addressing the worst stage first.
-      </div>
-
-      <div class="spacer-sm"></div>
-
-      <div class="muted" style="line-height:1.6;">
-        <strong>Recommendation:</strong>
-        ${statusPack.recommendation}
+        <div><strong>Largest contributor:</strong> ${dominant.label}</div>
       </div>
 
       <div class="spacer-md"></div>
 
       <div class="muted">
-        Breakdown:
-        <ul style="margin:.4rem 0 0 1.15rem;">
-          ${breakdown}
-        </ul>
+        <strong>Recommendation:</strong> ${statusPack.recommendation}
+      </div>
+
+      <div class="spacer-md"></div>
+
+      <ul class="muted">${breakdown}</ul>
+
+      <div class="spacer-lg"></div>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/network/">← Return to Network Category</a>
       </div>
     `;
 
     const flow = readFlow() || {};
-    flow.category = "network";
-    flow.tool = "latency";
-    flow.step = "latency";
-    flow.lane = "v1";
     flow.totalLatencyMs = totalMs;
-    flow.targetLatencyMs = targetMs;
-    flow.dominantLatencyStage = dominant.label;
     flow.timestamp = Date.now();
     writeFlow(flow);
   }
 
   function reset() {
-    $("encodeMs").value = "80";
-    $("switchMs").value = "5";
-    $("uplinkMs").value = "10";
-    $("wanMs").value = "40";
-    $("decodeMs").value = "60";
-    $("renderMs").value = "30";
-    $("bufferMs").value = "20";
-    $("targetMs").value = "300";
+    $("encodeMs").value = 80;
+    $("switchMs").value = 5;
+    $("uplinkMs").value = 10;
+    $("wanMs").value = 40;
+    $("decodeMs").value = 60;
+    $("renderMs").value = 30;
+    $("bufferMs").value = 20;
+    $("targetMs").value = 300;
 
-    $("out").innerHTML =
-      '<div class="muted">Run the calculator to see total latency, dominant contributors, and practical guidance.</div>';
+    $("out").innerHTML = '<div class="muted">Run calculation.</div>';
   }
 
-  function initUnlockedTool() {
+  function init() {
     reset();
     maybePrefillFromOversub();
   }
 
   window.addEventListener("DOMContentLoaded", () => {
-    const year = document.querySelector("[data-year]");
-    if (year) year.textContent = new Date().getFullYear();
+    $("calc")?.addEventListener("click", calculate);
+    $("reset")?.addEventListener("click", reset);
 
-    const calcBtn = $("calc");
-    const resetBtn = $("reset");
-
-    if (calcBtn) calcBtn.addEventListener("click", calculate);
-    if (resetBtn) resetBtn.addEventListener("click", reset);
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const t = e.target;
-        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
-          e.preventDefault();
-          calculate();
-        }
-      }
-    });
-
-    // First pass
     let unlocked = unlockCategoryPage();
-    if (unlocked) {
-      initUnlockedTool();
-    }
+    if (unlocked) init();
 
-    // Second pass after auth/session restore settles
     setTimeout(() => {
       unlocked = unlockCategoryPage();
-      if (unlocked) {
-        initUnlockedTool();
-      }
+      if (unlocked) init();
     }, 400);
   });
+
 })();
