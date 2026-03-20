@@ -1,237 +1,280 @@
-(() => {
-  const $ = (id) => document.getElementById(id);
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bandwidth Planner *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate mixed network throughput, uplink utilization, and recommended capacity using average load, peak factor, and traffic overhead."
+  />
 
-  function num(id) {
-    const el = $(id);
-    if (!el) return NaN;
-    const v = Number(el.value);
-    return Number.isFinite(v) ? v : NaN;
-  }
+  <link rel="stylesheet" href="/assets/style.css?v=net-bandwidth-0401" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0401"></script>
+  <script defer src="/assets/app.js?v=0401"></script>
 
-  function clamp(v, min, max) {
-    return Math.max(min, Math.min(max, v));
-  }
-
-  function fmtMbps(x) {
-    if (!Number.isFinite(x)) return "—";
-    return `${x.toFixed(2)} Mbps`;
-  }
-
-  function fmtPct(x) {
-    if (!Number.isFinite(x)) return "—";
-    return `${x.toFixed(1)}%`;
-  }
-
-  function setFlowNote(text) {
-    const note = $("flow-note");
-    if (!note) return;
-    note.hidden = false;
-    note.textContent = text;
-  }
-
-  function readFlow() {
-    try {
-      const raw =
-        sessionStorage.getItem("pipeline:network") ||
-        sessionStorage.getItem("scopedlabs:flow:network");
-      return raw ? JSON.parse(raw) : null;
-    } catch (_) {
-      return null;
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
     }
-  }
 
-  function writeFlow(payload) {
-    try {
-      sessionStorage.setItem("pipeline:network", JSON.stringify(payload));
-      sessionStorage.setItem("scopedlabs:flow:network", JSON.stringify(payload));
-    } catch (_) {}
-  }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
 
-  function buildRows(rows) {
-    return rows.map((row) => {
-      const cls = row.className ? ` ${row.className}` : "";
-      return `
-        <div class="result-row">
-          <div class="k">${row.label}</div>
-          <div class="v${cls}">${row.value}</div>
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .flag-ok {
+      color: rgba(140, 255, 170, 0.95);
+    }
+
+    .flag-warn {
+      color: rgba(255, 210, 140, 0.95);
+    }
+
+    .flag-bad {
+      color: rgba(255, 180, 140, 0.95);
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body
+  data-tier="free"
+  data-category="network"
+  data-tool="bandwidth"
+  data-step="bandwidth"
+  data-lane="v1"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/network/">Network &amp; Throughput</a>
+        <span class="sep">/</span>
+        <span>Bandwidth Planner</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--free">Free tool</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Bandwidth Planner</h1>
+
+      <div id="pipeline"></div>
+
+      <p class="subhead">
+        Estimate mixed network throughput, uplink utilization, and recommended capacity using average load, peak factor, and traffic overhead.
+      </p>
+
+      <p class="tool-best-for">
+        <strong>Best for:</strong> estimating aggregate network demand from mixed devices and checking whether current uplinks can support average and peak traffic safely.
+      </p>
+
+      <div id="flow-note" class="flow-note" hidden>
+        This is step 2 of the Network pipeline. After confirming edge power, estimate the traffic those devices place on the network.
+      </div>
+
+      <section class="card" style="margin-top: 14px;">
+        <p class="muted" style="margin: 0;">
+          Use this planner to model sustained throughput, peak demand, protocol overhead, and background traffic.
+          This is mixed networking math, so it can be used for cameras, access points, VoIP, edge devices, or a blended traffic profile.
+        </p>
+      </section>
+
+      <section class="card tool-card" style="margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Enter the expected number of active streams or devices, your average traffic per stream, peak multiplier,
+          explicit overhead, and current uplink size.
+        </p>
+
+        <div class="form-grid" style="margin-top: 14px;">
+          <div class="field">
+            <div class="label-row">
+              <label for="devices">Active streams / devices</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Active streams / devices"
+                data-help="How many concurrent traffic-producing devices or streams should be counted in this estimate."
+                aria-label="Help: Active streams / devices"
+              >?</button>
+            </div>
+            <input id="devices" type="number" min="1" step="1" value="16" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="bitrate">Average Mbps per stream / device</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Average Mbps per stream / device"
+                data-help="Typical average demand per active stream or device. This is not necessarily the burst maximum."
+                aria-label="Help: Average Mbps per stream / device"
+              >?</button>
+            </div>
+            <input id="bitrate" type="number" min="0" step="0.1" value="4" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="peakFactor">Peak factor</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Peak factor"
+                data-help="Multiplier applied to the average stream load to estimate realistic peak conditions."
+                aria-label="Help: Peak factor"
+              >?</button>
+            </div>
+            <input id="peakFactor" type="number" min="1" step="0.05" value="1.5" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="overheadPct">Protocol overhead (%)</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Protocol overhead"
+                data-help="Allowance for transport, framing, headers, retransmits, or similar protocol overhead."
+                aria-label="Help: Protocol overhead"
+              >?</button>
+            </div>
+            <input id="overheadPct" type="number" min="0" step="1" value="12" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="otherTraffic">Other traffic allowance (Mbps)</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Other traffic allowance"
+                data-help="Reserve bandwidth for non-modeled traffic such as management, client activity, backups, or miscellaneous services."
+                aria-label="Help: Other traffic allowance"
+              >?</button>
+            </div>
+            <input id="otherTraffic" type="number" min="0" step="0.1" value="25" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="uplinkMbps">Current uplink capacity (Mbps)</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Current uplink capacity"
+                data-help="The actual uplink capacity you want to evaluate against. For 1 Gbps, enter 1000."
+                aria-label="Help: Current uplink capacity"
+              >?</button>
+            </div>
+            <input id="uplinkMbps" type="number" min="1" step="1" value="1000" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="safeUtil">Target max utilization (%)</label>
+              <button
+                type="button"
+                class="hint"
+                data-title="Target max utilization"
+                data-help="Preferred upper operating band. Designs often aim below 70% to preserve margin for burst traffic and future adds."
+                aria-label="Help: Target max utilization"
+              >?</button>
+            </div>
+            <input id="safeUtil" type="number" min="1" max="99" step="1" value="70" />
+          </div>
         </div>
-      `;
-    }).join("");
-  }
 
-  function classify(utilPeak) {
-    if (utilPeak > 100) {
-      return {
-        status: "FAIL — Peak exceeds uplink",
-        statusClass: "flag-bad",
-        interpretation: "Peak traffic exceeds uplink capacity.",
-        recommendation: "Increase uplink or reduce load."
-      };
-    }
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+          <button id="reset" class="btn" type="button">Reset</button>
+        </div>
 
-    if (utilPeak > 85) {
-      return {
-        status: "WARNING — Very high utilization",
-        statusClass: "flag-warn",
-        interpretation: "Operating near saturation.",
-        recommendation: "Consider upgrading uplink."
-      };
-    }
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">Enter values and press Calculate.</div>
+          </div>
 
-    if (utilPeak > 70) {
-      return {
-        status: "CAUTION — Tight margin",
-        statusClass: "flag-warn",
-        interpretation: "Limited headroom.",
-        recommendation: "Validate growth and burst scenarios."
-      };
-    }
+          <p class="mini-note">
+            Model: average = devices × average Mbps. Peak = average × peak factor. Overhead is applied to modeled traffic,
+            then other traffic is added. Utilization is checked against the selected uplink capacity.
+          </p>
+        </div>
 
-    return {
-      status: "GOOD — Healthy capacity",
-      statusClass: "flag-ok",
-      interpretation: "Adequate headroom available.",
-      recommendation: "Proceed to next step."
-    };
-  }
+        <div class="btn-row" style="margin-top: 14px;">
+          <a class="btn" href="/tools/network/">Back to Network &amp; Throughput</a>
+        </div>
 
-  // 🔥 CARRYOVER + VISUAL FEEDBACK
-  function maybePrefillFromPoe() {
-    const flow = readFlow();
-    if (!flow) {
-      setFlowNote("Step 2: Estimate network load after validating power.");
-      return;
-    }
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+          <a id="to-oversubscription" class="btn btn-primary" href="/tools/network/oversubscription/">
+            Continue → Oversubscription
+          </a>
+        </div>
+      </section>
 
-    const poweredDevices = Number(flow.poweredDevices);
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
 
-    if (Number.isFinite(poweredDevices) && poweredDevices > 0) {
-      $("devices").value = String(poweredDevices);
+    </div>
+  </main>
 
-      // 👇 VISUAL FEEDBACK TO USER
-      setFlowNote(
-        `Step 1 → Step 2: ${poweredDevices} devices carried over from PoE Budget. This represents the active load entering the network.`
-      );
-
-      return;
-    }
-
-    setFlowNote("Step 2: Estimate network throughput.");
-  }
-
-  function calculateBandwidth() {
-    const devices = num("devices");
-    const bitrate = num("bitrate");
-    const peakFactor = num("peakFactor");
-    const overheadPct = num("overheadPct");
-    const otherTraffic = num("otherTraffic");
-    const uplinkMbps = num("uplinkMbps");
-    const safeUtil = clamp(num("safeUtil"), 1, 99);
-
-    if ([devices, bitrate, peakFactor, overheadPct, otherTraffic, uplinkMbps].some(v => !Number.isFinite(v))) {
-      return { ok: false, message: "Enter valid values." };
-    }
-
-    const overheadMult = 1 + (overheadPct / 100);
-
-    const avg = devices * bitrate;
-    const peak = avg * peakFactor;
-
-    const avgTotal = (avg * overheadMult) + otherTraffic;
-    const peakTotal = (peak * overheadMult) + otherTraffic;
-
-    const utilAvg = (avgTotal / uplinkMbps) * 100;
-    const utilPeak = (peakTotal / uplinkMbps) * 100;
-
-    const recUplink = peakTotal / (safeUtil / 100);
-
-    const statusPack = classify(utilPeak);
-
-    return {
-      ok: true,
-      avgTotal,
-      peakTotal,
-      utilAvg,
-      utilPeak,
-      recUplink,
-      devices,
-      uplinkMbps,
-      ...statusPack
-    };
-  }
-
-  function renderResults(data) {
-    const results = $("results");
-    if (!results) return;
-
-    if (!data.ok) {
-      results.innerHTML = `<div class="muted">${data.message}</div>`;
-      return;
-    }
-
-    results.innerHTML = buildRows([
-      { label: "Average Load", value: fmtMbps(data.avgTotal) },
-      { label: "Peak Load", value: fmtMbps(data.peakTotal) },
-      { label: "Avg Utilization", value: fmtPct(data.utilAvg) },
-      { label: "Peak Utilization", value: fmtPct(data.utilPeak) },
-      { label: "Recommended Uplink", value: fmtMbps(data.recUplink) },
-      { label: "Status", value: data.status, className: data.statusClass },
-      { label: "Interpretation", value: data.interpretation },
-      { label: "Recommendation", value: data.recommendation }
-    ]);
-  }
-
-  function saveToPipeline(data) {
-    if (!data.ok) return;
-
-    const flow = readFlow() || {};
-
-    flow.category = "network";
-    flow.tool = "bandwidth";
-    flow.bandwidthPeakMbps = data.peakTotal;
-    flow.bandwidthAvgMbps = data.avgTotal;
-    flow.uplinkMbps = data.uplinkMbps;
-    flow.devices = data.devices;
-    flow.timestamp = Date.now();
-
-    writeFlow(flow);
-  }
-
-  function showNext(data) {
-    const row = $("next-step-row");
-    if (!row) return;
-    row.style.display = data && data.ok ? "flex" : "none";
-  }
-
-  function calculate() {
-    const data = calculateBandwidth();
-    renderResults(data);
-    saveToPipeline(data);
-    showNext(data);
-  }
-
-  function reset() {
-    $("devices").value = "16";
-    $("bitrate").value = "4";
-    $("peakFactor").value = "1.5";
-    $("overheadPct").value = "12";
-    $("otherTraffic").value = "25";
-    $("uplinkMbps").value = "1000";
-    $("safeUtil").value = "70";
-
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-    showNext(null);
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    $("calc").addEventListener("click", calculate);
-    $("reset").addEventListener("click", reset);
-
-    // 🔥 FIXED ORDER
-    reset();
-    maybePrefillFromPoe();
-  });
-})();
+  <script src="/assets/tool-flow.js?v=23"></script>
+  <script src="/assets/catalog.js?v=23"></script>
+  <script src="/assets/pipelines.js?v=23"></script>
+  <script src="/assets/pipeline.js?v=23"></script>
+  <script src="./script.js?v=net-bandwidth-0401"></script>
+</body>
+</html>
 
 
 
