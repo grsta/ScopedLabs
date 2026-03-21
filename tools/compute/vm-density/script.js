@@ -1,91 +1,136 @@
-﻿// VM Density Estimator
-(() => {
+﻿(() => {
   const $ = (id) => document.getElementById(id);
+  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
-  function n(id) {
-    const el = $(id);
-    const v = el ? parseFloat(String(el.value ?? "").trim()) : NaN;
-    return Number.isFinite(v) ? v : 0;
+  let hasResult = false;
+  let context = null;
+
+  function showContinue() {
+    $("continue-wrap").style.display = "block";
+    $("continue").disabled = false;
+    hasResult = true;
   }
 
-  function clamp(x, lo, hi) {
-    return Math.min(hi, Math.max(lo, x));
+  function hideContinue() {
+    $("continue-wrap").style.display = "none";
+    $("continue").disabled = true;
+    hasResult = false;
   }
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(div);
-    });
+  function invalidate() {
+    if (!hasResult) return;
+    sessionStorage.removeItem(FLOW_KEY);
+    hideContinue();
+  }
+
+  function loadContext() {
+    const raw = sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.category !== "compute") return null;
+
+    return parsed.data;
+  }
+
+  function loadFlow() {
+    context = loadContext();
+    if (!context) return;
+
+    const el = $("flow-note");
+    el.style.display = "block";
+
+    el.innerHTML = `
+      <div style="display:grid; gap:10px;">
+        <div style="font-weight:600;">System Context:</div>
+
+        ${context.cores ? `
+        <div class="result-row">
+          <span>CPU</span><span>${context.cores} cores</span>
+        </div>` : ""}
+
+        ${context.ram ? `
+        <div class="result-row">
+          <span>RAM</span><span>${context.ram} GB</span>
+        </div>` : ""}
+
+        ${context.finalIops ? `
+        <div class="result-row">
+          <span>IOPS</span><span>${Math.round(context.finalIops)}</span>
+        </div>` : ""}
+
+        ${context.final ? `
+        <div class="result-row">
+          <span>Throughput</span><span>${context.final.toFixed(0)} MB/s</span>
+        </div>` : ""}
+      </div>
+    `;
   }
 
   function calc() {
-    const hostCores = Math.max(1, Math.floor(n("hostCores")));
-    const hostRam = Math.max(1, n("hostRam"));
-    const reserve = Math.max(0, n("reserve"));
+    const cores = +$("hostCores").value;
+    const ram = +$("hostRam").value;
+    const reserve = +$("reserve").value;
 
-    const vmCpu = Math.max(1, Math.floor(n("vmCpu")));
-    const vmRam = Math.max(0.1, n("vmRam"));
+    const vmCpu = +$("vmCpu").value;
+    const vmRam = +$("vmRam").value;
 
-    const cpuOver = Math.max(1, n("cpuOver"));
-    const ramOver = Math.max(1, n("ramOver"));
+    const cpuOver = +$("cpuOver").value;
+    const ramOver = +$("ramOver").value;
+    const spare = +$("spare").value;
 
-    const sparePct = clamp(n("spare"), 0, 80);
+    const cpuPool = cores * (1 - spare / 100) * cpuOver;
+    const ramPool = (ram - reserve) * (1 - spare / 100) * ramOver;
 
-    // apply spare: reduce usable pool
-    const cpuPool = hostCores * (1 - sparePct / 100);
-    const ramPool = Math.max(0, (hostRam - reserve)) * (1 - sparePct / 100);
+    const cpuVMs = Math.floor(cpuPool / vmCpu);
+    const ramVMs = Math.floor(ramPool / vmRam);
 
-    // oversub/overcommit increases effective pool
-    const effCpu = cpuPool * cpuOver;
-    const effRam = ramPool * ramOver;
+    const vms = Math.min(cpuVMs, ramVMs);
 
-    const cpuVMs = Math.floor(effCpu / vmCpu);
-    const ramVMs = Math.floor(effRam / vmRam);
+    let limiting = "Balanced";
+    if (cpuVMs < ramVMs) limiting = "CPU";
+    if (ramVMs < cpuVMs) limiting = "RAM";
 
-    const vms = Math.max(0, Math.min(cpuVMs, ramVMs));
+    let insight = "System is balanced.";
+    if (limiting === "CPU") insight = "CPU will cap density first.";
+    if (limiting === "RAM") insight = "Memory will cap density first.";
 
-    const limiting = cpuVMs < ramVMs ? "CPU" : (ramVMs < cpuVMs ? "RAM" : "Balanced");
+    if (context && context.finalIops > 20000 && vms > 50) {
+      insight = "Storage likely becomes bottleneck before reaching this density.";
+    }
 
-    render([
-      { label: "Host (raw)", value: `${hostCores} cores / ${hostRam.toFixed(0)} GB` },
-      { label: "Reserved RAM", value: `${reserve.toFixed(0)} GB` },
-      { label: "VM Size", value: `${vmCpu} vCPU / ${vmRam.toFixed(1)} GB` },
+    $("results").innerHTML = `
+      <div class="result-row"><span>VM Capacity</span><span>${vms}</span></div>
+      <div class="result-row"><span>CPU Limit</span><span>${cpuVMs}</span></div>
+      <div class="result-row"><span>RAM Limit</span><span>${ramVMs}</span></div>
+      <div class="result-row"><span>Primary Constraint</span><span>${limiting}</span></div>
+      <div class="result-row"><span>Insight</span><span>${insight}</span></div>
+    `;
 
-      { label: "CPU Oversubscription", value: `${cpuOver.toFixed(2)}×` },
-      { label: "RAM Overcommit", value: `${ramOver.toFixed(2)}×` },
-      { label: "Spare Capacity", value: `${sparePct.toFixed(0)}%` },
+    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+      category: "compute",
+      step: "vm-density",
+      data: { vms, limiting }
+    }));
 
-      { label: "VMs by CPU", value: `${cpuVMs}` },
-      { label: "VMs by RAM", value: `${ramVMs}` },
-      { label: "Estimated VM Density", value: `${vms} VMs / host` },
-
-      { label: "Limiting Resource", value: limiting },
-      { label: "Notes", value: "Oversubscription assumptions vary by workload. Validate with telemetry and keep N+1 headroom for failures." }
-    ]);
-  }
-
-  function reset() {
-    $("hostCores").value = 32;
-    $("hostRam").value = 256;
-    $("reserve").value = 16;
-    $("vmCpu").value = 2;
-    $("vmRam").value = 4;
-    $("cpuOver").value = 3;
-    $("ramOver").value = 1.1;
-    $("spare").value = 15;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    showContinue();
   }
 
   $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
+  $("reset").addEventListener("click", () => {
+    $("results").innerHTML = `<div class="muted">Run calculation.</div>`;
+    invalidate();
+  });
 
-  reset();
+  ["hostCores","hostRam","reserve","vmCpu","vmRam","cpuOver","ramOver","spare"]
+    .forEach(id => {
+      $(id).addEventListener("input", invalidate);
+      $(id).addEventListener("change", invalidate);
+    });
+
+  $("continue").addEventListener("click", () => {
+    window.location.href = "/tools/compute/gpu-vram/";
+  });
+
+  loadFlow();
 })();
