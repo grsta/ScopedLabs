@@ -49,7 +49,9 @@
         }
       },
 
-      // ✅ FIXED — NOW INSIDE categories
+      // -----------------------------
+      // ACCESS CONTROL
+      // -----------------------------
       "access-control": {
         label: "Access Control",
         lanes: {
@@ -61,27 +63,27 @@
             { id: "access-level-sizing", label: "Access Level Sizing", href: "/tools/access-control/access-level-sizing/" }
           ]
         }
-      }
-    },
+      },
 
       // -----------------------------
       // COMPUTE
       // -----------------------------
       compute: {
-       label: "Compute",
-       lanes: {
-         v1: [
-           { id: "cpu-sizing", label: "CPU", href: "/tools/compute/cpu-sizing/" },
-           { id: "ram-sizing", label: "RAM", href: "/tools/compute/ram-sizing/" },
-           { id: "storage-iops", label: "IOPS", href: "/tools/compute/storage-iops/" },
-           { id: "storage-throughput", label: "Throughput", href: "/tools/compute/storage-throughput/" },
-           { id: "vm-density", label: "VM Density", href: "/tools/compute/vm-density/" },
-           { id: "gpu-vram", label: "GPU (Optional)", href: "/tools/compute/gpu-vram/" },
-           { id: "power-thermal", label: "Power / Thermal", href: "/tools/compute/power-thermal/" },
-           { id: "raid-rebuild-time", label: "RAID Rebuild", href: "/tools/compute/raid-rebuild-time/" },
-           { id: "backup-window", label: "Backup Window", href: "/tools/compute/backup-window/" }
+        label: "Compute",
+        lanes: {
+          v1: [
+            { id: "cpu-sizing", label: "CPU", href: "/tools/compute/cpu-sizing/" },
+            { id: "ram-sizing", label: "RAM", href: "/tools/compute/ram-sizing/" },
+            { id: "storage-iops", label: "IOPS", href: "/tools/compute/storage-iops/" },
+            { id: "storage-throughput", label: "Throughput", href: "/tools/compute/storage-throughput/" },
+            { id: "vm-density", label: "VM Density", href: "/tools/compute/vm-density/" },
+            { id: "gpu-vram", label: "GPU (Optional)", href: "/tools/compute/gpu-vram/" },
+            { id: "power-thermal", label: "Power / Thermal", href: "/tools/compute/power-thermal/" },
+            { id: "raid-rebuild-time", label: "RAID Rebuild", href: "/tools/compute/raid-rebuild-time/" },
+            { id: "backup-window", label: "Backup Window", href: "/tools/compute/backup-window/" }
           ]
         }
+      }
     },
 
     // -------------------------------
