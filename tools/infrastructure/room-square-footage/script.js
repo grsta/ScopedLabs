@@ -10,19 +10,9 @@
     clearance: $("clearance"),
     calc: $("calc"),
     reset: $("reset"),
-
-    emptyState: $("emptyState"),
     results: $("results"),
-    outTotalSqft: $("outTotalSqft"),
-    outUsableSqft: $("outUsableSqft"),
-    outVolume: $("outVolume"),
-    outRacks: $("outRacks"),
-    outDensity: $("outDensity"),
-    outRoomType: $("outRoomType"),
-    interpretationText: $("interpretationText"),
-    pipelineContextText: $("pipelineContextText"),
-    continueWrap: $("continueWrap"),
-    continueBtn: $("continueBtn"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
     flowNote: $("flow-note")
   };
 
@@ -36,9 +26,9 @@
   };
 
   const CLEARANCE_LABELS = {
-    tight: "Tight / Retrofit",
+    tight: "Tight",
     standard: "Standard",
-    generous: "Generous / Future-Friendly"
+    generous: "Generous"
   };
 
   const CLEARANCE_FACTORS = {
@@ -49,7 +39,7 @@
 
   const ROOM_TYPE_MULTIPLIERS = {
     closet: 0.92,
-    idf: 1.00,
+    idf: 1.0,
     mdf: 1.06,
     datacenter: 1.12
   };
@@ -97,25 +87,6 @@
     return "Ceiling height is generally workable for typical rack and pathway planning.";
   }
 
-  function clearResultView() {
-    els.emptyState.hidden = false;
-    els.results.hidden = true;
-    els.continueWrap.classList.remove("show");
-    hasResult = false;
-  }
-
-  function showResultView() {
-    els.emptyState.hidden = true;
-    els.results.hidden = false;
-    els.continueWrap.classList.add("show");
-    hasResult = true;
-  }
-
-  function invalidate() {
-    if (!hasResult) return;
-    clearResultView();
-  }
-
   function savePipelineContext(data) {
     sessionStorage.setItem("infra_room_sqft", String(data.totalSqft));
     sessionStorage.setItem("infra_room_usable_sqft", String(data.usableSqft));
@@ -129,15 +100,15 @@
   }
 
   function renderFlowNote() {
+    if (!els.flowNote) return;
+
     const lastTool = sessionStorage.getItem("infra_last_pipeline_tool");
     const roomSqft = sessionStorage.getItem("infra_room_sqft");
     const density = sessionStorage.getItem("infra_room_density");
     const racks = sessionStorage.getItem("infra_room_est_racks");
 
-    if (!els.flowNote) return;
-
     if (lastTool && lastTool !== "room-square-footage" && (roomSqft || racks)) {
-      els.flowNote.hidden = false;
+      els.flowNote.style.display = "";
       els.flowNote.textContent =
         `Existing infrastructure context detected: ` +
         `${roomSqft ? `${roomSqft} sq ft` : "room data"}` +
@@ -145,18 +116,31 @@
         `${racks ? `, ${racks} estimated rack position${racks === "1" ? "" : "s"}` : ""}. ` +
         `Recalculate here if you want to override it for this lane.`;
     } else {
-      els.flowNote.hidden = true;
+      els.flowNote.style.display = "none";
       els.flowNote.textContent = "";
     }
   }
 
+  function renderInitialState() {
+    if (!els.results) return;
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
+    hasResult = false;
+  }
+
+  function invalidate() {
+    if (!hasResult) return;
+    renderInitialState();
+  }
+
   function calculate() {
-    const length = parseFloat(els.length.value);
-    const width = parseFloat(els.width.value);
-    const height = parseFloat(els.height.value);
-    const reserve = parseFloat(els.reserve.value);
-    const roomType = els.roomType.value;
-    const clearance = els.clearance.value;
+    const length = parseFloat(els.length?.value);
+    const width = parseFloat(els.width?.value);
+    const height = parseFloat(els.height?.value);
+    const reserve = parseFloat(els.reserve?.value);
+    const roomType = els.roomType?.value;
+    const clearance = els.clearance?.value;
 
     if (
       !Number.isFinite(length) || length <= 0 ||
@@ -179,7 +163,6 @@
 
     const estimatedRacks = estimateRackCount(usableSqft, roomType);
     const density = classifyDensity(usableSqft, estimatedRacks);
-
     const roomLabel = ROOM_LABELS[roomType] || "Room";
 
     const densityTone = {
@@ -205,16 +188,6 @@
       `Passing forward ${fmt(usableSqft, 1)} usable sq ft, an estimated ${fmt(estimatedRacks)} rack position` +
       `${estimatedRacks === 1 ? "" : "s"}, ${density.toLowerCase()} density guidance, and ${fmt(totalCubicFt, 0)} cubic ft of room volume into Rack RU Planner.`;
 
-    els.outTotalSqft.textContent = `${fmt(totalSqft, 1)} sq ft`;
-    els.outUsableSqft.textContent = `${fmt(usableSqft, 1)} sq ft`;
-    els.outVolume.textContent = `${fmt(totalCubicFt, 0)} cu ft`;
-    els.outRacks.textContent = fmt(estimatedRacks);
-    els.outDensity.textContent = density;
-    els.outRoomType.textContent = roomLabel;
-    els.interpretationText.textContent = interpretation;
-    els.pipelineContextText.textContent = pipelineContext;
-    els.continueBtn.href = "/tools/infrastructure/rack-ru-planner/";
-
     savePipelineContext({
       totalSqft,
       usableSqft,
@@ -226,18 +199,71 @@
       reserve
     });
 
-    showResultView();
+    if (els.results) {
+      els.results.innerHTML = `
+        <div class="results-grid">
+          <div class="result-box">
+            <div class="k">Total Room Area</div>
+            <div class="v">${fmt(totalSqft, 1)} sq ft</div>
+          </div>
+
+          <div class="result-box">
+            <div class="k">Usable Working Area</div>
+            <div class="v">${fmt(usableSqft, 1)} sq ft</div>
+          </div>
+
+          <div class="result-box">
+            <div class="k">Room Volume</div>
+            <div class="v">${fmt(totalCubicFt, 0)} cu ft</div>
+          </div>
+
+          <div class="result-box">
+            <div class="k">Estimated Rack Positions</div>
+            <div class="v">${fmt(estimatedRacks)}</div>
+          </div>
+
+          <div class="result-box">
+            <div class="k">Planning Density</div>
+            <div class="v">${density}</div>
+          </div>
+
+          <div class="result-box">
+            <div class="k">Room Classification</div>
+            <div class="v">${roomLabel}</div>
+          </div>
+        </div>
+
+        <div class="interpretation">
+          <h3>Interpretation</h3>
+          <p>${interpretation}</p>
+        </div>
+
+        <div class="pipeline-context">
+          <h3>Pipeline Context</h3>
+          <p>${pipelineContext}</p>
+        </div>
+      `;
+    }
+
+    if (els.continueWrap) els.continueWrap.style.display = "";
+    if (els.continue) els.continue.disabled = false;
+
+    hasResult = true;
     renderFlowNote();
   }
 
   function resetForm() {
-    els.length.value = 16;
-    els.width.value = 10;
-    els.height.value = 9;
-    els.roomType.value = "idf";
-    els.reserve.value = 20;
-    els.clearance.value = "standard";
-    clearResultView();
+    if (els.length) els.length.value = 16;
+    if (els.width) els.width.value = 10;
+    if (els.height) els.height.value = 9;
+    if (els.roomType) els.roomType.value = "idf";
+    if (els.reserve) els.reserve.value = 20;
+    if (els.clearance) els.clearance.value = "standard";
+    renderInitialState();
+  }
+
+  function goNext() {
+    window.location.href = "/tools/infrastructure/rack-ru-planner/";
   }
 
   [
@@ -255,7 +281,8 @@
 
   if (els.calc) els.calc.addEventListener("click", calculate);
   if (els.reset) els.reset.addEventListener("click", resetForm);
+  if (els.continue) els.continue.addEventListener("click", goNext);
 
-  clearResultView();
+  renderInitialState();
   renderFlowNote();
 })();
