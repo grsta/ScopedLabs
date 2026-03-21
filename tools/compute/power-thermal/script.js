@@ -1,67 +1,111 @@
-﻿// Compute Power -> Heat conversion
-(() => {
+﻿(() => {
   const $ = (id) => document.getElementById(id);
+  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
-  function n(id) {
-    const el = $(id);
-    const v = el ? parseFloat(String(el.value ?? "").trim()) : NaN;
-    return Number.isFinite(v) ? v : 0;
+  let hasResult = false;
+  let context = null;
+
+  function showContinue() {
+    $("continue-wrap").style.display = "block";
+    $("continue").disabled = false;
+    hasResult = true;
   }
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(div);
-    });
+  function hideContinue() {
+    $("continue-wrap").style.display = "none";
+    $("continue").disabled = true;
+    hasResult = false;
+  }
+
+  function invalidate() {
+    if (!hasResult) return;
+    sessionStorage.removeItem(FLOW_KEY);
+    hideContinue();
+  }
+
+  function loadContext() {
+    const raw = sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.category !== "compute") return null;
+
+    return parsed.data;
+  }
+
+  function loadFlow() {
+    context = loadContext();
+    if (!context) return;
+
+    const el = $("flow-note");
+    el.style.display = "block";
+
+    el.innerHTML = `
+      <div style="display:grid; gap:10px;">
+        <div style="font-weight:600;">System Context:</div>
+
+        ${context.vms ? `
+        <div class="result-row">
+          <span>VM Capacity</span><span>${context.vms}</span>
+        </div>` : ""}
+
+        ${context.limiting ? `
+        <div class="result-row">
+          <span>Constraint</span><span>${context.limiting}</span>
+        </div>` : ""}
+      </div>
+    `;
   }
 
   function calc() {
-    const nodes = Math.max(1, Math.floor(n("nodes")));
-    const watts = Math.max(0, n("watts"));
-    const peak = parseFloat($("peak").value);
-    const overheadPct = Math.max(0, n("overhead"));
+    const nodes = +$("nodes").value;
+    const watts = +$("watts").value;
+    const peak = +$("peak").value;
+    const overhead = +$("overhead").value;
 
-    const baseW = nodes * watts;
-    const peakW = baseW * (Number.isFinite(peak) ? peak : 1.15);
-    const totalW = peakW * (1 + overheadPct / 100);
+    const totalW = nodes * watts * peak * (1 + overhead / 100);
+    const btu = totalW * 3.412;
+    const tons = btu / 12000;
 
-    // 1 watt = 3.412141633 BTU/hr
-    const btuHr = totalW * 3.412141633;
+    let pressure = "Normal";
+    if (totalW > 5000) pressure = "High Rack Load";
+    if (totalW > 10000) pressure = "Extreme Rack Load";
 
-    // Ton of cooling: 12,000 BTU/hr
-    const tons = btuHr / 12000;
+    let insight = "Cooling requirements are manageable.";
+    if (tons > 3) insight = "Dedicated cooling likely required.";
+    if (tons > 6) insight = "Data center-grade cooling required.";
 
-    render([
-      { label: "Nodes", value: `${nodes}` },
-      { label: "Base Load", value: `${baseW.toFixed(0)} W` },
-      { label: "Peak Factor", value: `${peak.toFixed(2)}×` },
-      { label: "Overhead", value: `${overheadPct.toFixed(0)}%` },
+    $("results").innerHTML = `
+      <div class="result-row"><span>Total Power</span><span>${totalW.toFixed(0)} W</span></div>
+      <div class="result-row"><span>Heat Load</span><span>${btu.toFixed(0)} BTU/hr</span></div>
+      <div class="result-row"><span>Cooling</span><span>${tons.toFixed(2)} tons</span></div>
+      <div class="result-row"><span>Thermal Pressure</span><span>${pressure}</span></div>
+      <div class="result-row"><span>Insight</span><span>${insight}</span></div>
+    `;
 
-      { label: "Total Power (est.)", value: `${totalW.toFixed(0)} W` },
-      { label: "Heat Load", value: `${btuHr.toFixed(0)} BTU/hr` },
-      { label: "Cooling (approx)", value: `${tons.toFixed(2)} tons` },
+    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+      category: "compute",
+      step: "power-thermal",
+      data: { totalW, tons }
+    }));
 
-      { label: "Notes", value: "Rule-of-thumb: nearly all electrical power consumed becomes heat in the room. Validate with nameplate + real telemetry where possible." }
-    ]);
-  }
-
-  function reset() {
-    $("nodes").value = 10;
-    $("watts").value = 450;
-    $("peak").value = "1.15";
-    $("overhead").value = 8;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    showContinue();
   }
 
   $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
+  $("reset").addEventListener("click", () => {
+    $("results").innerHTML = `<div class="muted">Run calculation.</div>`;
+    invalidate();
+  });
 
-  reset();
+  ["nodes","watts","peak","overhead"].forEach(id => {
+    $(id).addEventListener("input", invalidate);
+    $(id).addEventListener("change", invalidate);
+  });
+
+  $("continue").addEventListener("click", () => {
+    window.location.href = "/tools/compute/raid-rebuild-time/";
+  });
+
+  loadFlow();
 })();
