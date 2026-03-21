@@ -1,11 +1,35 @@
 ﻿(() => {
-  const $ = (id) => document.getElementById(id);
+  "use strict";
 
-  let hasFreshResult = false;
+  const $ = (id) => document.getElementById(id);
+  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+
+  const els = {
+    doorType: $("doorType"),
+    life: $("life"),
+    powerLoss: $("powerLoss"),
+    fire: $("fire"),
+    threat: $("threat"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    nextRow: $("continue-wrap"),
+    nextBtn: $("continue"),
+  };
+
+  function showContinue() {
+    if (els.nextRow) els.nextRow.style.display = "block";
+    if (els.nextBtn) els.nextBtn.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.nextRow) els.nextRow.style.display = "none";
+    if (els.nextBtn) els.nextBtn.disabled = true;
+  }
 
   function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
+    if (!els.results) return;
+    els.results.innerHTML = "";
 
     rows.forEach((r) => {
       const div = document.createElement("div");
@@ -14,191 +38,180 @@
         <span class="result-label">${r.label}</span>
         <span class="result-value">${r.value}</span>
       `;
-      el.appendChild(div);
+      els.results.appendChild(div);
     });
   }
 
-  function hideContinue() {
-    const wrap = $("continue-wrap");
-    const btn = $("continue");
-    if (wrap) wrap.style.display = "none";
-    if (btn) btn.disabled = true;
-    hasFreshResult = false;
-  }
-
-  function showContinue() {
-    const wrap = $("continue-wrap");
-    const btn = $("continue");
-    if (wrap) wrap.style.display = "block";
-    if (btn) btn.disabled = false;
-    hasFreshResult = true;
-  }
-
-  function getInputState() {
-    return {
-      doorType: $("doorType").value,
-      life: $("life").value,
-      powerLoss: $("powerLoss").value,
-      fire: $("fire").value,
-      threat: $("threat").value
-    };
+  function readValue(el) {
+    return el ? String(el.value).trim() : "";
   }
 
   function getDoorTypeLabel(value) {
-    const map = {
+    return {
       interior: "Interior",
       perimeter: "Perimeter / Exterior",
       stairwell: "Stairwell / Exit",
       it: "IT / Critical"
-    };
-    return map[value] || value;
+    }[value] || value;
   }
 
   function getLifeLabel(value) {
-    const map = {
+    return {
       high: "High",
       med: "Medium",
       low: "Low"
-    };
-    return map[value] || value;
+    }[value] || value;
   }
 
   function getThreatLabel(value) {
-    const map = {
+    return {
       low: "Low",
       med: "Medium",
       high: "High"
-    };
-    return map[value] || value;
+    }[value] || value;
   }
 
   function getPowerLabel(value) {
-    const map = {
+    return {
       frequent: "Frequent Issues",
       normal: "Normal",
       rare: "UPS / Generator"
-    };
-    return map[value] || value;
+    }[value] || value;
   }
 
   function getFireLabel(value) {
     return value === "yes" ? "Yes" : "No";
   }
 
-  function calc() {
-    const { doorType, life, powerLoss, fire, threat } = getInputState();
+  function savePipelineResult(payload) {
+    try {
+      const wrapped = {
+        category: "access-control",
+        step: "fail-safe-fail-secure",
+        ts: Date.now(),
+        data: payload,
+      };
+      sessionStorage.setItem(FLOW_KEY, JSON.stringify(wrapped));
+    } catch (err) {
+      console.warn("Could not save pipeline payload:", err);
+    }
+  }
+
+  function invalidatePipelineResult() {
+    try {
+      const raw = sessionStorage.getItem(FLOW_KEY);
+      if (!raw) {
+        hideContinue();
+        return;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (
+        parsed &&
+        parsed.category === "access-control" &&
+        parsed.step === "fail-safe-fail-secure"
+      ) {
+        sessionStorage.removeItem(FLOW_KEY);
+      }
+    } catch (err) {
+      console.warn("Could not invalidate pipeline payload:", err);
+    }
+
+    hideContinue();
+  }
+
+  function clearResults() {
+    if (els.results) {
+      els.results.innerHTML = `<div class="muted">Run the evaluation to see results.</div>`;
+    }
+    hideContinue();
+  }
+
+  function calculate() {
+    const doorType = readValue(els.doorType);
+    const life = readValue(els.life);
+    const powerLoss = readValue(els.powerLoss);
+    const fire = readValue(els.fire);
+    const threat = readValue(els.threat);
 
     let score = 0;
-    const drivers = [];
 
-    if (doorType === "stairwell") {
-      score += 3;
-      drivers.push("stairwell/egress use pushes toward fail-safe");
-    }
-    if (doorType === "interior") {
-      score += 1;
-      drivers.push("interior opening slightly favors egress flexibility");
-    }
-    if (doorType === "perimeter") {
-      score -= 1;
-      drivers.push("perimeter opening increases security pressure");
-    }
-    if (doorType === "it") {
-      score -= 3;
-      drivers.push("critical room use strongly favors secure behavior");
-    }
+    if (doorType === "stairwell") score += 3;
+    if (doorType === "interior") score += 1;
+    if (doorType === "perimeter") score -= 1;
+    if (doorType === "it") score -= 3;
 
-    if (life === "high") {
-      score += 3;
-      drivers.push("life safety priority is high");
-    }
-    if (life === "med") {
-      score += 1;
-      drivers.push("life safety still matters");
-    }
-    if (life === "low") {
-      score -= 2;
-      drivers.push("security priority outweighs egress bias");
-    }
+    if (life === "high") score += 3;
+    if (life === "med") score += 1;
+    if (life === "low") score -= 2;
 
-    if (powerLoss === "frequent") {
-      score += 2;
-      drivers.push("outage risk increases fail-safe pressure");
-    }
-    if (powerLoss === "rare") {
-      score -= 1;
-      drivers.push("backup power reduces outage concern");
-    }
+    if (powerLoss === "frequent") score += 2;
+    if (powerLoss === "rare") score -= 1;
 
-    if (fire === "yes") {
-      score += 1;
-      drivers.push("fire integration supports safe release behavior");
-    }
+    if (fire === "yes") score += 1;
 
-    if (threat === "high") {
-      score -= 3;
-      drivers.push("high threat level pushes toward fail-secure");
-    }
-    if (threat === "med") {
-      score -= 1;
-      drivers.push("moderate threat adds security pressure");
-    }
+    if (threat === "high") score -= 3;
+    if (threat === "med") score -= 1;
 
-    let rec = "";
+    let recommendation = "";
     let rationale = "";
-    let risk = "";
-    let hardwareTendency = "";
+    let primaryRisk = "";
+    let hardwareDirection = "";
     let deploymentFit = "";
-    let dominantFactor = drivers[0] || "mixed criteria";
+    let dominantFactor = "Mixed criteria";
 
     if (score >= 2) {
-      rec = "FAIL-SAFE";
-      rationale = "Life safety, egress, and outage behavior outweigh the need to stay locked during power loss.";
-      risk = "Primary risk is reduced security during outage or release events if the opening is not otherwise supervised.";
-      hardwareTendency = "More commonly aligns with maglocks and other release-on-power-loss approaches, subject to code and egress requirements.";
-      deploymentFit = "Best fit for interior egress paths, stairwell-related openings, and areas where occupant release behavior matters most.";
+      recommendation = "FAIL-SAFE";
+      rationale = "Life safety, egress behavior, and outage conditions outweigh the need to remain locked on power loss.";
+      primaryRisk = "Security exposure during outage or release events if the opening is not otherwise supervised.";
+      hardwareDirection = "Usually aligns more naturally with release-on-power-loss behavior and openings where safe release is the priority.";
+      deploymentFit = "Best fit for interior egress paths, stairwell-related openings, and spaces where occupant release matters most.";
     } else if (score <= -2) {
-      rec = "FAIL-SECURE";
-      rationale = "Security retention during power loss outweighs the convenience of automatic unlock behavior.";
-      risk = "Primary risk is creating a bad door behavior choice if free egress, fire release, or backup power strategy are not designed correctly.";
-      hardwareTendency = "Often aligns with electric strikes, secure openings, critical rooms, and perimeter-controlled doors.";
-      deploymentFit = "Best fit for perimeter openings, critical rooms, restricted spaces, and doors where retained security is the priority.";
+      recommendation = "FAIL-SECURE";
+      rationale = "Retaining security during power loss outweighs the convenience of automatic unlock behavior.";
+      primaryRisk = "Improper egress or bad fire behavior if the opening is not designed correctly around code and release requirements.";
+      hardwareDirection = "Often aligns with perimeter openings, critical rooms, and doors where retained security matters most.";
+      deploymentFit = "Best fit for restricted spaces, perimeter doors, and critical rooms where staying secure is the priority.";
     } else {
-      rec = "MIXED / CONDITIONAL";
-      rationale = "Inputs are balanced enough that code requirements, locking hardware, and operating policy should drive the final decision.";
-      risk = "Primary risk is inconsistent door behavior across similar openings, which creates confusion for installers, operators, and users.";
-      hardwareTendency = "Hardware choice should follow code path, free egress method, and how the opening is expected to behave on alarm or outage.";
-      deploymentFit = "Best fit for review with a standardized door schedule before hardware is finalized.";
+      recommendation = "MIXED / CONDITIONAL";
+      rationale = "Inputs are balanced enough that code path, locking hardware, and operating policy should determine the final choice.";
+      primaryRisk = "Inconsistent door behavior across similar openings if standards are not set early.";
+      hardwareDirection = "Final hardware choice should follow code, free egress method, and alarm/outage behavior.";
+      deploymentFit = "Best fit for review against a standardized door schedule before hardware is finalized.";
     }
 
-    if (life === "high") dominantFactor = "life safety requirements";
-    else if (threat === "high") dominantFactor = "security threat level";
-    else if (powerLoss === "frequent") dominantFactor = "power outage sensitivity";
-    else if (doorType === "stairwell") dominantFactor = "stairwell / egress use";
-    else if (doorType === "it") dominantFactor = "critical room protection";
+    if (life === "high") dominantFactor = "Life safety requirements";
+    else if (threat === "high") dominantFactor = "Security threat level";
+    else if (powerLoss === "frequent") dominantFactor = "Power outage sensitivity";
+    else if (doorType === "stairwell") dominantFactor = "Stairwell / egress use";
+    else if (doorType === "it") dominantFactor = "Critical room protection";
 
     const guidance = [
       "Verify final behavior against local code, fire/life safety requirements, and AHJ expectations.",
       "Do not assume fail-secure is acceptable unless free egress and fire-release behavior are clearly addressed.",
-      "If the door must remain secure during outages, confirm UPS or generator strategy before finalizing hardware.",
+      "If the opening must remain secure during outages, confirm UPS or generator strategy before finalizing hardware.",
       "Keep behavior consistent across similar door types unless there is a documented reason not to."
     ].join(" ");
 
     render([
-      { label: "Recommendation", value: rec },
+      { label: "Recommendation", value: recommendation },
       { label: "Why", value: rationale },
       { label: "Dominant Factor", value: dominantFactor },
       { label: "Deployment Fit", value: deploymentFit },
-      { label: "Hardware Direction", value: hardwareTendency },
-      { label: "Primary Risk", value: risk },
+      { label: "Hardware Direction", value: hardwareDirection },
+      { label: "Primary Risk", value: primaryRisk },
       { label: "Guidance", value: guidance },
       { label: "Score", value: String(score) }
     ]);
 
-    const payload = {
-      recommendation: rec,
+    savePipelineResult({
+      source: "Fail-Safe / Fail-Secure",
+      recommendation,
       score,
       dominantFactor,
+      deploymentFit,
+      hardwareDirection,
+      primaryRisk,
       doorType,
       doorTypeLabel: getDoorTypeLabel(doorType),
       life,
@@ -208,52 +221,42 @@
       fire,
       fireLabel: getFireLabel(fire),
       threat,
-      threatLabel: getThreatLabel(threat)
-    };
-
-    sessionStorage.setItem("ac_fail_mode", rec);
-    sessionStorage.setItem("ac_fail_score", String(score));
-    sessionStorage.setItem("ac_fail_payload", JSON.stringify(payload));
+      threatLabel: getThreatLabel(threat),
+    });
 
     showContinue();
   }
 
-  function reset() {
-    $("doorType").value = "interior";
-    $("life").value = "high";
-    $("powerLoss").value = "normal";
-    $("fire").value = "yes";
-    $("threat").value = "low";
+  function resetAll() {
+    if (els.doorType) els.doorType.value = "interior";
+    if (els.life) els.life.value = "high";
+    if (els.powerLoss) els.powerLoss.value = "normal";
+    if (els.fire) els.fire.value = "yes";
+    if (els.threat) els.threat.value = "low";
 
-    $("results").innerHTML = `<div class="muted">Run the evaluation to see results.</div>`;
-
-    sessionStorage.removeItem("ac_fail_mode");
-    sessionStorage.removeItem("ac_fail_score");
-    sessionStorage.removeItem("ac_fail_payload");
-
-    hideContinue();
+    clearResults();
+    invalidatePipelineResult();
   }
 
-  function markStale() {
-    if (!hasFreshResult) return;
-    hideContinue();
+  if (els.calc) els.calc.addEventListener("click", calculate);
+  if (els.reset) els.reset.addEventListener("click", resetAll);
+
+  [els.doorType, els.life, els.powerLoss, els.fire, els.threat].forEach((el) => {
+    if (!el) return;
+
+    el.addEventListener("input", invalidatePipelineResult);
+    el.addEventListener("change", invalidatePipelineResult);
+
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") calculate();
+    });
+  });
+
+  if (els.nextBtn) {
+    els.nextBtn.addEventListener("click", () => {
+      window.location.href = "/tools/access-control/reader-type-selector/";
+    });
   }
 
-  $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
-
-  ["doorType", "life", "powerLoss", "fire", "threat"].forEach((id) => {
-    const el = $(id);
-    if (el) {
-      el.addEventListener("change", markStale);
-      el.addEventListener("input", markStale);
-    }
-  });
-
-  $("continue").addEventListener("click", () => {
-    if (!hasFreshResult) return;
-    window.location.href = "/tools/access-control/reader-type-selector/";
-  });
-
-  reset();
+  clearResults();
 })();
