@@ -3,75 +3,273 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Room Square Footage Planner *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0331"></script>
-<script defer src="/assets/app.js?v=0331"></script>
+  <title>Room Square Footage *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate usable room area, planning density, and rough rack capacity for infrastructure spaces."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=infra-room-0401" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0331"></script>
+  <script defer src="/assets/app.js?v=0331"></script>
+
+  <style>
+    .tool-hero {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .flow-note {
+      display: none;
+      padding: 12px 14px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.88);
+      font-size: .96rem;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .flow-note.is-visible {
+      display: block;
+    }
+
+    .tool-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      font-size: .82rem;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.74);
+    }
+
+    .mini-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #79ffb0;
+      box-shadow: 0 0 10px rgba(121,255,176,.55);
+      flex: 0 0 auto;
+    }
+
+    .best-for {
+      margin: 0;
+      color: rgba(255,255,255,.76);
+    }
+
+    .best-for strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .result-card {
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      background: rgba(255,255,255,.03);
+      padding: 14px;
+    }
+
+    .result-card .result-label {
+      display: block;
+      font-size: .82rem;
+      color: rgba(255,255,255,.68);
+      margin-bottom: 6px;
+    }
+
+    .result-card .result-value {
+      display: block;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .summary-block {
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      background: rgba(255,255,255,.03);
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .summary-block h3 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    .summary-block p {
+      margin: 0;
+      color: rgba(255,255,255,.88);
+      line-height: 1.6;
+    }
+
+    .result-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
 </head>
 
-<body data-tier="pro" data-category="infrastructure">
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-dot"></span>
-      <span class="brand-text">ScopedLabs</span>
-    </a>
-    <nav class="site-nav">
-      <a class="nav-pill" href="/">Home</a>
-      <a class="nav-pill" href="/tools/">Tools</a>
-      <a class="nav-pill" href="/tools/infrastructure/">Infrastructure</a>
-    </nav>
-  </div>
-</header>
+<body
+  data-tier="pro"
+  data-category="infrastructure"
+  data-pipeline-category="infrastructure"
+  data-pipeline-lane="room_design"
+  data-pipeline-tool="room-square-footage"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
 
-<main class="container page">
-  <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/infrastructure/">Infrastructure</a> /
-    Room Square Footage
-  </div>
-
-  <h1>Room Square Footage Planner</h1>
-  <p class="subhead">Estimate room size based on equipment footprint and clearance factor.</p>
-
-  <section class="card tool-card">
-    <h2>Inputs</h2>
-
-    <div class="form-grid">
-      <label class="field">
-        <span class="label">Equipment Footprint (sq ft)</span>
-        <input id="equip" type="number" value="250">
-      </label>
-
-      <label class="field">
-        <span class="label">Clearance / Aisle Factor (x)</span>
-        <input id="factor" type="number" step="0.1" value="2.0">
-      </label>
-
-      <label class="field">
-        <span class="label">Growth Reserve (%)</span>
-        <input id="growth" type="number" value="20">
-      </label>
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/infrastructure/">Infrastructure</a>
+      </nav>
     </div>
+  </header>
 
-    <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+  <main class="page">
+    <div class="container">
+      <div class="crumbs">
+        <a href="/tools/">Tools</a> /
+        <a href="/tools/infrastructure/">Infrastructure</a> /
+        Room Square Footage
+      </div>
+
+      <section class="tool-hero">
+        <span class="tool-kicker">
+          <span class="mini-dot"></span>
+          Infrastructure Pipeline · Room Design
+        </span>
+
+        <h1>Room Square Footage</h1>
+        <p class="subhead">
+          Estimate total room area, usable working area, and rough infrastructure density before moving into rack planning.
+        </p>
+        <p class="best-for">
+          <strong>Best for:</strong> MDFs, IDFs, server rooms, network closets, and early infrastructure layout scoping.
+        </p>
+      </section>
+
+      <div id="flow-note" class="flow-note"></div>
+      <div id="pipeline-anchor"></div>
+
+      <section class="card tool-card">
+        <h2>Inputs</h2>
+
+        <div class="form-grid">
+          <label class="field">
+            <span class="label">Room Length (ft)</span>
+            <input id="length" type="number" min="1" step="0.1" value="16" />
+          </label>
+
+          <label class="field">
+            <span class="label">Room Width (ft)</span>
+            <input id="width" type="number" min="1" step="0.1" value="10" />
+          </label>
+
+          <label class="field">
+            <span class="label">Ceiling Height (ft)</span>
+            <input id="height" type="number" min="6" step="0.1" value="9" />
+          </label>
+
+          <label class="field">
+            <span class="label">Room Type</span>
+            <select id="roomType">
+              <option value="closet">Closet</option>
+              <option value="idf" selected>Small IDF</option>
+              <option value="mdf">MDF / Server Room</option>
+              <option value="datacenter">Data Center</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="label">Planning Reserve (%)</span>
+            <input id="reserve" type="number" min="0" step="1" value="20" />
+          </label>
+
+          <label class="field">
+            <span class="label">Clearance Profile</span>
+            <select id="clearance">
+              <option value="tight">Tight / Retrofit</option>
+              <option value="standard" selected>Standard</option>
+              <option value="generous">Generous / Future-Friendly</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+          <button id="reset" class="btn" type="button">Reset</button>
+        </div>
+      </section>
+
+      <section class="card tool-card">
+        <h2>Results</h2>
+
+        <div id="empty-state">
+          <p class="subhead" style="margin:0;">
+            Calculate to estimate usable floor area, density, and rough rack capacity for the next step in the infrastructure pipeline.
+          </p>
+        </div>
+
+        <div id="results-wrap" class="hidden">
+          <div id="result-grid" class="result-grid"></div>
+
+          <div class="summary-block">
+            <h3>Interpretation</h3>
+            <p id="interpretation"></p>
+          </div>
+
+          <div class="summary-block">
+            <h3>Pipeline Context</h3>
+            <p id="pipeline-context"></p>
+          </div>
+
+          <div class="result-actions">
+            <a id="continueBtn" class="btn btn-primary" href="/tools/infrastructure/rack-ru-planner/">Continue to Rack RU Planner</a>
+            <a class="btn" href="/tools/infrastructure/">Return to Infrastructure Category</a>
+          </div>
+        </div>
+      </section>
     </div>
-  </section>
+  </main>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results"></div>
-  </section>
-</main>
-
-<script src="./script.js"></script>
+  <script src="/assets/tool-flow.js"></script>
+  <script src="/assets/catalog.js"></script>
+  <script src="/assets/pipelines.js"></script>
+  <script src="/assets/pipeline.js"></script>
+  <script src="./script.js"></script>
 </body>
 </html>
 

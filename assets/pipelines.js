@@ -83,6 +83,33 @@
             { id: "backup-window", label: "Backup Window", href: "/tools/compute/backup-window/" }
           ]
         }
+      },
+
+      // -----------------------------
+      // INFRASTRUCTURE
+      // -----------------------------
+      infrastructure: {
+        label: "Infrastructure",
+        lanes: {
+          room_design: [
+            { id: "room-square-footage", label: "Room", href: "/tools/infrastructure/room-square-footage/" },
+            { id: "rack-ru-planner", label: "Rack RU", href: "/tools/infrastructure/rack-ru-planner/" },
+            { id: "equipment-spacing", label: "Spacing", href: "/tools/infrastructure/equipment-spacing/" },
+            { id: "rack-weight-load", label: "Rack Load", href: "/tools/infrastructure/rack-weight-load/" },
+            { id: "floor-load-rating", label: "Floor Load", href: "/tools/infrastructure/floor-load-rating/" },
+            { id: "ups-room-sizing", label: "UPS Space", href: "/tools/infrastructure/ups-room-sizing/" }
+          ],
+
+          pathways: [
+            { id: "conduit-fill", label: "Conduit", href: "/tools/infrastructure/conduit-fill/" },
+            { id: "cable-tray-fill", label: "Cable Tray", href: "/tools/infrastructure/cable-tray-fill/" }
+          ],
+
+          site_power: [
+            { id: "generator-runtime", label: "Generator", href: "/tools/infrastructure/generator-runtime/" },
+            { id: "grounding-estimator", label: "Grounding", href: "/tools/infrastructure/grounding-estimator/" }
+          ]
+        }
       }
     },
 
