@@ -3,6 +3,7 @@
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
   let hasResult = false;
+  let cpuContext = null;
 
   function showContinue() {
     $("continue-wrap").style.display = "block";
@@ -25,7 +26,7 @@
   function render(rows) {
     const el = $("results");
     el.innerHTML = "";
-    rows.forEach(r => {
+    rows.forEach((r) => {
       const div = document.createElement("div");
       div.className = "result-row";
       div.innerHTML = `
@@ -44,76 +45,63 @@
     return 1.0;
   }
 
-  function loadCPU() {
+  function loadCPUContext() {
     const raw = sessionStorage.getItem(FLOW_KEY);
     if (!raw) return null;
 
-    const parsed = JSON.parse(raw);
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+
     if (!parsed || parsed.category !== "compute") return null;
+    if (parsed.step !== "cpu-sizing") return null;
+    if (!parsed.data) return null;
 
     return parsed.data;
   }
 
   function loadFlowContext() {
-  const raw = sessionStorage.getItem(FLOW_KEY);
-  if (!raw) return;
+    cpuContext = loadCPUContext();
+    if (!cpuContext) return;
 
-  let parsed;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return;
+    const flow = $("flow-note");
+    flow.style.display = "block";
+    flow.innerHTML = `
+      <div style="display:grid; gap:10px;">
+        <div style="font-weight:600;">From CPU Sizing:</div>
+
+        <div class="result-row">
+          <span class="result-label">Recommended Cores</span>
+          <span class="result-value">${cpuContext.cores}</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Effective Load</span>
+          <span class="result-value">${Number(cpuContext.eff).toFixed(2)} core-eq</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Workload</span>
+          <span class="result-value">${cpuContext.workload}</span>
+        </div>
+      </div>
+    `;
   }
 
-  if (!parsed || parsed.category !== "compute") return;
-  if (parsed.step !== "cpu-sizing") return;
-
-  const d = parsed.data;
-  if (!d) return;
-
-  const el = $("flow-note");
-  el.style.display = "block";
-
-  el.innerHTML = `
-    <div style="display:grid; gap:10px;">
-      
-      <div style="font-weight:600;">
-        From CPU Sizing:
-      </div>
-
-      <div class="result-row">
-        <span class="result-label">Recommended Cores</span>
-        <span class="result-value">${d.cores}</span>
-      </div>
-
-      <div class="result-row">
-        <span class="result-label">Effective Load</span>
-        <span class="result-value">${d.eff.toFixed(2)}</span>
-      </div>
-
-      <div class="result-row">
-        <span class="result-label">Workload</span>
-        <span class="result-value">${d.workload}</span>
-      </div>
-
-    </div>
-  `;
-}
-
   function calc() {
-    const cpuData = loadCPU();
-
     const workload = $("workload").value;
-    const concurrency = +$("concurrency").value;
-    const perProc = +$("perProc").value;
-    const osGb = +$("osGb").value;
-    const headroom = +$("headroom").value;
+    const concurrency = Math.max(1, Number($("concurrency").value) || 0);
+    const perProc = Math.max(0, Number($("perProc").value) || 0);
+    const osGb = Math.max(0, Number($("osGb").value) || 0);
+    const headroomPct = Math.max(0, Number($("headroom").value) || 0);
 
     const base = concurrency * perProc;
     const adjusted = base * workloadFactor(workload);
     const subtotal = adjusted + osGb;
-    const total = subtotal * (1 + headroom / 100);
-
+    const total = subtotal * (1 + headroomPct / 100);
     const rec = Math.ceil(total / 8) * 8;
 
     let pressure = "Balanced";
@@ -121,7 +109,7 @@
     if (total > 256) pressure = "Extreme Memory Pressure";
 
     let bottleneck = "Balanced";
-    if (cpuData && cpuData.cores < 8 && total > 64) {
+    if (cpuContext && Number(cpuContext.cores) < 8 && total > 64) {
       bottleneck = "CPU likely bottleneck before RAM";
     } else if (total > 128) {
       bottleneck = "Memory is primary constraint";
@@ -142,7 +130,9 @@
       data: {
         ram: rec,
         total,
-        pressure
+        pressure,
+        bottleneck,
+        workload
       }
     }));
 
@@ -150,12 +140,18 @@
   }
 
   $("calc").addEventListener("click", calc);
+
   $("reset").addEventListener("click", () => {
-    $("results").innerHTML = `<div class="muted">Enter values and calculate.</div>`;
+    $("workload").value = "general";
+    $("concurrency").value = 10;
+    $("perProc").value = 2;
+    $("osGb").value = 8;
+    $("headroom").value = 25;
+    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     invalidate();
   });
 
-  ["workload","concurrency","perProc","osGb","headroom"].forEach(id => {
+  ["workload", "concurrency", "perProc", "osGb", "headroom"].forEach((id) => {
     $(id).addEventListener("input", invalidate);
     $(id).addEventListener("change", invalidate);
   });
@@ -163,4 +159,6 @@
   $("continue").addEventListener("click", () => {
     window.location.href = "/tools/compute/storage-iops/";
   });
+
+  loadFlowContext();
 })();
