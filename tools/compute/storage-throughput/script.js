@@ -1,15 +1,26 @@
-﻿// Storage Throughput Estimator
-(() => {
+﻿(() => {
   const $ = (id) => document.getElementById(id);
+  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
-  function n(id) {
-    const el = $(id);
-    const v = el ? parseFloat(String(el.value ?? "").trim()) : NaN;
-    return Number.isFinite(v) ? v : 0;
+  let hasResult = false;
+  let iopsContext = null;
+
+  function showContinue() {
+    $("continue-wrap").style.display = "block";
+    $("continue").disabled = false;
+    hasResult = true;
   }
 
-  function clamp(x, lo, hi) {
-    return Math.min(hi, Math.max(lo, x));
+  function hideContinue() {
+    $("continue-wrap").style.display = "none";
+    $("continue").disabled = true;
+    hasResult = false;
+  }
+
+  function invalidate() {
+    if (!hasResult) return;
+    sessionStorage.removeItem(FLOW_KEY);
+    hideContinue();
   }
 
   function render(rows) {
@@ -26,49 +37,98 @@
     });
   }
 
-  function calc() {
-    const iops = Math.max(0, n("iops"));
-    const kb = Math.max(0, n("kb"));
-    const readPct = clamp(n("readPct"), 0, 100);
-    const writePct = clamp(n("writePct"), 0, 100);
-    const overheadPct = Math.max(0, n("overhead"));
+  function loadIOPSContext() {
+    const raw = sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return null;
 
-    const totalPct = readPct + writePct;
-    const rPct = totalPct === 0 ? 0.5 : readPct / totalPct;
-    const wPct = totalPct === 0 ? 0.5 : writePct / totalPct;
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.category !== "compute") return null;
+    if (parsed.step !== "storage-iops") return null;
 
-    // MB/s = IOPS * KB / 1024
-    const totalMBps = (iops * kb) / 1024;
-
-    const readMBps = totalMBps * rPct;
-    const writeMBps = totalMBps * wPct;
-
-    const finalMBps = totalMBps * (1 + overheadPct / 100);
-
-    render([
-      { label: "I/O Size", value: `${kb.toFixed(0)} KB` },
-      { label: "Read / Write Split", value: `${(rPct * 100).toFixed(0)}% / ${(wPct * 100).toFixed(0)}%` },
-
-      { label: "Read Throughput", value: `${readMBps.toFixed(1)} MB/s` },
-      { label: "Write Throughput", value: `${writeMBps.toFixed(1)} MB/s` },
-      { label: "Subtotal Throughput", value: `${totalMBps.toFixed(1)} MB/s` },
-      { label: "Overhead", value: `${overheadPct.toFixed(0)}%` },
-
-      { label: "Estimated Required Throughput", value: `${finalMBps.toFixed(1)} MB/s` }
-    ]);
+    return parsed.data;
   }
 
-  function reset() {
-    $("iops").value = 5000;
-    $("kb").value = 32;
-    $("readPct").value = 70;
-    $("writePct").value = 30;
-    $("overhead").value = 15;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+  function loadFlowContext() {
+    iopsContext = loadIOPSContext();
+    if (!iopsContext) return;
+
+    const el = $("flow-note");
+    el.style.display = "block";
+
+    el.innerHTML = `
+      <div style="display:grid; gap:10px;">
+        <div style="font-weight:600;">From IOPS:</div>
+
+        <div class="result-row">
+          <span class="result-label">Required IOPS</span>
+          <span class="result-value">${Math.round(iopsContext.finalIops)}</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Storage Pressure</span>
+          <span class="result-value">${iopsContext.storagePressure}</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Constraint</span>
+          <span class="result-value">${iopsContext.primaryConstraint}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function calc() {
+    const iops = +$("iops").value;
+    const kb = +$("kb").value;
+    const readPct = +$("readPct").value;
+    const writePct = +$("writePct").value;
+    const overhead = +$("overhead").value;
+
+    const totalMBps = (iops * kb) / 1024;
+    const final = totalMBps * (1 + overhead / 100);
+
+    let pressure = "Balanced";
+    if (final > 500) pressure = "High Throughput Demand";
+    if (final > 1500) pressure = "Extreme Throughput Demand";
+
+    let mismatch = "Balanced";
+    if (iopsContext && iopsContext.finalIops > 20000 && final < 300) {
+      mismatch = "High IOPS but low throughput → random workload";
+    }
+    if (iopsContext && final > 1000 && iopsContext.finalIops < 5000) {
+      mismatch = "High throughput but low IOPS → sequential workload";
+    }
+
+    render([
+      { label: "Throughput", value: `${final.toFixed(1)} MB/s` },
+      { label: "Throughput Pressure", value: pressure },
+      { label: "Workload Pattern", value: mismatch }
+    ]);
+
+    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+      category: "compute",
+      step: "storage-throughput",
+      data: { final, pressure, mismatch }
+    }));
+
+    showContinue();
   }
 
   $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
 
-  reset();
+  $("reset").addEventListener("click", () => {
+    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    invalidate();
+  });
+
+  ["iops","kb","readPct","writePct","overhead"].forEach(id => {
+    $(id).addEventListener("input", invalidate);
+    $(id).addEventListener("change", invalidate);
+  });
+
+  $("continue").addEventListener("click", () => {
+    window.location.href = "/tools/compute/vm-density/";
+  });
+
+  loadFlowContext();
 })();
