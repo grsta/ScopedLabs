@@ -1,10 +1,8 @@
 // /assets/pipelines.js
 (() => {
   window.SCOPED_PIPELINES = {
-    // ---------------------------------------------------
-    // CATEGORY PIPELINES (normal design flows)
-    // ---------------------------------------------------
     categories: {
+
       // -----------------------------
       // VIDEO & STORAGE
       // -----------------------------
@@ -37,7 +35,7 @@
       },
 
       // -----------------------------
-      // NETWORK & THROUGHPUT
+      // NETWORK
       // -----------------------------
       network: {
         label: "Network & Throughput",
@@ -49,64 +47,37 @@
             { id: "latency", label: "Latency", href: "/tools/network/latency/" }
           ]
         }
+      },
+
+      // ✅ FIXED — NOW INSIDE categories
+      "access-control": {
+        label: "Access Control",
+        lanes: {
+          v1: [
+            { id: "fail-safe-fail-secure", label: "Fail-Safe / Fail-Secure", href: "/tools/access-control/fail-safe-fail-secure/" },
+            { id: "reader-type-selector", label: "Reader Type", href: "/tools/access-control/reader-type-selector/" },
+            { id: "lock-power-budget", label: "Lock Power Budget", href: "/tools/access-control/lock-power-budget/" },
+            { id: "panel-capacity", label: "Panel Capacity", href: "/tools/access-control/panel-capacity/" },
+            { id: "access-level-sizing", label: "Access Level Sizing", href: "/tools/access-control/access-level-sizing/" }
+          ]
+        }
       }
     },
 
     // -------------------------------
-    // ACCESS CONTROL
+    // FUTURE CROSS-SITE PIPELINES
     // -------------------------------
-    "access-control": {
-  label: "Access Control",
-  lanes: {
-    v1: [
-      { id: "fail-safe-fail-secure", label: "Fail-Safe / Fail-Secure", href: "/tools/access-control/fail-safe-fail-secure/" },
-      { id: "reader-type-selector", label: "Reader Type", href: "/tools/access-control/reader-type-selector/" },
-      { id: "lock-power-budget", label: "Lock Power Budget", href: "/tools/access-control/lock-power-budget/" },
-      { id: "panel-capacity", label: "Panel Capacity", href: "/tools/access-control/panel-capacity/" },
-      { id: "access-level-sizing", label: "Access Level Sizing", href: "/tools/access-control/access-level-sizing/" }
-    ]
-  }
-},
-
-    // ---------------------------------------------------
-    // CROSS-CATEGORY PIPELINES (future Gold tier)
-    // ---------------------------------------------------
     crossSite: {
       "infrastructure-design": {
         label: "Infrastructure Design",
         tier: "gold",
         lanes: {
           v1: [
-            {
-              id: "bitrate",
-              label: "Bitrate",
-              category: "video-storage",
-              href: "/tools/video-storage/bitrate-estimator/"
-            },
-            {
-              id: "storage",
-              label: "Storage",
-              category: "video-storage",
-              href: "/tools/video-storage/storage-calculator/"
-            },
-            {
-              id: "bandwidth",
-              label: "Bandwidth",
-              category: "network",
-              href: "/tools/network/bandwidth/"
-            },
-            {
-              id: "va-watts-amps",
-              label: "VA / Watts / Amps",
-              category: "power",
-              href: "/tools/power/va-watts-amps/"
-            },
-            {
-              id: "ups-runtime",
-              label: "UPS Runtime",
-              category: "power",
-              href: "/tools/power/ups-runtime/"
-            }
+            { id: "bitrate", category: "video-storage", href: "/tools/video-storage/bitrate-estimator/" },
+            { id: "storage", category: "video-storage", href: "/tools/video-storage/storage-calculator/" },
+            { id: "bandwidth", category: "network", href: "/tools/network/bandwidth/" },
+            { id: "va-watts-amps", category: "power", href: "/tools/power/va-watts-amps/" },
+            { id: "ups-runtime", category: "power", href: "/tools/power/ups-runtime/" }
           ]
         }
       }
