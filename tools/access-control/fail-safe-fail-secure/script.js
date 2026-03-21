@@ -1,10 +1,10 @@
-﻿// Fail-Safe vs Fail-Secure helper (guidance)
-(() => {
+﻿(() => {
   const $ = (id) => document.getElementById(id);
 
   function render(rows) {
     const el = $("results");
     el.innerHTML = "";
+
     rows.forEach(r => {
       const div = document.createElement("div");
       div.className = "result-row";
@@ -23,67 +23,74 @@
     const fire = $("fire").value;
     const threat = $("threat").value;
 
-    // Scoring: positive -> fail-safe, negative -> fail-secure
     let score = 0;
 
-    // Door type tendencies
     if (doorType === "stairwell") score += 3;
     if (doorType === "interior") score += 1;
     if (doorType === "perimeter") score -= 1;
     if (doorType === "it") score -= 3;
 
-    // Life safety
     if (life === "high") score += 3;
     if (life === "med") score += 1;
     if (life === "low") score -= 2;
 
-    // Power loss environment
-    if (powerLoss === "frequent") score += 2; // don't lock people in during outages
-    if (powerLoss === "rare") score -= 1;     // can afford secure behavior if backed
+    if (powerLoss === "frequent") score += 2;
+    if (powerLoss === "rare") score -= 1;
 
-    // Fire integration: if yes, fail-secure can still unlock on fire, but fail-safe aligns naturally
     if (fire === "yes") score += 1;
 
-    // Threat model
     if (threat === "high") score -= 3;
     if (threat === "med") score -= 1;
 
-    let rec = "FAIL-SAFE";
-    let rationale = "Unlocks on power loss. Common for egress paths and many interior doors where life safety is dominant.";
-    if (score <= -2) {
+    let rec, rationale, risk;
+
+    if (score >= 2) {
+      rec = "FAIL-SAFE";
+      rationale = "Life safety and egress requirements dominate. Door should unlock on power loss.";
+      risk = "Security exposure during outages.";
+    } else if (score <= -2) {
       rec = "FAIL-SECURE";
-      rationale = "Stays locked on power loss (still allows free mechanical egress if code-compliant). Common for high-security and perimeter control.";
-    } else if (score > -2 && score < 2) {
-      rec = "DEPENDS (Mixed)";
-      rationale = "Inputs point to competing priorities. Choose based on code requirements, risk tolerance, and power backup strategy.";
+      rationale = "Security priority dominates. Door should remain locked on power loss.";
+      risk = "Potential lock-in risk if egress is not properly designed.";
+    } else {
+      rec = "MIXED / CONDITIONAL";
+      rationale = "Competing priorities. Final decision depends on code requirements and system design.";
+      risk = "Design inconsistency if not standardized across openings.";
     }
 
-    const cautions = [
-      "Always follow local fire/life safety code and AHJ requirements.",
-      "Ensure free egress is maintained (mechanical egress, request-to-exit, and fire unlock where required).",
-      "Maglocks typically require fire alarm release + egress sensing; strikes/mortise may behave differently.",
-      "If using fail-secure on critical doors, plan UPS/generator to avoid lockout during outages."
-    ].join(" ");
+    const guidance = `
+      Always verify with local code and AHJ.
+      Ensure mechanical egress is always available.
+      Consider fire alarm release requirements.
+      Plan UPS if using fail-secure on critical doors.
+    `;
 
     render([
       { label: "Recommendation", value: rec },
       { label: "Why", value: rationale },
-      { label: "Score (info)", value: `${score}` },
-      { label: "Cautions", value: cautions }
+      { label: "Primary Risk", value: risk },
+      { label: "Guidance", value: guidance },
+      { label: "Score", value: score }
     ]);
+
+    // SAVE FOR PIPELINE
+    sessionStorage.setItem("ac_fail_mode", rec);
+
+    // ENABLE CONTINUE
+    $("continue-wrap").style.display = "block";
   }
 
   function reset() {
-    $("doorType").value = "interior";
-    $("life").value = "high";
-    $("powerLoss").value = "normal";
-    $("fire").value = "yes";
-    $("threat").value = "low";
-    $("results").innerHTML = `<div class="muted">Enter values and press Evaluate.</div>`;
+    $("results").innerHTML = `<div class="muted">Run the evaluation to see results.</div>`;
+    $("continue-wrap").style.display = "none";
   }
 
   $("calc").addEventListener("click", calc);
   $("reset").addEventListener("click", reset);
 
-  reset();
+  // CONTINUE BUTTON
+  $("continue").addEventListener("click", () => {
+    window.location.href = "/tools/access-control/reader-type-selector/";
+  });
+
 })();
