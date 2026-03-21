@@ -6,14 +6,14 @@
   <title>Room Square Footage *ScopedLabs</title>
   <meta
     name="description"
-    content="Estimate total room area, usable room area, and rough rack capacity for infrastructure planning."
+    content="Estimate total room area, usable working area, and rough rack capacity for infrastructure planning."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=infra-room-raidtmpl-003" />
+  <link rel="stylesheet" href="/assets/style.css?v=infra-room-raid-shell-004" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script defer src="/assets/auth.js?v=0318"></script>
   <script defer src="/assets/app.js?v=0318"></script>
@@ -113,6 +113,7 @@
       <section class="hero">
         <div class="eyebrow">Infrastructure</div>
         <h1>Room Square Footage</h1>
+
         <div
           id="pipeline"
           data-pipeline-category="infrastructure"
