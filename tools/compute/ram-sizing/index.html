@@ -3,90 +3,126 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RAM Sizing Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
+
+  <title>RAM Sizing Estimator • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=ram-pipeline-001" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  </script>
+  <script defer src="/assets/auth.js?v=0402"></script>
+  <script defer src="/assets/app.js?v=0402"></script>
 </head>
 
-<body data-tier="free" data-category="compute">
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="/">
-        <span class="brand-dot"></span>
-        <span class="brand-text">ScopedLabs</span>
-      </a>
+<body data-tier="free" data-category="compute" data-step="ram-sizing" data-lane="v1">
 
-      <nav class="site-nav" aria-label="Primary">
-        <a class="nav-pill" href="/">Home</a>
-        <a class="nav-pill" href="/tools/">Tools</a>
-        <a class="nav-pill" href="/tools/compute/">Compute</a>
-      </nav>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/compute/">Compute</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+
+  <div class="crumbs">
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <a href="/tools/compute/">Compute</a>
+    <span class="sep">/</span>
+    <span>RAM Sizing</span>
+  </div>
+
+  <h1>RAM Sizing Estimator</h1>
+
+  <div id="pipeline"></div>
+
+  <p class="subhead">
+    Estimate system memory and detect memory pressure based on workload and concurrency.
+  </p>
+
+  <!-- FLOW NOTE -->
+  <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> validating memory requirements and detecting overcommit risk after CPU sizing.
+    </p>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="label">Workload Type</span>
+        <select id="workload">
+          <option value="general">General / Mixed</option>
+          <option value="web">Web / API</option>
+          <option value="db">Database</option>
+          <option value="virtualization">Virtualization</option>
+          <option value="analytics">Analytics / ML</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="label">Concurrent Processes / VMs</span>
+        <input id="concurrency" type="number" value="10" />
+      </label>
+
+      <label class="field">
+        <span class="label">RAM per Process (GB)</span>
+        <input id="perProc" type="number" value="2" />
+      </label>
+
+      <label class="field">
+        <span class="label">OS Overhead (GB)</span>
+        <input id="osGb" type="number" value="8" />
+      </label>
+
+      <label class="field">
+        <span class="label">Headroom (%)</span>
+        <input id="headroom" type="number" value="25" />
+      </label>
     </div>
-  </header>
 
-  <main class="container page">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <a href="/tools/compute/">Compute</a>
-      <span class="sep">/</span>
-      <span>RAM Sizing</span>
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
     </div>
+  </section>
 
-    <h1>RAM Sizing Estimator</h1>
-    <p class="subhead">Estimate system memory based on workload type, concurrency, and cache needs.</p>
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results">
+      <div class="muted">Enter values and calculate.</div>
+    </div>
+  </section>
 
-    <section class="card tool-card">
-      <h2>Inputs</h2>
+  <div id="continue-wrap" class="card" style="display:none;">
+    <button id="continue" class="btn btn-primary" disabled>
+      Continue → Storage IOPS
+    </button>
+  </div>
 
-      <div class="form-grid">
-        <label class="field">
-          <span class="label">Workload Type</span>
-          <select id="workload">
-            <option value="general" selected>General / Mixed</option>
-            <option value="web">Web / API</option>
-            <option value="db">Database</option>
-            <option value="virtualization">Virtualization</option>
-            <option value="analytics">Analytics / ML</option>
-          </select>
-        </label>
+</main>
 
-        <label class="field">
-          <span class="label">Concurrent Processes / VMs</span>
-          <input id="concurrency" type="number" min="1" step="1" value="10" />
-        </label>
+<script src="/assets/tool-flow.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/pipelines.js"></script>
+<script src="/assets/pipeline.js"></script>
+<script src="./script.js?v=002"></script>
 
-        <label class="field">
-          <span class="label">Avg RAM per Process (GB)</span>
-          <input id="perProc" type="number" min="0" step="0.1" value="2" />
-        </label>
-
-        <label class="field">
-          <span class="label">OS / Base Overhead (GB)</span>
-          <input id="osGb" type="number" min="0" step="0.5" value="8" />
-        </label>
-
-        <label class="field">
-          <span class="label">Cache / Headroom (%)</span>
-          <input id="headroom" type="number" min="0" step="1" value="25" />
-        </label>
-      </div>
-
-      <div class="actions">
-        <button id="calc" class="btn btn-primary">Calculate</button>
-        <button id="reset" class="btn">Reset</button>
-      </div>
-    </section>
-
-    <section class="card tool-card">
-      <h2>Results</h2>
-      <div id="results" class="results">
-        <div class="muted">Enter values and press Calculate.</div>
-      </div>
-    </section>
-  </main>
-
-  <script src="/assets/app.js?v=0314"></script>
-  <script src="./script.js"></script>
 </body>
 </html>
 
