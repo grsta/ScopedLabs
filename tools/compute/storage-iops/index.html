@@ -3,11 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Storage IOPS Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
+
+  <title>Storage IOPS Estimator • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=compute-iops-001" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0402"></script>
+  <script defer src="/assets/app.js?v=0402"></script>
 </head>
 
-<body data-tier="free" data-category="compute">
+<body data-tier="free" data-category="compute" data-step="storage-iops" data-lane="v1">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -33,7 +42,18 @@
     </div>
 
     <h1>Storage IOPS Estimator</h1>
-    <p class="subhead">Estimate read/write IOPS required for your workload.</p>
+
+    <div id="pipeline"></div>
+
+    <p class="subhead">Estimate read/write IOPS required for your workload and identify storage pressure early.</p>
+
+    <div id="flow-note" class="card" style="display:none;"></div>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> checking whether your workload is likely to become storage-limited after CPU and RAM sizing are established.
+      </p>
+    </section>
 
     <section class="card tool-card">
       <h2>Inputs</h2>
@@ -58,9 +78,9 @@
           <span class="label">RAID Write Penalty</span>
           <select id="penalty">
             <option value="1">None / JBOD</option>
-            <option value="2">RAID 1 / 10 (Ã—2)</option>
-            <option value="4" selected>RAID 5 (Ã—4)</option>
-            <option value="6">RAID 6 (Ã—6)</option>
+            <option value="2">RAID 1 / 10 (×2)</option>
+            <option value="4" selected>RAID 5 (×4)</option>
+            <option value="6">RAID 6 (×6)</option>
           </select>
         </label>
 
@@ -82,13 +102,21 @@
         <div class="muted">Enter values and press Calculate.</div>
       </div>
     </section>
+
+    <div id="continue-wrap" class="card" style="display:none;">
+      <button id="continue" class="btn btn-primary" disabled>
+        Continue → Storage Throughput
+      </button>
+    </div>
   </main>
 
-  <script src="/assets/app.js?v=0314"></script>
-  <script src="./script.js"></script>
+  <script src="/assets/tool-flow.js"></script>
+  <script src="/assets/catalog.js"></script>
+  <script src="/assets/pipelines.js"></script>
+  <script src="/assets/pipeline.js"></script>
+  <script src="./script.js?v=003"></script>
 </body>
 </html>
-
 
 
 
