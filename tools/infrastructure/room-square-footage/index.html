@@ -2,21 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Room Square Footage *ScopedLabs</title>
-  <meta
-    name="description"
-    content="Estimate total room area, usable working area, and rough rack capacity for infrastructure planning."
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=infra-room-raid-shell-004" />
+  <title>Room Square Footage • ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=infra-room-raid-007" />
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0318"></script>
-  <script defer src="/assets/app.js?v=0318"></script>
+  <script defer src="/assets/auth.js?v=0407"></script>
+  <script defer src="/assets/app.js?v=0407"></script>
 
   <style>
     .results-grid {
@@ -45,7 +43,6 @@
       font-size: 1.2rem;
       font-weight: 700;
       color: #fff;
-      line-height: 1.2;
     }
 
     .interpretation,
@@ -55,20 +52,6 @@
       border: 1px solid rgba(255,255,255,.10);
       border-radius: 16px;
       background: rgba(255,255,255,.03);
-      color: rgba(255,255,255,.88);
-      line-height: 1.6;
-    }
-
-    .interpretation h3,
-    .pipeline-context h3 {
-      margin: 0 0 8px;
-      font-size: 1rem;
-      color: #fff;
-    }
-
-    .interpretation p,
-    .pipeline-context p {
-      margin: 0;
     }
 
     .continue-wrap {
@@ -78,8 +61,8 @@
 
     .continue-wrap.show {
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
+      flex-wrap: wrap;
     }
   </style>
 </head>
@@ -89,168 +72,128 @@
     <div class="container header-inner">
       <a class="brand" href="/">
         <span class="brand-dot"></span>
-        <span>ScopedLabs</span>
+        <span class="brand-text">ScopedLabs</span>
       </a>
 
       <nav class="site-nav">
-        <a href="/">Home</a>
-        <a href="/tools/">Tools</a>
-        <a href="/tools/infrastructure/">Infrastructure</a>
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/infrastructure/">Infrastructure</a>
       </nav>
     </div>
   </header>
 
-  <main class="page">
-    <div class="container">
-      <div class="crumbs">
-        <a href="/tools/">Tools</a>
-        <span>/</span>
-        <a href="/tools/infrastructure/">Infrastructure</a>
-        <span>/</span>
-        <span>Room Square Footage</span>
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/infrastructure/">Infrastructure</a>
+      <span class="sep">/</span>
+      <span>Room Square Footage</span>
+    </div>
+
+    <!-- HERO -->
+    <h1>Room Square Footage</h1>
+
+    <!-- PIPELINE -->
+    <div
+      id="pipeline"
+      data-pipeline-category="infrastructure"
+      data-pipeline-lane="room_design"
+      data-pipeline-tool="room-square-footage"
+    ></div>
+
+    <!-- SUBHEAD -->
+    <p class="subhead">
+      Estimate total room area, usable working area, and rough rack capacity before moving into rack planning.
+    </p>
+
+    <!-- SYSTEM CONTEXT -->
+    <div id="flow-note" class="card" style="display:none;"></div>
+
+    <!-- BEST FOR -->
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> MDFs, IDFs, server rooms, network closets, and early infrastructure layout scoping.
+      </p>
+    </section>
+
+    <!-- INPUTS -->
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Room Length (ft)</span>
+          <input id="length" type="number" value="16" />
+        </label>
+
+        <label class="field">
+          <span class="label">Room Width (ft)</span>
+          <input id="width" type="number" value="10" />
+        </label>
+
+        <label class="field">
+          <span class="label">Ceiling Height (ft)</span>
+          <input id="height" type="number" value="9" />
+        </label>
+
+        <label class="field">
+          <span class="label">Room Type</span>
+          <select id="roomType">
+            <option value="closet">Closet</option>
+            <option value="idf" selected>Small IDF</option>
+            <option value="mdf">MDF / Server Room</option>
+            <option value="datacenter">Data Center</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Planning Reserve (%)</span>
+          <input id="reserve" type="number" value="20" />
+        </label>
+
+        <label class="field">
+          <span class="label">Clearance Profile</span>
+          <select id="clearance">
+            <option value="tight">Tight</option>
+            <option value="standard" selected>Standard</option>
+            <option value="generous">Generous</option>
+          </select>
+        </label>
       </div>
 
-      <section class="hero">
-        <div class="eyebrow">Infrastructure</div>
-        <h1>Room Square Footage</h1>
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
 
-        <div
-          id="pipeline"
-          data-pipeline-category="infrastructure"
-          data-pipeline-lane="room_design"
-          data-pipeline-tool="room-square-footage"
-        ></div>
+    <!-- RESULTS -->
+    <section class="card tool-card">
+      <h2>Results</h2>
 
-        <p class="subhead">
-          Estimate total room area, usable working area, and rough rack capacity before moving into rack planning.
-        </p>
+      <div id="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
 
-        <div id="flow-note" class="flow-note" hidden></div>
-      </section>
-
-      <section class="card">
-        <p class="best-for">
-          <strong>Best for:</strong> MDFs, IDFs, server rooms, network closets, and early infrastructure layout scoping.
-        </p>
-      </section>
-
-      <section class="card tool-card">
-        <h2>Inputs</h2>
-
-        <div class="form-grid">
-          <label class="field">
-            <span>Room Length (ft)</span>
-            <input id="length" type="number" min="1" step="0.1" value="16" />
-          </label>
-
-          <label class="field">
-            <span>Room Width (ft)</span>
-            <input id="width" type="number" min="1" step="0.1" value="10" />
-          </label>
-
-          <label class="field">
-            <span>Ceiling Height (ft)</span>
-            <input id="height" type="number" min="6" step="0.1" value="9" />
-          </label>
-
-          <label class="field">
-            <span>Room Type</span>
-            <select id="roomType">
-              <option value="closet">Closet</option>
-              <option value="idf" selected>Small IDF</option>
-              <option value="mdf">MDF / Server Room</option>
-              <option value="datacenter">Data Center</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span>Planning Reserve (%)</span>
-            <input id="reserve" type="number" min="0" step="1" value="20" />
-          </label>
-
-          <label class="field">
-            <span>Clearance Profile</span>
-            <select id="clearance">
-              <option value="tight">Tight / Retrofit</option>
-              <option value="standard" selected>Standard</option>
-              <option value="generous">Generous / Future-Friendly</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="actions">
-          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
-          <button id="reset" class="btn" type="button">Reset</button>
-        </div>
-      </section>
-
-      <section class="card tool-card">
-        <h2>Results</h2>
-
-        <div id="emptyState" class="muted">
-          Calculate to estimate usable room area, planning density, and rough rack capacity for the next step in the infrastructure pipeline.
-        </div>
-
-        <div id="results" hidden>
-          <div class="results-grid">
-            <div class="result-box">
-              <div class="k">Total Room Area</div>
-              <div class="v" id="outTotalSqft">—</div>
-            </div>
-
-            <div class="result-box">
-              <div class="k">Usable Working Area</div>
-              <div class="v" id="outUsableSqft">—</div>
-            </div>
-
-            <div class="result-box">
-              <div class="k">Room Volume</div>
-              <div class="v" id="outVolume">—</div>
-            </div>
-
-            <div class="result-box">
-              <div class="k">Estimated Rack Positions</div>
-              <div class="v" id="outRacks">—</div>
-            </div>
-
-            <div class="result-box">
-              <div class="k">Planning Density</div>
-              <div class="v" id="outDensity">—</div>
-            </div>
-
-            <div class="result-box">
-              <div class="k">Room Classification</div>
-              <div class="v" id="outRoomType">—</div>
-            </div>
-          </div>
-
-          <div class="interpretation">
-            <h3>Interpretation</h3>
-            <p id="interpretationText">—</p>
-          </div>
-
-          <div class="pipeline-context">
-            <h3>Pipeline Context</h3>
-            <p id="pipelineContextText">—</p>
-          </div>
-
-          <div id="continueWrap" class="continue-wrap">
-            <a id="continueBtn" class="btn btn-primary" href="/tools/infrastructure/rack-ru-planner/">Continue to Rack RU Planner</a>
-            <a class="btn" href="/tools/infrastructure/">Return to Infrastructure Category</a>
-          </div>
-        </div>
-      </section>
+    <!-- CONTINUE -->
+    <div id="continue-wrap" class="card" style="display:none;">
+      <button id="continue" class="btn btn-primary" disabled>
+        Continue → Rack RU Planner
+      </button>
     </div>
   </main>
 
+  <!-- SCRIPTS -->
   <script src="/assets/tool-flow.js"></script>
   <script src="/assets/catalog.js"></script>
   <script src="/assets/pipelines.js"></script>
   <script src="/assets/pipeline.js"></script>
-  <script src="./script.js"></script>
+  <script src="./script.js?v=004"></script>
 </body>
 </html>
-
 
 
 
