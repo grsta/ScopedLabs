@@ -1,16 +1,32 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
 
-  const DEFAULTS = {
-    length: 16,
-    width: 10,
-    height: 9,
-    roomType: "idf",
-    reserve: 20,
-    clearance: "standard"
+  const els = {
+    length: $("length"),
+    width: $("width"),
+    height: $("height"),
+    roomType: $("roomType"),
+    reserve: $("reserve"),
+    clearance: $("clearance"),
+    calc: $("calc"),
+    reset: $("reset"),
+
+    emptyState: $("emptyState"),
+    results: $("results"),
+    outTotalSqft: $("outTotalSqft"),
+    outUsableSqft: $("outUsableSqft"),
+    outVolume: $("outVolume"),
+    outRacks: $("outRacks"),
+    outDensity: $("outDensity"),
+    outRoomType: $("outRoomType"),
+    interpretationText: $("interpretationText"),
+    pipelineContextText: $("pipelineContextText"),
+    continueWrap: $("continueWrap"),
+    continueBtn: $("continueBtn"),
+    flowNote: $("flow-note")
   };
 
-  const NEXT_HREF = "/tools/infrastructure/rack-ru-planner/";
+  let hasResult = false;
 
   const ROOM_LABELS = {
     closet: "Closet",
@@ -33,45 +49,21 @@
 
   const ROOM_TYPE_MULTIPLIERS = {
     closet: 0.92,
-    idf: 1.0,
+    idf: 1.00,
     mdf: 1.06,
     datacenter: 1.12
   };
 
-  function round(value, decimals = 1) {
-    const factor = Math.pow(10, decimals);
-    return Math.round(value * factor) / factor;
-  }
-
-  function whole(value) {
-    return Math.round(value);
-  }
-
-  function fmtNumber(value, decimals = 0) {
+  function fmt(value, decimals = 0) {
     return Number(value).toLocaleString(undefined, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals
     });
   }
 
-  function readInputs() {
-    return {
-      length: parseFloat($("length").value),
-      width: parseFloat($("width").value),
-      height: parseFloat($("height").value),
-      roomType: $("roomType").value,
-      reserve: parseFloat($("reserve").value),
-      clearance: $("clearance").value
-    };
-  }
-
-  function isValid(input) {
-    return (
-      Number.isFinite(input.length) && input.length > 0 &&
-      Number.isFinite(input.width) && input.width > 0 &&
-      Number.isFinite(input.height) && input.height > 0 &&
-      Number.isFinite(input.reserve) && input.reserve >= 0
-    );
+  function round(value, decimals = 1) {
+    const p = 10 ** decimals;
+    return Math.round(value * p) / p;
   }
 
   function estimateRackCount(usableSqft, roomType) {
@@ -87,7 +79,6 @@
 
   function classifyDensity(usableSqft, rackCount) {
     const sqftPerRack = usableSqft / Math.max(rackCount, 1);
-
     if (sqftPerRack >= 28) return "Low";
     if (sqftPerRack >= 20) return "Medium";
     return "High";
@@ -106,170 +97,165 @@
     return "Ceiling height is generally workable for typical rack and pathway planning.";
   }
 
-  function buildInterpretation(data) {
-    const roomName = ROOM_LABELS[data.roomType] || "Room";
-    const densityTone = {
-      Low: "This layout has breathing room and should be easier to service and grow.",
-      Medium: "This layout is workable, but space discipline will matter as hardware and pathway density increase.",
-      High: "This layout is space-efficient but will require tighter planning discipline around clearances, airflow, and future growth."
-    }[data.density];
-
-    const rackTone =
-      data.estimatedRacks <= 1
-        ? "Expect this to behave like a compact single-rack or closet-class deployment."
-        : data.estimatedRacks <= 3
-          ? "This supports a small multi-rack footprint, but aisle discipline and service access will matter."
-          : "This has enough area to support a more deliberate rack layout and staged growth planning.";
-
-    return `${fmtNumber(data.totalSqft)} sq ft places this space in the ${roomName} planning range. After applying ${CLEARANCE_LABELS[data.clearance].toLowerCase()} clearance assumptions and a ${fmtNumber(data.reserve)}% planning reserve, usable working area lands around ${fmtNumber(data.usableSqft)} sq ft. ${rackTone} ${densityTone} ${ceilingComment(data.height, data.roomType)}`;
+  function clearResultView() {
+    els.emptyState.hidden = false;
+    els.results.hidden = true;
+    els.continueWrap.classList.remove("show");
+    hasResult = false;
   }
 
-  function buildPipelineContext(data) {
-    return `Passing forward ${fmtNumber(data.usableSqft)} usable sq ft, an estimated ${fmtNumber(data.estimatedRacks)} rack position${data.estimatedRacks === 1 ? "" : "s"}, ${data.density.toLowerCase()} density guidance, and ${fmtNumber(data.totalCubicFt)} cubic ft of room volume into Rack RU Planner.`;
-  }
-
-  function clearResults() {
-    $("empty-state").classList.remove("hidden");
-    $("results-wrap").classList.add("hidden");
-    $("result-grid").innerHTML = "";
-    $("interpretation").textContent = "";
-    $("pipeline-context").textContent = "";
-  }
-
-  function renderCards(cards) {
-    const grid = $("result-grid");
-    grid.innerHTML = "";
-
-    cards.forEach((card) => {
-      const div = document.createElement("div");
-      div.className = "result-card";
-      div.innerHTML = `
-        <span class="result-label">${card.label}</span>
-        <span class="result-value">${card.value}</span>
-      `;
-      grid.appendChild(div);
-    });
-  }
-
-  function writeContext(data) {
-    sessionStorage.setItem("infra_room_sqft", String(round(data.totalSqft, 1)));
-    sessionStorage.setItem("infra_room_usable_sqft", String(round(data.usableSqft, 1)));
-    sessionStorage.setItem("infra_room_type", data.roomType);
-    sessionStorage.setItem("infra_room_density", data.density);
-    sessionStorage.setItem("infra_room_volume_cuft", String(round(data.totalCubicFt, 1)));
-    sessionStorage.setItem("infra_room_est_racks", String(data.estimatedRacks));
-    sessionStorage.setItem("infra_room_clearance_profile", data.clearance);
-    sessionStorage.setItem("infra_room_reserve_pct", String(round(data.reserve, 0)));
-    sessionStorage.setItem("infra_last_pipeline_tool", "room-square-footage");
+  function showResultView() {
+    els.emptyState.hidden = true;
+    els.results.hidden = false;
+    els.continueWrap.classList.add("show");
+    hasResult = true;
   }
 
   function invalidate() {
-    clearResults();
-    sessionStorage.removeItem("infra_room_sqft");
-    sessionStorage.removeItem("infra_room_usable_sqft");
-    sessionStorage.removeItem("infra_room_type");
-    sessionStorage.removeItem("infra_room_density");
-    sessionStorage.removeItem("infra_room_volume_cuft");
-    sessionStorage.removeItem("infra_room_est_racks");
-    sessionStorage.removeItem("infra_room_clearance_profile");
-    sessionStorage.removeItem("infra_room_reserve_pct");
-    sessionStorage.removeItem("infra_last_pipeline_tool");
+    if (!hasResult) return;
+    clearResultView();
+  }
+
+  function savePipelineContext(data) {
+    sessionStorage.setItem("infra_room_sqft", String(data.totalSqft));
+    sessionStorage.setItem("infra_room_usable_sqft", String(data.usableSqft));
+    sessionStorage.setItem("infra_room_type", data.roomType);
+    sessionStorage.setItem("infra_room_density", data.density);
+    sessionStorage.setItem("infra_room_volume_cuft", String(data.totalCubicFt));
+    sessionStorage.setItem("infra_room_est_racks", String(data.estimatedRacks));
+    sessionStorage.setItem("infra_room_clearance_profile", data.clearance);
+    sessionStorage.setItem("infra_room_reserve_pct", String(data.reserve));
+    sessionStorage.setItem("infra_last_pipeline_tool", "room-square-footage");
+  }
+
+  function renderFlowNote() {
+    const lastTool = sessionStorage.getItem("infra_last_pipeline_tool");
+    const roomSqft = sessionStorage.getItem("infra_room_sqft");
+    const density = sessionStorage.getItem("infra_room_density");
+    const racks = sessionStorage.getItem("infra_room_est_racks");
+
+    if (!els.flowNote) return;
+
+    if (lastTool && lastTool !== "room-square-footage" && (roomSqft || racks)) {
+      els.flowNote.hidden = false;
+      els.flowNote.textContent =
+        `Existing infrastructure context detected: ` +
+        `${roomSqft ? `${roomSqft} sq ft` : "room data"}` +
+        `${density ? `, ${density.toLowerCase()} density` : ""}` +
+        `${racks ? `, ${racks} estimated rack position${racks === "1" ? "" : "s"}` : ""}. ` +
+        `Recalculate here if you want to override it for this lane.`;
+    } else {
+      els.flowNote.hidden = true;
+      els.flowNote.textContent = "";
+    }
   }
 
   function calculate() {
-    const input = readInputs();
+    const length = parseFloat(els.length.value);
+    const width = parseFloat(els.width.value);
+    const height = parseFloat(els.height.value);
+    const reserve = parseFloat(els.reserve.value);
+    const roomType = els.roomType.value;
+    const clearance = els.clearance.value;
 
-    if (!isValid(input)) {
+    if (
+      !Number.isFinite(length) || length <= 0 ||
+      !Number.isFinite(width) || width <= 0 ||
+      !Number.isFinite(height) || height <= 0 ||
+      !Number.isFinite(reserve) || reserve < 0
+    ) {
       alert("Please enter valid positive values for room dimensions and reserve.");
       return;
     }
 
-    const totalSqft = input.length * input.width;
-    const totalCubicFt = totalSqft * input.height;
+    const totalSqft = round(length * width, 1);
+    const totalCubicFt = round(totalSqft * height, 1);
 
-    const clearanceFactor = CLEARANCE_FACTORS[input.clearance] || 0.68;
-    const roomMultiplier = ROOM_TYPE_MULTIPLIERS[input.roomType] || 1.0;
+    const clearanceFactor = CLEARANCE_FACTORS[clearance] || 0.68;
+    const roomMultiplier = ROOM_TYPE_MULTIPLIERS[roomType] || 1.0;
 
     const usableBeforeReserve = totalSqft * clearanceFactor * roomMultiplier;
-    const usableSqft = usableBeforeReserve / (1 + input.reserve / 100);
+    const usableSqft = round(Math.max(usableBeforeReserve / (1 + reserve / 100), 0), 1);
 
-    const estimatedRacks = estimateRackCount(usableSqft, input.roomType);
+    const estimatedRacks = estimateRackCount(usableSqft, roomType);
     const density = classifyDensity(usableSqft, estimatedRacks);
 
-    const data = {
-      ...input,
-      totalSqft: round(totalSqft, 1),
-      totalCubicFt: round(totalCubicFt, 1),
-      usableSqft: round(Math.max(usableSqft, 0), 1),
+    const roomLabel = ROOM_LABELS[roomType] || "Room";
+
+    const densityTone = {
+      Low: "This layout has breathing room and should be easier to service and grow.",
+      Medium: "This layout is workable, but space discipline will matter as hardware and pathway density increase.",
+      High: "This layout is space-efficient but will require tighter planning discipline around clearances, airflow, and future growth."
+    }[density];
+
+    const rackTone =
+      estimatedRacks <= 1
+        ? "Expect this to behave like a compact single-rack or closet-class deployment."
+        : estimatedRacks <= 3
+          ? "This supports a small multi-rack footprint, but aisle discipline and service access will matter."
+          : "This has enough area to support a more deliberate rack layout and staged growth planning.";
+
+    const interpretation =
+      `${fmt(totalSqft, 1)} sq ft places this space in the ${roomLabel} planning range. ` +
+      `After applying ${CLEARANCE_LABELS[clearance].toLowerCase()} clearance assumptions and a ${fmt(reserve)}% planning reserve, ` +
+      `usable working area lands around ${fmt(usableSqft, 1)} sq ft. ` +
+      `${rackTone} ${densityTone} ${ceilingComment(height, roomType)}`;
+
+    const pipelineContext =
+      `Passing forward ${fmt(usableSqft, 1)} usable sq ft, an estimated ${fmt(estimatedRacks)} rack position` +
+      `${estimatedRacks === 1 ? "" : "s"}, ${density.toLowerCase()} density guidance, and ${fmt(totalCubicFt, 0)} cubic ft of room volume into Rack RU Planner.`;
+
+    els.outTotalSqft.textContent = `${fmt(totalSqft, 1)} sq ft`;
+    els.outUsableSqft.textContent = `${fmt(usableSqft, 1)} sq ft`;
+    els.outVolume.textContent = `${fmt(totalCubicFt, 0)} cu ft`;
+    els.outRacks.textContent = fmt(estimatedRacks);
+    els.outDensity.textContent = density;
+    els.outRoomType.textContent = roomLabel;
+    els.interpretationText.textContent = interpretation;
+    els.pipelineContextText.textContent = pipelineContext;
+    els.continueBtn.href = "/tools/infrastructure/rack-ru-planner/";
+
+    savePipelineContext({
+      totalSqft,
+      usableSqft,
+      roomType,
+      density,
+      totalCubicFt,
       estimatedRacks,
-      density
-    };
-
-    writeContext(data);
-
-    renderCards([
-      { label: "Total Room Area", value: `${fmtNumber(data.totalSqft, 1)} sq ft` },
-      { label: "Usable Working Area", value: `${fmtNumber(data.usableSqft, 1)} sq ft` },
-      { label: "Room Volume", value: `${fmtNumber(data.totalCubicFt, 0)} cu ft` },
-      { label: "Estimated Rack Positions", value: fmtNumber(data.estimatedRacks) },
-      { label: "Planning Density", value: data.density },
-      { label: "Room Type", value: ROOM_LABELS[data.roomType] }
-    ]);
-
-    $("interpretation").textContent = buildInterpretation(data);
-    $("pipeline-context").textContent = buildPipelineContext(data);
-
-    $("empty-state").classList.add("hidden");
-    $("results-wrap").classList.remove("hidden");
-    $("continueBtn").setAttribute("href", NEXT_HREF);
-  }
-
-  function reset() {
-    $("length").value = DEFAULTS.length;
-    $("width").value = DEFAULTS.width;
-    $("height").value = DEFAULTS.height;
-    $("roomType").value = DEFAULTS.roomType;
-    $("reserve").value = DEFAULTS.reserve;
-    $("clearance").value = DEFAULTS.clearance;
-    invalidate();
-  }
-
-  function maybeShowFlowNote() {
-    const flow = $("flow-note");
-    if (!flow) return;
-
-    const upstreamRoomSqft = sessionStorage.getItem("infra_room_sqft");
-    const upstreamDensity = sessionStorage.getItem("infra_room_density");
-    const upstreamRacks = sessionStorage.getItem("infra_room_est_racks");
-    const lastTool = sessionStorage.getItem("infra_last_pipeline_tool");
-
-    if (lastTool && lastTool !== "room-square-footage" && (upstreamRoomSqft || upstreamRacks)) {
-      flow.classList.add("is-visible");
-      flow.textContent = `Existing infrastructure context detected: ${upstreamRoomSqft ? `${upstreamRoomSqft} sq ft` : "room data"}${upstreamDensity ? `, ${upstreamDensity.toLowerCase()} density` : ""}${upstreamRacks ? `, ${upstreamRacks} estimated rack position${upstreamRacks === "1" ? "" : "s"}` : ""}. Recalculate here if you want to override it for this lane.`;
-    }
-  }
-
-  function bindInvalidation() {
-    ["length", "width", "height", "roomType", "reserve", "clearance"].forEach((id) => {
-      const el = $(id);
-      if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      clearance,
+      reserve
     });
+
+    showResultView();
+    renderFlowNote();
   }
 
-  function init() {
-    $("calc").addEventListener("click", calculate);
-    $("reset").addEventListener("click", reset);
-    bindInvalidation();
-    clearResults();
-    maybeShowFlowNote();
+  function resetForm() {
+    els.length.value = 16;
+    els.width.value = 10;
+    els.height.value = 9;
+    els.roomType.value = "idf";
+    els.reserve.value = 20;
+    els.clearance.value = "standard";
+    clearResultView();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init, { once: true });
-  } else {
-    init();
-  }
+  [
+    els.length,
+    els.width,
+    els.height,
+    els.roomType,
+    els.reserve,
+    els.clearance
+  ].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", invalidate);
+    el.addEventListener("change", invalidate);
+  });
+
+  if (els.calc) els.calc.addEventListener("click", calculate);
+  if (els.reset) els.reset.addEventListener("click", resetForm);
+
+  clearResultView();
+  renderFlowNote();
 })();
-

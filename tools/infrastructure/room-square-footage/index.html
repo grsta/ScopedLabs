@@ -2,158 +2,96 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Room Square Footage *ScopedLabs</title>
   <meta
     name="description"
-    content="Estimate usable room area, planning density, and rough rack capacity for infrastructure spaces."
+    content="Estimate total room area, usable room area, and rough rack capacity for infrastructure planning."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=infra-room-0401" />
+  <link rel="stylesheet" href="/assets/style.css?v=infra-room-raidtmpl-010" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-  </script>
-  <script defer src="/assets/auth.js?v=0331"></script>
-  <script defer src="/assets/app.js?v=0331"></script>
+  <script defer src="/assets/auth.js?v=0450"></script>
+  <script defer src="/assets/app.js?v=0450"></script>
 
   <style>
-    .tool-hero {
+    .results-grid {
       display: grid;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .flow-note {
-      display: none;
-      padding: 12px 14px;
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: 14px;
-      background: rgba(255,255,255,.03);
-      color: rgba(255,255,255,.88);
-      font-size: .96rem;
-      line-height: 1.5;
-      margin-bottom: 18px;
-    }
-
-    .flow-note.is-visible {
-      display: block;
-    }
-
-    .tool-kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      width: fit-content;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
-      font-size: .82rem;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.74);
-    }
-
-    .mini-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: #79ffb0;
-      box-shadow: 0 0 10px rgba(121,255,176,.55);
-      flex: 0 0 auto;
-    }
-
-    .best-for {
-      margin: 0;
-      color: rgba(255,255,255,.76);
-    }
-
-    .best-for strong {
-      color: #fff;
-      font-weight: 600;
-    }
-
-    .result-grid {
-      display: grid;
+      gap: 10px;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
+      margin-top: 14px;
     }
 
-    .result-card {
+    .result-box {
       border: 1px solid rgba(255,255,255,.10);
-      border-radius: 18px;
+      border-radius: 16px;
       background: rgba(255,255,255,.03);
-      padding: 14px;
+      padding: 12px 14px;
     }
 
-    .result-card .result-label {
-      display: block;
-      font-size: .82rem;
-      color: rgba(255,255,255,.68);
+    .result-box .k {
+      font-size: .78rem;
+      color: rgba(255,255,255,.70);
       margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
     }
 
-    .result-card .result-value {
-      display: block;
+    .result-box .v {
       font-size: 1.2rem;
       font-weight: 700;
       color: #fff;
       line-height: 1.2;
     }
 
-    .summary-block {
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 18px;
-      background: rgba(255,255,255,.03);
-      padding: 16px;
+    .interpretation,
+    .pipeline-context {
       margin-top: 14px;
-    }
-
-    .summary-block h3 {
-      margin: 0 0 10px;
-      font-size: 1rem;
-    }
-
-    .summary-block p {
-      margin: 0;
+      padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
       color: rgba(255,255,255,.88);
       line-height: 1.6;
     }
 
-    .result-actions {
+    .interpretation h3,
+    .pipeline-context h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    .interpretation p,
+    .pipeline-context p {
+      margin: 0;
+    }
+
+    .continue-wrap {
+      margin-top: 16px;
+      display: none;
+    }
+
+    .continue-wrap.show {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 16px;
-    }
-
-    .hidden {
-      display: none !important;
     }
   </style>
 </head>
 
-<body
-  data-tier="pro"
-  data-category="infrastructure"
-  data-pipeline-category="infrastructure"
-  data-pipeline-lane="room_design"
-  data-pipeline-tool="room-square-footage"
->
+<body data-protected="true" data-tier="pro" data-category="infrastructure">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
         <span class="brand-dot"></span>
-        <span class="brand-text">ScopedLabs</span>
+        <span>ScopedLabs</span>
       </a>
 
       <nav class="site-nav">
-        <a class="nav-pill" href="/">Home</a>
-        <a class="nav-pill" href="/tools/">Tools</a>
-        <a class="nav-pill" href="/tools/infrastructure/">Infrastructure</a>
+        <a href="/">Home</a>
+        <a href="/tools/">Tools</a>
+        <a href="/tools/infrastructure/">Infrastructure</a>
       </nav>
     </div>
   </header>
@@ -161,50 +99,57 @@
   <main class="page">
     <div class="container">
       <div class="crumbs">
-        <a href="/tools/">Tools</a> /
-        <a href="/tools/infrastructure/">Infrastructure</a> /
-        Room Square Footage
+        <a href="/tools/">Tools</a>
+        <span>/</span>
+        <a href="/tools/infrastructure/">Infrastructure</a>
+        <span>/</span>
+        <span>Room Square Footage</span>
       </div>
 
-      <section class="tool-hero">
-        <span class="tool-kicker">
-          <span class="mini-dot"></span>
-          Infrastructure Pipeline · Room Design
-        </span>
-
+      <section class="hero">
+        <div class="eyebrow">Infrastructure</div>
         <h1>Room Square Footage</h1>
+        <div
+          id="pipeline"
+          data-pipeline-category="infrastructure"
+          data-pipeline-lane="room_design"
+          data-pipeline-tool="room-square-footage"
+        ></div>
+
         <p class="subhead">
-          Estimate total room area, usable working area, and rough infrastructure density before moving into rack planning.
+          Estimate total room area, usable working area, and rough rack capacity before moving into rack planning.
         </p>
+
+        <div id="flow-note" class="flow-note" hidden></div>
+      </section>
+
+      <section class="card">
         <p class="best-for">
           <strong>Best for:</strong> MDFs, IDFs, server rooms, network closets, and early infrastructure layout scoping.
         </p>
       </section>
-
-      <div id="flow-note" class="flow-note"></div>
-      <div id="pipeline-anchor"></div>
 
       <section class="card tool-card">
         <h2>Inputs</h2>
 
         <div class="form-grid">
           <label class="field">
-            <span class="label">Room Length (ft)</span>
+            <span>Room Length (ft)</span>
             <input id="length" type="number" min="1" step="0.1" value="16" />
           </label>
 
           <label class="field">
-            <span class="label">Room Width (ft)</span>
+            <span>Room Width (ft)</span>
             <input id="width" type="number" min="1" step="0.1" value="10" />
           </label>
 
           <label class="field">
-            <span class="label">Ceiling Height (ft)</span>
+            <span>Ceiling Height (ft)</span>
             <input id="height" type="number" min="6" step="0.1" value="9" />
           </label>
 
           <label class="field">
-            <span class="label">Room Type</span>
+            <span>Room Type</span>
             <select id="roomType">
               <option value="closet">Closet</option>
               <option value="idf" selected>Small IDF</option>
@@ -214,12 +159,12 @@
           </label>
 
           <label class="field">
-            <span class="label">Planning Reserve (%)</span>
+            <span>Planning Reserve (%)</span>
             <input id="reserve" type="number" min="0" step="1" value="20" />
           </label>
 
           <label class="field">
-            <span class="label">Clearance Profile</span>
+            <span>Clearance Profile</span>
             <select id="clearance">
               <option value="tight">Tight / Retrofit</option>
               <option value="standard" selected>Standard</option>
@@ -237,26 +182,54 @@
       <section class="card tool-card">
         <h2>Results</h2>
 
-        <div id="empty-state">
-          <p class="subhead" style="margin:0;">
-            Calculate to estimate usable floor area, density, and rough rack capacity for the next step in the infrastructure pipeline.
-          </p>
+        <div id="emptyState" class="muted">
+          Calculate to estimate usable room area, planning density, and rough rack capacity for the next step in the infrastructure pipeline.
         </div>
 
-        <div id="results-wrap" class="hidden">
-          <div id="result-grid" class="result-grid"></div>
+        <div id="results" hidden>
+          <div class="results-grid">
+            <div class="result-box">
+              <div class="k">Total Room Area</div>
+              <div class="v" id="outTotalSqft">—</div>
+            </div>
 
-          <div class="summary-block">
+            <div class="result-box">
+              <div class="k">Usable Working Area</div>
+              <div class="v" id="outUsableSqft">—</div>
+            </div>
+
+            <div class="result-box">
+              <div class="k">Room Volume</div>
+              <div class="v" id="outVolume">—</div>
+            </div>
+
+            <div class="result-box">
+              <div class="k">Estimated Rack Positions</div>
+              <div class="v" id="outRacks">—</div>
+            </div>
+
+            <div class="result-box">
+              <div class="k">Planning Density</div>
+              <div class="v" id="outDensity">—</div>
+            </div>
+
+            <div class="result-box">
+              <div class="k">Room Classification</div>
+              <div class="v" id="outRoomType">—</div>
+            </div>
+          </div>
+
+          <div class="interpretation">
             <h3>Interpretation</h3>
-            <p id="interpretation"></p>
+            <p id="interpretationText">—</p>
           </div>
 
-          <div class="summary-block">
+          <div class="pipeline-context">
             <h3>Pipeline Context</h3>
-            <p id="pipeline-context"></p>
+            <p id="pipelineContextText">—</p>
           </div>
 
-          <div class="result-actions">
+          <div id="continueWrap" class="continue-wrap">
             <a id="continueBtn" class="btn btn-primary" href="/tools/infrastructure/rack-ru-planner/">Continue to Rack RU Planner</a>
             <a class="btn" href="/tools/infrastructure/">Return to Infrastructure Category</a>
           </div>
@@ -272,7 +245,6 @@
   <script src="./script.js"></script>
 </body>
 </html>
-
 
 
 
