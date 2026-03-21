@@ -1,101 +1,117 @@
-﻿// Panel Capacity Planner (generic, vendor-agnostic)
-(() => {
+﻿(() => {
   const $ = (id) => document.getElementById(id);
+  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
-  function n(id) {
-    const el = $(id);
-    const v = el ? parseFloat(String(el.value ?? "").trim()) : NaN;
-    return Number.isFinite(v) ? v : 0;
+  let hasResult = false;
+
+  const els = {
+    doors: $("doors"),
+    readersPerDoor: $("readersPerDoor"),
+    inputsPerDoor: $("inputsPerDoor"),
+    outputsPerDoor: $("outputsPerDoor"),
+    baseDoors: $("baseDoors"),
+    expDoors: $("expDoors"),
+    maxExp: $("maxExp"),
+    spare: $("spare"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    nextWrap: $("continue-wrap"),
+    nextBtn: $("continue"),
+    flowNote: $("flow-note")
+  };
+
+  function showContinue() {
+    els.nextWrap.style.display = "block";
+    els.nextBtn.disabled = false;
+    hasResult = true;
   }
 
-  function ceilDiv(a, b) {
-    return b <= 0 ? 0 : Math.ceil(a / b);
+  function hideContinue() {
+    els.nextWrap.style.display = "none";
+    els.nextBtn.disabled = true;
+    hasResult = false;
   }
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(div);
-    });
+  function invalidate() {
+    if (!hasResult) return;
+    sessionStorage.removeItem(FLOW_KEY);
+    hideContinue();
+  }
+
+  function loadFlowContext() {
+    const raw = sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.category !== "access-control") return;
+
+    els.flowNote.style.display = "block";
+    els.flowNote.innerHTML = `
+      <strong>System context:</strong><br>
+      ${parsed.data.recommendation || ""}<br>
+      ${parsed.data.reader || ""}<br>
+      ${parsed.data.req ? `Power Load: ${parsed.data.req.toFixed(2)} A` : ""}
+    `;
   }
 
   function calc() {
-    const doors = Math.max(0, Math.floor(n("doors")));
-    const readersPerDoor = Math.max(1, Math.floor(n("readersPerDoor")));
-    const inputsPerDoor = Math.max(0, Math.floor(n("inputsPerDoor")));
-    const outputsPerDoor = Math.max(0, Math.floor(n("outputsPerDoor")));
-    const baseDoors = Math.max(1, Math.floor(n("baseDoors")));
-    const expDoors = Math.max(1, Math.floor(n("expDoors")));
-    const maxExp = Math.max(0, Math.floor(n("maxExp")));
-    const spare = Math.max(0, n("spare"));
+    const doors = +els.doors.value;
+    const spare = +els.spare.value;
 
-    const targetDoors = Math.ceil(doors * (1 + spare / 100));
+    const target = Math.ceil(doors * (1 + spare / 100));
 
-    // Doors capacity per panel = base + (maxExp * expDoors)
-    const doorsPerPanel = baseDoors + (maxExp * expDoors);
+    const base = +els.baseDoors.value;
+    const exp = +els.expDoors.value;
+    const maxExp = +els.maxExp.value;
 
-    const panels = Math.max(1, ceilDiv(targetDoors, doorsPerPanel));
+    const perPanel = base + (maxExp * exp);
+    const panels = Math.ceil(target / perPanel);
 
-    // Now compute approximate expansions needed
-    const totalBaseCapacity = panels * baseDoors;
-    const remainingDoors = Math.max(0, targetDoors - totalBaseCapacity);
-    const expansionsNeeded = ceilDiv(remainingDoors, expDoors);
+    const remaining = target - (panels * base);
+    const expansions = Math.ceil(Math.max(0, remaining) / exp);
 
-    const expPerPanel = panels > 0 ? expansionsNeeded / panels : 0;
+    const readers = doors * +els.readersPerDoor.value;
 
-    // IO totals (planning)
-    const readers = doors * readersPerDoor;
-    const inputs = doors * inputsPerDoor;
-    const outputs = doors * outputsPerDoor;
-
-    const warnings = [];
-    if (expansionsNeeded > panels * maxExp) {
-      warnings.push("Expansion limit exceeded: increase panels or choose higher-capacity controllers.");
-    }
-    if (spare < 10) {
-      warnings.push("Spare capacity is low. Consider 15–25% to avoid future rip-and-replace.");
+    let risk = "Balanced system.";
+    if (expansions > panels * maxExp) {
+      risk = "Expansion limit exceeded — add panels.";
+    } else if (spare < 15) {
+      risk = "Low spare capacity — scaling risk.";
     }
 
-    render([
-      { label: "Doors (requested)", value: `${doors}` },
-      { label: "Spare Capacity", value: `${spare.toFixed(0)}%` },
-      { label: "Doors (with spare)", value: `${targetDoors}` },
+    els.results.innerHTML = `
+      <div class="result-row"><span>Panels Required</span><span>${panels}</span></div>
+      <div class="result-row"><span>Expansion Modules</span><span>${expansions}</span></div>
+      <div class="result-row"><span>Total Readers</span><span>${readers}</span></div>
+      <div class="result-row"><span>Risk</span><span>${risk}</span></div>
+    `;
 
-      { label: "Capacity per Panel (doors)", value: `${doorsPerPanel} (base ${baseDoors} + ${maxExp}×${expDoors})` },
-      { label: "Panels Required (est.)", value: `${panels}` },
-      { label: "Expansion Modules Needed", value: `${expansionsNeeded}` },
-      { label: "Avg Expansions per Panel", value: `${expPerPanel.toFixed(2)}` },
+    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+      category: "access-control",
+      step: "panel-capacity",
+      data: { panels, expansions, readers }
+    }));
 
-      { label: "Total Readers (approx)", value: `${readers}` },
-      { label: "Total Inputs (approx)", value: `${inputs}` },
-      { label: "Total Outputs (approx)", value: `${outputs}` },
-
-      { label: "Notes", value: warnings.length ? warnings.join(" ") : "Estimate tool. Confirm vendor panel door/IO counts and licensing." }
-    ]);
+    showContinue();
   }
 
-  function reset() {
-    $("doors").value = 24;
-    $("readersPerDoor").value = "1";
-    $("inputsPerDoor").value = 2;
-    $("outputsPerDoor").value = 1;
-    $("baseDoors").value = 4;
-    $("expDoors").value = 2;
-    $("maxExp").value = 8;
-    $("spare").value = 20;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-  }
+  els.calc.addEventListener("click", calc);
+  els.reset.addEventListener("click", () => {
+    els.results.innerHTML = `<div class="muted">Run calculation.</div>`;
+    invalidate();
+  });
 
-  $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
+  Object.values(els).forEach(el => {
+    if (el && (el.tagName === "INPUT" || el.tagName === "SELECT")) {
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    }
+  });
 
-  reset();
+  els.nextBtn.addEventListener("click", () => {
+    window.location.href = "/tools/access-control/access-level-sizing/";
+  });
+
+  loadFlowContext();
 })();
-
