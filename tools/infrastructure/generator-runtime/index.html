@@ -3,18 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Generator Runtime Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0331"></script>
-<script defer src="/assets/app.js?v=0331"></script>
+  <title>Generator Runtime • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=infra-gen-001" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  </script>
+  <script defer src="/assets/auth.js?v=0402"></script>
+  <script defer src="/assets/app.js?v=0402"></script>
 </head>
 
-<body data-tier="pro" data-category="infrastructure">
+<body data-tier="pro" data-category="infrastructure" data-step="generator-runtime" data-lane="v1">
+
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
@@ -36,21 +38,34 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
     Generator Runtime
   </div>
 
-  <h1>Generator Runtime Estimator</h1>
-  <p class="subhead">Estimate runtime based on fuel capacity and load draw.</p>
+  <h1>Generator Runtime</h1>
+
+  <div id="pipeline"></div>
+
+  <p class="subhead">
+    Estimate generator runtime and resilience under real-world load conditions.
+  </p>
+
+  <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> validating backup power endurance and outage survivability.
+    </p>
+  </section>
 
   <section class="card tool-card">
     <h2>Inputs</h2>
 
     <div class="form-grid">
       <label class="field">
-        <span class="label">Fuel Capacity (gallons)</span>
-        <input id="fuel" type="number" step="0.1" value="100">
+        <span class="label">Fuel Capacity (gal)</span>
+        <input id="fuel" type="number" value="100">
       </label>
 
       <label class="field">
         <span class="label">Consumption Rate (gal/hr)</span>
-        <input id="rate" type="number" step="0.01" value="4.0">
+        <input id="rate" type="number" value="4.0">
       </label>
 
       <label class="field">
@@ -65,7 +80,7 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
       <label class="field">
         <span class="label">Reserve Fuel (%)</span>
-        <input id="reserve" type="number" step="1" value="10">
+        <input id="reserve" type="number" value="10">
       </label>
     </div>
 
@@ -77,11 +92,24 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results"><div class="muted">Run calculation.</div></div>
   </section>
+
+  <!-- FINAL STEP (no next tool) -->
+  <div id="continue-wrap" class="card" style="display:none;">
+    <div style="display:grid; gap:10px;">
+      <strong>Pipeline Complete</strong>
+      <span class="muted">Infrastructure design validated from space → structure → power.</span>
+      <a href="/tools/infrastructure/" class="btn btn-primary">Return to Infrastructure</a>
+    </div>
+  </div>
 </main>
 
-<script src="./script.js"></script>
+<script src="/assets/tool-flow.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/pipelines.js"></script>
+<script src="/assets/pipeline.js"></script>
+<script src="./script.js?v=002"></script>
 </body>
 </html>
 

@@ -98,6 +98,7 @@
             { id: "rack-weight-load", label: "Rack Load", href: "/tools/infrastructure/rack-weight-load/" },
             { id: "floor-load-rating", label: "Floor Load", href: "/tools/infrastructure/floor-load-rating/" },
             { id: "ups-room-sizing", label: "UPS Space", href: "/tools/infrastructure/ups-room-sizing/" }
+            { id: "generator-runtime", label: "Generator", href: "/tools/infrastructure/generator-runtime/" }
           ],
 
           pathways: [
