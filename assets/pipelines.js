@@ -91,7 +91,7 @@
       infrastructure: {
         label: "Infrastructure",
         lanes: {
-          room_design: [
+          v1: [
             { id: "room-square-footage", label: "Room", href: "/tools/infrastructure/room-square-footage/" },
             { id: "rack-ru-planner", label: "Rack RU", href: "/tools/infrastructure/rack-ru-planner/" },
             { id: "equipment-spacing", label: "Spacing", href: "/tools/infrastructure/equipment-spacing/" },
