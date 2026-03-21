@@ -32,7 +32,17 @@
 
   function invalidate() {
     if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
+
+    try {
+      const raw = sessionStorage.getItem(FLOW_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.category === "access-control") {
+          sessionStorage.removeItem(FLOW_KEY);
+        }
+      }
+    } catch {}
+
     hideContinue();
   }
 
@@ -53,14 +63,63 @@
     const raw = sessionStorage.getItem(FLOW_KEY);
     if (!raw) return;
 
-    const parsed = JSON.parse(raw);
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
     if (!parsed || parsed.category !== "access-control") return;
 
-    const data = parsed.data;
+    const d = parsed.data;
+    if (!d) return;
 
     els.flowNote.style.display = "block";
+
     els.flowNote.innerHTML = `
-      <strong>From previous step:</strong> ${data.recommendation} (${data.dominantFactor})
+      <div style="display:grid; gap:10px;">
+        
+        <div style="font-weight:600;">
+          From previous step:
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Recommendation</span>
+          <span class="result-value">${d.recommendation}</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Door Type</span>
+          <span class="result-value">${d.doorTypeLabel}</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Life Safety</span>
+          <span class="result-value">${d.lifeLabel}</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Threat Level</span>
+          <span class="result-value">${d.threatLabel}</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Power Reliability</span>
+          <span class="result-value">${d.powerLossLabel}</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Fire Integration</span>
+          <span class="result-value">${d.fireLabel}</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Dominant Factor</span>
+          <span class="result-value">${d.dominantFactor}</span>
+        </div>
+
+      </div>
     `;
   }
 
@@ -71,32 +130,36 @@
     const throughput = els.throughput.value;
     const iface = els.iface.value;
 
-    let interfaceRec = iface === "osdp"
-      ? "OSDP (secure, supervised)"
-      : "Wiegand (legacy, not encrypted)";
+    let interfaceRec =
+      iface === "osdp"
+        ? "OSDP (secure, supervised)"
+        : "Wiegand (legacy, not encrypted)";
 
     let reader = "Smart card reader";
     if (cred === "mobile") reader = "Mobile credential reader";
     if (cred === "pin") reader = "Keypad reader";
     if (cred === "multi") reader = "Multi-factor reader";
 
-    let security = sec === "high"
-      ? "Use encrypted credentials + OSDP + MFA where needed"
-      : sec === "med"
-      ? "Encrypted credentials recommended"
-      : "Standard credentials acceptable";
+    let security =
+      sec === "high"
+        ? "Encrypted credentials + OSDP + MFA recommended"
+        : sec === "med"
+        ? "Encrypted credentials recommended"
+        : "Standard credentials acceptable";
 
-    let envNote = env === "harsh"
-      ? "Use industrial/IP-rated reader"
-      : env === "outdoor"
-      ? "Use weather-rated reader"
-      : "Indoor-rated reader is fine";
+    let envNote =
+      env === "harsh"
+        ? "Use industrial/IP-rated reader"
+        : env === "outdoor"
+        ? "Use weather-rated reader"
+        : "Indoor-rated reader is fine";
 
-    let throughputNote = throughput === "handsfree"
-      ? "Long-range / BLE readers required"
-      : throughput === "fast"
-      ? "Optimize for fast authentication"
-      : "Standard read speed acceptable";
+    let throughputNote =
+      throughput === "handsfree"
+        ? "Long-range / BLE readers required"
+        : throughput === "fast"
+        ? "Optimize for fast authentication"
+        : "Standard read speed acceptable";
 
     render([
       { label: "Reader Type", value: reader },
@@ -106,20 +169,27 @@
       { label: "Throughput", value: throughputNote }
     ]);
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "access-control",
-      step: "reader-type-selector",
-      data: {
-        reader,
-        interfaceRec,
-        security
-      }
-    }));
+    // SAVE PIPELINE
+    sessionStorage.setItem(
+      FLOW_KEY,
+      JSON.stringify({
+        category: "access-control",
+        step: "reader-type-selector",
+        data: {
+          reader,
+          interfaceRec,
+          security,
+          envNote,
+          throughputNote
+        }
+      })
+    );
 
     showContinue();
   }
 
   els.calc.addEventListener("click", calc);
+
   els.reset.addEventListener("click", () => {
     els.results.innerHTML = `<div class="muted">Run recommendation.</div>`;
     invalidate();
