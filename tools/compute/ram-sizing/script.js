@@ -54,6 +54,52 @@
     return parsed.data;
   }
 
+  function loadFlowContext() {
+  const raw = sessionStorage.getItem(FLOW_KEY);
+  if (!raw) return;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return;
+  }
+
+  if (!parsed || parsed.category !== "compute") return;
+  if (parsed.step !== "cpu-sizing") return;
+
+  const d = parsed.data;
+  if (!d) return;
+
+  const el = $("flow-note");
+  el.style.display = "block";
+
+  el.innerHTML = `
+    <div style="display:grid; gap:10px;">
+      
+      <div style="font-weight:600;">
+        From CPU Sizing:
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Recommended Cores</span>
+        <span class="result-value">${d.cores}</span>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Effective Load</span>
+        <span class="result-value">${d.eff.toFixed(2)}</span>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Workload</span>
+        <span class="result-value">${d.workload}</span>
+      </div>
+
+    </div>
+  `;
+}
+
   function calc() {
     const cpuData = loadCPU();
 
