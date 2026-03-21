@@ -1,11 +1,46 @@
-﻿// Backup Window Estimator
-(() => {
+﻿(() => {
   const $ = (id) => document.getElementById(id);
+  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
-  function n(id) {
-    const el = $(id);
-    const v = el ? parseFloat(String(el.value ?? "").trim()) : NaN;
-    return Number.isFinite(v) ? v : 0;
+  let hasResult = false;
+  let context = null;
+
+  function loadContext() {
+    const raw = sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.category !== "compute") return null;
+
+    return parsed;
+  }
+
+  function loadFlow() {
+    context = loadContext();
+    if (!context) return;
+
+    const el = $("flow-note");
+    el.style.display = "block";
+
+    const d = context.data;
+
+    el.innerHTML = `
+      <div style="display:grid; gap:10px;">
+        <div style="font-weight:600;">System Context:</div>
+
+        ${d.hours ? `
+        <div class="result-row">
+          <span>Rebuild Time</span>
+          <span>${d.hours.toFixed(1)} hrs</span>
+        </div>` : ""}
+
+        ${d.risk ? `
+        <div class="result-row">
+          <span>Risk Level</span>
+          <span>${d.risk}</span>
+        </div>` : ""}
+      </div>
+    `;
   }
 
   function render(rows) {
@@ -23,77 +58,63 @@
   }
 
   function calc() {
-    const dataTb = Math.max(0, n("dataTb"));
-    const changePct = Math.max(0, n("changePct"));
-    const type = $("type").value; // full|inc|diff
-    const mbps = Math.max(1, n("mbps"));
-    const savingsPct = Math.max(0, n("savingsPct"));
-    const overheadPct = Math.max(0, n("overheadPct"));
+    const dataTb = +$("dataTb").value;
+    const changePct = +$("changePct").value;
+    const type = $("type").value;
+    const mbps = +$("mbps").value;
+    const savings = +$("savingsPct").value;
+    const overhead = +$("overheadPct").value;
 
-    if (dataTb <= 0) {
-      render([{ label: "Error", value: "Dataset size must be > 0 TB" }]);
-      return;
-    }
+    let data = dataTb;
 
-    // Determine effective data to copy
-    let dataToCopyTb = dataTb;
+    if (type === "inc") data = dataTb * (changePct / 100);
+    if (type === "diff") data = dataTb * Math.min(1, (changePct / 100) * 2);
 
-    if (type === "inc") {
-      dataToCopyTb = dataTb * (changePct / 100);
-    } else if (type === "diff") {
-      // differential tends to grow over time; approximate as 2× daily change if not reset often
-      dataToCopyTb = dataTb * Math.min(1, (changePct / 100) * 2);
-    }
+    const afterSavings = data * (1 - savings / 100);
+    const effective = afterSavings * (1 + overhead / 100);
 
-    // Apply savings (compression/dedup reduces bytes written)
-    const afterSavingsTb = dataToCopyTb * (1 - savingsPct / 100);
-
-    // Apply overhead (encryption, small files, verification, metadata, etc.)
-    const effectiveTb = afterSavingsTb * (1 + overheadPct / 100);
-
-    // Convert TB -> MB (decimal) then divide by MB/s to seconds
-    const totalMB = effectiveTb * 1_000_000; // 1 TB = 1,000,000 MB
+    const totalMB = effective * 1_000_000;
     const seconds = totalMB / mbps;
-
     const hours = seconds / 3600;
-    const mins = (hours - Math.floor(hours)) * 60;
 
     const windowText =
       hours >= 1
-        ? `${Math.floor(hours)}h ${Math.round(mins)}m`
+        ? `${Math.floor(hours)}h ${Math.round((hours % 1) * 60)}m`
         : `${Math.round(hours * 60)}m`;
 
-    // Throughput guidance
-    const note = [
-      "Throughput is usually limited by: source read speed, network, target write, and backup software overhead.",
-      "If small files: real throughput can be much lower than link speed.",
-      "Consider adding a verification window (hash/check) if required."
-    ].join(" ");
+    let insight = "Backup window is within reasonable limits.";
+    if (hours > 6) insight = "Backup may exceed maintenance window.";
+    if (hours > 12) insight = "Backup strategy needs optimization.";
+    if (hours > 24) insight = "Recovery time may be unacceptable.";
+
+    if (context && context.data?.hours) {
+      const rebuild = context.data.hours;
+      if (hours > rebuild) {
+        insight = "Backup takes longer than rebuild window — high recovery risk.";
+      }
+    }
 
     render([
       { label: "Backup Type", value: type.toUpperCase() },
-      { label: "Data to Copy (raw)", value: `${dataToCopyTb.toFixed(3)} TB` },
-      { label: "After Savings", value: `${afterSavingsTb.toFixed(3)} TB` },
-      { label: "After Overhead", value: `${effectiveTb.toFixed(3)} TB` },
-
-      { label: "Effective Throughput", value: `${mbps.toFixed(0)} MB/s` },
-      { label: "Estimated Backup Window", value: windowText },
-      { label: "Notes", value: note }
+      { label: "Data to Copy", value: `${data.toFixed(2)} TB` },
+      { label: "Effective Data", value: `${effective.toFixed(2)} TB` },
+      { label: "Throughput", value: `${mbps} MB/s` },
+      { label: "Backup Window", value: windowText },
+      { label: "Insight", value: insight }
     ]);
-  }
 
-  function reset() {
-    $("dataTb").value = 10;
-    $("changePct").value = 5;
-    $("type").value = "inc";
-    $("mbps").value = 250;
-    $("savingsPct").value = 20;
-    $("overheadPct").value = 15;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    $("complete-wrap").style.display = "block";
+
+    hasResult = true;
   }
 
   $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
 
-  reset();
+  $("reset").addEventListener("click", () => {
+    $("results").innerHTML = `<div class="muted">Run calculation.</div>`;
+    $("complete-wrap").style.display = "none";
+    hasResult = false;
+  });
+
+  loadFlow();
 })();
