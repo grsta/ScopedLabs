@@ -3,6 +3,7 @@
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
   let chart = null;
+  let chartWrap = null;
   let hasResult = false;
 
   const els = {
@@ -25,6 +26,10 @@
       chart.destroy();
       chart = null;
     }
+    if (chartWrap && chartWrap.parentNode) {
+      chartWrap.parentNode.removeChild(chartWrap);
+    }
+    chartWrap = null;
   }
 
   function showContinue() {
@@ -117,11 +122,20 @@
   function renderChart(metrics) {
     destroyChart();
 
+    chartWrap = document.createElement("div");
+    chartWrap.style.marginTop = "16px";
+    chartWrap.style.width = "100%";
+    chartWrap.style.height = "340px";
+    chartWrap.style.minHeight = "340px";
+    chartWrap.style.position = "relative";
+
     const canvas = document.createElement("canvas");
     canvas.style.width = "100%";
-    canvas.style.height = "340px";
-    canvas.parentElement && (canvas.parentElement.style.minHeight = "340px");
-    els.results.appendChild(canvas);
+    canvas.style.height = "100%";
+    canvas.style.display = "block";
+
+    chartWrap.appendChild(canvas);
+    els.results.appendChild(chartWrap);
 
     const labels = [
       "Peak Load",
@@ -366,12 +380,6 @@
       },
       plugins: [chartBgPlugin, thresholdBandPlugin]
     });
-
-    canvas.style.width = "100%";
-    canvas.style.height = "340px";
-    if (canvas.parentElement) {
-      canvas.parentElement.style.minHeight = "340px";
-    }
   }
 
   function calc() {
@@ -438,6 +446,7 @@
 
   els.reset.addEventListener("click", () => {
     els.results.innerHTML = `<div class="muted">Run calculation.</div>`;
+    destroyChart();
     invalidate();
   });
 
