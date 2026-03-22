@@ -28,13 +28,13 @@
   }
 
   function hideContinue(){
-    els.continueWrap.style.display="none";
-    els.continueBtn.disabled=true;
+    els.continueWrap.style.display = "none";
+    els.continueBtn.disabled = true;
   }
 
   function showContinue(){
-    els.continueWrap.style.display="";
-    els.continueBtn.disabled=false;
+    els.continueWrap.style.display = "";
+    els.continueBtn.disabled = false;
   }
 
   function clearStored(){
@@ -44,34 +44,65 @@
   function invalidate(){
     clearStored();
     hideContinue();
-    els.results.innerHTML=`<div class="muted">Enter values and press Calculate.</div>`;
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
   }
 
   function loadPrior(){
-    let saved=null;
+    let saved = null;
     try{
-      saved=JSON.parse(sessionStorage.getItem(STORAGE_KEY)||"null");
-    }catch{}
+      saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+    }catch{
+      saved = null;
+    }
 
-    if(!saved || saved.category!==CATEGORY || saved.step!=="cpu-utilization-impact") return;
+    els.flowNote.style.display = "none";
+    els.flowNote.innerHTML = "";
 
-    const d=saved.data||{};
+    if(!saved || saved.category !== CATEGORY || saved.step !== "cpu-utilization-impact") return;
+
+    const d = saved.data || {};
+
+    const cpuUtilization = Number(d.cpuUtilization);      // fraction
+    const latency = Number(d.latency);
+    const safeUtilization = Number(d.safeUtilization);    // fraction
+
+    // Carry over into inputs
+    if (Number.isFinite(safeUtilization) && safeUtilization > 0) {
+      els.util.value = Math.round(safeUtilization * 100);
+    } else if (Number.isFinite(cpuUtilization) && cpuUtilization > 0) {
+      els.util.value = Math.round(cpuUtilization * 100);
+    }
+
+    // Light heuristic to seed capacity if prior latency was already high
+    if (Number.isFinite(latency)) {
+      if (latency > 150) els.cap.value = 2500;
+      else if (latency > 75) els.cap.value = 2000;
+      else els.cap.value = 1500;
+    }
 
     els.flowNote.innerHTML = `
       <strong>Carried over context</strong><br>
-      CPU Utilization: <strong>${(d.cpuUtilization*100).toFixed(1)}%</strong>,
-      Latency: <strong>${d.latency?.toFixed?.(1) ?? "—"} ms</strong>.
-      This step evaluates storage bottlenecks.
+      CPU Utilization: <strong>${Number.isFinite(cpuUtilization) ? (cpuUtilization * 100).toFixed(1) : "—"}%</strong>,
+      Latency: <strong>${Number.isFinite(latency) ? latency.toFixed(1) : "—"} ms</strong>,
+      Recommended Max CPU Util: <strong>${Number.isFinite(safeUtilization) ? (safeUtilization * 100).toFixed(0) : "—"}%</strong>.
+      These values were used to seed the disk target utilization and capacity assumption.
     `;
-    els.flowNote.style.display="";
+    els.flowNote.style.display = "";
   }
 
   function calc(){
-    const riops=parseFloat(els.riops.value);
-    const wiops=parseFloat(els.wiops.value);
-    const iosz=parseFloat(els.iosz.value);
-    const cap=parseFloat(els.cap.value);
-    const util=parseFloat(els.util.value)/100;
+    const riops = parseFloat(els.riops.value);
+    const wiops = parseFloat(els.wiops.value);
+    const iosz = parseFloat(els.iosz.value);
+    const cap = parseFloat(els.cap.value);
+    const util = parseFloat(els.util.value) / 100;
+
+    if(!Number.isFinite(riops) || !Number.isFinite(wiops) || !Number.isFinite(iosz) || !Number.isFinite(cap) || !Number.isFinite(util)){
+      els.results.innerHTML = row("Status", "Invalid input");
+      hideContinue();
+      clearStored();
+      return;
+    }
 
     const totalIops = riops + wiops;
     const mbps = (totalIops * iosz) / 1024;
@@ -106,8 +137,11 @@
       category: CATEGORY,
       step: STEP,
       data: {
+        totalIops,
         throughput: mbps,
-        utilization: pct/100,
+        utilization: pct / 100,
+        targetUtilization: util,
+        capacityMBps: cap,
         saturated: mbps > maxAtTarget
       }
     }));
@@ -116,19 +150,19 @@
   }
 
   function reset(){
-    els.riops.value=12000;
-    els.wiops.value=6000;
-    els.iosz.value=16;
-    els.cap.value=1500;
-    els.util.value=75;
-    els.results.innerHTML="";
+    els.riops.value = 12000;
+    els.wiops.value = 6000;
+    els.iosz.value = 16;
+    els.cap.value = 1500;
+    els.util.value = 75;
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     clearStored();
     hideContinue();
     loadPrior();
   }
 
   function bind(){
-    [els.riops, els.wiops, els.iosz, els.cap, els.util].forEach(el=>{
+    [els.riops, els.wiops, els.iosz, els.cap, els.util].forEach(el => {
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
@@ -139,9 +173,9 @@
     loadPrior();
     bind();
 
-    els.calc.onclick=calc;
-    els.reset.onclick=reset;
-    els.continueBtn.onclick=()=>window.location.href=NEXT_URL;
+    els.calc.onclick = calc;
+    els.reset.onclick = reset;
+    els.continueBtn.onclick = () => window.location.href = NEXT_URL;
   }
 
   init();
