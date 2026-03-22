@@ -11,6 +11,8 @@
 
   function render(rows) {
     const el = $("results");
+    if (!el) return;
+
     el.innerHTML = "";
     rows.forEach((r) => {
       const d = document.createElement("div");
@@ -24,12 +26,16 @@
   }
 
   function showContinue() {
-    $("continue").style.display = "inline-block";
+    const btn = $("continue");
+    if (!btn) return;
+    btn.style.display = "inline-block";
     hasResult = true;
   }
 
   function hideContinue() {
-    $("continue").style.display = "none";
+    const btn = $("continue");
+    if (!btn) return;
+    btn.style.display = "none";
     hasResult = false;
   }
 
@@ -58,8 +64,8 @@
       const tilt = Number(data.tilt || 0);
       const tiltClass = data.tiltClass || "";
 
-      if (dist > 0) $("dist").value = dist.toFixed(0);
-      if (h > 0) $("h").value = h.toFixed(0);
+      if ($("dist") && dist > 0) $("dist").value = String(Math.round(dist));
+      if ($("h") && h > 0) $("h").value = String(Math.round(h));
 
       note.innerHTML = `
         <strong>Flow context:</strong>
@@ -71,7 +77,7 @@
         Use field of view now to determine how much scene width that mounting geometry can realistically cover.
       `;
       note.style.display = "block";
-    } catch {
+    } catch (err) {
       note.style.display = "none";
       note.innerHTML = "";
     }
@@ -104,10 +110,17 @@
   }
 
   function calc() {
-    const dist = Math.max(0.1, parseFloat($("dist").value) || 0.1);
-    const hfov = Math.max(1, parseFloat($("hfov").value) || 1);
-    const scene = Math.max(0, parseFloat($("scene").value) || 0);
-    const h = Math.max(0, parseFloat($("h").value) || 0);
+    const distEl = $("dist");
+    const hfovEl = $("hfov");
+    const sceneEl = $("scene");
+    const hEl = $("h");
+
+    if (!distEl || !hfovEl || !sceneEl || !hEl) return;
+
+    const dist = Math.max(0.1, parseFloat(distEl.value) || 0.1);
+    const hfov = Math.max(1, parseFloat(hfovEl.value) || 1);
+    const scene = Math.max(0, parseFloat(sceneEl.value) || 0);
+    const h = Math.max(0, parseFloat(hEl.value) || 0);
 
     const sceneWidth = 2 * Math.tan(deg2rad(hfov / 2)) * dist;
     const halfWidth = sceneWidth / 2;
@@ -150,15 +163,14 @@
     }));
 
     showContinue();
-    showFlowNote();
   }
 
   function reset() {
-    $("dist").value = 40;
-    $("hfov").value = 90;
-    $("scene").value = 60;
-    $("h").value = 12;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    if ($("dist")) $("dist").value = 40;
+    if ($("hfov")) $("hfov").value = 90;
+    if ($("scene")) $("scene").value = 60;
+    if ($("h")) $("h").value = 12;
+    if ($("results")) $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     sessionStorage.removeItem(FLOW_KEY);
     hideContinue();
     showFlowNote();
@@ -170,18 +182,25 @@
     showFlowNote();
   }
 
-  $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
+  const calcBtn = $("calc");
+  const resetBtn = $("reset");
+  const continueBtn = $("continue");
+
+  if (calcBtn) calcBtn.addEventListener("click", calc);
+  if (resetBtn) resetBtn.addEventListener("click", reset);
 
   ["dist", "hfov", "scene", "h"].forEach((id) => {
     const el = $(id);
+    if (!el) return;
     el.addEventListener("input", invalidate);
     el.addEventListener("change", invalidate);
   });
 
-  $("continue").addEventListener("click", () => {
-    window.location.href = NEXT_URL;
-  });
+  if (continueBtn) {
+    continueBtn.addEventListener("click", () => {
+      window.location.href = NEXT_URL;
+    });
+  }
 
   showFlowNote();
 })();
