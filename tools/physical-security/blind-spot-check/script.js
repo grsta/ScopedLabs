@@ -1,9 +1,15 @@
 ﻿(() => {
   const $ = id => document.getElementById(id);
+  const KEY = "scopedlabs:pipeline:last-result";
+  const NEXT_URL = "/tools/physical-security/";
+
+  function deg2rad(x){ return x * Math.PI / 180; }
+
+  let prev = null;
 
   function render(rows){
-    const el=$("results");
-    el.innerHTML="";
+    const el = $("results");
+    el.innerHTML = "";
     rows.forEach(r=>{
       const d=document.createElement("div");
       d.className="result-row";
@@ -13,7 +19,58 @@
     });
   }
 
-  function deg2rad(x){ return x * Math.PI / 180; }
+  function showContinue(){
+    $("continue").style.display = "inline-block";
+  }
+
+  function hideContinue(){
+    $("continue").style.display = "none";
+  }
+
+  // ✅ CARRY OVER FROM CAMERA-SPACING
+  function showFlowNote(){
+    const note = $("flow-note");
+
+    try{
+      const raw = sessionStorage.getItem(KEY);
+      if(!raw){ note.style.display="none"; return; }
+
+      const parsed = JSON.parse(raw);
+      if(parsed.step !== "camera-spacing"){ note.style.display="none"; return; }
+
+      prev = parsed.data;
+
+      if(prev.cams) $("cams").value = prev.cams;
+
+      note.innerHTML = `
+        <strong>Flow context:</strong>
+        Layout includes <strong>${prev.cams}</strong> cameras with spacing
+        <strong>${prev.spacing?.toFixed(1) || "—"} ft</strong>.
+        This step validates if blind spots remain.
+      `;
+
+      note.style.display = "block";
+
+    }catch{
+      note.style.display="none";
+    }
+  }
+
+  function classify(gap, width){
+    if(gap <= 0) return "FULL COVERAGE";
+    if(gap <= 0.1 * width) return "MINOR GAPS";
+    return "BLIND SPOTS";
+  }
+
+  function interpretation(status){
+    if(status === "FULL COVERAGE"){
+      return "Coverage is continuous with overlap. No blind spots expected.";
+    }
+    if(status === "MINOR GAPS"){
+      return "Small gaps may exist depending on real-world conditions and alignment.";
+    }
+    return "Coverage gaps are likely. Additional cameras or tighter spacing required.";
+  }
 
   function calc(){
     const w=parseFloat($("w").value);
@@ -23,29 +80,31 @@
     const cams=Math.max(1, Math.floor(parseFloat($("cams").value)));
     const overlap=parseFloat($("overlap").value)/100;
 
-    // coverage width at distance for one camera
-    const half = Math.tan(deg2rad(hfov/2)) * dist;
-    const cov = half * 2; // feet
+    const cov = 2 * Math.tan(deg2rad(hfov/2)) * dist;
+    const eff = cov * (1 - overlap);
+    const total = eff * cams;
 
-    // effective coverage accounting for overlap between adjacent cameras
-    const effectivePerCam = cov * (1 - overlap);
-    const totalCoverage = effectivePerCam * cams;
-
-    const gap = w - totalCoverage;
-
-    const status = gap <= 0 ? "COVERED (with overlap)" :
-                   gap <= (0.1*w) ? "MINOR GAPS POSSIBLE" :
-                   "BLIND SPOTS LIKELY";
+    const gap = w - total;
+    const status = classify(gap, w);
+    const interp = interpretation(status);
 
     render([
-      {label:"Coverage Width per Camera", value:`${cov.toFixed(1)} ft @ ${dist.toFixed(0)} ft`},
-      {label:"Overlap Target", value:`${(overlap*100).toFixed(0)}%`},
-      {label:"Total Effective Coverage", value:`${totalCoverage.toFixed(1)} ft`},
+      {label:"Coverage per Camera", value:`${cov.toFixed(1)} ft`},
+      {label:"Effective Coverage", value:`${eff.toFixed(1)} ft`},
+      {label:"Total Coverage", value:`${total.toFixed(1)} ft`},
       {label:"Area Width", value:`${w.toFixed(1)} ft`},
-      {label:"Estimated Gap", value: gap <= 0 ? "0 ft (overlapped)" : `${gap.toFixed(1)} ft`},
-      {label:"Result", value: status},
-      {label:"Note", value:"Planning estimate only. Real coverage depends on lens, angle, obstructions, and required pixel density."}
+      {label:"Gap", value: gap <= 0 ? "0 ft" : `${gap.toFixed(1)} ft`},
+      {label:"Result", value:status},
+      {label:"Interpretation", value:interp}
     ]);
+
+    sessionStorage.setItem(KEY, JSON.stringify({
+      category:"physical-security",
+      step:"blind-spot-check",
+      data:{ gap, status }
+    }));
+
+    showContinue();
   }
 
   function reset(){
@@ -56,9 +115,27 @@
     $("cams").value=2;
     $("overlap").value=15;
     $("results").innerHTML="";
+    sessionStorage.removeItem(KEY);
+    hideContinue();
   }
 
-  $("calc").onclick=calc;
-  $("reset").onclick=reset;
+  function invalidate(){
+    sessionStorage.removeItem(KEY);
+    hideContinue();
+  }
+
+  ["w","d","hfov","dist","cams","overlap"].forEach(id=>{
+    const el = $(id);
+    if(el) el.addEventListener("input", invalidate);
+  });
+
+  $("calc").onclick = calc;
+  $("reset").onclick = reset;
+
+  $("continue").onclick = () => {
+    window.location.href = NEXT_URL;
+  };
+
+  showFlowNote();
 })();
 
