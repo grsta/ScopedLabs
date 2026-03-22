@@ -150,6 +150,21 @@
         const { ctx, chartArea, scales } = c;
         if (!chartArea || !scales.x) return;
 
+        const chartBgPlugin = {
+          id: "chartBgPlugin",
+          beforeDraw(c) {
+            const { ctx, chartArea } = c;
+            if (!chartArea) return;
+
+            const { left, top, width, height } = chartArea;
+
+            ctx.save();
+            ctx.fillStyle = "rgba(255,255,255,0.03)";
+            ctx.fillRect(left, top, width, height);
+            ctx.restore();
+      }
+    };
+
         const x = scales.x;
         const { top, bottom, left, right } = chartArea;
 
@@ -160,13 +175,13 @@
 
         // Healthy band
         if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.08)";
+          ctx.fillStyle = "rgba(46, 204, 113, 0.14)";
           ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
         }
 
         // Watch band
         if (watchMax > 80) {
-          ctx.fillStyle = "rgba(255, 170, 51, 0.08)";
+          ctx.fillStyle = "rgba(255, 170, 51, 0.14)";
           ctx.fillRect(
             x.getPixelForValue(80),
             top,
@@ -177,7 +192,7 @@
 
         // Risk band
         if (x.max > 150) {
-          ctx.fillStyle = "rgba(255, 77, 77, 0.08)";
+          ctx.fillStyle = "rgba(255, 77, 77, 0.14)";
           ctx.fillRect(
             x.getPixelForValue(150),
             top,
@@ -234,6 +249,8 @@
         datasets: [
           {
             label: "Access Design Metrics",
+            barPercentage: 0.55,
+            categoryPercentage: 0.65,
             data: values,
             borderWidth: 1.5,
             borderRadius: 8,
@@ -275,6 +292,14 @@
           duration: 700,
           easing: "easeOutQuart"
         },
+        layout: {
+          padding: {
+          top: 28,
+          right: 10,
+          left: 10,
+          bottom: 0
+        }
+      },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -317,7 +342,7 @@
           }
         }
       },
-      plugins: [thresholdBandPlugin]
+      plugins: [thresholdBandPlugin, chartBgPlugin]
     });
   }
 
