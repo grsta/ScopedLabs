@@ -87,10 +87,6 @@
     }
   }
 
-  function clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max);
-  }
-
   function invalidate() {
     clearStored();
     hideContinue();
@@ -108,25 +104,54 @@
 
     const d = saved.data || {};
 
-    const cacheHitRatioPct = num(d.cacheHitRatioPct);
-    const missRequestsPerSecond = num(d.missRequestsPerSecond);
-    const avgLatencyMs = num(d.avgLatencyMs);
-    const latencyReductionPct = num(d.latencyReductionPct);
-    const backendLoadReductionPct = num(d.backendLoadReductionPct);
-    const cacheStatus = d.cacheStatus || "—";
+    const cacheHitRatioPct =
+      num(d.cacheHitRatioPct) ??
+      (num(d.cacheHit) !== null ? num(d.cacheHit) * 100 : null);
+
+    const avgLatencyMs =
+      num(d.avgLatencyMs) ??
+      num(d.avgLatency);
+
+    const missRequestsPerSecond =
+      num(d.missRequestsPerSecond) ??
+      num(d.backendLoadRps) ??
+      num(d.backendLoad);
+
+    const hitRequestsPerSecond =
+      num(d.hitRequestsPerSecond);
+
+    const latencyReductionPct =
+      num(d.latencyReductionPct) ??
+      num(d.reductionPct);
+
+    const backendLoadReductionPct =
+      num(d.backendLoadReductionPct) ??
+      cacheHitRatioPct;
+
+    const cacheStatus =
+      d.cacheStatus ||
+      d.status ||
+      (
+        cacheHitRatioPct !== null
+          ? cacheHitRatioPct >= 90 ? "EXCELLENT"
+          : cacheHitRatioPct >= 80 ? "GOOD"
+          : cacheHitRatioPct >= 65 ? "MODERATE"
+          : "WEAK"
+          : "—"
+      );
 
     if (cacheStatus === "EXCELLENT") {
-      els.cpu.value = "45";
-      els.ram.value = "50";
-      els.disk.value = "35";
+      els.cpu.value = "42";
+      els.ram.value = "48";
+      els.disk.value = "36";
       els.net.value = "30";
     } else if (cacheStatus === "GOOD") {
-      els.cpu.value = "58";
+      els.cpu.value = "56";
       els.ram.value = "60";
-      els.disk.value = "48";
-      els.net.value = "40";
+      els.disk.value = "46";
+      els.net.value = "38";
     } else if (cacheStatus === "MODERATE") {
-      els.cpu.value = "72";
+      els.cpu.value = "70";
       els.ram.value = "68";
       els.disk.value = "58";
       els.net.value = "46";
@@ -134,13 +159,41 @@
       els.cpu.value = "84";
       els.ram.value = "76";
       els.disk.value = "66";
-      els.net.value = "55";
+      els.net.value = "54";
+    }
+
+    if (missRequestsPerSecond !== null) {
+      if (missRequestsPerSecond <= 500) {
+        els.cpu.value = "40";
+        els.ram.value = "46";
+        els.disk.value = "34";
+        els.net.value = "28";
+      } else if (missRequestsPerSecond <= 1500) {
+        els.cpu.value = "55";
+        els.ram.value = "58";
+        els.disk.value = "45";
+        els.net.value = "36";
+      } else if (missRequestsPerSecond <= 3000) {
+        els.cpu.value = "68";
+        els.ram.value = "66";
+        els.disk.value = "56";
+        els.net.value = "44";
+      } else {
+        els.cpu.value = "82";
+        els.ram.value = "74";
+        els.disk.value = "64";
+        els.net.value = "52";
+      }
     }
 
     const parts = [];
 
     if (cacheHitRatioPct !== null) {
       parts.push(`Cache Hit Ratio: <strong>${fmt(cacheHitRatioPct, 1)}%</strong>`);
+    }
+
+    if (hitRequestsPerSecond !== null) {
+      parts.push(`Hit Requests: <strong>${fmt(hitRequestsPerSecond, 0)} req/s</strong>`);
     }
 
     if (missRequestsPerSecond !== null) {
@@ -164,7 +217,7 @@
     showFlowNote(`
       <strong>Carried over context</strong><br>
       ${parts.join(", ")}.
-      This step now evaluates which subsystem is most likely to be the active limiter after cache efficiency has reduced some portion of repeated backend demand.
+      This step now estimates which subsystem is most likely to become the active bottleneck after cache efficiency has reduced some portion of repeated backend demand.
     `);
   }
 
@@ -207,10 +260,10 @@
       return;
     }
 
-    metrics.sort((a, b) => b.val - a.val);
+    const byWorst = [...metrics].sort((a, b) => b.val - a.val);
 
-    const worst = metrics[0];
-    const second = metrics[1];
+    const worst = byWorst[0];
+    const second = byWorst[1];
     const severity = getSeverity(worst.val);
     const spread = worst.val - second.val;
     const avgUtil = metrics.reduce((sum, m) => sum + m.val, 0) / metrics.length;
@@ -224,7 +277,7 @@
     els.results.innerHTML = [
       row("Highest Utilization", `${worst.name} (${worst.val.toFixed(1)}%)`),
       row("Second Highest", `${second.name} (${second.val.toFixed(1)}%)`),
-      row("Likely Bottleneck", severity),
+      row("Likely Bottleneck", `${worst.name} - ${severity}`),
       row("Bottleneck Gap", `${spread.toFixed(1)} pts`),
       row("Load Balance", balanceStatus),
       row("Average Utilization", `${avgUtil.toFixed(1)}%`),
