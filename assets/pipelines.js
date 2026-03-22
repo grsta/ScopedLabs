@@ -50,6 +50,24 @@
       },
 
       // -----------------------------
+      // WIRELESS
+      // -----------------------------
+      wireless: {
+        label: "Wireless",
+        lanes: {
+          v1: [
+            { id: "coverage-radius", label: "Coverage Radius", href: "/tools/wireless/coverage-radius/" },
+            { id: "ap-count", label: "AP Count", href: "/tools/wireless/ap-count/" },
+            { id: "capacity-per-ap", label: "Capacity per AP", href: "/tools/wireless/capacity-per-ap/" },
+            { id: "client-density", label: "Client Density", href: "/tools/wireless/client-density/" },
+            { id: "backhaul-throughput", label: "Backhaul Throughput", href: "/tools/wireless/backhaul-throughput/" },
+            { id: "poe-power-budget", label: "PoE / Power Budget", href: "/tools/wireless/poe-power-budget/" },
+            { id: "failover-impact", label: "Failover Impact", href: "/tools/wireless/failover-impact/" }
+          ]
+        }
+      },
+
+      // -----------------------------
       // ACCESS CONTROL
       // -----------------------------
       "access-control": {
