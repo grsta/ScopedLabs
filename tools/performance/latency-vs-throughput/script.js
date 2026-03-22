@@ -1,54 +1,126 @@
 ﻿(() => {
+  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
+  const CATEGORY = "performance";
+  const STEP = "response-time-sla";
+  const NEXT_URL = "/tools/performance/latency-vs-throughput/";
+
   const $ = id => document.getElementById(id);
 
-  function render(rows){
-    const el=$("results");
-    el.innerHTML="";
-    rows.forEach(r=>{
-      const d=document.createElement("div");
-      d.className="result-row";
-      d.innerHTML=`<span class="result-label">${r.label}</span>
-                   <span class="result-value">${r.value}</span>`;
-      el.appendChild(d);
-    });
+  const els = {
+    cur: $("cur"),
+    tgt: $("tgt"),
+    sla: $("sla"),
+    eb: $("eb"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    continueWrap: $("continue-wrap"),
+    continueBtn: $("continue")
+  };
+
+  function resultRow(label, value){
+    return `
+      <div class="result-row">
+        <div class="result-label">${label}</div>
+        <div class="result-value">${value}</div>
+      </div>
+    `;
   }
 
-  function estLatency(base, util){
-    // simple queueing-style blowup: L = base / (1 - util)
-    const denom = Math.max(0.02, 1 - util);
-    return base / denom;
+  function hideContinue(){
+    els.continueWrap.style.display="none";
+    els.continueBtn.disabled=true;
   }
 
-  function calc(){
-    const baseLat=parseFloat($("baseLat").value);
-    const t0=parseFloat($("t0").value);
-    const t1=parseFloat($("t1").value);
-    const cap=parseFloat($("cap").value);
+  function showContinue(){
+    els.continueWrap.style.display="";
+    els.continueBtn.disabled=false;
+  }
 
-    const u0 = Math.min(0.98, t0/cap);
-    const u1 = Math.min(0.98, t1/cap);
+  function clearStored(){
+    sessionStorage.removeItem(STORAGE_KEY);
+  }
 
-    const l0 = estLatency(baseLat, u0);
-    const l1 = estLatency(baseLat, u1);
+  function invalidate(){
+    clearStored();
+    hideContinue();
+    els.results.innerHTML = `<div class="muted">Enter values and press Check SLA.</div>`;
+  }
 
-    render([
-      {label:"Current Utilization", value:`${(u0*100).toFixed(1)}%`},
-      {label:"Estimated Latency @ Current", value:`${l0.toFixed(1)} ms`},
-      {label:"Target Utilization", value:`${(u1*100).toFixed(1)}%`},
-      {label:"Estimated Latency @ Target", value:`${l1.toFixed(1)} ms`},
-      {label:"Latency Increase", value:`${((l1/l0-1)*100).toFixed(1)}%`},
-      {label:"Note", value:"This is a simplified approximation; real latency depends on burstiness and queueing discipline."}
-    ]);
+  function status(lat, sla){
+    if(lat <= sla) return "PASS";
+    if(lat <= sla * 1.1) return "RISK";
+    return "FAIL";
+  }
+
+  function calculate(){
+    const cur=parseFloat(els.cur.value);
+    const tgt=parseFloat(els.tgt.value);
+    const sla=parseFloat(els.sla.value);
+    const eb=parseFloat(els.eb.value);
+
+    if(!Number.isFinite(cur) || !Number.isFinite(sla)){
+      els.results.innerHTML = resultRow("Status","Invalid input");
+      hideContinue();
+      clearStored();
+      return;
+    }
+
+    const interpretation =
+      cur <= sla
+        ? "Current system meets SLA requirements. Performance baseline is acceptable."
+        : cur <= sla * 1.1
+          ? "System is near SLA limits. Optimization may be required under load."
+          : "System exceeds SLA. Performance bottlenecks must be identified and resolved.";
+
+    els.results.innerHTML = [
+      resultRow("SLA Threshold", `${sla.toFixed(1)} ms`),
+      resultRow("Current Avg", `${cur.toFixed(1)} ms (${status(cur,sla)})`),
+      resultRow("Target Avg", `${tgt.toFixed(1)} ms (${status(tgt,sla)})`),
+      resultRow("Error Budget", `${eb.toFixed(2)} %`),
+      resultRow("Engineering Interpretation", interpretation)
+    ].join("");
+
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        sla,
+        currentLatency: cur,
+        targetLatency: tgt,
+        errorBudget: eb
+      }
+    }));
+
+    showContinue();
   }
 
   function reset(){
-    $("baseLat").value=25;
-    $("t0").value=1200;
-    $("t1").value=1800;
-    $("cap").value=2000;
-    $("results").innerHTML="";
+    els.cur.value=120;
+    els.tgt.value=180;
+    els.sla.value=200;
+    els.eb.value=1;
+    els.results.innerHTML="";
+    clearStored();
+    hideContinue();
   }
 
-  $("calc").onclick=calc;
-  $("reset").onclick=reset;
+  function bindInvalidation(){
+    [els.cur, els.tgt, els.sla, els.eb].forEach(el=>{
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+  }
+
+  function init(){
+    hideContinue();
+    bindInvalidation();
+
+    els.calc.onclick=calculate;
+    els.reset.onclick=reset;
+    els.continueBtn.onclick=()=>window.location.href=NEXT_URL;
+  }
+
+  init();
 })();
