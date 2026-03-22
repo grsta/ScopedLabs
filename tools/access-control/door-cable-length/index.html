@@ -4,14 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Door Cable Length Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0182" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0332"></script>
-<script defer src="/assets/app.js?v=0332"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="/assets/auth.js?v=0333"></script>
+  <script defer src="/assets/app.js?v=0333"></script>
 </head>
 
 <body data-tier="pro" data-category="access-control">
@@ -25,7 +26,7 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
       <nav class="site-nav" aria-label="Primary">
         <a class="nav-pill" href="/">Home</a>
         <a class="nav-pill" href="/tools/">Tools</a>
-        <a class="nav-pill" href="/about/">About</a>
+        <a class="nav-pill" href="/tools/access-control/">Access Control</a>
       </nav>
     </div>
   </header>
@@ -41,6 +42,12 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
     <h1>Door Cable Length Estimator</h1>
     <p class="subhead">Estimate total cable run per door (panel to door) including slack, routing, and service loops.</p>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> estimating realistic field cable quantities and identifying when routing complexity starts turning into installation risk.
+      </p>
+    </section>
 
     <section class="card tool-card">
       <h2>Inputs</h2>
@@ -95,10 +102,18 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
       <div id="results" class="results">
         <div class="muted">Enter values and press Calculate.</div>
       </div>
+
+      <div style="margin-top:16px;">
+        <canvas id="chart"></canvas>
+      </div>
     </section>
+
+    <div id="return-wrap" class="card" style="display:block;">
+      <button id="returnBtn" class="btn">Return to Access Control</button>
+    </div>
   </main>
 
-<script src="./script.js?v=3"></script>
+<script src="./script.js?v=5"></script>
 </body>
 </html>
 
