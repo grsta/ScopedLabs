@@ -1,26 +1,92 @@
 ﻿(() => {
+  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
+  const CATEGORY = "wireless";
+  const STEP = "ap-capacity";
+  const NEXT_URL = "/tools/wireless/link-budget/";
+
   const $ = id => document.getElementById(id);
 
-  function render(rows){
-    const el=$("results");
-    el.innerHTML="";
-    rows.forEach(r=>{
-      const d=document.createElement("div");
-      d.className="result-row";
-      d.innerHTML=`<span class="result-label">${r.label}</span>
-                   <span class="result-value">${r.value}</span>`;
-      el.appendChild(d);
-    });
+  const els = {
+    clients: $("clients"),
+    mbps: $("mbps"),
+    util: $("util"),
+    apcap: $("apcap"),
+    maxc: $("maxc"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    continueWrap: $("continue-wrap"),
+    continueBtn: $("continue")
+  };
+
+  function resultRow(label, value){
+    return `
+      <div class="result-row">
+        <div class="result-label">${label}</div>
+        <div class="result-value">${value}</div>
+      </div>
+    `;
   }
 
-  function calc(){
-    const clients=parseFloat($("clients").value);
-    const mbps=parseFloat($("mbps").value);
-    const util=parseFloat($("util").value)/100;
-    const apcap=parseFloat($("apcap").value);
-    const maxc=parseFloat($("maxc").value);
+  function hideContinue(){
+    els.continueWrap.style.display="none";
+    els.continueBtn.disabled=true;
+  }
 
-    const totalDemand = clients * mbps;              // Mbps
+  function showContinue(){
+    els.continueWrap.style.display="";
+    els.continueBtn.disabled=false;
+  }
+
+  function clearStored(){
+    sessionStorage.removeItem(STORAGE_KEY);
+  }
+
+  function invalidate(){
+    clearStored();
+    hideContinue();
+    els.results.innerHTML="";
+  }
+
+  function loadPrior(){
+    els.flowNote.style.display="none";
+    els.flowNote.innerHTML="";
+
+    let saved=null;
+    try{
+      saved=JSON.parse(sessionStorage.getItem(STORAGE_KEY)||"null");
+    }catch{}
+
+    if(!saved || saved.category!==CATEGORY || saved.step!=="client-density") return;
+
+    const d=saved.data||{};
+
+    els.flowNote.innerHTML = `
+      <strong>Carried over context</strong><br>
+      Estimated AP Count: <strong>${d.apCount ?? "—"}</strong>,
+      Client Density: <strong>${d.density ?? "—"}</strong>.
+      This step refines capacity based on throughput demand.
+    `;
+
+    els.flowNote.style.display="";
+  }
+
+  function calculate(){
+    const clients=parseFloat(els.clients.value);
+    const mbps=parseFloat(els.mbps.value);
+    const util=parseFloat(els.util.value)/100;
+    const apcap=parseFloat(els.apcap.value);
+    const maxc=parseFloat(els.maxc.value);
+
+    if(!Number.isFinite(clients) || !Number.isFinite(mbps)){
+      els.results.innerHTML = resultRow("Status","Invalid input");
+      hideContinue();
+      clearStored();
+      return;
+    }
+
+    const totalDemand = clients * mbps;
     const usablePerAP = apcap * Math.max(0.05, util);
 
     const byThroughput = Math.max(1, Math.ceil(totalDemand / usablePerAP));
@@ -28,25 +94,62 @@
 
     const recommended = Math.max(byThroughput, byClients);
 
-    render([
-      {label:"Total Client Demand", value:`${totalDemand.toFixed(1)} Mbps`},
-      {label:"Usable per AP (utilized)", value:`${usablePerAP.toFixed(1)} Mbps`},
-      {label:"APs by Throughput", value:`${byThroughput}`},
-      {label:"APs by Client Limit", value:`${byClients}`},
-      {label:"Recommended AP Count", value:`${recommended}`},
-      {label:"Note", value:"Planning estimate. Real capacity depends on RF, channel width, MCS, interference, and airtime overhead."}
-    ]);
+    const interpretation =
+      recommended <= byClients
+        ? "Client count is the limiting factor. Airtime contention will dominate."
+        : "Throughput demand is the limiting factor. Capacity planning is bandwidth-driven.";
+
+    els.results.innerHTML = [
+      resultRow("Total Client Demand", `${totalDemand.toFixed(1)} Mbps`),
+      resultRow("Usable per AP", `${usablePerAP.toFixed(1)} Mbps`),
+      resultRow("APs (Throughput)", `${byThroughput}`),
+      resultRow("APs (Client Limit)", `${byClients}`),
+      resultRow("Recommended AP Count", `${recommended}`),
+      resultRow("Engineering Interpretation", interpretation)
+    ].join("");
+
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        totalDemand,
+        recommended,
+        byThroughput,
+        byClients
+      }
+    }));
+
+    showContinue();
   }
 
   function reset(){
-    $("clients").value=150;
-    $("mbps").value=3;
-    $("util").value=60;
-    $("apcap").value=300;
-    $("maxc").value=35;
-    $("results").innerHTML="";
+    els.clients.value=150;
+    els.mbps.value=3;
+    els.util.value=60;
+    els.apcap.value=300;
+    els.maxc.value=35;
+    els.results.innerHTML="";
+    clearStored();
+    hideContinue();
+    loadPrior();
   }
 
-  $("calc").onclick=calc;
-  $("reset").onclick=reset;
+  function bindInvalidation(){
+    [els.clients, els.mbps, els.util, els.apcap, els.maxc].forEach(el=>{
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+  }
+
+  function init(){
+    hideContinue();
+    loadPrior();
+    bindInvalidation();
+
+    els.calc.onclick=calculate;
+    els.reset.onclick=reset;
+    els.continueBtn.onclick=()=>window.location.href=NEXT_URL;
+  }
+
+  init();
 })();
