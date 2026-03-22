@@ -111,6 +111,27 @@
             { id: "grounding-estimator", label: "Grounding", href: "/tools/infrastructure/grounding-estimator/" }
           ]
         }
+      },
+
+      // -----------------------------
+      // PHYSICAL SECURITY
+      // -----------------------------
+      "physical-security": {
+        label: "Physical Security",
+        lanes: {
+          v1: [
+            { id: "scene-illumination", label: "Scene Illumination", href: "/tools/physical-security/scene-illumination/" },
+            { id: "mounting-height", label: "Mounting Height", href: "/tools/physical-security/mounting-height/" },
+            { id: "field-of-view", label: "Field of View", href: "/tools/physical-security/field-of-view/" },
+            { id: "camera-coverage-area", label: "Coverage Area", href: "/tools/physical-security/camera-coverage-area/" },
+            { id: "camera-spacing", label: "Camera Spacing", href: "/tools/physical-security/camera-spacing/" },
+            { id: "blind-spot-check", label: "Blind Spot Check", href: "/tools/physical-security/blind-spot-check/" },
+            { id: "pixel-density", label: "Pixel Density", href: "/tools/physical-security/pixel-density/" },
+            { id: "lens-selection", label: "Lens Selection", href: "/tools/physical-security/lens-selection/" },
+            { id: "face-recognition-range", label: "Face Recognition", href: "/tools/physical-security/face-recognition-range/" },
+            { id: "license-plate-range", label: "License Plate", href: "/tools/physical-security/license-plate-range/" }
+          ]
+        }
       }
     },
 
