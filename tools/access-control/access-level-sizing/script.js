@@ -221,7 +221,7 @@
 
         ctx.fillStyle = "rgba(210, 255, 225, 0.95)";
         ctx.font = "12px sans-serif";
-        ctx.fillText(`Recommended Limit (${recommendedLimit})`, rx + 8, top + 14);
+        ctx.fillText(`Recommended Limit (${recommendedLimit})`, rx + 8, bottom - 6);
 
         ctx.fillStyle = "rgba(180, 255, 200, 0.78)";
         ctx.font = "11px sans-serif";
