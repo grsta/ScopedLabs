@@ -4,10 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Headroom Target Calculator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0182" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0332"></script>
+  <script defer src="/assets/app.js?v=0332"></script>
 </head>
 
-<body data-tier="free" data-category="performance">
+<body data-tier="free" data-category="performance" data-step="headroom-target" data-lane="v1">
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
@@ -30,7 +37,18 @@
   </div>
 
   <h1>Headroom Target Calculator</h1>
+
+  <div id="pipeline"></div>
+
   <p class="subhead">Determine safe utilization limits based on desired headroom.</p>
+
+  <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> converting the identified bottleneck pressure into a practical safe operating target with reserved capacity for bursts, failures, and future growth.
+    </p>
+  </section>
 
   <section class="card tool-card">
     <h2>Inputs</h2>
@@ -69,11 +87,22 @@
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
   </section>
+
+  <div id="continue-wrap" class="card" style="display:none;">
+    <button id="continue" class="btn btn-primary" disabled>
+      Return → Performance Category
+    </button>
+  </div>
 </main>
 
-<script src="/assets/app.js"></script>
+<script src="/assets/tool-flow.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/pipelines.js"></script>
+<script src="/assets/pipeline.js"></script>
 <script src="./script.js"></script>
 </body>
 </html>
