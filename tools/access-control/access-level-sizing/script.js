@@ -179,7 +179,7 @@
         }
 
         if (watchMax > 80) {
-          ctx.fillStyle = "rgba(255, 170, 51, 0.14)";
+          ctx.fillStyle = "rgba(255, 170, 51, 0.12)";
           ctx.fillRect(
             x.getPixelForValue(80),
             top,
@@ -189,7 +189,7 @@
         }
 
         if (x.max > 150) {
-          ctx.fillStyle = "rgba(255, 77, 77, 0.14)";
+          ctx.fillStyle = "rgba(255, 77, 77, 0.12)";
           ctx.fillRect(
             x.getPixelForValue(150),
             top,
@@ -210,8 +210,8 @@
         ctx.save();
 
         const rx = x.getPixelForValue(recommendedLimit);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.85)";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(120, 255, 170, 0.1)";
+        ctx.lineWidth = 2.5;
         ctx.setLineDash([6, 5]);
         ctx.beginPath();
         ctx.moveTo(rx, top);
@@ -221,7 +221,7 @@
 
         ctx.fillStyle = "rgba(210, 255, 225, 0.95)";
         ctx.font = "12px sans-serif";
-        ctx.fillText(`Recommended Limit (${recommendedLimit})`, rx + 8, bottom - 6);
+        ctx.fillText(`Recommended Limit (${recommendedLimit})`, rx + 8, bottom - 10);
 
         ctx.fillStyle = "rgba(180, 255, 200, 0.78)";
         ctx.font = "11px sans-serif";
@@ -258,11 +258,12 @@
                 if (v > 150) return "rgba(255, 77, 77, 0.95)";
                 if (v > 80) return "rgba(255, 170, 51, 0.95)";
                 return "rgba(120, 255, 170, 0.95)";
+                hoverBackgroundColor: "rgba(120,255,170,1)"
               }
 
               if (v > 150) return "rgba(255, 77, 77, 0.55)";
               if (v > 80) return "rgba(255, 170, 51, 0.50)";
-              return "rgba(90, 170, 255, 0.45)";
+              return "rgba(90, 170, 255, 0.25)";
             },
             borderColor: (context) => {
               const i = context.dataIndex;
@@ -324,7 +325,7 @@
             title: {
               display: true,
               text: "Complexity Magnitude",
-              color: "rgba(220, 245, 230, 0.78)"
+              color: "rgba(230, 255, 240, 0.9)"
             }
           },
           y: {
