@@ -112,6 +112,24 @@
         }
       },
 
+      thermal: {
+       label: "Thermal & Environment",
+       lanes: {
+         v1: [
+           { id: "heat-load-estimator", label: "Heat Load", href: "/tools/thermal/heat-load-estimator/" },
+           { id: "psu-efficiency-heat", label: "PSU Heat Loss", href: "/tools/thermal/psu-efficiency-heat/" },
+           { id: "btu-converter", label: "BTU Conversion", href: "/tools/thermal/btu-converter/" },
+           { id: "rack-thermal-density", label: "Rack Density", href: "/tools/thermal/rack-thermal-density/" },
+           { id: "airflow-requirement", label: "Airflow Required", href: "/tools/thermal/airflow-requirement/" },
+           { id: "fan-cfm-sizing", label: "Fan CFM", href: "/tools/thermal/fan-cfm-sizing/" },
+           { id: "hot-cold-aisle", label: "Hot/Cold Aisle", href: "/tools/thermal/hot-cold-aisle/" },
+           { id: "ambient-rise", label: "Ambient Rise", href: "/tools/thermal/ambient-rise/" },
+           { id: "exhaust-temperature", label: "Exhaust Temp", href: "/tools/thermal/exhaust-temperature/" },
+           { id: "room-cooling-capacity", label: "Cooling Capacity", href: "/tools/thermal/room-cooling-capacity/" }
+         ]
+       }
+     },
+
       "physical-security": {
         label: "Physical Security",
         lanes: {
