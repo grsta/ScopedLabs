@@ -25,11 +25,15 @@
       <span class="brand-dot"></span>
       <span class="brand-text">ScopedLabs</span>
     </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/physical-security/">Physical Security</a>
+    </nav>
   </div>
 </header>
 
 <main class="container page">
-
   <div class="crumbs">
     <a href="/tools/">Tools</a> /
     <a href="/tools/physical-security/">Physical Security</a> /
@@ -40,11 +44,11 @@
 
   <div id="pipeline"></div>
 
-  <p class="subhead">Determine maximum readable license plate distance based on optics and pixel density.</p>
+  <p class="subhead">Estimate max distance for readable license plate capture.</p>
 
   <section class="card">
     <p class="tool-best-for">
-      <strong>Best for:</strong> validating whether your camera/lens setup can reliably capture license plates under real-world conditions.
+      <strong>Best for:</strong> validating whether your chosen optics and framing can reliably support readable plate capture at the intended standoff distance.
     </p>
   </section>
 
@@ -88,7 +92,9 @@
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
 
     <div class="actions" style="margin-top:16px;">
       <button id="continue" class="btn btn-primary" style="display:none;">
@@ -96,7 +102,6 @@
       </button>
     </div>
   </section>
-
 </main>
 
 <script src="/assets/tool-flow.js"></script>
@@ -104,7 +109,6 @@
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
 <script src="./script.js"></script>
-
 </body>
 </html>
 
