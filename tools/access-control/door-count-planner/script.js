@@ -1,6 +1,6 @@
-﻿// Door Count Planner (rule-of-thumb)
-(() => {
+﻿(() => {
   const $ = (id) => document.getElementById(id);
+  let chart = null;
 
   function n(id) {
     const el = $(id);
@@ -8,22 +8,13 @@
     return Number.isFinite(v) ? v : 0;
   }
 
-  function clamp(x, lo, hi) {
-    return Math.min(hi, Math.max(lo, x));
-  }
-
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(div);
-    });
+  function row(label, value) {
+    return `
+      <div class="result-row">
+        <span class="result-label">${label}</span>
+        <span class="result-value">${value}</span>
+      </div>
+    `;
   }
 
   function compFactor(c) {
@@ -32,56 +23,136 @@
     return 1.0;
   }
 
+  function destroyChart() {
+    if (chart) {
+      chart.destroy();
+      chart = null;
+    }
+  }
+
   function calc() {
     const perimeter = Math.max(0, n("perimeter"));
     const zones = Math.max(0, n("zones"));
     const highsec = Math.max(0, n("highsec"));
-    const compliance = $("compliance").value; // basic|moderate|strict
-    const bothSides = $("bothSides").value;   // no|yes
+    const compliance = $("compliance").value;
+    const bothSides = $("bothSides").value;
 
-    // Perimeter: usually 1 controlled door per entrance (some orgs only control after-hours).
     const perimeterDoors = perimeter;
-
-    // Interior zones: rule-of-thumb 1–3 controlled doors per zone, based on compliance.
     const zoneBase = zones * 1.6 * compFactor(compliance);
-
-    // High security: generally additional controls: mantrap/vestibule/secondary door
     const highsecAdd = highsec * (compliance === "strict" ? 2.0 : 1.3);
 
-    // Total controlled doors (rounded)
     let doors = Math.round(perimeterDoors + zoneBase + highsecAdd);
     doors = Math.max(0, doors);
 
-    // If controlling both sides / in-out, the reader count doubles-ish, not doors.
     const readerMultiplier = bothSides === "yes" ? 2 : 1;
     const readers = doors * readerMultiplier;
 
-    // Suggest a range
-    const low = Math.max(0, Math.round(doors * 0.8));
-    const high = Math.max(0, Math.round(doors * 1.2));
+    const complexityIndex =
+      doors +
+      zones * 2 +
+      highsec * 5 +
+      (bothSides === "yes" ? doors * 0.5 : 0);
 
-    const tips = [
-      "Start by controlling perimeter entrances + server/IT + sensitive storage areas.",
-      "Add interior segmentation where policy requires least privilege.",
-      "Remember: door hardware type (mag/strike/mortise) affects cabling and power budgeting.",
-      "If you need anti-passback or occupancy: plan IN/OUT reads (reader multiplier grows quickly)."
-    ].join(" ");
+    // 🔥 classification
+    let status = "HEALTHY";
+    if (complexityIndex > 140) status = "RISK";
+    else if (complexityIndex > 80) status = "WATCH";
 
-    render([
-      { label: "Perimeter Doors (estimate)", value: `${perimeterDoors.toFixed(0)}` },
-      { label: "Interior Zone Doors (estimate)", value: `${Math.round(zoneBase)}` },
-      { label: "High-Security Additions", value: `${Math.round(highsecAdd)}` },
+    let guidance = "Standard segmentation is acceptable.";
+    if (status === "WATCH") {
+      guidance = "System complexity is rising. Ensure controller placement and wiring paths are well planned.";
+    }
+    if (status === "RISK") {
+      guidance = "System is becoming complex. Consider segmentation strategy, controller distribution, and phased deployment.";
+    }
 
-      { label: "Estimated Controlled Doors", value: `${doors}` },
-      { label: "Suggested Range", value: `${low} – ${high}` },
+    let insight =
+      status === "RISK"
+        ? "High door count and segmentation will increase install time, wiring complexity, and long-term management overhead."
+        : status === "WATCH"
+        ? "System is manageable but requires disciplined layout and clear segmentation boundaries."
+        : "System is clean and scalable with minimal administrative overhead.";
 
-      { label: "Control Both Sides", value: bothSides === "yes" ? "YES" : "NO" },
-      { label: "Estimated Reader Count", value: `${readers}` },
+    $("results").innerHTML = [
+      row("Perimeter Doors", perimeterDoors),
+      row("Interior Zone Doors", Math.round(zoneBase)),
+      row("High-Security Additions", Math.round(highsecAdd)),
+      row("Total Controlled Doors", doors),
+      row("Estimated Reader Count", readers),
+      row("Complexity Index", complexityIndex.toFixed(0)),
+      row("System Status", status),
+      row("Design Guidance", guidance),
+      row("Engineering Insight", insight)
+    ].join("");
 
-      { label: "Notes", value: "This is a planning estimate. Validate with a floor plan walk and policy requirements." },
-      { label: "Best Practices", value: tips }
-    ]);
+    renderChart({
+      doors,
+      zones,
+      readers,
+      complexityIndex
+    });
   }
+
+  function renderChart(data) {
+    destroyChart();
+
+    const ctx = document.createElement("canvas");
+    $("results").appendChild(ctx);
+
+    const values = [
+      data.doors,
+      data.zones * 5,
+      data.readers,
+      data.complexityIndex
+    ];
+
+    const labels = [
+      "Doors",
+      "Zones Impact",
+      "Readers",
+      "Complexity"
+    ];
+
+    const dominant = values.indexOf(Math.max(...values));
+
+    chart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          borderWidth: 2,
+          borderRadius: 8,
+          backgroundColor: (ctx) => {
+            const v = ctx.raw;
+            if (v > 140) return "rgba(255,90,90,1)";
+            if (v > 80) return "rgba(255,200,80,1)";
+            return "rgba(120,255,170,1)";
+          }
+        }]
+      },
+      options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            grid: { color: "rgba(255,255,255,0.05)" },
+            ticks: { color: "#cfe" }
+          },
+          y: {
+            ticks: { color: "#cfe" }
+          }
+        }
+      }
+    });
+  }
+
+  const returnBtn = document.getElementById("returnBtn");
+if (returnBtn) {
+  returnBtn.addEventListener("click", () => {
+    window.location.href = "/tools/access-control/";
+  });
+}
 
   function reset() {
     $("perimeter").value = 8;
@@ -90,6 +161,7 @@
     $("compliance").value = "basic";
     $("bothSides").value = "no";
     $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    destroyChart();
   }
 
   $("calc").addEventListener("click", calc);
