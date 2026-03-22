@@ -2,7 +2,7 @@
   const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "wireless";
   const STEP = "coverage-radius";
-  const NEXT_URL = "/tools/wireless/ap-count/";
+  const NEXT_URL = "/tools/wireless/channel-overlap/";
 
   const els = {
     band: document.getElementById("band"),

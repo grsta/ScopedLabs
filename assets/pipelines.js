@@ -45,12 +45,14 @@
         lanes: {
           v1: [
             { id: "coverage-radius", label: "Coverage Radius", href: "/tools/wireless/coverage-radius/" },
-            { id: "ap-count", label: "AP Count", href: "/tools/wireless/ap-count/" },
-            { id: "capacity-per-ap", label: "Capacity per AP", href: "/tools/wireless/capacity-per-ap/" },
+            { id: "channel-overlap", label: "Channel Overlap", href: "/tools/wireless/channel-overlap/" },
+            { id: "noise-floor-margin", label: "Noise Floor Margin", href: "/tools/wireless/noise-floor-margin/" },
             { id: "client-density", label: "Client Density", href: "/tools/wireless/client-density/" },
-            { id: "backhaul-throughput", label: "Backhaul Throughput", href: "/tools/wireless/backhaul-throughput/" },
-            { id: "poe-power-budget", label: "PoE / Power Budget", href: "/tools/wireless/poe-power-budget/" },
-            { id: "failover-impact", label: "Failover Impact", href: "/tools/wireless/failover-impact/" }
+            { id: "ap-capacity", label: "AP Capacity", href: "/tools/wireless/ap-capacity/" },
+            { id: "link-budget", label: "Link Budget", href: "/tools/wireless/link-budget/" },
+            { id: "mesh-backhaul", label: "Mesh Backhaul", href: "/tools/wireless/mesh-backhaul/" },
+            { id: "ptp-wireless-link", label: "PTP Wireless Link", href: "/tools/wireless/ptp-wireless-link/" },
+            { id: "roaming-thresholds", label: "Roaming Thresholds", href: "/tools/wireless/roaming-thresholds/" }
           ]
         }
       },
