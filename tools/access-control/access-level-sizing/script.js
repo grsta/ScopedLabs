@@ -2,6 +2,7 @@
   const $ = (id) => document.getElementById(id);
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
+  let chart = null;
   let hasResult = false;
 
   const els = {
@@ -14,13 +15,15 @@
     flowNote: $("flow-note"),
     completeWrap: $("complete-wrap"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    chart: $("chart")
   };
 
   function invalidate() {
     if (!hasResult) return;
     sessionStorage.removeItem(FLOW_KEY);
     els.completeWrap.style.display = "none";
+    if (chart) chart.destroy();
     hasResult = false;
   }
 
@@ -33,10 +36,11 @@
 
     els.flowNote.style.display = "block";
     els.flowNote.innerHTML = `
-      <strong>System Context:</strong><br>
-      ${parsed.data.panels || ""} panels<br>
-      ${parsed.data.expansions || ""} expansions<br>
-      ${parsed.data.readers || ""} readers
+      <strong>Carried over system design:</strong><br>
+      Panels: <strong>${parsed.data.panels || 0}</strong><br>
+      Expansions: <strong>${parsed.data.expansions || 0}</strong><br>
+      Readers: <strong>${parsed.data.readers || 0}</strong><br><br>
+      This step evaluates whether your access structure will scale cleanly or become operationally complex.
     `;
   }
 
@@ -54,29 +58,54 @@
 
     const total = Math.round(base * (1 + schedules * 0.1) * (1 + groups * 0.05) * complexityFactor);
 
+    const combinations = roles * areas;
+    const scalingPressure = total / (roles + areas);
+
     let risk = "Healthy";
-    let insight = "System should scale well.";
+    let insight = "System should scale cleanly with minimal administrative overhead.";
 
     if (total > 150) {
       risk = "High Complexity";
-      insight = "Access levels likely to become difficult to manage.";
+      insight = "Access levels are likely to become difficult to manage and prone to errors. Consider grouping strategies and role abstraction.";
     } else if (total > 80) {
       risk = "Moderate Complexity";
-      insight = "Structure is manageable but should be grouped carefully.";
+      insight = "System is manageable but will require structured grouping and consistent naming to avoid sprawl.";
     }
 
     els.results.innerHTML = `
       <div class="result-row"><span>Access Levels</span><span>${total}</span></div>
+      <div class="result-row"><span>Role-Area Combinations</span><span>${combinations}</span></div>
+      <div class="result-row"><span>Scaling Pressure</span><span>${scalingPressure.toFixed(1)}</span></div>
       <div class="result-row"><span>Complexity</span><span>${risk}</span></div>
-      <div class="result-row"><span>Insight</span><span>${insight}</span></div>
+      <div class="result-row"><span>Engineering Insight</span><span>${insight}</span></div>
     `;
+
+    // GRAPH
+    if (chart) chart.destroy();
+
+    chart = new Chart(els.chart, {
+      type: "bar",
+      data: {
+        labels: ["Access Levels", "Roles", "Areas", "Schedules"],
+        datasets: [{
+          label: "System Structure",
+          data: [total, roles, areas, schedules]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
 
     els.completeWrap.style.display = "block";
 
     sessionStorage.setItem(FLOW_KEY, JSON.stringify({
       category: "access-control",
       step: "access-level-sizing",
-      data: { total, risk }
+      data: { total, risk, combinations, scalingPressure }
     }));
 
     hasResult = true;
