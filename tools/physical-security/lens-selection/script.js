@@ -25,6 +25,7 @@
     $("continue").style.display = "none";
   }
 
+  // ✅ TRUE carry-over + usage
   function showFlowNote(){
     const note = $("flow-note");
     if (!note) return;
@@ -34,47 +35,42 @@
     try{
       const raw = sessionStorage.getItem(KEY);
       if(!raw){
-        note.style.display = "none";
-        note.innerHTML = "";
+        note.style.display="none";
         return;
       }
 
       const parsed = JSON.parse(raw);
-      if(!parsed || parsed.category !== "physical-security" || parsed.step !== "pixel-density"){
-        note.style.display = "none";
-        note.innerHTML = "";
+
+      if(parsed.step !== "pixel-density"){
+        note.style.display="none";
         return;
       }
 
-      const d = parsed.data || {};
-      prev = d;
+      prev = parsed.data;
 
-      const dist = Number(d.dist || 0);
-      const ppf = typeof d.ppf === "number" ? d.ppf : Number(d.ppf || 0);
-      const level = d.level || d.classification || "";
+      const dist = Number(prev.dist || 0);
+      const ppf = Number(prev.ppf || 0);
+      const level = prev.level || prev.classification || "";
 
-      if (dist > 0) {
-        $("dist").value = String(Math.round(dist));
+      if(dist > 0){
+        $("dist").value = Math.round(dist);
       }
 
       let msg = `<strong>Flow context:</strong> `;
 
-      if (level) {
-        msg += `Pixel density classified as <strong>${level}</strong>. `;
-      } else if (ppf > 0) {
-        msg += `Pixel density calculated at <strong>${ppf.toFixed(1)} PPF</strong>. `;
-      } else {
-        msg += `Pixel density data detected. `;
+      if(level){
+        msg += `Pixel density = <strong>${level}</strong>. `;
+      } else if(ppf){
+        msg += `Pixel density = <strong>${ppf.toFixed(1)} PPF</strong>. `;
       }
 
-      msg += `This step converts that requirement into a physical lens selection.`;
+      msg += `Lens selection will adjust based on required detail level.`;
 
       note.innerHTML = msg;
-      note.style.display = "block";
+      note.style.display="block";
 
     }catch{
-      note.style.display = "none";
-      note.innerHTML = "";
+      note.style.display="none";
     }
   }
 
@@ -99,14 +95,23 @@
     return "Highly focused view for long-range identification.";
   }
 
-  function designGuidance(focal, tw){
-    if (focal < 4 && tw > 20) {
-      return "This lens choice favors broad scene width. Good for general awareness, but verify that target detail remains acceptable at the intended distance.";
+  function adjustForPPF(focal){
+    if(!prev) return focal;
+
+    const ppf = Number(prev.ppf || 0);
+
+    // 🔥 REAL PIPELINE LOGIC
+    if(ppf < 40){
+      return focal * 1.4; // tighten
     }
-    if (focal >= 8 && tw < 10) {
-      return "This is a tighter lens direction suited for detail-driven viewing. Confirm the narrowed field does not clip important scene context.";
+    if(ppf < 80){
+      return focal * 1.2;
     }
-    return "Use this focal length as a planning baseline, then confirm with manufacturer FOV charts and a scene test at the real mounting distance.";
+    if(ppf > 120){
+      return focal * 0.9; // allow wider
+    }
+
+    return focal;
   }
 
   function calc(){
@@ -114,16 +119,31 @@
     const tw = parseFloat($("tw").value);
     const sw = parseFloat($("sw").value);
 
-    const focal = (sw * dist) / tw;
+    let focal = (sw * dist) / tw;
+
+    // ✅ APPLY PIXEL DENSITY INFLUENCE
+    focal = adjustForPPF(focal);
+
     const lensClass = classifyLens(focal);
     const interp = interpretation(focal);
-    const guide = designGuidance(focal, tw);
+
+    let guidance = "Verify with manufacturer FOV charts.";
+
+    if(prev){
+      const ppf = Number(prev.ppf || 0);
+
+      if(ppf < 40){
+        guidance = "Pixel density is low — tighter lens recommended to improve detail.";
+      } else if(ppf > 120){
+        guidance = "Pixel density is high — wider lens may be acceptable.";
+      }
+    }
 
     render([
-      {label:"Estimated Focal Length", value:`${focal.toFixed(1)} mm`},
+      {label:"Adjusted Focal Length", value:`${focal.toFixed(1)} mm`},
       {label:"Suggested Lens Class", value:lensClass},
       {label:"Interpretation", value:interp},
-      {label:"Design Guidance", value:guide}
+      {label:"Design Guidance", value:guidance}
     ]);
 
     sessionStorage.setItem(KEY, JSON.stringify({
@@ -133,10 +153,7 @@
         focal,
         lensClass,
         dist,
-        tw,
-        sw,
-        interp,
-        guide
+        tw
       }
     }));
 
@@ -144,31 +161,26 @@
   }
 
   function reset(){
-    $("dist").value = 80;
-    $("tw").value = 20;
-    $("sw").value = 6.4;
-    $("results").innerHTML = `<div class="muted">Enter values and press Suggest Lens.</div>`;
+    $("dist").value=80;
+    $("tw").value=20;
+    $("sw").value=6.4;
+    $("results").innerHTML="";
     sessionStorage.removeItem(KEY);
     hideContinue();
-    showFlowNote();
   }
 
   function invalidate(){
     sessionStorage.removeItem(KEY);
     hideContinue();
-    showFlowNote();
   }
 
   ["dist","tw","sw"].forEach(id=>{
     const el = $(id);
-    if(el) {
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
-    }
+    if(el) el.addEventListener("input", invalidate);
   });
 
-  $("calc").onclick = calc;
-  $("reset").onclick = reset;
+  $("calc").onclick=calc;
+  $("reset").onclick=reset;
 
   $("continue").onclick = () => {
     window.location.href = NEXT_URL;
