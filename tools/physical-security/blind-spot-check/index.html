@@ -5,19 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blind Spot Check *ScopedLabs</title>
   <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
   window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-
   <script defer src="/assets/auth.js?v=0331"></script>
   <script defer src="/assets/app.js?v=0331"></script>
 </head>
 
 <body data-tier="pro" data-category="physical-security" data-step="blind-spot-check" data-lane="v1">
-
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
@@ -33,7 +30,6 @@
 </header>
 
 <main class="container page">
-
   <div class="crumbs">
     <a href="/tools/">Tools</a> /
     <a href="/tools/physical-security/">Physical Security</a> /
@@ -44,11 +40,11 @@
 
   <div id="pipeline"></div>
 
-  <p class="subhead">Validate camera layout and detect potential coverage gaps.</p>
+  <p class="subhead">Estimate whether spacing and field of view leave coverage gaps.</p>
 
   <section class="card">
     <p class="tool-best-for">
-      <strong>Best for:</strong> verifying that your spacing and camera count actually eliminate blind spots before finalizing layout.
+      <strong>Best for:</strong> validating that your camera spacing and overlap plan actually eliminate blind spots before moving into pixel-density verification.
     </p>
   </section>
 
@@ -74,7 +70,7 @@
       </label>
 
       <label class="field">
-        <span class="label">Mounting Distance (ft)</span>
+        <span class="label">Mounting Distance to Target Zone (ft)</span>
         <input id="dist" type="number" value="60">
       </label>
 
@@ -97,15 +93,16 @@
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Check Coverage.</div>
+    </div>
 
     <div class="actions" style="margin-top:16px;">
       <button id="continue" class="btn btn-primary" style="display:none;">
-        Continue → Pixel Density
+        Continue to Pixel Density →
       </button>
     </div>
   </section>
-
 </main>
 
 <script src="/assets/tool-flow.js"></script>
@@ -113,7 +110,6 @@
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
 <script src="./script.js"></script>
-
 </body>
 </html>
 
