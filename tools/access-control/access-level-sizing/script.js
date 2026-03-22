@@ -144,26 +144,26 @@
     const maxValue = Math.max(...values, recommendedLimit, 160);
     const dominantIndex = values.indexOf(Math.max(...values));
 
+    const chartBgPlugin = {
+      id: "chartBgPlugin",
+      beforeDraw(c) {
+        const { ctx, chartArea } = c;
+        if (!chartArea) return;
+
+        const { left, top, width, height } = chartArea;
+
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.04)";
+        ctx.fillRect(left, top, width, height);
+        ctx.restore();
+      }
+    };
+
     const thresholdBandPlugin = {
       id: "thresholdBandPlugin",
       beforeDatasetsDraw(c) {
         const { ctx, chartArea, scales } = c;
         if (!chartArea || !scales.x) return;
-
-        const chartBgPlugin = {
-          id: "chartBgPlugin",
-          beforeDraw(c) {
-            const { ctx, chartArea } = c;
-            if (!chartArea) return;
-
-            const { left, top, width, height } = chartArea;
-
-            ctx.save();
-            ctx.fillStyle = "rgba(255,255,255,0.03)";
-            ctx.fillRect(left, top, width, height);
-            ctx.restore();
-      }
-    };
 
         const x = scales.x;
         const { top, bottom, left, right } = chartArea;
@@ -173,13 +173,11 @@
 
         ctx.save();
 
-        // Healthy band
         if (healthyMax > 0) {
           ctx.fillStyle = "rgba(46, 204, 113, 0.14)";
           ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
         }
 
-        // Watch band
         if (watchMax > 80) {
           ctx.fillStyle = "rgba(255, 170, 51, 0.14)";
           ctx.fillRect(
@@ -190,7 +188,6 @@
           );
         }
 
-        // Risk band
         if (x.max > 150) {
           ctx.fillStyle = "rgba(255, 77, 77, 0.14)";
           ctx.fillRect(
@@ -212,7 +209,6 @@
 
         ctx.save();
 
-        // Recommended line
         const rx = x.getPixelForValue(recommendedLimit);
         ctx.strokeStyle = "rgba(120, 255, 170, 0.85)";
         ctx.lineWidth = 2;
@@ -227,15 +223,14 @@
         ctx.font = "12px sans-serif";
         ctx.fillText(`Recommended Limit (${recommendedLimit})`, rx + 8, top + 14);
 
-        // Zone labels
-        ctx.fillStyle = "rgba(180, 255, 200, 0.75)";
+        ctx.fillStyle = "rgba(180, 255, 200, 0.78)";
         ctx.font = "11px sans-serif";
         ctx.fillText("Healthy", x.getPixelForValue(8), top + 14);
 
-        ctx.fillStyle = "rgba(255, 210, 130, 0.75)";
+        ctx.fillStyle = "rgba(255, 210, 130, 0.78)";
         ctx.fillText("Watch", x.getPixelForValue(88), top + 14);
 
-        ctx.fillStyle = "rgba(255, 150, 150, 0.75)";
+        ctx.fillStyle = "rgba(255, 150, 150, 0.78)";
         ctx.fillText("Risk", x.getPixelForValue(158), top + 14);
 
         ctx.restore();
@@ -294,12 +289,12 @@
         },
         layout: {
           padding: {
-          top: 28,
-          right: 10,
-          left: 10,
-          bottom: 0
-        }
-      },
+            top: 28,
+            right: 10,
+            left: 10,
+            bottom: 0
+          }
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -342,7 +337,7 @@
           }
         }
       },
-      plugins: [thresholdBandPlugin, chartBgPlugin]
+      plugins: [chartBgPlugin, thresholdBandPlugin]
     });
   }
 
@@ -439,7 +434,6 @@
     }
   });
 
-  // Give canvas a stable height without HTML changes
   if (els.chart) {
     els.chart.style.width = "100%";
     els.chart.style.height = "340px";
