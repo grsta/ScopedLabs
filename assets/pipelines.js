@@ -1,4 +1,4 @@
-// /assets/pipelines.js
+// /assets/pipelines.js This is for the deign pipeline navigation bar
 (() => {
   window.SCOPED_PIPELINES = {
     categories: {
