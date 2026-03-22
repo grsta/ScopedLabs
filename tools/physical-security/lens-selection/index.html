@@ -4,17 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lens Selection Helper *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0331"></script>
-<script defer src="/assets/app.js?v=0331"></script>
+
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0182" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  </script>
+
+  <script defer src="/assets/auth.js?v=0332"></script>
+  <script defer src="/assets/app.js?v=0332"></script>
 </head>
 
-<body data-tier="pro" data-category="physical-security">
+<body data-tier="pro" data-category="physical-security" data-step="lens-selection" data-lane="v1">
+
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
@@ -30,6 +34,7 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 </header>
 
 <main class="container page">
+
   <div class="crumbs">
     <a href="/tools/">Tools</a> /
     <a href="/tools/physical-security/">Physical Security</a> /
@@ -37,7 +42,18 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
   </div>
 
   <h1>Lens Selection Helper</h1>
-  <p class="subhead">Suggest lens class based on distance and target width.</p>
+
+  <div id="pipeline"></div>
+
+  <p class="subhead">Determine focal length and lens class based on scene geometry.</p>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> converting pixel-density validated distances into a real lens choice that delivers the required field of view.
+    </p>
+  </section>
+
+  <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card tool-card">
     <h2>Inputs</h2>
@@ -67,14 +83,27 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Suggest Lens.</div>
+    </div>
+
+    <div class="actions" style="margin-top:16px;">
+      <button id="continue" class="btn btn-primary" style="display:none;">
+        Continue to Face Recognition →
+      </button>
+    </div>
   </section>
+
 </main>
 
+<script src="/assets/tool-flow.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/pipelines.js"></script>
+<script src="/assets/pipeline.js"></script>
 <script src="./script.js"></script>
+
 </body>
 </html>
-
 
 
 
