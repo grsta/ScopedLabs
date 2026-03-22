@@ -108,24 +108,44 @@
 
     const d = saved.data || {};
 
-    const highestSubsystem = d.highestSubsystem || "—";
+    const highestSubsystem =
+      d.highestSubsystem ||
+      d.likelyBottleneck ||
+      d.bottleneckSubsystem ||
+      "—";
+
     const highestUtilizationPct =
       num(d.highestUtilizationPct) ??
-      num(d.highestUtilization);
-    const secondHighestSubsystem = d.secondHighestSubsystem || "—";
+      num(d.highestUtilization) ??
+      num(d.maxUtilizationPct) ??
+      num(d.currentUtilizationPct);
+
+    const secondHighestSubsystem =
+      d.secondHighestSubsystem ||
+      "—";
+
     const secondHighestUtilizationPct =
-      num(d.secondHighestUtilizationPct);
+      num(d.secondHighestUtilizationPct) ??
+      num(d.secondHighestUtilization);
+
     const bottleneckSeverity =
       d.bottleneckSeverity ||
       d.severity ||
+      d.status ||
       "—";
+
     const bottleneckGapPts =
       num(d.bottleneckGapPts) ??
-      num(d.spread);
+      num(d.spread) ??
+      num(d.utilizationGapPts);
+
     const averageUtilizationPct =
-      num(d.averageUtilizationPct);
+      num(d.averageUtilizationPct) ??
+      num(d.avgUtilizationPct);
+
     const balanceStatus =
       d.balanceStatus ||
+      d.loadBalance ||
       "—";
 
     if (highestUtilizationPct !== null) {
