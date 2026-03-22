@@ -1,27 +1,85 @@
 ﻿(() => {
+  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
+  const CATEGORY = "thermal";
+  const STEP = "btu-converter";
+  const NEXT_URL = "/tools/thermal/rack-thermal-density/";
+
   const $ = id => document.getElementById(id);
 
-  const W_TO_BTU = 3.412141633;     // BTU/hr per watt
-  const TON_TO_BTU = 12000;         // 1 ton cooling = 12,000 BTU/hr
+  const els = {
+    w: $("w"),
+    btu: $("btu"),
+    tons: $("tons"),
+    mode: $("mode"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    continueWrap: $("continue-wrap"),
+    continueBtn: $("continue")
+  };
 
-  function render(rows){
-    const el=$("results");
-    el.innerHTML="";
-    rows.forEach(r=>{
-      const d=document.createElement("div");
-      d.className="result-row";
-      d.innerHTML=`<span class="result-label">${r.label}</span>
-                   <span class="result-value">${r.value}</span>`;
-      el.appendChild(d);
-    });
+  const W_TO_BTU = 3.412141633;
+  const TON_TO_BTU = 12000;
+
+  function resultRow(label, value){
+    return `
+      <div class="result-row">
+        <div class="result-label">${label}</div>
+        <div class="result-value">${value}</div>
+      </div>
+    `;
+  }
+
+  function hideContinue(){
+    els.continueWrap.style.display="none";
+    els.continueBtn.disabled=true;
+  }
+
+  function showContinue(){
+    els.continueWrap.style.display="";
+    els.continueBtn.disabled=false;
+  }
+
+  function clearStored(){
+    sessionStorage.removeItem(STORAGE_KEY);
+  }
+
+  function invalidate(){
+    clearStored();
+    hideContinue();
+    els.results.innerHTML = `<div class="muted">Enter values and press Convert.</div>`;
+  }
+
+  function loadPrior(){
+    els.flowNote.style.display="none";
+    els.flowNote.innerHTML="";
+
+    let saved=null;
+    try{
+      saved=JSON.parse(sessionStorage.getItem(STORAGE_KEY)||"null");
+    }catch{}
+
+    if(!saved || saved.category!==CATEGORY || saved.step!=="psu-efficiency-heat") return;
+
+    const d=saved.data||{};
+
+    els.flowNote.innerHTML = `
+      <strong>Carried over context</strong><br>
+      PSU Heat Loss: <strong>${d.heatLossW ?? "—"} W</strong> /
+      <strong>${d.heatLossBtuHr ?? "—"} BTU/hr</strong>.
+      This step converts total system heat into HVAC planning units.
+    `;
+
+    els.flowNote.style.display="";
   }
 
   function convert(){
-    const mode=$("mode").value;
+    const mode=els.mode.value;
 
-    let w=parseFloat($("w").value);
-    let btu=parseFloat($("btu").value);
-    let tons=parseFloat($("tons").value);
+    let w=parseFloat(els.w.value);
+    let btu=parseFloat(els.btu.value);
+    let tons=parseFloat(els.tons.value);
 
     if(mode==="watts"){
       btu = w * W_TO_BTU;
@@ -34,26 +92,64 @@
       w = btu / W_TO_BTU;
     }
 
-    $("w").value = isFinite(w) ? w.toFixed(0) : "";
-    $("btu").value = isFinite(btu) ? btu.toFixed(0) : "";
-    $("tons").value = isFinite(tons) ? tons.toFixed(2) : "";
+    els.w.value = isFinite(w) ? w.toFixed(0) : "";
+    els.btu.value = isFinite(btu) ? btu.toFixed(0) : "";
+    els.tons.value = isFinite(tons) ? tons.toFixed(2) : "";
 
-    render([
-      {label:"Watts", value:`${w.toFixed(0)} W`},
-      {label:"BTU/hr", value:`${btu.toFixed(0)} BTU/hr`},
-      {label:"Cooling Tons", value:`${tons.toFixed(2)} tons`},
-      {label:"Note", value:"1 ton = 12,000 BTU/hr. BTU conversion uses 3.412 BTU/hr per watt."}
-    ]);
+    const interpretation =
+      btu < 5000
+        ? "Low cooling requirement. Standard ventilation may be sufficient."
+        : btu < 20000
+          ? "Moderate cooling requirement. Dedicated airflow and cooling should be considered."
+          : "High cooling requirement. HVAC sizing becomes critical for maintaining safe operating temperatures.";
+
+    els.results.innerHTML = [
+      resultRow("Watts", `${w.toFixed(0)} W`),
+      resultRow("BTU/hr", `${btu.toFixed(0)} BTU/hr`),
+      resultRow("Cooling Tons", `${tons.toFixed(2)} tons`),
+      resultRow("Engineering Interpretation", interpretation)
+    ].join("");
+
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        watts: w,
+        btu,
+        tons
+      }
+    }));
+
+    showContinue();
   }
 
   function reset(){
-    $("w").value=3500;
-    $("btu").value=11942;
-    $("tons").value=1.00;
-    $("mode").value="watts";
-    $("results").innerHTML="";
+    els.w.value=3500;
+    els.btu.value=11942;
+    els.tons.value=1.00;
+    els.mode.value="watts";
+    els.results.innerHTML=`<div class="muted">Enter values and press Convert.</div>`;
+    clearStored();
+    hideContinue();
+    loadPrior();
   }
 
-  $("calc").onclick=convert;
-  $("reset").onclick=reset;
+  function bindInvalidation(){
+    [els.w, els.btu, els.tons, els.mode].forEach(el=>{
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+  }
+
+  function init(){
+    hideContinue();
+    loadPrior();
+    bindInvalidation();
+
+    els.calc.onclick=convert;
+    els.reset.onclick=reset;
+    els.continueBtn.onclick=()=>window.location.href=NEXT_URL;
+  }
+
+  init();
 })();
