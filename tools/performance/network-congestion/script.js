@@ -4,7 +4,7 @@
   const STEP = "network-congestion";
   const NEXT_URL = "/tools/performance/cache-hit-ratio/";
 
-  const $ = id => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     cur: $("cur"),
@@ -19,45 +19,45 @@
     continueBtn: $("continue")
   };
 
-  function row(label, value){
+  function row(label, value) {
     return `<div class="result-row">
       <span class="result-label">${label}</span>
       <span class="result-value">${value}</span>
     </div>`;
   }
 
-  function hideContinue(){
+  function hideContinue() {
     els.continueWrap.style.display = "none";
     els.continueBtn.disabled = true;
   }
 
-  function showContinue(){
+  function showContinue() {
     els.continueWrap.style.display = "";
     els.continueBtn.disabled = false;
   }
 
-  function clearStored(){
+  function clearStored() {
     sessionStorage.removeItem(STORAGE_KEY);
   }
 
-  function invalidate(){
+  function invalidate() {
     clearStored();
     hideContinue();
     els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
   }
 
-  function loadPrior(){
+  function loadPrior() {
     let saved = null;
-    try{
+    try {
       saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-    }catch{
+    } catch {
       saved = null;
     }
 
     els.flowNote.style.display = "none";
     els.flowNote.innerHTML = "";
 
-    if(!saved || saved.category !== CATEGORY || saved.step !== "disk-saturation") return;
+    if (!saved || saved.category !== CATEGORY || saved.step !== "disk-saturation") return;
 
     const d = saved.data || {};
 
@@ -66,6 +66,7 @@
     const targetUtilization = Number(d.targetUtilization);
     const capacityMBps = Number(d.capacityMBps);
     const saturated = Boolean(d.saturated);
+    const totalIops = Number(d.totalIops);
 
     if (Number.isFinite(throughput) && throughput > 0) {
       els.cur.value = Math.round(throughput);
@@ -87,19 +88,20 @@
       Disk Throughput: <strong>${Number.isFinite(throughput) ? throughput.toFixed(1) : "—"} MB/s</strong>,
       Disk Utilization: <strong>${Number.isFinite(utilization) ? (utilization * 100).toFixed(1) : "—"}%</strong>,
       Disk Capacity: <strong>${Number.isFinite(capacityMBps) ? capacityMBps.toFixed(0) : "—"} MB/s</strong>,
+      Total IOPS: <strong>${Number.isFinite(totalIops) ? totalIops.toFixed(0) : "—"}</strong>,
       Saturation Risk: <strong>${saturated ? "Yes" : "No"}</strong>.
-      These values were used to seed the current traffic, peak traffic, and link target assumptions.
+      These values were carried forward to seed current traffic, peak traffic, capacity, and target utilization.
     `;
     els.flowNote.style.display = "";
   }
 
-  function calc(){
+  function calc() {
     const cur = parseFloat(els.cur.value);
     const peak = parseFloat(els.peak.value);
     const cap = parseFloat(els.cap.value);
     const util = parseFloat(els.util.value) / 100;
 
-    if(!Number.isFinite(cur) || !Number.isFinite(peak) || !Number.isFinite(cap) || !Number.isFinite(util) || cap <= 0){
+    if (!Number.isFinite(cur) || !Number.isFinite(peak) || !Number.isFinite(cap) || !Number.isFinite(util) || cap <= 0) {
       els.results.innerHTML = row("Status", "Invalid input");
       hideContinue();
       clearStored();
@@ -110,17 +112,19 @@
     const peakPct = (peak / cap) * 100;
     const maxAtTarget = cap * util;
 
-    const risk = peak > maxAtTarget ? "HIGH" :
-                 cur > maxAtTarget ? "MEDIUM" : "LOW";
+    const risk =
+      peak > maxAtTarget ? "HIGH" :
+      cur > maxAtTarget ? "MEDIUM" :
+      "LOW";
 
     const interpretation =
       peakPct < 60
         ? "Network has substantial headroom and congestion risk is low."
         : peakPct < 80
-          ? "Network is carrying moderate load. Bursts may start affecting latency."
+          ? "Network is carrying moderate load. Bursts may start affecting delay and jitter."
           : peakPct < 95
-            ? "Network is nearing congestion. Throughput spikes may increase delay and drops."
-            : "Network is effectively saturated. Congestion is likely to impact application performance.";
+            ? "Network is nearing congestion. Peak load may create queueing, retransmits, and latency spikes."
+            : "Network is effectively saturated. Congestion is likely to impact application performance directly.";
 
     els.results.innerHTML = [
       row("Current Utilization", `${curPct.toFixed(1)}%`),
@@ -146,7 +150,7 @@
     showContinue();
   }
 
-  function reset(){
+  function reset() {
     els.cur.value = 600;
     els.peak.value = 900;
     els.cap.value = 1000;
@@ -157,14 +161,14 @@
     loadPrior();
   }
 
-  function bind(){
-    [els.cur, els.peak, els.cap, els.util].forEach(el => {
+  function bind() {
+    [els.cur, els.peak, els.cap, els.util].forEach((el) => {
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
   }
 
-  function init(){
+  function init() {
     hideContinue();
     loadPrior();
     bind();
