@@ -124,11 +124,21 @@
           borderWidth: 2,
           borderRadius: 8,
           backgroundColor: (ctx) => {
+            const i = ctx.dataIndex;
             const v = ctx.raw;
-            if (v > 140) return "rgba(255,90,90,1)";
-            if (v > 80) return "rgba(255,200,80,1)";
-            return "rgba(120,255,170,1)";
+
+            // dominant bar = strong color
+            if (i === dominant) {
+              if (v > 140) return "rgba(255,90,90,1)";
+              if (v > 80) return "rgba(255,200,80,1)";
+              return "rgba(120,255,170,1)";
           }
+
+  // non-dominant = faded
+  if (v > 140) return "rgba(255,90,90,0.25)";
+  if (v > 80) return "rgba(255,200,80,0.18)";
+  return "rgba(120,255,170,0.12)";
+}
         }]
       },
       options: {
