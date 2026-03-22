@@ -2,56 +2,53 @@
   const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "wireless";
   const STEP = "coverage-radius";
-  const NEXT_HREF = "/tools/wireless/ap-count/";
+  const NEXT_URL = "/tools/wireless/ap-count/";
 
-  const $ = (id) => document.getElementById(id);
-
-  const base = {
-    "24": { open: 180, office: 120, dense: 80 },
-    "5":  { open: 140, office: 95,  dense: 65 },
-    "6":  { open: 115, office: 80,  dense: 55 }
+  const els = {
+    band: document.getElementById("band"),
+    environment: document.getElementById("environment"),
+    eirp: document.getElementById("eirp"),
+    targetRssi: document.getElementById("targetRssi"),
+    clientClass: document.getElementById("clientClass"),
+    calc: document.getElementById("calc"),
+    reset: document.getElementById("reset"),
+    results: document.getElementById("results"),
+    flowNote: document.getElementById("flow-note"),
+    continueWrap: document.getElementById("continue-wrap"),
+    continueBtn: document.getElementById("continue")
   };
 
-  const envLabels = {
-    open: "Open / Outdoor",
-    office: "Office / Light walls",
-    dense: "Dense / Many walls"
+  const BAND_BASE_LOSS = {
+    "2.4": 40,
+    "5": 47,
+    "6": 50
   };
 
-  const bandLabels = {
-    "24": "2.4 GHz",
-    "5": "5 GHz",
-    "6": "6 GHz"
+  const ENVIRONMENT_LOSS = {
+    open: 0,
+    office: 10,
+    dense: 18
   };
 
-  const powerLabels = {
-    low: "Low",
-    med: "Medium",
-    high: "High"
+  const CLIENT_MARGIN = {
+    robust: 0,
+    typical: 4,
+    weak: 8
   };
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-
-    rows.forEach((row) => {
-      const d = document.createElement("div");
-      d.className = "result-row";
-      d.innerHTML = `
-        <span class="result-label">${row.label}</span>
-        <span class="result-value">${row.value}</span>
-      `;
-      el.appendChild(d);
-    });
+  function safeNumber(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : NaN;
   }
 
   function hideContinue() {
-    $("continue-link").style.display = "none";
+    els.continueWrap.style.display = "none";
+    els.continueBtn.disabled = true;
   }
 
   function showContinue() {
-    $("continue-link").href = NEXT_HREF;
-    $("continue-link").style.display = "";
+    els.continueWrap.style.display = "";
+    els.continueBtn.disabled = false;
   }
 
   function clearStoredResult() {
@@ -61,65 +58,89 @@
   function invalidate() {
     clearStoredResult();
     hideContinue();
-    $("results").innerHTML = "";
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
   }
 
-  function getCoverageClass(radius) {
-    if (radius < 70) return "Tight cell";
-    if (radius < 120) return "Moderate cell";
+  function resultRow(label, value) {
+    return `
+      <div class="result-row">
+        <div class="result-label">${label}</div>
+        <div class="result-value">${value}</div>
+      </div>
+    `;
+  }
+
+  function getBandLabel(value) {
+    if (value === "2.4") return "2.4 GHz";
+    if (value === "5") return "5 GHz";
+    if (value === "6") return "6 GHz";
+    return value;
+  }
+
+  function getEnvironmentLabel(value) {
+    if (value === "open") return "Open / Low Obstruction";
+    if (value === "office") return "Office / Light Partitioning";
+    if (value === "dense") return "Dense Interior / Heavy Obstruction";
+    return value;
+  }
+
+  function getClientLabel(value) {
+    if (value === "robust") return "Robust / Laptop";
+    if (value === "typical") return "Typical Mixed Clients";
+    if (value === "weak") return "Weak / Small Mobile Devices";
+    return value;
+  }
+
+  function classifyRadius(radiusFt) {
+    if (radiusFt < 35) return "Tight cell";
+    if (radiusFt < 60) return "Moderate cell";
     return "Broad cell";
   }
 
-  function getEngineeringInterpretation({ band, env, rssi, pwr, radius }) {
+  function buildInterpretation({ band, environment, clientClass, radiusFt, targetRssi }) {
     const bandText =
-      band === "24"
-        ? "2.4 GHz tends to stretch farther, but it is usually the most interference-prone option and should not be mistaken for clean client capacity."
+      band === "2.4"
+        ? "2.4 GHz gives the longest reach, but larger cells usually come with more overlap and more interference pressure."
         : band === "5"
-          ? "5 GHz is usually the balanced design choice for general enterprise coverage because it contains cells better while still delivering useful range."
-          : "6 GHz is best treated as a higher-performance, shorter-reach design layer that usually needs tighter AP spacing and cleaner line-of-sight."
+          ? "5 GHz usually lands in the practical middle ground for enterprise Wi-Fi because it balances coverage and cleaner reuse."
+          : "6 GHz favors cleaner spectrum and better high-performance design, but the coverage footprint is usually tighter.";
 
     const envText =
-      env === "open"
-        ? "An open environment supports larger planning cells, but mounting height and down-tilt still matter because overshooting the service area can hurt channel reuse."
-        : env === "office"
-          ? "Light-wall office layouts usually need more conservative spacing than open areas because partitions, furniture, and hallway geometry create uneven client experience."
-          : "Dense interiors should be designed with tighter cells because wall loss and obstruction stacking will shrink usable edge coverage quickly."
+      environment === "open"
+        ? "Open areas can support larger planning cells, but that wider reach can make channel reuse harder if you overextend coverage."
+        : environment === "office"
+          ? "Office-style partitioning tends to break cells up unevenly, so this should be treated as a planning estimate rather than a guaranteed radius."
+          : "Dense interiors usually demand much tighter AP spacing because walls, shelving, and obstruction stacks collapse edge performance fast.";
+
+    const clientText =
+      clientClass === "weak"
+        ? "Because weaker client devices usually transmit and receive worse than the AP, the practical edge should be treated conservatively."
+        : clientClass === "robust"
+          ? "Stronger client assumptions can stretch a design on paper, but it is still wise to validate edge behavior against real mixed-device conditions."
+          : "A mixed-client assumption is a good baseline for real deployments where phones, tablets, and laptops all share airtime.";
 
     const rssiText =
-      rssi >= -65
-        ? "Your RSSI target is relatively strong, which is better for performance-sensitive designs but forces a smaller practical edge radius."
-        : rssi <= -72
-          ? "Your RSSI target is loose, which can expand planning radius, but edge clients may operate at lower data rates and consume more airtime."
-          : "Your RSSI target is in a common planning range for usable client coverage without pushing the cell edge too aggressively."
-
-    const powerText =
-      pwr === "high"
-        ? "Higher AP power can make the downlink look better on paper, but client devices still transmit weaker than the AP, so uplink balance should be verified before trusting the larger radius."
-        : pwr === "low"
-          ? "Lower AP power helps contain cell size and improve reuse, but it may require more APs to hold the same footprint."
-          : "A medium power setting is a reasonable planning midpoint before detailed survey tuning."
+      targetRssi >= -65
+        ? "Your RSSI target is fairly strong, which supports better edge performance but forces a smaller usable cell."
+        : targetRssi <= -72
+          ? "Your RSSI target is loose, which expands radius, but clients at the edge are more likely to fall into lower data rates and consume more airtime."
+          : "Your RSSI target is in a practical planning range for general coverage modeling.";
 
     const classText =
-      radius < 70
-        ? "This result points toward a denser deployment pattern where client quality is being prioritized over broad area reach."
-        : radius < 120
-          ? "This result is a middle-ground planning cell that can often support balanced indoor layouts if channel plan and client count are kept under control."
-          : "This result is a large planning cell, which may reduce AP count on paper but can create reuse, roaming, and airtime issues if capacity is not checked in the next steps."
+      radiusFt < 35
+        ? "This points toward a dense design where AP count will rise, but capacity and roaming behavior usually improve."
+        : radiusFt < 60
+          ? "This is a balanced planning result that should transition cleanly into AP count and capacity modeling."
+          : "This is a broad planning cell, which may reduce AP count on paper, but it can also hide future problems with contention, overlap, and client edge quality.";
 
-    return `${bandText} ${envText} ${rssiText} ${powerText} ${classText}`;
-  }
-
-  function saveResult(payload) {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    return `${bandText} ${envText} ${clientText} ${rssiText} ${classText}`;
   }
 
   function loadPriorContext() {
-    const flow = $("flow-note");
-    flow.style.display = "none";
-    flow.innerHTML = "";
+    els.flowNote.style.display = "none";
+    els.flowNote.innerHTML = "";
 
     let saved = null;
-
     try {
       saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
     } catch (err) {
@@ -128,95 +149,115 @@
 
     if (!saved || saved.category !== CATEGORY || saved.step === STEP) return;
 
-    flow.innerHTML = `
+    els.flowNote.innerHTML = `
       <strong>Carried over context</strong><br>
       Prior wireless step: ${saved.step}
     `;
-    flow.style.display = "";
+    els.flowNote.style.display = "";
   }
 
-  function calc() {
-    const band = $("band").value;
-    const env = $("env").value;
-    const rssi = parseFloat($("rssi").value);
-    const pwr = $("pwr").value;
+  function calculate() {
+    const band = els.band.value;
+    const environment = els.environment.value;
+    const eirp = safeNumber(els.eirp.value);
+    const targetRssi = safeNumber(els.targetRssi.value);
+    const clientClass = els.clientClass.value;
 
-    if (!Number.isFinite(rssi)) {
-      render([
-        { label: "Status", value: "Enter a valid RSSI target" },
-        { label: "Engineering Interpretation", value: "The estimator needs a numeric RSSI target so the planning radius can be tightened or relaxed correctly." }
-      ]);
+    if (!Number.isFinite(eirp) || !Number.isFinite(targetRssi)) {
+      els.results.innerHTML = [
+        resultRow("Status", "Invalid input"),
+        resultRow(
+          "Engineering Interpretation",
+          "Enter valid numeric values for AP EIRP and target RSSI so the planning radius can be estimated correctly."
+        )
+      ].join("");
       hideContinue();
       clearStoredResult();
       return;
     }
 
-    let radius = base[band][env];
+    const availablePathLoss =
+      eirp - targetRssi - ENVIRONMENT_LOSS[environment] - CLIENT_MARGIN[clientClass];
 
-    if (rssi > -65) radius *= 0.80;
-    else if (rssi > -67) radius *= 0.90;
-    else if (rssi < -72) radius *= 1.15;
-    else if (rssi < -70) radius *= 1.08;
+    let radiusFt = Math.pow(10, (availablePathLoss - BAND_BASE_LOSS[band]) / 20);
 
-    if (pwr === "low") radius *= 0.85;
-    if (pwr === "high") radius *= 1.10;
+    if (!Number.isFinite(radiusFt) || radiusFt <= 0) {
+      radiusFt = 1;
+    }
 
-    const area = Math.PI * radius * radius;
-    const coverageClass = getCoverageClass(radius);
-    const interpretation = getEngineeringInterpretation({ band, env, rssi, pwr, radius });
+    const diameterFt = radiusFt * 2;
+    const cellAreaSqFt = Math.PI * radiusFt * radiusFt;
+    const coverageClass = classifyRadius(radiusFt);
+    const interpretation = buildInterpretation({
+      band,
+      environment,
+      clientClass,
+      radiusFt,
+      targetRssi
+    });
 
-    render([
-      { label: "Estimated Radius", value: `${radius.toFixed(0)} ft` },
-      { label: "Estimated Coverage Area", value: `${area.toFixed(0)} sq ft` },
-      { label: "Coverage Class", value: coverageClass },
-      { label: "Min RSSI Target", value: `${rssi.toFixed(0)} dBm` },
-      { label: "Engineering Interpretation", value: interpretation }
-    ]);
+    els.results.innerHTML = [
+      resultRow("Estimated Radius", `${radiusFt.toFixed(1)} ft`),
+      resultRow("Estimated Diameter", `${diameterFt.toFixed(1)} ft`),
+      resultRow("Estimated Cell Area", `${cellAreaSqFt.toFixed(0)} sq ft`),
+      resultRow("Status", coverageClass),
+      resultRow("Engineering Interpretation", interpretation)
+    ].join("");
 
-    saveResult({
+    const payload = {
       category: CATEGORY,
       step: STEP,
       data: {
         band,
-        bandLabel: bandLabels[band],
-        environment: env,
-        environmentLabel: envLabels[env],
-        minRssiDbm: rssi,
-        powerLevel: pwr,
-        powerLevelLabel: powerLabels[pwr],
-        estimatedRadiusFt: Number(radius.toFixed(0)),
-        estimatedAreaSqFt: Number(area.toFixed(0)),
+        bandLabel: getBandLabel(band),
+        environment,
+        environmentLabel: getEnvironmentLabel(environment),
+        eirpDbm: eirp,
+        targetRssiDbm: targetRssi,
+        clientClass,
+        clientClassLabel: getClientLabel(clientClass),
+        estimatedRadiusFt: Number(radiusFt.toFixed(1)),
+        estimatedDiameterFt: Number(diameterFt.toFixed(1)),
+        estimatedCellAreaSqFt: Number(cellAreaSqFt.toFixed(0)),
         coverageClass
       }
-    });
+    };
 
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     showContinue();
   }
 
-  function reset() {
-    $("band").value = "24";
-    $("env").value = "open";
-    $("rssi").value = -67;
-    $("pwr").value = "med";
-    $("results").innerHTML = "";
+  function resetForm() {
+    els.band.value = "5";
+    els.environment.value = "office";
+    els.eirp.value = "23";
+    els.targetRssi.value = "-67";
+    els.clientClass.value = "typical";
     clearStoredResult();
     hideContinue();
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
   }
 
   function bindInvalidation() {
-    ["band", "env", "rssi", "pwr"].forEach((id) => {
-      const el = $(id);
+    [els.band, els.environment, els.eirp, els.targetRssi, els.clientClass].forEach((el) => {
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
   }
 
+  function bindActions() {
+    els.calc.addEventListener("click", calculate);
+    els.reset.addEventListener("click", resetForm);
+    els.continueBtn.addEventListener("click", () => {
+      window.location.href = NEXT_URL;
+    });
+  }
+
   function init() {
-    loadPriorContext();
     hideContinue();
+    loadPriorContext();
     bindInvalidation();
-    $("calc").addEventListener("click", calc);
-    $("reset").addEventListener("click", reset);
+    bindActions();
   }
 
   init();

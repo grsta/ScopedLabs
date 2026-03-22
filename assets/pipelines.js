@@ -3,9 +3,6 @@
   window.SCOPED_PIPELINES = {
     categories: {
 
-      // -----------------------------
-      // VIDEO & STORAGE
-      // -----------------------------
       "video-storage": {
         label: "Video & Storage",
         lanes: {
@@ -19,9 +16,6 @@
         }
       },
 
-      // -----------------------------
-      // POWER
-      // -----------------------------
       power: {
         label: "Power",
         lanes: {
@@ -34,9 +28,6 @@
         }
       },
 
-      // -----------------------------
-      // NETWORK
-      // -----------------------------
       network: {
         label: "Network & Throughput",
         lanes: {
@@ -49,9 +40,6 @@
         }
       },
 
-      // -----------------------------
-      // WIRELESS
-      // -----------------------------
       wireless: {
         label: "Wireless",
         lanes: {
@@ -67,9 +55,6 @@
         }
       },
 
-      // -----------------------------
-      // ACCESS CONTROL
-      // -----------------------------
       "access-control": {
         label: "Access Control",
         lanes: {
@@ -83,9 +68,6 @@
         }
       },
 
-      // -----------------------------
-      // COMPUTE
-      // -----------------------------
       compute: {
         label: "Compute",
         lanes: {
@@ -103,9 +85,6 @@
         }
       },
 
-      // -----------------------------
-      // INFRASTRUCTURE
-      // -----------------------------
       infrastructure: {
         label: "Infrastructure",
         lanes: {
@@ -131,9 +110,6 @@
         }
       },
 
-      // -----------------------------
-      // PHYSICAL SECURITY
-      // -----------------------------
       "physical-security": {
         label: "Physical Security",
         lanes: {
@@ -153,9 +129,6 @@
       }
     },
 
-    // -------------------------------
-    // FUTURE CROSS-SITE PIPELINES
-    // -------------------------------
     crossSite: {
       "infrastructure-design": {
         label: "Infrastructure Design",

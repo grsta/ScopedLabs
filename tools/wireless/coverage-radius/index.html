@@ -1,98 +1,129 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Coverage Radius Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0182" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Coverage Radius • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=wireless-coverage-003" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0409"></script>
+  <script defer src="/assets/app.js?v=0409"></script>
 </head>
 
-<body data-tier="free" data-category="wireless">
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-dot"></span>
-      <span class="brand-text">ScopedLabs</span>
-    </a>
-    <nav class="site-nav">
-      <a class="nav-pill" href="/">Home</a>
-      <a class="nav-pill" href="/tools/">Tools</a>
-      <a class="nav-pill" href="/tools/wireless/">Wireless</a>
-    </nav>
-  </div>
-</header>
+<body data-tier="free" data-category="wireless" data-step="coverage-radius" data-lane="v1">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
 
-<main class="container page">
-  <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/wireless/">Wireless</a> /
-    Coverage Radius
-  </div>
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/wireless/">Wireless</a>
+      </nav>
+    </div>
+  </header>
 
-  <h1>Coverage Radius Estimator</h1>
-  <p class="subhead">Planning-level radius based on band, environment, and minimum RSSI target.</p>
-
-  <div id="pipeline"></div>
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card tool-card">
-    <h2>Inputs</h2>
-
-    <div class="form-grid">
-      <label class="field">
-        <span class="label">Band</span>
-        <select id="band">
-          <option value="24" selected>2.4 GHz</option>
-          <option value="5">5 GHz</option>
-          <option value="6">6 GHz</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span class="label">Environment</span>
-        <select id="env">
-          <option value="open" selected>Open / Outdoor</option>
-          <option value="office">Office / Light walls</option>
-          <option value="dense">Dense / Many walls</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span class="label">Minimum RSSI Target (dBm)</span>
-        <input id="rssi" type="number" value="-67">
-      </label>
-
-      <label class="field">
-        <span class="label">AP Power Level</span>
-        <select id="pwr">
-          <option value="low">Low</option>
-          <option value="med" selected>Medium</option>
-          <option value="high">High</option>
-        </select>
-      </label>
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/wireless/">Wireless</a>
+      <span class="sep">/</span>
+      <span>Coverage Radius</span>
     </div>
 
-    <div class="actions">
-      <button id="calc" class="btn btn-primary">Estimate</button>
-      <button id="reset" class="btn">Reset</button>
+    <h1>Coverage Radius</h1>
+
+    <div id="pipeline"></div>
+
+    <p class="subhead">
+      Estimate usable wireless cell radius based on band, environment, AP power, and minimum target RSSI.
+    </p>
+
+    <div id="flow-note" class="card" style="display:none;"></div>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> early-stage wireless planning when you need a realistic starting point for AP spacing before moving into AP count and capacity.
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Band</span>
+          <select id="band">
+            <option value="2.4">2.4 GHz</option>
+            <option value="5" selected>5 GHz</option>
+            <option value="6">6 GHz</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Environment</span>
+          <select id="environment">
+            <option value="open">Open / Low Obstruction</option>
+            <option value="office" selected>Office / Light Partitioning</option>
+            <option value="dense">Dense Interior / Heavy Obstruction</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">AP EIRP (dBm)</span>
+          <input id="eirp" type="number" min="1" step="1" value="23" />
+        </label>
+
+        <label class="field">
+          <span class="label">Minimum Target RSSI (dBm)</span>
+          <input id="targetRssi" type="number" max="-40" min="-90" step="1" value="-67" />
+        </label>
+
+        <label class="field">
+          <span class="label">Client Device Class</span>
+          <select id="clientClass">
+            <option value="robust">Robust / Laptop</option>
+            <option value="typical" selected>Typical Mixed Clients</option>
+            <option value="weak">Weak / Small Mobile Devices</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
+
+    <div id="continue-wrap" class="card" style="display:none;">
+      <button id="continue" class="btn btn-primary" disabled>
+        Continue → AP Count
+      </button>
     </div>
-  </section>
+  </main>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results"></div>
-
-    <div class="actions">
-      <a id="continue-link" class="btn btn-primary" href="/tools/wireless/ap-count/" style="display:none;">Continue to AP Count</a>
-    </div>
-  </section>
-</main>
-
-<script src="/assets/tool-flow.js"></script>
-<script src="/assets/catalog.js"></script>
-<script src="/assets/pipelines.js"></script>
-<script src="/assets/pipeline.js"></script>
-<script src="./script.js"></script>
+  <script src="/assets/tool-flow.js"></script>
+  <script src="/assets/catalog.js"></script>
+  <script src="/assets/pipelines.js"></script>
+  <script src="/assets/pipeline.js"></script>
+  <script src="./script.js?v=001"></script>
 </body>
 </html>
 
