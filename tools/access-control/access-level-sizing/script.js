@@ -153,7 +153,7 @@
         const { left, top, width, height } = chartArea;
 
         ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.04)";
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
         ctx.fillRect(left, top, width, height);
         ctx.restore();
       }
@@ -174,12 +174,12 @@
         ctx.save();
 
         if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.14)";
+          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
           ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
         }
 
         if (watchMax > 80) {
-          ctx.fillStyle = "rgba(255, 170, 51, 0.12)";
+          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
           ctx.fillRect(
             x.getPixelForValue(80),
             top,
@@ -189,7 +189,7 @@
         }
 
         if (x.max > 150) {
-          ctx.fillStyle = "rgba(255, 77, 77, 0.12)";
+          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
           ctx.fillRect(
             x.getPixelForValue(150),
             top,
@@ -202,36 +202,50 @@
       },
       afterDatasetsDraw(c) {
         const { ctx, chartArea, scales } = c;
-        if (!chartArea || !scales.x) return;
+        if (!chartArea || !scales.x || !scales.y) return;
 
         const x = scales.x;
+        const y = scales.y;
         const { top, bottom } = chartArea;
 
         ctx.save();
 
         const rx = x.getPixelForValue(recommendedLimit);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.1)";
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([6, 5]);
+        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
         ctx.moveTo(rx, top);
         ctx.lineTo(rx, bottom);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        ctx.fillStyle = "rgba(210, 255, 225, 0.95)";
-        ctx.font = "12px sans-serif";
+        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
+        ctx.font = "600 11px sans-serif";
         ctx.fillText(`Recommended Limit (${recommendedLimit})`, rx + 8, bottom - 10);
 
-        ctx.fillStyle = "rgba(180, 255, 200, 0.78)";
-        ctx.font = "11px sans-serif";
+        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
+        ctx.font = "600 11px sans-serif";
         ctx.fillText("Healthy", x.getPixelForValue(8), top + 14);
 
-        ctx.fillStyle = "rgba(255, 210, 130, 0.78)";
+        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
         ctx.fillText("Watch", x.getPixelForValue(88), top + 14);
 
-        ctx.fillStyle = "rgba(255, 150, 150, 0.78)";
+        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
         ctx.fillText("Risk", x.getPixelForValue(158), top + 14);
+
+        // Marker dot on dominant bar endpoint
+        const dominantValue = values[dominantIndex];
+        const px = x.getPixelForValue(dominantValue);
+        const py = y.getPixelForValue(labels[dominantIndex]);
+
+        ctx.beginPath();
+        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(225, 255, 240, 1)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
         ctx.restore();
       }
@@ -244,10 +258,10 @@
         datasets: [
           {
             label: "Access Design Metrics",
-            barPercentage: 0.55,
-            categoryPercentage: 0.65,
+            barPercentage: 0.5,
+            categoryPercentage: 0.58,
             data: values,
-            borderWidth: 1.5,
+            borderWidth: 2,
             borderRadius: 8,
             borderSkipped: false,
             backgroundColor: (context) => {
@@ -255,27 +269,32 @@
               const v = context.raw;
 
               if (i === dominantIndex) {
-                if (v > 150) return "rgba(255, 77, 77, 0.95)";
-                if (v > 80) return "rgba(255, 170, 51, 0.95)";
-                return "rgba(120, 255, 170, 0.95)";
-                hoverBackgroundColor: "rgba(120,255,170,1)"
+                if (v > 150) return "rgba(255, 92, 92, 1)";
+                if (v > 80) return "rgba(255, 188, 82, 1)";
+                return "rgba(120, 255, 170, 1)";
               }
 
-              if (v > 150) return "rgba(255, 77, 77, 0.55)";
-              if (v > 80) return "rgba(255, 170, 51, 0.50)";
-              return "rgba(90, 170, 255, 0.25)";
+              if (v > 150) return "rgba(255, 77, 77, 0.30)";
+              if (v > 80) return "rgba(255, 170, 51, 0.24)";
+              return "rgba(90, 170, 255, 0.15)";
             },
             borderColor: (context) => {
               const i = context.dataIndex;
-              return i === dominantIndex
-                ? "rgba(220,255,235,0.95)"
-                : "rgba(120,170,200,0.35)";
+              const v = context.raw;
+
+              if (i === dominantIndex) {
+                if (v > 150) return "rgba(255, 220, 220, 1)";
+                if (v > 80) return "rgba(255, 240, 210, 1)";
+                return "rgba(215, 255, 230, 1)";
+              }
+
+              return "rgba(120,170,200,0.18)";
             },
             hoverBackgroundColor: (context) => {
               const v = context.raw;
-              if (v > 150) return "rgba(255, 97, 97, 1)";
-              if (v > 80) return "rgba(255, 190, 81, 1)";
-              return "rgba(120, 255, 170, 1)";
+              if (v > 150) return "rgba(255, 105, 105, 1)";
+              if (v > 80) return "rgba(255, 198, 95, 1)";
+              return "rgba(135, 255, 182, 1)";
             }
           }
         ]
@@ -291,7 +310,7 @@
         layout: {
           padding: {
             top: 28,
-            right: 10,
+            right: 12,
             left: 10,
             bottom: 0
           }
@@ -315,22 +334,22 @@
         scales: {
           x: {
             beginAtZero: true,
-            suggestedMax: Math.ceil(maxValue * 1.1),
+            suggestedMax: Math.ceil(maxValue * 1.08),
             ticks: {
-              color: "rgba(210, 235, 225, 0.72)"
+              color: "rgba(220, 238, 230, 0.78)"
             },
             grid: {
-              color: "rgba(110, 160, 140, 0.12)"
+              color: "rgba(110, 160, 140, 0.10)"
             },
             title: {
               display: true,
               text: "Complexity Magnitude",
-              color: "rgba(230, 255, 240, 0.9)"
+              color: "rgba(230, 255, 240, 0.92)"
             }
           },
           y: {
             ticks: {
-              color: "rgba(220, 245, 230, 0.86)"
+              color: "rgba(228, 245, 235, 0.92)"
             },
             grid: {
               display: false
