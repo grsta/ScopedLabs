@@ -130,6 +130,24 @@
        }
      },
 
+     performance: {
+      label: "Performance",
+      lanes: {
+        v1: [
+          { id: "response-time-sla", label: "SLA Target", href: "/tools/performance/response-time-sla/" },
+          { id: "latency-vs-throughput", label: "Latency vs Throughput", href: "/tools/performance/latency-vs-throughput/" },
+          { id: "queue-depth", label: "Queue Depth", href: "/tools/performance/queue-depth/" },
+          { id: "concurrency-scaling", label: "Concurrency", href: "/tools/performance/concurrency-scaling/" },
+          { id: "cpu-utilization-impact", label: "CPU Impact", href: "/tools/performance/cpu-utilization-impact/" },
+          { id: "disk-saturation", label: "Disk Saturation", href: "/tools/performance/disk-saturation/" },
+          { id: "network-congestion", label: "Network Congestion", href: "/tools/performance/network-congestion/" },
+          { id: "cache-hit-ratio", label: "Cache Efficiency", href: "/tools/performance/cache-hit-ratio/" },
+          { id: "bottleneck-analyzer", label: "Bottleneck", href: "/tools/performance/bottleneck-analyzer/" },
+          { id: "headroom-target", label: "Headroom", href: "/tools/performance/headroom-target/" }
+        ]
+      }
+    },
+
       "physical-security": {
         label: "Physical Security",
         lanes: {
