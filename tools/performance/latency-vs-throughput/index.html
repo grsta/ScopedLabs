@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Response Time SLA Checker *ScopedLabs</title>
+  <title>Latency vs Throughput Estimator *ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0183" />
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_ANON_KEY = "YOUR_KEY_HERE";
   </script>
 
-  <script defer src="/assets/auth.js?v=0407"></script>
-  <script defer src="/assets/app.js?v=0407"></script>
+  <script defer src="/assets/auth.js?v=0408"></script>
+  <script defer src="/assets/app.js?v=0408"></script>
 </head>
 
-<body data-tier="free" data-category="performance" data-step="response-time-sla" data-lane="v1">
+<body data-tier="pro" data-category="performance" data-step="latency-vs-throughput" data-lane="v1">
 
 <header class="site-header">
   <div class="container header-inner">
@@ -37,22 +37,22 @@
   <div class="crumbs">
     <a href="/tools/">Tools</a> /
     <a href="/tools/performance/">Performance</a> /
-    Response Time SLA
+    Latency vs Throughput
   </div>
 
-  <h1>Response Time SLA Checker</h1>
+  <h1>Latency vs Throughput Estimator</h1>
 
   <!-- REQUIRED -->
   <div id="pipeline"></div>
 
-  <p class="subhead">Define acceptable latency targets and SLA boundaries for system performance.</p>
+  <p class="subhead">Understand how latency increases as system utilization approaches capacity.</p>
 
   <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
     <p class="tool-best-for">
-      <strong>Best for:</strong> establishing baseline latency expectations that drive all downstream performance calculations.
+      <strong>Best for:</strong> visualizing how close your system is to saturation and how latency will degrade under load.
     </p>
   </section>
 
@@ -61,28 +61,28 @@
 
     <div class="form-grid">
       <label class="field">
-        <span class="label">Current Avg Latency (ms)</span>
-        <input id="cur" type="number" step="0.1" value="120">
+        <span class="label">Base Latency (ms)</span>
+        <input id="baseLat" type="number" step="0.1" value="25">
       </label>
 
       <label class="field">
-        <span class="label">Target Avg Latency (ms)</span>
-        <input id="tgt" type="number" step="0.1" value="180">
+        <span class="label">Current Throughput</span>
+        <input id="t0" type="number" value="1200">
       </label>
 
       <label class="field">
-        <span class="label">SLA Threshold (ms)</span>
-        <input id="sla" type="number" step="0.1" value="200">
+        <span class="label">Target Throughput</span>
+        <input id="t1" type="number" value="1800">
       </label>
 
       <label class="field">
-        <span class="label">Allowed Error Budget (%)</span>
-        <input id="eb" type="number" step="0.1" value="1">
+        <span class="label">System Capacity</span>
+        <input id="cap" type="number" value="2000">
       </label>
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Check SLA</button>
+      <button id="calc" class="btn btn-primary">Calculate</button>
       <button id="reset" class="btn">Reset</button>
     </div>
   </section>
@@ -90,14 +90,14 @@
   <section class="card tool-card">
     <h2>Results</h2>
     <div id="results" class="results">
-      <div class="muted">Enter values and press Check SLA.</div>
+      <div class="muted">Enter values and press Calculate.</div>
     </div>
   </section>
 
   <!-- REQUIRED -->
   <div id="continue-wrap" class="card" style="display:none;">
     <button id="continue" class="btn btn-primary" disabled>
-      Continue → Latency vs Throughput
+      Continue → Queue Depth
     </button>
   </div>
 </main>
@@ -106,7 +106,7 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="./script.js?v=004"></script>
 
 </body>
 </html>
