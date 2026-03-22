@@ -3,8 +3,6 @@
   const KEY = "scopedlabs:pipeline:last-result";
   const NEXT_URL = "/tools/physical-security/blind-spot-check/";
 
-  function deg2rad(x){ return x * Math.PI / 180; }
-
   function render(rows){
     const el = $("results");
     el.innerHTML = "";
@@ -35,19 +33,23 @@
       if(!raw){ note.style.display="none"; return; }
 
       const parsed = JSON.parse(raw);
-      if(parsed.step !== "camera-coverage-area"){ note.style.display="none"; return; }
+
+      if(parsed.step !== "camera-coverage-area"){
+        note.style.display="none";
+        return;
+      }
 
       const d = parsed.data;
 
       if(d.effWidth){
-        $("dist").value = Math.round(d.dist);
-        $("hfov").value = Math.round(d.hfov);
+        $("effWidth").value = d.effWidth.toFixed(1);
       }
 
       note.innerHTML = `
         <strong>Flow context:</strong>
-        Effective coverage width <strong>${d.effWidth.toFixed(1)} ft</strong>.
-        This step converts coverage into spacing and camera count across the perimeter.
+        Effective coverage width from previous step:
+        <strong>${d.effWidth.toFixed(1)} ft</strong>.
+        Spacing will be based on usable coverage after overlap.
       `;
 
       note.style.display = "block";
@@ -65,36 +67,33 @@
 
   function interpretation(type){
     if(type === "Tight Spacing"){
-      return "Cameras are closer than necessary, increasing cost but improving redundancy and reducing blind spots.";
+      return "High redundancy. More cameras than necessary but minimal risk of gaps.";
     }
     if(type === "Balanced Spacing"){
-      return "Spacing is well balanced for continuous coverage and efficient deployment.";
+      return "Good balance between efficiency and continuous coverage.";
     }
-    return "Spacing is too wide. This increases the risk of blind spots and weak overlap.";
+    return "Spacing too wide. Expect coverage gaps or weak overlap.";
   }
 
   function calc(){
-    const len = parseFloat($("len").value);
-    const dist = parseFloat($("dist").value);
-    const hfov = parseFloat($("hfov").value);
-    const ov = parseFloat($("ov").value) / 100;
+    const effWidth = parseFloat($("effWidth").value);
+    const sceneWidth = parseFloat($("sceneWidth").value);
+    const safety = parseFloat($("safety").value) / 100;
 
-    const width = 2 * Math.tan(deg2rad(hfov/2)) * dist;
-    const spacing = width * (1 - ov);
-    const cams = Math.max(1, Math.ceil(len / spacing));
-    const actualSpacing = len / cams;
+    const adjustedWidth = effWidth * (1 - safety);
+    const cams = Math.max(1, Math.ceil(sceneWidth / adjustedWidth));
+    const actualSpacing = sceneWidth / cams;
 
-    const ratio = actualSpacing / width;
-    const spacingType = classifySpacing(ratio);
-    const interp = interpretation(spacingType);
+    const ratio = actualSpacing / effWidth;
+    const type = classifySpacing(ratio);
+    const interp = interpretation(type);
 
     render([
-      {label:"Coverage Width per Camera", value:`${width.toFixed(1)} ft`},
-      {label:"Recommended Spacing", value:`${spacing.toFixed(1)} ft`},
+      {label:"Effective Coverage Width", value:`${effWidth.toFixed(1)} ft`},
+      {label:"Adjusted Spacing Width", value:`${adjustedWidth.toFixed(1)} ft`},
+      {label:"Camera Count", value:`${cams}`},
       {label:"Actual Spacing", value:`${actualSpacing.toFixed(1)} ft`},
-      {label:"Perimeter Length", value:`${len.toFixed(0)} ft`},
-      {label:"Estimated Cameras Needed", value:`${cams}`},
-      {label:"Spacing Classification", value:spacingType},
+      {label:"Spacing Classification", value:type},
       {label:"Interpretation", value:interp}
     ]);
 
@@ -102,12 +101,10 @@
       category:"physical-security",
       step:"camera-spacing",
       data:{
-        len,
-        dist,
-        hfov,
-        width,
-        spacing,
-        cams
+        effWidth,
+        sceneWidth,
+        cams,
+        actualSpacing
       }
     }));
 
@@ -115,10 +112,9 @@
   }
 
   function reset(){
-    $("len").value=300;
-    $("dist").value=60;
-    $("hfov").value=90;
-    $("ov").value=15;
+    $("effWidth").value=40;
+    $("sceneWidth").value=200;
+    $("safety").value=10;
     $("results").innerHTML="";
     sessionStorage.removeItem(KEY);
     hideContinue();
@@ -129,7 +125,7 @@
     hideContinue();
   }
 
-  ["len","dist","hfov","ov"].forEach(id=>{
+  ["effWidth","sceneWidth","safety"].forEach(id=>{
     $(id).addEventListener("input", invalidate);
   });
 
