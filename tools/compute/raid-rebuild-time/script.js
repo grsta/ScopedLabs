@@ -1,72 +1,98 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
+
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CURRENT_CATEGORY = "compute";
+  const CURRENT_STEP = "raid-rebuild-time";
 
   let hasResult = false;
-  let context = null;
+  let cachedFlow = null;
+  let upstream = null;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
 
-  function showContinue() {
-    $("continue-wrap").style.display = "block";
-    $("continue").disabled = false;
-    hasResult = true;
-  }
+  const els = {
+    driveTb: $("driveTb"),
+    mbps: $("mbps"),
+    load: $("load"),
+    raid: $("raid"),
+    verify: $("verify"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    analysisCopy: $("analysis-copy"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
+    calc: $("calc"),
+    reset: $("reset")
+  };
 
-  function hideContinue() {
-    $("continue-wrap").style.display = "none";
-    $("continue").disabled = true;
-    hasResult = false;
+  function refreshFlowNote() {
+    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      cachedFlow,
+      title: "System Context",
+      intro:
+        "This step checks how long the platform stays vulnerable after a disk failure and whether rebuild exposure starts colliding with recovery expectations.",
+      customRows: (() => {
+        const source = ScopedLabsAnalyzer.getUpstreamFlow({
+          flowKey: FLOW_KEY,
+          category: CURRENT_CATEGORY,
+          step: CURRENT_STEP,
+          cachedFlow
+        });
+
+        upstream = source ? (source.data || {}) : null;
+
+        if (!source || !source.data) return null;
+
+        const d = source.data;
+        const rows = [];
+
+        if (source.step === "power-thermal") {
+          if (typeof d.totalW === "number") {
+            rows.push({ label: "Power Load", value: `${d.totalW.toFixed(0)} W` });
+          }
+          if (typeof d.tons === "number") {
+            rows.push({ label: "Cooling", value: `${d.tons.toFixed(2)} tons` });
+          }
+          if (typeof d.pressure === "string") {
+            rows.push({ label: "Thermal Pressure", value: d.pressure });
+          }
+          return rows.length ? rows : null;
+        }
+
+        rows.push({ label: "Previous Step", value: source.step });
+        return rows;
+      })()
+    });
   }
 
   function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-  }
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continue,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP
+    });
 
-  function loadContext() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.category !== "compute") return null;
-
-    return parsed;
-  }
-
-  function loadFlow() {
-    context = loadContext();
-    if (!context) return;
-
-    const el = $("flow-note");
-    el.style.display = "block";
-
-    const d = context.data;
-
-    el.innerHTML = `
-      <div style="display:grid; gap:10px;">
-        <div style="font-weight:600;">System Context:</div>
-
-        ${d.totalW ? `
-        <div class="result-row">
-          <span>Power Load</span>
-          <span>${d.totalW.toFixed(0)} W</span>
-        </div>` : ""}
-
-        ${d.tons ? `
-        <div class="result-row">
-          <span>Cooling</span>
-          <span>${d.tons.toFixed(2)} tons</span>
-        </div>` : ""}
-      </div>
-    `;
+    hasResult = false;
+    refreshFlowNote();
   }
 
   function calc() {
-    const driveTb = parseFloat($("driveTb").value);
-    const mbps = parseFloat($("mbps").value);
-    const loadFactor = parseFloat($("load").value);
-    const raid = $("raid").value;
-    const verify = $("verify").value;
+    const driveTb = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.driveTb.value, 0));
+    const mbps = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.mbps.value, 1));
+    const loadFactor = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.load.value, 1));
+    const raid = els.raid.value;
+    const verify = els.verify.value;
 
     const effMbps = mbps * loadFactor;
 
@@ -79,46 +105,170 @@
 
     if (verify === "yes") hours *= 2;
 
+    const exposurePressure = ScopedLabsAnalyzer.clamp((hours / 24) * 100, 0, 180);
+    const parityStress = raid === "10" ? 35 : raid === "5" ? 70 : 90;
+    const verifyStress = verify === "yes" ? 85 : 35;
+
+    const metrics = [
+      {
+        label: "Exposure Pressure",
+        value: exposurePressure,
+        displayValue: `${Math.round(exposurePressure)}%`
+      },
+      {
+        label: "Parity Stress",
+        value: parityStress,
+        displayValue: `${Math.round(parityStress)}%`
+      },
+      {
+        label: "Verify Stress",
+        value: verifyStress,
+        displayValue: `${Math.round(verifyStress)}%`
+      }
+    ];
+
+    const compositeScore = Math.round(
+      (exposurePressure * 0.55) +
+      (parityStress * 0.25) +
+      (verifyStress * 0.20)
+    );
+
+    const analyzer = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore,
+      metrics,
+      healthyMax: 65,
+      watchMax: 85
+    });
+
     let risk = "Low";
     if (hours > 24) risk = "Elevated";
     if (hours > 48) risk = "High";
     if (hours > 72) risk = "Critical";
 
-    let insight = "Rebuild exposure is acceptable.";
-    if (risk === "Elevated") insight = "System is vulnerable during rebuild.";
-    if (risk === "High") insight = "Failure risk increases significantly during rebuild.";
-    if (risk === "Critical") insight = "High chance of data loss window — redesign recommended.";
+    let dominantConstraint = "Balanced rebuild profile";
+    if (analyzer.dominant.label === "Exposure Pressure") {
+      dominantConstraint = "Extended failure exposure window";
+    } else if (analyzer.dominant.label === "Parity Stress") {
+      dominantConstraint = "Parity reconstruction overhead";
+    } else if (analyzer.dominant.label === "Verify Stress") {
+      dominantConstraint = "Post-rebuild verification burden";
+    }
 
-    $("results").innerHTML = `
-      <div class="result-row"><span>Rebuild Time</span><span>${hours.toFixed(1)} hrs</span></div>
-      <div class="result-row"><span>Risk Level</span><span>${risk}</span></div>
-      <div class="result-row"><span>Insight</span><span>${insight}</span></div>
-    `;
+    let crossCheck = "Rebuild duration appears aligned with a manageable recovery profile";
+    if (upstream && typeof upstream.pressure === "string" && upstream.pressure.includes("Extreme")) {
+      crossCheck = "Thermal and power pressure are already elevated, so sustained rebuild load could amplify infrastructure stress";
+    } else if (hours > 48) {
+      crossCheck = "The rebuild window is long enough that a second failure materially increases operational exposure";
+    } else if (verify === "yes") {
+      crossCheck = "The verify pass is materially extending the time spent in a degraded recovery state";
+    }
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    let interpretation = "";
+    if (analyzer.status === "RISK") {
+      interpretation =
+        "The array is staying in a vulnerable state for too long. Rebuild duration, parity overhead, or verification burden will keep the system exposed long enough that a second issue becomes a meaningful operational threat.";
+    } else if (analyzer.status === "WATCH") {
+      interpretation =
+        "The rebuild profile is workable, but exposure is tightening. The system should recover, although parity overhead and extended degraded operation are consuming more safety margin than the raw hours figure suggests.";
+    } else {
+      interpretation =
+        "The rebuild profile remains inside a manageable operating envelope. Current drive size, rebuild speed, and recovery overhead leave room to restore protection without making rebuild exposure the first major risk driver.";
+    }
+
+    let guidance = "";
+    if (analyzer.status === "HEALTHY") {
+      guidance =
+        "Maintain rebuild monitoring and verify that actual controller throughput stays near the modeled range. The first meaningful pressure increase will usually appear in rebuild duration before it appears in nominal array capacity.";
+    } else if (analyzer.status === "WATCH") {
+      guidance =
+        "Validate actual rebuild throughput under load and review whether verification needs to run inline. Watch what fails first: rebuild hours, parity overhead, or degraded-performance duration.";
+    } else {
+      guidance =
+        `Re-architect the array recovery profile. The primary limiter is ${dominantConstraint.toLowerCase()}, not just raw drive size. Reduce rebuild exposure with faster media, narrower fault domains, or a design that shortens degraded-state duration.`;
+    }
+
+    const summaryRows = [
+      { label: "Rebuild Time", value: `${hours.toFixed(1)} hrs` },
+      { label: "Effective Rebuild Speed", value: `${effMbps.toFixed(0)} MB/s` },
+      { label: "RAID Type", value: `RAID ${raid}` },
+      { label: "Verify Pass", value: verify === "yes" ? "Enabled" : "Disabled" },
+      { label: "Risk Level", value: risk },
+      { label: "Drive Size", value: `${driveTb.toFixed(1)} TB` }
+    ];
+
+    const derivedRows = [
+      { label: "Cross-Check", value: crossCheck },
+      { label: "Parity Penalty", value: `${penalty.toFixed(2)}×` },
+      { label: "Exposure Class", value: hours > 72 ? "Critical exposure" : hours > 48 ? "High exposure" : hours > 24 ? "Elevated exposure" : "Manageable exposure" }
+    ];
+
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows,
+      derivedRows,
+      status: analyzer.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      chart: {
+        labels: metrics.map((m) => m.label),
+        values: metrics.map((m) => m.value),
+        displayValues: metrics.map((m) => m.displayValue),
+        referenceValue: 65,
+        healthyMax: 65,
+        watchMax: 85,
+        axisTitle: "RAID Rebuild Risk Magnitude",
+        referenceLabel: "Healthy Margin Floor",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          120,
+          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+        )
+      }
+    });
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
       category: "compute",
       step: "raid-rebuild-time",
-      data: { hours, risk }
-    }));
+      data: {
+        hours,
+        risk,
+        crossCheck,
+        status: analyzer.status
+      }
+    });
 
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
+    hasResult = true;
   }
 
-  $("calc").addEventListener("click", calc);
+  els.calc.addEventListener("click", calc);
 
-  $("reset").addEventListener("click", () => {
-    $("results").innerHTML = `<div class="muted">Run calculation.</div>`;
+  els.reset.addEventListener("click", () => {
+    els.driveTb.value = 16;
+    els.mbps.value = 120;
+    els.load.value = "0.7";
+    els.raid.value = "5";
+    els.verify.value = "no";
     invalidate();
   });
 
-  ["driveTb","mbps","load","raid","verify"].forEach(id => {
-    $(id).addEventListener("input", invalidate);
-    $(id).addEventListener("change", invalidate);
+  ["driveTb", "mbps", "load", "raid", "verify"].forEach((id) => {
+    const el = $(id);
+    el.addEventListener("input", invalidate);
+    el.addEventListener("change", invalidate);
   });
 
-  $("continue").addEventListener("click", () => {
+  els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
     window.location.href = "/tools/compute/backup-window/";
   });
 
-  loadFlow();
+  refreshFlowNote();
+  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
 })();
