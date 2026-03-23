@@ -1,134 +1,285 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
+
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CURRENT_CATEGORY = "compute";
+  const CURRENT_STEP = "storage-throughput";
 
   let hasResult = false;
+  let cachedFlow = null;
   let iopsContext = null;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
 
-  function showContinue() {
-    $("continue-wrap").style.display = "block";
-    $("continue").disabled = false;
-    hasResult = true;
-  }
+  const els = {
+    iops: $("iops"),
+    kb: $("kb"),
+    readPct: $("readPct"),
+    writePct: $("writePct"),
+    overhead: $("overhead"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    analysisCopy: $("analysis-copy"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
+    calc: $("calc"),
+    reset: $("reset")
+  };
 
-  function hideContinue() {
-    $("continue-wrap").style.display = "none";
-    $("continue").disabled = true;
-    hasResult = false;
-  }
+  function refreshFlowNote() {
+    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      cachedFlow,
+      title: "System Context",
+      intro:
+        "This step checks whether storage throughput becomes the next limiter after IOPS demand is understood, or whether the workload remains primarily random and latency-driven.",
+      customRows: (() => {
+        const source = ScopedLabsAnalyzer.getUpstreamFlow({
+          flowKey: FLOW_KEY,
+          category: CURRENT_CATEGORY,
+          step: CURRENT_STEP,
+          cachedFlow
+        });
 
-  function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-  }
+        iopsContext = source && source.step === "storage-iops" ? (source.data || {}) : null;
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(div);
+        if (!source || !source.data || source.step !== "storage-iops") return null;
+
+        const data = source.data;
+        const rows = [];
+
+        if (typeof data.finalIops === "number") {
+          rows.push({ label: "Required IOPS", value: `${Math.round(data.finalIops)}` });
+        }
+
+        if (typeof data.storagePressure === "string") {
+          rows.push({ label: "Storage Pressure", value: data.storagePressure });
+        }
+
+        if (typeof data.primaryConstraint === "string") {
+          rows.push({ label: "Primary Constraint", value: data.primaryConstraint });
+        }
+
+        if (typeof data.status === "string") {
+          rows.push({ label: "IOPS Status", value: data.status });
+        }
+
+        return rows.length ? rows : null;
+      })()
     });
   }
 
-  function loadIOPSContext() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return null;
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continue,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP
+    });
 
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.category !== "compute") return null;
-    if (parsed.step !== "storage-iops") return null;
-
-    return parsed.data;
-  }
-
-  function loadFlowContext() {
-    iopsContext = loadIOPSContext();
-    if (!iopsContext) return;
-
-    const el = $("flow-note");
-    el.style.display = "block";
-
-    el.innerHTML = `
-      <div style="display:grid; gap:10px;">
-        <div style="font-weight:600;">From IOPS:</div>
-
-        <div class="result-row">
-          <span class="result-label">Required IOPS</span>
-          <span class="result-value">${Math.round(iopsContext.finalIops)}</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Storage Pressure</span>
-          <span class="result-value">${iopsContext.storagePressure}</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Constraint</span>
-          <span class="result-value">${iopsContext.primaryConstraint}</span>
-        </div>
-      </div>
-    `;
+    hasResult = false;
+    refreshFlowNote();
   }
 
   function calc() {
-    const iops = +$("iops").value;
-    const kb = +$("kb").value;
-    const readPct = +$("readPct").value;
-    const writePct = +$("writePct").value;
-    const overhead = +$("overhead").value;
+    const iops = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.iops.value, 0));
+    const kb = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.kb.value, 1));
+    const readPct = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.readPct.value, 0), 0, 100);
+    const writePct = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.writePct.value, 0), 0, 100);
+    const overhead = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.overhead.value, 0));
 
-    const totalMBps = (iops * kb) / 1024;
-    const final = totalMBps * (1 + overhead / 100);
+    const pctTotal = Math.max(readPct + writePct, 1);
+    const normalizedReadPct = (readPct / pctTotal) * 100;
+    const normalizedWritePct = (writePct / pctTotal) * 100;
 
-    let pressure = "Balanced";
-    if (final > 500) pressure = "High Throughput Demand";
-    if (final > 1500) pressure = "Extreme Throughput Demand";
+    const readIops = iops * (normalizedReadPct / 100);
+    const writeIops = iops * (normalizedWritePct / 100);
 
-    let mismatch = "Balanced";
-    if (iopsContext && iopsContext.finalIops > 20000 && final < 300) {
-      mismatch = "High IOPS but low throughput → random workload";
+    const readMBps = (readIops * kb) / 1024;
+    const writeMBps = (writeIops * kb) / 1024;
+    const baseMBps = readMBps + writeMBps;
+    const finalMBps = baseMBps * (1 + overhead / 100);
+
+    const seqBias = Math.min(160, (kb / 128) * 100);
+    const throughputPressure = Math.min(160, finalMBps / 20);
+    const overheadStress = Math.min(160, overhead * 2.2);
+
+    const metrics = [
+      {
+        label: "Throughput Pressure",
+        value: throughputPressure,
+        displayValue: `${Math.round(throughputPressure)}%`
+      },
+      {
+        label: "Sequential Bias",
+        value: seqBias,
+        displayValue: `${Math.round(seqBias)}%`
+      },
+      {
+        label: "Overhead Stress",
+        value: overheadStress,
+        displayValue: `${Math.round(overheadStress)}%`
+      }
+    ];
+
+    const compositeScore = Math.round(
+      (throughputPressure * 0.50) +
+      (seqBias * 0.30) +
+      (overheadStress * 0.20)
+    );
+
+    const analyzer = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore,
+      metrics,
+      healthyMax: 65,
+      watchMax: 85
+    });
+
+    let throughputClass = "Balanced";
+    if (finalMBps > 500) throughputClass = "High Throughput Demand";
+    if (finalMBps > 1500) throughputClass = "Extreme Throughput Demand";
+
+    let workloadPattern = "Mixed / General";
+    if (kb >= 128 && finalMBps > 300) {
+      workloadPattern = "Sequential throughput-heavy";
+    } else if (iopsContext && typeof iopsContext.finalIops === "number" && iopsContext.finalIops > 20000 && finalMBps < 300) {
+      workloadPattern = "Random IOPS-heavy";
+    } else if (kb <= 16 && iops > 10000) {
+      workloadPattern = "Small-block random";
     }
-    if (iopsContext && final > 1000 && iopsContext.finalIops < 5000) {
-      mismatch = "High throughput but low IOPS → sequential workload";
+
+    let dominantConstraint = "Balanced storage flow";
+    if (analyzer.dominant.label === "Throughput Pressure") {
+      dominantConstraint = "Media throughput ceiling";
+    } else if (analyzer.dominant.label === "Sequential Bias") {
+      dominantConstraint = "Large-block transfer profile";
+    } else if (analyzer.dominant.label === "Overhead Stress") {
+      dominantConstraint = "Protocol / filesystem overhead";
     }
 
-    render([
-      { label: "Throughput", value: `${final.toFixed(1)} MB/s` },
-      { label: "Throughput Pressure", value: pressure },
-      { label: "Workload Pattern", value: mismatch }
-    ]);
+    let crossCheck = "IOPS and throughput appear reasonably aligned";
+    if (iopsContext && typeof iopsContext.finalIops === "number") {
+      if (iopsContext.finalIops > 20000 && finalMBps < 300) {
+        crossCheck = "High IOPS with modest MB/s suggests a random workload where latency still matters more than raw throughput";
+      } else if (finalMBps > 1000 && iopsContext.finalIops < 5000) {
+        crossCheck = "Throughput demand is outrunning IOPS density, which points toward a sequential or large-block transfer profile";
+      } else if (iopsContext.status === "RISK" && analyzer.status !== "RISK") {
+        crossCheck = "IOPS pressure may still dominate before throughput becomes the true first bottleneck";
+      }
+    }
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "compute",
-      step: "storage-throughput",
-      data: { final, pressure, mismatch }
-    }));
+    let interpretation = "";
+    if (analyzer.status === "RISK") {
+      interpretation =
+        "The storage path is crowding its usable throughput envelope. Large-block transfer demand, protocol overhead, or sustained movement of data will begin reducing margin before the rest of the compute stack can scale cleanly.";
+    } else if (analyzer.status === "WATCH") {
+      interpretation =
+        "The throughput profile is workable, but reserve is tightening. The design should operate, although larger block sizes, sequential bursts, or transport overhead will consume available margin faster than the base MB/s figure implies.";
+    } else {
+      interpretation =
+        "The throughput requirement remains inside a manageable operating envelope. Current transfer demand and overhead leave room for normal burst behavior without making throughput the first likely scaling wall.";
+    }
 
-    showContinue();
+    let guidance = "A balanced storage design should maintain throughput reserve above sustained transfer demand.";
+    if (analyzer.status === "WATCH") {
+      guidance =
+        "Validate controller path, transport layer, and future block-size growth before locking hardware. This is where sequential load can force a move to faster media or a wider storage path sooner than expected.";
+    }
+    if (analyzer.status === "RISK") {
+      guidance =
+        `Rework the throughput plan before continuing. The primary limiter is ${dominantConstraint.toLowerCase()}, so scaling headroom will collapse there first. Reduce transfer size, raise available bandwidth, or move to faster media and transport.`;
+    }
+
+    const summaryRows = [
+      { label: "Read Throughput", value: `${readMBps.toFixed(1)} MB/s` },
+      { label: "Write Throughput", value: `${writeMBps.toFixed(1)} MB/s` },
+      { label: "Base Throughput", value: `${baseMBps.toFixed(1)} MB/s` },
+      { label: "Estimated Required Throughput", value: `${finalMBps.toFixed(1)} MB/s` },
+      { label: "Read / Write Mix", value: `${normalizedReadPct.toFixed(0)}% / ${normalizedWritePct.toFixed(0)}%` },
+      { label: "Avg I/O Size", value: `${kb.toFixed(0)} KB` }
+    ];
+
+    const derivedRows = [
+      { label: "Throughput Class", value: throughputClass },
+      { label: "Workload Pattern", value: workloadPattern },
+      { label: "Cross-Check", value: crossCheck }
+    ];
+
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows,
+      derivedRows,
+      status: analyzer.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      chart: {
+        labels: metrics.map((m) => m.label),
+        values: metrics.map((m) => m.value),
+        displayValues: metrics.map((m) => m.displayValue),
+        referenceValue: 65,
+        healthyMax: 65,
+        watchMax: 85,
+        axisTitle: "Storage Throughput Magnitude",
+        referenceLabel: "Healthy Margin Floor",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          120,
+          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+        )
+      }
+    });
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      data: {
+        finalMBps,
+        throughputClass,
+        workloadPattern,
+        crossCheck,
+        status: analyzer.status
+      }
+    });
+
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
+    hasResult = true;
   }
 
-  $("calc").addEventListener("click", calc);
+  els.calc.addEventListener("click", calc);
 
-  $("reset").addEventListener("click", () => {
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+  els.reset.addEventListener("click", () => {
+    els.iops.value = 5000;
+    els.kb.value = 32;
+    els.readPct.value = 70;
+    els.writePct.value = 30;
+    els.overhead.value = 15;
     invalidate();
   });
 
-  ["iops","kb","readPct","writePct","overhead"].forEach(id => {
+  ["iops", "kb", "readPct", "writePct", "overhead"].forEach((id) => {
     $(id).addEventListener("input", invalidate);
     $(id).addEventListener("change", invalidate);
   });
 
-  $("continue").addEventListener("click", () => {
+  els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
     window.location.href = "/tools/compute/vm-density/";
   });
 
-  loadFlowContext();
+  refreshFlowNote();
+  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
 })();
