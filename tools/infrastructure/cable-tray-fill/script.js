@@ -1,11 +1,6 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "infrastructure";
-  const CURRENT_STEP = "cable-tray-fill";
-
-  let cachedFlow = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
 
@@ -16,38 +11,15 @@
     count: $("count"),
     maxFill: $("maxFill"),
     results: $("results"),
-    flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
     calc: $("calc"),
     reset: $("reset")
   };
 
-  function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "System Context",
-      intro:
-        "This step checks whether the tray is merely passing the current cable count or still retaining usable growth and service margin."
-    });
-  }
-
   function invalidate() {
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysisCopy,
-      existingChartRef: chartRef,
-      existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      emptyMessage: "Enter values and press Calculate."
-    });
-
-    refreshFlowNote();
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
   }
 
   function calc() {
@@ -73,8 +45,16 @@
     const marginPct = Math.max(0, maxFill - fillPct);
 
     const fillPressure = ScopedLabsAnalyzer.clamp((fillPct / maxFill) * 100, 0, 180);
-    const growthPressure = ScopedLabsAnalyzer.clamp(((count + Math.max(1, Math.ceil(count * 0.25))) * cableArea / maxUsableArea) * 100, 0, 180);
-    const serviceabilityStress = ScopedLabsAnalyzer.clamp(100 - ((marginPct / maxFill) * 100), 0, 180);
+    const growthPressure = ScopedLabsAnalyzer.clamp(
+      ((count + Math.max(1, Math.ceil(count * 0.25))) * cableArea / Math.max(maxUsableArea, 0.0001)) * 100,
+      0,
+      180
+    );
+    const serviceabilityStress = ScopedLabsAnalyzer.clamp(
+      100 - ((marginPct / maxFill) * 100),
+      0,
+      180
+    );
 
     const metrics = [
       {
@@ -195,17 +175,6 @@
         )
       }
     });
-
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      data: {
-        fillPct,
-        remainingArea,
-        remainingCableCapacity,
-        status: analyzer.status
-      }
-    });
   }
 
   function reset() {
@@ -226,6 +195,5 @@
     el.addEventListener("change", invalidate);
   });
 
-  refreshFlowNote();
   invalidate();
 })();
