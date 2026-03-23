@@ -71,11 +71,14 @@
 
   function loadFlow() {
     context = loadContext();
-    if (!context) return;
 
     const el = $("flow-note");
-    const d = context.data || {};
+    el.style.display = "none";
+    el.innerHTML = "";
 
+    if (!context) return;
+
+    const d = context.data || {};
     const rows = [];
 
     if (Number.isFinite(d.hours)) {
@@ -188,25 +191,35 @@
       chart = null;
     }
 
-    const markerDotPlugin = {
-      id: "scopedlabsMarkerDot",
-      afterDatasetsDraw(chartInstance) {
-        const { ctx: drawCtx } = chartInstance;
-        const meta = chartInstance.getDatasetMeta(0);
-        const element = meta.data[dominantIndex];
-        if (!element) return;
+    const bandPlugin = {
+      id: "scopedlabsAnalyzerBands",
+      beforeDatasetsDraw(chartInstance) {
+        const { ctx: drawCtx, chartArea, scales } = chartInstance;
+        if (!chartArea || !scales.x) return;
 
-        const props = element.getProps(["x", "y", "base"], true);
-        const dotX = props.x;
-        const dotY = props.y;
+        const x0 = scales.x.getPixelForValue(0);
+        const x35 = scales.x.getPixelForValue(35);
+        const x65 = scales.x.getPixelForValue(65);
+        const x100 = scales.x.getPixelForValue(100);
 
         drawCtx.save();
-        drawCtx.beginPath();
-        drawCtx.arc(dotX, dotY, 5, 0, Math.PI * 2);
-        drawCtx.fillStyle = "rgba(140, 255, 181, 1)";
-        drawCtx.shadowBlur = 10;
-        drawCtx.shadowColor = "rgba(140, 255, 181, .65)";
-        drawCtx.fill();
+
+        drawCtx.fillStyle = "rgba(96, 210, 132, 0.08)";
+        drawCtx.fillRect(x0, chartArea.top, x35 - x0, chartArea.bottom - chartArea.top);
+
+        drawCtx.fillStyle = "rgba(255, 210, 96, 0.08)";
+        drawCtx.fillRect(x35, chartArea.top, x65 - x35, chartArea.bottom - chartArea.top);
+
+        drawCtx.fillStyle = "rgba(255, 110, 110, 0.08)";
+        drawCtx.fillRect(x65, chartArea.top, x100 - x65, chartArea.bottom - chartArea.top);
+
+        drawCtx.fillStyle = "rgba(255,255,255,.42)";
+        drawCtx.font = "600 11px sans-serif";
+        drawCtx.textAlign = "left";
+        drawCtx.fillText("Healthy", x0 + 8, chartArea.top + 14);
+        drawCtx.fillText("Watch", x35 + 8, chartArea.top + 14);
+        drawCtx.fillText("Risk", x65 + 8, chartArea.top + 14);
+
         drawCtx.restore();
       }
     };
@@ -229,9 +242,31 @@
         drawCtx.stroke();
         drawCtx.setLineDash([]);
 
-        drawCtx.fillStyle = "rgba(255,255,255,.65)";
-        drawCtx.font = "12px sans-serif";
-        drawCtx.fillText("Ref 65", x + 8, chartArea.top + 14);
+        drawCtx.fillStyle = "rgba(255,255,255,.68)";
+        drawCtx.font = "600 11px sans-serif";
+        drawCtx.textAlign = "left";
+        drawCtx.fillText("Ref 65", x + 8, chartArea.bottom - 8);
+        drawCtx.restore();
+      }
+    };
+
+    const markerDotPlugin = {
+      id: "scopedlabsMarkerDot",
+      afterDatasetsDraw(chartInstance) {
+        const { ctx: drawCtx } = chartInstance;
+        const meta = chartInstance.getDatasetMeta(0);
+        const element = meta.data[dominantIndex];
+        if (!element) return;
+
+        const props = element.getProps(["x", "y"], true);
+
+        drawCtx.save();
+        drawCtx.beginPath();
+        drawCtx.arc(props.x, props.y, 5, 0, Math.PI * 2);
+        drawCtx.fillStyle = "rgba(140, 255, 181, 1)";
+        drawCtx.shadowBlur = 12;
+        drawCtx.shadowColor = "rgba(140, 255, 181, .70)";
+        drawCtx.fill();
         drawCtx.restore();
       }
     };
@@ -248,9 +283,9 @@
         const value = values[dominantIndex];
 
         drawCtx.save();
-        drawCtx.fillStyle = "rgba(255,255,255,.92)";
         drawCtx.font = "600 12px sans-serif";
         drawCtx.textAlign = "left";
+        drawCtx.fillStyle = "rgba(255,255,255,.95)";
         drawCtx.fillText(`${Math.round(value)}`, props.x + 10, props.y + 4);
         drawCtx.restore();
       }
@@ -262,20 +297,19 @@
         labels,
         datasets: [
           {
-            label: "Risk Score",
             data: values,
-            borderRadius: 10,
+            borderRadius: 999,
             borderSkipped: false,
             backgroundColor: values.map((_, i) =>
-              i === dominantIndex ? "rgba(120, 255, 170, 0.88)" : "rgba(120, 255, 170, 0.25)"
+              i === dominantIndex ? "rgba(120, 255, 170, 0.88)" : "rgba(120, 255, 170, 0.22)"
             ),
             borderColor: values.map((_, i) =>
-              i === dominantIndex ? "rgba(120, 255, 170, 1)" : "rgba(120, 255, 170, 0.30)"
+              i === dominantIndex ? "rgba(120, 255, 170, 1)" : "rgba(120, 255, 170, 0.18)"
             ),
-            borderWidth: 1.5,
-            barThickness: 20,
-            categoryPercentage: 0.72,
-            barPercentage: 0.82
+            borderWidth: 1.4,
+            barThickness: 18,
+            categoryPercentage: 0.62,
+            barPercentage: 0.78
           }
         ]
       },
@@ -286,9 +320,9 @@
         animation: false,
         layout: {
           padding: {
-            top: 12,
+            top: 22,
             right: 24,
-            bottom: 12,
+            bottom: 18,
             left: 8
           }
         },
@@ -298,12 +332,12 @@
           },
           tooltip: {
             enabled: true,
+            displayColors: false,
             backgroundColor: "rgba(10,12,16,.96)",
             borderColor: "rgba(255,255,255,.10)",
             borderWidth: 1,
             titleColor: "rgba(255,255,255,.92)",
             bodyColor: "rgba(255,255,255,.82)",
-            displayColors: false,
             callbacks: {
               label(context) {
                 return `Risk Score: ${Math.round(context.raw)}`;
@@ -315,27 +349,26 @@
           x: {
             min: 0,
             max: 100,
-            grid: {
-              color(context) {
-                const v = context.tick && typeof context.tick.value === "number" ? context.tick.value : -1;
-                if (v >= 0 && v <= 35) return "rgba(110, 230, 150, 0.12)";
-                if (v > 35 && v <= 65) return "rgba(255, 210, 110, 0.12)";
-                return "rgba(255, 120, 120, 0.12)";
-              }
-            },
             border: {
               color: "rgba(255,255,255,.10)"
             },
+            grid: {
+              color: "rgba(255,255,255,.06)",
+              lineWidth: 1
+            },
             ticks: {
-              color: "rgba(255,255,255,.65)",
-              stepSize: 20
+              color: "rgba(255,255,255,.56)",
+              stepSize: 20,
+              font: {
+                size: 11
+              }
             }
           },
           y: {
-            grid: {
+            border: {
               display: false
             },
-            border: {
+            grid: {
               display: false
             },
             ticks: {
@@ -348,7 +381,7 @@
           }
         }
       },
-      plugins: [markerDotPlugin, referenceLinePlugin, valueLabelPlugin]
+      plugins: [bandPlugin, referenceLinePlugin, markerDotPlugin, valueLabelPlugin]
     });
 
     $("chart-wrap").style.display = "block";
@@ -373,9 +406,14 @@
     ) {
       $("results").innerHTML = `<div class="muted">Enter valid values to calculate.</div>`;
       $("analysis-copy").style.display = "none";
+      $("analysis-copy").innerHTML = "";
       $("chart-wrap").style.display = "none";
       $("complete-wrap").style.display = "none";
       $("continue-wrap").style.display = "none";
+      if (chart) {
+        chart.destroy();
+        chart = null;
+      }
       return;
     }
 
@@ -386,7 +424,7 @@
     const protectedTb = sourceTb * (1 - savingsPct / 100);
     const effectiveTb = protectedTb * (1 + overheadPct / 100);
 
-    const totalMB = effectiveTb * 1_000_000;
+    const totalMB = effectiveTb * 1000000;
     const seconds = totalMB / mbps;
     const hours = seconds / 3600;
 
@@ -457,10 +495,7 @@
       { label: "Effective Throughput", value: `${mbps.toFixed(0)} MB/s` },
       { label: "Backup Window", value: formatHours(hours) },
       { label: "Composite Risk Score", value: `${compositeScore} / 100` },
-      {
-        label: "Status",
-        value: status
-      },
+      { label: "Status", value: status },
       {
         label: "Backup vs Recovery Window",
         value: rebuildHours
@@ -510,7 +545,8 @@
     const el = $(id);
     const evt = el.tagName === "SELECT" ? "change" : "input";
     el.addEventListener(evt, () => {
-      if (hasResult) invalidate();
+      invalidate();
+      loadFlow();
     });
   });
 
