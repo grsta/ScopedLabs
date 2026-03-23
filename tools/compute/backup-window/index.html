@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Backup Window Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-backup-004" />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-backup-006" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,31 +13,10 @@
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
   </script>
-  <script defer src="/assets/auth.js?v=0405"></script>
-  <script defer src="/assets/app.js?v=0405"></script>
+  <script defer src="/assets/auth.js?v=0406"></script>
+  <script defer src="/assets/app.js?v=0406"></script>
 
   <style>
-    .analyzer-wrap {
-      position: relative;
-      height: 340px;
-      min-height: 340px;
-      max-height: 340px;
-      margin-top: 14px;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 18px;
-      padding: 12px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
-        rgba(255,255,255,.02);
-      overflow: hidden;
-    }
-
-    .analyzer-wrap canvas {
-      display: block;
-      width: 100% !important;
-      height: 100% !important;
-    }
-
     .results-block {
       display: grid;
       gap: 10px;
@@ -77,6 +56,18 @@
     .analysis-note strong {
       display: block;
       margin-bottom: 6px;
+    }
+
+    #chart-wrap {
+      margin-top: 16px;
+      min-height: 340px;
+      display: none;
+    }
+
+    #analyzerChart {
+      width: 100%;
+      height: 340px;
+      display: block;
     }
   </style>
 </head>
@@ -176,7 +167,7 @@
       <div class="muted">Run calculation.</div>
     </div>
 
-    <div id="chart-wrap" class="analyzer-wrap" style="display:none;">
+    <div id="chart-wrap">
       <canvas id="analyzerChart" aria-label="Backup Window Analyzer Chart"></canvas>
     </div>
 
@@ -208,7 +199,7 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=006"></script>
+<script src="./script.js?v=007"></script>
 
 </body>
 </html>

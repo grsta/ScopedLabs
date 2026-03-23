@@ -20,7 +20,6 @@
 
     const parsed = safeParse(raw);
     if (!parsed || parsed.category !== "compute") return null;
-
     return parsed;
   }
 
@@ -146,9 +145,9 @@
   }
 
   function getStatus(score) {
-    if (score < 35) return "HEALTHY";
-    if (score < 65) return "WATCH";
-    return "RISK";
+    if (score > 65) return "RISK";
+    if (score > 35) return "WATCH";
+    return "HEALTHY";
   }
 
   function getStatusClass(status) {
@@ -180,136 +179,182 @@
     `;
   }
 
+  function metricColor(value, isDominant) {
+    if (isDominant) {
+      if (value > 65) return "rgba(255, 92, 92, 1)";
+      if (value > 35) return "rgba(255, 188, 82, 1)";
+      return "rgba(120, 255, 170, 1)";
+    }
+
+    if (value > 65) return "rgba(255, 77, 77, 0.30)";
+    if (value > 35) return "rgba(255, 170, 51, 0.24)";
+    return "rgba(90, 170, 255, 0.15)";
+  }
+
+  function metricBorderColor(value, isDominant) {
+    if (isDominant) {
+      if (value > 65) return "rgba(255, 220, 220, 1)";
+      if (value > 35) return "rgba(255, 240, 210, 1)";
+      return "rgba(215, 255, 230, 1)";
+    }
+
+    return "rgba(120,170,200,0.18)";
+  }
+
+  function metricHoverColor(value) {
+    if (value > 65) return "rgba(255, 105, 105, 1)";
+    if (value > 35) return "rgba(255, 198, 95, 1)";
+    return "rgba(135, 255, 182, 1)";
+  }
+
   function buildChart(metrics, dominantIndex) {
     const canvas = $("analyzerChart");
-    const ctx = canvas.getContext("2d");
-    const labels = metrics.map((m) => m.label);
-    const values = metrics.map((m) => m.value);
+    if (!canvas) return;
 
     if (chart) {
       chart.destroy();
       chart = null;
     }
 
-    const bandPlugin = {
-      id: "scopedlabsAnalyzerBands",
-      beforeDatasetsDraw(chartInstance) {
-        const { ctx: drawCtx, chartArea, scales } = chartInstance;
+    const labels = metrics.map((m) => m.label);
+    const values = metrics.map((m) => m.value);
+
+    const chartBgPlugin = {
+      id: "chartBgPlugin",
+      beforeDraw(c) {
+        const { ctx, chartArea } = c;
+        if (!chartArea) return;
+
+        const { left, top, width, height } = chartArea;
+
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        ctx.fillRect(left, top, width, height);
+        ctx.restore();
+      }
+    };
+
+    const thresholdBandPlugin = {
+      id: "thresholdBandPlugin",
+      beforeDatasetsDraw(c) {
+        const { ctx, chartArea, scales } = c;
         if (!chartArea || !scales.x) return;
 
-        const x0 = scales.x.getPixelForValue(0);
-        const x35 = scales.x.getPixelForValue(35);
-        const x65 = scales.x.getPixelForValue(65);
-        const x100 = scales.x.getPixelForValue(100);
+        const x = scales.x;
+        const { top, bottom, left, right } = chartArea;
 
-        drawCtx.save();
+        const healthyMax = Math.min(35, x.max);
+        const watchMax = Math.min(65, x.max);
 
-        drawCtx.fillStyle = "rgba(96, 210, 132, 0.08)";
-        drawCtx.fillRect(x0, chartArea.top, x35 - x0, chartArea.bottom - chartArea.top);
+        ctx.save();
 
-        drawCtx.fillStyle = "rgba(255, 210, 96, 0.08)";
-        drawCtx.fillRect(x35, chartArea.top, x65 - x35, chartArea.bottom - chartArea.top);
+        if (healthyMax > 0) {
+          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
+          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
+        }
 
-        drawCtx.fillStyle = "rgba(255, 110, 110, 0.08)";
-        drawCtx.fillRect(x65, chartArea.top, x100 - x65, chartArea.bottom - chartArea.top);
+        if (watchMax > 35) {
+          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
+          ctx.fillRect(
+            x.getPixelForValue(35),
+            top,
+            x.getPixelForValue(watchMax) - x.getPixelForValue(35),
+            bottom - top
+          );
+        }
 
-        drawCtx.fillStyle = "rgba(255,255,255,.42)";
-        drawCtx.font = "600 11px sans-serif";
-        drawCtx.textAlign = "left";
-        drawCtx.fillText("Healthy", x0 + 8, chartArea.top + 14);
-        drawCtx.fillText("Watch", x35 + 8, chartArea.top + 14);
-        drawCtx.fillText("Risk", x65 + 8, chartArea.top + 14);
+        if (x.max > 65) {
+          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
+          ctx.fillRect(
+            x.getPixelForValue(65),
+            top,
+            right - x.getPixelForValue(65),
+            bottom - top
+          );
+        }
 
-        drawCtx.restore();
+        ctx.restore();
+      },
+      afterDatasetsDraw(c) {
+        const { ctx, chartArea, scales } = c;
+        if (!chartArea || !scales.x || !scales.y) return;
+
+        const x = scales.x;
+        const y = scales.y;
+        const { top, bottom } = chartArea;
+
+        ctx.save();
+
+        const rx = x.getPixelForValue(65);
+        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(rx, top);
+        ctx.lineTo(rx, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
+        ctx.font = "600 11px sans-serif";
+        ctx.fillText("Reference Window (65)", rx + 8, bottom - 10);
+
+        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
+        ctx.font = "600 11px sans-serif";
+        ctx.fillText("Healthy", x.getPixelForValue(6), top + 14);
+
+        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
+        ctx.fillText("Watch", x.getPixelForValue(39), top + 14);
+
+        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
+        ctx.fillText("Risk", x.getPixelForValue(69), top + 14);
+
+        const dominantValue = values[dominantIndex];
+        const px = x.getPixelForValue(dominantValue);
+        const py = y.getPixelForValue(labels[dominantIndex]);
+
+        ctx.beginPath();
+        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(225, 255, 240, 1)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(245,255,248,0.98)";
+        ctx.font = "600 12px sans-serif";
+        ctx.fillText(`${Math.round(dominantValue)}`, px + 10, py + 4);
+
+        ctx.restore();
       }
     };
 
-    const referenceLinePlugin = {
-      id: "scopedlabsReferenceLine",
-      afterDraw(chartInstance) {
-        const { ctx: drawCtx, chartArea, scales } = chartInstance;
-        if (!chartArea || !scales.x) return;
+    const maxValue = Math.max(...values, 100);
 
-        const x = scales.x.getPixelForValue(65);
-
-        drawCtx.save();
-        drawCtx.strokeStyle = "rgba(255,255,255,.45)";
-        drawCtx.lineWidth = 1;
-        drawCtx.setLineDash([6, 6]);
-        drawCtx.beginPath();
-        drawCtx.moveTo(x, chartArea.top);
-        drawCtx.lineTo(x, chartArea.bottom);
-        drawCtx.stroke();
-        drawCtx.setLineDash([]);
-
-        drawCtx.fillStyle = "rgba(255,255,255,.68)";
-        drawCtx.font = "600 11px sans-serif";
-        drawCtx.textAlign = "left";
-        drawCtx.fillText("Ref 65", x + 8, chartArea.bottom - 8);
-        drawCtx.restore();
-      }
-    };
-
-    const markerDotPlugin = {
-      id: "scopedlabsMarkerDot",
-      afterDatasetsDraw(chartInstance) {
-        const { ctx: drawCtx } = chartInstance;
-        const meta = chartInstance.getDatasetMeta(0);
-        const element = meta.data[dominantIndex];
-        if (!element) return;
-
-        const props = element.getProps(["x", "y"], true);
-
-        drawCtx.save();
-        drawCtx.beginPath();
-        drawCtx.arc(props.x, props.y, 5, 0, Math.PI * 2);
-        drawCtx.fillStyle = "rgba(140, 255, 181, 1)";
-        drawCtx.shadowBlur = 12;
-        drawCtx.shadowColor = "rgba(140, 255, 181, .70)";
-        drawCtx.fill();
-        drawCtx.restore();
-      }
-    };
-
-    const valueLabelPlugin = {
-      id: "scopedlabsValueLabel",
-      afterDatasetsDraw(chartInstance) {
-        const { ctx: drawCtx } = chartInstance;
-        const meta = chartInstance.getDatasetMeta(0);
-        const element = meta.data[dominantIndex];
-        if (!element) return;
-
-        const props = element.getProps(["x", "y"], true);
-        const value = values[dominantIndex];
-
-        drawCtx.save();
-        drawCtx.font = "600 12px sans-serif";
-        drawCtx.textAlign = "left";
-        drawCtx.fillStyle = "rgba(255,255,255,.95)";
-        drawCtx.fillText(`${Math.round(value)}`, props.x + 10, props.y + 4);
-        drawCtx.restore();
-      }
-    };
-
-    chart = new Chart(ctx, {
+    chart = new Chart(canvas, {
       type: "bar",
       data: {
         labels,
         datasets: [
           {
+            label: "Backup Risk Metrics",
+            barPercentage: 0.5,
+            categoryPercentage: 0.58,
             data: values,
-            borderRadius: 999,
+            borderWidth: 2,
+            borderRadius: 8,
             borderSkipped: false,
-            backgroundColor: values.map((_, i) =>
-              i === dominantIndex ? "rgba(120, 255, 170, 0.88)" : "rgba(120, 255, 170, 0.22)"
-            ),
-            borderColor: values.map((_, i) =>
-              i === dominantIndex ? "rgba(120, 255, 170, 1)" : "rgba(120, 255, 170, 0.18)"
-            ),
-            borderWidth: 1.4,
-            barThickness: 18,
-            categoryPercentage: 0.62,
-            barPercentage: 0.78
+            backgroundColor: (ctx) => {
+              const i = ctx.dataIndex;
+              const v = ctx.raw;
+              return metricColor(v, i === dominantIndex);
+            },
+            borderColor: (ctx) => {
+              const i = ctx.dataIndex;
+              const v = ctx.raw;
+              return metricBorderColor(v, i === dominantIndex);
+            },
+            hoverBackgroundColor: (ctx) => metricHoverColor(ctx.raw)
           }
         ]
       },
@@ -317,72 +362,69 @@
         responsive: true,
         maintainAspectRatio: false,
         indexAxis: "y",
-        animation: false,
+        animation: {
+          duration: 700,
+          easing: "easeOutQuart"
+        },
         layout: {
           padding: {
-            top: 22,
-            right: 24,
-            bottom: 18,
-            left: 8
+            top: 28,
+            right: 12,
+            left: 10,
+            bottom: 0
           }
         },
         plugins: {
-          legend: {
-            display: false
-          },
+          legend: { display: false },
           tooltip: {
-            enabled: true,
-            displayColors: false,
-            backgroundColor: "rgba(10,12,16,.96)",
-            borderColor: "rgba(255,255,255,.10)",
+            backgroundColor: "rgba(8, 18, 18, 0.96)",
+            titleColor: "#e8fff1",
+            bodyColor: "#d9f7e7",
+            borderColor: "rgba(100, 255, 180, 0.25)",
             borderWidth: 1,
-            titleColor: "rgba(255,255,255,.92)",
-            bodyColor: "rgba(255,255,255,.82)",
+            padding: 12,
+            displayColors: false,
             callbacks: {
               label(context) {
-                return `Risk Score: ${Math.round(context.raw)}`;
+                return ` ${Math.round(context.raw)}`;
               }
             }
           }
         },
         scales: {
           x: {
-            min: 0,
-            max: 100,
-            border: {
-              color: "rgba(255,255,255,.10)"
+            beginAtZero: true,
+            suggestedMax: Math.ceil(maxValue * 1.08),
+            ticks: {
+              color: "rgba(220, 238, 230, 0.78)"
             },
             grid: {
-              color: "rgba(255,255,255,.06)",
-              lineWidth: 1
+              color: "rgba(110, 160, 140, 0.10)"
             },
-            ticks: {
-              color: "rgba(255,255,255,.56)",
-              stepSize: 20,
-              font: {
-                size: 11
-              }
+            title: {
+              display: true,
+              text: "Backup Risk Magnitude",
+              color: "rgba(230, 255, 240, 0.92)"
             }
           },
           y: {
-            border: {
-              display: false
+            ticks: {
+              color: "rgba(228, 245, 235, 0.92)"
             },
             grid: {
               display: false
-            },
-            ticks: {
-              color: "rgba(255,255,255,.82)",
-              font: {
-                size: 12,
-                weight: "600"
-              }
             }
           }
         }
       },
-      plugins: [bandPlugin, referenceLinePlugin, markerDotPlugin, valueLabelPlugin]
+      plugins: [chartBgPlugin, thresholdBandPlugin]
     });
+
+    canvas.style.width = "100%";
+    canvas.style.height = "340px";
+    if (canvas.parentElement) {
+      canvas.parentElement.style.minHeight = "340px";
+    }
 
     $("chart-wrap").style.display = "block";
   }
@@ -438,11 +480,11 @@
       ? clamp((hours / rebuildHours) * 100, 0, 200)
       : null;
 
-    const throughputDemandScore = clamp((effectiveTb / Math.max(hours, 0.01)) * 6, 0, 100);
     const schedulePressureScore = clamp((hours / 8) * 100, 0, 100);
     const recoveryCollisionScore = rebuildHours
       ? clamp((hours / rebuildHours) * 100, 0, 100)
       : clamp((hours / 12) * 100, 0, 100);
+    const throughputDemandScore = clamp((effectiveTb / Math.max(hours, 0.01)) * 6, 0, 100);
 
     const metrics = [
       { label: "Schedule Pressure", value: schedulePressureScore },
@@ -456,6 +498,7 @@
     }
 
     const dominantLabel = metrics[dominantIndex].label;
+
     const compositeScore = Math.round(
       (schedulePressureScore * 0.35) +
       (recoveryCollisionScore * 0.45) +
@@ -469,20 +512,20 @@
 
     if (status === "HEALTHY") {
       interpretation = rebuildHours
-        ? `Backup execution fits inside the known recovery envelope. The current data-change pattern and transport rate should allow completion before storage recovery becomes the dominant operational threat.`
-        : `Backup execution remains inside a workable maintenance window. The platform is not presently backup-bound, and routine protection jobs should complete without materially constraining operations.`;
+        ? "Backup execution fits inside the known recovery envelope. The current data-change pattern and transport rate should allow completion before storage recovery becomes the dominant operational threat."
+        : "Backup execution remains inside a workable maintenance window. The platform is not presently backup-bound, and routine protection jobs should complete without materially constraining operations.";
 
-      guidance = `Maintain the current throughput target, keep incremental cadence tight, and monitor change-rate growth. Expansion pressure will first appear in backup duration and recovery overlap before it appears in raw storage consumption.`;
+      guidance = "Maintain the current throughput target, keep incremental cadence tight, and monitor change-rate growth. Expansion pressure will first appear in backup duration and recovery overlap before it appears in raw storage consumption.";
     } else if (status === "WATCH") {
       interpretation = rebuildHours
-        ? `Backup duration is starting to compete with the platform's recovery timeline. If a disk event or rebuild occurs during the same period, recovery operations and protection jobs begin contending for the same time budget.`
-        : `Backup duration is approaching the edge of a practical maintenance window. The system is still workable, but schedule elasticity is narrowing and scaling headroom is limited.`;
+        ? "Backup duration is starting to compete with the platform's recovery timeline. If a disk event or rebuild occurs during the same period, recovery operations and protection jobs begin contending for the same time budget."
+        : "Backup duration is approaching the edge of a practical maintenance window. The system is still workable, but schedule elasticity is narrowing and scaling headroom is limited.";
 
-      guidance = `Reduce protected data per cycle, improve effective throughput, or split jobs by tier. Watch what fails first: overnight schedule margin, recovery overlap, or ingest contention on production storage.`;
+      guidance = "Reduce protected data per cycle, improve effective throughput, or split jobs by tier. Watch what fails first: overnight schedule margin, recovery overlap, or ingest contention on production storage.";
     } else {
       interpretation = rebuildHours
-        ? `Backup duration now exceeds or materially crowds the available recovery window. In this state, storage recovery, backup completion, and restore confidence are no longer aligned. The platform becomes operationally fragile under concurrent failure conditions.`
-        : `Backup duration has moved into a high-risk operating range. Protection jobs will be difficult to finish consistently, and restores become harder to validate against realistic outage windows.`;
+        ? "Backup duration now exceeds or materially crowds the available recovery window. In this state, storage recovery, backup completion, and restore confidence are no longer aligned. The platform becomes operationally fragile under concurrent failure conditions."
+        : "Backup duration has moved into a high-risk operating range. Protection jobs will be difficult to finish consistently, and restores become harder to validate against realistic outage windows.";
 
       guidance = `Re-architect the backup plan. The primary limit is ${dominantLabel.toLowerCase()}, not raw capacity. Increase throughput, segment datasets, shorten change scope, or move to a more aggressive tiered backup strategy before scaling further.`;
     }
