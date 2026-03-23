@@ -9,14 +9,51 @@
     content="Project future bandwidth demand, required uplink capacity, and upgrade timing using growth, peak, and headroom assumptions."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=net-growth-0401" />
+  <link rel="stylesheet" href="/assets/style.css?v=net-growth-0402" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0401"></script>
-  <script defer src="/assets/app.js?v=0401"></script>
+  <script defer src="/assets/auth.js?v=0402"></script>
+  <script defer src="/assets/app.js?v=0402"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.96rem;
+    }
+
+    .table th,
+    .table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(120, 255, 120, 0.10);
+    }
+
+    .table th {
+      color: rgba(255,255,255,0.72);
+      font-weight: 700;
+    }
+
+    .table td {
+      color: rgba(255,255,255,0.92);
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="network" data-tool="growth-simulator">
@@ -55,15 +92,6 @@
           <p class="tool-best-for">
             Best for: projecting future bandwidth demand and determining when uplinks or aggregation capacity will need to be upgraded.
           </p>
-        </div>
-      </section>
-
-      <div id="pipeline"></div>
-
-      <section id="flowNote" class="card tool-card" hidden>
-        <h2>Workflow Context</h2>
-        <div id="flowNoteText" class="muted">
-          This tool is best used after estimating present-day traffic. It helps validate whether your current design still holds up as the network grows.
         </div>
       </section>
 
@@ -123,23 +151,21 @@
         </div>
 
         <div class="actions">
-          <button id="calc" class="btn btn-primary">Simulate</button>
-          <button id="reset" class="btn">Reset</button>
+          <button id="calc" class="btn btn-primary" type="button">Simulate</button>
+          <button id="reset" class="btn" type="button">Reset</button>
         </div>
       </section>
 
       <section class="card tool-card">
         <h2>Results</h2>
-        <div id="results" class="results">
+        <div id="results" class="results-grid">
           <div class="muted">Enter values and press Simulate.</div>
         </div>
-      </section>
+        <div id="analysis-copy" style="display:none;"></div>
 
-      <section class="card tool-card">
-        <h2>Engineering Interpretation</h2>
-        <div id="interpretation" class="results">
-          <div class="muted">Run a simulation to see what the projected growth means for capacity planning.</div>
-        </div>
+        <p class="mini-note">
+          Model: base demand compounds monthly, peak factor is applied to demand, overhead is added, and the result is checked against your selected utilization target and uplink size.
+        </p>
       </section>
 
       <section class="card tool-card">
@@ -151,13 +177,10 @@
     </div>
   </main>
 
-  <script src="/assets/tool-flow.js"></script>
-  <script src="/assets/pipelines.js"></script>
-  <script src="/assets/pipeline.js"></script>
-  <script src="./script.js"></script>
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=0402"></script>
 </body>
 </html>
-
 
 
 
