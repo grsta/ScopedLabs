@@ -1,145 +1,202 @@
 ﻿(() => {
-  const $ = id => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CURRENT_CATEGORY = "infrastructure";
+  const CURRENT_STEP = "ups-room-sizing";
 
+  let cachedFlow = null;
   let hasResult = false;
-  let context = null;
 
-  function render(rows){
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r=>{
-      const d = document.createElement("div");
-      d.className = "result-row";
-      d.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(d);
+  const els = {
+    ups: $("ups"),
+    batt: $("batt"),
+    areaEach: $("areaEach"),
+    factor: $("factor"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    analysisCopy: $("analysis-copy"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
+    calc: $("calc"),
+    reset: $("reset")
+  };
+
+  function refreshFlowNote() {
+    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      cachedFlow,
+      title: "Structural Context",
+      intro:
+        "This step checks whether the UPS room is only fitting nominal equipment footprint or still preserving enough access, service, and expansion margin for real deployment.",
+      customRows: (() => {
+        const source = ScopedLabsAnalyzer.getUpstreamFlow({
+          flowKey: FLOW_KEY,
+          category: CURRENT_CATEGORY,
+          step: CURRENT_STEP,
+          cachedFlow
+        });
+
+        if (!source || !source.data) return null;
+
+        const d = source.data;
+        const rows = [];
+
+        if (typeof d.psf === "number") {
+          rows.push({ label: "Floor Load", value: `${d.psf.toFixed(1)} psf` });
+        }
+
+        if (typeof d.status === "string") {
+          rows.push({ label: "Load Status", value: d.status });
+        }
+
+        return rows.length ? rows : null;
+      })()
     });
   }
 
-  function showContinue(){
-    $("continue-wrap").style.display = "block";
-    $("continue").disabled = false;
-    hasResult = true;
-  }
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continue,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      emptyMessage: "Run calculation."
+    });
 
-  function hideContinue(){
-    $("continue-wrap").style.display = "none";
-    $("continue").disabled = true;
     hasResult = false;
+    refreshFlowNote();
   }
 
-  function invalidate(){
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-  }
-
-  function loadContext(){
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.category !== "infrastructure") return null;
-
-    return parsed;
-  }
-
-  function loadFlow(){
-    context = loadContext();
-    if (!context) return;
-
-    const el = $("flow-note");
-    el.style.display = "block";
-
-    const d = context.data;
-
-    el.innerHTML = `
-      <div style="display:grid; gap:10px;">
-        <div style="font-weight:600;">Structural Context:</div>
-
-        ${d.psf ? `
-        <div class="result-row">
-          <span>Floor Load</span>
-          <span>${d.psf.toFixed(1)} psf</span>
-        </div>` : ""}
-
-        ${d.status ? `
-        <div class="result-row">
-          <span>Load Status</span>
-          <span>${d.status}</span>
-        </div>` : ""}
-      </div>
-    `;
-  }
-
-  function calc(){
-    const ups = parseFloat($("ups").value);
-    const batt = parseFloat($("batt").value);
-    const areaEach = parseFloat($("areaEach").value);
-    const factor = parseFloat($("factor").value);
+  function calc() {
+    const ups = Math.max(0, Math.floor(ScopedLabsAnalyzer.safeNumber(els.ups.value, 0)));
+    const batt = Math.max(0, Math.floor(ScopedLabsAnalyzer.safeNumber(els.batt.value, 0)));
+    const areaEach = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.areaEach.value, 0));
+    const factor = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.factor.value, 1));
 
     const totalCab = ups + batt;
     const baseArea = totalCab * areaEach;
     const finalArea = baseArea * factor;
 
+    const clearanceArea = Math.max(0, finalArea - baseArea);
+    const densityPct = finalArea > 0 ? (baseArea / finalArea) * 100 : 0;
+    const reservePct = Math.max(0, 100 - densityPct);
+
+    let status = "HEALTHY";
+    if (factor < 1.3 || reservePct < 15 || densityPct > 75) {
+      status = "RISK";
+    } else if (factor < 1.6 || reservePct < 25 || densityPct > 60) {
+      status = "WATCH";
+    }
+
     let density = "Balanced";
-    if (factor < 1.3) density = "Tight";
-    if (factor > 2.0) density = "Spacious";
+    if (factor < 1.35 || densityPct > 70) density = "Tight";
+    else if (factor > 2.0 && reservePct > 35) density = "Spacious";
 
-    let insight = "UPS room sizing is within normal planning range.";
-    if (density === "Tight") {
-      insight = "Clearance is minimal. Ensure service access and ventilation.";
+    let dominantConstraint = "Balanced UPS room sizing";
+    if (factor < 1.4) {
+      dominantConstraint = "Clearance / service allowance";
+    } else if (reservePct < 20) {
+      dominantConstraint = "Future expansion reserve";
+    } else if (densityPct > 65) {
+      dominantConstraint = "Cabinet density concentration";
     }
-    if (density === "Spacious") {
-      insight = "Layout allows expansion but uses additional floor space.";
+
+    let interpretation = "";
+    if (status === "RISK") {
+      interpretation =
+        "The UPS room plan is crowding usable deployment margin too tightly. Even if the cabinet count fits numerically, service clearances and future battery or UPS changes will become the first practical limitation.";
+    } else if (status === "WATCH") {
+      interpretation =
+        "The UPS room sizing is workable, but reserve is tightening. The current cabinet plan may fit, although service access and growth margin are being consumed faster than the raw room total suggests.";
+    } else {
+      interpretation =
+        "The UPS room sizing remains inside a manageable planning envelope. Cabinet footprint, clearance allowance, and reserve still leave useful room before space becomes the first infrastructure limiter.";
     }
 
-    render([
-      {label:"Total Cabinets", value: totalCab},
-      {label:"Base Area", value:`${baseArea.toFixed(0)} sq ft`},
-      {label:"Clearance Factor", value:`${factor.toFixed(1)}×`},
-      {label:"Estimated Room Size", value:`${finalArea.toFixed(0)} sq ft`},
-      {label:"Layout Density", value:density},
-      {label:"Insight", value:insight}
-    ]);
+    let guidance = "";
+    if (status === "HEALTHY") {
+      guidance =
+        "Maintain this room baseline, but keep battery growth, service clearances, and replacement access explicit in the final layout. The next pressure increase will usually appear in reserve consumption before total room size looks obviously undersized.";
+    } else if (status === "WATCH") {
+      guidance =
+        "Validate maintenance access, battery replacement path, and future cabinet growth before locking the room size. Watch what tightens first: clearances, reserve area, or cabinet density.";
+    } else {
+      guidance =
+        `Rework the UPS room plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not just total cabinet count. Increase room area, raise clearance allowance, or preserve more reserve before finalizing deployment.`;
+    }
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    const summaryRows = [
+      { label: "Total Cabinets", value: `${totalCab}` },
+      { label: "Base Equipment Area", value: `${baseArea.toFixed(0)} sq ft` },
+      { label: "Clearance Factor", value: `${factor.toFixed(1)}×` },
+      { label: "Estimated Room Size", value: `${finalArea.toFixed(0)} sq ft` },
+      { label: "Layout Density", value: density }
+    ];
+
+    const derivedRows = [
+      { label: "Clearance / Service Area", value: `${clearanceArea.toFixed(0)} sq ft` },
+      { label: "Cabinet Density", value: `${densityPct.toFixed(1)} %` },
+      { label: "Reserve Area", value: `${reservePct.toFixed(1)} %` },
+      { label: "Primary Constraint", value: dominantConstraint }
+    ];
+
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      summaryRows,
+      derivedRows,
+      status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      chart: null
+    });
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
       category: "infrastructure",
       step: "ups-room-sizing",
       data: {
         totalCab,
+        baseArea,
         finalArea,
-        density
+        density,
+        status
       }
-    }));
+    });
 
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
+    hasResult = true;
   }
 
-  function reset(){
-    $("ups").value = 2;
-    $("batt").value = 4;
-    $("areaEach").value = 20;
-    $("factor").value = 1.5;
-    $("results").innerHTML = `<div class="muted">Run calculation.</div>`;
-    hideContinue();
+  function reset() {
+    els.ups.value = 2;
+    els.batt.value = 4;
+    els.areaEach.value = 20;
+    els.factor.value = 1.5;
+    invalidate();
   }
 
-  $("calc").onclick = calc;
-  $("reset").onclick = reset;
+  els.calc.addEventListener("click", calc);
+  els.reset.addEventListener("click", reset);
 
-  ["ups","batt","areaEach","factor"].forEach(id=>{
-    $(id).addEventListener("input", invalidate);
-    $(id).addEventListener("change", invalidate);
+  ["ups", "batt", "areaEach", "factor"].forEach((id) => {
+    const el = $(id);
+    el.addEventListener("input", invalidate);
+    el.addEventListener("change", invalidate);
   });
 
-  $("continue").onclick = () => {
+  els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
     window.location.href = "/tools/infrastructure/generator-runtime/";
-  };
+  });
 
-  loadFlow();
+  refreshFlowNote();
+  invalidate();
 })();
 
