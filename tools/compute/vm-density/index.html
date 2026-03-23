@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>VM Density Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-vm-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-vm-003" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
   </script>
-  <script defer src="/assets/auth.js?v=0402"></script>
-  <script defer src="/assets/app.js?v=0402"></script>
+  <script defer src="/assets/auth.js?v=0403"></script>
+  <script defer src="/assets/app.js?v=0403"></script>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="vm-density" data-lane="v1">
@@ -51,16 +52,14 @@
     Combine CPU, memory, and storage constraints to estimate real VM capacity.
   </p>
 
-  <!-- FLOW -->
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
     <p class="tool-best-for">
-      <strong>Best for:</strong> validating how many workloads a system can realistically support before hitting limits.
+      <strong>Best for:</strong> validating how many workloads a system can realistically support before CPU, memory, or storage pressure collapses consolidation headroom.
     </p>
   </section>
 
-  <!-- INPUTS -->
   <section class="card tool-card">
     <h2>Inputs</h2>
 
@@ -87,6 +86,7 @@
   <section class="card tool-card">
     <h2>Results</h2>
     <div id="results"><div class="muted">Run calculation.</div></div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
   <div id="continue-wrap" class="card" style="display:none;">
@@ -101,7 +101,8 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=003"></script>
 
 </body>
 </html>

@@ -1,136 +1,303 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
+
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CURRENT_CATEGORY = "compute";
+  const CURRENT_STEP = "vm-density";
 
   let hasResult = false;
-  let context = null;
+  let cachedFlow = null;
+  let upstreamContext = null;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
 
-  function showContinue() {
-    $("continue-wrap").style.display = "block";
-    $("continue").disabled = false;
-    hasResult = true;
-  }
+  const els = {
+    hostCores: $("hostCores"),
+    hostRam: $("hostRam"),
+    reserve: $("reserve"),
+    vmCpu: $("vmCpu"),
+    vmRam: $("vmRam"),
+    cpuOver: $("cpuOver"),
+    ramOver: $("ramOver"),
+    spare: $("spare"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    analysisCopy: $("analysis-copy"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
+    calc: $("calc"),
+    reset: $("reset")
+  };
 
-  function hideContinue() {
-    $("continue-wrap").style.display = "none";
-    $("continue").disabled = true;
-    hasResult = false;
+  function refreshFlowNote() {
+    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      cachedFlow,
+      title: "System Context",
+      intro:
+        "This step checks whether the host can actually consolidate workloads at the expected density once CPU, memory, and storage pressure are considered together.",
+      customRows: (() => {
+        const source = ScopedLabsAnalyzer.getUpstreamFlow({
+          flowKey: FLOW_KEY,
+          category: CURRENT_CATEGORY,
+          step: CURRENT_STEP,
+          cachedFlow
+        });
+
+        upstreamContext = source ? (source.data || {}) : null;
+
+        if (!source || !source.data) return null;
+
+        const data = source.data;
+        const rows = [];
+
+        if (typeof data.finalMBps === "number") {
+          rows.push({ label: "Required Throughput", value: `${Number(data.finalMBps).toFixed(1)} MB/s` });
+        }
+
+        if (typeof data.throughputClass === "string") {
+          rows.push({ label: "Throughput Class", value: data.throughputClass });
+        }
+
+        if (typeof data.workloadPattern === "string") {
+          rows.push({ label: "Workload Pattern", value: data.workloadPattern });
+        }
+
+        if (typeof data.crossCheck === "string") {
+          rows.push({ label: "Cross-Check", value: data.crossCheck });
+        }
+
+        if (typeof data.status === "string") {
+          rows.push({ label: "Upstream Status", value: data.status });
+        }
+
+        return rows.length ? rows : null;
+      })()
+    });
   }
 
   function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-  }
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continue,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      emptyMessage: "Run calculation."
+    });
 
-  function loadContext() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.category !== "compute") return null;
-
-    return parsed.data;
-  }
-
-  function loadFlow() {
-    context = loadContext();
-    if (!context) return;
-
-    const el = $("flow-note");
-    el.style.display = "block";
-
-    el.innerHTML = `
-      <div style="display:grid; gap:10px;">
-        <div style="font-weight:600;">System Context:</div>
-
-        ${context.cores ? `
-        <div class="result-row">
-          <span>CPU</span><span>${context.cores} cores</span>
-        </div>` : ""}
-
-        ${context.ram ? `
-        <div class="result-row">
-          <span>RAM</span><span>${context.ram} GB</span>
-        </div>` : ""}
-
-        ${context.finalIops ? `
-        <div class="result-row">
-          <span>IOPS</span><span>${Math.round(context.finalIops)}</span>
-        </div>` : ""}
-
-        ${context.final ? `
-        <div class="result-row">
-          <span>Throughput</span><span>${context.final.toFixed(0)} MB/s</span>
-        </div>` : ""}
-      </div>
-    `;
+    hasResult = false;
+    refreshFlowNote();
   }
 
   function calc() {
-    const cores = +$("hostCores").value;
-    const ram = +$("hostRam").value;
-    const reserve = +$("reserve").value;
+    const hostCores = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.hostCores.value, 1));
+    const hostRam = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.hostRam.value, 1));
+    const reserve = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.reserve.value, 0));
 
-    const vmCpu = +$("vmCpu").value;
-    const vmRam = +$("vmRam").value;
+    const vmCpu = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.vmCpu.value, 1));
+    const vmRam = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.vmRam.value, 1));
 
-    const cpuOver = +$("cpuOver").value;
-    const ramOver = +$("ramOver").value;
-    const spare = +$("spare").value;
+    const cpuOver = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.cpuOver.value, 1));
+    const ramOver = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.ramOver.value, 1));
+    const spare = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.spare.value, 0), 0, 80);
 
-    const cpuPool = cores * (1 - spare / 100) * cpuOver;
-    const ramPool = (ram - reserve) * (1 - spare / 100) * ramOver;
+    const cpuPool = hostCores * (1 - spare / 100) * cpuOver;
+    const ramPool = Math.max(0, (hostRam - reserve)) * (1 - spare / 100) * ramOver;
 
     const cpuVMs = Math.floor(cpuPool / vmCpu);
     const ramVMs = Math.floor(ramPool / vmRam);
 
-    const vms = Math.min(cpuVMs, ramVMs);
+    const vms = Math.max(0, Math.min(cpuVMs, ramVMs));
+
+    const cpuConsumption = vms * vmCpu;
+    const ramConsumption = vms * vmRam;
+
+    const effectiveCpuHeadroom = Math.max(0, cpuPool - cpuConsumption);
+    const effectiveRamHeadroom = Math.max(0, ramPool - ramConsumption);
+
+    const cpuPressure = Math.min(160, (cpuConsumption / Math.max(cpuPool, 1)) * 100);
+    const ramPressure = Math.min(160, (ramConsumption / Math.max(ramPool, 1)) * 100);
+
+    let storageDensityPressure = 22;
+    if (upstreamContext && typeof upstreamContext.finalMBps === "number") {
+      storageDensityPressure = Math.min(160, upstreamContext.finalMBps / Math.max(vms, 1));
+    }
+
+    const metrics = [
+      {
+        label: "CPU Density Pressure",
+        value: cpuPressure,
+        displayValue: `${Math.round(cpuPressure)}%`
+      },
+      {
+        label: "Memory Density Pressure",
+        value: ramPressure,
+        displayValue: `${Math.round(ramPressure)}%`
+      },
+      {
+        label: "Storage Density Pressure",
+        value: storageDensityPressure,
+        displayValue: `${Math.round(storageDensityPressure)}%`
+      }
+    ];
+
+    const compositeScore = Math.round(
+      (cpuPressure * 0.40) +
+      (ramPressure * 0.40) +
+      (storageDensityPressure * 0.20)
+    );
+
+    const analyzer = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore,
+      metrics,
+      healthyMax: 65,
+      watchMax: 85
+    });
 
     let limiting = "Balanced";
     if (cpuVMs < ramVMs) limiting = "CPU";
     if (ramVMs < cpuVMs) limiting = "RAM";
 
-    let insight = "System is balanced.";
-    if (limiting === "CPU") insight = "CPU will cap density first.";
-    if (limiting === "RAM") insight = "Memory will cap density first.";
+    let densityClass = "Balanced consolidation";
+    if (vms >= 40) densityClass = "High consolidation";
+    if (vms >= 80) densityClass = "Aggressive consolidation";
 
-    if (context && context.finalIops > 20000 && vms > 50) {
-      insight = "Storage likely becomes bottleneck before reaching this density.";
+    let dominantConstraint = "Balanced host profile";
+    if (analyzer.dominant.label === "CPU Density Pressure") {
+      dominantConstraint = "CPU oversubscription envelope";
+    } else if (analyzer.dominant.label === "Memory Density Pressure") {
+      dominantConstraint = "Memory allocation ceiling";
+    } else if (analyzer.dominant.label === "Storage Density Pressure") {
+      dominantConstraint = "Per-VM storage pressure";
     }
 
-    $("results").innerHTML = `
-      <div class="result-row"><span>VM Capacity</span><span>${vms}</span></div>
-      <div class="result-row"><span>CPU Limit</span><span>${cpuVMs}</span></div>
-      <div class="result-row"><span>RAM Limit</span><span>${ramVMs}</span></div>
-      <div class="result-row"><span>Primary Constraint</span><span>${limiting}</span></div>
-      <div class="result-row"><span>Insight</span><span>${insight}</span></div>
-    `;
+    let crossCheck = "CPU, RAM, and storage appear reasonably aligned";
+    if (upstreamContext && typeof upstreamContext.status === "string" && upstreamContext.status === "RISK" && analyzer.status !== "RISK") {
+      crossCheck = "Upstream storage throughput may still tighten before the host reaches this modeled density";
+    } else if (limiting === "CPU") {
+      crossCheck = "CPU is likely to cap consolidation before memory is fully utilized";
+    } else if (limiting === "RAM") {
+      crossCheck = "Memory is likely to cap consolidation before CPU oversubscription is exhausted";
+    }
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "compute",
-      step: "vm-density",
-      data: { vms, limiting }
-    }));
+    let interpretation = "";
+    if (analyzer.status === "RISK") {
+      interpretation =
+        "The host is crowding its usable consolidation envelope too tightly. CPU oversubscription, memory allocation, or storage pressure will begin collapsing margin before the platform can absorb meaningful workload growth.";
+    } else if (analyzer.status === "WATCH") {
+      interpretation =
+        "The density target is workable, but reserve is tightening. The host should operate, although higher contention, burstier workloads, or storage-driven queue pressure will reduce stability margin faster than the VM count alone suggests.";
+    } else {
+      interpretation =
+        "The density target remains inside a manageable operating envelope. Current CPU, memory, and storage assumptions leave room for normal consolidation without making the host the first likely scaling wall.";
+    }
 
-    showContinue();
+    let guidance = "A balanced virtualization host should maintain enough spare capacity to absorb burst behavior and maintenance events.";
+    if (analyzer.status === "WATCH") {
+      guidance =
+        "Validate cluster spare policy, noisy-neighbor behavior, and future resource growth before locking the host count. This is where modest oversubscription can become operationally tight sooner than expected.";
+    }
+    if (analyzer.status === "RISK") {
+      guidance =
+        `Rework the density target before continuing. The primary limiter is ${dominantConstraint.toLowerCase()}, so consolidation headroom will collapse there first. Lower per-VM allocation, add host capacity, or reduce oversubscription pressure.`;
+    }
+
+    const summaryRows = [
+      { label: "VM Capacity", value: `${vms}` },
+      { label: "CPU Limit", value: `${cpuVMs}` },
+      { label: "RAM Limit", value: `${ramVMs}` },
+      { label: "CPU Pool", value: `${cpuPool.toFixed(1)} vCPU-eq` },
+      { label: "RAM Pool", value: `${ramPool.toFixed(1)} GB` },
+      { label: "Spare Policy", value: `${spare.toFixed(0)}%` }
+    ];
+
+    const derivedRows = [
+      { label: "Density Class", value: densityClass },
+      { label: "Primary Constraint", value: limiting },
+      { label: "Cross-Check", value: crossCheck },
+      { label: "CPU Headroom", value: `${effectiveCpuHeadroom.toFixed(1)} vCPU-eq` },
+      { label: "RAM Headroom", value: `${effectiveRamHeadroom.toFixed(1)} GB` }
+    ];
+
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows,
+      derivedRows,
+      status: analyzer.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      chart: {
+        labels: metrics.map((m) => m.label),
+        values: metrics.map((m) => m.value),
+        displayValues: metrics.map((m) => m.displayValue),
+        referenceValue: 65,
+        healthyMax: 65,
+        watchMax: 85,
+        axisTitle: "VM Density Stress Magnitude",
+        referenceLabel: "Healthy Margin Floor",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          120,
+          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+        )
+      }
+    });
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      data: {
+        vms,
+        limiting,
+        densityClass,
+        crossCheck,
+        status: analyzer.status
+      }
+    });
+
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
+    hasResult = true;
   }
 
-  $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", () => {
-    $("results").innerHTML = `<div class="muted">Run calculation.</div>`;
+  els.calc.addEventListener("click", calc);
+
+  els.reset.addEventListener("click", () => {
+    els.hostCores.value = 32;
+    els.hostRam.value = 256;
+    els.reserve.value = 16;
+    els.vmCpu.value = 2;
+    els.vmRam.value = 4;
+    els.cpuOver.value = 3;
+    els.ramOver.value = 1.1;
+    els.spare.value = 15;
     invalidate();
   });
 
   ["hostCores","hostRam","reserve","vmCpu","vmRam","cpuOver","ramOver","spare"]
-    .forEach(id => {
+    .forEach((id) => {
       $(id).addEventListener("input", invalidate);
       $(id).addEventListener("change", invalidate);
     });
 
-  $("continue").addEventListener("click", () => {
+  els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
     window.location.href = "/tools/compute/gpu-vram/";
   });
 
-  loadFlow();
+  refreshFlowNote();
+  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
 })();
