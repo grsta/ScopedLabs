@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Storage IOPS Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-iops-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-iops-004" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0402"></script>
-  <script defer src="/assets/app.js?v=0402"></script>
+  <script defer src="/assets/auth.js?v=0403"></script>
+  <script defer src="/assets/app.js?v=0403"></script>
 </head>
 
 <body data-tier="free" data-category="compute" data-step="storage-iops" data-lane="v1">
@@ -101,6 +102,7 @@
       <div id="results" class="results">
         <div class="muted">Enter values and press Calculate.</div>
       </div>
+      <div id="analysis-copy" style="display:none;"></div>
     </section>
 
     <div id="continue-wrap" class="card" style="display:none;">
@@ -114,7 +116,8 @@
   <script src="/assets/catalog.js"></script>
   <script src="/assets/pipelines.js"></script>
   <script src="/assets/pipeline.js"></script>
-  <script src="./script.js?v=003"></script>
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=004"></script>
 </body>
 </html>
 

@@ -1,162 +1,258 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
+
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CURRENT_CATEGORY = "compute";
+  const CURRENT_STEP = "storage-iops";
 
   let hasResult = false;
+  let cachedFlow = null;
   let ramContext = null;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
 
-  function showContinue() {
-    $("continue-wrap").style.display = "block";
-    $("continue").disabled = false;
-    hasResult = true;
-  }
+  const els = {
+    tps: $("tps"),
+    reads: $("reads"),
+    writes: $("writes"),
+    penalty: $("penalty"),
+    headroom: $("headroom"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    analysisCopy: $("analysis-copy"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
+    calc: $("calc"),
+    reset: $("reset")
+  };
 
-  function hideContinue() {
-    $("continue-wrap").style.display = "none";
-    $("continue").disabled = true;
-    hasResult = false;
-  }
+  function refreshFlowNote() {
+    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      cachedFlow,
+      title: "System Context",
+      intro:
+        "This step validates whether storage performance becomes the next scaling limiter after CPU and RAM have been established.",
+      customRows: (() => {
+        const source = ScopedLabsAnalyzer.getUpstreamFlow({
+          flowKey: FLOW_KEY,
+          category: CURRENT_CATEGORY,
+          step: CURRENT_STEP,
+          cachedFlow
+        });
 
-  function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-  }
+        ramContext = source && source.step === "ram-sizing" ? (source.data || {}) : null;
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach((r) => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(div);
+        if (!source || !source.data || source.step !== "ram-sizing") return null;
+
+        const data = source.data;
+        const rows = [];
+
+        if (typeof data.ram === "number") {
+          rows.push({ label: "Recommended RAM", value: `${data.ram} GB` });
+        }
+
+        if (typeof data.totalRequired === "number") {
+          rows.push({ label: "Estimated Total", value: `${Number(data.totalRequired).toFixed(1)} GB` });
+        }
+
+        if (typeof data.status === "string") {
+          rows.push({ label: "Memory Status", value: data.status });
+        }
+
+        if (typeof data.dominantConstraint === "string") {
+          rows.push({ label: "Primary Constraint", value: data.dominantConstraint });
+        }
+
+        return rows.length ? rows : null;
+      })()
     });
   }
 
-  function loadRAMContext() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return null;
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continue,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP
+    });
 
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return null;
-    }
-
-    if (!parsed || parsed.category !== "compute") return null;
-    if (parsed.step !== "ram-sizing") return null;
-    if (!parsed.data) return null;
-
-    return parsed.data;
-  }
-
-  function loadFlowContext() {
-    ramContext = loadRAMContext();
-    if (!ramContext) return;
-
-    const flow = $("flow-note");
-    flow.style.display = "block";
-    flow.innerHTML = `
-      <div style="display:grid; gap:10px;">
-        <div style="font-weight:600;">From RAM Sizing:</div>
-
-        <div class="result-row">
-          <span class="result-label">Recommended RAM</span>
-          <span class="result-value">${ramContext.ram} GB</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Estimated Total</span>
-          <span class="result-value">${Number(ramContext.total).toFixed(1)} GB</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Memory Pressure</span>
-          <span class="result-value">${ramContext.pressure}</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Primary Constraint</span>
-          <span class="result-value">${ramContext.bottleneck}</span>
-        </div>
-      </div>
-    `;
+    hasResult = false;
+    refreshFlowNote();
   }
 
   function calc() {
-    const tps = Math.max(0, Number($("tps").value) || 0);
-    const reads = Math.max(0, Number($("reads").value) || 0);
-    const writes = Math.max(0, Number($("writes").value) || 0);
-    const penalty = Number($("penalty").value) || 1;
-    const headroomPct = Math.max(0, Number($("headroom").value) || 0);
+    const tps = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.tps.value, 0));
+    const reads = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.reads.value, 0));
+    const writes = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.writes.value, 0));
+    const penalty = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.penalty.value, 1));
+    const headroomPct = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.headroom.value, 0));
 
     const readIops = tps * reads;
-    const writeIops = tps * writes * penalty;
+    const baseWriteIops = tps * writes;
+    const writeIops = baseWriteIops * penalty;
     const subtotal = readIops + writeIops;
-    const finalIops = subtotal * (1 + headroomPct / 100);
+    const reserveIops = subtotal * (headroomPct / 100);
+    const finalIops = subtotal + reserveIops;
+
+    const writePenaltyStress = Math.min(160, ((penalty - 1) / 5) * 100);
+    const capacityPressure = Math.min(160, finalIops / 600);
+    const burstExposure = Math.min(160, (reserveIops / Math.max(finalIops, 1)) * 100 * 2.4);
+
+    const metrics = [
+      {
+        label: "Capacity Pressure",
+        value: capacityPressure,
+        displayValue: `${Math.round(capacityPressure)}%`
+      },
+      {
+        label: "Write Penalty Stress",
+        value: writePenaltyStress,
+        displayValue: `${Math.round(writePenaltyStress)}%`
+      },
+      {
+        label: "Burst Exposure",
+        value: burstExposure,
+        displayValue: `${Math.round(burstExposure)}%`
+      }
+    ];
+
+    const compositeScore = Math.round(
+      (capacityPressure * 0.50) +
+      (writePenaltyStress * 0.30) +
+      (burstExposure * 0.20)
+    );
+
+    const analyzer = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore,
+      metrics,
+      healthyMax: 65,
+      watchMax: 85
+    });
 
     let storagePressure = "Balanced";
     if (finalIops > 10000) storagePressure = "High IOPS Demand";
     if (finalIops > 50000) storagePressure = "Extreme IOPS Demand";
 
+    let dominantConstraint = "Balanced storage profile";
+    if (analyzer.dominant.label === "Capacity Pressure") {
+      dominantConstraint = "Storage performance ceiling";
+    } else if (analyzer.dominant.label === "Write Penalty Stress") {
+      dominantConstraint = "RAID write amplification";
+    } else if (analyzer.dominant.label === "Burst Exposure") {
+      dominantConstraint = "Peak transaction volatility";
+    }
+
     let primaryConstraint = "Balanced";
-    if (ramContext && Number(ramContext.ram) >= 128 && finalIops > 10000) {
-      primaryConstraint = "Storage is likely primary bottleneck";
-    } else if (finalIops > 50000) {
-      primaryConstraint = "Storage is primary bottleneck";
-    } else if (ramContext && String(ramContext.pressure).includes("Extreme")) {
+    if (ramContext && typeof ramContext.status === "string" && ramContext.status === "RISK" && analyzer.status !== "RISK") {
       primaryConstraint = "Memory pressure may still dominate";
+    } else if (analyzer.status === "RISK") {
+      primaryConstraint = "Storage is likely primary bottleneck";
+    } else if (analyzer.status === "WATCH") {
+      primaryConstraint = "Storage headroom is tightening";
+    }
+
+    let interpretation = "";
+    if (analyzer.status === "RISK") {
+      interpretation =
+        "The workload is crowding the storage layer too tightly. Queue depth, write amplification, or burst behavior will begin degrading responsiveness before the rest of the compute stack has room to scale cleanly.";
+    } else if (analyzer.status === "WATCH") {
+      interpretation =
+        "The storage profile is workable, but reserve is narrowing. The design should run, although higher write activity, RAID penalty, or sustained spikes will reduce margin faster than the raw IOPS number suggests.";
+    } else {
+      interpretation =
+        "The storage requirement remains inside a manageable operating envelope. Current read/write demand and reserve allowance leave room for normal burst behavior without making storage the first likely scaling wall.";
     }
 
     let guidance = "A balanced storage design should maintain headroom above normal peaks.";
-    if (penalty >= 4) {
-      guidance = "RAID write penalty is materially increasing write load. Validate disk tier and controller cache carefully.";
+    if (analyzer.status === "WATCH") {
+      guidance =
+        "Validate controller cache, disk tier, and future write growth before locking hardware. This is where RAID penalty and sustained transaction spikes can force an early move to faster media.";
     }
-    if (finalIops > 50000) {
-      guidance = "This workload likely needs high-performance SSD or NVMe storage. Spinning disk will struggle unless heavily tiered.";
+    if (analyzer.status === "RISK") {
+      guidance =
+        `Rework the storage plan before continuing. The primary limiter is ${dominantConstraint.toLowerCase()}, so performance will tighten there first. Reduce write amplification, raise media performance, or increase available IOPS headroom.`;
     }
 
-    render([
-      { label: "Read IOPS", value: readIops.toFixed(0) },
-      { label: "Write IOPS (penalized)", value: writeIops.toFixed(0) },
-      { label: "Subtotal IOPS", value: subtotal.toFixed(0) },
-      { label: "Headroom", value: `${headroomPct.toFixed(0)} %` },
-      { label: "Estimated Required IOPS", value: finalIops.toFixed(0) },
+    const summaryRows = [
+      { label: "Read IOPS", value: `${readIops.toFixed(0)}` },
+      { label: "Base Write IOPS", value: `${baseWriteIops.toFixed(0)}` },
+      { label: "Write IOPS (penalized)", value: `${writeIops.toFixed(0)}` },
+      { label: "Subtotal IOPS", value: `${subtotal.toFixed(0)}` },
+      { label: "Reserve / Headroom", value: `${reserveIops.toFixed(0)} IOPS` },
+      { label: "Estimated Required IOPS", value: `${finalIops.toFixed(0)}` }
+    ];
+
+    const derivedRows = [
       { label: "Storage Pressure", value: storagePressure },
       { label: "Primary Constraint", value: primaryConstraint },
-      { label: "Guidance", value: guidance }
-    ]);
+      { label: "RAID Penalty", value: `×${penalty}` }
+    ];
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "compute",
-      step: "storage-iops",
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows,
+      derivedRows,
+      status: analyzer.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      chart: {
+        labels: metrics.map((m) => m.label),
+        values: metrics.map((m) => m.value),
+        displayValues: metrics.map((m) => m.displayValue),
+        referenceValue: 65,
+        healthyMax: 65,
+        watchMax: 85,
+        axisTitle: "Storage Stress Magnitude",
+        referenceLabel: "Healthy Margin Floor",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          120,
+          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+        )
+      }
+    });
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
       data: {
         readIops,
         writeIops,
         subtotal,
         finalIops,
         storagePressure,
-        primaryConstraint
+        primaryConstraint,
+        status: analyzer.status
       }
-    }));
+    });
 
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
+    hasResult = true;
   }
 
-  $("calc").addEventListener("click", calc);
+  els.calc.addEventListener("click", calc);
 
-  $("reset").addEventListener("click", () => {
-    $("tps").value = 2000;
-    $("reads").value = 2;
-    $("writes").value = 1;
-    $("penalty").value = "4";
-    $("headroom").value = 30;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+  els.reset.addEventListener("click", () => {
+    els.tps.value = 2000;
+    els.reads.value = 2;
+    els.writes.value = 1;
+    els.penalty.value = "4";
+    els.headroom.value = 30;
     invalidate();
   });
 
@@ -165,9 +261,11 @@
     $(id).addEventListener("change", invalidate);
   });
 
-  $("continue").addEventListener("click", () => {
+  els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
     window.location.href = "/tools/compute/storage-throughput/";
   });
 
-  loadFlowContext();
+  refreshFlowNote();
+  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
 })();
