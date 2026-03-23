@@ -2,7 +2,8 @@
   const $ = (id) => document.getElementById(id);
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
-  let chart = null;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
   let hasResult = false;
 
   const els = {
@@ -14,13 +15,24 @@
     smt: $("smt"),
     results: $("results"),
     flowNote: $("flow-note"),
-    calc: $("calc"),
-    reset: $("reset"),
+    analysisCopy: $("analysis-copy"),
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
-    analysisCopy: $("analysis-copy"),
-    chart: $("chart")
+    calc: $("calc"),
+    reset: $("reset")
   };
+
+  function workloadFactor(w) {
+    if (w === "web") return 0.9;
+    if (w === "db") return 1.1;
+    if (w === "video") return 1.35;
+    if (w === "compute") return 1.5;
+    return 1.0;
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
 
   function row(label, value) {
     return `
@@ -31,34 +43,32 @@
     `;
   }
 
-  function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
+  function showContinue() {
+    els.continueWrap.style.display = "block";
+    els.continue.disabled = false;
+    hasResult = true;
   }
 
-  function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
+  function hideContinue() {
     els.continueWrap.style.display = "none";
     els.continue.disabled = true;
-    els.analysisCopy.style.display = "none";
-    els.analysisCopy.innerHTML = "";
-    $("chart-wrap").style.display = "none";
-    if (chart) {
-      chart.destroy();
-      chart = null;
-    }
     hasResult = false;
   }
 
-  function workloadFactor(w) {
-    if (w === "web") return 0.9;
-    if (w === "db") return 1.1;
-    if (w === "video") return 1.35;
-    if (w === "compute") return 1.5;
-    return 1.0;
+  function render(rows) {
+    els.results.innerHTML = "";
+    rows.forEach((r) => {
+      const div = document.createElement("div");
+      div.className = "result-row";
+      div.innerHTML = `
+        <span class="result-label">${r.label}</span>
+        <span class="result-value">${r.value}</span>
+      `;
+      els.results.appendChild(div);
+    });
   }
 
-  function loadFlow() {
+  function renderFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEY);
     els.flowNote.style.display = "none";
     els.flowNote.innerHTML = "";
@@ -74,37 +84,37 @@
 
     if (!parsed || parsed.category !== "compute" || parsed.step === "cpu-sizing") return;
 
-    const d = parsed.data || {};
-    const lines = [];
+    const data = parsed.data || {};
+    const parts = [];
 
-    if (typeof d.throughputMbps === "number") {
-      lines.push(`Upstream throughput profile: <strong>${d.throughputMbps.toFixed(0)} MB/s</strong>`);
+    if (typeof data.throughputMbps === "number") {
+      parts.push(`Upstream throughput profile: <strong>${data.throughputMbps.toFixed(0)} MB/s</strong>`);
     }
-    if (typeof d.backupHours === "number") {
-      lines.push(`Observed backup window: <strong>${d.backupHours.toFixed(2)} hrs</strong>`);
+    if (typeof data.backupHours === "number") {
+      parts.push(`Observed backup window: <strong>${data.backupHours.toFixed(2)} hrs</strong>`);
     }
-    if (typeof d.cores === "number") {
-      lines.push(`Previous CPU recommendation: <strong>${d.cores} cores</strong>`);
+    if (typeof data.cores === "number") {
+      parts.push(`Previous CPU recommendation: <strong>${data.cores} cores</strong>`);
     }
 
     els.flowNote.style.display = "block";
     els.flowNote.innerHTML = `
       <strong>System Context</strong><br>
-      ${lines.length ? lines.join("<br>") : "Prior compute pipeline context detected."}
+      ${parts.length ? parts.join("<br>") : "Prior compute pipeline context detected."}
       <br><br>
       This step establishes the baseline CPU envelope that later memory, storage, and throughput decisions must live inside.
     `;
   }
 
   function getStatus(score) {
-    if (score > 65) {
+    if (score > 85) {
       return {
         label: "RISK",
         insight: "CPU sizing is being pushed too close to the edge. The workload is likely to hit scheduling pressure, burst contention, or reduced responsiveness before downstream memory and storage layers can be evaluated cleanly."
       };
     }
 
-    if (score > 35) {
+    if (score > 65) {
       return {
         label: "WATCH",
         insight: "CPU sizing is serviceable but tightening. As concurrency rises or burst conditions widen, scheduler pressure and per-core contention will begin reducing the safety margin for later expansion."
@@ -139,28 +149,68 @@
     `;
   }
 
-  function renderChart(loadPressure, coreDemand, utilPressure, referenceWindow) {
-    if (!els.chart) return;
+  function invalidate() {
+    if (chartRef.current) {
+      chartRef.current.destroy();
+      chartRef.current = null;
+    }
+    if (chartWrapRef.current && chartWrapRef.current.parentNode) {
+      chartWrapRef.current.parentNode.removeChild(chartWrapRef.current);
+    }
+    chartWrapRef.current = null;
 
-    if (chart) {
-      chart.destroy();
-      chart = null;
+    sessionStorage.removeItem(FLOW_KEY);
+    els.analysisCopy.style.display = "none";
+    els.analysisCopy.innerHTML = "";
+    hideContinue();
+  }
+
+  function renderAnalyzerChart({
+    mountEl,
+    existingChartRef,
+    existingWrapRef,
+    labels,
+    values,
+    displayValues,
+    referenceValue = 65,
+    healthyMax = 65,
+    watchMax = 85,
+    axisTitle = "Analyzer Magnitude",
+    referenceLabel = "Healthy Margin Floor",
+    healthyLabel = "Healthy",
+    watchLabel = "Watch",
+    riskLabel = "Risk",
+    chartMax = null
+  }) {
+    if (existingChartRef.current) {
+      existingChartRef.current.destroy();
+      existingChartRef.current = null;
     }
 
-    const labels = [
-      "Load Pressure",
-      "Core Demand",
-      "Utilization"
-    ];
+    if (existingWrapRef.current && existingWrapRef.current.parentNode) {
+      existingWrapRef.current.parentNode.removeChild(existingWrapRef.current);
+    }
+    existingWrapRef.current = null;
 
-    const values = [
-      loadPressure,
-      coreDemand,
-      utilPressure
-    ];
+    const wrap = document.createElement("div");
+    wrap.style.marginTop = "16px";
+    wrap.style.width = "100%";
+    wrap.style.height = "340px";
+    wrap.style.minHeight = "340px";
+    wrap.style.position = "relative";
 
-    const maxValue = Math.max(...values, referenceWindow, 100);
+    const canvas = document.createElement("canvas");
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    canvas.style.display = "block";
+
+    wrap.appendChild(canvas);
+    mountEl.appendChild(wrap);
+
+    existingWrapRef.current = wrap;
+
     const dominantIndex = values.indexOf(Math.max(...values));
+    const resolvedChartMax = chartMax ?? Math.max(100, Math.ceil(Math.max(...values, watchMax) * 1.12));
 
     const chartBgPlugin = {
       id: "chartBgPlugin",
@@ -169,7 +219,6 @@
         if (!chartArea) return;
 
         const { left, top, width, height } = chartArea;
-
         ctx.save();
         ctx.fillStyle = "rgba(255,255,255,0.05)";
         ctx.fillRect(left, top, width, height);
@@ -186,32 +235,32 @@
         const x = scales.x;
         const { top, bottom, left, right } = chartArea;
 
-        const healthyMax = Math.min(35, x.max);
-        const watchMax = Math.min(65, x.max);
+        const resolvedHealthyMax = Math.min(healthyMax, x.max);
+        const resolvedWatchMax = Math.min(watchMax, x.max);
 
         ctx.save();
 
-        if (healthyMax > 0) {
+        if (resolvedHealthyMax > 0) {
           ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
+          ctx.fillRect(left, top, x.getPixelForValue(resolvedHealthyMax) - left, bottom - top);
         }
 
-        if (watchMax > 35) {
+        if (resolvedWatchMax > healthyMax) {
           ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
           ctx.fillRect(
-            x.getPixelForValue(35),
+            x.getPixelForValue(healthyMax),
             top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(35),
+            x.getPixelForValue(resolvedWatchMax) - x.getPixelForValue(healthyMax),
             bottom - top
           );
         }
 
-        if (x.max > 65) {
+        if (x.max > watchMax) {
           ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
           ctx.fillRect(
-            x.getPixelForValue(65),
+            x.getPixelForValue(watchMax),
             top,
-            right - x.getPixelForValue(65),
+            right - x.getPixelForValue(watchMax),
             bottom - top
           );
         }
@@ -228,7 +277,7 @@
 
         ctx.save();
 
-        const rx = x.getPixelForValue(referenceWindow);
+        const rx = x.getPixelForValue(referenceValue);
         ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
         ctx.lineWidth = 3;
         ctx.setLineDash([4, 4]);
@@ -240,17 +289,17 @@
 
         ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
         ctx.font = "600 11px sans-serif";
-        ctx.fillText(`Healthy Margin Floor (${referenceWindow})`, rx + 8, bottom - 10);
+        ctx.fillText(referenceLabel, rx + 8, bottom - 10);
 
         ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
         ctx.font = "600 11px sans-serif";
-        ctx.fillText("Healthy", x.getPixelForValue(6), top + 14);
+        ctx.fillText(healthyLabel, x.getPixelForValue(Math.max(4, healthyMax * 0.08)), top + 14);
 
         ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
-        ctx.fillText("Watch", x.getPixelForValue(39), top + 14);
+        ctx.fillText(watchLabel, x.getPixelForValue(healthyMax + Math.max(4, (watchMax - healthyMax) * 0.2)), top + 14);
 
         ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
-        ctx.fillText("Risk", x.getPixelForValue(69), top + 14);
+        ctx.fillText(riskLabel, x.getPixelForValue(watchMax + 4), top + 14);
 
         const dominantValue = values[dominantIndex];
         const px = x.getPixelForValue(dominantValue);
@@ -264,20 +313,28 @@
         ctx.lineWidth = 2;
         ctx.stroke();
 
+        ctx.fillStyle = "rgba(235, 248, 240, 0.92)";
+        ctx.font = "600 11px sans-serif";
+        ctx.fillText(
+          displayValues[dominantIndex],
+          Math.min(px + 8, chartArea.right - 110),
+          py - 8
+        );
+
         ctx.restore();
       }
     };
 
-    chart = new Chart(els.chart, {
+    existingChartRef.current = new Chart(canvas, {
       type: "bar",
       data: {
         labels,
         datasets: [
           {
-            label: "CPU Stress Metrics",
+            label: "Analyzer Metrics",
+            data: values,
             barPercentage: 0.5,
             categoryPercentage: 0.58,
-            data: values,
             borderWidth: 2,
             borderRadius: 8,
             borderSkipped: false,
@@ -286,13 +343,13 @@
               const v = context.raw;
 
               if (i === dominantIndex) {
-                if (v > 65) return "rgba(255, 92, 92, 1)";
-                if (v > 35) return "rgba(255, 188, 82, 1)";
+                if (v > watchMax) return "rgba(255, 92, 92, 1)";
+                if (v > healthyMax) return "rgba(255, 188, 82, 1)";
                 return "rgba(120, 255, 170, 1)";
               }
 
-              if (v > 65) return "rgba(255, 77, 77, 0.30)";
-              if (v > 35) return "rgba(255, 170, 51, 0.24)";
+              if (v > watchMax) return "rgba(255, 77, 77, 0.30)";
+              if (v > healthyMax) return "rgba(255, 170, 51, 0.24)";
               return "rgba(90, 170, 255, 0.15)";
             },
             borderColor: (context) => {
@@ -300,8 +357,8 @@
               const v = context.raw;
 
               if (i === dominantIndex) {
-                if (v > 65) return "rgba(255, 220, 220, 1)";
-                if (v > 35) return "rgba(255, 240, 210, 1)";
+                if (v > watchMax) return "rgba(255, 220, 220, 1)";
+                if (v > healthyMax) return "rgba(255, 240, 210, 1)";
                 return "rgba(215, 255, 230, 1)";
               }
 
@@ -309,8 +366,8 @@
             },
             hoverBackgroundColor: (context) => {
               const v = context.raw;
-              if (v > 65) return "rgba(255, 105, 105, 1)";
-              if (v > 35) return "rgba(255, 198, 95, 1)";
+              if (v > watchMax) return "rgba(255, 105, 105, 1)";
+              if (v > healthyMax) return "rgba(255, 198, 95, 1)";
               return "rgba(135, 255, 182, 1)";
             }
           }
@@ -343,7 +400,7 @@
             padding: 12,
             callbacks: {
               label(context) {
-                return ` ${context.raw.toFixed(0)}%`;
+                return ` ${displayValues[context.dataIndex]}`;
               }
             }
           }
@@ -351,7 +408,7 @@
         scales: {
           x: {
             beginAtZero: true,
-            suggestedMax: Math.ceil(maxValue * 1.08),
+            suggestedMax: resolvedChartMax,
             ticks: {
               color: "rgba(220, 238, 230, 0.78)"
             },
@@ -360,7 +417,7 @@
             },
             title: {
               display: true,
-              text: "CPU Stress Magnitude",
+              text: axisTitle,
               color: "rgba(230, 255, 240, 0.92)"
             }
           },
@@ -376,8 +433,6 @@
       },
       plugins: [chartBgPlugin, thresholdBandPlugin]
     });
-
-    $("chart-wrap").style.display = "block";
   }
 
   function calc() {
@@ -406,16 +461,17 @@
     const physicalRec = smt === "on" ? Math.ceil(rec / 2) : rec;
 
     const loadPressure = clamp((eff / Math.max(rec, 1)) * 100, 0, 100);
-    const coreDemand = clamp((rec / 32) * 100, 0, 100);
+    const coreDemand = clamp((rec / 32) * 100, 0, 200);
     const utilPressure = clamp(target, 0, 100);
 
     const values = [loadPressure, coreDemand, utilPressure];
     const labels = ["Load Pressure", "Core Demand", "Utilization"];
     const dominantIndex = values.indexOf(Math.max(...values));
     const dominantLabel = labels[dominantIndex];
+
     const compositeScore = Math.round(
       (loadPressure * 0.35) +
-      (coreDemand * 0.30) +
+      (Math.min(coreDemand, 100) * 0.30) +
       (utilPressure * 0.35)
     );
 
@@ -435,17 +491,38 @@
     if (dominantLabel === "Core Demand") constraint = "Core count density";
     if (dominantLabel === "Load Pressure") constraint = "Burst / scheduling pressure";
 
-    els.results.innerHTML = [
-      row("Effective Demand", `${eff.toFixed(2)} cores`),
-      row("Required Cores", `${cores.toFixed(2)}`),
-      row("Recommended Logical Cores", `${rec} cores`),
-      row("Recommended Physical Cores", `${physicalRec} cores`),
-      row("Primary Constraint", constraint),
-      row("System Status", risk.label)
-    ].join("");
+    render([
+      { label: "Effective Demand", value: `${eff.toFixed(2)} cores` },
+      { label: "Required Cores", value: `${cores.toFixed(2)}` },
+      { label: "Recommended Logical Cores", value: `${rec} cores` },
+      { label: "Recommended Physical Cores", value: `${physicalRec} cores` },
+      { label: "Primary Constraint", value: constraint },
+      { label: "System Status", value: risk.label }
+    ]);
 
     renderAnalysis(risk.label, risk.insight, guidance, dominantLabel);
-    renderChart(loadPressure, coreDemand, utilPressure, 65);
+
+    renderAnalyzerChart({
+      mountEl: els.results,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      labels: ["Load Pressure", "Core Demand", "Utilization"],
+      values: [loadPressure, coreDemand, utilPressure],
+      displayValues: [
+        `${Math.round(loadPressure)}%`,
+        `${Math.round(coreDemand)}%`,
+        `${Math.round(utilPressure)}%`
+      ],
+      referenceValue: 65,
+      healthyMax: 65,
+      watchMax: 85,
+      axisTitle: "CPU Stress Magnitude",
+      referenceLabel: "Healthy Margin Floor",
+      healthyLabel: "Healthy",
+      watchLabel: "Watch",
+      riskLabel: "Risk",
+      chartMax: Math.max(120, Math.ceil(Math.max(loadPressure, coreDemand, utilPressure, 85) * 1.08))
+    });
 
     sessionStorage.setItem(FLOW_KEY, JSON.stringify({
       category: "compute",
@@ -459,9 +536,7 @@
       }
     }));
 
-    els.continueWrap.style.display = "block";
-    els.continue.disabled = false;
-    hasResult = true;
+    showContinue();
   }
 
   els.calc.addEventListener("click", calc);
@@ -475,26 +550,18 @@
     els.smt.value = "on";
     els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     invalidate();
-    loadFlow();
+    renderFlowNote();
   });
 
   ["workload", "concurrency", "cpuPerWorker", "peak", "targetUtil", "smt"].forEach((id) => {
-    const el = $(id);
-    el.addEventListener("input", invalidate);
-    el.addEventListener("change", invalidate);
+    $(id).addEventListener("input", invalidate);
+    $(id).addEventListener("change", invalidate);
   });
 
   els.continue.addEventListener("click", () => {
     window.location.href = "/tools/compute/ram-sizing/";
   });
 
-  if (els.chart) {
-    els.chart.style.width = "100%";
-    els.chart.style.height = "340px";
-    if (els.chart.parentElement) {
-      els.chart.parentElement.style.minHeight = "340px";
-    }
-  }
-
-  loadFlow();
+  renderFlowNote();
+  hideContinue();
 })();

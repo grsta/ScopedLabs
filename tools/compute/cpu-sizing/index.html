@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>CPU Sizing Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=cpu-pipeline-006" />
+  <link rel="stylesheet" href="/assets/style.css?v=cpu-pipeline-008" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,21 +17,6 @@
   <script defer src="/assets/app.js?v=0403"></script>
 
   <style>
-    .analyzer-wrap {
-      position: relative;
-      height: 340px;
-      min-height: 340px;
-      max-height: 340px;
-      margin-top: 14px;
-      overflow: hidden;
-    }
-
-    .analyzer-wrap canvas {
-      display: block;
-      width: 100% !important;
-      height: 100% !important;
-    }
-
     .results-copy {
       display: grid;
       gap: 10px;
@@ -170,10 +155,6 @@
         <div class="muted">Enter values and press Calculate.</div>
       </div>
 
-      <div id="chart-wrap" class="analyzer-wrap" style="display:none;">
-        <canvas id="chart" aria-label="CPU Sizing Analyzer Chart"></canvas>
-      </div>
-
       <div id="analysis-copy" class="results-copy" style="display:none;"></div>
     </section>
 
@@ -188,10 +169,9 @@
   <script src="/assets/catalog.js"></script>
   <script src="/assets/pipelines.js"></script>
   <script src="/assets/pipeline.js"></script>
-  <script src="./script.js?v=007"></script>
+  <script src="./script.js?v=008"></script>
 </body>
 </html>
-
 
 
 
