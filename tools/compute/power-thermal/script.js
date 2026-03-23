@@ -1,141 +1,161 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
+
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CURRENT_CATEGORY = "compute";
+  const CURRENT_STEP = "power-thermal";
 
   let hasResult = false;
+  let cachedFlow = null;
   let upstream = null;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
 
-  function showContinue() {
-    $("continue-wrap").style.display = "block";
-    $("continue").disabled = false;
-    hasResult = true;
-  }
+  const els = {
+    nodes: $("nodes"),
+    watts: $("watts"),
+    peak: $("peak"),
+    overhead: $("overhead"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    analysisCopy: $("analysis-copy"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
+    calc: $("calc"),
+    reset: $("reset")
+  };
 
-  function hideContinue() {
-    $("continue-wrap").style.display = "none";
-    $("continue").disabled = true;
-    hasResult = false;
+  function refreshFlowNote() {
+    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      cachedFlow,
+      title: "System Context",
+      intro:
+        "This step validates whether compute density and optional GPU inclusion create a rack power or cooling profile that becomes the next deployment limiter.",
+      customRows: (() => {
+        const source = ScopedLabsAnalyzer.getUpstreamFlow({
+          flowKey: FLOW_KEY,
+          category: CURRENT_CATEGORY,
+          step: CURRENT_STEP,
+          cachedFlow
+        });
+
+        upstream = source ? (source.data || {}) : null;
+
+        if (!source || !source.data) return null;
+
+        const d = source.data;
+        const rows = [];
+
+        if (source.step === "gpu-vram") {
+          if (d.gpu === "none") {
+            rows.push({ label: "GPU Requirement", value: "Not Required" });
+            rows.push({ label: "Pipeline Path", value: "CPU-only system" });
+          } else {
+            rows.push({ label: "GPU Step", value: "Included" });
+            if (typeof d.vram === "number") {
+              rows.push({ label: "Estimated VRAM", value: `${Number(d.vram).toFixed(2)} GB` });
+            }
+            if (typeof d.gpuClass === "string") {
+              rows.push({ label: "GPU Class", value: d.gpuClass });
+            }
+          }
+          return rows.length ? rows : null;
+        }
+
+        if (source.step === "vm-density") {
+          if (d.vms != null) rows.push({ label: "VM Capacity", value: `${d.vms}` });
+          if (d.limiting) rows.push({ label: "Primary Constraint", value: d.limiting });
+          if (d.densityClass) rows.push({ label: "Density Class", value: d.densityClass });
+          return rows.length ? rows : null;
+        }
+
+        rows.push({ label: "Previous Step", value: source.step });
+        return rows;
+      })()
+    });
   }
 
   function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-  }
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continue,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      emptyMessage: "Run calculation."
+    });
 
-  function loadContext() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return null;
-
-    try {
-      const parsed = JSON.parse(raw);
-      if (!parsed || parsed.category !== "compute") return null;
-      return parsed;
-    } catch {
-      return null;
-    }
-  }
-
-  function renderFlowContext(parsed) {
-    if (!parsed || !parsed.data) return;
-
-    upstream = parsed;
-    const d = parsed.data;
-    const el = $("flow-note");
-    el.style.display = "block";
-
-    if (parsed.step === "gpu-vram") {
-      if (d.gpu === "none") {
-        el.innerHTML = `
-          <div style="display:grid; gap:10px;">
-            <div style="font-weight:600;">System Context:</div>
-
-            <div class="result-row">
-              <span>GPU Requirement</span>
-              <span>Not Required</span>
-            </div>
-
-            <div class="result-row">
-              <span>Pipeline Path</span>
-              <span>CPU-only system</span>
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      el.innerHTML = `
-        <div style="display:grid; gap:10px;">
-          <div style="font-weight:600;">System Context:</div>
-
-          <div class="result-row">
-            <span>GPU Step</span>
-            <span>Included</span>
-          </div>
-
-          <div class="result-row">
-            <span>Estimated VRAM</span>
-            <span>${Number(d.vram).toFixed(2)} GB</span>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    if (parsed.step === "vm-density") {
-      el.innerHTML = `
-        <div style="display:grid; gap:10px;">
-          <div style="font-weight:600;">System Context:</div>
-
-          ${d.vms != null ? `
-          <div class="result-row">
-            <span>VM Capacity</span>
-            <span>${d.vms}</span>
-          </div>` : ""}
-
-          ${d.limiting ? `
-          <div class="result-row">
-            <span>Primary Constraint</span>
-            <span>${d.limiting}</span>
-          </div>` : ""}
-        </div>
-      `;
-      return;
-    }
-
-    el.innerHTML = `
-      <div style="display:grid; gap:10px;">
-        <div style="font-weight:600;">System Context:</div>
-        <div class="result-row">
-          <span>Previous Step</span>
-          <span>${parsed.step}</span>
-        </div>
-      </div>
-    `;
+    hasResult = false;
+    refreshFlowNote();
   }
 
   function calc() {
-    const nodes = Math.max(1, Number($("nodes").value) || 0);
-    const watts = Math.max(0, Number($("watts").value) || 0);
-    const peak = Number($("peak").value) || 1;
-    const overhead = Math.max(0, Number($("overhead").value) || 0);
+    const nodes = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.nodes.value, 1));
+    const watts = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.watts.value, 0));
+    const peak = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.peak.value, 1));
+    const overhead = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.overhead.value, 0));
 
-    let totalW = nodes * watts * peak * (1 + overhead / 100);
-
-    // Optional advisory note if GPU is in play.
-    let gpuNote = "GPU not included in this step.";
-    if (upstream && upstream.step === "gpu-vram") {
-      if (upstream.data?.gpu === "none") {
-        gpuNote = "GPU was intentionally skipped for this design.";
-      } else if (upstream.data?.vram != null) {
-        gpuNote = `GPU is part of this design path (estimated VRAM ${Number(upstream.data.vram).toFixed(2)} GB). Add actual GPU board wattage into node power if not already included.`;
-      }
-    } else if (upstream && upstream.step === "vm-density") {
-      gpuNote = "No GPU step payload was present; using VM density context only.";
-    }
-
+    const baseWatts = nodes * watts;
+    const peakWatts = baseWatts * peak;
+    const totalW = peakWatts * (1 + overhead / 100);
     const btu = totalW * 3.412141633;
     const tons = btu / 12000;
+    const amps120 = totalW / 120;
+    const amps208 = totalW / 208;
+
+    let gpuNote = "GPU not included in this step.";
+    if (upstream) {
+      if (upstream.gpu === "none") {
+        gpuNote = "GPU was intentionally skipped for this design.";
+      } else if (typeof upstream.vram === "number") {
+        gpuNote = `GPU is part of this design path (estimated VRAM ${Number(upstream.vram).toFixed(2)} GB). Add actual GPU board wattage into node power if not already included.`;
+      } else if (typeof upstream.vms === "number") {
+        gpuNote = "No GPU step payload was present; using VM density context only.";
+      }
+    }
+
+    const rackPowerPressure = ScopedLabsAnalyzer.clamp((totalW / 5000) * 100, 0, 180);
+    const coolingPressure = ScopedLabsAnalyzer.clamp((tons / 3) * 100, 0, 180);
+    const circuitPressure = ScopedLabsAnalyzer.clamp((amps208 / 24) * 100, 0, 180);
+
+    const metrics = [
+      {
+        label: "Rack Power Pressure",
+        value: rackPowerPressure,
+        displayValue: `${Math.round(rackPowerPressure)}%`
+      },
+      {
+        label: "Cooling Pressure",
+        value: coolingPressure,
+        displayValue: `${Math.round(coolingPressure)}%`
+      },
+      {
+        label: "Circuit Pressure",
+        value: circuitPressure,
+        displayValue: `${Math.round(circuitPressure)}%`
+      }
+    ];
+
+    const compositeScore = Math.round(
+      (rackPowerPressure * 0.4) +
+      (coolingPressure * 0.35) +
+      (circuitPressure * 0.25)
+    );
+
+    const analyzer = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore,
+      metrics,
+      healthyMax: 65,
+      watchMax: 85
+    });
 
     let pressure = "Normal";
     if (totalW > 5000) pressure = "High Rack Load";
@@ -145,16 +165,94 @@
     if (tons > 3) insight = "Dedicated cooling likely required.";
     if (tons > 6) insight = "Data center-grade cooling required.";
 
-    $("results").innerHTML = `
-      <div class="result-row"><span>Total Power</span><span>${totalW.toFixed(0)} W</span></div>
-      <div class="result-row"><span>Heat Load</span><span>${btu.toFixed(0)} BTU/hr</span></div>
-      <div class="result-row"><span>Cooling</span><span>${tons.toFixed(2)} tons</span></div>
-      <div class="result-row"><span>Thermal Pressure</span><span>${pressure}</span></div>
-      <div class="result-row"><span>Insight</span><span>${insight}</span></div>
-      <div class="result-row"><span>GPU Context</span><span>${gpuNote}</span></div>
-    `;
+    let dominantConstraint = "Balanced power profile";
+    if (analyzer.dominant.label === "Rack Power Pressure") {
+      dominantConstraint = "Rack power envelope";
+    } else if (analyzer.dominant.label === "Cooling Pressure") {
+      dominantConstraint = "Cooling capacity envelope";
+    } else if (analyzer.dominant.label === "Circuit Pressure") {
+      dominantConstraint = "Electrical circuit loading";
+    }
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    let crossCheck = "Power and cooling appear reasonably aligned with the modeled compute profile";
+    if (upstream && upstream.gpu === "none") {
+      crossCheck = "This path is CPU-only, so thermal load is being driven by host power rather than accelerator hardware";
+    } else if (upstream && typeof upstream.vram === "number") {
+      crossCheck = "GPU hardware is in the design path, so node wattage should include real accelerator board draw";
+    } else if (upstream && typeof upstream.vms === "number" && upstream.vms > 50) {
+      crossCheck = "High virtualization density can hide aggregate rack power until multiple hosts reach load together";
+    }
+
+    let interpretation = "";
+    if (analyzer.status === "RISK") {
+      interpretation =
+        "The deployment is crowding its usable rack power or cooling envelope too tightly. Electrical loading, thermal rejection, or peak draw behavior will begin collapsing deployment margin before the platform has room to scale cleanly.";
+    } else if (analyzer.status === "WATCH") {
+      interpretation =
+        "The thermal profile is workable, but infrastructure reserve is tightening. The design should run, although higher peak draw, warmer intake conditions, or denser expansion will consume headroom faster than the average watt figure suggests.";
+    } else {
+      interpretation =
+        "The current power and cooling profile remains inside a manageable operating envelope. Rack load, thermal rejection, and circuit draw still leave usable deployment margin before infrastructure becomes the first likely scaling wall.";
+    }
+
+    let guidance = "";
+    if (analyzer.status === "HEALTHY") {
+      guidance =
+        "Maintain the current rack plan, but keep real measured peak draw in view as the system grows. The next pressure increase will usually appear in cooling reserve or branch circuit loading before it appears in raw node count.";
+    } else if (analyzer.status === "WATCH") {
+      guidance =
+        "Validate branch circuits, breaker loading policy, and room cooling reserve before locking deployment. Watch what fails first: circuit draw, hot-aisle temperature, or peak-load excursions during full-system activity.";
+    } else {
+      guidance =
+        `Rework the deployment power plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not raw compute count. Reduce per-node draw, split the rack load, or increase electrical and cooling capacity before scaling further.`;
+    }
+
+    const summaryRows = [
+      { label: "Total Power", value: `${totalW.toFixed(0)} W` },
+      { label: "Heat Load", value: `${btu.toFixed(0)} BTU/hr` },
+      { label: "Cooling", value: `${tons.toFixed(2)} tons` },
+      { label: "208V Current", value: `${amps208.toFixed(1)} A` },
+      { label: "120V Current", value: `${amps120.toFixed(1)} A` },
+      { label: "Thermal Pressure", value: pressure }
+    ];
+
+    const derivedRows = [
+      { label: "Insight", value: insight },
+      { label: "GPU Context", value: gpuNote },
+      { label: "Cross-Check", value: crossCheck }
+    ];
+
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows,
+      derivedRows,
+      status: analyzer.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      chart: {
+        labels: metrics.map((m) => m.label),
+        values: metrics.map((m) => m.value),
+        displayValues: metrics.map((m) => m.displayValue),
+        referenceValue: 65,
+        healthyMax: 65,
+        watchMax: 85,
+        axisTitle: "Power & Thermal Stress Magnitude",
+        referenceLabel: "Healthy Margin Floor",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          120,
+          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+        )
+      }
+    });
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
       category: "compute",
       step: "power-thermal",
       data: {
@@ -163,21 +261,22 @@
         tons,
         pressure,
         insight,
-        gpuNote
+        gpuNote,
+        status: analyzer.status
       }
-    }));
+    });
 
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
+    hasResult = true;
   }
 
-  $("calc").addEventListener("click", calc);
+  els.calc.addEventListener("click", calc);
 
-  $("reset").addEventListener("click", () => {
-    $("nodes").value = 10;
-    $("watts").value = 450;
-    $("peak").value = "1.15";
-    $("overhead").value = 8;
-    $("results").innerHTML = `<div class="muted">Run calculation.</div>`;
+  els.reset.addEventListener("click", () => {
+    els.nodes.value = 10;
+    els.watts.value = 450;
+    els.peak.value = "1.15";
+    els.overhead.value = 8;
     invalidate();
   });
 
@@ -188,9 +287,11 @@
     el.addEventListener("change", invalidate);
   });
 
-  $("continue").addEventListener("click", () => {
+  els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
     window.location.href = "/tools/compute/raid-rebuild-time/";
   });
 
-  renderFlowContext(loadContext());
+  refreshFlowNote();
+  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
 })();

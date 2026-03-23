@@ -4,10 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>Compute Power & Heat • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-power-005" />
+  <title>Compute Power &amp; Heat • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=compute-power-006" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
@@ -40,10 +41,10 @@
     <span class="sep">/</span>
     <a href="/tools/compute/">Compute</a>
     <span class="sep">/</span>
-    <span>Power & Thermal</span>
+    <span>Power &amp; Thermal</span>
   </div>
 
-  <h1>Compute Power & Thermal</h1>
+  <h1>Compute Power &amp; Thermal</h1>
 
   <div id="pipeline"></div>
 
@@ -51,7 +52,6 @@
     Convert system load into real-world power and cooling requirements.
   </p>
 
-  <!-- FLOW CONTEXT -->
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
@@ -60,19 +60,18 @@
     </p>
   </section>
 
-  <!-- INPUTS -->
   <section class="card tool-card">
     <h2>Inputs</h2>
 
     <div class="form-grid">
       <label class="field">
         <span class="label">Nodes</span>
-        <input id="nodes" type="number" value="10" />
+        <input id="nodes" type="number" value="10" min="1" step="1" />
       </label>
 
       <label class="field">
         <span class="label">Watts per Node</span>
-        <input id="watts" type="number" value="450" />
+        <input id="watts" type="number" value="450" min="0" step="1" />
       </label>
 
       <label class="field">
@@ -87,7 +86,7 @@
 
       <label class="field">
         <span class="label">Overhead (%)</span>
-        <input id="overhead" type="number" value="8" />
+        <input id="overhead" type="number" value="8" min="0" step="0.1" />
       </label>
     </div>
 
@@ -100,6 +99,7 @@
   <section class="card tool-card">
     <h2>Results</h2>
     <div id="results"><div class="muted">Run calculation.</div></div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
   <div id="continue-wrap" class="card" style="display:none;">
@@ -114,7 +114,8 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=007"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=008"></script>
 
 </body>
 </html>
