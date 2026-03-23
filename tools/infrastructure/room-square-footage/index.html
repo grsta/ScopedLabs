@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Room Square Footage Planner • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=infra-room-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=infra-room-002" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -46,6 +46,8 @@
     Estimate room size from equipment footprint, clearance needs, and growth reserve before rack layout begins.
   </p>
 
+  <div id="flow-note" class="card" style="display:none;"></div>
+
   <section class="card">
     <p class="tool-best-for">
       <strong>Best for:</strong> setting a realistic room-size baseline before rack, aisle, and infrastructure planning starts.
@@ -83,6 +85,7 @@
     <div id="results" class="results">
       <div class="muted">Enter values and press Calculate.</div>
     </div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
   <div id="continue-wrap" class="card" style="display:none;">
@@ -96,7 +99,8 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=003"></script>
 </body>
 </html>
 

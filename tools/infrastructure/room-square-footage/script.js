@@ -1,71 +1,138 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CURRENT_CATEGORY = "infrastructure";
+  const CURRENT_STEP = "room-square-footage";
 
+  let cachedFlow = null;
   let hasResult = false;
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach((r) => {
-      const d = document.createElement("div");
-      d.className = "result-row";
-      d.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(d);
+  const els = {
+    equip: $("equip"),
+    factor: $("factor"),
+    growth: $("growth"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    analysisCopy: $("analysis-copy"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
+    calc: $("calc"),
+    reset: $("reset")
+  };
+
+  function refreshFlowNote() {
+    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      cachedFlow,
+      title: "Infrastructure Context",
+      intro:
+        "This first step checks whether the room plan is only barely fitting the equipment footprint or still leaving realistic service, aisle, and growth margin before detailed layout begins."
     });
   }
 
-  function showContinue() {
-    $("continue-wrap").style.display = "block";
-    $("continue").disabled = false;
-    hasResult = true;
-  }
-
-  function hideContinue() {
-    $("continue-wrap").style.display = "none";
-    $("continue").disabled = true;
-    hasResult = false;
-  }
-
   function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continue,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      emptyMessage: "Enter values and press Calculate."
+    });
+
+    hasResult = false;
+    refreshFlowNote();
   }
 
   function calc() {
-    const equip = Math.max(1, parseFloat($("equip").value) || 0);
-    const factor = Math.max(1, parseFloat($("factor").value) || 0);
-    const growth = Math.max(0, parseFloat($("growth").value) || 0);
+    const equip = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.equip.value, 0));
+    const factor = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.factor.value, 0));
+    const growth = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.growth.value, 0));
 
     const base = equip * factor;
     const total = base * (1 + growth / 100);
+    const clearanceArea = Math.max(0, base - equip);
+    const growthArea = Math.max(0, total - base);
+    const equipmentDensity = total > 0 ? (equip / total) * 100 : 0;
 
-    let density = "Balanced";
-    if (factor < 1.6) density = "Tight";
-    if (factor > 2.6) density = "Conservative";
-
-    let guidance = "Room sizing appears reasonable for an early planning estimate.";
-    if (density === "Tight") {
-      guidance = "Clearance factor is aggressive. Validate aisle width, service access, and cable paths before committing.";
-    } else if (density === "Conservative") {
-      guidance = "Clearance factor is generous. Good for growth and serviceability, but confirm the extra square footage is justified.";
+    let status = "HEALTHY";
+    if (factor < 1.5 || growth < 10 || equipmentDensity > 70) {
+      status = "RISK";
+    } else if (factor < 1.8 || growth < 20 || equipmentDensity > 55) {
+      status = "WATCH";
     }
 
-    render([
+    let density = "Balanced";
+    if (factor < 1.6 || equipmentDensity > 65) density = "Tight";
+    else if (factor > 2.6 && growth >= 25) density = "Conservative";
+
+    let dominantConstraint = "Balanced room sizing";
+    if (factor < 1.6) {
+      dominantConstraint = "Clearance / aisle allowance";
+    } else if (growth < 15) {
+      dominantConstraint = "Future growth reserve";
+    } else if (equipmentDensity > 60) {
+      dominantConstraint = "Equipment density concentration";
+    }
+
+    let interpretation = "";
+    if (status === "RISK") {
+      interpretation =
+        "The room plan is crowding usable deployment margin too tightly. Even if the footprint fits numerically, aisle flexibility, service access, or future growth will become the first practical limitation.";
+    } else if (status === "WATCH") {
+      interpretation =
+        "The room plan is workable, but margin is tightening. The current estimate may support the initial build, although service clearances and growth reserve are being consumed faster than the raw square-foot total suggests.";
+    } else {
+      interpretation =
+        "The room plan remains inside a manageable planning envelope. Equipment footprint, clearance allowance, and reserve still leave useful room before space becomes the first infrastructure limiter.";
+    }
+
+    let guidance = "";
+    if (status === "HEALTHY") {
+      guidance =
+        "Maintain this planning baseline, but keep final aisle, service, and growth assumptions explicit as the layout evolves. The next pressure increase will usually appear in reserve consumption before total square footage looks obviously small.";
+    } else if (status === "WATCH") {
+      guidance =
+        "Validate aisle width, service clearances, and realistic expansion assumptions before locking the room size. Watch what tightens first: clearance margin, growth reserve, or usable deployment density.";
+    } else {
+      guidance =
+        `Rework the room baseline. The primary limiter is ${dominantConstraint.toLowerCase()}, not just total square footage. Increase floor area, raise the clearance factor, or preserve more future reserve before continuing into rack layout.`;
+    }
+
+    const summaryRows = [
       { label: "Equipment Footprint", value: `${equip.toFixed(0)} sq ft` },
       { label: "Clearance Factor", value: `${factor.toFixed(1)}×` },
       { label: "Base Room Size", value: `${base.toFixed(0)} sq ft` },
       { label: "Growth Reserve", value: `${growth.toFixed(0)}%` },
       { label: "Estimated Room Size", value: `${total.toFixed(0)} sq ft` },
-      { label: "Planning Density", value: density },
-      { label: "Guidance", value: guidance }
-    ]);
+      { label: "Planning Density", value: density }
+    ];
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    const derivedRows = [
+      { label: "Clearance / Aisle Area", value: `${clearanceArea.toFixed(0)} sq ft` },
+      { label: "Growth Reserve Area", value: `${growthArea.toFixed(0)} sq ft` },
+      { label: "Equipment Density", value: `${equipmentDensity.toFixed(1)}%` },
+      { label: "Primary Constraint", value: dominantConstraint }
+    ];
+
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      summaryRows,
+      derivedRows,
+      status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      chart: null
+    });
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
       category: "infrastructure",
       step: "room-square-footage",
       data: {
@@ -75,24 +142,23 @@
         base,
         total,
         density,
-        guidance
+        status
       }
-    }));
+    });
 
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
+    hasResult = true;
   }
 
   function reset() {
-    $("equip").value = 250;
-    $("factor").value = 2.0;
-    $("growth").value = 20;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
+    els.equip.value = 250;
+    els.factor.value = 2.0;
+    els.growth.value = 20;
+    invalidate();
   }
 
-  $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
+  els.calc.addEventListener("click", calc);
+  els.reset.addEventListener("click", reset);
 
   ["equip", "factor", "growth"].forEach((id) => {
     const el = $(id);
@@ -100,9 +166,11 @@
     el.addEventListener("change", invalidate);
   });
 
-  $("continue").addEventListener("click", () => {
+  els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
     window.location.href = "/tools/infrastructure/rack-ru-planner/";
   });
 
-  reset();
+  refreshFlowNote();
+  invalidate();
 })();
