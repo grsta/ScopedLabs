@@ -4,9 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rack Weight Load • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=infra-weight-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=infra-weight-003" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
@@ -43,14 +44,14 @@
   <div id="pipeline"></div>
 
   <p class="subhead">
-    Estimate rack weight and validate structural capacity before deployment.
+    Estimate rack loading and validate structural reserve before deployment.
   </p>
 
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
     <p class="tool-best-for">
-      <strong>Best for:</strong> verifying rack loading limits before installation and avoiding structural failures.
+      <strong>Best for:</strong> verifying rack loading limits before installation and catching structural margin problems before the rack is populated.
     </p>
   </section>
 
@@ -71,7 +72,10 @@
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results"><div class="muted">Run calculation.</div></div>
+    <div id="results" class="results">
+      <div class="muted">Run calculation.</div>
+    </div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
   <div id="continue-wrap" class="card" style="display:none;">
@@ -85,7 +89,8 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=003"></script>
 </body>
 </html>
 

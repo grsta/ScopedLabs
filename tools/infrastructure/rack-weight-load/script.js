@@ -1,141 +1,250 @@
 ﻿(() => {
-  const $ = id => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CURRENT_CATEGORY = "infrastructure";
+  const CURRENT_STEP = "rack-weight-load";
 
+  let cachedFlow = null;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
   let hasResult = false;
-  let context = null;
 
-  function render(rows){
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r=>{
-      const d = document.createElement("div");
-      d.className = "result-row";
-      d.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(d);
+  const els = {
+    count: $("count"),
+    each: $("each"),
+    cap: $("cap"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    analysisCopy: $("analysis-copy"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
+    calc: $("calc"),
+    reset: $("reset")
+  };
+
+  function refreshFlowNote() {
+    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      cachedFlow,
+      title: "Layout Context",
+      intro:
+        "This step checks whether the rack weight plan only fits nominally or still leaves real structural margin before placement and population.",
+      customRows: (() => {
+        const source = ScopedLabsAnalyzer.getUpstreamFlow({
+          flowKey: FLOW_KEY,
+          category: CURRENT_CATEGORY,
+          step: CURRENT_STEP,
+          cachedFlow
+        });
+
+        if (!source || !source.data) return null;
+
+        const d = source.data;
+        const rows = [];
+
+        if (typeof d.areaSqFt === "number") {
+          rows.push({ label: "Room Area", value: `${d.areaSqFt.toFixed(0)} sq ft` });
+        }
+
+        if (typeof d.layout === "string") {
+          rows.push({ label: "Layout Type", value: d.layout });
+        }
+
+        if (typeof d.status === "string") {
+          rows.push({ label: "Previous Status", value: d.status });
+        }
+
+        return rows.length ? rows : null;
+      })()
     });
   }
 
-  function showContinue(){
-    $("continue-wrap").style.display = "block";
-    $("continue").disabled = false;
-    hasResult = true;
-  }
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continue,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEY,
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
+      emptyMessage: "Run calculation."
+    });
 
-  function hideContinue(){
-    $("continue-wrap").style.display = "none";
-    $("continue").disabled = true;
     hasResult = false;
+    refreshFlowNote();
   }
 
-  function invalidate(){
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-  }
-
-  function loadContext(){
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.category !== "infrastructure") return null;
-
-    return parsed;
-  }
-
-  function loadFlow(){
-    context = loadContext();
-    if (!context) return;
-
-    const el = $("flow-note");
-    el.style.display = "block";
-
-    const d = context.data;
-
-    el.innerHTML = `
-      <div style="display:grid; gap:10px;">
-        <div style="font-weight:600;">Layout Context:</div>
-
-        ${d.areaSqFt ? `
-        <div class="result-row">
-          <span>Room Area</span>
-          <span>${d.areaSqFt.toFixed(0)} sq ft</span>
-        </div>` : ""}
-
-        ${d.layout ? `
-        <div class="result-row">
-          <span>Layout Type</span>
-          <span>${d.layout}</span>
-        </div>` : ""}
-      </div>
-    `;
-  }
-
-  function calc(){
-    const count = parseFloat($("count").value);
-    const each = parseFloat($("each").value);
-    const cap = parseFloat($("cap").value);
+  function calc() {
+    const count = Math.max(0, Math.floor(ScopedLabsAnalyzer.safeNumber(els.count.value, 0)));
+    const each = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.each.value, 0));
+    const cap = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.cap.value, 1));
 
     const total = count * each;
     const percent = (total / cap) * 100;
+    const remaining = Math.max(0, cap - total);
+    const remainingPct = Math.max(0, ((cap - total) / cap) * 100);
 
-    let status = "Within Capacity";
-    if (percent > 80) status = "High Load";
-    if (percent > 100) status = "Over Capacity";
+    const loadPressure = ScopedLabsAnalyzer.clamp((total / cap) * 100, 0, 180);
+    const reserveStress = ScopedLabsAnalyzer.clamp(100 - remainingPct, 0, 180);
+    const densityStress = ScopedLabsAnalyzer.clamp((count / 30) * 100, 0, 180);
 
-    let insight = "Rack loading is within safe operating limits.";
-    if (status === "High Load") {
-      insight = "Rack is approaching capacity. Consider load distribution.";
+    const metrics = [
+      {
+        label: "Load Pressure",
+        value: loadPressure,
+        displayValue: `${Math.round(loadPressure)}%`
+      },
+      {
+        label: "Reserve Stress",
+        value: reserveStress,
+        displayValue: `${Math.round(reserveStress)}%`
+      },
+      {
+        label: "Device Density",
+        value: densityStress,
+        displayValue: `${Math.round(densityStress)}%`
+      }
+    ];
+
+    const compositeScore = Math.round(
+      (loadPressure * 0.55) +
+      (reserveStress * 0.30) +
+      (densityStress * 0.15)
+    );
+
+    const analyzer = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore,
+      metrics,
+      healthyMax: 65,
+      watchMax: 85
+    });
+
+    let statusText = "Within Capacity";
+    if (percent > 80) statusText = "High Load";
+    if (percent > 100) statusText = "Over Capacity";
+
+    let loadClass = "Comfortable rack load";
+    if (percent > 100) loadClass = "Overloaded rack";
+    else if (percent > 90) loadClass = "Critical rack load";
+    else if (percent > 75) loadClass = "Elevated rack load";
+
+    let dominantConstraint = "Balanced rack loading";
+    if (analyzer.dominant.label === "Load Pressure") {
+      dominantConstraint = "Rack structural capacity";
+    } else if (analyzer.dominant.label === "Reserve Stress") {
+      dominantConstraint = "Remaining load margin";
+    } else if (analyzer.dominant.label === "Device Density") {
+      dominantConstraint = "Equipment concentration";
     }
-    if (status === "Over Capacity") {
-      insight = "Rack exceeds rating. Risk of structural failure or damage.";
+
+    let interpretation = "";
+    if (analyzer.status === "RISK") {
+      interpretation =
+        "The rack is too close to its structural envelope. Even if the load is technically supportable on paper, remaining margin is too small to treat the rack as comfortably deployable.";
+    } else if (analyzer.status === "WATCH") {
+      interpretation =
+        "The rack loading is workable, but reserve is tightening. The population plan may still fit, although late-stage device additions or inaccurate equipment weights will consume structural margin faster than the raw percentage suggests.";
+    } else {
+      interpretation =
+        "The rack loading remains inside a manageable structural envelope. Device count, total weight, and remaining margin still leave useful reserve before rack capacity becomes the first deployment limiter.";
     }
 
-    render([
-      {label:"Devices", value: count},
-      {label:"Total Weight", value: `${total.toFixed(0)} lbs`},
-      {label:"Rack Capacity", value: `${cap.toFixed(0)} lbs`},
-      {label:"Load %", value: `${percent.toFixed(1)}%`},
-      {label:"Status", value: status},
-      {label:"Insight", value: insight}
-    ]);
+    let guidance = "";
+    if (analyzer.status === "HEALTHY") {
+      guidance =
+        "Maintain the current population plan, but keep actual installed device weights in view. The next pressure increase will usually appear in reserve margin before it appears in absolute capacity.";
+    } else if (analyzer.status === "WATCH") {
+      guidance =
+        "Validate real equipment weights and late-stage additions before locking the rack bill of materials. Watch what tightens first: remaining load margin, device concentration, or final installed accessories.";
+    } else {
+      guidance =
+        `Rework the rack population plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not just device count. Reduce equipment concentration, split the load, or move to a stronger rack before deployment.`;
+    }
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    const summaryRows = [
+      { label: "Devices", value: `${count}` },
+      { label: "Total Weight", value: `${total.toFixed(0)} lbs` },
+      { label: "Rack Capacity", value: `${cap.toFixed(0)} lbs` },
+      { label: "Load %", value: `${percent.toFixed(1)} %` },
+      { label: "Load Status", value: statusText }
+    ];
+
+    const derivedRows = [
+      { label: "Remaining Capacity", value: `${remaining.toFixed(0)} lbs` },
+      { label: "Remaining Margin", value: `${remainingPct.toFixed(1)} %` },
+      { label: "Load Class", value: loadClass }
+    ];
+
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows,
+      derivedRows,
+      status: analyzer.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      chart: {
+        labels: metrics.map((m) => m.label),
+        values: metrics.map((m) => m.value),
+        displayValues: metrics.map((m) => m.displayValue),
+        referenceValue: 65,
+        healthyMax: 65,
+        watchMax: 85,
+        axisTitle: "Rack Load Risk Magnitude",
+        referenceLabel: "Healthy Margin Floor",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          120,
+          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+        )
+      }
+    });
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
       category: "infrastructure",
       step: "rack-weight-load",
       data: {
         total,
         percent,
-        status
+        status: analyzer.status
       }
-    }));
+    });
 
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
+    hasResult = true;
   }
 
-  function reset(){
-    $("count").value = 20;
-    $("each").value = 35;
-    $("cap").value = 3000;
-    $("results").innerHTML = `<div class="muted">Run calculation.</div>`;
-    hideContinue();
+  function reset() {
+    els.count.value = 20;
+    els.each.value = 35;
+    els.cap.value = 3000;
+    invalidate();
   }
 
-  $("calc").onclick = calc;
-  $("reset").onclick = reset;
+  els.calc.addEventListener("click", calc);
+  els.reset.addEventListener("click", reset);
 
-  ["count","each","cap"].forEach(id=>{
+  ["count", "each", "cap"].forEach((id) => {
     $(id).addEventListener("input", invalidate);
     $(id).addEventListener("change", invalidate);
   });
 
-  $("continue").onclick = () => {
+  els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
     window.location.href = "/tools/infrastructure/floor-load-rating/";
-  };
+  });
 
-  loadFlow();
+  refreshFlowNote();
+  invalidate();
 })();
