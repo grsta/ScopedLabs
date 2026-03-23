@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Backup Window Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-backup-006" />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-backup-007" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,6 +17,21 @@
   <script defer src="/assets/app.js?v=0406"></script>
 
   <style>
+    .analyzer-wrap {
+      position: relative;
+      height: 340px;
+      min-height: 340px;
+      max-height: 340px;
+      margin-top: 14px;
+      overflow: hidden;
+    }
+
+    .analyzer-wrap canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
     .results-block {
       display: grid;
       gap: 10px;
@@ -56,18 +71,6 @@
     .analysis-note strong {
       display: block;
       margin-bottom: 6px;
-    }
-
-    #chart-wrap {
-      margin-top: 16px;
-      min-height: 340px;
-      display: none;
-    }
-
-    #analyzerChart {
-      width: 100%;
-      height: 340px;
-      display: block;
     }
   </style>
 </head>
@@ -167,7 +170,7 @@
       <div class="muted">Run calculation.</div>
     </div>
 
-    <div id="chart-wrap">
+    <div id="chart-wrap" class="analyzer-wrap" style="display:none;">
       <canvas id="analyzerChart" aria-label="Backup Window Analyzer Chart"></canvas>
     </div>
 
@@ -203,7 +206,6 @@
 
 </body>
 </html>
-
 
 
 

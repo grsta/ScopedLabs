@@ -2,25 +2,44 @@
   const $ = (id) => document.getElementById(id);
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
+  let chart = null;
   let hasResult = false;
   let context = null;
-  let chart = null;
 
-  function safeParse(raw) {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
+  const els = {
+    dataTb: $("dataTb"),
+    changePct: $("changePct"),
+    type: $("type"),
+    mbps: $("mbps"),
+    savingsPct: $("savingsPct"),
+    overheadPct: $("overheadPct"),
+    results: $("results"),
+    flowNote: $("flow-note"),
+    completeWrap: $("complete-wrap"),
+    continueWrap: $("continue-wrap"),
+    continueBtn: $("continueBtn"),
+    analysisCopy: $("analysis-copy"),
+    calc: $("calc"),
+    reset: $("reset"),
+    chart: $("analyzerChart")
+  };
+
+  function row(label, value) {
+    return `
+      <div class="result-row">
+        <span class="result-label">${label}</span>
+        <span class="result-value">${value}</span>
+      </div>
+    `;
   }
 
-  function loadContext() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return null;
+  function num(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  }
 
-    const parsed = safeParse(raw);
-    if (!parsed || parsed.category !== "compute") return null;
-    return parsed;
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
   }
 
   function formatHours(hours) {
@@ -33,8 +52,19 @@
     return `${Math.round(hours * 60)}m`;
   }
 
-  function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
+  function invalidate() {
+    if (!hasResult) return;
+    sessionStorage.removeItem(FLOW_KEY);
+    els.completeWrap.style.display = "none";
+    els.continueWrap.style.display = "none";
+    els.analysisCopy.style.display = "none";
+    els.analysisCopy.innerHTML = "";
+    $("chart-wrap").style.display = "none";
+    if (chart) {
+      chart.destroy();
+      chart = null;
+    }
+    hasResult = false;
   }
 
   function saveResult(payload) {
@@ -48,119 +78,76 @@
     );
   }
 
-  function clearState() {
-    hasResult = false;
-    $("results").innerHTML = `<div class="muted">Run calculation.</div>`;
-    $("analysis-copy").style.display = "none";
-    $("analysis-copy").innerHTML = "";
-    $("chart-wrap").style.display = "none";
-    $("complete-wrap").style.display = "none";
-    $("continue-wrap").style.display = "none";
-
-    if (chart) {
-      chart.destroy();
-      chart = null;
-    }
-  }
-
-  function invalidate() {
-    clearState();
-    sessionStorage.removeItem(FLOW_KEY);
-  }
-
   function loadFlow() {
-    context = loadContext();
+    const raw = sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return;
 
-    const el = $("flow-note");
-    el.style.display = "none";
-    el.innerHTML = "";
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return;
+    }
 
-    if (!context) return;
+    if (!parsed || parsed.category !== "compute") return;
 
-    const d = context.data || {};
-    const rows = [];
+    context = parsed;
+    const d = parsed.data || {};
+    const lines = [];
 
     if (Number.isFinite(d.hours)) {
-      rows.push(`
-        <div class="result-row">
-          <span>Previous Recovery / Rebuild Window</span>
-          <span>${formatHours(d.hours)}</span>
-        </div>
-      `);
+      lines.push(`Previous Recovery / Rebuild Window: <strong>${formatHours(d.hours)}</strong>`);
     }
 
     if (d.risk) {
-      rows.push(`
-        <div class="result-row">
-          <span>Previous Risk State</span>
-          <span>${d.risk}</span>
-        </div>
-      `);
+      lines.push(`Previous Risk State: <strong>${d.risk}</strong>`);
     }
 
-    if (d.rebuildHours && Number.isFinite(d.rebuildHours)) {
-      rows.push(`
-        <div class="result-row">
-          <span>Rebuild Duration</span>
-          <span>${formatHours(d.rebuildHours)}</span>
-        </div>
-      `);
+    if (Number.isFinite(d.rebuildHours)) {
+      lines.push(`Rebuild Duration: <strong>${formatHours(d.rebuildHours)}</strong>`);
     }
 
-    if (d.survivalHours && Number.isFinite(d.survivalHours)) {
-      rows.push(`
-        <div class="result-row">
-          <span>Estimated Survival Window</span>
-          <span>${formatHours(d.survivalHours)}</span>
-        </div>
-      `);
+    if (Number.isFinite(d.survivalHours)) {
+      lines.push(`Estimated Survival Window: <strong>${formatHours(d.survivalHours)}</strong>`);
     }
 
-    if (!rows.length) return;
-
-    el.style.display = "block";
-    el.innerHTML = `
-      <div style="display:grid; gap:10px;">
-        <div style="font-weight:600;">System Context</div>
-        <div class="muted">
-          Carry-over from the previous compute step is active and is being used to judge whether the backup plan fits inside the platform's failure and recovery envelope.
-        </div>
-        ${rows.join("")}
-      </div>
+    els.flowNote.style.display = "block";
+    els.flowNote.innerHTML = `
+      <strong>Carried over system design:</strong><br>
+      ${lines.length ? lines.join("<br>") : "Prior compute recovery data detected."}
+      <br><br>
+      This final step evaluates whether the backup plan fits inside the platform's recovery and failure envelope without turning protection jobs into an operational bottleneck.
     `;
   }
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach((r) => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(div);
-    });
-  }
-
   function getStatus(score) {
-    if (score > 65) return "RISK";
-    if (score > 35) return "WATCH";
-    return "HEALTHY";
-  }
+    if (score > 65) {
+      return {
+        label: "RISK",
+        insight:
+          "Backup duration is now materially crowding the available recovery envelope. Recovery operations, backup completion, and restore confidence are no longer aligned under failure pressure."
+      };
+    }
 
-  function getStatusClass(status) {
-    if (status === "HEALTHY") return "healthy";
-    if (status === "WATCH") return "watch";
-    return "risk";
+    if (score > 35) {
+      return {
+        label: "WATCH",
+        insight:
+          "Backup duration is beginning to compete with recovery timing. The platform is still workable, but backup windows are consuming schedule margin that would otherwise absorb recovery events."
+      };
+    }
+
+    return {
+      label: "HEALTHY",
+      insight:
+        "Backup execution remains inside a workable operating envelope. The current data-change pattern and transport rate should allow protection jobs to complete without materially constraining recovery timing."
+    };
   }
 
   function renderAnalysis(status, interpretation, guidance, dominantLabel) {
-    const el = $("analysis-copy");
-    el.style.display = "grid";
-    el.innerHTML = `
-      <div class="status-pill ${getStatusClass(status)}">Status: ${status}</div>
+    els.analysisCopy.style.display = "grid";
+    els.analysisCopy.innerHTML = `
+      <div class="status-pill ${status === "HEALTHY" ? "healthy" : status === "WATCH" ? "watch" : "risk"}">Status: ${status}</div>
 
       <div class="analysis-note">
         <strong>Engineering Interpretation</strong>
@@ -179,45 +166,28 @@
     `;
   }
 
-  function metricColor(value, isDominant) {
-    if (isDominant) {
-      if (value > 65) return "rgba(255, 92, 92, 1)";
-      if (value > 35) return "rgba(255, 188, 82, 1)";
-      return "rgba(120, 255, 170, 1)";
-    }
-
-    if (value > 65) return "rgba(255, 77, 77, 0.30)";
-    if (value > 35) return "rgba(255, 170, 51, 0.24)";
-    return "rgba(90, 170, 255, 0.15)";
-  }
-
-  function metricBorderColor(value, isDominant) {
-    if (isDominant) {
-      if (value > 65) return "rgba(255, 220, 220, 1)";
-      if (value > 35) return "rgba(255, 240, 210, 1)";
-      return "rgba(215, 255, 230, 1)";
-    }
-
-    return "rgba(120,170,200,0.18)";
-  }
-
-  function metricHoverColor(value) {
-    if (value > 65) return "rgba(255, 105, 105, 1)";
-    if (value > 35) return "rgba(255, 198, 95, 1)";
-    return "rgba(135, 255, 182, 1)";
-  }
-
-  function buildChart(metrics, dominantIndex) {
-    const canvas = $("analyzerChart");
-    if (!canvas) return;
+  function renderChart(schedulePressure, recoveryCollision, throughputDemand, referenceWindow) {
+    if (!els.chart) return;
 
     if (chart) {
       chart.destroy();
       chart = null;
     }
 
-    const labels = metrics.map((m) => m.label);
-    const values = metrics.map((m) => m.value);
+    const labels = [
+      "Schedule Pressure",
+      "Recovery Collision",
+      "Throughput Demand"
+    ];
+
+    const values = [
+      schedulePressure,
+      recoveryCollision,
+      throughputDemand
+    ];
+
+    const maxValue = Math.max(...values, referenceWindow, 100);
+    const dominantIndex = values.indexOf(Math.max(...values));
 
     const chartBgPlugin = {
       id: "chartBgPlugin",
@@ -285,7 +255,7 @@
 
         ctx.save();
 
-        const rx = x.getPixelForValue(65);
+        const rx = x.getPixelForValue(referenceWindow);
         ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
         ctx.lineWidth = 3;
         ctx.setLineDash([4, 4]);
@@ -297,7 +267,7 @@
 
         ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
         ctx.font = "600 11px sans-serif";
-        ctx.fillText("Reference Window (65)", rx + 8, bottom - 10);
+        ctx.fillText(`Reference Window (${referenceWindow})`, rx + 8, bottom - 10);
 
         ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
         ctx.font = "600 11px sans-serif";
@@ -321,17 +291,11 @@
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = "rgba(245,255,248,0.98)";
-        ctx.font = "600 12px sans-serif";
-        ctx.fillText(`${Math.round(dominantValue)}`, px + 10, py + 4);
-
         ctx.restore();
       }
     };
 
-    const maxValue = Math.max(...values, 100);
-
-    chart = new Chart(canvas, {
+    chart = new Chart(els.chart, {
       type: "bar",
       data: {
         labels,
@@ -344,17 +308,38 @@
             borderWidth: 2,
             borderRadius: 8,
             borderSkipped: false,
-            backgroundColor: (ctx) => {
-              const i = ctx.dataIndex;
-              const v = ctx.raw;
-              return metricColor(v, i === dominantIndex);
+            backgroundColor: (context) => {
+              const i = context.dataIndex;
+              const v = context.raw;
+
+              if (i === dominantIndex) {
+                if (v > 65) return "rgba(255, 92, 92, 1)";
+                if (v > 35) return "rgba(255, 188, 82, 1)";
+                return "rgba(120, 255, 170, 1)";
+              }
+
+              if (v > 65) return "rgba(255, 77, 77, 0.30)";
+              if (v > 35) return "rgba(255, 170, 51, 0.24)";
+              return "rgba(90, 170, 255, 0.15)";
             },
-            borderColor: (ctx) => {
-              const i = ctx.dataIndex;
-              const v = ctx.raw;
-              return metricBorderColor(v, i === dominantIndex);
+            borderColor: (context) => {
+              const i = context.dataIndex;
+              const v = context.raw;
+
+              if (i === dominantIndex) {
+                if (v > 65) return "rgba(255, 220, 220, 1)";
+                if (v > 35) return "rgba(255, 240, 210, 1)";
+                return "rgba(215, 255, 230, 1)";
+              }
+
+              return "rgba(120,170,200,0.18)";
             },
-            hoverBackgroundColor: (ctx) => metricHoverColor(ctx.raw)
+            hoverBackgroundColor: (context) => {
+              const v = context.raw;
+              if (v > 65) return "rgba(255, 105, 105, 1)";
+              if (v > 35) return "rgba(255, 198, 95, 1)";
+              return "rgba(135, 255, 182, 1)";
+            }
           }
         ]
       },
@@ -383,7 +368,6 @@
             borderColor: "rgba(100, 255, 180, 0.25)",
             borderWidth: 1,
             padding: 12,
-            displayColors: false,
             callbacks: {
               label(context) {
                 return ` ${Math.round(context.raw)}`;
@@ -420,42 +404,43 @@
       plugins: [chartBgPlugin, thresholdBandPlugin]
     });
 
-    canvas.style.width = "100%";
-    canvas.style.height = "340px";
-    if (canvas.parentElement) {
-      canvas.parentElement.style.minHeight = "340px";
-    }
-
     $("chart-wrap").style.display = "block";
   }
 
   function calc() {
-    context = loadContext();
+    context = null;
+    const raw = sessionStorage.getItem(FLOW_KEY);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.category === "compute") {
+          context = parsed;
+        }
+      } catch {}
+    }
 
-    const dataTb = +$("dataTb").value;
-    const changePct = +$("changePct").value;
-    const type = $("type").value;
-    const mbps = +$("mbps").value;
-    const savingsPct = +$("savingsPct").value;
-    const overheadPct = +$("overheadPct").value;
+    const dataTb = num(els.dataTb.value);
+    const changePct = num(els.changePct.value);
+    const type = els.type.value;
+    const mbps = num(els.mbps.value);
+    const savingsPct = num(els.savingsPct.value);
+    const overheadPct = num(els.overheadPct.value);
 
     if (
-      !Number.isFinite(dataTb) || dataTb <= 0 ||
-      !Number.isFinite(changePct) || changePct < 0 ||
-      !Number.isFinite(mbps) || mbps <= 0 ||
-      !Number.isFinite(savingsPct) || savingsPct < 0 ||
-      !Number.isFinite(overheadPct) || overheadPct < 0
+      dataTb <= 0 ||
+      changePct < 0 ||
+      mbps <= 0 ||
+      savingsPct < 0 ||
+      overheadPct < 0
     ) {
-      $("results").innerHTML = `<div class="muted">Enter valid values to calculate.</div>`;
-      $("analysis-copy").style.display = "none";
-      $("analysis-copy").innerHTML = "";
-      $("chart-wrap").style.display = "none";
-      $("complete-wrap").style.display = "none";
-      $("continue-wrap").style.display = "none";
+      els.results.innerHTML = `<div class="muted">Enter valid values and run analysis.</div>`;
       if (chart) {
         chart.destroy();
         chart = null;
       }
+      els.completeWrap.style.display = "none";
+      els.continueWrap.style.display = "none";
+      els.analysisCopy.style.display = "none";
       return;
     }
 
@@ -480,80 +465,57 @@
       ? clamp((hours / rebuildHours) * 100, 0, 200)
       : null;
 
-    const schedulePressureScore = clamp((hours / 8) * 100, 0, 100);
-    const recoveryCollisionScore = rebuildHours
+    const schedulePressure = clamp((hours / 8) * 100, 0, 100);
+    const recoveryCollision = rebuildHours
       ? clamp((hours / rebuildHours) * 100, 0, 100)
       : clamp((hours / 12) * 100, 0, 100);
-    const throughputDemandScore = clamp((effectiveTb / Math.max(hours, 0.01)) * 6, 0, 100);
+    const throughputDemand = clamp((effectiveTb / Math.max(hours, 0.01)) * 6, 0, 100);
 
-    const metrics = [
-      { label: "Schedule Pressure", value: schedulePressureScore },
-      { label: "Recovery Collision", value: recoveryCollisionScore },
-      { label: "Throughput Demand", value: throughputDemandScore }
-    ];
-
-    let dominantIndex = 0;
-    for (let i = 1; i < metrics.length; i += 1) {
-      if (metrics[i].value > metrics[dominantIndex].value) dominantIndex = i;
-    }
-
-    const dominantLabel = metrics[dominantIndex].label;
+    const values = [schedulePressure, recoveryCollision, throughputDemand];
+    const dominantIndex = values.indexOf(Math.max(...values));
+    const dominantLabel = ["Schedule Pressure", "Recovery Collision", "Throughput Demand"][dominantIndex];
 
     const compositeScore = Math.round(
-      (schedulePressureScore * 0.35) +
-      (recoveryCollisionScore * 0.45) +
-      (throughputDemandScore * 0.20)
+      (schedulePressure * 0.35) +
+      (recoveryCollision * 0.45) +
+      (throughputDemand * 0.20)
     );
 
-    const status = getStatus(compositeScore);
+    const risk = getStatus(compositeScore);
 
-    let interpretation = "";
     let guidance = "";
-
-    if (status === "HEALTHY") {
-      interpretation = rebuildHours
-        ? "Backup execution fits inside the known recovery envelope. The current data-change pattern and transport rate should allow completion before storage recovery becomes the dominant operational threat."
-        : "Backup execution remains inside a workable maintenance window. The platform is not presently backup-bound, and routine protection jobs should complete without materially constraining operations.";
-
+    if (risk.label === "HEALTHY") {
       guidance = "Maintain the current throughput target, keep incremental cadence tight, and monitor change-rate growth. Expansion pressure will first appear in backup duration and recovery overlap before it appears in raw storage consumption.";
-    } else if (status === "WATCH") {
-      interpretation = rebuildHours
-        ? "Backup duration is starting to compete with the platform's recovery timeline. If a disk event or rebuild occurs during the same period, recovery operations and protection jobs begin contending for the same time budget."
-        : "Backup duration is approaching the edge of a practical maintenance window. The system is still workable, but schedule elasticity is narrowing and scaling headroom is limited.";
-
+    } else if (risk.label === "WATCH") {
       guidance = "Reduce protected data per cycle, improve effective throughput, or split jobs by tier. Watch what fails first: overnight schedule margin, recovery overlap, or ingest contention on production storage.";
     } else {
-      interpretation = rebuildHours
-        ? "Backup duration now exceeds or materially crowds the available recovery window. In this state, storage recovery, backup completion, and restore confidence are no longer aligned. The platform becomes operationally fragile under concurrent failure conditions."
-        : "Backup duration has moved into a high-risk operating range. Protection jobs will be difficult to finish consistently, and restores become harder to validate against realistic outage windows.";
-
       guidance = `Re-architect the backup plan. The primary limit is ${dominantLabel.toLowerCase()}, not raw capacity. Increase throughput, segment datasets, shorten change scope, or move to a more aggressive tiered backup strategy before scaling further.`;
     }
 
-    render([
-      { label: "Backup Type", value: type.toUpperCase() },
-      { label: "Source Data This Job", value: `${sourceTb.toFixed(2)} TB` },
-      { label: "Protected Data After Savings", value: `${protectedTb.toFixed(2)} TB` },
-      { label: "Effective Data with Overhead", value: `${effectiveTb.toFixed(2)} TB` },
-      { label: "Effective Throughput", value: `${mbps.toFixed(0)} MB/s` },
-      { label: "Backup Window", value: formatHours(hours) },
-      { label: "Composite Risk Score", value: `${compositeScore} / 100` },
-      { label: "Status", value: status },
-      {
-        label: "Backup vs Recovery Window",
-        value: rebuildHours
+    els.results.innerHTML = `
+      ${row("Backup Type", type.toUpperCase())}
+      ${row("Source Data This Job", `${sourceTb.toFixed(2)} TB`)}
+      ${row("Protected Data After Savings", `${protectedTb.toFixed(2)} TB`)}
+      ${row("Effective Data with Overhead", `${effectiveTb.toFixed(2)} TB`)}
+      ${row("Effective Throughput", `${mbps.toFixed(0)} MB/s`)}
+      ${row("Backup Window", formatHours(hours))}
+      ${row("Composite Risk Score", `${compositeScore} / 100`)}
+      ${row("Status", risk.label)}
+      ${row(
+        "Backup vs Recovery Window",
+        rebuildHours
           ? `${backupCoveragePct.toFixed(0)}% of rebuild window`
           : "No prior recovery window carry-over detected"
-      }
-    ]);
+      )}
+    `;
 
-    renderAnalysis(status, interpretation, guidance, dominantLabel);
-    buildChart(metrics, dominantIndex);
+    renderAnalysis(risk.label, risk.insight, guidance, dominantLabel);
+    renderChart(schedulePressure, recoveryCollision, throughputDemand, 65);
 
     saveResult({
       hours,
       backupHours: hours,
-      risk: status,
+      risk: risk.label,
       score: compositeScore,
       dominantMetric: dominantLabel,
       sourceTb,
@@ -562,25 +524,41 @@
       throughputMbps: mbps
     });
 
-    $("complete-wrap").style.display = "block";
-    $("continue-wrap").style.display = "block";
+    els.completeWrap.style.display = "block";
+    els.continueWrap.style.display = "block";
     hasResult = true;
   }
 
-  $("calc").addEventListener("click", calc);
+  els.calc.addEventListener("click", calc);
 
-  $("reset").addEventListener("click", () => {
-    $("dataTb").value = 10;
-    $("changePct").value = 5;
-    $("type").value = "inc";
-    $("mbps").value = 250;
-    $("savingsPct").value = 20;
-    $("overheadPct").value = 15;
-    invalidate();
+  els.reset.addEventListener("click", () => {
+    els.dataTb.value = 10;
+    els.changePct.value = 5;
+    els.type.value = "inc";
+    els.mbps.value = 250;
+    els.savingsPct.value = 20;
+    els.overheadPct.value = 15;
+
+    sessionStorage.removeItem(FLOW_KEY);
+    els.results.innerHTML = `<div class="muted">Run calculation.</div>`;
+    els.flowNote.style.display = "none";
+    els.flowNote.innerHTML = "";
+    els.analysisCopy.style.display = "none";
+    els.analysisCopy.innerHTML = "";
+    els.completeWrap.style.display = "none";
+    els.continueWrap.style.display = "none";
+    $("chart-wrap").style.display = "none";
+
+    if (chart) {
+      chart.destroy();
+      chart = null;
+    }
+
+    hasResult = false;
     loadFlow();
   });
 
-  $("continueBtn").addEventListener("click", () => {
+  els.continueBtn.addEventListener("click", () => {
     window.location.href = "/tools/compute/";
   });
 
