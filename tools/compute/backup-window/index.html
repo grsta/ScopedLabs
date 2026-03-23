@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Backup Window Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-backup-007" />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-backup-008" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,64 +15,6 @@
   </script>
   <script defer src="/assets/auth.js?v=0406"></script>
   <script defer src="/assets/app.js?v=0406"></script>
-
-  <style>
-    .analyzer-wrap {
-      position: relative;
-      height: 340px;
-      min-height: 340px;
-      max-height: 340px;
-      margin-top: 14px;
-      overflow: hidden;
-    }
-
-    .analyzer-wrap canvas {
-      display: block;
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    .results-block {
-      display: grid;
-      gap: 10px;
-    }
-
-    .results-copy {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      width: fit-content;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      font-size: .92rem;
-      font-weight: 600;
-      letter-spacing: .02em;
-    }
-
-    .status-pill.healthy { color: #b6f7cb; }
-    .status-pill.watch { color: #ffe39a; }
-    .status-pill.risk { color: #ffb0b0; }
-
-    .analysis-note {
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 16px;
-      padding: 14px;
-      background: rgba(255,255,255,.025);
-    }
-
-    .analysis-note strong {
-      display: block;
-      margin-bottom: 6px;
-    }
-  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="backup-window" data-lane="v1">
@@ -165,16 +107,10 @@
 
   <section class="card tool-card">
     <h2>Results</h2>
-
-    <div id="results" class="results-block">
+    <div id="results" class="results">
       <div class="muted">Run calculation.</div>
     </div>
-
-    <div id="chart-wrap" class="analyzer-wrap" style="display:none;">
-      <canvas id="analyzerChart" aria-label="Backup Window Analyzer Chart"></canvas>
-    </div>
-
-    <div id="analysis-copy" class="results-copy" style="display:none;"></div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
   <section id="continue-wrap" class="card" style="display:none;">
@@ -183,7 +119,7 @@
       Final step complete. Continue back to the Compute category with this system profile finalized.
     </div>
     <div class="actions">
-      <button id="continueBtn" class="btn btn-primary">Continue</button>
+      <button id="continueBtn" class="btn btn-primary" disabled>Continue</button>
     </div>
   </section>
 
@@ -202,7 +138,8 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=007"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=008"></script>
 
 </body>
 </html>
