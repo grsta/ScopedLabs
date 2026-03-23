@@ -225,10 +225,12 @@
     const targetMs = input.targetMs;
     const dominant = [...input.contributors].sort((a, b) => b.value - a.value)[0];
     const dominantPct = totalMs > 0 ? (dominant.value / totalMs) * 100 : 0;
+
     const networkTransportMs =
       input.contributors
         .filter((x) => ["Switching / routing", "Uplink / aggregation", "WAN / VPN transport"].includes(x.label))
         .reduce((sum, s) => sum + s.value, 0);
+
     const processingMs =
       input.contributors
         .filter((x) => ["Source / encode", "Decode / processing", "Client render"].includes(x.label))
@@ -238,25 +240,28 @@
     const overTargetMs = Math.max(0, totalMs - targetMs);
     const reserveMs = Math.max(0, targetMs - totalMs);
 
+    const perStageHealthyMax = Math.max(targetMs / 4, 1);
+    const perStageWatchMax = Math.max(targetMs / 2, 1);
+
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: budgetUsePct,
-      metrics: [
-        { label: "Budget Consumption", value: budgetUsePct, displayValue: fmtPct(budgetUsePct) },
-        { label: "Dominant Stage Share", value: dominantPct, displayValue: fmtPct(dominantPct) },
-        { label: "Transport Stack Share", value: totalMs > 0 ? (networkTransportMs / totalMs) * 100 : 0, displayValue: fmtPct(totalMs > 0 ? (networkTransportMs / totalMs) * 100 : 0) }
-      ],
-      healthyMax: 100,
-      watchMax: 125
+      compositeScore: dominant.value,
+      metrics: input.contributors.map((item) => ({
+        label: item.label,
+        value: item.value,
+        displayValue: fmtMs(item.value)
+      })),
+      healthyMax: perStageHealthyMax,
+      watchMax: perStageWatchMax
     });
 
     let interpretation = `Total modeled latency is ${fmtMs(totalMs)} against a target budget of ${fmtMs(targetMs)}. ${dominant.label} is the single largest contributor at ${fmtMs(dominant.value)}, which means that stage will shape how responsive the workflow feels before smaller contributors do.`;
 
     if (statusPack.status === "RISK") {
-      interpretation += ` The full path is now consuming ${fmtPct(budgetUsePct)} of the selected budget, so delay is no longer just a tuning issue. At this level, operators will usually experience noticeable sluggishness, especially when buffering, decode delay, and WAN transport stack together.`;
+      interpretation += ` The dominant stage is consuming too much of the latency budget by itself, which means the path is already fragile before the smaller contributors are even added. In practice, users will usually experience noticeable sluggishness because the largest delay source is oversized, not because the path is uniformly slow.`;
     } else if (statusPack.status === "WATCH") {
-      interpretation += ` The design is still usable, but it is running close enough to the budget that burst conditions, client rendering differences, or added processing stages can push the experience from acceptable to frustrating.`;
+      interpretation += ` The path may still remain inside the total budget, but the dominant stage is already large enough to erode responsiveness margin on its own. That usually means the workflow still works, but it starts feeling less immediate once real transport variation, client performance, or additional buffering is introduced.`;
     } else {
-      interpretation += ` The path remains inside the target budget, which means the design still has usable responsiveness margin for the assumptions entered here.`;
+      interpretation += ` The dominant stage remains inside a controlled band, so no single contributor is disproportionately consuming the latency budget. That keeps the design more balanced and easier to tune if requirements change later.`;
     }
 
     let dominantConstraint = `${dominant.label} is the dominant limiter. In practice, reducing smaller stages first will not materially improve perceived responsiveness until this largest contributor is addressed or validated.`;
@@ -269,11 +274,11 @@
 
     let guidance = "";
     if (statusPack.status === "RISK") {
-      guidance = `Trim the largest stage first, then re-test the full path. Focus on ${dominant.label.toLowerCase()} before chasing smaller contributors. If this is a live-view workflow, the current budget use is aggressive enough that users will likely describe it as slow rather than merely delayed.`;
+      guidance = `Reduce ${dominant.label.toLowerCase()} first. That stage is too large relative to the per-stage comfort band, so the system is carrying an oversized contributor that will dominate the user experience even if the total path still appears mathematically acceptable.`;
     } else if (statusPack.status === "WATCH") {
-      guidance = `The budget is serviceable but tight. Validate whether ${dominant.label.toLowerCase()} is realistic, and review transport assumptions from the upstream pipeline step before committing to the design.`;
+      guidance = `Validate whether ${dominant.label.toLowerCase()} is realistic and worth optimizing. The path is still workable, but the dominant stage is now large enough that it can become the first source of perceived sluggishness as the environment gets less ideal.`;
     } else {
-      guidance = `This path is in a controlled band. Keep the dominant stage visible during design reviews, because that is the first place latency risk will grow if the system expands or buffering assumptions change.`;
+      guidance = `This latency profile is balanced. Keep the dominant stage visible during design review, because that is still the first place where latency risk will grow if buffering, transport delay, or client processing expands later.`;
     }
 
     return {
@@ -288,6 +293,8 @@
       budgetUsePct,
       overTargetMs,
       reserveMs,
+      perStageHealthyMax,
+      perStageWatchMax,
       status: statusPack.status,
       interpretation,
       dominantConstraint,
@@ -318,8 +325,6 @@
   }
 
   function renderSuccess(data) {
-    const transportSharePct = data.totalMs > 0 ? (data.networkTransportMs / data.totalMs) * 100 : 0;
-
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.out,
       analysisEl: els.analysis,
@@ -347,9 +352,9 @@
         labels: data.input.contributors.map((x) => x.label),
         values: data.input.contributors.map((x) => Number(x.value.toFixed(1))),
         displayValues: data.input.contributors.map((x) => fmtMs(x.value)),
-        referenceValue: Math.max(data.targetMs / 4, 1),
-        healthyMax: Math.max(data.targetMs / 4, 1),
-        watchMax: Math.max(data.targetMs / 2, 1),
+        referenceValue: data.perStageHealthyMax,
+        healthyMax: data.perStageHealthyMax,
+        watchMax: data.perStageWatchMax,
         axisTitle: "Latency Contribution (ms)",
         referenceLabel: "Per-Stage Comfort Target",
         healthyLabel: "Healthy",
@@ -360,7 +365,7 @@
           Math.ceil(
             Math.max(
               ...data.input.contributors.map((x) => x.value),
-              data.targetMs / 2
+              data.perStageWatchMax
             ) * 1.18
           )
         )
