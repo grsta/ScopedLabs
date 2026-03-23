@@ -1,10 +1,13 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CURRENT_STEP = "cpu-sizing";
+  const CURRENT_CATEGORY = "compute";
 
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
   let hasResult = false;
+  let upstreamFlowContext = null;
 
   const els = {
     workload: $("workload"),
@@ -34,15 +37,6 @@
     return Math.min(max, Math.max(min, value));
   }
 
-  function row(label, value) {
-    return `
-      <div class="result-row">
-        <span class="result-label">${label}</span>
-        <span class="result-value">${value}</span>
-      </div>
-    `;
-  }
-
   function showContinue() {
     els.continueWrap.style.display = "block";
     els.continue.disabled = false;
@@ -68,27 +62,47 @@
     });
   }
 
-  function renderFlowNote() {
+  function getStoredFlow() {
     const raw = sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  function cacheUpstreamFlowContext() {
+    const parsed = getStoredFlow();
+    if (!parsed) return;
+
+    if (parsed.category === CURRENT_CATEGORY && parsed.step !== CURRENT_STEP) {
+      upstreamFlowContext = parsed;
+    }
+  }
+
+  function renderFlowNote() {
+    const parsed = getStoredFlow();
+    let source = null;
+
+    if (parsed && parsed.category === CURRENT_CATEGORY && parsed.step !== CURRENT_STEP) {
+      source = parsed;
+      upstreamFlowContext = parsed;
+    } else if (upstreamFlowContext && upstreamFlowContext.category === CURRENT_CATEGORY && upstreamFlowContext.step !== CURRENT_STEP) {
+      source = upstreamFlowContext;
+    }
+
     els.flowNote.style.display = "none";
     els.flowNote.innerHTML = "";
 
-    if (!raw) return;
+    if (!source) return;
 
-    let parsed = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return;
-    }
-
-    if (!parsed || parsed.category !== "compute" || parsed.step === "cpu-sizing") return;
-
-    const data = parsed.data || {};
+    const data = source.data || {};
     const parts = [];
 
     if (typeof data.throughputMbps === "number") {
-      parts.push(`Upstream throughput profile: <strong>${data.throughputMbps.toFixed(0)} MB/s</strong>`);
+      parts.push(`Upstream throughput profile: <strong>${data.throughputMbps.toFixed(0)} Mbps</strong>`);
     }
     if (typeof data.backupHours === "number") {
       parts.push(`Observed backup window: <strong>${data.backupHours.toFixed(2)} hrs</strong>`);
@@ -149,7 +163,7 @@
     `;
   }
 
-  function invalidate() {
+  function clearAnalyzerVisuals() {
     if (chartRef.current) {
       chartRef.current.destroy();
       chartRef.current = null;
@@ -159,10 +173,21 @@
     }
     chartWrapRef.current = null;
 
-    sessionStorage.removeItem(FLOW_KEY);
     els.analysisCopy.style.display = "none";
     els.analysisCopy.innerHTML = "";
+  }
+
+  function invalidate() {
+    clearAnalyzerVisuals();
+
+    const parsed = getStoredFlow();
+    if (parsed && parsed.category === CURRENT_CATEGORY && parsed.step === CURRENT_STEP) {
+      sessionStorage.removeItem(FLOW_KEY);
+    }
+
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     hideContinue();
+    renderFlowNote();
   }
 
   function renderAnalyzerChart({
@@ -525,8 +550,8 @@
     });
 
     sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "compute",
-      step: "cpu-sizing",
+      category: CURRENT_CATEGORY,
+      step: CURRENT_STEP,
       data: {
         cores: rec,
         physicalCores: physicalRec,
@@ -548,9 +573,7 @@
     els.peak.value = "1.25";
     els.targetUtil.value = 70;
     els.smt.value = "on";
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     invalidate();
-    renderFlowNote();
   });
 
   ["workload", "concurrency", "cpuPerWorker", "peak", "targetUtil", "smt"].forEach((id) => {
@@ -559,9 +582,11 @@
   });
 
   els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
     window.location.href = "/tools/compute/ram-sizing/";
   });
 
+  cacheUpstreamFlowContext();
   renderFlowNote();
   hideContinue();
 })();
