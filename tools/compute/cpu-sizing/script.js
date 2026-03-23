@@ -25,6 +25,10 @@
     return 1.0;
   }
 
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
   function row(label, value) {
     return `
       <div class="result-row">
@@ -132,29 +136,18 @@
     `;
   }
 
-  function renderChart(loadPressure, coreDemand, utilPressure, referenceWindow) {
-    const canvas = $("analyzerChart");
-    if (!canvas) return;
+  function createAnalyzerChart(canvas, config) {
+    if (!canvas) return null;
 
-    if (chart) {
-      chart.destroy();
-      chart = null;
-    }
-
-    const labels = [
-      "Load Pressure",
-      "Core Demand",
-      "Utilization"
-    ];
-
-    const values = [
-      loadPressure,
-      coreDemand,
-      utilPressure
-    ];
-
-    const dominantIndex = values.indexOf(Math.max(...values));
-    const maxValue = Math.max(...values, referenceWindow, 100);
+    const {
+      labels,
+      values,
+      dominantIndex,
+      chartTitle,
+      referenceValue,
+      referenceLabel,
+      dominantSuffix = ""
+    } = config;
 
     const chartBgPlugin = {
       id: "chartBgPlugin",
@@ -179,35 +172,26 @@
         const x = scales.x;
         const { top, bottom, left, right } = chartArea;
 
-        const healthyMax = Math.min(35, x.max);
-        const watchMax = Math.min(65, x.max);
-
         ctx.save();
 
-        if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, bottom - top);
-        }
+        ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
+        ctx.fillRect(left, top, x.getPixelForValue(35) - left, bottom - top);
 
-        if (watchMax > 35) {
-          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(35),
-            top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(35),
-            bottom - top
-          );
-        }
+        ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
+        ctx.fillRect(
+          x.getPixelForValue(35),
+          top,
+          x.getPixelForValue(65) - x.getPixelForValue(35),
+          bottom - top
+        );
 
-        if (x.max > 65) {
-          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
-          ctx.fillRect(
-            x.getPixelForValue(65),
-            top,
-            right - x.getPixelForValue(65),
-            bottom - top
-          );
-        }
+        ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
+        ctx.fillRect(
+          x.getPixelForValue(65),
+          top,
+          right - x.getPixelForValue(65),
+          bottom - top
+        );
 
         ctx.restore();
       },
@@ -221,7 +205,7 @@
 
         ctx.save();
 
-        const rx = x.getPixelForValue(referenceWindow);
+        const rx = x.getPixelForValue(referenceValue);
         ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
         ctx.lineWidth = 3;
         ctx.setLineDash([4, 4]);
@@ -233,7 +217,7 @@
 
         ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
         ctx.font = "600 11px sans-serif";
-        ctx.fillText(`Healthy Margin Floor (${referenceWindow})`, rx + 8, bottom - 10);
+        ctx.fillText(referenceLabel, rx + 8, bottom - 10);
 
         ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
         ctx.font = "600 11px sans-serif";
@@ -259,19 +243,19 @@
 
         ctx.fillStyle = "rgba(245,255,248,0.98)";
         ctx.font = "600 12px sans-serif";
-        ctx.fillText(`${Math.round(dominantValue)}%`, px + 10, py + 4);
+        ctx.fillText(`${Math.round(dominantValue)}${dominantSuffix}`, px + 10, py + 4);
 
         ctx.restore();
       }
     };
 
-    chart = new Chart(canvas, {
+    return new Chart(canvas, {
       type: "bar",
       data: {
         labels,
         datasets: [
           {
-            label: "CPU Stress Metrics",
+            label: chartTitle,
             barPercentage: 0.5,
             categoryPercentage: 0.58,
             data: values,
@@ -280,35 +264,17 @@
             borderSkipped: false,
             backgroundColor: (context) => {
               const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 65) return "rgba(255, 92, 92, 1)";
-                if (v > 35) return "rgba(255, 188, 82, 1)";
-                return "rgba(120, 255, 170, 1)";
-              }
-
-              if (v > 65) return "rgba(255, 77, 77, 0.30)";
-              if (v > 35) return "rgba(255, 170, 51, 0.24)";
+              if (i === dominantIndex) return "rgba(255, 188, 82, 1)";
               return "rgba(90, 170, 255, 0.15)";
             },
             borderColor: (context) => {
               const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 65) return "rgba(255, 220, 220, 1)";
-                if (v > 35) return "rgba(255, 240, 210, 1)";
-                return "rgba(215, 255, 230, 1)";
-              }
-
+              if (i === dominantIndex) return "rgba(255, 240, 210, 1)";
               return "rgba(120,170,200,0.18)";
             },
             hoverBackgroundColor: (context) => {
-              const v = context.raw;
-              if (v > 65) return "rgba(255, 105, 105, 1)";
-              if (v > 35) return "rgba(255, 198, 95, 1)";
-              return "rgba(135, 255, 182, 1)";
+              const i = context.dataIndex;
+              return i === dominantIndex ? "rgba(255, 198, 95, 1)" : "rgba(90, 170, 255, 0.20)";
             }
           }
         ]
@@ -341,7 +307,7 @@
             displayColors: false,
             callbacks: {
               label(context) {
-                return ` ${Math.round(context.raw)}%`;
+                return ` ${Math.round(context.raw)}${dominantSuffix}`;
               }
             }
           }
@@ -349,7 +315,8 @@
         scales: {
           x: {
             beginAtZero: true,
-            suggestedMax: Math.ceil(maxValue * 1.08),
+            min: 0,
+            max: 100,
             ticks: {
               color: "rgba(220, 238, 230, 0.78)"
             },
@@ -358,7 +325,7 @@
             },
             title: {
               display: true,
-              text: "CPU Stress Magnitude",
+              text: chartTitle,
               color: "rgba(230, 255, 240, 0.92)"
             }
           },
@@ -373,6 +340,30 @@
         }
       },
       plugins: [chartBgPlugin, thresholdBandPlugin]
+    });
+  }
+
+  function renderChart(loadPressure, coreDemand, utilPressure) {
+    const canvas = $("analyzerChart");
+    if (!canvas) return;
+
+    if (chart) {
+      chart.destroy();
+      chart = null;
+    }
+
+    const labels = ["Load Pressure", "Core Demand", "Utilization"];
+    const values = [loadPressure, coreDemand, utilPressure];
+    const dominantIndex = values.indexOf(Math.max(...values));
+
+    chart = createAnalyzerChart(canvas, {
+      labels,
+      values,
+      dominantIndex,
+      chartTitle: "CPU Stress Magnitude",
+      referenceValue: 65,
+      referenceLabel: "Healthy Margin Floor (65)",
+      dominantSuffix: "%"
     });
 
     $("chart-wrap").style.display = "block";
@@ -403,9 +394,9 @@
     const rec = Math.ceil(cores);
 
     const physicalRec = smt === "on" ? Math.ceil(rec / 2) : rec;
-    const loadPressure = Math.min(100, (eff / Math.max(rec, 1)) * 100);
-    const coreDemand = Math.min(100, (rec / 32) * 100);
-    const utilPressure = Math.min(100, target);
+    const loadPressure = clamp((eff / Math.max(rec, 1)) * 100, 0, 100);
+    const coreDemand = clamp((rec / 32) * 100, 0, 100);
+    const utilPressure = clamp(target, 0, 100);
 
     const values = [loadPressure, coreDemand, utilPressure];
     const labels = ["Load Pressure", "Core Demand", "Utilization"];
@@ -448,7 +439,7 @@
     ]);
 
     renderAnalysis(status, interpretation, guidance, dominantLabel);
-    renderChart(loadPressure, coreDemand, utilPressure, 65);
+    renderChart(loadPressure, coreDemand, utilPressure);
 
     sessionStorage.setItem(FLOW_KEY, JSON.stringify({
       category: "compute",
