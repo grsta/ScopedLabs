@@ -1,11 +1,6 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "infrastructure";
-  const CURRENT_STEP = "conduit-fill";
-
-  let cachedFlow = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
 
@@ -15,38 +10,15 @@
     count: $("count"),
     limit: $("limit"),
     results: $("results"),
-    flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
     calc: $("calc"),
     reset: $("reset")
   };
 
-  function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "System Context",
-      intro:
-        "This step checks whether the conduit is simply passing code-style fill or still retaining enough physical margin for pulling, serviceability, and future additions."
-    });
-  }
-
   function invalidate() {
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysisCopy,
-      existingChartRef: chartRef,
-      existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      emptyMessage: "Enter values and press Calculate."
-    });
-
-    refreshFlowNote();
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
   }
 
   function calc() {
@@ -71,7 +43,11 @@
     const marginPct = Math.max(0, limit - fillPct);
 
     const fillPressure = ScopedLabsAnalyzer.clamp((fillPct / limit) * 100, 0, 180);
-    const growthPressure = ScopedLabsAnalyzer.clamp((((count + Math.max(1, Math.ceil(count * 0.25))) * oneCableArea) / Math.max(allowedArea, 0.0001)) * 100, 0, 180);
+    const growthPressure = ScopedLabsAnalyzer.clamp(
+      (((count + Math.max(1, Math.ceil(count * 0.25))) * oneCableArea) / Math.max(allowedArea, 0.0001)) * 100,
+      0,
+      180
+    );
     const pullStress = ScopedLabsAnalyzer.clamp(100 - ((marginPct / limit) * 100), 0, 180);
 
     const metrics = [
@@ -192,17 +168,6 @@
         )
       }
     });
-
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      data: {
-        fillPct,
-        remainingArea,
-        spareCableCapacity,
-        status: analyzer.status
-      }
-    });
   }
 
   function reset() {
@@ -222,6 +187,5 @@
     el.addEventListener("change", invalidate);
   });
 
-  refreshFlowNote();
   invalidate();
 })();
