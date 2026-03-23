@@ -1,86 +1,118 @@
-(function () {
+(() => {
+  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+
+  const DEFAULTS = {
+    poeBudgetW: 370,
+    marginPct: 20,
+    poeStandard: "at",
+    poePorts: 16,
+    camsCount: 12,
+    camsW: 12,
+    apsCount: 2,
+    apsW: 15,
+    phonesCount: 0,
+    phonesW: 5,
+    otherCount: 0,
+    otherW: 10
+  };
+
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
   const $ = (id) => document.getElementById(id);
 
-  function num(id) {
-    const el = $(id);
-    if (!el) return NaN;
-    const v = Number(el.value);
-    return Number.isFinite(v) ? v : NaN;
-  }
+  const els = {
+    poeBudgetW: $("poeBudgetW"),
+    marginPct: $("marginPct"),
+    poeStandard: $("poeStandard"),
+    poePorts: $("poePorts"),
+    camsCount: $("camsCount"),
+    camsW: $("camsW"),
+    apsCount: $("apsCount"),
+    apsW: $("apsW"),
+    phonesCount: $("phonesCount"),
+    phonesW: $("phonesW"),
+    otherCount: $("otherCount"),
+    otherW: $("otherW"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    analysis: $("analysis-copy"),
+    flowNote: $("flow-note"),
+    continueWrap: $("next-step-row"),
+    continueBtn: $("to-bandwidth")
+  };
 
-  function clamp(v, min, max) {
-    return Math.max(min, Math.min(max, v));
+  function safeNum(el, fallback = NaN) {
+    return ScopedLabsAnalyzer.safeNumber(el?.value, fallback);
   }
 
   function fmtW(x) {
-    if (!Number.isFinite(x)) return "—";
-    return `${x.toFixed(1)} W`;
+    return Number.isFinite(x) ? `${x.toFixed(1)} W` : "—";
   }
 
   function fmtPct(x) {
-    if (!Number.isFinite(x)) return "—";
-    return `${x.toFixed(1)}%`;
+    return Number.isFinite(x) ? `${x.toFixed(1)}%` : "—";
   }
 
-  function setFlowNote(text) {
-    const note = $("flow-note");
-    if (!note) return;
-    note.hidden = false;
-    note.textContent = text;
+  function fmtCount(x) {
+    return Number.isFinite(x) ? `${Math.round(x)}` : "—";
   }
 
-  function readFlow() {
-    try {
-      const raw =
-        sessionStorage.getItem("pipeline:network") ||
-        sessionStorage.getItem("scopedlabs:flow:network");
-      return raw ? JSON.parse(raw) : null;
-    } catch (_) {
-      return null;
-    }
+  function applyDefaults() {
+    els.poeBudgetW.value = String(DEFAULTS.poeBudgetW);
+    els.marginPct.value = String(DEFAULTS.marginPct);
+    els.poeStandard.value = DEFAULTS.poeStandard;
+    els.poePorts.value = String(DEFAULTS.poePorts);
+    els.camsCount.value = String(DEFAULTS.camsCount);
+    els.camsW.value = String(DEFAULTS.camsW);
+    els.apsCount.value = String(DEFAULTS.apsCount);
+    els.apsW.value = String(DEFAULTS.apsW);
+    els.phonesCount.value = String(DEFAULTS.phonesCount);
+    els.phonesW.value = String(DEFAULTS.phonesW);
+    els.otherCount.value = String(DEFAULTS.otherCount);
+    els.otherW.value = String(DEFAULTS.otherW);
   }
 
-  function writeFlow(payload) {
-    try {
-      sessionStorage.setItem("pipeline:network", JSON.stringify(payload));
-      sessionStorage.setItem("scopedlabs:flow:network", JSON.stringify(payload));
-    } catch (_) {
-      // ignore storage errors
-    }
+  function renderFlowContext() {
+    ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: "network",
+      step: "poe-budget",
+      title: "System Context",
+      intro: "Start here for the Network pipeline. Confirm switch power headroom before estimating traffic demand."
+    });
   }
 
-  function buildRows(rows) {
-    return rows
-      .map((row) => {
-        const cls = row.className ? ` ${row.className}` : "";
-        return `
-          <div class="result-row">
-            <div class="k">${row.label}</div>
-            <div class="v${cls}">${row.value}</div>
-          </div>
-        `;
-      })
-      .join("");
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEY,
+      category: "network",
+      step: "poe-budget",
+      emptyMessage: "Enter values and press Calculate."
+    });
   }
 
-  function calculatePoeLoad() {
-    const poeBudgetW = num("poeBudgetW");
-    const marginPct = clamp(num("marginPct"), 0, 80);
-    const poePorts = Math.max(0, Math.floor(num("poePorts")));
-
-    const camsCount = Math.max(0, Math.floor(num("camsCount")));
-    const camsW = Math.max(0, num("camsW"));
-
-    const apsCount = Math.max(0, Math.floor(num("apsCount")));
-    const apsW = Math.max(0, num("apsW"));
-
-    const phonesCount = Math.max(0, Math.floor(num("phonesCount")));
-    const phonesW = Math.max(0, num("phonesW"));
-
-    const otherCount = Math.max(0, Math.floor(num("otherCount")));
-    const otherW = Math.max(0, num("otherW"));
-
-    const totalDevices = camsCount + apsCount + phonesCount + otherCount;
+  function getInputs() {
+    const poeBudgetW = safeNum(els.poeBudgetW);
+    const marginPct = ScopedLabsAnalyzer.clamp(safeNum(els.marginPct), 0, 80);
+    const poePorts = Math.max(0, Math.floor(safeNum(els.poePorts)));
+    const camsCount = Math.max(0, Math.floor(safeNum(els.camsCount)));
+    const camsW = Math.max(0, safeNum(els.camsW));
+    const apsCount = Math.max(0, Math.floor(safeNum(els.apsCount)));
+    const apsW = Math.max(0, safeNum(els.apsW));
+    const phonesCount = Math.max(0, Math.floor(safeNum(els.phonesCount)));
+    const phonesW = Math.max(0, safeNum(els.phonesW));
+    const otherCount = Math.max(0, Math.floor(safeNum(els.otherCount)));
+    const otherW = Math.max(0, safeNum(els.otherW));
+    const poeStandard = String(els.poeStandard?.value || "at");
 
     const required = [
       poeBudgetW, marginPct, poePorts,
@@ -91,58 +123,7 @@
     ];
 
     if (required.some((v) => !Number.isFinite(v) || v < 0)) {
-      return {
-        ok: false,
-        message: "Enter valid non-negative values."
-      };
-    }
-
-    const totalDrawW =
-      (camsCount * camsW) +
-      (apsCount * apsW) +
-      (phonesCount * phonesW) +
-      (otherCount * otherW);
-
-    const safeBudgetW = poeBudgetW * (1 - (marginPct / 100));
-    const headroomW = safeBudgetW - totalDrawW;
-    const utilPct = poeBudgetW > 0 ? (totalDrawW / poeBudgetW) * 100 : 0;
-    const portWarn = poePorts > 0 && totalDevices > poePorts;
-
-    let status = "";
-    let statusClass = "";
-    let interpretation = "";
-    let recommendation = "";
-
-    if (poeBudgetW === 0) {
-      status = "INPUT NEEDED";
-      statusClass = "flag-warn";
-      interpretation = "A switch budget above 0 W is required before this design can be evaluated.";
-      recommendation = "Enter the actual PoE budget from the switch or injector datasheet.";
-    } else if (totalDevices === 0) {
-      status = "INPUT NEEDED";
-      statusClass = "flag-warn";
-      interpretation = "No powered devices are currently included, so there is no load to evaluate.";
-      recommendation = "Add your expected device counts and typical watt draw.";
-    } else if (headroomW < 0) {
-      status = "FAIL — Over safe budget";
-      statusClass = "flag-bad";
-      interpretation = "Estimated device draw exceeds the safe planning budget after margin. The design may work inconsistently or fail under peak conditions.";
-      recommendation = "Reduce load, split devices across switches, or move to a switch with a larger PoE budget.";
-    } else if (headroomW <= poeBudgetW * 0.10 || utilPct > 80) {
-      status = "WARNING — Thin headroom";
-      statusClass = "flag-warn";
-      interpretation = "The switch is close enough to capacity that IR, heaters, cold starts, or future adds could create instability.";
-      recommendation = "Keep more reserve, validate worst-case draw, or upsize switch capacity before deployment.";
-    } else {
-      status = "GOOD — Within safe limits";
-      statusClass = "flag-ok";
-      interpretation = "The design appears to have usable planning headroom under the selected assumptions.";
-      recommendation = "Proceed, but validate any devices with variable draw and re-check if more endpoints are added later.";
-    }
-
-    if (portWarn) {
-      interpretation += " Device count also exceeds the available powered port count, which means the design is not physically supportable as entered.";
-      recommendation = " Increase port capacity or reduce powered endpoints on this switch.";
+      return { ok: false, message: "Enter valid non-negative values." };
     }
 
     return {
@@ -150,124 +131,243 @@
       poeBudgetW,
       marginPct,
       poePorts,
+      camsCount,
+      camsW,
+      apsCount,
+      apsW,
+      phonesCount,
+      phonesW,
+      otherCount,
+      otherW,
+      poeStandard
+    };
+  }
+
+  function calculateModel() {
+    const input = getInputs();
+    if (!input.ok) return input;
+
+    const totalDevices = input.camsCount + input.apsCount + input.phonesCount + input.otherCount;
+
+    const totalDrawW =
+      (input.camsCount * input.camsW) +
+      (input.apsCount * input.apsW) +
+      (input.phonesCount * input.phonesW) +
+      (input.otherCount * input.otherW);
+
+    const safeBudgetW = input.poeBudgetW * (1 - (input.marginPct / 100));
+    const headroomW = safeBudgetW - totalDrawW;
+    const utilPct = input.poeBudgetW > 0 ? (totalDrawW / input.poeBudgetW) * 100 : 0;
+    const safeBandPct = input.poeBudgetW > 0 ? (safeBudgetW / input.poeBudgetW) * 100 : 0;
+    const portWarn = input.poePorts > 0 && totalDevices > input.poePorts;
+    const portsRemaining = input.poePorts - totalDevices;
+
+    const standardComforts = { af: 12.95, at: 25.5, bt: 60 };
+    const perPortComfort = standardComforts[input.poeStandard] || 25.5;
+    const averagePerDeviceW = totalDevices > 0 ? totalDrawW / totalDevices : 0;
+    const portPowerPressurePct = perPortComfort > 0 ? (averagePerDeviceW / perPortComfort) * 100 : 0;
+
+    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore: utilPct,
+      metrics: [
+        { label: "Switch Budget Pressure", value: utilPct, displayValue: fmtPct(utilPct) },
+        { label: "Safe-Band Pressure", value: safeBudgetW > 0 ? (totalDrawW / safeBudgetW) * 100 : 0, displayValue: safeBudgetW > 0 ? fmtPct((totalDrawW / safeBudgetW) * 100) : "—" },
+        { label: "Per-Port Load Pressure", value: portPowerPressurePct, displayValue: fmtPct(portPowerPressurePct) }
+      ],
+      healthyMax: safeBandPct,
+      watchMax: 95
+    });
+
+    let interpretation = `Estimated PoE draw is ${fmtW(totalDrawW)} against a switch budget of ${fmtW(input.poeBudgetW)}. After holding back a ${fmtPct(input.marginPct)} planning reserve, the usable safe budget is ${fmtW(safeBudgetW)}.`;
+
+    if (statusPack.status === "RISK") {
+      interpretation += " The modeled load is now too close to, or beyond, the safe operating band. In practice, this is where IR, heaters, startup events, or accessory modules can push the switch into unstable behavior or force load shedding long before the nameplate budget looks fully consumed.";
+    } else if (statusPack.status === "WATCH") {
+      interpretation += " The design is still workable on paper, but margin is thin enough that field behavior and seasonal draw variation can start consuming the remaining reserve faster than expected.";
+    } else {
+      interpretation += " The design remains inside a controlled planning band, so the switch still has usable reserve for normal real-world variance under the assumptions entered here.";
+    }
+
+    let dominantConstraint = statusPack.dominant.label === "Per-Port Load Pressure"
+      ? "Per-port load pressure is the dominant limiter. That means the issue is not just total switch budget, but how aggressively each powered endpoint is being assumed relative to the selected PoE standard."
+      : statusPack.dominant.label === "Safe-Band Pressure"
+      ? "Safe-band pressure is the dominant limiter. The total design is consuming the reserved planning margin too quickly, even if it has not fully exhausted the raw switch budget yet."
+      : "Switch budget pressure is the dominant limiter. The overall switch power envelope is the first hard limit that will constrain this design under peak draw conditions.";
+
+    if (portWarn) {
+      dominantConstraint += " Device count also exceeds the available powered port count, so the design is not physically supportable as entered even before power headroom is considered.";
+    }
+
+    let guidance = "";
+    if (statusPack.status === "RISK") {
+      guidance = "Reduce powered load, split endpoints across switches, or move to a larger PoE budget before deployment. If cameras use IR, heaters, or high-draw accessories, validate field worst-case draw instead of relying on typical idle numbers.";
+    } else if (statusPack.status === "WATCH") {
+      guidance = "The design is serviceable but tight. Keep reserve higher if endpoints can surge, and verify whether your watt assumptions reflect realistic field behavior rather than nominal specs.";
+    } else {
+      guidance = "This PoE plan is balanced. Continue into Bandwidth next so the traffic model is built on a switch design that already has power headroom under control.";
+    }
+
+    return {
+      ok: true,
+      input,
       totalDevices,
       totalDrawW,
       safeBudgetW,
       headroomW,
       utilPct,
+      safeBandPct,
       portWarn,
-      status,
-      statusClass,
+      portsRemaining,
+      averagePerDeviceW,
+      portPowerPressurePct,
+      status: statusPack.status,
       interpretation,
-      recommendation
+      dominantConstraint,
+      guidance
     };
   }
 
-  function renderResults(data) {
-    const results = $("results");
-    if (!results) return;
-
-    if (!data.ok) {
-      results.innerHTML = `<div class="muted">${data.message}</div>`;
-      return;
-    }
-
-    results.innerHTML = buildRows([
-      { label: "Total device draw", value: fmtW(data.totalDrawW) },
-      { label: "Safe budget (after margin)", value: fmtW(data.safeBudgetW) },
-      { label: "Headroom", value: fmtW(data.headroomW) },
-      { label: "Utilization (vs switch budget)", value: fmtPct(data.utilPct) },
-      { label: "Powered devices", value: `${data.totalDevices}` },
-      { label: "PoE ports used", value: `${data.poePorts}` },
-      { label: "Status", value: data.status, className: data.statusClass },
-      { label: "What this means", value: data.interpretation },
-      { label: "Recommendation", value: data.recommendation }
-    ]);
+  function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    els.results.innerHTML = `<div class="muted">${message}</div>`;
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
   }
 
-  function saveToPipeline(data) {
-    if (!data.ok) return;
-
-    const flow = readFlow() || {};
-
-    flow.category = "network";
-    flow.tool = "poe-budget";
-    flow.step = 1;
-    flow.lane = "v1";
-    flow.poeBudgetW = data.poeBudgetW;
-    flow.safeBudgetW = data.safeBudgetW;
-    flow.poeHeadroomW = data.headroomW;
-    flow.poeUtilPct = data.utilPct;
-    flow.poweredDevices = data.totalDevices;
-    flow.timestamp = Date.now();
-
-    writeFlow(flow);
+  function writeFlow(data) {
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+      category: "network",
+      step: "poe-budget",
+      data: {
+        poeBudgetW: Number(data.input.poeBudgetW.toFixed(1)),
+        safeBudgetW: Number(data.safeBudgetW.toFixed(1)),
+        poeHeadroomW: Number(data.headroomW.toFixed(1)),
+        poeUtilPct: Number(data.utilPct.toFixed(1)),
+        poweredDevices: Number(data.totalDevices),
+        poeStatus: data.status
+      }
+    });
   }
 
-  function showNextStep(data) {
-    const row = $("next-step-row");
-    if (!row) return;
-    row.style.display = data && data.ok ? "flex" : "none";
-  }
-
-  function calc() {
-    const data = calculatePoeLoad();
-    renderResults(data);
-    saveToPipeline(data);
-    showNextStep(data);
-  }
-
-  function reset() {
-    $("poeBudgetW").value = "370";
-    $("marginPct").value = "20";
-    $("poeStandard").value = "at";
-    $("poePorts").value = "16";
-
-    $("camsCount").value = "12";
-    $("camsW").value = "12";
-    $("apsCount").value = "2";
-    $("apsW").value = "15";
-    $("phonesCount").value = "0";
-    $("phonesW").value = "5";
-    $("otherCount").value = "0";
-    $("otherW").value = "10";
-
-    const results = $("results");
-    if (results) {
-      results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-    }
-
-    showNextStep(null);
-  }
-
-  function maybeShowFlowNote() {
-    const flow = readFlow();
-    if (!flow) {
-      setFlowNote("Start here for the Network pipeline. Confirm switch power headroom before estimating traffic demand.");
-      return;
-    }
-
-    setFlowNote("This tool is the first Network pipeline step. Calculate switch headroom, then continue into Bandwidth Planner.");
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    const calcBtn = $("calc");
-    const resetBtn = $("reset");
-
-    if (calcBtn) calcBtn.addEventListener("click", calc);
-    if (resetBtn) resetBtn.addEventListener("click", reset);
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const t = e.target;
-        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
-          e.preventDefault();
-          calc();
-        }
+  function renderSuccess(data) {
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows: [
+        { label: "Total device draw", value: fmtW(data.totalDrawW) },
+        { label: "Safe budget (after margin)", value: fmtW(data.safeBudgetW) },
+        { label: "Headroom", value: fmtW(data.headroomW) },
+        { label: "Powered devices", value: fmtCount(data.totalDevices) }
+      ],
+      derivedRows: [
+        { label: "Utilization (vs switch budget)", value: fmtPct(data.utilPct) },
+        { label: "Ports used", value: fmtCount(data.input.poePorts) },
+        { label: "Ports remaining", value: fmtCount(data.portsRemaining) },
+        { label: "Average watts per device", value: fmtW(data.averagePerDeviceW) },
+        { label: "Per-port load pressure", value: fmtPct(data.portPowerPressurePct) },
+        { label: "Port-count warning", value: data.portWarn ? "YES" : "NO" }
+      ],
+      status: data.status,
+      interpretation: data.interpretation,
+      dominantConstraint: data.dominantConstraint,
+      guidance: data.guidance,
+      chart: {
+        labels: [
+          "Total Device Draw",
+          "Safe Budget",
+          "Headroom"
+        ],
+        values: [
+          Number(data.totalDrawW.toFixed(1)),
+          Number(data.safeBudgetW.toFixed(1)),
+          Number(Math.max(0, data.headroomW).toFixed(1))
+        ],
+        displayValues: [
+          fmtW(data.totalDrawW),
+          fmtW(data.safeBudgetW),
+          fmtW(Math.max(0, data.headroomW))
+        ],
+        referenceValue: data.safeBudgetW,
+        healthyMax: data.safeBudgetW,
+        watchMax: data.input.poeBudgetW,
+        axisTitle: "PoE Capacity (W)",
+        referenceLabel: "Safe Budget",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          100,
+          Math.ceil(
+            Math.max(
+              data.totalDrawW,
+              data.safeBudgetW,
+              data.input.poeBudgetW
+            ) * 1.12
+          )
+        )
       }
     });
 
-    maybeShowFlowNote();
+    writeFlow(data);
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+  }
+
+  function calculate() {
+    const data = calculateModel();
+    if (!data.ok) {
+      renderError(data.message);
+      return;
+    }
+    renderSuccess(data);
+  }
+
+  function reset() {
+    applyDefaults();
+    renderFlowContext();
+    invalidate();
+  }
+
+  function bindInvalidation() {
+    [
+      els.poeBudgetW,
+      els.marginPct,
+      els.poeStandard,
+      els.poePorts,
+      els.camsCount,
+      els.camsW,
+      els.apsCount,
+      els.apsW,
+      els.phonesCount,
+      els.phonesW,
+      els.otherCount,
+      els.otherW
+    ].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    bindInvalidation();
+
+    els.calc?.addEventListener("click", calculate);
+    els.reset?.addEventListener("click", reset);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        calculate();
+      }
+    });
+
     reset();
   });
 })();
