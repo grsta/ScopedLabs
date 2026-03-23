@@ -5,15 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Backup Window Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-backup-001" />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-backup-002" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
   </script>
-  <script defer src="/assets/auth.js?v=0402"></script>
-  <script defer src="/assets/app.js?v=0402"></script>
+  <script defer src="/assets/auth.js?v=0403"></script>
+  <script defer src="/assets/app.js?v=0403"></script>
+
+  <style>
+    .analyzer-wrap {
+      position: relative;
+      height: 340px;
+      min-height: 340px;
+      max-height: 340px;
+      margin-top: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 12px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
+        rgba(255,255,255,.02);
+      overflow: hidden;
+    }
+
+    .analyzer-wrap canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .results-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    .results-copy {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      font-size: .92rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
+
+    .status-pill.healthy { color: #b6f7cb; }
+    .status-pill.watch { color: #ffe39a; }
+    .status-pill.risk { color: #ffb0b0; }
+
+    .analysis-note {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255,255,255,.025);
+    }
+
+    .analysis-note strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="backup-window" data-lane="v1">
@@ -65,12 +130,12 @@
     <div class="form-grid">
       <label class="field">
         <span class="label">Total Dataset Size (TB)</span>
-        <input id="dataTb" type="number" value="10" />
+        <input id="dataTb" type="number" value="10" min="0" step="0.1" />
       </label>
 
       <label class="field">
         <span class="label">Daily Change Rate (%)</span>
-        <input id="changePct" type="number" value="5" />
+        <input id="changePct" type="number" value="5" min="0" max="100" step="0.1" />
       </label>
 
       <label class="field">
@@ -84,17 +149,17 @@
 
       <label class="field">
         <span class="label">Effective Throughput (MB/s)</span>
-        <input id="mbps" type="number" value="250" />
+        <input id="mbps" type="number" value="250" min="1" step="1" />
       </label>
 
       <label class="field">
         <span class="label">Compression / Dedup (%)</span>
-        <input id="savingsPct" type="number" value="20" />
+        <input id="savingsPct" type="number" value="20" min="0" max="95" step="0.1" />
       </label>
 
       <label class="field">
         <span class="label">Overhead (%)</span>
-        <input id="overheadPct" type="number" value="15" />
+        <input id="overheadPct" type="number" value="15" min="0" max="200" step="0.1" />
       </label>
     </div>
 
@@ -106,7 +171,26 @@
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results"><div class="muted">Run calculation.</div></div>
+
+    <div id="results" class="results-block">
+      <div class="muted">Run calculation.</div>
+    </div>
+
+    <div id="chart-wrap" class="analyzer-wrap" style="display:none;">
+      <canvas id="analyzerChart" aria-label="Backup Window Analyzer Chart"></canvas>
+    </div>
+
+    <div id="analysis-copy" class="results-copy" style="display:none;"></div>
+  </section>
+
+  <section id="continue-wrap" class="card" style="display:none;">
+    <div style="font-weight:600; margin-bottom:10px;">Continue</div>
+    <div class="muted" style="margin-bottom:12px;">
+      Final step complete. Continue back to the Compute category with this system profile finalized.
+    </div>
+    <div class="actions">
+      <button id="continueBtn" class="btn btn-primary">Continue</button>
+    </div>
   </section>
 
   <!-- FINAL STEP -->
@@ -125,7 +209,7 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="./script.js?v=004"></script>
 
 </body>
 </html>
