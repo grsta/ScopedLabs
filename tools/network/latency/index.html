@@ -9,14 +9,15 @@
     content="Build an end-to-end latency budget and identify where delay is introduced across encode, transport, decode, and render stages."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=net-latency-0401" />
+  <link rel="stylesheet" href="/assets/style.css?v=net-latency-0402" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0401"></script>
-  <script defer src="/assets/app.js?v=0401"></script>
+  <script defer src="/assets/auth.js?v=0402"></script>
+  <script defer src="/assets/app.js?v=0402"></script>
 </head>
 
 <body
@@ -78,7 +79,6 @@
         </p>
       </section>
 
-      <!-- LOCKED -->
       <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
         <div class="pill-row">
           <span class="pill pill--pro">Pro / Advanced</span>
@@ -102,7 +102,6 @@
         </div>
       </section>
 
-      <!-- UNLOCKED -->
       <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
         <div class="pill-row">
           <span class="pill pill--pro">Pro / Advanced</span>
@@ -224,6 +223,11 @@
         <div id="out" class="card" style="background:rgba(0,0,0,.14);">
           <div class="muted">Run the calculator to see total latency, dominant contributors, and practical guidance.</div>
         </div>
+        <div id="analysis-copy" style="display:none;"></div>
+
+        <div id="next-step-row" class="actions" style="display:none; margin-top:1rem;">
+          <a class="btn btn-primary" href="/tools/network/">← Return to Network Category</a>
+        </div>
       </section>
 
       <footer class="site-footer">
@@ -237,6 +241,7 @@
   <script src="/assets/catalog.js?v=23"></script>
   <script src="/assets/pipelines.js?v=23"></script>
   <script src="/assets/pipeline.js?v=23"></script>
-  <script src="./script.js?v=net-latency-0401"></script>
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=net-latency-0402"></script>
 </body>
 </html>
