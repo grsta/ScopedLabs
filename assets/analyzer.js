@@ -353,7 +353,7 @@ window.ScopedLabsAnalyzer = (() => {
     clearChart(chartRef, wrapRef);
 
     const wrap = document.createElement("div");
-    wrap.style.marginTop = "16px";
+    wrap.style.marginTop = "18px";
     wrap.style.width = "100%";
     wrap.style.height = "340px";
     wrap.style.minHeight = "340px";
@@ -380,7 +380,7 @@ window.ScopedLabsAnalyzer = (() => {
 
         const { left, top, width, height } = chartArea;
         ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        ctx.fillStyle = "rgba(255,255,255,0.07)";
         ctx.fillRect(left, top, width, height);
         ctx.restore();
       }
@@ -401,12 +401,12 @@ window.ScopedLabsAnalyzer = (() => {
         ctx.save();
 
         if (resolvedHealthyMax > 0) {
-          ctx.fillStyle = "rgba(46, 204, 113, 0.16)";
+          ctx.fillStyle = "rgba(46, 204, 113, 0.18)";
           ctx.fillRect(left, top, x.getPixelForValue(resolvedHealthyMax) - left, bottom - top);
         }
 
         if (resolvedWatchMax > healthyMax) {
-          ctx.fillStyle = "rgba(255, 200, 80, 0.13)";
+          ctx.fillStyle = "rgba(255, 200, 80, 0.15)";
           ctx.fillRect(
             x.getPixelForValue(healthyMax),
             top,
@@ -416,7 +416,7 @@ window.ScopedLabsAnalyzer = (() => {
         }
 
         if (x.max > watchMax) {
-          ctx.fillStyle = "rgba(255, 90, 90, 0.13)";
+          ctx.fillStyle = "rgba(255, 90, 90, 0.14)";
           ctx.fillRect(
             x.getPixelForValue(watchMax),
             top,
@@ -438,7 +438,7 @@ window.ScopedLabsAnalyzer = (() => {
         ctx.save();
 
         const rx = x.getPixelForValue(referenceValue);
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.98)";
+        ctx.strokeStyle = "rgba(120, 255, 170, 1)";
         ctx.lineWidth = 3;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
@@ -447,18 +447,22 @@ window.ScopedLabsAnalyzer = (() => {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        ctx.fillStyle = "rgba(220, 255, 235, 0.96)";
+        ctx.fillStyle = "rgba(232, 255, 241, 0.98)";
         ctx.font = "600 11px sans-serif";
         ctx.fillText(referenceLabel, rx + 8, bottom - 10);
 
-        ctx.fillStyle = "rgba(180, 255, 200, 0.82)";
-        ctx.font = "600 11px sans-serif";
+        ctx.fillStyle = "rgba(195, 255, 214, 0.95)";
+        ctx.font = "700 11px sans-serif";
         ctx.fillText(healthyLabel, x.getPixelForValue(Math.max(4, healthyMax * 0.08)), top + 14);
 
-        ctx.fillStyle = "rgba(255, 220, 140, 0.82)";
-        ctx.fillText(watchLabel, x.getPixelForValue(healthyMax + Math.max(4, (watchMax - healthyMax) * 0.2)), top + 14);
+        ctx.fillStyle = "rgba(255, 226, 150, 0.95)";
+        ctx.fillText(
+          watchLabel,
+          x.getPixelForValue(healthyMax + Math.max(4, (watchMax - healthyMax) * 0.2)),
+          top + 14
+        );
 
-        ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
+        ctx.fillStyle = "rgba(255, 173, 173, 0.95)";
         ctx.fillText(riskLabel, x.getPixelForValue(watchMax + 4), top + 14);
 
         const dominantValue = values[dominantIndex];
@@ -467,17 +471,18 @@ window.ScopedLabsAnalyzer = (() => {
 
         ctx.beginPath();
         ctx.arc(px, py, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(225, 255, 240, 1)";
+        ctx.fillStyle = "rgba(235, 255, 244, 1)";
         ctx.fill();
-        ctx.strokeStyle = "rgba(120, 255, 170, 0.95)";
+        ctx.strokeStyle = "rgba(120, 255, 170, 1)";
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = "rgba(235, 248, 240, 0.92)";
-        ctx.font = "600 11px sans-serif";
+        const valueText = displayValues[dominantIndex];
+        ctx.fillStyle = "rgba(244, 251, 247, 0.98)";
+        ctx.font = "700 11px sans-serif";
         ctx.fillText(
-          displayValues[dominantIndex],
-          Math.min(px + 8, chartArea.right - 110),
+          valueText,
+          Math.min(px + 8, chartArea.right - 118),
           py - 8
         );
 
@@ -508,21 +513,21 @@ window.ScopedLabsAnalyzer = (() => {
                 return "rgba(120, 255, 170, 1)";
               }
 
-              if (v > watchMax) return "rgba(255, 77, 77, 0.30)";
-              if (v > healthyMax) return "rgba(255, 170, 51, 0.24)";
-              return "rgba(90, 170, 255, 0.15)";
+              if (v > watchMax) return "rgba(255, 77, 77, 0.32)";
+              if (v > healthyMax) return "rgba(255, 170, 51, 0.26)";
+              return "rgba(90, 170, 255, 0.16)";
             },
             borderColor: (context) => {
               const i = context.dataIndex;
               const v = context.raw;
 
               if (i === dominantIndex) {
-                if (v > watchMax) return "rgba(255, 220, 220, 1)";
-                if (v > healthyMax) return "rgba(255, 240, 210, 1)";
-                return "rgba(215, 255, 230, 1)";
+                if (v > watchMax) return "rgba(255, 235, 235, 1)";
+                if (v > healthyMax) return "rgba(255, 243, 220, 1)";
+                return "rgba(222, 255, 234, 1)";
               }
 
-              return "rgba(120,170,200,0.18)";
+              return "rgba(135, 188, 214, 0.22)";
             },
             hoverBackgroundColor: (context) => {
               const v = context.raw;
@@ -543,10 +548,10 @@ window.ScopedLabsAnalyzer = (() => {
         },
         layout: {
           padding: {
-            top: 28,
-            right: 12,
-            left: 10,
-            bottom: 0
+            top: 30,
+            right: 14,
+            left: 12,
+            bottom: 4
           }
         },
         plugins: {
@@ -570,23 +575,34 @@ window.ScopedLabsAnalyzer = (() => {
             beginAtZero: true,
             suggestedMax: resolvedChartMax,
             ticks: {
-              color: "rgba(220, 238, 230, 0.78)"
+              color: "rgba(235, 246, 240, 0.88)"
             },
             grid: {
-              color: "rgba(110, 160, 140, 0.10)"
+              color: "rgba(140, 185, 165, 0.16)",
+              lineWidth: 1
+            },
+            border: {
+              color: "rgba(170, 215, 195, 0.22)"
             },
             title: {
               display: true,
               text: axisTitle,
-              color: "rgba(230, 255, 240, 0.92)"
+              color: "rgba(238, 255, 246, 0.96)",
+              font: {
+                size: 12,
+                weight: "600"
+              }
             }
           },
           y: {
             ticks: {
-              color: "rgba(228, 245, 235, 0.92)"
+              color: "rgba(236, 247, 241, 0.96)"
             },
             grid: {
               display: false
+            },
+            border: {
+              color: "rgba(170, 215, 195, 0.10)"
             }
           }
         }
