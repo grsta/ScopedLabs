@@ -1,153 +1,332 @@
-﻿// Packet Loss Impact (simple, practical model)
-(() => {
+﻿(() => {
+  const DEFAULTS = {
+    baseline: 100,
+    lossPct: 1,
+    rtt: 30,
+    traffic: "video",
+    proto: "tcp"
+  };
+
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
   const $ = (id) => document.getElementById(id);
 
-  function n(id) {
-    const el = $(id);
-    const v = el ? parseFloat(String(el.value ?? "").trim()) : NaN;
-    return Number.isFinite(v) ? v : 0;
+  const els = {
+    baseline: $("baseline"),
+    lossPct: $("lossPct"),
+    rtt: $("rtt"),
+    traffic: $("traffic"),
+    proto: $("proto"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    analysis: $("analysis-copy")
+  };
+
+  function fmt(value, decimals = 2) {
+    if (!Number.isFinite(value)) return "—";
+    const cleaned = Math.abs(value) < 1e-9 ? 0 : value;
+    return cleaned.toFixed(decimals);
   }
 
-  function clamp(x, lo, hi) {
-    return Math.min(hi, Math.max(lo, x));
+  function fmtMbps(value, decimals = 2) {
+    return Number.isFinite(value) ? `${value.toFixed(decimals)} Mbps` : "—";
   }
 
-  function fmt(x, d = 2) {
-    if (!Number.isFinite(x)) return "—";
-    const y = Math.abs(x) < 1e-9 ? 0 : x;
-    return y.toFixed(d);
+  function fmtPct(value, decimals = 2) {
+    return Number.isFinite(value) ? `${value.toFixed(decimals)}%` : "—";
   }
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(div);
-    });
+  function safeNum(el, fallback = NaN) {
+    return ScopedLabsAnalyzer.safeNumber(el?.value, fallback);
   }
 
-  function qualityLabel(traffic, lossPct, proto) {
-    // practical rule-of-thumb thresholds
-    // Voice is most sensitive; video next; data least.
-    const L = lossPct;
+  function applyDefaults() {
+    els.baseline.value = String(DEFAULTS.baseline);
+    els.lossPct.value = String(DEFAULTS.lossPct);
+    els.rtt.value = String(DEFAULTS.rtt);
+    els.traffic.value = DEFAULTS.traffic;
+    els.proto.value = DEFAULTS.proto;
+  }
 
-    if (proto === "udp") {
-      if (traffic === "voice") {
-        if (L <= 0.3) return "Good";
-        if (L <= 1.0) return "Degraded";
-        return "Poor";
-      }
-      if (traffic === "video") {
-        if (L <= 0.5) return "Good";
-        if (L <= 2.0) return "Degraded";
-        return "Poor";
-      }
-      // data over UDP is uncommon; treat moderate
-      if (L <= 1.0) return "Good";
-      if (L <= 3.0) return "Degraded";
-      return "Poor";
+  function invalidate() {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+  }
+
+  function getInputs() {
+    const baseline = safeNum(els.baseline);
+    const lossPct = ScopedLabsAnalyzer.clamp(safeNum(els.lossPct), 0, 100);
+    const rtt = Math.max(0, safeNum(els.rtt));
+    const traffic = String(els.traffic?.value || "video");
+    const proto = String(els.proto?.value || "tcp");
+
+    if ([baseline, lossPct, rtt].some((v) => !Number.isFinite(v))) {
+      return { ok: false, message: "Enter valid numeric values." };
     }
-
-    // TCP hides loss via retransmit, but throughput and latency suffer.
-    if (traffic === "voice") {
-      if (L <= 0.1) return "Good";
-      if (L <= 0.5) return "Degraded (retransmit delay)";
-      return "Poor (retransmit delay)";
-    }
-    if (traffic === "video") {
-      if (L <= 0.2) return "Good";
-      if (L <= 1.0) return "Degraded (buffering)";
-      return "Poor (buffering)";
-    }
-    // data
-    if (L <= 1.0) return "Good";
-    if (L <= 3.0) return "Degraded";
-    return "Poor";
-  }
-
-  function guidance(traffic, lossPct, proto) {
-    const L = lossPct;
-
-    const tips = [];
-    if (L >= 1.0) tips.push("Check cabling/terminations, duplex mismatches, Wi-Fi RSSI/SNR, and switch port errors.");
-    if (proto === "udp" && L >= 0.5) tips.push("Real-time streams: prioritize QoS, reduce bitrate, or move to wired backhaul.");
-    if (proto === "tcp" && L >= 0.5) tips.push("TCP: expect retransmits; improve link quality or reduce congestion (queueing/bufferbloat).");
-    if (traffic === "voice" && L >= 0.3) tips.push("Voice: target ≤0.3% loss for clean calls.");
-    if (traffic === "video" && L >= 0.5) tips.push("Video: target ≤0.5% loss to avoid visible artifacts/buffering.");
-    if (tips.length === 0) tips.push("Loss level is generally acceptable; keep monitoring during peak load.");
-
-    return tips.join(" ");
-  }
-
-  function calc() {
-    const baseline = n("baseline");        // Mbps
-    let lossPct = n("lossPct");            // %
-    const rttMs = n("rtt");                // ms
-    const traffic = $("traffic").value;    // voice|video|data
-    const proto = $("proto").value;        // tcp|udp
-
-    lossPct = clamp(lossPct, 0, 100);
-    const loss = lossPct / 100;
 
     if (baseline <= 0) {
-      render([{ label: "Error", value: "Enter a Baseline Throughput (Mbps) > 0" }]);
-      return;
+      return { ok: false, message: "Baseline Throughput must be greater than 0 Mbps." };
     }
 
-    // Delivered throughput:
-    // UDP: delivered ≈ baseline * (1-loss) (loss shows up as missing packets/artifacts)
-    // TCP: delivered "goodput" suffers more than (1-loss) due to retransmit + RTT penalty.
-    // Simple penalty factor: 1 / (1 + loss * (RTT/1000) * K)
-    // K tuned to be gentle at small loss, meaningful at higher loss/RTT.
-    const K = 6.0;
+    return {
+      ok: true,
+      baseline,
+      lossPct,
+      rtt,
+      traffic,
+      proto
+    };
+  }
 
+  function trafficSensitivity(traffic) {
+    if (traffic === "voice") return 1.35;
+    if (traffic === "video") return 1.1;
+    return 0.85;
+  }
+
+  function protocolSensitivity(proto) {
+    return proto === "udp" ? 1.15 : 1.0;
+  }
+
+  function experienceLabel(status, proto) {
+    if (proto === "udp") {
+      if (status === "RISK") return "Poor / visible or audible impairment likely";
+      if (status === "WATCH") return "Degraded / artifacts or instability possible";
+      return "Controlled / generally acceptable";
+    }
+
+    if (status === "RISK") return "Poor / retransmit drag likely user-visible";
+    if (status === "WATCH") return "Degraded / reduced responsiveness likely";
+    return "Controlled / loss impact manageable";
+  }
+
+  function calculateModel() {
+    const input = getInputs();
+    if (!input.ok) return input;
+
+    const { baseline, lossPct, rtt, traffic, proto } = input;
+    const loss = lossPct / 100;
+
+    const K = 6.0;
     let delivered;
     if (proto === "udp") {
       delivered = baseline * (1 - loss);
     } else {
-      const penalty = 1 / (1 + loss * (rttMs / 1000) * K);
+      const penalty = 1 / (1 + loss * (rtt / 1000) * K);
       delivered = baseline * (1 - loss) * penalty;
     }
 
     delivered = Math.max(0, delivered);
+
     const lostMbps = Math.max(0, baseline - delivered);
+    const deliveredPct = baseline > 0 ? (delivered / baseline) * 100 : 0;
+    const throughputLossPct = baseline > 0 ? (lostMbps / baseline) * 100 : 0;
 
-    const q = qualityLabel(traffic, lossPct, proto);
-    const note = guidance(traffic, lossPct, proto);
+    const sensitivity = trafficSensitivity(traffic) * protocolSensitivity(proto);
 
-    render([
-      { label: "Baseline Throughput", value: `${fmt(baseline, 2)} Mbps` },
-      { label: "Packet Loss", value: `${fmt(lossPct, 2)} %` },
-      { label: "RTT", value: `${fmt(rttMs, 0)} ms` },
-      { label: "Protocol", value: proto.toUpperCase() },
-      { label: "Traffic Type", value: traffic.toUpperCase() },
+    const lossPressure = lossPct * sensitivity * 10;
+    const retransmitPressure =
+      proto === "tcp"
+        ? lossPct * Math.max(1, rtt / 20) * trafficSensitivity(traffic) * 3.5
+        : lossPct * trafficSensitivity(traffic) * 6;
+    const throughputPressure = throughputLossPct * 2.5;
 
-      { label: "Estimated Delivered", value: `${fmt(delivered, 2)} Mbps` },
-      { label: "Estimated Loss Impact", value: `${fmt(lostMbps, 2)} Mbps` },
-      { label: "Experience Risk", value: q },
+    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore: Math.max(lossPressure, retransmitPressure, throughputPressure),
+      metrics: [
+        {
+          label: "Loss Pressure",
+          value: lossPressure,
+          displayValue: fmtPct(lossPct)
+        },
+        {
+          label: "RTT Retransmit Pressure",
+          value: retransmitPressure,
+          displayValue: proto === "tcp" ? `${fmt(rtt, 0)} ms RTT` : "Real-time sensitivity"
+        },
+        {
+          label: "Throughput Loss",
+          value: throughputPressure,
+          displayValue: fmtPct(throughputLossPct)
+        }
+      ],
+      healthyMax: 35,
+      watchMax: 70
+    });
 
-      { label: "Guidance", value: note }
-    ]);
+    const experienceRisk = experienceLabel(statusPack.status, proto);
+    const dominantLabel = statusPack.dominant.label;
+
+    let interpretation = `With ${fmtPct(lossPct)} packet loss on a ${fmt(rtt, 0)} ms RTT path, estimated delivered throughput falls to ${fmtMbps(delivered)} from a ${fmtMbps(baseline)} baseline.`;
+
+    if (proto === "udp") {
+      interpretation += ` For ${traffic} traffic over UDP, loss is exposed directly to the application, so damage usually appears as missing audio, visible artifacts, or stream instability rather than hidden recovery.`;
+    } else {
+      interpretation += ` For ${traffic} traffic over TCP, the transport can hide some loss through retransmissions, but the tradeoff is lower goodput and added delay pressure as RTT stretches recovery time.`;
+    }
+
+    if (statusPack.status === "RISK") {
+      interpretation += ` The dominant pressure is already in a risk band, so this is no longer a minor impairment. The link is now behaving in a way users are likely to describe as bad quality, buffering, or sluggish response rather than merely imperfect conditions.`;
+    } else if (statusPack.status === "WATCH") {
+      interpretation += ` The path is still usable, but the dominant loss-related pressure is large enough that peak periods or additional congestion can push the experience from acceptable into clearly degraded.`;
+    } else {
+      interpretation += ` The path remains inside a controlled band, so packet loss exists but is not yet dominating the user experience under the entered assumptions.`;
+    }
+
+    let dominantConstraint = "";
+    if (dominantLabel === "Loss Pressure") {
+      dominantConstraint = `Loss percentage itself is the dominant limiter. The path quality is poor enough that fixing raw loss rate will matter more than chasing throughput estimates alone.`;
+    } else if (dominantLabel === "RTT Retransmit Pressure") {
+      dominantConstraint = `RTT retransmit pressure is the dominant limiter. The combination of loss and round-trip delay is making recovery expensive, so performance degrades faster than the raw loss percentage alone suggests.`;
+    } else {
+      dominantConstraint = `Throughput loss is the dominant limiter. The path is shedding enough effective bandwidth that applications feel constrained even before you account for secondary user-experience effects.`;
+    }
+
+    let guidance = "";
+    if (statusPack.status === "RISK") {
+      guidance = `Treat this as a path-quality problem first. Check physical errors, Wi-Fi RF quality, congestion, and queueing behavior before assuming the application is at fault. ${
+        traffic === "voice"
+          ? "Voice paths should usually stay around or below 0.3% loss."
+          : traffic === "video"
+          ? "Video paths usually behave best around or below 0.5% loss."
+          : "Even general data traffic can become painful when loss and RTT reinforce each other."
+      }`;
+    } else if (statusPack.status === "WATCH") {
+      guidance = `The path is workable but soft. Validate whether the loss is bursty or sustained, because intermittent loss spikes often hurt real traffic more than the average value alone implies.`;
+    } else {
+      guidance = `This loss level is manageable under the current assumptions. Keep monitoring during busy periods, because packet loss often becomes meaningful only when it stacks with congestion or RF instability.`;
+    }
+
+    return {
+      ok: true,
+      input,
+      delivered,
+      lostMbps,
+      deliveredPct,
+      throughputLossPct,
+      lossPressure,
+      retransmitPressure,
+      throughputPressure,
+      experienceRisk,
+      status: statusPack.status,
+      interpretation,
+      dominantConstraint,
+      guidance
+    };
+  }
+
+  function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    els.results.innerHTML = `<div class="muted">${message}</div>`;
+  }
+
+  function renderSuccess(data) {
+    const { input } = data;
+
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows: [
+        { label: "Baseline Throughput", value: fmtMbps(input.baseline) },
+        { label: "Packet Loss", value: fmtPct(input.lossPct) },
+        { label: "RTT", value: `${fmt(input.rtt, 0)} ms` },
+        { label: "Estimated Delivered Throughput", value: fmtMbps(data.delivered) }
+      ],
+      derivedRows: [
+        { label: "Estimated Lost Throughput", value: fmtMbps(data.lostMbps) },
+        { label: "Delivered Share of Baseline", value: fmtPct(data.deliveredPct) },
+        { label: "Throughput Loss", value: fmtPct(data.throughputLossPct) },
+        { label: "Traffic Type", value: input.traffic.toUpperCase() },
+        { label: "Protocol", value: input.proto.toUpperCase() },
+        { label: "Experience Risk", value: data.experienceRisk }
+      ],
+      status: data.status,
+      interpretation: data.interpretation,
+      dominantConstraint: data.dominantConstraint,
+      guidance: data.guidance,
+      chart: {
+        labels: [
+          "Loss Pressure",
+          "RTT Retransmit Pressure",
+          "Throughput Loss"
+        ],
+        values: [
+          Number(data.lossPressure.toFixed(1)),
+          Number(data.retransmitPressure.toFixed(1)),
+          Number(data.throughputPressure.toFixed(1))
+        ],
+        displayValues: [
+          fmtPct(input.lossPct),
+          input.proto === "tcp" ? `${fmt(input.rtt, 0)} ms RTT` : "Real-time sensitivity",
+          fmtPct(data.throughputLossPct)
+        ],
+        referenceValue: 35,
+        healthyMax: 35,
+        watchMax: 70,
+        axisTitle: "Loss Impact Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          100,
+          Math.ceil(
+            Math.max(
+              data.lossPressure,
+              data.retransmitPressure,
+              data.throughputPressure,
+              70
+            ) * 1.12
+          )
+        )
+      }
+    });
+  }
+
+  function calculate() {
+    const data = calculateModel();
+    if (!data.ok) {
+      renderError(data.message);
+      return;
+    }
+    renderSuccess(data);
   }
 
   function reset() {
-    $("baseline").value = 100;
-    $("lossPct").value = 1;
-    $("rtt").value = 30;
-    $("traffic").value = "video";
-    $("proto").value = "tcp";
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    applyDefaults();
+    invalidate();
   }
 
-  $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
+  function bindInvalidation() {
+    [els.baseline, els.lossPct, els.rtt, els.traffic, els.proto].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+  }
 
-  reset();
+  window.addEventListener("DOMContentLoaded", () => {
+    bindInvalidation();
+
+    els.calc?.addEventListener("click", calculate);
+    els.reset?.addEventListener("click", reset);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const target = e.target;
+      if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+        e.preventDefault();
+        calculate();
+      }
+    });
+
+    reset();
+  });
 })();
 
