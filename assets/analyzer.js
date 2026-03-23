@@ -1,5 +1,7 @@
 window.ScopedLabsAnalyzer = (() => {
-  const DEFAULTS = {
+  const DEFAULT_FLOW_KEY = "scopedlabs:pipeline:last-result";
+
+  const DEFAULT_CHART = {
     referenceValue: 65,
     healthyMax: 65,
     watchMax: 85,
@@ -15,61 +17,13 @@ window.ScopedLabsAnalyzer = (() => {
     return ref && typeof ref === "object" ? ref : { current: null };
   }
 
-  function clearChart(existingChartRef, existingWrapRef) {
-    const chartRef = ensureRef(existingChartRef);
-    const wrapRef = ensureRef(existingWrapRef);
-
-    if (chartRef.current) {
-      chartRef.current.destroy();
-      chartRef.current = null;
-    }
-
-    if (wrapRef.current && wrapRef.current.parentNode) {
-      wrapRef.current.parentNode.removeChild(wrapRef.current);
-    }
-
-    wrapRef.current = null;
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
   }
 
-  function clearCurrentStepResult(flowKey, category, step) {
-    const raw = sessionStorage.getItem(flowKey);
-    if (!raw) return;
-
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && parsed.category === category && parsed.step === step) {
-        sessionStorage.removeItem(flowKey);
-      }
-    } catch (_) {
-      sessionStorage.removeItem(flowKey);
-    }
-  }
-
-  function readFlow(flowKey) {
-    const raw = sessionStorage.getItem(flowKey);
-    if (!raw) return null;
-
-    try {
-      return JSON.parse(raw);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function writeFlow(flowKey, payload) {
-    sessionStorage.setItem(flowKey, JSON.stringify(payload));
-  }
-
-  function getStatus(score, healthyMax = 65, watchMax = 85) {
-    if (score > watchMax) return "RISK";
-    if (score > healthyMax) return "WATCH";
-    return "HEALTHY";
-  }
-
-  function getStatusClass(status) {
-    if (status === "RISK") return "risk";
-    if (status === "WATCH") return "watch";
-    return "healthy";
+  function safeNumber(value, fallback = 0) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
   }
 
   function escapeHtml(value) {
@@ -81,26 +35,118 @@ window.ScopedLabsAnalyzer = (() => {
       .replaceAll("'", "&#39;");
   }
 
-  function renderRows(rows) {
-    if (!Array.isArray(rows) || !rows.length) return "";
-
-    return rows.map((row) => {
-      const label = escapeHtml(row.label ?? "");
-      const value = escapeHtml(row.value ?? "");
-      return `
-        <div class="result-row">
-          <span class="result-label">${label}</span>
-          <span class="result-value">${value}</span>
-        </div>
-      `;
-    }).join("");
+  function readFlow(flowKey = DEFAULT_FLOW_KEY) {
+    const raw = sessionStorage.getItem(flowKey);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   }
 
-  function ensureAnalysisStyles() {
-    if (document.getElementById("scopedlabs-analyzer-styles")) return;
+  function writeFlow(flowKey = DEFAULT_FLOW_KEY, payload) {
+    sessionStorage.setItem(flowKey, JSON.stringify(payload));
+  }
+
+  function clearCurrentStepResult(flowKey = DEFAULT_FLOW_KEY, category, step) {
+    const parsed = readFlow(flowKey);
+    if (!parsed) return;
+    if (parsed.category === category && parsed.step === step) {
+      sessionStorage.removeItem(flowKey);
+    }
+  }
+
+  function getUpstreamFlow({ flowKey = DEFAULT_FLOW_KEY, category, step, cachedFlow = null }) {
+    const parsed = readFlow(flowKey);
+
+    if (parsed && parsed.category === category && parsed.step !== step) {
+      return parsed;
+    }
+
+    if (cachedFlow && cachedFlow.category === category && cachedFlow.step !== step) {
+      return cachedFlow;
+    }
+
+    return null;
+  }
+
+  function getFlowContextRows(data = {}) {
+    const rows = [];
+
+    Object.keys(data).forEach((key) => {
+      const value = data[key];
+      if (value === null || value === undefined || value === "") return;
+
+      let label = key
+        .replace(/([A-Z])/g, " $1")
+        .replace(/[_-]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+
+      let displayValue = value;
+      if (typeof value === "number") {
+        displayValue = Number.isInteger(value) ? `${value}` : value.toFixed(2);
+      }
+
+      rows.push({
+        label,
+        value: `${displayValue}`
+      });
+    });
+
+    return rows;
+  }
+
+  function renderFlowNote({
+    flowEl,
+    flowKey = DEFAULT_FLOW_KEY,
+    category,
+    step,
+    cachedFlow = null,
+    title = "System Context",
+    intro = "",
+    customRows = null
+  }) {
+    if (!flowEl) return null;
+
+    const source = getUpstreamFlow({ flowKey, category, step, cachedFlow });
+
+    flowEl.style.display = "none";
+    flowEl.innerHTML = "";
+
+    if (!source) return null;
+
+    const rows = Array.isArray(customRows) ? customRows : getFlowContextRows(source.data || {});
+    const rowsHtml = rows.length
+      ? rows.map((row) => `
+          <div class="result-row">
+            <span class="result-label">${escapeHtml(row.label)}</span>
+            <span class="result-value">${escapeHtml(row.value)}</span>
+          </div>
+        `).join("")
+      : `<div class="muted">Prior pipeline context detected.</div>`;
+
+    flowEl.style.display = "block";
+    flowEl.innerHTML = `
+      <div class="sl-flow-stack">
+        <div class="sl-flow-title">${escapeHtml(title)}</div>
+        ${rowsHtml}
+        ${intro ? `<div class="muted">${escapeHtml(intro)}</div>` : ""}
+      </div>
+    `;
+
+    ensureEngineStyles();
+    return source;
+  }
+
+  function ensureEngineStyles() {
+    if (document.getElementById("scopedlabs-analyzer-engine-styles")) return;
 
     const style = document.createElement("style");
-    style.id = "scopedlabs-analyzer-styles";
+    style.id = "scopedlabs-analyzer-engine-styles";
     style.textContent = `
       .sl-analyzer-stack {
         display: grid;
@@ -137,8 +183,118 @@ window.ScopedLabsAnalyzer = (() => {
         display: block;
         margin-bottom: 6px;
       }
+
+      .sl-flow-stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .sl-flow-title {
+        font-weight: 600;
+      }
     `;
     document.head.appendChild(style);
+  }
+
+  function clearChart(existingChartRef, existingWrapRef) {
+    const chartRef = ensureRef(existingChartRef);
+    const wrapRef = ensureRef(existingWrapRef);
+
+    if (chartRef.current) {
+      chartRef.current.destroy();
+      chartRef.current = null;
+    }
+
+    if (wrapRef.current && wrapRef.current.parentNode) {
+      wrapRef.current.parentNode.removeChild(wrapRef.current);
+    }
+
+    wrapRef.current = null;
+  }
+
+  function clearAnalysisBlock(mountEl) {
+    if (!mountEl) return;
+    mountEl.style.display = "none";
+    mountEl.innerHTML = "";
+    mountEl.classList.remove("sl-analyzer-stack");
+  }
+
+  function renderRows(rows = []) {
+    return rows.map((row) => `
+      <div class="result-row">
+        <span class="result-label">${escapeHtml(row.label ?? "")}</span>
+        <span class="result-value">${escapeHtml(row.value ?? "")}</span>
+      </div>
+    `).join("");
+  }
+
+  function getStatusClass(status) {
+    if (status === "RISK") return "risk";
+    if (status === "WATCH") return "watch";
+    return "healthy";
+  }
+
+  function getMetricStatus(value, healthyMax = 65, watchMax = 85) {
+    const n = safeNumber(value, 0);
+    if (n > watchMax) return "RISK";
+    if (n > healthyMax) return "WATCH";
+    return "HEALTHY";
+  }
+
+  function getDominantMetric(metrics = [], healthyMax = 65, watchMax = 85) {
+    if (!Array.isArray(metrics) || !metrics.length) {
+      return {
+        label: "No dominant metric",
+        value: 0,
+        displayValue: "0",
+        status: "HEALTHY",
+        index: 0
+      };
+    }
+
+    let dominantIndex = 0;
+    let dominantValue = safeNumber(metrics[0]?.value, 0);
+
+    metrics.forEach((metric, index) => {
+      const value = safeNumber(metric?.value, 0);
+      if (value > dominantValue) {
+        dominantValue = value;
+        dominantIndex = index;
+      }
+    });
+
+    const metric = metrics[dominantIndex] || {};
+    return {
+      label: metric.label ?? `Metric ${dominantIndex + 1}`,
+      value: safeNumber(metric.value, 0),
+      displayValue: metric.displayValue ?? `${safeNumber(metric.value, 0)}`,
+      status: getMetricStatus(metric.value, healthyMax, watchMax),
+      index: dominantIndex
+    };
+  }
+
+  function resolveStatus({
+    compositeScore = null,
+    metrics = [],
+    healthyMax = 65,
+    watchMax = 85
+  }) {
+    const dominant = getDominantMetric(metrics, healthyMax, watchMax);
+
+    let baseStatus = "HEALTHY";
+    if (compositeScore !== null && compositeScore !== undefined) {
+      baseStatus = getMetricStatus(compositeScore, healthyMax, watchMax);
+    }
+
+    let finalStatus = baseStatus;
+
+    if (dominant.status === "RISK") finalStatus = "RISK";
+    else if (dominant.status === "WATCH" && finalStatus === "HEALTHY") finalStatus = "WATCH";
+
+    return {
+      status: finalStatus,
+      dominant
+    };
   }
 
   function renderAnalysisBlock({
@@ -150,7 +306,7 @@ window.ScopedLabsAnalyzer = (() => {
   }) {
     if (!mountEl) return;
 
-    ensureAnalysisStyles();
+    ensureEngineStyles();
 
     mountEl.style.display = "grid";
     mountEl.classList.add("sl-analyzer-stack");
@@ -172,13 +328,6 @@ window.ScopedLabsAnalyzer = (() => {
         <div>${escapeHtml(guidance)}</div>
       </div>
     `;
-  }
-
-  function clearAnalysisBlock(mountEl) {
-    if (!mountEl) return;
-    mountEl.style.display = "none";
-    mountEl.innerHTML = "";
-    mountEl.classList.remove("sl-analyzer-stack");
   }
 
   function renderAnalyzerChart({
@@ -461,10 +610,12 @@ window.ScopedLabsAnalyzer = (() => {
   }) {
     if (!resultsEl) return;
 
+    ensureEngineStyles();
     clearChart(existingChartRef, existingWrapRef);
+
     resultsEl.innerHTML = `${renderRows(summaryRows)}${renderRows(derivedRows)}`;
 
-    if (chart) {
+    if (chart && Array.isArray(chart.labels) && Array.isArray(chart.values) && Array.isArray(chart.displayValues)) {
       renderAnalyzerChart({
         mountEl: resultsEl,
         existingChartRef,
@@ -472,15 +623,15 @@ window.ScopedLabsAnalyzer = (() => {
         labels: chart.labels,
         values: chart.values,
         displayValues: chart.displayValues,
-        referenceValue: chart.referenceValue ?? DEFAULTS.referenceValue,
-        healthyMax: chart.healthyMax ?? DEFAULTS.healthyMax,
-        watchMax: chart.watchMax ?? DEFAULTS.watchMax,
-        axisTitle: chart.axisTitle ?? DEFAULTS.axisTitle,
-        referenceLabel: chart.referenceLabel ?? DEFAULTS.referenceLabel,
-        healthyLabel: chart.healthyLabel ?? DEFAULTS.healthyLabel,
-        watchLabel: chart.watchLabel ?? DEFAULTS.watchLabel,
-        riskLabel: chart.riskLabel ?? DEFAULTS.riskLabel,
-        chartMax: chart.chartMax ?? DEFAULTS.chartMax
+        referenceValue: chart.referenceValue ?? DEFAULT_CHART.referenceValue,
+        healthyMax: chart.healthyMax ?? DEFAULT_CHART.healthyMax,
+        watchMax: chart.watchMax ?? DEFAULT_CHART.watchMax,
+        axisTitle: chart.axisTitle ?? DEFAULT_CHART.axisTitle,
+        referenceLabel: chart.referenceLabel ?? DEFAULT_CHART.referenceLabel,
+        healthyLabel: chart.healthyLabel ?? DEFAULT_CHART.healthyLabel,
+        watchLabel: chart.watchLabel ?? DEFAULT_CHART.watchLabel,
+        riskLabel: chart.riskLabel ?? DEFAULT_CHART.riskLabel,
+        chartMax: chart.chartMax ?? DEFAULT_CHART.chartMax
       });
     }
 
@@ -500,7 +651,7 @@ window.ScopedLabsAnalyzer = (() => {
     continueBtnEl,
     existingChartRef,
     existingWrapRef,
-    flowKey,
+    flowKey = DEFAULT_FLOW_KEY,
     category,
     step,
     emptyMessage = "Enter values and press Calculate."
@@ -517,14 +668,33 @@ window.ScopedLabsAnalyzer = (() => {
     if (continueBtnEl) continueBtnEl.disabled = true;
   }
 
+  function showContinue(continueWrapEl, continueBtnEl) {
+    if (continueWrapEl) continueWrapEl.style.display = "block";
+    if (continueBtnEl) continueBtnEl.disabled = false;
+  }
+
+  function hideContinue(continueWrapEl, continueBtnEl) {
+    if (continueWrapEl) continueWrapEl.style.display = "none";
+    if (continueBtnEl) continueBtnEl.disabled = true;
+  }
+
   return {
-    clearChart,
-    clearCurrentStepResult,
     readFlow,
     writeFlow,
-    getStatus,
+    clearCurrentStepResult,
+    getUpstreamFlow,
+    renderFlowNote,
+    getMetricStatus,
+    getDominantMetric,
+    resolveStatus,
     renderAnalyzerChart,
     renderOutput,
-    invalidate
+    invalidate,
+    showContinue,
+    hideContinue,
+    clearChart,
+    clearAnalysisBlock,
+    clamp,
+    safeNumber
   };
 })();
