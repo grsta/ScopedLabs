@@ -4,14 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Grounding Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0331"></script>
-<script defer src="/assets/app.js?v=0331"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=infra-grounding-003" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0407"></script>
+  <script defer src="/assets/app.js?v=0407"></script>
 </head>
 
 <body data-tier="pro" data-category="infrastructure">
@@ -37,7 +38,13 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
   </div>
 
   <h1>Grounding Estimator</h1>
-  <p class="subhead">Basic grounding conductor sizing guidance based on circuit current.</p>
+  <p class="subhead">Grounding conductor sizing guidance and grounding target interpretation based on circuit current and resistance goals.</p>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> quickly sizing a grounding conductor and checking whether the grounding target is conservative, normal, or likely to require enhanced electrode strategy.
+    </p>
+  </section>
 
   <section class="card tool-card">
     <h2>Inputs</h2>
@@ -45,7 +52,7 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
     <div class="form-grid">
       <label class="field">
         <span class="label">Circuit Amperage (A)</span>
-        <input id="amps" type="number" value="60">
+        <input id="amps" type="number" min="0" step="1" value="60">
       </label>
 
       <label class="field">
@@ -57,8 +64,8 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
       </label>
 
       <label class="field">
-        <span class="label">Target Ground Resistance</span>
-        <input id="res" type="number" step="0.1" value="5">
+        <span class="label">Target Ground Resistance (Ω)</span>
+        <input id="res" type="number" min="0.1" step="0.1" value="5">
       </label>
     </div>
 
@@ -70,11 +77,15 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 </main>
 
-<script src="./script.js"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=003"></script>
 </body>
 </html>
 
