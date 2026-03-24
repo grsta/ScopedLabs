@@ -1,174 +1,320 @@
 ﻿(() => {
-  const $ = id => document.getElementById(id);
   const KEY = "scopedlabs:pipeline:last-result";
+  const CATEGORY = "physical-security";
+  const STEP = "camera-spacing";
+  const PREVIOUS_STEP = "camera-coverage-area";
   const NEXT_URL = "/tools/physical-security/blind-spot-check/";
 
-  function deg2rad(x){ return x * Math.PI / 180; }
+  const $ = (id) => document.getElementById(id);
 
-  let prev = null;
+  const els = {
+    len: $("len"),
+    dist: $("dist"),
+    hfov: $("hfov"),
+    ov: $("ov"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    analysis: $("analysis-copy"),
+    flowNote: $("flow-note"),
+    continueBtn: $("continue")
+  };
 
-  function render(rows){
-    const el = $("results");
-    if (!el) return;
+  const DEFAULTS = {
+    len: 300,
+    dist: 60,
+    hfov: 90,
+    ov: 15
+  };
 
-    el.innerHTML = "";
-    rows.forEach(r=>{
-      const d = document.createElement("div");
-      d.className = "result-row";
-      d.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(d);
+  function num(value, fallback = NaN) {
+    return ScopedLabsAnalyzer.safeNumber(value, fallback);
+  }
+
+  function deg2rad(x) {
+    return x * Math.PI / 180;
+  }
+
+  function fmt(value, digits = 1) {
+    return Number.isFinite(value) ? value.toFixed(digits) : "—";
+  }
+
+  function fmtFt(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—";
+  }
+
+  function fmtPct(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+  }
+
+  function applyDefaults() {
+    els.len.value = String(DEFAULTS.len);
+    els.dist.value = String(DEFAULTS.dist);
+    els.hfov.value = String(DEFAULTS.hfov);
+    els.ov.value = String(DEFAULTS.ov);
+  }
+
+  function renderFlowNote() {
+    const flow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: KEY,
+      category: CATEGORY,
+      step: STEP,
+      title: "Flow context",
+      intro: "This step converts effective single-camera coverage into real camera-to-camera spacing along the protected perimeter."
     });
-  }
 
-  function showContinue(){
-    const btn = $("continue");
-    if (btn) btn.style.display = "inline-block";
-  }
+    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
 
-  function hideContinue(){
-    const btn = $("continue");
-    if (btn) btn.style.display = "none";
-  }
+    const prev = flow.data || {};
 
-  // ✅ FIXED carry-over
-  function showFlowNote(){
-    const note = $("flow-note");
-    if (!note) return;
+    const dist = num(prev.dist);
+    const hfov = num(prev.hfov);
+    const ovPct = num(prev.ovPct);
+    const effWidth = num(prev.effWidth);
+    const width = num(prev.width);
 
-    prev = null;
+    if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
+    if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+    if (Number.isFinite(ovPct) && ovPct >= 0) els.ov.value = String(Math.round(ovPct));
 
-    try{
-      const raw = sessionStorage.getItem(KEY);
-      if(!raw){
-        note.style.display = "none";
-        return;
-      }
+    const parts = [];
+    if (Number.isFinite(effWidth) && effWidth > 0) parts.push(`effective width <strong>${fmtFt(effWidth)}</strong>`);
+    if (Number.isFinite(width) && width > 0) parts.push(`raw width <strong>${fmtFt(width)}</strong>`);
+    if (Number.isFinite(dist) && dist > 0) parts.push(`distance <strong>${fmtFt(dist)}</strong>`);
+    if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV <strong>${fmt(hfov, 1)}°</strong>`);
 
-      const parsed = JSON.parse(raw);
-
-      if(parsed.step !== "camera-coverage-area"){
-        note.style.display = "none";
-        return;
-      }
-
-      prev = parsed.data;
-
-      // Prefill inputs from previous tool
-      if(prev.dist) $("dist").value = Math.round(prev.dist);
-      if(prev.hfov) $("hfov").value = Math.round(prev.hfov);
-      if(prev.ov !== undefined) $("ov").value = Math.round(prev.ov * 100);
-
-      note.innerHTML = `
-        <strong>Flow context:</strong>
-        Effective coverage width <strong>${prev.effWidth.toFixed(1)} ft</strong>
-        from previous step.
-        This tool converts that into spacing and camera count.
+    if (parts.length) {
+      els.flowNote.style.display = "";
+      els.flowNote.innerHTML = `
+        <strong>Flow context</strong><br>
+        Prior coverage-area results detected — ${parts.join(", ")}.
+        This step turns that usable footprint into real spacing and camera count guidance.
       `;
-
-      note.style.display = "block";
-
-    }catch{
-      note.style.display = "none";
     }
   }
 
-  function classifySpacing(ratio){
-    if(ratio < 0.8) return "Tight Spacing";
-    if(ratio <= 1.05) return "Balanced Spacing";
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      flowKey: KEY,
+      category: CATEGORY,
+      step: STEP,
+      emptyMessage: "Enter values and press Calculate."
+    });
+    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    renderFlowNote();
+  }
+
+  function getInputs() {
+    const len = num(els.len.value);
+    const dist = num(els.dist.value);
+    const hfov = num(els.hfov.value);
+    const ovPct = num(els.ov.value);
+
+    if (
+      !Number.isFinite(len) || len <= 0 ||
+      !Number.isFinite(dist) || dist <= 0 ||
+      !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
+      !Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95
+    ) {
+      return { ok: false, message: "Enter valid values and press Calculate." };
+    }
+
+    return { ok: true, len, dist, hfov, ovPct };
+  }
+
+  function classifySpacing(ratio) {
+    if (ratio < 0.8) return "Tight Spacing";
+    if (ratio <= 1.05) return "Balanced Spacing";
     return "Wide Spacing";
   }
 
-  function interpretation(type){
-    if(type === "Tight Spacing"){
-      return "High redundancy. More cameras than needed but minimal risk of gaps.";
+  function calculateModel() {
+    const input = getInputs();
+    if (!input.ok) return input;
+
+    const rawWidth = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
+    const usableWidth = rawWidth * (1 - (input.ovPct / 100));
+
+    const cams = Math.max(1, Math.ceil(input.len / usableWidth));
+    const spacing = input.len / cams;
+    const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
+
+    const gapExposureMetric = ratio > 1 ? Math.min((ratio - 1) * 250, 100) : 0;
+    const compressionMetric = ratio < 1 ? Math.min((1 - ratio) * 100, 100) : 0;
+    const reserveMetric = input.ovPct;
+
+    const metrics = [
+      {
+        label: "Gap Exposure",
+        value: gapExposureMetric,
+        displayValue: ratio > 1 ? fmtPct((ratio - 1) * 100, 1) : "0.0%"
+      },
+      {
+        label: "Spacing Compression",
+        value: compressionMetric,
+        displayValue: ratio < 1 ? fmtPct((1 - ratio) * 100, 1) : "0.0%"
+      },
+      {
+        label: "Overlap Reserve",
+        value: reserveMetric,
+        displayValue: fmtPct(input.ovPct, 1)
+      }
+    ];
+
+    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore: Math.max(gapExposureMetric, compressionMetric, reserveMetric),
+      metrics,
+      healthyMax: 20,
+      watchMax: 35
+    });
+
+    const spacingClass = classifySpacing(ratio);
+
+    let interpretation = `With a usable camera footprint of about ${fmtFt(usableWidth)}, a ${fmtFt(input.len)} perimeter needs ${cams} camera${cams === 1 ? "" : "s"} to maintain the requested overlap. That produces an actual spacing of about ${fmtFt(spacing)} between camera centers.`;
+
+    if (spacingClass === "Wide Spacing") {
+      interpretation += ` The layout is running wider than the usable footprint, which raises the chance of soft gaps or outright blind zones once real mounting tolerances and scene geometry are applied.`;
+    } else if (spacingClass === "Tight Spacing") {
+      interpretation += ` The layout is conservative and overlap-heavy, which reduces blind-spot risk but drives camera count and compresses coverage efficiency.`;
+    } else {
+      interpretation += ` The spacing is balanced against usable width, which is typically the healthiest tradeoff between continuity and camera efficiency.`;
     }
-    if(type === "Balanced Spacing"){
-      return "Good balance between coverage and efficiency.";
+
+    let dominantConstraint = "";
+    if (spacingClass === "Wide Spacing") {
+      dominantConstraint = "Gap exposure is the dominant limiter. Camera spacing is outrunning the usable footprint, so weak zones between views become the first operational risk.";
+    } else if (spacingClass === "Tight Spacing") {
+      dominantConstraint = "Spacing compression is the dominant limiter. The design is safe from a continuity standpoint, but it is consuming more cameras than the coverage width strictly requires.";
+    } else if (input.ovPct >= 25) {
+      dominantConstraint = "Overlap reserve is the dominant limiter. The spacing still works, but the reserve target is starting to compress usable width enough to affect layout efficiency.";
+    } else {
+      dominantConstraint = "The layout is balanced. Spacing, usable width, and reserve target are still working together without a strong limiting factor.";
     }
-    return "Spacing too wide. Risk of blind spots between cameras.";
+
+    let guidance = "";
+    if (spacingClass === "Wide Spacing") {
+      guidance = "Reduce spacing, widen usable footprint, or increase camera count before treating this as a final layout. Then use Blind Spot Check to confirm the remaining continuity risk.";
+    } else if (spacingClass === "Tight Spacing") {
+      guidance = "This layout is conservative. Review whether the overlap target or camera count can be relaxed without creating coverage gaps, then confirm in Blind Spot Check.";
+    } else {
+      guidance = "Spacing is in a practical range. Continue to Blind Spot Check next to verify that the geometry still closes gaps across the protected span.";
+    }
+
+    return {
+      ok: true,
+      ...input,
+      rawWidth,
+      usableWidth,
+      cams,
+      spacing,
+      ratio,
+      spacingClass,
+      status: statusPack.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      gapExposureMetric,
+      compressionMetric,
+      reserveMetric
+    };
   }
 
-  function calc(){
-    const len = parseFloat($("len").value);
-    const dist = parseFloat($("dist").value);
-    const hfov = parseFloat($("hfov").value);
-    const ov = parseFloat($("ov").value) / 100;
-
-    const rawWidth = 2 * Math.tan(deg2rad(hfov/2)) * dist;
-
-    // ✅ Use carry-over if available
-    const usableWidth = (prev && prev.effWidth)
-      ? prev.effWidth
-      : rawWidth * (1 - ov);
-
-    const cams = Math.max(1, Math.ceil(len / usableWidth));
-    const spacing = len / cams;
-
-    const ratio = spacing / usableWidth;
-    const type = classifySpacing(ratio);
-    const interp = interpretation(type);
-
-    render([
-      {label:"Raw Coverage Width", value:`${rawWidth.toFixed(1)} ft`},
-      {label:"Usable Width", value:`${usableWidth.toFixed(1)} ft`},
-      {label:"Perimeter Length", value:`${len.toFixed(0)} ft`},
-      {label:"Camera Count", value:`${cams}`},
-      {label:"Actual Spacing", value:`${spacing.toFixed(1)} ft`},
-      {label:"Spacing Classification", value:type},
-      {label:"Interpretation", value:interp}
-    ]);
-
+  function writeFlow(data) {
     sessionStorage.setItem(KEY, JSON.stringify({
-      category:"physical-security",
-      step:"camera-spacing",
-      data:{
-        len,
-        dist,
-        hfov,
-        usableWidth,
-        cams,
-        spacing
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        len: data.len,
+        dist: data.dist,
+        hfov: data.hfov,
+        ovPct: data.ovPct,
+        rawWidth: data.rawWidth,
+        usableWidth: data.usableWidth,
+        cams: data.cams,
+        spacing: data.spacing,
+        ratio: data.ratio,
+        spacingClass: data.spacingClass,
+        interpretation: data.interpretation,
+        guidance: data.guidance
       }
     }));
-
-    showContinue();
   }
 
-  function reset(){
-    $("len").value = 300;
-    $("dist").value = 60;
-    $("hfov").value = 90;
-    $("ov").value = 15;
-    $("results").innerHTML = "";
-    sessionStorage.removeItem(KEY);
-    hideContinue();
+  function renderError(message) {
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
-  function invalidate(){
-    sessionStorage.removeItem(KEY);
-    hideContinue();
+  function renderSuccess(data) {
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      summaryRows: [
+        { label: "Raw Coverage Width", value: fmtFt(data.rawWidth) },
+        { label: "Usable Width", value: fmtFt(data.usableWidth) },
+        { label: "Camera Count", value: `${data.cams}` },
+        { label: "Actual Spacing", value: fmtFt(data.spacing) }
+      ],
+      derivedRows: [
+        { label: "Perimeter Length", value: fmtFt(data.len, 0) },
+        { label: "Distance to Target", value: fmtFt(data.dist) },
+        { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
+        { label: "Overlap Target", value: fmtPct(data.ovPct, 1) },
+        { label: "Spacing Ratio", value: fmt(data.ratio, 2) },
+        { label: "Spacing Classification", value: data.spacingClass }
+      ],
+      status: data.status,
+      interpretation: data.interpretation,
+      dominantConstraint: data.dominantConstraint,
+      guidance: data.guidance
+    });
+
+    writeFlow(data);
+    ScopedLabsAnalyzer.showContinue(els.continueBtn);
   }
 
-  // ✅ SAFE event binding (no more crashes)
-  ["len","dist","hfov","ov"].forEach(id=>{
-    const el = $(id);
-    if (el){
-      el.addEventListener("input", invalidate);
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) {
+      renderError(data.message);
+      return;
     }
-  });
+    renderSuccess(data);
+  }
 
-  const calcBtn = $("calc");
-  const resetBtn = $("reset");
-  const continueBtn = $("continue");
+  function reset() {
+    applyDefaults();
+    renderFlowNote();
+    invalidate();
+  }
 
-  if (calcBtn) calcBtn.addEventListener("click", calc);
-  if (resetBtn) resetBtn.addEventListener("click", reset);
-  if (continueBtn) continueBtn.addEventListener("click", () => {
-    window.location.href = NEXT_URL;
-  });
+  function bind() {
+    ["len", "dist", "hfov", "ov"].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
 
-  showFlowNote();
+    if (els.calc) els.calc.addEventListener("click", calc);
+    if (els.reset) els.reset.addEventListener("click", reset);
+    if (els.continueBtn) {
+      els.continueBtn.addEventListener("click", () => {
+        window.location.href = NEXT_URL;
+      });
+    }
+  }
+
+  function init() {
+    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    bind();
+    renderFlowNote();
+    invalidate();
+  }
+
+  window.addEventListener("DOMContentLoaded", init);
 })();
