@@ -1,74 +1,65 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
+
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CATEGORY = "physical-security";
+  const STEP = "mounting-height";
+  const PREVIOUS_STEP = "scene-illumination";
   const NEXT_URL = "/tools/physical-security/field-of-view/";
 
-  let hasResult = false;
+  const els = {
+    h: $("h"),
+    dist: $("dist"),
+    th: $("th"),
+    vfov: $("vfov"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    analysis: $("analysis-copy"),
+    flowNote: $("flow-note"),
+    continueBtn: $("continue")
+  };
 
-  function rad2deg(x) { return x * 180 / Math.PI; }
-  function deg2rad(x) { return x * Math.PI / 180; }
+  const DEFAULTS = {
+    h: 12,
+    dist: 40,
+    th: 5.5,
+    vfov: 55
+  };
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach((r) => {
-      const d = document.createElement("div");
-      d.className = "result-row";
-      d.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(d);
-    });
+  function num(value, fallback = NaN) {
+    return ScopedLabsAnalyzer.safeNumber(value, fallback);
   }
 
-  function showContinue() {
-    $("continue").style.display = "inline-block";
-    hasResult = true;
+  function rad2deg(x) {
+    return x * 180 / Math.PI;
   }
 
-  function hideContinue() {
-    $("continue").style.display = "none";
-    hasResult = false;
+  function deg2rad(x) {
+    return x * Math.PI / 180;
   }
 
-  function showFlowNote() {
-    const note = $("flow-note");
-    if (!note) return;
+  function fmt(value, digits = 1) {
+    return Number.isFinite(value) ? value.toFixed(digits) : "—";
+  }
 
-    try {
-      const raw = sessionStorage.getItem(FLOW_KEY);
-      if (!raw) {
-        note.style.display = "none";
-        note.innerHTML = "";
-        return;
-      }
+  function fmtFt(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—";
+  }
 
-      const parsed = JSON.parse(raw);
-      if (!parsed || parsed.category !== "physical-security" || parsed.step !== "scene-illumination") {
-        note.style.display = "none";
-        note.innerHTML = "";
-        return;
-      }
+  function fmtDeg(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}°` : "—";
+  }
 
-      const data = parsed.data || {};
-      const area = Number(data.area || 0);
-      const fc = Number(data.fc || 0);
-      const lumens = Number(data.lumens || 0);
+  function fmtPct(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+  }
 
-      note.innerHTML = `
-        <strong>Flow context:</strong>
-        Prior scene illumination results detected —
-        area <strong>${area.toFixed(0)} sq ft</strong>,
-        target illumination <strong>${fc.toFixed(2)} fc</strong>,
-        estimated lumen requirement <strong>${lumens.toFixed(0)} lm</strong>.
-        Use mounting height to balance subject angle and scene coverage before locking field of view.
-      `;
-      note.style.display = "block";
-    } catch {
-      note.style.display = "none";
-      note.innerHTML = "";
-    }
+  function applyDefaults() {
+    els.h.value = String(DEFAULTS.h);
+    els.dist.value = String(DEFAULTS.dist);
+    els.th.value = String(DEFAULTS.th);
+    els.vfov.value = String(DEFAULTS.vfov);
   }
 
   function classifyTilt(tilt) {
@@ -101,84 +92,261 @@
     return "Mount height is relatively high. This helps with tamper resistance and broad coverage, but can hurt identification geometry if tilt becomes too steep.";
   }
 
-  function calc() {
-    const h = Math.max(0, parseFloat($("h").value) || 0);
-    const dist = Math.max(0.1, parseFloat($("dist").value) || 0.1);
-    const th = Math.max(0, parseFloat($("th").value) || 0);
-    const vfov = Math.max(1, parseFloat($("vfov").value) || 1);
+  function renderFlowNote() {
+    const flow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CATEGORY,
+      step: STEP,
+      title: "Flow context",
+      intro: "This step uses the prior illumination plan to choose a workable install height before locking field of view."
+    });
 
-    const drop = h - th;
-    const tilt = rad2deg(Math.atan2(drop, dist));
-    const span = 2 * Math.tan(deg2rad(vfov / 2)) * dist;
-    const topEdgeHeight = h - Math.tan(deg2rad(Math.max(0, tilt - (vfov / 2)))) * dist;
-    const bottomEdgeHeight = h - Math.tan(deg2rad(tilt + (vfov / 2))) * dist;
-    const tiltClass = classifyTilt(tilt);
-    const interpretation = angleInterpretation(tilt);
-    const guidance = heightGuidance(h);
+    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
 
-    render([
-      { label: "Vertical Drop (mount - target)", value: `${drop.toFixed(2)} ft` },
-      { label: "Suggested Down-Tilt", value: `${tilt.toFixed(1)}°` },
-      { label: "Vertical Coverage Span @ Distance", value: `${span.toFixed(1)} ft` },
-      { label: "Approx. Top of View @ Distance", value: `${topEdgeHeight.toFixed(1)} ft` },
-      { label: "Approx. Bottom of View @ Distance", value: `${bottomEdgeHeight.toFixed(1)} ft` },
-      { label: "Angle Quality", value: tiltClass },
-      { label: "Interpretation", value: interpretation },
-      { label: "Design Guidance", value: guidance }
-    ]);
+    const data = flow.data || {};
+    const area = num(data.area || 0);
+    const fc = num(data.fc || 0);
+    const lumens = num(data.lumens || 0);
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "physical-security",
-      step: "mounting-height",
-      data: {
-        h,
-        dist,
-        th,
-        vfov,
-        drop,
-        tilt,
-        span,
-        topEdgeHeight,
-        bottomEdgeHeight,
-        tiltClass,
-        interpretation,
-        guidance
-      }
-    }));
+    const parts = [];
+    if (area > 0) parts.push(`area <strong>${fmt(area, 0)} sq ft</strong>`);
+    if (fc > 0) parts.push(`target illumination <strong>${fmt(fc, 2)} fc</strong>`);
+    if (lumens > 0) parts.push(`estimated lumen requirement <strong>${fmt(lumens, 0)} lm</strong>`);
 
-    showContinue();
-    showFlowNote();
-  }
-
-  function reset() {
-    $("h").value = 12;
-    $("dist").value = 40;
-    $("th").value = 5.5;
-    $("vfov").value = 55;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-    showFlowNote();
+    if (parts.length) {
+      els.flowNote.style.display = "";
+      els.flowNote.innerHTML = `
+        <strong>Flow context</strong><br>
+        Prior scene-illumination results detected — ${parts.join(", ")}.
+        Use mounting height to balance subject angle and scene coverage before locking field of view.
+      `;
+    }
   }
 
   function invalidate() {
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-    showFlowNote();
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      flowKey: FLOW_KEY,
+      category: CATEGORY,
+      step: STEP,
+      emptyMessage: "Enter values and press Calculate."
+    });
+    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    renderFlowNote();
   }
 
-  $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
+  function getInputs() {
+    const h = num(els.h.value);
+    const dist = num(els.dist.value);
+    const th = num(els.th.value);
+    const vfov = num(els.vfov.value);
 
-  ["h", "dist", "th", "vfov"].forEach((id) => {
-    const el = $(id);
-    el.addEventListener("input", invalidate);
-    el.addEventListener("change", invalidate);
-  });
+    if (
+      !Number.isFinite(h) || h < 0 ||
+      !Number.isFinite(dist) || dist <= 0 ||
+      !Number.isFinite(th) || th < 0 ||
+      !Number.isFinite(vfov) || vfov <= 0 || vfov >= 180
+    ) {
+      return { ok: false, message: "Enter valid values and press Calculate." };
+    }
 
-  $("continue").addEventListener("click", () => {
-    window.location.href = NEXT_URL;
-  });
+    return { ok: true, h, dist, th, vfov };
+  }
 
-  showFlowNote();
+  function calculateModel() {
+    const input = getInputs();
+    if (!input.ok) return input;
+
+    const drop = input.h - input.th;
+    const tilt = rad2deg(Math.atan2(drop, input.dist));
+    const span = 2 * Math.tan(deg2rad(input.vfov / 2)) * input.dist;
+    const topEdgeHeight = input.h - Math.tan(deg2rad(Math.max(0, tilt - (input.vfov / 2)))) * input.dist;
+    const bottomEdgeHeight = input.h - Math.tan(deg2rad(tilt + (input.vfov / 2))) * input.dist;
+
+    const tiltClass = classifyTilt(tilt);
+    const angleText = angleInterpretation(tilt);
+    const heightText = heightGuidance(input.h);
+
+    const subjectAngleMetric =
+      tilt < 10 ? 85 :
+      tilt < 25 ? 35 :
+      tilt < 45 ? 18 :
+      78;
+
+    const mountPressureMetric =
+      input.h < 9 ? 42 :
+      input.h <= 15 ? 18 :
+      55;
+
+    const framingPressureMetric =
+      bottomEdgeHeight > 0 ? Math.min(bottomEdgeHeight * 12, 100) :
+      topEdgeHeight < input.th ? Math.min((input.th - topEdgeHeight) * 10, 100) :
+      12;
+
+    const metrics = [
+      {
+        label: "Subject Angle",
+        value: subjectAngleMetric,
+        displayValue: fmtDeg(tilt)
+      },
+      {
+        label: "Mount Height Pressure",
+        value: mountPressureMetric,
+        displayValue: fmtFt(input.h)
+      },
+      {
+        label: "Vertical Framing Risk",
+        value: framingPressureMetric,
+        displayValue: `${fmtFt(topEdgeHeight)} to ${fmtFt(bottomEdgeHeight)}`
+      }
+    ];
+
+    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore: Math.max(subjectAngleMetric, mountPressureMetric, framingPressureMetric),
+      metrics,
+      healthyMax: 20,
+      watchMax: 45
+    });
+
+    let dominantConstraint = "";
+    if (tilt < 10) {
+      dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too shallow across the scene, which weakens practical face detail and identification geometry.";
+    } else if (tilt >= 45) {
+      dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too steeply downward, which compresses subjects and reduces usable face detail.";
+    } else if (input.h > 15) {
+      dominantConstraint = "Mount height pressure is the dominant limiter. The install point is high enough that tamper resistance improves, but usable subject geometry starts to suffer.";
+    } else if (bottomEdgeHeight > 0) {
+      dominantConstraint = "Vertical framing risk is the dominant limiter. The lower edge of view is still floating above grade at the target distance, so ground-level coverage is not fully closing.";
+    } else {
+      dominantConstraint = "The geometry is balanced. Mount height, target distance, and vertical framing remain in a practical range for the next field-of-view step.";
+    }
+
+    const interpretation = `With a mount height of ${fmtFt(input.h)} and a target point ${fmtFt(input.dist)} away at ${fmtFt(input.th)}, the suggested down-tilt is about ${fmtDeg(tilt)}. At that distance, a ${fmtDeg(input.vfov)} vertical field of view spans about ${fmtFt(span)} vertically, with the view landing from roughly ${fmtFt(topEdgeHeight)} down to ${fmtFt(bottomEdgeHeight)}. ${angleText}`;
+
+    let guidance = "";
+    if (tilt < 10) {
+      guidance = "Lower the mount, move the target zone farther out, or tighten vertical framing before locking the design. Then continue to Field of View once subject angle is healthier.";
+    } else if (tilt >= 45) {
+      guidance = "Reduce mount height or increase standoff distance before finalizing the view. Excessive top-down angle can make downstream detail goals harder to reach.";
+    } else if (bottomEdgeHeight > 0) {
+      guidance = "Check whether the lower edge of view needs to reach grade at the target distance. If so, revise height or angle assumptions before moving forward.";
+    } else {
+      guidance = "Mounting geometry is workable. Continue to Field of View next to translate this setup into actual scene width coverage.";
+    }
+
+    return {
+      ok: true,
+      ...input,
+      drop,
+      tilt,
+      span,
+      topEdgeHeight,
+      bottomEdgeHeight,
+      tiltClass,
+      angleText,
+      heightText,
+      status: statusPack.status,
+      interpretation,
+      dominantConstraint,
+      guidance
+    };
+  }
+
+  function writeFlow(data) {
+    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        h: data.h,
+        dist: data.dist,
+        th: data.th,
+        vfov: data.vfov,
+        drop: data.drop,
+        tilt: data.tilt,
+        span: data.span,
+        topEdgeHeight: data.topEdgeHeight,
+        bottomEdgeHeight: data.bottomEdgeHeight,
+        tiltClass: data.tiltClass,
+        interpretation: data.interpretation,
+        guidance: data.guidance
+      }
+    }));
+  }
+
+  function renderError(message) {
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    els.results.innerHTML = `<div class="muted">${message}</div>`;
+  }
+
+  function renderSuccess(data) {
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      summaryRows: [
+        { label: "Vertical Drop", value: fmtFt(data.drop) },
+        { label: "Suggested Down-Tilt", value: fmtDeg(data.tilt) },
+        { label: "Vertical Coverage Span", value: fmtFt(data.span) },
+        { label: "Angle Quality", value: data.tiltClass }
+      ],
+      derivedRows: [
+        { label: "Approx. Top of View @ Distance", value: fmtFt(data.topEdgeHeight) },
+        { label: "Approx. Bottom of View @ Distance", value: fmtFt(data.bottomEdgeHeight) },
+        { label: "Mount Height", value: fmtFt(data.h) },
+        { label: "Target Distance", value: fmtFt(data.dist) },
+        { label: "Target Height", value: fmtFt(data.th) },
+        { label: "Height Guidance", value: data.heightText }
+      ],
+      status: data.status,
+      interpretation: data.interpretation,
+      dominantConstraint: data.dominantConstraint,
+      guidance: data.guidance
+    });
+
+    writeFlow(data);
+    ScopedLabsAnalyzer.showContinue(els.continueBtn);
+  }
+
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) {
+      renderError(data.message);
+      return;
+    }
+    renderSuccess(data);
+  }
+
+  function reset() {
+    applyDefaults();
+    renderFlowNote();
+    invalidate();
+  }
+
+  function bind() {
+    ["h", "dist", "th", "vfov"].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+
+    if (els.calc) els.calc.addEventListener("click", calc);
+    if (els.reset) els.reset.addEventListener("click", reset);
+    if (els.continueBtn) {
+      els.continueBtn.addEventListener("click", () => {
+        window.location.href = NEXT_URL;
+      });
+    }
+  }
+
+  function init() {
+    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    bind();
+    renderFlowNote();
+    invalidate();
+  }
+
+  window.addEventListener("DOMContentLoaded", init);
 })();
