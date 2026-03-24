@@ -4,20 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Concurrency Scaling Estimator *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate throughput gains from additional workers and identify when coordination overhead starts eroding scaling efficiency."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0185" />
+  <link rel="stylesheet" href="/assets/style.css?v=perf-concurrency-0404" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
 
-  <script defer src="/assets/auth.js?v=0339"></script>
-  <script defer src="/assets/app.js?v=0339"></script>
+  <script defer src="/assets/auth.js?v=perf-concurrency-0404"></script>
+  <script defer src="/assets/app.js?v=perf-concurrency-0404"></script>
 </head>
 
-<body data-tier="pro" data-category="performance" data-step="concurrency-scaling" data-lane="v1">
+<body data-tier="pro" data-category="performance" data-tool="concurrency-scaling" data-step="concurrency-scaling" data-lane="v1">
 
 <header class="site-header">
   <div class="container header-inner">
@@ -45,13 +50,13 @@
 
   <div id="pipeline"></div>
 
-  <p class="subhead">Estimate throughput gains with more workers/threads using a parallel scaling model.</p>
+  <p class="subhead">Estimate throughput gains with more workers or threads and determine where scaling efficiency begins to degrade.</p>
 
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
     <p class="tool-best-for">
-      <strong>Best for:</strong> understanding how adding workers impacts throughput and where scaling efficiency begins to degrade.
+      <strong>Best for:</strong> evaluating how much real throughput improvement additional workers provide after queue pressure has already been identified upstream.
     </p>
   </section>
 
@@ -61,33 +66,33 @@
     <div class="form-grid">
       <label class="field">
         <span class="label">Baseline Throughput (req/sec)</span>
-        <input id="base" type="number" value="1200">
+        <input id="base" type="number" min="0" step="1" value="1200">
       </label>
 
       <label class="field">
         <span class="label">Workers (current)</span>
-        <input id="w0" type="number" value="4">
+        <input id="w0" type="number" min="1" step="1" value="4">
       </label>
 
       <label class="field">
         <span class="label">Workers (target)</span>
-        <input id="w1" type="number" value="12">
+        <input id="w1" type="number" min="1" step="1" value="12">
       </label>
 
       <label class="field">
         <span class="label">Parallel Fraction (%)</span>
-        <input id="p" type="number" value="85">
+        <input id="p" type="number" min="0" max="100" step="0.1" value="85">
       </label>
 
       <label class="field">
         <span class="label">Coordination Overhead (%)</span>
-        <input id="oh" type="number" value="8">
+        <input id="oh" type="number" min="0" max="95" step="0.1" value="8">
       </label>
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
     </div>
   </section>
 
@@ -96,6 +101,7 @@
     <div id="results" class="results">
       <div class="muted">Enter values and press Calculate.</div>
     </div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
   <div id="continue-wrap" class="card" style="display:none;">
@@ -106,11 +112,12 @@
 
 </main>
 
-<script src="/assets/tool-flow.js"></script>
-<script src="/assets/catalog.js"></script>
-<script src="/assets/pipelines.js"></script>
-<script src="/assets/pipeline.js"></script>
-<script src="./script.js"></script>
+<script src="/assets/tool-flow.js?v=perf-concurrency-0404"></script>
+<script src="/assets/catalog.js?v=perf-concurrency-0404"></script>
+<script src="/assets/pipelines.js?v=perf-concurrency-0404"></script>
+<script src="/assets/pipeline.js?v=perf-concurrency-0404"></script>
+<script src="/assets/analyzer.js?v=perf-concurrency-0404"></script>
+<script src="./script.js?v=perf-concurrency-0404"></script>
 
 </body>
 </html>
