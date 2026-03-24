@@ -30,8 +30,7 @@
   };
 
   function num(id) {
-    const v = Number($(id)?.value);
-    return Number.isFinite(v) ? v : NaN;
+    return ScopedLabsAnalyzer.safeNumber($(id)?.value, NaN);
   }
 
   function fmt(value, digits = 2) {
@@ -123,12 +122,15 @@
     const deltaHrs = B.runtime - A.runtime;
     const pctChange = A.runtime === 0 ? NaN : (deltaHrs / A.runtime) * 100;
 
+    const usableWhDelta = B.usableWh - A.usableWh;
     const efficiencyDelta = B.effPct - A.effPct;
-    const capacityDeltaWh = B.battWh - A.battWh;
     const reserveDeltaPct = B.reservePct - A.reservePct;
     const loadDeltaPct = A.loadW > 0 ? ((B.loadW - A.loadW) / A.loadW) * 100 : 0;
 
     const runtimeGapMetric = ScopedLabsAnalyzer.clamp(Math.abs(pctChange), 0, 100);
+    const usableEnergyGapMetric = Math.max(A.usableWh, B.usableWh) > 0
+      ? ScopedLabsAnalyzer.clamp((Math.abs(usableWhDelta) / Math.max(A.usableWh, B.usableWh)) * 100, 0, 100)
+      : 0;
     const efficiencyShiftMetric = ScopedLabsAnalyzer.clamp(Math.abs(efficiencyDelta) * 4, 0, 100);
     const reserveShiftMetric = ScopedLabsAnalyzer.clamp(Math.abs(reserveDeltaPct) * 2, 0, 100);
 
@@ -136,7 +138,7 @@
       {
         label: "Runtime Difference",
         value: runtimeGapMetric,
-        displayValue: fmtPct(Math.abs(pctChange))
+        displayValue: Number.isFinite(pctChange) ? fmtPct(Math.abs(pctChange)) : "—"
       },
       {
         label: "Efficiency Shift",
@@ -161,16 +163,18 @@
     if (Math.abs(pctChange) >= 40) comparisonClass = "Large Runtime Difference";
     else if (Math.abs(pctChange) >= 15) comparisonClass = "Moderate Runtime Difference";
 
-    const betterLabel = deltaHrs > 0 ? "Scenario B" : deltaHrs < 0 ? "Scenario A" : "Neither scenario";
+    let betterLabel = "Neither scenario";
+    if (deltaHrs > 0) betterLabel = "Scenario B";
+    if (deltaHrs < 0) betterLabel = "Scenario A";
 
     let interpretation = `Scenario A delivers about ${fmtHrs(A.runtime)} of runtime from ${fmtWh(A.usableWh)} usable energy, while Scenario B delivers about ${fmtHrs(B.runtime)} from ${fmtWh(B.usableWh)} usable energy. The runtime difference is ${fmtHrs(Math.abs(deltaHrs))}, which is ${Number.isFinite(pctChange) ? fmtPct(Math.abs(pctChange)) : "—"} relative to Scenario A.`;
 
     if (Math.abs(pctChange) >= 40) {
-      interpretation += ` The scenarios are materially different, so one of the design assumptions — battery size, efficiency, reserve policy, or load — is meaningfully changing resilience.`;
+      interpretation += ` The scenarios are materially different, so one of the assumptions — battery size, efficiency, reserve policy, or load — is meaningfully changing resilience.`;
     } else if (Math.abs(pctChange) >= 15) {
       interpretation += ` The runtime spread is large enough to affect planning decisions, especially if outage targets are tight.`;
     } else {
-      interpretation += ` The scenarios are relatively close, so the design choice is more about preference, margin philosophy, or small efficiency advantages than a major runtime shift.`;
+      interpretation += ` The scenarios are relatively close, so the decision is more about preference, margin philosophy, or small efficiency advantages than a major runtime shift.`;
     }
 
     let dominantConstraint = "";
@@ -193,18 +197,36 @@
       guidance = "Since runtime is close, choose based on cost, space, thermal behavior, or maintenance preference rather than expecting a dramatic runtime advantage.";
     }
 
+    const runtimeLeader = deltaHrs > 0
+      ? `Scenario B +${fmtHrs(Math.abs(deltaHrs))}`
+      : deltaHrs < 0
+        ? `Scenario A +${fmtHrs(Math.abs(deltaHrs))}`
+        : "Tie";
+
+    const usableLeader = usableWhDelta > 0
+      ? `Scenario B +${fmtWh(Math.abs(usableWhDelta))}`
+      : usableWhDelta < 0
+        ? `Scenario A +${fmtWh(Math.abs(usableWhDelta))}`
+        : "Tie";
+
     return {
       ok: true,
       A,
       B,
       deltaHrs,
       pctChange,
+      usableWhDelta,
       efficiencyDelta,
-      capacityDeltaWh,
       reserveDeltaPct,
       loadDeltaPct,
       comparisonClass,
       betterLabel,
+      runtimeLeader,
+      usableLeader,
+      runtimeGapMetric,
+      usableEnergyGapMetric,
+      efficiencyShiftMetric,
+      reserveShiftMetric,
       status: statusPack.status,
       interpretation,
       dominantConstraint,
@@ -225,7 +247,7 @@
         { label: "Scenario A Runtime", value: fmtHrs(data.A.runtime) },
         { label: "Scenario B Runtime", value: fmtHrs(data.B.runtime) },
         { label: "Difference (B − A)", value: `${data.deltaHrs >= 0 ? "+" : "-"}${fmtHrs(Math.abs(data.deltaHrs))}` },
-        { label: "Comparison Result", value: data.comparisonClass }
+        { label: "Preferred Outcome", value: data.betterLabel }
       ],
       derivedRows: [
         { label: "Scenario A Load", value: fmtWatts(data.A.loadW) },
@@ -235,12 +257,41 @@
         { label: "% Change vs A", value: Number.isFinite(data.pctChange) ? fmtPct(data.pctChange) : "—" },
         { label: "Efficiency Shift", value: fmtPct(data.efficiencyDelta) },
         { label: "Reserve Shift", value: fmtPct(data.reserveDeltaPct) },
-        { label: "Capacity Shift", value: fmtWh(data.capacityDeltaWh) }
+        { label: "Comparison Result", value: data.comparisonClass }
       ],
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: [
+          "Runtime Advantage",
+          "Usable Energy Advantage",
+          "Efficiency Gap",
+          "Reserve Policy Gap"
+        ],
+        values: [
+          Number(data.runtimeGapMetric.toFixed(1)),
+          Number(data.usableEnergyGapMetric.toFixed(1)),
+          Number(data.efficiencyShiftMetric.toFixed(1)),
+          Number(data.reserveShiftMetric.toFixed(1))
+        ],
+        displayValues: [
+          data.runtimeLeader,
+          data.usableLeader,
+          fmtPct(Math.abs(data.efficiencyDelta)),
+          fmtPct(Math.abs(data.reserveDeltaPct))
+        ],
+        referenceValue: 15,
+        healthyMax: 15,
+        watchMax: 35,
+        axisTitle: "Comparison Difference Pressure",
+        referenceLabel: "Meaningful Difference",
+        healthyLabel: "Minor",
+        watchLabel: "Moderate",
+        riskLabel: "Large",
+        chartMax: 100
+      }
     });
   }
 
