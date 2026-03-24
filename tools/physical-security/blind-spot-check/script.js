@@ -51,7 +51,7 @@
   }
 
   function deg2rad(x) {
-    return x * Math.PI / 180;
+    return (x * Math.PI) / 180;
   }
 
   function applyDefaults() {
@@ -151,30 +151,36 @@
     const overCoverageFt = Math.max(0, totalCoverageFt - input.w);
     const coverageMarginPct = input.w > 0 ? (overCoverageFt / input.w) * 100 : 0;
 
-    let statusPack;
-    if (gapFt <= 0) {
-      statusPack = ScopedLabsAnalyzer.resolveStatus({
-        compositeScore: Math.max(0, coverageMarginPct),
-        metrics: [
-          { label: "Gap Pressure", value: 0, displayValue: "0.0 ft" },
-          { label: "Coverage Margin", value: Math.min(coverageMarginPct, 100), displayValue: fmtPct(coverageMarginPct) },
-          { label: "Overlap Compression", value: input.overlapPct, displayValue: fmtPct(input.overlapPct) }
-        ],
-        healthyMax: 25,
-        watchMax: 60
-      });
-    } else {
-      statusPack = ScopedLabsAnalyzer.resolveStatus({
-        compositeScore: Math.max(gapPct * 3, input.overlapPct, 0),
-        metrics: [
-          { label: "Gap Pressure", value: Math.min(gapPct * 3, 100), displayValue: fmtFt(gapFt) },
-          { label: "Coverage Shortfall", value: Math.min(gapPct * 2, 100), displayValue: fmtPct(gapPct) },
-          { label: "Overlap Compression", value: input.overlapPct, displayValue: fmtPct(input.overlapPct) }
-        ],
-        healthyMax: 25,
-        watchMax: 60
-      });
-    }
+    const gapPressureMetric = gapFt <= 0 ? 0 : Math.min(gapPct * 4, 100);
+    const shortfallMetric = gapFt <= 0 ? 0 : Math.min(gapPct * 3, 100);
+    const overlapMetric = Math.min(input.overlapPct, 100);
+
+    const metrics = [
+      {
+        label: "Gap Pressure",
+        value: gapPressureMetric,
+        displayValue: gapFt <= 0 ? "0.0 ft" : fmtFt(gapFt)
+      },
+      {
+        label: "Coverage Shortfall",
+        value: shortfallMetric,
+        displayValue: fmtPct(gapPct)
+      },
+      {
+        label: "Overlap Compression",
+        value: overlapMetric,
+        displayValue: fmtPct(input.overlapPct)
+      }
+    ];
+
+    const dominantMetric = Math.max(gapPressureMetric, shortfallMetric, overlapMetric);
+
+    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore: dominantMetric,
+      metrics,
+      healthyMax: 25,
+      watchMax: 60
+    });
 
     let coverageClass = "FULL COVERAGE";
     if (gapFt > 0 && gapPct <= 10) coverageClass = "MINOR GAPS";
@@ -186,13 +192,15 @@
       interpretation += ` The modeled layout leaves a meaningful gap of ${fmtFt(gapFt)}, so blind spots are likely unless spacing, count, or field of view changes.`;
     } else if (coverageClass === "MINOR GAPS") {
       interpretation += ` Coverage is close, but a remaining gap of ${fmtFt(gapFt)} means real-world alignment tolerances, edge performance, and installation drift can still expose weak spots.`;
+    } else if (input.overlapPct >= 25) {
+      interpretation += ` Coverage is continuous, but overlap is consuming more usable width than necessary. The layout works geometrically, yet you are giving up footprint efficiency to maintain comfort margin.`;
     } else {
       interpretation += ` Coverage is continuous with remaining margin of about ${fmtFt(overCoverageFt)} across the protected width, so blind spots are not indicated by the geometric model.`;
     }
 
     let dominantConstraint = "";
     if (coverageClass === "BLIND SPOTS") {
-      dominantConstraint = "Coverage shortfall is the dominant limiter. The total effective footprint is simply too narrow for the required width once overlap is honored.";
+      dominantConstraint = "Coverage shortfall is the dominant limiter. The total effective footprint is too narrow for the required width once overlap is honored.";
     } else if (coverageClass === "MINOR GAPS") {
       dominantConstraint = "Gap pressure is the dominant limiter. The layout is almost workable, but the remaining uncovered width is still large enough to matter in field conditions.";
     } else if (input.overlapPct >= 25) {
@@ -206,6 +214,8 @@
       guidance = "Do not lock this layout yet. Reduce spacing, add cameras, widen the effective footprint, or revise upstream spacing assumptions before moving forward.";
     } else if (coverageClass === "MINOR GAPS") {
       guidance = "Coverage is close, but verify corners and overlap assumptions on the real mounting geometry before finalizing the design.";
+    } else if (input.overlapPct >= 25) {
+      guidance = "Coverage is acceptable, but review whether overlap is intentionally this high. You may be able to recover usable width or reduce camera count without creating blind spots.";
     } else {
       guidance = "Coverage is acceptable from a blind-spot standpoint. Continue to Pixel Density next to confirm that this same layout also delivers enough subject detail.";
     }
@@ -225,9 +235,9 @@
       interpretation,
       dominantConstraint,
       guidance,
-      gapPressureMetric: gapFt <= 0 ? 0 : Math.min(gapPct * 3, 100),
-      shortfallMetric: gapFt <= 0 ? 0 : Math.min(gapPct * 2, 100),
-      overlapMetric: input.overlapPct
+      gapPressureMetric,
+      shortfallMetric,
+      overlapMetric
     };
   }
 
@@ -258,8 +268,8 @@
   function renderError(message) {
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
-    if (els.continueBtn) els.continueBtn.style.display = "none";
   }
 
   function renderSuccess(data) {
@@ -315,7 +325,7 @@
     });
 
     writeFlow(data);
-    if (els.continueBtn) els.continueBtn.style.display = "inline-block";
+    ScopedLabsAnalyzer.showContinue(els.continueBtn);
   }
 
   function calc() {
