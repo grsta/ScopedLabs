@@ -4,20 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Latency vs Throughput Estimator *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate how latency accelerates as throughput approaches system capacity and identify when the load curve becomes dangerous."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
+  <link rel="stylesheet" href="/assets/style.css?v=perf-latency-throughput-0404" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-    window.SL_SUPABASE_ANON_KEY = "YOUR_KEY_HERE";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
 
-  <script defer src="/assets/auth.js?v=0408"></script>
-  <script defer src="/assets/app.js?v=0408"></script>
+  <script defer src="/assets/auth.js?v=perf-latency-throughput-0404"></script>
+  <script defer src="/assets/app.js?v=perf-latency-throughput-0404"></script>
 </head>
 
-<body data-tier="pro" data-category="performance" data-step="latency-vs-throughput" data-lane="v1">
+<body data-tier="pro" data-category="performance" data-tool="latency-vs-throughput" data-step="latency-vs-throughput" data-lane="v1">
 
 <header class="site-header">
   <div class="container header-inner">
@@ -42,17 +47,15 @@
 
   <h1>Latency vs Throughput Estimator</h1>
 
-  <!-- REQUIRED -->
   <div id="pipeline"></div>
 
   <p class="subhead">Understand how latency increases as system utilization approaches capacity.</p>
 
-  <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
     <p class="tool-best-for">
-      <strong>Best for:</strong> visualizing how close your system is to saturation and how latency will degrade under load.
+      <strong>Best for:</strong> visualizing how close your system is to saturation and how quickly latency will degrade as throughput rises toward capacity.
     </p>
   </section>
 
@@ -62,28 +65,28 @@
     <div class="form-grid">
       <label class="field">
         <span class="label">Base Latency (ms)</span>
-        <input id="baseLat" type="number" step="0.1" value="25">
+        <input id="baseLat" type="number" min="0" step="0.1" value="25">
       </label>
 
       <label class="field">
         <span class="label">Current Throughput</span>
-        <input id="t0" type="number" value="1200">
+        <input id="t0" type="number" min="0" step="1" value="1200">
       </label>
 
       <label class="field">
         <span class="label">Target Throughput</span>
-        <input id="t1" type="number" value="1800">
+        <input id="t1" type="number" min="0" step="1" value="1800">
       </label>
 
       <label class="field">
         <span class="label">System Capacity</span>
-        <input id="cap" type="number" value="2000">
+        <input id="cap" type="number" min="0.1" step="1" value="2000">
       </label>
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
     </div>
   </section>
 
@@ -92,9 +95,9 @@
     <div id="results" class="results">
       <div class="muted">Enter values and press Calculate.</div>
     </div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
-  <!-- REQUIRED -->
   <div id="continue-wrap" class="card" style="display:none;">
     <button id="continue" class="btn btn-primary" disabled>
       Continue → Queue Depth
@@ -102,11 +105,12 @@
   </div>
 </main>
 
-<script src="/assets/tool-flow.js"></script>
-<script src="/assets/catalog.js"></script>
-<script src="/assets/pipelines.js"></script>
-<script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=004"></script>
+<script src="/assets/tool-flow.js?v=perf-latency-throughput-0404"></script>
+<script src="/assets/catalog.js?v=perf-latency-throughput-0404"></script>
+<script src="/assets/pipelines.js?v=perf-latency-throughput-0404"></script>
+<script src="/assets/pipeline.js?v=perf-latency-throughput-0404"></script>
+<script src="/assets/analyzer.js?v=perf-latency-throughput-0404"></script>
+<script src="./script.js?v=perf-latency-throughput-0404"></script>
 
 </body>
 </html>
