@@ -5,6 +5,9 @@
   const PREVIOUS_STEP = "bottleneck-analyzer";
   const NEXT_URL = "/tools/performance/";
 
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
   const $ = (id) => document.getElementById(id);
 
   const els = {
@@ -15,6 +18,7 @@
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
+    analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("continue-wrap"),
     continueBtn: $("continue")
@@ -27,86 +31,53 @@
     unit: "req/s"
   };
 
-  function row(label, value) {
-    return `<div class="result-row">
-      <span class="result-label">${label}</span>
-      <span class="result-value">${value}</span>
-    </div>`;
-  }
-
   function num(value) {
-    const n = Number(value);
-    return Number.isFinite(n) ? n : null;
+    return ScopedLabsAnalyzer.safeNumber(value, NaN);
   }
 
   function fmt(value, digits = 1) {
-    const n = num(value);
-    return n === null ? "—" : n.toFixed(digits);
+    return Number.isFinite(value) ? value.toFixed(digits) : "—";
   }
 
-  function render(rows) {
-    els.results.innerHTML = rows.join("");
+  function fmtPct(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
-  function showContinue() {
-    els.continueWrap.style.display = "";
-    els.continueBtn.disabled = false;
-  }
-
-  function hideContinue() {
-    els.continueWrap.style.display = "none";
-    els.continueBtn.disabled = true;
-  }
-
-  function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
-  }
-
-  function setDefaultResults() {
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-  }
-
-  function getSaved() {
-    try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-    } catch {
-      return null;
-    }
-  }
-
-  function hideFlowNote() {
-    els.flowNote.style.display = "none";
-    els.flowNote.innerHTML = "";
-  }
-
-  function showFlowNote(html) {
-    els.flowNote.innerHTML = html;
-    els.flowNote.style.display = "";
-  }
-
-  function resetInputsToDefaults() {
-    els.u.value = DEFAULTS.u;
-    els.h.value = DEFAULTS.h;
-    els.cap.value = DEFAULTS.cap;
+  function applyDefaults() {
+    els.u.value = String(DEFAULTS.u);
+    els.h.value = String(DEFAULTS.h);
+    els.cap.value = String(DEFAULTS.cap);
     els.unit.value = DEFAULTS.unit;
   }
 
   function invalidate() {
-    clearStored();
-    hideContinue();
-    setDefaultResults();
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: STORAGE_KEY,
+      category: CATEGORY,
+      step: STEP,
+      emptyMessage: "Enter values and press Calculate."
+    });
   }
 
   function loadPrior() {
-    const saved = getSaved();
+    const flow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: STORAGE_KEY,
+      category: CATEGORY,
+      step: STEP,
+      title: "Carried over context",
+      intro: "This final step converts the identified bottleneck into a safer operating target by reserving headroom for bursts, failover conditions, and future growth."
+    });
 
-    hideFlowNote();
+    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
 
-    if (!saved || saved.category !== CATEGORY || saved.step !== PREVIOUS_STEP) {
-      return;
-    }
-
-    const d = saved.data || {};
+    const d = flow.data || {};
 
     const highestSubsystem =
       d.highestSubsystem ||
@@ -121,17 +92,16 @@
       num(d.currentUtilizationPct);
 
     const secondHighestSubsystem =
-      d.secondHighestSubsystem ||
-      "—";
+      d.secondHighestSubsystem || "—";
 
     const secondHighestUtilizationPct =
       num(d.secondHighestUtilizationPct) ??
       num(d.secondHighestUtilization);
 
-    const bottleneckSeverity =
-      d.bottleneckSeverity ||
-      d.severity ||
+    const bottleneckStatus =
+      d.bottleneckStatus ||
       d.status ||
+      d.severity ||
       "—";
 
     const bottleneckGapPts =
@@ -148,7 +118,7 @@
       d.loadBalance ||
       "—";
 
-    if (highestUtilizationPct !== null) {
+    if (Number.isFinite(highestUtilizationPct)) {
       els.u.value = String(Math.round(highestUtilizationPct));
 
       if (highestUtilizationPct >= 90) {
@@ -178,41 +148,37 @@
 
     const parts = [];
 
-    if (highestSubsystem !== "—" && highestUtilizationPct !== null) {
+    if (highestSubsystem !== "—" && Number.isFinite(highestUtilizationPct)) {
       parts.push(`Likely Bottleneck: <strong>${highestSubsystem} (${fmt(highestUtilizationPct, 1)}%)</strong>`);
     }
-
-    if (secondHighestSubsystem !== "—" && secondHighestUtilizationPct !== null) {
+    if (secondHighestSubsystem !== "—" && Number.isFinite(secondHighestUtilizationPct)) {
       parts.push(`Second Highest: <strong>${secondHighestSubsystem} (${fmt(secondHighestUtilizationPct, 1)}%)</strong>`);
     }
-
-    if (bottleneckSeverity !== "—") {
-      parts.push(`Severity: <strong>${bottleneckSeverity}</strong>`);
+    if (bottleneckStatus !== "—") {
+      parts.push(`Severity: <strong>${bottleneckStatus}</strong>`);
     }
-
-    if (bottleneckGapPts !== null) {
+    if (Number.isFinite(bottleneckGapPts)) {
       parts.push(`Gap: <strong>${fmt(bottleneckGapPts, 1)} pts</strong>`);
     }
-
-    if (averageUtilizationPct !== null) {
+    if (Number.isFinite(averageUtilizationPct)) {
       parts.push(`Average Utilization: <strong>${fmt(averageUtilizationPct, 1)}%</strong>`);
     }
-
     if (balanceStatus !== "—") {
       parts.push(`Load Balance: <strong>${balanceStatus}</strong>`);
     }
 
-    showFlowNote(`
+    els.flowNote.style.display = "";
+    els.flowNote.innerHTML = `
       <strong>Carried over context</strong><br>
       ${parts.join(", ")}.
       This final step converts the identified bottleneck into a safer operating target by reserving headroom for bursts, failover conditions, and future growth.
-    `);
+    `;
   }
 
-  function calc() {
-    const uPct = parseFloat(els.u.value);
-    const hPct = parseFloat(els.h.value);
-    const cap = parseFloat(els.cap.value);
+  function getInputs() {
+    const uPct = num(els.u.value);
+    const hPct = num(els.h.value);
+    const cap = num(els.cap.value);
     const unit = els.unit.value;
 
     if (
@@ -220,79 +186,217 @@
       !Number.isFinite(hPct) || hPct < 0 || hPct >= 100 ||
       !Number.isFinite(cap) || cap <= 0
     ) {
-      els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
-      hideContinue();
-      return;
+      return { ok: false, message: "Enter valid values and press Calculate." };
     }
+
+    return { ok: true, uPct, hPct, cap, unit };
+  }
+
+  function calculateModel() {
+    const input = getInputs();
+    if (!input.ok) return input;
+
+    const { uPct, hPct, cap, unit } = input;
 
     const u = uPct / 100;
     const h = hPct / 100;
-
     const safeUtil = 1 - h;
     const currentLoad = cap * u;
     const maxLoad = cap * safeUtil;
     const remainingSafeCapacity = maxLoad - currentLoad;
     const growthUntilLimitPct = maxLoad > 0 ? (remainingSafeCapacity / maxLoad) * 100 : 0;
-    const overloadAgainstTarget = currentLoad > maxLoad ? currentLoad - maxLoad : 0;
+    const overloadAgainstTarget = Math.max(0, currentLoad - maxLoad);
 
-    let status = "HEALTHY";
-    if (currentLoad > maxLoad) {
-      status = "OVER TARGET";
-    } else if (uPct >= (safeUtil * 100) - 5) {
-      status = "TIGHT";
-    } else if (uPct >= (safeUtil * 100) - 15) {
-      status = "WATCH";
+    const operatingPressure = uPct;
+    const headroomDeficitPct = Math.max(0, uPct - (safeUtil * 100));
+    const reserveTightnessPct = Math.max(0, (uPct + hPct) - 100);
+
+    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore: Math.max(operatingPressure - 40, headroomDeficitPct * 2, reserveTightnessPct * 2),
+      metrics: [
+        {
+          label: "Operating Pressure",
+          value: operatingPressure,
+          displayValue: fmtPct(uPct)
+        },
+        {
+          label: "Headroom Deficit",
+          value: headroomDeficitPct * 2,
+          displayValue: fmtPct(headroomDeficitPct)
+        },
+        {
+          label: "Reserve Tightness",
+          value: reserveTightnessPct * 2,
+          displayValue: fmtPct(hPct)
+        }
+      ],
+      healthyMax: 35,
+      watchMax: 70
+    });
+
+    let headroomStatus = "HEALTHY";
+    if (statusPack.status === "WATCH") headroomStatus = "WATCH";
+    if (statusPack.status === "RISK") {
+      headroomStatus = overloadAgainstTarget > 0 ? "OVER TARGET" : "TIGHT";
     }
 
-    let interpretation = "";
-    if (status === "OVER TARGET") {
-      interpretation = `Current utilization already exceeds the recommended safe operating target. In engineering terms, this system is consuming reserved headroom and has reduced tolerance for bursts, failover, or growth. Capacity relief or load redistribution should be prioritized.`;
-    } else if (status === "TIGHT") {
-      interpretation = `The system is operating close to its recommended limit. There is still some usable reserve, but remaining headroom is narrow enough that demand spikes or subsystem degradation could push performance into an unstable range.`;
-    } else if (status === "WATCH") {
-      interpretation = `The current operating point is still inside the target envelope, but meaningful growth will reduce margin. This is generally acceptable for steady-state use, though expansion planning should begin before the safe utilization ceiling is reached.`;
+    let interpretation = `Current utilization is ${fmtPct(uPct)} with a desired reserve of ${fmtPct(hPct)}. That translates to a recommended maximum operating utilization of ${fmtPct(safeUtil * 100)} and a recommended maximum load of ${fmt(maxLoad, 1)} ${unit}.`;
+
+    if (statusPack.status === "RISK") {
+      interpretation += ` The operating point is already too close to, or beyond, the intended safe band. In engineering terms, the system is now consuming reserve that should have been preserved for bursts, failover, or growth, so resilience is materially reduced.`;
+    } else if (statusPack.status === "WATCH") {
+      interpretation += ` The system is still inside the target envelope, but reserve is tight enough that growth or transient peaks can erode the remaining margin faster than expected.`;
     } else {
-      interpretation = `Headroom is currently healthy. The system remains below the recommended operating target, leaving reserve capacity for bursts, transient failures, and future growth without immediately entering a stressed utilization band.`;
+      interpretation += ` The operating point remains in a controlled band, so reserve capacity is still available for bursts, transient degradation, and moderate growth.`;
     }
 
-    render([
-      row("Current Load", `${currentLoad.toFixed(1)} ${unit}`),
-      row("Desired Headroom", `${hPct.toFixed(0)}%`),
-      row("Recommended Max Load", `${maxLoad.toFixed(1)} ${unit}`),
-      row("Recommended Max Utilization", `${(safeUtil * 100).toFixed(0)}%`),
-      row("Remaining Safe Capacity", `${remainingSafeCapacity.toFixed(1)} ${unit}`),
-      row("Growth Until Target Limit", `${growthUntilLimitPct.toFixed(1)}%`),
-      row("Headroom Status", status),
-      row("Engineering Interpretation", interpretation)
-    ]);
+    let dominantConstraint = "";
+    if (statusPack.dominant.label === "Operating Pressure") {
+      dominantConstraint = "Operating pressure is the dominant limiter. The main concern is the current fraction of capacity already being consumed.";
+    } else if (statusPack.dominant.label === "Headroom Deficit") {
+      dominantConstraint = "Headroom deficit is the dominant limiter. The design is already overrunning the intended safe operating band rather than merely approaching it.";
+    } else {
+      dominantConstraint = "Reserve tightness is the dominant limiter. The biggest risk is not today’s load alone, but how little reserve remains once the desired headroom is honored.";
+    }
 
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+    let guidance = "";
+    if (statusPack.status === "RISK") {
+      guidance = "Lower sustained load, add capacity, or reduce the required burst envelope before treating this target as safe. A system that has already consumed its reserve is much less tolerant of failure, spikes, or growth.";
+    } else if (statusPack.status === "WATCH") {
+      guidance = "The target is serviceable, but expansion planning should start before the remaining reserve is consumed. Validate whether the chosen headroom percentage truly reflects expected burst and failover conditions.";
+    } else {
+      guidance = "This headroom target is balanced. Use it as a practical safe operating ceiling for ongoing planning and monitoring rather than relying on raw maximum capacity alone.";
+    }
+
+    return {
+      ok: true,
+      uPct,
+      hPct,
+      cap,
+      unit,
+      currentLoad,
+      maxLoad,
+      remainingSafeCapacity,
+      growthUntilLimitPct,
+      overloadAgainstTarget,
+      recommendedMaxUtilizationPct: safeUtil * 100,
+      headroomStatus,
+      status: statusPack.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      operatingPressure,
+      headroomDeficitPct,
+      reserveTightnessPct
+    };
+  }
+
+  function writeFlow(data) {
+    ScopedLabsAnalyzer.writeFlow(STORAGE_KEY, {
       category: CATEGORY,
       step: STEP,
       data: {
-        currentUtilizationPct: uPct,
-        desiredHeadroomPct: hPct,
-        currentCapacity: cap,
-        unit: unit,
-        currentLoad: currentLoad,
-        recommendedMaxLoad: maxLoad,
-        recommendedMaxUtilizationPct: safeUtil * 100,
-        remainingSafeCapacity: remainingSafeCapacity,
-        growthUntilLimitPct: growthUntilLimitPct,
-        overloadAgainstTarget: overloadAgainstTarget,
-        headroomStatus: status
+        currentUtilizationPct: data.uPct,
+        desiredHeadroomPct: data.hPct,
+        currentCapacity: data.cap,
+        unit: data.unit,
+        currentLoad: data.currentLoad,
+        recommendedMaxLoad: data.maxLoad,
+        recommendedMaxUtilizationPct: data.recommendedMaxUtilizationPct,
+        remainingSafeCapacity: data.remainingSafeCapacity,
+        growthUntilLimitPct: data.growthUntilLimitPct,
+        overloadAgainstTarget: data.overloadAgainstTarget,
+        headroomStatus: data.headroomStatus
       }
-    }));
+    });
+  }
 
-    showContinue();
+  function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    els.results.innerHTML = `<div class="muted">${message}</div>`;
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+  }
+
+  function renderSuccess(data) {
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows: [
+        { label: "Current Load", value: `${fmt(data.currentLoad, 1)} ${data.unit}` },
+        { label: "Recommended Max Load", value: `${fmt(data.maxLoad, 1)} ${data.unit}` },
+        { label: "Recommended Max Utilization", value: fmtPct(data.recommendedMaxUtilizationPct) },
+        { label: "Headroom Status", value: data.headroomStatus }
+      ],
+      derivedRows: [
+        { label: "Desired Headroom", value: fmtPct(data.hPct) },
+        { label: "Remaining Safe Capacity", value: `${fmt(data.remainingSafeCapacity, 1)} ${data.unit}` },
+        { label: "Growth Until Target Limit", value: fmtPct(data.growthUntilLimitPct) },
+        { label: "Current Capacity", value: `${fmt(data.cap, 1)} ${data.unit}` },
+        { label: "Overload Against Target", value: `${fmt(data.overloadAgainstTarget, 1)} ${data.unit}` },
+        { label: "Current Utilization", value: fmtPct(data.uPct) }
+      ],
+      status: data.status,
+      interpretation: data.interpretation,
+      dominantConstraint: data.dominantConstraint,
+      guidance: data.guidance,
+      chart: {
+        labels: [
+          "Operating Pressure",
+          "Headroom Deficit",
+          "Reserve Tightness"
+        ],
+        values: [
+          Number((data.operatingPressure - 40).toFixed(1)),
+          Number((data.headroomDeficitPct * 2).toFixed(1)),
+          Number((data.reserveTightnessPct * 2).toFixed(1))
+        ],
+        displayValues: [
+          fmtPct(data.uPct),
+          fmtPct(data.headroomDeficitPct),
+          fmtPct(data.hPct)
+        ],
+        referenceValue: 35,
+        healthyMax: 35,
+        watchMax: 70,
+        axisTitle: "Headroom Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          100,
+          Math.ceil(
+            Math.max(
+              data.operatingPressure - 40,
+              data.headroomDeficitPct * 2,
+              data.reserveTightnessPct * 2,
+              70
+            ) * 1.12
+          )
+        )
+      }
+    });
+
+    writeFlow(data);
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+  }
+
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) {
+      renderError(data.message);
+      return;
+    }
+    renderSuccess(data);
   }
 
   function reset() {
-    resetInputsToDefaults();
-    clearStored();
-    hideContinue();
-    setDefaultResults();
+    applyDefaults();
     loadPrior();
+    invalidate();
   }
 
   function bind() {
@@ -309,11 +413,10 @@
   }
 
   function init() {
-    hideContinue();
-    setDefaultResults();
-    loadPrior();
     bind();
+    loadPrior();
+    invalidate();
   }
 
-  init();
+  window.addEventListener("DOMContentLoaded", init);
 })();
