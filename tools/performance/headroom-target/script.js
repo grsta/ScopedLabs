@@ -211,27 +211,35 @@
     const headroomDeficitPct = Math.max(0, uPct - (safeUtil * 100));
     const reserveTightnessPct = Math.max(0, (uPct + hPct) - 100);
 
+    const operatingPressureMetric = operatingPressure;
+    const headroomDeficitMetric = headroomDeficitPct * 2;
+    const reserveTightnessMetric = reserveTightnessPct * 2;
+
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: Math.max(operatingPressure - 40, headroomDeficitPct * 2, reserveTightnessPct * 2),
+      compositeScore: Math.max(
+        operatingPressureMetric,
+        headroomDeficitMetric,
+        reserveTightnessMetric
+      ),
       metrics: [
         {
           label: "Operating Pressure",
-          value: operatingPressure,
+          value: operatingPressureMetric,
           displayValue: fmtPct(uPct)
         },
         {
           label: "Headroom Deficit",
-          value: headroomDeficitPct * 2,
+          value: headroomDeficitMetric,
           displayValue: fmtPct(headroomDeficitPct)
         },
         {
           label: "Reserve Tightness",
-          value: reserveTightnessPct * 2,
+          value: reserveTightnessMetric,
           displayValue: fmtPct(hPct)
         }
       ],
-      healthyMax: 35,
-      watchMax: 70
+      healthyMax: 70,
+      watchMax: 85
     });
 
     let headroomStatus = "HEALTHY";
@@ -287,7 +295,10 @@
       guidance,
       operatingPressure,
       headroomDeficitPct,
-      reserveTightnessPct
+      reserveTightnessPct,
+      operatingPressureMetric,
+      headroomDeficitMetric,
+      reserveTightnessMetric
     };
   }
 
@@ -349,18 +360,18 @@
           "Reserve Tightness"
         ],
         values: [
-          Number((data.operatingPressure - 40).toFixed(1)),
-          Number((data.headroomDeficitPct * 2).toFixed(1)),
-          Number((data.reserveTightnessPct * 2).toFixed(1))
+          Number(data.operatingPressureMetric.toFixed(1)),
+          Number(data.headroomDeficitMetric.toFixed(1)),
+          Number(data.reserveTightnessMetric.toFixed(1))
         ],
         displayValues: [
           fmtPct(data.uPct),
           fmtPct(data.headroomDeficitPct),
           fmtPct(data.hPct)
         ],
-        referenceValue: 35,
-        healthyMax: 35,
-        watchMax: 70,
+        referenceValue: 70,
+        healthyMax: 70,
+        watchMax: 85,
         axisTitle: "Headroom Pressure",
         referenceLabel: "Comfort Band",
         healthyLabel: "Healthy",
@@ -370,10 +381,10 @@
           100,
           Math.ceil(
             Math.max(
-              data.operatingPressure - 40,
-              data.headroomDeficitPct * 2,
-              data.reserveTightnessPct * 2,
-              70
+              data.operatingPressureMetric,
+              data.headroomDeficitMetric,
+              data.reserveTightnessMetric,
+              85
             ) * 1.12
           )
         )
