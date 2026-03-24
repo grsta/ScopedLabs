@@ -1,181 +1,358 @@
 ﻿(() => {
-  const $ = id => document.getElementById(id);
   const KEY = "scopedlabs:pipeline:last-result";
+  const CATEGORY = "physical-security";
+  const STEP = "blind-spot-check";
+  const PREVIOUS_STEP = "camera-spacing";
   const NEXT_URL = "/tools/physical-security/pixel-density/";
 
-  function deg2rad(x){ return x * Math.PI / 180; }
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
 
-  let prev = null;
+  const $ = (id) => document.getElementById(id);
 
-  function render(rows){
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r=>{
-      const d=document.createElement("div");
-      d.className="result-row";
-      d.innerHTML=`<span class="result-label">${r.label}</span>
-                   <span class="result-value">${r.value}</span>`;
-      el.appendChild(d);
+  const els = {
+    w: $("w"),
+    d: $("d"),
+    hfov: $("hfov"),
+    dist: $("dist"),
+    cams: $("cams"),
+    overlap: $("overlap"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    analysis: $("analysis-copy"),
+    flowNote: $("flow-note"),
+    continueBtn: $("continue")
+  };
+
+  const DEFAULTS = {
+    w: 120,
+    d: 80,
+    hfov: 90,
+    dist: 60,
+    cams: 2,
+    overlap: 15
+  };
+
+  function num(v) {
+    return ScopedLabsAnalyzer.safeNumber(v, NaN);
+  }
+
+  function fmt(v, digits = 1) {
+    return Number.isFinite(v) ? v.toFixed(digits) : "—";
+  }
+
+  function fmtFt(v, digits = 1) {
+    return Number.isFinite(v) ? `${v.toFixed(digits)} ft` : "—";
+  }
+
+  function fmtPct(v, digits = 1) {
+    return Number.isFinite(v) ? `${v.toFixed(digits)}%` : "—";
+  }
+
+  function deg2rad(x) {
+    return x * Math.PI / 180;
+  }
+
+  function applyDefaults() {
+    els.w.value = String(DEFAULTS.w);
+    els.d.value = String(DEFAULTS.d);
+    els.hfov.value = String(DEFAULTS.hfov);
+    els.dist.value = String(DEFAULTS.dist);
+    els.cams.value = String(DEFAULTS.cams);
+    els.overlap.value = String(DEFAULTS.overlap);
+  }
+
+  function renderFlowNote() {
+    const flow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: KEY,
+      category: CATEGORY,
+      step: STEP,
+      title: "Flow context",
+      intro: "This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied."
+    });
+
+    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+
+    const prev = flow.data || {};
+
+    const cams = num(prev.cams);
+    const dist = num(prev.dist);
+    const hfov = num(prev.hfov);
+    const spacing = num(prev.spacing ?? prev.actualSpacing);
+
+    if (Number.isFinite(cams) && cams > 0) els.cams.value = String(Math.round(cams));
+    if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
+    if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+
+    const parts = [];
+    if (Number.isFinite(cams)) parts.push(`Cameras: <strong>${fmt(cams, 0)}</strong>`);
+    if (Number.isFinite(spacing)) parts.push(`Spacing: <strong>${fmtFt(spacing)}</strong>`);
+    if (Number.isFinite(dist)) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
+    if (Number.isFinite(hfov)) parts.push(`HFOV: <strong>${fmt(hfov, 0)}°</strong>`);
+
+    if (parts.length) {
+      els.flowNote.style.display = "";
+      els.flowNote.innerHTML = `
+        <strong>Flow context</strong><br>
+        ${parts.join(", ")}.
+        This step checks whether blind spots remain before moving into pixel density.
+      `;
+    }
+  }
+
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      continueBtnEl: els.continueBtn,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: KEY,
+      category: CATEGORY,
+      step: STEP,
+      emptyMessage: "Enter values and press Check Coverage."
     });
   }
 
-  function showContinue(){
-    $("continue").style.display = "inline-block";
+  function getInputs() {
+    const w = num(els.w.value);
+    const d = num(els.d.value);
+    const hfov = num(els.hfov.value);
+    const dist = num(els.dist.value);
+    const cams = Math.max(1, Math.floor(num(els.cams.value)));
+    const overlapPct = num(els.overlap.value);
+
+    if (
+      !Number.isFinite(w) || w <= 0 ||
+      !Number.isFinite(d) || d <= 0 ||
+      !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
+      !Number.isFinite(dist) || dist <= 0 ||
+      !Number.isFinite(cams) || cams < 1 ||
+      !Number.isFinite(overlapPct) || overlapPct < 0 || overlapPct > 95
+    ) {
+      return { ok: false, message: "Enter valid values and press Check Coverage." };
+    }
+
+    return { ok: true, w, d, hfov, dist, cams, overlapPct };
   }
 
-  function hideContinue(){
-    $("continue").style.display = "none";
+  function calculateModel() {
+    const input = getInputs();
+    if (!input.ok) return input;
+
+    const overlap = input.overlapPct / 100;
+    const coveragePerCameraFt = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
+    const effectiveCoverageFt = coveragePerCameraFt * (1 - overlap);
+    const totalCoverageFt = effectiveCoverageFt * input.cams;
+    const gapFt = Math.max(0, input.w - totalCoverageFt);
+    const gapPct = input.w > 0 ? (gapFt / input.w) * 100 : 0;
+    const overCoverageFt = Math.max(0, totalCoverageFt - input.w);
+    const coverageMarginPct = input.w > 0 ? (overCoverageFt / input.w) * 100 : 0;
+
+    let statusPack;
+    if (gapFt <= 0) {
+      statusPack = ScopedLabsAnalyzer.resolveStatus({
+        compositeScore: Math.max(0, coverageMarginPct),
+        metrics: [
+          { label: "Gap Pressure", value: 0, displayValue: "0.0 ft" },
+          { label: "Coverage Margin", value: Math.min(coverageMarginPct, 100), displayValue: fmtPct(coverageMarginPct) },
+          { label: "Overlap Compression", value: input.overlapPct, displayValue: fmtPct(input.overlapPct) }
+        ],
+        healthyMax: 25,
+        watchMax: 60
+      });
+    } else {
+      statusPack = ScopedLabsAnalyzer.resolveStatus({
+        compositeScore: Math.max(gapPct * 3, input.overlapPct, 0),
+        metrics: [
+          { label: "Gap Pressure", value: Math.min(gapPct * 3, 100), displayValue: fmtFt(gapFt) },
+          { label: "Coverage Shortfall", value: Math.min(gapPct * 2, 100), displayValue: fmtPct(gapPct) },
+          { label: "Overlap Compression", value: input.overlapPct, displayValue: fmtPct(input.overlapPct) }
+        ],
+        healthyMax: 25,
+        watchMax: 60
+      });
+    }
+
+    let coverageClass = "FULL COVERAGE";
+    if (gapFt > 0 && gapPct <= 10) coverageClass = "MINOR GAPS";
+    if (gapFt > 0 && gapPct > 10) coverageClass = "BLIND SPOTS";
+
+    let interpretation = `Each camera covers about ${fmtFt(coveragePerCameraFt)} horizontally at the target zone. After applying ${fmtPct(input.overlapPct)} overlap, effective usable coverage per camera is ${fmtFt(effectiveCoverageFt)}, giving total usable width of ${fmtFt(totalCoverageFt)} across ${fmt(input.cams, 0)} cameras.`;
+
+    if (coverageClass === "BLIND SPOTS") {
+      interpretation += ` The modeled layout leaves a meaningful gap of ${fmtFt(gapFt)}, so blind spots are likely unless spacing, count, or field of view changes.`;
+    } else if (coverageClass === "MINOR GAPS") {
+      interpretation += ` Coverage is close, but a remaining gap of ${fmtFt(gapFt)} means real-world alignment tolerances, edge performance, and installation drift can still expose weak spots.`;
+    } else {
+      interpretation += ` Coverage is continuous with remaining margin of about ${fmtFt(overCoverageFt)} across the protected width, so blind spots are not indicated by the geometric model.`;
+    }
+
+    let dominantConstraint = "";
+    if (coverageClass === "BLIND SPOTS") {
+      dominantConstraint = "Coverage shortfall is the dominant limiter. The total effective footprint is simply too narrow for the required width once overlap is honored.";
+    } else if (coverageClass === "MINOR GAPS") {
+      dominantConstraint = "Gap pressure is the dominant limiter. The layout is almost workable, but the remaining uncovered width is still large enough to matter in field conditions.";
+    } else if (input.overlapPct >= 25) {
+      dominantConstraint = "Overlap compression is the dominant limiter. Coverage is complete, but heavy overlap is consuming usable width faster than necessary.";
+    } else {
+      dominantConstraint = "Field geometry is balanced. The camera count, spacing, and effective width remain aligned with the protected span.";
+    }
+
+    let guidance = "";
+    if (coverageClass === "BLIND SPOTS") {
+      guidance = "Do not lock this layout yet. Reduce spacing, add cameras, widen the effective footprint, or revise upstream spacing assumptions before moving forward.";
+    } else if (coverageClass === "MINOR GAPS") {
+      guidance = "Coverage is close, but verify corners and overlap assumptions on the real mounting geometry before finalizing the design.";
+    } else {
+      guidance = "Coverage is acceptable from a blind-spot standpoint. Continue to Pixel Density next to confirm that this same layout also delivers enough subject detail.";
+    }
+
+    return {
+      ok: true,
+      ...input,
+      coveragePerCameraFt,
+      effectiveCoverageFt,
+      totalCoverageFt,
+      gapFt,
+      gapPct,
+      overCoverageFt,
+      coverageMarginPct,
+      coverageClass,
+      status: statusPack.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      gapPressureMetric: gapFt <= 0 ? 0 : Math.min(gapPct * 3, 100),
+      shortfallMetric: gapFt <= 0 ? 0 : Math.min(gapPct * 2, 100),
+      overlapMetric: input.overlapPct
+    };
   }
 
-  function showFlowNote(){
-    const note = $("flow-note");
-
-    try{
-      const raw = sessionStorage.getItem(KEY);
-      if(!raw){
-        note.style.display="none";
-        note.innerHTML = "";
-        return;
+  function writeFlow(data) {
+    ScopedLabsAnalyzer.writeFlow(KEY, {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        w: data.w,
+        d: data.d,
+        hfov: data.hfov,
+        dist: data.dist,
+        cams: data.cams,
+        overlap: data.overlapPct / 100,
+        overlapPct: data.overlapPct,
+        cov: data.coveragePerCameraFt,
+        eff: data.effectiveCoverageFt,
+        total: data.totalCoverageFt,
+        gap: data.gapFt,
+        gapPct: data.gapPct,
+        status: data.coverageClass,
+        interp: data.interpretation,
+        guide: data.guidance
       }
+    });
+  }
 
-      const parsed = JSON.parse(raw);
-      if(parsed.step !== "camera-spacing"){
-        note.style.display="none";
-        note.innerHTML = "";
-        return;
+  function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    els.results.innerHTML = `<div class="muted">${message}</div>`;
+    if (els.continueBtn) els.continueBtn.style.display = "none";
+  }
+
+  function renderSuccess(data) {
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows: [
+        { label: "Coverage per Camera", value: fmtFt(data.coveragePerCameraFt) },
+        { label: "Effective Coverage", value: fmtFt(data.effectiveCoverageFt) },
+        { label: "Total Coverage", value: fmtFt(data.totalCoverageFt) },
+        { label: "Result", value: data.coverageClass }
+      ],
+      derivedRows: [
+        { label: "Area Width", value: fmtFt(data.w) },
+        { label: "Area Depth", value: fmtFt(data.d) },
+        { label: "Gap", value: data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt) },
+        { label: "Overlap Target", value: fmtPct(data.overlapPct) },
+        { label: "Coverage Margin", value: fmtPct(data.coverageMarginPct) },
+        { label: "Camera Count", value: fmt(data.cams, 0) }
+      ],
+      status: data.status,
+      interpretation: data.interpretation,
+      dominantConstraint: data.dominantConstraint,
+      guidance: data.guidance,
+      chart: {
+        labels: [
+          "Gap Pressure",
+          "Coverage Shortfall",
+          "Overlap Compression"
+        ],
+        values: [
+          Number(data.gapPressureMetric.toFixed(1)),
+          Number(data.shortfallMetric.toFixed(1)),
+          Number(data.overlapMetric.toFixed(1))
+        ],
+        displayValues: [
+          data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt),
+          fmtPct(data.gapPct),
+          fmtPct(data.overlapPct)
+        ],
+        referenceValue: 25,
+        healthyMax: 25,
+        watchMax: 60,
+        axisTitle: "Coverage Risk Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
       }
+    });
 
-      prev = parsed.data;
+    writeFlow(data);
+    if (els.continueBtn) els.continueBtn.style.display = "inline-block";
+  }
 
-      if(prev.cams) $("cams").value = prev.cams;
-      if(prev.dist) $("dist").value = Math.round(prev.dist);
-      if(prev.hfov) $("hfov").value = Math.round(prev.hfov);
-
-      note.innerHTML = `
-        <strong>Flow context:</strong>
-        Layout includes <strong>${prev.cams}</strong> cameras with spacing
-        <strong>${(prev.spacing ?? prev.actualSpacing ?? 0).toFixed(1)} ft</strong>.
-        This step validates whether blind spots still remain before moving into pixel density.
-      `;
-
-      note.style.display = "block";
-
-    }catch{
-      note.style.display="none";
-      note.innerHTML = "";
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) {
+      renderError(data.message);
+      return;
     }
+    renderSuccess(data);
   }
 
-  function classify(gap, width){
-    if(gap <= 0) return "FULL COVERAGE";
-    if(gap <= 0.1 * width) return "MINOR GAPS";
-    return "BLIND SPOTS";
+  function reset() {
+    applyDefaults();
+    renderFlowNote();
+    invalidate();
   }
 
-  function interpretation(status){
-    if(status === "FULL COVERAGE"){
-      return "Coverage is continuous with overlap. No blind spots expected.";
-    }
-    if(status === "MINOR GAPS"){
-      return "Small gaps may exist depending on real-world alignment, edge performance, and installation tolerances.";
-    }
-    return "Coverage gaps are likely. Additional cameras, tighter spacing, or a wider effective footprint are required.";
+  function bind() {
+    ["w", "d", "hfov", "dist", "cams", "overlap"].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+
+    els.calc.addEventListener("click", calc);
+    els.reset.addEventListener("click", reset);
+    els.continueBtn.addEventListener("click", () => {
+      window.location.href = NEXT_URL;
+    });
   }
 
-  function guidance(status){
-    if(status === "FULL COVERAGE"){
-      return "Layout is acceptable from a pure coverage standpoint. Next, confirm that the same layout also provides enough target detail through pixel density.";
-    }
-    if(status === "MINOR GAPS"){
-      return "Coverage is close, but field conditions may expose weak spots. Verify corner conditions and overlap assumptions before finalizing.";
-    }
-    return "Do not lock this layout yet. Reduce spacing, increase camera count, or revisit upstream coverage assumptions before moving forward.";
+  function init() {
+    bind();
+    renderFlowNote();
+    invalidate();
   }
 
-  function calc(){
-    const w = parseFloat($("w").value);
-    const d = parseFloat($("d").value);
-    const hfov = parseFloat($("hfov").value);
-    const dist = parseFloat($("dist").value);
-    const cams = Math.max(1, Math.floor(parseFloat($("cams").value)));
-    const overlap = parseFloat($("overlap").value) / 100;
-
-    const cov = 2 * Math.tan(deg2rad(hfov / 2)) * dist;
-    const eff = cov * (1 - overlap);
-    const total = eff * cams;
-
-    const gap = w - total;
-    const status = classify(gap, w);
-    const interp = interpretation(status);
-    const guide = guidance(status);
-
-    render([
-      {label:"Coverage per Camera", value:`${cov.toFixed(1)} ft`},
-      {label:"Effective Coverage", value:`${eff.toFixed(1)} ft`},
-      {label:"Total Coverage", value:`${total.toFixed(1)} ft`},
-      {label:"Area Width", value:`${w.toFixed(1)} ft`},
-      {label:"Area Depth", value:`${d.toFixed(1)} ft`},
-      {label:"Gap", value: gap <= 0 ? "0 ft" : `${gap.toFixed(1)} ft`},
-      {label:"Result", value:status},
-      {label:"Interpretation", value:interp},
-      {label:"Design Guidance", value:guide}
-    ]);
-
-    sessionStorage.setItem(KEY, JSON.stringify({
-      category:"physical-security",
-      step:"blind-spot-check",
-      data:{
-        w,
-        d,
-        hfov,
-        dist,
-        cams,
-        overlap,
-        cov,
-        eff,
-        total,
-        gap,
-        status,
-        interp,
-        guide
-      }
-    }));
-
-    showContinue();
-  }
-
-  function reset(){
-    $("w").value = 120;
-    $("d").value = 80;
-    $("hfov").value = 90;
-    $("dist").value = 60;
-    $("cams").value = 2;
-    $("overlap").value = 15;
-    $("results").innerHTML = "";
-    sessionStorage.removeItem(KEY);
-    hideContinue();
-    showFlowNote();
-  }
-
-  function invalidate(){
-    sessionStorage.removeItem(KEY);
-    hideContinue();
-    showFlowNote();
-  }
-
-  ["w","d","hfov","dist","cams","overlap"].forEach(id=>{
-    const el = $(id);
-    if(el) el.addEventListener("input", invalidate);
-    if(el) el.addEventListener("change", invalidate);
-  });
-
-  $("calc").onclick = calc;
-  $("reset").onclick = reset;
-
-  $("continue").onclick = () => {
-    window.location.href = NEXT_URL;
-  };
-
-  showFlowNote();
+  window.addEventListener("DOMContentLoaded", init);
 })();
-
