@@ -1,98 +1,73 @@
 ﻿(() => {
-  const $ = (id) => document.getElementById(id);
   const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const CATEGORY = "physical-security";
+  const STEP = "camera-coverage-area";
+  const PREVIOUS_STEP = "field-of-view";
   const NEXT_URL = "/tools/physical-security/camera-spacing/";
 
-  let hasResult = false;
+  const $ = (id) => document.getElementById(id);
 
-  function deg2rad(x) {
-    return x * Math.PI / 180;
+  const els = {
+    hfov: $("hfov"),
+    vfov: $("vfov"),
+    dist: $("dist"),
+    ov: $("ov"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    analysis: $("analysis-copy"),
+    flowNote: $("flow-note"),
+    continueBtn: $("continue")
+  };
+
+  const DEFAULTS = {
+    hfov: 90,
+    vfov: 55,
+    dist: 60,
+    ov: 15
+  };
+
+  function num(value, fallback = NaN) {
+    return ScopedLabsAnalyzer.safeNumber(value, fallback);
   }
 
-  function render(rows) {
-    const el = $("results");
-    if (!el) return;
-
-    el.innerHTML = "";
-    rows.forEach((r) => {
-      const d = document.createElement("div");
-      d.className = "result-row";
-      d.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(d);
-    });
+  function deg2rad(deg) {
+    return (deg * Math.PI) / 180;
   }
 
-  function showContinue() {
-    const btn = $("continue");
-    if (!btn) return;
-    btn.style.display = "inline-block";
-    hasResult = true;
+  function fmt(value, digits = 1) {
+    return Number.isFinite(value) ? value.toFixed(digits) : "—";
+  }
+
+  function fmtFt(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—";
+  }
+
+  function fmtSqFt(value, digits = 0) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)} sq ft` : "—";
+  }
+
+  function fmtPct(value, digits = 0) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
   function hideContinue() {
-    const btn = $("continue");
-    if (!btn) return;
-    btn.style.display = "none";
-    hasResult = false;
+    if (els.continueBtn) els.continueBtn.style.display = "none";
   }
 
-  function showFlowNote() {
-    const note = $("flow-note");
-    if (!note) return;
-
-    try {
-      const raw = sessionStorage.getItem(FLOW_KEY);
-      if (!raw) {
-        note.style.display = "none";
-        note.innerHTML = "";
-        return;
-      }
-
-      const parsed = JSON.parse(raw);
-      if (!parsed || parsed.category !== "physical-security" || parsed.step !== "field-of-view") {
-        note.style.display = "none";
-        note.innerHTML = "";
-        return;
-      }
-
-      const data = parsed.data || {};
-      const sceneWidth = Number(data.sceneWidth || 0);
-      const dist = Number(data.dist || 0);
-      const hfov = Number(data.hfov || 0);
-      const fitClass = data.fitClass || "";
-
-      if ($("dist") && dist > 0) $("dist").value = String(Math.round(dist));
-      if ($("hfov") && hfov > 0) $("hfov").value = String(Math.round(hfov));
-
-      note.innerHTML = `
-        <strong>Flow context:</strong>
-        Prior field-of-view results detected —
-        estimated scene width <strong>${sceneWidth.toFixed(1)} ft</strong> at
-        <strong>${dist.toFixed(1)} ft</strong> with
-        <strong>${hfov.toFixed(1)}°</strong> HFOV,
-        classified as <strong>${fitClass}</strong>.
-        This step converts that lens width into real usable coverage after overlap reserve is applied.
-      `;
-      note.style.display = "block";
-    } catch (err) {
-      note.style.display = "none";
-      note.innerHTML = "";
-    }
+  function showContinue() {
+    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
   }
 
-  function classifyOverlap(ov) {
-    if (ov < 0.10) return "Low Overlap";
-    if (ov <= 0.25) return "Balanced Overlap";
+  function classifyOverlap(ovPct) {
+    if (ovPct < 10) return "Low Overlap";
+    if (ovPct <= 25) return "Balanced Overlap";
     return "High Overlap";
   }
 
-  function classifyCoverageEfficiency(effArea, area) {
-    const ratio = area > 0 ? effArea / area : 0;
-    if (ratio < 0.65) return "Heavy Reserve";
-    if (ratio < 0.85) return "Practical Reserve";
+  function classifyCoverageEfficiency(effAreaRatioPct) {
+    if (effAreaRatioPct < 65) return "Heavy Reserve";
+    if (effAreaRatioPct < 85) return "Practical Reserve";
     return "Minimal Reserve";
   }
 
@@ -106,32 +81,99 @@
     return "High overlap improves continuity and handoff between cameras, but reduces usable coverage efficiency and can increase camera count.";
   }
 
-  function designGuidance(effWidth, width) {
-    const ratio = width > 0 ? effWidth / width : 0;
-    if (ratio < 0.70) {
+  function reserveGuidance(effWidthRatioPct) {
+    if (effWidthRatioPct < 70) {
       return "Usable width drops quickly once overlap reserve gets aggressive. This is appropriate when continuity matters more than raw coverage efficiency.";
     }
-    if (ratio < 0.90) {
+    if (effWidthRatioPct < 90) {
       return "This is a healthy reserve range for many practical layouts. You preserve usable width while still protecting against blind edges.";
     }
     return "Very little width is being reserved for overlap. Coverage efficiency is high, but spacing tolerance between cameras will be tighter.";
   }
 
-  function calc() {
-    const hfovEl = $("hfov");
-    const vfovEl = $("vfov");
-    const distEl = $("dist");
-    const ovEl = $("ov");
+  function applyDefaults() {
+    els.hfov.value = String(DEFAULTS.hfov);
+    els.vfov.value = String(DEFAULTS.vfov);
+    els.dist.value = String(DEFAULTS.dist);
+    els.ov.value = String(DEFAULTS.ov);
+  }
 
-    if (!hfovEl || !vfovEl || !distEl || !ovEl) return;
+  function renderFlowNote() {
+    const flow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: FLOW_KEY,
+      category: CATEGORY,
+      step: STEP,
+      title: "Flow context",
+      intro: "This step converts field-of-view results into real usable scene coverage after overlap reserve is applied."
+    });
 
-    const hfov = Math.max(1, parseFloat(hfovEl.value) || 1);
-    const vfov = Math.max(1, parseFloat(vfovEl.value) || 1);
-    const dist = Math.max(0.1, parseFloat(distEl.value) || 0.1);
-    const ov = Math.max(0, Math.min(0.95, (parseFloat(ovEl.value) || 0) / 100));
+    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
 
-    const halfW = Math.tan(deg2rad(hfov / 2)) * dist;
-    const halfH = Math.tan(deg2rad(vfov / 2)) * dist;
+    const data = flow.data || {};
+    const sceneWidth = num(data.sceneWidth, 0);
+    const dist = num(data.dist, 0);
+    const hfov = num(data.hfov, 0);
+    const fitClass = data.fitClass || "";
+
+    if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
+    if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+
+    const parts = [];
+    if (sceneWidth > 0) parts.push(`scene width <strong>${fmtFt(sceneWidth)}</strong>`);
+    if (dist > 0) parts.push(`distance <strong>${fmtFt(dist)}</strong>`);
+    if (hfov > 0) parts.push(`HFOV <strong>${fmt(hfov, 1)}°</strong>`);
+    if (fitClass) parts.push(`classified as <strong>${fitClass}</strong>`);
+
+    if (parts.length) {
+      els.flowNote.style.display = "";
+      els.flowNote.innerHTML = `
+        <strong>Flow context</strong><br>
+        Prior field-of-view results detected — ${parts.join(", ")}.
+        This step converts that lens width into real usable coverage after overlap reserve is applied.
+      `;
+    }
+  }
+
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      flowKey: FLOW_KEY,
+      category: CATEGORY,
+      step: STEP,
+      emptyMessage: "Enter values and press Calculate."
+    });
+    hideContinue();
+    renderFlowNote();
+  }
+
+  function getInputs() {
+    const hfov = num(els.hfov.value);
+    const vfov = num(els.vfov.value);
+    const dist = num(els.dist.value);
+    const ovPct = num(els.ov.value);
+
+    if (
+      !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
+      !Number.isFinite(vfov) || vfov <= 0 || vfov >= 180 ||
+      !Number.isFinite(dist) || dist <= 0 ||
+      !Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95
+    ) {
+      return { ok: false, message: "Enter valid values and press Calculate." };
+    }
+
+    return { ok: true, hfov, vfov, dist, ovPct };
+  }
+
+  function calculateModel() {
+    const input = getInputs();
+    if (!input.ok) return input;
+
+    const ov = input.ovPct / 100;
+
+    const halfW = Math.tan(deg2rad(input.hfov / 2)) * input.dist;
+    const halfH = Math.tan(deg2rad(input.vfov / 2)) * input.dist;
 
     const width = halfW * 2;
     const height = halfH * 2;
@@ -142,85 +184,177 @@
     const area = width * height;
     const effArea = effWidth * effHeight;
 
-    const overlapClass = classifyOverlap(ov);
-    const efficiencyClass = classifyCoverageEfficiency(effArea, area);
-    const interpretation = overlapInterpretation(overlapClass);
-    const guidance = designGuidance(effWidth, width);
+    const widthRetentionPct = width > 0 ? (effWidth / width) * 100 : 0;
+    const areaRetentionPct = area > 0 ? (effArea / area) * 100 : 0;
+    const reserveLossPct = 100 - areaRetentionPct;
 
-    render([
-      { label: "Coverage Width", value: `${width.toFixed(1)} ft` },
-      { label: "Coverage Height", value: `${height.toFixed(1)} ft` },
-      { label: "Coverage Area", value: `${area.toFixed(0)} sq ft` },
-      { label: "Overlap Reserve", value: `${(ov * 100).toFixed(0)}%` },
-      { label: "Effective Width", value: `${effWidth.toFixed(1)} ft` },
-      { label: "Effective Height", value: `${effHeight.toFixed(1)} ft` },
-      { label: "Effective Area", value: `${effArea.toFixed(0)} sq ft` },
-      { label: "Overlap Classification", value: overlapClass },
-      { label: "Coverage Efficiency", value: efficiencyClass },
-      { label: "Interpretation", value: interpretation },
-      { label: "Design Guidance", value: guidance }
-    ]);
+    const overlapClass = classifyOverlap(input.ovPct);
+    const efficiencyClass = classifyCoverageEfficiency(areaRetentionPct);
 
+    const metrics = [
+      {
+        label: "Reserve Pressure",
+        value: reserveLossPct,
+        displayValue: fmtPct(reserveLossPct, 1)
+      },
+      {
+        label: "Width Retention",
+        value: 100 - widthRetentionPct,
+        displayValue: fmtPct(widthRetentionPct, 1)
+      },
+      {
+        label: "Area Retention",
+        value: 100 - areaRetentionPct,
+        displayValue: fmtPct(areaRetentionPct, 1)
+      }
+    ];
+
+    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore: Math.max(reserveLossPct, 100 - widthRetentionPct, 100 - areaRetentionPct),
+      metrics,
+      healthyMax: 20,
+      watchMax: 35
+    });
+
+    const interpretationCore = overlapInterpretation(overlapClass);
+    const guidanceCore = reserveGuidance(widthRetentionPct);
+
+    let dominantConstraint = "";
+    if (reserveLossPct >= 35) {
+      dominantConstraint = "Reserve pressure is the dominant limiter. Too much usable scene area is being sacrificed to overlap, which can drive camera count and reduce layout efficiency.";
+    } else if (reserveLossPct >= 20) {
+      dominantConstraint = "Coverage efficiency is the dominant limiter. The reserve strategy is still workable, but it is beginning to compress usable scene width enough to affect downstream spacing.";
+    } else {
+      dominantConstraint = "Field geometry is balanced. Most of the lens footprint remains usable after reserve is applied, which gives the next spacing step a healthier starting point.";
+    }
+
+    const interpretation = `At ${fmtFt(input.dist)}, the modeled lens footprint is about ${fmtFt(width)} wide by ${fmtFt(height)} high, producing ${fmtSqFt(area)} of raw area. After reserving ${fmtPct(input.ovPct)} for overlap, effective coverage drops to ${fmtFt(effWidth)} by ${fmtFt(effHeight)}, or about ${fmtSqFt(effArea)} of usable scene coverage. ${interpretationCore}`;
+
+    const guidance = `${guidanceCore} Continue to Camera Spacing next so you can translate this usable width into actual camera-to-camera placement.`;
+
+    return {
+      ok: true,
+      ...input,
+      ov,
+      width,
+      height,
+      area,
+      effWidth,
+      effHeight,
+      effArea,
+      widthRetentionPct,
+      areaRetentionPct,
+      reserveLossPct,
+      overlapClass,
+      efficiencyClass,
+      status: statusPack.status,
+      interpretation,
+      dominantConstraint,
+      guidance
+    };
+  }
+
+  function writeFlow(data) {
     sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "physical-security",
-      step: "camera-coverage-area",
+      category: CATEGORY,
+      step: STEP,
       data: {
-        hfov,
-        vfov,
-        dist,
-        ov,
-        width,
-        height,
-        area,
-        effWidth,
-        effHeight,
-        effArea,
-        overlapClass,
-        efficiencyClass,
-        interpretation,
-        guidance
+        hfov: data.hfov,
+        vfov: data.vfov,
+        dist: data.dist,
+        ov: data.ov,
+        ovPct: data.ovPct,
+        width: data.width,
+        height: data.height,
+        area: data.area,
+        effWidth: data.effWidth,
+        effHeight: data.effHeight,
+        effArea: data.effArea,
+        widthRetentionPct: data.widthRetentionPct,
+        areaRetentionPct: data.areaRetentionPct,
+        reserveLossPct: data.reserveLossPct,
+        overlapClass: data.overlapClass,
+        efficiencyClass: data.efficiencyClass,
+        interpretation: data.interpretation,
+        guidance: data.guidance
       }
     }));
+  }
 
+  function renderError(message) {
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    hideContinue();
+    els.results.innerHTML = `<div class="muted">${message}</div>`;
+  }
+
+  function renderSuccess(data) {
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      summaryRows: [
+        { label: "Coverage Width", value: fmtFt(data.width) },
+        { label: "Coverage Height", value: fmtFt(data.height) },
+        { label: "Coverage Area", value: fmtSqFt(data.area) },
+        { label: "Effective Area", value: fmtSqFt(data.effArea) }
+      ],
+      derivedRows: [
+        { label: "Overlap Reserve", value: fmtPct(data.ovPct) },
+        { label: "Effective Width", value: fmtFt(data.effWidth) },
+        { label: "Effective Height", value: fmtFt(data.effHeight) },
+        { label: "Width Retention", value: fmtPct(data.widthRetentionPct, 1) },
+        { label: "Area Retention", value: fmtPct(data.areaRetentionPct, 1) },
+        { label: "Overlap Classification", value: data.overlapClass },
+        { label: "Coverage Efficiency", value: data.efficiencyClass }
+      ],
+      status: data.status,
+      interpretation: data.interpretation,
+      dominantConstraint: data.dominantConstraint,
+      guidance: data.guidance
+    });
+
+    writeFlow(data);
     showContinue();
   }
 
+  function calc() {
+    const result = calculateModel();
+    if (!result.ok) {
+      renderError(result.message);
+      return;
+    }
+    renderSuccess(result);
+  }
+
   function reset() {
-    if ($("hfov")) $("hfov").value = 90;
-    if ($("vfov")) $("vfov").value = 55;
-    if ($("dist")) $("dist").value = 60;
-    if ($("ov")) $("ov").value = 15;
-    if ($("results")) $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-    showFlowNote();
+    applyDefaults();
+    renderFlowNote();
+    invalidate();
   }
 
-  function invalidate() {
-    sessionStorage.removeItem(FLOW_KEY);
-    hideContinue();
-    showFlowNote();
-  }
+  function bind() {
+    if (els.calc) els.calc.addEventListener("click", calc);
+    if (els.reset) els.reset.addEventListener("click", reset);
 
-  const calcBtn = $("calc");
-  const resetBtn = $("reset");
-  const continueBtn = $("continue");
-
-  if (calcBtn) calcBtn.addEventListener("click", calc);
-  if (resetBtn) resetBtn.addEventListener("click", reset);
-
-  ["hfov", "vfov", "dist", "ov"].forEach((id) => {
-    const el = $(id);
-    if (!el) return;
-    el.addEventListener("input", invalidate);
-    el.addEventListener("change", invalidate);
-  });
-
-  if (continueBtn) {
-    continueBtn.addEventListener("click", () => {
-      window.location.href = NEXT_URL;
+    ["hfov", "vfov", "dist", "ov"].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
     });
+
+    if (els.continueBtn) {
+      els.continueBtn.addEventListener("click", () => {
+        window.location.href = NEXT_URL;
+      });
+    }
   }
 
-  showFlowNote();
+  function init() {
+    hideContinue();
+    bind();
+    renderFlowNote();
+    invalidate();
+  }
+
+  window.addEventListener("DOMContentLoaded", init);
 })();
