@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Scenario Comparator • ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
-`r`n`r`n<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0331"></script>
-<script defer src="/assets/app.js?v=0331"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=power-scenario-comparator-0406" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=power-scenario-comparator-0406"></script>
+  <script defer src="/assets/app.js?v=power-scenario-comparator-0406"></script>
 </head>
 
 <body data-tier="pro" data-category="power">
@@ -42,14 +42,19 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
   <h1>Scenario Comparator</h1>
   <p class="subhead">
-    Compare two UPS/battery scenarios side-by-side (load, capacity, efficiency, reserve) and see runtime impact instantly.
+    Compare two UPS / battery scenarios side-by-side and see runtime tradeoffs instantly.
   </p>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> comparing two candidate designs when battery size, efficiency, reserve policy, or load assumptions differ and you need a fast planning decision.
+    </p>
+  </section>
 
   <section class="card tool-card">
     <h2>Inputs</h2>
 
     <div class="form-grid">
-      <!-- Scenario A -->
       <div class="card" style="background:rgba(0,0,0,.14);">
         <div class="muted" style="font-weight:600; margin-bottom:.5rem;">Scenario A</div>
 
@@ -74,7 +79,6 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
         </label>
       </div>
 
-      <!-- Scenario B -->
       <div class="card" style="background:rgba(0,0,0,.14);">
         <div class="muted" style="font-weight:600; margin-bottom:.5rem;">Scenario B</div>
 
@@ -111,26 +115,23 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
     <div id="results" class="results">
       <div class="muted">Enter values and press Calculate.</div>
     </div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
-    <div class="spacer-xl"></div>
+
+  <div class="spacer-xl"></div>
 
   <div class="container">
     <div class="breadcrumbs muted" style="margin-bottom:.75rem;">
-      <a href="/tools/power/">← Back to Power & Runtime</a>
+      <a href="/tools/power/">← Back to Power &amp; Runtime</a>
     </div>
 
     <footer class="site-footer muted">
       © 2026 ScopedLabs
     </footer>
   </div>
-
 </main>
 
-<script src="./script.js?v=0207sc"></script>
+<script src="/assets/analyzer.js?v=power-scenario-comparator-0406"></script>
+<script src="./script.js?v=power-scenario-comparator-0406"></script>
 </body>
 </html>
-
-
-
-
-
