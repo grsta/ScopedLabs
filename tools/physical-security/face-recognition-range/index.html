@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Face Recognition Range *ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0182" />
+  <link rel="stylesheet" href="/assets/style.css?v=phys-face-rec-0405" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -13,8 +13,8 @@
   window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
   </script>
 
-  <script defer src="/assets/auth.js?v=0332"></script>
-  <script defer src="/assets/app.js?v=0332"></script>
+  <script defer src="/assets/auth.js?v=phys-face-rec-0405"></script>
+  <script defer src="/assets/app.js?v=phys-face-rec-0405"></script>
 </head>
 
 <body data-tier="pro" data-category="physical-security" data-step="face-recognition-range" data-lane="v1">
@@ -88,7 +88,10 @@
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
+    <div id="analysis-copy" style="display:none;"></div>
 
     <div class="actions" style="margin-top:16px;">
       <button id="continue" class="btn btn-primary" style="display:none;">
@@ -99,11 +102,12 @@
 
 </main>
 
-<script src="/assets/tool-flow.js"></script>
-<script src="/assets/catalog.js"></script>
-<script src="/assets/pipelines.js"></script>
-<script src="/assets/pipeline.js"></script>
-<script src="./script.js"></script>
+<script src="/assets/tool-flow.js?v=phys-face-rec-0405"></script>
+<script src="/assets/catalog.js?v=phys-face-rec-0405"></script>
+<script src="/assets/pipelines.js?v=phys-face-rec-0405"></script>
+<script src="/assets/pipeline.js?v=phys-face-rec-0405"></script>
+<script src="/assets/analyzer.js?v=phys-face-rec-0405"></script>
+<script src="./script.js?v=phys-face-rec-0405"></script>
 
 </body>
 </html>
