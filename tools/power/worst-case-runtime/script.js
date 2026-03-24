@@ -151,7 +151,6 @@
 
     const worstLoad = input.loadW * input.spikeX;
     const loadPressurePct = (worstLoad / input.upsMaxW) * 100;
-    const deratePenaltyPct = input.healthLossPct + input.tempLossPct;
 
     const overloadMetric = Math.min(loadPressurePct, 100);
     const runtimeLossMetric = Math.min(Math.max(runtimeLossPct, 0), 100);
@@ -223,10 +222,6 @@
       guidance = "Worst-case margin is workable. Use this as the stress-tested planning baseline for final runtime and battery decisions.";
     }
 
-    const baselineLeader = `Baseline ${fmtMin(baselineMin, 1)}`;
-    const worstLeader = `Worst-case ${fmtMin(worstMin, 1)}`;
-    const floorLeader = `Floor ${fmtMin(input.floorMin, 0)}`;
-
     return {
       ok: true,
       ...input,
@@ -238,11 +233,7 @@
       runtimeLossPct,
       worstLoad,
       loadPressurePct,
-      deratePenaltyPct,
       resultClass,
-      baselineLeader,
-      worstLeader,
-      floorLeader,
       status: statusPack.status,
       interpretation,
       dominantConstraint,
@@ -287,22 +278,19 @@
       guidance: data.guidance,
       chart: {
         labels: [
-          "Baseline vs Worst-Case Runtime",
+          "Load Pressure",
           "Runtime Loss",
-          "UPS Load Pressure",
-          "Floor Margin Tightness"
+          "Floor Tightness"
         ],
         values: [
-          Number(Math.min((data.worstMin / Math.max(data.baselineMin, 1)) * 100, 100).toFixed(1)),
+          Number(data.overloadMetric.toFixed(1)),
           Number(data.runtimeLossMetric.toFixed(1)),
-          Number(Math.min(data.loadPressurePct, 100).toFixed(1)),
           Number(data.floorGapMetric.toFixed(1))
         ],
         displayValues: [
-          `${data.baselineLeader} → ${data.worstLeader}`,
-          fmtMin(data.runtimeLossMin, 1),
           fmtPct(data.loadPressurePct, 1),
-          `${data.worstLeader} vs ${data.floorLeader}`
+          fmtMin(data.runtimeLossMin, 1),
+          `${fmtMin(data.worstMin, 1)} vs ${fmtMin(data.floorMin, 0)}`
         ],
         referenceValue: 60,
         healthyMax: 60,
