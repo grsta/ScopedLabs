@@ -4,17 +4,23 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>VPN Overhead Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0331"></script>
-<script defer src="/assets/app.js?v=0331"></script>
+  <meta
+    name="description"
+    content="Estimate delivered throughput, encapsulation overhead, and MTU pressure caused by VPN tunneling."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=net-vpn-overhead-0404" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=net-vpn-overhead-0404"></script>
+  <script defer src="/assets/app.js?v=net-vpn-overhead-0404"></script>
 </head>
 
-<body data-tier="pro" data-category="network">
+<body data-tier="pro" data-category="network" data-tool="vpn-overhead">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -40,7 +46,11 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
     </div>
 
     <h1>VPN Overhead Estimator</h1>
-    <p class="subhead">Estimate throughput and MTU impact caused by VPN encapsulation.</p>
+    <p class="subhead">Estimate delivered throughput, encapsulation loss, and MTU pressure caused by VPN tunneling.</p>
+
+    <p class="tool-best-for">
+      Best for: comparing tunnel choices, understanding goodput loss, and checking whether encapsulation overhead is likely to create fragmentation pressure.
+    </p>
 
     <section class="card tool-card">
       <h2>Inputs</h2>
@@ -78,8 +88,8 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
       </div>
 
       <div class="actions">
-        <button id="calc" class="btn btn-primary">Calculate</button>
-        <button id="reset" class="btn">Reset</button>
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
       </div>
     </section>
 
@@ -88,11 +98,12 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
       <div id="results" class="results">
         <div class="muted">Enter values and press Calculate.</div>
       </div>
+      <div id="analysis-copy" style="display:none;"></div>
     </section>
   </main>
 
-<script src="./script.js"></script>
-  
+  <script src="/assets/analyzer.js?v=net-vpn-overhead-0404"></script>
+  <script src="./script.js?v=net-vpn-overhead-0404"></script>
 </body>
 </html>
 
