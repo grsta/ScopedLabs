@@ -54,6 +54,14 @@
     return (x * Math.PI) / 180;
   }
 
+  function hideContinue() {
+    if (els.continueBtn) els.continueBtn.style.display = "none";
+  }
+
+  function showContinue() {
+    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
+  }
+
   function applyDefaults() {
     els.w.value = String(DEFAULTS.w);
     els.d.value = String(DEFAULTS.d);
@@ -106,7 +114,6 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      continueBtnEl: els.continueBtn,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
       flowKey: KEY,
@@ -114,6 +121,7 @@
       step: STEP,
       emptyMessage: "Enter values and press Check Coverage."
     });
+    hideContinue();
   }
 
   function getInputs() {
@@ -268,7 +276,7 @@
   function renderError(message) {
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    hideContinue();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -325,7 +333,7 @@
     });
 
     writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueBtn);
+    showContinue();
   }
 
   function calc() {
@@ -359,6 +367,7 @@
   }
 
   function init() {
+    hideContinue();
     bind();
     renderFlowNote();
     invalidate();
