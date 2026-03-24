@@ -4,20 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Response Time SLA Checker *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Check whether current and target response times stay inside SLA boundaries and whether latency reserve remains safe."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0183" />
+  <link rel="stylesheet" href="/assets/style.css?v=perf-response-sla-0404" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-    window.SL_SUPABASE_ANON_KEY = "YOUR_KEY_HERE";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
 
-  <script defer src="/assets/auth.js?v=0407"></script>
-  <script defer src="/assets/app.js?v=0407"></script>
+  <script defer src="/assets/auth.js?v=perf-response-sla-0404"></script>
+  <script defer src="/assets/app.js?v=perf-response-sla-0404"></script>
 </head>
 
-<body data-tier="free" data-category="performance" data-step="response-time-sla" data-lane="v1">
+<body data-tier="free" data-category="performance" data-tool="response-time-sla" data-step="response-time-sla" data-lane="v1">
 
 <header class="site-header">
   <div class="container header-inner">
@@ -42,12 +47,10 @@
 
   <h1>Response Time SLA Checker</h1>
 
-  <!-- REQUIRED -->
   <div id="pipeline"></div>
 
   <p class="subhead">Define acceptable latency targets and SLA boundaries for system performance.</p>
 
-  <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
@@ -62,28 +65,28 @@
     <div class="form-grid">
       <label class="field">
         <span class="label">Current Avg Latency (ms)</span>
-        <input id="cur" type="number" step="0.1" value="120">
+        <input id="cur" type="number" min="0" step="0.1" value="120">
       </label>
 
       <label class="field">
         <span class="label">Target Avg Latency (ms)</span>
-        <input id="tgt" type="number" step="0.1" value="180">
+        <input id="tgt" type="number" min="0" step="0.1" value="180">
       </label>
 
       <label class="field">
         <span class="label">SLA Threshold (ms)</span>
-        <input id="sla" type="number" step="0.1" value="200">
+        <input id="sla" type="number" min="0.1" step="0.1" value="200">
       </label>
 
       <label class="field">
         <span class="label">Allowed Error Budget (%)</span>
-        <input id="eb" type="number" step="0.1" value="1">
+        <input id="eb" type="number" min="0" max="100" step="0.1" value="1">
       </label>
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Check SLA</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Check SLA</button>
+      <button id="reset" class="btn" type="button">Reset</button>
     </div>
   </section>
 
@@ -92,9 +95,9 @@
     <div id="results" class="results">
       <div class="muted">Enter values and press Check SLA.</div>
     </div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
-  <!-- REQUIRED -->
   <div id="continue-wrap" class="card" style="display:none;">
     <button id="continue" class="btn btn-primary" disabled>
       Continue → Latency vs Throughput
@@ -102,15 +105,15 @@
   </div>
 </main>
 
-<script src="/assets/tool-flow.js"></script>
-<script src="/assets/catalog.js"></script>
-<script src="/assets/pipelines.js"></script>
-<script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="/assets/tool-flow.js?v=perf-response-sla-0404"></script>
+<script src="/assets/catalog.js?v=perf-response-sla-0404"></script>
+<script src="/assets/pipelines.js?v=perf-response-sla-0404"></script>
+<script src="/assets/pipeline.js?v=perf-response-sla-0404"></script>
+<script src="/assets/analyzer.js?v=perf-response-sla-0404"></script>
+<script src="./script.js?v=perf-response-sla-0404"></script>
 
 </body>
 </html>
-
 
 
 
