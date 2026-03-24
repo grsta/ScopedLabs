@@ -2,9 +2,13 @@
   const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "performance";
   const STEP = "disk-saturation";
+  const PREVIOUS_STEP = "cpu-utilization-impact";
   const NEXT_URL = "/tools/performance/network-congestion/";
 
-  const $ = id => document.getElementById(id);
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     riops: $("riops"),
@@ -15,168 +19,347 @@
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
+    analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("continue-wrap"),
     continueBtn: $("continue")
   };
 
-  function row(label, value){
-    return `<div class="result-row">
-      <span class="result-label">${label}</span>
-      <span class="result-value">${value}</span>
-    </div>`;
+  const DEFAULTS = {
+    riops: 12000,
+    wiops: 6000,
+    iosz: 16,
+    cap: 1500,
+    util: 75
+  };
+
+  function num(value) {
+    return ScopedLabsAnalyzer.safeNumber(value, NaN);
   }
 
-  function hideContinue(){
-    els.continueWrap.style.display = "none";
-    els.continueBtn.disabled = true;
+  function fmt(value, digits = 1) {
+    return Number.isFinite(value) ? value.toFixed(digits) : "—";
   }
 
-  function showContinue(){
-    els.continueWrap.style.display = "";
-    els.continueBtn.disabled = false;
+  function fmtPct(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
-  function clearStored(){
-    sessionStorage.removeItem(STORAGE_KEY);
+  function fmtMBs(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)} MB/s` : "—";
   }
 
-  function invalidate(){
-    clearStored();
-    hideContinue();
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+  function fmtIOPS(value, digits = 0) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)} IOPS` : "—";
   }
 
-  function loadPrior(){
-    let saved = null;
-    try{
-      saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-    }catch{
-      saved = null;
-    }
-
-    els.flowNote.style.display = "none";
-    els.flowNote.innerHTML = "";
-
-    if(!saved || saved.category !== CATEGORY || saved.step !== "cpu-utilization-impact") return;
-
-    const d = saved.data || {};
-
-    const cpuUtilization = Number(d.cpuUtilization);      // fraction
-    const latency = Number(d.latency);
-    const safeUtilization = Number(d.safeUtilization);    // fraction
-
-    // Carry over into inputs
-    if (Number.isFinite(safeUtilization) && safeUtilization > 0) {
-      els.util.value = Math.round(safeUtilization * 100);
-    } else if (Number.isFinite(cpuUtilization) && cpuUtilization > 0) {
-      els.util.value = Math.round(cpuUtilization * 100);
-    }
-
-    // Light heuristic to seed capacity if prior latency was already high
-    if (Number.isFinite(latency)) {
-      if (latency > 150) els.cap.value = 2500;
-      else if (latency > 75) els.cap.value = 2000;
-      else els.cap.value = 1500;
-    }
-
-    els.flowNote.innerHTML = `
-      <strong>Carried over context</strong><br>
-      CPU Utilization: <strong>${Number.isFinite(cpuUtilization) ? (cpuUtilization * 100).toFixed(1) : "—"}%</strong>,
-      Latency: <strong>${Number.isFinite(latency) ? latency.toFixed(1) : "—"} ms</strong>,
-      Recommended Max CPU Util: <strong>${Number.isFinite(safeUtilization) ? (safeUtilization * 100).toFixed(0) : "—"}%</strong>.
-      These values were used to seed the disk target utilization and capacity assumption.
-    `;
-    els.flowNote.style.display = "";
+  function applyDefaults() {
+    els.riops.value = String(DEFAULTS.riops);
+    els.wiops.value = String(DEFAULTS.wiops);
+    els.iosz.value = String(DEFAULTS.iosz);
+    els.cap.value = String(DEFAULTS.cap);
+    els.util.value = String(DEFAULTS.util);
   }
 
-  function calc(){
-    const riops = parseFloat(els.riops.value);
-    const wiops = parseFloat(els.wiops.value);
-    const iosz = parseFloat(els.iosz.value);
-    const cap = parseFloat(els.cap.value);
-    const util = parseFloat(els.util.value) / 100;
-
-    if(!Number.isFinite(riops) || !Number.isFinite(wiops) || !Number.isFinite(iosz) || !Number.isFinite(cap) || !Number.isFinite(util)){
-      els.results.innerHTML = row("Status", "Invalid input");
-      hideContinue();
-      clearStored();
-      return;
-    }
-
-    const totalIops = riops + wiops;
-    const mbps = (totalIops * iosz) / 1024;
-
-    const pct = (mbps / cap) * 100;
-    const maxAtTarget = cap * util;
-
-    const status = mbps <= maxAtTarget
-      ? "WITHIN TARGET"
-      : "SATURATED / RISK";
-
-    const interpretation =
-      pct < 50
-        ? "Disk has significant headroom."
-        : pct < 75
-          ? "Disk utilization is moderate. Monitor growth."
-          : pct < 90
-            ? "Disk nearing saturation. Performance degradation likely."
-            : "Disk is saturated. Storage is now a bottleneck.";
-
-    els.results.innerHTML = [
-      row("Total IOPS", totalIops.toFixed(0)),
-      row("Throughput", `${mbps.toFixed(1)} MB/s`),
-      row("Capacity", `${cap.toFixed(0)} MB/s`),
-      row("Utilization", `${pct.toFixed(1)}%`),
-      row("Target Limit", `${maxAtTarget.toFixed(0)} MB/s`),
-      row("Status", status),
-      row("Engineering Interpretation", interpretation)
-    ].join("");
-
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: STORAGE_KEY,
       category: CATEGORY,
       step: STEP,
-      data: {
-        totalIops,
-        throughput: mbps,
-        utilization: pct / 100,
-        targetUtilization: util,
-        capacityMBps: cap,
-        saturated: mbps > maxAtTarget
-      }
-    }));
-
-    showContinue();
-  }
-
-  function reset(){
-    els.riops.value = 12000;
-    els.wiops.value = 6000;
-    els.iosz.value = 16;
-    els.cap.value = 1500;
-    els.util.value = 75;
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-    clearStored();
-    hideContinue();
-    loadPrior();
-  }
-
-  function bind(){
-    [els.riops, els.wiops, els.iosz, els.cap, els.util].forEach(el => {
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      emptyMessage: "Enter values and press Calculate."
     });
   }
 
-  function init(){
-    hideContinue();
-    loadPrior();
-    bind();
+  function loadPrior() {
+    const flow = ScopedLabsAnalyzer.renderFlowNote({
+      flowEl: els.flowNote,
+      flowKey: STORAGE_KEY,
+      category: CATEGORY,
+      step: STEP,
+      title: "Carried over context",
+      intro: "This step checks whether storage throughput becomes the next active limiter after processor-side pressure has already been estimated."
+    });
 
-    els.calc.onclick = calc;
-    els.reset.onclick = reset;
-    els.continueBtn.onclick = () => window.location.href = NEXT_URL;
+    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+
+    const d = flow.data || {};
+
+    const currentCpu = num(d.currentCpuUtilizationPct);
+    const targetCpu = num(d.targetCpuUtilizationPct);
+    const targetLatency = num(d.targetLatencyMs);
+    const safeCpu = num(d.safeCpuUtilizationPct);
+
+    if (Number.isFinite(safeCpu) && safeCpu > 0) {
+      els.util.value = String(Math.round(safeCpu));
+    } else if (Number.isFinite(targetCpu) && targetCpu > 0) {
+      els.util.value = String(Math.round(targetCpu));
+    }
+
+    if (Number.isFinite(targetLatency)) {
+      if (targetLatency > 200) els.cap.value = "2500";
+      else if (targetLatency > 100) els.cap.value = "2000";
+      else if (targetLatency > 50) els.cap.value = "1700";
+      else els.cap.value = "1500";
+    }
+
+    const parts = [];
+    if (Number.isFinite(currentCpu)) parts.push(`Current CPU: <strong>${fmtPct(currentCpu)}</strong>`);
+    if (Number.isFinite(targetCpu)) parts.push(`Target CPU: <strong>${fmtPct(targetCpu)}</strong>`);
+    if (Number.isFinite(targetLatency)) parts.push(`Target Latency: <strong>${fmt(targetLatency, 1)} ms</strong>`);
+    if (Number.isFinite(safeCpu)) parts.push(`Safe CPU Ceiling: <strong>${fmtPct(safeCpu)}</strong>`);
+
+    els.flowNote.style.display = "";
+    els.flowNote.innerHTML = `
+      <strong>Carried over context</strong><br>
+      ${parts.join(", ")}.
+      These values were used to seed the disk target utilization and storage-capacity assumption.
+    `;
   }
 
-  init();
+  function getInputs() {
+    const riops = num(els.riops.value);
+    const wiops = num(els.wiops.value);
+    const iosz = num(els.iosz.value);
+    const cap = num(els.cap.value);
+    const util = num(els.util.value);
+
+    if (
+      !Number.isFinite(riops) || riops < 0 ||
+      !Number.isFinite(wiops) || wiops < 0 ||
+      !Number.isFinite(iosz) || iosz <= 0 ||
+      !Number.isFinite(cap) || cap <= 0 ||
+      !Number.isFinite(util) || util <= 0 || util > 95
+    ) {
+      return { ok: false, message: "Enter valid values and press Calculate." };
+    }
+
+    return { ok: true, riops, wiops, iosz, cap, util };
+  }
+
+  function calculateModel() {
+    const input = getInputs();
+    if (!input.ok) return input;
+
+    const totalIops = input.riops + input.wiops;
+    const throughput = (totalIops * input.iosz) / 1024;
+    const utilizationPct = (throughput / input.cap) * 100;
+    const targetLimitMBs = input.cap * (input.util / 100);
+
+    const throughputPressure = utilizationPct;
+    const headroomDeficitPct = Math.max(0, utilizationPct - input.util);
+    const saturationOverrunPct = Math.max(0, utilizationPct - 90) * 2;
+    const readWriteImbalancePct =
+      totalIops > 0 ? Math.abs(input.riops - input.wiops) / totalIops * 100 : 0;
+
+    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore: Math.max(throughputPressure - 40, headroomDeficitPct * 2, saturationOverrunPct),
+      metrics: [
+        {
+          label: "Throughput Pressure",
+          value: throughputPressure,
+          displayValue: fmtPct(utilizationPct)
+        },
+        {
+          label: "Headroom Deficit",
+          value: headroomDeficitPct * 2,
+          displayValue: fmtPct(headroomDeficitPct)
+        },
+        {
+          label: "Saturation Overrun",
+          value: saturationOverrunPct,
+          displayValue: fmtMBs(throughput)
+        }
+      ],
+      healthyMax: 35,
+      watchMax: 70
+    });
+
+    let diskClass = "COMFORTABLE";
+    if (statusPack.status === "WATCH") diskClass = "ELEVATED";
+    if (statusPack.status === "RISK") diskClass = "SATURATED";
+
+    const dominantLabel = statusPack.dominant.label;
+
+    let interpretation = `The workload drives approximately ${fmtMBs(throughput)} of disk throughput from ${fmtIOPS(totalIops)} at an average IO size of ${fmt(input.iosz, 1)} KB. That places storage utilization at ${fmtPct(utilizationPct)} against a capacity of ${fmtMBs(input.cap)}.`;
+
+    if (statusPack.status === "RISK") {
+      interpretation += ` The dominant storage pressure is already in a risk band, which means the disk tier is no longer just busy — it is approaching a point where queueing, service-time inflation, and application-visible slowdown become likely.`;
+    } else if (statusPack.status === "WATCH") {
+      interpretation += ` Storage remains usable, but the pressure profile is already elevated enough that moderate growth or burst activity can push the disk tier into a visible bottleneck state.`;
+    } else {
+      interpretation += ` Storage remains in a controlled band, so the workload does not yet indicate a severe throughput-side saturation problem under the current assumptions.`;
+    }
+
+    let dominantConstraint = "";
+    if (dominantLabel === "Throughput Pressure") {
+      dominantConstraint = "Throughput pressure is the dominant limiter. The main concern is the raw fraction of available disk bandwidth the workload is already consuming.";
+    } else if (dominantLabel === "Headroom Deficit") {
+      dominantConstraint = "Headroom deficit is the dominant limiter. The design is exceeding the intended operating band even before absolute saturation is reached, so resilience is already being consumed.";
+    } else {
+      dominantConstraint = "Saturation overrun is the dominant limiter. The biggest practical risk is that storage is being pushed far enough that service time and queueing behavior can degrade sharply.";
+    }
+
+    let guidance = "";
+    if (statusPack.status === "RISK") {
+      guidance = "Treat storage as the active bottleneck candidate. Validate queue depth, latency, controller contention, and read/write amplification before assuming the next subsystem in the stack is the primary issue.";
+    } else if (statusPack.status === "WATCH") {
+      guidance = "Disk pressure is rising. Confirm whether this load is sustained or bursty and whether the throughput assumptions reflect real production peak behavior rather than averages.";
+    } else {
+      guidance = "Disk capacity is balanced for the current model. Continue into Network Congestion next to determine whether the path beyond storage becomes the next limiting layer.";
+    }
+
+    return {
+      ok: true,
+      totalIops,
+      throughput,
+      utilizationPct,
+      targetLimitMBs,
+      headroomMBs: targetLimitMBs - throughput,
+      targetUtilizationPct: input.util,
+      capacityMBs: input.cap,
+      ioszKB: input.iosz,
+      readIops: input.riops,
+      writeIops: input.wiops,
+      readWriteImbalancePct,
+      diskClass,
+      status: statusPack.status,
+      interpretation,
+      dominantConstraint,
+      guidance,
+      throughputPressure,
+      headroomDeficitPct,
+      saturationOverrunPct
+    };
+  }
+
+  function writeFlow(data) {
+    ScopedLabsAnalyzer.writeFlow(STORAGE_KEY, {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        totalIops: data.totalIops,
+        throughputMBps: data.throughput,
+        diskUtilizationPct: data.utilizationPct,
+        targetUtilizationPct: data.targetUtilizationPct,
+        capacityMBps: data.capacityMBs,
+        diskClass: data.diskClass,
+        saturated: data.status === "RISK"
+      }
+    });
+  }
+
+  function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    els.results.innerHTML = `<div class="muted">${message}</div>`;
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+  }
+
+  function renderSuccess(data) {
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      summaryRows: [
+        { label: "Total IOPS", value: fmtIOPS(data.totalIops) },
+        { label: "Throughput", value: fmtMBs(data.throughput) },
+        { label: "Utilization", value: fmtPct(data.utilizationPct) },
+        { label: "Disk Class", value: data.diskClass }
+      ],
+      derivedRows: [
+        { label: "Capacity", value: fmtMBs(data.capacityMBs) },
+        { label: "Target Limit", value: fmtMBs(data.targetLimitMBs) },
+        { label: "Headroom", value: fmtMBs(data.headroomMBs) },
+        { label: "Read IOPS", value: fmtIOPS(data.readIops) },
+        { label: "Write IOPS", value: fmtIOPS(data.writeIops) },
+        { label: "Read/Write Imbalance", value: fmtPct(data.readWriteImbalancePct) }
+      ],
+      status: data.status,
+      interpretation: data.interpretation,
+      dominantConstraint: data.dominantConstraint,
+      guidance: data.guidance,
+      chart: {
+        labels: [
+          "Throughput Pressure",
+          "Headroom Deficit",
+          "Saturation Overrun"
+        ],
+        values: [
+          Number(data.throughputPressure.toFixed(1)),
+          Number((data.headroomDeficitPct * 2).toFixed(1)),
+          Number(data.saturationOverrunPct.toFixed(1))
+        ],
+        displayValues: [
+          fmtPct(data.utilizationPct),
+          fmtPct(data.headroomDeficitPct),
+          fmtMBs(data.throughput)
+        ],
+        referenceValue: 35,
+        healthyMax: 35,
+        watchMax: 70,
+        axisTitle: "Storage Saturation Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          100,
+          Math.ceil(
+            Math.max(
+              data.throughputPressure,
+              data.headroomDeficitPct * 2,
+              data.saturationOverrunPct,
+              70
+            ) * 1.12
+          )
+        )
+      }
+    });
+
+    writeFlow(data);
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+  }
+
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) {
+      renderError(data.message);
+      return;
+    }
+    renderSuccess(data);
+  }
+
+  function reset() {
+    applyDefaults();
+    loadPrior();
+    invalidate();
+  }
+
+  function bind() {
+    [els.riops, els.wiops, els.iosz, els.cap, els.util].forEach((el) => {
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+
+    els.calc.addEventListener("click", calc);
+    els.reset.addEventListener("click", reset);
+    els.continueBtn.addEventListener("click", () => {
+      window.location.href = NEXT_URL;
+    });
+  }
+
+  function init() {
+    bind();
+    loadPrior();
+    invalidate();
+  }
+
+  window.addEventListener("DOMContentLoaded", init);
 })();

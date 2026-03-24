@@ -4,20 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Disk Saturation Estimator *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate disk saturation from IOPS and throughput against storage bandwidth limits and target utilization."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0189" />
+  <link rel="stylesheet" href="/assets/style.css?v=perf-disk-saturation-0404" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
 
-  <script defer src="/assets/auth.js?v=0339"></script>
-  <script defer src="/assets/app.js?v=0339"></script>
+  <script defer src="/assets/auth.js?v=perf-disk-saturation-0404"></script>
+  <script defer src="/assets/app.js?v=perf-disk-saturation-0404"></script>
 </head>
 
-<body data-tier="pro" data-category="performance" data-step="disk-saturation" data-lane="v1">
+<body data-tier="pro" data-category="performance" data-tool="disk-saturation" data-step="disk-saturation" data-lane="v1">
 
 <header class="site-header">
   <div class="container header-inner">
@@ -45,13 +50,13 @@
 
   <div id="pipeline"></div>
 
-  <p class="subhead">Estimate disk utilization from IOPS and throughput against device capacity.</p>
+  <p class="subhead">Estimate disk pressure from IOPS and throughput against device capacity.</p>
 
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
     <p class="tool-best-for">
-      <strong>Best for:</strong> determining whether storage becomes the limiting factor under workload throughput.
+      <strong>Best for:</strong> determining whether storage bandwidth becomes the next bottleneck after CPU pressure has already been evaluated upstream.
     </p>
   </section>
 
@@ -61,33 +66,33 @@
     <div class="form-grid">
       <label class="field">
         <span class="label">Read IOPS</span>
-        <input id="riops" type="number" value="12000">
+        <input id="riops" type="number" min="0" step="1" value="12000">
       </label>
 
       <label class="field">
         <span class="label">Write IOPS</span>
-        <input id="wiops" type="number" value="6000">
+        <input id="wiops" type="number" min="0" step="1" value="6000">
       </label>
 
       <label class="field">
         <span class="label">Avg IO Size (KB)</span>
-        <input id="iosz" type="number" value="16">
+        <input id="iosz" type="number" min="0.1" step="0.1" value="16">
       </label>
 
       <label class="field">
         <span class="label">Disk Throughput Capacity (MB/s)</span>
-        <input id="cap" type="number" value="1500">
+        <input id="cap" type="number" min="0.1" step="1" value="1500">
       </label>
 
       <label class="field">
         <span class="label">Target Utilization (%)</span>
-        <input id="util" type="number" value="75">
+        <input id="util" type="number" min="1" max="95" step="0.1" value="75">
       </label>
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
     </div>
   </section>
 
@@ -96,6 +101,7 @@
     <div id="results" class="results">
       <div class="muted">Enter values and press Calculate.</div>
     </div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
   <div id="continue-wrap" class="card" style="display:none;">
@@ -106,11 +112,12 @@
 
 </main>
 
-<script src="/assets/tool-flow.js"></script>
-<script src="/assets/catalog.js"></script>
-<script src="/assets/pipelines.js"></script>
-<script src="/assets/pipeline.js"></script>
-<script src="./script.js"></script>
+<script src="/assets/tool-flow.js?v=perf-disk-saturation-0404"></script>
+<script src="/assets/catalog.js?v=perf-disk-saturation-0404"></script>
+<script src="/assets/pipelines.js?v=perf-disk-saturation-0404"></script>
+<script src="/assets/pipeline.js?v=perf-disk-saturation-0404"></script>
+<script src="/assets/analyzer.js?v=perf-disk-saturation-0404"></script>
+<script src="./script.js?v=perf-disk-saturation-0404"></script>
 
 </body>
 </html>
