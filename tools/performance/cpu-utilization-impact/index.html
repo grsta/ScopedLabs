@@ -4,20 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CPU Utilization Impact *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate latency blow-up as CPU utilization approaches saturation and determine whether processor headroom remains safe."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0182" />
+  <link rel="stylesheet" href="/assets/style.css?v=perf-cpu-impact-0404" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
 
-  <script defer src="/assets/auth.js?v=0332"></script>
-  <script defer src="/assets/app.js?v=0332"></script>
+  <script defer src="/assets/auth.js?v=perf-cpu-impact-0404"></script>
+  <script defer src="/assets/app.js?v=perf-cpu-impact-0404"></script>
 </head>
 
-<body data-tier="pro" data-category="performance" data-step="cpu-utilization-impact" data-lane="v1">
+<body data-tier="pro" data-category="performance" data-tool="cpu-utilization-impact" data-step="cpu-utilization-impact" data-lane="v1">
 
 <header class="site-header">
   <div class="container header-inner">
@@ -43,17 +48,15 @@
 
   <h1>CPU Utilization Impact</h1>
 
-  <!-- REQUIRED -->
   <div id="pipeline"></div>
 
-  <p class="subhead">Estimate latency blow-up as utilization approaches saturation.</p>
+  <p class="subhead">Estimate latency blow-up as CPU utilization approaches saturation.</p>
 
-  <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
     <p class="tool-best-for">
-      <strong>Best for:</strong> identifying when CPU becomes the dominant bottleneck and how close the system is to saturation.
+      <strong>Best for:</strong> identifying when CPU becomes the dominant bottleneck and how close the system is to saturation after concurrency gains have already been estimated.
     </p>
   </section>
 
@@ -63,28 +66,28 @@
     <div class="form-grid">
       <label class="field">
         <span class="label">Current CPU Utilization (%)</span>
-        <input id="u" type="number" value="65">
+        <input id="u" type="number" min="0" max="100" step="0.1" value="65">
       </label>
 
       <label class="field">
         <span class="label">Target CPU Utilization (%)</span>
-        <input id="u2" type="number" value="85">
+        <input id="u2" type="number" min="0" max="100" step="0.1" value="85">
       </label>
 
       <label class="field">
         <span class="label">Baseline Latency (ms)</span>
-        <input id="lat" type="number" step="0.1" value="25">
+        <input id="lat" type="number" min="0" step="0.1" value="25">
       </label>
 
       <label class="field">
         <span class="label">Headroom Target (%)</span>
-        <input id="head" type="number" value="20">
+        <input id="head" type="number" min="0" max="95" step="0.1" value="20">
       </label>
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
     </div>
   </section>
 
@@ -93,9 +96,9 @@
     <div id="results" class="results">
       <div class="muted">Enter values and press Calculate.</div>
     </div>
+    <div id="analysis-copy" style="display:none;"></div>
   </section>
 
-  <!-- REQUIRED -->
   <div id="continue-wrap" class="card" style="display:none;">
     <button id="continue" class="btn btn-primary" disabled>
       Continue → Disk Saturation
@@ -104,11 +107,12 @@
 
 </main>
 
-<script src="/assets/tool-flow.js"></script>
-<script src="/assets/catalog.js"></script>
-<script src="/assets/pipelines.js"></script>
-<script src="/assets/pipeline.js"></script>
-<script src="./script.js"></script>
+<script src="/assets/tool-flow.js?v=perf-cpu-impact-0404"></script>
+<script src="/assets/catalog.js?v=perf-cpu-impact-0404"></script>
+<script src="/assets/pipelines.js?v=perf-cpu-impact-0404"></script>
+<script src="/assets/pipeline.js?v=perf-cpu-impact-0404"></script>
+<script src="/assets/analyzer.js?v=perf-cpu-impact-0404"></script>
+<script src="./script.js?v=perf-cpu-impact-0404"></script>
 
 </body>
 </html>
