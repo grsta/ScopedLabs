@@ -33,10 +33,6 @@
     return value.toFixed(decimals);
   }
 
-  function fmtPct(value, decimals = 1) {
-    return Number.isFinite(value) ? `${value.toFixed(decimals)}%` : "—";
-  }
-
   function impactLabel(status) {
     if (status === "RISK") return "Critical restoration priority";
     if (status === "WATCH") return "Elevated restoration priority";
@@ -79,31 +75,31 @@
 
     const sitePressure = Math.min(sites * 12, 36);
     const userPressure = Math.min(users * 0.8, 32);
+    const scalePressure = sitePressure + userPressure;
 
     let appPressure = 0;
     if (apps === "basic") appPressure = 10;
     if (apps === "mixed") appPressure = 20;
     if (apps === "critical") appPressure = 32;
 
-    let failoverRelief = 0;
-    if (failover === "yes") failoverRelief = 18;
-    if (failover === "partial") failoverRelief = 8;
-    if (failover === "no") failoverRelief = 0;
+    let failoverPenalty = 0;
+    if (failover === "yes") failoverPenalty = 8;
+    if (failover === "partial") failoverPenalty = 18;
+    if (failover === "no") failoverPenalty = 26;
 
     const durationPressure = Math.min((minutes / 60) * 6, 24);
 
-    const preFailoverScore = sitePressure + userPressure + appPressure + durationPressure;
+    const failoverRelief = failover === "yes" ? 18 : failover === "partial" ? 8 : 0;
+    const preFailoverScore = scalePressure + appPressure + durationPressure;
     const finalScore = ScopedLabsAnalyzer.clamp(preFailoverScore - failoverRelief, 0, 100);
 
-    const failoverPenalty = failoverRelief === 0 ? 26 : failover === "partial" ? 18 : 8;
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: finalScore,
+      compositeScore: Math.max(scalePressure, appPressure, failoverPenalty, durationPressure),
       metrics: [
         {
           label: "Scale Pressure",
-          value: sitePressure + userPressure,
-          displayValue: `${fmt(sitePressure + userPressure, 0)} pts`
+          value: scalePressure,
+          displayValue: `${fmt(scalePressure, 0)} pts`
         },
         {
           label: "Application Criticality",
@@ -129,22 +125,22 @@
     const impactClass = impactLabel(statusPack.status);
     const dominantLabel = statusPack.dominant.label;
 
-    let interpretation = `The modeled outage impact score is ${fmt(finalScore, 0)} / 100 for ${sites} affected site${sites === 1 ? "" : "s"} and ${users} affected user${users === 1 ? "" : "s"}, with an expected outage duration of ${fmt(minutes, 0)} minutes.`;
+    let interpretation = `The modeled outage impact score is ${fmt(finalScore, 0)} / 100 for ${sites} affected site${sites === 1 ? "" : "s"} and ${users} affected user${users === 1 ? "" : "s"}, with an expected outage duration of ${fmt(minutes, 0)} minutes. The active severity band is being set by ${dominantLabel.toLowerCase()}, which is the strongest operational pressure in the current model.`;
 
     if (failover === "no") {
       interpretation += " There is no alternate transport path, so this is a full dependency failure rather than a degraded-capacity event.";
     } else if (failover === "partial") {
       interpretation += " Partial failover exists, but it does not fully remove risk because limited backup bandwidth often preserves connectivity while still degrading business-critical workflows.";
     } else {
-      interpretation += " Full failover materially reduces impact, but it does not eliminate operational pressure if the applications behind the link are latency- or continuity-sensitive.";
+      interpretation += " Full failover materially reduces blended impact, but it does not eliminate operational pressure if the applications behind the link are latency- or continuity-sensitive.";
     }
 
     if (statusPack.status === "RISK") {
-      interpretation += " This is firmly in a high-consequence band. Users are likely to feel the outage as a business interruption, not just a technical inconvenience.";
+      interpretation += " The dominant pressure is already in a risk band, so the outage should be treated as a high-consequence event even before secondary factors are added together.";
     } else if (statusPack.status === "WATCH") {
-      interpretation += " The outage is meaningful enough that restoration priority should be elevated, especially if multiple functions depend on the same path.";
+      interpretation += " The dominant pressure is elevated enough that restoration priority should be higher than a routine connectivity issue, especially if conditions worsen or multiple dependencies stack behind the same uplink.";
     } else {
-      interpretation += " The outage is still operationally relevant, but the modeled conditions suggest it is more contained than broadly disruptive.";
+      interpretation += " No single pressure source is dominating the model aggressively, so the outage remains more contained than broadly disruptive under the assumptions entered here.";
     }
 
     let dominantConstraint = "";
@@ -172,6 +168,7 @@
       input,
       sitePressure,
       userPressure,
+      scalePressure,
       appPressure,
       failoverPenalty,
       durationPressure,
@@ -210,7 +207,7 @@
         { label: "Application Profile", value: input.apps.toUpperCase() },
         { label: "Failover State", value: input.failover.toUpperCase() },
         { label: "Outage Duration", value: `${fmt(input.minutes, 0)} min` },
-        { label: "Scale Pressure", value: `${fmt(data.sitePressure + data.userPressure, 0)} pts` },
+        { label: "Scale Pressure", value: `${fmt(data.scalePressure, 0)} pts` },
         { label: "Application Criticality Pressure", value: `${fmt(data.appPressure, 0)} pts` },
         { label: "Failover Weakness Pressure", value: `${fmt(data.failoverPenalty, 0)} pts` },
         { label: "Duration Pressure", value: `${fmt(data.durationPressure, 0)} pts` },
@@ -228,13 +225,13 @@
           "Duration Pressure"
         ],
         values: [
-          Number((data.sitePressure + data.userPressure).toFixed(1)),
+          Number(data.scalePressure.toFixed(1)),
           Number(data.appPressure.toFixed(1)),
           Number(data.failoverPenalty.toFixed(1)),
           Number(data.durationPressure.toFixed(1))
         ],
         displayValues: [
-          `${fmt(data.sitePressure + data.userPressure, 0)} pts`,
+          `${fmt(data.scalePressure, 0)} pts`,
           input.apps.toUpperCase(),
           input.failover.toUpperCase(),
           `${fmt(input.minutes, 0)} min`
@@ -251,7 +248,7 @@
           80,
           Math.ceil(
             Math.max(
-              data.sitePressure + data.userPressure,
+              data.scalePressure,
               data.appPressure,
               data.failoverPenalty,
               data.durationPressure,
