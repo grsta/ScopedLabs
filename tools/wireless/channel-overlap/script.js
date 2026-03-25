@@ -14,26 +14,56 @@
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
+    analysisCopy: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("continue-wrap"),
     continueBtn: $("continue")
   };
 
-  function resultRow(label, value) {
-    return `
-      <div class="result-row">
-        <div class="result-label">${label}</div>
-        <div class="result-value">${value}</div>
-      </div>
-    `;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
+
+  function safeNumber(value, fallback = 0) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
+    }
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function clamp(value, min, max) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clamp === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.clamp(value, min, max);
+    }
+    return Math.min(max, Math.max(min, value));
   }
 
   function hideContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
     els.continueWrap.style.display = "none";
     els.continueBtn.disabled = true;
   }
 
   function showContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.showContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
     els.continueWrap.style.display = "";
     els.continueBtn.disabled = false;
   }
@@ -42,15 +72,68 @@
     sessionStorage.removeItem(STORAGE_KEY);
   }
 
+  function clearAnalysisBlock() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+      return;
+    }
+    if (els.analysisCopy) {
+      els.analysisCopy.style.display = "none";
+      els.analysisCopy.innerHTML = "";
+    }
+  }
+
+  function clearChart() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearChart === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+      return;
+    }
+
+    if (chartRef.current) {
+      try { chartRef.current.destroy(); } catch {}
+      chartRef.current = null;
+    }
+
+    if (chartWrapRef.current && chartWrapRef.current.parentNode) {
+      chartWrapRef.current.parentNode.removeChild(chartWrapRef.current);
+      chartWrapRef.current = null;
+    }
+  }
+
+  function renderEmpty() {
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    clearAnalysisBlock();
+    clearChart();
+  }
+
   function invalidate() {
     clearStoredResult();
     hideContinue();
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-  }
 
-  function safeNumber(value) {
-    const n = Number(value);
-    return Number.isFinite(n) ? n : NaN;
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.invalidate === "function"
+    ) {
+      window.ScopedLabsAnalyzer.invalidate({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
+        category: CATEGORY,
+        step: STEP,
+        emptyMessage: "Enter values and press Calculate."
+      });
+    } else {
+      renderEmpty();
+    }
+
+    clearChart();
   }
 
   function bandLabel(value) {
@@ -131,6 +214,34 @@
     return `${bandText} ${widthText} ${countText} ${radiusText} ${planClass}. ${reuseClass}. ${classText}`;
   }
 
+  function buildGuidance(status, dominantConstraint) {
+    if (status === "HEALTHY") {
+      return `Carry this channel plan forward into the noise-floor step, but keep AP power and cell size disciplined so the reuse model stays true in the field.`;
+    }
+
+    if (status === "WATCH") {
+      if (dominantConstraint === "Reuse pressure") {
+        return `Reduce AP overlap, tighten cell edges, or increase available channel count where possible. Reuse is already becoming influential enough to affect airtime quality.`;
+      }
+
+      if (dominantConstraint === "Channel scarcity") {
+        return `Protect channel count before increasing AP density further. Width choice or band choice is compressing the channel pool enough that contention risk will rise quickly.`;
+      }
+
+      return `Use more conservative width planning or stronger spatial separation before treating the layout as comfortable. The design is workable, but it is beginning to depend on tighter RF discipline.`;
+    }
+
+    if (dominantConstraint === "Reuse pressure") {
+      return `Rework AP density or cell overlap before continuing. The present reuse level is too aggressive to assume stable performance without careful tuning.`;
+    }
+
+    if (dominantConstraint === "Channel scarcity") {
+      return `Increase usable channel count or reduce width before deployment. The channel plan is too constrained to support this density comfortably.`;
+    }
+
+    return `Treat this layout as a high-contention design until channel width, reuse, or AP spacing are improved.`;
+  }
+
   function loadPriorContext() {
     els.flowNote.style.display = "none";
     els.flowNote.innerHTML = "";
@@ -150,6 +261,39 @@
     const radiusFt = Number(data.estimatedRadiusFt);
     const areaSqFt = Number(data.estimatedCellAreaSqFt);
 
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderFlowNote({
+        flowEl: els.flowNote,
+        category: CATEGORY,
+        step: STEP,
+        title: "System Context",
+        intro:
+          "Coverage Radius estimated the likely cell footprint. Use this step to check whether that coverage plan is likely to create unhealthy channel reuse.",
+        customRows: [
+          {
+            label: "Band",
+            value: band
+          },
+          {
+            label: "Environment",
+            value: environment
+          },
+          {
+            label: "Estimated radius",
+            value: Number.isFinite(radiusFt) ? `${radiusFt.toFixed(1)} ft` : "—"
+          },
+          {
+            label: "Estimated cell area",
+            value: Number.isFinite(areaSqFt) ? `${areaSqFt.toFixed(0)} sq ft` : "—"
+          }
+        ]
+      });
+      return;
+    }
+
     els.flowNote.innerHTML = `
       <strong>Carried over context</strong><br>
       Coverage Radius estimated <strong>${Number.isFinite(radiusFt) ? radiusFt.toFixed(1) : "—"} ft</strong> radius
@@ -168,16 +312,15 @@
   function calculate() {
     const band = els.band.value;
     const width = els.width.value;
-    const aps = Math.max(1, safeNumber(els.aps.value));
-    const ch = Math.max(1, safeNumber(els.ch.value));
+    const aps = clamp(safeNumber(els.aps.value, NaN), 1, 100000);
+    const ch = clamp(safeNumber(els.ch.value, NaN), 1, 100000);
 
     if (!Number.isFinite(aps) || !Number.isFinite(ch)) {
-      els.results.innerHTML = [
-        resultRow("Status", "Invalid input"),
-        resultRow("Engineering Interpretation", "Enter valid numeric values for AP count and available channels so reuse pressure can be estimated correctly.")
-      ].join("");
+      els.results.innerHTML = `<div class="muted">Enter valid numeric values and press Calculate.</div>`;
+      clearAnalysisBlock();
       hideContinue();
       clearStoredResult();
+      clearChart();
       return;
     }
 
@@ -200,6 +343,58 @@
     const reuseClass = classifyReuse(reuse);
     const planClass = classifyChannelPlan(ch, suggested);
     const overlapRiskPct = Math.min(100, Math.max(0, ((reuse - 1) / 3) * 100));
+
+    const reusePressure = reuse / 1.5;
+    const channelScarcityPressure = suggested / ch;
+    const widthPressure =
+      width === "20" ? 0.8 :
+      width === "40" ? 1.1 :
+      width === "80" ? 1.6 :
+      2.2;
+
+    const metrics = [
+      {
+        label: "Reuse pressure",
+        value: reusePressure,
+        displayValue: `${reuse.toFixed(2)}`
+      },
+      {
+        label: "Channel scarcity",
+        value: channelScarcityPressure,
+        displayValue: `${ch.toFixed(0)} / ${suggested}`
+      },
+      {
+        label: "Width pressure",
+        value: widthPressure,
+        displayValue: `${width} MHz`
+      }
+    ];
+
+    let status = "HEALTHY";
+    let dominantLabel = "Reuse pressure";
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+    ) {
+      const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+        metrics,
+        healthyMax: 1.0,
+        watchMax: 1.5
+      });
+      status = resolved?.status || "HEALTHY";
+      dominantLabel = resolved?.dominant?.label || "Reuse pressure";
+    }
+
+    const dominantConstraintMap = {
+      "Reuse pressure": "Reuse pressure",
+      "Channel scarcity": "Channel scarcity",
+      "Width pressure": "Width pressure"
+    };
+
+    const dominantConstraint =
+      dominantConstraintMap[dominantLabel] || "Reuse pressure";
+
     const interpretation = buildInterpretation({
       band,
       width,
@@ -211,17 +406,81 @@
       priorRadiusFt
     });
 
-    els.results.innerHTML = [
-      resultRow("Band / Width", `${bandLabel(band)} / ${width} MHz`),
-      resultRow("AP Count", `${aps.toFixed(0)}`),
-      resultRow("Channels Provided", `${ch.toFixed(0)}`),
-      resultRow("Suggested Channels (Typical)", `${suggested}`),
-      resultRow("Average Reuse (APs per Channel)", `${reuse.toFixed(2)}`),
-      resultRow("Status", reuseClass),
-      resultRow("Channel Plan", planClass),
-      resultRow("Overlap Risk", `${overlapRiskPct.toFixed(0)}%`),
-      resultRow("Engineering Interpretation", interpretation)
-    ].join("");
+    const guidance = buildGuidance(status, dominantConstraint);
+
+    const summaryRows = [
+      { label: "Band / Width", value: `${bandLabel(band)} / ${width} MHz` },
+      { label: "AP Count", value: `${aps.toFixed(0)}` },
+      { label: "Channels Provided", value: `${ch.toFixed(0)}` },
+      { label: "Suggested Channels (Typical)", value: `${suggested}` }
+    ];
+
+    const derivedRows = [
+      { label: "Average Reuse (APs per Channel)", value: `${reuse.toFixed(2)}` },
+      { label: "Status", value: reuseClass },
+      { label: "Channel Plan", value: planClass },
+      { label: "Overlap Risk", value: `${overlapRiskPct.toFixed(0)}%` }
+    ];
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderOutput({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        summaryRows,
+        derivedRows,
+        status,
+        interpretation,
+        dominantConstraint,
+        guidance
+      });
+    } else {
+      const fallbackRows = summaryRows.concat(derivedRows, [
+        { label: "Engineering Interpretation", value: interpretation },
+        { label: "Actionable Guidance", value: guidance }
+      ]);
+
+      els.results.innerHTML = fallbackRows.map((row) => `
+        <div class="result-row">
+          <div class="result-label">${row.label}</div>
+          <div class="result-value">${row.value}</div>
+        </div>
+      `).join("");
+    }
+
+    clearChart();
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderAnalyzerChart({
+        mountEl: els.results,
+        existingChartRef: chartRef,
+        existingWrapRef: chartWrapRef,
+        labels: ["Reuse Pressure", "Channel Scarcity", "Width Pressure"],
+        values: [reusePressure, channelScarcityPressure, widthPressure],
+        displayValues: [
+          `${reuse.toFixed(2)}`,
+          `${ch.toFixed(0)} / ${suggested}`,
+          `${width} MHz`
+        ],
+        referenceValue: 1.0,
+        healthyMax: 1.0,
+        watchMax: 1.5,
+        axisTitle: "Overlap Pressure",
+        referenceLabel: "Healthy Threshold",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          3,
+          Math.ceil(Math.max(reusePressure, channelScarcityPressure, widthPressure, 1.5) * 1.15 * 10) / 10
+        )
+      });
+    }
 
     const payload = {
       category: CATEGORY,
@@ -238,7 +497,9 @@
         channelPlanClass: planClass,
         overlapRiskPct: Number(overlapRiskPct.toFixed(0)),
         priorRadiusFt: Number.isFinite(priorRadiusFt) ? Number(priorRadiusFt.toFixed(1)) : null,
-        priorCellAreaSqFt: Number.isFinite(priorAreaSqFt) ? Number(priorAreaSqFt.toFixed(0)) : null
+        priorCellAreaSqFt: Number.isFinite(priorAreaSqFt) ? Number(priorAreaSqFt.toFixed(0)) : null,
+        status,
+        dominantConstraint
       }
     };
 
@@ -253,7 +514,7 @@
     els.ch.value = "4";
     clearStoredResult();
     hideContinue();
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    renderEmpty();
     loadPriorContext();
   }
 
@@ -277,6 +538,7 @@
 
   function init() {
     hideContinue();
+    renderEmpty();
     loadPriorContext();
     bindInvalidation();
     bindActions();

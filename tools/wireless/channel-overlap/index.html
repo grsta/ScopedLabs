@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Channel Overlap Checker • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=wireless-channel-overlap-002" />
+  <link rel="stylesheet" href="/assets/style.css?v=wireless-channel-overlap-003" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
@@ -92,8 +93,9 @@
       </div>
 
       <div class="actions">
-        <button id="calc" class="btn btn-primary">Calculate</button>
-        <button id="reset" class="btn">Reset</button>
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+        <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
       </div>
     </section>
 
@@ -104,8 +106,10 @@
       </div>
     </section>
 
+    <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
     <div id="continue-wrap" class="card" style="display:none;">
-      <button id="continue" class="btn btn-primary" disabled>
+      <button id="continue" class="btn btn-primary" disabled type="button">
         Continue → Noise Floor Margin
       </button>
     </div>
@@ -115,7 +119,8 @@
   <script src="/assets/catalog.js"></script>
   <script src="/assets/pipelines.js"></script>
   <script src="/assets/pipeline.js"></script>
-  <script src="./script.js?v=002"></script>
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=003"></script>
 </body>
 </html>
 
