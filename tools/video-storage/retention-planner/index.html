@@ -7,11 +7,16 @@
 
   <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
   <script defer src="/assets/auth.js?v=0331"></script>
   <script defer src="/assets/app.js?v=0331"></script>
 </head>
 
-<body data-tier="free" data-category="video-storage" data-step="retention">
+<body data-tier="free" data-category="video-storage" data-step="retention" data-lane="v1">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -43,6 +48,7 @@
       </div>
 
       <h1 style="margin-top: 10px;">Retention Planner</h1>
+      <div id="pipeline"></div>
       <p class="subhead">Estimate required storage based on cameras, bitrate, and desired retention.</p>
       <p class="tool-best-for">
         <strong>Best for:</strong> estimating how long footage will retain before overwrite based on bitrate, camera count, and storage targets.
@@ -102,6 +108,8 @@
           </div>
         </div>
 
+        <section id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
+
         <div class="btn-row" style="margin-top: 14px;">
           <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
         </div>
@@ -119,11 +127,13 @@
 
     </div>
   </main>
+
   <script src="/assets/tool-flow.js?v=23"></script>
   <script src="/assets/catalog.js?v=23"></script>
   <script src="/assets/pipelines.js?v=23"></script>
   <script src="/assets/pipeline.js?v=23"></script>
-  <script src="./script.js?v=retention-014"></script>
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=retention-015"></script>
 </body>
 </html>
 
