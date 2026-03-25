@@ -2,9 +2,10 @@
   const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "thermal";
   const STEP = "ambient-rise";
+  const PRIOR_STEP = "hot-cold-aisle";
   const NEXT_URL = "/tools/thermal/exhaust-temperature/";
 
-  const $ = id => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     w: $("w"),
@@ -13,137 +14,477 @@
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
+    analysisCopy: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("continue-wrap"),
     continueBtn: $("continue")
   };
 
-  function resultRow(label, value){
-    return `
-      <div class="result-row">
-        <div class="result-label">${label}</div>
-        <div class="result-value">${value}</div>
-      </div>
-    `;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
+
+  function safeNumber(value, fallback = 0) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
+    }
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
   }
 
-  function hideContinue(){
-    els.continueWrap.style.display="none";
-    els.continueBtn.disabled=true;
+  function clamp(value, min, max) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clamp === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.clamp(value, min, max);
+    }
+    return Math.min(max, Math.max(min, value));
   }
 
-  function showContinue(){
-    els.continueWrap.style.display="";
-    els.continueBtn.disabled=false;
+  function readSaved() {
+    try {
+      return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+    } catch {
+      return null;
+    }
   }
 
-  function clearStored(){
+  function clearStored() {
     sessionStorage.removeItem(STORAGE_KEY);
   }
 
-  function invalidate(){
-    clearStored();
-    hideContinue();
-    els.results.innerHTML=`<div class="muted">Enter values and press Calculate.</div>`;
+  function hideContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
-  function loadPrior(){
-    els.flowNote.style.display="none";
-    els.flowNote.innerHTML="";
-
-    let saved=null;
-    try{
-      saved=JSON.parse(sessionStorage.getItem(STORAGE_KEY)||"null");
-    }catch{}
-
-    if(!saved || saved.category!==CATEGORY || saved.step!=="hot-cold-aisle") return;
-
-    const d=saved.data||{};
-
-    els.flowNote.innerHTML = `
-      <strong>Carried over context</strong><br>
-      Layout Strategy: <strong>${d.layout ?? "—"}</strong>.
-      This step evaluates resulting temperature rise from airflow and layout.
-    `;
-
-    els.flowNote.style.display="";
+  function showContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.showContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
+    if (els.continueWrap) els.continueWrap.style.display = "";
+    if (els.continueBtn) els.continueBtn.disabled = false;
   }
 
-  function calculate(){
-    const watts=parseFloat(els.w.value);
-    const cfm=parseFloat(els.cfm.value);
-    const k=parseFloat(els.k.value);
+  function clearAnalysisBlock() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+    } else if (els.analysisCopy) {
+      els.analysisCopy.style.display = "none";
+      els.analysisCopy.innerHTML = "";
+    }
+  }
 
-    if(!Number.isFinite(watts) || !Number.isFinite(cfm)){
-      els.results.innerHTML = resultRow("Status","Invalid input");
-      hideContinue();
-      clearStored();
+  function clearChart() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearChart === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
       return;
     }
 
-    const btu = watts * 3.412;
-    const dt = btu / (k * Math.max(1, cfm));
+    if (chartRef.current) {
+      try { chartRef.current.destroy(); } catch {}
+      chartRef.current = null;
+    }
 
-    let classification = "Low temperature rise";
-    if(dt > 10) classification = "Moderate temperature rise";
-    if(dt > 20) classification = "High temperature rise";
-    if(dt > 35) classification = "Extreme temperature rise";
+    if (chartWrapRef.current && chartWrapRef.current.parentNode) {
+      chartWrapRef.current.parentNode.removeChild(chartWrapRef.current);
+      chartWrapRef.current = null;
+    }
+  }
 
-    const interpretation =
-      dt < 10
-        ? "Cooling is effective. Temperature rise is well controlled."
-        : dt < 20
-          ? "Acceptable temperature rise for most environments."
-          : dt < 35
-            ? "High temperature rise. Airflow or cooling improvements recommended."
-            : "Excessive temperature rise. System is likely under-cooled.";
+  function renderEmpty() {
+    if (els.results) {
+      els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    }
+    clearAnalysisBlock();
+    clearChart();
+  }
 
-    els.results.innerHTML = [
-      resultRow("Heat Load", `${watts.toFixed(0)} W`),
-      resultRow("Heat Load", `${btu.toFixed(0)} BTU/hr`),
-      resultRow("Airflow", `${cfm.toFixed(0)} CFM`),
-      resultRow("Estimated ΔT", `${dt.toFixed(1)} °F`),
-      resultRow("Status", classification),
-      resultRow("Engineering Interpretation", interpretation)
-    ].join("");
+  function renderFlowNote() {
+    const saved = readSaved();
 
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        deltaT: dt,
-        classification
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderFlowNote({
+        flowEl: els.flowNote,
+        category: CATEGORY,
+        step: STEP,
+        title: "System Context",
+        intro:
+          "This step estimates how much ambient temperature rises when available airflow is asked to absorb the present heat load.",
+        customRows:
+          saved &&
+          saved.category === CATEGORY &&
+          saved.step === PRIOR_STEP
+            ? [
+                {
+                  label: "Prior Step",
+                  value: "Hot / Cold Aisle"
+                },
+                {
+                  label: "Layout Strategy",
+                  value: saved.data?.layout ?? "—"
+                },
+                {
+                  label: "Containment Quality",
+                  value: saved.data?.classification ?? saved.data?.status ?? "—"
+                }
+              ]
+            : null
+      });
+      return;
+    }
+
+    if (!els.flowNote) return;
+    els.flowNote.style.display = "none";
+    els.flowNote.innerHTML = "";
+  }
+
+  function buildInterpretation(status, dominantConstraint, dt, cfm, watts) {
+    const kw = watts / 1000;
+
+    if (status === "HEALTHY") {
+      return `Estimated temperature rise remains controlled for a ${kw.toFixed(1)} kW load at the current airflow level. Ambient uplift is still in a range where downstream exhaust conditions should remain manageable if the airflow path is clean and evenly distributed.`;
+    }
+
+    if (status === "WATCH") {
+      if (dominantConstraint === "Available airflow margin") {
+        return `Airflow is starting to become the limiting factor. The system can still function, but small losses from filters, cable blockage, or poor fan performance can push ambient rise higher than planned.`;
       }
-    }));
+
+      if (dominantConstraint === "Heat load intensity") {
+        return `The heat load is large enough that room or cabinet temperature rise begins to accumulate noticeably. At this point, cooling effectiveness depends more on real airflow delivery than on nameplate assumptions.`;
+      }
+
+      return `Ambient rise is entering a range where distribution quality matters more. Even if total airflow looks adequate on paper, uneven intake paths or recirculation can create localized hot zones.`;
+    }
+
+    if (dominantConstraint === "Available airflow margin") {
+      return `The available airflow is too tight for the current heat load, so ambient temperature rise becomes a direct operational risk. In practice, the first issue is usually not the formula—it is fan performance sag, obstructions, or recirculation reducing real delivered CFM.`;
+    }
+
+    if (dominantConstraint === "Temperature rise outcome") {
+      return `The projected temperature rise is already high enough to indicate an under-cooled condition. That means downstream exhaust and inlet stability will become hard to control, especially as environmental conditions drift away from ideal.`;
+    }
+
+    return `Heat intensity is high relative to available cooling movement. That raises the chance of unstable ambient conditions, uneven rack temperatures, and loss of thermal margin during peak operating periods.`;
+  }
+
+  function buildGuidance(status, dominantConstraint, dt) {
+    if (status === "HEALTHY") {
+      return `Keep some airflow margin in reserve for real-world losses, then validate the next step by checking exhaust temperature behavior. This is a good point to confirm that predicted airflow is actually achievable through the full path.`;
+    }
+
+    if (status === "WATCH") {
+      if (dominantConstraint === "Available airflow margin") {
+        return `Increase airflow margin before locking in the design. Even modest airflow gains can materially reduce ambient rise and improve thermal stability.`;
+      }
+
+      if (dominantConstraint === "Heat load intensity") {
+        return `Review whether the load can be spread more evenly or staged differently. Reducing concentration often improves temperature behavior faster than simply adding more fan rating.`;
+      }
+
+      return `Audit the airflow path for bypass and recirculation. In this range, containment quality often decides whether the real temperature rise matches the model.`;
+    }
+
+    if (dt > 35) {
+      return `Treat this as an under-cooled scenario. Increase delivered airflow, reduce thermal concentration, or improve containment before moving forward with the current assumptions.`;
+    }
+
+    if (dominantConstraint === "Available airflow margin") {
+      return `Increase delivered CFM and validate against real static-pressure conditions, not free-air fan ratings. The cooling path is now too tight to rely on nominal airflow assumptions.`;
+    }
+
+    return `Lower the effective temperature rise by improving airflow delivery and hot-air separation before proceeding. This design currently has too little thermal margin for stable operation.`;
+  }
+
+  function invalidate() {
+    clearStored();
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.invalidate === "function"
+    ) {
+      window.ScopedLabsAnalyzer.invalidate({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
+        category: CATEGORY,
+        step: STEP,
+        emptyMessage: "Enter values and press Calculate."
+      });
+    } else {
+      renderEmpty();
+      hideContinue();
+    }
+
+    clearChart();
+  }
+
+  function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+    if (els.results) {
+      els.results.innerHTML = `
+        ${summaryRows.map((row) => `
+          <div class="result-row">
+            <div class="result-label">${row.label}</div>
+            <div class="result-value">${row.value}</div>
+          </div>
+        `).join("")}
+        ${derivedRows.map((row) => `
+          <div class="result-row">
+            <div class="result-label">${row.label}</div>
+            <div class="result-value">${row.value}</div>
+          </div>
+        `).join("")}
+      `;
+    }
+
+    if (els.analysisCopy) {
+      els.analysisCopy.style.display = "";
+      els.analysisCopy.innerHTML = `
+        <div class="results">
+          <div class="result-row">
+            <div class="result-label">Status</div>
+            <div class="result-value">${status}</div>
+          </div>
+          <div class="result-row">
+            <div class="result-label">Dominant Constraint</div>
+            <div class="result-value">${dominantConstraint}</div>
+          </div>
+          <div class="result-row">
+            <div class="result-label">Engineering Interpretation</div>
+            <div class="result-value">${interpretation}</div>
+          </div>
+          <div class="result-row">
+            <div class="result-label">Actionable Guidance</div>
+            <div class="result-value">${guidance}</div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function calculate() {
+    const watts = safeNumber(els.w.value, NaN);
+    const cfmRaw = safeNumber(els.cfm.value, NaN);
+    const k = safeNumber(els.k.value, 1.08);
+
+    if (!Number.isFinite(watts) || watts <= 0 || !Number.isFinite(cfmRaw) || cfmRaw <= 0) {
+      if (els.results) {
+        els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+      }
+      clearAnalysisBlock();
+      hideContinue();
+      clearStored();
+      clearChart();
+      return;
+    }
+
+    const cfm = clamp(cfmRaw, 1, 1000000);
+    const btu = watts * 3.412;
+    const dt = btu / (k * cfm);
+    const airflowPerKw = cfm / Math.max(0.1, watts / 1000);
+
+    const metrics = [
+      {
+        label: "Temperature Rise Outcome",
+        value: dt,
+        displayValue: `${dt.toFixed(1)} °F`
+      },
+      {
+        label: "Available Airflow Margin",
+        value: btu / Math.max(1, cfm * 1.08 * 10),
+        displayValue: `${(btu / Math.max(1, cfm * 1.08 * 10)).toFixed(2)}`
+      },
+      {
+        label: "Heat Load Intensity",
+        value: watts / 4000,
+        displayValue: `${(watts / 4000).toFixed(2)}`
+      }
+    ];
+
+    let status = "HEALTHY";
+    let dominantLabel = "Temperature Rise Outcome";
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+    ) {
+      const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+        metrics,
+        healthyMax: 10,
+        watchMax: 20
+      });
+
+      status = resolved?.status || "HEALTHY";
+      dominantLabel = resolved?.dominant?.label || "Temperature Rise Outcome";
+    } else {
+      const dominant = metrics.reduce((best, current) =>
+        Number(current.value) > Number(best.value) ? current : best
+      );
+      dominantLabel = dominant.label;
+      if (dt > 20) status = "RISK";
+      else if (dt > 10) status = "WATCH";
+    }
+
+    const dominantConstraintMap = {
+      "Temperature Rise Outcome": "Temperature rise outcome",
+      "Available Airflow Margin": "Available airflow margin",
+      "Heat Load Intensity": "Heat load intensity"
+    };
+
+    const dominantConstraint =
+      dominantConstraintMap[dominantLabel] || "Temperature rise outcome";
+
+    const interpretation = buildInterpretation(status, dominantConstraint, dt, cfm, watts);
+    const guidance = buildGuidance(status, dominantConstraint, dt);
+
+    const summaryRows = [
+      { label: "Heat Load", value: `${watts.toFixed(0)} W` },
+      { label: "Heat Load", value: `${btu.toFixed(0)} BTU/hr` },
+      { label: "Available Airflow", value: `${cfm.toFixed(0)} CFM` },
+      { label: "Air Density Factor", value: `${k.toFixed(2)}` }
+    ];
+
+    const derivedRows = [
+      { label: "Estimated ΔT", value: `${dt.toFixed(1)} °F` },
+      { label: "Airflow Intensity", value: `${airflowPerKw.toFixed(0)} CFM/kW` }
+    ];
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderOutput({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        summaryRows,
+        derivedRows,
+        status,
+        interpretation,
+        dominantConstraint,
+        guidance
+      });
+    } else {
+      renderFallback(
+        summaryRows,
+        derivedRows,
+        status,
+        dominantConstraint,
+        interpretation,
+        guidance
+      );
+    }
+
+    clearChart();
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderAnalyzerChart({
+        mountEl: els.results,
+        existingChartRef: chartRef,
+        existingWrapRef: chartWrapRef,
+        labels: [
+          "Temp Rise",
+          "Airflow Margin",
+          "Heat Intensity"
+        ],
+        values: [
+          dt,
+          btu / Math.max(1, cfm * 1.08 * 10),
+          watts / 4000
+        ],
+        displayValues: [
+          `${dt.toFixed(1)} °F`,
+          `${(btu / Math.max(1, cfm * 1.08 * 10)).toFixed(2)}`,
+          `${(watts / 4000).toFixed(2)}`
+        ],
+        referenceValue: 10,
+        healthyMax: 10,
+        watchMax: 20,
+        axisTitle: "Thermal Pressure",
+        referenceLabel: "Healthy Rise Threshold (10 °F)",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(24, Math.ceil(Math.max(dt, btu / Math.max(1, cfm * 1.08 * 10), watts / 4000, 10) * 1.15))
+      });
+    }
+
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        category: CATEGORY,
+        step: STEP,
+        data: {
+          deltaT: dt,
+          classification: status,
+          airflowCFM: cfm,
+          heatBTU: btu,
+          dominantConstraint
+        }
+      })
+    );
 
     showContinue();
   }
 
-  function reset(){
-    els.w.value=3500;
-    els.cfm.value=800;
-    els.k.value="1.08";
-    els.results.innerHTML="";
+  function reset() {
+    els.w.value = 3500;
+    els.cfm.value = 800;
+    els.k.value = "1.08";
     clearStored();
     hideContinue();
-    loadPrior();
+    renderEmpty();
+    renderFlowNote();
   }
 
-  function bindInvalidation(){
-    [els.w, els.cfm, els.k].forEach(el=>{
+  function bindInvalidation() {
+    [els.w, els.cfm, els.k].forEach((el) => {
+      if (!el) return;
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
   }
 
-  function init(){
+  function init() {
     hideContinue();
-    loadPrior();
+    renderEmpty();
+    renderFlowNote();
     bindInvalidation();
 
-    els.calc.onclick=calculate;
-    els.reset.onclick=reset;
-    els.continueBtn.onclick=()=>window.location.href=NEXT_URL;
+    if (els.calc) els.calc.addEventListener("click", calculate);
+    if (els.reset) els.reset.addEventListener("click", reset);
+    if (els.continueBtn) {
+      els.continueBtn.addEventListener("click", () => {
+        window.location.href = NEXT_URL;
+      });
+    }
   }
 
   init();
