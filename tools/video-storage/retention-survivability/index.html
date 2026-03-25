@@ -8,17 +8,18 @@
     name="description"
     content="Estimate how degraded capacity reduces effective retention days."
   />
-<link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0331"></script>
-<script defer src="/assets/app.js?v=0331"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0331"></script>
+  <script defer src="/assets/app.js?v=0331"></script>
 </head>
 
-<body data-tier="pro" data-category="video-storage" data-step="survivability">
+<body data-tier="pro" data-category="video-storage" data-step="survivability" data-lane="v1">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -50,6 +51,7 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
       </div>
 
       <h1 style="margin-top: 10px;">Retention Survivability Estimator</h1>
+      <div id="pipeline"></div>
       <p class="subhead">Estimate how degraded capacity and storage loss reduce effective retention.</p>
       <p class="tool-best-for">
         <strong>Best for:</strong> analyzing how storage failures, degraded arrays, or reserve loss affect retention guarantees.
@@ -166,27 +168,23 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
         <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
           <h3 class="h3" style="margin-top: 0;">Results</h3>
-
-          <div class="result-lines">
-            <div class="row"><span>Baseline retention</span><strong id="outBaseline">—</strong></div>
-            <div class="row"><span>Effective retention (degraded)</span><strong id="outEffective">—</strong></div>
-            <div class="row"><span>Days lost (effective)</span><strong id="outDaysLost">—</strong></div>
-            <div class="row"><span>Meets retention goal?</span><strong id="outMeetsGoal" class="muted">—</strong></div>
-
-            <div class="row" style="margin-top: 10px;"><span>Recommended baseline (with headroom)</span><strong id="outRecommended">—</strong></div>
-            <div class="row"><span>Headroom margin required</span><strong id="outHeadroomNeed">—</strong></div>
-
-            <div class="row" style="margin-top: 10px;"><span>Degraded period impact (days lost)</span><strong id="outDegradedImpact">—</strong></div>
-            <div class="row"><span>Risk flag</span><strong id="outRisk" class="muted">—</strong></div>
-
-            <div class="row" style="margin-top: 10px;"><span>Status</span><strong id="statusText" class="muted">Enter values and calculate.</strong></div>
+          <div id="results" class="results">
+            <div class="muted">Enter values and press Calculate.</div>
           </div>
+        </div>
 
-          <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.08);">
-            <div class="pill-row">
-              <span class="pill">Interpretation</span>
+        <section id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
+
+        <div class="card" id="completion-wrap" style="display:none; margin-top:14px;">
+          <div class="results">
+            <div class="result-row">
+              <div class="result-label">Pipeline Status</div>
+              <div class="result-value">Video &amp; Storage v1 complete</div>
             </div>
-            <p class="muted" id="outNarrative" style="margin: 0;">—</p>
+            <div class="result-row">
+              <div class="result-label">Next Action</div>
+              <div class="result-value">Review results or return to Video &amp; Storage</div>
+            </div>
           </div>
         </div>
 
@@ -205,7 +203,8 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
   <script src="/assets/catalog.js?v=23"></script>
   <script src="/assets/pipelines.js?v=23"></script>
   <script src="/assets/pipeline.js?v=23"></script>
-  <script src="./script.js?v=vs-ret-pro-0015"></script>
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=vs-ret-pro-0016"></script>
 </body>
 </html>
 
