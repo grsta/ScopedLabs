@@ -296,29 +296,41 @@
     const deltaGB = newGB - oldGB;
     const deltaPct = oldGB > 0 ? (deltaGB / oldGB) * 100 : 0;
 
-    const qualityPressure = qFactor(quality);
-    const motionPressure = mFactor(motion);
-    const gopPressure = 1 / gopFactor(gop);
+    const qualityPressure =
+  quality === "high" ? 1.55 :
+  quality === "med" ? 1.00 :
+  0.78;
 
-    const metrics = [
-      {
-        label: "Quality Bias Pressure",
-        value: qualityPressure,
-        displayValue: quality.toUpperCase()
-      },
-      {
-        label: "Motion-driven Bitrate Pressure",
-        value: motionPressure,
-        displayValue: motion.toUpperCase()
-      },
-      {
-        label: "Keyframe Interval Pressure",
-        value: gopPressure,
-        displayValue: `${gop.toFixed(1)}s`
-      }
-    ];
+const motionPressure =
+  motion === "high" ? 1.85 :
+  motion === "med" ? 1.00 :
+  0.75;
 
-    const resolved = resolveStatus(metrics);
+let gopPressure = 1.00;
+if (gop <= 1) gopPressure = 1.55;
+else if (gop <= 2) gopPressure = 1.15;
+else if (gop <= 4) gopPressure = 0.95;
+else gopPressure = 0.80;
+
+const metrics = [
+  {
+    label: "Quality Bias Pressure",
+    value: qualityPressure,
+    displayValue: quality.toUpperCase()
+  },
+  {
+    label: "Motion-driven Bitrate Pressure",
+    value: motionPressure,
+    displayValue: motion.toUpperCase()
+  },
+  {
+    label: "Keyframe Interval Pressure",
+    value: gopPressure,
+    displayValue: `${gop.toFixed(1)}s`
+  }
+];
+
+const resolved = resolveStatus(metrics);
     const status = resolved.status;
 
     const dominantConstraintMap = {
@@ -410,7 +422,7 @@
         ],
         referenceValue: 1.0,
         healthyMax: 1.0,
-        watchMax: 1.35,
+        watchMax: 1.45,
         axisTitle: "Compression Pressure",
         referenceLabel: "Healthy Threshold",
         healthyLabel: "Healthy",
@@ -418,7 +430,7 @@
         riskLabel: "Risk",
         chartMax: Math.max(
           2.5,
-          Math.ceil(Math.max(qualityPressure, motionPressure, gopPressure, 1.35) * 1.15 * 10) / 10
+          Math.ceil(Math.max(qualityPressure, motionPressure, gopPressure, 1.85) * 1.15 * 10) / 10
         )
       });
     }
