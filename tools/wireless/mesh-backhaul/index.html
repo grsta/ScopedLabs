@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0183" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
@@ -42,13 +43,17 @@
 
   <h1>Mesh Backhaul Estimator</h1>
 
-  <!-- REQUIRED -->
   <div id="pipeline"></div>
 
   <p class="subhead">Estimate effective throughput after mesh hops and overhead.</p>
 
-  <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> checking how quickly usable throughput collapses as hops and protocol overhead accumulate across a mesh design.
+    </p>
+  </section>
 
   <section class="card tool-card">
     <h2>Inputs</h2>
@@ -79,19 +84,23 @@
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+      <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
     </div>
   </section>
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
   </section>
 
-  <!-- REQUIRED -->
+  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
   <div id="continue-wrap" class="card" style="display:none;">
-    <button id="continue" class="btn btn-primary" disabled>
+    <button id="continue" class="btn btn-primary" disabled type="button">
       Continue → PTP Wireless Link
     </button>
   </div>
@@ -101,7 +110,8 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=003"></script>
 
 </body>
 </html>
