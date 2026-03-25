@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Coverage Radius • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=wireless-coverage-006" />
+  <link rel="stylesheet" href="/assets/style.css?v=wireless-coverage-007" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -100,8 +100,9 @@
       </div>
 
       <div class="actions">
-        <button id="calc" class="btn btn-primary">Calculate</button>
-        <button id="reset" class="btn">Reset</button>
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+        <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
       </div>
     </section>
 
@@ -112,8 +113,10 @@
       </div>
     </section>
 
+    <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
     <div id="continue-wrap" class="card" style="display:none;">
-      <button id="continue" class="btn btn-primary" disabled>
+      <button id="continue" class="btn btn-primary" disabled type="button">
         Continue → Channel Overlap
       </button>
     </div>
@@ -123,11 +126,7 @@
   <script src="/assets/catalog.js"></script>
   <script src="/assets/pipelines.js"></script>
   <script src="/assets/pipeline.js"></script>
-  <script src="./script.js?v=006"></script>
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=007"></script>
 </body>
 </html>
-
-
-
-
-

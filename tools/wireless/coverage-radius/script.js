@@ -13,6 +13,7 @@
     calc: document.getElementById("calc"),
     reset: document.getElementById("reset"),
     results: document.getElementById("results"),
+    analysisCopy: document.getElementById("analysis-copy"),
     flowNote: document.getElementById("flow-note"),
     continueWrap: document.getElementById("continue-wrap"),
     continueBtn: document.getElementById("continue")
@@ -36,17 +37,47 @@
     weak: 8
   };
 
-  function safeNumber(value) {
+  function safeNumber(value, fallback = NaN) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
+    }
     const n = Number(value);
-    return Number.isFinite(n) ? n : NaN;
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function clamp(value, min, max) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clamp === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.clamp(value, min, max);
+    }
+    return Math.min(max, Math.max(min, value));
   }
 
   function hideContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
     els.continueWrap.style.display = "none";
     els.continueBtn.disabled = true;
   }
 
   function showContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.showContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
     els.continueWrap.style.display = "";
     els.continueBtn.disabled = false;
   }
@@ -55,19 +86,45 @@
     sessionStorage.removeItem(STORAGE_KEY);
   }
 
+  function clearAnalysisBlock() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+      return;
+    }
+    if (els.analysisCopy) {
+      els.analysisCopy.style.display = "none";
+      els.analysisCopy.innerHTML = "";
+    }
+  }
+
+  function renderEmpty() {
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    clearAnalysisBlock();
+  }
+
   function invalidate() {
     clearStoredResult();
     hideContinue();
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-  }
 
-  function resultRow(label, value) {
-    return `
-      <div class="result-row">
-        <div class="result-label">${label}</div>
-        <div class="result-value">${value}</div>
-      </div>
-    `;
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.invalidate === "function"
+    ) {
+      window.ScopedLabsAnalyzer.invalidate({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
+        category: CATEGORY,
+        step: STEP,
+        emptyMessage: "Enter values and press Calculate."
+      });
+    } else {
+      renderEmpty();
+    }
   }
 
   function getBandLabel(value) {
@@ -136,6 +193,34 @@
     return `${bandText} ${envText} ${clientText} ${rssiText} ${classText}`;
   }
 
+  function buildGuidance(status, dominantConstraint) {
+    if (status === "HEALTHY") {
+      return `Carry this cell radius into Channel Overlap, but keep transmit power and placement disciplined so the broader cell does not quietly turn into a reuse problem.`;
+    }
+
+    if (status === "WATCH") {
+      if (dominantConstraint === "Coverage sprawl pressure") {
+        return `Tighten AP spacing or reduce cell ambition before moving forward. The design is still workable, but the footprint is getting broad enough that overlap and edge quality deserve caution.`;
+      }
+
+      if (dominantConstraint === "Client sensitivity pressure") {
+        return `Keep the edge budget conservative before continuing. Weaker or mixed-client assumptions are already shrinking the practical cell enough that overconfidence would be risky.`;
+      }
+
+      return `Use a stronger edge target or tighter environment assumption before freezing the layout. The current radius is workable, but it is no longer especially forgiving.`;
+    }
+
+    if (dominantConstraint === "Coverage sprawl pressure") {
+      return `Reduce the planned cell size before trusting the wider layout. The current radius is broad enough that reuse and edge instability are likely to become the next problems.`;
+    }
+
+    if (dominantConstraint === "Client sensitivity pressure") {
+      return `Plan for the weakest clients, not the strongest ones. The design is too sensitive to client quality assumptions to rely on optimistic edge behavior.`;
+    }
+
+    return `Use a more conservative RSSI target or denser layout before continuing. The current edge assumption is too loose to treat as comfortable.`;
+  }
+
   function loadPriorContext() {
     els.flowNote.style.display = "none";
     els.flowNote.innerHTML = "";
@@ -143,11 +228,32 @@
     let saved = null;
     try {
       saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-    } catch (err) {
+    } catch {
       saved = null;
     }
 
     if (!saved || saved.category !== CATEGORY || saved.step === STEP) return;
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderFlowNote({
+        flowEl: els.flowNote,
+        category: CATEGORY,
+        step: STEP,
+        title: "System Context",
+        intro:
+          "This is the first wireless planning step. Establish a realistic cell radius first so overlap, density, and capacity decisions are built on the same coverage assumption.",
+        customRows: [
+          {
+            label: "Prior wireless step",
+            value: saved.step || "—"
+          }
+        ]
+      });
+      return;
+    }
 
     els.flowNote.innerHTML = `
       <strong>Carried over context</strong><br>
@@ -159,50 +265,133 @@
   function calculate() {
     const band = els.band.value;
     const environment = els.environment.value;
-    const eirp = safeNumber(els.eirp.value);
-    const targetRssi = safeNumber(els.targetRssi.value);
+    const eirp = safeNumber(els.eirp.value, NaN);
+    const targetRssi = safeNumber(els.targetRssi.value, NaN);
     const clientClass = els.clientClass.value;
 
     if (!Number.isFinite(eirp) || !Number.isFinite(targetRssi)) {
-      els.results.innerHTML = [
-        resultRow("Status", "Invalid input"),
-        resultRow(
-          "Engineering Interpretation",
-          "Enter valid numeric values for AP EIRP and target RSSI so the planning radius can be estimated correctly."
-        )
-      ].join("");
+      els.results.innerHTML = `<div class="muted">Enter valid numeric values and press Calculate.</div>`;
+      clearAnalysisBlock();
       hideContinue();
       clearStoredResult();
       return;
     }
 
+    const boundedEirp = clamp(eirp, 1, 50);
+    const boundedTarget = clamp(targetRssi, -90, -40);
+
     const availablePathLoss =
-      eirp - targetRssi - ENVIRONMENT_LOSS[environment] - CLIENT_MARGIN[clientClass];
+      boundedEirp - boundedTarget - ENVIRONMENT_LOSS[environment] - CLIENT_MARGIN[clientClass];
 
     let radiusFt = Math.pow(10, (availablePathLoss - BAND_BASE_LOSS[band]) / 20);
-
-    if (!Number.isFinite(radiusFt) || radiusFt <= 0) {
-      radiusFt = 1;
-    }
+    if (!Number.isFinite(radiusFt) || radiusFt <= 0) radiusFt = 1;
 
     const diameterFt = radiusFt * 2;
     const cellAreaSqFt = Math.PI * radiusFt * radiusFt;
     const coverageClass = classifyRadius(radiusFt);
+
+    const coverageSprawlPressure = radiusFt / 60;
+    const clientSensitivityPressure = (CLIENT_MARGIN[clientClass] + 2) / 6;
+    const edgeRssiPressure =
+      boundedTarget <= -72 ? 1.7 :
+      boundedTarget <= -70 ? 1.3 :
+      boundedTarget <= -67 ? 1.0 :
+      0.8;
+
+    const metrics = [
+      {
+        label: "Coverage sprawl pressure",
+        value: coverageSprawlPressure,
+        displayValue: `${radiusFt.toFixed(1)} ft`
+      },
+      {
+        label: "Client sensitivity pressure",
+        value: clientSensitivityPressure,
+        displayValue: getClientLabel(clientClass)
+      },
+      {
+        label: "Edge RSSI pressure",
+        value: edgeRssiPressure,
+        displayValue: `${boundedTarget} dBm`
+      }
+    ];
+
+    let status = "HEALTHY";
+    let dominantLabel = "Coverage sprawl pressure";
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+    ) {
+      const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+        metrics,
+        healthyMax: 1.0,
+        watchMax: 1.5
+      });
+      status = resolved?.status || "HEALTHY";
+      dominantLabel = resolved?.dominant?.label || "Coverage sprawl pressure";
+    }
+
+    const dominantConstraintMap = {
+      "Coverage sprawl pressure": "Coverage sprawl pressure",
+      "Client sensitivity pressure": "Client sensitivity pressure",
+      "Edge RSSI pressure": "Edge RSSI pressure"
+    };
+
+    const dominantConstraint =
+      dominantConstraintMap[dominantLabel] || "Coverage sprawl pressure";
+
     const interpretation = buildInterpretation({
       band,
       environment,
       clientClass,
       radiusFt,
-      targetRssi
+      targetRssi: boundedTarget
     });
 
-    els.results.innerHTML = [
-      resultRow("Estimated Radius", `${radiusFt.toFixed(1)} ft`),
-      resultRow("Estimated Diameter", `${diameterFt.toFixed(1)} ft`),
-      resultRow("Estimated Cell Area", `${cellAreaSqFt.toFixed(0)} sq ft`),
-      resultRow("Status", coverageClass),
-      resultRow("Engineering Interpretation", interpretation)
-    ].join("");
+    const guidance = buildGuidance(status, dominantConstraint);
+
+    const summaryRows = [
+      { label: "Band", value: getBandLabel(band) },
+      { label: "Environment", value: getEnvironmentLabel(environment) },
+      { label: "Client Class", value: getClientLabel(clientClass) },
+      { label: "AP EIRP / Target RSSI", value: `${boundedEirp.toFixed(0)} dBm / ${boundedTarget.toFixed(0)} dBm` }
+    ];
+
+    const derivedRows = [
+      { label: "Estimated Radius", value: `${radiusFt.toFixed(1)} ft` },
+      { label: "Estimated Diameter", value: `${diameterFt.toFixed(1)} ft` },
+      { label: "Estimated Cell Area", value: `${cellAreaSqFt.toFixed(0)} sq ft` },
+      { label: "Coverage Class", value: coverageClass }
+    ];
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderOutput({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        summaryRows,
+        derivedRows,
+        status,
+        interpretation,
+        dominantConstraint,
+        guidance
+      });
+    } else {
+      const fallbackRows = summaryRows.concat(derivedRows, [
+        { label: "Engineering Interpretation", value: interpretation },
+        { label: "Actionable Guidance", value: guidance }
+      ]);
+
+      els.results.innerHTML = fallbackRows.map((row) => `
+        <div class="result-row">
+          <div class="result-label">${row.label}</div>
+          <div class="result-value">${row.value}</div>
+        </div>
+      `).join("");
+    }
 
     const payload = {
       category: CATEGORY,
@@ -212,14 +401,16 @@
         bandLabel: getBandLabel(band),
         environment,
         environmentLabel: getEnvironmentLabel(environment),
-        eirpDbm: eirp,
-        targetRssiDbm: targetRssi,
+        eirpDbm: boundedEirp,
+        targetRssiDbm: boundedTarget,
         clientClass,
         clientClassLabel: getClientLabel(clientClass),
         estimatedRadiusFt: Number(radiusFt.toFixed(1)),
         estimatedDiameterFt: Number(diameterFt.toFixed(1)),
         estimatedCellAreaSqFt: Number(cellAreaSqFt.toFixed(0)),
-        coverageClass
+        coverageClass,
+        status,
+        dominantConstraint
       }
     };
 
@@ -235,7 +426,8 @@
     els.clientClass.value = "typical";
     clearStoredResult();
     hideContinue();
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    renderEmpty();
+    loadPriorContext();
   }
 
   function bindInvalidation() {
@@ -255,6 +447,7 @@
 
   function init() {
     hideContinue();
+    renderEmpty();
     loadPriorContext();
     bindInvalidation();
     bindActions();
