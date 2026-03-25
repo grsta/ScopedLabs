@@ -11,11 +11,12 @@
 
   <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
   <script defer src="/assets/auth.js?v=0331"></script>
   <script defer src="/assets/app.js?v=0331"></script>
 
@@ -66,7 +67,7 @@ window.SL_SUPABASE_ANON_KEY =
   </style>
 </head>
 
-<body data-tier="pro" data-category="video-storage" data-step="raid">
+<body data-tier="pro" data-category="video-storage" data-step="raid-impact" data-lane="v1">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -98,6 +99,7 @@ window.SL_SUPABASE_ANON_KEY =
       </div>
 
       <h1 style="margin-top: 10px;">RAID Capacity &amp; Failure Impact</h1>
+      <div id="pipeline"></div>
       <p class="subhead">Understand usable capacity, failure tolerance, and retention fit.</p>
       <p class="tool-best-for">
         <strong>Best for:</strong> sizing RAID groups against retention requirements and comparing tradeoffs across RAID levels.
@@ -244,6 +246,8 @@ window.SL_SUPABASE_ANON_KEY =
           </p>
         </div>
 
+        <section id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
+
         <div class="btn-row" style="margin-top: 14px;">
           <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
         </div>
@@ -266,6 +270,7 @@ window.SL_SUPABASE_ANON_KEY =
   <script src="/assets/catalog.js?v=23"></script>
   <script src="/assets/pipelines.js?v=23"></script>
   <script src="/assets/pipeline.js?v=23"></script>
-  <script src="./script.js?v=raid-014"></script>
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=raid-015"></script>
 </body>
 </html>
