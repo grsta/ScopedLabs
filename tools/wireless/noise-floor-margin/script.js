@@ -4,7 +4,7 @@
   const STEP = "noise-floor-margin";
   const NEXT_URL = "/tools/wireless/client-density/";
 
-  const $ = id => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     sig: $("sig"),
@@ -13,60 +13,137 @@
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
+    analysisCopy: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("continue-wrap"),
     continueBtn: $("continue")
   };
 
-  function resultRow(label, value){
-    return `
-      <div class="result-row">
-        <div class="result-label">${label}</div>
-        <div class="result-value">${value}</div>
-      </div>
-    `;
+  function safeNumber(value, fallback = NaN) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
+    }
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
   }
 
-  function hideContinue(){
-    els.continueWrap.style.display="none";
-    els.continueBtn.disabled=true;
+  function hideContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
+    els.continueWrap.style.display = "none";
+    els.continueBtn.disabled = true;
   }
 
-  function showContinue(){
-    els.continueWrap.style.display="";
-    els.continueBtn.disabled=false;
+  function showContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.showContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
+    els.continueWrap.style.display = "";
+    els.continueBtn.disabled = false;
   }
 
-  function clearStored(){
+  function clearStored() {
     sessionStorage.removeItem(STORAGE_KEY);
   }
 
-  function invalidate(){
-    clearStored();
-    hideContinue();
-    els.results.innerHTML="";
+  function clearAnalysisBlock() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+      return;
+    }
+    if (els.analysisCopy) {
+      els.analysisCopy.style.display = "none";
+      els.analysisCopy.innerHTML = "";
+    }
   }
 
-  function qualityLabel(snr){
-    if(snr >= 30) return "Excellent";
-    if(snr >= 25) return "Good";
-    if(snr >= 20) return "Fair";
-    if(snr >= 15) return "Poor";
+  function renderEmpty() {
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    clearAnalysisBlock();
+  }
+
+  function invalidate() {
+    clearStored();
+    hideContinue();
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.invalidate === "function"
+    ) {
+      window.ScopedLabsAnalyzer.invalidate({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
+        category: CATEGORY,
+        step: STEP,
+        emptyMessage: "Enter values and press Calculate."
+      });
+    } else {
+      renderEmpty();
+    }
+  }
+
+  function qualityLabel(snr) {
+    if (snr >= 30) return "Excellent";
+    if (snr >= 25) return "Good";
+    if (snr >= 20) return "Fair";
+    if (snr >= 15) return "Poor";
     return "Very Poor";
   }
 
-  function loadPrior(){
-    els.flowNote.style.display="none";
-    els.flowNote.innerHTML="";
+  function loadPrior() {
+    els.flowNote.style.display = "none";
+    els.flowNote.innerHTML = "";
 
-    let saved=null;
-    try{
-      saved=JSON.parse(sessionStorage.getItem(STORAGE_KEY)||"null");
-    }catch{}
+    let saved = null;
+    try {
+      saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+    } catch {}
 
-    if(!saved || saved.category!==CATEGORY || saved.step!=="channel-overlap") return;
+    if (!saved || saved.category !== CATEGORY || saved.step !== "channel-overlap") return;
 
-    const d=saved.data||{};
+    const d = saved.data || {};
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderFlowNote({
+        flowEl: els.flowNote,
+        category: CATEGORY,
+        step: STEP,
+        title: "System Context",
+        intro:
+          "Channel Overlap estimated whether the channel plan is likely to create reuse pressure. Use this step to verify whether the RF environment still has enough signal margin to support stable performance.",
+        customRows: [
+          {
+            label: "Channel reuse",
+            value: d.averageReuse != null ? `${d.averageReuse}` : "—"
+          },
+          {
+            label: "Overlap risk",
+            value: d.overlapRiskPct != null ? `${d.overlapRiskPct}%` : "—"
+          }
+        ]
+      });
+      return;
+    }
 
     els.flowNote.innerHTML = `
       <strong>Carried over context</strong><br>
@@ -74,17 +151,73 @@
       Overlap risk: <strong>${d.overlapRiskPct ?? "—"}%</strong>.
       Use this step to verify whether RF conditions can support stable performance.
     `;
-
-    els.flowNote.style.display="";
+    els.flowNote.style.display = "";
   }
 
-  function calculate(){
-    const sig=parseFloat(els.sig.value);
-    const noise=parseFloat(els.noise.value);
-    const target=parseFloat(els.target.value);
+  function buildInterpretation(status, dominantConstraint, snr, margin) {
+    if (status === "HEALTHY") {
+      return `RF margin remains in a comfortable range, so the environment should support stable client behavior without immediately collapsing into low-rate operation. This is a healthy foundation for the next density step.`;
+    }
 
-    if(!Number.isFinite(sig) || !Number.isFinite(noise) || !Number.isFinite(target)){
-      els.results.innerHTML = resultRow("Status","Invalid input");
+    if (status === "WATCH") {
+      if (dominantConstraint === "Target fit pressure") {
+        return `The main issue is how closely the current SNR tracks the actual target. The link may still work, but the design is no longer especially forgiving if interference or signal variance increases.`;
+      }
+
+      if (dominantConstraint === "Noise pressure") {
+        return `The noise floor is starting to consume too much usable RF headroom. Even with acceptable signal, elevated noise is now compressing the performance margin enough to matter.`;
+      }
+
+      return `Signal strength is starting to become a limiting factor. The design is still workable, but it is beginning to depend on cleaner-than-average RF conditions to stay comfortable.`;
+    }
+
+    if (dominantConstraint === "Target fit pressure") {
+      return `The present SNR is too close to — or below — the target threshold. The design is now too dependent on ideal conditions to assume reliable higher-rate performance.`;
+    }
+
+    if (dominantConstraint === "Noise pressure") {
+      return `The environment is too noisy for a comfortable design. Even if clients remain associated, throughput and stability are likely to degrade because the RF floor is consuming too much margin.`;
+    }
+
+    return `Signal strength is too weak relative to the target. The RF path may still function intermittently, but it is now too fragile to treat as a comfortable design baseline.`;
+  }
+
+  function buildGuidance(status, dominantConstraint) {
+    if (status === "HEALTHY") {
+      return `Carry this result into Client Density, but keep some RF reserve for interference swings, crowding, and environmental change so the model stays true in the field.`;
+    }
+
+    if (status === "WATCH") {
+      if (dominantConstraint === "Target fit pressure") {
+        return `Increase margin before loading the design too aggressively. The current RF state is workable, but the headroom above the target is starting to get thin.`;
+      }
+
+      if (dominantConstraint === "Noise pressure") {
+        return `Improve the RF environment or channel plan before relying on higher client density. The noise floor is already consuming too much of the practical budget.`;
+      }
+
+      return `Improve received signal or reduce client expectations before scale-up. The design is viable, but not especially tolerant of change.`;
+    }
+
+    if (dominantConstraint === "Target fit pressure") {
+      return `Do not assume stable client performance until the SNR clears the target with more margin. Tighten the design before moving forward.`;
+    }
+
+    if (dominantConstraint === "Noise pressure") {
+      return `Reduce environmental noise or change the RF plan before deployment. The design is too vulnerable to interference at the current margin.`;
+    }
+
+    return `Increase signal quality before relying on this design. The current link margin is too low to support comfortable operation under real-world variation.`;
+  }
+
+  function calculate() {
+    const sig = safeNumber(els.sig.value, NaN);
+    const noise = safeNumber(els.noise.value, NaN);
+    const target = safeNumber(els.target.value, NaN);
+
+    if (!Number.isFinite(sig) || !Number.isFinite(noise) || !Number.isFinite(target)) {
+      els.results.innerHTML = `<div class="muted">Enter valid numeric values and press Calculate.</div>`;
+      clearAnalysisBlock();
       hideContinue();
       clearStored();
       return;
@@ -93,66 +226,153 @@
     const snr = sig - noise;
     const margin = snr - target;
 
-    let status="MEETS TARGET";
-    if(margin < 0) status="BELOW TARGET";
+    let result = "MEETS TARGET";
+    if (margin < 0) result = "BELOW TARGET";
 
-    const interpretation =
-      snr >= 30
-        ? "RF conditions are strong and can support high data rates with stable performance."
-        : snr >= 25
-          ? "RF conditions are generally healthy but may begin to limit peak throughput under load."
-          : snr >= 20
-            ? "RF conditions are marginal and will impact higher MCS rates and overall airtime efficiency."
-            : "RF conditions are poor and will likely degrade throughput, roaming, and client stability.";
+    const targetFitPressure =
+      margin >= 15 ? 0.7 :
+      margin >= 5 ? 1.0 :
+      margin >= 0 ? 1.6 :
+      2.3;
 
-    els.results.innerHTML = [
-      resultRow("Signal (RSSI)", `${sig.toFixed(1)} dBm`),
-      resultRow("Noise Floor", `${noise.toFixed(1)} dBm`),
-      resultRow("SNR", `${snr.toFixed(1)} dB (${qualityLabel(snr)})`),
-      resultRow("Target SNR", `${target.toFixed(1)} dB`),
-      resultRow("Margin", `${margin.toFixed(1)} dB`),
-      resultRow("Result", status),
-      resultRow("Engineering Interpretation", interpretation)
-    ].join("");
+    const noisePressure =
+      noise <= -95 ? 0.7 :
+      noise <= -90 ? 1.0 :
+      noise <= -85 ? 1.6 :
+      2.2;
+
+    const signalPressure =
+      sig >= -60 ? 0.7 :
+      sig >= -67 ? 1.0 :
+      sig >= -72 ? 1.6 :
+      2.2;
+
+    const metrics = [
+      {
+        label: "Target fit pressure",
+        value: targetFitPressure,
+        displayValue: `${margin.toFixed(1)} dB`
+      },
+      {
+        label: "Noise pressure",
+        value: noisePressure,
+        displayValue: `${noise.toFixed(1)} dBm`
+      },
+      {
+        label: "Signal pressure",
+        value: signalPressure,
+        displayValue: `${sig.toFixed(1)} dBm`
+      }
+    ];
+
+    let status = "HEALTHY";
+    let dominantLabel = "Target fit pressure";
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+    ) {
+      const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+        metrics,
+        healthyMax: 1.0,
+        watchMax: 1.5
+      });
+      status = resolved?.status || "HEALTHY";
+      dominantLabel = resolved?.dominant?.label || "Target fit pressure";
+    }
+
+    const dominantConstraintMap = {
+      "Target fit pressure": "Target fit pressure",
+      "Noise pressure": "Noise pressure",
+      "Signal pressure": "Signal pressure"
+    };
+
+    const dominantConstraint =
+      dominantConstraintMap[dominantLabel] || "Target fit pressure";
+
+    const interpretation = buildInterpretation(status, dominantConstraint, snr, margin);
+    const guidance = buildGuidance(status, dominantConstraint);
+
+    const summaryRows = [
+      { label: "Signal (RSSI)", value: `${sig.toFixed(1)} dBm` },
+      { label: "Noise Floor", value: `${noise.toFixed(1)} dBm` },
+      { label: "SNR", value: `${snr.toFixed(1)} dB (${qualityLabel(snr)})` },
+      { label: "Target SNR", value: `${target.toFixed(1)} dB` }
+    ];
+
+    const derivedRows = [
+      { label: "Margin", value: `${margin.toFixed(1)} dB` },
+      { label: "Result", value: result }
+    ];
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderOutput({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        summaryRows,
+        derivedRows,
+        status,
+        interpretation,
+        dominantConstraint,
+        guidance
+      });
+    } else {
+      const fallbackRows = summaryRows.concat(derivedRows, [
+        { label: "Engineering Interpretation", value: interpretation },
+        { label: "Actionable Guidance", value: guidance }
+      ]);
+
+      els.results.innerHTML = fallbackRows.map((row) => `
+        <div class="result-row">
+          <div class="result-label">${row.label}</div>
+          <div class="result-value">${row.value}</div>
+        </div>
+      `).join("");
+    }
 
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
       category: CATEGORY,
       step: STEP,
       data: {
-        snr,
-        margin,
-        status
+        snr: Number(snr.toFixed(1)),
+        margin: Number(margin.toFixed(1)),
+        status: result,
+        dominantConstraint
       }
     }));
 
     showContinue();
   }
 
-  function reset(){
-    els.sig.value=-62;
-    els.noise.value=-95;
-    els.target.value=25;
-    els.results.innerHTML="";
+  function reset() {
+    els.sig.value = "-62";
+    els.noise.value = "-95";
+    els.target.value = "25";
+    renderEmpty();
     clearStored();
     hideContinue();
     loadPrior();
   }
 
-  function bindInvalidation(){
-    [els.sig, els.noise, els.target].forEach(el=>{
+  function bindInvalidation() {
+    [els.sig, els.noise, els.target].forEach(el => {
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
   }
 
-  function init(){
+  function init() {
     hideContinue();
     loadPrior();
+    renderEmpty();
     bindInvalidation();
 
-    els.calc.onclick=calculate;
-    els.reset.onclick=reset;
-    els.continueBtn.onclick=()=>window.location.href=NEXT_URL;
+    els.calc.onclick = calculate;
+    els.reset.onclick = reset;
+    els.continueBtn.onclick = () => window.location.href = NEXT_URL;
   }
 
   init();
