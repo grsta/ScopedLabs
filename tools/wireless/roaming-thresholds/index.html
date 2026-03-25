@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roaming Thresholds Planner *ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0183" />
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0192" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -42,13 +42,17 @@
 
   <h1>Roaming Thresholds Planner</h1>
 
-  <!-- REQUIRED -->
   <div id="pipeline"></div>
 
   <p class="subhead">Suggest RSSI and SNR thresholds to encourage timely client roaming.</p>
 
-  <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> turning the prior wireless link and coverage work into practical roaming thresholds that reduce sticky clients without making the WLAN overly twitchy.
+    </p>
+  </section>
 
   <section class="card tool-card">
     <h2>Inputs</h2>
@@ -79,28 +83,44 @@
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Suggest</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Suggest</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+      <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
     </div>
   </section>
 
   <section class="card tool-card">
     <h2>Suggested Thresholds</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Suggest.</div>
+    </div>
   </section>
 
-  <!-- FINAL STEP → no continue -->
+  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
+  <div class="card" id="completion-wrap" style="display:none;">
+    <div class="results">
+      <div class="result-row">
+        <div class="result-label">Pipeline Status</div>
+        <div class="result-value">Wireless v1 complete</div>
+      </div>
+      <div class="result-row">
+        <div class="result-label">Next Action</div>
+        <div class="result-value">Review thresholds or return to Wireless</div>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script src="/assets/tool-flow.js"></script>
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=004"></script>
 
 </body>
 </html>
-
 
 
 
