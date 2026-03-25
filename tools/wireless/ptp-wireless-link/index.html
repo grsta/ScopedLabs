@@ -42,13 +42,17 @@
 
   <h1>PtP Wireless Link Planner</h1>
 
-  <!-- REQUIRED -->
   <div id="pipeline"></div>
 
   <p class="subhead">Planning check for line-of-sight margin and estimated throughput.</p>
 
-  <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> validating whether a long-distance wireless path still has enough margin and throughput to support the backhaul assumptions from the prior step.
+    </p>
+  </section>
 
   <section class="card tool-card">
     <h2>Inputs</h2>
@@ -96,19 +100,23 @@
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+      <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
     </div>
   </section>
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
   </section>
 
-  <!-- REQUIRED -->
+  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
   <div id="continue-wrap" class="card" style="display:none;">
-    <button id="continue" class="btn btn-primary" disabled>
+    <button id="continue" class="btn btn-primary" disabled type="button">
       Continue → Roaming Thresholds
     </button>
   </div>
@@ -118,12 +126,9 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=003"></script>
 
 </body>
 </html>
-
-
-
-
 
