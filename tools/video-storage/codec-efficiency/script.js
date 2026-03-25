@@ -1,97 +1,437 @@
-﻿// Codec Efficiency Comparator (rule-of-thumb savings)
+﻿// Codec Efficiency Comparator
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  function n(id) {
-    const el = $(id);
-    const v = el ? parseFloat(String(el.value ?? "").trim()) : NaN;
-    return Number.isFinite(v) ? v : 0;
+  const els = {
+    baseline: $("baseline"),
+    fromCodec: $("fromCodec"),
+    toCodec: $("toCodec"),
+    hours: $("hours"),
+    days: $("days"),
+    cams: $("cams"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    analysisCopy: $("analysis-copy")
+  };
+
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
+
+  function safeNumber(value, fallback = 0) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
+    }
+
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
   }
 
-  function clamp(x, lo, hi) {
-    return Math.min(hi, Math.max(lo, x));
+  function clamp(value, min, max) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clamp === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.clamp(value, min, max);
+    }
+
+    return Math.min(max, Math.max(min, value));
   }
 
-  function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
-    rows.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "result-row";
-      div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
-      `;
-      el.appendChild(div);
-    });
+  function clearAnalysisBlock() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+    } else if (els.analysisCopy) {
+      els.analysisCopy.style.display = "none";
+      els.analysisCopy.innerHTML = "";
+    }
   }
 
-  // Relative efficiency: lower means more efficient (needs fewer bits for similar quality)
+  function clearChart() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearChart === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+      return;
+    }
+
+    if (chartRef.current) {
+      try {
+        chartRef.current.destroy();
+      } catch {}
+      chartRef.current = null;
+    }
+
+    if (chartWrapRef.current && chartWrapRef.current.parentNode) {
+      chartWrapRef.current.parentNode.removeChild(chartWrapRef.current);
+      chartWrapRef.current = null;
+    }
+  }
+
+  function renderEmpty() {
+    if (els.results) {
+      els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    }
+    clearAnalysisBlock();
+    clearChart();
+  }
+
+  function invalidate() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.invalidate === "function"
+    ) {
+      window.ScopedLabsAnalyzer.invalidate({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        emptyMessage: "Enter values and press Calculate."
+      });
+    } else {
+      renderEmpty();
+    }
+
+    clearChart();
+  }
+
   function eff(codec) {
     if (codec === "av1") return 0.60;
     if (codec === "h265") return 0.70;
     if (codec === "vp9") return 0.75;
-    return 1.00; // h264 baseline
+    return 1.00;
   }
 
   function gbFromMbps(mbps, hours) {
-    // Mbps -> GB for a given number of hours
-    // 1 byte = 8 bits, 1 GB = 1e9 bytes
     const bits = mbps * 1_000_000 * (hours * 3600);
     const bytes = bits / 8;
     return bytes / 1_000_000_000;
   }
 
-  function calc() {
-    const baseline = Math.max(0, n("baseline"));
-    const fromCodec = $("fromCodec").value;
-    const toCodec = $("toCodec").value;
-    const hours = clamp(n("hours"), 0, 24);
-    const days = Math.max(0, n("days"));
-    const cams = Math.max(1, n("cams"));
+  function resolveStatus(metrics) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+    ) {
+      const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+        metrics,
+        healthyMax: 1.0,
+        watchMax: 1.35
+      });
 
-    if (baseline <= 0) {
-      render([{ label: "Error", value: "Enter a baseline bitrate (Mbps) > 0" }]);
+      return {
+        status: resolved?.status || "HEALTHY",
+        dominantLabel: resolved?.dominant?.label || metrics[0].label
+      };
+    }
+
+    const dominant = metrics.reduce((best, current) =>
+      Number(current.value) > Number(best.value) ? current : best
+    );
+
+    let status = "HEALTHY";
+    if (Number(dominant.value) > 1.35) status = "RISK";
+    else if (Number(dominant.value) > 1.0) status = "WATCH";
+
+    return {
+      status,
+      dominantLabel: dominant.label
+    };
+  }
+
+  function buildInterpretation(status, dominantConstraint, savingsPct, oldGB, newGB) {
+    if (status === "HEALTHY") {
+      return `The codec change produces meaningful savings without pushing the design into a fragile edge case. The storage benefit is real, and the difference between the current and target codec is large enough to matter operationally over retention windows.`;
+    }
+
+    if (status === "WATCH") {
+      if (dominantConstraint === "Codec delta strength") {
+        return `The primary story here is the size of the codec efficiency change itself. Savings exist, but they are not so large that the move alone will transform the storage design unless camera count or retention is also substantial.`;
+      }
+
+      if (dominantConstraint === "Retention burden") {
+        return `Retention length is making the codec difference more important. Even modest efficiency gains now accumulate into a noticeable storage impact because the archive window is long enough for small stream differences to compound.`;
+      }
+
+      return `Camera scale is amplifying the codec decision. The per-camera change may look modest, but the fleet-wide effect is large enough that codec choice becomes a real storage-planning lever.`;
+    }
+
+    if (dominantConstraint === "Retention burden") {
+      return `Long retention is turning codec efficiency into a major storage driver. The choice of codec now materially changes how much retained data the system must carry over time.`;
+    }
+
+    if (dominantConstraint === "Camera fleet scale") {
+      return `Camera count is the main reason this codec decision matters so much. Even moderate per-stream efficiency changes are being magnified into a large aggregate storage burden across the deployment.`;
+    }
+
+    return `The difference between the current and target codec is large enough to create a significant storage swing. This is no longer a minor tuning choice — it is a structural efficiency decision that can materially alter capacity planning.`;
+  }
+
+  function buildGuidance(status, dominantConstraint, savingsPct) {
+    if (status === "HEALTHY") {
+      return `Use the target codec estimate as a practical storage-planning alternative, but validate encoder support, quality acceptance, and playback workflow before assuming the savings are fully bankable.`;
+    }
+
+    if (status === "WATCH") {
+      if (dominantConstraint === "Retention burden") {
+        return `Prioritize codec validation if long retention is a hard requirement. The archive window is now long enough that codec efficiency can materially change total storage demand.`;
+      }
+
+      if (dominantConstraint === "Camera fleet scale") {
+        return `Model the codec decision at full deployment scale before locking the storage plan. Fleet size is large enough that even moderate efficiency changes deserve a deliberate validation pass.`;
+      }
+
+      return `Treat the savings as useful but not magical. Combine codec choice with bitrate tuning, retention review, and storage policy rather than expecting codec migration alone to solve every capacity issue.`;
+    }
+
+    if (dominantConstraint === "Codec delta strength") {
+      return `Validate the migration path seriously. The savings are large enough that codec choice can reshape storage planning, but only if the operational workflow can support the target codec cleanly.`;
+    }
+
+    if (dominantConstraint === "Retention burden") {
+      return `Use the more efficient codec path or reduce retention burden. The current archive horizon is making codec efficiency too important to ignore.`;
+    }
+
+    return `Rework the storage plan around the codec outcome rather than treating codec as a cosmetic setting. The efficiency difference is large enough to change real capacity decisions.`;
+  }
+
+  function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+    if (els.results) {
+      els.results.innerHTML = `
+        ${summaryRows.map((row) => `
+          <div class="result-row">
+            <span class="result-label">${row.label}</span>
+            <span class="result-value">${row.value}</span>
+          </div>
+        `).join("")}
+        ${derivedRows.map((row) => `
+          <div class="result-row">
+            <span class="result-label">${row.label}</span>
+            <span class="result-value">${row.value}</span>
+          </div>
+        `).join("")}
+      `;
+    }
+
+    if (els.analysisCopy) {
+      els.analysisCopy.style.display = "";
+      els.analysisCopy.innerHTML = `
+        <div class="results">
+          <div class="result-row">
+            <span class="result-label">Status</span>
+            <span class="result-value">${status}</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">Dominant Constraint</span>
+            <span class="result-value">${dominantConstraint}</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">Engineering Interpretation</span>
+            <span class="result-value">${interpretation}</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">Actionable Guidance</span>
+            <span class="result-value">${guidance}</span>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function calculate() {
+    const baselineRaw = safeNumber(els.baseline.value, NaN);
+    const hoursRaw = safeNumber(els.hours.value, NaN);
+    const daysRaw = safeNumber(els.days.value, NaN);
+    const camsRaw = safeNumber(els.cams.value, NaN);
+
+    const fromCodec = els.fromCodec.value;
+    const toCodec = els.toCodec.value;
+
+    if (
+      !Number.isFinite(baselineRaw) || baselineRaw <= 0 ||
+      !Number.isFinite(hoursRaw) || hoursRaw < 0 ||
+      !Number.isFinite(daysRaw) || daysRaw < 0 ||
+      !Number.isFinite(camsRaw) || camsRaw < 1
+    ) {
+      if (els.results) {
+        els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+      }
+      clearAnalysisBlock();
+      clearChart();
       return;
     }
 
-    // Convert baseline measured in "from codec" to estimated in "to codec"
-    // Example: baseline in H.264 (1.00) -> H.265 (0.70): new = baseline * (0.70/1.00)
+    const baseline = clamp(baselineRaw, 0.01, 100000);
+    const hours = clamp(hoursRaw, 0, 24);
+    const days = clamp(daysRaw, 0, 3650);
+    const cams = Math.max(1, Math.floor(clamp(camsRaw, 1, 100000)));
+
     const newMbps = baseline * (eff(toCodec) / eff(fromCodec));
 
     const perCamHours = hours * days;
     const oldGB = gbFromMbps(baseline, perCamHours) * cams;
     const newGB = gbFromMbps(newMbps, perCamHours) * cams;
 
-    const savingsGB = Math.max(0, oldGB - newGB);
+    const savingsGB = oldGB - newGB;
     const savingsPct = oldGB > 0 ? (savingsGB / oldGB) * 100 : 0;
 
-    render([
-      { label: "Baseline Bitrate", value: `${baseline.toFixed(2)} Mbps (${fromCodec.toUpperCase()})` },
-      { label: "Estimated Target Bitrate", value: `${newMbps.toFixed(2)} Mbps (${toCodec.toUpperCase()})` },
-      { label: "Hours × Days × Cams", value: `${hours.toFixed(1)}h × ${days.toFixed(0)}d × ${cams}` },
+    const codecDeltaStrength = Math.abs(1 - (eff(toCodec) / eff(fromCodec))) * 3;
+    const retentionBurden = Math.max(0.1, days / 30);
+    const fleetScale = Math.max(0.1, cams / 8);
 
+    const metrics = [
+      {
+        label: "Codec Delta Strength",
+        value: codecDeltaStrength,
+        displayValue: `${savingsPct.toFixed(1)}%`
+      },
+      {
+        label: "Retention Burden",
+        value: retentionBurden,
+        displayValue: `${days.toFixed(0)} days`
+      },
+      {
+        label: "Camera Fleet Scale",
+        value: fleetScale,
+        displayValue: `${cams} cams`
+      }
+    ];
+
+    const resolved = resolveStatus(metrics);
+    const status = resolved.status;
+
+    const dominantConstraintMap = {
+      "Codec Delta Strength": "Codec delta strength",
+      "Retention Burden": "Retention burden",
+      "Camera Fleet Scale": "Camera fleet scale"
+    };
+
+    const dominantConstraint =
+      dominantConstraintMap[resolved.dominantLabel] || "Codec delta strength";
+
+    const interpretation = buildInterpretation(
+      status,
+      dominantConstraint,
+      savingsPct,
+      oldGB,
+      newGB
+    );
+
+    const guidance = buildGuidance(
+      status,
+      dominantConstraint,
+      savingsPct
+    );
+
+    const summaryRows = [
+      { label: "Baseline Bitrate", value: `${baseline.toFixed(2)} Mbps (${fromCodec.toUpperCase()})` },
+      { label: "Target Bitrate", value: `${newMbps.toFixed(2)} Mbps (${toCodec.toUpperCase()})` },
+      { label: "Hours × Days × Cams", value: `${hours.toFixed(1)}h × ${days.toFixed(0)}d × ${cams}` }
+    ];
+
+    const derivedRows = [
       { label: "Storage (Baseline)", value: `${oldGB.toFixed(1)} GB` },
       { label: "Storage (Target)", value: `${newGB.toFixed(1)} GB` },
-
       { label: "Estimated Savings", value: `${savingsGB.toFixed(1)} GB (${savingsPct.toFixed(1)}%)` },
-      { label: "Notes", value: "Rule-of-thumb. Real results vary by encoder settings, motion, and lighting." }
-    ]);
+      { label: "Planning Basis", value: "Rule-of-thumb codec efficiency comparison" }
+    ];
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderOutput({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        summaryRows,
+        derivedRows,
+        status,
+        interpretation,
+        dominantConstraint,
+        guidance
+      });
+    } else {
+      renderFallback(
+        summaryRows,
+        derivedRows,
+        status,
+        dominantConstraint,
+        interpretation,
+        guidance
+      );
+    }
+
+    clearChart();
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderAnalyzerChart({
+        mountEl: els.results,
+        existingChartRef: chartRef,
+        existingWrapRef: chartWrapRef,
+        labels: [
+          "Codec Delta",
+          "Retention Burden",
+          "Fleet Scale"
+        ],
+        values: [
+          codecDeltaStrength,
+          retentionBurden,
+          fleetScale
+        ],
+        displayValues: [
+          `${savingsPct.toFixed(1)}%`,
+          `${days.toFixed(0)} days`,
+          `${cams} cams`
+        ],
+        referenceValue: 1.0,
+        healthyMax: 1.0,
+        watchMax: 1.35,
+        axisTitle: "Savings Pressure",
+        referenceLabel: "Healthy Threshold",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          3,
+          Math.ceil(Math.max(codecDeltaStrength, retentionBurden, fleetScale, 1.35) * 1.15 * 10) / 10
+        )
+      });
+    }
   }
 
   function reset() {
-    $("baseline").value = 4.0;
-    $("fromCodec").value = "h264";
-    $("toCodec").value = "h265";
-    $("hours").value = 24;
-    $("days").value = 30;
-    $("cams").value = 8;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    els.baseline.value = 4.0;
+    els.fromCodec.value = "h264";
+    els.toCodec.value = "h265";
+    els.hours.value = 24;
+    els.days.value = 30;
+    els.cams.value = 8;
+    renderEmpty();
   }
 
-  $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
+  function bindInvalidation() {
+    [els.baseline, els.fromCodec, els.toCodec, els.hours, els.days, els.cams].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+  }
 
-  reset();
+  function init() {
+    renderEmpty();
+    bindInvalidation();
+
+    if (els.calc) els.calc.addEventListener("click", calculate);
+    if (els.reset) els.reset.addEventListener("click", reset);
+  }
+
+  init();
 })();
-
