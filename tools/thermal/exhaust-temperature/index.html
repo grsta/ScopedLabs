@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Exhaust Temperature Estimator *ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0183" />
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
   </script>
 
-  <script defer src="/assets/auth.js?v=0407"></script>
-  <script defer src="/assets/app.js?v=0407"></script>
+  <script defer src="/assets/auth.js?v=0408"></script>
+  <script defer src="/assets/app.js?v=0408"></script>
 </head>
 
 <body data-tier="pro" data-category="thermal" data-step="exhaust-temperature" data-lane="v1">
@@ -42,12 +43,10 @@
 
   <h1>Exhaust Temperature Estimator</h1>
 
-  <!-- REQUIRED -->
   <div id="pipeline"></div>
 
   <p class="subhead">Estimate exhaust air temperature based on inlet temperature, heat load, and airflow.</p>
 
-  <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
@@ -98,7 +97,8 @@
     </div>
   </section>
 
-  <!-- REQUIRED -->
+  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
   <div id="continue-wrap" class="card" style="display:none;">
     <button id="continue" class="btn btn-primary" disabled>
       Continue → Cooling Capacity
@@ -110,7 +110,8 @@
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=002"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=003"></script>
 
 </body>
 </html>
