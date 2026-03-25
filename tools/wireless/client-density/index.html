@@ -42,13 +42,17 @@
 
   <h1>Client Density Planner</h1>
 
-  <!-- REQUIRED -->
   <div id="pipeline"></div>
 
   <p class="subhead">Estimate AP count based on area size and target client density.</p>
 
-  <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> translating site size and user count into a realistic AP-count starting point before capacity and overlap planning.
+    </p>
+  </section>
 
   <section class="card tool-card">
     <h2>Inputs</h2>
@@ -81,35 +85,34 @@
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+      <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
     </div>
   </section>
 
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results" class="results"></div>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
   </section>
 
-  <!-- REQUIRED -->
+  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
   <div id="continue-wrap" class="card" style="display:none;">
-    <button id="continue" class="btn btn-primary" disabled>
+    <button id="continue" class="btn btn-primary" disabled type="button">
       Continue → AP Capacity
     </button>
   </div>
 </main>
 
-<!-- REQUIRED ORDER -->
 <script src="/assets/tool-flow.js"></script>
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=005"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=006"></script>
 
 </body>
 </html>
-
-
-
-
-
