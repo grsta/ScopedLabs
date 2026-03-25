@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
@@ -42,12 +43,10 @@
 
   <h1>Room Cooling Capacity</h1>
 
-  <!-- REQUIRED -->
   <div id="pipeline"></div>
 
   <p class="subhead">Convert total system heat into required cooling capacity.</p>
 
-  <!-- REQUIRED -->
   <div id="flow-note" class="card" style="display:none;"></div>
 
   <section class="card">
@@ -84,20 +83,34 @@
     </div>
   </section>
 
-  <div class="card">
-  <button class="btn" onclick="window.location.href='/tools/thermal/'">
-    ← Return to Thermal Category
-  </button>
-</div>
+  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
 
-  <!-- FINAL STEP → NO CONTINUE BUTTON -->
+  <div class="card" id="completion-wrap" style="display:none;">
+    <div class="results">
+      <div class="result-row">
+        <div class="result-label">Pipeline Status</div>
+        <div class="result-value">Thermal v1 complete</div>
+      </div>
+      <div class="result-row">
+        <div class="result-label">Next Action</div>
+        <div class="result-value">Review results or return to Thermal Category</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="btn" onclick="window.location.href='/tools/thermal/'">
+      ← Return to Thermal Category
+    </button>
+  </div>
 </main>
 
 <script src="/assets/tool-flow.js"></script>
 <script src="/assets/catalog.js"></script>
 <script src="/assets/pipelines.js"></script>
 <script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=003"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=004"></script>
 
 </body>
 </html>
