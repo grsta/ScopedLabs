@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Network &amp; Throughput • ScopedLabs</title>
   <meta name="description" content="Plan bandwidth, latency, PoE budgets, and topology before the install." />
-  <link rel="stylesheet" href="/assets/style.css?v=network-0382" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0317"></script>
-<script defer src="/assets/app.js?v=0317"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=network-0383" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=network-0383"></script>
+  <script defer src="/assets/app.js?v=network-0383"></script>
 </head>
 
 <body data-protected="true" data-category="network">
@@ -56,23 +56,29 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
     <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
       <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Design Pipeline</div>
       <h2 class="h2" style="margin-top: 0;">Follow a recommended engineering sequence</h2>
-      <p class="muted">
+      <p class="muted" style="margin-bottom: 14px;">
         Some ScopedLabs tools work as a connected workflow. In Network &amp; Throughput, the Design Flow carries you
         from switch power planning into bandwidth, oversubscription, and latency validation so you can move from
         rough sizing to design checks with less re-entry.
       </p>
-      <div style="display:flex; flex-wrap:wrap; gap:10px; margin: 14px 0 10px; align-items:center;">
-        <span class="pill pill-ok">PoE Budget</span>
-        <span class="muted">→</span>
-        <span class="pill pill-ok">Bandwidth</span>
-        <span class="muted">→</span>
-        <span class="pill pill--pro">Oversubscription</span>
-        <span class="muted">→</span>
-        <span class="pill pill--pro">Latency</span>
+
+      <div class="pipeline-preview" aria-label="Network design pipeline preview">
+        <span class="pipeline-preview-label">DESIGN PIPELINE</span>
+        <div class="pipeline-preview-steps">
+          <span class="pipeline-preview-step is-active">PoE Budget</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step">Bandwidth</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Oversubscription</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Latency</span>
+        </div>
       </div>
-      <p class="muted" style="margin-bottom: 14px;">
+
+      <p class="muted" style="margin-top: 14px; margin-bottom: 14px;">
         Includes both Free and Pro tools. Unlock Pro to complete the full flow.
       </p>
+
       <div class="actions">
         <a class="btn btn-primary" href="/tools/network/poe-budget/">Start Design Pipeline</a>
       </div>
@@ -107,8 +113,7 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
         </div>
       </a>
 
-      <a class="tool-row tool-row--center" 
-      href="/tools/network/mtu-fragmentation/">
+      <a class="tool-row tool-row--center" href="/tools/network/mtu-fragmentation/">
         <div class="tool-row-center">
           <div class="tool-row-title">MTU &amp; Fragmentation Helper</div>
           <div class="tool-row-sub">
@@ -125,9 +130,9 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
     <h3 class="section-divider">Pro Tier</h3>
 
     <div class="stack">
-      <a class="tool-row pro" 
-      href="/upgrade/?category=network#checkout" 
-      data-tool="/tools/network/growth-simulator/">
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/growth-simulator/">
         <div class="tool-row-center">
           <div class="tool-row-title"><span class="lock-icon"></span>Growth Simulator</div>
           <div class="tool-row-sub">
@@ -139,9 +144,9 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
         </div>
       </a>
 
-      <a class="tool-row pro" 
-      href="/upgrade/?category=network#checkout" 
-      data-tool="/tools/network/latency/">
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/latency/">
         <div class="tool-row-center">
           <div class="tool-row-title"><span class="lock-icon"></span>Latency Budget Calculator</div>
           <div class="tool-row-sub">
@@ -153,9 +158,9 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
         </div>
       </a>
 
-      <a class="tool-row pro" 
-      href="/upgrade/?category=network#checkout" 
-      data-tool="/tools/network/latency-jitter-buffer/">
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/latency-jitter-buffer/">
         <div class="tool-row-center">
           <div class="tool-row-title"><span class="lock-icon"></span>Latency &amp; Jitter Buffer Planner</div>
           <div class="tool-row-sub">
@@ -167,9 +172,9 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
         </div>
       </a>
 
-      <a class="tool-row pro" 
-      href="/upgrade/?category=network#checkout" 
-      data-tool="/tools/network/oversubscription/">
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/oversubscription/">
         <div class="tool-row-center">
           <div class="tool-row-title"><span class="lock-icon"></span>Uplink Oversubscription Estimator</div>
           <div class="tool-row-sub">
@@ -181,9 +186,9 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
         </div>
       </a>
 
-      <a class="tool-row pro" 
-      href="/upgrade/?category=network#checkout" 
-      data-tool="/tools/network/packet-loss-impact/">
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/packet-loss-impact/">
         <div class="tool-row-center">
           <div class="tool-row-title"><span class="lock-icon"></span>Packet Loss Impact Model</div>
           <div class="tool-row-sub">
@@ -195,9 +200,9 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
         </div>
       </a>
 
-      <a class="tool-row pro" 
-      href="/upgrade/?category=network#checkout" 
-      data-tool="/tools/network/uplink-failure-impact/">
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/uplink-failure-impact/">
         <div class="tool-row-center">
           <div class="tool-row-title"><span class="lock-icon"></span>Uplink Failure Impact</div>
           <div class="tool-row-sub">
@@ -209,9 +214,9 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
         </div>
       </a>
 
-      <a class="tool-row pro" 
-      href="/upgrade/?category=network#checkout" 
-      data-tool="/tools/network/vpn-overhead/">
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/vpn-overhead/">
         <div class="tool-row-center">
           <div class="tool-row-title"><span class="lock-icon"></span>VPN Overhead Estimator</div>
           <div class="tool-row-sub">
@@ -223,9 +228,6 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
         </div>
       </a>
     </div>
-
-  
-    </section>
 
     <footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>
@@ -239,6 +241,70 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
     .tool-row-sub { opacity: 0.9; margin-bottom: 10px; }
     .tool-row-pill { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
     .lock-icon { margin-right: 6px; }
+
+    .pipeline-preview {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background:
+        linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 12px 30px rgba(0,0,0,0.18);
+    }
+
+    .pipeline-preview-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(220,255,220,0.78);
+      margin-bottom: 9px;
+    }
+
+    .pipeline-preview-steps {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.98rem;
+      line-height: 1.4;
+    }
+
+    .pipeline-preview-step {
+      color: rgba(220,235,225,0.72);
+      font-weight: 600;
+    }
+
+    .pipeline-preview-step.is-active {
+      color: rgba(255,255,255,0.96);
+      position: relative;
+      padding-left: 15px;
+    }
+
+    .pipeline-preview-step.is-active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #57ff7a;
+      transform: translateY(-50%);
+      box-shadow: 0 0 12px rgba(87,255,122,0.55);
+    }
+
+    .pipeline-preview-step.is-pro {
+      color: rgba(210,220,214,0.82);
+    }
+
+    .pipeline-preview-sep {
+      color: rgba(180,205,190,0.42);
+      font-weight: 700;
+    }
   </style>
 </body>
 </html>
