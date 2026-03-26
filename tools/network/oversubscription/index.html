@@ -18,6 +18,54 @@
   </script>
   <script defer src="/assets/auth.js?v=net-oversub-0414"></script>
   <script defer src="/assets/app.js?v=net-oversub-0414"></script>
+
+  <style>
+  .results-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(120, 255, 120, 0.14);
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  .result-label,
+  .result-row .k {
+    color: rgba(255, 255, 255, 0.70);
+  }
+
+  .result-value,
+  .result-row .v {
+    font-weight: 800;
+    text-align: right;
+  }
+
+  .flag-ok {
+    color: rgba(140, 255, 170, 0.95);
+  }
+
+  .flag-warn {
+    color: rgba(255, 210, 140, 0.95);
+  }
+
+  .flag-bad {
+    color: rgba(255, 180, 140, 0.95);
+  }
+
+  .mini-note {
+    margin-top: 12px;
+    color: rgba(255, 255, 255, 0.56);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+</style>
 </head>
 
 <body
