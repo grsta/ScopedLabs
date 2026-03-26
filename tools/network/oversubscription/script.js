@@ -19,7 +19,7 @@
     targetUtilPct: $("targetUtilPct"),
     calc: $("calc"),
     reset: $("reset"),
-    out: $("out"),
+    results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     lockedCard: $("lockedCard"),
@@ -187,7 +187,7 @@
 
   function invalidate() {
     ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.out,
+      resultsEl: els.results,
       analysisEl: els.analysis,
       continueWrapEl: els.continueWrap,
       continueBtnEl: els.continueBtn,
@@ -349,7 +349,7 @@
   function renderError(message) {
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    els.out.innerHTML = `<div class="muted">${message}</div>`;
+    els.results.innerHTML = `<div class="muted">${message}</div>`;
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
   }
 
@@ -371,7 +371,7 @@
 
   function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
-      resultsEl: els.out,
+      resultsEl: els.results,
       analysisEl: els.analysis,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,

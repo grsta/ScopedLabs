@@ -9,15 +9,15 @@
     content="Estimate oversubscription at access, aggregation, and WAN layers and flag congestion risk using peak-demand assumptions."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=net-oversub-0413" />
+  <link rel="stylesheet" href="/assets/style.css?v=net-oversub-0414" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=net-oversub-0413"></script>
-  <script defer src="/assets/app.js?v=net-oversub-0413"></script>
+  <script defer src="/assets/auth.js?v=net-oversub-0414"></script>
+  <script defer src="/assets/app.js?v=net-oversub-0414"></script>
 </head>
 
 <body
@@ -104,15 +104,12 @@
       </section>
 
       <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
-
-        <h2 class="h2">Oversubscription Estimator</h2>
-        <p class="muted">
-          Calculate oversubscription ratios and congestion risk using access, aggregation, and core/WAN peak-demand assumptions.
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Compare downstream demand against available uplink capacity across access, aggregation, and core / WAN boundaries using practical peak-demand assumptions.
         </p>
 
-        <div class="spacer-md"></div>
-
-        <div class="card" style="background:rgba(0,0,0,.16);">
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.16);">
           <div class="muted"><strong>Layer inputs</strong></div>
 
           <div class="form-grid" style="margin-top:.75rem;">
@@ -222,12 +219,18 @@
           </p>
         </div>
 
-        <div class="spacer-md"></div>
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">Run the estimator to see oversubscription ratios, congestion risk, and carried-forward demand context.</div>
+          </div>
+          <div id="analysis-copy" style="display:none;"></div>
 
-        <div id="out" class="card" style="background:rgba(0,0,0,.14);">
-          <div class="muted">Run the estimator to see oversubscription ratios, congestion risk, and carried-forward demand context.</div>
+          <p class="mini-note">
+            Model: demand is increased by the overhead reserve, then compared against access, aggregation, and core / WAN capacity.
+            Utilization and recommended capacity are measured against the selected target operating band.
+          </p>
         </div>
-        <div id="analysis-copy" style="display:none;"></div>
 
         <div id="next-step-row" class="btn-row" style="margin-top: 14px; display:none;">
           <a id="next-step-btn" class="btn btn-primary" href="/tools/network/latency/">
@@ -243,12 +246,12 @@
     </div>
   </main>
 
-  <script src="/assets/tool-flow.js?v=net-oversub-0413"></script>
-  <script src="/assets/catalog.js?v=net-oversub-0413"></script>
-  <script src="/assets/pipelines.js?v=net-oversub-0413"></script>
-  <script src="/assets/pipeline.js?v=net-oversub-0413"></script>
-  <script src="/assets/analyzer.js?v=net-oversub-0413"></script>
-  <script src="./script.js?v=net-oversub-0413"></script>
+  <script src="/assets/tool-flow.js?v=net-oversub-0414"></script>
+  <script src="/assets/catalog.js?v=net-oversub-0414"></script>
+  <script src="/assets/pipelines.js?v=net-oversub-0414"></script>
+  <script src="/assets/pipeline.js?v=net-oversub-0414"></script>
+  <script src="/assets/analyzer.js?v=net-oversub-0414"></script>
+  <script src="./script.js?v=net-oversub-0414"></script>
 </body>
 </html>
 
