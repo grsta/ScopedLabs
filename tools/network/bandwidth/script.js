@@ -42,10 +42,6 @@
     return Number.isFinite(n) ? `${n.toFixed(1)}%` : "—";
   }
 
-  function readInput(el, fallback = 0) {
-    return ScopedLabsAnalyzer.safeNumber(el?.value, fallback);
-  }
-
   function applyDefaults() {
     els.devices.value = String(DEFAULTS.devices);
     els.bitrate.value = String(DEFAULTS.bitrate);
@@ -56,25 +52,31 @@
     els.safeUtil.value = String(DEFAULTS.safeUtil);
   }
 
+  function getStoredFlow() {
+    const raw = sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  function clearCurrentFlowIfOwnedByThisStep() {
+    const flow = getStoredFlow();
+    if (
+      flow &&
+      flow.category === "network" &&
+      flow.step === "bandwidth"
+    ) {
+      sessionStorage.removeItem(FLOW_KEY);
+    }
+  }
+
   function renderFlowContext() {
     if (!els.flowNote) return null;
 
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Step 2 — Network pipeline:</strong><br>
-        After confirming edge power, estimate the traffic those devices place on the network before checking aggregation pressure.
-      `;
-      return null;
-    }
-
-    let flow = null;
-    try {
-      flow = JSON.parse(raw);
-    } catch {
-      flow = null;
-    }
+    const flow = getStoredFlow();
 
     const validUpstream =
       flow &&
@@ -95,13 +97,24 @@
 
     const poeBudgetW = ScopedLabsAnalyzer.safeNumber(data.poeBudgetW, NaN);
     const safeBudgetW = ScopedLabsAnalyzer.safeNumber(data.safeBudgetW, NaN);
-    const headroomW = ScopedLabsAnalyzer.safeNumber(data.headroomW, NaN);
-    const utilPct = ScopedLabsAnalyzer.safeNumber(data.utilizationPct, NaN);
+    const headroomW = ScopedLabsAnalyzer.safeNumber(
+      data.poeHeadroomW ?? data.headroomW,
+      NaN
+    );
+    const utilPct = ScopedLabsAnalyzer.safeNumber(
+      data.poeUtilPct ?? data.utilizationPct,
+      NaN
+    );
     const poweredDevices = ScopedLabsAnalyzer.safeNumber(
       data.poweredDevices ?? data.devices ?? data.modeledDevices,
       NaN
     );
-    const status = typeof data.status === "string" ? data.status : "";
+    const status =
+      typeof data.poeStatus === "string"
+        ? data.poeStatus
+        : typeof data.status === "string"
+        ? data.status
+        : "";
 
     const parts = [];
 
@@ -141,32 +154,27 @@
   function maybePrefillFromUpstream(upstream) {
     if (!upstream || !upstream.data) return;
 
-    const poweredDevices =
-      ScopedLabsAnalyzer.safeNumber(
-        upstream.data.poweredDevices ??
+    const poweredDevices = ScopedLabsAnalyzer.safeNumber(
+      upstream.data.poweredDevices ??
         upstream.data.devices ??
         upstream.data.modeledDevices,
-        NaN
-      );
+      NaN
+    );
 
     if (Number.isFinite(poweredDevices) && poweredDevices > 0) {
       els.devices.value = String(Math.round(poweredDevices));
     }
   }
 
-  function invalidate() {
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
-      existingChartRef: chartRef,
-      existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: "network",
-      step: "bandwidth",
-      emptyMessage: "Enter values and press Calculate."
-    });
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) {
+      clearCurrentFlowIfOwnedByThisStep();
+    }
+
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
 
     renderFlowContext();
   }
@@ -242,8 +250,6 @@
 
     const recUplink = peakTotal / (safeUtil / 100);
     const shortfallMbps = Math.max(0, recUplink - uplinkMbps);
-    const shortfallPct = uplinkMbps > 0 ? (shortfallMbps / uplinkMbps) * 100 : 0;
-    const targetPressure = (utilPeak / safeUtil) * 100;
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: utilPeak,
@@ -293,8 +299,6 @@
       protocolAndBackgroundPct,
       recUplink,
       shortfallMbps,
-      shortfallPct,
-      targetPressure,
       status: statusPack.status,
       dominant: statusPack.dominant,
       interpretation,
@@ -360,11 +364,7 @@
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance,
       chart: {
-        labels: [
-          "Average Load",
-          "Peak Load",
-          "Burst Delta"
-        ],
+        labels: ["Average Load", "Peak Load", "Burst Delta"],
         values: [
           Number(data.utilAvg.toFixed(1)),
           Number(data.utilPeak.toFixed(1)),
@@ -415,7 +415,7 @@
     applyDefaults();
     const upstream = renderFlowContext();
     maybePrefillFromUpstream(upstream);
-    invalidate();
+    invalidate({ clearFlow: false });
   }
 
   function bindInvalidation() {
@@ -429,8 +429,8 @@
       els.safeUtil
     ].forEach((el) => {
       if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      el.addEventListener("input", () => invalidate({ clearFlow: true }));
+      el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
   }
 
