@@ -74,15 +74,19 @@
     els.otherW.value = String(DEFAULTS.otherW);
   }
 
+  function clearFlowState() {
+    try {
+      sessionStorage.removeItem(FLOW_KEY);
+    } catch {}
+  }
+
   function renderFlowContext() {
-    ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: "network",
-      step: "poe-budget",
-      title: "System Context",
-      intro: "Start here for the Network pipeline. Confirm switch power headroom before estimating traffic demand."
-    });
+    if (!els.flowNote) return;
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Start here for the Network pipeline.</strong><br>
+      Confirm switch power headroom before estimating traffic demand.
+    `;
   }
 
   function invalidate() {
@@ -98,6 +102,8 @@
       step: "poe-budget",
       emptyMessage: "Enter values and press Calculate."
     });
+
+    renderFlowContext();
   }
 
   function getInputs() {
@@ -324,6 +330,7 @@
   }
 
   function reset() {
+    clearFlowState();
     applyDefaults();
     renderFlowContext();
     invalidate();
