@@ -34,7 +34,7 @@
 
   function fmtMbps(value) {
     const n = Number(value);
-    return Number.isFinite(n) ? `${n.toFixed(2)} Mbps` : "—";
+    return Number.isFinite(n) ? `${n.toFixed(1)} Mbps` : "—";
   }
 
   function fmtPct(value) {
@@ -57,17 +57,85 @@
   }
 
   function renderFlowContext() {
-    const upstream = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: "network",
-      step: "bandwidth",
-      title: "System Context",
-      intro: "This is step 2 of the Network pipeline. After confirming edge power, estimate the traffic those devices place on the network before checking aggregation pressure.",
-      customRows: null
-    });
+    if (!els.flowNote) return null;
 
-    return upstream;
+    const raw = sessionStorage.getItem(FLOW_KEY);
+    if (!raw) {
+      els.flowNote.hidden = false;
+      els.flowNote.innerHTML = `
+        <strong>Step 2 — Network pipeline:</strong><br>
+        After confirming edge power, estimate the traffic those devices place on the network before checking aggregation pressure.
+      `;
+      return null;
+    }
+
+    let flow = null;
+    try {
+      flow = JSON.parse(raw);
+    } catch {
+      flow = null;
+    }
+
+    const validUpstream =
+      flow &&
+      flow.category === "network" &&
+      flow.step === "poe-budget" &&
+      flow.data;
+
+    if (!validUpstream) {
+      els.flowNote.hidden = false;
+      els.flowNote.innerHTML = `
+        <strong>Step 2 — Network pipeline:</strong><br>
+        After confirming edge power, estimate the traffic those devices place on the network before checking aggregation pressure.
+      `;
+      return null;
+    }
+
+    const data = flow.data || {};
+
+    const poeBudgetW = ScopedLabsAnalyzer.safeNumber(data.poeBudgetW, NaN);
+    const safeBudgetW = ScopedLabsAnalyzer.safeNumber(data.safeBudgetW, NaN);
+    const headroomW = ScopedLabsAnalyzer.safeNumber(data.headroomW, NaN);
+    const utilPct = ScopedLabsAnalyzer.safeNumber(data.utilizationPct, NaN);
+    const poweredDevices = ScopedLabsAnalyzer.safeNumber(
+      data.poweredDevices ?? data.devices ?? data.modeledDevices,
+      NaN
+    );
+    const status = typeof data.status === "string" ? data.status : "";
+
+    const parts = [];
+
+    if (Number.isFinite(poeBudgetW)) {
+      parts.push(`PoE Budget: ${poeBudgetW.toFixed(0)} W`);
+    }
+    if (Number.isFinite(safeBudgetW)) {
+      parts.push(`Safe Budget: ${safeBudgetW.toFixed(0)} W`);
+    }
+    if (Number.isFinite(headroomW)) {
+      parts.push(`PoE Headroom: ${headroomW.toFixed(0)} W`);
+    }
+    if (Number.isFinite(utilPct)) {
+      parts.push(`PoE Util: ${utilPct.toFixed(0)}%`);
+    }
+    if (Number.isFinite(poweredDevices)) {
+      parts.push(`Powered Devices: ${Math.round(poweredDevices)}`);
+    }
+    if (status) {
+      parts.push(`PoE Status: ${String(status).toUpperCase()}`);
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = parts.length
+      ? `
+        <strong>Step 2 — Using PoE results:</strong><br>
+        ${parts.join(" | ")}
+      `
+      : `
+        <strong>Step 2 — Network pipeline:</strong><br>
+        After confirming edge power, estimate the traffic those devices place on the network before checking aggregation pressure.
+      `;
+
+    return flow;
   }
 
   function maybePrefillFromUpstream(upstream) {
@@ -99,6 +167,8 @@
       step: "bandwidth",
       emptyMessage: "Enter values and press Calculate."
     });
+
+    renderFlowContext();
   }
 
   function getInputs() {
