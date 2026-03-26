@@ -179,7 +179,7 @@
       }
 
       els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `Step 3 → Using Bandwidth results:<br>${parts.join(" | ")}`;
+      els.flowNote.innerHTML = `<strong>Step 3 → Using Bandwidth results:</strong><br>${parts.join(" | ")}`;
     }
 
     return flow;
@@ -198,6 +198,8 @@
       step: "oversubscription",
       emptyMessage: "Run the estimator to see oversubscription ratios, congestion risk, and carried-forward demand context."
     });
+
+    renderFlowContext();
   }
 
   function getInputs() {
