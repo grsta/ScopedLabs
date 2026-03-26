@@ -9,7 +9,7 @@
     content="Calculate PoE load, safe switch budget, and installation headroom before deployment."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=net-poe-0406" />
+  <link rel="stylesheet" href="/assets/style.css?v=net-poe-0409" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -96,9 +96,17 @@
 
       <h1 style="margin-top: 10px;">PoE Budget &amp; Switch Margin Analyzer</h1>
       <div id="pipeline"></div>
-      <p class="muted" style="margin: 0;">
+
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">This tool starts the Network Design Flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          Use this first to verify switch power headroom before continuing into bandwidth, uplink pressure, and latency checks.
+        </p>
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
           This flow includes both Free and Pro tools. Unlock Pro to complete the full sequence.
-      </p>
+        </p>
+      </section>
 
       <p class="subhead">Calculate total PoE load, safe operating budget, and installation headroom before deployment.</p>
       <p class="tool-best-for">
@@ -108,16 +116,6 @@
       <div id="flow-note" class="flow-note" hidden>
         Start here for the Network pipeline. Confirm switch power headroom before estimating traffic demand.
       </div>
-
-
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool starts the Network Design Flow</h2>
-        <p class="muted" style="margin-bottom: 12px;">
-          Use this first to verify switch power headroom before continuing into bandwidth, uplink pressure, and latency checks.
-        </p>
-
-      </section>
 
       <section class="card tool-card" style="margin-top: 18px;">
         <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
