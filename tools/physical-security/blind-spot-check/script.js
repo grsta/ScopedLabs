@@ -22,7 +22,10 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
-    continueBtn: $("continue")
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   const DEFAULTS = {
@@ -54,12 +57,48 @@
     return (x * Math.PI) / 180;
   }
 
-  function hideContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "none";
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
   }
 
-  function showContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw
+        .split(",")
+        .map((x) => String(x).trim().toLowerCase())
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
   }
 
   function applyDefaults() {
@@ -77,14 +116,13 @@
       flowKey: KEY,
       category: CATEGORY,
       step: STEP,
-      title: "Flow context",
+      title: "Flow Context",
       intro: "This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied."
     });
 
     if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
 
     const prev = flow.data || {};
-
     const cams = num(prev.cams);
     const dist = num(prev.dist);
     const hfov = num(prev.hfov);
@@ -101,11 +139,10 @@
     if (Number.isFinite(hfov)) parts.push(`HFOV: <strong>${fmt(hfov, 0)}°</strong>`);
 
     if (parts.length) {
-      els.flowNote.style.display = "";
+      els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
-        <strong>Flow context</strong><br>
-        ${parts.join(", ")}.
-        This step checks whether blind spots remain before moving into pixel density.
+        <strong>Flow Context</strong><br>
+        ${parts.join(" | ")}
       `;
     }
   }
@@ -114,6 +151,8 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
       flowKey: KEY,
@@ -121,7 +160,8 @@
       step: STEP,
       emptyMessage: "Enter values and press Check Coverage."
     });
-    hideContinue();
+
+    renderFlowNote();
   }
 
   function getInputs() {
@@ -276,7 +316,7 @@
   function renderError(message) {
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    hideContinue();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -305,11 +345,7 @@
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance,
       chart: {
-        labels: [
-          "Gap Pressure",
-          "Coverage Shortfall",
-          "Overlap Compression"
-        ],
+        labels: ["Gap Pressure", "Coverage Shortfall", "Overlap Compression"],
         values: [
           Number(data.gapPressureMetric.toFixed(1)),
           Number(data.shortfallMetric.toFixed(1)),
@@ -333,7 +369,7 @@
     });
 
     writeFlow(data);
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function calc() {
@@ -359,19 +395,38 @@
       el.addEventListener("change", invalidate);
     });
 
-    els.calc.addEventListener("click", calc);
-    els.reset.addEventListener("click", reset);
-    els.continueBtn.addEventListener("click", () => {
-      window.location.href = NEXT_URL;
+    els.calc?.addEventListener("click", calc);
+    els.reset?.addEventListener("click", reset);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        calc();
+      }
     });
   }
 
-  function init() {
-    hideContinue();
+  function initTool() {
     bind();
     renderFlowNote();
     invalidate();
   }
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    let unlocked = unlockCategoryPage();
+    if (unlocked) initTool();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        initTool();
+      }
+    }, 400);
+  });
 })();
