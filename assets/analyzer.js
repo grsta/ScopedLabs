@@ -17,6 +17,18 @@ window.ScopedLabsAnalyzer = (() => {
     return ref && typeof ref === "object" ? ref : { current: null };
   }
 
+  function getPipelineState() {
+    return window.ScopedPipelineState || null;
+  }
+
+  function resolveFlowKey(flowKey = DEFAULT_FLOW_KEY, category = "", step = "") {
+    const state = getPipelineState();
+    if (state) {
+      return state.resolveFlowKey(flowKey, category, step);
+    }
+    return flowKey || DEFAULT_FLOW_KEY;
+  }
+
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
@@ -35,8 +47,10 @@ window.ScopedLabsAnalyzer = (() => {
       .replaceAll("'", "&#39;");
   }
 
-  function readFlow(flowKey = DEFAULT_FLOW_KEY) {
-    const raw = sessionStorage.getItem(flowKey);
+  function readFlow(flowKey = DEFAULT_FLOW_KEY, category = "", step = "") {
+    const resolvedKey = resolveFlowKey(flowKey, category, step);
+
+    const raw = sessionStorage.getItem(resolvedKey);
     if (!raw) return null;
     try {
       return JSON.parse(raw);
@@ -46,19 +60,43 @@ window.ScopedLabsAnalyzer = (() => {
   }
 
   function writeFlow(flowKey = DEFAULT_FLOW_KEY, payload) {
-    sessionStorage.setItem(flowKey, JSON.stringify(payload));
+    const category = payload?.category || "";
+    const step = payload?.step || "";
+    const resolvedKey = resolveFlowKey(flowKey, category, step);
+    sessionStorage.setItem(resolvedKey, JSON.stringify(payload));
   }
 
   function clearCurrentStepResult(flowKey = DEFAULT_FLOW_KEY, category, step) {
-    const parsed = readFlow(flowKey);
+    const resolvedKey = resolveFlowKey(flowKey, category, step);
+    const parsed = readFlow(resolvedKey, category, step);
     if (!parsed) return;
     if (parsed.category === category && parsed.step === step) {
-      sessionStorage.removeItem(flowKey);
+      sessionStorage.removeItem(resolvedKey);
     }
   }
 
-  function getUpstreamFlow({ flowKey = DEFAULT_FLOW_KEY, category, step, cachedFlow = null }) {
-    const parsed = readFlow(flowKey);
+  function getUpstreamFlow({
+    flowKey = DEFAULT_FLOW_KEY,
+    category,
+    step,
+    lane = "v1",
+    cachedFlow = null
+  }) {
+    const state = getPipelineState();
+
+    if (
+      state &&
+      flowKey === DEFAULT_FLOW_KEY &&
+      category &&
+      step
+    ) {
+      const upstream = state.getUpstreamFlow(category, lane, step);
+      if (upstream && upstream.category === category && upstream.step !== step) {
+        return upstream;
+      }
+    }
+
+    const parsed = readFlow(flowKey, category, step);
 
     if (parsed && parsed.category === category && parsed.step !== step) {
       return parsed;
@@ -105,6 +143,7 @@ window.ScopedLabsAnalyzer = (() => {
     flowKey = DEFAULT_FLOW_KEY,
     category,
     step,
+    lane = "v1",
     cachedFlow = null,
     title = "System Context",
     intro = "",
@@ -112,7 +151,13 @@ window.ScopedLabsAnalyzer = (() => {
   }) {
     if (!flowEl) return null;
 
-    const source = getUpstreamFlow({ flowKey, category, step, cachedFlow });
+    const source = getUpstreamFlow({
+      flowKey,
+      category,
+      step,
+      lane,
+      cachedFlow
+    });
 
     flowEl.style.display = "none";
     flowEl.innerHTML = "";
