@@ -1,7 +1,13 @@
 (() => {
   "use strict";
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    poe: "scopedlabs:pipeline:network:poe-budget",
+    bandwidth: "scopedlabs:pipeline:network:bandwidth",
+    oversub: "scopedlabs:pipeline:network:oversubscription",
+    latency: "scopedlabs:pipeline:network:latency"
+  };
+
   const DEFAULTS = {
     encodeMs: 80,
     switchMs: 5,
@@ -37,6 +43,8 @@
     continueWrap: $("next-step-row")
   };
 
+  let initialized = false;
+
   function fmt(v, d = 0) {
     return Number.isFinite(v) ? v.toFixed(d) : "—";
   }
@@ -51,6 +59,16 @@
 
   function readNumber(el, fallback = NaN) {
     return ScopedLabsAnalyzer.safeNumber(el?.value, fallback);
+  }
+
+  function getStoredFlow(key) {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   }
 
   function hasStoredAuth() {
@@ -108,41 +126,37 @@
     els.targetMs.value = String(DEFAULTS.targetMs);
   }
 
-  function renderFlowContext() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: "network",
-      step: "latency",
-      title: "System Context",
-      intro: "This is the final step of the Network pipeline. Use carried-forward transport assumptions to judge whether the design still feels responsive in practice."
-    });
+  function clearOwnState() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.latency);
+    } catch {}
+  }
 
-    if (!flow || !flow.data) return null;
+  function renderFlowContext() {
+    const flow = getStoredFlow(FLOW_KEYS.oversub);
+
+    if (!flow || !flow.data) {
+      els.flowNote.hidden = false;
+      els.flowNote.innerHTML = `
+        <strong>Step 4 — Network pipeline:</strong><br>
+        This is the final step of the Network pipeline. Use carried-forward transport assumptions to judge whether the design still feels responsive in practice.
+      `;
+      return null;
+    }
 
     const data = flow.data;
-    const peakUtil =
-      ScopedLabsAnalyzer.safeNumber(
-        data.peakUtilizationPct ??
-        data.coreUtilPct ??
-        data.transportUtilizationPct,
-        NaN
-      );
-
-    const demandMbps =
-      ScopedLabsAnalyzer.safeNumber(
-        data.peakTotalMbps ??
-        data.coreDemandMbps,
-        NaN
-      );
-
-    const transportMbps =
-      ScopedLabsAnalyzer.safeNumber(
-        data.wanMbps ??
-        data.uplinkMbps ??
-        data.transportMbps,
-        NaN
-      );
+    const peakUtil = ScopedLabsAnalyzer.safeNumber(
+      data.peakUtilizationPct ?? data.coreUtilPct ?? data.transportUtilizationPct,
+      NaN
+    );
+    const demandMbps = ScopedLabsAnalyzer.safeNumber(
+      data.peakTotalMbps ?? data.coreDemandMbps,
+      NaN
+    );
+    const transportMbps = ScopedLabsAnalyzer.safeNumber(
+      data.wanMbps ?? data.uplinkMbps ?? data.transportMbps,
+      NaN
+    );
 
     if (Number.isFinite(peakUtil)) {
       if (peakUtil > 90) {
@@ -163,24 +177,28 @@
       note.push(`Demand: <strong>${fmt(demandMbps, 1)} Mbps</strong>`);
       note.push(`Transport capacity: <strong>${fmt(transportMbps, 1)} Mbps</strong>`);
       els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `Step 4 → Using upstream network assumptions:<br>${note.join(" | ")}`;
+      els.flowNote.innerHTML = `<strong>Step 4 → Using Oversubscription results:</strong><br>${note.join(" | ")}`;
     }
 
     return flow;
   }
 
-  function invalidate() {
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) clearOwnState();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.out,
       analysisEl: els.analysis,
       continueWrapEl: els.continueWrap,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS.latency,
       category: "network",
       step: "latency",
       emptyMessage: "Run the calculator to see total latency, dominant contributors, and practical guidance."
     });
+
+    renderFlowContext();
   }
 
   function getInputs() {
@@ -193,10 +211,7 @@
     const bufferMs = readNumber(els.bufferMs);
     const targetMs = readNumber(els.targetMs);
 
-    if (
-      [encodeMs, switchMs, uplinkMs, wanMs, decodeMs, renderMs, bufferMs, targetMs]
-        .some((v) => !Number.isFinite(v))
-    ) {
+    if ([encodeMs, switchMs, uplinkMs, wanMs, decodeMs, renderMs, bufferMs, targetMs].some((v) => !Number.isFinite(v))) {
       return { ok: false, message: "Enter valid values." };
     }
 
@@ -226,15 +241,13 @@
     const dominant = [...input.contributors].sort((a, b) => b.value - a.value)[0];
     const dominantPct = totalMs > 0 ? (dominant.value / totalMs) * 100 : 0;
 
-    const networkTransportMs =
-      input.contributors
-        .filter((x) => ["Switching / routing", "Uplink / aggregation", "WAN / VPN transport"].includes(x.label))
-        .reduce((sum, s) => sum + s.value, 0);
+    const networkTransportMs = input.contributors
+      .filter((x) => ["Switching / routing", "Uplink / aggregation", "WAN / VPN transport"].includes(x.label))
+      .reduce((sum, s) => sum + s.value, 0);
 
-    const processingMs =
-      input.contributors
-        .filter((x) => ["Source / encode", "Decode / processing", "Client render"].includes(x.label))
-        .reduce((sum, s) => sum + s.value, 0);
+    const processingMs = input.contributors
+      .filter((x) => ["Source / encode", "Decode / processing", "Client render"].includes(x.label))
+      .reduce((sum, s) => sum + s.value, 0);
 
     const budgetUsePct = targetMs > 0 ? (totalMs / targetMs) * 100 : 0;
     const overTargetMs = Math.max(0, totalMs - targetMs);
@@ -257,11 +270,11 @@
     let interpretation = `Total modeled latency is ${fmtMs(totalMs)} against a target budget of ${fmtMs(targetMs)}. ${dominant.label} is the single largest contributor at ${fmtMs(dominant.value)}, which means that stage will shape how responsive the workflow feels before smaller contributors do.`;
 
     if (statusPack.status === "RISK") {
-      interpretation += ` The dominant stage is consuming too much of the latency budget by itself, which means the path is already fragile before the smaller contributors are even added. In practice, users will usually experience noticeable sluggishness because the largest delay source is oversized, not because the path is uniformly slow.`;
+      interpretation += " The dominant stage is consuming too much of the latency budget by itself, which means the path is already fragile before the smaller contributors are even added. In practice, users will usually experience noticeable sluggishness because the largest delay source is oversized, not because the path is uniformly slow.";
     } else if (statusPack.status === "WATCH") {
-      interpretation += ` The path may still remain inside the total budget, but the dominant stage is already large enough to erode responsiveness margin on its own. That usually means the workflow still works, but it starts feeling less immediate once real transport variation, client performance, or additional buffering is introduced.`;
+      interpretation += " The path may still remain inside the total budget, but the dominant stage is already large enough to erode responsiveness margin on its own. That usually means the workflow still works, but it starts feeling less immediate once real transport variation, client performance, or additional buffering is introduced.";
     } else {
-      interpretation += ` The dominant stage remains inside a controlled band, so no single contributor is disproportionately consuming the latency budget. That keeps the design more balanced and easier to tune if requirements change later.`;
+      interpretation += " The dominant stage remains inside a controlled band, so no single contributor is disproportionately consuming the latency budget. That keeps the design more balanced and easier to tune if requirements change later.";
     }
 
     let dominantConstraint = `${dominant.label} is the dominant limiter. In practice, reducing smaller stages first will not materially improve perceived responsiveness until this largest contributor is addressed or validated.`;
@@ -310,7 +323,7 @@
   }
 
   function writeFlow(data) {
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.latency, {
       category: "network",
       step: "latency",
       data: {
@@ -362,12 +375,7 @@
         riskLabel: "Risk",
         chartMax: Math.max(
           100,
-          Math.ceil(
-            Math.max(
-              ...data.input.contributors.map((x) => x.value),
-              data.perStageWatchMax
-            ) * 1.18
-          )
+          Math.ceil(Math.max(...data.input.contributors.map((x) => x.value), data.perStageWatchMax) * 1.18)
         )
       }
     });
@@ -391,12 +399,12 @@
   function reset() {
     applyDefaults();
     renderFlowContext();
-    invalidate();
+    invalidate({ clearFlow: false });
   }
 
   function initTool() {
-    renderFlowContext();
-    invalidate();
+    if (initialized) return;
+    initialized = true;
 
     [
       els.encodeMs,
@@ -409,8 +417,8 @@
       els.targetMs
     ].forEach((el) => {
       if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      el.addEventListener("input", () => invalidate({ clearFlow: true }));
+      el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
     els.calc?.addEventListener("click", calculate);
@@ -424,21 +432,17 @@
         calculate();
       }
     });
+
+    reset();
   }
 
   window.addEventListener("DOMContentLoaded", () => {
     let unlocked = unlockCategoryPage();
-    if (unlocked) {
-      initTool();
-      reset();
-    }
+    if (unlocked) initTool();
 
     setTimeout(() => {
       unlocked = unlockCategoryPage();
-      if (unlocked) {
-        initTool();
-        reset();
-      }
+      if (unlocked) initTool();
     }, 400);
   });
 })();

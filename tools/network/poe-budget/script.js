@@ -1,5 +1,10 @@
 (() => {
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    poe: "scopedlabs:pipeline:network:poe-budget",
+    bandwidth: "scopedlabs:pipeline:network:bandwidth",
+    oversub: "scopedlabs:pipeline:network:oversubscription",
+    latency: "scopedlabs:pipeline:network:latency"
+  };
 
   const DEFAULTS = {
     poeBudgetW: 370,
@@ -74,9 +79,9 @@
     els.otherW.value = String(DEFAULTS.otherW);
   }
 
-  function clearFlowState() {
+  function clearNetworkPipelineState() {
     try {
-      sessionStorage.removeItem(FLOW_KEY);
+      Object.values(FLOW_KEYS).forEach((key) => sessionStorage.removeItem(key));
     } catch {}
   }
 
@@ -90,19 +95,10 @@
   }
 
   function invalidate() {
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
-      existingChartRef: chartRef,
-      existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: "network",
-      step: "poe-budget",
-      emptyMessage: "Enter values and press Calculate."
-    });
-
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     renderFlowContext();
   }
 
@@ -241,7 +237,7 @@
   }
 
   function writeFlow(data) {
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.poe, {
       category: "network",
       step: "poe-budget",
       data: {
@@ -280,11 +276,7 @@
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance,
       chart: {
-        labels: [
-          "Total Device Draw",
-          "Safe Budget",
-          "Headroom"
-        ],
+        labels: ["Total Device Draw", "Safe Budget", "Headroom"],
         values: [
           Number(data.totalDrawW.toFixed(1)),
           Number(data.safeBudgetW.toFixed(1)),
@@ -306,11 +298,7 @@
         chartMax: Math.max(
           100,
           Math.ceil(
-            Math.max(
-              data.totalDrawW,
-              data.safeBudgetW,
-              data.input.poeBudgetW
-            ) * 1.12
+            Math.max(data.totalDrawW, data.safeBudgetW, data.input.poeBudgetW) * 1.12
           )
         )
       }
@@ -330,7 +318,7 @@
   }
 
   function reset() {
-    clearFlowState();
+    clearNetworkPipelineState();
     applyDefaults();
     renderFlowContext();
     invalidate();
@@ -362,7 +350,6 @@
     if (year) year.textContent = new Date().getFullYear();
 
     bindInvalidation();
-
     els.calc?.addEventListener("click", calculate);
     els.reset?.addEventListener("click", reset);
 

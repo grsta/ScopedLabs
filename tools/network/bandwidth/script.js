@@ -1,5 +1,11 @@
 (() => {
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    poe: "scopedlabs:pipeline:network:poe-budget",
+    bandwidth: "scopedlabs:pipeline:network:bandwidth",
+    oversub: "scopedlabs:pipeline:network:oversubscription",
+    latency: "scopedlabs:pipeline:network:latency"
+  };
+
   const DEFAULTS = {
     devices: 16,
     bitrate: 4,
@@ -52,8 +58,8 @@
     els.safeUtil.value = String(DEFAULTS.safeUtil);
   }
 
-  function getStoredFlow() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
+  function getStoredFlow(key) {
+    const raw = sessionStorage.getItem(key);
     if (!raw) return null;
     try {
       return JSON.parse(raw);
@@ -62,22 +68,18 @@
     }
   }
 
-  function clearCurrentFlowIfOwnedByThisStep() {
-    const flow = getStoredFlow();
-    if (
-      flow &&
-      flow.category === "network" &&
-      flow.step === "bandwidth"
-    ) {
-      sessionStorage.removeItem(FLOW_KEY);
-    }
+  function clearDownstreamState() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.bandwidth);
+      sessionStorage.removeItem(FLOW_KEYS.oversub);
+      sessionStorage.removeItem(FLOW_KEYS.latency);
+    } catch {}
   }
 
   function renderFlowContext() {
     if (!els.flowNote) return null;
 
-    const flow = getStoredFlow();
-
+    const flow = getStoredFlow(FLOW_KEYS.poe);
     const validUpstream =
       flow &&
       flow.category === "network" &&
@@ -94,17 +96,10 @@
     }
 
     const data = flow.data || {};
-
     const poeBudgetW = ScopedLabsAnalyzer.safeNumber(data.poeBudgetW, NaN);
     const safeBudgetW = ScopedLabsAnalyzer.safeNumber(data.safeBudgetW, NaN);
-    const headroomW = ScopedLabsAnalyzer.safeNumber(
-      data.poeHeadroomW ?? data.headroomW,
-      NaN
-    );
-    const utilPct = ScopedLabsAnalyzer.safeNumber(
-      data.poeUtilPct ?? data.utilizationPct,
-      NaN
-    );
+    const headroomW = ScopedLabsAnalyzer.safeNumber(data.poeHeadroomW ?? data.headroomW, NaN);
+    const utilPct = ScopedLabsAnalyzer.safeNumber(data.poeUtilPct ?? data.utilizationPct, NaN);
     const poweredDevices = ScopedLabsAnalyzer.safeNumber(
       data.poweredDevices ?? data.devices ?? data.modeledDevices,
       NaN
@@ -117,32 +112,16 @@
         : "";
 
     const parts = [];
-
-    if (Number.isFinite(poeBudgetW)) {
-      parts.push(`PoE Budget: ${poeBudgetW.toFixed(0)} W`);
-    }
-    if (Number.isFinite(safeBudgetW)) {
-      parts.push(`Safe Budget: ${safeBudgetW.toFixed(0)} W`);
-    }
-    if (Number.isFinite(headroomW)) {
-      parts.push(`PoE Headroom: ${headroomW.toFixed(0)} W`);
-    }
-    if (Number.isFinite(utilPct)) {
-      parts.push(`PoE Util: ${utilPct.toFixed(0)}%`);
-    }
-    if (Number.isFinite(poweredDevices)) {
-      parts.push(`Powered Devices: ${Math.round(poweredDevices)}`);
-    }
-    if (status) {
-      parts.push(`PoE Status: ${String(status).toUpperCase()}`);
-    }
+    if (Number.isFinite(poeBudgetW)) parts.push(`PoE Budget: ${poeBudgetW.toFixed(0)} W`);
+    if (Number.isFinite(safeBudgetW)) parts.push(`Safe Budget: ${safeBudgetW.toFixed(0)} W`);
+    if (Number.isFinite(headroomW)) parts.push(`PoE Headroom: ${headroomW.toFixed(0)} W`);
+    if (Number.isFinite(utilPct)) parts.push(`PoE Util: ${utilPct.toFixed(0)}%`);
+    if (Number.isFinite(poweredDevices)) parts.push(`Powered Devices: ${Math.round(poweredDevices)}`);
+    if (status) parts.push(`PoE Status: ${String(status).toUpperCase()}`);
 
     els.flowNote.hidden = false;
     els.flowNote.innerHTML = parts.length
-      ? `
-        <strong>Step 2 — Using PoE results:</strong><br>
-        ${parts.join(" | ")}
-      `
+      ? `<strong>Step 2 — Using PoE results:</strong><br>${parts.join(" | ")}`
       : `
         <strong>Step 2 — Network pipeline:</strong><br>
         After confirming edge power, estimate the traffic those devices place on the network before checking aggregation pressure.
@@ -156,8 +135,8 @@
 
     const poweredDevices = ScopedLabsAnalyzer.safeNumber(
       upstream.data.poweredDevices ??
-        upstream.data.devices ??
-        upstream.data.modeledDevices,
+      upstream.data.devices ??
+      upstream.data.modeledDevices,
       NaN
     );
 
@@ -167,15 +146,12 @@
   }
 
   function invalidate({ clearFlow = true } = {}) {
-    if (clearFlow) {
-      clearCurrentFlowIfOwnedByThisStep();
-    }
+    if (clearFlow) clearDownstreamState();
 
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-
     renderFlowContext();
   }
 
@@ -192,10 +168,7 @@
       99
     );
 
-    if (
-      [devices, bitrate, peakFactor, overheadPct, otherTraffic, uplinkMbps, safeUtil]
-        .some((v) => !Number.isFinite(v))
-    ) {
+    if ([devices, bitrate, peakFactor, overheadPct, otherTraffic, uplinkMbps, safeUtil].some((v) => !Number.isFinite(v))) {
       return { ok: false, message: "Enter valid numeric values." };
     }
 
@@ -206,40 +179,20 @@
     if (otherTraffic < 0) return { ok: false, message: "Other traffic allowance cannot be negative." };
     if (uplinkMbps <= 0) return { ok: false, message: "Current uplink capacity must be greater than 0 Mbps." };
 
-    return {
-      ok: true,
-      devices,
-      bitrate,
-      peakFactor,
-      overheadPct,
-      otherTraffic,
-      uplinkMbps,
-      safeUtil
-    };
+    return { ok: true, devices, bitrate, peakFactor, overheadPct, otherTraffic, uplinkMbps, safeUtil };
   }
 
   function calculateModel() {
     const input = getInputs();
     if (!input.ok) return input;
 
-    const {
-      devices,
-      bitrate,
-      peakFactor,
-      overheadPct,
-      otherTraffic,
-      uplinkMbps,
-      safeUtil
-    } = input;
-
+    const { devices, bitrate, peakFactor, overheadPct, otherTraffic, uplinkMbps, safeUtil } = input;
     const overheadMultiplier = 1 + (overheadPct / 100);
 
     const avgStream = devices * bitrate;
     const peakStream = avgStream * peakFactor;
-
     const avgWithOverhead = avgStream * overheadMultiplier;
     const peakWithOverhead = peakStream * overheadMultiplier;
-
     const avgTotal = avgWithOverhead + otherTraffic;
     const peakTotal = peakWithOverhead + otherTraffic;
 
@@ -247,7 +200,6 @@
     const utilPeak = (peakTotal / uplinkMbps) * 100;
     const burstDeltaPct = ((peakTotal - avgTotal) / uplinkMbps) * 100;
     const protocolAndBackgroundPct = ((peakTotal - peakStream) / uplinkMbps) * 100;
-
     const recUplink = peakTotal / (safeUtil / 100);
     const shortfallMbps = Math.max(0, recUplink - uplinkMbps);
 
@@ -315,7 +267,7 @@
   }
 
   function writeFlow(data) {
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.bandwidth, {
       category: "network",
       step: "bandwidth",
       data: {
@@ -385,15 +337,7 @@
         riskLabel: "Risk",
         chartMax: Math.max(
           100,
-          Math.ceil(
-            Math.max(
-              data.utilPeak,
-              data.utilAvg,
-              data.burstDeltaPct,
-              safeUtil,
-              watchMax
-            ) * 1.18
-          )
+          Math.ceil(Math.max(data.utilPeak, data.utilAvg, data.burstDeltaPct, safeUtil, watchMax) * 1.18)
         )
       }
     });
@@ -436,14 +380,8 @@
 
   window.addEventListener("DOMContentLoaded", () => {
     bindInvalidation();
-
-    if (els.calc) {
-      els.calc.addEventListener("click", calculate);
-    }
-
-    if (els.reset) {
-      els.reset.addEventListener("click", reset);
-    }
+    els.calc?.addEventListener("click", calculate);
+    els.reset?.addEventListener("click", reset);
 
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;

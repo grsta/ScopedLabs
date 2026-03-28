@@ -1,7 +1,12 @@
 (() => {
   "use strict";
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    poe: "scopedlabs:pipeline:network:poe-budget",
+    bandwidth: "scopedlabs:pipeline:network:bandwidth",
+    oversub: "scopedlabs:pipeline:network:oversubscription",
+    latency: "scopedlabs:pipeline:network:latency"
+  };
 
   const chartRef = { current: null };
   const chartWrapRef = { current: null };
@@ -114,57 +119,55 @@
     els.targetUtilPct.value = String(DEFAULTS.targetUtilPct);
   }
 
-  function renderFlowContext() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: "network",
-      step: "oversubscription",
-      title: "System Context",
-      intro: "This is step 3 of the Network pipeline. Use Bandwidth results here to test whether peak demand still fits through the uplink hierarchy with usable headroom."
-    });
+  function getStoredFlow(key) {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
 
-    if (!flow || !flow.data) return null;
+  function clearDownstreamState() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.oversub);
+      sessionStorage.removeItem(FLOW_KEYS.latency);
+    } catch {}
+  }
+
+  function renderFlowContext() {
+    const flow = getStoredFlow(FLOW_KEYS.bandwidth);
+
+    if (!flow || !flow.data) {
+      els.flowNote.hidden = false;
+      els.flowNote.innerHTML = `
+        <strong>Step 3 — Network pipeline:</strong><br>
+        Use Bandwidth results here to test whether peak demand still fits through the uplink hierarchy with usable headroom.
+      `;
+      return null;
+    }
 
     const peakTotalMbps = ScopedLabsAnalyzer.safeNumber(
       flow.data.peakTotalMbps ?? flow.data.bandwidthPeakMbps,
       NaN
     );
-
-    const recommendedUplinkMbps = ScopedLabsAnalyzer.safeNumber(
-      flow.data.recommendedUplinkMbps,
-      NaN
-    );
-
-    const actualUplinkMbps = ScopedLabsAnalyzer.safeNumber(
-      flow.data.uplinkMbps,
-      NaN
-    );
-
-    const peakUtilPct = ScopedLabsAnalyzer.safeNumber(
-      flow.data.peakUtilizationPct,
-      NaN
-    );
+    const recommendedUplinkMbps = ScopedLabsAnalyzer.safeNumber(flow.data.recommendedUplinkMbps, NaN);
+    const actualUplinkMbps = ScopedLabsAnalyzer.safeNumber(flow.data.uplinkMbps, NaN);
+    const peakUtilPct = ScopedLabsAnalyzer.safeNumber(flow.data.peakUtilizationPct, NaN);
 
     if (Number.isFinite(peakTotalMbps) && peakTotalMbps > 0) {
       els.coreDemandMbps.value = String(Math.round(peakTotalMbps));
     }
-
     if (Number.isFinite(actualUplinkMbps) && actualUplinkMbps > 0) {
       els.wanMbps.value = String(Math.round(actualUplinkMbps));
       els.edgeUpMbps.value = String(Math.round(actualUplinkMbps));
     }
-
     if (Number.isFinite(recommendedUplinkMbps) && recommendedUplinkMbps > 0) {
       els.aggUpMbps.value = String(Math.round(recommendedUplinkMbps));
     }
 
-    if (
-      Number.isFinite(peakTotalMbps) &&
-      peakTotalMbps > 0 &&
-      Number.isFinite(actualUplinkMbps) &&
-      actualUplinkMbps > 0
-    ) {
+    if (Number.isFinite(peakTotalMbps) && peakTotalMbps > 0 && Number.isFinite(actualUplinkMbps) && actualUplinkMbps > 0) {
       const parts = [
         `Peak demand: <strong>${fmt(peakTotalMbps, 1)} Mbps</strong>`,
         `Current uplink: <strong>${fmt(actualUplinkMbps, 1)} Mbps</strong>`
@@ -173,7 +176,6 @@
       if (Number.isFinite(recommendedUplinkMbps) && recommendedUplinkMbps > 0) {
         parts.push(`Recommended uplink: <strong>${fmt(recommendedUplinkMbps, 1)} Mbps</strong>`);
       }
-
       if (Number.isFinite(peakUtilPct)) {
         parts.push(`Peak utilization: <strong>${fmt(peakUtilPct, 1)}%</strong>`);
       }
@@ -185,20 +187,13 @@
     return flow;
   }
 
-  function invalidate() {
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
-      existingChartRef: chartRef,
-      existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: "network",
-      step: "oversubscription",
-      emptyMessage: "Run the estimator to see oversubscription ratios, congestion risk, and carried-forward demand context."
-    });
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) clearDownstreamState();
 
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    els.results.innerHTML = `<div class="muted">Run the estimator to see oversubscription ratios, congestion risk, and carried-forward demand context.</div>`;
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     renderFlowContext();
   }
 
@@ -212,10 +207,7 @@
     const overheadPct = ScopedLabsAnalyzer.clamp(safeNum(els.overheadPct), 0, 60);
     const targetUtilPct = ScopedLabsAnalyzer.clamp(safeNum(els.targetUtilPct), 10, 95);
 
-    if (
-      [edgeDownRaw, edgeUp, aggDownRaw, aggUp, coreDemandRaw, wanMbps, overheadPct, targetUtilPct]
-        .some((v) => !Number.isFinite(v))
-    ) {
+    if ([edgeDownRaw, edgeUp, aggDownRaw, aggUp, coreDemandRaw, wanMbps, overheadPct, targetUtilPct].some((v) => !Number.isFinite(v))) {
       return { ok: false, message: "Enter valid numeric values." };
     }
 
@@ -245,7 +237,6 @@
     if (!input.ok) return input;
 
     const overheadMult = 1 + (input.overheadPct / 100);
-
     const edgeDown = input.edgeDownRaw * overheadMult;
     const aggDown = input.aggDownRaw * overheadMult;
     const coreDemand = input.coreDemandRaw * overheadMult;
@@ -354,7 +345,7 @@
   }
 
   function writeFlow(data) {
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.oversub, {
       category: "network",
       step: "oversubscription",
       data: {
@@ -418,9 +409,7 @@
         riskLabel: "Risk",
         chartMax: Math.max(
           110,
-          Math.ceil(
-            Math.max(data.edgeUtil, data.aggUtil, data.coreUtil, 95) * 1.12
-          )
+          Math.ceil(Math.max(data.edgeUtil, data.aggUtil, data.coreUtil, 95) * 1.12)
         )
       }
     });
@@ -441,7 +430,7 @@
   function reset() {
     applyDefaults();
     renderFlowContext();
-    invalidate();
+    invalidate({ clearFlow: false });
   }
 
   function bindInvalidation() {
@@ -456,14 +445,13 @@
       els.targetUtilPct
     ].forEach((el) => {
       if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      el.addEventListener("input", () => invalidate({ clearFlow: true }));
+      el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
   }
 
   function initTool() {
     bindInvalidation();
-
     els.calc?.addEventListener("click", calculate);
     els.reset?.addEventListener("click", reset);
 
@@ -484,9 +472,7 @@
     if (year) year.textContent = new Date().getFullYear();
 
     let unlocked = unlockCategoryPage();
-    if (unlocked) {
-      initTool();
-    }
+    if (unlocked) initTool();
 
     setTimeout(() => {
       unlocked = unlockCategoryPage();
