@@ -63,6 +63,14 @@
     return Number.isFinite(value) ? value.toFixed(digits) : "—";
   }
 
+  function hideContinue() {
+    if (els.continueBtn) els.continueBtn.style.display = "none";
+  }
+
+  function showContinue() {
+    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
+  }
+
   function applyDefaults() {
     els.w.value = String(DEFAULTS.w);
     els.d.value = String(DEFAULTS.d);
@@ -79,25 +87,15 @@
   }
 
   function suitability(fc) {
-    if (fc < 1) {
-      return "Scene illumination is very weak. The design will depend heavily on IR, aggressive gain, or extreme low-light camera behavior, which raises noise and reduces dependable evidence quality.";
-    }
-    if (fc < 3) {
-      return "Lighting is workable for general awareness, but still light-starved for stronger identification work. Exposure stress, blur, and color loss are more likely in real conditions.";
-    }
-    if (fc < 10) {
-      return "Lighting is in a practical planning range for many exterior and perimeter scenes. Cameras should perform more comfortably, especially for general surveillance and improved image clarity.";
-    }
+    if (fc < 1) return "Scene illumination is very weak. The design will depend heavily on IR, aggressive gain, or extreme low-light camera behavior, which raises noise and reduces dependable evidence quality.";
+    if (fc < 3) return "Lighting is workable for general awareness, but still light-starved for stronger identification work. Exposure stress, blur, and color loss are more likely in real conditions.";
+    if (fc < 10) return "Lighting is in a practical planning range for many exterior and perimeter scenes. Cameras should perform more comfortably, especially for general surveillance and improved image clarity.";
     return "Lighting is strong and gives the optical design a healthier starting point. Better exposure control and lower low-light stress improve downstream detail performance.";
-    }
+  }
 
   function nextStepGuidance(fc, lumens, area) {
-    if (fc < 2) {
-      return "Before moving into mounting height and field-of-view decisions, confirm whether fixture output or lighting strategy should be improved. Weak illumination can undermine otherwise-correct camera geometry.";
-    }
-    if (lumens > 30000 && area < 5000) {
-      return "Required lumen output is aggressive for the scene size. Re-check whether the footcandle target is truly necessary, or whether fixture aiming and zone coverage should be adjusted.";
-    }
+    if (fc < 2) return "Before moving into mounting height and field-of-view decisions, confirm whether fixture output or lighting strategy should be improved. Weak illumination can undermine otherwise-correct camera geometry.";
+    if (lumens > 30000 && area < 5000) return "Required lumen output is aggressive for the scene size. Re-check whether the footcandle target is truly necessary, or whether fixture aiming and zone coverage should be adjusted.";
     return "This lighting baseline is workable for continuing into mounting height and field-of-view design. Next steps should validate angle, coverage, and detail against the surveillance objective.";
   }
 
@@ -125,7 +123,8 @@
       lane: LANE,
       emptyMessage: "Enter values and press Calculate."
     });
-    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
+
+    hideContinue();
     renderFlowNote();
   }
 
@@ -146,16 +145,7 @@
       return { ok: false, message: "Enter valid values and press Calculate." };
     }
 
-    return {
-      ok: true,
-      w,
-      d,
-      fc,
-      ufPct,
-      llfPct,
-      uf: ufPct / 100,
-      llf: llfPct / 100
-    };
+    return { ok: true, w, d, fc, ufPct, llfPct, uf: ufPct / 100, llf: llfPct / 100 };
   }
 
   function calculateModel() {
@@ -175,21 +165,9 @@
     const outputLoadMetric = area > 0 ? Math.min((lumens / area) * 8, 100) : 0;
 
     const metrics = [
-      {
-        label: "Planning Factor Pressure",
-        value: factorPressureMetric,
-        displayValue: fmtFactor(effectiveFactor)
-      },
-      {
-        label: "Illumination Demand",
-        value: targetDemandMetric,
-        displayValue: fmtFc(input.fc)
-      },
-      {
-        label: "Output Load",
-        value: outputLoadMetric,
-        displayValue: `${fmt(lumens / area, 2)} lm/sq ft`
-      }
+      { label: "Planning Factor Pressure", value: factorPressureMetric, displayValue: fmtFactor(effectiveFactor) },
+      { label: "Illumination Demand", value: targetDemandMetric, displayValue: fmtFc(input.fc) },
+      { label: "Output Load", value: outputLoadMetric, displayValue: `${fmt(lumens / area, 2)} lm/sq ft` }
     ];
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
@@ -200,19 +178,12 @@
     });
 
     let dominantConstraint = "";
-    if (effectiveFactor < 0.45) {
-      dominantConstraint = "Planning factor pressure is the dominant limiter. Too much fixture output is being lost through utilization and light-loss assumptions, so the scene demands more lumens than it first appears.";
-    } else if (input.fc >= 10) {
-      dominantConstraint = "Illumination demand is the dominant limiter. The target light level is relatively aggressive, which can drive fixture count and power requirements upward quickly.";
-    } else if ((lumens / area) > 6) {
-      dominantConstraint = "Output load is the dominant limiter. Required lumens per square foot are climbing enough that fixture strategy and aiming deserve closer review.";
-    } else {
-      dominantConstraint = "The lighting baseline is balanced. Scene size, target illumination, and planning factors are staying in a practical range for downstream camera design.";
-    }
+    if (effectiveFactor < 0.45) dominantConstraint = "Planning factor pressure is the dominant limiter. Too much fixture output is being lost through utilization and light-loss assumptions, so the scene demands more lumens than it first appears.";
+    else if (input.fc >= 10) dominantConstraint = "Illumination demand is the dominant limiter. The target light level is relatively aggressive, which can drive fixture count and power requirements upward quickly.";
+    else if ((lumens / area) > 6) dominantConstraint = "Output load is the dominant limiter. Required lumens per square foot are climbing enough that fixture strategy and aiming deserve closer review.";
+    else dominantConstraint = "The lighting baseline is balanced. Scene size, target illumination, and planning factors are staying in a practical range for downstream camera design.";
 
     const interpretation = `For an area of ${fmtSqFt(area)} at a target of ${fmtFc(input.fc)}, with a utilization factor of ${fmtPct(input.ufPct)} and light-loss factor of ${fmtPct(input.llfPct)}, the effective planning factor is ${fmtFactor(effectiveFactor)}. The estimated lumen requirement is about ${fmtLumens(lumens)}. Lighting condition is classified as ${lightingClass}. ${interpretationBase}`;
-
-    const guidance = nextGuidance;
 
     return {
       ok: true,
@@ -224,7 +195,7 @@
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance: nextGuidance
     };
   }
 
@@ -250,7 +221,7 @@
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
+    hideContinue();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -279,15 +250,12 @@
     });
 
     writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(null, els.continueBtn);
+    showContinue();
   }
 
   function calc() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
@@ -304,17 +272,13 @@
       el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
-    if (els.calc) els.calc.addEventListener("click", calc);
-    if (els.reset) els.reset.addEventListener("click", reset);
-    if (els.continueBtn) {
-      els.continueBtn.addEventListener("click", () => {
-        window.location.href = NEXT_URL;
-      });
-    }
+    els.calc?.addEventListener("click", calc);
+    els.reset?.addEventListener("click", reset);
+    els.continueBtn?.addEventListener("click", () => { window.location.href = NEXT_URL; });
   }
 
   function init() {
-    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
+    hideContinue();
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });

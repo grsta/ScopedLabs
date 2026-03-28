@@ -27,48 +27,17 @@
     continueBtn: $("continue")
   };
 
-  const DEFAULTS = {
-    hfov: 90,
-    vfov: 55,
-    dist: 60,
-    ov: 15
-  };
+  const DEFAULTS = { hfov: 90, vfov: 55, dist: 60, ov: 15 };
 
-  function num(value, fallback = NaN) {
-    return ScopedLabsAnalyzer.safeNumber(value, fallback);
-  }
+  function num(value, fallback = NaN) { return ScopedLabsAnalyzer.safeNumber(value, fallback); }
+  function deg2rad(deg) { return (deg * Math.PI) / 180; }
+  function fmt(value, digits = 1) { return Number.isFinite(value) ? value.toFixed(digits) : "—"; }
+  function fmtFt(value, digits = 1) { return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—"; }
+  function fmtSqFt(value, digits = 0) { return Number.isFinite(value) ? `${value.toFixed(digits)} sq ft` : "—"; }
+  function fmtPct(value, digits = 0) { return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—"; }
 
-  function deg2rad(deg) {
-    return (deg * Math.PI) / 180;
-  }
-
-  function fmt(value, digits = 1) {
-    return Number.isFinite(value) ? value.toFixed(digits) : "—";
-  }
-
-  function fmtFt(value, digits = 1) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—";
-  }
-
-  function fmtSqFt(value, digits = 0) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)} sq ft` : "—";
-  }
-
-  function fmtPct(value, digits = 0) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
-  }
-
-  function clearOwnState() {
-    sessionStorage.removeItem(FLOW_KEYS.area);
-  }
-
-  function hideContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "none";
-  }
-
-  function showContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
-  }
+  function hideContinue() { if (els.continueBtn) els.continueBtn.style.display = "none"; }
+  function showContinue() { if (els.continueBtn) els.continueBtn.style.display = "inline-flex"; }
 
   function classifyOverlap(ovPct) {
     if (ovPct < 10) return "Low Overlap";
@@ -83,22 +52,14 @@
   }
 
   function overlapInterpretation(overlapClass) {
-    if (overlapClass === "Low Overlap") {
-      return "Low overlap maximizes individual camera footprint, but increases the chance of soft gaps between adjacent views.";
-    }
-    if (overlapClass === "Balanced Overlap") {
-      return "Balanced overlap is usually the best planning range for continuous scene coverage without wasting too much usable width.";
-    }
+    if (overlapClass === "Low Overlap") return "Low overlap maximizes individual camera footprint, but increases the chance of soft gaps between adjacent views.";
+    if (overlapClass === "Balanced Overlap") return "Balanced overlap is usually the best planning range for continuous scene coverage without wasting too much usable width.";
     return "High overlap improves continuity and handoff between cameras, but reduces usable coverage efficiency and can increase camera count.";
   }
 
   function reserveGuidance(effWidthRatioPct) {
-    if (effWidthRatioPct < 70) {
-      return "Usable width drops quickly once overlap reserve gets aggressive. This is appropriate when continuity matters more than raw coverage efficiency.";
-    }
-    if (effWidthRatioPct < 90) {
-      return "This is a healthy reserve range for many practical layouts. You preserve usable width while still protecting against blind edges.";
-    }
+    if (effWidthRatioPct < 70) return "Usable width drops quickly once overlap reserve gets aggressive. This is appropriate when continuity matters more than raw coverage efficiency.";
+    if (effWidthRatioPct < 90) return "This is a healthy reserve range for many practical layouts. You preserve usable width while still protecting against blind edges.";
     return "Very little width is being reserved for overlap. Coverage efficiency is high, but spacing tolerance between cameras will be tighter.";
   }
 
@@ -139,16 +100,14 @@
 
     if (parts.length) {
       els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow context</strong><br>
-        Prior field-of-view results detected — ${parts.join(", ")}.
-        This step converts that lens width into real usable coverage after overlap reserve is applied.
-      `;
+      els.flowNote.innerHTML = `<strong>Flow context</strong><br>Prior field-of-view results detected — ${parts.join(", ")}. This step converts that lens width into real usable coverage after overlap reserve is applied.`;
     }
   }
 
   function invalidate({ clearFlow = true } = {}) {
-    if (clearFlow) clearOwnState();
+    if (clearFlow) {
+      sessionStorage.removeItem(FLOW_KEYS.area);
+    }
 
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
@@ -159,6 +118,7 @@
       lane: LANE,
       emptyMessage: "Enter valid values and press Calculate."
     });
+
     hideContinue();
     renderFlowNote();
   }
@@ -174,9 +134,7 @@
       !Number.isFinite(vfov) || vfov <= 0 || vfov >= 180 ||
       !Number.isFinite(dist) || dist <= 0 ||
       !Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95
-    ) {
-      return { ok: false, message: "Enter valid values and press Calculate." };
-    }
+    ) return { ok: false, message: "Enter valid values and press Calculate." };
 
     return { ok: true, hfov, vfov, dist, ovPct };
   }
@@ -207,21 +165,9 @@
     const efficiencyClass = classifyCoverageEfficiency(areaRetentionPct);
 
     const metrics = [
-      {
-        label: "Reserve Pressure",
-        value: reserveLossPct,
-        displayValue: fmtPct(reserveLossPct, 1)
-      },
-      {
-        label: "Width Retention",
-        value: 100 - widthRetentionPct,
-        displayValue: fmtPct(widthRetentionPct, 1)
-      },
-      {
-        label: "Area Retention",
-        value: 100 - areaRetentionPct,
-        displayValue: fmtPct(areaRetentionPct, 1)
-      }
+      { label: "Reserve Pressure", value: reserveLossPct, displayValue: fmtPct(reserveLossPct, 1) },
+      { label: "Width Retention", value: 100 - widthRetentionPct, displayValue: fmtPct(widthRetentionPct, 1) },
+      { label: "Area Retention", value: 100 - areaRetentionPct, displayValue: fmtPct(areaRetentionPct, 1) }
     ];
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
@@ -235,13 +181,9 @@
     const guidanceCore = reserveGuidance(widthRetentionPct);
 
     let dominantConstraint = "";
-    if (reserveLossPct >= 35) {
-      dominantConstraint = "Reserve pressure is the dominant limiter. Too much usable scene area is being sacrificed to overlap, which can drive camera count and reduce layout efficiency.";
-    } else if (reserveLossPct >= 20) {
-      dominantConstraint = "Coverage efficiency is the dominant limiter. The reserve strategy is still workable, but it is beginning to compress usable scene width enough to affect downstream spacing.";
-    } else {
-      dominantConstraint = "Field geometry is balanced. Most of the lens footprint remains usable after reserve is applied, which gives the next spacing step a healthier starting point.";
-    }
+    if (reserveLossPct >= 35) dominantConstraint = "Reserve pressure is the dominant limiter. Too much usable scene area is being sacrificed to overlap, which can drive camera count and reduce layout efficiency.";
+    else if (reserveLossPct >= 20) dominantConstraint = "Coverage efficiency is the dominant limiter. The reserve strategy is still workable, but it is beginning to compress usable scene width enough to affect downstream spacing.";
+    else dominantConstraint = "Field geometry is balanced. Most of the lens footprint remains usable after reserve is applied, which gives the next spacing step a healthier starting point.";
 
     const interpretation = `At ${fmtFt(input.dist)}, the modeled lens footprint is about ${fmtFt(width)} wide by ${fmtFt(height)} high, producing ${fmtSqFt(area)} of raw area. After reserving ${fmtPct(input.ovPct)} for overlap, effective coverage drops to ${fmtFt(effWidth)} by ${fmtFt(effHeight)}, or about ${fmtSqFt(effArea)} of usable scene coverage. ${interpretationCore}`;
 
@@ -333,10 +275,7 @@
 
   function calc() {
     const result = calculateModel();
-    if (!result.ok) {
-      renderError(result.message);
-      return;
-    }
+    if (!result.ok) return renderError(result.message);
     renderSuccess(result);
   }
 
@@ -347,8 +286,8 @@
   }
 
   function bind() {
-    if (els.calc) els.calc.addEventListener("click", calc);
-    if (els.reset) els.reset.addEventListener("click", reset);
+    els.calc?.addEventListener("click", calc);
+    els.reset?.addEventListener("click", reset);
 
     ["hfov", "vfov", "dist", "ov"].forEach((id) => {
       const el = $(id);
@@ -357,11 +296,7 @@
       el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
-    if (els.continueBtn) {
-      els.continueBtn.addEventListener("click", () => {
-        window.location.href = NEXT_URL;
-      });
-    }
+    els.continueBtn?.addEventListener("click", () => { window.location.href = NEXT_URL; });
   }
 
   function init() {

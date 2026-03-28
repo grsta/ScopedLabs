@@ -27,40 +27,17 @@
     continueBtn: $("continue")
   };
 
-  const DEFAULTS = {
-    h: 12,
-    dist: 40,
-    th: 5.5,
-    vfov: 55
-  };
+  const DEFAULTS = { h: 12, dist: 40, th: 5.5, vfov: 55 };
 
-  function num(value, fallback = NaN) {
-    return ScopedLabsAnalyzer.safeNumber(value, fallback);
-  }
+  function num(value, fallback = NaN) { return ScopedLabsAnalyzer.safeNumber(value, fallback); }
+  function rad2deg(x) { return x * 180 / Math.PI; }
+  function deg2rad(x) { return x * Math.PI / 180; }
+  function fmt(value, digits = 1) { return Number.isFinite(value) ? value.toFixed(digits) : "—"; }
+  function fmtFt(value, digits = 1) { return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—"; }
+  function fmtDeg(value, digits = 1) { return Number.isFinite(value) ? `${value.toFixed(digits)}°` : "—"; }
 
-  function rad2deg(x) {
-    return x * 180 / Math.PI;
-  }
-
-  function deg2rad(x) {
-    return x * Math.PI / 180;
-  }
-
-  function fmt(value, digits = 1) {
-    return Number.isFinite(value) ? value.toFixed(digits) : "—";
-  }
-
-  function fmtFt(value, digits = 1) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—";
-  }
-
-  function fmtDeg(value, digits = 1) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)}°` : "—";
-  }
-
-  function fmtPct(value, digits = 1) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
-  }
+  function hideContinue() { if (els.continueBtn) els.continueBtn.style.display = "none"; }
+  function showContinue() { if (els.continueBtn) els.continueBtn.style.display = "inline-flex"; }
 
   function applyDefaults() {
     els.h.value = String(DEFAULTS.h);
@@ -77,25 +54,15 @@
   }
 
   function angleInterpretation(tilt) {
-    if (tilt < 10) {
-      return "Angle is very shallow. This tends to overemphasize the horizon, weakens face detail, and reduces practical identification quality.";
-    }
-    if (tilt < 25) {
-      return "Angle is balanced for general surveillance. It supports broad situational awareness, but may still be light on subject detail for stronger identification tasks.";
-    }
-    if (tilt < 45) {
-      return "Angle is strong for practical surveillance design. It usually provides a better compromise between coverage and usable subject geometry.";
-    }
+    if (tilt < 10) return "Angle is very shallow. This tends to overemphasize the horizon, weakens face detail, and reduces practical identification quality.";
+    if (tilt < 25) return "Angle is balanced for general surveillance. It supports broad situational awareness, but may still be light on subject detail for stronger identification tasks.";
+    if (tilt < 45) return "Angle is strong for practical surveillance design. It usually provides a better compromise between coverage and usable subject geometry.";
     return "Angle is steep. Coverage may still work, but top-down compression can reduce face detail and make subjects look visually flattened.";
-    }
+  }
 
   function heightGuidance(h) {
-    if (h < 9) {
-      return "Mount height is relatively low. This can improve subject angle and detail, but raises tamper and vandalism risk.";
-    }
-    if (h <= 15) {
-      return "Mount height is in a practical working range for many building exteriors and perimeter applications.";
-    }
+    if (h < 9) return "Mount height is relatively low. This can improve subject angle and detail, but raises tamper and vandalism risk.";
+    if (h <= 15) return "Mount height is in a practical working range for many building exteriors and perimeter applications.";
     return "Mount height is relatively high. This helps with tamper resistance and broad coverage, but can hurt identification geometry if tilt becomes too steep.";
   }
 
@@ -129,11 +96,7 @@
 
     if (parts.length) {
       els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow context</strong><br>
-        Prior scene-illumination results detected — ${parts.join(", ")}.
-        Use mounting height to balance subject angle and scene coverage before locking field of view.
-      `;
+      els.flowNote.innerHTML = `<strong>Flow context</strong><br>Prior scene-illumination results detected — ${parts.join(", ")}. Use mounting height to balance subject angle and scene coverage before locking field of view.`;
     }
   }
 
@@ -149,7 +112,8 @@
       lane: LANE,
       emptyMessage: "Enter valid values and press Calculate."
     });
-    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
+
+    hideContinue();
     renderFlowNote();
   }
 
@@ -164,9 +128,7 @@
       !Number.isFinite(dist) || dist <= 0 ||
       !Number.isFinite(th) || th < 0 ||
       !Number.isFinite(vfov) || vfov <= 0 || vfov >= 180
-    ) {
-      return { ok: false, message: "Enter valid values and press Calculate." };
-    }
+    ) return { ok: false, message: "Enter valid values and press Calculate." };
 
     return { ok: true, h, dist, th, vfov };
   }
@@ -185,38 +147,16 @@
     const angleText = angleInterpretation(tilt);
     const heightText = heightGuidance(input.h);
 
-    const subjectAngleMetric =
-      tilt < 10 ? 85 :
-      tilt < 25 ? 35 :
-      tilt < 45 ? 18 :
-      78;
-
-    const mountPressureMetric =
-      input.h < 9 ? 42 :
-      input.h <= 15 ? 18 :
-      55;
-
+    const subjectAngleMetric = tilt < 10 ? 85 : tilt < 25 ? 35 : tilt < 45 ? 18 : 78;
+    const mountPressureMetric = input.h < 9 ? 42 : input.h <= 15 ? 18 : 55;
     const framingPressureMetric =
       bottomEdgeHeight > 0 ? Math.min(bottomEdgeHeight * 12, 100) :
-      topEdgeHeight < input.th ? Math.min((input.th - topEdgeHeight) * 10, 100) :
-      12;
+      topEdgeHeight < input.th ? Math.min((input.th - topEdgeHeight) * 10, 100) : 12;
 
     const metrics = [
-      {
-        label: "Subject Angle",
-        value: subjectAngleMetric,
-        displayValue: fmtDeg(tilt)
-      },
-      {
-        label: "Mount Height Pressure",
-        value: mountPressureMetric,
-        displayValue: fmtFt(input.h)
-      },
-      {
-        label: "Vertical Framing Risk",
-        value: framingPressureMetric,
-        displayValue: `${fmtFt(topEdgeHeight)} to ${fmtFt(bottomEdgeHeight)}`
-      }
+      { label: "Subject Angle", value: subjectAngleMetric, displayValue: fmtDeg(tilt) },
+      { label: "Mount Height Pressure", value: mountPressureMetric, displayValue: fmtFt(input.h) },
+      { label: "Vertical Framing Risk", value: framingPressureMetric, displayValue: `${fmtFt(topEdgeHeight)} to ${fmtFt(bottomEdgeHeight)}` }
     ];
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
@@ -227,30 +167,19 @@
     });
 
     let dominantConstraint = "";
-    if (tilt < 10) {
-      dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too shallow across the scene, which weakens practical face detail and identification geometry.";
-    } else if (tilt >= 45) {
-      dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too steeply downward, which compresses subjects and reduces usable face detail.";
-    } else if (input.h > 15) {
-      dominantConstraint = "Mount height pressure is the dominant limiter. The install point is high enough that tamper resistance improves, but usable subject geometry starts to suffer.";
-    } else if (bottomEdgeHeight > 0) {
-      dominantConstraint = "Vertical framing risk is the dominant limiter. The lower edge of view is still floating above grade at the target distance, so ground-level coverage is not fully closing.";
-    } else {
-      dominantConstraint = "The geometry is balanced. Mount height, target distance, and vertical framing remain in a practical range for the next field-of-view step.";
-    }
+    if (tilt < 10) dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too shallow across the scene, which weakens practical face detail and identification geometry.";
+    else if (tilt >= 45) dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too steeply downward, which compresses subjects and reduces usable face detail.";
+    else if (input.h > 15) dominantConstraint = "Mount height pressure is the dominant limiter. The install point is high enough that tamper resistance improves, but usable subject geometry starts to suffer.";
+    else if (bottomEdgeHeight > 0) dominantConstraint = "Vertical framing risk is the dominant limiter. The lower edge of view is still floating above grade at the target distance, so ground-level coverage is not fully closing.";
+    else dominantConstraint = "The geometry is balanced. Mount height, target distance, and vertical framing remain in a practical range for the next field-of-view step.";
 
     const interpretation = `With a mount height of ${fmtFt(input.h)} and a target point ${fmtFt(input.dist)} away at ${fmtFt(input.th)}, the suggested down-tilt is about ${fmtDeg(tilt)}. At that distance, a ${fmtDeg(input.vfov)} vertical field of view spans about ${fmtFt(span)} vertically, with the view landing from roughly ${fmtFt(topEdgeHeight)} down to ${fmtFt(bottomEdgeHeight)}. ${angleText}`;
 
     let guidance = "";
-    if (tilt < 10) {
-      guidance = "Lower the mount, move the target zone farther out, or tighten vertical framing before locking the design. Then continue to Field of View once subject angle is healthier.";
-    } else if (tilt >= 45) {
-      guidance = "Reduce mount height or increase standoff distance before finalizing the view. Excessive top-down angle can make downstream detail goals harder to reach.";
-    } else if (bottomEdgeHeight > 0) {
-      guidance = "Check whether the lower edge of view needs to reach grade at the target distance. If so, revise height or angle assumptions before moving forward.";
-    } else {
-      guidance = "Mounting geometry is workable. Continue to Field of View next to translate this setup into actual scene width coverage.";
-    }
+    if (tilt < 10) guidance = "Lower the mount, move the target zone farther out, or tighten vertical framing before locking the design. Then continue to Field of View once subject angle is healthier.";
+    else if (tilt >= 45) guidance = "Reduce mount height or increase standoff distance before finalizing the view. Excessive top-down angle can make downstream detail goals harder to reach.";
+    else if (bottomEdgeHeight > 0) guidance = "Check whether the lower edge of view needs to reach grade at the target distance. If so, revise height or angle assumptions before moving forward.";
+    else guidance = "Mounting geometry is workable. Continue to Field of View next to translate this setup into actual scene width coverage.";
 
     return {
       ok: true,
@@ -293,7 +222,7 @@
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
+    hideContinue();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -322,15 +251,12 @@
     });
 
     writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(null, els.continueBtn);
+    showContinue();
   }
 
   function calc() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
@@ -348,17 +274,13 @@
       el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
-    if (els.calc) els.calc.addEventListener("click", calc);
-    if (els.reset) els.reset.addEventListener("click", reset);
-    if (els.continueBtn) {
-      els.continueBtn.addEventListener("click", () => {
-        window.location.href = NEXT_URL;
-      });
-    }
+    els.calc?.addEventListener("click", calc);
+    els.reset?.addEventListener("click", reset);
+    els.continueBtn?.addEventListener("click", () => { window.location.href = NEXT_URL; });
   }
 
   function init() {
-    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
+    hideContinue();
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });
