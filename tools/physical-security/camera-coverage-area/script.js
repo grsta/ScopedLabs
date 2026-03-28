@@ -1,6 +1,13 @@
 ﻿(() => {
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    scene: "scopedlabs:pipeline:physical-security:scene-illumination",
+    mount: "scopedlabs:pipeline:physical-security:mounting-height",
+    fov: "scopedlabs:pipeline:physical-security:field-of-view",
+    area: "scopedlabs:pipeline:physical-security:camera-coverage-area"
+  };
+
   const CATEGORY = "physical-security";
+  const LANE = "v1";
   const STEP = "camera-coverage-area";
   const PREVIOUS_STEP = "field-of-view";
   const NEXT_URL = "/tools/physical-security/camera-spacing/";
@@ -49,6 +56,10 @@
 
   function fmtPct(value, digits = 0) {
     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+  }
+
+  function clearOwnState() {
+    sessionStorage.removeItem(FLOW_KEYS.area);
   }
 
   function hideContinue() {
@@ -101,9 +112,10 @@
   function renderFlowNote() {
     const flow = ScopedLabsAnalyzer.renderFlowNote({
       flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS.area,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       title: "Flow context",
       intro: "This step converts field-of-view results into real usable scene coverage after overlap reserve is applied."
     });
@@ -126,7 +138,7 @@
     if (fitClass) parts.push(`classified as <strong>${fitClass}</strong>`);
 
     if (parts.length) {
-      els.flowNote.style.display = "";
+      els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
         <strong>Flow context</strong><br>
         Prior field-of-view results detected — ${parts.join(", ")}.
@@ -135,14 +147,17 @@
     }
   }
 
-  function invalidate() {
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) clearOwnState();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS.area,
       category: CATEGORY,
       step: STEP,
-      emptyMessage: "Enter values and press Calculate."
+      lane: LANE,
+      emptyMessage: "Enter valid values and press Calculate."
     });
     hideContinue();
     renderFlowNote();
@@ -255,7 +270,7 @@
   }
 
   function writeFlow(data) {
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.area, {
       category: CATEGORY,
       step: STEP,
       data: {
@@ -278,7 +293,7 @@
         interpretation: data.interpretation,
         guidance: data.guidance
       }
-    }));
+    });
   }
 
   function renderError(message) {
@@ -328,7 +343,7 @@
   function reset() {
     applyDefaults();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: true });
   }
 
   function bind() {
@@ -338,8 +353,8 @@
     ["hfov", "vfov", "dist", "ov"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      el.addEventListener("input", () => invalidate({ clearFlow: true }));
+      el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
     if (els.continueBtn) {
@@ -353,7 +368,7 @@
     hideContinue();
     bind();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: false });
   }
 
   window.addEventListener("DOMContentLoaded", init);

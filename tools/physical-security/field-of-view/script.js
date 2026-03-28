@@ -1,8 +1,15 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    scene: "scopedlabs:pipeline:physical-security:scene-illumination",
+    mount: "scopedlabs:pipeline:physical-security:mounting-height",
+    fov: "scopedlabs:pipeline:physical-security:field-of-view",
+    area: "scopedlabs:pipeline:physical-security:camera-coverage-area"
+  };
+
   const CATEGORY = "physical-security";
+  const LANE = "v1";
   const STEP = "field-of-view";
   const PREVIOUS_STEP = "mounting-height";
   const NEXT_URL = "/tools/physical-security/camera-coverage-area/";
@@ -84,12 +91,17 @@
     return "This is a wide view. Useful for broad awareness, but watch for reduced target detail at the far edges of coverage.";
   }
 
+  function clearDownstream() {
+    sessionStorage.removeItem(FLOW_KEYS.area);
+  }
+
   function renderFlowNote() {
     const flow = ScopedLabsAnalyzer.renderFlowNote({
       flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS.fov,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       title: "Flow context",
       intro: "This step uses the prior mounting-height recommendation to estimate how much scene width the selected field of view can realistically cover at the target distance."
     });
@@ -112,7 +124,7 @@
     if (tiltClass) parts.push(`angle quality <strong>${tiltClass}</strong>`);
 
     if (parts.length) {
-      els.flowNote.style.display = "";
+      els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
         <strong>Flow context</strong><br>
         Prior mounting-height results detected — ${parts.join(", ")}.
@@ -121,16 +133,19 @@
     }
   }
 
-  function invalidate() {
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) clearDownstream();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS.fov,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Calculate."
     });
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
     renderFlowNote();
   }
 
@@ -252,7 +267,7 @@
   }
 
   function writeFlow(data) {
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.fov, {
       category: CATEGORY,
       step: STEP,
       data: {
@@ -271,12 +286,12 @@
         interpretation: data.interpretation,
         guidance: data.guidance
       }
-    }));
+    });
   }
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -304,7 +319,7 @@
     });
 
     writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueBtn);
+    ScopedLabsAnalyzer.showContinue(null, els.continueBtn);
   }
 
   function calc() {
@@ -319,7 +334,7 @@
   function reset() {
     applyDefaults();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: true });
   }
 
   function bind() {
@@ -329,8 +344,8 @@
     ["dist", "hfov", "scene", "h"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      el.addEventListener("input", () => invalidate({ clearFlow: true }));
+      el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
     if (els.continueBtn) {
@@ -341,10 +356,10 @@
   }
 
   function init() {
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
     bind();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: false });
   }
 
   window.addEventListener("DOMContentLoaded", init);

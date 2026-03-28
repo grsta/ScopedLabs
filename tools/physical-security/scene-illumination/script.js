@@ -1,8 +1,15 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    scene: "scopedlabs:pipeline:physical-security:scene-illumination",
+    mount: "scopedlabs:pipeline:physical-security:mounting-height",
+    fov: "scopedlabs:pipeline:physical-security:field-of-view",
+    area: "scopedlabs:pipeline:physical-security:camera-coverage-area"
+  };
+
   const CATEGORY = "physical-security";
+  const LANE = "v1";
   const STEP = "scene-illumination";
   const NEXT_URL = "/tools/physical-security/mounting-height/";
 
@@ -82,7 +89,7 @@
       return "Lighting is in a practical planning range for many exterior and perimeter scenes. Cameras should perform more comfortably, especially for general surveillance and improved image clarity.";
     }
     return "Lighting is strong and gives the optical design a healthier starting point. Better exposure control and lower low-light stress improve downstream detail performance.";
-  }
+    }
 
   function nextStepGuidance(fc, lumens, area) {
     if (fc < 2) {
@@ -94,22 +101,31 @@
     return "This lighting baseline is workable for continuing into mounting height and field-of-view design. Next steps should validate angle, coverage, and detail against the surveillance objective.";
   }
 
+  function clearDownstream() {
+    sessionStorage.removeItem(FLOW_KEYS.mount);
+    sessionStorage.removeItem(FLOW_KEYS.fov);
+    sessionStorage.removeItem(FLOW_KEYS.area);
+  }
+
   function renderFlowNote() {
     if (!els.flowNote) return;
     els.flowNote.style.display = "none";
     els.flowNote.innerHTML = "";
   }
 
-  function invalidate() {
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) clearDownstream();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS.scene,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Calculate."
     });
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
     renderFlowNote();
   }
 
@@ -213,7 +229,7 @@
   }
 
   function writeFlow(data) {
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.scene, {
       category: CATEGORY,
       step: STEP,
       data: {
@@ -229,12 +245,12 @@
         interpretation: data.interpretation,
         guidance: data.guidance
       }
-    }));
+    });
   }
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -263,7 +279,7 @@
     });
 
     writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueBtn);
+    ScopedLabsAnalyzer.showContinue(null, els.continueBtn);
   }
 
   function calc() {
@@ -277,15 +293,15 @@
 
   function reset() {
     applyDefaults();
-    invalidate();
+    invalidate({ clearFlow: true });
   }
 
   function bind() {
     ["w", "d", "fc", "uf", "llf"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      el.addEventListener("input", () => invalidate({ clearFlow: true }));
+      el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
     if (els.calc) els.calc.addEventListener("click", calc);
@@ -298,10 +314,10 @@
   }
 
   function init() {
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
     bind();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: false });
   }
 
   window.addEventListener("DOMContentLoaded", init);

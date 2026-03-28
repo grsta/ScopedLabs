@@ -1,8 +1,15 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    scene: "scopedlabs:pipeline:physical-security:scene-illumination",
+    mount: "scopedlabs:pipeline:physical-security:mounting-height",
+    fov: "scopedlabs:pipeline:physical-security:field-of-view",
+    area: "scopedlabs:pipeline:physical-security:camera-coverage-area"
+  };
+
   const CATEGORY = "physical-security";
+  const LANE = "v1";
   const STEP = "mounting-height";
   const PREVIOUS_STEP = "scene-illumination";
   const NEXT_URL = "/tools/physical-security/field-of-view/";
@@ -80,7 +87,7 @@
       return "Angle is strong for practical surveillance design. It usually provides a better compromise between coverage and usable subject geometry.";
     }
     return "Angle is steep. Coverage may still work, but top-down compression can reduce face detail and make subjects look visually flattened.";
-  }
+    }
 
   function heightGuidance(h) {
     if (h < 9) {
@@ -92,12 +99,18 @@
     return "Mount height is relatively high. This helps with tamper resistance and broad coverage, but can hurt identification geometry if tilt becomes too steep.";
   }
 
+  function clearDownstream() {
+    sessionStorage.removeItem(FLOW_KEYS.fov);
+    sessionStorage.removeItem(FLOW_KEYS.area);
+  }
+
   function renderFlowNote() {
     const flow = ScopedLabsAnalyzer.renderFlowNote({
       flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS.mount,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       title: "Flow context",
       intro: "This step uses the prior illumination plan to choose a workable install height before locking field of view."
     });
@@ -115,7 +128,7 @@
     if (lumens > 0) parts.push(`estimated lumen requirement <strong>${fmt(lumens, 0)} lm</strong>`);
 
     if (parts.length) {
-      els.flowNote.style.display = "";
+      els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
         <strong>Flow context</strong><br>
         Prior scene-illumination results detected — ${parts.join(", ")}.
@@ -124,16 +137,19 @@
     }
   }
 
-  function invalidate() {
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) clearDownstream();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS.mount,
       category: CATEGORY,
       step: STEP,
-      emptyMessage: "Enter values and press Calculate."
+      lane: LANE,
+      emptyMessage: "Enter valid values and press Calculate."
     });
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
     renderFlowNote();
   }
 
@@ -255,7 +271,7 @@
   }
 
   function writeFlow(data) {
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.mount, {
       category: CATEGORY,
       step: STEP,
       data: {
@@ -272,12 +288,12 @@
         interpretation: data.interpretation,
         guidance: data.guidance
       }
-    }));
+    });
   }
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -306,7 +322,7 @@
     });
 
     writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueBtn);
+    ScopedLabsAnalyzer.showContinue(null, els.continueBtn);
   }
 
   function calc() {
@@ -321,15 +337,15 @@
   function reset() {
     applyDefaults();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: true });
   }
 
   function bind() {
     ["h", "dist", "th", "vfov"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      el.addEventListener("input", () => invalidate({ clearFlow: true }));
+      el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
     if (els.calc) els.calc.addEventListener("click", calc);
@@ -342,10 +358,10 @@
   }
 
   function init() {
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    ScopedLabsAnalyzer.hideContinue(null, els.continueBtn);
     bind();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: false });
   }
 
   window.addEventListener("DOMContentLoaded", init);
