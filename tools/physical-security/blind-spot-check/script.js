@@ -1,6 +1,16 @@
 ﻿(() => {
-  const KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    scene: "scopedlabs:pipeline:physical-security:scene-illumination",
+    mount: "scopedlabs:pipeline:physical-security:mounting-height",
+    fov: "scopedlabs:pipeline:physical-security:field-of-view",
+    area: "scopedlabs:pipeline:physical-security:camera-coverage-area",
+    spacing: "scopedlabs:pipeline:physical-security:camera-spacing",
+    blind: "scopedlabs:pipeline:physical-security:blind-spot-check",
+    pixel: "scopedlabs:pipeline:physical-security:pixel-density"
+  };
+
   const CATEGORY = "physical-security";
+  const LANE = "v1";
   const STEP = "blind-spot-check";
   const PREVIOUS_STEP = "camera-spacing";
   const NEXT_URL = "/tools/physical-security/pixel-density/";
@@ -101,6 +111,10 @@
     return false;
   }
 
+  function clearDownstream() {
+    sessionStorage.removeItem(FLOW_KEYS.pixel);
+  }
+
   function applyDefaults() {
     els.w.value = String(DEFAULTS.w);
     els.d.value = String(DEFAULTS.d);
@@ -113,9 +127,10 @@
   function renderFlowNote() {
     const flow = ScopedLabsAnalyzer.renderFlowNote({
       flowEl: els.flowNote,
-      flowKey: KEY,
+      flowKey: FLOW_KEYS.blind,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       title: "Flow Context",
       intro: "This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied."
     });
@@ -147,7 +162,9 @@
     }
   }
 
-  function invalidate() {
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) clearDownstream();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -155,9 +172,10 @@
       continueBtnEl: els.continueBtn,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: KEY,
+      flowKey: FLOW_KEYS.blind,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Check Coverage."
     });
 
@@ -290,7 +308,7 @@
   }
 
   function writeFlow(data) {
-    ScopedLabsAnalyzer.writeFlow(KEY, {
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.blind, {
       category: CATEGORY,
       step: STEP,
       data: {
@@ -374,25 +392,22 @@
 
   function calc() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
   function reset() {
     applyDefaults();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: true });
   }
 
   function bind() {
     ["w", "d", "hfov", "dist", "cams", "overlap"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      el.addEventListener("input", () => invalidate({ clearFlow: true }));
+      el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
     els.calc?.addEventListener("click", calc);
@@ -411,7 +426,7 @@
   function initTool() {
     bind();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: false });
   }
 
   window.addEventListener("DOMContentLoaded", () => {
