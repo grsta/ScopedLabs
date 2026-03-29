@@ -13,7 +13,6 @@
   const LANE = "v1";
   const STEP = "camera-spacing";
   const PREVIOUS_STEP = "camera-coverage-area";
-  const NEXT_URL = "/tools/physical-security/blind-spot-check/";
 
   const $ = (id) => document.getElementById(id);
 
@@ -27,7 +26,10 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
-    continueBtn: $("continue")
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   const DEFAULTS = {
@@ -57,12 +59,48 @@
     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
-  function hideContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "none";
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
   }
 
-  function showContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw
+        .split(",")
+        .map((x) => String(x).trim().toLowerCase())
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
   }
 
   function applyDefaults() {
@@ -84,7 +122,7 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      title: "Flow context",
+      title: "Flow Context",
       intro: "This step converts effective single-camera coverage into real camera-to-camera spacing along the protected perimeter."
     });
 
@@ -102,35 +140,38 @@
     if (Number.isFinite(ovPct) && ovPct >= 0) els.ov.value = String(Math.round(ovPct));
 
     const parts = [];
-    if (Number.isFinite(effWidth) && effWidth > 0) parts.push(`effective width <strong>${fmtFt(effWidth)}</strong>`);
-    if (Number.isFinite(width) && width > 0) parts.push(`raw width <strong>${fmtFt(width)}</strong>`);
-    if (Number.isFinite(dist) && dist > 0) parts.push(`distance <strong>${fmtFt(dist)}</strong>`);
-    if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV <strong>${fmt(hfov, 1)}°</strong>`);
+    if (Number.isFinite(effWidth) && effWidth > 0) parts.push(`Effective width: <strong>${fmtFt(effWidth)}</strong>`);
+    if (Number.isFinite(width) && width > 0) parts.push(`Raw width: <strong>${fmtFt(width)}</strong>`);
+    if (Number.isFinite(dist) && dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
+    if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}°</strong>`);
 
     if (parts.length) {
       els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
-        <strong>Flow context</strong><br>
-        Prior coverage-area results detected — ${parts.join(", ")}.
-        This step turns that usable footprint into real spacing and camera count guidance.
+        <strong>Flow Context</strong><br>
+        ${parts.join(" | ")}
       `;
     }
   }
 
   function invalidate({ clearFlow = true } = {}) {
-    if (clearFlow) clearDownstream();
+    if (clearFlow) {
+      sessionStorage.removeItem(FLOW_KEYS.spacing);
+      clearDownstream();
+    }
 
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
       flowKey: FLOW_KEYS.spacing,
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      emptyMessage: "Enter values and press Calculate."
+      emptyMessage: "Enter valid values and press Calculate."
     });
 
-    hideContinue();
     renderFlowNote();
   }
 
@@ -242,10 +283,7 @@
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance,
-      gapExposureMetric,
-      compressionMetric,
-      reserveMetric
+      guidance
     };
   }
 
@@ -272,7 +310,7 @@
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    hideContinue();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -289,7 +327,7 @@
       derivedRows: [
         { label: "Perimeter Length", value: fmtFt(data.len, 0) },
         { label: "Distance to Target", value: fmtFt(data.dist) },
-        { label: "Horizontal FOV", value: fmt(data.hfov, 1) + "°" },
+        { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
         { label: "Overlap Target", value: fmtPct(data.ovPct, 1) },
         { label: "Spacing Ratio", value: fmt(data.ratio, 2) },
         { label: "Spacing Classification", value: data.spacingClass }
@@ -301,7 +339,7 @@
     });
 
     writeFlow(data);
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function calc() {
@@ -326,17 +364,36 @@
 
     els.calc?.addEventListener("click", calc);
     els.reset?.addEventListener("click", reset);
-    els.continueBtn?.addEventListener("click", () => {
-      window.location.href = NEXT_URL;
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        calc();
+      }
     });
   }
 
-  function init() {
-    hideContinue();
+  function initTool() {
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    let unlocked = unlockCategoryPage();
+    if (unlocked) initTool();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        initTool();
+      }
+    }, 400);
+  });
 })();

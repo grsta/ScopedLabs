@@ -1,108 +1,235 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Camera Spacing Planner *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=phys-cam-spacing-0418" />
+  <meta
+    name="description"
+    content="Estimate practical camera spacing and camera count from usable coverage width and overlap target."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=phys-cam-spacing-0420" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=phys-cam-spacing-0418"></script>
-  <script defer src="/assets/app.js?v=phys-cam-spacing-0418"></script>
+  <script defer src="/assets/auth.js?v=phys-cam-spacing-0420"></script>
+  <script defer src="/assets/app.js?v=phys-cam-spacing-0420"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .flag-ok {
+      color: rgba(140, 255, 170, 0.95);
+    }
+
+    .flag-warn {
+      color: rgba(255, 210, 140, 0.95);
+    }
+
+    .flag-bad {
+      color: rgba(255, 180, 140, 0.95);
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
-<body data-tier="pro" data-category="physical-security" data-step="camera-spacing" data-lane="v1">
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-dot"></span>
-      <span class="brand-text">ScopedLabs</span>
-    </a>
-    <nav class="site-nav">
-      <a class="nav-pill" href="/">Home</a>
-      <a class="nav-pill" href="/tools/">Tools</a>
-      <a class="nav-pill" href="/tools/physical-security/">Physical Security</a>
-    </nav>
-  </div>
-</header>
+<body
+  data-tier="pro"
+  data-category="physical-security"
+  data-tool="camera-spacing"
+  data-step="camera-spacing"
+  data-lane="v1"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
-<main class="container page">
-  <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/physical-security/">Physical Security</a> /
-    Camera Spacing
-  </div>
-
-  <h1>Camera Spacing Planner</h1>
-
-  <div id="pipeline"></div>
-
-  <p class="subhead">Estimate spacing between cameras along a wall/perimeter to maintain overlap.</p>
-
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> turning single-camera coverage into a real multi-camera layout with practical spacing, overlap, and camera count guidance.
-    </p>
-  </section>
-
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card tool-card">
-    <h2>Inputs</h2>
-
-    <div class="form-grid">
-      <label class="field">
-        <span class="label">Perimeter Length (ft)</span>
-        <input id="len" type="number" value="300">
-      </label>
-
-      <label class="field">
-        <span class="label">Distance to Target Plane (ft)</span>
-        <input id="dist" type="number" value="60">
-      </label>
-
-      <label class="field">
-        <span class="label">Horizontal FOV (deg)</span>
-        <input id="hfov" type="number" value="90">
-      </label>
-
-      <label class="field">
-        <span class="label">Overlap Target (%)</span>
-        <input id="ov" type="number" value="15">
-      </label>
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
     </div>
+  </header>
 
-    <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+  <main class="page">
+    <div class="container">
+
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/physical-security/">Physical Security</a>
+        <span class="sep">/</span>
+        <span>Camera Spacing</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Camera Spacing Planner</h1>
+
+      <div id="pipeline"></div>
+
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">This tool continues the Physical Security Design Flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          Use this step to convert usable single-camera footprint into practical camera-to-camera spacing along the protected perimeter.
+          It turns effective coverage width into a real multi-camera layout before you validate continuity with Blind Spot Check.
+        </p>
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+          This flow includes both Free and Pro tools. Unlock Pro to complete the full sequence.
+        </p>
+      </section>
+
+      <p class="subhead">Estimate spacing between cameras along a wall/perimeter to maintain overlap.</p>
+
+      <p class="tool-best-for">
+        <strong>Best for:</strong> turning single-camera coverage into a real multi-camera layout with practical spacing, overlap, and camera count guidance.
+      </p>
+
+      <div id="flow-note" class="flow-note" hidden>
+        This step converts effective single-camera coverage into real camera-to-camera spacing along the protected perimeter.
+      </div>
+
+      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+
+        <h2 class="h2">🔒 Locked</h2>
+        <p class="muted">This tool is included with Pro access for the Physical Security category.</p>
+
+        <p class="muted"><strong>What this models</strong></p>
+        <ul class="muted">
+          <li>Raw versus usable coverage width per camera</li>
+          <li>Spacing required to maintain the overlap target</li>
+          <li>Estimated camera count along the protected run</li>
+          <li>Whether the layout is tight, balanced, or too wide before blind-spot validation</li>
+        </ul>
+
+        <div class="actions">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+          <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Physical Security</a>
+        </div>
+      </section>
+
+      <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Estimate how far cameras can be spaced while still honoring usable width and overlap target, so the final layout is based on practical continuity rather than raw lens footprint alone.
+        </p>
+
+        <div class="form-grid" style="margin-top: 14px;">
+          <div class="field">
+            <div class="label-row">
+              <label for="len">Perimeter Length (ft)</label>
+            </div>
+            <input id="len" type="number" min="0.1" step="0.1" value="300" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="dist">Distance to Target Plane (ft)</label>
+            </div>
+            <input id="dist" type="number" min="0.1" step="0.1" value="60" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="hfov">Horizontal FOV (deg)</label>
+            </div>
+            <input id="hfov" type="number" min="1" max="179" step="0.1" value="90" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="ov">Overlap Target (%)</label>
+            </div>
+            <input id="ov" type="number" min="0" max="95" step="0.1" value="15" />
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+          <button id="reset" class="btn" type="button">Reset</button>
+        </div>
+
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">Enter valid values and press Calculate.</div>
+          </div>
+          <div id="analysis-copy" style="display:none;"></div>
+
+          <p class="mini-note">
+            Model: raw width is calculated from horizontal field of view at the target plane, then reduced by the overlap target to estimate usable width. That usable width is applied across the total protected run to estimate camera count and actual spacing.
+          </p>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+        </div>
+
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+          <a id="continue" class="btn btn-primary" href="/tools/physical-security/blind-spot-check/">
+            Continue → Blind Spot Check
+          </a>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+
     </div>
-  </section>
+  </main>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results">
-      <div class="muted">Enter values and press Calculate.</div>
-    </div>
-    <div id="analysis-copy" style="display:none;"></div>
-
-    <div class="actions" style="margin-top:16px;">
-      <button id="continue" class="btn btn-primary" style="display:none;">
-        Continue to Blind Spot Check →
-      </button>
-    </div>
-  </section>
-</main>
-
-<script src="/assets/tool-flow.js?v=phys-pipeline-0418"></script>
-<script src="/assets/catalog.js?v=phys-pipeline-0418"></script>
-<script src="/assets/pipelines.js?v=phys-pipeline-0418"></script>
-<script src="/assets/pipeline-state.js?v=phys-pipeline-0418"></script>
-<script src="/assets/pipeline.js?v=phys-pipeline-0418"></script>
-<script src="/assets/analyzer.js?v=phys-pipeline-0418"></script>
-<script src="./script.js?v=phys-pipeline-0418"></script>
+  <script src="/assets/tool-flow.js?v=phys-cam-spacing-0420"></script>
+  <script src="/assets/catalog.js?v=phys-cam-spacing-0420"></script>
+  <script src="/assets/pipelines.js?v=phys-cam-spacing-0420"></script>
+  <script src="/assets/pipeline-state.js?v=phys-cam-spacing-0420"></script>
+  <script src="/assets/pipeline.js?v=phys-cam-spacing-0420"></script>
+  <script src="/assets/analyzer.js?v=phys-cam-spacing-0420"></script>
+  <script src="./script.js?v=phys-cam-spacing-0420"></script>
 </body>
 </html>
 
