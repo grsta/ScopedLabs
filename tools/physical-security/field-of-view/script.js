@@ -1,6 +1,4 @@
 ﻿(() => {
-  const $ = (id) => document.getElementById(id);
-
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
@@ -12,7 +10,8 @@
   const LANE = "v1";
   const STEP = "field-of-view";
   const PREVIOUS_STEP = "mounting-height";
-  const NEXT_URL = "/tools/physical-security/camera-coverage-area/";
+
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     dist: $("dist"),
@@ -24,26 +23,39 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    continueWrap: $("next-step-row"),
     continueBtn: $("continue")
   };
 
-  const DEFAULTS = { dist: 40, hfov: 90, scene: 60, h: 12 };
+  const DEFAULTS = {
+    dist: 40,
+    hfov: 90,
+    scene: 60,
+    h: 12
+  };
 
-  function num(value, fallback = NaN) { return ScopedLabsAnalyzer.safeNumber(value, fallback); }
-  function deg2rad(x) { return x * Math.PI / 180; }
-  function fmt(value, digits = 1) { return Number.isFinite(value) ? value.toFixed(digits) : "—"; }
-  function fmtFt(value, digits = 1) { return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—"; }
-  function fmtRatio(value, digits = 2) { return Number.isFinite(value) ? `${value.toFixed(digits)}x` : "—"; }
-  function fmtDeg(value, digits = 1) { return Number.isFinite(value) ? `${value.toFixed(digits)}°` : "—"; }
+  function num(value, fallback = NaN) {
+    return ScopedLabsAnalyzer.safeNumber(value, fallback);
+  }
 
-  function hideContinue() { if (els.continueBtn) els.continueBtn.style.display = "none"; }
-  function showContinue() { if (els.continueBtn) els.continueBtn.style.display = "inline-flex"; }
+  function deg2rad(x) {
+    return x * Math.PI / 180;
+  }
 
-  function applyDefaults() {
-    els.dist.value = String(DEFAULTS.dist);
-    els.hfov.value = String(DEFAULTS.hfov);
-    els.scene.value = String(DEFAULTS.scene);
-    els.h.value = String(DEFAULTS.h);
+  function fmt(value, digits = 1) {
+    return Number.isFinite(value) ? value.toFixed(digits) : "—";
+  }
+
+  function fmtFt(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—";
+  }
+
+  function fmtRatio(value, digits = 2) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}x` : "—";
+  }
+
+  function fmtDeg(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}°` : "—";
   }
 
   function classifyFit(coverageRatio) {
@@ -53,19 +65,34 @@
   }
 
   function interpretationForFit(fitClass) {
-    if (fitClass === "Too Narrow") return "Current field of view does not cover the full target scene width. You will likely need a wider lens, shorter standoff distance, or more cameras.";
-    if (fitClass === "Good Fit") return "Field of view is in a practical range for the intended scene width. This is a workable baseline for downstream coverage-area and spacing decisions.";
+    if (fitClass === "Too Narrow") {
+      return "Current field of view does not cover the full target scene width. You will likely need a wider lens, shorter standoff distance, or more cameras.";
+    }
+    if (fitClass === "Good Fit") {
+      return "Field of view is in a practical range for the intended scene width. This is a workable baseline for downstream coverage-area and spacing decisions.";
+    }
     return "Field of view is wider than necessary for the target scene width. This improves coverage breadth, but may dilute detail and weaken identification performance.";
   }
 
   function lensGuidance(hfov) {
-    if (hfov < 50) return "This is a relatively tight view. Good for concentrating detail, but scene coverage width will be limited.";
-    if (hfov <= 90) return "This is a balanced field of view for many general surveillance applications.";
+    if (hfov < 50) {
+      return "This is a relatively tight view. Good for concentrating detail, but scene coverage width will be limited.";
+    }
+    if (hfov <= 90) {
+      return "This is a balanced field of view for many general surveillance applications.";
+    }
     return "This is a wide view. Useful for broad awareness, but watch for reduced target detail at the far edges of coverage.";
   }
 
   function clearDownstream() {
     sessionStorage.removeItem(FLOW_KEYS.area);
+  }
+
+  function applyDefaults() {
+    els.dist.value = String(DEFAULTS.dist);
+    els.hfov.value = String(DEFAULTS.hfov);
+    els.scene.value = String(DEFAULTS.scene);
+    els.h.value = String(DEFAULTS.h);
   }
 
   function renderFlowNote() {
@@ -75,7 +102,7 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      title: "Flow context",
+      title: "Flow Context",
       intro: "This step uses the prior mounting-height recommendation to estimate how much scene width the selected field of view can realistically cover at the target distance."
     });
 
@@ -91,23 +118,31 @@
     if (Number.isFinite(h) && h > 0) els.h.value = String(Math.round(h));
 
     const parts = [];
-    if (Number.isFinite(h) && h > 0) parts.push(`mount height <strong>${fmtFt(h)}</strong>`);
-    if (Number.isFinite(dist) && dist > 0) parts.push(`target distance <strong>${fmtFt(dist)}</strong>`);
-    if (Number.isFinite(tilt) && tilt > 0) parts.push(`suggested tilt <strong>${fmtDeg(tilt)}</strong>`);
-    if (tiltClass) parts.push(`angle quality <strong>${tiltClass}</strong>`);
+    if (Number.isFinite(h) && h > 0) parts.push(`Mount height: <strong>${fmtFt(h)}</strong>`);
+    if (Number.isFinite(dist) && dist > 0) parts.push(`Target distance: <strong>${fmtFt(dist)}</strong>`);
+    if (Number.isFinite(tilt) && tilt > 0) parts.push(`Suggested tilt: <strong>${fmtDeg(tilt)}</strong>`);
+    if (tiltClass) parts.push(`Angle quality: <strong>${tiltClass}</strong>`);
 
     if (parts.length) {
       els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `<strong>Flow context</strong><br>Prior mounting-height results detected — ${parts.join(", ")}. This step estimates how much horizontal scene width that mounting geometry can realistically cover.`;
+      els.flowNote.innerHTML = `
+        <strong>Flow Context</strong><br>
+        ${parts.join(" | ")}
+      `;
     }
   }
 
   function invalidate({ clearFlow = true } = {}) {
-    if (clearFlow) clearDownstream();
+    if (clearFlow) {
+      sessionStorage.removeItem(FLOW_KEYS.fov);
+      clearDownstream();
+    }
 
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
       flowKey: FLOW_KEYS.fov,
       category: CATEGORY,
       step: STEP,
@@ -115,7 +150,6 @@
       emptyMessage: "Enter values and press Calculate."
     });
 
-    hideContinue();
     renderFlowNote();
   }
 
@@ -130,7 +164,9 @@
       !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
       !Number.isFinite(scene) || scene < 0 ||
       !Number.isFinite(h) || h < 0
-    ) return { ok: false, message: "Enter valid values and press Calculate." };
+    ) {
+      return { ok: false, message: "Enter valid values and press Calculate." };
+    }
 
     return { ok: true, dist, hfov, scene, h };
   }
@@ -148,43 +184,27 @@
     const diagonalReach = Math.sqrt((sceneWidth * sceneWidth) + (input.dist * input.dist));
     const widthPerFootHeight = input.h > 0 ? sceneWidth / input.h : 0;
 
-    const shortfallPct = input.scene > 0 && sceneWidth < input.scene ? ((input.scene - sceneWidth) / input.scene) * 100 : 0;
-    const overshootPct = input.scene > 0 && sceneWidth > input.scene ? ((sceneWidth - input.scene) / input.scene) * 100 : 0;
-
-    const fitPressureMetric = fitClass === "Too Narrow"
-      ? Math.min(shortfallPct * 2.5, 100)
-      : fitClass === "Too Wide"
-        ? Math.min(overshootPct * 0.9, 100)
-        : Math.min(Math.abs(coverageRatio - 1) * 100, 100);
-
-    const lensBreadthMetric = input.hfov > 90 ? Math.min((input.hfov - 90) * 1.25, 100) : 0;
-    const geometryMetric = input.h > 0 && widthPerFootHeight > 8 ? Math.min((widthPerFootHeight - 8) * 8, 100) : 0;
-
-    const metrics = [
-      { label: "Fit Pressure", value: fitPressureMetric, displayValue: fitClass === "Good Fit" ? fitClass : fmtRatio(coverageRatio) },
-      { label: "Lens Breadth", value: lensBreadthMetric, displayValue: fmtDeg(input.hfov) },
-      { label: "Geometry Spread", value: geometryMetric, displayValue: input.h > 0 ? `${fmt(widthPerFootHeight, 2)} ft/ft` : "N/A" }
-    ];
-
-    const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: Math.max(fitPressureMetric, lensBreadthMetric, geometryMetric),
-      metrics,
-      healthyMax: 20,
-      watchMax: 40
-    });
-
-    let dominantConstraint = "";
-    if (fitClass === "Too Narrow") dominantConstraint = "Fit pressure is the dominant limiter. The lens footprint is not wide enough for the target scene, so coverage gaps or extra cameras become the first downstream issue.";
-    else if (fitClass === "Too Wide") dominantConstraint = "Lens breadth is the dominant limiter. You can cover the width, but the view is spreading scene detail across a broader footprint than necessary.";
-    else if (geometryMetric > 20) dominantConstraint = "Geometry spread is the dominant limiter. The scene width is expanding quickly relative to mount height, which can make detail distribution less efficient.";
-    else dominantConstraint = "The field geometry is balanced. Distance, horizontal angle, and target scene width are aligned well enough for the next planning steps.";
-
     const interpretation = `At ${fmtFt(input.dist)}, a ${fmtDeg(input.hfov)} horizontal field of view covers about ${fmtFt(sceneWidth)} of scene width, or ${fmtFt(halfWidth)} to either side of centerline. Against the requested scene width of ${fmtFt(input.scene)}, the layout is classified as ${fitClass}. ${fitText}`;
 
+    let dominantConstraint = "";
+    if (fitClass === "Too Narrow") {
+      dominantConstraint = "Fit pressure is the dominant limiter. The lens footprint is not wide enough for the target scene, so coverage gaps or extra cameras become the first downstream issue.";
+    } else if (fitClass === "Too Wide") {
+      dominantConstraint = "Lens breadth is the dominant limiter. You can cover the width, but the view is spreading scene detail across a broader footprint than necessary.";
+    } else if (input.h > 0 && widthPerFootHeight > 8) {
+      dominantConstraint = "Geometry spread is the dominant limiter. The scene width is expanding quickly relative to mount height, which can make detail distribution less efficient.";
+    } else {
+      dominantConstraint = "The field geometry is balanced. Distance, horizontal angle, and target scene width are aligned well enough for the next planning steps.";
+    }
+
     let guidance = "";
-    if (fitClass === "Too Narrow") guidance = "Widen the lens, move closer, or plan on additional cameras before trusting this layout. Then continue to Coverage Area once the width fit is acceptable.";
-    else if (fitClass === "Too Wide") guidance = "Coverage is broad enough, but verify whether this much width is actually desirable for the target detail level. Continue to Coverage Area to translate this width into usable scene footprint.";
-    else guidance = "This is a workable starting point. Continue to Coverage Area to convert the lens footprint into usable width, height, and effective coverage after reserve is applied.";
+    if (fitClass === "Too Narrow") {
+      guidance = "Widen the lens, move closer, or plan on additional cameras before trusting this layout. Then continue to Coverage Area once the width fit is acceptable.";
+    } else if (fitClass === "Too Wide") {
+      guidance = "Coverage is broad enough, but verify whether this much width is actually desirable for the target detail level. Continue to Coverage Area to translate this width into usable scene footprint.";
+    } else {
+      guidance = "This is a workable starting point. Continue to Coverage Area to convert the lens footprint into usable width, height, and effective coverage after reserve is applied.";
+    }
 
     return {
       ok: true,
@@ -197,10 +217,15 @@
       lensText,
       diagonalReach,
       widthPerFootHeight,
-      status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance,
+      status:
+        fitClass === "Good Fit"
+          ? "Healthy"
+          : fitClass === "Too Wide"
+            ? "Watch"
+            : "Risk"
     };
   }
 
@@ -229,7 +254,7 @@
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    hideContinue();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -257,7 +282,7 @@
     });
 
     writeFlow(data);
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function calc() {
@@ -283,11 +308,20 @@
       el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
-    els.continueBtn?.addEventListener("click", () => { window.location.href = NEXT_URL; });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        calc();
+      }
+    });
   }
 
   function init() {
-    hideContinue();
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });
