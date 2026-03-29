@@ -1,14 +1,16 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
-
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
+(() => {
   const CATEGORY = "video-storage";
-  const STEP = "bitrate-estimator";
+  const STEP = "bitrate";
+  const LANE = "v1";
   const NEXT_URL = "/tools/video-storage/storage-calculator/";
+
+  const FLOW_KEYS = {
+    bitrate: "scopedlabs:pipeline:video-storage:bitrate",
+    storage: "scopedlabs:pipeline:video-storage:storage",
+    retention: "scopedlabs:pipeline:video-storage:retention",
+    raid: "scopedlabs:pipeline:video-storage:raid",
+    survivability: "scopedlabs:pipeline:video-storage:survivability"
+  };
 
   const $ = (id) => document.getElementById(id);
 
@@ -25,57 +27,38 @@ const FLOW_KEYS = {
     results: $("results"),
     analysisCopy: $("analysis-copy"),
     flowNote: $("flow-note"),
-    continueWrap: $("continue-wrap"),
+    continueWrap: $("next-step-row"),
     continueBtn: $("continue")
   };
 
   function safeNumber(value, fallback = 0) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.safeNumber === "function") {
       return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
     }
-
     const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
   }
 
-  function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
-  }
-
   function hideContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.hideContinue === "function") {
       window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
       return;
     }
-
     if (els.continueWrap) els.continueWrap.style.display = "none";
     if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function showContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.showContinue === "function") {
       window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
       return;
     }
-
     if (els.continueWrap) els.continueWrap.style.display = "";
     if (els.continueBtn) els.continueBtn.disabled = false;
   }
 
   function clearAnalysisBlock() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
     } else if (els.analysisCopy) {
       els.analysisCopy.style.display = "none";
@@ -91,15 +74,14 @@ const FLOW_KEYS = {
   }
 
   function renderFlowNote() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderFlowNote === "function") {
       window.ScopedLabsAnalyzer.renderFlowNote({
         flowEl: els.flowNote,
+        flowKey: FLOW_KEYS[STEP],
         category: CATEGORY,
         step: STEP,
-        title: "System Context",
+        lane: LANE,
+        title: "Flow Context",
         intro:
           "This is the first step of the Video & Storage pipeline. Establish the stream bitrate first so storage, retention, RAID impact, and survivability are all based on the same bandwidth assumption.",
         customRows: null
@@ -108,7 +90,7 @@ const FLOW_KEYS = {
     }
 
     if (els.flowNote) {
-      els.flowNote.style.display = "none";
+      els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
     }
   }
@@ -142,76 +124,73 @@ const FLOW_KEYS = {
     return 1.00;
   }
 
-  function buildInterpretation(status, dominantConstraint, bitrate) {
+  function buildInterpretation(status, dominantConstraint) {
     if (status === "HEALTHY") {
-      return `Estimated bitrate remains in a manageable range for the selected resolution, frame rate, and codec. This gives the rest of the pipeline a clean planning baseline without putting unusual pressure on storage or transport yet.`;
+      return "Estimated bitrate remains in a manageable range for the selected resolution, frame rate, and codec. This gives the rest of the pipeline a clean planning baseline without putting unusual pressure on storage or transport yet.";
     }
 
     if (status === "WATCH") {
       if (dominantConstraint === "Scene motion complexity") {
-        return `Scene behavior is starting to drive bitrate more than the base image format alone. The stream may still be workable, but motion-heavy conditions now have enough leverage to widen the real operating range.`;
+        return "Scene behavior is starting to drive bitrate more than the base image format alone. The stream may still be workable, but motion-heavy conditions now have enough leverage to widen the real operating range.";
       }
 
       if (dominantConstraint === "Frame density burden") {
-        return `The combination of pixel count and frame rate is pushing bitrate upward. Storage planning should assume the stream is now more sensitive to tuning choices rather than relying on a casual rule-of-thumb.`;
+        return "The combination of pixel count and frame rate is pushing bitrate upward. Storage planning should assume the stream is now more sensitive to tuning choices rather than relying on a casual rule-of-thumb.";
       }
 
-      return `The selected quality posture is leaning toward a heavier stream. That can be valid, but it means the next storage step should be based on the upper side of the estimate rather than the midpoint alone.`;
+      return "The selected quality posture is leaning toward a heavier stream. That can be valid, but it means the next storage step should be based on the upper side of the estimate rather than the midpoint alone.";
     }
 
     if (dominantConstraint === "Scene motion complexity") {
-      return `Motion-driven bitrate pressure is high enough that average-state assumptions become less trustworthy. Real-world scene changes are likely to push the stream toward the top end of the modeled range often enough to matter.`;
+      return "Motion-driven bitrate pressure is high enough that average-state assumptions become less trustworthy. Real-world scene changes are likely to push the stream toward the top end of the modeled range often enough to matter.";
     }
 
     if (dominantConstraint === "Frame density burden") {
-      return `The image format itself is now the main bitrate driver. High pixel count combined with frame rate is creating a stream that will materially increase downstream storage and transport burden if left unchanged.`;
+      return "The image format itself is now the main bitrate driver. High pixel count combined with frame rate is creating a stream that will materially increase downstream storage and transport burden if left unchanged.";
     }
 
-    return `The chosen quality posture is producing a high-bitrate stream expectation. The result may be technically acceptable, but the cost is that storage and retention planning now need more deliberate headroom.`;
+    return "The chosen quality posture is producing a high-bitrate stream expectation. The result may be technically acceptable, but the cost is that storage and retention planning now need more deliberate headroom.";
   }
 
   function buildGuidance(status, dominantConstraint) {
     if (status === "HEALTHY") {
-      return `Use the estimate as the planning bitrate and carry it into storage sizing. Keep the suggested range in mind so the next step does not rely on a single overly-optimistic number.`;
+      return "Use the estimate as the planning bitrate and carry it into storage sizing. Keep the suggested range in mind so the next step does not rely on a single overly-optimistic number.";
     }
 
     if (status === "WATCH") {
       if (dominantConstraint === "Scene motion complexity") {
-        return `Validate the stream under realistic scene activity before locking the design. Motion complexity is now influential enough that live encoder behavior matters more than a static assumption.`;
+        return "Validate the stream under realistic scene activity before locking the design. Motion complexity is now influential enough that live encoder behavior matters more than a static assumption.";
       }
 
       if (dominantConstraint === "Frame density burden") {
-        return `Review whether frame rate, resolution, or codec choice can be tuned more efficiently before scaling the design. Even a small change here can materially improve storage outcomes later.`;
+        return "Review whether frame rate, resolution, or codec choice can be tuned more efficiently before scaling the design. Even a small change here can materially improve storage outcomes later.";
       }
 
-      return `Carry the upper suggested range into the storage step instead of the midpoint alone. The current stream has enough bitrate pressure that conservative downstream planning is justified.`;
+      return "Carry the upper suggested range into the storage step instead of the midpoint alone. The current stream has enough bitrate pressure that conservative downstream planning is justified.";
     }
 
     if (dominantConstraint === "Frame density burden") {
-      return `Reduce stream burden before finalizing the design if storage, uplink, or retention targets are tight. Resolution, frame rate, or codec choice should be reviewed deliberately.`;
+      return "Reduce stream burden before finalizing the design if storage, uplink, or retention targets are tight. Resolution, frame rate, or codec choice should be reviewed deliberately.";
     }
 
     if (dominantConstraint === "Scene motion complexity") {
-      return `Use field validation or worst-case bitrate assumptions before trusting this stream at scale. Motion behavior is currently too influential to ignore.`;
+      return "Use field validation or worst-case bitrate assumptions before trusting this stream at scale. Motion behavior is currently too influential to ignore.";
     }
 
-    return `Treat this as a high-bitrate planning case. The remaining pipeline should assume the heavier side of the estimated range unless the stream is intentionally tuned down.`;
+    return "Treat this as a high-bitrate planning case. The remaining pipeline should assume the heavier side of the estimated range unless the stream is intentionally tuned down.";
   }
 
   function invalidateResult() {
-    clearStored();
-
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.invalidate === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.invalidate === "function") {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
         continueWrapEl: els.continueWrap,
         continueBtnEl: els.continueBtn,
+        flowKey: FLOW_KEYS[STEP],
         category: CATEGORY,
         step: STEP,
+        lane: LANE,
         emptyMessage: "Enter values and press Calculate."
       });
       return;
@@ -293,7 +272,6 @@ const FLOW_KEYS = {
       }
       clearAnalysisBlock();
       hideContinue();
-      clearStored();
       return;
     }
 
@@ -337,10 +315,7 @@ const FLOW_KEYS = {
     let status = "HEALTHY";
     let dominantLabel = "Frame Density Burden";
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.resolveStatus === "function") {
       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
         metrics,
         healthyMax: 1.25,
@@ -368,7 +343,7 @@ const FLOW_KEYS = {
     const dominantConstraint =
       dominantConstraintMap[dominantLabel] || "Frame density burden";
 
-    const interpretation = buildInterpretation(status, dominantConstraint, bitrate);
+    const interpretation = buildInterpretation(status, dominantConstraint);
     const guidance = buildGuidance(status, dominantConstraint);
 
     const summaryRows = [
@@ -385,13 +360,12 @@ const FLOW_KEYS = {
       { label: "Planning Basis", value: "Rule-of-thumb stream estimate" }
     ];
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderOutput === "function") {
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
         summaryRows,
         derivedRows,
         status,
@@ -410,27 +384,24 @@ const FLOW_KEYS = {
       );
     }
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        category: CATEGORY,
-        step: STEP,
-        data: {
-          resolution: `${Math.round(w)}x${Math.round(h)}`,
-          width: Math.round(w),
-          height: Math.round(h),
-          fps: Number(fps.toFixed(0)),
-          codec,
-          scene,
-          quality,
-          bitrateMbps: Number(bitrate.toFixed(2)),
-          minBitrateMbps: Number(low.toFixed(2)),
-          maxBitrateMbps: Number(high.toFixed(2)),
-          status,
-          dominantConstraint
-        }
-      })
-    );
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        resolution: `${Math.round(w)}x${Math.round(h)}`,
+        width: Math.round(w),
+        height: Math.round(h),
+        fps: Number(fps.toFixed(0)),
+        codec,
+        scene,
+        quality,
+        bitrateMbps: Number(bitrate.toFixed(2)),
+        minBitrateMbps: Number(low.toFixed(2)),
+        maxBitrateMbps: Number(high.toFixed(2)),
+        status,
+        dominantConstraint
+      }
+    });
 
     showContinue();
   }
@@ -443,7 +414,6 @@ const FLOW_KEYS = {
     els.codec.value = "h264";
     els.scene.value = "med";
     els.quality.value = "balanced";
-    clearStored();
     renderEmpty();
     hideContinue();
     renderFlowNote();
@@ -476,30 +446,9 @@ const FLOW_KEYS = {
     }
   }
 
-  init();
-})();
-
-
-function invalidate() {
-  // TODO: implement invalidation
-}
-
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    init();
   });
-}
+})();
