@@ -1,6 +1,4 @@
 ﻿(() => {
-  const $ = (id) => document.getElementById(id);
-
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
@@ -13,6 +11,11 @@
   const STEP = "scene-illumination";
   const NEXT_URL = "/tools/physical-security/mounting-height/";
 
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
+  const $ = (id) => document.getElementById(id);
+
   const els = {
     w: $("w"),
     d: $("d"),
@@ -24,7 +27,10 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
-    continueBtn: $("continue")
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   const DEFAULTS = {
@@ -35,40 +41,86 @@
     llf: 80
   };
 
-  function num(value, fallback = NaN) {
-    return ScopedLabsAnalyzer.safeNumber(value, fallback);
+  function num(v) {
+    return ScopedLabsAnalyzer.safeNumber(v, NaN);
   }
 
-  function fmt(value, digits = 1) {
-    return Number.isFinite(value) ? value.toFixed(digits) : "—";
+  function fmt(v, digits = 1) {
+    return Number.isFinite(v) ? v.toFixed(digits) : "—";
   }
 
-  function fmtSqFt(value, digits = 0) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)} sq ft` : "—";
+  function fmtFt(v, digits = 1) {
+    return Number.isFinite(v) ? `${v.toFixed(digits)} ft` : "—";
   }
 
-  function fmtFc(value, digits = 2) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)} fc` : "—";
+  function fmtSqFt(v, digits = 0) {
+    return Number.isFinite(v) ? `${v.toFixed(digits)} sq ft` : "—";
   }
 
-  function fmtPct(value, digits = 0) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+  function fmtPct(v, digits = 1) {
+    return Number.isFinite(v) ? `${v.toFixed(digits)}%` : "—";
   }
 
-  function fmtLumens(value, digits = 0) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)} lm` : "—";
+  function fmtFc(v, digits = 2) {
+    return Number.isFinite(v) ? `${v.toFixed(digits)} fc` : "—";
   }
 
-  function fmtFactor(value, digits = 2) {
-    return Number.isFinite(value) ? value.toFixed(digits) : "—";
+  function fmtLumens(v, digits = 0) {
+    return Number.isFinite(v) ? `${v.toFixed(digits)} lm` : "—";
   }
 
-  function showContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
+  function fmtFactor(v, digits = 2) {
+    return Number.isFinite(v) ? v.toFixed(digits) : "—";
   }
 
-  function hideContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "none";
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw
+        .split(",")
+        .map((x) => String(x).trim().toLowerCase())
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
+  function clearDownstream() {
+    sessionStorage.removeItem(FLOW_KEYS.mount);
+    sessionStorage.removeItem(FLOW_KEYS.fov);
+    sessionStorage.removeItem(FLOW_KEYS.area);
   }
 
   function applyDefaults() {
@@ -79,25 +131,36 @@
     els.llf.value = String(DEFAULTS.llf);
   }
 
-  function clearDownstream() {
-    sessionStorage.removeItem(FLOW_KEYS.mount);
-    sessionStorage.removeItem(FLOW_KEYS.fov);
-    sessionStorage.removeItem(FLOW_KEYS.area);
-  }
-
   function renderFlowNote() {
     if (!els.flowNote) return;
-
-    els.flowNote.style.display = "";
+    els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
-      <h2>Design Flow</h2>
-      <p class="muted" style="margin-top:8px;">
-        This step establishes the lighting baseline for the scene before camera geometry is finalized.
-        Start here to estimate how much usable light the area needs, then continue into mounting height
-        and field-of-view decisions with a clearer understanding of whether the environment is light-starved,
-        workable, or comfortably illuminated.
-      </p>
+      <strong>Flow Context</strong><br>
+      This tool starts the design flow by establishing the scene-lighting baseline that downstream geometry and detail steps will build on.
     `;
+  }
+
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) {
+      sessionStorage.removeItem(FLOW_KEYS.scene);
+      clearDownstream();
+    }
+
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEYS.scene,
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
+      emptyMessage: "Enter values and press Estimate Lighting."
+    });
+
+    renderFlowNote();
   }
 
   function classifyFootcandles(fc) {
@@ -131,9 +194,9 @@
   }
 
   function getInputs() {
-    const w = Math.max(0, num(els.w.value, 0));
-    const d = Math.max(0, num(els.d.value, 0));
-    const fc = Math.max(0, num(els.fc.value, 0));
+    const w = num(els.w.value);
+    const d = num(els.d.value);
+    const fc = num(els.fc.value);
     const ufPct = num(els.uf.value);
     const llfPct = num(els.llf.value);
 
@@ -144,7 +207,7 @@
       !Number.isFinite(ufPct) || ufPct <= 0 || ufPct > 100 ||
       !Number.isFinite(llfPct) || llfPct <= 0 || llfPct > 100
     ) {
-      return { ok: false, message: "Enter valid values and press Calculate." };
+      return { ok: false, message: "Enter valid values and press Estimate Lighting." };
     }
 
     return {
@@ -170,7 +233,7 @@
 
     const lightingClass = classifyFootcandles(input.fc);
     const interpretationBase = suitability(input.fc);
-    const nextGuidance = nextStepGuidance(input.fc, lumens, area);
+    const guidance = nextStepGuidance(input.fc, lumens, area);
 
     const factorPressureMetric = Math.min(((1 - effectiveFactor) / 0.95) * 100, 100);
     const targetDemandMetric = input.fc >= 10 ? 65 : input.fc >= 3 ? 30 : input.fc >= 1 ? 15 : 5;
@@ -194,8 +257,10 @@
       }
     ];
 
+    const dominantMetric = Math.max(factorPressureMetric, targetDemandMetric, outputLoadMetric);
+
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: Math.max(factorPressureMetric, targetDemandMetric, outputLoadMetric),
+      compositeScore: dominantMetric,
       metrics,
       healthyMax: 20,
       watchMax: 45
@@ -222,11 +287,13 @@
       lumens,
       lumenDensity,
       lightingClass,
-      metrics,
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance: nextGuidance
+      guidance,
+      factorPressureMetric,
+      targetDemandMetric,
+      outputLoadMetric
     };
   }
 
@@ -254,8 +321,9 @@
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    hideContinue();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -263,6 +331,8 @@
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Area", value: fmtSqFt(data.area) },
         { label: "Target Illumination", value: fmtFc(data.fc) },
@@ -270,8 +340,8 @@
         { label: "Estimated Lumens Required", value: fmtLumens(data.lumens) }
       ],
       derivedRows: [
-        { label: "Area Width", value: `${fmt(data.w, 0)} ft` },
-        { label: "Area Depth", value: `${fmt(data.d, 0)} ft` },
+        { label: "Area Width", value: fmtFt(data.w) },
+        { label: "Area Depth", value: fmtFt(data.d) },
         { label: "Utilization Factor", value: fmtPct(data.ufPct) },
         { label: "Light Loss Factor", value: fmtPct(data.llfPct) },
         { label: "Lighting Condition", value: data.lightingClass },
@@ -281,47 +351,43 @@
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance,
-      metrics: data.metrics,
-      healthyMax: 20,
-      watchMax: 45
+      chart: {
+        labels: ["Planning Factor Pressure", "Illumination Demand", "Output Load"],
+        values: [
+          Number(data.factorPressureMetric.toFixed(1)),
+          Number(data.targetDemandMetric.toFixed(1)),
+          Number(data.outputLoadMetric.toFixed(1))
+        ],
+        displayValues: [
+          fmtFactor(data.effectiveFactor),
+          fmtFc(data.fc),
+          `${fmt(data.lumenDensity, 2)} lm/sq ft`
+        ],
+        referenceValue: 20,
+        healthyMax: 20,
+        watchMax: 45,
+        axisTitle: "Lighting Planning Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
 
     writeFlow(data);
-    showContinue();
-  }
-
-  function invalidate({ clearFlow = true } = {}) {
-    if (clearFlow) {
-      sessionStorage.removeItem(FLOW_KEYS.scene);
-      clearDownstream();
-    }
-
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysis,
-      flowKey: FLOW_KEYS.scene,
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      emptyMessage: "Enter values and press Calculate."
-    });
-
-    hideContinue();
-    renderFlowNote();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function calc() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
-
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
   function reset() {
     applyDefaults();
+    renderFlowNote();
     invalidate({ clearFlow: true });
   }
 
@@ -329,39 +395,42 @@
     ["w", "d", "fc", "uf", "llf"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-
       el.addEventListener("input", () => invalidate({ clearFlow: true }));
       el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
     els.calc?.addEventListener("click", calc);
     els.reset?.addEventListener("click", reset);
-    els.continueBtn?.addEventListener("click", () => {
-      window.location.href = NEXT_URL;
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        calc();
+      }
     });
   }
 
-  function init() {
-    applyDefaults();
+  function initTool() {
     bind();
     renderFlowNote();
-
-    // Entry tool behavior: start fresh here and do not depend on upstream pipeline state.
-    clearDownstream();
-    sessionStorage.removeItem(FLOW_KEYS.scene);
-
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysis,
-      flowKey: FLOW_KEYS.scene,
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      emptyMessage: "Enter values and press Calculate."
-    });
-
-    hideContinue();
+    invalidate({ clearFlow: false });
   }
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    let unlocked = unlockCategoryPage();
+    if (unlocked) initTool();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        initTool();
+      }
+    }, 400);
+  });
 })();
