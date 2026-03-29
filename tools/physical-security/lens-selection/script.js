@@ -1,8 +1,21 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
 
-  const KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    scene: "scopedlabs:pipeline:physical-security:scene-illumination",
+    mount: "scopedlabs:pipeline:physical-security:mounting-height",
+    fov: "scopedlabs:pipeline:physical-security:field-of-view",
+    area: "scopedlabs:pipeline:physical-security:camera-coverage-area",
+    spacing: "scopedlabs:pipeline:physical-security:camera-spacing",
+    blind: "scopedlabs:pipeline:physical-security:blind-spot-check",
+    pixel: "scopedlabs:pipeline:physical-security:pixel-density",
+    lens: "scopedlabs:pipeline:physical-security:lens-selection",
+    face: "scopedlabs:pipeline:physical-security:face-recognition-range",
+    plate: "scopedlabs:pipeline:physical-security:license-plate-range"
+  };
+
   const CATEGORY = "physical-security";
+  const LANE = "v1";
   const STEP = "lens-selection";
   const PREVIOUS_STEP = "pixel-density";
   const NEXT_URL = "/tools/physical-security/face-recognition-range/";
@@ -47,14 +60,23 @@
     return Number.isFinite(value) ? `${value.toFixed(digits)} PPF` : "—";
   }
 
-  function fmtRatio(value, digits = 2) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)}x` : "—";
+  function hideContinue() {
+    if (els.continueBtn) els.continueBtn.style.display = "none";
+  }
+
+  function showContinue() {
+    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
   }
 
   function applyDefaults() {
     els.dist.value = String(DEFAULTS.dist);
     els.tw.value = String(DEFAULTS.tw);
     els.sw.value = String(DEFAULTS.sw);
+  }
+
+  function clearDownstream() {
+    sessionStorage.removeItem(FLOW_KEYS.face);
+    sessionStorage.removeItem(FLOW_KEYS.plate);
   }
 
   function classifyLens(focal) {
@@ -88,9 +110,9 @@
   function renderFlowNote() {
     const flow = ScopedLabsAnalyzer.renderFlowNote({
       flowEl: els.flowNote,
-      flowKey: KEY,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       title: "Flow context",
       intro: "This step converts pixel-density requirements into a practical focal-length choice for the desired scene width."
     });
@@ -120,7 +142,7 @@
     }
 
     if (parts.length) {
-      els.flowNote.style.display = "";
+      els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
         <strong>Flow context</strong><br>
         Prior pixel-density results detected — ${parts.join(", ")}.
@@ -129,16 +151,20 @@
     }
   }
 
-  function invalidate() {
+  function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) clearDownstream();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      flowKey: KEY,
+      flowKey: FLOW_KEYS.lens,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Suggest Lens."
     });
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+
+    hideContinue();
     renderFlowNote();
   }
 
@@ -269,7 +295,7 @@
   }
 
   function writeFlow(data) {
-    sessionStorage.setItem(KEY, JSON.stringify({
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.lens, {
       category: CATEGORY,
       step: STEP,
       data: {
@@ -284,12 +310,12 @@
         interpretation: data.interpretation,
         guidance: data.guidance
       }
-    }));
+    });
   }
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    hideContinue();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -318,46 +344,41 @@
     });
 
     writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueBtn);
+    showContinue();
   }
 
   function calc() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
   function reset() {
     applyDefaults();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: true });
   }
 
   function bind() {
     ["dist", "tw", "sw"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
+      el.addEventListener("input", () => invalidate({ clearFlow: true }));
+      el.addEventListener("change", () => invalidate({ clearFlow: true }));
     });
 
-    if (els.calc) els.calc.addEventListener("click", calc);
-    if (els.reset) els.reset.addEventListener("click", reset);
-    if (els.continueBtn) {
-      els.continueBtn.addEventListener("click", () => {
-        window.location.href = NEXT_URL;
-      });
-    }
+    els.calc?.addEventListener("click", calc);
+    els.reset?.addEventListener("click", reset);
+    els.continueBtn?.addEventListener("click", () => {
+      window.location.href = NEXT_URL;
+    });
   }
 
   function init() {
-    ScopedLabsAnalyzer.hideContinue(els.continueBtn);
+    hideContinue();
     bind();
     renderFlowNote();
-    invalidate();
+    invalidate({ clearFlow: false });
   }
 
   window.addEventListener("DOMContentLoaded", init);
