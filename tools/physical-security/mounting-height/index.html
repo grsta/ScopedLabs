@@ -1,109 +1,214 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mounting Height Helper *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate tilt angle and vertical framing based on mounting height and target distance before locking field of view."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=phys-mount-height-0418" />
+  <link rel="stylesheet" href="/assets/style.css?v=phys-mount-height-0420" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=phys-mount-height-0418"></script>
-  <script defer src="/assets/app.js?v=phys-mount-height-0418"></script>
+  <script defer src="/assets/auth.js?v=phys-mount-height-0420"></script>
+  <script defer src="/assets/app.js?v=phys-mount-height-0420"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .flag-ok {
+      color: rgba(140, 255, 170, 0.95);
+    }
+
+    .flag-warn {
+      color: rgba(255, 210, 140, 0.95);
+    }
+
+    .flag-bad {
+      color: rgba(255, 180, 140, 0.95);
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
-<body data-tier="free" data-category="physical-security" data-step="mounting-height" data-lane="v1">
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-dot"></span>
-      <span class="brand-text">ScopedLabs</span>
-    </a>
-    <nav class="site-nav">
-      <a class="nav-pill" href="/">Home</a>
-      <a class="nav-pill" href="/tools/">Tools</a>
-      <a class="nav-pill" href="/tools/physical-security/">Physical Security</a>
-    </nav>
-  </div>
-</header>
+<body
+  data-tier="free"
+  data-category="physical-security"
+  data-tool="mounting-height"
+  data-step="mounting-height"
+  data-lane="v1"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
-<main class="container page">
-  <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/physical-security/">Physical Security</a> /
-    Mounting Height
-  </div>
-
-  <h1>Mounting Height Helper</h1>
-
-  <div id="pipeline"></div>
-
-  <p class="subhead">Estimate tilt angle and ground coverage based on mounting height and distance.</p>
-
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> choosing a workable install height that balances coverage, subject angle, and identification quality before locking field of view.
-    </p>
-  </section>
-
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card tool-card">
-    <h2>Inputs</h2>
-
-    <div class="form-grid">
-      <label class="field">
-        <span class="label">Mount Height (ft)</span>
-        <input id="h" type="number" value="12">
-      </label>
-
-      <label class="field">
-        <span class="label">Target Distance (ft)</span>
-        <input id="dist" type="number" value="40">
-      </label>
-
-      <label class="field">
-        <span class="label">Target Height (ft)</span>
-        <input id="th" type="number" value="5.5">
-      </label>
-
-      <label class="field">
-        <span class="label">Vertical FOV (deg)</span>
-        <input id="vfov" type="number" value="55">
-      </label>
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
     </div>
+  </header>
 
-    <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+  <main class="page">
+    <div class="container">
+
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/physical-security/">Physical Security</a>
+        <span class="sep">/</span>
+        <span>Mounting Height</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--free">Free Tier</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Mounting Height Helper</h1>
+
+      <div id="pipeline"></div>
+
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">This tool continues the Physical Security Design Flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          Use this step to choose a workable install height before locking field of view.
+          It translates scene geometry into a suggested down-tilt and framing range so the next optical step starts from a healthier mounting assumption.
+        </p>
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+          Calculated values from the previous step can carry forward into this tool, reducing re-entry and preserving design context.
+        </p>
+      </section>
+
+      <p class="subhead">Estimate tilt angle and ground coverage based on mounting height and distance.</p>
+
+      <p class="tool-best-for">
+        <strong>Best for:</strong> choosing a workable install height that balances coverage, subject angle, and identification quality before locking field of view.
+      </p>
+
+      <div id="flow-note" class="flow-note" hidden>
+        This step uses the prior illumination plan to choose a workable install height before locking field of view.
+      </div>
+
+      <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Estimate vertical geometry so mount height, target distance, and framing stay in a practical range before you move into horizontal field-of-view planning.
+        </p>
+
+        <div class="form-grid" style="margin-top: 14px;">
+          <div class="field">
+            <div class="label-row">
+              <label for="h">Mount Height (ft)</label>
+            </div>
+            <input id="h" type="number" min="0" step="0.1" value="12" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="dist">Target Distance (ft)</label>
+            </div>
+            <input id="dist" type="number" min="0.1" step="0.1" value="40" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="th">Target Height (ft)</label>
+            </div>
+            <input id="th" type="number" min="0" step="0.1" value="5.5" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="vfov">Vertical FOV (deg)</label>
+            </div>
+            <input id="vfov" type="number" min="1" max="179" step="0.1" value="55" />
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+          <button id="reset" class="btn" type="button">Reset</button>
+        </div>
+
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">Enter valid values and press Calculate.</div>
+          </div>
+          <div id="analysis-copy" style="display:none;"></div>
+
+          <p class="mini-note">
+            Model: suggested down-tilt is derived from mount height, target distance, and target height. Vertical framing is then estimated using the supplied vertical field of view to show where the top and bottom edges land at the target distance.
+          </p>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+        </div>
+
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+          <a id="continue" class="btn btn-primary" href="/tools/physical-security/field-of-view/">
+            Continue → Field of View
+          </a>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+
     </div>
-  </section>
+  </main>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results">
-      <div class="muted">Enter values and press Calculate.</div>
-    </div>
-    <div id="analysis-copy" style="display:none;"></div>
-
-    <div class="actions" style="margin-top:16px;">
-      <button id="continue" class="btn btn-primary" style="display:none;">
-        Continue → Field of View
-      </button>
-    </div>
-  </section>
-</main>
-
-<script src="/assets/tool-flow.js?v=phys-pipeline-0418"></script>
-<script src="/assets/catalog.js?v=phys-pipeline-0418"></script>
-<script src="/assets/pipelines.js?v=phys-pipeline-0418"></script>
-<script src="/assets/pipeline-state.js?v=phys-pipeline-0418"></script>
-<script src="/assets/pipeline.js?v=phys-pipeline-0418"></script>
-<script src="/assets/analyzer.js?v=phys-pipeline-0418"></script>
-<script src="./script.js?v=phys-pipeline-0418"></script>
+  <script src="/assets/tool-flow.js?v=phys-mount-height-0420"></script>
+  <script src="/assets/catalog.js?v=phys-mount-height-0420"></script>
+  <script src="/assets/pipelines.js?v=phys-mount-height-0420"></script>
+  <script src="/assets/pipeline-state.js?v=phys-mount-height-0420"></script>
+  <script src="/assets/pipeline.js?v=phys-mount-height-0420"></script>
+  <script src="/assets/analyzer.js?v=phys-mount-height-0420"></script>
+  <script src="./script.js?v=phys-mount-height-0420"></script>
 </body>
 </html>
 
