@@ -1,16 +1,18 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "survivability";
-const CATEGORY = "video-storage";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
-
 (() => {
-  const $ = (id) => document.getElementById(id);
+  const CATEGORY = "video-storage";
+  const STEP = "survivability";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "raid";
 
-  const yearEl = document.querySelector("[data-year]");
-  if (yearEl) yearEl.textContent = new Date().getFullYear();
+  const FLOW_KEYS = {
+    bitrate: "scopedlabs:pipeline:video-storage:bitrate",
+    storage: "scopedlabs:pipeline:video-storage:storage",
+    retention: "scopedlabs:pipeline:video-storage:retention",
+    raid: "scopedlabs:pipeline:video-storage:raid",
+    survivability: "scopedlabs:pipeline:video-storage:survivability"
+  };
+
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     baselineRetention: $("baselineRetention"),
@@ -24,17 +26,59 @@ const FLOW_KEYS = {
     results: $("results"),
     analysisCopy: $("analysis-copy"),
     flowNote: $("flow-note"),
-    completionWrap: $("completion-wrap")
+    completionWrap: $("completion-wrap"),
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
   function safeNumber(value, fallback = 0) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.safeNumber === "function") {
       return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
     }
     const n = Number(value);
@@ -42,10 +86,7 @@ const FLOW_KEYS = {
   }
 
   function clamp(v, min, max) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clamp === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clamp === "function") {
       return window.ScopedLabsAnalyzer.clamp(v, min, max);
     }
     return Math.min(max, Math.max(min, v));
@@ -60,15 +101,8 @@ const FLOW_KEYS = {
     return `${round(v, 2)} days`;
   }
 
-  function fmtPct(v) {
-    return `${round(v, 1)}%`;
-  }
-
   function clearAnalysisBlock() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
       return;
     }
@@ -79,17 +113,12 @@ const FLOW_KEYS = {
   }
 
   function clearChart() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearChart === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearChart === "function") {
       window.ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
       return;
     }
     if (chartRef.current) {
-      try {
-        chartRef.current.destroy();
-      } catch {}
+      try { chartRef.current.destroy(); } catch {}
       chartRef.current = null;
     }
     if (chartWrapRef.current && chartWrapRef.current.parentNode) {
@@ -116,15 +145,18 @@ const FLOW_KEYS = {
   }
 
   function invalidate() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.invalidate === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.invalidate === "function") {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        category: "video-storage",
-        step: "survivability",
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
+        existingChartRef: chartRef,
+        existingWrapRef: chartWrapRef,
+        flowKey: FLOW_KEYS[STEP],
+        category: CATEGORY,
+        step: STEP,
+        lane: LANE,
         emptyMessage: "Enter values and press Calculate."
       });
     } else {
@@ -153,17 +185,15 @@ const FLOW_KEYS = {
       els.capacityLossPct.value = round(lossPct, 1);
     }
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderFlowNote === "function") {
       window.ScopedLabsAnalyzer.renderFlowNote({
         flowEl: els.flowNote,
-        category: "video-storage",
-        step: "survivability",
-        title: "System Context",
-        intro:
-          "Imported from RAID Impact. This final step checks how degraded capacity and rebuild stress compress the promised retention window.",
+        flowKey: FLOW_KEYS[STEP],
+        category: CATEGORY,
+        step: STEP,
+        lane: LANE,
+        title: "Flow Context",
+        intro: "Imported from RAID Impact. This final step checks how degraded capacity and rebuild stress compress the promised retention window.",
         customRows: [
           {
             label: "Imported target",
@@ -190,60 +220,48 @@ const FLOW_KEYS = {
     }
   }
 
-  function buildInterpretation(status, dominantConstraint, effectiveDays, targetDays, daysLost) {
+  function buildInterpretation(status, dominantConstraint) {
     if (status === "HEALTHY") {
-      return `Degraded capacity reduces effective retention, but the design still remains in a controlled range. The storage plan retains enough margin that temporary degradation does not immediately collapse the retention promise.`;
+      return "Degraded capacity reduces effective retention, but the design still remains in a controlled range. The storage plan retains enough margin that temporary degradation does not immediately collapse the retention promise.";
     }
-
     if (status === "WATCH") {
       if (dominantConstraint === "Goal fit pressure") {
-        return `The main concern is how close degraded retention is to the actual target. The design may still work, but it is operating near a retention cliff where modest additional stress could cause it to miss the promise.`;
+        return "The main concern is how close degraded retention is to the actual target. The design may still work, but it is operating near a retention cliff where modest additional stress could cause it to miss the promise.";
       }
-
       if (dominantConstraint === "Capacity loss pressure") {
-        return `Usable capacity loss is now large enough that degradation meaningfully compresses retention. The system can still survive, but reserve margin is being consumed faster than is comfortable.`;
+        return "Usable capacity loss is now large enough that degradation meaningfully compresses retention. The system can still survive, but reserve margin is being consumed faster than is comfortable.";
       }
-
-      return `Write-stress during degradation is starting to matter. Rebuild or verification load is now amplifying the retention hit enough that degraded-state performance deserves explicit attention.`;
+      return "Write-stress during degradation is starting to matter. Rebuild or verification load is now amplifying the retention hit enough that degraded-state performance deserves explicit attention.";
     }
-
     if (dominantConstraint === "Goal fit pressure") {
-      return `Effective retention falls too close to — or below — the required goal once the degraded condition is applied. The design is now too dependent on ideal recovery timing to be considered comfortable.`;
+      return "Effective retention falls too close to — or below — the required goal once the degraded condition is applied. The design is now too dependent on ideal recovery timing to be considered comfortable.";
     }
-
     if (dominantConstraint === "Capacity loss pressure") {
-      return `Capacity loss during degradation is severe enough to become the primary survivability issue. Even if the healthy-state design looks acceptable, the degraded-state retention window is now too compressed to ignore.`;
+      return "Capacity loss during degradation is severe enough to become the primary survivability issue. Even if the healthy-state design looks acceptable, the degraded-state retention window is now too compressed to ignore.";
     }
-
-    return `Degraded write stress is materially shrinking effective retention. The array may recover eventually, but the combination of capacity loss and rebuild penalty is now strong enough to threaten the retention promise during the event itself.`;
+    return "Degraded write stress is materially shrinking effective retention. The array may recover eventually, but the combination of capacity loss and rebuild penalty is now strong enough to threaten the retention promise during the event itself.";
   }
 
   function buildGuidance(status, dominantConstraint) {
     if (status === "HEALTHY") {
-      return `The pipeline closes in a workable state. Keep reserve margin disciplined and recovery time short so degraded conditions remain inside the modelled survivability envelope.`;
+      return "The pipeline closes in a workable state. Keep reserve margin disciplined and recovery time short so degraded conditions remain inside the modelled survivability envelope.";
     }
-
     if (status === "WATCH") {
       if (dominantConstraint === "Goal fit pressure") {
-        return `Increase baseline retention margin or reduce degraded-state exposure before the design grows further. The current retention promise is being carried too close to the edge under failure conditions.`;
+        return "Increase baseline retention margin or reduce degraded-state exposure before the design grows further. The current retention promise is being carried too close to the edge under failure conditions.";
       }
-
       if (dominantConstraint === "Capacity loss pressure") {
-        return `Reduce degraded capacity loss or increase healthy-state headroom. The storage plan is still viable, but failure-state shrinkage is now consuming a meaningful amount of retention margin.`;
+        return "Reduce degraded capacity loss or increase healthy-state headroom. The storage plan is still viable, but failure-state shrinkage is now consuming a meaningful amount of retention margin.";
       }
-
-      return `Account for degraded write penalties more deliberately in planning. Recovery behavior is now important enough that it should not be treated as background noise.`;
+      return "Account for degraded write penalties more deliberately in planning. Recovery behavior is now important enough that it should not be treated as background noise.";
     }
-
     if (dominantConstraint === "Goal fit pressure") {
-      return `Do not trust the current retention promise under degraded conditions without more headroom. Increase baseline retention or reduce loss assumptions before deployment.`;
+      return "Do not trust the current retention promise under degraded conditions without more headroom. Increase baseline retention or reduce loss assumptions before deployment.";
     }
-
     if (dominantConstraint === "Capacity loss pressure") {
-      return `Reduce degradation severity or increase healthy-state capacity before relying on this design. The storage system is losing too much usable retention when it enters a degraded state.`;
+      return "Reduce degradation severity or increase healthy-state capacity before relying on this design. The storage system is losing too much usable retention when it enters a degraded state.";
     }
-
-    return `Shorten degraded duration, reduce write-stress, or add retention headroom. The current design is too sensitive to failure-state conditions to treat survivability as acceptable.`;
+    return "Shorten degraded duration, reduce write-stress, or add retention headroom. The current design is too sensitive to failure-state conditions to treat survivability as acceptable.";
   }
 
   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
@@ -327,10 +345,7 @@ const FLOW_KEYS = {
     let status = "HEALTHY";
     let dominantLabel = "Goal fit pressure";
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.resolveStatus === "function") {
       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
         metrics,
         healthyMax: 1.0,
@@ -340,15 +355,7 @@ const FLOW_KEYS = {
       dominantLabel = resolved?.dominant?.label || "Goal fit pressure";
     }
 
-    const dominantConstraintMap = {
-      "Goal fit pressure": "Goal fit pressure",
-      "Capacity loss pressure": "Capacity loss pressure",
-      "Degraded stress pressure": "Degraded stress pressure"
-    };
-
-    const dominantConstraint =
-      dominantConstraintMap[dominantLabel] || "Goal fit pressure";
-
+    const dominantConstraint = dominantLabel || "Goal fit pressure";
     const risk =
       !meets ? "FAIL (below goal)" :
       marginRatio < 1.1 || lossPct >= 20 || stressPct >= 15 ? "WARNING (fragile margin)" :
@@ -369,26 +376,15 @@ const FLOW_KEYS = {
       { label: "Risk flag", value: risk }
     ];
 
-    const interpretation = buildInterpretation(
-      status,
-      dominantConstraint,
-      effectiveDays,
-      targetDays,
-      daysLost
-    );
+    const interpretation = buildInterpretation(status, dominantConstraint);
+    const guidance = buildGuidance(status, dominantConstraint);
 
-    const guidance = buildGuidance(
-      status,
-      dominantConstraint
-    );
-
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderOutput === "function") {
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
         summaryRows,
         derivedRows,
         status,
@@ -402,10 +398,7 @@ const FLOW_KEYS = {
 
     clearChart();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function") {
       window.ScopedLabsAnalyzer.renderAnalyzerChart({
         mountEl: els.results,
         existingChartRef: chartRef,
@@ -430,6 +423,27 @@ const FLOW_KEYS = {
           Math.ceil(Math.max(goalFitPressure, capacityLossPressure, degradedStressPressure, 1.5) * 1.15 * 10) / 10
         )
       });
+    }
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        baselineDays,
+        effectiveDays,
+        daysLost,
+        targetDays,
+        lossPct,
+        stressPct,
+        degradedDays,
+        headroomPct,
+        risk,
+        status
+      }
+    });
+
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.showContinue === "function") {
+      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
     }
 
     showCompletion();
@@ -468,79 +482,17 @@ const FLOW_KEYS = {
     }
   });
 
-  renderEmpty();
-  hideCompletion();
-  importFromRaid();
-})();
+  window.addEventListener("DOMContentLoaded", () => {
+    const yearEl = document.querySelector("[data-year]");
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
 
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
+    renderEmpty();
+    hideCompletion();
+    importFromRaid();
   });
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
+})();

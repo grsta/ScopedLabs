@@ -8,7 +8,7 @@
     name="description"
     content="Estimate how degraded capacity reduces effective retention days."
   />
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
+  <link rel="stylesheet" href="/assets/style.css?v=vs-survivability-0017" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -37,7 +37,6 @@
 
   <main class="page">
     <div class="container">
-
       <div class="crumbs">
         <a href="/tools/">Tools</a>
         <span class="sep">/</span>
@@ -47,24 +46,25 @@
       </div>
 
       <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro tool</span>
+        <span class="pill pill--pro">Pro Tier</span>
       </div>
 
       <h1 style="margin-top: 10px;">Retention Survivability Estimator</h1>
       <div id="pipeline"></div>
-      
+
       <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
         <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
+        <h2 class="h3" style="margin-top: 0;">This tool completes the Video &amp; Storage design flow</h2>
         <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of Retention Survivability Estimator.
+          Use this final step to test how degraded capacity, rebuild stress, and reserve loss compress the real retention window after the healthy-state design is complete.
         </p>
         <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
+          It converts degraded-state storage loss into effective retention days so you can see whether the design still protects the promised retention target under failure conditions.
         </p>
       </section>
-<p class="subhead">Estimate how degraded capacity and storage loss reduce effective retention.</p>
+
+      <p class="subhead">Estimate how degraded capacity and storage loss reduce effective retention.</p>
+
       <p class="tool-best-for">
         <strong>Best for:</strong> analyzing how storage failures, degraded arrays, or reserve loss affect retention guarantees.
       </p>
@@ -81,7 +81,6 @@
         </p>
       </section>
 
-      
       <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
         <div class="pill-row">
           <span class="pill pill--pro">Pro Tier</span>
@@ -92,13 +91,13 @@
 
         <p class="muted"><strong>What this models</strong></p>
         <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
+          <li>Effective retention loss under degraded conditions</li>
+          <li>How capacity loss and rebuild stress shrink retention guarantees</li>
+          <li>Whether the design still meets the promised retention target</li>
         </ul>
 
         <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
+          <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
           <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
         </div>
       </section>
@@ -113,13 +112,7 @@
           <div class="field">
             <div class="label-row">
               <label for="baselineRetention">Baseline retention (days)</label>
-              <button
-                class="hint"
-                type="button"
-                data-title="Baseline retention"
-                data-help="The healthy-state retention you expect before any degradation or capacity loss."
-                aria-label="Help: Baseline retention"
-              >?</button>
+              <button class="hint" type="button" data-title="Baseline retention" data-help="The healthy-state retention you expect before any degradation or capacity loss." aria-label="Help: Baseline retention">?</button>
             </div>
             <input id="baselineRetention" type="number" inputmode="decimal" min="0.1" step="0.1" value="30" />
           </div>
@@ -127,13 +120,7 @@
           <div class="field">
             <div class="label-row">
               <label for="capacityLossPct">Usable capacity loss (%)</label>
-              <button
-                class="hint"
-                type="button"
-                data-title="Usable capacity loss"
-                data-help="Percent of usable capacity lost during a degraded state, rebuild, reserve event, or drive loss."
-                aria-label="Help: Usable capacity loss"
-              >?</button>
+              <button class="hint" type="button" data-title="Usable capacity loss" data-help="Percent of usable capacity lost during a degraded state, rebuild, reserve event, or drive loss." aria-label="Help: Usable capacity loss">?</button>
             </div>
             <input id="capacityLossPct" type="number" inputmode="decimal" min="0" step="0.1" value="12" />
           </div>
@@ -141,13 +128,7 @@
           <div class="field">
             <div class="label-row">
               <label for="targetRetention">Retention goal (days)</label>
-              <button
-                class="hint"
-                type="button"
-                data-title="Retention goal"
-                data-help="The minimum retention promise or target you need to maintain."
-                aria-label="Help: Retention goal"
-              >?</button>
+              <button class="hint" type="button" data-title="Retention goal" data-help="The minimum retention promise or target you need to maintain." aria-label="Help: Retention goal">?</button>
             </div>
             <input id="targetRetention" type="number" inputmode="decimal" min="0.1" step="0.1" value="30" />
           </div>
@@ -155,13 +136,7 @@
           <div class="field">
             <div class="label-row">
               <label for="stressWritePct">Degraded write penalty (%)</label>
-              <button
-                class="hint"
-                type="button"
-                data-title="Degraded write penalty"
-                data-help="Optional write overhead during rebuild, degraded parity operation, or background verification. Planning range: 5-20%."
-                aria-label="Help: Degraded write penalty"
-              >?</button>
+              <button class="hint" type="button" data-title="Degraded write penalty" data-help="Optional write overhead during rebuild, degraded parity operation, or background verification. Planning range: 5-20%." aria-label="Help: Degraded write penalty">?</button>
             </div>
             <input id="stressWritePct" type="number" inputmode="decimal" min="0" step="0.1" value="8" />
           </div>
@@ -169,13 +144,7 @@
           <div class="field">
             <div class="label-row">
               <label for="degradedDays">Degraded period (days)</label>
-              <button
-                class="hint"
-                type="button"
-                data-title="Degraded period"
-                data-help="Estimated time the array remains degraded before replacement and rebuild complete."
-                aria-label="Help: Degraded period"
-              >?</button>
+              <button class="hint" type="button" data-title="Degraded period" data-help="Estimated time the array remains degraded before replacement and rebuild complete." aria-label="Help: Degraded period">?</button>
             </div>
             <input id="degradedDays" type="number" inputmode="decimal" min="0" step="0.1" value="2" />
           </div>
@@ -183,13 +152,7 @@
           <div class="field">
             <div class="label-row">
               <label for="reserveHeadroomPct">Recommended headroom (%)</label>
-              <button
-                class="hint"
-                type="button"
-                data-title="Recommended headroom"
-                data-help="Suggested retention margin above your target. Planning range: 10-25%."
-                aria-label="Help: Recommended headroom"
-              >?</button>
+              <button class="hint" type="button" data-title="Recommended headroom" data-help="Suggested retention margin above your target. Planning range: 10-25%." aria-label="Help: Recommended headroom">?</button>
             </div>
             <input id="reserveHeadroomPct" type="number" inputmode="decimal" min="0" step="0.1" value="15" />
           </div>
@@ -208,6 +171,12 @@
         </div>
 
         <section id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
+
+        <div id="next-step-row" class="btn-row" style="margin-top: 14px; display:none;">
+          <a id="continue" class="btn btn-primary" href="/tools/video-storage/">
+            Complete Pipeline →
+          </a>
+        </div>
 
         <div class="card" id="completion-wrap" style="display:none; margin-top:14px;">
           <div class="results">
@@ -233,15 +202,13 @@
     </div>
   </main>
 
-  
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=vs-ret-pro-0016"></script>
-
+  <script src="/assets/tool-flow.js?v=vs-survivability-0017"></script>
+  <script src="/assets/catalog.js?v=vs-survivability-0017"></script>
+  <script src="/assets/pipelines.js?v=vs-survivability-0017"></script>
+  <script src="/assets/pipeline-state.js?v=vs-survivability-0017"></script>
+  <script src="/assets/pipeline.js?v=vs-survivability-0017"></script>
+  <script src="/assets/analyzer.js?v=vs-survivability-0017"></script>
+  <script src="./script.js?v=vs-survivability-0017"></script>
 </body>
 </html>
 
