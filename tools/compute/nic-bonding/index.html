@@ -8,7 +8,7 @@
     name="description"
     content="Estimate aggregate throughput, single-flow limits, and resiliency tradeoffs for common NIC bonding options."
   />
-  <link rel="stylesheet" href="/assets/style.css?v=compute-nic-004" />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-nic-standalone-005" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,7 +20,7 @@
   <script defer src="/assets/app.js?v=0408"></script>
 </head>
 
-<body data-tier="pro" data-category="compute" data-step="nic-bonding" data-lane="v1">
+<body data-tier="pro" data-category="compute" data-tool="nic-bonding">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -50,22 +50,22 @@
     </div>
 
     <h1>NIC Bonding Planner</h1>
-    <div id="pipeline"></div>
-
-    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-      <h2 class="h3" style="margin-top: 0;">This tool completes the Compute design flow</h2>
-      <p class="muted" style="margin-bottom: 0;">
-        Use this final step to evaluate whether link bonding materially improves real throughput and resiliency, or just creates misleading capacity expectations.
-      </p>
-      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-        It converts link count, speed, traffic shape, and bonding mode into practical engineering guidance so you can see whether aggregate bandwidth, single-flow limits, or distribution inefficiency will dominate first.
-      </p>
-    </section>
 
     <p class="subhead">Estimate aggregate throughput, single-flow limits, and resiliency tradeoffs for common bonding options.</p>
 
-    <div id="flow-note" class="flow-note" hidden></div>
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Analyzer Tool</div>
+      <h2 class="h3" style="margin-top: 0;">Model real bonding behavior before you assume “more links = more speed”</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        This tool estimates how bonding mode, link count, traffic shape, and hash policy affect real usable throughput,
+        single-flow limits, and resiliency.
+      </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        It is a standalone compute analyzer, so it should work directly from this page without depending on pipeline navigation.
+      </p>
+    </section>
+
+    <div id="flow-note" class="card" style="display:none;"></div>
 
     <section class="card">
       <p class="tool-best-for">
@@ -79,7 +79,7 @@
       </div>
 
       <h2 class="h2">🔒 Locked</h2>
-      <p class="muted">This tool is included with Pro access for this category.</p>
+      <p class="muted">This tool is included with Pro access for the Compute category.</p>
 
       <p class="muted"><strong>What this models</strong></p>
       <ul class="muted">
@@ -89,7 +89,7 @@
       </ul>
 
       <div class="actions">
-        <a class="btn" href="/tools/compute/">Back to Category</a>
+        <a class="btn" href="/tools/compute/">Back to Compute</a>
         <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
       </div>
     </section>
@@ -158,24 +158,13 @@
       <div id="analysis-copy" style="display:none;"></div>
     </section>
 
-    <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-      <a id="continue" class="btn btn-primary" href="/tools/compute/">
-        Complete Pipeline →
-      </a>
-    </div>
-
     <footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=compute-nic-004"></script>
-  <script src="/assets/catalog.js?v=compute-nic-004"></script>
-  <script src="/assets/pipelines.js?v=compute-nic-004"></script>
-  <script src="/assets/pipeline-state.js?v=compute-nic-004"></script>
-  <script src="/assets/pipeline.js?v=compute-nic-004"></script>
-  <script src="/assets/analyzer.js?v=compute-nic-004"></script>
-  <script src="./script.js?v=004"></script>
+  <script src="/assets/analyzer.js?v=compute-nic-standalone-005"></script>
+  <script src="./script.js?v=005"></script>
 </body>
 </html>
 

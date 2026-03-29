@@ -1,21 +1,6 @@
 (() => {
   const CATEGORY = "compute";
-  const STEP = "nic-bonding";
-  const LANE = "v1";
-  const PREVIOUS_STEP = "backup-window";
-
-  const FLOW_KEYS = {
-    "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
-    "ram-sizing": "scopedlabs:pipeline:compute:ram-sizing",
-    "storage-iops": "scopedlabs:pipeline:compute:storage-iops",
-    "storage-throughput": "scopedlabs:pipeline:compute:storage-throughput",
-    "vm-density": "scopedlabs:pipeline:compute:vm-density",
-    "gpu-vram": "scopedlabs:pipeline:compute:gpu-vram",
-    "power-thermal": "scopedlabs:pipeline:compute:power-thermal",
-    "raid-rebuild-time": "scopedlabs:pipeline:compute:raid-rebuild-time",
-    "backup-window": "scopedlabs:pipeline:compute:backup-window",
-    "nic-bonding": "scopedlabs:pipeline:compute:nic-bonding"
-  };
+  const TOOL_KEY = "scopedlabs:analyzer:compute:nic-bonding";
 
   const $ = (id) => document.getElementById(id);
 
@@ -35,8 +20,6 @@
     analysisCopy: $("analysis-copy"),
     calc: $("calc"),
     reset: $("reset"),
-    continueWrap: $("next-step-row"),
-    continueBtn: $("continue"),
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard")
   };
@@ -83,29 +66,24 @@
   }
 
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEYS[STEP],
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      cachedFlow,
-      title: "Flow Context",
-      intro:
-        "This final compute step checks whether link bonding improves real aggregate throughput, or whether single-flow limits still dominate despite more physical links."
-    });
-
-    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
-    if (!raw) return;
+    const raw = sessionStorage.getItem("scopedlabs:pipeline:compute:backup-window");
+    if (!raw) {
+      els.flowNote.style.display = "none";
+      return;
+    }
 
     let parsed = null;
     try {
       parsed = JSON.parse(raw);
     } catch {
+      els.flowNote.style.display = "none";
       return;
     }
 
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) return;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== "backup-window") {
+      els.flowNote.style.display = "none";
+      return;
+    }
 
     const d = parsed.data || {};
     const parts = [];
@@ -116,29 +94,29 @@
     if (Number.isFinite(d.requiredThroughputGbps)) parts.push(`Required throughput: <strong>${d.requiredThroughputGbps.toFixed(2)} Gbps</strong>`);
     if (d.status) parts.push(`Prior result: <strong>${d.status}</strong>`);
 
-    if (parts.length) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow Context</strong><br>
-        ${parts.join(" | ")}
-        <br><br>
-        This final networking step checks whether link bonding improves real aggregate throughput, or whether single-flow limits still dominate despite more physical links.
-      `;
+    if (!parts.length) {
+      els.flowNote.style.display = "none";
+      return;
     }
+
+    els.flowNote.style.display = "block";
+    els.flowNote.innerHTML = `
+      <strong>Optional carry-over context</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This standalone analyzer can use prior Compute design context, but it does not depend on pipeline navigation.
+    `;
   }
 
   function invalidate() {
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEYS[STEP],
+      flowKey: TOOL_KEY,
       category: CATEGORY,
-      step: STEP,
-      lane: LANE,
+      step: "nic-bonding",
       emptyMessage: "Enter values and press Calculate."
     });
 
@@ -305,9 +283,9 @@
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+    ScopedLabsAnalyzer.writeFlow(TOOL_KEY, {
       category: CATEGORY,
-      step: STEP,
+      step: "nic-bonding",
       data: {
         mode,
         aggregate,
@@ -315,8 +293,6 @@
         status: analyzer.status
       }
     });
-
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function reset() {
