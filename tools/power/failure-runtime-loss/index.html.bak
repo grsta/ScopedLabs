@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Failure Runtime Loss • ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=power-failure-runtime-loss-0406" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=power-failure-runtime-loss-0406"></script>
+  <script defer src="/assets/app.js?v=power-failure-runtime-loss-0406"></script>
+</head>
+
+<body data-tier="pro" data-category="power">
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/power/">Power</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+  <div class="crumbs">
+    <a href="/tools/">Tools</a> /
+    <a href="/tools/power/">Power & Runtime</a> /
+    Failure Runtime Loss
+  </div>
+
+  <h1>Failure Runtime Loss</h1>
+  <p class="subhead">Model how a higher failure-state load reduces usable runtime and resilience.</p>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> quantifying how much runtime headroom disappears when a system enters a degraded or failed operating state.
+    </p>
+  </section>
+
+  <section class="card tool-card">
+    <div class="form-grid">
+      <div class="field">
+        <label for="baselineLoad">Baseline Load (W)</label>
+        <input id="baselineLoad" type="number" value="300">
+      </div>
+
+      <div class="field">
+        <label for="failureLoad">Failure Load (W)</label>
+        <input id="failureLoad" type="number" value="360">
+      </div>
+
+      <div class="field">
+        <label for="batteryWh">Battery Capacity (Wh)</label>
+        <input id="batteryWh" type="number" value="1200">
+      </div>
+
+      <div class="field">
+        <label for="voltage">System Voltage</label>
+        <select id="voltage">
+          <option value="12" selected>12 V</option>
+          <option value="24">24 V</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="efficiency">Efficiency (%)</label>
+        <input id="efficiency" type="number" value="75">
+      </div>
+
+      <div class="field">
+        <label for="dod">Max Depth of Discharge (%)</label>
+        <input id="dod" type="number" value="70">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
+    <div id="analysis-copy" style="display:none;"></div>
+  </section>
+
+  <details class="card">
+    <summary class="muted">Notes / Assumptions</summary>
+    <ul style="margin-top:10px;">
+      <li>Runtime = (BatteryWh × Efficiency × Usable DoD) ÷ Load</li>
+      <li>Failure scenario assumes the load rises under degraded conditions</li>
+      <li>This tool compares runtime resilience, not charger recovery time</li>
+    </ul>
+  </details>
+
+  <footer class="page-footer">
+    <div style="margin-bottom:.5rem;">
+      <a href="/tools/power/" class="muted">← Back to Power Tools</a>
+    </div>
+    <span class="muted">© ScopedLabs</span>
+  </footer>
+</main>
+
+<script src="/assets/analyzer.js?v=power-failure-runtime-loss-0406"></script>
+<script src="./script.js?v=power-failure-runtime-loss-0406"></script>
+</body>
+</html>
+
+
+
+
+

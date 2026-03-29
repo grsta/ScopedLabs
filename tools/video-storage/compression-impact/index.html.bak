@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Compression Impact *ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0185" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0409"></script>
+  <script defer src="/assets/app.js?v=0409"></script>
+</head>
+
+<body data-tier="pro" data-category="video-storage">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/video-storage/">Video &amp; Storage</a>
+      <span class="sep">/</span>
+      <span>Compression Impact</span>
+    </div>
+
+    <h1>Compression Impact</h1>
+    <p class="subhead">Estimate bitrate and storage changes when adjusting quality, motion, and keyframe interval.</p>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> comparing how stream tuning choices change bitrate and retained storage footprint.
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Baseline Bitrate (Mbps)</span>
+          <input id="baseline" type="number" min="0" step="0.01" value="4.0" />
+        </label>
+
+        <label class="field">
+          <span class="label">Quality Preset</span>
+          <select id="quality">
+            <option value="high">High (best image)</option>
+            <option value="med" selected>Medium</option>
+            <option value="low">Low (smaller files)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Motion Level</span>
+          <select id="motion">
+            <option value="low">Low</option>
+            <option value="med" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Keyframe Interval (seconds)</span>
+          <input id="gop" type="number" min="0.5" step="0.5" value="2" />
+        </label>
+
+        <label class="field">
+          <span class="label">Hours per Day</span>
+          <input id="hours" type="number" min="0" step="0.1" value="24" />
+        </label>
+
+        <label class="field">
+          <span class="label">Days of Retention</span>
+          <input id="days" type="number" min="0" step="1" value="30" />
+        </label>
+
+        <label class="field">
+          <span class="label">Camera Count</span>
+          <input id="cams" type="number" min="1" step="1" value="8" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+        <a class="btn" href="/tools/video-storage/">← Back to Video &amp; Storage</a>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
+
+    <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
+    <div class="actions" style="margin-top:14px;">
+      <a class="btn" href="/tools/video-storage/">← Back to Video &amp; Storage</a>
+    </div>
+  </main>
+
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=005"></script>
+</body>
+</html>
+
+
+
+
+

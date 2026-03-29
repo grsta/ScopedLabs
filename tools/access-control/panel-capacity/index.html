@@ -45,11 +45,27 @@
     <span>Panel Capacity</span>
   </div>
 
-  <h1>Panel Capacity Planner</h1>
+  
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+<h1>Panel Capacity Planner</h1>
 
   <div id="pipeline"></div>
 
-  <p class="subhead">
+  
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
+          Review and customize this explainer so it reflects the actual purpose of Panel Capacity Planner.
+        </p>
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+          TODO: replace this generic flow copy with tool-specific design guidance.
+        </p>
+      </section>
+<p class="subhead">
     Estimate controller requirements, expansion modules, and system headroom.
   </p>
 
@@ -62,7 +78,29 @@
   </section>
 
   <!-- INPUTS -->
-  <section class="card tool-card">
+  
+      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+
+        <h2 class="h2">🔒 Locked</h2>
+        <p class="muted">This tool is included with Pro access for this category.</p>
+
+        <p class="muted"><strong>What this models</strong></p>
+        <ul class="muted">
+          <li>TODO: add tool-specific lock summary</li>
+          <li>TODO: add second bullet</li>
+          <li>TODO: add third bullet</li>
+        </ul>
+
+        <div class="actions">
+          <a class="btn" href="/tools/">Back to Tools</a>
+          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+        </div>
+      </section>
+
+      <section id="toolCard" class="card tool-card">
     <h2>Inputs</h2>
 
     <div class="form-grid">
@@ -92,7 +130,8 @@
   <!-- RESULTS -->
   <section class="card tool-card">
     <h2>Results</h2>
-    <div id="results"><div class="muted">Run calculation.</div></div>
+    <div id="results"><div class="muted">Run calculation.</div>
+          <div id="analysis-copy" style="display:none;"></div></div>
   </section>
 
   <!-- CONTINUE -->
@@ -102,13 +141,20 @@
     </button>
   </div>
 
+
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
 </main>
 
-<script src="/assets/tool-flow.js"></script>
-<script src="/assets/catalog.js"></script>
-<script src="/assets/pipelines.js"></script>
-<script src="/assets/pipeline.js"></script>
-<script src="./script.js?v=005"></script>
+
+  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
+  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
+  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
+  <script src="./script.js?v=005"></script>
 
 </body>
 </html>

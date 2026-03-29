@@ -45,14 +45,40 @@
       <span>VPN Overhead</span>
     </div>
 
-    <h1>VPN Overhead Estimator</h1>
+    
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+<h1>VPN Overhead Estimator</h1>
     <p class="subhead">Estimate delivered throughput, encapsulation loss, and MTU pressure caused by VPN tunneling.</p>
 
     <p class="tool-best-for">
       Best for: comparing tunnel choices, understanding goodput loss, and checking whether encapsulation overhead is likely to create fragmentation pressure.
     </p>
 
-    <section class="card tool-card">
+    
+      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+
+        <h2 class="h2">🔒 Locked</h2>
+        <p class="muted">This tool is included with Pro access for this category.</p>
+
+        <p class="muted"><strong>What this models</strong></p>
+        <ul class="muted">
+          <li>Advanced analyzer workflow for network</li>
+          <li>Scenario comparison and deeper engineering guidance</li>
+          <li>Pro-only decision support output</li>
+        </ul>
+
+        <div class="actions">
+          <a class="btn" href="/tools/network/">Back to Category</a>
+          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+        </div>
+      </section>
+
+<section id="toolCard" class="card tool-card">
       <h2>Inputs</h2>
 
       <div class="form-grid">
@@ -100,6 +126,11 @@
       </div>
       <div id="analysis-copy" style="display:none;"></div>
     </section>
+  
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+
   </main>
 
   <script src="/assets/analyzer.js?v=net-vpn-overhead-0404"></script>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Battery Sizing *ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=power-battery-sizing-0406" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "YOUR_KEY";
+  </script>
+  <script defer src="/assets/auth.js?v=power-battery-sizing-0406"></script>
+  <script defer src="/assets/app.js?v=power-battery-sizing-0406"></script>
+</head>
+
+<body data-tier="free" data-category="power">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/power/">Power</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a> /
+      <a href="/tools/power/">Power</a> /
+      Battery Sizing
+    </div>
+
+    <h1>Battery Sizing</h1>
+
+    <p class="subhead">
+      Estimate required battery capacity (Ah) from voltage, load, runtime, and efficiency.
+    </p>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> sizing a simple DC battery requirement when you know your load and runtime target but need to account for conversion losses.
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">System Voltage (V)</span>
+          <select id="voltage">
+            <option value="" selected disabled>Select voltage</option>
+            <option value="12">12 V</option>
+            <option value="24">24 V</option>
+            <option value="48">48 V</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Load Watts (W)</span>
+          <input id="watts" type="number" step="0.1" min="0" placeholder="Load watts (W)" />
+        </label>
+
+        <label class="field">
+          <span class="label">Load Amps (A)</span>
+          <input id="amps" type="number" step="0.1" min="0" placeholder="Load amps (A)" />
+        </label>
+
+        <label class="field">
+          <span class="label">Runtime (hours)</span>
+          <input id="hours" type="number" step="0.1" min="0" placeholder="Runtime hours" />
+        </label>
+
+        <label class="field">
+          <span class="label">Efficiency (%)</span>
+          <input id="eff" type="number" step="1" min="1" max="100" placeholder="Efficiency % (e.g. 85)" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+    </section>
+
+    <details class="card" style="margin-top:1rem;">
+      <summary class="muted">Notes / Assumptions</summary>
+      <div class="muted" style="margin-top:.75rem;">
+        <ul>
+          <li>If you enter Watts, amps are derived as: Amps = Watts ÷ Volts</li>
+          <li>If you enter Amps, watts are derived as: Watts = Volts × Amps</li>
+          <li>Efficiency accounts for inverter / driver losses and battery discharge inefficiency.</li>
+        </ul>
+      </div>
+    </details>
+  </main>
+
+  <script src="/assets/analyzer.js?v=power-battery-sizing-0406"></script>
+  <script src="./script.js?v=power-battery-sizing-0406"></script>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>CPU Sizing Estimator • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=cpu-pipeline-011" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0407"></script>
+  <script defer src="/assets/app.js?v=0407"></script>
+</head>
+
+<body data-tier="free" data-category="compute" data-step="cpu-sizing" data-lane="v1">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/compute/">Compute</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/compute/">Compute</a>
+      <span class="sep">/</span>
+      <span>CPU Sizing</span>
+    </div>
+
+    <h1>CPU Sizing Estimator</h1>
+
+    <div id="pipeline"></div>
+
+    <p class="subhead">Estimate CPU cores needed based on workload type, concurrency, and utilization target.</p>
+
+    <div id="flow-note" class="card" style="display:none;"></div>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> establishing a compute baseline and identifying early CPU bottlenecks before sizing memory or storage.
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Workload Type</span>
+          <select id="workload">
+            <option value="general" selected>General / Mixed</option>
+            <option value="web">Web / API</option>
+            <option value="db">Database</option>
+            <option value="video">Video / Transcode</option>
+            <option value="compute">Compute-heavy (batch)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Concurrent Workers / Threads</span>
+          <input id="concurrency" type="number" min="1" step="1" value="16" />
+        </label>
+
+        <label class="field">
+          <span class="label">Avg CPU per Worker (%)</span>
+          <input id="cpuPerWorker" type="number" min="0" step="1" value="30" />
+        </label>
+
+        <label class="field">
+          <span class="label">Peak Factor (burst)</span>
+          <select id="peak">
+            <option value="1.0">1.0× (steady)</option>
+            <option value="1.25" selected>1.25×</option>
+            <option value="1.5">1.5×</option>
+            <option value="2.0">2.0×</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Target Max CPU Utilization (%)</span>
+          <input id="targetUtil" type="number" min="10" max="95" step="1" value="70" />
+        </label>
+
+        <label class="field">
+          <span class="label">Hyperthreading / SMT</span>
+          <select id="smt">
+            <option value="on" selected>On (logical cores count)</option>
+            <option value="off">Off (physical cores only)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+    </section>
+
+    <div id="continue-wrap" class="card" style="display:none;">
+      <button id="continue" class="btn btn-primary" disabled>
+        Continue → RAM Sizing
+      </button>
+    </div>
+  </main>
+
+  <script src="/assets/tool-flow.js"></script>
+  <script src="/assets/catalog.js"></script>
+  <script src="/assets/pipelines.js"></script>
+  <script src="/assets/pipeline.js"></script>
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=0011"></script>
+</body>
+</html>
+
+
+
+

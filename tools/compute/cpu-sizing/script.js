@@ -1,3 +1,11 @@
+const LANE = "v1";
+const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
+const STEP = "cpu-sizing";
+const CATEGORY = "compute";
+const FLOW_KEYS = {
+  // TODO: replace with real per-step flow keys
+};
+
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
 
@@ -234,3 +242,13 @@
   refreshFlowNote();
   ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
 })();
+
+function renderFlowNote() {
+  // TODO: implement upstream flow-note carry-over
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  const year = document.querySelector("[data-year]");
+  if (year) year.textContent = new Date().getFullYear();
+});

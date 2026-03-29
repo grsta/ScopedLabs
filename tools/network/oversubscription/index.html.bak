@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Oversubscription Estimator *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate oversubscription at access, aggregation, and WAN layers and flag congestion risk using peak-demand assumptions."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=net-oversub-0416" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=net-oversub-0416"></script>
+  <script defer src="/assets/app.js?v=net-oversub-0416"></script>
+
+  <style>
+  .results-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(120, 255, 120, 0.14);
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  .result-label,
+  .result-row .k {
+    color: rgba(255, 255, 255, 0.70);
+  }
+
+  .result-value,
+  .result-row .v {
+    font-weight: 800;
+    text-align: right;
+  }
+
+  .flag-ok {
+    color: rgba(140, 255, 170, 0.95);
+  }
+
+  .flag-warn {
+    color: rgba(255, 210, 140, 0.95);
+  }
+
+  .flag-bad {
+    color: rgba(255, 180, 140, 0.95);
+  }
+
+  .mini-note {
+    margin-top: 12px;
+    color: rgba(255, 255, 255, 0.56);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+</style>
+</head>
+
+<body
+  data-tier="pro"
+  data-category="network"
+  data-tool="oversubscription"
+  data-step="oversubscription"
+  data-lane="v1"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/network/">Network &amp; Throughput</a>
+        <span class="sep">/</span>
+        <span>Oversubscription Estimator</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Oversubscription Estimator</h1>
+
+      <div id="pipeline"></div>
+
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">This tool continues the Network Design Flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          Use this step to test whether estimated traffic still fits through the uplink hierarchy with practical headroom before moving into latency validation.
+          Calculated values from the previous step can carry forward into this tool, reducing re-entry and preserving design context.
+        </p>
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+          This flow includes both Free and Pro tools. Unlock Pro to complete the full sequence.
+        </p>
+      </section>
+
+      <p class="subhead">
+        Estimate contention risk by comparing downstream demand to uplink capacity across access, aggregation, and WAN layers.
+      </p>
+
+      <p class="tool-best-for">
+        <strong>Best for:</strong> stress-testing oversubscription risk across access, aggregation, and transport layers using realistic peak-demand assumptions.
+      </p>
+
+      <div id="flow-note" class="flow-note" hidden>
+        This is step 3 of the Network pipeline. Use Bandwidth results here to test whether peak demand still fits through the uplink hierarchy with usable headroom.
+      </div>
+
+      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+
+        <h2 class="h2">🔒 Locked</h2>
+        <p class="muted">This tool is included with Pro access for the Network &amp; Throughput category.</p>
+
+        <p class="muted"><strong>What this models</strong></p>
+        <ul class="muted">
+          <li>Access layer: edge demand vs uplink</li>
+          <li>Aggregation layer: downstream demand vs upstream</li>
+          <li>Core / WAN: expected peak demand vs available transport</li>
+          <li>Peak-demand risk bands, not just simple ratio math</li>
+        </ul>
+
+        <div class="actions">
+          <a class="btn" href="/tools/network/">Back to Network &amp; Throughput</a>
+          <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Network &amp; Throughput</a>
+        </div>
+      </section>
+
+      <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Compare downstream demand against available uplink capacity across access, aggregation, and core / WAN boundaries using practical peak-demand assumptions.
+        </p>
+
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.16);">
+          <div class="muted"><strong>Layer inputs</strong></div>
+
+          <div class="form-grid" style="margin-top:.75rem;">
+            <div class="field">
+              <div class="label-row">
+                <label for="edgeDownMbps">Edge / downstream demand (Mbps)</label>
+                <button type="button" class="hint"
+                  data-title="Edge / downstream demand"
+                  data-help="Total traffic demand feeding into the uplink at the access layer. This should represent realistic peak load, not theoretical port sum unless that is your intent."
+                  aria-label="Help: Edge downstream demand">?</button>
+              </div>
+              <input id="edgeDownMbps" type="number" min="0" step="1" value="2400" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="edgeUpMbps">Access uplink capacity (Mbps)</label>
+                <button type="button" class="hint"
+                  data-title="Access uplink capacity"
+                  data-help="Available uplink line rate leaving the access layer. Use effective aggregate throughput if LACP or multiple links are involved."
+                  aria-label="Help: Access uplink capacity">?</button>
+              </div>
+              <input id="edgeUpMbps" type="number" min="0" step="1" value="1000" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="aggDownMbps">Aggregation downstream demand (Mbps)</label>
+                <button type="button" class="hint"
+                  data-title="Aggregation downstream demand"
+                  data-help="Total demand entering the aggregation layer from downstream switches or segments."
+                  aria-label="Help: Aggregation downstream demand">?</button>
+              </div>
+              <input id="aggDownMbps" type="number" min="0" step="1" value="8000" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="aggUpMbps">Aggregation upstream capacity (Mbps)</label>
+                <button type="button" class="hint"
+                  data-title="Aggregation upstream capacity"
+                  data-help="Available uplink leaving aggregation toward the core or transport boundary."
+                  aria-label="Help: Aggregation upstream capacity">?</button>
+              </div>
+              <input id="aggUpMbps" type="number" min="0" step="1" value="2000" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="coreDemandMbps">Core / WAN expected peak demand (Mbps)</label>
+                <button type="button" class="hint"
+                  data-title="Core / WAN expected peak demand"
+                  data-help="Expected peak traffic crossing the transport boundary. Use the Bandwidth Planner peak result here when applicable."
+                  aria-label="Help: Core or WAN expected peak demand">?</button>
+              </div>
+              <input id="coreDemandMbps" type="number" min="0" step="1" value="1200" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="wanMbps">WAN / core transport capacity (Mbps)</label>
+                <button type="button" class="hint"
+                  data-title="WAN / core transport capacity"
+                  data-help="Usable bandwidth available for this traffic at the core or WAN boundary."
+                  aria-label="Help: WAN or core transport capacity">?</button>
+              </div>
+              <input id="wanMbps" type="number" min="0" step="1" value="1000" />
+            </div>
+          </div>
+
+          <hr class="divider" style="margin:1.1rem 0;" />
+
+          <div class="muted"><strong>Risk assumptions</strong></div>
+
+          <div class="form-grid" style="margin-top:.75rem;">
+            <div class="field">
+              <div class="label-row">
+                <label for="overheadPct">Overhead reserve (%)</label>
+                <button type="button" class="hint"
+                  data-title="Overhead reserve"
+                  data-help="Reserve for bursts, retransmits, queueing, and non-modeled protocol overhead. Typical planning range is 10% to 25%."
+                  aria-label="Help: Overhead reserve">?</button>
+              </div>
+              <input id="overheadPct" type="number" min="0" step="1" value="15" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="targetUtilPct">Target peak utilization (%)</label>
+                <button type="button" class="hint"
+                  data-title="Target peak utilization"
+                  data-help="Preferred peak operating band. Lower targets preserve more performance margin under burst conditions."
+                  aria-label="Help: Target peak utilization">?</button>
+              </div>
+              <input id="targetUtilPct" type="number" min="10" max="95" step="1" value="70" />
+            </div>
+          </div>
+
+          <div class="actions" style="margin-top:1rem;">
+            <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+            <button id="reset" class="btn" type="button">Reset</button>
+            <a class="btn" href="/tools/network/">Back to Network &amp; Throughput</a>
+          </div>
+
+          <p class="tip" style="margin-top:1rem;">
+            Tip: High oversubscription ratios may be acceptable in bursty office networks, but video and real-time traffic are much less forgiving under congestion.
+          </p>
+        </div>
+
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">Run the estimator to see oversubscription ratios, congestion risk, and carried-forward demand context.</div>
+          </div>
+          <div id="analysis-copy" style="display:none;"></div>
+
+          <p class="mini-note">
+            Model: demand is increased by the overhead reserve, then compared against access, aggregation, and core / WAN capacity.
+            Utilization and recommended capacity are measured against the selected target operating band.
+          </p>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <a class="btn" href="/tools/network/">Back to Network &amp; Throughput</a>
+        </div>
+
+        <div id="next-step-row" class="btn-row" style="margin-top: 14px; display:none;">
+          <a id="next-step-btn" class="btn btn-primary" href="/tools/network/latency/">
+            Continue → Latency
+          </a>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+
+    </div>
+  </main>
+
+  <script src="/assets/tool-flow.js?v=net-oversub-0416"></script>
+  <script src="/assets/catalog.js?v=net-oversub-0416"></script>
+  <script src="/assets/pipelines.js?v=net-oversub-0416"></script>
+  <script src="/assets/pipeline.js?v=net-oversub-0416"></script>
+  <script src="/assets/analyzer.js?v=net-oversub-0416"></script>
+  <script src="./script.js?v=net-oversub-0416"></script>
+  <script src="/assets/pipeline-state.js?v=net-pipeline-0416"></script>
+</body>
+</html>
+
+
+
+
+

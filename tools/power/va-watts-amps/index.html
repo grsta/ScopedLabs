@@ -41,7 +41,11 @@
       <span>VA to Watts to Amps Converter</span>
     </div>
 
-    <h1 class="page-title">VA to Watts to Amps Converter</h1>
+    
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--free">Free Tier</span>
+      </div>
+<h1 class="page-title">VA to Watts to Amps Converter</h1>
     <p class="page-subtitle">
       Convert between VA, Watts, and Amps using voltage and power factor.
     </p>
@@ -54,7 +58,7 @@
 
     <div id="flow-note" class="flow-note card" hidden></div>
 
-    <section class="card tool-card">
+    <section id="toolCard" class="card tool-card">
       <h2>Inputs</h2>
 
       <label class="field">
@@ -95,22 +99,36 @@
           Continue → Load Growth
         </button>
       </div>
-    </section>
+    
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
 
-    <footer style="margin-top:2rem; text-align:left;">
+          <a id="continue" class="btn btn-primary" href="/tools/power/load-growth/">
+            Continue →
+          </a>
+        </div>
+
+      </section>
+      <footer style="margin-top:2rem; text-align:left;">
       <div style="margin-bottom:.5rem;">
         <a href="/tools/power/" class="muted">← Back to Power Tools</a>
       </div>
       <span class="muted">© ScopedLabs</span>
     </footer>
-  </main>
+  
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+</main>
 
-  <script src="/assets/tool-flow.js?v=power-va-watts-amps-0406"></script>
-  <script src="/assets/catalog.js?v=power-va-watts-amps-0406"></script>
-  <script src="/assets/pipelines.js?v=power-va-watts-amps-0406"></script>
-  <script src="/assets/pipeline.js?v=power-va-watts-amps-0406"></script>
-  <script src="/assets/analyzer.js?v=power-va-watts-amps-0406"></script>
+  
+  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
+  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
+  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
   <script src="./script.js?v=power-va-watts-amps-0406"></script>
+
 </body>
 </html>
 

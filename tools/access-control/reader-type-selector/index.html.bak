@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Reader Type Selector • ScopedLabs</title>
+  <meta name="description" content="Select reader type based on security, environment, throughput, and door behavior." />
+
+  <link rel="stylesheet" href="/assets/style.css?v=ac-reader-003" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=0404"></script>
+  <script defer src="/assets/app.js?v=0404"></script>
+</head>
+
+<body data-tier="free" data-category="access-control" data-step="reader-type-selector" data-lane="v1">
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/access-control/">Access Control</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/access-control/">Access Control</a>
+      <span class="sep">/</span>
+      <span>Reader Type Selector</span>
+    </div>
+
+    <h1>Reader Type Selector</h1>
+
+    <div id="pipeline"></div>
+
+    <p class="subhead">
+      Choose reader technology based on security, environment, throughput, and upstream door behavior decisions.
+    </p>
+
+    <!-- FLOW NOTE -->
+    <div id="flow-note" class="card" style="display:none;"></div>
+
+    <!-- BEST FOR -->
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> selecting the correct reader type after door behavior is defined so hardware aligns with real-world conditions.
+      </p>
+    </section>
+
+    <!-- INPUTS -->
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Security Level</span>
+          <select id="sec">
+            <option value="low">Low</option>
+            <option value="med">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Credential Preference</span>
+          <select id="cred">
+            <option value="card">Card / Fob</option>
+            <option value="mobile">Mobile</option>
+            <option value="pin">PIN / keypad</option>
+            <option value="multi">Multi-factor</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Environment</span>
+          <select id="env">
+            <option value="indoor">Indoor</option>
+            <option value="outdoor">Outdoor</option>
+            <option value="harsh">Harsh</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Throughput</span>
+          <select id="throughput">
+            <option value="standard">Standard</option>
+            <option value="fast">High Throughput</option>
+            <option value="handsfree">Hands-free</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Panel Interface</span>
+          <select id="iface">
+            <option value="wg">Wiegand</option>
+            <option value="osdp">OSDP</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Recommend</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section class="card tool-card">
+      <h2>Recommendation</h2>
+      <div id="results" class="results">
+        <div class="muted">Run recommendation.</div>
+      </div>
+    </section>
+
+    <!-- CONTINUE -->
+    <div id="continue-wrap" class="card" style="display:none;">
+      <button id="continue" class="btn btn-primary" disabled>
+        Continue → Lock Power Budget
+      </button>
+    </div>
+
+  </main>
+
+  <script src="/assets/tool-flow.js"></script>
+  <script src="/assets/catalog.js"></script>
+  <script src="/assets/pipelines.js"></script>
+  <script src="/assets/pipeline.js"></script>
+  <script src="./script.js?v=002"></script>
+
+</body>
+</html>
+
+
+
+
+

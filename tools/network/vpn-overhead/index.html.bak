@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VPN Overhead Estimator *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate delivered throughput, encapsulation overhead, and MTU pressure caused by VPN tunneling."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=net-vpn-overhead-0404" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=net-vpn-overhead-0404"></script>
+  <script defer src="/assets/app.js?v=net-vpn-overhead-0404"></script>
+</head>
+
+<body data-tier="pro" data-category="network" data-tool="vpn-overhead">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/network/">Network</a>
+      <span class="sep">/</span>
+      <span>VPN Overhead</span>
+    </div>
+
+    <h1>VPN Overhead Estimator</h1>
+    <p class="subhead">Estimate delivered throughput, encapsulation loss, and MTU pressure caused by VPN tunneling.</p>
+
+    <p class="tool-best-for">
+      Best for: comparing tunnel choices, understanding goodput loss, and checking whether encapsulation overhead is likely to create fragmentation pressure.
+    </p>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Baseline Throughput (Mbps)</span>
+          <input id="baseline" type="number" min="0" step="0.1" value="200" />
+        </label>
+
+        <label class="field">
+          <span class="label">Encryption Type</span>
+          <select id="enc">
+            <option value="ipsec">IPsec</option>
+            <option value="openvpn" selected>OpenVPN</option>
+            <option value="wireguard">WireGuard</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Tunnel Mode</span>
+          <select id="mode">
+            <option value="udp" selected>UDP</option>
+            <option value="tcp">TCP</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Hardware Offload?</span>
+          <select id="offload">
+            <option value="yes">Yes</option>
+            <option value="no" selected>No</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script src="/assets/analyzer.js?v=net-vpn-overhead-0404"></script>
+  <script src="./script.js?v=net-vpn-overhead-0404"></script>
+</body>
+</html>
+
+
+
+
+

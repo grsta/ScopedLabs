@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UPS Room Sizing • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=infra-ups-002" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  </script>
+  <script defer src="/assets/auth.js?v=0402"></script>
+  <script defer src="/assets/app.js?v=0402"></script>
+</head>
+
+<body data-tier="pro" data-category="infrastructure" data-step="ups-room-sizing" data-lane="v1">
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/infrastructure/">Infrastructure</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+  <div class="crumbs">
+    <a href="/tools/">Tools</a> /
+    <a href="/tools/infrastructure/">Infrastructure</a> /
+    UPS Room Sizing
+  </div>
+
+  <h1>UPS Room Sizing</h1>
+
+  <div id="pipeline"></div>
+
+  <p class="subhead">
+    Estimate UPS and battery room requirements based on equipment footprint and clearance.
+  </p>
+
+  <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> planning power infrastructure space before deployment.
+    </p>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <label class="field"><span class="label">UPS Cabinets</span><input id="ups" type="number" value="2"></label>
+      <label class="field"><span class="label">Battery Cabinets</span><input id="batt" type="number" value="4"></label>
+      <label class="field"><span class="label">Area per Cabinet (sq ft)</span><input id="areaEach" type="number" value="20"></label>
+      <label class="field"><span class="label">Clearance Factor</span><input id="factor" type="number" value="1.5"></label>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results"><div class="muted">Run calculation.</div></div>
+    <div id="analysis-copy" style="display:none;"></div>
+  </section>
+
+  <div id="continue-wrap" class="card" style="display:none;">
+    <button id="continue" class="btn btn-primary" disabled>
+      Continue → Generator Runtime
+    </button>
+  </div>
+</main>
+
+<script src="/assets/tool-flow.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/pipelines.js"></script>
+<script src="/assets/pipeline.js"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=003"></script>
+</body>
+</html>
+
+
+
+

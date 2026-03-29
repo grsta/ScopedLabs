@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jitter Buffer Sizing Tool *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate recommended jitter buffer size, added latency, and stability tradeoffs based on average jitter, variation, and safety margin."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=net-jitter-buffer-0402" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0402"></script>
+  <script defer src="/assets/app.js?v=0402"></script>
+</head>
+
+<body data-tier="pro" data-category="network" data-tool="latency-jitter-buffer">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/network/">Network</a>
+      <span class="sep">/</span>
+      <span>Jitter Buffer Sizing</span>
+    </div>
+
+    <h1>Jitter Buffer Sizing</h1>
+    <p class="subhead">Estimate recommended jitter buffer size, added latency, and stability tradeoffs based on network jitter and variation.</p>
+
+    <p class="tool-best-for">
+      Best for: sizing playback or transport buffers where jitter protection must be balanced against added latency and responsiveness.
+    </p>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Average Jitter (ms)</span>
+          <input id="avgJitter" type="number" min="0" step="1" value="20">
+        </label>
+
+        <label class="field">
+          <span class="label">Jitter Variation (ms)</span>
+          <input id="variation" type="number" min="0" step="1" value="10">
+        </label>
+
+        <label class="field">
+          <span class="label">Safety Margin (%)</span>
+          <input id="margin" type="number" min="0" step="1" value="20">
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=0402"></script>
+</body>
+</html>
+
+
+
+
+

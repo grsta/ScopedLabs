@@ -1,3 +1,11 @@
+const LANE = "v1";
+const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
+const STEP = "retention";
+const CATEGORY = "video-storage";
+const FLOW_KEYS = {
+  // TODO: replace with real per-step flow keys
+};
+
 ﻿// Retention Planner
 (() => {
   const STORAGE_KEY = "scopedlabs:pipeline:last-result";
@@ -484,3 +492,23 @@
   hideNext();
   importParams();
 })();
+
+
+function renderFlowNote() {
+  // TODO: implement upstream flow-note carry-over
+}
+
+
+function writeFlow(data) {
+  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
+    category: CATEGORY,
+    step: STEP,
+    data
+  });
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  const year = document.querySelector("[data-year]");
+  if (year) year.textContent = new Date().getFullYear();
+});

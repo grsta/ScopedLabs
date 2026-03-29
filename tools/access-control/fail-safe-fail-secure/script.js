@@ -1,3 +1,11 @@
+const LANE = "v1";
+const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
+const STEP = "fail-safe-fail-secure";
+const CATEGORY = "access-control";
+const FLOW_KEYS = {
+  // TODO: replace with real per-step flow keys
+};
+
 ﻿(() => {
   "use strict";
 
@@ -157,3 +165,61 @@
 
   clearResults();
 })();
+
+function renderFlowNote() {
+  // TODO: implement upstream flow-note carry-over
+}
+
+
+function invalidate() {
+  // TODO: implement invalidation
+}
+
+
+function calc() {
+  // TODO: implement calculate handler
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  const year = document.querySelector("[data-year]");
+  if (year) year.textContent = new Date().getFullYear();
+});
+
+
+function invalidate() {
+  ScopedLabsAnalyzer.invalidate({
+    resultsEl: els.results,
+    analysisEl: els.analysis,
+    continueWrapEl: els.continueWrap,
+    continueBtnEl: els.continueBtn,
+    flowKey: FLOW_KEYS[STEP] || "",
+    category: CATEGORY,
+    step: STEP,
+    lane: LANE,
+    emptyMessage: "Enter values and press Calculate."
+  });
+}
+
+
+function renderSuccess(data) {
+  ScopedLabsAnalyzer.renderOutput({
+    resultsEl: els.results,
+    analysisEl: els.analysis,
+    summaryRows: [],
+    derivedRows: [],
+    status: data.status || "Healthy",
+    interpretation: data.interpretation || "",
+    dominantConstraint: data.dominantConstraint || "",
+    guidance: data.guidance || ""
+  });
+}
+
+
+function writeFlow(data) {
+  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
+    category: CATEGORY,
+    step: STEP,
+    data
+  });
+}

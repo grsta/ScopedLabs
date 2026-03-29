@@ -1,3 +1,8 @@
+const LANE = "v1";
+const FLOW_KEYS = {
+  // TODO: replace with real per-step flow keys
+};
+
 ﻿(() => {
   const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "performance";
@@ -425,3 +430,14 @@
 
   window.addEventListener("DOMContentLoaded", init);
 })();
+
+
+function renderFlowNote() {
+  // TODO: implement upstream flow-note carry-over
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  const year = document.querySelector("[data-year]");
+  if (year) year.textContent = new Date().getFullYear();
+});

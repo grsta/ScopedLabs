@@ -49,7 +49,19 @@
 
       <h1 style="margin-top: 10px;">Retention Planner</h1>
       <div id="pipeline"></div>
-      <p class="subhead">Estimate required storage based on cameras, bitrate, and desired retention.</p>
+      
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
+          Review and customize this explainer so it reflects the actual purpose of Retention Planner.
+        </p>
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+          TODO: replace this generic flow copy with tool-specific design guidance.
+        </p>
+      </section>
+<p class="subhead">Estimate required storage based on cameras, bitrate, and desired retention.</p>
       <p class="tool-best-for">
         <strong>Best for:</strong> estimating how long footage will retain before overwrite based on bitrate, camera count, and storage targets.
       </p>
@@ -108,7 +120,7 @@
           </div>
         </div>
 
-        <section id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
+        <section id="toolCard" id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
 
         <div class="btn-row" style="margin-top: 14px;">
           <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
@@ -119,8 +131,15 @@
             Continue → RAID Impact
           </a>
         </div>
-      </section>
+      
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
 
+          <a id="continue" class="btn btn-primary" href="/tools/video-storage/raid/">
+            Continue →
+          </a>
+        </div>
+
+      </section>
       <footer class="site-footer">
         <div class="muted">© <span data-year></span> ScopedLabs</div>
       </footer>
@@ -128,12 +147,15 @@
     </div>
   </main>
 
-  <script src="/assets/tool-flow.js?v=23"></script>
-  <script src="/assets/catalog.js?v=23"></script>
-  <script src="/assets/pipelines.js?v=23"></script>
-  <script src="/assets/pipeline.js?v=23"></script>
-  <script src="/assets/analyzer.js"></script>
+  
+  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
+  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
+  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
   <script src="./script.js?v=retention-015"></script>
+
 </body>
 </html>
 

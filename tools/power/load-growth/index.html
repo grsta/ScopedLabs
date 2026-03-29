@@ -33,7 +33,13 @@
 
   <main class="container">
     <section class="page-head">
-      <h1>Load Growth Estimator</h1>
+      
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+<h1>Load Growth Estimator</h1>
+
+      <div id="pipeline"></div>
 
       <p class="muted">
         Estimate future electrical load based on annual growth.
@@ -42,6 +48,10 @@
       <p class="tool-best-for">
         <strong>Best for:</strong> projecting future infrastructure load so UPS and battery sizing use realistic design loads.
       </p>
+      <div id="flow-note" class="flow-note" hidden>
+        TODO: replace generic flow-note text.
+      </div>
+
     </section>
 
     <section id="flowNote" class="flow-note card" hidden></section>
@@ -54,7 +64,29 @@
       </p>
     </section>
 
-    <section class="card tool-card">
+    
+      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+
+        <h2 class="h2">🔒 Locked</h2>
+        <p class="muted">This tool is included with Pro access for this category.</p>
+
+        <p class="muted"><strong>What this models</strong></p>
+        <ul class="muted">
+          <li>TODO: add tool-specific lock summary</li>
+          <li>TODO: add second bullet</li>
+          <li>TODO: add third bullet</li>
+        </ul>
+
+        <div class="actions">
+          <a class="btn" href="/tools/">Back to Tools</a>
+          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+        </div>
+      </section>
+
+      <section id="toolCard" class="card tool-card">
       <h2>Calculator</h2>
 
       <div class="form-grid">
@@ -156,21 +188,38 @@
       </div>
 
       <div class="muted small" id="notes"></div>
-      <div id="analysis-copy" style="display:none;"></div>
+      <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">Enter values and press Calculate.</div>
+          </div>
+          <div id="analysis-copy" style="display:none;"></div>
     </section>
 
     <section class="card tool-card" id="errorCard" hidden>
       <h2>Fix This</h2>
       <p id="errorText" class="muted"></p>
-    </section>
-  </main>
+    
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
 
-  <script src="/assets/tool-flow.js?v=power-load-growth-0406"></script>
-  <script src="/assets/catalog.js?v=power-load-growth-0406"></script>
-  <script src="/assets/pipelines.js?v=power-load-growth-0406"></script>
-  <script src="/assets/pipeline.js?v=power-load-growth-0406"></script>
-  <script src="/assets/analyzer.js?v=power-load-growth-0406"></script>
+          <a id="continue" class="btn btn-primary" href="/tools/power/ups-runtime/">
+            Continue →
+          </a>
+        </div>
+
+      </section>
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+</main>
+
+  
+  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
+  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
+  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
   <script src="./script.js?v=power-load-growth-0406"></script>
+
 </body>
 </html>
 

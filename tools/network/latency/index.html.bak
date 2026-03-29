@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Latency Budget Calculator *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Build an end-to-end latency budget and identify where delay is introduced across encode, transport, decode, and render stages."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=net-latency-0415" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=net-latency-0415"></script>
+  <script defer src="/assets/app.js?v=net-latency-0415"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .flag-ok {
+      color: rgba(140, 255, 170, 0.95);
+    }
+
+    .flag-warn {
+      color: rgba(255, 210, 140, 0.95);
+    }
+
+    .flag-bad {
+      color: rgba(255, 180, 140, 0.95);
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body
+  data-tier="pro"
+  data-category="network"
+  data-tool="latency"
+  data-step="latency"
+  data-lane="v1"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/network/">Network &amp; Throughput</a>
+        <span class="sep">/</span>
+        <span>Latency Budget Calculator</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Latency Budget Calculator</h1>
+
+      <div id="pipeline"></div>
+
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">This tool completes the Network Design Flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          Use this final step to judge whether the full design still feels responsive once encode, transport, decode, render, and reserve stages are combined.
+          Calculated values from the previous step can carry forward into this tool, reducing re-entry and preserving design context.
+        </p>
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+          This flow includes both Free and Pro tools. Unlock Pro to complete the full sequence.
+        </p>
+      </section>
+
+      <p class="subhead">
+        Build an end-to-end latency budget and identify where delay is introduced across encode, transport, decode, and render stages.
+      </p>
+
+      <p class="tool-best-for">
+        <strong>Best for:</strong> modeling end-to-end delay and identifying which stage dominates latency in live-view or transport-sensitive workflows.
+      </p>
+
+      <div id="flow-note" class="flow-note" hidden>
+        This is the final step of the Network pipeline. Use carried-forward transport assumptions to judge whether the design still feels responsive in practice.
+      </div>
+
+      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+
+        <h2 class="h2">🔒 Locked</h2>
+        <p class="muted">This tool is included with Pro access for the Network &amp; Throughput category.</p>
+
+        <p class="muted"><strong>What this models</strong></p>
+        <ul class="muted">
+          <li>Camera or source encode latency</li>
+          <li>Switching, routing, and uplink delay</li>
+          <li>WAN / VPN transport delay</li>
+          <li>Decode and client render delay</li>
+          <li>Total end-to-end latency vs target budget</li>
+        </ul>
+
+        <div class="actions">
+          <a class="btn" href="/tools/network/">Back to Network &amp; Throughput</a>
+          <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Network &amp; Throughput</a>
+        </div>
+      </section>
+
+      <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Build a practical end-to-end latency budget by entering the major delay contributors across source, transport, decode, and render stages.
+        </p>
+
+        <div class="card" style="margin-top: 14px; background:rgba(0,0,0,.16);">
+          <div class="muted"><strong>Latency contributors (milliseconds)</strong></div>
+
+          <div class="form-grid" style="margin-top:.75rem;">
+            <div class="field">
+              <div class="label-row">
+                <label for="encodeMs">Source / encode latency</label>
+                <button type="button" class="hint"
+                  data-title="Source / encode latency"
+                  data-help="Delay introduced by source processing or video encoding before traffic enters the network."
+                  aria-label="Help: Source or encode latency">?</button>
+              </div>
+              <input id="encodeMs" type="number" min="0" step="1" value="80" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="switchMs">Switching / routing</label>
+                <button type="button" class="hint"
+                  data-title="Switching / routing"
+                  data-help="Delay introduced by switching, routing, queueing, and forwarding inside the network path."
+                  aria-label="Help: Switching or routing latency">?</button>
+              </div>
+              <input id="switchMs" type="number" min="0" step="1" value="5" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="uplinkMs">Uplink / aggregation</label>
+                <button type="button" class="hint"
+                  data-title="Uplink / aggregation"
+                  data-help="Additional delay introduced as traffic crosses uplinks or aggregation boundaries."
+                  aria-label="Help: Uplink or aggregation latency">?</button>
+              </div>
+              <input id="uplinkMs" type="number" min="0" step="1" value="10" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="wanMs">WAN / VPN transport</label>
+                <button type="button" class="hint"
+                  data-title="WAN / VPN transport"
+                  data-help="Transport latency across WAN, VPN, internet, or other long-haul paths."
+                  aria-label="Help: WAN or VPN transport latency">?</button>
+              </div>
+              <input id="wanMs" type="number" min="0" step="1" value="40" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="decodeMs">Decode / processing</label>
+                <button type="button" class="hint"
+                  data-title="Decode / processing"
+                  data-help="Delay introduced by server-side or client-side decode and intermediate processing."
+                  aria-label="Help: Decode or processing latency">?</button>
+              </div>
+              <input id="decodeMs" type="number" min="0" step="1" value="60" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="renderMs">Client render</label>
+                <button type="button" class="hint"
+                  data-title="Client render"
+                  data-help="Final display and render delay on the viewing client."
+                  aria-label="Help: Client render latency">?</button>
+              </div>
+              <input id="renderMs" type="number" min="0" step="1" value="30" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="bufferMs">Jitter buffer / reserve</label>
+                <button type="button" class="hint"
+                  data-title="Jitter buffer or reserve"
+                  data-help="Reserve for jitter, smoothing, buffering, or safety allowance."
+                  aria-label="Help: Jitter buffer or reserve">?</button>
+              </div>
+              <input id="bufferMs" type="number" min="0" step="1" value="20" />
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="targetMs">Target latency budget (ms)</label>
+                <button type="button" class="hint"
+                  data-title="Target latency budget"
+                  data-help="Preferred total end-to-end latency target for the workflow you are designing for."
+                  aria-label="Help: Target latency budget">?</button>
+              </div>
+              <input id="targetMs" type="number" min="0" step="10" value="300" />
+            </div>
+          </div>
+
+          <div class="actions" style="margin-top:1rem;">
+            <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+            <button id="reset" class="btn" type="button">Reset</button>
+            <a class="btn" href="/tools/network/">Back to Network &amp; Throughput</a>
+          </div>
+
+          <p class="tip" style="margin-top:1rem;">
+            Tip: interactive live-view workflows usually feel best below about <strong>300 ms</strong>. Monitoring, playback, and review tolerate more delay.
+          </p>
+        </div>
+
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="out" class="results-grid" aria-live="polite">
+            <div class="muted">Run the calculator to see total latency, dominant contributors, and practical guidance.</div>
+          </div>
+          <div id="analysis-copy" style="display:none;"></div>
+
+          <p class="mini-note">
+            Model: total latency is the sum of each contributor. The analyzer highlights the dominant stage and compares per-stage pressure against a comfort target derived from the selected total latency budget.
+          </p>
+        </div>
+
+        <div id="next-step-row" class="actions" style="display:none; margin-top:1rem;">
+          <a class="btn btn-primary" href="/tools/network/">← Return to Network Category</a>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+
+    </div>
+  </main>
+
+  <script src="/assets/tool-flow.js?v=net-latency-0415"></script>
+  <script src="/assets/catalog.js?v=net-latency-0415"></script>
+  <script src="/assets/pipelines.js?v=net-latency-0415"></script>
+  <script src="/assets/pipeline.js?v=net-latency-0415"></script>
+  <script src="/assets/analyzer.js?v=net-latency-0415"></script>
+  <script src="./script.js?v=net-latency-0415"></script>
+  <script src="/assets/pipeline-state.js?v=net-pipeline-0416"></script>
+</body>
+</html>

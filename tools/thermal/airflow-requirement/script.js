@@ -1,3 +1,9 @@
+const LANE = "v1";
+const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
+const FLOW_KEYS = {
+  // TODO: replace with real per-step flow keys
+};
+
 ﻿(() => {
   const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "thermal";
@@ -431,3 +437,22 @@
 
   init();
 })();
+
+function calc() {
+  // TODO: implement calculate handler
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  const year = document.querySelector("[data-year]");
+  if (year) year.textContent = new Date().getFullYear();
+});
+
+
+function writeFlow(data) {
+  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
+    category: CATEGORY,
+    step: STEP,
+    data
+  });
+}

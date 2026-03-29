@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scene Illumination Estimator *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate lumen requirement and illumination pressure across a protected scene before continuing the physical security design flow."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=phys-scene-illumination-0421" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJpcmVmIiwicmVmIjoieWJuenp0dWVjaXJ6YWpyYWRkZnQiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3MDU4NjA2MSwiZXhwIjoyMDg2MTYyMDYxfQ.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=phys-scene-illumination-0421"></script>
+  <script defer src="/assets/app.js?v=phys-scene-illumination-0421"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .flag-ok {
+      color: rgba(140, 255, 170, 0.95);
+    }
+
+    .flag-warn {
+      color: rgba(255, 210, 140, 0.95);
+    }
+
+    .flag-bad {
+      color: rgba(255, 180, 140, 0.95);
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body
+  data-tier="pro"
+  data-category="physical-security"
+  data-tool="scene-illumination"
+  data-step="scene-illumination"
+  data-lane="v1"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/physical-security/">Physical Security</a>
+        <span class="sep">/</span>
+        <span>Scene Illumination</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Scene Illumination Estimator</h1>
+
+      <div id="pipeline"></div>
+
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">This tool starts the Physical Security Design Flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          Use this step to estimate how much usable light the scene requires before camera geometry is finalized.
+          This establishes the lighting baseline that later mounting-height, field-of-view, spacing, and pixel-density decisions depend on.
+        </p>
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+          This flow includes both Free and Pro tools. Unlock Pro to complete the full sequence.
+        </p>
+      </section>
+
+      <p class="subhead">Estimate required lumens for a target illumination level over an area.</p>
+
+      <p class="tool-best-for">
+        <strong>Best for:</strong> establishing whether a scene has enough usable light for general surveillance, improved image clarity, and downstream camera design decisions.
+      </p>
+
+      <div id="flow-note" class="flow-note" hidden>
+        This step starts the design flow by establishing the lighting baseline for the scene.
+      </div>
+
+      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+
+        <h2 class="h2">🔒 Locked</h2>
+        <p class="muted">This tool is included with Pro access for the Physical Security category.</p>
+
+        <p class="muted"><strong>What this models</strong></p>
+        <ul class="muted">
+          <li>Protected scene area in square feet</li>
+          <li>Target footcandle requirement</li>
+          <li>Utilization and light-loss planning factors</li>
+          <li>Estimated total lumen demand before downstream camera layout decisions</li>
+        </ul>
+
+        <div class="actions">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+          <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Physical Security</a>
+        </div>
+      </section>
+
+      <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Estimate lighting demand across the protected area so the rest of the camera design flow starts from a realistic scene-illumination baseline.
+        </p>
+
+        <div class="form-grid" style="margin-top: 14px;">
+          <div class="field">
+            <div class="label-row">
+              <label for="w">Area Width (ft)</label>
+            </div>
+            <input id="w" type="number" min="0.1" step="0.1" value="60" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="d">Area Depth (ft)</label>
+            </div>
+            <input id="d" type="number" min="0.1" step="0.1" value="40" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="fc">Target Footcandles (fc)</label>
+            </div>
+            <input id="fc" type="number" min="0.1" step="0.1" value="2.0" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="uf">Utilization Factor (%)</label>
+            </div>
+            <input id="uf" type="number" min="1" max="100" step="0.1" value="70" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="llf">Light Loss Factor (%)</label>
+            </div>
+            <input id="llf" type="number" min="1" max="100" step="0.1" value="80" />
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="calc" class="btn btn-primary" type="button">Estimate Lighting</button>
+          <button id="reset" class="btn" type="button">Reset</button>
+        </div>
+
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">Enter values and press Estimate Lighting.</div>
+          </div>
+          <div id="analysis-copy" style="display:none;"></div>
+
+          <p class="mini-note">
+            Model: total lumen requirement is estimated from area × target footcandles, then adjusted upward by utilization and light-loss assumptions so the result reflects a more realistic planning baseline rather than ideal fixture output.
+          </p>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+        </div>
+
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+          <a id="continue" class="btn btn-primary" href="/tools/physical-security/mounting-height/">
+            Continue → Mounting Height
+          </a>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+
+    </div>
+  </main>
+
+  <script src="/assets/tool-flow.js?v=phys-scene-illumination-0421"></script>
+  <script src="/assets/catalog.js?v=phys-scene-illumination-0421"></script>
+  <script src="/assets/pipelines.js?v=phys-scene-illumination-0421"></script>
+  <script src="/assets/pipeline-state.js?v=phys-scene-illumination-0421"></script>
+  <script src="/assets/pipeline.js?v=phys-scene-illumination-0421"></script>
+  <script src="/assets/analyzer.js?v=phys-scene-illumination-0421"></script>
+  <script src="./script.js?v=phys-scene-illumination-0421"></script>
+</body>
+</html>
+
+
+

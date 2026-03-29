@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Face Recognition Range *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Determine maximum recognition distance based on optics and pixel density."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=phys-face-rec-0420" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  </script>
+  <script defer src="/assets/auth.js?v=phys-face-rec-0420"></script>
+  <script defer src="/assets/app.js?v=phys-face-rec-0420"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body
+  data-tier="pro"
+  data-category="physical-security"
+  data-tool="face-recognition-range"
+  data-step="face-recognition-range"
+  data-lane="v1"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/physical-security/">Physical Security</a>
+        <span class="sep">/</span>
+        <span>Face Recognition Range</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Face Recognition Range</h1>
+
+      <div id="pipeline"></div>
+
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">This tool continues the Physical Security Design Flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          Use this step to verify how far the chosen lens can still support facial-recognition detail before identification quality starts falling away.
+          Calculated values from the previous step can carry forward into this tool, reducing re-entry and preserving design context.
+        </p>
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+          This flow includes both Free and Pro tools. Unlock Pro to complete the full sequence.
+        </p>
+      </section>
+
+      <p class="subhead">Determine maximum recognition distance based on optics and pixel density.</p>
+
+      <p class="tool-best-for">
+        <strong>Best for:</strong> validating how far your chosen lens can reliably support facial recognition before real-world losses start to matter.
+      </p>
+
+      <div id="flow-note" class="flow-note" hidden>
+        This step checks how far the chosen lens can still hold facial-recognition detail before identification quality starts falling away.
+      </div>
+
+      <section class="card tool-card" style="margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Enter resolution, field of view, recognition target, and working distance to estimate how much facial-recognition headroom the current optical setup has.
+        </p>
+
+        <div class="form-grid" style="margin-top: 14px;">
+          <div class="field">
+            <div class="label-row">
+              <label for="res">Horizontal Resolution (px)</label>
+            </div>
+            <input id="res" type="number" min="1" step="1" value="3840" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="hfov">Horizontal FOV (deg)</label>
+            </div>
+            <input id="hfov" type="number" min="1" max="179" step="0.1" value="90" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="ppf">Target Pixels per Face (px)</label>
+            </div>
+            <input id="ppf" type="number" min="1" step="1" value="250" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="fw">Face Width (ft)</label>
+            </div>
+            <input id="fw" type="number" min="0.01" step="0.01" value="0.6" />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="dist">Distance (ft)</label>
+            </div>
+            <input id="dist" type="number" min="0.1" step="0.1" value="60" />
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+          <button id="reset" class="btn" type="button">Reset</button>
+        </div>
+
+        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">Enter values and press Calculate.</div>
+          </div>
+          <div id="analysis-copy" style="display:none;"></div>
+
+          <p class="mini-note">
+            Model: recognition distance is estimated from resolution, horizontal field of view, face-width assumption, and the target pixels-per-face threshold, then compared against the actual working distance.
+          </p>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+        </div>
+
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+          <button id="continue" class="btn btn-primary" type="button">
+            Continue → License Plate
+          </button>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+      </footer>
+
+    </div>
+  </main>
+
+  <script src="/assets/tool-flow.js?v=phys-face-rec-0420"></script>
+  <script src="/assets/catalog.js?v=phys-face-rec-0420"></script>
+  <script src="/assets/pipelines.js?v=phys-face-rec-0420"></script>
+  <script src="/assets/pipeline-state.js?v=phys-face-rec-0420"></script>
+  <script src="/assets/pipeline.js?v=phys-face-rec-0420"></script>
+  <script src="/assets/analyzer.js?v=phys-face-rec-0420"></script>
+  <script src="./script.js?v=phys-face-rec-0420"></script>
+</body>
+</html>
+
+
+
+

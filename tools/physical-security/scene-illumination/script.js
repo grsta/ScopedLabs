@@ -1,3 +1,4 @@
+const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
 ﻿(() => {
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",

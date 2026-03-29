@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Network &amp; Throughput • ScopedLabs</title>
+  <meta name="description" content="Plan bandwidth, latency, PoE budgets, and topology before the install." />
+  <link rel="stylesheet" href="/assets/style.css?v=network-0384" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=network-0384"></script>
+  <script defer src="/assets/app.js?v=network-0384"></script>
+</head>
+
+<body data-protected="true" data-category="network">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-head">
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <span>Network &amp; Throughput</span>
+      </div>
+
+      <h1 class="h1">Network &amp; Throughput</h1>
+      <p class="subhead">
+        Plan bandwidth, latency, PoE budgets, and topology before the install.
+      </p>
+    </section>
+
+    <section class="card">
+      <p class="muted">
+        Network problems rarely show up in the spec sheet. They show up in the field: oversubscribed uplinks,
+        PoE headroom that disappears after adds, long cable runs, and “it was fine yesterday” congestion.
+        These tools help you model the real world before it becomes a rollback.
+      </p>
+    </section>
+
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Design Pipeline</div>
+      <h2 class="h2" style="margin-top: 0;">Follow a recommended engineering sequence</h2>
+      <p class="muted" style="margin-bottom: 14px;">
+        Some ScopedLabs tools work as a connected workflow. In Network &amp; Throughput, the Design Flow carries you
+        from switch power planning into bandwidth, oversubscription, and latency validation so you can move from
+        rough sizing to design checks with less re-entry.
+      </p>
+
+      <div class="pipeline-preview" aria-label="Network design pipeline preview">
+        <span class="pipeline-preview-label">DESIGN PIPELINE</span>
+        <div class="pipeline-preview-steps">
+          <span class="pipeline-preview-step is-active">PoE Budget</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step">Bandwidth</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Oversubscription</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Latency</span>
+        </div>
+      </div>
+
+      <p class="muted" style="margin-top: 14px; margin-bottom: 14px;">
+        Includes both Free and Pro tools. Unlock Pro to complete the full flow.
+      </p>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/network/poe-budget/">Start Design Pipeline</a>
+      </div>
+    </section>
+
+    <!-- FREE -->
+    <h3 class="section-divider">Free Tier</h3>
+
+    <div class="stack">
+      <a class="tool-row tool-row--center" href="/tools/network/poe-budget/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">PoE Budget &amp; Switch Margin Analyzer</div>
+          <div class="tool-row-sub">
+            Calculate total PoE draw, headroom, and safe capacity including a margin factor.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tool-row tool-row--center" href="/tools/network/bandwidth/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">Bandwidth Planner</div>
+          <div class="tool-row-sub">
+            Estimate total stream throughput and uplink requirements by device count and bitrate.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tool-row tool-row--center" href="/tools/network/mtu-fragmentation/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">MTU &amp; Fragmentation Helper</div>
+          <div class="tool-row-sub">
+            Sanity-check MTU overhead, fragmentation risk, and safe payload sizes for common tunnels.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- PRO -->
+    <h3 class="section-divider">Pro Tier</h3>
+
+    <div class="stack">
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/growth-simulator/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Growth Simulator</div>
+          <div class="tool-row-sub">
+            Model staged adds over time and see headroom erosion as the network grows.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/latency/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Latency Budget Calculator</div>
+          <div class="tool-row-sub">
+            Model end-to-end delay and identify where latency is being introduced.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/latency-jitter-buffer/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Latency &amp; Jitter Buffer Planner</div>
+          <div class="tool-row-sub">
+            Estimate jitter tolerance and buffer sizing trade-offs (delay vs. smooth playback).
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/oversubscription/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Uplink Oversubscription Estimator</div>
+          <div class="tool-row-sub">
+            Stress-test uplinks under worst-case bitrate and peak-motion periods.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/packet-loss-impact/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Packet Loss Impact Model</div>
+          <div class="tool-row-sub">
+            Estimate quality degradation risk from loss/repair behavior (retries, buffering, drops).
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/uplink-failure-impact/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Uplink Failure Impact</div>
+          <div class="tool-row-sub">
+            Model failover scenarios and what breaks when the uplink drops or degrades.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tool-row pro"
+         href="/upgrade/?category=network#checkout"
+         data-tool="/tools/network/vpn-overhead/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>VPN Overhead Estimator</div>
+          <div class="tool-row-sub">
+            Estimate throughput loss and MTU overhead for common VPN/tunnel modes and encryption profiles.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
+
+  <style>
+    .tool-row--center { text-decoration: none; }
+    .tool-row-center { text-align: center; width: 100%; }
+    .tool-row-title { font-weight: 700; margin-bottom: 6px; }
+    .tool-row-sub { opacity: 0.9; margin-bottom: 10px; }
+    .tool-row-pill { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .lock-icon { margin-right: 6px; }
+
+    .pipeline-preview {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background:
+        linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 12px 30px rgba(0,0,0,0.18);
+    }
+
+    .pipeline-preview-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(220,255,220,0.78);
+      margin-bottom: 9px;
+    }
+
+    .pipeline-preview-steps {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.98rem;
+      line-height: 1.4;
+    }
+
+    .pipeline-preview-step {
+      color: rgba(220,235,225,0.72);
+      font-weight: 600;
+    }
+
+    .pipeline-preview-step.is-active {
+      color: rgba(255,255,255,0.96);
+      position: relative;
+      padding-left: 15px;
+    }
+
+    .pipeline-preview-step.is-active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #57ff7a;
+      transform: translateY(-50%);
+      box-shadow: 0 0 12px rgba(87,255,122,0.55);
+    }
+
+    .pipeline-preview-step.is-pro {
+      color: rgba(210,220,214,0.82);
+    }
+
+    .pipeline-preview-sep {
+      color: rgba(180,205,190,0.42);
+      font-weight: 700;
+    }
+  </style>
+</body>
+</html>
+
+
+
+
+
+
+
+

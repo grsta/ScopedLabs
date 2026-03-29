@@ -1,3 +1,7 @@
+const LANE = "v1";
+const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
+const STEP = "latency";
+const CATEGORY = "network";
 (() => {
   "use strict";
 
@@ -437,6 +441,8 @@
   }
 
   window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
     let unlocked = unlockCategoryPage();
     if (unlocked) initTool();
 
@@ -446,3 +452,13 @@
     }, 400);
   });
 })();
+
+
+function renderFlowNote() {
+  // TODO: implement upstream flow-note carry-over
+}
+
+
+function calc() {
+  // TODO: implement calculate handler
+}

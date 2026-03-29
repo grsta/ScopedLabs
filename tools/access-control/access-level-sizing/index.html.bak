@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Access Level Sizing • ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=ac-final-010" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script defer src="/assets/auth.js?v=0412"></script>
+  <script defer src="/assets/app.js?v=0412"></script>
+</head>
+
+<body data-tier="pro" data-category="access-control" data-step="access-level-sizing" data-lane="v1">
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/access-control/">Access Control</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+
+  <div class="crumbs">
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <a href="/tools/access-control/">Access Control</a>
+    <span class="sep">/</span>
+    <span>Access Level Sizing</span>
+  </div>
+
+  <h1>Access Level Sizing</h1>
+
+  <div id="pipeline"></div>
+
+  <p class="subhead">
+    Estimate system complexity and determine if your access design will scale cleanly.
+  </p>
+
+  <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> validating whether your access structure will remain manageable or turn into administrative chaos.
+    </p>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <label class="field"><span class="label">User Roles</span><input id="roles" type="number" value="6" /></label>
+      <label class="field"><span class="label">Areas</span><input id="areas" type="number" value="8" /></label>
+      <label class="field"><span class="label">Schedules</span><input id="schedules" type="number" value="4" /></label>
+      <label class="field"><span class="label">Door Groups</span><input id="doorGroups" type="number" value="0" /></label>
+
+      <label class="field">
+        <span class="label">Complexity</span>
+        <select id="complexity">
+          <option value="simple">Simple</option>
+          <option value="normal">Normal</option>
+          <option value="complex">Complex</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Analyze</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>System Evaluation</h2>
+    <div id="results"><div class="muted">Run analysis.</div></div>
+
+    <!-- GRAPH -->
+    <div style="margin-top:16px;">
+      <canvas id="chart"></canvas>
+    </div>
+  </section>
+
+  <div id="complete-wrap" class="card" style="display:none;">
+    <div style="font-weight:600;">✔ Pipeline Complete</div>
+    <div style="opacity:.85;">You now have a full access control system design baseline.</div>
+  </div>
+
+</main>
+
+<script src="/assets/tool-flow.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/pipelines.js"></script>
+<script src="/assets/pipeline.js"></script>
+<script src="./script.js?v=010"></script>
+
+</body>
+</html>
+
+
+
+

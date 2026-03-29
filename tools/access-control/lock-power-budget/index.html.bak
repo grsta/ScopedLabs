@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Lock Power Budget • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate required power supply capacity based on lock type, current draw, and simultaneous unlock events."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=ac-lock-007" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0410"></script>
+  <script defer src="/assets/app.js?v=0410"></script>
+</head>
+
+<body data-tier="pro" data-category="access-control" data-step="lock-power-budget" data-lane="v1">
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/access-control/">Access Control</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/access-control/">Access Control</a>
+      <span class="sep">/</span>
+      <span>Lock Power Budget</span>
+    </div>
+
+    <h1>Lock Power Budget</h1>
+
+    <div id="pipeline"></div>
+
+    <p class="subhead">
+      Estimate required power supply capacity based on lock type, current draw, and simultaneous unlock events.
+    </p>
+
+    <div id="flow-note" class="card" style="display:none;"></div>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> validating whether your locking hardware will overload a supply under real-world simultaneous unlock conditions.
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Lock Type</span>
+          <select id="lockType">
+            <option value="strike">Electric Strike</option>
+            <option value="mag">Maglock</option>
+            <option value="mortise">Electric Mortise</option>
+            <option value="bolt">Electric Bolt</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Voltage</span>
+          <select id="voltage">
+            <option value="12">12 VDC</option>
+            <option value="24">24 VDC</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Current per Lock (A)</span>
+          <input id="amps" type="number" min="0" step="0.01" value="0.35" />
+        </label>
+
+        <label class="field">
+          <span class="label">Number of Locks</span>
+          <input id="locks" type="number" min="1" step="1" value="8" />
+        </label>
+
+        <label class="field">
+          <span class="label">Simultaneous Unlocks</span>
+          <input id="simul" type="number" min="1" step="1" value="2" />
+        </label>
+
+        <label class="field">
+          <span class="label">Headroom (%)</span>
+          <input id="headroom" type="number" min="0" step="1" value="25" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Run calculation.</div>
+      </div>
+    </section>
+
+    <div id="continue-wrap" class="card" style="display:none;">
+      <button id="continue" class="btn btn-primary" disabled>
+        Continue → Panel Capacity
+      </button>
+    </div>
+  </main>
+
+  <script src="/assets/tool-flow.js"></script>
+  <script src="/assets/catalog.js"></script>
+  <script src="/assets/pipelines.js"></script>
+  <script src="/assets/pipeline.js"></script>
+  <script src="./script.js?v=007"></script>
+</body>
+</html>
+
+
+
+

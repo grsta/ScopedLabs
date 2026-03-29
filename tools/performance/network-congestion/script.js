@@ -1,3 +1,8 @@
+const LANE = "v1";
+const FLOW_KEYS = {
+  // TODO: replace with real per-step flow keys
+};
+
 ﻿(() => {
   const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "performance";
@@ -378,3 +383,61 @@
 
   window.addEventListener("DOMContentLoaded", init);
 })();
+
+function renderFlowNote() {
+  // TODO: implement upstream flow-note carry-over
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  const year = document.querySelector("[data-year]");
+  if (year) year.textContent = new Date().getFullYear();
+});
+
+
+function hasStoredAuth() {
+  try {
+    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+    if (!k) return false;
+    const raw = JSON.parse(localStorage.getItem(k));
+    return !!(
+      raw?.access_token ||
+      raw?.currentSession?.access_token ||
+      (Array.isArray(raw) ? raw[0]?.access_token : null)
+    );
+  } catch {
+    return false;
+  }
+}
+
+
+function getUnlockedCategories() {
+  try {
+    const raw = localStorage.getItem("sl_unlocked_categories");
+    if (!raw) return [];
+    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+
+function unlockCategoryPage() {
+  const body = document.body;
+  const category = String(body?.dataset?.category || "").trim().toLowerCase();
+  const signedIn = hasStoredAuth();
+  const unlocked = getUnlockedCategories().includes(category);
+
+  const lockedCard = document.getElementById("lockedCard");
+  const toolCard = document.getElementById("toolCard");
+
+  if (signedIn && unlocked) {
+    if (lockedCard) lockedCard.style.display = "none";
+    if (toolCard) toolCard.style.display = "";
+    return true;
+  }
+
+  if (lockedCard) lockedCard.style.display = "";
+  if (toolCard) toolCard.style.display = "none";
+  return false;
+}

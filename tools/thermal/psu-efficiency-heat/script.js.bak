@@ -1,0 +1,431 @@
+﻿(() => {
+  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
+  const CATEGORY = "thermal";
+  const STEP = "psu-efficiency-heat";
+  const PRIOR_STEP = "heat-load-estimator";
+  const NEXT_URL = "/tools/thermal/btu-converter/";
+  const W_TO_BTU = 3.412141633;
+
+  const $ = (id) => document.getElementById(id);
+
+  const els = {
+    load: $("load"),
+    eff: $("eff"),
+    calc: $("calc"),
+    reset: $("reset"),
+    results: $("results"),
+    analysisCopy: $("analysis-copy"),
+    flowNote: $("flow-note"),
+    continueWrap: $("continue-wrap"),
+    continueBtn: $("continue")
+  };
+
+  function safeNumber(value, fallback = 0) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
+    }
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function clamp(value, min, max) {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clamp === "function"
+    ) {
+      return window.ScopedLabsAnalyzer.clamp(value, min, max);
+    }
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function readSaved() {
+    try {
+      return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function clearStored() {
+    sessionStorage.removeItem(STORAGE_KEY);
+  }
+
+  function hideContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
+    els.continueWrap.style.display = "none";
+    els.continueBtn.disabled = true;
+  }
+
+  function showContinue() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.showContinue === "function"
+    ) {
+      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
+    els.continueWrap.style.display = "";
+    els.continueBtn.disabled = false;
+  }
+
+  function renderEmpty() {
+    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+    } else if (els.analysisCopy) {
+      els.analysisCopy.style.display = "none";
+      els.analysisCopy.innerHTML = "";
+    }
+  }
+
+  function renderFlowNote() {
+    const saved = readSaved();
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderFlowNote({
+        flowEl: els.flowNote,
+        category: CATEGORY,
+        step: STEP,
+        title: "System Context",
+        intro:
+          "This step adds the thermal penalty created by power-supply inefficiency so downstream airflow and cooling work from a more realistic heat basis.",
+        customRows:
+          saved &&
+          saved.category === CATEGORY &&
+          saved.step === PRIOR_STEP
+            ? [
+                {
+                  label: "Prior Step",
+                  value: "Heat Load Estimator"
+                },
+                {
+                  label: "Working Heat Load",
+                  value:
+                    saved.data && Number.isFinite(Number(saved.data.heatLoadW))
+                      ? `${Number(saved.data.heatLoadW).toFixed(0)} W`
+                      : "—"
+                },
+                {
+                  label: "Thermal Output",
+                  value:
+                    saved.data && Number.isFinite(Number(saved.data.heatLoadBtuHr))
+                      ? `${Number(saved.data.heatLoadBtuHr).toFixed(0)} BTU/hr`
+                      : "—"
+                }
+              ]
+            : null
+      });
+      return;
+    }
+
+    els.flowNote.style.display = "none";
+    els.flowNote.innerHTML = "";
+  }
+
+  function buildInterpretation(status, dominantConstraint, loss, effPct, load) {
+    if (status === "HEALTHY") {
+      return `PSU losses remain relatively modest for the current output load. Efficiency is high enough that the additional thermal burden is present but still manageable in the broader cooling design.`;
+    }
+
+    if (status === "WATCH") {
+      if (dominantConstraint === "Efficiency penalty") {
+        return `The main concern is the percentage of power lost through conversion inefficiency. Even with a reasonable load level, poorer PSU efficiency is now adding enough heat that it should be carried through the remaining thermal steps deliberately.`;
+      }
+
+      if (dominantConstraint === "Heat loss magnitude") {
+        return `The absolute heat loss is large enough that it becomes a real input to rack and airflow planning rather than a minor correction. This is where efficiency losses stop being background noise and start affecting temperature behavior.`;
+      }
+
+      return `The combination of output load and PSU loss is beginning to matter thermally. The design can still work, but ignoring conversion losses from here would make downstream airflow and cooling assumptions too optimistic.`;
+    }
+
+    if (dominantConstraint === "Efficiency penalty") {
+      return `PSU inefficiency is now a major thermal contributor. The system is spending enough power on conversion loss that the added heat becomes a first-order design input rather than a small correction factor.`;
+    }
+
+    if (dominantConstraint === "Heat loss magnitude") {
+      return `The magnitude of wasted power is high enough to materially change the thermal profile of the system. In practice, this means airflow and cooling capacity sized only to output load would likely come up short.`;
+    }
+
+    return `High output load combined with conversion loss is creating a significant thermal burden. That raises operational risk because the wasted power is injected directly into the environment that the cooling system must now manage.`;
+  }
+
+  function buildGuidance(status, dominantConstraint, loss, effPct) {
+    if (status === "HEALTHY") {
+      return `Carry this loss value forward into BTU and airflow planning so the remaining pipeline reflects real conversion losses instead of idealized power delivery.`;
+    }
+
+    if (status === "WATCH") {
+      if (dominantConstraint === "Efficiency penalty") {
+        return `Confirm that the assumed PSU efficiency matches the actual operating range of the hardware. Small efficiency differences can create meaningful thermal changes once the system scales.`;
+      }
+
+      if (dominantConstraint === "Heat loss magnitude") {
+        return `Include the full loss value in downstream cooling calculations and avoid sizing from output load alone. The thermal overhead is now large enough to influence design margin.`;
+      }
+
+      return `Keep this inefficiency load in the model and verify that all later steps use the same corrected heat basis. Mixed assumptions will make the final thermal picture look cleaner than reality.`;
+    }
+
+    if (effPct < 85) {
+      return `Treat PSU efficiency as a thermal design issue, not just an electrical one. Improving conversion efficiency may reduce heat more cleanly than trying to absorb the penalty downstream with extra airflow alone.`;
+    }
+
+    return `Proceed using the corrected heat-loss value, but reassess the PSU assumptions if the resulting thermal burden feels excessive. At this level, conversion loss must be treated as part of the core cooling requirement.`;
+  }
+
+  function invalidate() {
+    clearStored();
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.invalidate === "function"
+    ) {
+      window.ScopedLabsAnalyzer.invalidate({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
+        category: CATEGORY,
+        step: STEP,
+        emptyMessage: "Enter values and press Calculate."
+      });
+      return;
+    }
+
+    hideContinue();
+    renderEmpty();
+  }
+
+  function calculate() {
+    const loadRaw = safeNumber(els.load.value, NaN);
+    const effPctRaw = safeNumber(els.eff.value, NaN);
+
+    if (
+      !Number.isFinite(loadRaw) ||
+      !Number.isFinite(effPctRaw) ||
+      loadRaw <= 0 ||
+      effPctRaw <= 0 ||
+      effPctRaw > 100
+    ) {
+      els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+      hideContinue();
+      clearStored();
+
+      if (
+        window.ScopedLabsAnalyzer &&
+        typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+      ) {
+        window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+      }
+      return;
+    }
+
+    const load = clamp(loadRaw, 0.1, 100000000);
+    const effPct = clamp(effPctRaw, 1, 100);
+    const eff = effPct / 100;
+
+    const input = load / Math.max(0.01, eff);
+    const loss = input - load;
+    const btu = loss * W_TO_BTU;
+
+    const metrics = [
+      {
+        label: "Heat Loss Magnitude",
+        value: loss / 150,
+        displayValue: `${loss.toFixed(0)} W`
+      },
+      {
+        label: "Efficiency Penalty",
+        value: (100 - effPct) / 8,
+        displayValue: `${(100 - effPct).toFixed(1)}%`
+      },
+      {
+        label: "Output Load Pressure",
+        value: load / 2000,
+        displayValue: `${load.toFixed(0)} W`
+      }
+    ];
+
+    let status = "HEALTHY";
+    let dominantLabel = "Heat Loss Magnitude";
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+    ) {
+      const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+        metrics,
+        healthyMax: 1.0,
+        watchMax: 1.8
+      });
+
+      status = resolved?.status || "HEALTHY";
+      dominantLabel = resolved?.dominant?.label || "Heat Loss Magnitude";
+    } else {
+      const dominant = metrics.reduce((best, current) =>
+        Number(current.value) > Number(best.value) ? current : best
+      );
+      dominantLabel = dominant.label;
+      if (Number(dominant.value) > 1.8) status = "RISK";
+      else if (Number(dominant.value) > 1.0) status = "WATCH";
+    }
+
+    const dominantConstraintMap = {
+      "Heat Loss Magnitude": "Heat loss magnitude",
+      "Efficiency Penalty": "Efficiency penalty",
+      "Output Load Pressure": "Output load pressure"
+    };
+
+    const dominantConstraint =
+      dominantConstraintMap[dominantLabel] || "Heat loss magnitude";
+
+    const interpretation = buildInterpretation(
+      status,
+      dominantConstraint,
+      loss,
+      effPct,
+      load
+    );
+
+    const guidance = buildGuidance(
+      status,
+      dominantConstraint,
+      loss,
+      effPct
+    );
+
+    const summaryRows = [
+      { label: "Output Load", value: `${load.toFixed(0)} W` },
+      { label: "PSU Efficiency", value: `${effPct.toFixed(1)}%` },
+      { label: "PSU Input Power", value: `${input.toFixed(0)} W` }
+    ];
+
+    const derivedRows = [
+      { label: "Heat Loss", value: `${loss.toFixed(0)} W` },
+      { label: "Heat Loss", value: `${btu.toFixed(0)} BTU/hr` },
+      { label: "Thermal Basis", value: "Conversion inefficiency added" }
+    ];
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderOutput({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        summaryRows,
+        derivedRows,
+        status,
+        interpretation,
+        dominantConstraint,
+        guidance
+      });
+    } else {
+      els.results.innerHTML = `
+        ${summaryRows.map((row) => `
+          <div class="result-row">
+            <div class="result-label">${row.label}</div>
+            <div class="result-value">${row.value}</div>
+          </div>
+        `).join("")}
+        ${derivedRows.map((row) => `
+          <div class="result-row">
+            <div class="result-label">${row.label}</div>
+            <div class="result-value">${row.value}</div>
+          </div>
+        `).join("")}
+      `;
+
+      if (els.analysisCopy) {
+        els.analysisCopy.style.display = "";
+        els.analysisCopy.innerHTML = `
+          <div class="results">
+            <div class="result-row">
+              <div class="result-label">Status</div>
+              <div class="result-value">${status}</div>
+            </div>
+            <div class="result-row">
+              <div class="result-label">Dominant Constraint</div>
+              <div class="result-value">${dominantConstraint}</div>
+            </div>
+            <div class="result-row">
+              <div class="result-label">Engineering Interpretation</div>
+              <div class="result-value">${interpretation}</div>
+            </div>
+            <div class="result-row">
+              <div class="result-label">Actionable Guidance</div>
+              <div class="result-value">${guidance}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        category: CATEGORY,
+        step: STEP,
+        data: {
+          outputLoadW: Number(load.toFixed(0)),
+          inputPowerW: Number(input.toFixed(0)),
+          heatLossW: Number(loss.toFixed(0)),
+          heatLossBtuHr: Number(btu.toFixed(0)),
+          efficiencyPct: Number(effPct.toFixed(1)),
+          status,
+          dominantConstraint
+        }
+      })
+    );
+
+    showContinue();
+  }
+
+  function reset() {
+    els.load.value = 800;
+    els.eff.value = 92;
+    clearStored();
+    hideContinue();
+    renderEmpty();
+    renderFlowNote();
+  }
+
+  function bindInvalidation() {
+    [els.load, els.eff].forEach((el) => {
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+  }
+
+  function init() {
+    hideContinue();
+    renderFlowNote();
+    renderEmpty();
+    bindInvalidation();
+
+    els.calc.onclick = calculate;
+    els.reset.onclick = reset;
+    els.continueBtn.onclick = () => {
+      window.location.href = NEXT_URL;
+    };
+  }
+
+  init();
+})();

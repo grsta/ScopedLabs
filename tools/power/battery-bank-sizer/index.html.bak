@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Battery Bank Sizer *ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=power-battery-bank-0406" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "YOUR_KEY";
+  </script>
+
+  <script defer src="/assets/auth.js?v=power-battery-bank-0406"></script>
+  <script defer src="/assets/app.js?v=power-battery-bank-0406"></script>
+</head>
+
+<body data-category="power" data-step="battery-bank-sizer" data-lane="v1" data-tier="pro">
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/power/">Power & Runtime</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container">
+
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/power/">Power & Runtime</a>
+      <span class="sep">/</span>
+      <span>Battery Bank Sizer</span>
+    </div>
+
+    <h1>Battery Bank Sizer</h1>
+
+    <div id="pipeline"></div>
+
+    <p class="subhead">
+      Size a battery bank based on load, runtime, and system constraints.
+    </p>
+
+    <p class="tool-best-for">
+      <strong>Best for:</strong> determining total battery capacity required after UPS runtime and system losses.
+    </p>
+
+    <div id="flow-note" class="card" style="display:none;"></div>
+
+    <section class="card">
+      <p class="muted">
+        Final step of the power design pipeline. Converts runtime requirements into real battery capacity,
+        factoring in efficiency and depth of discharge limits.
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <div class="form-grid">
+        <div class="field">
+          <label for="load">Load (Watts)</label>
+          <input id="load" type="number" value="300">
+        </div>
+
+        <div class="field">
+          <label for="hours">Runtime (Hours)</label>
+          <input id="hours" type="number" value="8">
+        </div>
+
+        <div class="field">
+          <label for="voltage">System Voltage (V)</label>
+          <input id="voltage" type="number" value="12">
+        </div>
+
+        <div class="field">
+          <label for="dod">Depth of Discharge (%)</label>
+          <input id="dod" type="number" value="80">
+        </div>
+
+        <div class="field">
+          <label for="efficiency">Efficiency (%)</label>
+          <input id="efficiency" type="number" value="85">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="calc" class="btn btn-primary">Calculate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div id="results" class="results">
+        <div class="muted">Enter values and calculate.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+    </section>
+
+    <div id="next-step-row" class="btn-row" style="display:none;">
+      <button class="btn btn-primary" type="button">Power Design Complete</button>
+    </div>
+
+  </div>
+</main>
+
+<script src="/assets/tool-flow.js?v=power-battery-bank-0406"></script>
+<script src="/assets/catalog.js?v=power-battery-bank-0406"></script>
+<script src="/assets/pipelines.js?v=power-battery-bank-0406"></script>
+<script src="/assets/pipeline.js?v=power-battery-bank-0406"></script>
+<script src="/assets/analyzer.js?v=power-battery-bank-0406"></script>
+<script src="./script.js?v=power-battery-bank-0406"></script>
+
+</body>
+</html>
+
+
+

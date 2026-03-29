@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Generator Runtime • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=infra-gen-004" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  </script>
+  <script defer src="/assets/auth.js?v=0406"></script>
+  <script defer src="/assets/app.js?v=0406"></script>
+</head>
+
+<body data-tier="pro" data-category="infrastructure" data-step="generator-runtime" data-lane="v1">
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/infrastructure/">Infrastructure</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+  <div class="crumbs">
+    <a href="/tools/">Tools</a> /
+    <a href="/tools/infrastructure/">Infrastructure</a> /
+    Generator Runtime
+  </div>
+
+  <h1>Generator Runtime</h1>
+
+  <div id="pipeline"></div>
+
+  <p class="subhead">
+    Estimate generator runtime and resilience under real-world load conditions.
+  </p>
+
+  <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> validating backup power endurance and outage survivability.
+    </p>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="label">Fuel Capacity (gal)</span>
+        <input id="fuel" type="number" value="100" min="0" step="0.1">
+      </label>
+
+      <label class="field">
+        <span class="label">Consumption Rate (gal/hr)</span>
+        <input id="rate" type="number" value="4.0" min="0.1" step="0.1">
+      </label>
+
+      <label class="field">
+        <span class="label">Load Factor</span>
+        <select id="load">
+          <option value="1.0">1.0 (full)</option>
+          <option value="0.75" selected>0.75</option>
+          <option value="0.5">0.5</option>
+          <option value="0.3">0.3</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="label">Reserve Fuel (%)</span>
+        <input id="reserve" type="number" value="10" min="0" max="80" step="0.1">
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results"><div class="muted">Run calculation.</div></div>
+    <div id="analysis-copy" style="display:none;"></div>
+  </section>
+
+  <div id="continue-wrap" class="card" style="display:none;">
+    <div style="display:grid; gap:10px;">
+      <strong>Pipeline Complete</strong>
+      <span class="muted">Infrastructure design validated from space → structure → power.</span>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="/tools/infrastructure/" class="btn">
+          ← Back to Infrastructure
+        </a>
+
+        <a href="/tools/" class="btn btn-primary">
+          Explore Tools
+        </a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="/assets/tool-flow.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/pipelines.js"></script>
+<script src="/assets/pipeline.js"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=004"></script>
+</body>
+</html>
+
+
+

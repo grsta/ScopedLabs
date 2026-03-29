@@ -102,7 +102,11 @@
         <span>Bandwidth Planner</span>
       </div>
 
-      <h1 style="margin-top: 10px;">Bandwidth Planner</h1>
+      
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--free">Free Tier</span>
+      </div>
+<h1 style="margin-top: 10px;">Bandwidth Planner</h1>
 
       <div id="pipeline"></div>
 
@@ -129,7 +133,7 @@
         This is step 2 of the Network pipeline. After confirming edge power, estimate the traffic those devices place on the network before checking aggregation pressure.
       </div>
 
-      <section class="card tool-card" style="margin-top: 18px;">
+      <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
         <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
         <p class="muted" style="margin-top: -4px;">
           Enter the expected number of active streams or devices, your average traffic per stream, peak multiplier,
@@ -263,8 +267,15 @@
             Continue → Oversubscription
           </a>
         </div>
-      </section>
+      
+        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
 
+          <a id="continue" class="btn btn-primary" href="/tools/network/oversubscription/">
+            Continue →
+          </a>
+        </div>
+
+      </section>
       <footer class="site-footer">
         <div class="muted">© <span data-year></span> ScopedLabs</div>
       </footer>
@@ -272,13 +283,15 @@
     </div>
   </main>
 
-  <script src="/assets/tool-flow.js?v=net-bandwidth-0414"></script>
-  <script src="/assets/catalog.js?v=net-bandwidth-0414"></script>
-  <script src="/assets/pipelines.js?v=net-bandwidth-0414"></script>
-  <script src="/assets/pipeline.js?v=net-bandwidth-0414"></script>
-  <script src="/assets/analyzer.js?v=net-bandwidth-0414"></script>
+  
+  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
+  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
+  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
+  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
   <script src="./script.js?v=net-bandwidth-0414"></script>
-  <script src="/assets/pipeline-state.js?v=net-pipeline-0416"></script>
+
 </body>
 </html>
 

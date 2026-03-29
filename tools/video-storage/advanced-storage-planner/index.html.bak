@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Advanced Storage Planner *ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate storage ingest and retention under average and peak conditions for video systems."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0408"></script>
+  <script defer src="/assets/app.js?v=0408"></script>
+</head>
+
+<body data-tier="pro" data-category="video-storage">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/video-storage/">Video &amp; Storage</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a> /
+      <a href="/tools/video-storage/">Video &amp; Storage</a> /
+      Advanced Storage Planner
+    </div>
+
+    <h1>Advanced Storage Planner</h1>
+
+    <p class="subhead">
+      Estimate average ingest, peak ingest, retention compression, and bitrate headroom
+      under planning-grade assumptions.
+    </p>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> modeling dense systems, retention cliffs, bitrate spikes,
+        and storage headroom under average versus peak behavior.
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <p class="muted" style="margin-top:-4px;">
+        Average bitrate is your expected steady-state value. Motion / duty scales the real
+        recorded load, and peak multiplier models spike behavior during more difficult scenes.
+      </p>
+
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="field">
+          <div class="label-row">
+            <label class="muted" for="cams">Camera count</label>
+            <button
+              class="hint"
+              type="button"
+              data-title="Camera count"
+              data-help="Total cameras contributing to the recording workload."
+            >?</button>
+          </div>
+          <input id="cams" type="number" min="1" step="1" value="16" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label class="muted" for="avgMbps">Average bitrate per camera (Mbps)</label>
+            <button
+              class="hint"
+              type="button"
+              data-title="Average bitrate per camera"
+              data-help="Typical sustained bitrate per camera under normal operating conditions. Use realistic planning values, not idealized marketing numbers."
+            >?</button>
+          </div>
+          <input id="avgMbps" type="number" min="0.1" step="0.1" value="4" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label class="muted" for="motionPct">Motion / recording duty (%)</label>
+            <button
+              class="hint"
+              type="button"
+              data-title="Motion / recording duty"
+              data-help="100% means continuous recording. Lower values approximate the portion of the day the system actually records at the modeled bitrate."
+            >?</button>
+          </div>
+          <input id="motionPct" type="number" min="1" max="100" step="1" value="100" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label class="muted" for="peakMult">Peak multiplier (x)</label>
+            <button
+              class="hint"
+              type="button"
+              data-title="Peak multiplier"
+              data-help="How much bitrate can spike above the average case during more difficult scenes, noise, IR activity, motion bursts, or codec stress."
+            >?</button>
+          </div>
+          <input id="peakMult" type="number" min="1" step="0.05" value="1.5" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label class="muted" for="usableTb">Usable storage (TB)</label>
+            <button
+              class="hint"
+              type="button"
+              data-title="Usable storage"
+              data-help="Usable storage after RAID, filesystem, and platform overhead. Enter decimal TB as the system is planned."
+            >?</button>
+          </div>
+          <input id="usableTb" type="number" min="0.1" step="0.1" value="40" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label class="muted" for="targetDays">Target retention (days)</label>
+            <button
+              class="hint"
+              type="button"
+              data-title="Target retention"
+              data-help="Minimum required retention. The tool checks both average and peak behavior against this target."
+            >?</button>
+          </div>
+          <input id="targetDays" type="number" min="1" step="1" value="30" />
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:14px;">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+      </div>
+
+      <p class="mini-note" style="margin-top:12px;">
+        Unit note: bitrate is converted using decimal GB/day so planning output matches the
+        way network and storage teams usually discuss ingest.
+      </p>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
+
+    <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
+    <footer class="site-footer" style="margin-top:22px;">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
+
+  <script src="/assets/analyzer.js"></script>
+  <script src="./script.js?v=002"></script>
+</body>
+</html>
+
+
+

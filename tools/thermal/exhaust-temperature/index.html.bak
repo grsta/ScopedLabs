@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exhaust Temperature Estimator *ScopedLabs</title>
+
+  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  </script>
+
+  <script defer src="/assets/auth.js?v=0408"></script>
+  <script defer src="/assets/app.js?v=0408"></script>
+</head>
+
+<body data-tier="pro" data-category="thermal" data-step="exhaust-temperature" data-lane="v1">
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <span class="brand-dot"></span>
+      <span class="brand-text">ScopedLabs</span>
+    </a>
+    <nav class="site-nav">
+      <a class="nav-pill" href="/">Home</a>
+      <a class="nav-pill" href="/tools/">Tools</a>
+      <a class="nav-pill" href="/tools/thermal/">Thermal</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container page">
+  <div class="crumbs">
+    <a href="/tools/">Tools</a> /
+    <a href="/tools/thermal/">Thermal</a> /
+    Exhaust Temperature
+  </div>
+
+  <h1>Exhaust Temperature Estimator</h1>
+
+  <div id="pipeline"></div>
+
+  <p class="subhead">Estimate exhaust air temperature based on inlet temperature, heat load, and airflow.</p>
+
+  <div id="flow-note" class="card" style="display:none;"></div>
+
+  <section class="card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> validating final exhaust conditions before confirming cooling capacity and system limits.
+    </p>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Inputs</h2>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="label">Inlet Temperature (°F)</span>
+        <input id="tin" type="number" value="72">
+      </label>
+
+      <label class="field">
+        <span class="label">Heat Load (Watts)</span>
+        <input id="w" type="number" value="3500">
+      </label>
+
+      <label class="field">
+        <span class="label">Airflow (CFM)</span>
+        <input id="cfm" type="number" value="900">
+      </label>
+
+      <label class="field">
+        <span class="label">Air Density Factor</span>
+        <select id="k">
+          <option value="1.08" selected>Standard (1.08)</option>
+          <option value="1.00">Thin air / altitude (1.00)</option>
+          <option value="1.15">Cool dense air (1.15)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="calc" class="btn btn-primary">Calculate</button>
+      <button id="reset" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <section class="card tool-card">
+    <h2>Results</h2>
+    <div id="results" class="results">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
+  </section>
+
+  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
+  <div id="continue-wrap" class="card" style="display:none;">
+    <button id="continue" class="btn btn-primary" disabled>
+      Continue → Cooling Capacity
+    </button>
+  </div>
+</main>
+
+<script src="/assets/tool-flow.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/pipelines.js"></script>
+<script src="/assets/pipeline.js"></script>
+<script src="/assets/analyzer.js"></script>
+<script src="./script.js?v=003"></script>
+
+</body>
+</html>
+
+
+
+
+

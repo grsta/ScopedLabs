@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Fail-Safe vs Fail-Secure • ScopedLabs</title>
+  <meta name="description" content="Determine correct door behavior based on life safety, threat level, and power conditions." />
+
+  <link rel="stylesheet" href="/assets/style.css?v=ac-fail-005" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/auth.js?v=0406"></script>
+  <script defer src="/assets/app.js?v=0406"></script>
+</head>
+
+<body data-tier="free" data-category="access-control" data-step="fail-safe-fail-secure" data-lane="v1">
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/access-control/">Access Control</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/access-control/">Access Control</a>
+      <span class="sep">/</span>
+      <span>Fail-Safe vs Fail-Secure</span>
+    </div>
+
+    <h1>Fail-Safe vs Fail-Secure</h1>
+    
+     <!-- PIPELINE -->
+    <div id="pipeline"></div>
+
+    <p class="subhead">
+      Determine how a door should behave during power loss based on life safety, security, and real-world conditions.
+    </p>
+
+    <!-- BEST FOR -->
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> deciding door behavior early so you don’t choose the wrong lock type or create life-safety conflicts later.
+      </p>
+    </section>
+
+    <!-- FLOW NOTE -->
+    <div id="flow-note"></div>
+
+    <!-- INPUTS -->
+    <section class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Door Type</span>
+          <select id="doorType">
+            <option value="interior">Interior</option>
+            <option value="perimeter">Perimeter / Exterior</option>
+            <option value="stairwell">Stairwell / Exit</option>
+            <option value="it">IT / Critical</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Life Safety Priority</span>
+          <select id="life">
+            <option value="high">High</option>
+            <option value="med">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Power Reliability</span>
+          <select id="powerLoss">
+            <option value="frequent">Frequent Issues</option>
+            <option value="normal">Normal</option>
+            <option value="rare">UPS / Generator</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Fire Alarm Integration</span>
+          <select id="fire">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Threat Level</span>
+          <select id="threat">
+            <option value="low">Low</option>
+            <option value="med">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary">Evaluate</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section class="card tool-card">
+      <h2>Recommendation</h2>
+      <div id="results" class="results">
+        <div class="muted">Run the evaluation to see results.</div>
+      </div>
+    </section>
+
+    <!-- CONTINUE -->
+    <div id="continue-wrap" class="card" style="display:none;">
+      <button id="continue" class="btn btn-primary">Continue → Reader Type</button>
+    </div>
+
+  </main>
+
+  <!-- SCRIPT ORDER (LOCKED) -->
+  <script src="/assets/tool-flow.js"></script>
+  <script src="/assets/catalog.js"></script>
+  <script src="/assets/pipelines.js"></script>
+  <script src="/assets/pipeline.js"></script>
+  <script src="./script.js"></script>
+
+</body>
+</html>
+
+
+
+
