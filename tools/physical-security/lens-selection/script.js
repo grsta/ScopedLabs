@@ -29,6 +29,7 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    continueWrap: $("next-step-row"),
     continueBtn: $("continue")
   };
 
@@ -58,14 +59,6 @@
 
   function fmtPpf(value, digits = 1) {
     return Number.isFinite(value) ? `${value.toFixed(digits)} PPF` : "—";
-  }
-
-  function hideContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "none";
-  }
-
-  function showContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
   }
 
   function applyDefaults() {
@@ -157,6 +150,8 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
       flowKey: FLOW_KEYS.lens,
       category: CATEGORY,
       step: STEP,
@@ -164,7 +159,7 @@
       emptyMessage: "Enter values and press Suggest Lens."
     });
 
-    hideContinue();
+    prev = null;
     renderFlowNote();
   }
 
@@ -315,7 +310,7 @@
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    hideContinue();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -344,7 +339,7 @@
     });
 
     writeFlow(data);
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function calc() {
@@ -375,11 +370,14 @@
   }
 
   function init() {
-    hideContinue();
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    init();
+  });
 })();
