@@ -13,7 +13,9 @@
   const LANE = "v1";
   const STEP = "pixel-density";
   const PREVIOUS_STEP = "blind-spot-check";
-  const NEXT_URL = "/tools/physical-security/lens-selection/";
+
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
 
   const $ = (id) => document.getElementById(id);
 
@@ -28,6 +30,7 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    continueWrap: $("next-step-row"),
     continueBtn: $("continue")
   };
 
@@ -67,14 +70,6 @@
     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
-  function hideContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "none";
-  }
-
-  function showContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
-  }
-
   function applyDefaults() {
     els.res.value = String(DEFAULTS.res);
     els.hfov.value = String(DEFAULTS.hfov);
@@ -90,7 +85,7 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      title: "Flow context",
+      title: "Flow Context",
       intro: "This step verifies whether the blind-spot-safe layout also delivers enough subject detail at the working distance."
     });
 
@@ -106,17 +101,16 @@
     if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
 
     const parts = [];
-    if (status) parts.push(`blind-spot result <strong>${status}</strong>`);
-    if (Number.isFinite(dist) && dist > 0) parts.push(`distance <strong>${fmtFt(dist)}</strong>`);
-    if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV <strong>${fmt(hfov, 1)}°</strong>`);
-    if (Number.isFinite(gap)) parts.push(`gap <strong>${fmtFt(gap)}</strong>`);
+    if (status) parts.push(`Blind-spot result: <strong>${status}</strong>`);
+    if (Number.isFinite(dist) && dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
+    if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}°</strong>`);
+    if (Number.isFinite(gap)) parts.push(`Gap: <strong>${fmtFt(gap)}</strong>`);
 
     if (parts.length) {
       els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
-        <strong>Flow context</strong><br>
-        Prior blind-spot results detected — ${parts.join(", ")}.
-        This step checks whether that same geometry also produces enough pixel density for the detail level you need.
+        <strong>Flow Context</strong><br>
+        ${parts.join(" | ")}
       `;
     }
   }
@@ -129,6 +123,10 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       flowKey: FLOW_KEYS.pixel,
       category: CATEGORY,
       step: STEP,
@@ -136,7 +134,6 @@
       emptyMessage: "Enter values and press Calculate."
     });
 
-    hideContinue();
     renderFlowNote();
   }
 
@@ -194,12 +191,15 @@
     const pixelsOnTarget = ppf * input.tw;
     const level = classify(ppf);
 
-    const targetGapPct = input.tppf > 0 ? ((input.tppf - ppf) / input.tppf) * 100 : 0;
-    const shortfallMetric = ppf < input.tppf
-      ? ScopedLabsAnalyzer.clamp(targetGapPct, 0, 100)
-      : 0;
+    const targetGapPct =
+      input.tppf > 0 ? ((input.tppf - ppf) / input.tppf) * 100 : 0;
 
-    const utilizationPct = distForTppf > 0 ? (input.dist / distForTppf) * 100 : 100;
+    const shortfallMetric =
+      ppf < input.tppf ? ScopedLabsAnalyzer.clamp(targetGapPct, 0, 100) : 0;
+
+    const utilizationPct =
+      distForTppf > 0 ? (input.dist / distForTppf) * 100 : 100;
+
     const utilizationMetric = ScopedLabsAnalyzer.clamp(utilizationPct, 0, 100);
 
     const requirementMetric =
@@ -269,7 +269,11 @@
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance,
+      utilizationMetric,
+      shortfallMetric,
+      requirementMetric,
+      utilizationPct
     };
   }
 
@@ -292,8 +296,9 @@
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    hideContinue();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -301,6 +306,8 @@
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Scene Width", value: fmtFt(data.sceneW) },
         { label: "Pixel Density", value: fmtPpf(data.ppf) },
@@ -313,16 +320,38 @@
         { label: "Target Pixel Density", value: fmtPpf(data.tppf) },
         { label: "Target Width", value: fmtFt(data.tw) },
         { label: "Pixels on Target", value: fmtPx(data.pixelsOnTarget, 0) },
-        { label: "Working Distance Utilization", value: fmtPct((data.dist / data.distForTppf) * 100) }
+        { label: "Working Distance Utilization", value: fmtPct(data.utilizationPct) }
       ],
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: ["Detail Utilization", "PPF Shortfall", "Target Detail Demand"],
+        values: [
+          Number(data.utilizationMetric.toFixed(1)),
+          Number(data.shortfallMetric.toFixed(1)),
+          Number(data.requirementMetric.toFixed(1))
+        ],
+        displayValues: [
+          fmtPct(data.utilizationPct),
+          data.ppf < data.tppf ? fmtPpf(data.tppf - data.ppf) : "0.0 PPF",
+          fmtPpf(data.tppf)
+        ],
+        referenceValue: 75,
+        healthyMax: 75,
+        watchMax: 95,
+        axisTitle: "Detail Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
 
     writeFlow(data);
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function calc() {
@@ -347,13 +376,21 @@
 
     els.calc?.addEventListener("click", calc);
     els.reset?.addEventListener("click", reset);
-    els.continueBtn?.addEventListener("click", () => {
-      window.location.href = NEXT_URL;
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        calc();
+      }
     });
   }
 
   function init() {
-    hideContinue();
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });
