@@ -84,22 +84,37 @@ window.ScopedLabsAnalyzer = (() => {
   }) {
     const state = getPipelineState();
 
-    if (
-      state &&
-      flowKey === DEFAULT_FLOW_KEY &&
-      category &&
-      step
-    ) {
+    // First preference: migrated categories should always resolve
+    // their real upstream step from pipeline metadata/state.
+    if (state && category && step) {
       const upstream = state.getUpstreamFlow(category, lane, step);
       if (upstream && upstream.category === category && upstream.step !== step) {
         return upstream;
       }
     }
 
-    const parsed = readFlow(flowKey, category, step);
+    // Second preference: honor an explicitly provided flow key
+    // for older or partially migrated tools.
+    if (flowKey) {
+      const parsed = readFlow(flowKey, category, step);
+      if (parsed && parsed.category === category && parsed.step !== step) {
+        return parsed;
+      }
+    }
 
-    if (parsed && parsed.category === category && parsed.step !== step) {
-      return parsed;
+    // Legacy fallback for categories still using the old shared slot.
+    const legacyRaw = sessionStorage.getItem(DEFAULT_FLOW_KEY);
+    if (legacyRaw) {
+      try {
+        const legacyParsed = JSON.parse(legacyRaw);
+        if (
+          legacyParsed &&
+          legacyParsed.category === category &&
+          legacyParsed.step !== step
+        ) {
+          return legacyParsed;
+        }
+      } catch {}
     }
 
     if (cachedFlow && cachedFlow.category === category && cachedFlow.step !== step) {
@@ -726,17 +741,17 @@ window.ScopedLabsAnalyzer = (() => {
     }
 
     if (continueWrapEl) continueWrapEl.style.display = "none";
-    if (continueBtnEl) continueBtnEl.disabled = true;
+    if (continueBtnEl) continueBtnEl.style.display = "none";
   }
 
   function showContinue(continueWrapEl, continueBtnEl) {
     if (continueWrapEl) continueWrapEl.style.display = "block";
-    if (continueBtnEl) continueBtnEl.disabled = false;
+    if (continueBtnEl) continueBtnEl.style.display = "inline-flex";
   }
 
   function hideContinue(continueWrapEl, continueBtnEl) {
     if (continueWrapEl) continueWrapEl.style.display = "none";
-    if (continueBtnEl) continueBtnEl.disabled = true;
+    if (continueBtnEl) continueBtnEl.style.display = "none";
   }
 
   return {
