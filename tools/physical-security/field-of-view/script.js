@@ -184,6 +184,50 @@
     const diagonalReach = Math.sqrt((sceneWidth * sceneWidth) + (input.dist * input.dist));
     const widthPerFootHeight = input.h > 0 ? sceneWidth / input.h : 0;
 
+    const shortfallPct = input.scene > 0 && sceneWidth < input.scene
+      ? ((input.scene - sceneWidth) / input.scene) * 100
+      : 0;
+
+    const overshootPct = input.scene > 0 && sceneWidth > input.scene
+      ? ((sceneWidth - input.scene) / input.scene) * 100
+      : 0;
+
+    const fitPressureMetric = fitClass === "Too Narrow"
+      ? Math.min(shortfallPct * 2.5, 100)
+      : fitClass === "Too Wide"
+        ? Math.min(overshootPct * 0.9, 100)
+        : Math.min(Math.abs(coverageRatio - 1) * 100, 100);
+
+    const lensBreadthMetric = input.hfov > 90 ? Math.min((input.hfov - 90) * 1.25, 100) : 0;
+    const geometryMetric = input.h > 0 && widthPerFootHeight > 8
+      ? Math.min((widthPerFootHeight - 8) * 8, 100)
+      : 0;
+
+    const metrics = [
+      {
+        label: "Fit Pressure",
+        value: fitPressureMetric,
+        displayValue: fitClass === "Good Fit" ? fitClass : fmtRatio(coverageRatio)
+      },
+      {
+        label: "Lens Breadth",
+        value: lensBreadthMetric,
+        displayValue: fmtDeg(input.hfov)
+      },
+      {
+        label: "Geometry Spread",
+        value: geometryMetric,
+        displayValue: input.h > 0 ? `${fmt(widthPerFootHeight, 2)} ft/ft` : "N/A"
+      }
+    ];
+
+    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore: Math.max(fitPressureMetric, lensBreadthMetric, geometryMetric),
+      metrics,
+      healthyMax: 20,
+      watchMax: 40
+    });
+
     const interpretation = `At ${fmtFt(input.dist)}, a ${fmtDeg(input.hfov)} horizontal field of view covers about ${fmtFt(sceneWidth)} of scene width, or ${fmtFt(halfWidth)} to either side of centerline. Against the requested scene width of ${fmtFt(input.scene)}, the layout is classified as ${fitClass}. ${fitText}`;
 
     let dominantConstraint = "";
@@ -220,12 +264,7 @@
       interpretation,
       dominantConstraint,
       guidance,
-      status:
-        fitClass === "Good Fit"
-          ? "Healthy"
-          : fitClass === "Too Wide"
-            ? "Watch"
-            : "Risk"
+      status: statusPack.status
     };
   }
 
