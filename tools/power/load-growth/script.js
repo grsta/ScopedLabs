@@ -1,25 +1,27 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
-
 (() => {
   "use strict";
 
-  const $ = (id) => document.getElementById(id);
-
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "power";
   const STEP = "load-growth";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "va-watts-amps";
+
+  const FLOW_KEYS = {
+    "va-watts-amps": "scopedlabs:pipeline:power:va-watts-amps",
+    "load-growth": "scopedlabs:pipeline:power:load-growth",
+    "ups-runtime": "scopedlabs:pipeline:power:ups-runtime",
+    "battery-bank-sizer": "scopedlabs:pipeline:power:battery-bank-sizer"
+  };
+
   const NEXT_URL = "/tools/power/ups-runtime/";
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     baseLoad: $("baseLoad"),
     growthPct: $("growthPct"),
     years: $("years"),
     headroomPct: $("headroomPct"),
-    flowNote: $("flowNote"),
+    flowNote: $("flow-note"),
     resultsCard: $("resultsCard"),
     errorCard: $("errorCard"),
     errorText: $("errorText"),
@@ -29,8 +31,53 @@ const FLOW_KEYS = {
     notes: $("notes"),
     analysis: $("analysis-copy"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function toNum(raw) {
     return ScopedLabsAnalyzer.safeNumber(
@@ -56,36 +103,19 @@ const FLOW_KEYS = {
   }
 
   function hideContinue() {
-    const existing = $("continueWrap");
-    if (existing) existing.style.display = "none";
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.hideContinue === "function") {
+      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+      return;
+    }
+    if (els.continueWrap) els.continueWrap.style.display = "none";
   }
 
   function showContinue() {
-    let wrap = $("continueWrap");
-    if (!wrap) {
-      const resultsCard = els.resultsCard;
-      if (!resultsCard) return;
-
-      wrap = document.createElement("div");
-      wrap.id = "continueWrap";
-      wrap.className = "actions";
-      wrap.style.marginTop = "16px";
-      wrap.style.display = "none";
-
-      const btn = document.createElement("button");
-      btn.id = "continueBtn";
-      btn.className = "btn btn-primary";
-      btn.type = "button";
-      btn.textContent = "Continue → UPS Runtime";
-      btn.addEventListener("click", () => {
-        window.location.href = NEXT_URL;
-      });
-
-      wrap.appendChild(btn);
-      resultsCard.appendChild(wrap);
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.showContinue === "function") {
+      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+      return;
     }
-
-    wrap.style.display = "flex";
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
   function clearTable() {
@@ -140,7 +170,7 @@ const FLOW_KEYS = {
 
   function readPipelineInput() {
     try {
-      const raw = sessionStorage.getItem(FLOW_KEY);
+      const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (!parsed || !parsed.data) return null;
@@ -154,7 +184,7 @@ const FLOW_KEYS = {
   function savePipelineResult(payload) {
     try {
       sessionStorage.setItem(
-        FLOW_KEY,
+        FLOW_KEYS[STEP],
         JSON.stringify({
           category: CATEGORY,
           step: STEP,
@@ -169,11 +199,11 @@ const FLOW_KEYS = {
 
   function invalidatePipelineResult() {
     try {
-      const raw = sessionStorage.getItem(FLOW_KEY);
+      const raw = sessionStorage.getItem(FLOW_KEYS[STEP]);
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (parsed && parsed.category === CATEGORY && parsed.step === STEP) {
-        sessionStorage.removeItem(FLOW_KEY);
+        sessionStorage.removeItem(FLOW_KEYS[STEP]);
       }
     } catch (err) {
       console.warn("Could not invalidate pipeline payload:", err);
@@ -191,21 +221,20 @@ const FLOW_KEYS = {
       return;
     }
 
-    const rendered = ScopedLabsAnalyzer.renderFlowNote({
+    const data = incoming.data || {};
+
+    ScopedLabsAnalyzer.renderFlowNote({
       flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
-      title: "Pipeline Import",
+      lane: LANE,
+      title: "Flow Context",
       intro: "This step projects future load so UPS runtime and battery sizing use realistic design demand."
     });
 
-    if (!rendered || !incoming.data) return;
-
-    const data = incoming.data || {};
-
     if (
-      incoming.step === "va-watts-amps" &&
+      incoming.step === PREVIOUS_STEP &&
       els.baseLoad &&
       (!els.baseLoad.value || els.baseLoad.value.trim() === "") &&
       Number.isFinite(Number(data.baseLoadKw))
@@ -213,7 +242,7 @@ const FLOW_KEYS = {
       els.baseLoad.value = Number(data.baseLoadKw).toFixed(3);
     }
 
-    if (incoming.step === "va-watts-amps") {
+    if (incoming.step === PREVIOUS_STEP) {
       const watts = Number(data.watts);
       const kw = Number(data.baseLoadKw);
       const volts = Number(data.volts);
@@ -227,7 +256,7 @@ const FLOW_KEYS = {
       if (Number.isFinite(pf)) lines.push(`Power factor: <strong>${fmt(pf, 2)}</strong>`);
 
       els.flowNote.innerHTML = `
-        <strong>Pipeline Import</strong><br>
+        <strong>Flow Context</strong><br>
         ${lines.join("<br>")}
         <br><br>
         Review values and click <strong>Calculate</strong>.
@@ -415,10 +444,6 @@ const FLOW_KEYS = {
     };
   }
 
-  function renderError(msg) {
-    showError(msg);
-  }
-
   function renderSuccess(data) {
     clearTable();
 
@@ -435,17 +460,26 @@ const FLOW_KEYS = {
     }
     if (els.notes) els.notes.textContent = data.notesText;
 
-    if (els.analysis) {
-      els.analysis.style.display = "";
-      els.analysis.innerHTML = `
-        <div class="divider" style="margin-top:16px;"></div>
-        <div class="result-row"><strong>Status:</strong> ${data.status}</div>
-        <div class="result-row"><strong>Planning Classification:</strong> ${data.growthClass}</div>
-        <div class="result-row"><strong>Engineering Interpretation:</strong> ${data.interpretation}</div>
-        <div class="result-row"><strong>Dominant Constraint:</strong> ${data.dominantConstraint}</div>
-        <div class="result-row"><strong>Guidance:</strong> ${data.guidance}</div>
-      `;
-    }
+    ScopedLabsAnalyzer.renderOutput({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
+      summaryRows: [
+        { label: "Projected Load (Final Year)", value: fmtKw(data.finalLoad) },
+        { label: "Total Increase", value: `${fmtKw(data.totalIncrease)} (${fmtPct(data.totalIncreasePct)})` },
+        { label: "Recommended Capacity", value: fmtKw(data.recommendedCapacity) }
+      ],
+      derivedRows: [
+        { label: "Growth Classification", value: data.growthClass },
+        { label: "3-Year Check", value: fmtKw(data.threeYearCheck) },
+        { label: "5-Year Check", value: fmtKw(data.fiveYearCheck) }
+      ],
+      status: data.status,
+      interpretation: data.interpretation,
+      dominantConstraint: data.dominantConstraint,
+      guidance: data.guidance
+    });
 
     savePipelineResult({
       baseLoadKw: data.baseLoad,
@@ -479,7 +513,7 @@ const FLOW_KEYS = {
   function calc() {
     const data = calculateModel();
     if (!data.ok) {
-      renderError(data.message);
+      showError(data.message);
       return;
     }
     renderSuccess(data);
@@ -498,26 +532,24 @@ const FLOW_KEYS = {
     if (els.resultsCard) els.resultsCard.hidden = true;
     if (els.notes) els.notes.textContent = "";
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    hideContinue();
 
     if (els.flowNote) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
     }
 
-    hideContinue();
+    renderFlowNote();
   }
 
   function wire() {
-    const btnCalc = els.calc;
-    const btnReset = els.reset;
-
-    if (!btnCalc || !btnReset) {
+    if (!els.calc || !els.reset) {
       showError("Load Growth tool wiring failed: missing #calc or #reset button IDs in the HTML.");
       return;
     }
 
-    btnCalc.addEventListener("click", calc);
-    btnReset.addEventListener("click", reset);
+    els.calc.addEventListener("click", calc);
+    els.reset.addEventListener("click", reset);
 
     ["baseLoad", "growthPct", "years", "headroomPct"].forEach((id) => {
       const el = $(id);
@@ -538,101 +570,15 @@ const FLOW_KEYS = {
     hideContinue();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", wire);
-  } else {
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
     wire();
-  }
+  });
 })();
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function invalidate() {
-  ScopedLabsAnalyzer.invalidate({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    continueWrapEl: els.continueWrap,
-    continueBtnEl: els.continueBtn,
-    flowKey: FLOW_KEYS[STEP] || "",
-    category: CATEGORY,
-    step: STEP,
-    lane: LANE,
-    emptyMessage: "Enter values and press Calculate."
-  });
-}
-
-
-function renderSuccess(data) {
-  ScopedLabsAnalyzer.renderOutput({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    summaryRows: [],
-    derivedRows: [],
-    status: data.status || "Healthy",
-    interpretation: data.interpretation || "",
-    dominantConstraint: data.dominantConstraint || "",
-    guidance: data.guidance || ""
-  });
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}

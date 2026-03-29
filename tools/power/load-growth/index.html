@@ -4,16 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Load Growth Estimator</title>
+  <meta
+    name="description"
+    content="Estimate future electrical load based on annual growth."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=power-load-growth-0406" />
+  <link rel="stylesheet" href="/assets/style.css?v=power-load-growth-0407" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=power-load-growth-0406"></script>
-  <script defer src="/assets/app.js?v=power-load-growth-0406"></script>
+  <script defer src="/assets/auth.js?v=power-load-growth-0407"></script>
+  <script defer src="/assets/app.js?v=power-load-growth-0407"></script>
 </head>
 
 <body data-lane="v1" data-step="load-growth" data-category="power" data-tier="pro">
@@ -31,62 +35,68 @@
     </div>
   </header>
 
-  <main class="container">
-    <section class="page-head">
-      
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-<h1>Load Growth Estimator</h1>
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/power/">Power</a>
+      <span class="sep">/</span>
+      <span>Load Growth Estimator</span>
+    </div>
 
-      <div id="pipeline"></div>
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
 
-      <p class="muted">
-        Estimate future electrical load based on annual growth.
+    <h1>Load Growth Estimator</h1>
+
+    <div id="pipeline"></div>
+
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool continues the Power design flow</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        Use this step to project future electrical demand before moving into UPS runtime and battery sizing.
       </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        It turns today’s measured load into a more realistic future design load so the rest of the power pipeline is based on expected expansion, not just present-day conditions.
+      </p>
+    </section>
 
+    <p class="subhead">
+      Estimate future electrical load based on annual growth.
+    </p>
+
+    <section class="card">
       <p class="tool-best-for">
         <strong>Best for:</strong> projecting future infrastructure load so UPS and battery sizing use realistic design loads.
       </p>
-      <div id="flow-note" class="flow-note" hidden>
-        TODO: replace generic flow-note text.
+    </section>
+
+    <div id="flow-note" class="flow-note" hidden></div>
+
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+      <div class="pill-row">
+        <span class="pill pill--pro">Pro Tier</span>
       </div>
 
+      <h2 class="h2">🔒 Locked</h2>
+      <p class="muted">This tool is included with Pro access for this category.</p>
+
+      <p class="muted"><strong>What this models</strong></p>
+      <ul class="muted">
+        <li>Compound annual load growth over the planning horizon</li>
+        <li>Recommended design capacity with planning headroom</li>
+        <li>How future demand should shape downstream UPS sizing</li>
+      </ul>
+
+      <div class="actions">
+        <a class="btn" href="/tools/power/">Back to Power</a>
+        <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+      </div>
     </section>
 
-    <section id="flowNote" class="flow-note card" hidden></section>
-
-    <section class="card intro-card">
-      <p>
-        Estimate how connected load grows over time using compound annual growth and optional planning headroom.
-        This helps turn today’s measured load into a more realistic future design load before moving into UPS runtime
-        and battery sizing decisions.
-      </p>
-    </section>
-
-    
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
-
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
-
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
-        </ul>
-
-        <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
-
-      <section id="toolCard" class="card tool-card">
+    <section id="toolCard" class="card tool-card">
       <h2>Calculator</h2>
 
       <div class="form-grid">
@@ -188,38 +198,37 @@
       </div>
 
       <div class="muted small" id="notes"></div>
+
       <div id="results" class="results-grid" aria-live="polite">
-            <div class="muted">Enter values and press Calculate.</div>
-          </div>
-          <div id="analysis-copy" style="display:none;"></div>
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+
+      <div id="analysis-copy" style="display:none;"></div>
     </section>
 
     <section class="card tool-card" id="errorCard" hidden>
       <h2>Fix This</h2>
       <p id="errorText" class="muted"></p>
-    
-        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+    </section>
 
-          <a id="continue" class="btn btn-primary" href="/tools/power/ups-runtime/">
-            Continue →
-          </a>
-        </div>
+    <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+      <a id="continue" class="btn btn-primary" href="/tools/power/ups-runtime/">
+        Continue →
+      </a>
+    </div>
 
-      </section>
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-</main>
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
 
-  
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=power-load-growth-0406"></script>
-
+  <script src="/assets/tool-flow.js?v=power-load-growth-0407"></script>
+  <script src="/assets/catalog.js?v=power-load-growth-0407"></script>
+  <script src="/assets/pipelines.js?v=power-load-growth-0407"></script>
+  <script src="/assets/pipeline-state.js?v=power-load-growth-0407"></script>
+  <script src="/assets/pipeline.js?v=power-load-growth-0407"></script>
+  <script src="/assets/analyzer.js?v=power-load-growth-0407"></script>
+  <script src="./script.js?v=power-load-growth-0407"></script>
 </body>
 </html>
 
