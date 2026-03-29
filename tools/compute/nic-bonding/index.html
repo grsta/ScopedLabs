@@ -4,7 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>NIC Bonding Planner * ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-nic-003" />
+  <meta
+    name="description"
+    content="Estimate aggregate throughput, single-flow limits, and resiliency tradeoffs for common NIC bonding options."
+  />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-nic-004" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -41,27 +45,27 @@
       <span>NIC Bonding</span>
     </div>
 
-    
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-<h1>NIC Bonding Planner</h1>
-    <div id="pipeline"></div>
-    
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of NIC Bonding Planner.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">Estimate aggregate throughput, single-flow limits, and resiliency tradeoffs for common bonding options.</p>
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
 
-    <div id="flow-note" class="card" style="display:none;"></div>
+    <h1>NIC Bonding Planner</h1>
+    <div id="pipeline"></div>
+
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool completes the Compute design flow</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        Use this final step to evaluate whether link bonding materially improves real throughput and resiliency, or just creates misleading capacity expectations.
+      </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        It converts link count, speed, traffic shape, and bonding mode into practical engineering guidance so you can see whether aggregate bandwidth, single-flow limits, or distribution inefficiency will dominate first.
+      </p>
+    </section>
+
+    <p class="subhead">Estimate aggregate throughput, single-flow limits, and resiliency tradeoffs for common bonding options.</p>
+
+    <div id="flow-note" class="flow-note" hidden></div>
 
     <section class="card">
       <p class="tool-best-for">
@@ -69,29 +73,28 @@
       </p>
     </section>
 
-    
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+      <div class="pill-row">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
 
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
+      <h2 class="h2">🔒 Locked</h2>
+      <p class="muted">This tool is included with Pro access for this category.</p>
 
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
-        </ul>
+      <p class="muted"><strong>What this models</strong></p>
+      <ul class="muted">
+        <li>Aggregate bonded throughput potential</li>
+        <li>Single-flow performance ceilings</li>
+        <li>Redundancy and traffic-distribution tradeoffs</li>
+      </ul>
 
-        <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
+      <div class="actions">
+        <a class="btn" href="/tools/compute/">Back to Category</a>
+        <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+      </div>
+    </section>
 
-      <section id="toolCard" class="card tool-card">
+    <section id="toolCard" class="card tool-card">
       <h2>Inputs</h2>
 
       <div class="form-grid">
@@ -142,8 +145,8 @@
       </div>
 
       <div class="actions">
-        <button id="calc" class="btn btn-primary">Calculate</button>
-        <button id="reset" class="btn">Reset</button>
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
       </div>
     </section>
 
@@ -154,21 +157,25 @@
       </div>
       <div id="analysis-copy" style="display:none;"></div>
     </section>
-  
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-</main>
 
-  
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=002"></script>
+    <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+      <a id="continue" class="btn btn-primary" href="/tools/compute/">
+        Complete Pipeline →
+      </a>
+    </div>
 
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
+
+  <script src="/assets/tool-flow.js?v=compute-nic-004"></script>
+  <script src="/assets/catalog.js?v=compute-nic-004"></script>
+  <script src="/assets/pipelines.js?v=compute-nic-004"></script>
+  <script src="/assets/pipeline-state.js?v=compute-nic-004"></script>
+  <script src="/assets/pipeline.js?v=compute-nic-004"></script>
+  <script src="/assets/analyzer.js?v=compute-nic-004"></script>
+  <script src="./script.js?v=004"></script>
 </body>
 </html>
 

@@ -1,17 +1,23 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "nic-bonding";
-const CATEGORY = "compute";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  const CATEGORY = "compute";
+  const STEP = "nic-bonding";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "backup-window";
 
-﻿(() => {
+  const FLOW_KEYS = {
+    "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
+    "ram-sizing": "scopedlabs:pipeline:compute:ram-sizing",
+    "storage-iops": "scopedlabs:pipeline:compute:storage-iops",
+    "storage-throughput": "scopedlabs:pipeline:compute:storage-throughput",
+    "vm-density": "scopedlabs:pipeline:compute:vm-density",
+    "gpu-vram": "scopedlabs:pipeline:compute:gpu-vram",
+    "power-thermal": "scopedlabs:pipeline:compute:power-thermal",
+    "raid-rebuild-time": "scopedlabs:pipeline:compute:raid-rebuild-time",
+    "backup-window": "scopedlabs:pipeline:compute:backup-window",
+    "nic-bonding": "scopedlabs:pipeline:compute:nic-bonding"
+  };
+
   const $ = (id) => document.getElementById(id);
-
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "compute";
-  const CURRENT_STEP = "nic-bonding";
 
   let cachedFlow = null;
   let chartRef = { current: null };
@@ -28,31 +34,111 @@ const FLOW_KEYS = {
     flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function refreshFlowNote() {
     cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
       flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       cachedFlow,
-      title: "System Context",
+      title: "Flow Context",
       intro:
-        "This final networking step checks whether link bonding improves real aggregate throughput, or whether single-flow limits still dominate despite more physical links."
+        "This final compute step checks whether link bonding improves real aggregate throughput, or whether single-flow limits still dominate despite more physical links."
     });
+
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) return;
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) return;
+
+    const d = parsed.data || {};
+    const parts = [];
+
+    if (Number.isFinite(d.backupsPerDay)) parts.push(`Backups/day: <strong>${d.backupsPerDay}</strong>`);
+    if (Number.isFinite(d.dataPerBackupGB)) parts.push(`Data/backup: <strong>${d.dataPerBackupGB.toFixed(1)} GB</strong>`);
+    if (Number.isFinite(d.totalDailyDataGB)) parts.push(`Daily protected data: <strong>${d.totalDailyDataGB.toFixed(1)} GB</strong>`);
+    if (Number.isFinite(d.requiredThroughputGbps)) parts.push(`Required throughput: <strong>${d.requiredThroughputGbps.toFixed(2)} Gbps</strong>`);
+    if (d.status) parts.push(`Prior result: <strong>${d.status}</strong>`);
+
+    if (parts.length) {
+      els.flowNote.hidden = false;
+      els.flowNote.innerHTML = `
+        <strong>Flow Context</strong><br>
+        ${parts.join(" | ")}
+        <br><br>
+        This final networking step checks whether link bonding improves real aggregate throughput, or whether single-flow limits still dominate despite more physical links.
+      `;
+    }
   }
 
   function invalidate() {
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Calculate."
     });
 
@@ -134,13 +220,9 @@ const FLOW_KEYS = {
     });
 
     let dominantConstraint = "Balanced bonding profile";
-    if (analyzer.dominant.label === "Aggregate Pressure") {
-      dominantConstraint = "Total bonded capacity envelope";
-    } else if (analyzer.dominant.label === "Single-Flow Constraint") {
-      dominantConstraint = "Per-flow throughput ceiling";
-    } else if (analyzer.dominant.label === "Distribution Stress") {
-      dominantConstraint = "Flow distribution inefficiency";
-    }
+    if (analyzer.dominant.label === "Aggregate Pressure") dominantConstraint = "Total bonded capacity envelope";
+    if (analyzer.dominant.label === "Single-Flow Constraint") dominantConstraint = "Per-flow throughput ceiling";
+    if (analyzer.dominant.label === "Distribution Stress") dominantConstraint = "Flow distribution inefficiency";
 
     let bondingClass = "Balanced";
     if (mode === "active-backup") bondingClass = "Redundancy-first";
@@ -223,9 +305,9 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         mode,
         aggregate,
@@ -233,6 +315,8 @@ const FLOW_KEYS = {
         status: analyzer.status
       }
     });
+
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function reset() {
@@ -250,69 +334,21 @@ const FLOW_KEYS = {
 
   ["links", "speed", "mode", "hash", "flows", "util"].forEach((id) => {
     const el = $(id);
+    if (!el) return;
     el.addEventListener("input", invalidate);
     el.addEventListener("change", invalidate);
   });
 
-  refreshFlowNote();
-  invalidate();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    refreshFlowNote();
+    invalidate();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
