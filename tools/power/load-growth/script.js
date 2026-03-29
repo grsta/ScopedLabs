@@ -13,30 +13,106 @@
     "battery-bank-sizer": "scopedlabs:pipeline:power:battery-bank-sizer"
   };
 
-  const NEXT_URL = "/tools/power/ups-runtime/";
   const $ = (id) => document.getElementById(id);
 
-  const els = {
-    baseLoad: $("baseLoad"),
-    growthPct: $("growthPct"),
-    years: $("years"),
-    headroomPct: $("headroomPct"),
-    flowNote: $("flow-note"),
-    resultsCard: $("resultsCard"),
-    errorCard: $("errorCard"),
-    errorText: $("errorText"),
-    finalLoad: $("finalLoad"),
-    totalIncrease: $("totalIncrease"),
-    recommendedCapacity: $("recommendedCapacity"),
-    notes: $("notes"),
-    analysis: $("analysis-copy"),
-    calc: $("calc"),
-    reset: $("reset"),
-    continueWrap: $("next-step-row"),
-    continueBtn: $("continue"),
-    lockedCard: $("lockedCard"),
-    toolCard: $("toolCard")
-  };
+  function analyzer() {
+    return window.ScopedLabsAnalyzer || null;
+  }
+
+  function safeNumber(value, fallback = NaN) {
+    const a = analyzer();
+    if (a && typeof a.safeNumber === "function") {
+      return a.safeNumber(value, fallback);
+    }
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function clamp(value, min, max) {
+    const a = analyzer();
+    if (a && typeof a.clamp === "function") {
+      return a.clamp(value, min, max);
+    }
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function clearAnalysisBlock(el) {
+    const a = analyzer();
+    if (a && typeof a.clearAnalysisBlock === "function") {
+      a.clearAnalysisBlock(el);
+      return;
+    }
+    if (el) {
+      el.style.display = "none";
+      el.innerHTML = "";
+    }
+  }
+
+  function hideContinue(wrap, btn) {
+    const a = analyzer();
+    if (a && typeof a.hideContinue === "function") {
+      a.hideContinue(wrap, btn);
+      return;
+    }
+    if (wrap) wrap.style.display = "none";
+    if (btn) btn.disabled = true;
+  }
+
+  function showContinue(wrap, btn) {
+    const a = analyzer();
+    if (a && typeof a.showContinue === "function") {
+      a.showContinue(wrap, btn);
+      return;
+    }
+    if (wrap) wrap.style.display = "flex";
+    if (btn) btn.disabled = false;
+  }
+
+  function invalidateOutput(resultsEl, analysisEl, continueWrapEl, continueBtnEl) {
+    const a = analyzer();
+    if (a && typeof a.invalidate === "function") {
+      a.invalidate({
+        resultsEl,
+        analysisEl,
+        continueWrapEl,
+        continueBtnEl,
+        flowKey: FLOW_KEYS[STEP],
+        category: CATEGORY,
+        step: STEP,
+        lane: LANE,
+        emptyMessage: "Enter values and press Calculate."
+      });
+      return;
+    }
+
+    if (resultsEl) {
+      resultsEl.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    }
+    clearAnalysisBlock(analysisEl);
+    hideContinue(continueWrapEl, continueBtnEl);
+  }
+
+  function renderFlowNote(flowEl, html) {
+    if (!flowEl) return;
+    flowEl.hidden = false;
+    flowEl.innerHTML = html;
+  }
+
+  function fmt(n, decimals = 2) {
+    if (!Number.isFinite(n)) return "—";
+    return n.toLocaleString(undefined, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  }
+
+  function fmtKw(n, decimals = 2) {
+    return Number.isFinite(n) ? `${fmt(n, decimals)} kW` : "—";
+  }
+
+  function fmtPct(n, decimals = 1) {
+    return Number.isFinite(n) ? `${fmt(n, decimals)}%` : "—";
+  }
 
   function hasStoredAuth() {
     try {
@@ -63,7 +139,7 @@
     }
   }
 
-  function unlockCategoryPage() {
+  function unlockCategoryPage(els) {
     const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
     const signedIn = hasStoredAuth();
     const unlocked = getUnlockedCategories().includes(category);
@@ -79,95 +155,6 @@
     return false;
   }
 
-  function toNum(raw) {
-    return ScopedLabsAnalyzer.safeNumber(
-      raw === null || raw === undefined ? "" : String(raw).trim().replace(/,/g, ""),
-      NaN
-    );
-  }
-
-  function fmt(n, decimals = 2) {
-    if (!Number.isFinite(n)) return "—";
-    return n.toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
-    });
-  }
-
-  function fmtKw(n, decimals = 2) {
-    return Number.isFinite(n) ? `${fmt(n, decimals)} kW` : "—";
-  }
-
-  function fmtPct(n, decimals = 1) {
-    return Number.isFinite(n) ? `${fmt(n, decimals)}%` : "—";
-  }
-
-  function hideContinue() {
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.hideContinue === "function") {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    if (els.continueWrap) els.continueWrap.style.display = "none";
-  }
-
-  function showContinue() {
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.showContinue === "function") {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    if (els.continueWrap) els.continueWrap.style.display = "flex";
-  }
-
-  function clearTable() {
-    const tbody = document.querySelector("#yearTable tbody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-  }
-
-  function addRow(year, projected, delta, deltaPct) {
-    const tbody = document.querySelector("#yearTable tbody");
-    if (!tbody) return;
-
-    const tr = document.createElement("tr");
-
-    const tdYear = document.createElement("td");
-    tdYear.textContent = String(year);
-
-    const tdProj = document.createElement("td");
-    tdProj.textContent = fmtKw(projected);
-
-    const tdDelta = document.createElement("td");
-    tdDelta.textContent = fmtKw(delta);
-
-    const tdPct = document.createElement("td");
-    tdPct.textContent = fmtPct(deltaPct);
-
-    tr.appendChild(tdYear);
-    tr.appendChild(tdProj);
-    tr.appendChild(tdDelta);
-    tr.appendChild(tdPct);
-
-    tbody.appendChild(tr);
-  }
-
-  function showError(msg) {
-    if (els.resultsCard) els.resultsCard.hidden = true;
-    if (els.errorCard) els.errorCard.hidden = false;
-    if (els.errorText) els.errorText.textContent = msg;
-    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    hideContinue();
-  }
-
-  function clearError() {
-    if (els.errorCard) els.errorCard.hidden = true;
-    if (els.errorText) els.errorText.textContent = "";
-  }
-
-  function showResults() {
-    if (els.errorCard) els.errorCard.hidden = true;
-    if (els.resultsCard) els.resultsCard.hidden = false;
-  }
-
   function readPipelineInput() {
     try {
       const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
@@ -175,8 +162,7 @@
       const parsed = JSON.parse(raw);
       if (!parsed || !parsed.data) return null;
       return parsed;
-    } catch (err) {
-      console.warn("Could not read pipeline payload:", err);
+    } catch {
       return null;
     }
   }
@@ -192,9 +178,7 @@
           data: payload
         })
       );
-    } catch (err) {
-      console.warn("Could not save pipeline payload:", err);
-    }
+    } catch {}
   }
 
   function invalidatePipelineResult() {
@@ -205,12 +189,10 @@
       if (parsed && parsed.category === CATEGORY && parsed.step === STEP) {
         sessionStorage.removeItem(FLOW_KEYS[STEP]);
       }
-    } catch (err) {
-      console.warn("Could not invalidate pipeline payload:", err);
-    }
+    } catch {}
   }
 
-  function renderFlowNote() {
+  function renderImportedFlow(els) {
     const incoming = readPipelineInput();
 
     if (!incoming || incoming.category !== CATEGORY || !els.flowNote) {
@@ -222,16 +204,6 @@
     }
 
     const data = incoming.data || {};
-
-    ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEYS[STEP],
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      title: "Flow Context",
-      intro: "This step projects future load so UPS runtime and battery sizing use realistic design demand."
-    });
 
     if (
       incoming.step === PREVIOUS_STEP &&
@@ -255,34 +227,58 @@
       if (Number.isFinite(volts)) lines.push(`Voltage: <strong>${fmt(volts, 0)} V</strong>`);
       if (Number.isFinite(pf)) lines.push(`Power factor: <strong>${fmt(pf, 2)}</strong>`);
 
-      els.flowNote.innerHTML = `
-        <strong>Flow Context</strong><br>
-        ${lines.join("<br>")}
-        <br><br>
-        Review values and click <strong>Calculate</strong>.
-      `;
-      els.flowNote.hidden = false;
+      renderFlowNote(
+        els.flowNote,
+        `<strong>Flow Context</strong><br>${lines.join("<br>")}<br><br>Review values and click <strong>Calculate</strong>.`
+      );
+    } else {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
     }
   }
 
-  function invalidate() {
-    clearTable();
-    clearError();
-    invalidatePipelineResult();
-    hideContinue();
-    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-
-    if (els.resultsCard) els.resultsCard.hidden = true;
-    if (els.notes) els.notes.textContent = "";
-
-    renderFlowNote();
+  function clearTable() {
+    const tbody = document.querySelector("#yearTable tbody");
+    if (tbody) tbody.innerHTML = "";
   }
 
-  function getInputs() {
-    const baseLoad = toNum(els.baseLoad?.value);
-    const growthPct = toNum(els.growthPct?.value);
-    const years = Math.floor(toNum(els.years?.value));
-    const headroomPctRaw = toNum(els.headroomPct?.value);
+  function addRow(year, projected, delta, deltaPct) {
+    const tbody = document.querySelector("#yearTable tbody");
+    if (!tbody) return;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${year}</td>
+      <td>${fmtKw(projected)}</td>
+      <td>${fmtKw(delta)}</td>
+      <td>${fmtPct(deltaPct)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function showError(els, msg) {
+    if (els.resultsCard) els.resultsCard.hidden = true;
+    if (els.errorCard) els.errorCard.hidden = false;
+    if (els.errorText) els.errorText.textContent = msg;
+    clearAnalysisBlock(els.analysis);
+    hideContinue(els.continueWrap, els.continueBtn);
+  }
+
+  function clearError(els) {
+    if (els.errorCard) els.errorCard.hidden = true;
+    if (els.errorText) els.errorText.textContent = "";
+  }
+
+  function showResults(els) {
+    if (els.errorCard) els.errorCard.hidden = true;
+    if (els.resultsCard) els.resultsCard.hidden = false;
+  }
+
+  function getInputs(els) {
+    const baseLoad = safeNumber(els.baseLoad?.value, NaN);
+    const growthPct = safeNumber(els.growthPct?.value, NaN);
+    const years = Math.floor(safeNumber(els.years?.value, NaN));
+    const headroomPctRaw = safeNumber(els.headroomPct?.value, NaN);
 
     if (!Number.isFinite(baseLoad) || baseLoad < 0) {
       return { ok: false, message: "Enter a valid Current Load (kW). Example: 12.5" };
@@ -309,12 +305,11 @@
     };
   }
 
-  function calculateModel() {
-    const input = getInputs();
+  function calculateModel(els) {
+    const input = getInputs(els);
     if (!input.ok) return input;
 
-    const yearly = [];
-    yearly.push({ year: 0, projected: input.baseLoad, delta: 0, deltaPct: 0 });
+    const yearly = [{ year: 0, projected: input.baseLoad, delta: 0, deltaPct: 0 }];
 
     for (let y = 1; y <= input.years; y++) {
       const projected = input.baseLoad * Math.pow(1 + input.g, y);
@@ -338,34 +333,25 @@
     const continuousDesignKw = recommendedCapacity * 1.25;
     const continuousDesignWatts = continuousDesignKw * 1000;
 
-    const growthPressureMetric = ScopedLabsAnalyzer.clamp(input.growthPct * 4, 0, 100);
-    const planningHorizonMetric = ScopedLabsAnalyzer.clamp((input.years / 10) * 100, 0, 100);
-    const headroomMetric = ScopedLabsAnalyzer.clamp(input.headroomPct * 2, 0, 100);
+    const growthPressureMetric = clamp(input.growthPct * 4, 0, 100);
+    const planningHorizonMetric = clamp((input.years / 10) * 100, 0, 100);
+    const headroomMetric = clamp(input.headroomPct * 2, 0, 100);
 
-    const metrics = [
-      {
-        label: "Growth Pressure",
-        value: growthPressureMetric,
-        displayValue: fmtPct(input.growthPct)
-      },
-      {
-        label: "Planning Horizon",
-        value: planningHorizonMetric,
-        displayValue: `${input.years} years`
-      },
-      {
-        label: "Headroom Buffer",
-        value: headroomMetric,
-        displayValue: fmtPct(input.headroomPct)
-      }
-    ];
-
-    const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: Math.max(growthPressureMetric, planningHorizonMetric, headroomMetric),
-      metrics,
-      healthyMax: 20,
-      watchMax: 45
-    });
+    const a = analyzer();
+    let status = "HEALTHY";
+    if (a && typeof a.resolveStatus === "function") {
+      const statusPack = a.resolveStatus({
+        compositeScore: Math.max(growthPressureMetric, planningHorizonMetric, headroomMetric),
+        metrics: [
+          { label: "Growth Pressure", value: growthPressureMetric, displayValue: fmtPct(input.growthPct) },
+          { label: "Planning Horizon", value: planningHorizonMetric, displayValue: `${input.years} years` },
+          { label: "Headroom Buffer", value: headroomMetric, displayValue: fmtPct(input.headroomPct) }
+        ],
+        healthyMax: 20,
+        watchMax: 45
+      });
+      status = statusPack.status;
+    }
 
     let growthClass = "Balanced Expansion Planning";
     if (input.growthPct >= 10) growthClass = "Aggressive Growth Planning";
@@ -375,13 +361,13 @@
     let interpretation = `A current load of ${fmtKw(input.baseLoad)} growing at ${fmtPct(input.growthPct)} for ${input.years} year${input.years === 1 ? "" : "s"} projects to about ${fmtKw(finalLoad)} by the end of the planning horizon. With ${fmtPct(input.headroomPct)} planning headroom, the recommended design capacity rises to about ${fmtKw(recommendedCapacity)}.`;
 
     if (input.growthPct >= 10) {
-      interpretation += ` Growth is aggressive enough that today's measured load is no longer a safe proxy for future sizing. Infrastructure selected only on present load will age out quickly.`;
+      interpretation += " Growth is aggressive enough that today's measured load is no longer a safe proxy for future sizing. Infrastructure selected only on present load will age out quickly.";
     } else if (input.years >= 5) {
-      interpretation += ` The long planning horizon materially compounds even moderate annual growth, so future capacity drift becomes a practical design concern.`;
+      interpretation += " The long planning horizon materially compounds even moderate annual growth, so future capacity drift becomes a practical design concern.";
     } else if (input.headroomPct >= 20) {
-      interpretation += ` Headroom policy is doing a meaningful amount of the sizing work, which is appropriate when phased expansion risk matters more than initial cost.`;
+      interpretation += " Headroom policy is doing a meaningful amount of the sizing work, which is appropriate when phased expansion risk matters more than initial cost.";
     } else {
-      interpretation += ` Growth and buffer remain in a practical range, so the recommended design load stays reasonably proportional to today's connected demand.`;
+      interpretation += " Growth and buffer remain in a practical range, so the recommended design load stays reasonably proportional to today's connected demand.";
     }
 
     let dominantConstraint = "";
@@ -410,9 +396,7 @@
     notes.push(`Model: compound growth (Load × (1 + g)^years).`);
     notes.push(`Average added load: ${fmt(averageAnnualAddedKw)} kW/year.`);
     notes.push(`3-year check: ${fmtKw(threeYearCheck)}. 5-year check: ${fmtKw(fiveYearCheck)}.`);
-    if (input.headroomPct > 0) {
-      notes.push(`Headroom applied: ${fmtPct(input.headroomPct)}.`);
-    }
+    if (input.headroomPct > 0) notes.push(`Headroom applied: ${fmtPct(input.headroomPct)}.`);
     notes.push(
       `Engineering planning note: recommended capacity is ${fmtKw(recommendedCapacity)}, while a more conservative 125% continuous-design reference would be about ${fmtKw(continuousDesignKw)}.`
     );
@@ -436,7 +420,7 @@
       continuousDesignWatts,
       designLoadWatts: recommendedCapacityWatts,
       growthClass,
-      status: statusPack.status,
+      status,
       interpretation,
       dominantConstraint,
       guidance,
@@ -444,42 +428,50 @@
     };
   }
 
-  function renderSuccess(data) {
+  function renderSuccess(els, data) {
     clearTable();
-
-    data.yearly.forEach((row) => {
-      addRow(row.year, row.projected, row.delta, row.deltaPct);
-    });
+    data.yearly.forEach((row) => addRow(row.year, row.projected, row.delta, row.deltaPct));
 
     if (els.finalLoad) els.finalLoad.textContent = fmtKw(data.finalLoad);
-    if (els.totalIncrease) {
-      els.totalIncrease.textContent = `${fmtKw(data.totalIncrease)} (${fmtPct(data.totalIncreasePct)})`;
-    }
-    if (els.recommendedCapacity) {
-      els.recommendedCapacity.textContent = fmtKw(data.recommendedCapacity);
-    }
+    if (els.totalIncrease) els.totalIncrease.textContent = `${fmtKw(data.totalIncrease)} (${fmtPct(data.totalIncreasePct)})`;
+    if (els.recommendedCapacity) els.recommendedCapacity.textContent = fmtKw(data.recommendedCapacity);
     if (els.notes) els.notes.textContent = data.notesText;
 
-    ScopedLabsAnalyzer.renderOutput({
-      resultsEl: els.results,
-      analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
-      summaryRows: [
-        { label: "Projected Load (Final Year)", value: fmtKw(data.finalLoad) },
-        { label: "Total Increase", value: `${fmtKw(data.totalIncrease)} (${fmtPct(data.totalIncreasePct)})` },
-        { label: "Recommended Capacity", value: fmtKw(data.recommendedCapacity) }
-      ],
-      derivedRows: [
-        { label: "Growth Classification", value: data.growthClass },
-        { label: "3-Year Check", value: fmtKw(data.threeYearCheck) },
-        { label: "5-Year Check", value: fmtKw(data.fiveYearCheck) }
-      ],
-      status: data.status,
-      interpretation: data.interpretation,
-      dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
-    });
+    const a = analyzer();
+    if (a && typeof a.renderOutput === "function") {
+      a.renderOutput({
+        resultsEl: els.results,
+        analysisEl: els.analysis,
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
+        summaryRows: [
+          { label: "Projected Load (Final Year)", value: fmtKw(data.finalLoad) },
+          { label: "Total Increase", value: `${fmtKw(data.totalIncrease)} (${fmtPct(data.totalIncreasePct)})` },
+          { label: "Recommended Capacity", value: fmtKw(data.recommendedCapacity) }
+        ],
+        derivedRows: [
+          { label: "Growth Classification", value: data.growthClass },
+          { label: "3-Year Check", value: fmtKw(data.threeYearCheck) },
+          { label: "5-Year Check", value: fmtKw(data.fiveYearCheck) }
+        ],
+        status: data.status,
+        interpretation: data.interpretation,
+        dominantConstraint: data.dominantConstraint,
+        guidance: data.guidance
+      });
+    } else {
+      if (els.analysis) {
+        els.analysis.style.display = "";
+        els.analysis.innerHTML = `
+          <div class="divider" style="margin-top:16px;"></div>
+          <div class="result-row"><strong>Status:</strong> ${data.status}</div>
+          <div class="result-row"><strong>Planning Classification:</strong> ${data.growthClass}</div>
+          <div class="result-row"><strong>Engineering Interpretation:</strong> ${data.interpretation}</div>
+          <div class="result-row"><strong>Dominant Constraint:</strong> ${data.dominantConstraint}</div>
+          <div class="result-row"><strong>Guidance:</strong> ${data.guidance}</div>
+        `;
+      }
+    }
 
     savePipelineResult({
       baseLoadKw: data.baseLoad,
@@ -505,47 +497,91 @@
       guidance: data.guidance
     });
 
-    clearError();
-    showResults();
-    showContinue();
-  }
-
-  function calc() {
-    const data = calculateModel();
-    if (!data.ok) {
-      showError(data.message);
-      return;
-    }
-    renderSuccess(data);
-  }
-
-  function reset() {
-    clearTable();
-    clearError();
-    invalidatePipelineResult();
-
-    ["baseLoad", "growthPct", "years", "headroomPct"].forEach((id) => {
-      const el = $(id);
-      if (el) el.value = "";
-    });
-
-    if (els.resultsCard) els.resultsCard.hidden = true;
-    if (els.notes) els.notes.textContent = "";
-    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    hideContinue();
-
-    if (els.flowNote) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-    }
-
-    renderFlowNote();
+    clearError(els);
+    showResults(els);
+    showContinue(els.continueWrap, els.continueBtn);
   }
 
   function wire() {
+    const els = {
+      baseLoad: $("baseLoad"),
+      growthPct: $("growthPct"),
+      years: $("years"),
+      headroomPct: $("headroomPct"),
+      flowNote: $("flow-note"),
+      resultsCard: $("resultsCard"),
+      errorCard: $("errorCard"),
+      errorText: $("errorText"),
+      finalLoad: $("finalLoad"),
+      totalIncrease: $("totalIncrease"),
+      recommendedCapacity: $("recommendedCapacity"),
+      notes: $("notes"),
+      analysis: $("analysis-copy"),
+      results: $("results"),
+      calc: $("calc"),
+      reset: $("reset"),
+      continueWrap: $("next-step-row"),
+      continueBtn: $("continue"),
+      lockedCard: $("lockedCard"),
+      toolCard: $("toolCard")
+    };
+
     if (!els.calc || !els.reset) {
-      showError("Load Growth tool wiring failed: missing #calc or #reset button IDs in the HTML.");
+      showError(els, "Load Growth tool wiring failed: missing #calc or #reset button IDs in the HTML.");
       return;
+    }
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage(els);
+    setTimeout(() => unlockCategoryPage(els), 400);
+
+    function invalidate() {
+      clearTable();
+      clearError(els);
+      invalidatePipelineResult();
+      hideContinue(els.continueWrap, els.continueBtn);
+      clearAnalysisBlock(els.analysis);
+
+      if (els.resultsCard) els.resultsCard.hidden = true;
+      if (els.notes) els.notes.textContent = "";
+
+      renderImportedFlow(els);
+      invalidateOutput(els.results, els.analysis, els.continueWrap, els.continueBtn);
+    }
+
+    function calc() {
+      const data = calculateModel(els);
+      if (!data.ok) {
+        showError(els, data.message);
+        return;
+      }
+      renderSuccess(els, data);
+    }
+
+    function reset() {
+      clearTable();
+      clearError(els);
+      invalidatePipelineResult();
+
+      ["baseLoad", "growthPct", "years", "headroomPct"].forEach((id) => {
+        const el = $(id);
+        if (el) el.value = "";
+      });
+
+      if (els.resultsCard) els.resultsCard.hidden = true;
+      if (els.notes) els.notes.textContent = "";
+      clearAnalysisBlock(els.analysis);
+      hideContinue(els.continueWrap, els.continueBtn);
+
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
+
+      renderImportedFlow(els);
+      invalidateOutput(els.results, els.analysis, els.continueWrap, els.continueBtn);
     }
 
     els.calc.addEventListener("click", calc);
@@ -566,19 +602,14 @@
       el.addEventListener("change", invalidate);
     });
 
-    renderFlowNote();
-    hideContinue();
+    renderImportedFlow(els);
+    hideContinue(els.continueWrap, els.continueBtn);
+    if (els.resultsCard) els.resultsCard.hidden = true;
   }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    const year = document.querySelector("[data-year]");
-    if (year) year.textContent = new Date().getFullYear();
-
-    unlockCategoryPage();
-    setTimeout(() => {
-      unlockCategoryPage();
-    }, 400);
-
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wire);
+  } else {
     wire();
-  });
+  }
 })();
