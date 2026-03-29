@@ -5,8 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Access Level Sizing • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate access-control structure complexity and determine whether your access level model will scale cleanly."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=ac-final-010" />
+  <link rel="stylesheet" href="/assets/style.css?v=ac-final-011" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -21,145 +25,144 @@
 </head>
 
 <body data-tier="pro" data-category="access-control" data-step="access-level-sizing" data-lane="v1">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
 
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-dot"></span>
-      <span class="brand-text">ScopedLabs</span>
-    </a>
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/access-control/">Access Control</a>
+      </nav>
+    </div>
+  </header>
 
-    <nav class="site-nav">
-      <a class="nav-pill" href="/">Home</a>
-      <a class="nav-pill" href="/tools/">Tools</a>
-      <a class="nav-pill" href="/tools/access-control/">Access Control</a>
-    </nav>
-  </div>
-</header>
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/access-control/">Access Control</a>
+      <span class="sep">/</span>
+      <span>Access Level Sizing</span>
+    </div>
 
-<main class="container page">
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
 
-  <div class="crumbs">
-    <a href="/tools/">Tools</a>
-    <span class="sep">/</span>
-    <a href="/tools/access-control/">Access Control</a>
-    <span class="sep">/</span>
-    <span>Access Level Sizing</span>
-  </div>
+    <h1>Access Level Sizing</h1>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
+    <div id="pipeline"></div>
+
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool completes the Access Control design flow</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        Use this final step to validate whether the access structure you designed will stay administratively manageable as the system grows.
+      </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        It translates roles, areas, schedules, and grouping into a practical complexity check so you can spot permission sprawl before it becomes operational overhead.
+      </p>
+    </section>
+
+    <p class="subhead">
+      Estimate system complexity and determine if your access design will scale cleanly.
+    </p>
+
+    <div id="flow-note" class="flow-note" hidden>
+      This step validates whether the designed access structure will remain manageable as users, areas, and schedules increase.
+    </div>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> validating whether your access structure will remain manageable or turn into administrative chaos.
+      </p>
+    </section>
+
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+      <div class="pill-row">
         <span class="pill pill--pro">Pro Tier</span>
       </div>
-<h1>Access Level Sizing</h1>
 
-  <div id="pipeline"></div>
+      <h2 class="h2">🔒 Locked</h2>
+      <p class="muted">This tool is included with Pro access for this category.</p>
 
-  
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of Access Level Sizing.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">
-    Estimate system complexity and determine if your access design will scale cleanly.
-  </p>
+      <p class="muted"><strong>What this models</strong></p>
+      <ul class="muted">
+        <li>Total access level count pressure</li>
+        <li>Role-to-area structure complexity</li>
+        <li>Administrative scaling overhead as the system grows</li>
+      </ul>
 
-  <div id="flow-note" class="card" style="display:none;"></div>
+      <div class="actions">
+        <a class="btn" href="/tools/access-control/">Back to Category</a>
+        <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+      </div>
+    </section>
 
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> validating whether your access structure will remain manageable or turn into administrative chaos.
-    </p>
-  </section>
+    <section id="toolCard" class="card tool-card">
+      <h2>Inputs</h2>
 
-  
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
+      <div class="form-grid">
+        <label class="field"><span class="label">User Roles</span><input id="roles" type="number" value="6" min="1" step="1" /></label>
+        <label class="field"><span class="label">Areas</span><input id="areas" type="number" value="8" min="1" step="1" /></label>
+        <label class="field"><span class="label">Schedules</span><input id="schedules" type="number" value="4" min="0" step="1" /></label>
+        <label class="field"><span class="label">Door Groups</span><input id="doorGroups" type="number" value="0" min="0" step="1" /></label>
 
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
+        <label class="field">
+          <span class="label">Complexity</span>
+          <select id="complexity">
+            <option value="simple">Simple</option>
+            <option value="normal" selected>Normal</option>
+            <option value="complex">Complex</option>
+          </select>
+        </label>
+      </div>
 
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
-        </ul>
+      <div class="actions">
+        <button id="calc" class="btn btn-primary" type="button">Analyze</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+      </div>
+    </section>
 
-        <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
+    <section class="card tool-card">
+      <h2>System Evaluation</h2>
+      <div id="results"><div class="muted">Run analysis.</div></div>
+      <div id="analysis-copy" style="display:none;"></div>
 
-      <section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
+      <div style="margin-top:16px;">
+        <canvas id="chart"></canvas>
+      </div>
+    </section>
 
-    <div class="form-grid">
-      <label class="field"><span class="label">User Roles</span><input id="roles" type="number" value="6" /></label>
-      <label class="field"><span class="label">Areas</span><input id="areas" type="number" value="8" /></label>
-      <label class="field"><span class="label">Schedules</span><input id="schedules" type="number" value="4" /></label>
-      <label class="field"><span class="label">Door Groups</span><input id="doorGroups" type="number" value="0" /></label>
-
-      <label class="field">
-        <span class="label">Complexity</span>
-        <select id="complexity">
-          <option value="simple">Simple</option>
-          <option value="normal">Normal</option>
-          <option value="complex">Complex</option>
-        </select>
-      </label>
+    <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+      <a id="continue" class="btn btn-primary" href="/tools/access-control/">
+        Complete Pipeline →
+      </a>
     </div>
 
-    <div class="actions">
-      <button id="calc" class="btn btn-primary">Analyze</button>
-      <button id="reset" class="btn">Reset</button>
+    <div id="complete-wrap" class="card" style="display:none;">
+      <div style="font-weight:600;">✔ Pipeline Complete</div>
+      <div style="opacity:.85;">You now have a full access control system design baseline.</div>
     </div>
-  </section>
 
-  <section class="card tool-card">
-    <h2>System Evaluation</h2>
-    <div id="results"><div class="muted">Run analysis.</div>
-          <div id="analysis-copy" style="display:none;"></div></div>
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
 
-    <!-- GRAPH -->
-    <div style="margin-top:16px;">
-      <canvas id="chart"></canvas>
-    </div>
-  </section>
-
-  <div id="complete-wrap" class="card" style="display:none;">
-    <div style="font-weight:600;">✔ Pipeline Complete</div>
-    <div style="opacity:.85;">You now have a full access control system design baseline.</div>
-  </div>
-
-
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-</main>
-
-
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=010"></script>
-
+  <script src="/assets/tool-flow.js?v=ac-final-011"></script>
+  <script src="/assets/catalog.js?v=ac-final-011"></script>
+  <script src="/assets/pipelines.js?v=ac-final-011"></script>
+  <script src="/assets/pipeline-state.js?v=ac-final-011"></script>
+  <script src="/assets/pipeline.js?v=ac-final-011"></script>
+  <script src="/assets/analyzer.js?v=ac-final-011"></script>
+  <script src="./script.js?v=011"></script>
 </body>
 </html>
-
 
 
 

@@ -1,14 +1,18 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "access-level-sizing";
-const CATEGORY = "access-control";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  const CATEGORY = "access-control";
+  const STEP = "access-level-sizing";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "panel-capacity";
 
-﻿(() => {
+  const FLOW_KEYS = {
+    "reader-type-selector": "scopedlabs:pipeline:access-control:reader-type-selector",
+    "fail-safe-fail-secure": "scopedlabs:pipeline:access-control:fail-safe-fail-secure",
+    "lock-power-budget": "scopedlabs:pipeline:access-control:lock-power-budget",
+    "panel-capacity": "scopedlabs:pipeline:access-control:panel-capacity",
+    "access-level-sizing": "scopedlabs:pipeline:access-control:access-level-sizing"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
   let chart = null;
   let hasResult = false;
@@ -20,12 +24,58 @@ const FLOW_KEYS = {
     doorGroups: $("doorGroups"),
     complexity: $("complexity"),
     results: $("results"),
+    analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     completeWrap: $("complete-wrap"),
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
     calc: $("calc"),
     reset: $("reset"),
-    chart: $("chart")
+    chart: $("chart"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function row(label, value) {
     return `
@@ -42,18 +92,29 @@ const FLOW_KEYS = {
   }
 
   function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
-    els.completeWrap.style.display = "none";
     if (chart) {
       chart.destroy();
       chart = null;
     }
+
     hasResult = false;
+    els.completeWrap.style.display = "none";
+
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
+      emptyMessage: "Run analysis."
+    });
   }
 
   function loadFlow() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
     if (!raw) return;
 
     let parsed = null;
@@ -63,7 +124,7 @@ const FLOW_KEYS = {
       return;
     }
 
-    if (!parsed || parsed.category !== "access-control") return;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) return;
 
     const d = parsed.data || {};
     const panels = num(d.panels);
@@ -74,7 +135,6 @@ const FLOW_KEYS = {
     const utilization = num(d.utilizationPct);
 
     const lines = [];
-
     if (panels) lines.push(`Panels: <strong>${panels}</strong>`);
     if (expansions || expansions === 0) lines.push(`Expansions: <strong>${expansions}</strong>`);
     if (readers) lines.push(`Readers: <strong>${readers}</strong>`);
@@ -82,10 +142,10 @@ const FLOW_KEYS = {
     if (utilization) lines.push(`Utilization: <strong>${utilization.toFixed(1)}%</strong>`);
     if (powerBudget) lines.push(`Estimated Controller Load: <strong>${powerBudget.toFixed(1)} W</strong>`);
 
-    els.flowNote.style.display = "block";
+    els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
-      <strong>Carried over system design:</strong><br>
-      ${lines.length ? lines.join("<br>") : "Prior access-control sizing data detected."}
+      <strong>Flow Context</strong><br>
+      ${lines.length ? lines.join(" | ") : "Prior access-control sizing data detected."}
       <br><br>
       This final step evaluates whether the access structure itself will stay manageable or turn into long-term administrative overhead.
     `;
@@ -124,7 +184,7 @@ const FLOW_KEYS = {
       label: "Healthy",
       insight:
         "The structure should scale cleanly with minimal administrative overhead. Current complexity remains within a range that is typically manageable for day-to-day operations."
-    };
+      };
   }
 
   function renderChart(total, roles, areas, schedules, groups, recommendedLimit) {
@@ -157,9 +217,7 @@ const FLOW_KEYS = {
       beforeDraw(c) {
         const { ctx, chartArea } = c;
         if (!chartArea) return;
-
         const { left, top, width, height } = chartArea;
-
         ctx.save();
         ctx.fillStyle = "rgba(255,255,255,0.05)";
         ctx.fillRect(left, top, width, height);
@@ -242,7 +300,6 @@ const FLOW_KEYS = {
         ctx.fillStyle = "rgba(255, 160, 160, 0.82)";
         ctx.fillText("Risk", x.getPixelForValue(158), top + 14);
 
-        // Marker dot on dominant bar endpoint
         const dominantValue = values[dominantIndex];
         const px = x.getPixelForValue(dominantValue);
         const py = y.getPixelForValue(labels[dominantIndex]);
@@ -297,12 +354,6 @@ const FLOW_KEYS = {
               }
 
               return "rgba(120,170,200,0.18)";
-            },
-            hoverBackgroundColor: (context) => {
-              const v = context.raw;
-              if (v > 150) return "rgba(255, 105, 105, 1)";
-              if (v > 80) return "rgba(255, 198, 95, 1)";
-              return "rgba(135, 255, 182, 1)";
             }
           }
         ]
@@ -376,18 +427,8 @@ const FLOW_KEYS = {
     const groups = num(els.doorGroups.value);
     const complexity = els.complexity.value;
 
-    if (
-      roles <= 0 ||
-      areas <= 0 ||
-      schedules < 0 ||
-      groups < 0
-    ) {
-      els.results.innerHTML = `<div class="muted">Enter valid values and run analysis.</div>`;
-      if (chart) {
-        chart.destroy();
-        chart = null;
-      }
-      els.completeWrap.style.display = "none";
+    if (roles <= 0 || areas <= 0 || schedules < 0 || groups < 0) {
+      invalidate();
       return;
     }
 
@@ -425,21 +466,26 @@ const FLOW_KEYS = {
 
     renderChart(total, roles, areas, schedules, groups, recommendedLimit);
 
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+
     els.completeWrap.style.display = "block";
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "access-control",
-      step: "access-level-sizing",
-      data: {
-        total,
-        risk: risk.label,
-        combinations,
-        scalingPressure,
-        adminLoadIndex: Number(adminLoadIndex),
-        recommendedLimit,
-        overshoot
-      }
-    }));
+    const flowData = {
+      total,
+      risk: risk.label,
+      combinations,
+      scalingPressure,
+      adminLoadIndex: Number(adminLoadIndex),
+      recommendedLimit,
+      overshoot
+    };
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: flowData
+    });
 
     hasResult = true;
   }
@@ -447,122 +493,30 @@ const FLOW_KEYS = {
   els.calc.addEventListener("click", calc);
 
   els.reset.addEventListener("click", () => {
-    els.results.innerHTML = `<div class="muted">Run analysis.</div>`;
-    if (chart) {
-      chart.destroy();
-      chart = null;
-    }
     invalidate();
   });
 
-  Object.values(els).forEach((el) => {
-    if (el && (el.tagName === "INPUT" || el.tagName === "SELECT")) {
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
-    }
+  [els.roles, els.areas, els.schedules, els.doorGroups, els.complexity].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", invalidate);
+    el.addEventListener("change", invalidate);
   });
 
   if (els.chart) {
     els.chart.style.width = "100%";
     els.chart.style.height = "340px";
-    els.chart.parentElement.style.minHeight = "340px";
+    if (els.chart.parentElement) els.chart.parentElement.style.minHeight = "340px";
   }
 
-  loadFlow();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    loadFlow();
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function invalidate() {
-  ScopedLabsAnalyzer.invalidate({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    continueWrapEl: els.continueWrap,
-    continueBtnEl: els.continueBtn,
-    flowKey: FLOW_KEYS[STEP] || "",
-    category: CATEGORY,
-    step: STEP,
-    lane: LANE,
-    emptyMessage: "Enter values and press Calculate."
-  });
-}
-
-
-function renderSuccess(data) {
-  ScopedLabsAnalyzer.renderOutput({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    summaryRows: [],
-    derivedRows: [],
-    status: data.status || "Healthy",
-    interpretation: data.interpretation || "",
-    dominantConstraint: data.dominantConstraint || "",
-    guidance: data.guidance || ""
-  });
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
