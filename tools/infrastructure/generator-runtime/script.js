@@ -1,16 +1,20 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "generator-runtime";
-const CATEGORY = "infrastructure";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  const CATEGORY = "infrastructure";
+  const STEP = "generator-runtime";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "ups-room-sizing";
 
-﻿(() => {
+  const FLOW_KEYS = {
+    "room-square-footage": "scopedlabs:pipeline:infrastructure:room-square-footage",
+    "rack-ru-planner": "scopedlabs:pipeline:infrastructure:rack-ru-planner",
+    "equipment-spacing": "scopedlabs:pipeline:infrastructure:equipment-spacing",
+    "rack-weight-load": "scopedlabs:pipeline:infrastructure:rack-weight-load",
+    "floor-load-rating": "scopedlabs:pipeline:infrastructure:floor-load-rating",
+    "ups-room-sizing": "scopedlabs:pipeline:infrastructure:ups-room-sizing",
+    "generator-runtime": "scopedlabs:pipeline:infrastructure:generator-runtime"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "infrastructure";
-  const CURRENT_STEP = "generator-runtime";
 
   let cachedFlow = null;
   let upstream = null;
@@ -26,10 +30,55 @@ const FLOW_KEYS = {
     results: $("results"),
     flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
-    continueWrap: $("continue-wrap"),
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    completeWrap: $("complete-wrap"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function fmtHours(hours) {
     if (!Number.isFinite(hours) || hours <= 0) return "0h";
@@ -45,40 +94,50 @@ const FLOW_KEYS = {
   function refreshFlowNote() {
     cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
       flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       cachedFlow,
       title: "Infrastructure Context",
       intro:
-        "This final step checks whether backup power endurance is actually aligned with the physical infrastructure already modeled, or whether outage duration becomes the last hidden failure point.",
-      customRows: (() => {
-        const source = ScopedLabsAnalyzer.getUpstreamFlow({
-          flowKey: FLOW_KEY,
-          category: CURRENT_CATEGORY,
-          step: CURRENT_STEP,
-          cachedFlow
-        });
-
-        upstream = source ? (source.data || {}) : null;
-        if (!source || !source.data) return null;
-
-        const d = source.data;
-        const rows = [];
-
-        if (typeof d.finalArea === "number") {
-          rows.push({ label: "UPS Area", value: `${d.finalArea.toFixed(0)} sq ft` });
-        }
-        if (typeof d.density === "string") {
-          rows.push({ label: "Layout Density", value: d.density });
-        }
-        if (typeof d.status === "string") {
-          rows.push({ label: "Previous Status", value: d.status });
-        }
-
-        return rows.length ? rows : null;
-      })()
+        "This final step checks whether backup power endurance is actually aligned with the physical infrastructure already modeled, or whether outage duration becomes the last hidden failure point."
     });
+
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) return;
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) return;
+
+    upstream = parsed.data || {};
+    const rows = [];
+
+    if (typeof upstream.finalArea === "number") {
+      rows.push(`UPS Area: <strong>${upstream.finalArea.toFixed(0)} sq ft</strong>`);
+    }
+    if (typeof upstream.density === "string") {
+      rows.push(`Layout Density: <strong>${upstream.density}</strong>`);
+    }
+    if (typeof upstream.status === "string") {
+      rows.push(`Previous Status: <strong>${upstream.status}</strong>`);
+    }
+
+    if (rows.length) {
+      els.flowNote.hidden = false;
+      els.flowNote.innerHTML = `
+        <strong>Flow Context</strong><br>
+        ${rows.join(" | ")}
+        <br><br>
+        This final step checks whether backup power endurance is actually aligned with the physical infrastructure already modeled, or whether outage duration becomes the last hidden failure point.
+      `;
+    }
   }
 
   function invalidate() {
@@ -86,14 +145,17 @@ const FLOW_KEYS = {
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
       continueWrapEl: els.continueWrap,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      continueBtnEl: els.continueBtn,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       emptyMessage: "Run calculation."
     });
 
+    els.completeWrap.style.display = "none";
     hasResult = false;
     refreshFlowNote();
   }
@@ -235,9 +297,9 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         hours,
         tier,
@@ -247,7 +309,8 @@ const FLOW_KEYS = {
       }
     });
 
-    els.continueWrap.style.display = "block";
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+    els.completeWrap.style.display = "block";
     hasResult = true;
   }
 
@@ -264,69 +327,21 @@ const FLOW_KEYS = {
 
   ["fuel", "rate", "load", "reserve"].forEach((id) => {
     const el = $(id);
+    if (!el) return;
     el.addEventListener("input", invalidate);
     el.addEventListener("change", invalidate);
   });
 
-  refreshFlowNote();
-  invalidate();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    refreshFlowNote();
+    invalidate();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
