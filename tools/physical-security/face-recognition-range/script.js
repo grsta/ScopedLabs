@@ -31,6 +31,7 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    continueWrap: $("next-step-row"),
     continueBtn: $("continue")
   };
 
@@ -64,14 +65,6 @@
 
   function fmtPx(value, digits = 0) {
     return Number.isFinite(value) ? `${value.toFixed(digits)} px` : "—";
-  }
-
-  function hideContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "none";
-  }
-
-  function showContinue() {
-    if (els.continueBtn) els.continueBtn.style.display = "inline-flex";
   }
 
   function applyDefaults() {
@@ -129,6 +122,8 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
       flowKey: FLOW_KEYS.face,
       category: CATEGORY,
       step: STEP,
@@ -136,7 +131,6 @@
       emptyMessage: "Enter values and press Calculate."
     });
 
-    hideContinue();
     renderFlowNote();
   }
 
@@ -276,7 +270,7 @@
 
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    hideContinue();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -305,7 +299,7 @@
     });
 
     writeFlow(data);
-    showContinue();
+    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function calc() {
@@ -336,11 +330,14 @@
   }
 
   function init() {
-    hideContinue();
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    init();
+  });
 })();
