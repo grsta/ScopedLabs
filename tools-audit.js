@@ -1,16 +1,28 @@
 #!/usr/bin/env node
 /**
+<<<<<<< HEAD
  * ScopedLabs tool audit (mode-aware + category index aware)
+=======
+ * ScopedLabs tool audit (mode-aware)
+>>>>>>> 18f754b (Restore backup state)
  *
  * Usage:
  *   node tools-audit.js
  *   node tools-audit.js E:\ScopedLabs
  *
+<<<<<<< HEAD
  * Optional manifest:
  *   tools-audit-manifest.json
  *   {
  *     "tools/physical-security/index.html": { "mode": "category_index" },
  *     "tools/physical-security/pixel-density/index.html": { "mode": "pipeline", "chart": true }
+=======
+ * Optional future manifest support:
+ *   tools-audit-manifest.json
+ *   {
+ *     "tools/physical-security/pixel-density/index.html": { "mode": "pipeline", "chart": true },
+ *     "tools/access-control/credential-format/index.html": { "mode": "standalone_basic" }
+>>>>>>> 18f754b (Restore backup state)
  *   }
  */
 
@@ -43,6 +55,10 @@ const REQUIRED_BODY_ATTRS_PIPELINE = [
 function walk(dir) {
   const out = [];
   if (!fs.existsSync(dir)) return out;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 18f754b (Restore backup state)
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) out.push(...walk(full));
@@ -110,8 +126,13 @@ function getSlugFromPath(indexPath) {
 }
 
 function getCategoryFromPath(indexPath) {
+<<<<<<< HEAD
   const parts = rel(indexPath).split("/");
   return parts.length >= 3 ? parts[1] : "";
+=======
+  const relPath = rel(indexPath).split("/");
+  return relPath.length >= 3 ? relPath[1] : "";
+>>>>>>> 18f754b (Restore backup state)
 }
 
 function escapeRegExp(value) {
@@ -175,7 +196,11 @@ function hasCrumbs(html) {
 }
 
 function hasDesignFlowCard(html) {
+<<<<<<< HEAD
   return has(html, /Part of a Design Flow/i) || has(html, /Design Flow/i);
+=======
+  return has(html, /Part of a Design Flow/i);
+>>>>>>> 18f754b (Restore backup state)
 }
 
 function hasPillPro(html) {
@@ -190,6 +215,7 @@ function jsHasYearInit(jsText) {
   return has(jsText, /document\.querySelector\(\s*["']\[data-year\]["']\s*\)/);
 }
 
+<<<<<<< HEAD
 function isCategoryIndex(indexPath) {
   const rp = rel(indexPath);
   const parts = rp.split("/");
@@ -199,11 +225,22 @@ function isCategoryIndex(indexPath) {
 function detectMode(indexPath, html, jsText, manifestEntry) {
   if (manifestEntry?.mode) return manifestEntry.mode;
   if (isCategoryIndex(indexPath)) return "category_index";
+=======
+function detectMode(indexPath, html, jsText, manifestEntry) {
+  if (manifestEntry?.mode) return manifestEntry.mode;
+>>>>>>> 18f754b (Restore backup state)
 
   const attrs = getBodyAttrs(html);
   const scripts = getNormalizedScripts(html);
 
+<<<<<<< HEAD
   const bodyHasPipelineAttrs = !!attrs["data-step"] && !!attrs["data-lane"];
+=======
+  const bodyHasPipelineAttrs =
+    !!attrs["data-step"] &&
+    !!attrs["data-lane"];
+
+>>>>>>> 18f754b (Restore backup state)
   const hasPipelineBits =
     hasPipelineDom(html) ||
     hasFlowNoteDom(html) ||
@@ -248,11 +285,14 @@ function classifyTool(indexPath, html, jsText, manifest) {
 }
 
 function checkBodyAttrs(info, attrs, issues) {
+<<<<<<< HEAD
   if (info.mode === "category_index" || info.mode === "legacy") {
     if (!attrs["data-category"]) issues.push("Missing body attr: data-category");
     return;
   }
 
+=======
+>>>>>>> 18f754b (Restore backup state)
   for (const attr of REQUIRED_BODY_ATTRS_BASE) {
     if (!attrs[attr]) issues.push(`Missing body attr: ${attr}`);
   }
@@ -265,15 +305,28 @@ function checkBodyAttrs(info, attrs, issues) {
 }
 
 function checkPills(info, html, issues) {
+<<<<<<< HEAD
   if (info.mode === "category_index") return;
   if (info.tier === "pro" && !hasPillPro(html)) issues.push("Pro tool missing .pill--pro");
   if (info.tier === "free" && !hasPillFree(html)) issues.push("Free tool missing .pill--free");
+=======
+  if (info.tier === "pro" && !hasPillPro(html)) {
+    issues.push("Pro tool missing .pill--pro");
+  }
+  if (info.tier === "free" && !hasPillFree(html)) {
+    issues.push("Free tool missing .pill--free");
+  }
+>>>>>>> 18f754b (Restore backup state)
 }
 
 function checkFooter(html, jsText, issues) {
   if (!hasFooter(html)) issues.push("Missing site footer");
   if (!hasYearHook(html)) issues.push("Missing footer [data-year] hook");
+<<<<<<< HEAD
   if (jsText && !jsHasYearInit(jsText)) issues.push("Missing footer year init");
+=======
+  if (!jsHasYearInit(jsText)) issues.push("Missing footer year init");
+>>>>>>> 18f754b (Restore backup state)
 }
 
 function checkSharedScriptsForMode(mode, scripts, issues) {
@@ -286,9 +339,16 @@ function checkSharedScriptsForMode(mode, scripts, issues) {
       SHARED_SCRIPTS.pipeline,
       SHARED_SCRIPTS.analyzer
     ],
+<<<<<<< HEAD
     standalone_analyzer: [SHARED_SCRIPTS.analyzer],
     standalone_basic: [],
     category_index: [],
+=======
+    standalone_analyzer: [
+      SHARED_SCRIPTS.analyzer
+    ],
+    standalone_basic: [],
+>>>>>>> 18f754b (Restore backup state)
     legacy: []
   };
 
@@ -307,7 +367,13 @@ function checkSharedScriptsForMode(mode, scripts, issues) {
     }
   }
 
+<<<<<<< HEAD
   if (missing.length) issues.push(`Missing shared scripts: ${missing.join(", ")}`);
+=======
+  if (missing.length) {
+    issues.push(`Missing shared scripts: ${missing.join(", ")}`);
+  }
+>>>>>>> 18f754b (Restore backup state)
 }
 
 function checkHtml(indexPath, html, jsText, manifest) {
@@ -322,12 +388,18 @@ function checkHtml(indexPath, html, jsText, manifest) {
 
   checkBodyAttrs(info, attrs, issues);
   checkPills(info, html, issues);
+<<<<<<< HEAD
   checkFooter(html, jsText || "", issues);
 
   if (info.mode !== "category_index" && !hasLocalScript(scripts)) {
     issues.push("Missing local script.js include");
   }
 
+=======
+  checkFooter(html, jsText, issues);
+
+  if (!hasLocalScript(scripts)) issues.push("Missing local script.js include");
+>>>>>>> 18f754b (Restore backup state)
   if (!hasCrumbs(html)) issues.push("Missing breadcrumb block");
 
   if (info.mode === "pipeline") {
@@ -340,8 +412,18 @@ function checkHtml(indexPath, html, jsText, manifest) {
     if (!hasToolCard(html)) issues.push("Missing #toolCard");
     if (!hasNextStepRow(html)) issues.push("Missing #next-step-row");
     if (!hasContinue(html)) issues.push("Missing #continue");
+<<<<<<< HEAD
     if (info.tier === "pro" && !hasLockedCard(html)) issues.push("Pro tool missing #lockedCard");
     if (info.tier === "free" && hasLockedCard(html)) issues.push("Free tool should not include #lockedCard");
+=======
+
+    if (info.tier === "pro" && !hasLockedCard(html)) {
+      issues.push("Pro tool missing #lockedCard");
+    }
+    if (info.tier === "free" && hasLockedCard(html)) {
+      issues.push("Free tool should not include #lockedCard");
+    }
+>>>>>>> 18f754b (Restore backup state)
   }
 
   if (info.mode === "standalone_analyzer") {
@@ -349,20 +431,32 @@ function checkHtml(indexPath, html, jsText, manifest) {
     if (!hasResultsDom(html)) issues.push("Missing #results");
     if (!hasBestFor(html)) issues.push("Missing .tool-best-for");
     if (!hasToolCard(html)) issues.push("Missing #toolCard");
+<<<<<<< HEAD
     if (info.tier === "pro" && !hasLockedCard(html)) issues.push("Pro tool missing #lockedCard");
     if (info.tier === "free" && hasLockedCard(html)) issues.push("Free tool should not include #lockedCard");
+=======
+    if (info.tier === "pro" && !hasLockedCard(html)) {
+      issues.push("Pro tool missing #lockedCard");
+    }
+    if (info.tier === "free" && hasLockedCard(html)) {
+      issues.push("Free tool should not include #lockedCard");
+    }
+>>>>>>> 18f754b (Restore backup state)
   }
 
   if (info.mode === "standalone_basic") {
     if (!hasResultsDom(html)) issues.push("Missing #results");
   }
 
+<<<<<<< HEAD
   if (info.mode === "category_index") {
     if (!hasDesignFlowCard(html)) issues.push('Missing category pipeline/design-flow card');
     if (!has(html, /Free Tier/i)) issues.push('Missing Free Tier section');
     if (!has(html, /Pro Tier/i)) issues.push('Missing Pro Tier section');
   }
 
+=======
+>>>>>>> 18f754b (Restore backup state)
   checkSharedScriptsForMode(info.mode, scripts, issues);
 
   return {
@@ -381,12 +475,21 @@ function checkJs(indexPath, jsPath, jsText, htmlText, manifest) {
   const step = attrs["data-step"] || "";
   const category = info.category || "";
 
+<<<<<<< HEAD
   if (info.mode !== "category_index" && !jsText) {
     return { kind: "js", info, issues: ["Missing script.js"] };
   }
 
   if (!jsText) {
     return { kind: "js", info, issues };
+=======
+  if (!jsText) {
+    return {
+      kind: "js",
+      info,
+      issues: ["Missing script.js"]
+    };
+>>>>>>> 18f754b (Restore backup state)
   }
 
   const modeRequirements = {
@@ -399,9 +502,16 @@ function checkJs(indexPath, jsPath, jsText, htmlText, manifest) {
       "const STEP",
       "const PREVIOUS_STEP"
     ],
+<<<<<<< HEAD
     standalone_analyzer: ["ScopedLabsAnalyzer.renderOutput"],
     standalone_basic: [],
     category_index: [],
+=======
+    standalone_analyzer: [
+      "ScopedLabsAnalyzer.renderOutput"
+    ],
+    standalone_basic: [],
+>>>>>>> 18f754b (Restore backup state)
     legacy: []
   };
 
@@ -420,7 +530,10 @@ function checkJs(indexPath, jsPath, jsText, htmlText, manifest) {
       { re: /window\.addEventListener\(["']DOMContentLoaded["']/, msg: "Missing DOMContentLoaded init" }
     ],
     standalone_basic: [],
+<<<<<<< HEAD
     category_index: [],
+=======
+>>>>>>> 18f754b (Restore backup state)
     legacy: []
   };
 
@@ -439,6 +552,7 @@ function checkJs(indexPath, jsPath, jsText, htmlText, manifest) {
   }
 
   if (category && has(jsText, "const CATEGORY")) {
+<<<<<<< HEAD
     const ok = has(jsText, new RegExp(`const\\s+CATEGORY\\s*=\\s*["']${escapeRegExp(category)}["']`));
     if (!ok) issues.push(`CATEGORY constant does not match body data-category (${category})`);
   }
@@ -449,6 +563,32 @@ function checkJs(indexPath, jsPath, jsText, htmlText, manifest) {
   }
 
   return { kind: "js", info, issues };
+=======
+    const bodyCategoryMismatch = !has(
+      jsText,
+      new RegExp(`const\\s+CATEGORY\\s*=\\s*["']${escapeRegExp(category)}["']`)
+    );
+    if (bodyCategoryMismatch) {
+      issues.push(`CATEGORY constant does not match body data-category (${category})`);
+    }
+  }
+
+  if (step && has(jsText, "const STEP")) {
+    const bodyStepMismatch = !has(
+      jsText,
+      new RegExp(`const\\s+STEP\\s*=\\s*["']${escapeRegExp(step)}["']`)
+    );
+    if (bodyStepMismatch) {
+      issues.push(`STEP constant does not match body data-step (${step})`);
+    }
+  }
+
+  return {
+    kind: "js",
+    info,
+    issues
+  };
+>>>>>>> 18f754b (Restore backup state)
 }
 
 function summarizeByMode(report) {
@@ -493,6 +633,10 @@ function main() {
     const jsResult = checkJs(indexPath, jsPath, jsText, html, manifest);
 
     const issues = [...htmlResult.issues, ...jsResult.issues];
+<<<<<<< HEAD
+=======
+
+>>>>>>> 18f754b (Restore backup state)
     if (issues.length) {
       withIssues += 1;
       totalIssues += issues.length;
@@ -520,8 +664,13 @@ function main() {
   const modeSummary = summarizeByMode(report);
 
   console.log("");
+<<<<<<< HEAD
   console.log("SCOPEDLABS TOOL AUDIT (CATEGORY INDEX AWARE)");
   console.log("===========================================");
+=======
+  console.log("SCOPEDLABS TOOL AUDIT (MODE-AWARE)");
+  console.log("=================================");
+>>>>>>> 18f754b (Restore backup state)
   console.log(`Root: ${ROOT}`);
   console.log(`Tools scanned: ${report.length}`);
   console.log(`Tools with issues: ${withIssues}`);
@@ -531,7 +680,13 @@ function main() {
   console.log("BY MODE");
   console.log("-------");
   for (const [mode, stats] of modeSummary) {
+<<<<<<< HEAD
     console.log(`${mode}: count=${stats.count}, with_issues=${stats.withIssues}, issues=${stats.issues}`);
+=======
+    console.log(
+      `${mode}: count=${stats.count}, with_issues=${stats.withIssues}, issues=${stats.issues}`
+    );
+>>>>>>> 18f754b (Restore backup state)
   }
   console.log("");
 
@@ -542,8 +697,16 @@ function main() {
     console.log(`  tier/category/step: ${item.tier} / ${item.category} / ${item.step}`);
     console.log(`  mode: ${item.mode}`);
     console.log(`  chart.js: ${item.hasChartJs ? "yes" : "no"}`);
+<<<<<<< HEAD
     if (item.issues.length) {
       for (const issue of item.issues) console.log(`   - ${issue}`);
+=======
+
+    if (item.issues.length) {
+      for (const issue of item.issues) {
+        console.log(`   - ${issue}`);
+      }
+>>>>>>> 18f754b (Restore backup state)
     }
     console.log("");
   }
