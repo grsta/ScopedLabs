@@ -1,8 +1,8 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "poe-budget";
-const CATEGORY = "network";
 (() => {
+  const CATEGORY = "network";
+  const STEP = "poe-budget";
+  const LANE = "v1";
+
   const FLOW_KEYS = {
     poe: "scopedlabs:pipeline:network:poe-budget",
     bandwidth: "scopedlabs:pipeline:network:bandwidth",
@@ -49,7 +49,7 @@ const CATEGORY = "network";
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
-    continueBtn: $("to-bandwidth")
+    continueBtn: $("continue")
   };
 
   function safeNum(el, fallback = NaN) {
@@ -177,8 +177,16 @@ const CATEGORY = "network";
       compositeScore: utilPct,
       metrics: [
         { label: "Switch Budget Pressure", value: utilPct, displayValue: fmtPct(utilPct) },
-        { label: "Safe-Band Pressure", value: safeBudgetW > 0 ? (totalDrawW / safeBudgetW) * 100 : 0, displayValue: safeBudgetW > 0 ? fmtPct((totalDrawW / safeBudgetW) * 100) : "—" },
-        { label: "Per-Port Load Pressure", value: portPowerPressurePct, displayValue: fmtPct(portPowerPressurePct) }
+        {
+          label: "Safe-Band Pressure",
+          value: safeBudgetW > 0 ? (totalDrawW / safeBudgetW) * 100 : 0,
+          displayValue: safeBudgetW > 0 ? fmtPct((totalDrawW / safeBudgetW) * 100) : "—"
+        },
+        {
+          label: "Per-Port Load Pressure",
+          value: portPowerPressurePct,
+          displayValue: fmtPct(portPowerPressurePct)
+        }
       ],
       healthyMax: safeBandPct,
       watchMax: 95
@@ -369,27 +377,3 @@ const CATEGORY = "network";
     reset();
   });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-function invalidate() {
-  ScopedLabsAnalyzer.invalidate({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    continueWrapEl: els.continueWrap,
-    continueBtnEl: els.continueBtn,
-    flowKey: FLOW_KEYS[STEP] || "",
-    category: CATEGORY,
-    step: STEP,
-    lane: LANE,
-    emptyMessage: "Enter values and press Calculate."
-  });
-}
