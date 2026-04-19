@@ -1,14 +1,20 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "lock-power-budget";
-const CATEGORY = "access-control";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "access-control";
+  const STEP = "lock-power-budget";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "reader-type-selector";
+
+  const FLOW_KEYS = {
+    "fail-safe-fail-secure": "scopedlabs:pipeline:access-control:fail-safe-fail-secure",
+    "reader-type-selector": "scopedlabs:pipeline:access-control:reader-type-selector",
+    "lock-power-budget": "scopedlabs:pipeline:access-control:lock-power-budget",
+    "panel-capacity": "scopedlabs:pipeline:access-control:panel-capacity",
+    "access-level-sizing": "scopedlabs:pipeline:access-control:access-level-sizing"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
   let chart = null;
   let chartWrap = null;
@@ -24,10 +30,54 @@ const FLOW_KEYS = {
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
+    analysis: $("analysis-copy"),
     nextWrap: $("continue-wrap"),
     nextBtn: $("continue"),
-    flowNote: $("flow-note")
+    flowNote: $("flow-note"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function destroyChart() {
     if (chart) {
@@ -41,7 +91,7 @@ const FLOW_KEYS = {
   }
 
   function showContinue() {
-    els.nextWrap.style.display = "block";
+    els.nextWrap.style.display = "flex";
     els.nextBtn.disabled = false;
     hasResult = true;
   }
@@ -53,10 +103,17 @@ const FLOW_KEYS = {
   }
 
   function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["panel-capacity"]);
+      sessionStorage.removeItem(FLOW_KEYS["access-level-sizing"]);
+    } catch {}
+
     destroyChart();
     hideContinue();
+    els.results.innerHTML = `<div class="muted">Run calculation.</div>`;
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    loadFlowContext();
   }
 
   function row(label, value) {
@@ -73,31 +130,48 @@ const FLOW_KEYS = {
   }
 
   function loadFlowContext() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return;
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
     let parsed = null;
     try {
       parsed = JSON.parse(raw);
     } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
-    if (!parsed || parsed.category !== "access-control") return;
+    if (!parsed || parsed.category !== "access-control" || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
     const d = parsed.data || {};
     const lines = [];
 
-    if (d.recommendation) lines.push(String(d.recommendation));
-    if (d.reader) lines.push(String(d.reader));
-    if (d.confidence) lines.push(`Confidence: ${d.confidence}`);
+    if (d.readerType) lines.push(`Reader Type: <strong>${d.readerType}</strong>`);
+    if (d.recommendedMounting) lines.push(`Mounting: <strong>${d.recommendedMounting}</strong>`);
+    if (d.environment) lines.push(`Environment: <strong>${d.environment}</strong>`);
+    if (d.priority) lines.push(`Priority: <strong>${d.priority}</strong>`);
 
-    if (!lines.length) return;
+    if (!lines.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    els.flowNote.style.display = "block";
+    els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
-      <strong>Upstream decisions:</strong><br>
-      ${lines.join("<br>")}
+      <strong>Flow Context</strong><br>
+      ${lines.join(" | ")}
+      <br><br>
+      Use that reader decision as the basis for estimating whether the chosen lock hardware can be supported cleanly under simultaneous unlock demand.
     `;
   }
 
@@ -122,9 +196,9 @@ const FLOW_KEYS = {
       return `Peak event load of ${peak.toFixed(2)} A is pushing the supply too hard. Required budget rises to ${required.toFixed(2)} A / ${watts.toFixed(1)} W once headroom is included, which is not where you want a lock circuit to live.`;
     }
     if (status === "WATCH") {
-      return `The design is within range, but only with moderate reserve. Unlock bursts, cable losses, and future changes could move this supply from acceptable to problematic.`;
+      return "The design is within range, but only with moderate reserve. Unlock bursts, cable losses, and future changes could move this supply from acceptable to problematic.";
     }
-    return `The design stays well inside a healthy operating envelope. Peak unlock demand and reserved headroom remain balanced, which is what you want for stable lock behavior.`;
+    return "The design stays well inside a healthy operating envelope. Peak unlock demand and reserved headroom remain balanced, which is what you want for stable lock behavior.";
   }
 
   function renderChart(metrics) {
@@ -436,16 +510,17 @@ const FLOW_KEYS = {
       utilizationPct
     });
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "access-control",
-      step: "lock-power-budget",
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
-        req: required,
+        peakLoadA: peak,
+        requiredSupplyA: required,
         watts,
         utilizationPct,
         status
       }
-    }));
+    });
 
     showContinue();
   }
@@ -458,113 +533,26 @@ const FLOW_KEYS = {
     invalidate();
   });
 
-  Object.values(els).forEach((el) => {
-    if (el && (el.tagName === "INPUT" || el.tagName === "SELECT")) {
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
-    }
+  [els.lockType, els.voltage, els.amps, els.locks, els.simul, els.headroom].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", invalidate);
+    el.addEventListener("change", invalidate);
   });
 
   els.nextBtn.addEventListener("click", () => {
     window.location.href = "/tools/access-control/panel-capacity/";
   });
 
-  loadFlowContext();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    loadFlowContext();
+    hideContinue();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function invalidate() {
-  ScopedLabsAnalyzer.invalidate({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    continueWrapEl: els.continueWrap,
-    continueBtnEl: els.continueBtn,
-    flowKey: FLOW_KEYS[STEP] || "",
-    category: CATEGORY,
-    step: STEP,
-    lane: LANE,
-    emptyMessage: "Enter values and press Calculate."
-  });
-}
-
-
-function renderSuccess(data) {
-  ScopedLabsAnalyzer.renderOutput({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    summaryRows: [],
-    derivedRows: [],
-    status: data.status || "Healthy",
-    interpretation: data.interpretation || "",
-    dominantConstraint: data.dominantConstraint || "",
-    guidance: data.guidance || ""
-  });
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
