@@ -15,7 +15,6 @@
   const $ = (id) => document.getElementById(id);
 
   let chart = null;
-  let hasResult = false;
 
   const els = {
     roles: $("roles"),
@@ -97,7 +96,6 @@
       chart = null;
     }
 
-    hasResult = false;
     els.completeWrap.style.display = "none";
 
     ScopedLabsAnalyzer.invalidate({
@@ -111,20 +109,32 @@
       lane: LANE,
       emptyMessage: "Run analysis."
     });
+
+    loadFlow();
   }
 
   function loadFlow() {
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
-    if (!raw) return;
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
     let parsed = null;
     try {
       parsed = JSON.parse(raw);
     } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) return;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
     const d = parsed.data || {};
     const panels = num(d.panels);
@@ -142,10 +152,16 @@
     if (utilization) lines.push(`Utilization: <strong>${utilization.toFixed(1)}%</strong>`);
     if (powerBudget) lines.push(`Estimated Controller Load: <strong>${powerBudget.toFixed(1)} W</strong>`);
 
+    if (!lines.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
     els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
       <strong>Flow Context</strong><br>
-      ${lines.length ? lines.join(" | ") : "Prior access-control sizing data detected."}
+      ${lines.join(" | ")}
       <br><br>
       This final step evaluates whether the access structure itself will stay manageable or turn into long-term administrative overhead.
     `;
@@ -184,7 +200,7 @@
       label: "Healthy",
       insight:
         "The structure should scale cleanly with minimal administrative overhead. Current complexity remains within a range that is typically manageable for day-to-day operations."
-      };
+    };
   }
 
   function renderChart(total, roles, areas, schedules, groups, recommendedLimit) {
@@ -486,8 +502,6 @@
       step: STEP,
       data: flowData
     });
-
-    hasResult = true;
   }
 
   els.calc.addEventListener("click", calc);

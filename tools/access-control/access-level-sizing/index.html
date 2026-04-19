@@ -10,7 +10,7 @@
     content="Estimate access-control structure complexity and determine whether your access level model will scale cleanly."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=ac-final-011" />
+  <link rel="stylesheet" href="/assets/style.css?v=ac-final-012" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -68,19 +68,11 @@
       </p>
     </section>
 
-    <p class="subhead">
-      Estimate system complexity and determine if your access design will scale cleanly.
+    <p class="tool-best-for">
+      <strong>Best for:</strong> validating whether your access structure will remain manageable or turn into administrative chaos.
     </p>
 
-    <div id="flow-note" class="flow-note" hidden>
-      This step validates whether the designed access structure will remain manageable as users, areas, and schedules increase.
-    </div>
-
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> validating whether your access structure will remain manageable or turn into administrative chaos.
-      </p>
-    </section>
+    <div id="flow-note" class="flow-note" hidden></div>
 
     <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
       <div class="pill-row">
@@ -103,14 +95,29 @@
       </div>
     </section>
 
-    <section id="toolCard" class="card tool-card">
-      <h2>Inputs</h2>
+    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+      <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
 
-      <div class="form-grid">
-        <label class="field"><span class="label">User Roles</span><input id="roles" type="number" value="6" min="1" step="1" /></label>
-        <label class="field"><span class="label">Areas</span><input id="areas" type="number" value="8" min="1" step="1" /></label>
-        <label class="field"><span class="label">Schedules</span><input id="schedules" type="number" value="4" min="0" step="1" /></label>
-        <label class="field"><span class="label">Door Groups</span><input id="doorGroups" type="number" value="0" min="0" step="1" /></label>
+      <div class="form-grid" style="margin-top: 14px;">
+        <label class="field">
+          <span class="label">User Roles</span>
+          <input id="roles" type="number" value="6" min="1" step="1" />
+        </label>
+
+        <label class="field">
+          <span class="label">Areas</span>
+          <input id="areas" type="number" value="8" min="1" step="1" />
+        </label>
+
+        <label class="field">
+          <span class="label">Schedules</span>
+          <input id="schedules" type="number" value="4" min="0" step="1" />
+        </label>
+
+        <label class="field">
+          <span class="label">Door Groups</span>
+          <input id="doorGroups" type="number" value="0" min="0" step="1" />
+        </label>
 
         <label class="field">
           <span class="label">Complexity</span>
@@ -122,19 +129,25 @@
         </label>
       </div>
 
-      <div class="actions">
+      <div class="btn-row" style="margin-top: 14px;">
         <button id="calc" class="btn btn-primary" type="button">Analyze</button>
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
-    </section>
 
-    <section class="card tool-card">
-      <h2>System Evaluation</h2>
-      <div id="results"><div class="muted">Run analysis.</div></div>
-      <div id="analysis-copy" style="display:none;"></div>
+      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Results</h3>
+        <div id="results" class="results-grid" aria-live="polite">
+          <div class="muted">Run analysis.</div>
+        </div>
+        <div id="analysis-copy" style="display:none;"></div>
 
-      <div style="margin-top:16px;">
-        <canvas id="chart"></canvas>
+        <div style="margin-top:16px;">
+          <canvas id="chart"></canvas>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top: 14px;">
+        <a class="btn" href="/tools/access-control/">Back to Access Control</a>
       </div>
     </section>
 
@@ -154,13 +167,13 @@
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=ac-final-011"></script>
-  <script src="/assets/catalog.js?v=ac-final-011"></script>
-  <script src="/assets/pipelines.js?v=ac-final-011"></script>
-  <script src="/assets/pipeline-state.js?v=ac-final-011"></script>
-  <script src="/assets/pipeline.js?v=ac-final-011"></script>
-  <script src="/assets/analyzer.js?v=ac-final-011"></script>
-  <script src="./script.js?v=011"></script>
+  <script src="/assets/tool-flow.js?v=ac-final-012"></script>
+  <script src="/assets/catalog.js?v=ac-final-012"></script>
+  <script src="/assets/pipelines.js?v=ac-final-012"></script>
+  <script src="/assets/pipeline-state.js?v=ac-final-012"></script>
+  <script src="/assets/pipeline.js?v=ac-final-012"></script>
+  <script src="/assets/analyzer.js?v=ac-final-012"></script>
+  <script src="./script.js?v=012"></script>
 </body>
 </html>
 
