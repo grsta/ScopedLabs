@@ -1,17 +1,24 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "backup-window";
-const CATEGORY = "compute";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "compute";
+  const STEP = "backup-window";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "raid-rebuild-time";
+
+  const FLOW_KEYS = {
+    "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
+    "ram-sizing": "scopedlabs:pipeline:compute:ram-sizing",
+    "storage-iops": "scopedlabs:pipeline:compute:storage-iops",
+    "storage-throughput": "scopedlabs:pipeline:compute:storage-throughput",
+    "vm-density": "scopedlabs:pipeline:compute:vm-density",
+    "gpu-vram": "scopedlabs:pipeline:compute:gpu-vram",
+    "power-thermal": "scopedlabs:pipeline:compute:power-thermal",
+    "raid-rebuild-time": "scopedlabs:pipeline:compute:raid-rebuild-time",
+    "backup-window": "scopedlabs:pipeline:compute:backup-window"
+  };
+
   const $ = (id) => document.getElementById(id);
-
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "compute";
-  const CURRENT_STEP = "backup-window";
 
   let hasResult = false;
   let cachedFlow = null;
@@ -33,8 +40,51 @@ const FLOW_KEYS = {
     continueBtn: $("continueBtn"),
     analysisCopy: $("analysis-copy"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function formatHours(hours) {
     if (!Number.isFinite(hours) || hours <= 0) return "0m";
@@ -47,52 +97,68 @@ const FLOW_KEYS = {
   }
 
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "System Context",
-      intro:
-        "This final step evaluates whether the backup plan fits inside the platform's recovery and failure envelope without turning protection jobs into an operational bottleneck.",
-      customRows: (() => {
-        const source = ScopedLabsAnalyzer.getUpstreamFlow({
-          flowKey: FLOW_KEY,
-          category: CURRENT_CATEGORY,
-          step: CURRENT_STEP,
-          cachedFlow
-        });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
 
-        upstreamContext = source ? (source.data || {}) : null;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
 
-        if (!source || !source.data) return null;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
 
-        const data = source.data;
-        const rows = [];
+    const data = parsed.data || {};
+    upstreamContext = data;
 
-        if (typeof data.vms === "number") {
-          rows.push({ label: "VM Capacity", value: `${data.vms}` });
-        }
+    const rows = [];
+    if (Number.isFinite(Number(data.rebuildHours))) {
+      rows.push(`RAID Rebuild: <strong>${formatHours(Number(data.rebuildHours))}</strong>`);
+    }
+    if (data.status) {
+      rows.push(`Upstream Status: <strong>${String(data.status)}</strong>`);
+    }
+    if (data.protectionClass) {
+      rows.push(`Protection Class: <strong>${String(data.protectionClass)}</strong>`);
+    }
+    if (data.crossCheck) {
+      rows.push(`Cross-Check: <strong>${String(data.crossCheck)}</strong>`);
+    }
 
-        if (typeof data.densityClass === "string") {
-          rows.push({ label: "Density Class", value: data.densityClass });
-        }
+    if (!rows.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-        if (typeof data.crossCheck === "string") {
-          rows.push({ label: "Cross-Check", value: data.crossCheck });
-        }
-
-        if (typeof data.status === "string") {
-          rows.push({ label: "Upstream Status", value: data.status });
-        }
-
-        return rows.length ? rows : null;
-      })()
-    });
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${rows.join(" | ")}
+      <br><br>
+      This final step checks whether backup timing still fits inside the broader resilience profile the compute platform already established.
+    `;
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
@@ -100,9 +166,10 @@ const FLOW_KEYS = {
       continueBtnEl: els.continueBtn,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       emptyMessage: "Run calculation."
     });
 
@@ -147,8 +214,8 @@ const FLOW_KEYS = {
     const schedulePressure = ScopedLabsAnalyzer.clamp((hours / referenceWindowHours) * 100, 0, 160);
 
     let recoveryWindowHours = null;
-    if (upstreamContext && typeof upstreamContext.vms === "number") {
-      recoveryWindowHours = Math.max(4, upstreamContext.vms * 0.35);
+    if (upstreamContext && Number.isFinite(Number(upstreamContext.rebuildHours))) {
+      recoveryWindowHours = Math.max(4, Number(upstreamContext.rebuildHours));
     }
 
     const recoveryCollision = recoveryWindowHours
@@ -288,9 +355,9 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         hours,
         backupHours: hours,
@@ -330,65 +397,16 @@ const FLOW_KEYS = {
     el.addEventListener("change", invalidate);
   });
 
-  refreshFlowNote();
-  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    refreshFlowNote();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
