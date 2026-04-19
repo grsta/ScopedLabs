@@ -1,22 +1,27 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "cpu-sizing";
-const CATEGORY = "compute";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "compute";
+  const STEP = "cpu-sizing";
+  const LANE = "v1";
+
+  const FLOW_KEYS = {
+    "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
+    "ram-sizing": "scopedlabs:pipeline:compute:ram-sizing",
+    "storage-iops": "scopedlabs:pipeline:compute:storage-iops",
+    "storage-throughput": "scopedlabs:pipeline:compute:storage-throughput",
+    "vm-density": "scopedlabs:pipeline:compute:vm-density",
+    "gpu-vram": "scopedlabs:pipeline:compute:gpu-vram",
+    "power-thermal": "scopedlabs:pipeline:compute:power-thermal",
+    "raid-rebuild-time": "scopedlabs:pipeline:compute:raid-rebuild-time",
+    "backup-window": "scopedlabs:pipeline:compute:backup-window"
+  };
+
   const $ = (id) => document.getElementById(id);
-
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "compute";
-  const CURRENT_STEP = "cpu-sizing";
 
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
   let hasResult = false;
-  let cachedFlow = null;
 
   const els = {
     workload: $("workload"),
@@ -27,7 +32,7 @@ const FLOW_KEYS = {
     smt: $("smt"),
     results: $("results"),
     flowNote: $("flow-note"),
-    analysisCopy: $("analysisCopy") || $("analysis-copy"),
+    analysisCopy: $("analysis-copy"),
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
@@ -43,19 +48,23 @@ const FLOW_KEYS = {
   }
 
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "System Context",
-      intro:
-        "This step establishes the baseline CPU envelope that later memory, storage, and throughput decisions must live inside."
-    });
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["ram-sizing"]);
+      sessionStorage.removeItem(FLOW_KEYS["storage-iops"]);
+      sessionStorage.removeItem(FLOW_KEYS["storage-throughput"]);
+      sessionStorage.removeItem(FLOW_KEYS["vm-density"]);
+      sessionStorage.removeItem(FLOW_KEYS["gpu-vram"]);
+      sessionStorage.removeItem(FLOW_KEYS["power-thermal"]);
+      sessionStorage.removeItem(FLOW_KEYS["raid-rebuild-time"]);
+      sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
@@ -63,9 +72,11 @@ const FLOW_KEYS = {
       continueBtnEl: els.continue,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
+      emptyMessage: "Enter values and press Calculate."
     });
 
     hasResult = false;
@@ -201,9 +212,9 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         cores: rec,
         physicalCores: physicalRec,
@@ -239,16 +250,10 @@ const FLOW_KEYS = {
     window.location.href = "/tools/compute/ram-sizing/";
   });
 
-  refreshFlowNote();
-  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    refreshFlowNote();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});

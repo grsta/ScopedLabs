@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>CPU Sizing Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=cpu-pipeline-011" />
+  <link rel="stylesheet" href="/assets/style.css?v=cpu-pipeline-012" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,6 +15,42 @@
   </script>
   <script defer src="/assets/auth.js?v=0407"></script>
   <script defer src="/assets/app.js?v=0407"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="compute" data-step="cpu-sizing" data-lane="v1">
@@ -42,40 +78,35 @@
       <span>CPU Sizing</span>
     </div>
 
-    
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--free">Free Tier</span>
-      </div>
-<h1>CPU Sizing Estimator</h1>
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--free">Free Tier</span>
+    </div>
+
+    <h1>CPU Sizing Estimator</h1>
 
     <div id="pipeline"></div>
 
-    
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of CPU Sizing Estimator.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">Estimate CPU cores needed based on workload type, concurrency, and utilization target.</p>
-
-    <div id="flow-note" class="card" style="display:none;"></div>
-
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> establishing a compute baseline and identifying early CPU bottlenecks before sizing memory or storage.
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool starts the Compute design flow</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        Use this first to establish the baseline CPU envelope before moving into memory, storage, virtualization density, and resilience planning.
+      </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        This step defines whether the processor layer has enough headroom for concurrency, burst behavior, and scheduling overhead before the rest of the platform is sized around it.
       </p>
     </section>
 
-    <section id="toolCard" class="card tool-card">
-      <h2>Inputs</h2>
+    <p class="tool-best-for">
+      <strong>Best for:</strong> establishing a compute baseline and identifying early CPU bottlenecks before sizing memory or storage.
+    </p>
 
-      <div class="form-grid">
+    <div id="flow-note" class="flow-note" hidden></div>
+
+    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+      <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+
+      <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
           <span class="label">Workload Type</span>
           <select id="workload">
@@ -121,39 +152,46 @@
         </label>
       </div>
 
-      <div class="actions">
-        <button id="calc" class="btn btn-primary">Calculate</button>
-        <button id="reset" class="btn">Reset</button>
+      <div class="btn-row" style="margin-top: 14px;">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+      </div>
+
+      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Results</h3>
+        <div id="results" class="results-grid" aria-live="polite">
+          <div class="muted">Enter values and press Calculate.</div>
+        </div>
+        <div id="analysis-copy" style="display:none;"></div>
+
+        <p class="mini-note">
+          Model: effective CPU demand is based on concurrency, per-worker utilization, workload factor, burst multiplier, and target utilization ceiling. This is a planning tool for capacity shaping, not a benchmark replacement.
+        </p>
+      </div>
+
+      <div class="btn-row" style="margin-top: 14px;">
+        <a class="btn" href="/tools/compute/">Back to Compute</a>
       </div>
     </section>
 
-    <section class="card tool-card">
-      <h2>Results</h2>
-      <div id="results" class="results">
-        <div class="muted">Enter values and press Calculate.</div>
-      </div>
-      <div id="analysis-copy" style="display:none;"></div>
-    </section>
-
-    <div id="continue-wrap" class="card" style="display:none;">
+    <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
       <button id="continue" class="btn btn-primary" disabled>
         Continue → RAM Sizing
       </button>
     </div>
-  
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-</main>
 
-  
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=0011"></script>
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
+
+  <script src="/assets/tool-flow.js?v=cpu-pipeline-012"></script>
+  <script src="/assets/catalog.js?v=cpu-pipeline-012"></script>
+  <script src="/assets/pipelines.js?v=cpu-pipeline-012"></script>
+  <script src="/assets/pipeline-state.js?v=cpu-pipeline-012"></script>
+  <script src="/assets/pipeline.js?v=cpu-pipeline-012"></script>
+  <script src="/assets/analyzer.js?v=cpu-pipeline-012"></script>
+  <script src="./script.js?v=0012"></script>
 
 </body>
 </html>
