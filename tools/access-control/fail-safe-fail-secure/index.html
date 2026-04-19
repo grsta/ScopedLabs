@@ -7,10 +7,46 @@
   <title>Fail-Safe vs Fail-Secure • ScopedLabs</title>
   <meta name="description" content="Determine correct door behavior based on life safety, threat level, and power conditions." />
 
-  <link rel="stylesheet" href="/assets/style.css?v=ac-fail-005" />
+  <link rel="stylesheet" href="/assets/style.css?v=ac-fail-006" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="/assets/auth.js?v=0406"></script>
   <script defer src="/assets/app.js?v=0406"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="access-control" data-step="fail-safe-fail-secure" data-lane="v1">
@@ -31,7 +67,6 @@
   </header>
 
   <main class="container page">
-
     <div class="crumbs">
       <a href="/tools/">Tools</a>
       <span class="sep">/</span>
@@ -40,46 +75,35 @@
       <span>Fail-Safe vs Fail-Secure</span>
     </div>
 
-    
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--free">Free Tier</span>
-      </div>
-<h1>Fail-Safe vs Fail-Secure</h1>
-    
-     <!-- PIPELINE -->
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--free">Free Tier</span>
+    </div>
+
+    <h1>Fail-Safe vs Fail-Secure</h1>
+
     <div id="pipeline"></div>
 
-    
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of Fail-Safe vs Fail-Secure.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">
-      Determine how a door should behave during power loss based on life safety, security, and real-world conditions.
-    </p>
-
-    <!-- BEST FOR -->
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> deciding door behavior early so you don’t choose the wrong lock type or create life-safety conflicts later.
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool starts the Access Control design flow</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        Use this first to determine how a door should behave during power loss before you choose reader strategy, lock power, panel sizing, and long-term access structure.
+      </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        This is the logic gate for the rest of the access-control lane, because the wrong fail state can create life-safety conflicts or security exposure before hardware selection is even finalized.
       </p>
     </section>
 
-    <!-- FLOW NOTE -->
-    <div id="flow-note"></div>
+    <p class="tool-best-for">
+      <strong>Best for:</strong> deciding door behavior early so you don’t choose the wrong lock type or create life-safety conflicts later.
+    </p>
 
-    <!-- INPUTS -->
-    <section id="toolCard" class="card tool-card">
-      <h2>Inputs</h2>
+    <div id="flow-note" class="flow-note" hidden></div>
 
-      <div class="form-grid">
+    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+      <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+
+      <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
           <span class="label">Door Type</span>
           <select id="doorType">
@@ -126,45 +150,47 @@
         </label>
       </div>
 
-      <div class="actions">
-        <button id="calc" class="btn btn-primary">Evaluate</button>
-        <button id="reset" class="btn">Reset</button>
+      <div class="btn-row" style="margin-top: 14px;">
+        <button id="calc" class="btn btn-primary" type="button">Evaluate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+      </div>
+
+      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Recommendation</h3>
+        <div id="results" class="results-grid" aria-live="polite">
+          <div class="muted">Run the evaluation to see results.</div>
+        </div>
+        <div id="analysis-copy" style="display:none;"></div>
+
+        <p class="mini-note">
+          Model: recommendation is based on life safety, threat pressure, power reliability, fire integration, and door function. This is a planning decision tool, not a substitute for code compliance review or AHJ requirements.
+        </p>
+      </div>
+
+      <div class="btn-row" style="margin-top: 14px;">
+        <a class="btn" href="/tools/access-control/">Back to Access Control</a>
       </div>
     </section>
 
-    <!-- RESULTS -->
-    <section class="card tool-card">
-      <h2>Recommendation</h2>
-      <div id="results" class="results">
-        <div class="muted">Run the evaluation to see results.</div>
-          <div id="analysis-copy" style="display:none;"></div>
-      </div>
-    </section>
-
-    <!-- CONTINUE -->
-    <div id="continue-wrap" class="card" style="display:none;">
-      <button id="continue" class="btn btn-primary">Continue → Reader Type</button>
+    <div id="continue-wrap" class="btn-row" style="margin-top: 12px; display:none;">
+      <button id="continue" class="btn btn-primary" type="button">Continue → Reader Type</button>
     </div>
 
-  
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-</main>
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
 
-  <!-- SCRIPT ORDER (LOCKED) -->
-  
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js"></script>
+  <script src="/assets/tool-flow.js?v=ac-fail-006"></script>
+  <script src="/assets/catalog.js?v=ac-fail-006"></script>
+  <script src="/assets/pipelines.js?v=ac-fail-006"></script>
+  <script src="/assets/pipeline-state.js?v=ac-fail-006"></script>
+  <script src="/assets/pipeline.js?v=ac-fail-006"></script>
+  <script src="/assets/analyzer.js?v=ac-fail-006"></script>
+  <script src="./script.js?v=006"></script>
 
 </body>
 </html>
-
 
 
 

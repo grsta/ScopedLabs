@@ -1,16 +1,19 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "fail-safe-fail-secure";
-const CATEGORY = "access-control";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
-
-﻿(() => {
+(() => {
   "use strict";
 
+  const CATEGORY = "access-control";
+  const STEP = "fail-safe-fail-secure";
+  const LANE = "v1";
+
+  const FLOW_KEYS = {
+    "fail-safe-fail-secure": "scopedlabs:pipeline:access-control:fail-safe-fail-secure",
+    "reader-type-selector": "scopedlabs:pipeline:access-control:reader-type-selector",
+    "lock-power-budget": "scopedlabs:pipeline:access-control:lock-power-budget",
+    "panel-capacity": "scopedlabs:pipeline:access-control:panel-capacity",
+    "access-level-sizing": "scopedlabs:pipeline:access-control:access-level-sizing"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
   const els = {
     doorType: $("doorType"),
@@ -21,22 +24,24 @@ const FLOW_KEYS = {
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
-    nextRow: $("continue-wrap"),
-    nextBtn: $("continue"),
+    analysis: $("analysis-copy"),
+    flowNote: $("flow-note"),
+    continueWrap: $("continue-wrap"),
+    continueBtn: $("continue")
   };
 
   function showContinue() {
-    if (els.nextRow) els.nextRow.style.display = "block";
-    if (els.nextBtn) els.nextBtn.disabled = false;
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continueBtn) els.continueBtn.disabled = false;
   }
 
   function hideContinue() {
-    if (els.nextRow) els.nextRow.style.display = "none";
-    if (els.nextBtn) els.nextBtn.disabled = true;
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function render(rows) {
-    els.results.innerHTML = rows.map(r => `
+    els.results.innerHTML = rows.map((r) => `
       <div class="result-row">
         <span class="result-label">${r.label}</span>
         <span class="result-value">${r.value}</span>
@@ -45,27 +50,32 @@ const FLOW_KEYS = {
   }
 
   function savePipelineResult(payload) {
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "access-control",
-      step: "fail-safe-fail-secure",
-      ts: Date.now(),
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: payload
-    }));
+    });
   }
 
   function invalidatePipelineResult() {
-    sessionStorage.removeItem(FLOW_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["reader-type-selector"]);
+      sessionStorage.removeItem(FLOW_KEYS["lock-power-budget"]);
+      sessionStorage.removeItem(FLOW_KEYS["panel-capacity"]);
+      sessionStorage.removeItem(FLOW_KEYS["access-level-sizing"]);
+    } catch {}
     hideContinue();
   }
 
   function clearResults() {
     els.results.innerHTML = `<div class="muted">Run the evaluation to see results.</div>`;
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     hideContinue();
   }
 
   function getConfidence(score) {
     const abs = Math.abs(score);
-
     if (abs >= 4) return "HIGH";
     if (abs >= 2) return "MEDIUM";
     return "LOW";
@@ -77,6 +87,30 @@ const FLOW_KEYS = {
     if (score <= -3) return "Strong bias toward security retention.";
     if (score <= -1) return "Moderate lean toward security.";
     return "Balanced conditions — requires design judgment.";
+  }
+
+  function buildInterpretation(recommendation, score, doorType, fire, threat) {
+    if (recommendation === "FAIL-SAFE") {
+      return `This door leans toward fail-safe behavior because egress reliability and release behavior matter more than retaining the secured state through power loss. That is especially true when the door type or fire/alarm conditions increase life-safety sensitivity.`;
+    }
+
+    if (recommendation === "FAIL-SECURE") {
+      return `This door leans toward fail-secure behavior because the security consequence of releasing during outage is higher than the benefit of automatic unlock. That usually happens on perimeter or critical doors where threat pressure and asset protection outweigh convenience.`;
+    }
+
+    return `The door conditions are balanced enough that neither fail-safe nor fail-secure wins cleanly on logic alone. This is where code requirements, occupancy, emergency egress, and actual operational use should drive the final hardware choice.`;
+  }
+
+  function buildGuidance(recommendation, doorType, fire) {
+    if (recommendation === "FAIL-SAFE") {
+      return "Confirm that the lock hardware, release path, and fire-alarm behavior all support safe egress under loss-of-power conditions before moving into reader and power design.";
+    }
+
+    if (recommendation === "FAIL-SECURE") {
+      return "Verify egress method and code treatment carefully. A fail-secure choice is only acceptable if safe exit remains intact under the door’s actual use case and authority requirements.";
+    }
+
+    return "Do not finalize lock type yet. Escalate this door for code review and operational review before choosing reader placement or power assumptions.";
   }
 
   function calculate() {
@@ -123,6 +157,8 @@ const FLOW_KEYS = {
 
     const confidence = getConfidence(score);
     const scoreMeaning = getScoreMeaning(score);
+    const interpretation = buildInterpretation(recommendation, score, doorType, fire, threat);
+    const guidance = buildGuidance(recommendation, doorType, fire);
 
     render([
       { label: "Recommendation", value: recommendation },
@@ -130,13 +166,20 @@ const FLOW_KEYS = {
       { label: "Why", value: rationale },
       { label: "Score Meaning", value: scoreMeaning },
       { label: "Primary Risk", value: risk },
-      { label: "Score", value: score }
+      { label: "Score", value: score },
+      { label: "Engineering Interpretation", value: interpretation },
+      { label: "Actionable Guidance", value: guidance }
     ]);
 
     savePipelineResult({
       recommendation,
       score,
-      confidence
+      confidence,
+      doorType,
+      life,
+      powerLoss,
+      fire,
+      threat
     });
 
     showContinue();
@@ -155,71 +198,18 @@ const FLOW_KEYS = {
   els.calc.addEventListener("click", calculate);
   els.reset.addEventListener("click", resetAll);
 
-  [els.doorType, els.life, els.powerLoss, els.fire, els.threat].forEach(el => {
+  [els.doorType, els.life, els.powerLoss, els.fire, els.threat].forEach((el) => {
     el.addEventListener("change", invalidatePipelineResult);
+    el.addEventListener("input", invalidatePipelineResult);
   });
 
-  els.nextBtn.addEventListener("click", () => {
+  els.continueBtn.addEventListener("click", () => {
     window.location.href = "/tools/access-control/reader-type-selector/";
   });
 
-  clearResults();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    clearResults();
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function invalidate() {
-  // TODO: implement invalidation
-}
-
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function invalidate() {
-  ScopedLabsAnalyzer.invalidate({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    continueWrapEl: els.continueWrap,
-    continueBtnEl: els.continueBtn,
-    flowKey: FLOW_KEYS[STEP] || "",
-    category: CATEGORY,
-    step: STEP,
-    lane: LANE,
-    emptyMessage: "Enter values and press Calculate."
-  });
-}
-
-
-function renderSuccess(data) {
-  ScopedLabsAnalyzer.renderOutput({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    summaryRows: [],
-    derivedRows: [],
-    status: data.status || "Healthy",
-    interpretation: data.interpretation || "",
-    dominantConstraint: data.dominantConstraint || "",
-    guidance: data.guidance || ""
-  });
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
