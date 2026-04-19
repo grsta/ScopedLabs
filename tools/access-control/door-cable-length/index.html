@@ -4,18 +4,55 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Door Cable Length Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0185" />
+  <link rel="stylesheet" href="/assets/style.css?v=ac-cable-001" />
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script defer src="/assets/auth.js?v=0334"></script>
   <script defer src="/assets/app.js?v=0334"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
-<body data-tier="pro" data-category="access-control">
+<body data-tier="pro" data-category="access-control" data-tool="door-cable-length">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -40,19 +77,20 @@
       <span>Door Cable Length</span>
     </div>
 
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
+
     <h1>Door Cable Length Estimator</h1>
-    <p class="subhead">Estimate total cable run per door (panel to door) including slack, routing, and service loops.</p>
 
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> estimating realistic field cable quantities and identifying when routing complexity starts turning into installation risk.
-      </p>
-    </section>
+    <p class="tool-best-for">
+      <strong>Best for:</strong> estimating realistic field cable quantities and identifying when routing complexity starts turning into installation risk.
+    </p>
 
-    <section class="card tool-card">
-      <h2>Inputs</h2>
+    <section class="card tool-card" style="margin-top: 18px;">
+      <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
 
-      <div class="form-grid">
+      <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
           <span class="label">Straight-Line Distance (ft)</span>
           <input id="distance" type="number" min="0" step="1" value="120" />
@@ -91,29 +129,33 @@
         </label>
       </div>
 
-      <div class="actions">
-        <button id="calc" class="btn btn-primary">Calculate</button>
-        <button id="reset" class="btn">Reset</button>
+      <div class="btn-row" style="margin-top: 14px;">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+      </div>
+
+      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Results</h3>
+        <div id="results" class="results-grid" aria-live="polite">
+          <div class="muted">Enter values and press Calculate.</div>
+        </div>
+
+        <div style="margin-top:16px; min-height:340px;">
+          <canvas id="chart"></canvas>
+        </div>
+
+        <p class="mini-note">
+          Model: total run uses straight-line distance adjusted by routing factor, then adds service slack. Multi-run mode multiplies the per-door cable total by the number of separate cable paths.
+        </p>
+      </div>
+
+      <div class="btn-row" style="margin-top: 14px;">
+        <a class="btn" href="/tools/access-control/">Back to Access Control</a>
       </div>
     </section>
-
-    <section class="card tool-card">
-      <h2>Results</h2>
-      <div id="results" class="results">
-        <div class="muted">Enter values and press Calculate.</div>
-      </div>
-
-      <div style="margin-top:16px;">
-        <canvas id="chart"></canvas>
-      </div>
-    </section>
-
-    <div id="return-wrap" class="card" style="display:block;">
-      <button id="returnBtn" class="btn">Return to Access Control</button>
-    </div>
   </main>
 
-<script src="./script.js?v=6"></script>
+  <script src="./script.js?v=7"></script>
 </body>
 </html>
 
