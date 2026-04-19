@@ -1,14 +1,20 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "reader-type-selector";
-const CATEGORY = "access-control";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "access-control";
+  const STEP = "reader-type-selector";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "fail-safe-fail-secure";
+
+  const FLOW_KEYS = {
+    "fail-safe-fail-secure": "scopedlabs:pipeline:access-control:fail-safe-fail-secure",
+    "reader-type-selector": "scopedlabs:pipeline:access-control:reader-type-selector",
+    "lock-power-budget": "scopedlabs:pipeline:access-control:lock-power-budget",
+    "panel-capacity": "scopedlabs:pipeline:access-control:panel-capacity",
+    "access-level-sizing": "scopedlabs:pipeline:access-control:access-level-sizing"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
   let hasResult = false;
 
@@ -21,13 +27,14 @@ const FLOW_KEYS = {
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
+    analysis: $("analysis-copy"),
     nextWrap: $("continue-wrap"),
     nextBtn: $("continue"),
     flowNote: $("flow-note")
   };
 
   function showContinue() {
-    els.nextWrap.style.display = "block";
+    els.nextWrap.style.display = "flex";
     els.nextBtn.disabled = false;
     hasResult = true;
   }
@@ -39,24 +46,22 @@ const FLOW_KEYS = {
   }
 
   function invalidate() {
-    if (!hasResult) return;
-
     try {
-      const raw = sessionStorage.getItem(FLOW_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.category === "access-control") {
-          sessionStorage.removeItem(FLOW_KEY);
-        }
-      }
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["lock-power-budget"]);
+      sessionStorage.removeItem(FLOW_KEYS["panel-capacity"]);
+      sessionStorage.removeItem(FLOW_KEYS["access-level-sizing"]);
     } catch {}
 
     hideContinue();
+    els.results.innerHTML = `<div class="muted">Run recommendation.</div>`;
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    loadFlowContext();
   }
 
   function render(rows) {
     els.results.innerHTML = "";
-    rows.forEach(r => {
+    rows.forEach((r) => {
       const div = document.createElement("div");
       div.className = "result-row";
       div.innerHTML = `
@@ -68,66 +73,50 @@ const FLOW_KEYS = {
   }
 
   function loadFlowContext() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return;
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
     let parsed;
     try {
       parsed = JSON.parse(raw);
     } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
-    if (!parsed || parsed.category !== "access-control") return;
+    if (!parsed || parsed.category !== "access-control" || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    const d = parsed.data;
-    if (!d) return;
+    const d = parsed.data || {};
+    const lines = [];
 
-    els.flowNote.style.display = "block";
+    if (d.recommendation) lines.push(`Fail Mode: <strong>${d.recommendation}</strong>`);
+    if (d.doorType) lines.push(`Door Type: <strong>${d.doorType}</strong>`);
+    if (d.life) lines.push(`Life Safety: <strong>${d.life}</strong>`);
+    if (d.threat) lines.push(`Threat: <strong>${d.threat}</strong>`);
+    if (d.powerLoss) lines.push(`Power Reliability: <strong>${d.powerLoss}</strong>`);
+    if (d.fire) lines.push(`Fire Integration: <strong>${d.fire}</strong>`);
 
+    if (!lines.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
-      <div style="display:grid; gap:10px;">
-        
-        <div style="font-weight:600;">
-          From previous step:
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Recommendation</span>
-          <span class="result-value">${d.recommendation}</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Door Type</span>
-          <span class="result-value">${d.doorTypeLabel}</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Life Safety</span>
-          <span class="result-value">${d.lifeLabel}</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Threat Level</span>
-          <span class="result-value">${d.threatLabel}</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Power Reliability</span>
-          <span class="result-value">${d.powerLossLabel}</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Fire Integration</span>
-          <span class="result-value">${d.fireLabel}</span>
-        </div>
-
-        <div class="result-row">
-          <span class="result-label">Dominant Factor</span>
-          <span class="result-value">${d.dominantFactor}</span>
-        </div>
-
-      </div>
+      <strong>Flow Context</strong><br>
+      ${lines.join(" | ")}
+      <br><br>
+      Use that door-behavior decision to choose a reader style that fits the security need, environment, and user experience instead of selecting reader hardware in isolation.
     `;
   }
 
@@ -169,29 +158,43 @@ const FLOW_KEYS = {
         ? "Optimize for fast authentication"
         : "Standard read speed acceptable";
 
+    let interpretation = "";
+    if (cred === "multi" || sec === "high") {
+      interpretation = "This door is being treated as a higher-assurance checkpoint, so reader choice should prioritize credential integrity and stronger supervision over convenience alone.";
+    } else if (throughput === "handsfree") {
+      interpretation = "This opening is being optimized for flow and convenience, which changes the reader decision away from standard wall-reader assumptions and toward faster user interaction patterns.";
+    } else {
+      interpretation = "The recommended reader type is balanced for normal access-control conditions, where security, usability, and environment all matter but none of them are extreme enough to dominate the design outright.";
+    }
+
+    const guidance =
+      iface === "wg"
+        ? "If the panel can support it, consider moving away from Wiegand on new deployments so the reader decision does not lock the project into weaker signaling and less supervision."
+        : "OSDP is the stronger default here. Keep wiring, reader compatibility, and address planning aligned early so the interface choice stays clean through deployment.";
+
     render([
       { label: "Reader Type", value: reader },
       { label: "Interface", value: interfaceRec },
       { label: "Security", value: security },
       { label: "Environment", value: envNote },
-      { label: "Throughput", value: throughputNote }
+      { label: "Throughput", value: throughputNote },
+      { label: "Engineering Interpretation", value: interpretation },
+      { label: "Actionable Guidance", value: guidance }
     ]);
 
-    // SAVE PIPELINE
-    sessionStorage.setItem(
-      FLOW_KEY,
-      JSON.stringify({
-        category: "access-control",
-        step: "reader-type-selector",
-        data: {
-          reader,
-          interfaceRec,
-          security,
-          envNote,
-          throughputNote
-        }
-      })
-    );
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        readerType: reader,
+        interfaceRec,
+        security,
+        envNote,
+        throughputNote,
+        environment: env,
+        priority: sec
+      }
+    });
 
     showContinue();
   }
@@ -199,11 +202,15 @@ const FLOW_KEYS = {
   els.calc.addEventListener("click", calc);
 
   els.reset.addEventListener("click", () => {
-    els.results.innerHTML = `<div class="muted">Run recommendation.</div>`;
+    els.sec.value = "low";
+    els.cred.value = "card";
+    els.env.value = "indoor";
+    els.throughput.value = "standard";
+    els.iface.value = "wg";
     invalidate();
   });
 
-  [els.sec, els.cred, els.env, els.throughput, els.iface].forEach(el => {
+  [els.sec, els.cred, els.env, els.throughput, els.iface].forEach((el) => {
     el.addEventListener("input", invalidate);
     el.addEventListener("change", invalidate);
   });
@@ -212,53 +219,11 @@ const FLOW_KEYS = {
     window.location.href = "/tools/access-control/lock-power-budget/";
   });
 
-  loadFlowContext();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    loadFlowContext();
+    hideContinue();
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function invalidate() {
-  ScopedLabsAnalyzer.invalidate({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    continueWrapEl: els.continueWrap,
-    continueBtnEl: els.continueBtn,
-    flowKey: FLOW_KEYS[STEP] || "",
-    category: CATEGORY,
-    step: STEP,
-    lane: LANE,
-    emptyMessage: "Enter values and press Calculate."
-  });
-}
-
-
-function renderSuccess(data) {
-  ScopedLabsAnalyzer.renderOutput({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    summaryRows: [],
-    derivedRows: [],
-    status: data.status || "Healthy",
-    interpretation: data.interpretation || "",
-    dominantConstraint: data.dominantConstraint || "",
-    guidance: data.guidance || ""
-  });
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
