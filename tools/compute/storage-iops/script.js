@@ -1,20 +1,26 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "storage-iops";
-const CATEGORY = "compute";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "compute";
+  const STEP = "storage-iops";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "ram-sizing";
+
+  const FLOW_KEYS = {
+    "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
+    "ram-sizing": "scopedlabs:pipeline:compute:ram-sizing",
+    "storage-iops": "scopedlabs:pipeline:compute:storage-iops",
+    "storage-throughput": "scopedlabs:pipeline:compute:storage-throughput",
+    "vm-density": "scopedlabs:pipeline:compute:vm-density",
+    "gpu-vram": "scopedlabs:pipeline:compute:gpu-vram",
+    "power-thermal": "scopedlabs:pipeline:compute:power-thermal",
+    "raid-rebuild-time": "scopedlabs:pipeline:compute:raid-rebuild-time",
+    "backup-window": "scopedlabs:pipeline:compute:backup-window"
+  };
+
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "compute";
-  const CURRENT_STEP = "storage-iops";
-
   let hasResult = false;
-  let cachedFlow = null;
   let ramContext = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -34,66 +40,92 @@ const FLOW_KEYS = {
     reset: $("reset")
   };
 
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continue) els.continue.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
+  }
+
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "System Context",
-      intro:
-        "This step validates whether storage performance becomes the next scaling limiter after CPU and RAM have been established.",
-      customRows: (() => {
-        const source = ScopedLabsAnalyzer.getUpstreamFlow({
-          flowKey: FLOW_KEY,
-          category: CURRENT_CATEGORY,
-          step: CURRENT_STEP,
-          cachedFlow
-        });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      ramContext = null;
+      return;
+    }
 
-        ramContext = source && source.step === "ram-sizing" ? (source.data || {}) : null;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      ramContext = null;
+      return;
+    }
 
-        if (!source || !source.data || source.step !== "ram-sizing") return null;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      ramContext = null;
+      return;
+    }
 
-        const data = source.data;
-        const rows = [];
+    const data = parsed.data || {};
+    ramContext = data;
 
-        if (typeof data.ram === "number") {
-          rows.push({ label: "Recommended RAM", value: `${data.ram} GB` });
-        }
+    const rows = [];
+    if (typeof data.ram === "number") rows.push(`Recommended RAM: <strong>${data.ram} GB</strong>`);
+    if (typeof data.totalRequired === "number") rows.push(`Estimated Total: <strong>${Number(data.totalRequired).toFixed(1)} GB</strong>`);
+    if (typeof data.status === "string") rows.push(`Memory Status: <strong>${data.status}</strong>`);
+    if (typeof data.dominantConstraint === "string") rows.push(`Primary Constraint: <strong>${data.dominantConstraint}</strong>`);
 
-        if (typeof data.totalRequired === "number") {
-          rows.push({ label: "Estimated Total", value: `${Number(data.totalRequired).toFixed(1)} GB` });
-        }
+    if (!rows.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-        if (typeof data.status === "string") {
-          rows.push({ label: "Memory Status", value: data.status });
-        }
-
-        if (typeof data.dominantConstraint === "string") {
-          rows.push({ label: "Primary Constraint", value: data.dominantConstraint });
-        }
-
-        return rows.length ? rows : null;
-      })()
-    });
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${rows.join(" | ")}
+      <br><br>
+      This step checks whether storage performance becomes the next practical bottleneck after the memory profile already defined upstream.
+    `;
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["storage-throughput"]);
+      sessionStorage.removeItem(FLOW_KEYS["vm-density"]);
+      sessionStorage.removeItem(FLOW_KEYS["gpu-vram"]);
+      sessionStorage.removeItem(FLOW_KEYS["power-thermal"]);
+      sessionStorage.removeItem(FLOW_KEYS["raid-rebuild-time"]);
+      sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE
     });
 
     hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
@@ -235,9 +267,9 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         readIops,
         writeIops,
@@ -249,8 +281,8 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
     hasResult = true;
+    showContinue();
   }
 
   els.calc.addEventListener("click", calc);
@@ -274,17 +306,11 @@ const FLOW_KEYS = {
     window.location.href = "/tools/compute/storage-throughput/";
   });
 
-  refreshFlowNote();
-  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    refreshFlowNote();
+    hideContinue();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
