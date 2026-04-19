@@ -4,7 +4,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  let cachedFlow = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
 
@@ -68,7 +67,8 @@
   function refreshFlowNote() {
     const raw = sessionStorage.getItem("scopedlabs:pipeline:compute:backup-window");
     if (!raw) {
-      els.flowNote.style.display = "none";
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
@@ -76,30 +76,32 @@
     try {
       parsed = JSON.parse(raw);
     } catch {
-      els.flowNote.style.display = "none";
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
     if (!parsed || parsed.category !== CATEGORY || parsed.step !== "backup-window") {
-      els.flowNote.style.display = "none";
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
     const d = parsed.data || {};
     const parts = [];
 
-    if (Number.isFinite(d.backupsPerDay)) parts.push(`Backups/day: <strong>${d.backupsPerDay}</strong>`);
-    if (Number.isFinite(d.dataPerBackupGB)) parts.push(`Data/backup: <strong>${d.dataPerBackupGB.toFixed(1)} GB</strong>`);
-    if (Number.isFinite(d.totalDailyDataGB)) parts.push(`Daily protected data: <strong>${d.totalDailyDataGB.toFixed(1)} GB</strong>`);
-    if (Number.isFinite(d.requiredThroughputGbps)) parts.push(`Required throughput: <strong>${d.requiredThroughputGbps.toFixed(2)} Gbps</strong>`);
-    if (d.status) parts.push(`Prior result: <strong>${d.status}</strong>`);
+    if (Number.isFinite(d.backupHours)) parts.push(`Backup Window: <strong>${Number(d.backupHours).toFixed(2)} h</strong>`);
+    if (d.protectionClass) parts.push(`Protection Class: <strong>${d.protectionClass}</strong>`);
+    if (d.crossCheck) parts.push(`Cross-Check: <strong>${d.crossCheck}</strong>`);
+    if (d.status) parts.push(`Prior Result: <strong>${d.status}</strong>`);
 
     if (!parts.length) {
-      els.flowNote.style.display = "none";
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
-    els.flowNote.style.display = "block";
+    els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
       <strong>Optional carry-over context</strong><br>
       ${parts.join(" | ")}
