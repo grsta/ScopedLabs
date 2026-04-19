@@ -1,20 +1,26 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "power-thermal";
-const CATEGORY = "compute";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "compute";
+  const STEP = "power-thermal";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "gpu-vram";
+
+  const FLOW_KEYS = {
+    "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
+    "ram-sizing": "scopedlabs:pipeline:compute:ram-sizing",
+    "storage-iops": "scopedlabs:pipeline:compute:storage-iops",
+    "storage-throughput": "scopedlabs:pipeline:compute:storage-throughput",
+    "vm-density": "scopedlabs:pipeline:compute:vm-density",
+    "gpu-vram": "scopedlabs:pipeline:compute:gpu-vram",
+    "power-thermal": "scopedlabs:pipeline:compute:power-thermal",
+    "raid-rebuild-time": "scopedlabs:pipeline:compute:raid-rebuild-time",
+    "backup-window": "scopedlabs:pipeline:compute:backup-window"
+  };
+
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "compute";
-  const CURRENT_STEP = "power-thermal";
-
   let hasResult = false;
-  let cachedFlow = null;
   let upstream = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -30,64 +36,112 @@ const FLOW_KEYS = {
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "System Context",
-      intro:
-        "This step validates whether compute density and optional GPU inclusion create a rack power or cooling profile that becomes the next deployment limiter.",
-      customRows: (() => {
-        const source = ScopedLabsAnalyzer.getUpstreamFlow({
-          flowKey: FLOW_KEY,
-          category: CURRENT_CATEGORY,
-          step: CURRENT_STEP,
-          cachedFlow
-        });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstream = null;
+      return;
+    }
 
-        upstream = source ? (source.data || {}) : null;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstream = null;
+      return;
+    }
 
-        if (!source || !source.data) return null;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstream = null;
+      return;
+    }
 
-        const d = source.data;
-        const rows = [];
+    upstream = parsed.data || {};
 
-        if (source.step === "gpu-vram") {
-          if (d.gpu === "none") {
-            rows.push({ label: "GPU Requirement", value: "Not Required" });
-            rows.push({ label: "Pipeline Path", value: "CPU-only system" });
-          } else {
-            rows.push({ label: "GPU Step", value: "Included" });
-            if (typeof d.vram === "number") {
-              rows.push({ label: "Estimated VRAM", value: `${Number(d.vram).toFixed(2)} GB` });
-            }
-            if (typeof d.gpuClass === "string") {
-              rows.push({ label: "GPU Class", value: d.gpuClass });
-            }
-          }
-          return rows.length ? rows : null;
-        }
+    const lines = [];
+    if (upstream.gpu === "none") {
+      lines.push(`GPU Requirement: <strong>Not Required</strong>`);
+      lines.push(`Pipeline Path: <strong>CPU-only system</strong>`);
+    } else {
+      if (typeof upstream.vram === "number") lines.push(`Estimated VRAM: <strong>${Number(upstream.vram).toFixed(2)} GB</strong>`);
+      if (typeof upstream.gpuClass === "string") lines.push(`GPU Class: <strong>${upstream.gpuClass}</strong>`);
+      if (typeof upstream.status === "string") lines.push(`GPU Status: <strong>${upstream.status}</strong>`);
+    }
 
-        if (source.step === "vm-density") {
-          if (d.vms != null) rows.push({ label: "VM Capacity", value: `${d.vms}` });
-          if (d.limiting) rows.push({ label: "Primary Constraint", value: d.limiting });
-          if (d.densityClass) rows.push({ label: "Density Class", value: d.densityClass });
-          return rows.length ? rows : null;
-        }
+    if (!lines.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-        rows.push({ label: "Previous Step", value: source.step });
-        return rows;
-      })()
-    });
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${lines.join(" | ")}
+      <br><br>
+      This step checks whether the compute profile — including any GPU path — still fits inside a practical rack power and cooling envelope.
+    `;
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["raid-rebuild-time"]);
+      sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
@@ -95,9 +149,10 @@ const FLOW_KEYS = {
       continueBtnEl: els.continue,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       emptyMessage: "Run calculation."
     });
 
@@ -125,8 +180,6 @@ const FLOW_KEYS = {
         gpuNote = "GPU was intentionally skipped for this design.";
       } else if (typeof upstream.vram === "number") {
         gpuNote = `GPU is part of this design path (estimated VRAM ${Number(upstream.vram).toFixed(2)} GB). Add actual GPU board wattage into node power if not already included.`;
-      } else if (typeof upstream.vms === "number") {
-        gpuNote = "No GPU step payload was present; using VM density context only.";
       }
     }
 
@@ -187,8 +240,6 @@ const FLOW_KEYS = {
       crossCheck = "This path is CPU-only, so thermal load is being driven by host power rather than accelerator hardware";
     } else if (upstream && typeof upstream.vram === "number") {
       crossCheck = "GPU hardware is in the design path, so node wattage should include real accelerator board draw";
-    } else if (upstream && typeof upstream.vms === "number" && upstream.vms > 50) {
-      crossCheck = "High virtualization density can hide aggregate rack power until multiple hosts reach load together";
     }
 
     let interpretation = "";
@@ -260,7 +311,7 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: "compute",
       step: "power-thermal",
       data: {
@@ -300,64 +351,16 @@ const FLOW_KEYS = {
     window.location.href = "/tools/compute/raid-rebuild-time/";
   });
 
-  refreshFlowNote();
-  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    refreshFlowNote();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
