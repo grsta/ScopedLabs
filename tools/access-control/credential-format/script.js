@@ -1,5 +1,4 @@
-﻿// Credential Format Helper (planning math + guidance)
-(() => {
+﻿(() => {
   const $ = (id) => document.getElementById(id);
 
   function n(id) {
@@ -11,7 +10,7 @@
   function render(rows) {
     const el = $("results");
     el.innerHTML = "";
-    rows.forEach(r => {
+    rows.forEach((r) => {
       const div = document.createElement("div");
       div.className = "result-row";
       div.innerHTML = `
@@ -23,29 +22,24 @@
   }
 
   function pow10(d) {
-    // safe-ish for small digit counts
     return Math.pow(10, Math.max(0, d));
   }
 
   function calc() {
     const fcDigits = Math.max(0, Math.floor(n("fcDigits")));
     const cardDigits = Math.max(1, Math.floor(n("cardDigits")));
-    const fmt = $("fmt").value; // decimal|binary
+    const fmt = $("fmt").value;
     const bits = parseInt($("bits").value, 10);
     const pop = Math.max(0, Math.floor(n("pop")));
 
-    // Decimal capacity
     const fcCap = pow10(fcDigits);
     const cardCap = pow10(cardDigits);
     const totalDecimal = fcCap * cardCap;
 
-    // Binary capacity rough estimate (ignoring parity bits)
-    // Typical Wiegand formats include parity; we approximate usable bits as bits-2.
     const usableBits = Math.max(8, bits - 2);
     const totalBinary = Math.pow(2, usableBits);
 
     const chosenTotal = fmt === "decimal" ? totalDecimal : totalBinary;
-
     const utilization = chosenTotal > 0 ? (pop / chosenTotal) * 100 : 0;
 
     const fit =
@@ -55,22 +49,34 @@
       utilization < 90 ? "Tight / risk of collisions" :
       "Over capacity / collision likely";
 
+    let interpretation = "";
+    if (utilization < 10) {
+      interpretation = "This format leaves abundant numbering headroom relative to the expected badge population. Collision pressure is low, and you are less likely to create future migration pain if badge count grows modestly.";
+    } else if (utilization < 30) {
+      interpretation = "This format still has comfortable remaining capacity. The design should scale reasonably well, although format standardization and clean documentation still matter if multiple sites or tenants are involved.";
+    } else if (utilization < 60) {
+      interpretation = "This format is workable, but headroom is no longer generous. Growth, tenant separation, or mixed credential populations can consume the remaining numbering space faster than expected.";
+    } else if (utilization < 90) {
+      interpretation = "This format is entering a tight planning band. You may still deploy it, but future growth and migration flexibility are becoming constrained enough that collisions or numbering overlap deserve attention now.";
+    } else {
+      interpretation = "This format is effectively overcommitted for the expected badge population. Collision risk or numbering overlap becomes likely enough that a larger or more carefully partitioned format should be considered before rollout.";
+    }
+
     const tips = [
-      "Standardize one format across the site (avoid mixing readers/panels with different bit interpretations).",
-      "Record the exact format in documentation (bit length, facility code range, card range).",
-      "If multi-tenant: consider partitioning facility codes by tenant to reduce collision risk.",
-      "If migrating: plan for card number translation or dual-format acceptance during cutover."
+      "Standardize one format across the site to avoid reader/panel interpretation mismatches.",
+      "Document the exact format clearly: bit length, facility code range, and card range.",
+      "If multi-tenant, partition facility codes intentionally instead of ad hoc growth.",
+      "If migrating, plan card translation or dual-format acceptance during the cutover window."
     ].join(" ");
 
     render([
       { label: "Format Type", value: fmt.toUpperCase() },
       { label: "Badge Population", value: `${pop}` },
-
       { label: "Decimal Capacity (FC × Card)", value: `${totalDecimal.toLocaleString()} (${fcCap.toLocaleString()} × ${cardCap.toLocaleString()})` },
       { label: "Binary Capacity (approx)", value: `${totalBinary.toLocaleString()} (usable bits ~ ${usableBits})` },
-
       { label: "Capacity Used", value: `${utilization.toFixed(2)} %` },
       { label: "Assessment", value: fit },
+      { label: "Engineering Interpretation", value: interpretation },
       { label: "Best Practices", value: tips }
     ]);
   }
@@ -86,6 +92,12 @@
 
   $("calc").addEventListener("click", calc);
   $("reset").addEventListener("click", reset);
+
+  [$("fcDigits"), $("cardDigits"), $("fmt"), $("bits"), $("pop")].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", reset);
+    el.addEventListener("change", reset);
+  });
 
   reset();
 })();
