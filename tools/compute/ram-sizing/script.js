@@ -1,20 +1,26 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "ram-sizing";
-const CATEGORY = "compute";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "compute";
+  const STEP = "ram-sizing";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "cpu-sizing";
+
+  const FLOW_KEYS = {
+    "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
+    "ram-sizing": "scopedlabs:pipeline:compute:ram-sizing",
+    "storage-iops": "scopedlabs:pipeline:compute:storage-iops",
+    "storage-throughput": "scopedlabs:pipeline:compute:storage-throughput",
+    "vm-density": "scopedlabs:pipeline:compute:vm-density",
+    "gpu-vram": "scopedlabs:pipeline:compute:gpu-vram",
+    "power-thermal": "scopedlabs:pipeline:compute:power-thermal",
+    "raid-rebuild-time": "scopedlabs:pipeline:compute:raid-rebuild-time",
+    "backup-window": "scopedlabs:pipeline:compute:backup-window"
+  };
+
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "compute";
-  const CURRENT_STEP = "ram-sizing";
-
   let hasResult = false;
-  let cachedFlow = null;
   let cpuContext = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -43,52 +49,67 @@ const FLOW_KEYS = {
   }
 
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "System Context",
-      intro:
-        "This step validates whether memory becomes the next scaling limiter after CPU sizing, or whether the design still has usable reserve for caching, virtualization density, and workload growth.",
-      customRows: (() => {
-        const source = ScopedLabsAnalyzer.getUpstreamFlow({
-          flowKey: FLOW_KEY,
-          category: CURRENT_CATEGORY,
-          step: CURRENT_STEP,
-          cachedFlow
-        });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      cpuContext = null;
+      return;
+    }
 
-        cpuContext = source && source.step === "cpu-sizing" ? (source.data || {}) : null;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      cpuContext = null;
+      return;
+    }
 
-        if (!source || !source.data) return null;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      cpuContext = null;
+      return;
+    }
 
-        const data = source.data;
-        const rows = [];
+    const data = parsed.data || {};
+    cpuContext = data;
 
-        if (typeof data.cores === "number") {
-          rows.push({ label: "Recommended Cores", value: `${data.cores}` });
-        }
+    const lines = [];
+    if (typeof data.cores === "number") lines.push(`Recommended Cores: <strong>${data.cores}</strong>`);
+    if (typeof data.eff === "number") lines.push(`Effective Load: <strong>${Number(data.eff).toFixed(2)} core-eq</strong>`);
+    if (typeof data.workload === "string") lines.push(`Workload: <strong>${data.workload}</strong>`);
+    if (typeof data.status === "string") lines.push(`CPU Status: <strong>${data.status}</strong>`);
 
-        if (typeof data.eff === "number") {
-          rows.push({ label: "Effective Load", value: `${Number(data.eff).toFixed(2)} core-eq` });
-        }
+    if (!lines.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-        if (typeof data.workload === "string") {
-          rows.push({ label: "Workload", value: data.workload });
-        }
-
-        if (typeof data.status === "string" && source.step === "cpu-sizing") {
-          rows.push({ label: "CPU Status", value: data.status });
-        }
-
-        return rows.length ? rows : null;
-      })()
-    });
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${lines.join(" | ")}
+      <br><br>
+      This step checks whether memory becomes the next scaling wall after the CPU envelope already defined upstream.
+    `;
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["storage-iops"]);
+      sessionStorage.removeItem(FLOW_KEYS["storage-throughput"]);
+      sessionStorage.removeItem(FLOW_KEYS["vm-density"]);
+      sessionStorage.removeItem(FLOW_KEYS["gpu-vram"]);
+      sessionStorage.removeItem(FLOW_KEYS["power-thermal"]);
+      sessionStorage.removeItem(FLOW_KEYS["raid-rebuild-time"]);
+      sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
@@ -96,9 +117,10 @@ const FLOW_KEYS = {
       continueBtnEl: els.continue,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE
     });
 
     hasResult = false;
@@ -252,7 +274,7 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CURRENT_CATEGORY,
       step: CURRENT_STEP,
       data: {
@@ -290,16 +312,11 @@ const FLOW_KEYS = {
     window.location.href = "/tools/compute/storage-iops/";
   });
 
-  refreshFlowNote();
-  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    refreshFlowNote();
+    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
