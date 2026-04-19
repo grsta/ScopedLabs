@@ -40,6 +40,16 @@
     reset: $("reset")
   };
 
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continue) els.continue.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
+  }
+
   function workloadFactor(workload) {
     if (workload === "db") return 1.3;
     if (workload === "virtualization") return 1.25;
@@ -113,8 +123,8 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
       flowKey: FLOW_KEYS[STEP],
@@ -124,6 +134,7 @@
     });
 
     hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
@@ -275,8 +286,8 @@
     });
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      category: CATEGORY,
+      step: STEP,
       data: {
         ram: recommended,
         totalRequired,
@@ -287,8 +298,8 @@
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
     hasResult = true;
+    showContinue();
   }
 
   els.calc.addEventListener("click", calc);
@@ -317,6 +328,6 @@
     if (year) year.textContent = new Date().getFullYear();
 
     refreshFlowNote();
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+    hideContinue();
   });
 })();
