@@ -4,15 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Access Control • ScopedLabs</title>
-  <meta name="description" content="Credential formats, door hardware behavior, reader selection, and system capacity planning." />
-  <link rel="stylesheet" href="/assets/style.css?v=ac-cat-0381" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0317"></script>
-<script defer src="/assets/app.js?v=0317"></script>
+  <meta name="description" content="Credential formats, door behavior, reader selection, and system capacity planning." />
+  <link rel="stylesheet" href="/assets/style.css?v=ac-cat-0382" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=ac-cat-0382"></script>
+  <script defer src="/assets/app.js?v=ac-cat-0382"></script>
 </head>
 
 <body data-protected="true" data-category="access-control">
@@ -33,166 +33,277 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
 <main class="container">
 
-  <div class="crumbs">
-    <a href="/tools/">Tools</a>
-    <span class="sep">/</span>
-    <span>Access Control</span>
-  </div>
-
   <section class="page-head">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <span>Access Control</span>
+    </div>
+
     <h1 class="h1">Access Control</h1>
     <p class="subhead">Credential formats, door behavior, reader selection, and system capacity planning.</p>
-
-      <section class="card" data-auto-category-pipeline-card="true" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">Start the Access Control design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This category includes a guided pipeline so users can move step by step through the core design decisions instead of jumping between isolated tools.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          Update this card later with the exact category-specific flow summary and mini pipeline preview if needed.
-        </p>
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn btn-primary" href="/tools/access-control/reader-type-selector/">Start Pipeline</a>
-        </div>
-      </section>
-
   </section>
 
   <section class="card">
     <p class="muted">
-      Access control issues usually hit late: wrong credential format, mis-specified locks, panels out of capacity,
-      or power budgets that melt under real loads. These tools help you confirm decisions early and plan with headroom.
+      Access control issues usually show up late: wrong credential formats, lock behavior that conflicts with life
+      safety, panel counts that run out of room, or power budgets that fail under real unlock events. These tools help
+      you validate the design earlier so the install is less about rework and more about execution.
     </p>
   </section>
 
-  <!-- HERO (counts as one of the FREE tools) -->
-  <section class="card tool-hero">
-    <div class="pill pill-ok">Free tool</div>
-    <h2 class="h2">Credential Format</h2>
-    <p class="muted">Quick helper to confirm credential formats and avoid ordering the wrong readers/cards.</p>
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Design Pipeline</div>
+    <h2 class="h2" style="margin-top: 0;">Follow a recommended engineering sequence</h2>
+    <p class="muted" style="margin-bottom: 14px;">
+      Some ScopedLabs tools work as a connected workflow. In Access Control, the Design Flow carries you from
+      fail-state decisions into reader selection, lock power, panel capacity, and final access-structure validation so
+      the core system logic stays coherent from the first choice to the last.
+    </p>
+
+    <div class="pipeline-preview" aria-label="Access control design pipeline preview">
+      <span class="pipeline-preview-label">DESIGN PIPELINE</span>
+      <div class="pipeline-preview-steps">
+        <span class="pipeline-preview-step is-active">Fail-Safe / Fail-Secure</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step">Reader Type</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step is-pro">Lock Power</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step is-pro">Panel Capacity</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step is-pro">Access Levels</span>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top: 14px; margin-bottom: 14px;">
+      Includes both Free and Pro tools. Unlock Pro to complete the full flow.
+    </p>
+
     <div class="actions">
-      <a class="btn btn-primary" href="/tools/access-control/credential-format/">Launch Tool</a>
+      <a class="btn btn-primary" href="/tools/access-control/fail-safe-fail-secure/">Start Design Pipeline</a>
     </div>
   </section>
 
-  <!-- FREE (do NOT repeat hero tool here) -->
   <h3 class="section-divider">Free Tier</h3>
 
-  <a class="tool-row" href="/tools/access-control/fail-safe-fail-secure/">
-    <div class="tool-row-left">
-      <div class="tool-title">Fail-Safe / Fail-Secure</div>
-      <div class="tool-desc muted">Decision helper based on door type, life safety, and egress expectations.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill free">Free Tier</span>
-    </div>
-  </a>
+  <div class="stack">
+    <a class="tool-row tool-row--center" href="/tools/access-control/credential-format/">
+      <div class="tool-row-center">
+        <div class="tool-row-title">Credential Format Helper</div>
+        <div class="tool-row-sub">
+          Estimate credential numbering headroom and avoid format decisions that create future collision or migration pain.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill-ok">Free Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row" href="/tools/access-control/reader-type-selector/">
-    <div class="tool-row-left">
-      <div class="tool-title">Reader Type Selector</div>
-      <div class="tool-desc muted">Choose reader type (mullion/wall/keypad/mobile/long-range) based on use case.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill free">Free Tier</span>
-    </div>
-  </a>
+    <a class="tool-row tool-row--center" href="/tools/access-control/fail-safe-fail-secure/">
+      <div class="tool-row-center">
+        <div class="tool-row-title">Fail-Safe / Fail-Secure</div>
+        <div class="tool-row-sub">
+          Decide how the door should behave during power loss before reader, lock, and hardware choices get locked in.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill-ok">Free Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <!-- PRO -->
+    <a class="tool-row tool-row--center" href="/tools/access-control/reader-type-selector/">
+      <div class="tool-row-center">
+        <div class="tool-row-title">Reader Type Selector</div>
+        <div class="tool-row-sub">
+          Choose reader style and interface based on security, environment, throughput, and credential preference.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill-ok">Free Tier</span>
+        </div>
+      </div>
+    </a>
+  </div>
+
   <h3 class="section-divider">Pro Tier</h3>
 
-  <a class="tool-row pro"
-   href="/upgrade/?category=access-control#checkout"
-   data-tool="/tools/access-control/access-level-sizing/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Access Level Sizing</div>
-      <div class="tool-desc muted">Estimate access levels by doors, schedules, roles, and partitions.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+  <div class="stack">
+    <a class="tool-row pro"
+       href="/upgrade/?category=access-control#checkout"
+       data-tool="/tools/access-control/access-level-sizing/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Access Level Sizing</div>
+        <div class="tool-row-sub">
+          Estimate administrative complexity from roles, schedules, grouping, and access structure before it turns into permission sprawl.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=access-control#checkout" 
-  data-tool="/tools/access-control/anti-passback-zones/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Anti-Passback Zones</div>
-      <div class="tool-desc muted">Plan APB zones and common pitfalls for multi-door areas.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=access-control#checkout"
+       data-tool="/tools/access-control/anti-passback-zones/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Anti-Passback Zones</div>
+        <div class="tool-row-sub">
+          Plan APB segmentation and gauge whether tighter zone control adds security value or just operational friction.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=access-control#checkout" 
-  data-tool="/tools/access-control/door-cable-length/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Door Cable Length</div>
-      <div class="tool-desc muted">Distance planning + sanity checks for reader/lock cabling runs.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=access-control#checkout"
+       data-tool="/tools/access-control/door-cable-length/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Door Cable Length</div>
+        <div class="tool-row-sub">
+          Estimate realistic reader and lock cable quantities with routing factor, slack, and install difficulty in view.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <!-- DOOR COUNT PLANNER IS PRO (per your list) -->
-  <a class="tool-row pro" 
-  href="/upgrade/?category=access-control#checkout" 
-  data-tool="/tools/access-control/door-count-planner/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Door Count Planner</div>
-      <div class="tool-desc muted">Scope doors fast to drive controller count, licensing, and expansion planning.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=access-control#checkout"
+       data-tool="/tools/access-control/door-count-planner/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Door Count Planner</div>
+        <div class="tool-row-sub">
+          Scope controlled door quantity from perimeter, interior segmentation, and compliance posture before controller planning.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=access-control#checkout" 
-  data-tool="/tools/access-control/elevator-reader-count/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Elevator Reader Count</div>
-      <div class="tool-desc muted">Estimate elevator reader requirements based on floors and strategy.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=access-control#checkout"
+       data-tool="/tools/access-control/elevator-reader-count/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Elevator Reader Count</div>
+        <div class="tool-row-sub">
+          Estimate car, lobby, and DCS reader requirements before elevator access logic becomes hardware-heavy.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=access-control#checkout" 
-  data-tool="/tools/access-control/lock-power-budget/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Lock Power Budget</div>
-      <div class="tool-desc muted">Model inrush + hold current with safe margins across multiple doors.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=access-control#checkout"
+       data-tool="/tools/access-control/lock-power-budget/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Lock Power Budget</div>
+        <div class="tool-row-sub">
+          Model simultaneous unlock current, supply sizing, and headroom before lock circuits become unstable in the field.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=access-control#checkout" 
-  data-tool="/tools/access-control/panel-capacity/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Panel Capacity</div>
-      <div class="tool-desc muted">Plan doors/readers/inputs/outputs per panel with headroom targets.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=access-control#checkout"
+       data-tool="/tools/access-control/panel-capacity/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Panel Capacity</div>
+        <div class="tool-row-sub">
+          Plan controller and expansion requirements with spare margin before the architecture gets boxed in.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
+  </div>
 
   <footer class="site-footer">
-    <a class="muted" href="/tools/">← Back to Tools</a>
     <div class="muted">© <span data-year></span> ScopedLabs</div>
   </footer>
-
 </main>
+
+<style>
+  .tool-row--center { text-decoration: none; }
+  .tool-row-center { text-align: center; width: 100%; }
+  .tool-row-title { font-weight: 700; margin-bottom: 6px; }
+  .tool-row-sub { opacity: 0.9; margin-bottom: 10px; }
+  .tool-row-pill { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .lock-icon { margin-right: 6px; }
+
+  .pipeline-preview {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(120,255,120,0.14);
+    background:
+      linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      0 12px 30px rgba(0,0,0,0.18);
+  }
+
+  .pipeline-preview-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(220,255,220,0.78);
+    margin-bottom: 9px;
+  }
+
+  .pipeline-preview-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.98rem;
+    line-height: 1.4;
+  }
+
+  .pipeline-preview-step {
+    color: rgba(220,235,225,0.72);
+    font-weight: 600;
+  }
+
+  .pipeline-preview-step.is-active {
+    color: rgba(255,255,255,0.96);
+    position: relative;
+    padding-left: 15px;
+  }
+
+  .pipeline-preview-step.is-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #57ff7a;
+    transform: translateY(-50%);
+    box-shadow: 0 0 12px rgba(87,255,122,0.55);
+  }
+
+  .pipeline-preview-step.is-pro {
+    color: rgba(210,220,214,0.82);
+  }
+
+  .pipeline-preview-sep {
+    color: rgba(180,205,190,0.42);
+    font-weight: 700;
+  }
+</style>
 </body>
 </html>
 
