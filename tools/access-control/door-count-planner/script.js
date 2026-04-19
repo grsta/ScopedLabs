@@ -11,8 +11,7 @@
     results: $("results"),
     calc: $("calc"),
     reset: $("reset"),
-    chart: $("chart"),
-    returnBtn: $("returnBtn")
+    chart: $("chart")
   };
 
   function n(id) {
@@ -396,12 +395,6 @@
     el.addEventListener("input", resetResults);
     el.addEventListener("change", resetResults);
   });
-
-  if (els.returnBtn) {
-    els.returnBtn.addEventListener("click", () => {
-      window.location.href = "/tools/access-control/";
-    });
-  }
 
   reset();
 })();
