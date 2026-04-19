@@ -1,14 +1,20 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "panel-capacity";
-const CATEGORY = "access-control";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "access-control";
+  const STEP = "panel-capacity";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "lock-power-budget";
+
+  const FLOW_KEYS = {
+    "fail-safe-fail-secure": "scopedlabs:pipeline:access-control:fail-safe-fail-secure",
+    "reader-type-selector": "scopedlabs:pipeline:access-control:reader-type-selector",
+    "lock-power-budget": "scopedlabs:pipeline:access-control:lock-power-budget",
+    "panel-capacity": "scopedlabs:pipeline:access-control:panel-capacity",
+    "access-level-sizing": "scopedlabs:pipeline:access-control:access-level-sizing"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
   let chart = null;
   let chartWrap = null;
@@ -26,10 +32,54 @@ const FLOW_KEYS = {
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
+    analysis: $("analysis-copy"),
     nextWrap: $("continue-wrap"),
     nextBtn: $("continue"),
-    flowNote: $("flow-note")
+    flowNote: $("flow-note"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function destroyChart() {
     if (chart) {
@@ -43,7 +93,7 @@ const FLOW_KEYS = {
   }
 
   function showContinue() {
-    els.nextWrap.style.display = "block";
+    els.nextWrap.style.display = "flex";
     els.nextBtn.disabled = false;
     hasResult = true;
   }
@@ -55,10 +105,16 @@ const FLOW_KEYS = {
   }
 
   function invalidate() {
-    if (!hasResult) return;
-    sessionStorage.removeItem(FLOW_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["access-level-sizing"]);
+    } catch {}
+
     destroyChart();
     hideContinue();
+    els.results.innerHTML = `<div class="muted">Run calculation.</div>`;
+    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+    loadFlowContext();
   }
 
   function row(label, value) {
@@ -75,31 +131,48 @@ const FLOW_KEYS = {
   }
 
   function loadFlowContext() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return;
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
     let parsed = null;
     try {
       parsed = JSON.parse(raw);
     } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
-    if (!parsed || parsed.category !== "access-control") return;
+    if (!parsed || parsed.category !== "access-control" || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
     const d = parsed.data || {};
-
     const lines = [];
-    if (d.recommendation) lines.push(String(d.recommendation));
-    if (d.reader) lines.push(String(d.reader));
-    if (d.req) lines.push(`Power Load: ${Number(d.req).toFixed(2)} A`);
 
-    if (!lines.length) return;
+    if (Number.isFinite(Number(d.peakLoadA))) lines.push(`Peak Load: <strong>${Number(d.peakLoadA).toFixed(2)} A</strong>`);
+    if (Number.isFinite(Number(d.requiredSupplyA))) lines.push(`Required Supply: <strong>${Number(d.requiredSupplyA).toFixed(2)} A</strong>`);
+    if (Number.isFinite(Number(d.watts))) lines.push(`Power: <strong>${Number(d.watts).toFixed(1)} W</strong>`);
+    if (d.status) lines.push(`Power Status: <strong>${String(d.status)}</strong>`);
 
-    els.flowNote.style.display = "block";
+    if (!lines.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
-      <strong>System context:</strong><br>
-      ${lines.join("<br>")}
+      <strong>Flow Context</strong><br>
+      ${lines.join(" | ")}
+      <br><br>
+      Use that lock-power result as the basis for deciding how much controller and expansion capacity the full system really needs with growth margin included.
     `;
   }
 
@@ -383,11 +456,11 @@ const FLOW_KEYS = {
   }
 
   function calc() {
-    const doors = +els.doors.value;
-    const spare = +els.spare.value;
-    const base = +els.baseDoors.value;
-    const exp = +els.expDoors.value;
-    const maxExp = +els.maxExp.value;
+    const doors = Number(els.doors.value);
+    const spare = Number(els.spare.value);
+    const base = Number(els.baseDoors.value);
+    const exp = Number(els.expDoors.value);
+    const maxExp = Number(els.maxExp.value);
 
     if (
       !Number.isFinite(doors) || doors <= 0 ||
@@ -409,7 +482,7 @@ const FLOW_KEYS = {
     const remaining = target - (panels * base);
     const expansions = Math.ceil(Math.max(0, remaining) / exp);
 
-    const readers = doors * +els.readersPerDoor.value;
+    const readers = doors * Number(els.readersPerDoor.value);
 
     const loadPct = (target / (panels * perPanel)) * 100;
     const expansionPct = (expansions / (panels * maxExp)) * 100;
@@ -434,11 +507,18 @@ const FLOW_KEYS = {
       readers
     });
 
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "access-control",
-      step: "panel-capacity",
-      data: { panels, expansions, readers }
-    }));
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        panels,
+        expansions,
+        readers,
+        loadPct,
+        expansionPct,
+        status
+      }
+    });
 
     showContinue();
   }
@@ -451,112 +531,26 @@ const FLOW_KEYS = {
     invalidate();
   });
 
-  Object.values(els).forEach((el) => {
-    if (el && (el.tagName === "INPUT" || el.tagName === "SELECT")) {
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
-    }
+  [els.doors, els.readersPerDoor, els.inputsPerDoor, els.outputsPerDoor, els.baseDoors, els.expDoors, els.maxExp, els.spare].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", invalidate);
+    el.addEventListener("change", invalidate);
   });
 
   els.nextBtn.addEventListener("click", () => {
     window.location.href = "/tools/access-control/access-level-sizing/";
   });
 
-  loadFlowContext();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    loadFlowContext();
+    hideContinue();
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function invalidate() {
-  ScopedLabsAnalyzer.invalidate({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    continueWrapEl: els.continueWrap,
-    continueBtnEl: els.continueBtn,
-    flowKey: FLOW_KEYS[STEP] || "",
-    category: CATEGORY,
-    step: STEP,
-    lane: LANE,
-    emptyMessage: "Enter values and press Calculate."
-  });
-}
-
-
-function renderSuccess(data) {
-  ScopedLabsAnalyzer.renderOutput({
-    resultsEl: els.results,
-    analysisEl: els.analysis,
-    summaryRows: [],
-    derivedRows: [],
-    status: data.status || "Healthy",
-    interpretation: data.interpretation || "",
-    dominantConstraint: data.dominantConstraint || "",
-    guidance: data.guidance || ""
-  });
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
