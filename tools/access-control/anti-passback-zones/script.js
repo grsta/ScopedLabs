@@ -1,6 +1,5 @@
 ﻿(() => {
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
 
   let chart = null;
 
@@ -11,7 +10,6 @@
     strategy: $("strategy"),
     type: $("type"),
     results: $("results"),
-    flowNote: $("flow-note"),
     calc: $("calc"),
     reset: $("reset"),
     chart: $("chart")
@@ -53,48 +51,7 @@
   }
 
   function invalidate() {
-    sessionStorage.removeItem(FLOW_KEY);
     resetResults();
-  }
-
-  function loadFlow() {
-    const raw = sessionStorage.getItem(FLOW_KEY);
-    if (!raw) return;
-
-    let parsed = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return;
-    }
-
-    if (!parsed || parsed.category !== "access-control") return;
-
-    const d = parsed.data || {};
-    const bits = [];
-
-    if (Number.isFinite(Number(d.total))) {
-      bits.push(`Prior Access Levels: <strong>${d.total}</strong>`);
-    }
-    if (Number.isFinite(Number(d.combinations))) {
-      bits.push(`Role-Area Combos: <strong>${d.combinations}</strong>`);
-    }
-    if (Number.isFinite(Number(d.scalingPressure))) {
-      bits.push(`Scaling Pressure: <strong>${Number(d.scalingPressure).toFixed(1)}</strong>`);
-    }
-    if (d.risk) {
-      bits.push(`Complexity Status: <strong>${d.risk}</strong>`);
-    }
-
-    if (!bits.length) return;
-
-    els.flowNote.style.display = "block";
-    els.flowNote.innerHTML = `
-      <strong>Carried over access-control context:</strong><br>
-      ${bits.join("<br>")}
-      <br><br>
-      Use APB sparingly. If the overall access design is already complex, excessive zone segmentation can add operational friction faster than it adds security value.
-    `;
   }
 
   function getStrategyFactor(strategy) {
@@ -433,7 +390,6 @@
     const pairedFactor = type === "hard" ? 1.0 : 0.6;
     const pairedEntrances = Math.round(entrances * pairedFactor);
 
-    const transitionDensity = entrances + interior + Math.max(0, floors - 1);
     const complexityIndexRaw =
       (zoneBreakdown.total * getStrategyFactor(strategy) * 0.9) +
       (pairedEntrances * 0.45) +
@@ -442,7 +398,9 @@
       (getTypeFactor(type) * 1.2);
 
     const complexityIndex = Number(clamp(complexityIndexRaw, 1, 18).toFixed(1));
-    const enforcementExposure = Number(clamp((pairedEntrances * getTypeFactor(type)) + (zoneBreakdown.total * 0.35), 1, 18).toFixed(1));
+    const enforcementExposure = Number(
+      clamp((pairedEntrances * getTypeFactor(type)) + (zoneBreakdown.total * 0.35), 1, 18).toFixed(1)
+    );
     const operationalRisk = getOperationalRisk(complexityIndex, type, strategy);
     const modeRecommendation = getModeRecommendation(type, strategy, complexityIndex);
 
@@ -482,21 +440,6 @@
       complexityIndex,
       enforcementExposure
     });
-
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-      category: "access-control",
-      step: "anti-passback-zones",
-      data: {
-        recommendedZones: zoneBreakdown.total,
-        perimeterZones: zoneBreakdown.perimeterZones,
-        interiorZones: zoneBreakdown.interiorZones,
-        floorZones: zoneBreakdown.floorZones,
-        pairedEntrances,
-        complexityIndex,
-        operationalRisk,
-        recommendedType
-      }
-    }));
   }
 
   function reset() {
@@ -505,9 +448,7 @@
     els.floors.value = 2;
     els.strategy.value = "minimal";
     els.type.value = "soft";
-    sessionStorage.removeItem(FLOW_KEY);
     resetResults();
-    loadFlow();
   }
 
   els.calc.addEventListener("click", calc);
@@ -519,5 +460,4 @@
   });
 
   resetResults();
-  loadFlow();
 })();
