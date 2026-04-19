@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>RAM Sizing Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=ram-pipeline-008" />
+  <link rel="stylesheet" href="/assets/style.css?v=ram-pipeline-009" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,6 +15,42 @@
   </script>
   <script defer src="/assets/auth.js?v=0405"></script>
   <script defer src="/assets/app.js?v=0405"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="compute" data-step="ram-sizing" data-lane="v1">
@@ -110,10 +146,14 @@
 
       <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <h3 class="h3" style="margin-top: 0;">Results</h3>
-        <div id="results" class="results">
+        <div id="results" class="results-grid" aria-live="polite">
           <div class="muted">Enter values and press Calculate.</div>
         </div>
-        <div id="analysis-copy" class="results-copy" style="display:none;"></div>
+        <div id="analysis-copy" style="display:none;"></div>
+
+        <p class="mini-note">
+          Model: total RAM is based on concurrent process footprint, workload multiplier, OS/base overhead, and configured reserve. This is a planning estimator, not a replacement for measured application telemetry.
+        </p>
       </div>
     </section>
 
@@ -128,12 +168,12 @@
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=ram-pipeline-008"></script>
-  <script src="/assets/catalog.js?v=ram-pipeline-008"></script>
-  <script src="/assets/pipelines.js?v=ram-pipeline-008"></script>
-  <script src="/assets/pipeline-state.js?v=ram-pipeline-008"></script>
-  <script src="/assets/pipeline.js?v=ram-pipeline-008"></script>
-  <script src="/assets/analyzer.js?v=ram-pipeline-008"></script>
+  <script src="/assets/tool-flow.js?v=ram-pipeline-009"></script>
+  <script src="/assets/catalog.js?v=ram-pipeline-009"></script>
+  <script src="/assets/pipelines.js?v=ram-pipeline-009"></script>
+  <script src="/assets/pipeline-state.js?v=ram-pipeline-009"></script>
+  <script src="/assets/pipeline.js?v=ram-pipeline-009"></script>
+  <script src="/assets/analyzer.js?v=ram-pipeline-009"></script>
   <script src="./script.js?v=008"></script>
 
 </body>
