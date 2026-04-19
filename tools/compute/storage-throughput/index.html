@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Storage Throughput Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-throughput-003" />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-throughput-004" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,6 +15,42 @@
   </script>
   <script defer src="/assets/auth.js?v=0403"></script>
   <script defer src="/assets/app.js?v=0403"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="compute" data-step="storage-throughput" data-lane="v1">
@@ -44,124 +80,118 @@
     <span>Storage Throughput</span>
   </div>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-<h1>Storage Throughput Estimator</h1>
+  <div class="pill-row" style="margin-top: 6px;">
+    <span class="pill pill--pro">Pro Tier</span>
+  </div>
+
+  <h1>Storage Throughput Estimator</h1>
 
   <div id="pipeline"></div>
 
-  
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of Storage Throughput Estimator.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">
-    Validate sequential throughput and detect mismatch with IOPS-driven workloads.
-  </p>
-
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> identifying when storage throughput becomes the limiting factor even if IOPS appears sufficient.
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+    <h2 class="h3" style="margin-top: 0;">This tool continues the Compute design flow</h2>
+    <p class="muted" style="margin-bottom: 0;">
+      Use this step to verify whether sequential transfer demand becomes the next real limiter after random IOPS demand has already been established.
+    </p>
+    <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+      This is where block size, read/write mix, transfer overhead, and storage path width turn into a real throughput target instead of a generic “fast enough” assumption.
     </p>
   </section>
 
-  
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
+  <p class="tool-best-for">
+    <strong>Best for:</strong> identifying when storage throughput becomes the limiting factor even if IOPS appears sufficient.
+  </p>
 
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
+  <div id="flow-note" class="flow-note" hidden></div>
 
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
-        </ul>
+  <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+    <div class="pill-row">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
 
-        <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
+    <h2 class="h2">🔒 Locked</h2>
+    <p class="muted">This tool is included with Pro access for this category.</p>
 
-      <section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
+    <p class="muted"><strong>What this models</strong></p>
+    <ul class="muted">
+      <li>Estimated MB/s demand from IOPS, block size, and read/write mix</li>
+      <li>Whether transfer pattern is random, mixed, or sequentially throughput-heavy</li>
+      <li>How protocol and filesystem overhead change usable bandwidth headroom</li>
+    </ul>
 
-    <div class="form-grid">
+    <div class="actions">
+      <a class="btn" href="/tools/compute/">Back to Compute</a>
+      <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+    </div>
+  </section>
+
+  <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+    <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+
+    <div class="form-grid" style="margin-top: 14px;">
       <label class="field">
         <span class="label">IOPS</span>
-        <input id="iops" type="number" value="5000" />
+        <input id="iops" type="number" value="5000" min="0" />
       </label>
 
       <label class="field">
         <span class="label">Avg I/O Size (KB)</span>
-        <input id="kb" type="number" value="32" />
+        <input id="kb" type="number" value="32" min="1" />
       </label>
 
       <label class="field">
         <span class="label">Read %</span>
-        <input id="readPct" type="number" value="70" />
+        <input id="readPct" type="number" value="70" min="0" max="100" />
       </label>
 
       <label class="field">
         <span class="label">Write %</span>
-        <input id="writePct" type="number" value="30" />
+        <input id="writePct" type="number" value="30" min="0" max="100" />
       </label>
 
       <label class="field">
         <span class="label">Overhead (%)</span>
-        <input id="overhead" type="number" value="15" />
+        <input id="overhead" type="number" value="15" min="0" />
       </label>
     </div>
 
-    <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+    <div class="btn-row" style="margin-top: 14px;">
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+    </div>
+
+    <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <h3 class="h3" style="margin-top: 0;">Results</h3>
+      <div id="results" class="results-grid" aria-live="polite">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+
+      <p class="mini-note">
+        Model: throughput is estimated from IOPS, block size, read/write ratio, and protocol overhead. This is a planning view for transfer demand, not a replacement for traced workload captures.
+      </p>
     </div>
   </section>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results">
-      <div class="muted">Enter values and press Calculate.</div>
-    </div>
-    <div id="analysis-copy" style="display:none;"></div>
-  </section>
-
-  <div id="continue-wrap" class="card" style="display:none;">
+  <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
     <button id="continue" class="btn btn-primary" disabled>
       Continue → VM Density
     </button>
   </div>
 
-
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
+  <footer class="site-footer">
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
 </main>
 
-
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=003"></script>
+  <script src="/assets/tool-flow.js?v=compute-throughput-004"></script>
+  <script src="/assets/catalog.js?v=compute-throughput-004"></script>
+  <script src="/assets/pipelines.js?v=compute-throughput-004"></script>
+  <script src="/assets/pipeline-state.js?v=compute-throughput-004"></script>
+  <script src="/assets/pipeline.js?v=compute-throughput-004"></script>
+  <script src="/assets/analyzer.js?v=compute-throughput-004"></script>
+  <script src="./script.js?v=004"></script>
 
 </body>
 </html>

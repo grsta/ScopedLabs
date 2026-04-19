@@ -1,20 +1,26 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "storage-throughput";
-const CATEGORY = "compute";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "compute";
+  const STEP = "storage-throughput";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "storage-iops";
+
+  const FLOW_KEYS = {
+    "cpu-sizing": "scopedlabs:pipeline:compute:cpu-sizing",
+    "ram-sizing": "scopedlabs:pipeline:compute:ram-sizing",
+    "storage-iops": "scopedlabs:pipeline:compute:storage-iops",
+    "storage-throughput": "scopedlabs:pipeline:compute:storage-throughput",
+    "vm-density": "scopedlabs:pipeline:compute:vm-density",
+    "gpu-vram": "scopedlabs:pipeline:compute:gpu-vram",
+    "power-thermal": "scopedlabs:pipeline:compute:power-thermal",
+    "raid-rebuild-time": "scopedlabs:pipeline:compute:raid-rebuild-time",
+    "backup-window": "scopedlabs:pipeline:compute:backup-window"
+  };
+
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "compute";
-  const CURRENT_STEP = "storage-throughput";
-
   let hasResult = false;
-  let cachedFlow = null;
   let iopsContext = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -31,69 +37,136 @@ const FLOW_KEYS = {
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continue) els.continue.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
+  }
+
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "System Context",
-      intro:
-        "This step checks whether storage throughput becomes the next limiter after IOPS demand is understood, or whether the workload remains primarily random and latency-driven.",
-      customRows: (() => {
-        const source = ScopedLabsAnalyzer.getUpstreamFlow({
-          flowKey: FLOW_KEY,
-          category: CURRENT_CATEGORY,
-          step: CURRENT_STEP,
-          cachedFlow
-        });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      iopsContext = null;
+      return;
+    }
 
-        iopsContext = source && source.step === "storage-iops" ? (source.data || {}) : null;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      iopsContext = null;
+      return;
+    }
 
-        if (!source || !source.data || source.step !== "storage-iops") return null;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      iopsContext = null;
+      return;
+    }
 
-        const data = source.data;
-        const rows = [];
+    iopsContext = parsed.data || {};
 
-        if (typeof data.finalIops === "number") {
-          rows.push({ label: "Required IOPS", value: `${Math.round(data.finalIops)}` });
-        }
+    const rows = [];
+    if (typeof iopsContext.finalIops === "number") rows.push(`Required IOPS: <strong>${Math.round(iopsContext.finalIops)}</strong>`);
+    if (typeof iopsContext.storagePressure === "string") rows.push(`Storage Pressure: <strong>${iopsContext.storagePressure}</strong>`);
+    if (typeof iopsContext.primaryConstraint === "string") rows.push(`Primary Constraint: <strong>${iopsContext.primaryConstraint}</strong>`);
+    if (typeof iopsContext.status === "string") rows.push(`IOPS Status: <strong>${iopsContext.status}</strong>`);
 
-        if (typeof data.storagePressure === "string") {
-          rows.push({ label: "Storage Pressure", value: data.storagePressure });
-        }
+    if (!rows.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-        if (typeof data.primaryConstraint === "string") {
-          rows.push({ label: "Primary Constraint", value: data.primaryConstraint });
-        }
-
-        if (typeof data.status === "string") {
-          rows.push({ label: "IOPS Status", value: data.status });
-        }
-
-        return rows.length ? rows : null;
-      })()
-    });
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${rows.join(" | ")}
+      <br><br>
+      This step checks whether throughput becomes the next practical storage limiter after the random IOPS profile already defined upstream.
+    `;
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["vm-density"]);
+      sessionStorage.removeItem(FLOW_KEYS["gpu-vram"]);
+      sessionStorage.removeItem(FLOW_KEYS["power-thermal"]);
+      sessionStorage.removeItem(FLOW_KEYS["raid-rebuild-time"]);
+      sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE
     });
 
     hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
@@ -251,9 +324,9 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         finalMBps,
         throughputClass,
@@ -263,8 +336,8 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
     hasResult = true;
+    showContinue();
   }
 
   els.calc.addEventListener("click", calc);
@@ -288,65 +361,16 @@ const FLOW_KEYS = {
     window.location.href = "/tools/compute/vm-density/";
   });
 
-  refreshFlowNote();
-  ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    refreshFlowNote();
+    hideContinue();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
