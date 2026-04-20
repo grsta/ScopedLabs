@@ -4,15 +4,52 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rack RU Planner • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=infra-rack-002" />
+  <link rel="stylesheet" href="/assets/style.css?v=infra-rack-003" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
   </script>
   <script defer src="/assets/auth.js?v=0402"></script>
   <script defer src="/assets/app.js?v=0402"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="infrastructure" data-step="rack-ru-planner" data-lane="v1">
@@ -33,96 +70,94 @@
 
 <main class="container page">
   <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/infrastructure/">Infrastructure</a> /
-    Rack RU Planner
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <a href="/tools/infrastructure/">Infrastructure</a>
+    <span class="sep">/</span>
+    <span>Rack RU Planner</span>
   </div>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--free">Free Tier</span>
-      </div>
-<h1>Rack RU Planner</h1>
+  <div class="pill-row" style="margin-top: 6px;">
+    <span class="pill pill--free">Free Tier</span>
+  </div>
+
+  <h1>Rack RU Planner</h1>
 
   <div id="pipeline"></div>
 
-  
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of Rack RU Planner.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">
-    Plan rack utilization, reserve capacity, and understand real deployment limits.
-  </p>
-
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> validating rack capacity and avoiding overcommit before deployment.
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+    <h2 class="h3" style="margin-top: 0;">This tool continues the Infrastructure design flow</h2>
+    <p class="muted" style="margin-bottom: 0;">
+      Use this step to translate the room plan into real rack capacity so the build does not look spacious on paper while quietly running out of usable rack reserve.
+    </p>
+    <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+      This is where nominal free RU gets checked against growth reserve, service access, and future adds so the rack plan remains practical instead of just technically not full.
     </p>
   </section>
 
-  <section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
+  <p class="tool-best-for">
+    <strong>Best for:</strong> validating rack capacity and avoiding overcommit before deployment.
+  </p>
 
-    <div class="form-grid">
+  <div id="flow-note" class="flow-note" hidden></div>
+
+  <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+    <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+
+    <div class="form-grid" style="margin-top: 14px;">
       <label class="field">
         <span class="label">Rack Total RU</span>
-        <input id="total" type="number" value="42">
+        <input id="total" type="number" value="42" min="1">
       </label>
 
       <label class="field">
         <span class="label">Used RU</span>
-        <input id="used" type="number" value="18">
+        <input id="used" type="number" value="18" min="0">
       </label>
 
       <label class="field">
         <span class="label">Growth Reserve (%)</span>
-        <input id="reserve" type="number" value="20">
+        <input id="reserve" type="number" value="20" min="0" max="80">
       </label>
     </div>
 
-    <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+    <div class="btn-row" style="margin-top: 14px;">
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+    </div>
+
+    <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <h3 class="h3" style="margin-top: 0;">Results</h3>
+      <div id="results" class="results-grid" aria-live="polite">
+        <div class="muted">Run calculation.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+
+      <p class="mini-note">
+        Model: rack reserve is estimated from total RU, installed RU, and reserved growth policy. This is a planning estimator for deployable capacity, not a substitute for a final elevation with device-by-device service access checks.
+      </p>
     </div>
   </section>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results">
-      <div class="muted">Run calculation.</div>
-    </div>
-    <div id="analysis-copy" style="display:none;"></div>
-  </section>
-
-  <div id="continue-wrap" class="card" style="display:none;">
+  <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
     <button id="continue" class="btn btn-primary" disabled>
       Continue → Equipment Spacing
     </button>
   </div>
 
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
+  <footer class="site-footer">
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
 </main>
 
-
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=003"></script>
+  <script src="/assets/tool-flow.js?v=infra-rack-003"></script>
+  <script src="/assets/catalog.js?v=infra-rack-003"></script>
+  <script src="/assets/pipelines.js?v=infra-rack-003"></script>
+  <script src="/assets/pipeline-state.js?v=infra-rack-003"></script>
+  <script src="/assets/pipeline.js?v=infra-rack-003"></script>
+  <script src="/assets/analyzer.js?v=infra-rack-003"></script>
+  <script src="./script.js?v=004"></script>
 
 </body>
 </html>
