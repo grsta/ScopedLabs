@@ -5,193 +5,314 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Infrastructure • ScopedLabs</title>
   <meta name="description" content="Rack space, conduit, cable management, loads, and room planning." />
-  <link rel="stylesheet" href="/assets/style.css?v=infra-cat-0381" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0317"></script>
-<script defer src="/assets/app.js?v=0317"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=infra-cat-0385" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=infra-cat-0385"></script>
+  <script defer src="/assets/app.js?v=infra-cat-0385"></script>
 </head>
 
 <body data-protected="true" data-category="infrastructure">
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
-    <nav class="nav">
-      <a class="nav-link" href="/">Home</a>
-      <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
-      <a class="nav-link" href="/about/">About</a>
-    </nav>
-  </div>
-</header>
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
 
-<main class="container">
+  <main class="container">
+    <section class="page-head">
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <span>Infrastructure</span>
+      </div>
 
-  <div class="crumbs">
-    <a href="/tools/">Tools</a>
-    <span class="sep">/</span>
-    <span>Infrastructure</span>
-  </div>
+      <h1 class="h1">Infrastructure</h1>
+      <p class="subhead">
+        Rack space, conduit, cable management, loads, and room planning.
+      </p>
+    </section>
 
-  <section class="page-head">
-    <h1 class="h1">Infrastructure</h1>
-    <p class="subhead">Rack space, conduit, cable management, loads, and room planning.</p>
+    <section class="card">
+      <p class="muted">
+        Infrastructure problems rarely start with the equipment itself. They start when the room is too small, the
+        rack load is heavier than expected, the tray is overcrowded, or generator and grounding assumptions were never
+        modeled before install. These tools help you validate the physical and support-layer constraints before the
+        design becomes expensive to change.
+      </p>
+    </section>
 
-      <section class="card" data-auto-category-pipeline-card="true" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">Start the Infrastructure design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This category includes a guided pipeline so users can move step by step through the core design decisions instead of jumping between isolated tools.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          Update this card later with the exact category-specific flow summary and mini pipeline preview if needed.
-        </p>
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn btn-primary" href="/tools/infrastructure/rack-ru-planner/">Start Pipeline</a>
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Design Pipeline</div>
+      <h2 class="h2" style="margin-top: 0;">Follow a recommended engineering sequence</h2>
+      <p class="muted" style="margin-bottom: 14px;">
+        Some ScopedLabs tools work as a connected workflow. In Infrastructure, the Design Flow carries you from room
+        footprint and rack planning into physical loading, spacing, pathway capacity, and runtime support so the whole
+        deployment can be checked as one physical system instead of disconnected estimates.
+      </p>
+
+      <div class="pipeline-preview" aria-label="Infrastructure design pipeline preview">
+        <span class="pipeline-preview-label">DESIGN PIPELINE</span>
+        <div class="pipeline-preview-steps">
+          <span class="pipeline-preview-step is-active is-pro">Room Square Footage</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step">Rack RU</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step">Rack Weight</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Floor Load</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Equipment Spacing</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Cable Tray</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step">Conduit Fill</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Generator Runtime</span>
         </div>
-      </section>
+      </div>
 
-  </section>
+      <p class="muted" style="margin-top: 14px; margin-bottom: 14px;">
+        Includes both Free and Pro tools. Unlock Pro to complete the full flow.
+      </p>
 
-  <section class="card">
-    <p class="muted">
-      Infrastructure problems show up as “we ran out of rack,” “the tray is packed,” or “the room can’t handle the load.”
-      These tools help you plan the physical constraints before the gear lands.
-    </p>
-  </section>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/infrastructure/room-square-footage/">Start Design Pipeline</a>
+      </div>
+    </section>
 
-  <!-- HERO (Free tool) -->
-  <section class="card tool-hero">
-    <div class="pill pill-ok">Free tool</div>
-    <h2 class="h2">Rack RU Planner</h2>
-    <p class="muted">Estimate rack units and reserve space for growth and cable management.</p>
-    <div class="actions">
-      <a class="btn btn-primary" href="/tools/infrastructure/rack-ru-planner/">Launch Tool</a>
-    </div>
-  </section>
+    <h3 class="section-divider">Free Tier</h3>
 
-  <!-- FREE -->
-  <h3 class="section-divider">Free Tier</h3>
+    <div class="stack">
+      <a class="tool-row tool-row--center" href="/tools/infrastructure/rack-ru-planner/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">Rack RU Planner</div>
+          <div class="tool-row-sub">
+            Estimate rack unit consumption and reserve margin before physical layout starts tightening.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row" href="/tools/infrastructure/conduit-fill/">
-    <div class="tool-row-left">
-      <div class="tool-title">Conduit Fill</div>
-      <div class="tool-desc muted">Conduit fill sanity check for cable count and sizing assumptions.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill free">Free Tier</span>
-    </div>
-  </a>
+      <a class="tool-row tool-row--center" href="/tools/infrastructure/conduit-fill/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">Conduit Fill</div>
+          <div class="tool-row-sub">
+            Sanity-check cable count, pathway size, and fill assumptions before conduit becomes the surprise bottleneck.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row" href="/tools/infrastructure/rack-weight-load/">
-    <div class="tool-row-left">
-      <div class="tool-title">Rack Weight Load</div>
-      <div class="tool-desc muted">Estimate rack weight and flag high-risk load scenarios.</div>
+      <a class="tool-row tool-row--center" href="/tools/infrastructure/rack-weight-load/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">Rack Weight Load</div>
+          <div class="tool-row-sub">
+            Estimate loaded rack weight and flag scenarios that deserve closer structural review.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
     </div>
-    <div class="tool-row-right">
-      <span class="pill free">Free Tier</span>
-    </div>
-  </a>
 
-  <!-- PRO -->
-  <h3 class="section-divider">Pro Tier</h3>
+    <h3 class="section-divider">Pro Tier</h3>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=infrastructure#checkout" 
-  data-tool="/tools/infrastructure/cable-tray-fill/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Cable Tray Fill</div>
-      <div class="tool-desc muted">Tray fill model and practical spacing notes for growth.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <div class="stack">
+      <a class="tool-row pro"
+         href="/upgrade/?category=infrastructure#checkout"
+         data-tool="/tools/infrastructure/cable-tray-fill/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Cable Tray Fill</div>
+          <div class="tool-row-sub">
+            Model tray fill, growth margin, and spacing discipline before pathway capacity erodes over time.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=infrastructure#checkout" 
-  data-tool="/tools/infrastructure/equipment-spacing/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Equipment Spacing</div>
-      <div class="tool-desc muted">Clearances and spacing planner (front/rear/sides/airflow).</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=infrastructure#checkout"
+         data-tool="/tools/infrastructure/equipment-spacing/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Equipment Spacing</div>
+          <div class="tool-row-sub">
+            Plan front, rear, and side clearances so serviceability and airflow don’t collapse in the field.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=infrastructure#checkout" 
-  data-tool="/tools/infrastructure/floor-load-rating/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Floor Load Rating</div>
-      <div class="tool-desc muted">Estimate point loads and highlight when to confirm structural rating.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=infrastructure#checkout"
+         data-tool="/tools/infrastructure/floor-load-rating/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Floor Load Rating</div>
+          <div class="tool-row-sub">
+            Estimate point loading and highlight when rack density starts pushing into structural risk territory.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=infrastructure#checkout" 
-  data-tool="/tools/infrastructure/generator-runtime/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Generator Runtime</div>
-      <div class="tool-desc muted">Runtime estimate based on load and fuel assumptions.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=infrastructure#checkout"
+         data-tool="/tools/infrastructure/generator-runtime/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Generator Runtime</div>
+          <div class="tool-row-sub">
+            Estimate runtime against load and fuel assumptions before backup power becomes a false safety net.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=infrastructure#checkout" 
-  data-tool="/tools/infrastructure/grounding-estimator/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Grounding Estimator</div>
-      <div class="tool-desc muted">Grounding/earthing planning notes and sanity checks.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=infrastructure#checkout"
+         data-tool="/tools/infrastructure/grounding-estimator/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Grounding Estimator</div>
+          <div class="tool-row-sub">
+            Sanity-check grounding assumptions before support infrastructure becomes the hidden failure point.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=infrastructure#checkout" 
-  data-tool="/tools/infrastructure/room-square-footage/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Room Square Footage</div>
-      <div class="tool-desc muted">Estimate room footprint for racks, aisles, and service clearance.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=infrastructure#checkout"
+         data-tool="/tools/infrastructure/room-square-footage/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Room Square Footage</div>
+          <div class="tool-row-sub">
+            Estimate room footprint for racks, aisles, clearance, and support space before the layout gets boxed in.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=infrastructure#checkout" 
-  data-tool="/tools/infrastructure/ups-room-sizing/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>UPS Room Sizing</div>
-      <div class="tool-desc muted">Space planning for UPS/batteries with access and ventilation margin.</div>
+      <a class="tool-row pro"
+         href="/upgrade/?category=infrastructure#checkout"
+         data-tool="/tools/infrastructure/ups-room-sizing/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>UPS Room Sizing</div>
+          <div class="tool-row-sub">
+            Plan UPS and battery footprint with access, ventilation, and maintenance margin included.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
     </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
 
-  <footer class="site-footer">
-    <a class="muted" href="/tools/">← Back to Tools</a>
-    <div class="muted">© <span data-year></span> ScopedLabs</div>
-  </footer>
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
 
-</main>
+  <style>
+    .tool-row--center { text-decoration: none; }
+    .tool-row-center { text-align: center; width: 100%; }
+    .tool-row-title { font-weight: 700; margin-bottom: 6px; }
+    .tool-row-sub { opacity: 0.9; margin-bottom: 10px; }
+    .tool-row-pill { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .lock-icon { margin-right: 6px; }
+
+    .pipeline-preview {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background:
+        linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 12px 30px rgba(0,0,0,0.18);
+    }
+
+    .pipeline-preview-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(220,255,220,0.78);
+      margin-bottom: 9px;
+    }
+
+    .pipeline-preview-steps {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.98rem;
+      line-height: 1.4;
+    }
+
+    .pipeline-preview-step {
+      color: rgba(220,235,225,0.72);
+      font-weight: 600;
+    }
+
+    .pipeline-preview-step.is-active {
+      color: rgba(255,255,255,0.96);
+      position: relative;
+      padding-left: 15px;
+    }
+
+    .pipeline-preview-step.is-active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #57ff7a;
+      transform: translateY(-50%);
+      box-shadow: 0 0 12px rgba(87,255,122,0.55);
+    }
+
+    .pipeline-preview-step.is-pro {
+      color: rgba(210,220,214,0.82);
+    }
+
+    .pipeline-preview-sep {
+      color: rgba(180,205,190,0.42);
+      font-weight: 700;
+    }
+  </style>
 </body>
 </html>
 
