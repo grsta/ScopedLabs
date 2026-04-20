@@ -1,19 +1,27 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "equipment-spacing";
-const CATEGORY = "infrastructure";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "infrastructure";
+  const STEP = "equipment-spacing";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "rack-ru-planner";
+
+  const FLOW_KEYS = {
+    "room-square-footage": "scopedlabs:pipeline:infrastructure:room-square-footage",
+    "rack-ru-planner": "scopedlabs:pipeline:infrastructure:rack-ru-planner",
+    "equipment-spacing": "scopedlabs:pipeline:infrastructure:equipment-spacing",
+    "rack-weight-load": "scopedlabs:pipeline:infrastructure:rack-weight-load",
+    "floor-load-rating": "scopedlabs:pipeline:infrastructure:floor-load-rating",
+    "ups-room-sizing": "scopedlabs:pipeline:infrastructure:ups-room-sizing",
+    "generator-runtime": "scopedlabs:pipeline:infrastructure:generator-runtime"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "infrastructure";
-  const CURRENT_STEP = "equipment-spacing";
 
-  let cachedFlow = null;
   let hasResult = false;
+  let upstreamContext = null;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
 
   const els = {
     rows: $("rows"),
@@ -29,35 +37,137 @@ const FLOW_KEYS = {
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continue) els.continue.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
+  }
+
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "Infrastructure Context",
-      intro:
-        "This step checks whether the layout is simply fitting racks on paper or still preserving serviceability, aisle usability, and future layout flexibility."
-    });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
+
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
+
+    upstreamContext = parsed.data || {};
+
+    const rows = [];
+    if (typeof upstreamContext.status === "string") rows.push(`RU Status: <strong>${upstreamContext.status}</strong>`);
+    if (typeof upstreamContext.fillClass === "string") rows.push(`Rack Fill: <strong>${upstreamContext.fillClass}</strong>`);
+    if (typeof upstreamContext.growthHeadroom === "number") rows.push(`Growth Headroom: <strong>${Number(upstreamContext.growthHeadroom).toFixed(1)}%</strong>`);
+    if (typeof upstreamContext.recommendedRu === "number") rows.push(`Recommended RU: <strong>${upstreamContext.recommendedRu}</strong>`);
+
+    if (!rows.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${rows.join(" | ")}
+      <br><br>
+      This step checks whether the room still preserves workable aisle widths, service access, and future flexibility after rack capacity has already been defined.
+    `;
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["rack-weight-load"]);
+      sessionStorage.removeItem(FLOW_KEYS["floor-load-rating"]);
+      sessionStorage.removeItem(FLOW_KEYS["ups-room-sizing"]);
+      sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      continueWrapEl: null,
+      continueBtnEl: null,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       emptyMessage: "Run calculation."
     });
 
     hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
@@ -93,43 +203,83 @@ const FLOW_KEYS = {
     const serviceMargin = Math.min(coldAisleFt, hotAisleFt, endClearFt);
     const growthPadding = Math.max(0, (areaSqFt - rackFootprintSqFt) / Math.max(areaSqFt, 1) * 100);
 
-    const healthyAisle = 4.0;
-    const watchAisle = 3.0;
+    const servicePressure = ScopedLabsAnalyzer.clamp((4 / Math.max(serviceMargin, 0.1)) * 45, 0, 180);
+    const densityPressure = ScopedLabsAnalyzer.clamp(layoutEfficiency * 1.4, 0, 180);
+    const growthPressure = ScopedLabsAnalyzer.clamp((35 - growthPadding) * 4, 0, 180);
 
-    let status = "HEALTHY";
-    if (serviceMargin < watchAisle || growthPadding < 15 || layoutEfficiency > 70) {
-      status = "RISK";
-    } else if (serviceMargin < healthyAisle || growthPadding < 25 || layoutEfficiency > 55) {
-      status = "WATCH";
-    }
+    const metrics = [
+      {
+        label: "Service Pressure",
+        value: servicePressure,
+        displayValue: `${Math.round(servicePressure)}%`
+      },
+      {
+        label: "Density Pressure",
+        value: densityPressure,
+        displayValue: `${Math.round(densityPressure)}%`
+      },
+      {
+        label: "Growth Pressure",
+        value: growthPressure,
+        displayValue: `${Math.round(growthPressure)}%`
+      }
+    ];
+
+    const compositeScore = Math.round(
+      (servicePressure * 0.45) +
+      (densityPressure * 0.30) +
+      (growthPressure * 0.25)
+    );
+
+    const analyzer = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore,
+      metrics,
+      healthyMax: 65,
+      watchMax: 85
+    });
 
     let layout = "Balanced";
-    if (serviceMargin < watchAisle || widthFt < 10) layout = "Tight";
+    if (serviceMargin < 3 || widthFt < 10) layout = "Tight";
     else if (growthPadding > 35 && widthFt > 20) layout = "Spacious";
 
     let dominantConstraint = "Balanced equipment layout";
-    if (serviceMargin < coldAisleFt && serviceMargin <= hotAisleFt) {
-      dominantConstraint = "End or service clearance";
-    } else if (coldAisleFt <= hotAisleFt && coldAisleFt <= serviceMargin) {
-      dominantConstraint = "Cold aisle width";
-    } else if (hotAisleFt <= coldAisleFt && hotAisleFt <= serviceMargin) {
-      dominantConstraint = "Hot aisle width";
+    if (analyzer.dominant.label === "Service Pressure") {
+      dominantConstraint = "Aisle and service clearance";
+    } else if (analyzer.dominant.label === "Density Pressure") {
+      dominantConstraint = "Layout density";
+    } else if (analyzer.dominant.label === "Growth Pressure") {
+      dominantConstraint = "Future expansion padding";
     }
 
-    let insight = "Layout is within a workable deployment standard.";
-    if (status === "WATCH") {
-      insight = "The layout fits, but aisle margin or expansion room is tightening. Service access and airflow flexibility will become harder as density increases.";
-    }
-    if (status === "RISK") {
-      insight = "The layout is crowding usable deployment margin. Even if racks fit dimensionally, serviceability and future adjustment space are becoming the real constraint.";
+    let crossCheck = "The room layout appears reasonably aligned with the upstream rack plan";
+    if (upstreamContext && typeof upstreamContext.status === "string" && upstreamContext.status === "RISK" && analyzer.status !== "RISK") {
+      crossCheck = "Rack density may already be tight enough that RU planning still constrains the overall layout";
+    } else if (serviceMargin < 3) {
+      crossCheck = "The layout fits dimensionally, but service margin is already being squeezed";
+    } else if (growthPadding < 20) {
+      crossCheck = "The room layout may work today, but future adds will consume flexibility quickly";
     }
 
-    let guidance = "Maintain this layout, but preserve future rack-growth and access planning in the room design.";
-    if (status === "WATCH") {
-      guidance = "Validate technician access, door swing, and cable/service approach before locking this room plan. Watch what tightens first: aisle usability, end clearance, or growth room.";
+    let interpretation = "";
+    if (analyzer.status === "RISK") {
+      interpretation =
+        "The layout is crowding usable deployment margin. Even if racks fit dimensionally, serviceability and future adjustment space are becoming the real constraint.";
+    } else if (analyzer.status === "WATCH") {
+      interpretation =
+        "The layout fits, but aisle margin or expansion room is tightening. Service access and airflow flexibility will become harder as density increases.";
+    } else {
+      interpretation =
+        "The layout is within a workable deployment standard. Aisles, service margin, and layout growth still appear balanced enough for normal operation and maintenance.";
     }
-    if (status === "RISK") {
-      guidance = `Rework the room plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not raw floor area. Increase aisle or end clearance, reduce row density, or enlarge the room before finalizing deployment.`;
+
+    let guidance = "Maintain this layout, but preserve future rack growth and access planning in the room design.";
+    if (analyzer.status === "WATCH") {
+      guidance =
+        "Validate technician access, door swing, and cable/service approach before locking this room plan. Watch what tightens first: aisle usability, end clearance, or growth room.";
+    }
+    if (analyzer.status === "RISK") {
+      guidance =
+        `Rework the room plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not raw floor area. Increase aisle or end clearance, reduce row density, or enlarge the room before finalizing deployment.`;
     }
 
     const summaryRows = [
@@ -137,42 +287,63 @@ const FLOW_KEYS = {
       { label: "Room Width", value: `${widthFt.toFixed(1)} ft` },
       { label: "Floor Area", value: `${areaSqFt.toFixed(0)} sq ft` },
       { label: "Layout Density", value: layout },
-      { label: "Status", value: status }
+      { label: "Status", value: analyzer.status }
     ];
 
     const derivedRows = [
       { label: "Rack Footprint", value: `${rackFootprintSqFt.toFixed(0)} sq ft` },
       { label: "Layout Efficiency", value: `${layoutEfficiency.toFixed(1)} %` },
       { label: "Service Margin", value: `${serviceMargin.toFixed(1)} ft` },
-      { label: "Growth Padding", value: `${growthPadding.toFixed(1)} %` }
+      { label: "Growth Padding", value: `${growthPadding.toFixed(1)} %` },
+      { label: "Cross-Check", value: crossCheck }
     ];
 
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows,
       derivedRows,
-      status,
-      interpretation: insight,
+      status: analyzer.status,
+      interpretation,
       dominantConstraint,
       guidance,
-      chart: null
+      chart: {
+        labels: metrics.map((m) => m.label),
+        values: metrics.map((m) => m.value),
+        displayValues: metrics.map((m) => m.displayValue),
+        referenceValue: 65,
+        healthyMax: 65,
+        watchMax: 85,
+        axisTitle: "Layout Stress Magnitude",
+        referenceLabel: "Healthy Margin Floor",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          120,
+          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+        )
+      }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: "infrastructure",
-      step: "equipment-spacing",
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         lengthFt,
         widthFt,
         areaSqFt,
         layout,
-        status
+        status: analyzer.status,
+        clearanceClass: layout,
+        crossCheck
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
     hasResult = true;
+    showContinue();
   }
 
   function reset() {
@@ -199,65 +370,16 @@ const FLOW_KEYS = {
     window.location.href = "/tools/infrastructure/rack-weight-load/";
   });
 
-  refreshFlowNote();
-  invalidate();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    refreshFlowNote();
+    hideContinue();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
