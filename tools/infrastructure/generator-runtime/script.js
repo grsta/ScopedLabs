@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   const CATEGORY = "infrastructure";
   const STEP = "generator-runtime";
   const LANE = "v1";
@@ -16,7 +18,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  let cachedFlow = null;
   let upstream = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -91,30 +92,41 @@
     return `${mins}m`;
   }
 
-  function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEYS[STEP],
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      cachedFlow,
-      title: "Infrastructure Context",
-      intro:
-        "This final step checks whether backup power endurance is actually aligned with the physical infrastructure already modeled, or whether outage duration becomes the last hidden failure point."
-    });
+  function showComplete() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.completeWrap) els.completeWrap.style.display = "block";
+  }
 
+  function hideComplete() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.completeWrap) els.completeWrap.style.display = "none";
+  }
+
+  function refreshFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
-    if (!raw) return;
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstream = null;
+      return;
+    }
 
     let parsed = null;
     try {
       parsed = JSON.parse(raw);
     } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstream = null;
       return;
     }
 
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) return;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstream = null;
+      return;
+    }
 
     upstream = parsed.data || {};
     const rows = [];
@@ -129,23 +141,27 @@
       rows.push(`Previous Status: <strong>${upstream.status}</strong>`);
     }
 
-    if (rows.length) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow Context</strong><br>
-        ${rows.join(" | ")}
-        <br><br>
-        This final step checks whether backup power endurance is actually aligned with the physical infrastructure already modeled, or whether outage duration becomes the last hidden failure point.
-      `;
+    if (!rows.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
     }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${rows.join(" | ")}
+      <br><br>
+      This final step checks whether backup power endurance is actually aligned with the physical infrastructure already modeled, or whether outage duration becomes the last hidden failure point.
+    `;
   }
 
   function invalidate() {
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
       flowKey: FLOW_KEYS[STEP],
@@ -155,7 +171,7 @@
       emptyMessage: "Run calculation."
     });
 
-    els.completeWrap.style.display = "none";
+    hideComplete();
     hasResult = false;
     refreshFlowNote();
   }
@@ -171,15 +187,15 @@
     const hours = usable / effRate;
     const runtimeDays = hours / 24;
 
-    const schedulePressure = ScopedLabsAnalyzer.clamp((12 / Math.max(hours, 0.01)) * 100, 0, 180);
+    const runtimePressure = ScopedLabsAnalyzer.clamp((12 / Math.max(hours, 0.01)) * 100, 0, 180);
     const reserveStress = ScopedLabsAnalyzer.clamp((reserve / 25) * 100, 0, 180);
     const burnPressure = ScopedLabsAnalyzer.clamp((effRate / Math.max(rate, 0.001)) * 100, 0, 180);
 
     const metrics = [
       {
         label: "Runtime Pressure",
-        value: schedulePressure,
-        displayValue: `${Math.round(schedulePressure)}%`
+        value: runtimePressure,
+        displayValue: `${Math.round(runtimePressure)}%`
       },
       {
         label: "Reserve Stress",
@@ -194,7 +210,7 @@
     ];
 
     const compositeScore = Math.round(
-      (schedulePressure * 0.55) +
+      (runtimePressure * 0.55) +
       (reserveStress * 0.20) +
       (burnPressure * 0.25)
     );
@@ -309,8 +325,7 @@
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-    els.completeWrap.style.display = "block";
+    showComplete();
     hasResult = true;
   }
 
@@ -342,6 +357,7 @@
     }, 400);
 
     refreshFlowNote();
+    hideComplete();
     invalidate();
   });
 })();
