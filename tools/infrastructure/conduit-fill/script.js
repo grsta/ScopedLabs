@@ -1,4 +1,9 @@
 ﻿(() => {
+  "use strict";
+
+  const CATEGORY = "infrastructure";
+  const TOOL_KEY = "scopedlabs:analyzer:infrastructure:conduit-fill";
+
   const $ = (id) => document.getElementById(id);
 
   let chartRef = { current: null };
@@ -16,9 +21,16 @@
   };
 
   function invalidate() {
-    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
-    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: TOOL_KEY,
+      category: CATEGORY,
+      step: "conduit-fill",
+      emptyMessage: "Enter values and press Calculate."
+    });
   }
 
   function calc() {
@@ -168,6 +180,18 @@
         )
       }
     });
+
+    ScopedLabsAnalyzer.writeFlow(TOOL_KEY, {
+      category: CATEGORY,
+      step: "conduit-fill",
+      data: {
+        fillPct,
+        remainingArea,
+        spareCableCapacity,
+        fillClass,
+        status: analyzer.status
+      }
+    });
   }
 
   function reset() {
@@ -187,10 +211,9 @@
     el.addEventListener("change", invalidate);
   });
 
-  invalidate();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    invalidate();
+  });
 })();
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
