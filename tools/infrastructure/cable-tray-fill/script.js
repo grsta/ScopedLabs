@@ -1,6 +1,26 @@
 ﻿(() => {
+  "use strict";
+
+  const CATEGORY = "infrastructure";
+  const STEP = "cable-tray-fill";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "equipment-spacing";
+
+  const FLOW_KEYS = {
+    "room-square-footage": "scopedlabs:pipeline:infrastructure:room-square-footage",
+    "rack-ru-planner": "scopedlabs:pipeline:infrastructure:rack-ru-planner",
+    "rack-weight-load": "scopedlabs:pipeline:infrastructure:rack-weight-load",
+    "floor-load-rating": "scopedlabs:pipeline:infrastructure:floor-load-rating",
+    "equipment-spacing": "scopedlabs:pipeline:infrastructure:equipment-spacing",
+    "cable-tray-fill": "scopedlabs:pipeline:infrastructure:cable-tray-fill",
+    "conduit-fill": "scopedlabs:pipeline:infrastructure:conduit-fill",
+    "generator-runtime": "scopedlabs:pipeline:infrastructure:generator-runtime"
+  };
+
   const $ = (id) => document.getElementById(id);
 
+  let hasResult = false;
+  let upstreamContext = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
 
@@ -11,15 +31,139 @@
     count: $("count"),
     maxFill: $("maxFill"),
     results: $("results"),
+    flowNote: $("flow-note"),
     analysisCopy: $("analysis-copy"),
+    continueWrap: $("continue-wrap"),
+    continue: $("continue"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continue) els.continue.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
+  }
+
+  function refreshFlowNote() {
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
+
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
+
+    upstreamContext = parsed.data || {};
+
+    const rows = [];
+    if (typeof upstreamContext.status === "string") rows.push(`Spacing Status: <strong>${upstreamContext.status}</strong>`);
+    if (typeof upstreamContext.clearanceClass === "string") rows.push(`Clearance Class: <strong>${upstreamContext.clearanceClass}</strong>`);
+    if (typeof upstreamContext.crossCheck === "string") rows.push(`Cross-Check: <strong>${upstreamContext.crossCheck}</strong>`);
+
+    if (!rows.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${rows.join(" | ")}
+      <br><br>
+      This step checks whether the cable pathway still has usable growth room after the physical layout and service clearances have already been evaluated.
+    `;
+  }
+
   function invalidate() {
-    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
-    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["conduit-fill"]);
+      sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+    } catch {}
+
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysisCopy,
+      continueWrapEl: null,
+      continueBtnEl: null,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
+      emptyMessage: "Enter values and press Calculate."
+    });
+
+    hasResult = false;
+    hideContinue();
+    refreshFlowNote();
   }
 
   function calc() {
@@ -106,6 +250,15 @@
     else if (fillPct > maxFill * 0.85) fillClass = "Tight tray";
     else if (fillPct > maxFill * 0.65) fillClass = "Moderate tray fill";
 
+    let crossCheck = "Tray fill appears reasonably aligned with the current physical layout";
+    if (upstreamContext && typeof upstreamContext.status === "string" && upstreamContext.status === "RISK" && analyzer.status !== "RISK") {
+      crossCheck = "Physical spacing may still constrain the pathway layout before tray fill becomes the first hard limit";
+    } else if (fillPct > maxFill) {
+      crossCheck = "The tray already exceeds the usable fill policy and should not be treated as growth-ready";
+    } else if (marginPct < 10) {
+      crossCheck = "The tray technically passes, but future adds and service access are already being squeezed";
+    }
+
     let interpretation = "";
     if (analyzer.status === "RISK") {
       interpretation =
@@ -143,7 +296,8 @@
       { label: "Remaining Usable Area", value: `${remainingArea.toFixed(2)} in²` },
       { label: "Additional Cable Capacity", value: `${remainingCableCapacity}` },
       { label: "Margin to Limit", value: `${marginPct.toFixed(1)} %` },
-      { label: "Fill Class", value: fillClass }
+      { label: "Fill Class", value: fillClass },
+      { label: "Cross-Check", value: crossCheck }
     ];
 
     ScopedLabsAnalyzer.renderOutput({
@@ -175,6 +329,22 @@
         )
       }
     });
+
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        fillPct,
+        remainingArea,
+        remainingCableCapacity,
+        fillClass,
+        crossCheck,
+        status: analyzer.status
+      }
+    });
+
+    hasResult = true;
+    showContinue();
   }
 
   function reset() {
@@ -195,58 +365,21 @@
     el.addEventListener("change", invalidate);
   });
 
-  invalidate();
+  els.continue.addEventListener("click", () => {
+    if (!hasResult) return;
+    window.location.href = "/tools/infrastructure/conduit-fill/";
+  });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    refreshFlowNote();
+    hideContinue();
+  });
 })();
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
