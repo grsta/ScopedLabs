@@ -1,21 +1,27 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "rack-weight-load";
-const CATEGORY = "infrastructure";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "infrastructure";
+  const STEP = "rack-weight-load";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "equipment-spacing";
+
+  const FLOW_KEYS = {
+    "room-square-footage": "scopedlabs:pipeline:infrastructure:room-square-footage",
+    "rack-ru-planner": "scopedlabs:pipeline:infrastructure:rack-ru-planner",
+    "equipment-spacing": "scopedlabs:pipeline:infrastructure:equipment-spacing",
+    "rack-weight-load": "scopedlabs:pipeline:infrastructure:rack-weight-load",
+    "floor-load-rating": "scopedlabs:pipeline:infrastructure:floor-load-rating",
+    "ups-room-sizing": "scopedlabs:pipeline:infrastructure:ups-room-sizing",
+    "generator-runtime": "scopedlabs:pipeline:infrastructure:generator-runtime"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "infrastructure";
-  const CURRENT_STEP = "rack-weight-load";
 
-  let cachedFlow = null;
+  let hasResult = false;
+  let upstreamContext = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
-  let hasResult = false;
 
   const els = {
     count: $("count"),
@@ -30,61 +36,88 @@ const FLOW_KEYS = {
     reset: $("reset")
   };
 
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continue) els.continue.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
+  }
+
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "Layout Context",
-      intro:
-        "This step checks whether the rack weight plan only fits nominally or still leaves real structural margin before placement and population.",
-      customRows: (() => {
-        const source = ScopedLabsAnalyzer.getUpstreamFlow({
-          flowKey: FLOW_KEY,
-          category: CURRENT_CATEGORY,
-          step: CURRENT_STEP,
-          cachedFlow
-        });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
 
-        if (!source || !source.data) return null;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
 
-        const d = source.data;
-        const rows = [];
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstreamContext = null;
+      return;
+    }
 
-        if (typeof d.areaSqFt === "number") {
-          rows.push({ label: "Room Area", value: `${d.areaSqFt.toFixed(0)} sq ft` });
-        }
+    upstreamContext = parsed.data || {};
 
-        if (typeof d.layout === "string") {
-          rows.push({ label: "Layout Type", value: d.layout });
-        }
+    const rows = [];
+    if (typeof upstreamContext.areaSqFt === "number") rows.push(`Room Area: <strong>${upstreamContext.areaSqFt.toFixed(0)} sq ft</strong>`);
+    if (typeof upstreamContext.layout === "string") rows.push(`Layout Type: <strong>${upstreamContext.layout}</strong>`);
+    if (typeof upstreamContext.status === "string") rows.push(`Previous Status: <strong>${upstreamContext.status}</strong>`);
 
-        if (typeof d.status === "string") {
-          rows.push({ label: "Previous Status", value: d.status });
-        }
+    if (!rows.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-        return rows.length ? rows : null;
-      })()
-    });
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${rows.join(" | ")}
+      <br><br>
+      This step checks whether the rack weight plan only fits nominally or still leaves real structural margin before placement and population.
+    `;
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["floor-load-rating"]);
+      sessionStorage.removeItem(FLOW_KEYS["ups-room-sizing"]);
+      sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       emptyMessage: "Run calculation."
     });
 
     hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
@@ -95,8 +128,8 @@ const FLOW_KEYS = {
 
     const total = count * each;
     const percent = (total / cap) * 100;
-    const remaining = Math.max(0, cap - total);
-    const remainingPct = Math.max(0, ((cap - total) / cap) * 100);
+    const remaining = cap - total;
+    const remainingPct = (remaining / cap) * 100;
 
     const loadPressure = ScopedLabsAnalyzer.clamp((total / cap) * 100, 0, 180);
     const reserveStress = ScopedLabsAnalyzer.clamp(100 - remainingPct, 0, 180);
@@ -219,18 +252,19 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: "infrastructure",
-      step: "rack-weight-load",
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         total,
         percent,
-        status: analyzer.status
+        status: analyzer.status,
+        classification: loadClass
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
     hasResult = true;
+    showContinue();
   }
 
   function reset() {
@@ -253,16 +287,11 @@ const FLOW_KEYS = {
     window.location.href = "/tools/infrastructure/floor-load-rating/";
   });
 
-  refreshFlowNote();
-  invalidate();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    refreshFlowNote();
+    hideContinue();
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
