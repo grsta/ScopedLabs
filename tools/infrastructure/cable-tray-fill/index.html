@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cable Tray Fill Calculator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=infra-tray-fill-003" />
+  <link rel="stylesheet" href="/assets/style.css?v=infra-tray-fill-004" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -52,7 +52,7 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="infrastructure" data-step="cable-tray-fill" data-lane="v1">
+<body data-tier="pro" data-category="infrastructure" data-tool="cable-tray-fill">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -83,24 +83,20 @@
 
     <h1>Cable Tray Fill Calculator</h1>
 
-    <div id="pipeline"></div>
-
     <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-      <h2 class="h3" style="margin-top: 0;">This tool continues the Infrastructure design flow</h2>
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Analyzer Tool</div>
+      <h2 class="h3" style="margin-top: 0;">Check real fill pressure before the tray becomes a maintenance problem</h2>
       <p class="muted" style="margin-bottom: 0;">
-        Use this step to validate whether the pathway still leaves usable expansion room after room layout, rack placement, and physical spacing have already been considered.
+        This tool estimates tray occupancy, remaining usable area, and future growth pressure so you can tell the difference between a tray that technically passes and one that is still practical to live with.
       </p>
       <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-        This is where tray dimensions, cable size, growth allowance, and service margin turn into a real pathway limit instead of a simple count of what fits today.
+        It is a standalone infrastructure analyzer, not part of the current guided design lane.
       </p>
     </section>
 
     <p class="tool-best-for">
       <strong>Best for:</strong> checking whether tray sizing still leaves usable growth room instead of only barely passing today’s cable count.
     </p>
-
-    <div id="flow-note" class="flow-note" hidden></div>
 
     <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
       <div class="pill-row">
@@ -169,26 +165,19 @@
           Model: tray fill is estimated from tray cross-section, cable diameter, count, and allowed fill policy. This is a planning estimator for usable pathway capacity, not a substitute for code review or install-standard interpretation.
         </p>
       </div>
-    </section>
 
-    <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
-      <button id="continue" class="btn btn-primary" disabled>
-        Continue → Conduit Fill
-      </button>
-    </div>
+      <div class="btn-row" style="margin-top: 14px;">
+        <a class="btn" href="/tools/infrastructure/">Back to Infrastructure</a>
+      </div>
+    </section>
 
     <footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=infra-tray-fill-003"></script>
-  <script src="/assets/catalog.js?v=infra-tray-fill-003"></script>
-  <script src="/assets/pipelines.js?v=infra-tray-fill-003"></script>
-  <script src="/assets/pipeline-state.js?v=infra-tray-fill-003"></script>
-  <script src="/assets/pipeline.js?v=infra-tray-fill-003"></script>
-  <script src="/assets/analyzer.js?v=infra-tray-fill-003"></script>
-  <script src="./script.js?v=003"></script>
+  <script src="/assets/analyzer.js?v=infra-tray-fill-004"></script>
+  <script src="./script.js?v=004"></script>
 </body>
 </html>
 
