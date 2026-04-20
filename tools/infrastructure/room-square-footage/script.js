@@ -1,19 +1,25 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "room-square-footage";
-const CATEGORY = "infrastructure";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "infrastructure";
+  const STEP = "room-square-footage";
+  const LANE = "v1";
+
+  const FLOW_KEYS = {
+    "room-square-footage": "scopedlabs:pipeline:infrastructure:room-square-footage",
+    "rack-ru-planner": "scopedlabs:pipeline:infrastructure:rack-ru-planner",
+    "equipment-spacing": "scopedlabs:pipeline:infrastructure:equipment-spacing",
+    "rack-weight-load": "scopedlabs:pipeline:infrastructure:rack-weight-load",
+    "floor-load-rating": "scopedlabs:pipeline:infrastructure:floor-load-rating",
+    "ups-room-sizing": "scopedlabs:pipeline:infrastructure:ups-room-sizing",
+    "generator-runtime": "scopedlabs:pipeline:infrastructure:generator-runtime"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "infrastructure";
-  const CURRENT_STEP = "room-square-footage";
 
-  let cachedFlow = null;
   let hasResult = false;
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
 
   const els = {
     equip: $("equip"),
@@ -25,35 +31,99 @@ const FLOW_KEYS = {
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    const lockedCard = document.getElementById("lockedCard");
+    const toolCard = document.getElementById("toolCard");
+
+    if (signedIn && unlocked) {
+      if (lockedCard) lockedCard.style.display = "none";
+      if (toolCard) toolCard.style.display = "";
+      return true;
+    }
+
+    if (lockedCard) lockedCard.style.display = "";
+    if (toolCard) toolCard.style.display = "none";
+    return false;
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continue) els.continue.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
+  }
+
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "Infrastructure Context",
-      intro:
-        "This first step checks whether the room plan is only barely fitting the equipment footprint or still leaving realistic service, aisle, and growth margin before detailed layout begins."
-    });
+    if (!els.flowNote) return;
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["rack-ru-planner"]);
+      sessionStorage.removeItem(FLOW_KEYS["equipment-spacing"]);
+      sessionStorage.removeItem(FLOW_KEYS["rack-weight-load"]);
+      sessionStorage.removeItem(FLOW_KEYS["floor-load-rating"]);
+      sessionStorage.removeItem(FLOW_KEYS["ups-room-sizing"]);
+      sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      continueWrapEl: null,
+      continueBtnEl: null,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Calculate."
     });
 
     hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
@@ -68,31 +138,59 @@ const FLOW_KEYS = {
     const growthArea = Math.max(0, total - base);
     const equipmentDensity = total > 0 ? (equip / total) * 100 : 0;
 
-    let status = "HEALTHY";
-    if (factor < 1.5 || growth < 10 || equipmentDensity > 70) {
-      status = "RISK";
-    } else if (factor < 1.8 || growth < 20 || equipmentDensity > 55) {
-      status = "WATCH";
-    }
+    const clearancePressure = ScopedLabsAnalyzer.clamp((1.8 / factor) * 50, 0, 180);
+    const growthPressure = ScopedLabsAnalyzer.clamp((20 - growth) * 4, 0, 180);
+    const densityPressure = ScopedLabsAnalyzer.clamp((equipmentDensity / 70) * 100, 0, 180);
+
+    const metrics = [
+      {
+        label: "Clearance Pressure",
+        value: clearancePressure,
+        displayValue: `${Math.round(clearancePressure)}%`
+      },
+      {
+        label: "Growth Pressure",
+        value: growthPressure,
+        displayValue: `${Math.round(growthPressure)}%`
+      },
+      {
+        label: "Density Pressure",
+        value: densityPressure,
+        displayValue: `${Math.round(densityPressure)}%`
+      }
+    ];
+
+    const compositeScore = Math.round(
+      (clearancePressure * 0.40) +
+      (growthPressure * 0.30) +
+      (densityPressure * 0.30)
+    );
+
+    const analyzer = ScopedLabsAnalyzer.resolveStatus({
+      compositeScore,
+      metrics,
+      healthyMax: 65,
+      watchMax: 85
+    });
 
     let density = "Balanced";
     if (factor < 1.6 || equipmentDensity > 65) density = "Tight";
     else if (factor > 2.6 && growth >= 25) density = "Conservative";
 
     let dominantConstraint = "Balanced room sizing";
-    if (factor < 1.6) {
+    if (analyzer.dominant.label === "Clearance Pressure") {
       dominantConstraint = "Clearance / aisle allowance";
-    } else if (growth < 15) {
+    } else if (analyzer.dominant.label === "Growth Pressure") {
       dominantConstraint = "Future growth reserve";
-    } else if (equipmentDensity > 60) {
+    } else if (analyzer.dominant.label === "Density Pressure") {
       dominantConstraint = "Equipment density concentration";
     }
 
     let interpretation = "";
-    if (status === "RISK") {
+    if (analyzer.status === "RISK") {
       interpretation =
         "The room plan is crowding usable deployment margin too tightly. Even if the footprint fits numerically, aisle flexibility, service access, or future growth will become the first practical limitation.";
-    } else if (status === "WATCH") {
+    } else if (analyzer.status === "WATCH") {
       interpretation =
         "The room plan is workable, but margin is tightening. The current estimate may support the initial build, although service clearances and growth reserve are being consumed faster than the raw square-foot total suggests.";
     } else {
@@ -101,10 +199,10 @@ const FLOW_KEYS = {
     }
 
     let guidance = "";
-    if (status === "HEALTHY") {
+    if (analyzer.status === "HEALTHY") {
       guidance =
         "Maintain this planning baseline, but keep final aisle, service, and growth assumptions explicit as the layout evolves. The next pressure increase will usually appear in reserve consumption before total square footage looks obviously small.";
-    } else if (status === "WATCH") {
+    } else if (analyzer.status === "WATCH") {
       guidance =
         "Validate aisle width, service clearances, and realistic expansion assumptions before locking the room size. Watch what tightens first: clearance margin, growth reserve, or usable deployment density.";
     } else {
@@ -131,18 +229,36 @@ const FLOW_KEYS = {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows,
       derivedRows,
-      status,
+      status: analyzer.status,
       interpretation,
       dominantConstraint,
       guidance,
-      chart: null
+      chart: {
+        labels: metrics.map((m) => m.label),
+        values: metrics.map((m) => m.value),
+        displayValues: metrics.map((m) => m.displayValue),
+        referenceValue: 65,
+        healthyMax: 65,
+        watchMax: 85,
+        axisTitle: "Room Planning Stress Magnitude",
+        referenceLabel: "Healthy Margin Floor",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          120,
+          Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+        )
+      }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: "infrastructure",
-      step: "room-square-footage",
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         equip,
         factor,
@@ -150,12 +266,12 @@ const FLOW_KEYS = {
         base,
         total,
         density,
-        status
+        status: analyzer.status
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
     hasResult = true;
+    showContinue();
   }
 
   function reset() {
@@ -179,65 +295,16 @@ const FLOW_KEYS = {
     window.location.href = "/tools/infrastructure/rack-ru-planner/";
   });
 
-  refreshFlowNote();
-  invalidate();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    refreshFlowNote();
+    hideContinue();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
