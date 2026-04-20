@@ -3,19 +3,56 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Grounding Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=infra-grounding-003" />
+  <title>Grounding Estimator • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=infra-grounding-004" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script defer src="/assets/auth.js?v=0407"></script>
   <script defer src="/assets/app.js?v=0407"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
-<body data-tier="pro" data-category="infrastructure">
+<body data-tier="pro" data-category="infrastructure" data-tool="grounding-estimator">
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
@@ -32,50 +69,59 @@
 
 <main class="container page">
   <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/infrastructure/">Infrastructure</a> /
-    Grounding Estimator
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <a href="/tools/infrastructure/">Infrastructure</a>
+    <span class="sep">/</span>
+    <span>Grounding Estimator</span>
   </div>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-<h1>Grounding Estimator</h1>
-  <p class="subhead">Grounding conductor sizing guidance and grounding target interpretation based on circuit current and resistance goals.</p>
+  <div class="pill-row" style="margin-top: 6px;">
+    <span class="pill pill--pro">Pro Tier</span>
+  </div>
 
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> quickly sizing a grounding conductor and checking whether the grounding target is conservative, normal, or likely to require enhanced electrode strategy.
+  <h1>Grounding Estimator</h1>
+
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Analyzer Tool</div>
+    <h2 class="h3" style="margin-top: 0;">Size grounding intent before the site turns it into a field problem</h2>
+    <p class="muted" style="margin-bottom: 0;">
+      This tool gives planning guidance for grounding conductor scale and grounding-target strictness so you can quickly tell whether the job still looks routine or is drifting into a more engineered grounding strategy.
+    </p>
+    <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+      It is a standalone infrastructure analyzer, not part of the current design lane.
     </p>
   </section>
 
-  
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
+  <p class="tool-best-for">
+    <strong>Best for:</strong> quickly sizing a grounding conductor and checking whether the grounding target is conservative, normal, or likely to require enhanced electrode strategy.
+  </p>
 
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
+  <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+    <div class="pill-row">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
 
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>Advanced analyzer workflow for infrastructure</li>
-          <li>Scenario comparison and deeper engineering guidance</li>
-          <li>Pro-only decision support output</li>
-        </ul>
+    <h2 class="h2">🔒 Locked</h2>
+    <p class="muted">This tool is included with Pro access for this category.</p>
 
-        <div class="actions">
-          <a class="btn" href="/tools/infrastructure/">Back to Category</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
+    <p class="muted"><strong>What this models</strong></p>
+    <ul class="muted">
+      <li>Grounding conductor sizing guidance from circuit current and material</li>
+      <li>How aggressive the grounding resistance target really is</li>
+      <li>Whether conductor choice or electrode strategy is likely to drive field complexity</li>
+    </ul>
 
-<section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
+    <div class="actions">
+      <a class="btn" href="/tools/infrastructure/">Back to Infrastructure</a>
+      <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+    </div>
+  </section>
 
-    <div class="form-grid">
+  <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+    <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+
+    <div class="form-grid" style="margin-top: 14px;">
       <label class="field">
         <span class="label">Circuit Amperage (A)</span>
         <input id="amps" type="number" min="0" step="1" value="60">
@@ -95,28 +141,35 @@
       </label>
     </div>
 
-    <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+    <div class="btn-row" style="margin-top: 14px;">
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+    </div>
+
+    <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <h3 class="h3" style="margin-top: 0;">Results</h3>
+      <div id="results" class="results-grid" aria-live="polite">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+
+      <p class="mini-note">
+        Model: grounding guidance is estimated from circuit current, conductor material, and resistance target strictness. This is a planning aid, not a substitute for NEC/CEC table verification or site grounding tests.
+      </p>
+    </div>
+
+    <div class="btn-row" style="margin-top: 14px;">
+      <a class="btn" href="/tools/infrastructure/">Back to Infrastructure</a>
     </div>
   </section>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results">
-      <div class="muted">Enter values and press Calculate.</div>
-    </div>
-    <div id="analysis-copy" style="display:none;"></div>
-  </section>
+  <footer class="site-footer">
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
+</main>
 
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-
-  </main>
-
-<script src="/assets/analyzer.js"></script>
-<script src="./script.js?v=003"></script>
+<script src="/assets/analyzer.js?v=infra-grounding-004"></script>
+<script src="./script.js?v=004"></script>
 </body>
 </html>
 
