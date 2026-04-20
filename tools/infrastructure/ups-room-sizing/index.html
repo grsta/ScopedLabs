@@ -4,15 +4,52 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>UPS Room Sizing • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=infra-ups-002" />
+  <link rel="stylesheet" href="/assets/style.css?v=infra-ups-003" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
   </script>
   <script defer src="/assets/auth.js?v=0402"></script>
   <script defer src="/assets/app.js?v=0402"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="infrastructure" data-step="ups-room-sizing" data-lane="v1">
@@ -33,110 +70,123 @@
 
 <main class="container page">
   <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/infrastructure/">Infrastructure</a> /
-    UPS Room Sizing
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <a href="/tools/infrastructure/">Infrastructure</a>
+    <span class="sep">/</span>
+    <span>UPS Room Sizing</span>
   </div>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-<h1>UPS Room Sizing</h1>
+  <div class="pill-row" style="margin-top: 6px;">
+    <span class="pill pill--pro">Pro Tier</span>
+  </div>
+
+  <h1>UPS Room Sizing</h1>
 
   <div id="pipeline"></div>
 
-  
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of UPS Room Sizing.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">
-    Estimate UPS and battery room requirements based on equipment footprint and clearance.
-  </p>
-
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> planning power infrastructure space before deployment.
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+    <h2 class="h3" style="margin-top: 0;">This tool continues the Infrastructure design flow</h2>
+    <p class="muted" style="margin-bottom: 0;">
+      Use this step to check whether UPS and battery support equipment still fits with realistic service and replacement space after structural and load assumptions have already been validated.
+    </p>
+    <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+      This is where cabinet count and footprint become a real support-space requirement, not just a nameplate equipment list with no maintenance clearance around it.
     </p>
   </section>
 
-  
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
+  <p class="tool-best-for">
+    <strong>Best for:</strong> planning power infrastructure space before deployment.
+  </p>
 
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
+  <div id="flow-note" class="flow-note" hidden></div>
 
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
-        </ul>
-
-        <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
-
-      <section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
-
-    <div class="form-grid">
-      <label class="field"><span class="label">UPS Cabinets</span><input id="ups" type="number" value="2"></label>
-      <label class="field"><span class="label">Battery Cabinets</span><input id="batt" type="number" value="4"></label>
-      <label class="field"><span class="label">Area per Cabinet (sq ft)</span><input id="areaEach" type="number" value="20"></label>
-      <label class="field"><span class="label">Clearance Factor</span><input id="factor" type="number" value="1.5"></label>
+  <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+    <div class="pill-row">
+      <span class="pill pill--pro">Pro Tier</span>
     </div>
+
+    <h2 class="h2">🔒 Locked</h2>
+    <p class="muted">This tool is included with Pro access for this category.</p>
+
+    <p class="muted"><strong>What this models</strong></p>
+    <ul class="muted">
+      <li>UPS and battery support-room size from cabinet count and footprint</li>
+      <li>How much real area is being consumed by service and clearance allowance</li>
+      <li>Whether the room remains balanced, tight, or reserve-heavy before deployment</li>
+    </ul>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <a class="btn" href="/tools/infrastructure/">Back to Infrastructure</a>
+      <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
     </div>
   </section>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results"><div class="muted">Run calculation.</div></div>
-    <div id="analysis-copy" style="display:none;"></div>
+  <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+    <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+
+    <div class="form-grid" style="margin-top: 14px;">
+      <label class="field">
+        <span class="label">UPS Cabinets</span>
+        <input id="ups" type="number" value="2" min="0">
+      </label>
+
+      <label class="field">
+        <span class="label">Battery Cabinets</span>
+        <input id="batt" type="number" value="4" min="0">
+      </label>
+
+      <label class="field">
+        <span class="label">Area per Cabinet (sq ft)</span>
+        <input id="areaEach" type="number" value="20" min="0">
+      </label>
+
+      <label class="field">
+        <span class="label">Clearance Factor</span>
+        <input id="factor" type="number" value="1.5" min="1">
+      </label>
+    </div>
+
+    <div class="btn-row" style="margin-top: 14px;">
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+    </div>
+
+    <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <h3 class="h3" style="margin-top: 0;">Results</h3>
+      <div id="results" class="results-grid" aria-live="polite">
+        <div class="muted">Run calculation.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+
+      <p class="mini-note">
+        Model: UPS room area is estimated from cabinet count, cabinet footprint, and service-clearance factor. This is a planning estimator for support-space sizing, not a replacement for a final equipment-room layout and maintenance clearance review.
+      </p>
+    </div>
   </section>
 
-  <div id="continue-wrap" class="card" style="display:none;">
+  <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
     <button id="continue" class="btn btn-primary" disabled>
       Continue → Generator Runtime
     </button>
   </div>
 
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
+  <footer class="site-footer">
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
 </main>
 
-
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=003"></script>
+  <script src="/assets/tool-flow.js?v=infra-ups-003"></script>
+  <script src="/assets/catalog.js?v=infra-ups-003"></script>
+  <script src="/assets/pipelines.js?v=infra-ups-003"></script>
+  <script src="/assets/pipeline-state.js?v=infra-ups-003"></script>
+  <script src="/assets/pipeline.js?v=infra-ups-003"></script>
+  <script src="/assets/analyzer.js?v=infra-ups-003"></script>
+  <script src="./script.js?v=004"></script>
 
 </body>
 </html>
-
 
 
 
