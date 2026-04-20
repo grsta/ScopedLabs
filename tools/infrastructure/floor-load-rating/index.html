@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Floor Load Rating • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=infra-floor-002" />
+  <link rel="stylesheet" href="/assets/style.css?v=infra-floor-003" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,6 +14,42 @@
   </script>
   <script defer src="/assets/auth.js?v=0402"></script>
   <script defer src="/assets/app.js?v=0402"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="infrastructure" data-step="floor-load-rating" data-lane="v1">
@@ -24,6 +60,7 @@
       <span class="brand-dot"></span>
       <span class="brand-text">ScopedLabs</span>
     </a>
+
     <nav class="site-nav">
       <a class="nav-pill" href="/">Home</a>
       <a class="nav-pill" href="/tools/">Tools</a>
@@ -34,110 +71,123 @@
 
 <main class="container page">
   <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/infrastructure/">Infrastructure</a> /
-    Floor Load Rating
+    <a href="/tools/">Tools</a>
+    <span class="sep">/</span>
+    <a href="/tools/infrastructure/">Infrastructure</a>
+    <span class="sep">/</span>
+    <span>Floor Load Rating</span>
   </div>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-<h1>Floor Load Rating</h1>
+  <div class="pill-row" style="margin-top: 6px;">
+    <span class="pill pill--pro">Pro Tier</span>
+  </div>
+
+  <h1>Floor Load Rating</h1>
 
   <div id="pipeline"></div>
 
-  
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of Floor Load Rating.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">
-    Evaluate floor structural limits based on rack loading and footprint.
-  </p>
-
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> verifying structural safety and identifying when point loading approaches floor-rating limits before deployment.
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+    <h2 class="h3" style="margin-top: 0;">This tool continues the Infrastructure design flow</h2>
+    <p class="muted" style="margin-bottom: 0;">
+      Use this step to check whether the rack footprint still preserves real structural margin after equipment load and layout decisions have already been established.
+    </p>
+    <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+      This is where total rack weight turns into actual pressure on the floor, and where concentrated loading can become the real deployment limiter even when the room still looks spacious.
     </p>
   </section>
 
-  
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
+  <p class="tool-best-for">
+    <strong>Best for:</strong> verifying structural safety and identifying when point loading approaches floor-rating limits before deployment.
+  </p>
 
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
+  <div id="flow-note" class="flow-note" hidden></div>
 
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
-        </ul>
-
-        <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
-
-      <section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
-
-    <div class="form-grid">
-      <label class="field"><span class="label">Rack Weight (lbs)</span><input id="weight" type="number" value="2500"></label>
-      <label class="field"><span class="label">Rack Width (in)</span><input id="w" type="number" value="24"></label>
-      <label class="field"><span class="label">Rack Depth (in)</span><input id="d" type="number" value="42"></label>
-      <label class="field"><span class="label">Floor Rating (psf)</span><input id="rating" type="number" value="150"></label>
+  <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+    <div class="pill-row">
+      <span class="pill pill--pro">Pro Tier</span>
     </div>
+
+    <h2 class="h2">🔒 Locked</h2>
+    <p class="muted">This tool is included with Pro access for this category.</p>
+
+    <p class="muted"><strong>What this models</strong></p>
+    <ul class="muted">
+      <li>Rack footprint pressure in pounds per square foot</li>
+      <li>Remaining structural margin against a target floor rating</li>
+      <li>Whether concentrated loading is tightening faster than the raw rack weight suggests</li>
+    </ul>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <a class="btn" href="/tools/infrastructure/">Back to Infrastructure</a>
+      <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
     </div>
   </section>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results"><div class="muted">Run calculation.</div></div>
-    <div id="analysis-copy" style="display:none;"></div>
+  <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+    <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+
+    <div class="form-grid" style="margin-top: 14px;">
+      <label class="field">
+        <span class="label">Rack Weight (lbs)</span>
+        <input id="weight" type="number" value="2500" min="0">
+      </label>
+
+      <label class="field">
+        <span class="label">Rack Width (in)</span>
+        <input id="w" type="number" value="24" min="0.1">
+      </label>
+
+      <label class="field">
+        <span class="label">Rack Depth (in)</span>
+        <input id="d" type="number" value="42" min="0.1">
+      </label>
+
+      <label class="field">
+        <span class="label">Floor Rating (psf)</span>
+        <input id="rating" type="number" value="150" min="1">
+      </label>
+    </div>
+
+    <div class="btn-row" style="margin-top: 14px;">
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
+    </div>
+
+    <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <h3 class="h3" style="margin-top: 0;">Results</h3>
+      <div id="results" class="results-grid" aria-live="polite">
+        <div class="muted">Run calculation.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+
+      <p class="mini-note">
+        Model: floor loading is estimated from rack weight, rack footprint, and allowable floor rating. This is a planning estimator for structural pressure, not a substitute for structural engineering review.
+      </p>
+    </div>
   </section>
 
-  <div id="continue-wrap" class="card" style="display:none;">
+  <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
     <button id="continue" class="btn btn-primary" disabled>
       Continue → UPS Room Sizing
     </button>
   </div>
 
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
+  <footer class="site-footer">
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
 </main>
 
-
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=003"></script>
+  <script src="/assets/tool-flow.js?v=infra-floor-003"></script>
+  <script src="/assets/catalog.js?v=infra-floor-003"></script>
+  <script src="/assets/pipelines.js?v=infra-floor-003"></script>
+  <script src="/assets/pipeline-state.js?v=infra-floor-003"></script>
+  <script src="/assets/pipeline.js?v=infra-floor-003"></script>
+  <script src="/assets/analyzer.js?v=infra-floor-003"></script>
+  <script src="./script.js?v=004"></script>
 
 </body>
 </html>
-
 
 
 

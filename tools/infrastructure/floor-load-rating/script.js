@@ -1,22 +1,27 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "floor-load-rating";
-const CATEGORY = "infrastructure";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
+  const CATEGORY = "infrastructure";
+  const STEP = "floor-load-rating";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "rack-weight-load";
+
+  const FLOW_KEYS = {
+    "room-square-footage": "scopedlabs:pipeline:infrastructure:room-square-footage",
+    "rack-ru-planner": "scopedlabs:pipeline:infrastructure:rack-ru-planner",
+    "equipment-spacing": "scopedlabs:pipeline:infrastructure:equipment-spacing",
+    "rack-weight-load": "scopedlabs:pipeline:infrastructure:rack-weight-load",
+    "floor-load-rating": "scopedlabs:pipeline:infrastructure:floor-load-rating",
+    "ups-room-sizing": "scopedlabs:pipeline:infrastructure:ups-room-sizing",
+    "generator-runtime": "scopedlabs:pipeline:infrastructure:generator-runtime"
+  };
+
   const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
-  const CURRENT_CATEGORY = "infrastructure";
-  const CURRENT_STEP = "floor-load-rating";
 
-  let cachedFlow = null;
+  let hasResult = false;
   let upstream = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
-  let hasResult = false;
 
   const els = {
     weight: $("weight"),
@@ -29,61 +34,134 @@ const FLOW_KEYS = {
     continueWrap: $("continue-wrap"),
     continue: $("continue"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continue) els.continue.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continue) els.continue.disabled = true;
+  }
+
   function refreshFlowNote() {
-    cachedFlow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
-      cachedFlow,
-      title: "Infrastructure Context",
-      intro:
-        "This step checks whether the rack footprint is only passing on paper or still retaining real structural margin once concentrated floor loading is considered.",
-      customRows: (() => {
-        const source = ScopedLabsAnalyzer.getUpstreamFlow({
-          flowKey: FLOW_KEY,
-          category: CURRENT_CATEGORY,
-          step: CURRENT_STEP,
-          cachedFlow
-        });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstream = null;
+      return;
+    }
 
-        upstream = source ? (source.data || {}) : null;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstream = null;
+      return;
+    }
 
-        if (!source || !source.data) return null;
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      upstream = null;
+      return;
+    }
 
-        const d = source.data;
-        const rows = [];
+    upstream = parsed.data || {};
 
-        if (typeof d.total === "number") {
-          rows.push({ label: "Rack Weight", value: `${d.total.toFixed(0)} lbs` });
-        }
-        if (typeof d.status === "string") {
-          rows.push({ label: "Previous Status", value: d.status });
-        }
+    const rows = [];
+    if (typeof upstream.total === "number") rows.push(`Rack Weight: <strong>${upstream.total.toFixed(0)} lbs</strong>`);
+    if (typeof upstream.status === "string") rows.push(`Load Status: <strong>${upstream.status}</strong>`);
+    if (typeof upstream.classification === "string") rows.push(`Load Class: <strong>${upstream.classification}</strong>`);
 
-        return rows.length ? rows : null;
-      })()
-    });
+    if (!rows.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${rows.join(" | ")}
+      <br><br>
+      This step checks whether the rack footprint still preserves real structural margin once concentrated floor loading is considered.
+    `;
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["ups-room-sizing"]);
+      sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
-      category: CURRENT_CATEGORY,
-      step: CURRENT_STEP,
+      flowKey: FLOW_KEYS[STEP],
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
       emptyMessage: "Run calculation."
     });
 
     hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
@@ -95,12 +173,12 @@ const FLOW_KEYS = {
 
     const areaSqFt = (w / 12) * (d / 12);
     const psf = weight / areaSqFt;
-    const marginPsf = Math.max(0, rating - psf);
-    const marginPct = Math.max(0, ((rating - psf) / rating) * 100);
+    const marginPsf = rating - psf;
+    const remainingMarginPct = (marginPsf / rating) * 100;
 
     const loadPressure = ScopedLabsAnalyzer.clamp((psf / rating) * 100, 0, 180);
     const concentrationStress = ScopedLabsAnalyzer.clamp((weight / Math.max(areaSqFt * 25, 1)) * 100, 0, 180);
-    const safetyMarginStress = ScopedLabsAnalyzer.clamp(100 - marginPct, 0, 180);
+    const safetyMarginStress = ScopedLabsAnalyzer.clamp(100 - remainingMarginPct, 0, 180);
 
     const metrics = [
       {
@@ -156,7 +234,7 @@ const FLOW_KEYS = {
       crossCheck = "The upstream rack loading is already elevated, so concentrated floor loading deserves closer structural review";
     } else if (areaSqFt < 6) {
       crossCheck = "A compact footprint can amplify floor pressure faster than total rack weight suggests";
-    } else if (marginPct < 15) {
+    } else if (remainingMarginPct < 15) {
       crossCheck = "Structural reserve is now tight enough that installation tolerances and real load distribution begin to matter materially";
     }
 
@@ -193,7 +271,7 @@ const FLOW_KEYS = {
     ];
 
     const derivedRows = [
-      { label: "Remaining Margin", value: `${marginPct.toFixed(1)} %` },
+      { label: "Remaining Margin", value: `${remainingMarginPct.toFixed(1)} %` },
       { label: "Load Class", value: loadClass },
       { label: "Cross-Check", value: crossCheck }
     ];
@@ -228,17 +306,18 @@ const FLOW_KEYS = {
       }
     });
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEY, {
-      category: "infrastructure",
-      step: "floor-load-rating",
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
       data: {
         psf,
-        status: analyzer.status
+        status: analyzer.status,
+        classification: loadClass
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
     hasResult = true;
+    showContinue();
   }
 
   function reset() {
@@ -262,65 +341,16 @@ const FLOW_KEYS = {
     window.location.href = "/tools/infrastructure/ups-room-sizing/";
   });
 
-  refreshFlowNote();
-  invalidate();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    refreshFlowNote();
+    hideContinue();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
