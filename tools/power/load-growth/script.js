@@ -449,6 +449,7 @@
   function renderSuccess(data) {
     clearTable();
     data.yearly.forEach((row) => addRow(row.year, row.projected, row.delta, row.deltaPct));
+
     if (els.notes) els.notes.textContent = data.notesText;
 
     const a = analyzer();
@@ -573,7 +574,7 @@
         }
       });
 
-      el.addEventListener("input", () => {
+      const onChange = () => {
         clearTable();
         clearError();
         invalidatePipelineResult();
@@ -583,19 +584,10 @@
         if (els.notes) els.notes.textContent = "";
         renderImportedFlow();
         invalidateOutput();
-      });
+      };
 
-      el.addEventListener("change", () => {
-        clearTable();
-        clearError();
-        invalidatePipelineResult();
-        hideContinue(els.continueWrap, els.continueBtn);
-        clearAnalysisBlock(els.analysis);
-        if (els.resultsCard) els.resultsCard.hidden = true;
-        if (els.notes) els.notes.textContent = "";
-        renderImportedFlow();
-        invalidateOutput();
-      });
+      el.addEventListener("input", onChange);
+      el.addEventListener("change", onChange);
     });
   }
 
