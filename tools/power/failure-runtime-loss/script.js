@@ -1,5 +1,10 @@
 (() => {
+  "use strict";
+
   const $ = (id) => document.getElementById(id);
+
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
 
   const els = {
     baselineLoad: $("baselineLoad"),
@@ -11,7 +16,9 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     calc: $("calc"),
-    reset: $("reset")
+    reset: $("reset"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   const DEFAULTS = {
@@ -51,10 +58,53 @@
     return Number.isFinite(value) ? `${value.toFixed(digits)} V` : "—";
   }
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
   function invalidate() {
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       emptyMessage: "Enter values and press Calculate."
     });
   }
@@ -119,31 +169,29 @@
 
     const loadShockMetric = ScopedLabsAnalyzer.clamp(loadIncreasePct, 0, 100);
     const runtimeLossMetric = ScopedLabsAnalyzer.clamp(percentLost, 0, 100);
-    const energyMarginMetric = baselineRuntime > 0
-      ? ScopedLabsAnalyzer.clamp((failureRuntime / baselineRuntime) * 100, 0, 100)
-      : 0;
-
-    const metrics = [
-      {
-        label: "Load Shock",
-        value: loadShockMetric,
-        displayValue: fmtPct(loadIncreasePct)
-      },
-      {
-        label: "Runtime Loss",
-        value: runtimeLossMetric,
-        displayValue: fmtPct(percentLost)
-      },
-      {
-        label: "Remaining Runtime Margin",
-        value: 100 - energyMarginMetric,
-        displayValue: fmtPct(energyMarginMetric)
-      }
-    ];
+    const remainingRuntimePct =
+      baselineRuntime > 0 ? (failureRuntime / baselineRuntime) * 100 : 0;
+    const remainingMarginMetric = 100 - ScopedLabsAnalyzer.clamp(remainingRuntimePct, 0, 100);
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: Math.max(loadShockMetric, runtimeLossMetric, 100 - energyMarginMetric),
-      metrics,
+      compositeScore: Math.max(loadShockMetric, runtimeLossMetric, remainingMarginMetric),
+      metrics: [
+        {
+          label: "Load Shock",
+          value: loadShockMetric,
+          displayValue: fmtPct(loadIncreasePct)
+        },
+        {
+          label: "Runtime Loss",
+          value: runtimeLossMetric,
+          displayValue: fmtPct(percentLost)
+        },
+        {
+          label: "Remaining Runtime Margin",
+          value: remainingMarginMetric,
+          displayValue: fmtPct(remainingRuntimePct)
+        }
+      ],
       healthyMax: 20,
       watchMax: 45
     });
@@ -158,17 +206,17 @@
     if (percentLost >= 40) {
       interpretation += ` The failure state is consuming runtime aggressively, which means resilience collapses quickly once the system leaves normal operating conditions.`;
     } else if (percentLost >= 20) {
-      interpretation += ` The degraded load meaningfully compresses runtime, so backup duration under failure is materially weaker than nameplate baseline expectations.`;
+      interpretation += ` The degraded load meaningfully compresses runtime, so backup duration under failure is materially weaker than baseline expectations.`;
     } else {
       interpretation += ` Runtime resilience is still reasonably controlled, so the failed-state load does not erase backup duration as aggressively.`;
     }
 
     let dominantConstraint = "";
-    if (runtimeLossMetric >= loadShockMetric && runtimeLossMetric >= (100 - energyMarginMetric) && percentLost >= 20) {
-      dominantConstraint = "Runtime loss is the dominant limiter. Battery backup falls away fast once the system transitions into the higher-load failure condition.";
-    } else if (loadShockMetric >= (100 - energyMarginMetric) && loadIncreasePct >= 20) {
+    if (runtimeLossMetric >= loadShockMetric && runtimeLossMetric >= remainingMarginMetric && percentLost >= 20) {
+      dominantConstraint = "Runtime loss is the dominant limiter. Backup duration falls away quickly once the system transitions into the higher-load failure condition.";
+    } else if (loadShockMetric >= remainingMarginMetric && loadIncreasePct >= 20) {
       dominantConstraint = "Load shock is the dominant limiter. The jump from baseline to failure-state demand is what drives most of the resilience loss.";
-    } else if ((100 - energyMarginMetric) > 25) {
+    } else if (remainingMarginMetric > 25) {
       dominantConstraint = "Remaining runtime margin is the dominant limiter. There is not much battery headroom left once the failed-state load is applied.";
     } else {
       dominantConstraint = "The failure scenario is still reasonably contained. Battery capacity, efficiency, and degraded load remain in a workable range.";
@@ -176,9 +224,9 @@
 
     let guidance = "";
     if (percentLost >= 40) {
-      guidance = "Treat this as a weak-failure-resilience design. Increase battery capacity, reduce failure-state load, or shorten required outage duration before relying on it.";
+      guidance = "Treat this as weak failure resilience. Increase battery capacity, reduce failed-state load, or shorten required outage duration before relying on it operationally.";
     } else if (percentLost >= 20) {
-      guidance = "Review whether the failed-state load can be shed or segmented. Even modest load reduction during failure can materially restore runtime.";
+      guidance = "Review whether failed-state load can be shed or segmented. Even modest reduction during failure can materially restore runtime.";
     } else {
       guidance = "Runtime resilience is acceptable for planning purposes. Use this result to compare normal-vs-failure survivability across backup options.";
     }
@@ -192,15 +240,20 @@
       runtimeLost,
       percentLost,
       loadIncreasePct,
+      remainingRuntimePct,
       resilienceClass,
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance,
+      loadShockMetric,
+      runtimeLossMetric,
+      remainingMarginMetric
     };
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     els.results.innerHTML = `<div class="muted">⚠ ${message}</div>`;
   }
@@ -209,6 +262,8 @@
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Baseline Runtime", value: fmtHours(data.baselineRuntime) },
         { label: "Failure Runtime", value: fmtHours(data.failureRuntime) },
@@ -228,16 +283,35 @@
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: ["Load Shock", "Runtime Loss", "Remaining Runtime Margin"],
+        values: [
+          Number(data.loadShockMetric.toFixed(1)),
+          Number(data.runtimeLossMetric.toFixed(1)),
+          Number(data.remainingMarginMetric.toFixed(1))
+        ],
+        displayValues: [
+          fmtPct(data.loadIncreasePct),
+          fmtPct(data.percentLost),
+          fmtPct(data.remainingRuntimePct)
+        ],
+        referenceValue: 20,
+        healthyMax: 20,
+        watchMax: 45,
+        axisTitle: "Runtime Resilience Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
   }
 
   function calculate() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
@@ -261,66 +335,21 @@
   function boot() {
     bind();
     invalidate();
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  window.addEventListener("DOMContentLoaded", () => {
+    let unlocked = unlockCategoryPage();
+    if (unlocked) boot();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        boot();
+      }
+    }, 400);
+  });
 })();
-
-
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
