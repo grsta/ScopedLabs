@@ -1,4 +1,6 @@
 ﻿(() => {
+  "use strict";
+
   const $ = (id) => document.getElementById(id);
 
   const FLOW_KEYS = {
@@ -20,6 +22,9 @@
   const PREVIOUS_STEP = "pixel-density";
   const NEXT_URL = "/tools/physical-security/face-recognition-range/";
 
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
   const els = {
     dist: $("dist"),
     tw: $("tw"),
@@ -30,7 +35,9 @@
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
-    continueBtn: $("continue")
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   const DEFAULTS = {
@@ -61,15 +68,66 @@
     return Number.isFinite(value) ? `${value.toFixed(digits)} PPF` : "—";
   }
 
+  function fmtPct(value, digits = 1) {
+    return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+  }
+
   function applyDefaults() {
     els.dist.value = String(DEFAULTS.dist);
     els.tw.value = String(DEFAULTS.tw);
     els.sw.value = String(DEFAULTS.sw);
   }
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    const lockedCard = document.getElementById("lockedCard");
+    const toolCard = document.getElementById("toolCard");
+
+    if (signedIn && unlocked) {
+      if (lockedCard) lockedCard.style.display = "none";
+      if (toolCard) toolCard.style.display = "";
+      return true;
+    }
+
+    if (lockedCard) lockedCard.style.display = "";
+    if (toolCard) toolCard.style.display = "none";
+    return false;
+  }
+
   function clearDownstream() {
-    sessionStorage.removeItem(FLOW_KEYS.face);
-    sessionStorage.removeItem(FLOW_KEYS.plate);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.face);
+      sessionStorage.removeItem(FLOW_KEYS.plate);
+    } catch {}
   }
 
   function classifyLens(focal) {
@@ -101,20 +159,31 @@
   }
 
   function renderFlowNote() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      title: "Flow context",
-      intro: "This step converts pixel-density requirements into a practical focal-length choice for the desired scene width."
-    });
-
+    const raw = sessionStorage.getItem(FLOW_KEYS.pixel);
     prev = null;
 
-    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    prev = flow.data || {};
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    prev = parsed.data || {};
 
     const dist = num(prev.dist);
     const ppf = num(prev.ppf);
@@ -126,22 +195,27 @@
 
     const parts = [];
     if (level) {
-      parts.push(`pixel density <strong>${level}</strong>`);
+      parts.push(`Pixel Density: <strong>${level}</strong>`);
     } else if (Number.isFinite(ppf) && ppf > 0) {
-      parts.push(`pixel density <strong>${fmtPpf(ppf)}</strong>`);
+      parts.push(`Pixel Density: <strong>${fmtPpf(ppf)}</strong>`);
     }
     if (Number.isFinite(dist) && dist > 0) {
-      parts.push(`distance <strong>${fmtFt(dist)}</strong>`);
+      parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
     }
 
-    if (parts.length) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow context</strong><br>
-        Prior pixel-density results detected — ${parts.join(", ")}.
-        Lens selection will tighten or relax based on how much detail the prior step says you really need.
-      `;
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
     }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This step converts the validated detail requirement from Pixel Density into a practical focal-length recommendation.
+    `;
   }
 
   function invalidate({ clearFlow = true } = {}) {
@@ -152,6 +226,8 @@
       analysisEl: els.analysis,
       continueWrapEl: els.continueWrap,
       continueBtnEl: els.continueBtn,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       flowKey: FLOW_KEYS.lens,
       category: CATEGORY,
       step: STEP,
@@ -225,27 +301,25 @@
 
     const adjustmentMetric = Math.min(Math.abs(adjustmentPct) * 1.5, 100);
 
-    const metrics = [
-      {
-        label: "Detail Pressure",
-        value: detailPressureMetric,
-        displayValue: ppf > 0 ? fmtPpf(ppf) : "No prior PPF"
-      },
-      {
-        label: "Focal Demand",
-        value: focalPressureMetric,
-        displayValue: fmtMm(adjustedFocal)
-      },
-      {
-        label: "Adjustment Shift",
-        value: adjustmentMetric,
-        displayValue: `${fmt(adjustmentPct, 1)}%`
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(detailPressureMetric, focalPressureMetric, adjustmentMetric),
-      metrics,
+      metrics: [
+        {
+          label: "Detail Pressure",
+          value: detailPressureMetric,
+          displayValue: ppf > 0 ? fmtPpf(ppf) : "No prior PPF"
+        },
+        {
+          label: "Focal Demand",
+          value: focalPressureMetric,
+          displayValue: fmtMm(adjustedFocal)
+        },
+        {
+          label: "Adjustment Shift",
+          value: adjustmentMetric,
+          displayValue: `${fmt(adjustmentPct, 1)}%`
+        }
+      ],
       healthyMax: 25,
       watchMax: 60
     });
@@ -285,7 +359,10 @@
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance,
+      detailPressureMetric,
+      focalPressureMetric,
+      adjustmentMetric
     };
   }
 
@@ -309,6 +386,7 @@
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
@@ -318,6 +396,8 @@
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Raw Focal Length", value: fmtMm(data.baseFocal) },
         { label: "Adjusted Focal Length", value: fmtMm(data.adjustedFocal) },
@@ -335,7 +415,29 @@
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: ["Detail Pressure", "Focal Demand", "Adjustment Shift"],
+        values: [
+          Number(data.detailPressureMetric.toFixed(1)),
+          Number(data.focalPressureMetric.toFixed(1)),
+          Number(data.adjustmentMetric.toFixed(1))
+        ],
+        displayValues: [
+          data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF",
+          fmtMm(data.adjustedFocal),
+          `${fmt(data.adjustmentPct, 1)}%`
+        ],
+        referenceValue: 25,
+        healthyMax: 25,
+        watchMax: 60,
+        axisTitle: "Lens Selection Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
 
     writeFlow(data);
@@ -378,53 +480,16 @@
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
-    init();
+
+    let unlocked = unlockCategoryPage();
+    if (unlocked) init();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        init();
+      }
+    }, 400);
   });
 })();
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
