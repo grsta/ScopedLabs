@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Physical Security • ScopedLabs</title>
   <meta name="description" content="Field of view, mounting, pixel density, and camera planning tools." />
-  <link rel="stylesheet" href="/assets/style.css?v=physsec-cat-0383" />
+  <link rel="stylesheet" href="/assets/style.css?v=physsec-cat-0384" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuYWkiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3MDU4NjA2MSwiZXhwIjoyMDg2MTYyMDYxfQ.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0383"></script>
-  <script defer src="/assets/app.js?v=0383"></script>
+  <script defer src="/assets/auth.js?v=0384"></script>
+  <script defer src="/assets/app.js?v=0384"></script>
 </head>
 
 <body data-protected="true" data-category="physical-security">
@@ -32,175 +32,300 @@
   </header>
 
   <main class="container">
-    <div class="crumbs">
-      <a href="/tools/">Tools</a>
-      <span class="sep">/</span>
-      <span>Physical Security</span>
-    </div>
-
     <section class="page-head">
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <span>Physical Security</span>
+      </div>
+
       <h1 class="h1">Physical Security</h1>
       <p class="subhead">Field of view, mounting, pixel density, and camera planning tools.</p>
-
-      <section class="card" data-auto-category-pipeline-card="true" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">Start the Physical Security design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This category includes a guided pipeline so users can move step by step through the core design decisions instead of jumping between isolated tools.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          Update this card later with the exact category-specific flow summary and mini pipeline preview if needed.
-        </p>
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn btn-primary" href="/tools/physical-security/scene-illumination/">Start Pipeline</a>
-        </div>
-      </section>
-
     </section>
 
     <section class="card">
       <p class="muted">
-        Physical security problems usually show up as blind spots and “we need another camera.”
-        These tools help you plan coverage intent, optics, spacing, and real-world performance limits.
+        Physical security problems usually show up as blind spots, weak detail, poor angles, or “we just need another camera.”
+        These tools help you plan scene lighting, mount geometry, field coverage, spacing, and subject detail so the design is driven by real performance intent instead of guesswork.
       </p>
     </section>
 
-    <section class="card tool-hero">
-      <div class="pill pill-ok">Free tool</div>
-      <h2 class="h2">Pixel Density</h2>
-      <p class="muted">Calculate pixels-per-foot (PPF) / pixels-per-meter (PPM) to validate identification goals.</p>
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Design Pipeline</div>
+      <h2 class="h2" style="margin-top: 0;">Follow a recommended engineering sequence</h2>
+      <p class="muted" style="margin-bottom: 14px;">
+        Some ScopedLabs tools work as a connected workflow. In Physical Security, the Design Flow carries you from
+        scene readiness and mounting geometry through field coverage, spacing, blind-spot risk, pixel density, lens
+        choice, and final recognition/capture range so the camera plan is checked as one optical system instead of disconnected estimates.
+      </p>
+
+      <div class="pipeline-preview" aria-label="Physical Security design pipeline preview">
+        <span class="pipeline-preview-label">DESIGN PIPELINE</span>
+        <div class="pipeline-preview-steps">
+          <span class="pipeline-preview-step is-active is-pro">Scene Illumination</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step">Mounting Height</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step">Field of View</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Coverage Area</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Camera Spacing</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Blind Spot Check</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step">Pixel Density</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Lens Selection</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Face Recognition</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">License Plate</span>
+        </div>
+      </div>
+
+      <p class="muted" style="margin-top: 14px; margin-bottom: 14px;">
+        Includes both Free and Pro tools. Unlock Pro to complete the full flow.
+      </p>
+
       <div class="actions">
-        <a class="btn btn-primary" href="/tools/physical-security/pixel-density/">Launch Tool</a>
+        <a class="btn btn-primary" href="/tools/physical-security/scene-illumination/">Start Design Pipeline</a>
       </div>
     </section>
 
     <h3 class="section-divider">Free Tier</h3>
 
-    <a class="tool-row" href="/tools/physical-security/field-of-view/">
-      <div class="tool-row-left">
-        <div class="tool-title">Field of View</div>
-        <div class="tool-desc muted">Estimate horizontal coverage width based on distance and lens HFOV.</div>
-      </div>
-      <div class="tool-row-right">
-        <span class="pill free">Free Tier</span>
-      </div>
-    </a>
+    <div class="stack">
+      <a class="tool-row tool-row--center" href="/tools/physical-security/field-of-view/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">Field of View</div>
+          <div class="tool-row-sub">
+            Estimate horizontal scene coverage width from distance and lens field of view.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
 
-    <a class="tool-row" href="/tools/physical-security/mounting-height/">
-      <div class="tool-row-left">
-        <div class="tool-title">Mounting Height</div>
-        <div class="tool-desc muted">Mounting height planning with practical notes for angle and tamper risk.</div>
-      </div>
-      <div class="tool-row-right">
-        <span class="pill free">Free Tier</span>
-      </div>
-    </a>
+      <a class="tool-row tool-row--center" href="/tools/physical-security/mounting-height/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">Mounting Height</div>
+          <div class="tool-row-sub">
+            Plan installation height with practical guidance for angle, detail, and tamper exposure.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tool-row tool-row--center" href="/tools/physical-security/pixel-density/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">Pixel Density</div>
+          <div class="tool-row-sub">
+            Calculate PPF/PPM to validate whether the scene supports identification-level detail.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
+    </div>
 
     <h3 class="section-divider">Pro Tier</h3>
 
-    <a class="tool-row pro"
-      href="/upgrade/?category=physical-security#checkout"
-      data-tool="/tools/physical-security/blind-spot-check/"
-      data-category="physical-security"
-      data-upgrade-href="/upgrade/?category=physical-security#checkout">
-      <div class="tool-row-left">
-        <div class="tool-title"><span class="lock-icon"></span>Blind Spot Check</div>
-        <div class="tool-desc muted">Find blind spot risk based on approach angles and camera placement assumptions.</div>
-      </div>
-      <div class="tool-row-right">
-        <span class="pill pro">Pro Tier</span>
-      </div>
-    </a>
+    <div class="stack">
+      <a class="tool-row pro"
+         href="/upgrade/?category=physical-security#checkout"
+         data-tool="/tools/physical-security/blind-spot-check/"
+         data-category="physical-security"
+         data-upgrade-href="/upgrade/?category=physical-security#checkout">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Blind Spot Check</div>
+          <div class="tool-row-sub">
+            Find blind-spot risk based on approach angles, overlap assumptions, and camera placement geometry.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-    <a class="tool-row pro"
-      href="/upgrade/?category=physical-security#checkout"
-      data-tool="/tools/physical-security/camera-coverage-area/"
-      data-category="physical-security"
-      data-upgrade-href="/upgrade/?category=physical-security#checkout">
-      <div class="tool-row-left">
-        <div class="tool-title"><span class="lock-icon"></span>Camera Coverage Area</div>
-        <div class="tool-desc muted">Estimate coverage footprint based on height, tilt, and HFOV assumptions.</div>
-      </div>
-      <div class="tool-row-right">
-        <span class="pill pro">Pro Tier</span>
-      </div>
-    </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=physical-security#checkout"
+         data-tool="/tools/physical-security/camera-coverage-area/"
+         data-category="physical-security"
+         data-upgrade-href="/upgrade/?category=physical-security#checkout">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Camera Coverage Area</div>
+          <div class="tool-row-sub">
+            Estimate raw and effective footprint based on distance, HFOV, VFOV, and overlap reserve.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-    <a class="tool-row pro"
-      href="/upgrade/?category=physical-security#checkout"
-      data-tool="/tools/physical-security/camera-spacing/"
-      data-category="physical-security"
-      data-upgrade-href="/upgrade/?category=physical-security#checkout">
-      <div class="tool-row-left">
-        <div class="tool-title"><span class="lock-icon"></span>Camera Spacing</div>
-        <div class="tool-desc muted">Spacing helper to reduce gaps and maintain target pixel density overlap.</div>
-      </div>
-      <div class="tool-row-right">
-        <span class="pill pro">Pro Tier</span>
-      </div>
-    </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=physical-security#checkout"
+         data-tool="/tools/physical-security/camera-spacing/"
+         data-category="physical-security"
+         data-upgrade-href="/upgrade/?category=physical-security#checkout">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Camera Spacing</div>
+          <div class="tool-row-sub">
+            Convert usable single-camera footprint into real camera-to-camera spacing guidance.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-    <a class="tool-row pro"
-      href="/upgrade/?category=physical-security#checkout"
-      data-tool="/tools/physical-security/face-recognition-range/"
-      data-category="physical-security"
-      data-upgrade-href="/upgrade/?category=physical-security#checkout">
-      <div class="tool-row-left">
-        <div class="tool-title"><span class="lock-icon"></span>Face Recognition Range</div>
-        <div class="tool-desc muted">Estimate recognition range based on resolution, lens, and target PPF.</div>
-      </div>
-      <div class="tool-row-right">
-        <span class="pill pro">Pro Tier</span>
-      </div>
-    </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=physical-security#checkout"
+         data-tool="/tools/physical-security/face-recognition-range/"
+         data-category="physical-security"
+         data-upgrade-href="/upgrade/?category=physical-security#checkout">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Face Recognition Range</div>
+          <div class="tool-row-sub">
+            Estimate recognition distance from resolution, lens behavior, and identification-level detail targets.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-    <a class="tool-row pro"
-      href="/upgrade/?category=physical-security#checkout"
-      data-tool="/tools/physical-security/lens-selection/"
-      data-category="physical-security"
-      data-upgrade-href="/upgrade/?category=physical-security#checkout">
-      <div class="tool-row-left">
-        <div class="tool-title"><span class="lock-icon"></span>Lens Selection</div>
-        <div class="tool-desc muted">Choose lens based on distance, target width, and identification goal.</div>
-      </div>
-      <div class="tool-row-right">
-        <span class="pill pro">Pro Tier</span>
-      </div>
-    </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=physical-security#checkout"
+         data-tool="/tools/physical-security/lens-selection/"
+         data-category="physical-security"
+         data-upgrade-href="/upgrade/?category=physical-security#checkout">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Lens Selection</div>
+          <div class="tool-row-sub">
+            Choose focal strategy based on distance, target width, and downstream detail requirements.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-    <a class="tool-row pro"
-      href="/upgrade/?category=physical-security#checkout"
-      data-tool="/tools/physical-security/license-plate-range/"
-      data-category="physical-security"
-      data-upgrade-href="/upgrade/?category=physical-security#checkout">
-      <div class="tool-row-left">
-        <div class="tool-title"><span class="lock-icon"></span>License Plate Range</div>
-        <div class="tool-desc muted">Estimate plate capture range based on PPF targets and scene constraints.</div>
-      </div>
-      <div class="tool-row-right">
-        <span class="pill pro">Pro Tier</span>
-      </div>
-    </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=physical-security#checkout"
+         data-tool="/tools/physical-security/license-plate-range/"
+         data-category="physical-security"
+         data-upgrade-href="/upgrade/?category=physical-security#checkout">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>License Plate Range</div>
+          <div class="tool-row-sub">
+            Estimate plate-capture distance from pixel density, optics, and scene constraints.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-    <a class="tool-row pro"
-      href="/upgrade/?category=physical-security#checkout"
-      data-tool="/tools/physical-security/scene-illumination/"
-      data-category="physical-security"
-      data-upgrade-href="/upgrade/?category=physical-security#checkout">
-      <div class="tool-row-left">
-        <div class="tool-title"><span class="lock-icon"></span>Scene Illumination</div>
-        <div class="tool-desc muted">Illumination planning notes and risk flags for low-light scenes.</div>
-      </div>
-      <div class="tool-row-right">
-        <span class="pill pro">Pro Tier</span>
-      </div>
-    </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=physical-security#checkout"
+         data-tool="/tools/physical-security/scene-illumination/"
+         data-category="physical-security"
+         data-upgrade-href="/upgrade/?category=physical-security#checkout">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Scene Illumination</div>
+          <div class="tool-row-sub">
+            Estimate whether the scene has enough usable light for surveillance and downstream camera design.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
+    </div>
 
     <footer class="site-footer">
-      <a class="muted" href="/tools/">← Back to Tools</a>
       <div class="muted">© <span data-year></span> ScopedLabs</div>
     </footer>
   </main>
+
+  <style>
+    .tool-row--center { text-decoration: none; }
+    .tool-row-center { text-align: center; width: 100%; }
+    .tool-row-title { font-weight: 700; margin-bottom: 6px; }
+    .tool-row-sub { opacity: 0.9; margin-bottom: 10px; }
+    .tool-row-pill { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .lock-icon { margin-right: 6px; }
+
+    .pipeline-preview {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background:
+        linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 12px 30px rgba(0,0,0,0.18);
+    }
+
+    .pipeline-preview-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(220,255,220,0.78);
+      margin-bottom: 9px;
+    }
+
+    .pipeline-preview-steps {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.98rem;
+      line-height: 1.4;
+    }
+
+    .pipeline-preview-step {
+      color: rgba(220,235,225,0.72);
+      font-weight: 600;
+    }
+
+    .pipeline-preview-step.is-active {
+      color: rgba(255,255,255,0.96);
+      position: relative;
+      padding-left: 15px;
+    }
+
+    .pipeline-preview-step.is-active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #57ff7a;
+      transform: translateY(-50%);
+      box-shadow: 0 0 12px rgba(87,255,122,0.55);
+    }
+
+    .pipeline-preview-step.is-pro {
+      color: rgba(210,220,214,0.82);
+    }
+
+    .pipeline-preview-sep {
+      color: rgba(180,205,190,0.42);
+      font-weight: 700;
+    }
+  </style>
 </body>
 </html>
 
