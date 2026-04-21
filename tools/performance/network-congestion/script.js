@@ -1,19 +1,30 @@
-const LANE = "v1";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "performance";
   const STEP = "network-congestion";
+  const LANE = "v1";
   const PREVIOUS_STEP = "disk-saturation";
   const NEXT_URL = "/tools/performance/cache-hit-ratio/";
 
+  const FLOW_KEYS = {
+    "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+    "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+    "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+    "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+    "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+    "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+    "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+    "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+    "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+    "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  };
+
   const chartRef = { current: null };
   const chartWrapRef = { current: null };
-
   const $ = (id) => document.getElementById(id);
+
+  let hasResult = false;
 
   const els = {
     cur: $("cur"),
@@ -26,7 +37,9 @@ const FLOW_KEYS = {
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("continue-wrap"),
-    continueBtn: $("continue")
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   const DEFAULTS = {
@@ -35,6 +48,51 @@ const FLOW_KEYS = {
     cap: 1000,
     util: 75
   };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    const lockedCard = document.getElementById("lockedCard");
+    const toolCard = document.getElementById("toolCard");
+
+    if (signedIn && unlocked) {
+      if (lockedCard) lockedCard.style.display = "none";
+      if (toolCard) toolCard.style.display = "";
+      return true;
+    }
+
+    if (lockedCard) lockedCard.style.display = "";
+    if (toolCard) toolCard.style.display = "none";
+    return false;
+  }
 
   function num(value) {
     return ScopedLabsAnalyzer.safeNumber(value, NaN);
@@ -52,6 +110,16 @@ const FLOW_KEYS = {
     return Number.isFinite(value) ? `${value.toFixed(digits)} Mbps` : "—";
   }
 
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continueBtn) els.continueBtn.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continueBtn) els.continueBtn.disabled = true;
+  }
+
   function applyDefaults() {
     els.cur.value = String(DEFAULTS.cur);
     els.peak.value = String(DEFAULTS.peak);
@@ -60,33 +128,55 @@ const FLOW_KEYS = {
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["cache-hit-ratio"]);
+      sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+      sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: STORAGE_KEY,
+      flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Calculate."
     });
+
+    hasResult = false;
+    hideContinue();
   }
 
   function loadPrior() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: STORAGE_KEY,
-      category: CATEGORY,
-      step: STEP,
-      title: "Carried over context",
-      intro: "This step checks whether network bandwidth becomes the next limiter after storage throughput and disk saturation were evaluated."
-    });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    const d = flow.data || {};
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    const d = parsed.data || {};
 
     const throughputMBps =
       num(d.throughputMBps) ??
@@ -101,14 +191,9 @@ const FLOW_KEYS = {
       num(d.capacityMBps) ??
       num(d.capacity);
 
-    const totalIops =
-      num(d.totalIops);
-
-    const saturated =
-      Boolean(d.saturated);
-
-    const targetUtilizationPct =
-      num(d.targetUtilizationPct);
+    const totalIops = num(d.totalIops);
+    const saturated = Boolean(d.saturated);
+    const targetUtilizationPct = num(d.targetUtilizationPct);
 
     if (Number.isFinite(throughputMBps) && throughputMBps > 0) {
       els.cur.value = String(Math.round(throughputMBps));
@@ -132,11 +217,18 @@ const FLOW_KEYS = {
     if (Number.isFinite(totalIops)) parts.push(`Total IOPS: <strong>${fmt(totalIops, 0)}</strong>`);
     parts.push(`Saturation Risk: <strong>${saturated ? "Yes" : "No"}</strong>`);
 
-    els.flowNote.style.display = "";
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
-      <strong>Carried over context</strong><br>
-      ${parts.join(", ")}.
-      These values were carried forward to seed current traffic, peak traffic, capacity, and target utilization.
+      <strong>Flow Context</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This step checks whether network bandwidth becomes the next limiter after storage throughput and disk saturation were evaluated.
     `;
   }
 
@@ -255,33 +347,16 @@ const FLOW_KEYS = {
     };
   }
 
-  function writeFlow(data) {
-    ScopedLabsAnalyzer.writeFlow(STORAGE_KEY, {
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        currentTrafficMbps: data.currentTrafficMbps,
-        peakTrafficMbps: data.peakTrafficMbps,
-        linkCapacityMbps: data.linkCapacityMbps,
-        utilization: data.peakUtilizationPct / 100,
-        currentUtilizationPct: data.currentUtilizationPct,
-        peakUtilizationPct: data.peakUtilizationPct,
-        targetUtilizationPct: data.targetUtilizationPct,
-        targetThroughputMbps: data.targetThroughputMbps,
-        congestionRisk: data.congestionRisk,
-        congestionClass: data.congestionClass
-      }
-    });
-  }
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) {
+      ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+      ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+      els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+      hideContinue();
+      return;
+    }
 
-  function renderError(message) {
-    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
-    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    els.results.innerHTML = `<div class="muted">${message}</div>`;
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-  }
-
-  function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -343,17 +418,25 @@ const FLOW_KEYS = {
       }
     });
 
-    writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-  }
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        currentTrafficMbps: data.currentTrafficMbps,
+        peakTrafficMbps: data.peakTrafficMbps,
+        linkCapacityMbps: data.linkCapacityMbps,
+        utilization: data.peakUtilizationPct / 100,
+        currentUtilizationPct: data.currentUtilizationPct,
+        peakUtilizationPct: data.peakUtilizationPct,
+        targetUtilizationPct: data.targetUtilizationPct,
+        targetThroughputMbps: data.targetThroughputMbps,
+        congestionRisk: data.congestionRisk,
+        congestionClass: data.congestionClass
+      }
+    });
 
-  function calc() {
-    const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
-    renderSuccess(data);
+    hasResult = true;
+    showContinue();
   }
 
   function reset() {
@@ -371,6 +454,7 @@ const FLOW_KEYS = {
     els.calc.addEventListener("click", calc);
     els.reset.addEventListener("click", reset);
     els.continueBtn.addEventListener("click", () => {
+      if (!hasResult) return;
       window.location.href = NEXT_URL;
     });
   }
@@ -381,63 +465,14 @@ const FLOW_KEYS = {
     invalidate();
   }
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("DOMContentLoaded", () => {
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    init();
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
