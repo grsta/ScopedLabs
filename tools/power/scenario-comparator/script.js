@@ -3,6 +3,9 @@
 
   const $ = (id) => document.getElementById(id);
 
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
   const els = {
     a_load_w: $("a_load_w"),
     a_batt_wh: $("a_batt_wh"),
@@ -15,7 +18,9 @@
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
-    analysis: $("analysis-copy")
+    analysis: $("analysis-copy"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   const DEFAULTS = {
@@ -55,6 +60,47 @@
     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
   function runtimeHours(loadW, battWh, effPct, reservePct) {
     const eff = effPct / 100;
     const reserve = reservePct / 100;
@@ -68,6 +114,8 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       emptyMessage: "Enter values and press Calculate."
     });
   }
@@ -90,9 +138,7 @@
       !Number.isFinite(effPct) || effPct <= 0 || effPct > 100 ||
       !Number.isFinite(reservePct) || reservePct < 0 || reservePct >= 100;
 
-    if (bad) {
-      return { ok: false };
-    }
+    if (bad) return { ok: false };
 
     const usableWh = battWh * (effPct / 100) * (1 - reservePct / 100);
     const runtime = runtimeHours(loadW, battWh, effPct, reservePct);
@@ -134,27 +180,25 @@
     const efficiencyShiftMetric = ScopedLabsAnalyzer.clamp(Math.abs(efficiencyDelta) * 4, 0, 100);
     const reserveShiftMetric = ScopedLabsAnalyzer.clamp(Math.abs(reserveDeltaPct) * 2, 0, 100);
 
-    const metrics = [
-      {
-        label: "Runtime Difference",
-        value: runtimeGapMetric,
-        displayValue: Number.isFinite(pctChange) ? fmtPct(Math.abs(pctChange)) : "—"
-      },
-      {
-        label: "Efficiency Shift",
-        value: efficiencyShiftMetric,
-        displayValue: fmtPct(Math.abs(efficiencyDelta))
-      },
-      {
-        label: "Reserve Shift",
-        value: reserveShiftMetric,
-        displayValue: fmtPct(Math.abs(reserveDeltaPct))
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(runtimeGapMetric, efficiencyShiftMetric, reserveShiftMetric),
-      metrics,
+      metrics: [
+        {
+          label: "Runtime Difference",
+          value: runtimeGapMetric,
+          displayValue: Number.isFinite(pctChange) ? fmtPct(Math.abs(pctChange)) : "—"
+        },
+        {
+          label: "Efficiency Shift",
+          value: efficiencyShiftMetric,
+          displayValue: fmtPct(Math.abs(efficiencyDelta))
+        },
+        {
+          label: "Reserve Shift",
+          value: reserveShiftMetric,
+          displayValue: fmtPct(Math.abs(reserveDeltaPct))
+        }
+      ],
       healthyMax: 15,
       watchMax: 35
     });
@@ -235,6 +279,7 @@
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
@@ -243,6 +288,8 @@
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Scenario A Runtime", value: fmtHrs(data.A.runtime) },
         { label: "Scenario B Runtime", value: fmtHrs(data.B.runtime) },
@@ -297,16 +344,23 @@
 
   function calculate() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
   function resetForm() {
     applyDefaults();
     invalidate();
+  }
+
+  function invalidate() {
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      emptyMessage: "Enter values and press Calculate."
+    });
   }
 
   function bind() {
@@ -325,66 +379,24 @@
   }
 
   function boot() {
+    applyDefaults();
     bind();
     invalidate();
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  window.addEventListener("DOMContentLoaded", () => {
+    let unlocked = unlockCategoryPage();
+    if (unlocked) boot();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        boot();
+      }
+    }, 400);
+  });
 })();
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
