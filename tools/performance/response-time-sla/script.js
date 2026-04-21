@@ -1,19 +1,29 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "performance";
   const STEP = "response-time-sla";
+  const LANE = "v1";
   const NEXT_URL = "/tools/performance/latency-vs-throughput/";
+
+  const FLOW_KEYS = {
+    "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+    "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+    "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+    "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+    "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+    "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+    "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+    "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+    "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+    "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  };
 
   const chartRef = { current: null };
   const chartWrapRef = { current: null };
-
   const $ = (id) => document.getElementById(id);
+
+  let hasResult = false;
 
   const els = {
     cur: $("cur"),
@@ -52,6 +62,16 @@ const FLOW_KEYS = {
     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continueBtn) els.continueBtn.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continueBtn) els.continueBtn.disabled = true;
+  }
+
   function applyDefaults() {
     els.cur.value = String(DEFAULTS.cur);
     els.tgt.value = String(DEFAULTS.tgt);
@@ -59,30 +79,43 @@ const FLOW_KEYS = {
     els.eb.value = String(DEFAULTS.eb);
   }
 
+  function clearFlowNote() {
+    if (!els.flowNote) return;
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+  }
+
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["latency-vs-throughput"]);
+      sessionStorage.removeItem(FLOW_KEYS["queue-depth"]);
+      sessionStorage.removeItem(FLOW_KEYS["concurrency-scaling"]);
+      sessionStorage.removeItem(FLOW_KEYS["cpu-utilization-impact"]);
+      sessionStorage.removeItem(FLOW_KEYS["disk-saturation"]);
+      sessionStorage.removeItem(FLOW_KEYS["network-congestion"]);
+      sessionStorage.removeItem(FLOW_KEYS["cache-hit-ratio"]);
+      sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+      sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: STORAGE_KEY,
+      flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Check SLA."
     });
-  }
 
-  function loadPrior() {
-    ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: STORAGE_KEY,
-      category: CATEGORY,
-      step: STEP,
-      title: "Pipeline start",
-      intro: "This is the first step of the Performance pipeline. Define the acceptable response-time boundary first so downstream throughput, queueing, and scaling calculations have a clear latency target."
-    });
+    hasResult = false;
+    hideContinue();
+    clearFlowNote();
   }
 
   function getInputs() {
@@ -198,33 +231,16 @@ const FLOW_KEYS = {
     };
   }
 
-  function writeFlow(data) {
-    ScopedLabsAnalyzer.writeFlow(STORAGE_KEY, {
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        sla: data.sla,
-        slaMs: data.sla,
-        currentLatency: data.currentLatency,
-        currentLatencyMs: data.currentLatency,
-        targetLatency: data.targetLatency,
-        targetLatencyMs: data.targetLatency,
-        errorBudget: data.errorBudget,
-        errorBudgetPct: data.errorBudget,
-        status: data.slaClass,
-        slaStatus: data.slaClass
-      }
-    });
-  }
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) {
+      ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+      ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+      els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+      hideContinue();
+      return;
+    }
 
-  function renderError(message) {
-    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
-    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    els.results.innerHTML = `<div class="muted">${message}</div>`;
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-  }
-
-  function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -286,22 +302,29 @@ const FLOW_KEYS = {
       }
     });
 
-    writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-  }
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        sla: data.sla,
+        slaMs: data.sla,
+        currentLatency: data.currentLatency,
+        currentLatencyMs: data.currentLatency,
+        targetLatency: data.targetLatency,
+        targetLatencyMs: data.targetLatency,
+        errorBudget: data.errorBudget,
+        errorBudgetPct: data.errorBudget,
+        status: data.slaClass,
+        slaStatus: data.slaClass
+      }
+    });
 
-  function calc() {
-    const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
-    renderSuccess(data);
+    hasResult = true;
+    showContinue();
   }
 
   function reset() {
     applyDefaults();
-    loadPrior();
     invalidate();
   }
 
@@ -314,25 +337,19 @@ const FLOW_KEYS = {
     els.calc.addEventListener("click", calc);
     els.reset.addEventListener("click", reset);
     els.continueBtn.addEventListener("click", () => {
+      if (!hasResult) return;
       window.location.href = NEXT_URL;
     });
   }
 
   function init() {
     bind();
-    loadPrior();
     invalidate();
   }
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    init();
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
