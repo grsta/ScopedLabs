@@ -1,4 +1,6 @@
 ﻿(() => {
+  "use strict";
+
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
@@ -112,7 +114,9 @@
   }
 
   function clearDownstream() {
-    sessionStorage.removeItem(FLOW_KEYS.pixel);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.pixel);
+    } catch {}
   }
 
   function applyDefaults() {
@@ -125,19 +129,29 @@
   }
 
   function renderFlowNote() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEYS.blind,
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      title: "Flow Context",
-      intro: "This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied."
-    });
+    const raw = sessionStorage.getItem(FLOW_KEYS.spacing);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    const prev = flow.data || {};
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    const prev = parsed.data || {};
     const cams = num(prev.cams);
     const dist = num(prev.dist);
     const hfov = num(prev.hfov);
@@ -153,13 +167,19 @@
     if (Number.isFinite(dist)) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
     if (Number.isFinite(hfov)) parts.push(`HFOV: <strong>${fmt(hfov, 0)}°</strong>`);
 
-    if (parts.length) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow Context</strong><br>
-        ${parts.join(" | ")}
-      `;
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
     }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied.
+    `;
   }
 
   function invalidate({ clearFlow = true } = {}) {
