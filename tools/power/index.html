@@ -3,16 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Power • ScopedLabs</title>
+  <title>Power & Runtime • ScopedLabs</title>
   <meta name="description" content="Power sizing, runtime, redundancy, and load planning tools." />
-  <link rel="stylesheet" href="/assets/style.css?v=power-cat-0381" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0317"></script>
-<script defer src="/assets/app.js?v=0317"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=power-cat-0382" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0317"></script>
+  <script defer src="/assets/app.js?v=0317"></script>
 </head>
 
 <body data-protected="true" data-category="power">
@@ -32,169 +33,275 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 </header>
 
 <main class="container">
-
-  <div class="crumbs">
-    <a href="/tools/">Tools</a>
-    <span class="sep">/</span>
-    <span>Power</span>
-  </div>
-
   <section class="page-head">
-    <h1 class="h1">Power</h1>
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <span>Power & Runtime</span>
+    </div>
+
+    <h1 class="h1">Power & Runtime</h1>
     <p class="subhead">Power sizing, runtime, redundancy, and load planning tools.</p>
-
-      <section class="card" data-auto-category-pipeline-card="true" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">Start the Power design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This category includes a guided pipeline so users can move step by step through the core design decisions instead of jumping between isolated tools.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          Update this card later with the exact category-specific flow summary and mini pipeline preview if needed.
-        </p>
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn btn-primary" href="/tools/power/va-watts-amps/">Start Pipeline</a>
-        </div>
-      </section>
-
   </section>
 
   <section class="card">
     <p class="muted">
-      Power problems show up as brownouts, undersized UPS runtime, and surprise load growth.
-      These tools help you size and sanity-check power systems with real headroom.
+      Power problems usually show up as undersized runtime, overloaded circuits, surprise growth, or “it should hold”
+      assumptions that collapse under a real outage. These tools help you convert electrical load into practical runtime,
+      capacity, and resilience planning before the design gets boxed in by bad assumptions.
     </p>
   </section>
 
-  <!-- HERO (Free tool) -->
-  <section class="card tool-hero">
-    <div class="pill pill-ok">Free tool</div>
-    <h2 class="h2">VA / Watts / Amps</h2>
-    <p class="muted">Convert VA ↔ Watts and estimate current draw for quick sizing decisions.</p>
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Design Pipeline</div>
+    <h2 class="h2" style="margin-top: 0;">Follow a recommended engineering sequence</h2>
+    <p class="muted" style="margin-bottom: 14px;">
+      Some ScopedLabs tools work as a connected workflow. In Power & Runtime, the Design Flow moves from baseline load
+      conversion into projected growth, runtime impact, and final storage sizing so the power design is checked as one
+      practical system instead of disconnected estimates.
+    </p>
+
+    <div class="pipeline-preview" aria-label="Power design pipeline preview">
+      <span class="pipeline-preview-label">DESIGN PIPELINE</span>
+      <div class="pipeline-preview-steps">
+        <span class="pipeline-preview-step is-active">VA / Watts / Amps</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step is-pro">Load Growth</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step is-pro">UPS Runtime</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step is-pro">Battery Bank Sizer</span>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top: 14px; margin-bottom: 14px;">
+      Includes both Free and Pro tools. Unlock Pro to complete the full flow.
+    </p>
+
     <div class="actions">
-      <a class="btn btn-primary" href="/tools/power/va-watts-amps/">Launch Tool</a>
+      <a class="btn btn-primary" href="/tools/power/va-watts-amps/">Start Design Pipeline</a>
     </div>
   </section>
 
-  <!-- FREE -->
   <h3 class="section-divider">Free Tier</h3>
 
-  <a class="tool-row" 
-  href="/tools/power/battery-sizing/">
-    <div class="tool-row-left">
-      <div class="tool-title">Battery Sizing</div>
-      <div class="tool-desc muted">Basic battery sizing to hit a target runtime with safety margin.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill free">Free Tier</span>
-    </div>
-  </a>
+  <div class="stack">
+    <a class="tool-row tool-row--center" href="/tools/power/va-watts-amps/">
+      <div class="tool-row-center">
+        <div class="tool-row-title">VA / Watts / Amps</div>
+        <div class="tool-row-sub">
+          Convert VA, watts, and current draw into a usable starting point for downstream power design.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill-ok">Free Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row" 
-  href="/tools/power/inverter-efficiency/">
-    <div class="tool-row-left">
-      <div class="tool-title">Inverter Efficiency</div>
-      <div class="tool-desc muted">Estimate losses and required input power based on efficiency.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill free">Free Tier</span>
-    </div>
-  </a>
+    <a class="tool-row tool-row--center" href="/tools/power/battery-sizing/">
+      <div class="tool-row-center">
+        <div class="tool-row-title">Battery Sizing</div>
+        <div class="tool-row-sub">
+          Estimate basic battery requirements to hit a target runtime with a practical reserve.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill-ok">Free Tier</span>
+        </div>
+      </div>
+    </a>
 
+    <a class="tool-row tool-row--center" href="/tools/power/inverter-efficiency/">
+      <div class="tool-row-center">
+        <div class="tool-row-title">Inverter Efficiency</div>
+        <div class="tool-row-sub">
+          Estimate conversion losses and input power needs so runtime assumptions are not overly optimistic.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill-ok">Free Tier</span>
+        </div>
+      </div>
+    </a>
+  </div>
 
-  <!-- PRO -->
   <h3 class="section-divider">Pro Tier</h3>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=power#checkout" 
-  data-tool="/tools/power/battery-bank-sizer/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Battery Bank Sizer</div>
-      <div class="tool-desc muted">Advanced bank sizing with derating and headroom planning.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+  <div class="stack">
+    <a class="tool-row pro"
+       href="/upgrade/?category=power#checkout"
+       data-tool="/tools/power/battery-bank-sizer/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Battery Bank Sizer</div>
+        <div class="tool-row-sub">
+          Size full battery storage with derating, reserve margin, and runtime intent already accounted for.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=power#checkout" 
-  data-tool="/tools/power/failure-runtime-loss/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Failure Runtime Loss</div>
-      <div class="tool-desc muted">Estimate runtime lost when a battery/string/module fails.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=power#checkout"
+       data-tool="/tools/power/failure-runtime-loss/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Failure Runtime Loss</div>
+        <div class="tool-row-sub">
+          Estimate how much runtime disappears when a battery, module, or string is lost.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=power#checkout" 
-  data-tool="/tools/power/load-growth/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Load Growth</div>
-      <div class="tool-desc muted">Project load growth over time to plan capacity and upgrades.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=power#checkout"
+       data-tool="/tools/power/load-growth/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Load Growth</div>
+        <div class="tool-row-sub">
+          Project future demand so runtime and storage planning are based on where the system is going, not only where it is today.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=power#checkout" 
-  data-tool="/tools/power/redundancy-impact/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Redundancy Impact</div>
-      <div class="tool-desc muted">Model N+1 / redundant design effects on runtime and capacity.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=power#checkout"
+       data-tool="/tools/power/redundancy-impact/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Redundancy Impact</div>
+        <div class="tool-row-sub">
+          Model how N+1 and related redundancy choices change usable runtime and effective capacity.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=power#checkout" 
-  data-tool="/tools/power/scenario-comparator/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Scenario Comparator</div>
-      <div class="tool-desc muted">Compare two scenarios side-by-side (load, runtime, efficiency).</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=power#checkout"
+       data-tool="/tools/power/scenario-comparator/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Scenario Comparator</div>
+        <div class="tool-row-sub">
+          Compare alternate runtime, growth, and efficiency assumptions side by side before locking the design.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=power#checkout" 
-  data-tool="/tools/power/ups-runtime/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>UPS Runtime</div>
-      <div class="tool-desc muted">Advanced UPS runtime estimation with configurable assumptions.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=power#checkout"
+       data-tool="/tools/power/ups-runtime/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>UPS Runtime</div>
+        <div class="tool-row-sub">
+          Estimate how long the system will actually hold under the projected load before battery reserve is exhausted.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=power#checkout" 
-  data-tool="/tools/power/worst-case-runtime/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Worst-Case Runtime</div>
-      <div class="tool-desc muted">Runtime under worst-case assumptions (aging, derating, peak load).</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=power#checkout"
+       data-tool="/tools/power/worst-case-runtime/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Worst-Case Runtime</div>
+        <div class="tool-row-sub">
+          Estimate runtime under degraded, aged, or otherwise pessimistic conditions instead of best-case assumptions.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
+  </div>
 
   <footer class="site-footer">
-    <a class="muted" href="/tools/">← Back to Tools</a>
     <div class="muted">© <span data-year></span> ScopedLabs</div>
   </footer>
-
 </main>
+
+<style>
+  .tool-row--center { text-decoration: none; }
+  .tool-row-center { text-align: center; width: 100%; }
+  .tool-row-title { font-weight: 700; margin-bottom: 6px; }
+  .tool-row-sub { opacity: 0.9; margin-bottom: 10px; }
+  .tool-row-pill { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .lock-icon { margin-right: 6px; }
+
+  .pipeline-preview {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(120,255,120,0.14);
+    background:
+      linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      0 12px 30px rgba(0,0,0,0.18);
+  }
+
+  .pipeline-preview-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(220,255,220,0.78);
+    margin-bottom: 9px;
+  }
+
+  .pipeline-preview-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.98rem;
+    line-height: 1.4;
+  }
+
+  .pipeline-preview-step {
+    color: rgba(220,235,225,0.72);
+    font-weight: 600;
+  }
+
+  .pipeline-preview-step.is-active {
+    color: rgba(255,255,255,0.96);
+    position: relative;
+    padding-left: 15px;
+  }
+
+  .pipeline-preview-step.is-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #57ff7a;
+    transform: translateY(-50%);
+    box-shadow: 0 0 12px rgba(87,255,122,0.55);
+  }
+
+  .pipeline-preview-step.is-pro {
+    color: rgba(210,220,214,0.82);
+  }
+
+  .pipeline-preview-sep {
+    color: rgba(180,205,190,0.42);
+    font-weight: 700;
+  }
+</style>
 </body>
 </html>
 
