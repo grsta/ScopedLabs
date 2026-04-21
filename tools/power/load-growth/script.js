@@ -15,24 +15,43 @@
 
   const $ = (id) => document.getElementById(id);
 
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
+  const els = {
+    baseLoad: $("baseLoad"),
+    growthPct: $("growthPct"),
+    years: $("years"),
+    headroomPct: $("headroomPct"),
+    flowNote: $("flow-note"),
+    resultsCard: $("resultsCard"),
+    errorCard: $("errorCard"),
+    errorText: $("errorText"),
+    notes: $("notes"),
+    analysis: $("analysis-copy"),
+    results: $("results"),
+    calc: $("calc"),
+    reset: $("reset"),
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
+  };
+
   function analyzer() {
     return window.ScopedLabsAnalyzer || null;
   }
 
   function safeNumber(value, fallback = NaN) {
     const a = analyzer();
-    if (a && typeof a.safeNumber === "function") {
-      return a.safeNumber(value, fallback);
-    }
+    if (a && typeof a.safeNumber === "function") return a.safeNumber(value, fallback);
     const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
   }
 
   function clamp(value, min, max) {
     const a = analyzer();
-    if (a && typeof a.clamp === "function") {
-      return a.clamp(value, min, max);
-    }
+    if (a && typeof a.clamp === "function") return a.clamp(value, min, max);
     return Math.min(max, Math.max(min, value));
   }
 
@@ -66,36 +85,6 @@
     }
     if (wrap) wrap.style.display = "flex";
     if (btn) btn.disabled = false;
-  }
-
-  function invalidateOutput(resultsEl, analysisEl, continueWrapEl, continueBtnEl) {
-    const a = analyzer();
-    if (a && typeof a.invalidate === "function") {
-      a.invalidate({
-        resultsEl,
-        analysisEl,
-        continueWrapEl,
-        continueBtnEl,
-        flowKey: FLOW_KEYS[STEP],
-        category: CATEGORY,
-        step: STEP,
-        lane: LANE,
-        emptyMessage: "Enter values and press Calculate."
-      });
-      return;
-    }
-
-    if (resultsEl) {
-      resultsEl.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
-    }
-    clearAnalysisBlock(analysisEl);
-    hideContinue(continueWrapEl, continueBtnEl);
-  }
-
-  function renderFlowNote(flowEl, html) {
-    if (!flowEl) return;
-    flowEl.hidden = false;
-    flowEl.innerHTML = html;
   }
 
   function fmt(n, decimals = 2) {
@@ -139,7 +128,7 @@
     }
   }
 
-  function unlockCategoryPage(els) {
+  function unlockCategoryPage() {
     const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
     const signedIn = hasStoredAuth();
     const unlocked = getUnlockedCategories().includes(category);
@@ -192,7 +181,7 @@
     } catch {}
   }
 
-  function renderImportedFlow(els) {
+  function renderImportedFlow() {
     const incoming = readPipelineInput();
 
     if (!incoming || incoming.category !== CATEGORY || !els.flowNote) {
@@ -227,10 +216,13 @@
       if (Number.isFinite(volts)) lines.push(`Voltage: <strong>${fmt(volts, 0)} V</strong>`);
       if (Number.isFinite(pf)) lines.push(`Power factor: <strong>${fmt(pf, 2)}</strong>`);
 
-      renderFlowNote(
-        els.flowNote,
-        `<strong>Flow Context</strong><br>${lines.join("<br>")}<br><br>Review values and click <strong>Calculate</strong>.`
-      );
+      els.flowNote.hidden = false;
+      els.flowNote.innerHTML = `
+        <strong>Flow Context</strong><br>
+        ${lines.join("<br>")}
+        <br><br>
+        Review values and click <strong>Calculate</strong>.
+      `;
     } else {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
@@ -256,7 +248,7 @@
     tbody.appendChild(tr);
   }
 
-  function showError(els, msg) {
+  function showError(msg) {
     if (els.resultsCard) els.resultsCard.hidden = true;
     if (els.errorCard) els.errorCard.hidden = false;
     if (els.errorText) els.errorText.textContent = msg;
@@ -264,17 +256,43 @@
     hideContinue(els.continueWrap, els.continueBtn);
   }
 
-  function clearError(els) {
+  function clearError() {
     if (els.errorCard) els.errorCard.hidden = true;
     if (els.errorText) els.errorText.textContent = "";
   }
 
-  function showResults(els) {
+  function showResults() {
     if (els.errorCard) els.errorCard.hidden = true;
     if (els.resultsCard) els.resultsCard.hidden = false;
   }
 
-  function getInputs(els) {
+  function invalidateOutput() {
+    const a = analyzer();
+    if (a && typeof a.invalidate === "function") {
+      a.invalidate({
+        resultsEl: els.results,
+        analysisEl: els.analysis,
+        continueWrapEl: els.continueWrap,
+        continueBtnEl: els.continueBtn,
+        existingChartRef: chartRef,
+        existingWrapRef: chartWrapRef,
+        flowKey: FLOW_KEYS[STEP],
+        category: CATEGORY,
+        step: STEP,
+        lane: LANE,
+        emptyMessage: "Enter values and press Calculate."
+      });
+      return;
+    }
+
+    if (els.results) {
+      els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    }
+    clearAnalysisBlock(els.analysis);
+    hideContinue(els.continueWrap, els.continueBtn);
+  }
+
+  function getInputs() {
     const baseLoad = safeNumber(els.baseLoad?.value, NaN);
     const growthPct = safeNumber(els.growthPct?.value, NaN);
     const years = Math.floor(safeNumber(els.years?.value, NaN));
@@ -305,8 +323,8 @@
     };
   }
 
-  function calculateModel(els) {
-    const input = getInputs(els);
+  function calculateModel() {
+    const input = getInputs();
     if (!input.ok) return input;
 
     const yearly = [{ year: 0, projected: input.baseLoad, delta: 0, deltaPct: 0 }];
@@ -428,13 +446,9 @@
     };
   }
 
-  function renderSuccess(els, data) {
+  function renderSuccess(data) {
     clearTable();
     data.yearly.forEach((row) => addRow(row.year, row.projected, row.delta, row.deltaPct));
-
-    if (els.finalLoad) els.finalLoad.textContent = fmtKw(data.finalLoad);
-    if (els.totalIncrease) els.totalIncrease.textContent = `${fmtKw(data.totalIncrease)} (${fmtPct(data.totalIncreasePct)})`;
-    if (els.recommendedCapacity) els.recommendedCapacity.textContent = fmtKw(data.recommendedCapacity);
     if (els.notes) els.notes.textContent = data.notesText;
 
     const a = analyzer();
@@ -444,6 +458,8 @@
         analysisEl: els.analysis,
         continueWrapEl: els.continueWrap,
         continueBtnEl: els.continueBtn,
+        existingChartRef: chartRef,
+        existingWrapRef: chartWrapRef,
         summaryRows: [
           { label: "Projected Load (Final Year)", value: fmtKw(data.finalLoad) },
           { label: "Total Increase", value: `${fmtKw(data.totalIncrease)} (${fmtPct(data.totalIncreasePct)})` },
@@ -457,20 +473,30 @@
         status: data.status,
         interpretation: data.interpretation,
         dominantConstraint: data.dominantConstraint,
-        guidance: data.guidance
+        guidance: data.guidance,
+        chart: {
+          labels: ["Growth Pressure", "Planning Horizon", "Headroom Buffer"],
+          values: [
+            clamp(data.growthPct * 4, 0, 100),
+            clamp((data.years / 10) * 100, 0, 100),
+            clamp(data.headroomPct * 2, 0, 100)
+          ],
+          displayValues: [
+            fmtPct(data.growthPct),
+            `${data.years} years`,
+            fmtPct(data.headroomPct)
+          ],
+          referenceValue: 20,
+          healthyMax: 20,
+          watchMax: 45,
+          axisTitle: "Growth Planning Pressure",
+          referenceLabel: "Comfort Band",
+          healthyLabel: "Healthy",
+          watchLabel: "Watch",
+          riskLabel: "Risk",
+          chartMax: 100
+        }
       });
-    } else {
-      if (els.analysis) {
-        els.analysis.style.display = "";
-        els.analysis.innerHTML = `
-          <div class="divider" style="margin-top:16px;"></div>
-          <div class="result-row"><strong>Status:</strong> ${data.status}</div>
-          <div class="result-row"><strong>Planning Classification:</strong> ${data.growthClass}</div>
-          <div class="result-row"><strong>Engineering Interpretation:</strong> ${data.interpretation}</div>
-          <div class="result-row"><strong>Dominant Constraint:</strong> ${data.dominantConstraint}</div>
-          <div class="result-row"><strong>Guidance:</strong> ${data.guidance}</div>
-        `;
-      }
     }
 
     savePipelineResult({
@@ -497,95 +523,44 @@
       guidance: data.guidance
     });
 
-    clearError(els);
-    showResults(els);
+    clearError();
+    showResults();
     showContinue(els.continueWrap, els.continueBtn);
   }
 
-  function wire() {
-    const els = {
-      baseLoad: $("baseLoad"),
-      growthPct: $("growthPct"),
-      years: $("years"),
-      headroomPct: $("headroomPct"),
-      flowNote: $("flow-note"),
-      resultsCard: $("resultsCard"),
-      errorCard: $("errorCard"),
-      errorText: $("errorText"),
-      finalLoad: $("finalLoad"),
-      totalIncrease: $("totalIncrease"),
-      recommendedCapacity: $("recommendedCapacity"),
-      notes: $("notes"),
-      analysis: $("analysis-copy"),
-      results: $("results"),
-      calc: $("calc"),
-      reset: $("reset"),
-      continueWrap: $("next-step-row"),
-      continueBtn: $("continue"),
-      lockedCard: $("lockedCard"),
-      toolCard: $("toolCard")
-    };
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) return showError(data.message);
+    renderSuccess(data);
+  }
 
-    if (!els.calc || !els.reset) {
-      showError(els, "Load Growth tool wiring failed: missing #calc or #reset button IDs in the HTML.");
-      return;
+  function reset() {
+    clearTable();
+    clearError();
+    invalidatePipelineResult();
+
+    ["baseLoad", "growthPct", "years", "headroomPct"].forEach((id) => {
+      const el = $(id);
+      if (el) el.value = "";
+    });
+
+    if (els.resultsCard) els.resultsCard.hidden = true;
+    if (els.notes) els.notes.textContent = "";
+    clearAnalysisBlock(els.analysis);
+    hideContinue(els.continueWrap, els.continueBtn);
+
+    if (els.flowNote) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
     }
 
-    const year = document.querySelector("[data-year]");
-    if (year) year.textContent = new Date().getFullYear();
+    renderImportedFlow();
+    invalidateOutput();
+  }
 
-    unlockCategoryPage(els);
-    setTimeout(() => unlockCategoryPage(els), 400);
-
-    function invalidate() {
-      clearTable();
-      clearError(els);
-      invalidatePipelineResult();
-      hideContinue(els.continueWrap, els.continueBtn);
-      clearAnalysisBlock(els.analysis);
-
-      if (els.resultsCard) els.resultsCard.hidden = true;
-      if (els.notes) els.notes.textContent = "";
-
-      renderImportedFlow(els);
-      invalidateOutput(els.results, els.analysis, els.continueWrap, els.continueBtn);
-    }
-
-    function calc() {
-      const data = calculateModel(els);
-      if (!data.ok) {
-        showError(els, data.message);
-        return;
-      }
-      renderSuccess(els, data);
-    }
-
-    function reset() {
-      clearTable();
-      clearError(els);
-      invalidatePipelineResult();
-
-      ["baseLoad", "growthPct", "years", "headroomPct"].forEach((id) => {
-        const el = $(id);
-        if (el) el.value = "";
-      });
-
-      if (els.resultsCard) els.resultsCard.hidden = true;
-      if (els.notes) els.notes.textContent = "";
-      clearAnalysisBlock(els.analysis);
-      hideContinue(els.continueWrap, els.continueBtn);
-
-      if (els.flowNote) {
-        els.flowNote.hidden = true;
-        els.flowNote.innerHTML = "";
-      }
-
-      renderImportedFlow(els);
-      invalidateOutput(els.results, els.analysis, els.continueWrap, els.continueBtn);
-    }
-
-    els.calc.addEventListener("click", calc);
-    els.reset.addEventListener("click", reset);
+  function bind() {
+    els.calc?.addEventListener("click", calc);
+    els.reset?.addEventListener("click", reset);
 
     ["baseLoad", "growthPct", "years", "headroomPct"].forEach((id) => {
       const el = $(id);
@@ -598,18 +573,53 @@
         }
       });
 
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
-    });
+      el.addEventListener("input", () => {
+        clearTable();
+        clearError();
+        invalidatePipelineResult();
+        hideContinue(els.continueWrap, els.continueBtn);
+        clearAnalysisBlock(els.analysis);
+        if (els.resultsCard) els.resultsCard.hidden = true;
+        if (els.notes) els.notes.textContent = "";
+        renderImportedFlow();
+        invalidateOutput();
+      });
 
-    renderImportedFlow(els);
+      el.addEventListener("change", () => {
+        clearTable();
+        clearError();
+        invalidatePipelineResult();
+        hideContinue(els.continueWrap, els.continueBtn);
+        clearAnalysisBlock(els.analysis);
+        if (els.resultsCard) els.resultsCard.hidden = true;
+        if (els.notes) els.notes.textContent = "";
+        renderImportedFlow();
+        invalidateOutput();
+      });
+    });
+  }
+
+  function boot() {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    bind();
+    renderImportedFlow();
     hideContinue(els.continueWrap, els.continueBtn);
     if (els.resultsCard) els.resultsCard.hidden = true;
+    invalidateOutput();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", wire);
-  } else {
-    wire();
-  }
+  window.addEventListener("DOMContentLoaded", () => {
+    let unlocked = unlockCategoryPage();
+    if (unlocked) boot();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        boot();
+      }
+    }, 400);
+  });
 })();
