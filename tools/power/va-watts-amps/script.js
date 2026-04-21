@@ -1,18 +1,18 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
-
-﻿(() => {
+(() => {
   "use strict";
 
-  const $ = (id) => document.getElementById(id);
-
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "power";
   const STEP = "va-watts-amps";
   const NEXT_URL = "/tools/power/load-growth/";
+
+  const FLOW_KEYS = {
+    "va-watts-amps": "scopedlabs:pipeline:power:va-watts-amps",
+    "load-growth": "scopedlabs:pipeline:power:load-growth",
+    "ups-runtime": "scopedlabs:pipeline:power:ups-runtime",
+    "battery-bank-sizer": "scopedlabs:pipeline:power:battery-bank-sizer"
+  };
+
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     volts: $("volts"),
@@ -27,11 +27,6 @@ const FLOW_KEYS = {
     calc: $("calc"),
     reset: $("reset")
   };
-
-  function n(x) {
-    const v = Number(x);
-    return Number.isFinite(v) ? v : NaN;
-  }
 
   function fmtNum(v, decimals = 0) {
     if (!Number.isFinite(v)) return "—";
@@ -75,12 +70,15 @@ const FLOW_KEYS = {
 
   function savePipelineResult(payload) {
     try {
-      sessionStorage.setItem(FLOW_KEY, JSON.stringify({
-        category: CATEGORY,
-        step: STEP,
-        ts: Date.now(),
-        data: payload
-      }));
+      sessionStorage.setItem(
+        FLOW_KEYS[STEP],
+        JSON.stringify({
+          category: CATEGORY,
+          step: STEP,
+          ts: Date.now(),
+          data: payload
+        })
+      );
     } catch (err) {
       console.warn("Could not save pipeline payload:", err);
     }
@@ -88,11 +86,11 @@ const FLOW_KEYS = {
 
   function invalidatePipelineResult() {
     try {
-      const raw = sessionStorage.getItem(FLOW_KEY);
+      const raw = sessionStorage.getItem(FLOW_KEYS[STEP]);
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (parsed && parsed.category === CATEGORY && parsed.step === STEP) {
-        sessionStorage.removeItem(FLOW_KEY);
+        sessionStorage.removeItem(FLOW_KEYS[STEP]);
       }
     } catch (err) {
       console.warn("Could not invalidate pipeline payload:", err);
@@ -109,7 +107,7 @@ const FLOW_KEYS = {
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
       emptyMessage: "Enter Watts or VA, then press Calculate."
@@ -120,10 +118,10 @@ const FLOW_KEYS = {
   }
 
   function getInputs() {
-    const V = n(els.volts?.value);
-    const PF = n(els.pf?.value);
-    const W = n(els.watts?.value);
-    const VAin = n(els.va?.value);
+    const V = ScopedLabsAnalyzer.safeNumber(els.volts?.value, NaN);
+    const PF = ScopedLabsAnalyzer.safeNumber(els.pf?.value, NaN);
+    const W = ScopedLabsAnalyzer.safeNumber(els.watts?.value, NaN);
+    const VAin = ScopedLabsAnalyzer.safeNumber(els.va?.value, NaN);
 
     if (!Number.isFinite(V) || V <= 0) {
       return { ok: false, message: "Voltage must be greater than 0." };
@@ -180,27 +178,25 @@ const FLOW_KEYS = {
     const branchUtilMetric = ScopedLabsAnalyzer.clamp(utilizationPct80, 0, 100);
     const currentPressureMetric = ScopedLabsAnalyzer.clamp((amps / 20) * 100, 0, 100);
 
-    const metrics = [
-      {
-        label: "Branch Utilization",
-        value: branchUtilMetric,
-        displayValue: fmtPct(utilizationPct80)
-      },
-      {
-        label: "Current Pressure",
-        value: currentPressureMetric,
-        displayValue: fmtAmps(amps)
-      },
-      {
-        label: "Power Factor Penalty",
-        value: pfPenaltyMetric,
-        displayValue: fmtRatio(input.powerFactor, 2)
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(branchUtilMetric, currentPressureMetric, pfPenaltyMetric),
-      metrics,
+      metrics: [
+        {
+          label: "Branch Utilization",
+          value: branchUtilMetric,
+          displayValue: fmtPct(utilizationPct80)
+        },
+        {
+          label: "Current Pressure",
+          value: currentPressureMetric,
+          displayValue: fmtAmps(amps)
+        },
+        {
+          label: "Power Factor Penalty",
+          value: pfPenaltyMetric,
+          displayValue: fmtRatio(input.powerFactor, 2)
+        }
+      ],
       healthyMax: 60,
       watchMax: 85
     });
@@ -323,10 +319,7 @@ const FLOW_KEYS = {
 
   function calculate() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
@@ -367,6 +360,9 @@ const FLOW_KEYS = {
     renderFlowNote();
     hideContinue();
     invalidate();
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
   if (document.readyState === "loading") {
@@ -375,22 +371,3 @@ const FLOW_KEYS = {
     init();
   }
 })();
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
