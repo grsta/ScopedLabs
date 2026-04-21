@@ -1,19 +1,30 @@
-const LANE = "v1";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "performance";
   const STEP = "bottleneck-analyzer";
+  const LANE = "v1";
   const PREVIOUS_STEP = "cache-hit-ratio";
   const NEXT_URL = "/tools/performance/headroom-target/";
 
+  const FLOW_KEYS = {
+    "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+    "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+    "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+    "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+    "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+    "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+    "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+    "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+    "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+    "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  };
+
   const chartRef = { current: null };
   const chartWrapRef = { current: null };
-
   const $ = (id) => document.getElementById(id);
+
+  let hasResult = false;
 
   const els = {
     cpu: $("cpu"),
@@ -26,7 +37,9 @@ const FLOW_KEYS = {
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("continue-wrap"),
-    continueBtn: $("continue")
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   const DEFAULTS = {
@@ -35,6 +48,51 @@ const FLOW_KEYS = {
     disk: 55,
     net: 40
   };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    const lockedCard = document.getElementById("lockedCard");
+    const toolCard = document.getElementById("toolCard");
+
+    if (signedIn && unlocked) {
+      if (lockedCard) lockedCard.style.display = "none";
+      if (toolCard) toolCard.style.display = "";
+      return true;
+    }
+
+    if (lockedCard) lockedCard.style.display = "";
+    if (toolCard) toolCard.style.display = "none";
+    return false;
+  }
 
   function num(value) {
     return ScopedLabsAnalyzer.safeNumber(value, NaN);
@@ -48,6 +106,16 @@ const FLOW_KEYS = {
     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continueBtn) els.continueBtn.disabled = false;
+  }
+
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continueBtn) els.continueBtn.disabled = true;
+  }
+
   function applyDefaults() {
     els.cpu.value = String(DEFAULTS.cpu);
     els.ram.value = String(DEFAULTS.ram);
@@ -56,33 +124,54 @@ const FLOW_KEYS = {
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: STORAGE_KEY,
+      flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Analyze."
     });
+
+    hasResult = false;
+    hideContinue();
   }
 
   function loadPrior() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: STORAGE_KEY,
-      category: CATEGORY,
-      step: STEP,
-      title: "Carried over context",
-      intro: "This step estimates which subsystem is most likely to become the active bottleneck after cache efficiency has reduced some portion of repeated backend demand."
-    });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    const d = flow.data || {};
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    const d = parsed.data || {};
+    const rows = [];
 
     const cacheHitRatioPct =
       num(d.cacheHitRatioPct) ??
@@ -101,7 +190,31 @@ const FLOW_KEYS = {
         : cacheHitRatioPct >= 80 ? "GOOD"
         : cacheHitRatioPct >= 65 ? "MODERATE"
         : "WEAK"
-        : "—");
+        : null);
+
+    if (Number.isFinite(cacheHitRatioPct)) {
+      rows.push(`Cache Hit Ratio: <strong>${cacheHitRatioPct.toFixed(1)}%</strong>`);
+    }
+    if (Number.isFinite(missRequestsPerSecond)) {
+      rows.push(`Cache Miss Load: <strong>${missRequestsPerSecond.toFixed(0)} rps</strong>`);
+    }
+    if (cacheStatus) {
+      rows.push(`Cache Status: <strong>${cacheStatus}</strong>`);
+    }
+
+    if (!rows.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${rows.join(" | ")}
+      <br><br>
+      This step estimates which subsystem is most likely to become the active bottleneck after cache efficiency has reduced some portion of repeated backend demand.
+    `;
 
     if (cacheStatus === "EXCELLENT") {
       els.cpu.value = "42";
@@ -242,7 +355,7 @@ const FLOW_KEYS = {
   }
 
   function writeFlow(data) {
-    ScopedLabsAnalyzer.writeFlow(STORAGE_KEY, {
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
       step: STEP,
       data: {
@@ -262,14 +375,16 @@ const FLOW_KEYS = {
     });
   }
 
-  function renderError(message) {
-    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
-    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    els.results.innerHTML = `<div class="muted">${message}</div>`;
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-  }
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) {
+      ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+      ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+      els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+      hideContinue();
+      return;
+    }
 
-  function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -313,16 +428,8 @@ const FLOW_KEYS = {
     });
 
     writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-  }
-
-  function calc() {
-    const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
-    renderSuccess(data);
+    hasResult = true;
+    showContinue();
   }
 
   function reset() {
@@ -340,6 +447,7 @@ const FLOW_KEYS = {
     els.calc.addEventListener("click", calc);
     els.reset.addEventListener("click", reset);
     els.continueBtn.addEventListener("click", () => {
+      if (!hasResult) return;
       window.location.href = NEXT_URL;
     });
   }
@@ -350,64 +458,15 @@ const FLOW_KEYS = {
     invalidate();
   }
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+
+    unlockCategoryPage();
+    setTimeout(() => {
+      unlockCategoryPage();
+    }, 400);
+
+    init();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
