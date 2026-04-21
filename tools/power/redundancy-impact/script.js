@@ -3,6 +3,9 @@
 
   const $ = (id) => document.getElementById(id);
 
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
   const els = {
     locked: $("lockedCard"),
     tool: $("toolCard"),
@@ -14,7 +17,7 @@
     arch: $("arch"),
     calc: $("calc"),
     reset: $("reset"),
-    out: $("out"),
+    out: $("results"),
     analysis: $("analysis-copy")
   };
 
@@ -49,15 +52,53 @@
     return "Single UPS";
   }
 
-  function showToolUnlocked() {
-    if (els.locked) els.locked.style.display = "none";
-    if (els.tool) els.tool.style.display = "";
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.locked) els.locked.style.display = "none";
+      if (els.tool) els.tool.style.display = "";
+      return true;
+    }
+
+    if (els.locked) els.locked.style.display = "";
+    if (els.tool) els.tool.style.display = "none";
+    return false;
   }
 
   function invalidate() {
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.out,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       emptyMessage: "Run the model to see results."
     });
   }
@@ -132,27 +173,25 @@
     const maintenanceMetric = Math.min((maintenanceDowntime / 10) * 100, 100);
     const penaltyMetric = Math.min(input.penaltyPct * 2, 100);
 
-    const metrics = [
-      {
-        label: "Failure Downtime Pressure",
-        value: failureMetric,
-        displayValue: fmtHours(failureDowntime)
-      },
-      {
-        label: "Maintenance Downtime Pressure",
-        value: maintenanceMetric,
-        displayValue: fmtHours(maintenanceDowntime)
-      },
-      {
-        label: "Failover Penalty",
-        value: penaltyMetric,
-        displayValue: `${fmt(input.penaltyPct, 2)}%`
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(failureMetric, maintenanceMetric, penaltyMetric),
-      metrics,
+      metrics: [
+        {
+          label: "Failure Downtime Pressure",
+          value: failureMetric,
+          displayValue: fmtHours(failureDowntime)
+        },
+        {
+          label: "Maintenance Downtime Pressure",
+          value: maintenanceMetric,
+          displayValue: fmtHours(maintenanceDowntime)
+        },
+        {
+          label: "Failover Penalty",
+          value: penaltyMetric,
+          displayValue: `${fmt(input.penaltyPct, 2)}%`
+        }
+      ],
       healthyMax: 20,
       watchMax: 45
     });
@@ -204,11 +243,15 @@
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance,
+      failureMetric,
+      maintenanceMetric,
+      penaltyMetric
     };
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     els.out.innerHTML = `<div class="muted">⚠ ${message}</div>`;
   }
@@ -217,6 +260,8 @@
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.out,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Architecture", value: architectureLabel(data.arch) },
         { label: "Total Downtime / Year", value: fmtHours(data.totalDowntime) },
@@ -236,16 +281,39 @@
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: [
+          "Failure Downtime Pressure",
+          "Maintenance Downtime Pressure",
+          "Failover Penalty"
+        ],
+        values: [
+          Number(data.failureMetric.toFixed(1)),
+          Number(data.maintenanceMetric.toFixed(1)),
+          Number(data.penaltyMetric.toFixed(1))
+        ],
+        displayValues: [
+          fmtHours(data.failureDowntime),
+          fmtHours(data.maintenanceDowntime),
+          `${fmt(data.penaltyPct, 2)}%`
+        ],
+        referenceValue: 20,
+        healthyMax: 20,
+        watchMax: 45,
+        axisTitle: "Availability Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
   }
 
   function calculate() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
@@ -267,67 +335,24 @@
   }
 
   function boot() {
-    showToolUnlocked();
     applyDefaults();
     bind();
     invalidate();
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  window.addEventListener("DOMContentLoaded", () => {
+    let unlocked = unlockCategoryPage();
+    if (unlocked) boot();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.tool && !els.tool.dataset.initialized) {
+        els.tool.dataset.initialized = "true";
+        boot();
+      }
+    }, 400);
+  });
 })();
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
