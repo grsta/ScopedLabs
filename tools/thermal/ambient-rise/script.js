@@ -115,7 +115,7 @@
     window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, null);
     return;
   }
-  if (els.continueWrap) els.continueWrap.style.display = "none";
+  if (els.continueWrap) els.continueWrap.style.display = "false";
 }
 
   function showContinue() {
