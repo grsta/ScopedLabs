@@ -1,4 +1,6 @@
 ﻿(() => {
+  "use strict";
+
   const $ = (id) => document.getElementById(id);
 
   const FLOW_KEYS = {
@@ -20,6 +22,9 @@
   const PREVIOUS_STEP = "face-recognition-range";
   const NEXT_URL = "/tools/physical-security/";
 
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
+
   const els = {
     res: $("res"),
     hfov: $("hfov"),
@@ -32,7 +37,18 @@
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
-    continueBtn: $("continue")
+    continueBtn: $("continue"),
+    completeWrap: $("complete-wrap"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
+  };
+
+  const DEFAULTS = {
+    res: 3840,
+    hfov: 50,
+    ppp: 130,
+    pw: 1.0,
+    dist: 60
   };
 
   function num(value, fallback = NaN) {
@@ -60,26 +76,94 @@
   }
 
   function applyDefaults() {
-    els.res.value = "3840";
-    els.hfov.value = "50";
-    els.ppp.value = "130";
-    els.pw.value = "1.0";
-    els.dist.value = "60";
+    els.res.value = String(DEFAULTS.res);
+    els.hfov.value = String(DEFAULTS.hfov);
+    els.ppp.value = String(DEFAULTS.ppp);
+    els.pw.value = String(DEFAULTS.pw);
+    els.dist.value = String(DEFAULTS.dist);
+  }
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    const lockedCard = document.getElementById("lockedCard");
+    const toolCard = document.getElementById("toolCard");
+
+    if (signedIn && unlocked) {
+      if (lockedCard) lockedCard.style.display = "none";
+      if (toolCard) toolCard.style.display = "";
+      return true;
+    }
+
+    if (lockedCard) lockedCard.style.display = "";
+    if (toolCard) toolCard.style.display = "none";
+    return false;
+  }
+
+  function showComplete() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.completeWrap) els.completeWrap.style.display = "block";
+    if (els.continueBtn) els.continueBtn.disabled = false;
+  }
+
+  function hideComplete() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.completeWrap) els.completeWrap.style.display = "none";
+    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function renderFlowNote() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      title: "Flow context",
-      intro: "This step checks whether the upstream optical setup can also deliver readable license-plate detail at the intended working distance."
-    });
+    const raw = sessionStorage.getItem(FLOW_KEYS.face);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    const prev = flow.data || {};
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    const prev = parsed.data || {};
     const dist = num(prev.actualDist ?? prev.dist);
     const classification = prev.classification || "";
     const focal = num(prev.focal);
@@ -91,39 +175,48 @@
 
     const parts = [];
     if (classification) {
-      parts.push(`face requirement <strong>${classification}</strong>`);
+      parts.push(`Face Requirement: <strong>${classification}</strong>`);
     }
     if (Number.isFinite(dist) && dist > 0) {
-      parts.push(`working distance <strong>${fmtFt(dist)}</strong>`);
+      parts.push(`Working Distance: <strong>${fmtFt(dist)}</strong>`);
     }
     if (lensClass) {
-      let lensText = `lens <strong>${lensClass}</strong>`;
+      let lensText = `Lens: <strong>${lensClass}</strong>`;
       if (Number.isFinite(focal) && focal > 0) {
         lensText += ` (~${fmt(focal, 1)} mm)`;
       }
       parts.push(lensText);
     }
 
-    if (parts.length) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow context</strong><br>
-        Prior face-recognition results detected — ${parts.join(", ")}.
-        This step checks whether that same optical setup can also support readable license plate capture.
-      `;
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
     }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This final step checks whether the same optical setup can also support readable license-plate capture.
+    `;
   }
 
   function invalidate({ clearFlow = true } = {}) {
     if (clearFlow) {
-      sessionStorage.removeItem(FLOW_KEYS.plate);
+      try {
+        sessionStorage.removeItem(FLOW_KEYS.plate);
+      } catch {}
     }
 
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
+      continueWrapEl: null,
+      continueBtnEl: null,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       flowKey: FLOW_KEYS.plate,
       category: CATEGORY,
       step: STEP,
@@ -131,6 +224,7 @@
       emptyMessage: "Enter values and press Calculate."
     });
 
+    hideComplete();
     renderFlowNote();
   }
 
@@ -165,10 +259,15 @@
     const input = getInputs();
     if (!input.ok) return input;
 
-    const maxDist = (input.res * input.pw) / (2 * Math.tan(deg2rad(input.hfov / 2)) * input.ppp);
+    const maxDist =
+      (input.res * input.pw) /
+      (2 * Math.tan(deg2rad(input.hfov / 2)) * input.ppp);
+
     const marginFt = maxDist - input.dist;
     const utilizationPct = maxDist > 0 ? (input.dist / maxDist) * 100 : 100;
-    const deliveredPpp = (input.res * input.pw) / (2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist);
+    const deliveredPpp =
+      (input.res * input.pw) /
+      (2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist);
 
     const classification = classifyPlateTarget(input.ppp);
 
@@ -184,27 +283,25 @@
       input.ppp >= 130 ? 20 :
       input.ppp >= 100 ? 12 : 5;
 
-    const metrics = [
-      {
-        label: "Range Utilization",
-        value: utilizationMetric,
-        displayValue: fmtPct(utilizationPct)
-      },
-      {
-        label: "Distance Shortfall",
-        value: shortfallMetric,
-        displayValue: marginFt < 0 ? fmtFt(Math.abs(marginFt)) : "0.0 ft"
-      },
-      {
-        label: "Plate Readability Demand",
-        value: requirementMetric,
-        displayValue: fmtPx(input.ppp)
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(utilizationMetric, shortfallMetric, requirementMetric),
-      metrics,
+      metrics: [
+        {
+          label: "Range Utilization",
+          value: utilizationMetric,
+          displayValue: fmtPct(utilizationPct)
+        },
+        {
+          label: "Distance Shortfall",
+          value: shortfallMetric,
+          displayValue: marginFt < 0 ? fmtFt(Math.abs(marginFt)) : "0.0 ft"
+        },
+        {
+          label: "Plate Readability Demand",
+          value: requirementMetric,
+          displayValue: fmtPx(input.ppp)
+        }
+      ],
       healthyMax: 75,
       watchMax: 95
     });
@@ -254,7 +351,10 @@
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance,
+      utilizationMetric,
+      shortfallMetric,
+      requirementMetric
     };
   }
 
@@ -278,8 +378,9 @@
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+    hideComplete();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -287,6 +388,8 @@
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Plate Readability Target", value: data.classification },
         { label: "Max Capture Distance", value: fmtFt(data.maxDist) },
@@ -304,11 +407,33 @@
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: ["Range Utilization", "Distance Shortfall", "Plate Readability Demand"],
+        values: [
+          Number(data.utilizationMetric.toFixed(1)),
+          Number(data.shortfallMetric.toFixed(1)),
+          Number(data.requirementMetric.toFixed(1))
+        ],
+        displayValues: [
+          fmtPct(data.utilizationPct),
+          data.marginFt < 0 ? fmtFt(Math.abs(data.marginFt)) : "0.0 ft",
+          fmtPx(data.ppp)
+        ],
+        referenceValue: 75,
+        healthyMax: 75,
+        watchMax: 95,
+        axisTitle: "Plate Capture Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
 
     writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+    showComplete();
   }
 
   function calc() {
@@ -347,53 +472,16 @@
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
-    init();
+
+    let unlocked = unlockCategoryPage();
+    if (unlocked) init();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        init();
+      }
+    }, 400);
   });
 })();
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
