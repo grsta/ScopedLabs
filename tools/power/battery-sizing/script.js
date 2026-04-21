@@ -1,5 +1,10 @@
 ﻿(() => {
+  "use strict";
+
   const $ = (id) => document.getElementById(id);
+
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
 
   const els = {
     voltage: $("voltage"),
@@ -53,6 +58,8 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       emptyMessage: "Enter values and press Calculate."
     });
   }
@@ -120,27 +127,25 @@
     const efficiencyLossMetric = efficiencyLossPct;
     const reservePressureMetric = Math.min((reserveMultiplier - 1) * 100, 100);
 
-    const metrics = [
-      {
-        label: "Runtime Demand",
-        value: runtimeDemandMetric,
-        displayValue: fmtHours(input.hours)
-      },
-      {
-        label: "Efficiency Loss",
-        value: efficiencyLossMetric,
-        displayValue: fmtPct(efficiencyLossPct)
-      },
-      {
-        label: "Reserve Pressure",
-        value: reservePressureMetric,
-        displayValue: `${fmt(reserveMultiplier, 2)}x`
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(runtimeDemandMetric, efficiencyLossMetric, reservePressureMetric),
-      metrics,
+      metrics: [
+        {
+          label: "Runtime Demand",
+          value: runtimeDemandMetric,
+          displayValue: fmtHours(input.hours)
+        },
+        {
+          label: "Efficiency Loss",
+          value: efficiencyLossMetric,
+          displayValue: fmtPct(efficiencyLossPct)
+        },
+        {
+          label: "Reserve Pressure",
+          value: reservePressureMetric,
+          displayValue: `${fmt(reserveMultiplier, 2)}x`
+        }
+      ],
       healthyMax: 20,
       watchMax: 45
     });
@@ -196,11 +201,15 @@
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance,
+      runtimeDemandMetric,
+      efficiencyLossMetric,
+      reservePressureMetric
     };
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     els.results.innerHTML = `<div class="muted">⚠ ${message}</div>`;
   }
@@ -209,6 +218,8 @@
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Load Power", value: fmtWatts(data.loadWatts) },
         { label: "Runtime", value: fmtHours(data.hours) },
@@ -226,16 +237,35 @@
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: ["Runtime Demand", "Efficiency Loss", "Reserve Pressure"],
+        values: [
+          Number(data.runtimeDemandMetric.toFixed(1)),
+          Number(data.efficiencyLossMetric.toFixed(1)),
+          Number(data.reservePressureMetric.toFixed(1))
+        ],
+        displayValues: [
+          fmtHours(data.hours),
+          fmtPct(100 - data.effPct),
+          `${fmt(data.reserveMultiplier, 2)}x`
+        ],
+        referenceValue: 20,
+        healthyMax: 20,
+        watchMax: 45,
+        axisTitle: "Battery Sizing Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
   }
 
   function calc() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
@@ -263,6 +293,9 @@
   function boot() {
     bind();
     invalidate();
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
   if (document.readyState === "loading") {
@@ -271,10 +304,3 @@
     boot();
   }
 })();
-
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});

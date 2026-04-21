@@ -3,16 +3,57 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Battery Sizing *ScopedLabs</title>
+  <title>Battery Sizing • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate required battery capacity from voltage, load, runtime, and system efficiency."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=power-battery-sizing-0406" />
+  <link rel="stylesheet" href="/assets/style.css?v=power-battery-sizing-0421" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "YOUR_KEY";
   </script>
-  <script defer src="/assets/auth.js?v=power-battery-sizing-0406"></script>
-  <script defer src="/assets/app.js?v=power-battery-sizing-0406"></script>
+  <script defer src="/assets/auth.js?v=power-battery-sizing-0421"></script>
+  <script defer src="/assets/app.js?v=power-battery-sizing-0421"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="power">
@@ -25,36 +66,34 @@
       <nav class="site-nav">
         <a class="nav-pill" href="/">Home</a>
         <a class="nav-pill" href="/tools/">Tools</a>
-        <a class="nav-pill" href="/tools/power/">Power</a>
+        <a class="nav-pill" href="/tools/power/">Power & Runtime</a>
       </nav>
     </div>
   </header>
 
   <main class="container page">
     <div class="crumbs">
-      <a href="/tools/">Tools</a> /
-      <a href="/tools/power/">Power</a> /
-      Battery Sizing
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/power/">Power & Runtime</a>
+      <span class="sep">/</span>
+      <span>Battery Sizing</span>
     </div>
 
-    
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--free">Free Tier</span>
-      </div>
-<h1>Battery Sizing</h1>
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--free">Free Tier</span>
+    </div>
 
-    <p class="subhead">
-      Estimate required battery capacity (Ah) from voltage, load, runtime, and efficiency.
+    <h1>Battery Sizing</h1>
+
+    <p class="tool-best-for">
+      <strong>Best for:</strong> sizing a simple DC battery requirement when you know your load and runtime target and want to account for conversion losses.
     </p>
 
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> sizing a simple DC battery requirement when you know your load and runtime target but need to account for conversion losses.
-      </p>
-    </section>
+    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+      <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
 
-    <section id="toolCard" class="card tool-card">
-      <div class="form-grid">
+      <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
           <span class="label">System Voltage (V)</span>
           <select id="voltage">
@@ -86,18 +125,22 @@
         </label>
       </div>
 
-      <div class="actions">
-        <button id="calc" class="btn btn-primary">Calculate</button>
-        <button id="reset" class="btn">Reset</button>
+      <div class="btn-row" style="margin-top: 14px;">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
       </div>
-    </section>
 
-    <section class="card tool-card">
-      <h2>Results</h2>
-      <div id="results" class="results">
-        <div class="muted">Enter values and press Calculate.</div>
+      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Results</h3>
+        <div id="results" class="results-grid" aria-live="polite">
+          <div class="muted">Enter values and press Calculate.</div>
+        </div>
+        <div id="analysis-copy" style="display:none;"></div>
+
+        <p class="mini-note">
+          Model: if watts are entered, current is derived from voltage. If amps are entered, watts are derived from voltage. Efficiency accounts for inverter, converter, or discharge losses before final battery capacity is calculated.
+        </p>
       </div>
-      <div id="analysis-copy" style="display:none;"></div>
     </section>
 
     <details class="card" style="margin-top:1rem;">
@@ -110,15 +153,14 @@
         </ul>
       </div>
     </details>
-  
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
 
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
   </main>
 
-  <script src="/assets/analyzer.js?v=power-battery-sizing-0406"></script>
-  <script src="./script.js?v=power-battery-sizing-0406"></script>
+  <script src="/assets/analyzer.js?v=power-battery-sizing-0421"></script>
+  <script src="./script.js?v=power-battery-sizing-0421"></script>
 </body>
 </html>
 
