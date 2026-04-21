@@ -1,5 +1,10 @@
 ﻿(() => {
+  "use strict";
+
   const $ = (id) => document.getElementById(id);
+
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
 
   const els = {
     loadW: $("loadW"),
@@ -55,6 +60,8 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       emptyMessage: "Enter values and press Calculate."
     });
   }
@@ -98,27 +105,25 @@
     const currentPressureMetric = ScopedLabsAnalyzer.clamp((dcA / 50) * 100, 0, 100);
     const multiplierMetric = ScopedLabsAnalyzer.clamp((inputMultiplier - 1) * 100, 0, 100);
 
-    const metrics = [
-      {
-        label: "Efficiency Loss",
-        value: efficiencyLossMetric,
-        displayValue: fmtPct(efficiencyLossMetric)
-      },
-      {
-        label: "DC Current Pressure",
-        value: currentPressureMetric,
-        displayValue: fmtAmps(dcA)
-      },
-      {
-        label: "Input Multiplier",
-        value: multiplierMetric,
-        displayValue: fmtRatio(inputMultiplier)
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(efficiencyLossMetric, currentPressureMetric, multiplierMetric),
-      metrics,
+      metrics: [
+        {
+          label: "Efficiency Loss",
+          value: efficiencyLossMetric,
+          displayValue: fmtPct(efficiencyLossMetric)
+        },
+        {
+          label: "DC Current Pressure",
+          value: currentPressureMetric,
+          displayValue: fmtAmps(dcA)
+        },
+        {
+          label: "Input Multiplier",
+          value: multiplierMetric,
+          displayValue: fmtRatio(inputMultiplier)
+        }
+      ],
       healthyMax: 15,
       watchMax: 35
     });
@@ -170,11 +175,15 @@
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance,
+      efficiencyLossMetric,
+      currentPressureMetric,
+      multiplierMetric
     };
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     els.results.innerHTML = `<div class="muted">⚠ ${message}</div>`;
   }
@@ -183,6 +192,8 @@
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "AC Load", value: fmtWatts(data.loadW) },
         { label: "DC Input Power", value: fmtWatts(data.dcInW) },
@@ -199,16 +210,35 @@
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: ["Efficiency Loss", "DC Current Pressure", "Input Multiplier"],
+        values: [
+          Number(data.efficiencyLossMetric.toFixed(1)),
+          Number(data.currentPressureMetric.toFixed(1)),
+          Number(data.multiplierMetric.toFixed(1))
+        ],
+        displayValues: [
+          fmtPct(100 - data.effPct),
+          fmtAmps(data.dcA),
+          fmtRatio(data.inputMultiplier)
+        ],
+        referenceValue: 15,
+        healthyMax: 15,
+        watchMax: 35,
+        axisTitle: "Conversion Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
   }
 
   function calc() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
@@ -240,6 +270,9 @@
     applyDefaults();
     bind();
     invalidate();
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
   if (document.readyState === "loading") {
@@ -248,9 +281,3 @@
     boot();
   }
 })();
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
