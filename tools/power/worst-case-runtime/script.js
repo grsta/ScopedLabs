@@ -62,9 +62,51 @@
     return Number.isFinite(v) ? `${v.toFixed(digits)} Wh` : "—";
   }
 
-  function setUnlocked() {
-    if (els.lockedCard) els.lockedCard.style.display = "none";
-    if (els.toolCard) els.toolCard.style.display = "";
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
+  function applyDefaults() {
+    Object.entries(DEFAULTS).forEach(([key, value]) => {
+      if (els[key]) els[key].value = String(value);
+    });
   }
 
   function minutesFromWh(usableWh, effPct, healthLossPct, tempLossPct, loadW, spikeX) {
@@ -87,12 +129,6 @@
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
       emptyMessage: "Run the simulator to see baseline vs worst-case runtime and pass/fail against the floor target."
-    });
-  }
-
-  function applyDefaults() {
-    Object.entries(DEFAULTS).forEach(([key, value]) => {
-      if (els[key]) els[key].value = String(value);
     });
   }
 
@@ -158,27 +194,25 @@
       ? Math.max(0, 100 - worstMin)
       : Math.min(100, 70 + (input.floorMin - worstMin) * 2);
 
-    const metrics = [
-      {
-        label: "Load Pressure",
-        value: Number(overloadMetric.toFixed(1)),
-        displayValue: fmtPct(loadPressurePct, 1)
-      },
-      {
-        label: "Runtime Loss",
-        value: Number(runtimeLossMetric.toFixed(1)),
-        displayValue: fmtMin(runtimeLossMin, 1)
-      },
-      {
-        label: "Floor Tightness",
-        value: Number(floorGapMetric.toFixed(1)),
-        displayValue: `${fmtMin(worstMin, 1)} vs ${fmtMin(input.floorMin, 0)}`
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(overloadMetric, runtimeLossMetric, floorGapMetric),
-      metrics,
+      metrics: [
+        {
+          label: "Load Pressure",
+          value: Number(overloadMetric.toFixed(1)),
+          displayValue: fmtPct(loadPressurePct, 1)
+        },
+        {
+          label: "Runtime Loss",
+          value: Number(runtimeLossMetric.toFixed(1)),
+          displayValue: fmtMin(runtimeLossMin, 1)
+        },
+        {
+          label: "Floor Tightness",
+          value: Number(floorGapMetric.toFixed(1)),
+          displayValue: `${fmtMin(worstMin, 1)} vs ${fmtMin(input.floorMin, 0)}`
+        }
+      ],
       healthyMax: 60,
       watchMax: 85
     });
@@ -307,10 +341,7 @@
 
   function run() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
@@ -332,75 +363,24 @@
   }
 
   function boot() {
-    const y = document.querySelector("[data-year]");
-    if (y) y.textContent = new Date().getFullYear();
-
-    setUnlocked();
     applyDefaults();
     bind();
     invalidate();
+
+    const y = document.querySelector("[data-year]");
+    if (y) y.textContent = new Date().getFullYear();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  window.addEventListener("DOMContentLoaded", () => {
+    let unlocked = unlockCategoryPage();
+    if (unlocked) boot();
+
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        boot();
+      }
+    }, 400);
+  });
 })();
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-
-  unlockCategoryPage();
-  setTimeout(() => {
-    unlockCategoryPage();
-  }, 400);
-});

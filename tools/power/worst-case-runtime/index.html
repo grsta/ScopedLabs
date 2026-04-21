@@ -3,24 +3,64 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Worst-Case Runtime Simulator *ScopedLabs</title>
+  <title>Worst-Case Runtime Simulator • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Stress-test runtime assumptions and compare normal-day versus worst-case outage duration."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=power-worst-case-runtime-0407" />
+  <link rel="stylesheet" href="/assets/style.css?v=power-worst-case-runtime-0421" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=power-worst-case-runtime-0407"></script>
-  <script defer src="/assets/app.js?v=power-worst-case-runtime-0407"></script>
+  <script defer src="/assets/auth.js?v=power-worst-case-runtime-0421"></script>
+  <script defer src="/assets/app.js?v=power-worst-case-runtime-0421"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="power">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
-        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-dot" aria-hidden="true"></span>
         <span class="brand-name">ScopedLabs</span>
       </a>
 
@@ -34,27 +74,27 @@
 
   <main class="page">
     <div class="container">
-      <div class="breadcrumbs muted">
-        <a href="/tools/">Tools</a> <span class="muted">/</span>
-        <a href="/tools/power/">Power &amp; Runtime</a> <span class="muted">/</span>
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/power/">Power &amp; Runtime</a>
+        <span class="sep">/</span>
         <span>Worst-Case Runtime Simulator</span>
       </div>
 
-      <h1 class="page-title">Worst-Case Runtime Simulator</h1>
-      <p class="page-subtitle">
-        Stress-test assumptions and see runtime under worst-case conditions.
-      </p>
-
-      <div class="card info-card">
-        <p class="muted">
-          Compare normal-day runtime to a bad-day scenario using battery aging, temperature derate,
-          inverter efficiency, and spike load penalties. This is planning-grade energy math, not a vendor discharge-curve simulator.
-        </p>
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
       </div>
 
-      <section id="lockedCard" class="card tool-card locked-card" aria-label="Pro tool locked">
+      <h1>Worst-Case Runtime Simulator</h1>
+
+      <p class="tool-best-for">
+        <strong>Best for:</strong> stress-testing whether a design still survives when battery aging, temperature derate, and spike load penalties all hit at once.
+      </p>
+
+      <section id="lockedCard" class="card tool-card locked-card" aria-label="Pro tool locked" style="margin-top:18px;">
         <div class="pill-row">
-          <span class="pill pro">Pro / Advanced</span>
+          <span class="pill pill--pro">Pro Tier</span>
         </div>
 
         <h2 class="tool-title">🔒 Locked</h2>
@@ -66,10 +106,10 @@
           <div class="locked-row">
             <div class="locked-label">Worst-case factors modeled</div>
             <ul class="locked-list">
-              <li>Battery age / health derate curves</li>
-              <li>Temperature impact (cold room / hot closet)</li>
-              <li>Peak spike multiplier (start-up surges)</li>
-              <li>Runtime floor targets (minutes) + pass/fail</li>
+              <li>Battery age / health derate</li>
+              <li>Temperature impact on usable energy</li>
+              <li>Peak spike multiplier at the load</li>
+              <li>Runtime floor targets with pass/fail evaluation</li>
             </ul>
           </div>
         </div>
@@ -84,7 +124,7 @@
 
       <section id="toolCard" class="card tool-card" style="display:none;" aria-label="Worst-Case Runtime Simulator tool">
         <div class="pill-row">
-          <span class="pill pro">Pro / Advanced</span>
+          <span class="pill pill--pro">Pro Tier</span>
         </div>
 
         <h2 class="tool-title">Worst-Case Runtime Simulator</h2>
@@ -157,26 +197,27 @@
             <div class="btn-row">
               <button id="calc" class="btn primary" type="button">Run Worst-Case</button>
               <button id="reset" class="btn" type="button">Reset</button>
+              <a class="btn" href="/tools/power/">← Back to Power &amp; Runtime</a>
             </div>
           </div>
         </div>
 
         <div class="spacer-md"></div>
 
-        <div id="results" class="card" style="background:rgba(0,0,0,.12);">
-          <div class="muted" style="font-size:.95rem;">
-            Run the simulator to see baseline vs worst-case runtime and pass/fail against the floor target.
+        <div class="card" style="background:rgba(0,0,0,.12);">
+          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <div id="results" class="results-grid" aria-live="polite">
+            <div class="muted">
+              Run the simulator to see baseline vs worst-case runtime and pass/fail against the floor target.
+            </div>
           </div>
-        </div>
+          <div id="analysis-copy" style="display:none;"></div>
 
-        <div id="analysis-copy" style="display:none;"></div>
-
-        <div class="btn-row" style="margin-top:16px;">
-          <a class="btn" href="/tools/power/">← Back to Power &amp; Runtime</a>
+          <p class="mini-note">
+            Model: baseline runtime uses normal conditions, while worst-case runtime applies health loss, temperature loss, and spike multiplier together before comparing the result against the required floor target.
+          </p>
         </div>
       </section>
-
-      <div class="spacer-xl"></div>
 
       <footer class="site-footer muted">
         © <span data-year></span> ScopedLabs
@@ -184,7 +225,7 @@
     </div>
   </main>
 
-  <script src="/assets/analyzer.js?v=power-worst-case-runtime-0407"></script>
-  <script src="./script.js?v=power-worst-case-runtime-0407"></script>
+  <script src="/assets/analyzer.js?v=power-worst-case-runtime-0421"></script>
+  <script src="./script.js?v=power-worst-case-runtime-0421"></script>
 </body>
 </html>
