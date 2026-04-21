@@ -1,19 +1,29 @@
-const LANE = "v1";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "performance";
   const STEP = "headroom-target";
+  const LANE = "v1";
   const PREVIOUS_STEP = "bottleneck-analyzer";
-  const NEXT_URL = "/tools/performance/";
+
+  const FLOW_KEYS = {
+    "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+    "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+    "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+    "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+    "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+    "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+    "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+    "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+    "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+    "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  };
 
   const chartRef = { current: null };
   const chartWrapRef = { current: null };
-
   const $ = (id) => document.getElementById(id);
+
+  let hasResult = false;
 
   const els = {
     u: $("u"),
@@ -25,8 +35,9 @@ const FLOW_KEYS = {
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
-    continueWrap: $("continue-wrap"),
-    continueBtn: $("continue")
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    completeWrap: $("complete-wrap")
   };
 
   const DEFAULTS = {
@@ -48,6 +59,18 @@ const FLOW_KEYS = {
     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
+  function showComplete() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.completeWrap) els.completeWrap.style.display = "block";
+    if (els.continueBtn) els.continueBtn.setAttribute("aria-disabled", "false");
+  }
+
+  function hideComplete() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.completeWrap) els.completeWrap.style.display = "none";
+    if (els.continueBtn) els.continueBtn.setAttribute("aria-disabled", "true");
+  }
+
   function applyDefaults() {
     els.u.value = String(DEFAULTS.u);
     els.h.value = String(DEFAULTS.h);
@@ -56,39 +79,58 @@ const FLOW_KEYS = {
   }
 
   function invalidate() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
+      continueWrapEl: null,
+      continueBtnEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: STORAGE_KEY,
+      flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and press Calculate."
     });
+
+    hasResult = false;
+    hideComplete();
   }
 
   function loadPrior() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: STORAGE_KEY,
-      category: CATEGORY,
-      step: STEP,
-      title: "Carried over context",
-      intro: "This final step converts the identified bottleneck into a safer operating target by reserving headroom for bursts, failover conditions, and future growth."
-    });
+    const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    const d = flow.data || {};
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    const d = parsed.data || {};
 
     const highestSubsystem =
       d.highestSubsystem ||
       d.likelyBottleneck ||
       d.bottleneckSubsystem ||
-      "—";
+      null;
 
     const highestUtilizationPct =
       num(d.highestUtilizationPct) ??
@@ -96,9 +138,7 @@ const FLOW_KEYS = {
       num(d.maxUtilizationPct) ??
       num(d.currentUtilizationPct);
 
-    const secondHighestSubsystem =
-      d.secondHighestSubsystem || "—";
-
+    const secondHighestSubsystem = d.secondHighestSubsystem || null;
     const secondHighestUtilizationPct =
       num(d.secondHighestUtilizationPct) ??
       num(d.secondHighestUtilization);
@@ -107,7 +147,7 @@ const FLOW_KEYS = {
       d.bottleneckStatus ||
       d.status ||
       d.severity ||
-      "—";
+      null;
 
     const bottleneckGapPts =
       num(d.bottleneckGapPts) ??
@@ -121,7 +161,7 @@ const FLOW_KEYS = {
     const balanceStatus =
       d.balanceStatus ||
       d.loadBalance ||
-      "—";
+      null;
 
     if (Number.isFinite(highestUtilizationPct)) {
       els.u.value = String(Math.round(highestUtilizationPct));
@@ -153,13 +193,13 @@ const FLOW_KEYS = {
 
     const parts = [];
 
-    if (highestSubsystem !== "—" && Number.isFinite(highestUtilizationPct)) {
+    if (highestSubsystem && Number.isFinite(highestUtilizationPct)) {
       parts.push(`Likely Bottleneck: <strong>${highestSubsystem} (${fmt(highestUtilizationPct, 1)}%)</strong>`);
     }
-    if (secondHighestSubsystem !== "—" && Number.isFinite(secondHighestUtilizationPct)) {
+    if (secondHighestSubsystem && Number.isFinite(secondHighestUtilizationPct)) {
       parts.push(`Second Highest: <strong>${secondHighestSubsystem} (${fmt(secondHighestUtilizationPct, 1)}%)</strong>`);
     }
-    if (bottleneckStatus !== "—") {
+    if (bottleneckStatus) {
       parts.push(`Severity: <strong>${bottleneckStatus}</strong>`);
     }
     if (Number.isFinite(bottleneckGapPts)) {
@@ -168,14 +208,21 @@ const FLOW_KEYS = {
     if (Number.isFinite(averageUtilizationPct)) {
       parts.push(`Average Utilization: <strong>${fmt(averageUtilizationPct, 1)}%</strong>`);
     }
-    if (balanceStatus !== "—") {
+    if (balanceStatus) {
       parts.push(`Load Balance: <strong>${balanceStatus}</strong>`);
     }
 
-    els.flowNote.style.display = "";
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
-      <strong>Carried over context</strong><br>
-      ${parts.join(", ")}.
+      <strong>Flow Context</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
       This final step converts the identified bottleneck into a safer operating target by reserving headroom for bursts, failover conditions, and future growth.
     `;
   }
@@ -307,34 +354,16 @@ const FLOW_KEYS = {
     };
   }
 
-  function writeFlow(data) {
-    ScopedLabsAnalyzer.writeFlow(STORAGE_KEY, {
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        currentUtilizationPct: data.uPct,
-        desiredHeadroomPct: data.hPct,
-        currentCapacity: data.cap,
-        unit: data.unit,
-        currentLoad: data.currentLoad,
-        recommendedMaxLoad: data.maxLoad,
-        recommendedMaxUtilizationPct: data.recommendedMaxUtilizationPct,
-        remainingSafeCapacity: data.remainingSafeCapacity,
-        growthUntilLimitPct: data.growthUntilLimitPct,
-        overloadAgainstTarget: data.overloadAgainstTarget,
-        headroomStatus: data.headroomStatus
-      }
-    });
-  }
+  function calc() {
+    const data = calculateModel();
+    if (!data.ok) {
+      ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+      ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+      els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+      hideComplete();
+      return;
+    }
 
-  function renderError(message) {
-    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
-    ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    els.results.innerHTML = `<div class="muted">${message}</div>`;
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-  }
-
-  function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -396,17 +425,26 @@ const FLOW_KEYS = {
       }
     });
 
-    writeFlow(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-  }
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+      category: CATEGORY,
+      step: STEP,
+      data: {
+        currentUtilizationPct: data.uPct,
+        desiredHeadroomPct: data.hPct,
+        currentCapacity: data.cap,
+        unit: data.unit,
+        currentLoad: data.currentLoad,
+        recommendedMaxLoad: data.maxLoad,
+        recommendedMaxUtilizationPct: data.recommendedMaxUtilizationPct,
+        remainingSafeCapacity: data.remainingSafeCapacity,
+        growthUntilLimitPct: data.growthUntilLimitPct,
+        overloadAgainstTarget: data.overloadAgainstTarget,
+        headroomStatus: data.headroomStatus
+      }
+    });
 
-  function calc() {
-    const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
-    renderSuccess(data);
+    hasResult = true;
+    showComplete();
   }
 
   function reset() {
@@ -423,9 +461,6 @@ const FLOW_KEYS = {
 
     els.calc.addEventListener("click", calc);
     els.reset.addEventListener("click", reset);
-    els.continueBtn.addEventListener("click", () => {
-      window.location.href = NEXT_URL;
-    });
   }
 
   function init() {
@@ -434,15 +469,9 @@ const FLOW_KEYS = {
     invalidate();
   }
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    init();
+  });
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
