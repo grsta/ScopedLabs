@@ -1,20 +1,19 @@
-const LANE = "v1";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
-
-/* ScopedLabs — UPS Runtime Estimator
-   Analyzer + pipeline-aware version for Power V1
-*/
-(function () {
+(() => {
   "use strict";
 
-  const $ = (id) => document.getElementById(id);
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "power";
   const STEP = "ups-runtime";
+  const LANE = "v1";
   const PREVIOUS_STEP = "load-growth";
-  const NEXT_URL = "/tools/power/battery-bank-sizer/";
+
+  const FLOW_KEYS = {
+    "va-watts-amps": "scopedlabs:pipeline:power:va-watts-amps",
+    "load-growth": "scopedlabs:pipeline:power:load-growth",
+    "ups-runtime": "scopedlabs:pipeline:power:ups-runtime",
+    "battery-bank-sizer": "scopedlabs:pipeline:power:battery-bank-sizer"
+  };
+
+  const $ = (id) => document.getElementById(id);
 
   const chartRef = { current: null };
   const chartWrapRef = { current: null };
@@ -31,7 +30,9 @@ const FLOW_KEYS = {
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
-    nextRow: $("next-step-row")
+    continueRow: $("next-step-row"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   let importedPayload = null;
@@ -68,23 +69,64 @@ const FLOW_KEYS = {
     return Number.isFinite(n) ? `${Math.round(n)} min` : "—";
   }
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
   function hideContinue() {
-    if (els.nextRow) els.nextRow.style.display = "none";
+    if (els.continueRow) els.continueRow.style.display = "none";
   }
 
   function showContinue() {
-    if (els.nextRow) els.nextRow.style.display = "flex";
+    if (els.continueRow) els.continueRow.style.display = "flex";
   }
 
   function readPipelineInput() {
     try {
-      const raw = sessionStorage.getItem(FLOW_KEY);
+      const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (!parsed || !parsed.data) return null;
       return parsed;
-    } catch (err) {
-      console.warn("Could not read pipeline payload:", err);
+    } catch {
       return null;
     }
   }
@@ -92,7 +134,7 @@ const FLOW_KEYS = {
   function writePipelineResult(payload) {
     try {
       sessionStorage.setItem(
-        FLOW_KEY,
+        FLOW_KEYS[STEP],
         JSON.stringify({
           category: CATEGORY,
           step: STEP,
@@ -100,22 +142,19 @@ const FLOW_KEYS = {
           data: payload
         })
       );
-    } catch (err) {
-      console.warn("Could not save pipeline payload:", err);
-    }
+    } catch {}
   }
 
   function renderFlowNote() {
-    const incoming = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CATEGORY,
-      step: STEP,
-      title: "Pipeline Import",
-      intro: "This step checks whether the projected design load can actually be supported by the proposed UPS and usable battery energy."
-    });
+    const incoming = readPipelineInput();
 
-    if (!incoming || !incoming.data || incoming.step !== PREVIOUS_STEP) return;
+    if (!incoming || !incoming.data || incoming.step !== PREVIOUS_STEP) {
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
+      return;
+    }
 
     importedPayload = incoming;
     const data = incoming.data || {};
@@ -145,7 +184,7 @@ const FLOW_KEYS = {
 
     if (els.flowNote && lines.length) {
       els.flowNote.innerHTML = `
-        <strong>Pipeline Import</strong><br>
+        <strong>Flow Context</strong><br>
         Imported from Load Growth.<br>
         ${lines.join("<br>")}
         <br><br>
@@ -161,9 +200,10 @@ const FLOW_KEYS = {
       analysisEl: els.analysis,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEY,
+      flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and calculate."
     });
     hideContinue();
@@ -209,9 +249,8 @@ const FLOW_KEYS = {
     const usableWh = input.batteryWh * (input.effPct / 100) * (input.deratePct / 100);
     const runtimeHrs = usableWh / input.loadW;
     const runtimeMin = runtimeHrs * 60;
-    const runtimeMarginTo30 = runtimeMin - 30;
 
-    const overloadMetric = loadPct > 100 ? 100 : loadPct;
+    const overloadMetric = input.loadPct > 100 ? 100 : loadPct;
     const runtimeTightnessMetric =
       runtimeMin >= 30 ? Math.max(0, 100 - runtimeMin) :
       runtimeMin >= 10 ? 60 + (30 - runtimeMin) * 2 :
@@ -219,27 +258,25 @@ const FLOW_KEYS = {
     const energyMarginMetric =
       input.batteryWh > 0 ? Math.min((usableWh / input.batteryWh) * 100, 100) : 0;
 
-    const metrics = [
-      {
-        label: "Load Pressure",
-        value: Number(overloadMetric.toFixed(1)),
-        displayValue: fmtPct(loadPct, 1)
-      },
-      {
-        label: "Runtime Tightness",
-        value: Number(runtimeTightnessMetric.toFixed(1)),
-        displayValue: fmtMinutes(runtimeMin)
-      },
-      {
-        label: "Usable Energy Loss",
-        value: Number((100 - energyMarginMetric).toFixed(1)),
-        displayValue: fmtWh(usableWh)
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(overloadMetric, runtimeTightnessMetric, 100 - energyMarginMetric),
-      metrics,
+      metrics: [
+        {
+          label: "Load Pressure",
+          value: Number(Math.min(loadPct, 100).toFixed(1)),
+          displayValue: fmtPct(loadPct, 1)
+        },
+        {
+          label: "Runtime Tightness",
+          value: Number(runtimeTightnessMetric.toFixed(1)),
+          displayValue: fmtMinutes(runtimeMin)
+        },
+        {
+          label: "Usable Energy Loss",
+          value: Number((100 - energyMarginMetric).toFixed(1)),
+          displayValue: fmtWh(usableWh)
+        }
+      ],
       healthyMax: 60,
       watchMax: 85
     });
@@ -295,7 +332,6 @@ const FLOW_KEYS = {
       usableWh,
       runtimeHrs,
       runtimeMin,
-      runtimeMarginTo30,
       runtimeClass,
       status: statusPack.status,
       interpretation,
@@ -343,7 +379,7 @@ const FLOW_KEYS = {
           "Usable Energy Loss"
         ],
         values: [
-          Number(Math.min(data.loadPct > 100 ? 100 : data.loadPct, 100).toFixed(1)),
+          Number(Math.min(data.loadPct, 100).toFixed(1)),
           Number((
             data.runtimeMin >= 30 ? Math.max(0, 100 - data.runtimeMin) :
             data.runtimeMin >= 10 ? 60 + (30 - data.runtimeMin) * 2 :
@@ -392,12 +428,23 @@ const FLOW_KEYS = {
     showContinue();
   }
 
+  function writePipelineResult(payload) {
+    try {
+      sessionStorage.setItem(
+        FLOW_KEYS[STEP],
+        JSON.stringify({
+          category: CATEGORY,
+          step: STEP,
+          ts: Date.now(),
+          data: payload
+        })
+      );
+    } catch {}
+  }
+
   function calculate() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
@@ -412,17 +459,9 @@ const FLOW_KEYS = {
     invalidate();
   }
 
-  function wire() {
-    const btnCalc = els.calc;
-    const btnReset = els.reset;
-
-    if (!btnCalc || !btnReset) {
-      renderError("UPS Runtime tool wiring failed: missing #calc or #reset button IDs in the HTML.");
-      return;
-    }
-
-    btnCalc.addEventListener("click", calculate);
-    btnReset.addEventListener("click", resetAll);
+  function bind() {
+    els.calc?.addEventListener("click", calculate);
+    els.reset?.addEventListener("click", resetAll);
 
     [els.loadW, els.upsVA, els.pf, els.batteryWh, els.effPct, els.deratePct].forEach((el) => {
       if (!el) return;
@@ -437,82 +476,28 @@ const FLOW_KEYS = {
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
+  }
 
+  function boot() {
+    bind();
     renderFlowNote();
     hideContinue();
     invalidate();
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", wire);
-  } else {
-    wire();
-  }
-})();
+  window.addEventListener("DOMContentLoaded", () => {
+    let unlocked = unlockCategoryPage();
+    if (unlocked) boot();
 
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        boot();
+      }
+    }, 400);
   });
-}
+})();
