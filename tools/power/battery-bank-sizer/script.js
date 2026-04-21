@@ -1,15 +1,22 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
-
 (() => {
+  "use strict";
+
   const $ = (id) => document.getElementById(id);
 
-  const FLOW_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "power";
   const STEP = "battery-bank-sizer";
+  const LANE = "v1";
+  const PREVIOUS_STEP = "ups-runtime";
+
+  const FLOW_KEYS = {
+    va: "scopedlabs:pipeline:power:va-watts-amps",
+    growth: "scopedlabs:pipeline:power:load-growth",
+    runtime: "scopedlabs:pipeline:power:ups-runtime",
+    bank: "scopedlabs:pipeline:power:battery-bank-sizer"
+  };
+
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
 
   const els = {
     load: $("load"),
@@ -22,7 +29,11 @@ const FLOW_KEYS = {
     calc: $("calc"),
     reset: $("reset"),
     flowNote: $("flow-note"),
-    next: $("next-step-row")
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
+    completeWrap: $("complete-wrap"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
   const DEFAULTS = {
@@ -73,27 +84,84 @@ const FLOW_KEYS = {
     els.efficiency.value = String(DEFAULTS.efficiency);
   }
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
   function showComplete() {
-    if (els.next) els.next.style.display = "flex";
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continueBtn) els.continueBtn.disabled = false;
+    if (els.completeWrap) els.completeWrap.style.display = "block";
   }
 
   function hideComplete() {
-    if (els.next) els.next.style.display = "none";
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continueBtn) els.continueBtn.disabled = true;
+    if (els.completeWrap) els.completeWrap.style.display = "none";
   }
 
   function renderFlowNote() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEY,
-      category: CATEGORY,
-      step: STEP,
-      title: "Flow context",
-      intro: "This final step converts the upstream runtime requirement into real battery capacity after efficiency and discharge limits are applied."
-    });
+    const raw = sessionStorage.getItem(FLOW_KEYS.runtime);
+    if (!raw) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    if (!flow || !flow.data || flow.step !== "ups-runtime") return;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
 
-    const prev = flow.data || {};
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    const prev = parsed.data || {};
 
     const load =
       num(prev.designLoadWatts, NaN) ||
@@ -117,31 +185,42 @@ const FLOW_KEYS = {
     }
 
     const parts = [];
-    if (Number.isFinite(load) && load > 0) parts.push(`load <strong>${fmtWatts(load)}</strong>`);
-    if (Number.isFinite(runtime) && runtime > 0) parts.push(`runtime <strong>${fmtHours(runtime)}</strong>`);
-    if (Number.isFinite(va) && va > 0) parts.push(`VA <strong>${fmt(va, 0)}</strong>`);
-    if (Number.isFinite(watts) && watts > 0) parts.push(`watts <strong>${fmtWatts(watts)}</strong>`);
-    if (runtimeClass) parts.push(`runtime result <strong>${runtimeClass}</strong>`);
+    if (Number.isFinite(load) && load > 0) parts.push(`Load: <strong>${fmtWatts(load)}</strong>`);
+    if (Number.isFinite(runtime) && runtime > 0) parts.push(`Runtime: <strong>${fmtHours(runtime)}</strong>`);
+    if (Number.isFinite(va) && va > 0) parts.push(`VA: <strong>${fmt(va, 0)}</strong>`);
+    if (Number.isFinite(watts) && watts > 0) parts.push(`Watts: <strong>${fmtWatts(watts)}</strong>`);
+    if (runtimeClass) parts.push(`Runtime Result: <strong>${runtimeClass}</strong>`);
 
-    if (parts.length) {
-      els.flowNote.style.display = "";
-      els.flowNote.innerHTML = `
-        <strong>Flow context</strong><br>
-        Prior UPS runtime results detected — ${parts.join(", ")}.
-        This step converts that runtime target into required battery energy and amp-hour capacity.
-      `;
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
     }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Flow Context</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This final step converts the validated runtime target into required stored energy and amp-hour capacity.
+    `;
   }
 
   function invalidate() {
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
-      flowKey: FLOW_KEY,
+      continueWrapEl: null,
+      continueBtnEl: null,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
+      flowKey: FLOW_KEYS.bank,
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter values and calculate."
     });
+
     hideComplete();
     renderFlowNote();
   }
@@ -185,33 +264,31 @@ const FLOW_KEYS = {
     const batteryAh = totalWh / input.voltage;
 
     const reserveMultiplier = totalWh / requiredLoadWh;
-    const effectiveUsablePct = input.dodPct * input.effPct / 100;
+    const effectiveUsablePct = (input.dodPct * input.effPct) / 100;
 
     const efficiencyLossPct = 100 - input.effPct;
     const dodPressurePct = 100 - input.dodPct;
     const reservePressurePct = Math.min((reserveMultiplier - 1) * 100, 100);
 
-    const metrics = [
-      {
-        label: "Reserve Pressure",
-        value: reservePressurePct,
-        displayValue: `${fmt(reserveMultiplier, 2)}x`
-      },
-      {
-        label: "Efficiency Loss",
-        value: efficiencyLossPct,
-        displayValue: fmtPct(efficiencyLossPct)
-      },
-      {
-        label: "Discharge Constraint",
-        value: dodPressurePct,
-        displayValue: fmtPct(dodPressurePct)
-      }
-    ];
-
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(reservePressurePct, efficiencyLossPct, dodPressurePct),
-      metrics,
+      metrics: [
+        {
+          label: "Reserve Pressure",
+          value: reservePressurePct,
+          displayValue: `${fmt(reserveMultiplier, 2)}x`
+        },
+        {
+          label: "Efficiency Loss",
+          value: efficiencyLossPct,
+          displayValue: fmtPct(efficiencyLossPct)
+        },
+        {
+          label: "Discharge Constraint",
+          value: dodPressurePct,
+          displayValue: fmtPct(dodPressurePct)
+        }
+      ],
       healthyMax: 20,
       watchMax: 45
     });
@@ -264,12 +341,15 @@ const FLOW_KEYS = {
       status: statusPack.status,
       interpretation,
       dominantConstraint,
-      guidance
+      guidance,
+      reservePressurePct,
+      efficiencyLossPct,
+      dodPressurePct
     };
   }
 
   function writeFlow(data) {
-    sessionStorage.setItem(FLOW_KEY, JSON.stringify({
+    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.bank, {
       category: CATEGORY,
       step: STEP,
       data: {
@@ -285,10 +365,11 @@ const FLOW_KEYS = {
         interpretation: data.interpretation,
         guidance: data.guidance
       }
-    }));
+    });
   }
 
   function renderError(message) {
+    ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     hideComplete();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
@@ -298,6 +379,8 @@ const FLOW_KEYS = {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      existingChartRef: chartRef,
+      existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Required Runtime Energy", value: fmtWh(data.requiredLoadWh) },
         { label: "Total Stored Energy Required", value: fmtWh(data.totalWh) },
@@ -316,7 +399,29 @@ const FLOW_KEYS = {
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: ["Reserve Pressure", "Efficiency Loss", "Discharge Constraint"],
+        values: [
+          Number(data.reservePressurePct.toFixed(1)),
+          Number(data.efficiencyLossPct.toFixed(1)),
+          Number(data.dodPressurePct.toFixed(1))
+        ],
+        displayValues: [
+          `${fmt(data.reserveMultiplier, 2)}x`,
+          fmtPct(data.efficiencyLossPct),
+          fmtPct(data.dodPressurePct)
+        ],
+        referenceValue: 20,
+        healthyMax: 20,
+        watchMax: 45,
+        axisTitle: "Battery Sizing Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
 
     writeFlow(data);
@@ -325,15 +430,13 @@ const FLOW_KEYS = {
 
   function calculate() {
     const data = calculateModel();
-    if (!data.ok) {
-      renderError(data.message);
-      return;
-    }
+    if (!data.ok) return renderError(data.message);
     renderSuccess(data);
   }
 
   function reset() {
     applyDefaults();
+    renderFlowNote();
     invalidate();
   }
 
@@ -347,6 +450,11 @@ const FLOW_KEYS = {
 
     if (els.calc) els.calc.addEventListener("click", calculate);
     if (els.reset) els.reset.addEventListener("click", reset);
+    if (els.continueBtn) {
+      els.continueBtn.addEventListener("click", () => {
+        window.location.href = "/tools/power/";
+      });
+    }
   }
 
   function init() {
@@ -356,72 +464,19 @@ const FLOW_KEYS = {
     invalidate();
   }
 
-  window.addEventListener("DOMContentLoaded", init);
-})();
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
 
-function calc() {
-  // TODO: implement calculate handler
-}
+    let unlocked = unlockCategoryPage();
+    if (unlocked) init();
 
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        init();
+      }
+    }, 400);
   });
-}
+})();
