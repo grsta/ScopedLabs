@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   const CATEGORY = "video-storage";
   const STEP = "bitrate";
   const LANE = "v1";
@@ -40,21 +42,11 @@
   }
 
   function hideContinue() {
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.hideContinue === "function") {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
     if (els.continueWrap) els.continueWrap.style.display = "none";
-    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function showContinue() {
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.showContinue === "function") {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    if (els.continueWrap) els.continueWrap.style.display = "";
-    if (els.continueBtn) els.continueBtn.disabled = false;
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
   function clearAnalysisBlock() {
@@ -185,18 +177,15 @@
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
-        flowKey: FLOW_KEYS[STEP],
         category: CATEGORY,
         step: STEP,
         lane: LANE,
         emptyMessage: "Enter values and press Calculate."
       });
-      return;
+    } else {
+      renderEmpty();
     }
 
-    renderEmpty();
     hideContinue();
   }
 
@@ -364,8 +353,6 @@
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         summaryRows,
         derivedRows,
         status,
@@ -384,24 +371,26 @@
       );
     }
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        resolution: `${Math.round(w)}x${Math.round(h)}`,
-        width: Math.round(w),
-        height: Math.round(h),
-        fps: Number(fps.toFixed(0)),
-        codec,
-        scene,
-        quality,
-        bitrateMbps: Number(bitrate.toFixed(2)),
-        minBitrateMbps: Number(low.toFixed(2)),
-        maxBitrateMbps: Number(high.toFixed(2)),
-        status,
-        dominantConstraint
-      }
-    });
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.writeFlow === "function") {
+      window.ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
+        category: CATEGORY,
+        step: STEP,
+        data: {
+          resolution: `${Math.round(w)}x${Math.round(h)}`,
+          width: Math.round(w),
+          height: Math.round(h),
+          fps: Number(fps.toFixed(0)),
+          codec,
+          scene,
+          quality,
+          bitrateMbps: Number(bitrate.toFixed(2)),
+          minBitrateMbps: Number(low.toFixed(2)),
+          maxBitrateMbps: Number(high.toFixed(2)),
+          status,
+          dominantConstraint
+        }
+      });
+    }
 
     showContinue();
   }

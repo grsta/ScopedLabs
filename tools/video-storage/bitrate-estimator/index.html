@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bitrate Estimator *ScopedLabs</title>
+  <title>Bitrate Estimator • ScopedLabs</title>
   <meta
     name="description"
     content="Estimate video bitrate from resolution, frame rate, codec efficiency, and scene complexity."
   />
-  <link rel="stylesheet" href="/assets/style.css?v=vs-bitrate-019" />
+  <link rel="stylesheet" href="/assets/style.css?v=video-bitrate-0421" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0408"></script>
-  <script defer src="/assets/app.js?v=0408"></script>
+  <script defer src="/assets/auth.js?v=video-bitrate-0421"></script>
+  <script defer src="/assets/app.js?v=video-bitrate-0421"></script>
 </head>
 
 <body data-tier="free" data-category="video-storage" data-step="bitrate" data-lane="v1">
@@ -56,24 +56,20 @@
       <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
       <h2 class="h3" style="margin-top: 0;">This tool starts the Video &amp; Storage design flow</h2>
       <p class="muted" style="margin-bottom: 0;">
-        Use this first step to establish a realistic stream bitrate before you move into storage sizing, retention planning, RAID impact, and survivability.
+        Use this first step to establish a realistic stream bitrate before you move into storage sizing,
+        retention planning, RAID impact, and survivability.
       </p>
       <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-        It gives the rest of the pipeline a consistent planning baseline so downstream capacity calculations are based on the same bandwidth assumption.
+        It gives the rest of the pipeline a consistent planning baseline so downstream capacity calculations
+        are based on the same bandwidth assumption.
       </p>
     </section>
 
-    <p class="subhead">
-      Estimate video bitrate from resolution, frame rate, codec efficiency, and scene complexity.
+    <p class="tool-best-for">
+      <strong>Best for:</strong> estimating camera bandwidth before planning storage.
     </p>
 
     <div id="flow-note" class="flow-note" hidden></div>
-
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> estimating camera bandwidth before planning storage.
-      </p>
-    </section>
 
     <section id="toolCard" class="card tool-card">
       <h2>Inputs</h2>
@@ -150,9 +146,9 @@
     <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
 
     <div id="next-step-row" class="btn-row" style="margin-top: 14px; display:none;">
-      <button id="continue" class="btn btn-primary" type="button">
+      <a id="continue" class="btn btn-primary" href="/tools/video-storage/storage-calculator/">
         Continue → Storage Calculator
-      </button>
+      </a>
     </div>
 
     <footer class="site-footer">
@@ -160,13 +156,13 @@
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=vs-bitrate-019"></script>
-  <script src="/assets/catalog.js?v=vs-bitrate-019"></script>
-  <script src="/assets/pipelines.js?v=vs-bitrate-019"></script>
-  <script src="/assets/pipeline-state.js?v=vs-bitrate-019"></script>
-  <script src="/assets/pipeline.js?v=vs-bitrate-019"></script>
-  <script src="/assets/analyzer.js?v=vs-bitrate-019"></script>
-  <script src="./script.js?v=bitrate-019"></script>
+  <script src="/assets/tool-flow.js?v=video-bitrate-0421"></script>
+  <script src="/assets/catalog.js?v=video-bitrate-0421"></script>
+  <script src="/assets/pipelines.js?v=video-bitrate-0421"></script>
+  <script src="/assets/pipeline-state.js?v=video-bitrate-0421"></script>
+  <script src="/assets/pipeline.js?v=video-bitrate-0421"></script>
+  <script src="/assets/analyzer.js?v=video-bitrate-0421"></script>
+  <script src="./script.js?v=video-bitrate-0421"></script>
 </body>
 </html>
 
