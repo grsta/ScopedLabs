@@ -1,20 +1,31 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "thermal";
   const STEP = "psu-efficiency-heat";
   const PRIOR_STEP = "heat-load-estimator";
   const NEXT_URL = "/tools/thermal/btu-converter/";
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const W_TO_BTU = 3.412141633;
+
+  const FLOW_KEYS = {
+    "heat-load-estimator": "scopedlabs:pipeline:thermal:heat-load-estimator",
+    "psu-efficiency-heat": "scopedlabs:pipeline:thermal:psu-efficiency-heat",
+    "btu-converter": "scopedlabs:pipeline:thermal:btu-converter",
+    "rack-thermal-density": "scopedlabs:pipeline:thermal:rack-thermal-density",
+    "airflow-requirement": "scopedlabs:pipeline:thermal:airflow-requirement",
+    "fan-cfm-sizing": "scopedlabs:pipeline:thermal:fan-cfm-sizing",
+    "hot-cold-aisle": "scopedlabs:pipeline:thermal:hot-cold-aisle",
+    "ambient-rise": "scopedlabs:pipeline:thermal:ambient-rise",
+    "exhaust-temperature": "scopedlabs:pipeline:thermal:exhaust-temperature",
+    "room-cooling-capacity": "scopedlabs:pipeline:thermal:room-cooling-capacity"
+  };
 
   const $ = (id) => document.getElementById(id);
 
   const els = {
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard"),
     load: $("load"),
     eff: $("eff"),
     calc: $("calc"),
@@ -27,10 +38,7 @@ const FLOW_KEYS = {
   };
 
   function safeNumber(value, fallback = 0) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.safeNumber === "function") {
       return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
     }
     const n = Number(value);
@@ -38,58 +46,96 @@ const FLOW_KEYS = {
   }
 
   function clamp(value, min, max) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clamp === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clamp === "function") {
       return window.ScopedLabsAnalyzer.clamp(value, min, max);
     }
     return Math.min(max, Math.max(min, value));
   }
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
   function readSaved() {
     try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-    } catch {
-      return null;
-    }
+      const primary = JSON.parse(sessionStorage.getItem(FLOW_KEYS[PRIOR_STEP]) || "null");
+      if (primary && primary.category === CATEGORY && primary.step === PRIOR_STEP) {
+        return primary;
+      }
+    } catch {}
+
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === PRIOR_STEP) {
+        return legacy;
+      }
+    } catch {}
+
+    return null;
   }
 
   function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
   }
 
   function hideContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    els.continueWrap.style.display = "none";
-    els.continueBtn.disabled = true;
+    if (els.continueWrap) els.continueWrap.style.display = "none";
   }
 
   function showContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    els.continueWrap.style.display = "";
-    els.continueBtn.disabled = false;
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
   function renderEmpty() {
     els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
     } else if (els.analysisCopy) {
       els.analysisCopy.style.display = "none";
@@ -100,48 +146,39 @@ const FLOW_KEYS = {
   function renderFlowNote() {
     const saved = readSaved();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: CATEGORY,
-        step: STEP,
-        title: "System Context",
-        intro:
-          "This step adds the thermal penalty created by power-supply inefficiency so downstream airflow and cooling work from a more realistic heat basis.",
-        customRows:
-          saved &&
-          saved.category === CATEGORY &&
-          saved.step === PRIOR_STEP
-            ? [
-                {
-                  label: "Prior Step",
-                  value: "Heat Load Estimator"
-                },
-                {
-                  label: "Working Heat Load",
-                  value:
-                    saved.data && Number.isFinite(Number(saved.data.heatLoadW))
-                      ? `${Number(saved.data.heatLoadW).toFixed(0)} W`
-                      : "—"
-                },
-                {
-                  label: "Thermal Output",
-                  value:
-                    saved.data && Number.isFinite(Number(saved.data.heatLoadBtuHr))
-                      ? `${Number(saved.data.heatLoadBtuHr).toFixed(0)} BTU/hr`
-                      : "—"
-                }
-              ]
-            : null
-      });
+    if (!els.flowNote) return;
+
+    if (!saved || saved.category !== CATEGORY || saved.step !== PRIOR_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
-    els.flowNote.style.display = "none";
-    els.flowNote.innerHTML = "";
+    const data = saved.data || {};
+    const heatLoadW = Number(data.heatLoadW);
+    const heatLoadBtuHr = Number(data.heatLoadBtuHr);
+
+    if (Number.isFinite(heatLoadW) && (!els.load.value || Number(els.load.value) === 800)) {
+      els.load.value = String(Math.round(heatLoadW));
+    }
+
+    const parts = [];
+    if (Number.isFinite(heatLoadW)) parts.push(`Working Heat Load: ${Math.round(heatLoadW)} W`);
+    if (Number.isFinite(heatLoadBtuHr)) parts.push(`Thermal Output: ${Math.round(heatLoadBtuHr)} BTU/hr`);
+
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Step 2 — Using Heat Load results:</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This step adds the thermal penalty created by power-supply inefficiency so downstream airflow and cooling work from a more realistic heat basis.
+    `;
   }
 
   function buildInterpretation(status, dominantConstraint, loss, effPct, load) {
@@ -199,24 +236,20 @@ const FLOW_KEYS = {
   function invalidate() {
     clearStored();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.invalidate === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.invalidate === "function") {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         category: CATEGORY,
         step: STEP,
         emptyMessage: "Enter values and press Calculate."
       });
-      return;
+    } else {
+      renderEmpty();
     }
 
     hideContinue();
-    renderEmpty();
+    renderFlowNote();
   }
 
   function calculate() {
@@ -234,10 +267,7 @@ const FLOW_KEYS = {
       hideContinue();
       clearStored();
 
-      if (
-        window.ScopedLabsAnalyzer &&
-        typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
-      ) {
+      if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
         window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
       }
       return;
@@ -272,10 +302,7 @@ const FLOW_KEYS = {
     let status = "HEALTHY";
     let dominantLabel = "Heat Loss Magnitude";
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.resolveStatus === "function") {
       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
         metrics,
         healthyMax: 1.0,
@@ -329,10 +356,7 @@ const FLOW_KEYS = {
       { label: "Thermal Basis", value: "Conversion inefficiency added" }
     ];
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderOutput === "function") {
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
@@ -341,52 +365,40 @@ const FLOW_KEYS = {
         status,
         interpretation,
         dominantConstraint,
-        guidance
+        guidance,
+        existingChartRef: null,
+        existingWrapRef: null,
+        chart: {
+          labels: [
+            "Heat Loss",
+            "Efficiency Penalty",
+            "Output Load"
+          ],
+          values: [
+            Number((loss / 150).toFixed(2)),
+            Number(((100 - effPct) / 8).toFixed(2)),
+            Number((load / 2000).toFixed(2))
+          ],
+          displayValues: [
+            `${loss.toFixed(0)} W`,
+            `${(100 - effPct).toFixed(1)}%`,
+            `${load.toFixed(0)} W`
+          ],
+          referenceValue: 1.0,
+          healthyMax: 1.0,
+          watchMax: 1.8,
+          axisTitle: "PSU Loss Pressure",
+          referenceLabel: "Comfort Band",
+          healthyLabel: "Healthy",
+          watchLabel: "Watch",
+          riskLabel: "Risk",
+          chartMax: Math.max(3, Number((loss / 150).toFixed(2)) + 0.5)
+        }
       });
-    } else {
-      els.results.innerHTML = `
-        ${summaryRows.map((row) => `
-          <div class="result-row">
-            <div class="result-label">${row.label}</div>
-            <div class="result-value">${row.value}</div>
-          </div>
-        `).join("")}
-        ${derivedRows.map((row) => `
-          <div class="result-row">
-            <div class="result-label">${row.label}</div>
-            <div class="result-value">${row.value}</div>
-          </div>
-        `).join("")}
-      `;
-
-      if (els.analysisCopy) {
-        els.analysisCopy.style.display = "";
-        els.analysisCopy.innerHTML = `
-          <div class="results">
-            <div class="result-row">
-              <div class="result-label">Status</div>
-              <div class="result-value">${status}</div>
-            </div>
-            <div class="result-row">
-              <div class="result-label">Dominant Constraint</div>
-              <div class="result-value">${dominantConstraint}</div>
-            </div>
-            <div class="result-row">
-              <div class="result-label">Engineering Interpretation</div>
-              <div class="result-value">${interpretation}</div>
-            </div>
-            <div class="result-row">
-              <div class="result-label">Actionable Guidance</div>
-              <div class="result-value">${guidance}</div>
-            </div>
-          </div>
-        `;
-      }
     }
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
+    try {
+      const payload = {
         category: CATEGORY,
         step: STEP,
         data: {
@@ -398,8 +410,11 @@ const FLOW_KEYS = {
           status,
           dominantConstraint
         }
-      })
-    );
+      };
+
+      sessionStorage.setItem(FLOW_KEYS[STEP], JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showContinue();
   }
@@ -415,90 +430,44 @@ const FLOW_KEYS = {
 
   function bindInvalidation() {
     [els.load, els.eff].forEach((el) => {
+      if (!el) return;
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
   }
 
-  function init() {
+  function bind() {
+    bindInvalidation();
+
+    if (els.calc) els.calc.addEventListener("click", calculate);
+    if (els.reset) els.reset.addEventListener("click", reset);
+    if (els.continueBtn) {
+      els.continueBtn.addEventListener("click", () => {
+        window.location.href = NEXT_URL;
+      });
+    }
+  }
+
+  function boot() {
     hideContinue();
     renderFlowNote();
     renderEmpty();
-    bindInvalidation();
+    bind();
 
-    els.calc.onclick = calculate;
-    els.reset.onclick = reset;
-    els.continueBtn.onclick = () => {
-      window.location.href = NEXT_URL;
-    };
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
-  init();
-})();
+  window.addEventListener("DOMContentLoaded", () => {
+    let unlocked = unlockCategoryPage();
+    if (unlocked) boot();
 
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        boot();
+      }
+    }, 400);
   });
-}
+})();
