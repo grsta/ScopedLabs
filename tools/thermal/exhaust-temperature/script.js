@@ -1,19 +1,30 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "thermal";
   const STEP = "exhaust-temperature";
   const PRIOR_STEP = "ambient-rise";
   const NEXT_URL = "/tools/thermal/room-cooling-capacity/";
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
+
+  const FLOW_KEYS = {
+    "heat-load-estimator": "scopedlabs:pipeline:thermal:heat-load-estimator",
+    "psu-efficiency-heat": "scopedlabs:pipeline:thermal:psu-efficiency-heat",
+    "btu-converter": "scopedlabs:pipeline:thermal:btu-converter",
+    "rack-thermal-density": "scopedlabs:pipeline:thermal:rack-thermal-density",
+    "airflow-requirement": "scopedlabs:pipeline:thermal:airflow-requirement",
+    "fan-cfm-sizing": "scopedlabs:pipeline:thermal:fan-cfm-sizing",
+    "hot-cold-aisle": "scopedlabs:pipeline:thermal:hot-cold-aisle",
+    "ambient-rise": "scopedlabs:pipeline:thermal:ambient-rise",
+    "exhaust-temperature": "scopedlabs:pipeline:thermal:exhaust-temperature",
+    "room-cooling-capacity": "scopedlabs:pipeline:thermal:room-cooling-capacity"
+  };
 
   const $ = (id) => document.getElementById(id);
 
   const els = {
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard"),
     tin: $("tin"),
     w: $("w"),
     cfm: $("cfm"),
@@ -31,10 +42,7 @@ const FLOW_KEYS = {
   let chartWrapRef = { current: null };
 
   function safeNumber(value, fallback = 0) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.safeNumber === "function") {
       return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
     }
     const n = Number(value);
@@ -42,56 +50,94 @@ const FLOW_KEYS = {
   }
 
   function clamp(value, min, max) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clamp === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clamp === "function") {
       return window.ScopedLabsAnalyzer.clamp(value, min, max);
     }
     return Math.min(max, Math.max(min, value));
   }
 
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
   function readSaved() {
     try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-    } catch {
-      return null;
-    }
+      const primary = JSON.parse(sessionStorage.getItem(FLOW_KEYS[PRIOR_STEP]) || "null");
+      if (primary && primary.category === CATEGORY && primary.step === PRIOR_STEP) {
+        return primary;
+      }
+    } catch {}
+
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === PRIOR_STEP) {
+        return legacy;
+      }
+    } catch {}
+
+    return null;
   }
 
   function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
   }
 
   function hideContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
     if (els.continueWrap) els.continueWrap.style.display = "none";
-    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function showContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    if (els.continueWrap) els.continueWrap.style.display = "";
-    if (els.continueBtn) els.continueBtn.disabled = false;
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
   function clearAnalysisBlock() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
     } else if (els.analysisCopy) {
       els.analysisCopy.style.display = "none";
@@ -100,10 +146,7 @@ const FLOW_KEYS = {
   }
 
   function clearChart() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearChart === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearChart === "function") {
       window.ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
       return;
     }
@@ -130,49 +173,41 @@ const FLOW_KEYS = {
   function renderFlowNote() {
     const saved = readSaved();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: CATEGORY,
-        step: STEP,
-        title: "System Context",
-        intro:
-          "This step estimates final exhaust conditions using inlet temperature, heat load, and delivered airflow.",
-        customRows:
-          saved &&
-          saved.category === CATEGORY &&
-          saved.step === PRIOR_STEP
-            ? [
-                {
-                  label: "Prior Step",
-                  value: "Ambient Rise"
-                },
-                {
-                  label: "Ambient Rise",
-                  value:
-                    saved.data && Number.isFinite(Number(saved.data.deltaT))
-                      ? `${Number(saved.data.deltaT).toFixed(1)} °F`
-                      : "—"
-                },
-                {
-                  label: "Ambient Condition",
-                  value:
-                    saved.data?.classification ??
-                    saved.data?.status ??
-                    "—"
-                }
-              ]
-            : null
-      });
+    if (!els.flowNote) return;
+
+    if (!saved || saved.category !== CATEGORY || saved.step !== PRIOR_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
-    if (!els.flowNote) return;
-    els.flowNote.style.display = "none";
-    els.flowNote.innerHTML = "";
+    const data = saved.data || {};
+    const deltaT = Number(data.deltaT);
+    const classification = data.classification || data.status;
+    const airflowCFM = Number(data.airflowCFM);
+
+    if (Number.isFinite(airflowCFM) && (!els.cfm.value || Number(els.cfm.value) === 900)) {
+      els.cfm.value = String(Math.round(airflowCFM));
+    }
+
+    const parts = [];
+    if (Number.isFinite(deltaT)) parts.push(`Ambient Rise: ${deltaT.toFixed(1)} °F`);
+    if (classification) parts.push(`Condition: ${classification}`);
+    if (Number.isFinite(airflowCFM)) parts.push(`Airflow: ${Math.round(airflowCFM)} CFM`);
+
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Step 9 — Using Ambient Rise results:</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This step estimates final exhaust conditions using inlet temperature, heat load, and delivered airflow.
+    `;
   }
 
   function buildInterpretation(status, dominantConstraint, tout, dt, cfm, watts) {
@@ -236,68 +271,21 @@ const FLOW_KEYS = {
   function invalidate() {
     clearStored();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.invalidate === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.invalidate === "function") {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         category: CATEGORY,
         step: STEP,
         emptyMessage: "Enter values and press Calculate."
       });
     } else {
       renderEmpty();
-      hideContinue();
     }
 
     clearChart();
-  }
-
-  function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
-    if (els.results) {
-      els.results.innerHTML = `
-        ${summaryRows.map((row) => `
-          <div class="result-row">
-            <div class="result-label">${row.label}</div>
-            <div class="result-value">${row.value}</div>
-          </div>
-        `).join("")}
-        ${derivedRows.map((row) => `
-          <div class="result-row">
-            <div class="result-label">${row.label}</div>
-            <div class="result-value">${row.value}</div>
-          </div>
-        `).join("")}
-      `;
-    }
-
-    if (els.analysisCopy) {
-      els.analysisCopy.style.display = "";
-      els.analysisCopy.innerHTML = `
-        <div class="results">
-          <div class="result-row">
-            <div class="result-label">Status</div>
-            <div class="result-value">${status}</div>
-          </div>
-          <div class="result-row">
-            <div class="result-label">Dominant Constraint</div>
-            <div class="result-value">${dominantConstraint}</div>
-          </div>
-          <div class="result-row">
-            <div class="result-label">Engineering Interpretation</div>
-            <div class="result-value">${interpretation}</div>
-          </div>
-          <div class="result-row">
-            <div class="result-label">Actionable Guidance</div>
-            <div class="result-value">${guidance}</div>
-          </div>
-        </div>
-      `;
-    }
+    hideContinue();
+    renderFlowNote();
   }
 
   function calculate() {
@@ -354,10 +342,7 @@ const FLOW_KEYS = {
     let status = "HEALTHY";
     let dominantLabel = "Exhaust Temperature Outcome";
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.resolveStatus === "function") {
       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
         metrics,
         healthyMax: 95,
@@ -400,10 +385,7 @@ const FLOW_KEYS = {
       { label: "Airflow Intensity", value: `${airflowPerKw.toFixed(0)} CFM/kW` }
     ];
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderOutput === "function") {
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
@@ -412,62 +394,43 @@ const FLOW_KEYS = {
         status,
         interpretation,
         dominantConstraint,
-        guidance
-      });
-    } else {
-      renderFallback(
-        summaryRows,
-        derivedRows,
-        status,
-        dominantConstraint,
-        interpretation,
-        guidance
-      );
-    }
-
-    clearChart();
-
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderAnalyzerChart({
-        mountEl: els.results,
+        guidance,
         existingChartRef: chartRef,
         existingWrapRef: chartWrapRef,
-        labels: [
-          "Exhaust Temp",
-          "Airflow Margin",
-          "Heat Intensity"
-        ],
-        values: [
-          tout,
-          airflowMargin,
-          heatIntensity
-        ],
-        displayValues: [
-          `${tout.toFixed(1)} °F`,
-          `${airflowMargin.toFixed(2)}`,
-          `${heatIntensity.toFixed(2)}`
-        ],
-        referenceValue: 95,
-        healthyMax: 95,
-        watchMax: 110,
-        axisTitle: "Thermal Pressure",
-        referenceLabel: "Healthy Exhaust Threshold (95 °F)",
-        healthyLabel: "Healthy",
-        watchLabel: "Watch",
-        riskLabel: "Risk",
-        chartMax: Math.max(
-          130,
-          Math.ceil(Math.max(tout, airflowMargin, heatIntensity, 95) * 1.1)
-        )
+        chart: {
+          labels: [
+            "Exhaust Temperature",
+            "Airflow Margin",
+            "Heat Intensity"
+          ],
+          values: [
+            tout,
+            airflowMargin,
+            heatIntensity
+          ],
+          displayValues: [
+            `${tout.toFixed(1)} °F`,
+            `${airflowMargin.toFixed(2)}`,
+            `${heatIntensity.toFixed(2)}`
+          ],
+          referenceValue: 95,
+          healthyMax: 95,
+          watchMax: 110,
+          axisTitle: "Exhaust Thermal Pressure",
+          referenceLabel: "Healthy Exhaust Threshold (95 °F)",
+          healthyLabel: "Healthy",
+          watchLabel: "Watch",
+          riskLabel: "Risk",
+          chartMax: Math.max(
+            130,
+            Math.ceil(Math.max(tout, airflowMargin, heatIntensity, 95) * 1.1)
+          )
+        }
       });
     }
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
+    try {
+      const payload = {
         category: CATEGORY,
         step: STEP,
         data: {
@@ -479,8 +442,11 @@ const FLOW_KEYS = {
           classification: status,
           dominantConstraint
         }
-      })
-    );
+      };
+
+      sessionStorage.setItem(FLOW_KEYS[STEP], JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showContinue();
   }
@@ -504,10 +470,7 @@ const FLOW_KEYS = {
     });
   }
 
-  function init() {
-    hideContinue();
-    renderEmpty();
-    renderFlowNote();
+  function bind() {
     bindInvalidation();
 
     if (els.calc) els.calc.addEventListener("click", calculate);
@@ -519,72 +482,27 @@ const FLOW_KEYS = {
     }
   }
 
-  init();
-})();
+  function boot() {
+    bind();
+    hideContinue();
+    renderEmpty();
+    renderFlowNote();
+    invalidate();
 
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
+  window.addEventListener("DOMContentLoaded", () => {
+    let unlocked = unlockCategoryPage();
+    if (unlocked) boot();
 
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        boot();
+      }
+    }, 400);
   });
-}
+})();
