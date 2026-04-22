@@ -98,9 +98,7 @@
     }
 
     if (chartRef.current) {
-      try {
-        chartRef.current.destroy();
-      } catch {}
+      try { chartRef.current.destroy(); } catch {}
       chartRef.current = null;
     }
 
@@ -135,31 +133,23 @@
     const imported = readPreviousFlow();
 
     if (q.get("source") === "storage") {
-      if (q.get("cams")) els.cams.value = q.get("cams");
-      if (q.get("bitrate")) els.bitrate.value = q.get("bitrate");
-      if (q.get("days")) els.days.value = q.get("days");
+      const cams = q.get("cams");
+      const bitrate = q.get("bitrate");
+      const days = q.get("days");
 
-      if (
-        window.ScopedLabsAnalyzer &&
-        typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-      ) {
-        window.ScopedLabsAnalyzer.renderFlowNote({
-          flowEl: els.flowNote,
-          category: CATEGORY,
-          step: STEP,
-          title: "System Context",
-          intro:
-            "Imported from Storage Calculator. Review the carried values, then confirm how much storage is required to hold the desired retention window.",
-          customRows: [
-            { label: "Imported cameras", value: q.get("cams") || "—" },
-            { label: "Imported bitrate", value: q.get("bitrate") ? `${q.get("bitrate")} Mbps` : "—" },
-            { label: "Imported retention target", value: q.get("days") ? `${q.get("days")} days` : "—" }
-          ]
-        });
-      } else if (els.flowNote) {
+      if (cams) els.cams.value = cams;
+      if (bitrate) els.bitrate.value = bitrate;
+      if (days) els.days.value = days;
+
+      if (els.flowNote) {
         els.flowNote.hidden = false;
+        els.flowNote.innerHTML = `
+          <strong>Step 3 — Using Storage Calculator results:</strong><br>
+          Cameras: ${cams || "—"} | Bitrate: ${bitrate ? `${bitrate} Mbps` : "—"} | Retention Target: ${days ? `${days} days` : "—"}
+          <br><br>
+          This step converts the imported stream assumptions into a total storage target that the RAID design must actually support after protection overhead is applied.
+        `;
       }
-
       return;
     }
 
@@ -411,34 +401,6 @@
       });
     } else {
       renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance);
-    }
-
-    clearChart();
-
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderAnalyzerChart({
-        mountEl: els.results,
-        existingChartRef: chartRef,
-        existingWrapRef: chartWrapRef,
-        labels: ["Retention Burden", "Fleet Scale", "Overhead Pressure"],
-        values: [retentionBurden, fleetScaleBurden, overheadPressure],
-        displayValues: [`${days} days`, `${cams} cams`, `${overheadPct.toFixed(0)}%`],
-        referenceValue: 1.0,
-        healthyMax: 1.0,
-        watchMax: 1.5,
-        axisTitle: "Storage Pressure",
-        referenceLabel: "Healthy Threshold",
-        healthyLabel: "Healthy",
-        watchLabel: "Watch",
-        riskLabel: "Risk",
-        chartMax: Math.max(
-          3,
-          Math.ceil(Math.max(retentionBurden, fleetScaleBurden, overheadPressure, 1.5) * 1.15 * 10) / 10
-        )
-      });
     }
 
     const params = new URLSearchParams({
