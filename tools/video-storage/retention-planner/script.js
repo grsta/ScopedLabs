@@ -1,19 +1,23 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "retention";
-const CATEGORY = "video-storage";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
-
-﻿// Retention Planner
 (() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
+  "use strict";
+
+  const CATEGORY = "video-storage";
+  const STEP = "retention";
+  const PREVIOUS_STEP = "storage";
+  const NEXT_URL = "/tools/video-storage/raid-impact/";
+  const LANE = "v1";
+
+  const FLOW_KEYS = {
+    bitrate: "scopedlabs:pipeline:video-storage:bitrate",
+    storage: "scopedlabs:pipeline:video-storage:storage",
+    retention: "scopedlabs:pipeline:video-storage:retention",
+    raid: "scopedlabs:pipeline:video-storage:raid",
+    survivability: "scopedlabs:pipeline:video-storage:survivability"
+  };
+
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
 
   const $ = (id) => document.getElementById(id);
-
-  const yearEl = document.querySelector("[data-year]");
-  if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   const els = {
     cams: $("cams"),
@@ -24,7 +28,7 @@ const FLOW_KEYS = {
     results: $("results"),
     analysisCopy: $("analysis-copy"),
     nextStepRow: $("next-step-row"),
-    toRaid: $("to-raid"),
+    continueBtn: $("continue"),
     flowNote: $("flow-note"),
     calc: $("calc"),
     reset: $("reset")
@@ -32,11 +36,6 @@ const FLOW_KEYS = {
 
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
-
-  function n(el) {
-    const v = parseFloat(String(el?.value ?? "").trim());
-    return Number.isFinite(v) ? v : 0;
-  }
 
   function safeNumber(value, fallback = 0) {
     if (
@@ -49,16 +48,6 @@ const FLOW_KEYS = {
     return Number.isFinite(num) ? num : fallback;
   }
 
-  function clamp(value, min, max) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clamp === "function"
-    ) {
-      return window.ScopedLabsAnalyzer.clamp(value, min, max);
-    }
-    return Math.min(Math.max(value, min), max);
-  }
-
   function gbFromMbps(mbps, hours) {
     const bits = mbps * 1_000_000 * (hours * 3600);
     const bytes = bits / 8;
@@ -66,31 +55,23 @@ const FLOW_KEYS = {
   }
 
   function hideNext() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.nextStepRow, els.toRaid);
-      return;
-    }
     if (els.nextStepRow) els.nextStepRow.style.display = "none";
-    if (els.toRaid) els.toRaid.disabled = true;
   }
 
   function showNext() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.nextStepRow, els.toRaid);
-      return;
-    }
     if (els.nextStepRow) els.nextStepRow.style.display = "flex";
-    if (els.toRaid) els.toRaid.disabled = false;
   }
 
   function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.retention);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
   }
 
   function clearAnalysisBlock() {
@@ -135,6 +116,84 @@ const FLOW_KEYS = {
     clearChart();
   }
 
+  function readPreviousFlow() {
+    try {
+      const primary = JSON.parse(sessionStorage.getItem(FLOW_KEYS.storage) || "null");
+      if (primary && primary.category === CATEGORY) return primary;
+    } catch {}
+
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === PREVIOUS_STEP) return legacy;
+    } catch {}
+
+    return null;
+  }
+
+  function importParams() {
+    const q = new URLSearchParams(window.location.search);
+    const imported = readPreviousFlow();
+
+    if (q.get("source") === "storage") {
+      if (q.get("cams")) els.cams.value = q.get("cams");
+      if (q.get("bitrate")) els.bitrate.value = q.get("bitrate");
+      if (q.get("days")) els.days.value = q.get("days");
+
+      if (
+        window.ScopedLabsAnalyzer &&
+        typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
+      ) {
+        window.ScopedLabsAnalyzer.renderFlowNote({
+          flowEl: els.flowNote,
+          category: CATEGORY,
+          step: STEP,
+          title: "System Context",
+          intro:
+            "Imported from Storage Calculator. Review the carried values, then confirm how much storage is required to hold the desired retention window.",
+          customRows: [
+            { label: "Imported cameras", value: q.get("cams") || "—" },
+            { label: "Imported bitrate", value: q.get("bitrate") ? `${q.get("bitrate")} Mbps` : "—" },
+            { label: "Imported retention target", value: q.get("days") ? `${q.get("days")} days` : "—" }
+          ]
+        });
+      } else if (els.flowNote) {
+        els.flowNote.hidden = false;
+      }
+
+      return;
+    }
+
+    if (!imported || !els.flowNote) {
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
+      return;
+    }
+
+    const data = imported.data || {};
+    const cams = Number(data.cams ?? data.cameraCount ?? 0);
+    const bitrate = Number(data.bitrateMbps ?? data.bitrate ?? 0);
+    const days = Number(data.retentionDays ?? data.days ?? 0);
+
+    if (cams > 0) els.cams.value = String(Math.round(cams));
+    if (bitrate > 0) els.bitrate.value = bitrate.toFixed(2);
+    if (days > 0) els.days.value = String(Math.round(days));
+
+    const parts = [];
+    if (cams > 0) parts.push(`Cameras: ${Math.round(cams)}`);
+    if (bitrate > 0) parts.push(`Bitrate: ${bitrate.toFixed(2)} Mbps`);
+    if (days > 0) parts.push(`Retention Target: ${Math.round(days)} days`);
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Step 3 — Using Storage Calculator results:</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This step converts the imported stream assumptions into a total storage target that the RAID design must actually support after protection overhead is applied.
+    `;
+  }
+
   function invalidate() {
     clearStored();
     hideNext();
@@ -146,10 +205,9 @@ const FLOW_KEYS = {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.nextStepRow,
-        continueBtnEl: els.toRaid,
-        category: "video-storage",
-        step: "retention",
+        category: CATEGORY,
+        step: STEP,
+        lane: LANE,
         emptyMessage: "Enter values and press Calculate."
       });
     } else {
@@ -157,45 +215,6 @@ const FLOW_KEYS = {
     }
 
     clearChart();
-  }
-
-  function importParams() {
-    const q = new URLSearchParams(window.location.search);
-    if (q.get("source") !== "storage") return;
-
-    if (q.get("cams")) els.cams.value = q.get("cams");
-    if (q.get("bitrate")) els.bitrate.value = q.get("bitrate");
-    if (q.get("days")) els.days.value = q.get("days");
-
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: "video-storage",
-        step: "retention",
-        title: "System Context",
-        intro:
-          "Imported from Storage Calculator. Review the carried values, then confirm how much storage is required to hold the desired retention window.",
-        customRows: [
-          {
-            label: "Imported cameras",
-            value: q.get("cams") || "—"
-          },
-          {
-            label: "Imported bitrate",
-            value: q.get("bitrate") ? `${q.get("bitrate")} Mbps` : "—"
-          },
-          {
-            label: "Imported retention target",
-            value: q.get("days") ? `${q.get("days")} days` : "—"
-          }
-        ]
-      });
-    } else if (els.flowNote) {
-      els.flowNote.hidden = false;
-    }
   }
 
   function buildInterpretation(status, dominantConstraint, totalTb, days, cams) {
@@ -265,7 +284,7 @@ const FLOW_KEYS = {
     if (els.analysisCopy) {
       els.analysisCopy.style.display = "";
       els.analysisCopy.innerHTML = `
-        <div class="results">
+        <div class="results-grid">
           <div class="result-row">
             <span class="result-label">Status</span>
             <span class="result-value">${status}</span>
@@ -288,11 +307,11 @@ const FLOW_KEYS = {
   }
 
   function calc() {
-    const cams = Math.max(1, n(els.cams));
-    const bitrate = Math.max(0, n(els.bitrate));
-    const hours = Math.max(0, n(els.hours));
-    const days = Math.max(1, n(els.days));
-    const overheadPct = Math.max(0, n(els.overhead));
+    const cams = Math.max(1, safeNumber(els.cams.value, 0));
+    const bitrate = Math.max(0, safeNumber(els.bitrate.value, 0));
+    const hours = Math.max(0, safeNumber(els.hours.value, 0));
+    const days = Math.max(1, safeNumber(els.days.value, 0));
+    const overheadPct = Math.max(0, safeNumber(els.overhead.value, 0));
 
     if (bitrate <= 0) {
       els.results.innerHTML = `<div class="result-row"><span class="result-label">Error</span><span class="result-value">Enter bitrate &gt; 0 Mbps</span></div>`;
@@ -386,7 +405,9 @@ const FLOW_KEYS = {
         status,
         interpretation,
         dominantConstraint,
-        guidance
+        guidance,
+        existingChartRef: null,
+        existingWrapRef: null
       });
     } else {
       renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance);
@@ -430,28 +451,30 @@ const FLOW_KEYS = {
       storage_total_gb: finalTotal.toFixed(1)
     });
 
-    if (els.toRaid) {
-      els.toRaid.href = "/tools/video-storage/raid-impact/?" + params.toString();
+    if (els.continueBtn) {
+      els.continueBtn.href = NEXT_URL + "?" + params.toString();
     }
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        category: "video-storage",
-        step: "retention",
+    try {
+      const payload = {
+        category: CATEGORY,
+        step: STEP,
         data: {
           cams,
           bitrateMbps: Number(bitrate.toFixed(2)),
           hoursPerDay: Number(hours.toFixed(1)),
           retentionDays: Number(days.toFixed(0)),
           overheadPct: Number(overheadPct.toFixed(0)),
-          storageTotalGb: Number(finalTotal.toFixed(1)),
-          storageTotalTb: Number(finalTB.toFixed(2)),
+          storageGb: Number(finalTotal.toFixed(1)),
+          storageTb: Number(finalTB.toFixed(2)),
           status,
           dominantConstraint
         }
-      })
-    );
+      };
+
+      sessionStorage.setItem(FLOW_KEYS.retention, JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showNext();
   }
@@ -467,48 +490,41 @@ const FLOW_KEYS = {
     importParams();
   }
 
-  els.calc.addEventListener("click", calc);
-  els.reset.addEventListener("click", reset);
-
-  ["cams", "bitrate", "hours", "days", "overhead"].forEach((id) => {
-    const el = $(id);
-    if (el) {
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
-    }
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const t = e.target;
-      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
-        e.preventDefault();
-        calc();
+  function bindInvalidation() {
+    [els.cams, els.bitrate, els.hours, els.days, els.overhead].forEach((el) => {
+      if (el) {
+        el.addEventListener("input", invalidate);
+        el.addEventListener("change", invalidate);
       }
-    }
-  });
+    });
+  }
 
-  renderEmpty();
-  hideNext();
-  importParams();
+  function bind() {
+    if (els.calc) els.calc.addEventListener("click", calc);
+    if (els.reset) els.reset.addEventListener("click", reset);
+
+    bindInvalidation();
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+          e.preventDefault();
+          calc();
+        }
+      }
+    });
+  }
+
+  function boot() {
+    renderEmpty();
+    hideNext();
+    importParams();
+    bind();
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+  }
+
+  window.addEventListener("DOMContentLoaded", boot);
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
