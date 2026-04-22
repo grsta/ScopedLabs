@@ -24,7 +24,7 @@
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
-    analysisCopy: $("analysis-copy"),
+    analysisCopy: $("analysisCopy") || $("analysis-copy"),
     flowNote: $("flow-note"),
     completionWrap: $("completion-wrap"),
     continueWrap: $("next-step-row"),
@@ -135,6 +135,14 @@
     if (els.completionWrap) els.completionWrap.style.display = "";
   }
 
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+  }
+
   function renderEmpty() {
     if (els.results) {
       els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
@@ -142,6 +150,7 @@
     clearAnalysisBlock();
     clearChart();
     hideCompletion();
+    hideContinue();
   }
 
   function invalidate() {
@@ -149,11 +158,6 @@
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
-        existingChartRef: chartRef,
-        existingWrapRef: chartWrapRef,
-        flowKey: FLOW_KEYS[STEP],
         category: CATEGORY,
         step: STEP,
         lane: LANE,
@@ -164,6 +168,7 @@
     }
     clearChart();
     hideCompletion();
+    hideContinue();
   }
 
   function importFromRaid() {
@@ -275,7 +280,7 @@
     if (els.analysisCopy) {
       els.analysisCopy.style.display = "";
       els.analysisCopy.innerHTML = `
-        <div class="results">
+        <div class="results-grid">
           <div class="result-row">
             <span class="result-label">Status</span>
             <span class="result-value">${status}</span>
@@ -383,14 +388,14 @@
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         summaryRows,
         derivedRows,
         status,
         interpretation,
         dominantConstraint,
-        guidance
+        guidance,
+        existingChartRef: null,
+        existingWrapRef: null
       });
     } else {
       renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance);
@@ -425,27 +430,26 @@
       });
     }
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        baselineDays,
-        effectiveDays,
-        daysLost,
-        targetDays,
-        lossPct,
-        stressPct,
-        degradedDays,
-        headroomPct,
-        risk,
-        status
-      }
-    });
-
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.showContinue === "function") {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.writeFlow === "function") {
+      window.ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+        category: CATEGORY,
+        step: STEP,
+        data: {
+          baselineDays,
+          effectiveDays,
+          daysLost,
+          targetDays,
+          lossPct,
+          stressPct,
+          degradedDays,
+          headroomPct,
+          risk,
+          status
+        }
+      });
     }
 
+    showContinue();
     showCompletion();
   }
 
@@ -457,42 +461,50 @@
     els.degradedDays.value = "2";
     els.reserveHeadroomPct.value = "15";
     renderEmpty();
-    hideCompletion();
     importFromRaid();
   }
 
-  els.calc.addEventListener("click", compute);
-  els.reset.addEventListener("click", reset);
-
-  ["baselineRetention", "capacityLossPct", "targetRetention", "stressWritePct", "degradedDays", "reserveHeadroomPct"].forEach((id) => {
-    const el = $(id);
-    if (el) {
-      el.addEventListener("input", invalidate);
-      el.addEventListener("change", invalidate);
-    }
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const t = e.target;
-      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
-        e.preventDefault();
-        compute();
+  function bindInvalidation() {
+    ["baselineRetention", "capacityLossPct", "targetRetention", "stressWritePct", "degradedDays", "reserveHeadroomPct"].forEach((id) => {
+      const el = $(id);
+      if (el) {
+        el.addEventListener("input", invalidate);
+        el.addEventListener("change", invalidate);
       }
-    }
-  });
+    });
+  }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    const yearEl = document.querySelector("[data-year]");
-    if (yearEl) yearEl.textContent = new Date().getFullYear();
+  function bind() {
+    if (els.calc) els.calc.addEventListener("click", compute);
+    if (els.reset) els.reset.addEventListener("click", reset);
 
-    unlockCategoryPage();
-    setTimeout(() => {
-      unlockCategoryPage();
-    }, 400);
+    bindInvalidation();
 
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+          e.preventDefault();
+          compute();
+        }
+      }
+    });
+  }
+
+  function boot() {
     renderEmpty();
     hideCompletion();
+    hideContinue();
     importFromRaid();
+    bind();
+
+    const yearEl = document.querySelector("[data-year]");
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
+    boot();
   });
 })();

@@ -3,20 +3,49 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Retention Survivability Estimator *ScopedLabs</title>
+  <title>Retention Survivability Estimator • ScopedLabs</title>
   <meta
     name="description"
     content="Estimate how degraded capacity reduces effective retention days."
   />
-  <link rel="stylesheet" href="/assets/style.css?v=vs-survivability-0017" />
+  <link rel="stylesheet" href="/assets/style.css?v=video-retention-survivability-0422" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0331"></script>
-  <script defer src="/assets/app.js?v=0331"></script>
+  <script defer src="/assets/auth.js?v=video-retention-survivability-0422"></script>
+  <script defer src="/assets/app.js?v=video-retention-survivability-0422"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="video-storage" data-step="survivability" data-lane="v1">
@@ -27,188 +56,171 @@
         <span class="brand-name">ScopedLabs</span>
       </a>
 
-      <nav class="nav">
-        <a class="nav-link" href="/">Home</a>
-        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
-        <a class="nav-link" href="/about/">About</a>
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-pill" href="/about/">About</a>
       </nav>
     </div>
   </header>
 
-  <main class="page">
-    <div class="container">
-      <div class="crumbs">
-        <a href="/tools/">Tools</a>
-        <span class="sep">/</span>
-        <a href="/tools/video-storage/">Video &amp; Storage</a>
-        <span class="sep">/</span>
-        <span>Retention Survivability Estimator</span>
-      </div>
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/video-storage/">Video &amp; Storage</a>
+      <span class="sep">/</span>
+      <span>Retention Survivability Estimator</span>
+    </div>
 
-      <div class="pill-row" style="margin-top: 6px;">
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
+
+    <h1 style="margin-top: 10px;">Retention Survivability Estimator</h1>
+    <div id="pipeline"></div>
+
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool completes the Video &amp; Storage design flow</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        Use this final step to test how degraded capacity, rebuild stress, and reserve loss compress the real retention window after the healthy-state design is complete.
+      </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        It converts degraded-state storage loss into effective retention days so you can see whether the design still protects the promised retention target under failure conditions.
+      </p>
+    </section>
+
+    <p class="tool-best-for">
+      <strong>Best for:</strong> analyzing how storage failures, degraded arrays, or reserve loss affect retention guarantees.
+    </p>
+
+    <div id="flow-note" class="flow-note" hidden></div>
+
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+      <div class="pill-row">
         <span class="pill pill--pro">Pro Tier</span>
       </div>
 
-      <h1 style="margin-top: 10px;">Retention Survivability Estimator</h1>
-      <div id="pipeline"></div>
+      <h2 class="h2">🔒 Locked</h2>
+      <p class="muted">This tool is included with Pro access for this category.</p>
 
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool completes the Video &amp; Storage design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          Use this final step to test how degraded capacity, rebuild stress, and reserve loss compress the real retention window after the healthy-state design is complete.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          It converts degraded-state storage loss into effective retention days so you can see whether the design still protects the promised retention target under failure conditions.
-        </p>
-      </section>
+      <p class="muted"><strong>What this models</strong></p>
+      <ul class="muted">
+        <li>Effective retention loss under degraded conditions</li>
+        <li>How capacity loss and rebuild stress shrink retention guarantees</li>
+        <li>Whether the design still meets the promised retention target</li>
+      </ul>
 
-      <p class="subhead">Estimate how degraded capacity and storage loss reduce effective retention.</p>
+      <div class="actions">
+        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+        <a class="btn btn-primary" href="/upgrade/?category=video-storage#checkout">Unlock Pro</a>
+      </div>
+    </section>
 
-      <p class="tool-best-for">
-        <strong>Best for:</strong> analyzing how storage failures, degraded arrays, or reserve loss affect retention guarantees.
+    <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
+      <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+      <p class="muted" style="margin: 0 0 12px 0;">
+        Enter the baseline retention and expected capacity loss. Optional penalties model rebuild or degraded write stress.
       </p>
 
-      <div id="flow-note" class="flow-note" hidden>
-        Imported from RAID Impact. Review values and click Calculate.
+      <div class="form-grid" style="margin-top: 14px;">
+        <div class="field">
+          <div class="label-row">
+            <label for="baselineRetention">Baseline retention (days)</label>
+            <button class="hint" type="button" data-title="Baseline retention" data-help="The healthy-state retention you expect before any degradation or capacity loss." aria-label="Help: Baseline retention">?</button>
+          </div>
+          <input id="baselineRetention" type="number" inputmode="decimal" min="0.1" step="0.1" value="30" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="capacityLossPct">Usable capacity loss (%)</label>
+            <button class="hint" type="button" data-title="Usable capacity loss" data-help="Percent of usable capacity lost during a degraded state, rebuild, reserve event, or drive loss." aria-label="Help: Usable capacity loss">?</button>
+          </div>
+          <input id="capacityLossPct" type="number" inputmode="decimal" min="0" step="0.1" value="12" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="targetRetention">Retention goal (days)</label>
+            <button class="hint" type="button" data-title="Retention goal" data-help="The minimum retention promise or target you need to maintain." aria-label="Help: Retention goal">?</button>
+          </div>
+          <input id="targetRetention" type="number" inputmode="decimal" min="0.1" step="0.1" value="30" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="stressWritePct">Degraded write penalty (%)</label>
+            <button class="hint" type="button" data-title="Degraded write penalty" data-help="Optional write overhead during rebuild, degraded parity operation, or background verification. Planning range: 5-20%." aria-label="Help: Degraded write penalty">?</button>
+          </div>
+          <input id="stressWritePct" type="number" inputmode="decimal" min="0" step="0.1" value="8" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="degradedDays">Degraded period (days)</label>
+            <button class="hint" type="button" data-title="Degraded period" data-help="Estimated time the array remains degraded before replacement and rebuild complete." aria-label="Help: Degraded period">?</button>
+          </div>
+          <input id="degradedDays" type="number" inputmode="decimal" min="0" step="0.1" value="2" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="reserveHeadroomPct">Recommended headroom (%)</label>
+            <button class="hint" type="button" data-title="Recommended headroom" data-help="Suggested retention margin above your target. Planning range: 10-25%." aria-label="Help: Recommended headroom">?</button>
+          </div>
+          <input id="reserveHeadroomPct" type="number" inputmode="decimal" min="0" step="0.1" value="15" />
+        </div>
       </div>
 
-      <section class="card" style="margin-top: 14px;">
-        <p class="muted" style="margin: 0; line-height: 1.55;">
-          This tool converts <strong>usable capacity loss</strong> into <strong>effective retention days</strong>.
-          It estimates <strong>days lost</strong>, flags <strong>retention cliffs</strong>, and shows a simple
-          <strong>risk level</strong> when your design is operating too close to the edge.
-        </p>
-      </section>
+      <div class="btn-row" style="margin-top: 14px;">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+      </div>
 
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
+      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Results</h3>
+        <div id="results" class="results-grid">
+          <div class="muted">Enter values and press Calculate.</div>
         </div>
+      </div>
 
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
+      <section id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
 
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>Effective retention loss under degraded conditions</li>
-          <li>How capacity loss and rebuild stress shrink retention guarantees</li>
-          <li>Whether the design still meets the promised retention target</li>
-        </ul>
+      <div id="next-step-row" class="btn-row" style="margin-top: 14px; display:none;">
+        <a id="continue" class="btn btn-primary" href="/tools/video-storage/">
+          Complete Pipeline →
+        </a>
+      </div>
 
-        <div class="actions">
-          <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
-
-      <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
-        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
-        <p class="muted" style="margin: 0 0 12px 0;">
-          Enter the baseline retention and expected capacity loss. Optional penalties model rebuild or degraded write stress.
-        </p>
-
-        <div class="form-grid" style="margin-top: 14px;">
-          <div class="field">
-            <div class="label-row">
-              <label for="baselineRetention">Baseline retention (days)</label>
-              <button class="hint" type="button" data-title="Baseline retention" data-help="The healthy-state retention you expect before any degradation or capacity loss." aria-label="Help: Baseline retention">?</button>
-            </div>
-            <input id="baselineRetention" type="number" inputmode="decimal" min="0.1" step="0.1" value="30" />
+      <div class="card" id="completion-wrap" style="display:none; margin-top:14px;">
+        <div class="results-grid">
+          <div class="result-row">
+            <div class="result-label">Pipeline Status</div>
+            <div class="result-value">Video &amp; Storage v1 complete</div>
           </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="capacityLossPct">Usable capacity loss (%)</label>
-              <button class="hint" type="button" data-title="Usable capacity loss" data-help="Percent of usable capacity lost during a degraded state, rebuild, reserve event, or drive loss." aria-label="Help: Usable capacity loss">?</button>
-            </div>
-            <input id="capacityLossPct" type="number" inputmode="decimal" min="0" step="0.1" value="12" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="targetRetention">Retention goal (days)</label>
-              <button class="hint" type="button" data-title="Retention goal" data-help="The minimum retention promise or target you need to maintain." aria-label="Help: Retention goal">?</button>
-            </div>
-            <input id="targetRetention" type="number" inputmode="decimal" min="0.1" step="0.1" value="30" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="stressWritePct">Degraded write penalty (%)</label>
-              <button class="hint" type="button" data-title="Degraded write penalty" data-help="Optional write overhead during rebuild, degraded parity operation, or background verification. Planning range: 5-20%." aria-label="Help: Degraded write penalty">?</button>
-            </div>
-            <input id="stressWritePct" type="number" inputmode="decimal" min="0" step="0.1" value="8" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="degradedDays">Degraded period (days)</label>
-              <button class="hint" type="button" data-title="Degraded period" data-help="Estimated time the array remains degraded before replacement and rebuild complete." aria-label="Help: Degraded period">?</button>
-            </div>
-            <input id="degradedDays" type="number" inputmode="decimal" min="0" step="0.1" value="2" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="reserveHeadroomPct">Recommended headroom (%)</label>
-              <button class="hint" type="button" data-title="Recommended headroom" data-help="Suggested retention margin above your target. Planning range: 10-25%." aria-label="Help: Recommended headroom">?</button>
-            </div>
-            <input id="reserveHeadroomPct" type="number" inputmode="decimal" min="0" step="0.1" value="15" />
+          <div class="result-row">
+            <div class="result-label">Next Action</div>
+            <div class="result-value">Review results or return to Video &amp; Storage</div>
           </div>
         </div>
+      </div>
+    </section>
 
-        <div class="btn-row" style="margin-top: 14px;">
-          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
-          <button id="reset" class="btn" type="button">Reset</button>
-        </div>
-
-        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-          <h3 class="h3" style="margin-top: 0;">Results</h3>
-          <div id="results" class="results">
-            <div class="muted">Enter values and press Calculate.</div>
-          </div>
-        </div>
-
-        <section id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
-
-        <div id="next-step-row" class="btn-row" style="margin-top: 14px; display:none;">
-          <a id="continue" class="btn btn-primary" href="/tools/video-storage/">
-            Complete Pipeline →
-          </a>
-        </div>
-
-        <div class="card" id="completion-wrap" style="display:none; margin-top:14px;">
-          <div class="results">
-            <div class="result-row">
-              <div class="result-label">Pipeline Status</div>
-              <div class="result-value">Video &amp; Storage v1 complete</div>
-            </div>
-            <div class="result-row">
-              <div class="result-label">Next Action</div>
-              <div class="result-value">Review results or return to Video &amp; Storage</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
-        </div>
-      </section>
-
-      <footer class="site-footer" style="margin-top: 22px;">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-    </div>
+    <footer class="site-footer" style="margin-top: 22px;">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=vs-survivability-0017"></script>
-  <script src="/assets/catalog.js?v=vs-survivability-0017"></script>
-  <script src="/assets/pipelines.js?v=vs-survivability-0017"></script>
-  <script src="/assets/pipeline-state.js?v=vs-survivability-0017"></script>
-  <script src="/assets/pipeline.js?v=vs-survivability-0017"></script>
-  <script src="/assets/analyzer.js?v=vs-survivability-0017"></script>
-  <script src="./script.js?v=vs-survivability-0017"></script>
+  <script src="/assets/tool-flow.js?v=video-retention-survivability-0422"></script>
+  <script src="/assets/catalog.js?v=video-retention-survivability-0422"></script>
+  <script src="/assets/pipelines.js?v=video-retention-survivability-0422"></script>
+  <script src="/assets/pipeline-state.js?v=video-retention-survivability-0422"></script>
+  <script src="/assets/pipeline.js?v=video-retention-survivability-0422"></script>
+  <script src="/assets/analyzer.js?v=video-retention-survivability-0422"></script>
+  <script src="./script.js?v=video-retention-survivability-0422"></script>
 </body>
 </html>
 
