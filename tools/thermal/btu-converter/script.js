@@ -1,15 +1,23 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "thermal";
   const STEP = "btu-converter";
   const PRIOR_STEP = "psu-efficiency-heat";
   const NEXT_URL = "/tools/thermal/rack-thermal-density/";
+
+  const FLOW_KEYS = {
+    "heat-load-estimator": "scopedlabs:pipeline:thermal:heat-load-estimator",
+    "psu-efficiency-heat": "scopedlabs:pipeline:thermal:psu-efficiency-heat",
+    "btu-converter": "scopedlabs:pipeline:thermal:btu-converter",
+    "rack-thermal-density": "scopedlabs:pipeline:thermal:rack-thermal-density",
+    "airflow-requirement": "scopedlabs:pipeline:thermal:airflow-requirement",
+    "fan-cfm-sizing": "scopedlabs:pipeline:thermal:fan-cfm-sizing",
+    "hot-cold-aisle": "scopedlabs:pipeline:thermal:hot-cold-aisle",
+    "ambient-rise": "scopedlabs:pipeline:thermal:ambient-rise",
+    "exhaust-temperature": "scopedlabs:pipeline:thermal:exhaust-temperature",
+    "room-cooling-capacity": "scopedlabs:pipeline:thermal:room-cooling-capacity"
+  };
 
   const W_TO_BTU = 3.412141633;
   const TON_TO_BTU = 12000;
@@ -31,64 +39,40 @@ const FLOW_KEYS = {
   };
 
   function safeNumber(value, fallback = 0) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.safeNumber === "function") {
       return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
     }
-
     const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
   }
 
   function clamp(value, min, max) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clamp === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clamp === "function") {
       return window.ScopedLabsAnalyzer.clamp(value, min, max);
     }
-
     return Math.min(max, Math.max(min, value));
   }
 
   function readSaved() {
     try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+      return JSON.parse(sessionStorage.getItem(FLOW_KEYS[PRIOR_STEP]) || "null");
     } catch {
       return null;
     }
   }
 
   function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
   }
 
   function hideContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-
     if (els.continueWrap) els.continueWrap.style.display = "none";
-    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function showContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-
-    if (els.continueWrap) els.continueWrap.style.display = "";
-    if (els.continueBtn) els.continueBtn.disabled = false;
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
   function renderEmpty() {
@@ -96,10 +80,7 @@ const FLOW_KEYS = {
       els.results.innerHTML = `<div class="muted">Enter values and press Convert.</div>`;
     }
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
     } else if (els.analysisCopy) {
       els.analysisCopy.style.display = "none";
@@ -110,49 +91,43 @@ const FLOW_KEYS = {
   function renderFlowNote() {
     const saved = readSaved();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: CATEGORY,
-        step: STEP,
-        title: "System Context",
-        intro:
-          "This step converts electrical or thermal load into HVAC planning units so downstream density and cooling calculations use consistent heat terms.",
-        customRows:
-          saved &&
-          saved.category === CATEGORY &&
-          saved.step === PRIOR_STEP
-            ? [
-                {
-                  label: "Prior Step",
-                  value: "PSU Heat Loss"
-                },
-                {
-                  label: "PSU Heat Loss",
-                  value:
-                    saved.data && Number.isFinite(Number(saved.data.heatLossW))
-                      ? `${Number(saved.data.heatLossW).toFixed(0)} W`
-                      : "—"
-                },
-                {
-                  label: "Thermal Output",
-                  value:
-                    saved.data && Number.isFinite(Number(saved.data.heatLossBtuHr))
-                      ? `${Number(saved.data.heatLossBtuHr).toFixed(0)} BTU/hr`
-                      : "—"
-                }
-              ]
-            : null
-      });
+    if (!els.flowNote) return;
+
+    if (!saved || saved.category !== CATEGORY || saved.step !== PRIOR_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
-    if (!els.flowNote) return;
-    els.flowNote.style.display = "none";
-    els.flowNote.innerHTML = "";
+    const data = saved.data || {};
+    const heatLossW = Number(data.heatLossW);
+    const heatLossBtu = Number(data.heatLossBtuHr);
+
+    if (Number.isFinite(heatLossW) && (!els.w.value || Number(els.w.value) === 3500)) {
+      els.w.value = String(Math.round(heatLossW));
+    }
+
+    if (Number.isFinite(heatLossBtu) && (!els.btu.value || Number(els.btu.value) === 11942)) {
+      els.btu.value = String(Math.round(heatLossBtu));
+    }
+
+    const parts = [];
+    if (Number.isFinite(heatLossW)) parts.push(`PSU Heat Loss: ${Math.round(heatLossW)} W`);
+    if (Number.isFinite(heatLossBtu)) parts.push(`Thermal Output: ${Math.round(heatLossBtu)} BTU/hr`);
+
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Step 3 — Using PSU Heat results:</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This step converts electrical or thermal load into HVAC planning units so downstream density and cooling calculations use consistent heat terms.
+    `;
   }
 
   function buildInterpretation(status, dominantConstraint, btu, tons, mode) {
@@ -198,24 +173,20 @@ const FLOW_KEYS = {
   function invalidate() {
     clearStored();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.invalidate === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.invalidate === "function") {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         category: CATEGORY,
         step: STEP,
         emptyMessage: "Enter values and press Convert."
       });
-      return;
+    } else {
+      renderEmpty();
     }
 
-    renderEmpty();
     hideContinue();
+    renderFlowNote();
   }
 
   function calculate() {
@@ -282,10 +253,7 @@ const FLOW_KEYS = {
     let status = "HEALTHY";
     let dominantLabel = "Cooling Tonnage Requirement";
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.resolveStatus === "function") {
       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
         metrics,
         healthyMax: 1,
@@ -335,10 +303,7 @@ const FLOW_KEYS = {
       { label: "Planning Basis", value: "Thermal load translation" }
     ];
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderOutput === "function") {
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
@@ -347,61 +312,54 @@ const FLOW_KEYS = {
         status,
         interpretation,
         dominantConstraint,
-        guidance
+        guidance,
+        existingChartRef: null,
+        existingWrapRef: null,
+        chart: {
+          labels: [
+            "Cooling Tonnage",
+            "Thermal Magnitude",
+            "Planning Pressure"
+          ],
+          values: [
+            Number(tons.toFixed(2)),
+            Number((btu / 12000).toFixed(2)),
+            Number((btu / 20000).toFixed(2))
+          ],
+          displayValues: [
+            `${tons.toFixed(2)} tons`,
+            `${btu.toFixed(0)} BTU/hr`,
+            `${watts.toFixed(0)} W`
+          ],
+          referenceValue: 1,
+          healthyMax: 1,
+          watchMax: 2,
+          axisTitle: "Cooling Planning Pressure",
+          referenceLabel: "Comfort Band",
+          healthyLabel: "Healthy",
+          watchLabel: "Watch",
+          riskLabel: "Risk",
+          chartMax: Math.max(3, Number(tons.toFixed(2)) + 0.5)
+        }
       });
-    } else {
-      els.results.innerHTML = `
-        ${summaryRows.map((row) => `
-          <div class="result-row">
-            <span class="result-label">${row.label}</span>
-            <span class="result-value">${row.value}</span>
-          </div>
-        `).join("")}
-        ${derivedRows.map((row) => `
-          <div class="result-row">
-            <span class="result-label">${row.label}</span>
-            <span class="result-value">${row.value}</span>
-          </div>
-        `).join("")}
-      `;
-
-      if (els.analysisCopy) {
-        els.analysisCopy.style.display = "grid";
-        els.analysisCopy.innerHTML = `
-          <div class="result-row">
-            <span class="result-label">Status</span>
-            <span class="result-value">${status}</span>
-          </div>
-          <div class="result-row">
-            <span class="result-label">Dominant Constraint</span>
-            <span class="result-value">${dominantConstraint}</span>
-          </div>
-          <div class="result-row">
-            <span class="result-label">Engineering Interpretation</span>
-            <span class="result-value">${interpretation}</span>
-          </div>
-          <div class="result-row">
-            <span class="result-label">Actionable Guidance</span>
-            <span class="result-value">${guidance}</span>
-          </div>
-        `;
-      }
     }
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        category: CATEGORY,
-        step: STEP,
-        data: {
-          watts,
-          btu,
-          tons,
-          status,
-          dominantConstraint
-        }
-      })
-    );
+    try {
+      sessionStorage.setItem(
+        FLOW_KEYS[STEP],
+        JSON.stringify({
+          category: CATEGORY,
+          step: STEP,
+          data: {
+            watts,
+            btu,
+            tons,
+            status,
+            dominantConstraint
+          }
+        })
+      );
+    } catch {}
 
     showContinue();
   }
@@ -425,10 +383,7 @@ const FLOW_KEYS = {
     });
   }
 
-  function init() {
-    hideContinue();
-    renderEmpty();
-    renderFlowNote();
+  function bind() {
     bindInvalidation();
 
     if (els.calc) els.calc.addEventListener("click", calculate);
@@ -440,25 +395,15 @@ const FLOW_KEYS = {
     }
   }
 
+  function init() {
+    hideContinue();
+    renderEmpty();
+    renderFlowNote();
+    bind();
+  }
+
   init();
-})();
 
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
   const year = document.querySelector("[data-year]");
   if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
+})();
