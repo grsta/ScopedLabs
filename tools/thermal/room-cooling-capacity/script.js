@@ -1,14 +1,23 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "thermal";
   const STEP = "room-cooling-capacity";
   const PRIOR_STEP = "exhaust-temperature";
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
+
+  const FLOW_KEYS = {
+    "heat-load-estimator": "scopedlabs:pipeline:thermal:heat-load-estimator",
+    "psu-efficiency-heat": "scopedlabs:pipeline:thermal:psu-efficiency-heat",
+    "btu-converter": "scopedlabs:pipeline:thermal:btu-converter",
+    "rack-thermal-density": "scopedlabs:pipeline:thermal:rack-thermal-density",
+    "airflow-requirement": "scopedlabs:pipeline:thermal:airflow-requirement",
+    "fan-cfm-sizing": "scopedlabs:pipeline:thermal:fan-cfm-sizing",
+    "hot-cold-aisle": "scopedlabs:pipeline:thermal:hot-cold-aisle",
+    "ambient-rise": "scopedlabs:pipeline:thermal:ambient-rise",
+    "exhaust-temperature": "scopedlabs:pipeline:thermal:exhaust-temperature",
+    "room-cooling-capacity": "scopedlabs:pipeline:thermal:room-cooling-capacity"
+  };
 
   const W_TO_BTU = 3.412141633;
   const TON_BTU = 12000;
@@ -16,6 +25,8 @@ const FLOW_KEYS = {
   const $ = (id) => document.getElementById(id);
 
   const els = {
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard"),
     w: $("w"),
     m: $("m"),
     calc: $("calc"),
@@ -30,10 +41,7 @@ const FLOW_KEYS = {
   let chartWrapRef = { current: null };
 
   function safeNumber(value, fallback = 0) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.safeNumber === "function") {
       return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
     }
     const n = Number(value);
@@ -41,32 +49,86 @@ const FLOW_KEYS = {
   }
 
   function clamp(value, min, max) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clamp === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clamp === "function") {
       return window.ScopedLabsAnalyzer.clamp(value, min, max);
     }
     return Math.min(max, Math.max(min, value));
   }
 
-  function readSaved() {
+  function hasStoredAuth() {
     try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
     } catch {
-      return null;
+      return false;
     }
   }
 
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
+
+  function readSaved() {
+    try {
+      const primary = JSON.parse(sessionStorage.getItem(FLOW_KEYS[PRIOR_STEP]) || "null");
+      if (primary && primary.category === CATEGORY && primary.step === PRIOR_STEP) {
+        return primary;
+      }
+    } catch {}
+
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === PRIOR_STEP) {
+        return legacy;
+      }
+    } catch {}
+
+    return null;
+  }
+
   function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
   }
 
   function clearAnalysisBlock() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
     } else if (els.analysisCopy) {
       els.analysisCopy.style.display = "none";
@@ -75,10 +137,7 @@ const FLOW_KEYS = {
   }
 
   function clearChart() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearChart === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearChart === "function") {
       window.ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
       return;
     }
@@ -114,56 +173,37 @@ const FLOW_KEYS = {
   function renderFlowNote() {
     const saved = readSaved();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: CATEGORY,
-        step: STEP,
-        title: "System Context",
-        intro:
-          "This final step validates whether total thermal load can be absorbed by the room cooling system with enough planning margin to support stable operation.",
-        customRows:
-          saved &&
-          saved.category === CATEGORY &&
-          saved.step === PRIOR_STEP
-            ? [
-                {
-                  label: "Prior Step",
-                  value: "Exhaust Temperature"
-                },
-                {
-                  label: "Exhaust Temperature",
-                  value:
-                    saved.data && Number.isFinite(Number(saved.data.exhaustTemp))
-                      ? `${Number(saved.data.exhaustTemp).toFixed(1)} °F`
-                      : "—"
-                },
-                {
-                  label: "Ambient Rise",
-                  value:
-                    saved.data && Number.isFinite(Number(saved.data.deltaT))
-                      ? `${Number(saved.data.deltaT).toFixed(1)} °F`
-                      : "—"
-                },
-                {
-                  label: "Thermal Condition",
-                  value:
-                    saved.data?.classification ??
-                    saved.data?.status ??
-                    "—"
-                }
-              ]
-            : null
-      });
+    if (!els.flowNote) return;
+
+    if (!saved || saved.category !== CATEGORY || saved.step !== PRIOR_STEP) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
-    if (!els.flowNote) return;
-    els.flowNote.style.display = "none";
-    els.flowNote.innerHTML = "";
+    const data = saved.data || {};
+    const exhaustTemp = Number(data.exhaustTemp);
+    const deltaT = Number(data.deltaT);
+    const condition = data.classification || data.status;
+
+    const parts = [];
+    if (Number.isFinite(exhaustTemp)) parts.push(`Exhaust Temperature: ${exhaustTemp.toFixed(1)} °F`);
+    if (Number.isFinite(deltaT)) parts.push(`Ambient Rise: ${deltaT.toFixed(1)} °F`);
+    if (condition) parts.push(`Thermal Condition: ${condition}`);
+
+    if (!parts.length) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Final Step — Using Exhaust Temperature results:</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This final step validates whether total thermal load can be absorbed by the room cooling system with enough planning margin to support stable operation.
+    `;
   }
 
   function buildInterpretation(status, dominantConstraint, tons, marginPct, coolingBtu) {
@@ -225,10 +265,7 @@ const FLOW_KEYS = {
   function invalidate() {
     clearStored();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.invalidate === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.invalidate === "function") {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
@@ -265,7 +302,7 @@ const FLOW_KEYS = {
     if (els.analysisCopy) {
       els.analysisCopy.style.display = "";
       els.analysisCopy.innerHTML = `
-        <div class="results">
+        <div class="results-grid">
           <div class="result-row">
             <div class="result-label">Status</div>
             <div class="result-value">${status}</div>
@@ -345,10 +382,7 @@ const FLOW_KEYS = {
     let status = "HEALTHY";
     let dominantLabel = "Cooling Tonnage Burden";
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.resolveStatus === "function") {
       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
         metrics,
         healthyMax: 5,
@@ -402,10 +436,7 @@ const FLOW_KEYS = {
       { label: "Capacity Class", value: classification }
     ];
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderOutput === "function") {
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
@@ -414,7 +445,9 @@ const FLOW_KEYS = {
         status,
         interpretation,
         dominantConstraint,
-        guidance
+        guidance,
+        existingChartRef: null,
+        existingWrapRef: null
       });
     } else {
       renderFallback(
@@ -429,10 +462,7 @@ const FLOW_KEYS = {
 
     clearChart();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function") {
       window.ScopedLabsAnalyzer.renderAnalyzerChart({
         mountEl: els.results,
         existingChartRef: chartRef,
@@ -467,9 +497,8 @@ const FLOW_KEYS = {
       });
     }
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
+    try {
+      const payload = {
         category: CATEGORY,
         step: STEP,
         data: {
@@ -483,8 +512,11 @@ const FLOW_KEYS = {
           dominantConstraint,
           pipelineComplete: true
         }
-      })
-    );
+      };
+
+      sessionStorage.setItem(FLOW_KEYS[STEP], JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showCompletion();
   }
@@ -505,81 +537,33 @@ const FLOW_KEYS = {
     });
   }
 
-  function init() {
-    renderFlowNote();
-    renderEmpty();
+  function bind() {
     bindInvalidation();
 
     if (els.calc) els.calc.onclick = calculate;
     if (els.reset) els.reset.onclick = reset;
   }
 
-  init();
-})();
+  function boot() {
+    hideCompletion();
+    renderFlowNote();
+    renderEmpty();
+    bind();
 
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
   }
 
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
+  window.addEventListener("DOMContentLoaded", () => {
+    let unlocked = unlockCategoryPage();
+    if (unlocked) boot();
 
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
+    setTimeout(() => {
+      unlocked = unlockCategoryPage();
+      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+        els.toolCard.dataset.initialized = "true";
+        boot();
+      }
+    }, 400);
   });
-}
+})();

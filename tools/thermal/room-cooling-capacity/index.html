@@ -3,9 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Room Cooling Capacity *ScopedLabs</title>
+  <title>Room Cooling Capacity • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Convert total thermal load into required room cooling capacity and verify whether the environment can support the modeled heat safely."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
+  <link rel="stylesheet" href="/assets/style.css?v=thermal-room-cooling-capacity-0421" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,12 +18,47 @@
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
   </script>
 
-  <script defer src="/assets/auth.js?v=0408"></script>
-  <script defer src="/assets/app.js?v=0408"></script>
+  <script defer src="/assets/auth.js?v=thermal-room-cooling-capacity-0421"></script>
+  <script defer src="/assets/app.js?v=thermal-room-cooling-capacity-0421"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="thermal" data-step="room-cooling-capacity" data-lane="v1">
-
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
@@ -41,62 +80,56 @@
     Room Cooling Capacity
   </div>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-<h1>Room Cooling Capacity</h1>
+  <div class="pill-row" style="margin-top: 6px;">
+    <span class="pill pill--pro">Pro Tier</span>
+  </div>
+
+  <h1>Room Cooling Capacity</h1>
 
   <div id="pipeline"></div>
 
-  
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of Room Cooling Capacity.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">Convert total system heat into required cooling capacity.</p>
-
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> validating whether the room cooling system can handle total thermal load and determining required HVAC capacity.
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+    <h2 class="h3" style="margin-top: 0;">This tool completes the Thermal design flow</h2>
+    <p class="muted" style="margin-bottom: 0;">
+      Use this final step to convert total system heat into the room-level cooling capacity required to keep the environment stable with planning margin.
+    </p>
+    <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+      This is where the full thermal chain is validated at the infrastructure layer so you can compare the modeled load against real HVAC support instead of relying only on rack-level assumptions.
     </p>
   </section>
 
-  
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
+  <p class="tool-best-for">
+    <strong>Best for:</strong> validating whether the room cooling system can handle total thermal load and determining required HVAC capacity.
+  </p>
 
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
+  <div id="flow-note" class="flow-note" hidden></div>
 
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
-        </ul>
+  <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+    <div class="pill-row">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
 
-        <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
+    <h2 class="h2">🔒 Locked</h2>
+    <p class="muted">This tool is included with Pro access for this category.</p>
 
-      <section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
+    <p class="muted"><strong>What this models</strong></p>
+    <ul class="muted">
+      <li>Required room cooling capacity in BTU/hr and tons</li>
+      <li>Cooling demand after applying explicit planning margin</li>
+      <li>Whether the thermal design closes cleanly or exposes a room-level HVAC constraint</li>
+    </ul>
 
-    <div class="form-grid">
+    <div class="actions">
+      <a class="btn" href="/tools/thermal/">Back to Thermal</a>
+      <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+    </div>
+  </section>
+
+  <section id="toolCard" class="card tool-card" style="display:none; margin-top:18px;">
+    <h2 class="card-title" style="margin-top:0;">Inputs</h2>
+
+    <div class="form-grid" style="margin-top:14px;">
       <label class="field">
         <span class="label">Total Heat Load (Watts)</span>
         <input id="w" type="number" value="12000">
@@ -109,29 +142,25 @@
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Calculate</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+      <button id="reset" class="btn" type="button">Reset</button>
     </div>
   </section>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results">
+  <section class="card tool-card" style="margin-top:14px;">
+    <h2 class="card-title" style="margin-top:0;">Results</h2>
+    <div id="results" class="results-grid" aria-live="polite">
       <div class="muted">Enter values and press Calculate.</div>
     </div>
+    <div id="analysis-copy" style="display:none;"></div>
+
+    <p class="mini-note">
+      Model: total heat load is increased by the chosen planning margin, then converted into required room cooling capacity in BTU/hr and cooling tons.
+    </p>
   </section>
 
-  <section id="analysis-copy" class="card tool-card" style="display:none;">
-        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-
-          <a id="continue" class="btn btn-primary" href="/tools/thermal/rack-thermal-density/">
-            Continue →
-          </a>
-        </div>
-      </section>
-
-  <div class="card" id="completion-wrap" style="display:none;">
-    <div class="results">
+  <div class="card" id="completion-wrap" style="display:none; margin-top:12px;">
+    <div class="results-grid">
       <div class="result-row">
         <div class="result-label">Pipeline Status</div>
         <div class="result-value">Thermal v1 complete</div>
@@ -143,25 +172,22 @@
     </div>
   </div>
 
-  <div class="card">
-    <button class="btn" onclick="window.location.href='/tools/thermal/'">
-      ← Return to Thermal Category
-    </button>
+  <div class="btn-row" style="margin-top:12px;">
+    <a class="btn" href="/tools/thermal/">← Return to Thermal Category</a>
   </div>
 
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
+  <footer class="site-footer">
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
 </main>
 
-
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=004"></script>
+<script src="/assets/tool-flow.js?v=thermal-room-cooling-capacity-0421"></script>
+<script src="/assets/catalog.js?v=thermal-room-cooling-capacity-0421"></script>
+<script src="/assets/pipelines.js?v=thermal-room-cooling-capacity-0421"></script>
+<script src="/assets/pipeline-state.js?v=thermal-room-cooling-capacity-0421"></script>
+<script src="/assets/pipeline.js?v=thermal-room-cooling-capacity-0421"></script>
+<script src="/assets/analyzer.js?v=thermal-room-cooling-capacity-0421"></script>
+<script src="./script.js?v=thermal-room-cooling-capacity-0421"></script>
 
 </body>
 </html>
