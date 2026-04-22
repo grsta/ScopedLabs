@@ -3,8 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Codec Efficiency Comparator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0185" />
+  <title>Codec Efficiency Comparator • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate bitrate and storage savings when moving between codecs."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=video-codec-efficiency-0422" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,8 +17,37 @@
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0409"></script>
-  <script defer src="/assets/app.js?v=0409"></script>
+  <script defer src="/assets/auth.js?v=video-codec-efficiency-0422"></script>
+  <script defer src="/assets/app.js?v=video-codec-efficiency-0422"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background: rgba(0,0,0,0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255,255,255,0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="video-storage">
@@ -41,42 +75,38 @@
       <span>Codec Efficiency</span>
     </div>
 
-    
-      <div class="pill-row" style="margin-top: 6px;">
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
+
+    <h1>Codec Efficiency Comparator</h1>
+
+    <p class="tool-best-for">
+      <strong>Best for:</strong> evaluating storage efficiency differences between encoding strategies.
+    </p>
+
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+      <div class="pill-row">
         <span class="pill pill--pro">Pro Tier</span>
       </div>
-<h1>Codec Efficiency Comparator</h1>
-    <p class="subhead">Estimate bitrate and storage savings when moving between codecs.</p>
 
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> evaluating storage efficiency differences between encoding strategies.
-      </p>
+      <h2 class="h2">🔒 Locked</h2>
+      <p class="muted">This tool is included with Pro access for this category.</p>
+
+      <p class="muted"><strong>What this models</strong></p>
+      <ul class="muted">
+        <li>Relative bitrate and storage change between codec options</li>
+        <li>How retention length and camera count amplify codec decisions</li>
+        <li>Whether codec migration is a small tuning move or a meaningful storage lever</li>
+      </ul>
+
+      <div class="actions">
+        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+        <a class="btn btn-primary" href="/upgrade/?category=video-storage#checkout">Unlock Pro</a>
+      </div>
     </section>
 
-    
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
-
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
-
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>Advanced analyzer workflow for video-storage</li>
-          <li>Scenario comparison and deeper engineering guidance</li>
-          <li>Pro-only decision support output</li>
-        </ul>
-
-        <div class="actions">
-          <a class="btn" href="/tools/video-storage/">Back to Category</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
-
-<section id="toolCard" class="card tool-card">
+    <section id="toolCard" class="card tool-card" style="display:none;">
       <h2>Inputs</h2>
 
       <div class="form-grid">
@@ -124,34 +154,28 @@
       <div class="actions">
         <button id="calc" class="btn btn-primary" type="button">Calculate</button>
         <button id="reset" class="btn" type="button">Reset</button>
+        <a class="btn" href="/tools/video-storage/">← Back to Video &amp; Storage</a>
       </div>
     </section>
 
     <section class="card tool-card">
       <h2>Results</h2>
-      <div id="results" class="results">
+      <div id="results" class="results-grid">
         <div class="muted">Enter values and press Calculate.</div>
       </div>
     </section>
 
     <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
 
-    <div class="actions" style="margin-top:14px;">
-      <a class="btn" href="/tools/video-storage/">← Back to Video &amp; Storage</a>
-    </div>
-  
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
   </main>
 
-
-  <script src="/assets/analyzer.js"></script>
-  <script src="./script.js?v=004"></script>
+  <script src="/assets/analyzer.js?v=video-codec-efficiency-0422"></script>
+  <script src="./script.js?v=video-codec-efficiency-0422"></script>
 </body>
 </html>
-
 
 
 
