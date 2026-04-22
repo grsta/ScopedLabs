@@ -1,7 +1,11 @@
 (() => {
+  "use strict";
+
   const $ = (id) => document.getElementById(id);
 
   const els = {
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard"),
     cams: $("cams"),
     avgMbps: $("avgMbps"),
     motionPct: $("motionPct"),
@@ -16,6 +20,47 @@
 
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function safeNumber(value, fallback = 0) {
     if (
@@ -211,7 +256,7 @@
     if (els.analysisCopy) {
       els.analysisCopy.style.display = "";
       els.analysisCopy.innerHTML = `
-        <div class="results">
+        <div class="results-grid">
           <div class="result-row">
             <div class="result-label">Status</div>
             <div class="result-value">${status}</div>
@@ -367,7 +412,9 @@
         status,
         interpretation,
         dominantConstraint,
-        guidance
+        guidance,
+        existingChartRef: null,
+        existingWrapRef: null
       });
     } else {
       renderFallback(
@@ -454,58 +501,19 @@
     if (els.reset) els.reset.addEventListener("click", reset);
   }
 
-  init();
+  function boot() {
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
+
+    renderEmpty();
+    bindInvalidation();
+
+    if (els.calc) els.calc.addEventListener("click", calculate);
+    if (els.reset) els.reset.addEventListener("click", reset);
+
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+  }
+
+  window.addEventListener("DOMContentLoaded", boot);
 })();
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}

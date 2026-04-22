@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Advanced Storage Planner *ScopedLabs</title>
+  <title>Advanced Storage Planner • ScopedLabs</title>
   <meta
     name="description"
     content="Estimate storage ingest and retention under average and peak conditions for video systems."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
+  <link rel="stylesheet" href="/assets/style.css?v=video-advanced-storage-planner-0421" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,8 +17,37 @@
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0408"></script>
-  <script defer src="/assets/app.js?v=0408"></script>
+  <script defer src="/assets/auth.js?v=video-advanced-storage-planner-0421"></script>
+  <script defer src="/assets/app.js?v=video-advanced-storage-planner-0421"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background: rgba(0,0,0,0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255,255,255,0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="video-storage">
@@ -44,47 +73,39 @@
       Advanced Storage Planner
     </div>
 
-    
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-<h1>Advanced Storage Planner</h1>
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
 
-    <p class="subhead">
-      Estimate average ingest, peak ingest, retention compression, and bitrate headroom
-      under planning-grade assumptions.
+    <h1>Advanced Storage Planner</h1>
+
+    <p class="tool-best-for">
+      <strong>Best for:</strong> modeling dense systems, retention cliffs, bitrate spikes,
+      and storage headroom under average versus peak behavior.
     </p>
 
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> modeling dense systems, retention cliffs, bitrate spikes,
-        and storage headroom under average versus peak behavior.
-      </p>
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+      <div class="pill-row">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+
+      <h2 class="h2">🔒 Locked</h2>
+      <p class="muted">This tool is included with Pro access for this category.</p>
+
+      <p class="muted"><strong>What this models</strong></p>
+      <ul class="muted">
+        <li>Average versus peak ingest under real-duty recording behavior</li>
+        <li>Retention pressure against a required target window</li>
+        <li>How much bitrate headroom exists before the current plan fails</li>
+      </ul>
+
+      <div class="actions">
+        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+        <a class="btn btn-primary" href="/upgrade/?category=video-storage#checkout">Unlock Pro</a>
+      </div>
     </section>
 
-    
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
-
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
-
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>Advanced analyzer workflow for video-storage</li>
-          <li>Scenario comparison and deeper engineering guidance</li>
-          <li>Pro-only decision support output</li>
-        </ul>
-
-        <div class="actions">
-          <a class="btn" href="/tools/video-storage/">Back to Category</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
-
-<section id="toolCard" class="card tool-card">
+    <section id="toolCard" class="card tool-card" style="display:none;">
       <h2>Inputs</h2>
 
       <p class="muted" style="margin-top:-4px;">
@@ -96,12 +117,7 @@
         <div class="field">
           <div class="label-row">
             <label class="muted" for="cams">Camera count</label>
-            <button
-              class="hint"
-              type="button"
-              data-title="Camera count"
-              data-help="Total cameras contributing to the recording workload."
-            >?</button>
+            <button class="hint" type="button" data-title="Camera count" data-help="Total cameras contributing to the recording workload.">?</button>
           </div>
           <input id="cams" type="number" min="1" step="1" value="16" />
         </div>
@@ -109,12 +125,7 @@
         <div class="field">
           <div class="label-row">
             <label class="muted" for="avgMbps">Average bitrate per camera (Mbps)</label>
-            <button
-              class="hint"
-              type="button"
-              data-title="Average bitrate per camera"
-              data-help="Typical sustained bitrate per camera under normal operating conditions. Use realistic planning values, not idealized marketing numbers."
-            >?</button>
+            <button class="hint" type="button" data-title="Average bitrate per camera" data-help="Typical sustained bitrate per camera under normal operating conditions. Use realistic planning values, not idealized marketing numbers.">?</button>
           </div>
           <input id="avgMbps" type="number" min="0.1" step="0.1" value="4" />
         </div>
@@ -122,12 +133,7 @@
         <div class="field">
           <div class="label-row">
             <label class="muted" for="motionPct">Motion / recording duty (%)</label>
-            <button
-              class="hint"
-              type="button"
-              data-title="Motion / recording duty"
-              data-help="100% means continuous recording. Lower values approximate the portion of the day the system actually records at the modeled bitrate."
-            >?</button>
+            <button class="hint" type="button" data-title="Motion / recording duty" data-help="100% means continuous recording. Lower values approximate the portion of the day the system actually records at the modeled bitrate.">?</button>
           </div>
           <input id="motionPct" type="number" min="1" max="100" step="1" value="100" />
         </div>
@@ -135,12 +141,7 @@
         <div class="field">
           <div class="label-row">
             <label class="muted" for="peakMult">Peak multiplier (x)</label>
-            <button
-              class="hint"
-              type="button"
-              data-title="Peak multiplier"
-              data-help="How much bitrate can spike above the average case during more difficult scenes, noise, IR activity, motion bursts, or codec stress."
-            >?</button>
+            <button class="hint" type="button" data-title="Peak multiplier" data-help="How much bitrate can spike above the average case during more difficult scenes, noise, IR activity, motion bursts, or codec stress.">?</button>
           </div>
           <input id="peakMult" type="number" min="1" step="0.05" value="1.5" />
         </div>
@@ -148,12 +149,7 @@
         <div class="field">
           <div class="label-row">
             <label class="muted" for="usableTb">Usable storage (TB)</label>
-            <button
-              class="hint"
-              type="button"
-              data-title="Usable storage"
-              data-help="Usable storage after RAID, filesystem, and platform overhead. Enter decimal TB as the system is planned."
-            >?</button>
+            <button class="hint" type="button" data-title="Usable storage" data-help="Usable storage after RAID, filesystem, and platform overhead. Enter decimal TB as the system is planned.">?</button>
           </div>
           <input id="usableTb" type="number" min="0.1" step="0.1" value="40" />
         </div>
@@ -161,12 +157,7 @@
         <div class="field">
           <div class="label-row">
             <label class="muted" for="targetDays">Target retention (days)</label>
-            <button
-              class="hint"
-              type="button"
-              data-title="Target retention"
-              data-help="Minimum required retention. The tool checks both average and peak behavior against this target."
-            >?</button>
+            <button class="hint" type="button" data-title="Target retention" data-help="Minimum required retention. The tool checks both average and peak behavior against this target.">?</button>
           </div>
           <input id="targetDays" type="number" min="1" step="1" value="30" />
         </div>
@@ -186,7 +177,7 @@
 
     <section class="card tool-card">
       <h2>Results</h2>
-      <div id="results" class="results">
+      <div id="results" class="results-grid">
         <div class="muted">Enter values and press Calculate.</div>
       </div>
     </section>
@@ -198,8 +189,8 @@
     </footer>
   </main>
 
-  <script src="/assets/analyzer.js"></script>
-  <script src="./script.js?v=002"></script>
+  <script src="/assets/analyzer.js?v=video-advanced-storage-planner-0421"></script>
+  <script src="./script.js?v=video-advanced-storage-planner-0421"></script>
 </body>
 </html>
 
