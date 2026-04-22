@@ -1,24 +1,31 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "raid";
-const CATEGORY = "video-storage";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
-
 (() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
+  "use strict";
+
+  const CATEGORY = "video-storage";
+  const STEP = "raid-impact";
+  const PREVIOUS_STEP = "retention";
+  const NEXT_URL = "/tools/video-storage/retention-survivability/";
+  const LANE = "v1";
+
+  const FLOW_KEYS = {
+    bitrate: "scopedlabs:pipeline:video-storage:bitrate",
+    storage: "scopedlabs:pipeline:video-storage:storage",
+    retention: "scopedlabs:pipeline:video-storage:retention",
+    raid: "scopedlabs:pipeline:video-storage:raid",
+    survivability: "scopedlabs:pipeline:video-storage:survivability"
+  };
+
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
 
   const $ = (id) => document.getElementById(id);
 
-  const yearEl = document.querySelector("[data-year]");
-  if (yearEl) yearEl.textContent = new Date().getFullYear();
-
   const els = {
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard"),
     results: $("results"),
     analysisCopy: $("analysis-copy"),
     nextStepRow: $("next-step-row"),
-    toSurvivability: $("to-survivability"),
+    continueBtn: $("continue"),
     flowNote: $("flow-note"),
     raidLevel: $("raidLevel"),
     driveCount: $("driveCount"),
@@ -33,6 +40,47 @@ const FLOW_KEYS = {
 
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function num(v) {
     if (
@@ -66,27 +114,11 @@ const FLOW_KEYS = {
   }
 
   function hideNext() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.nextStepRow, els.toSurvivability);
-      return;
-    }
     if (els.nextStepRow) els.nextStepRow.style.display = "none";
-    if (els.toSurvivability) els.toSurvivability.disabled = true;
   }
 
   function showNext() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.nextStepRow, els.toSurvivability);
-      return;
-    }
     if (els.nextStepRow) els.nextStepRow.style.display = "flex";
-    if (els.toSurvivability) els.toSurvivability.disabled = false;
   }
 
   function clearAnalysisBlock() {
@@ -148,6 +180,77 @@ const FLOW_KEYS = {
     }
   }
 
+  function clearStored() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.raid);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
+  }
+
+  function readPreviousFlow() {
+    try {
+      const primary = JSON.parse(sessionStorage.getItem(FLOW_KEYS.retention) || "null");
+      if (primary && primary.category === CATEGORY) return primary;
+    } catch {}
+
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === PREVIOUS_STEP) return legacy;
+    } catch {}
+
+    return null;
+  }
+
+  function renderFlowNote() {
+    const imported = readPreviousFlow();
+
+    if (!imported || !els.flowNote) {
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
+      return;
+    }
+
+    const data = imported.data || {};
+    const targetDays = Number(data.targetDays);
+    const storageGb = Number(
+      data.storageGb ??
+      data.storage_total_gb ??
+      data.requiredStorageGb ??
+      0
+    );
+
+    if (Number.isFinite(targetDays) && targetDays > 0) {
+      els.targetDays.value = String(Math.round(targetDays));
+    }
+
+    if (Number.isFinite(storageGb) && storageGb > 0) {
+      els.requiredStorageGb.value = storageGb.toFixed(1);
+    }
+
+    const parts = [];
+    if (Number.isFinite(targetDays) && targetDays > 0) {
+      parts.push(`Target Retention: ${Math.round(targetDays)} days`);
+    }
+    if (Number.isFinite(storageGb) && storageGb > 0) {
+      parts.push(`Required Storage: ${(storageGb / 1000).toFixed(2)} TB`);
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Step 4 — Using Retention Planner results:</strong><br>
+      ${parts.join(" | ")}
+      <br><br>
+      This step checks whether the selected RAID profile can actually support the required retention target once parity, mirroring, spares, and platform overhead are applied.
+    `;
+  }
+
   function invalidate() {
     clearStored();
     hideNext();
@@ -159,10 +262,9 @@ const FLOW_KEYS = {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.nextStepRow,
-        continueBtnEl: els.toSurvivability,
-        category: "video-storage",
-        step: "raid-impact",
+        category: CATEGORY,
+        step: STEP,
+        lane: LANE,
         emptyMessage: "Enter values and press Calculate."
       });
     } else {
@@ -170,55 +272,6 @@ const FLOW_KEYS = {
     }
 
     clearChart();
-  }
-
-  function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
-  }
-
-  function importFromRetention() {
-    const q = new URLSearchParams(window.location.search);
-
-    if (q.get("source") !== "retention") return null;
-
-    const imported = {
-      targetDays: q.get("days"),
-      storageGb: num(q.get("storage_total_gb"))
-    };
-
-    if (imported.targetDays) els.targetDays.value = imported.targetDays;
-    if (imported.storageGb > 0) els.requiredStorageGb.value = imported.storageGb;
-
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: "video-storage",
-        step: "raid-impact",
-        title: "System Context",
-        intro: "Imported from Retention Planner. Review the capacity assumptions, then verify whether the RAID set can carry the required retention target safely.",
-        customRows: [
-          {
-            label: "Imported target",
-            value: imported.targetDays ? `${imported.targetDays} days` : "—"
-          },
-          {
-            label: "Required storage",
-            value: imported.storageGb > 0 ? `${(imported.storageGb / 1000).toFixed(2)} TB` : "—"
-          }
-        ]
-      });
-    } else if (els.flowNote) {
-      els.flowNote.hidden = false;
-      els.flowNote.textContent =
-        imported.storageGb > 0
-          ? `Imported from Retention Planner. Required storage: ${(imported.storageGb / 1000).toFixed(2)} TB. Review values and click Calculate.`
-          : "Imported from Retention Planner. Review values and click Calculate.";
-    }
-
-    return imported;
   }
 
   function buildInterpretation(status, dominantConstraint, fitRatio, active, level) {
@@ -532,7 +585,9 @@ const FLOW_KEYS = {
         status,
         interpretation,
         dominantConstraint,
-        guidance
+        guidance,
+        existingChartRef: null,
+        existingWrapRef: null
       });
     } else {
       renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance);
@@ -582,16 +637,14 @@ const FLOW_KEYS = {
       usableTb: usableAfterOverheadTB.toFixed(2)
     });
 
-    if (els.toSurvivability) {
-      els.toSurvivability.href =
-        "/tools/video-storage/retention-survivability/?" + params.toString();
+    if (els.continueBtn) {
+      els.continueBtn.href = NEXT_URL + "?" + params.toString();
     }
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        category: "video-storage",
-        step: "raid-impact",
+    try {
+      const payload = {
+        category: CATEGORY,
+        step: STEP,
         data: {
           raidLevel: String(level),
           activeDrives: active,
@@ -603,8 +656,11 @@ const FLOW_KEYS = {
           status,
           dominantConstraint
         }
-      })
-    );
+      };
+
+      sessionStorage.setItem(FLOW_KEYS.raid, JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showNext();
   }
@@ -620,111 +676,55 @@ const FLOW_KEYS = {
 
     renderEmpty();
     hideNext();
-    importFromRetention();
+    renderFlowNote();
   }
 
-  els.calc.addEventListener("click", calculate);
-  els.reset.addEventListener("click", reset);
+  function bindInvalidation() {
+    [
+      els.raidLevel,
+      els.driveCount,
+      els.driveSizeTb,
+      els.hotSpares,
+      els.overheadPct,
+      els.targetDays,
+      els.requiredStorageGb
+    ].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+  }
 
-  [
-    "raidLevel",
-    "driveCount",
-    "driveSizeTb",
-    "hotSpares",
-    "overheadPct",
-    "targetDays",
-    "requiredStorageGb"
-  ].forEach((id) => {
-    const el = $(id);
-    if (!el) return;
-    el.addEventListener("input", invalidate);
-    el.addEventListener("change", invalidate);
-  });
+  function bind() {
+    if (els.calc) els.calc.addEventListener("click", calculate);
+    if (els.reset) els.reset.addEventListener("click", reset);
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const t = e.target;
-      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
-        e.preventDefault();
-        calculate();
+    bindInvalidation();
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+          e.preventDefault();
+          calculate();
+        }
       }
-    }
-  });
+    });
+  }
 
-  renderEmpty();
-  hideNext();
-  importFromRetention();
+  function boot() {
+    renderEmpty();
+    hideNext();
+    renderFlowNote();
+    bind();
+
+    const yearEl = document.querySelector("[data-year]");
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
+    boot();
+  });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
-  }
-
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});

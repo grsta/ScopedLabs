@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RAID Capacity &amp; Failure Impact *ScopedLabs</title>
+  <title>RAID Capacity &amp; Failure Impact • ScopedLabs</title>
   <meta
     name="description"
     content="Compute usable RAID capacity, retention fit, and survivability tradeoffs."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0181" />
+  <link rel="stylesheet" href="/assets/style.css?v=video-raid-impact-0422" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -17,8 +17,8 @@
     window.SL_SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0331"></script>
-  <script defer src="/assets/app.js?v=0331"></script>
+  <script defer src="/assets/auth.js?v=video-raid-impact-0422"></script>
+  <script defer src="/assets/app.js?v=video-raid-impact-0422"></script>
 
   <style>
     .results-grid {
@@ -37,11 +37,13 @@
       background: rgba(0, 0, 0, 0.18);
     }
 
-    .result-row .k {
+    .result-row .k,
+    .result-label {
       color: rgba(255, 255, 255, 0.70);
     }
 
-    .result-row .v {
+    .result-row .v,
+    .result-value {
       font-weight: 800;
       text-align: right;
     }
@@ -67,7 +69,7 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="video-storage" data-step="raid" data-lane="v1">
+<body data-tier="pro" data-category="video-storage" data-step="raid-impact" data-lane="v1">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/">
@@ -75,246 +77,175 @@
         <span class="brand-name">ScopedLabs</span>
       </a>
 
-      <nav class="nav">
-        <a class="nav-link" href="/">Home</a>
-        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
-        <a class="nav-link" href="/about/">About</a>
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-pill" href="/about/">About</a>
       </nav>
     </div>
   </header>
 
-  <main class="page">
-    <div class="container">
-
-      <div class="crumbs">
-        <a href="/tools/">Tools</a>
-        <span class="sep">/</span>
-        <a href="/tools/video-storage/">Video &amp; Storage</a>
-        <span class="sep">/</span>
-        <span>RAID Capacity &amp; Failure Impact</span>
-      </div>
-
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro tool</span>
-      </div>
-
-      <h1 style="margin-top: 10px;">RAID Capacity &amp; Failure Impact</h1>
-      <div id="pipeline"></div>
-      
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of RAID Capacity &amp; Failure Impact.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">Understand usable capacity, failure tolerance, and retention fit.</p>
-      <p class="tool-best-for">
-        <strong>Best for:</strong> sizing RAID groups against retention requirements and comparing tradeoffs across RAID levels.
-      </p>
-
-      <div id="flow-note" class="flow-note" hidden>
-        Imported from Retention Planner. Review values and click Calculate.
-      </div>
-
-      <section class="card" style="margin-top: 14px;">
-        <p class="muted" style="margin: 0;">
-          Planning-grade RAID math for quick storage design. Assumes equal drive sizes.
-          Results show <strong>raw capacity</strong>, <strong>usable capacity</strong>, <strong>fault tolerance</strong>,
-          and whether the array can satisfy the imported retention target.
-        </p>
-      </section>
-
-      
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
-
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
-
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
-        </ul>
-
-        <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
-
-      <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
-        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
-        <p class="muted" style="margin-top: -4px;">
-          Uses common RAID planning rules. Final values shown in TB and TiB for easier real-world comparison.
-        </p>
-
-        <div class="form-grid" style="margin-top: 14px;">
-          <div class="field">
-            <div class="label-row">
-              <label for="raidLevel">RAID level</label>
-              <button
-                type="button"
-                class="hint"
-                data-title="RAID level"
-                data-help="Select a common RAID planning rule. RAID 10 assumes mirrored pairs."
-                aria-label="Help: RAID level"
-              >?</button>
-            </div>
-            <select id="raidLevel">
-              <option value="0">RAID 0 (stripe)</option>
-              <option value="1">RAID 1 (mirror)</option>
-              <option value="5" selected>RAID 5 (single parity)</option>
-              <option value="6">RAID 6 (dual parity)</option>
-              <option value="10">RAID 10 (striped mirrors)</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="driveCount">Drive count</label>
-              <button
-                type="button"
-                class="hint"
-                data-title="Drive count"
-                data-help="Total drives in the array group, before subtracting any hot spares."
-                aria-label="Help: Drive count"
-              >?</button>
-            </div>
-            <input id="driveCount" type="number" min="2" step="1" value="8" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="driveSizeTb">Drive size (TB)</label>
-              <button
-                type="button"
-                class="hint"
-                data-title="Drive size"
-                data-help="Per-drive decimal TB as labeled by the drive manufacturer."
-                aria-label="Help: Drive size"
-              >?</button>
-            </div>
-            <input id="driveSizeTb" type="number" min="0.1" step="0.1" value="10" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="hotSpares">Hot spares</label>
-              <button
-                type="button"
-                class="hint"
-                data-title="Hot spares"
-                data-help="Reserved drives subtracted from active capacity for conservative planning."
-                aria-label="Help: Hot spares"
-              >?</button>
-            </div>
-            <input id="hotSpares" type="number" min="0" step="1" value="0" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="overheadPct">Platform overhead (%)</label>
-              <button
-                type="button"
-                class="hint"
-                data-title="Platform overhead"
-                data-help="Filesystem, metadata, snapshots, reserve space, or other platform overhead."
-                aria-label="Help: Platform overhead"
-              >?</button>
-            </div>
-            <input id="overheadPct" type="number" min="0" max="50" step="0.5" value="8" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="targetDays">Target retention (days)</label>
-              <button
-                type="button"
-                class="hint"
-                data-title="Target retention"
-                data-help="Used to estimate maximum daily ingest while still meeting the selected retention target."
-                aria-label="Help: Target retention"
-              >?</button>
-            </div>
-            <input id="targetDays" type="number" min="1" step="1" value="30" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="requiredStorageGb">Imported required storage (GB)</label>
-              <button
-                type="button"
-                class="hint"
-                data-title="Imported required storage"
-                data-help="If you arrived from Retention Planner, this value is carried in automatically."
-                aria-label="Help: Imported required storage"
-              >?</button>
-            </div>
-            <input id="requiredStorageGb" type="number" min="0" step="0.1" value="0" />
-          </div>
-        </div>
-
-        <div class="btn-row" style="margin-top: 14px;">
-          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
-          <button id="reset" class="btn" type="button">Reset</button>
-        </div>
-
-        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-          <h3 class="h3" style="margin-top: 0;">Results</h3>
-          <div id="results" class="results-grid" aria-live="polite">
-            <div class="muted">Enter values and press Calculate.</div>
-          </div>
-
-          <p class="mini-note">
-            Notes: This is planning math, not vendor-specific behavior. Real systems may reserve more
-            space for metadata, rebuild safety, snapshots, and filesystem limits.
-          </p>
-        </div>
-
-        <section id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
-
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
-        </div>
-
-        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-          <a id="to-survivability" class="btn btn-primary" href="#">
-            Continue → Retention Survivability
-          </a>
-        </div>
-      
-        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-
-          <a id="continue" class="btn btn-primary" href="/tools/video-storage/survivability/">
-            Continue →
-          </a>
-        </div>
-
-      </section>
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/video-storage/">Video &amp; Storage</a>
+      <span class="sep">/</span>
+      <span>RAID Capacity &amp; Failure Impact</span>
     </div>
+
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
+
+    <h1 style="margin-top: 10px;">RAID Capacity &amp; Failure Impact</h1>
+    <div id="pipeline"></div>
+
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool continues the Video &amp; Storage design flow</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        Use this step to translate retention planning into an actual protected storage design.
+        This is where raw drive count turns into usable capacity, redundancy behavior, and rebuild exposure.
+      </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        It helps answer whether the selected RAID set can truly support the imported retention target once parity,
+        mirroring, spares, and overhead are accounted for.
+      </p>
+    </section>
+
+    <p class="tool-best-for">
+      <strong>Best for:</strong> sizing RAID groups against retention requirements and comparing tradeoffs across RAID levels.
+    </p>
+
+    <div id="flow-note" class="flow-note" hidden></div>
+
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+      <div class="pill-row">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+
+      <h2 class="h2">🔒 Locked</h2>
+      <p class="muted">This tool is included with Pro access for this category.</p>
+
+      <p class="muted"><strong>What this models</strong></p>
+      <ul class="muted">
+        <li>How RAID level changes usable storage after parity, mirroring, and hot spares</li>
+        <li>Whether the array can support the imported retention target with real overhead applied</li>
+        <li>How capacity efficiency and rebuild exposure trade against fault tolerance</li>
+      </ul>
+
+      <div class="actions">
+        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+        <a class="btn btn-primary" href="/upgrade/?category=video-storage#checkout">Unlock Pro</a>
+      </div>
+    </section>
+
+    <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
+      <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
+
+      <div class="form-grid" style="margin-top: 14px;">
+        <div class="field">
+          <div class="label-row">
+            <label for="raidLevel">RAID level</label>
+            <button type="button" class="hint" data-title="RAID level" data-help="Select a common RAID planning rule. RAID 10 assumes mirrored pairs." aria-label="Help: RAID level">?</button>
+          </div>
+          <select id="raidLevel">
+            <option value="0">RAID 0 (stripe)</option>
+            <option value="1">RAID 1 (mirror)</option>
+            <option value="5" selected>RAID 5 (single parity)</option>
+            <option value="6">RAID 6 (dual parity)</option>
+            <option value="10">RAID 10 (striped mirrors)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="driveCount">Drive count</label>
+            <button type="button" class="hint" data-title="Drive count" data-help="Total drives in the array group, before subtracting any hot spares." aria-label="Help: Drive count">?</button>
+          </div>
+          <input id="driveCount" type="number" min="2" step="1" value="8" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="driveSizeTb">Drive size (TB)</label>
+            <button type="button" class="hint" data-title="Drive size" data-help="Per-drive decimal TB as labeled by the drive manufacturer." aria-label="Help: Drive size">?</button>
+          </div>
+          <input id="driveSizeTb" type="number" min="0.1" step="0.1" value="10" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="hotSpares">Hot spares</label>
+            <button type="button" class="hint" data-title="Hot spares" data-help="Reserved drives subtracted from active capacity for conservative planning." aria-label="Help: Hot spares">?</button>
+          </div>
+          <input id="hotSpares" type="number" min="0" step="1" value="0" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="overheadPct">Platform overhead (%)</label>
+            <button type="button" class="hint" data-title="Platform overhead" data-help="Filesystem, metadata, snapshots, reserve space, or other platform overhead." aria-label="Help: Platform overhead">?</button>
+          </div>
+          <input id="overheadPct" type="number" min="0" max="50" step="0.5" value="8" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="targetDays">Target retention (days)</label>
+            <button type="button" class="hint" data-title="Target retention" data-help="Used to estimate maximum daily ingest while still meeting the selected retention target." aria-label="Help: Target retention">?</button>
+          </div>
+          <input id="targetDays" type="number" min="1" step="1" value="30" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="requiredStorageGb">Imported required storage (GB)</label>
+            <button type="button" class="hint" data-title="Imported required storage" data-help="If you arrived from Retention Planner, this value is carried in automatically." aria-label="Help: Imported required storage">?</button>
+          </div>
+          <input id="requiredStorageGb" type="number" min="0" step="0.1" value="0" />
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top: 14px;">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+        <a class="btn" href="/tools/video-storage/">Back to Video &amp; Storage</a>
+      </div>
+
+      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Results</h3>
+        <div id="results" class="results-grid" aria-live="polite">
+          <div class="muted">Enter values and press Calculate.</div>
+        </div>
+
+        <p class="mini-note">
+          Notes: This is planning math, not vendor-specific behavior. Real systems may reserve more
+          space for metadata, rebuild safety, snapshots, and filesystem limits.
+        </p>
+      </section>
+
+      <section id="analysis-copy" class="card tool-card" style="display:none; margin-top:14px;"></section>
+
+      <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
+        <a id="continue" class="btn btn-primary" href="/tools/video-storage/retention-survivability/">
+          Continue → Retention Survivability
+        </a>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
   </main>
 
-  
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=raid-016"></script>
-
+  <script src="/assets/tool-flow.js?v=video-raid-impact-0422"></script>
+  <script src="/assets/catalog.js?v=video-raid-impact-0422"></script>
+  <script src="/assets/pipelines.js?v=video-raid-impact-0422"></script>
+  <script src="/assets/pipeline-state.js?v=video-raid-impact-0422"></script>
+  <script src="/assets/pipeline.js?v=video-raid-impact-0422"></script>
+  <script src="/assets/analyzer.js?v=video-raid-impact-0422"></script>
+  <script src="./script.js?v=video-raid-impact-0422"></script>
 </body>
 </html>
