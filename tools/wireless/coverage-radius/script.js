@@ -1,29 +1,24 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "wireless";
   const STEP = "coverage-radius";
   const NEXT_URL = "/tools/wireless/channel-overlap/";
+  const LANE = "v1";
 
-  const els = {
-    band: document.getElementById("band"),
-    environment: document.getElementById("environment"),
-    eirp: document.getElementById("eirp"),
-    targetRssi: document.getElementById("targetRssi"),
-    clientClass: document.getElementById("clientClass"),
-    calc: document.getElementById("calc"),
-    reset: document.getElementById("reset"),
-    results: document.getElementById("results"),
-    analysisCopy: document.getElementById("analysis-copy"),
-    flowNote: document.getElementById("flow-note"),
-    continueWrap: document.getElementById("continue-wrap"),
-    continueBtn: document.getElementById("continue")
+  const FLOW_KEYS = {
+    "coverage-radius": "scopedlabs:pipeline:wireless:coverage-radius",
+    "channel-overlap": "scopedlabs:pipeline:wireless:channel-overlap",
+    "noise-floor-margin": "scopedlabs:pipeline:wireless:noise-floor-margin",
+    "client-density": "scopedlabs:pipeline:wireless:client-density",
+    "ap-capacity": "scopedlabs:pipeline:wireless:ap-capacity",
+    "link-budget": "scopedlabs:pipeline:wireless:link-budget",
+    "mesh-backhaul": "scopedlabs:pipeline:wireless:mesh-backhaul",
+    "ptp-wireless-link": "scopedlabs:pipeline:wireless:ptp-wireless-link",
+    "roaming-thresholds": "scopedlabs:pipeline:wireless:roaming-thresholds"
   };
+
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
 
   const BAND_BASE_LOSS = {
     "2.4": 40,
@@ -41,6 +36,21 @@ const FLOW_KEYS = {
     robust: 0,
     typical: 4,
     weak: 8
+  };
+
+  const els = {
+    band: document.getElementById("band"),
+    environment: document.getElementById("environment"),
+    eirp: document.getElementById("eirp"),
+    targetRssi: document.getElementById("targetRssi"),
+    clientClass: document.getElementById("clientClass"),
+    calc: document.getElementById("calc"),
+    reset: document.getElementById("reset"),
+    results: document.getElementById("results"),
+    analysisCopy: document.getElementById("analysis-copy"),
+    flowNote: document.getElementById("flow-note"),
+    continueWrap: document.getElementById("continue-wrap"),
+    continueBtn: document.getElementById("continue")
   };
 
   function safeNumber(value, fallback = NaN) {
@@ -65,31 +75,18 @@ const FLOW_KEYS = {
   }
 
   function hideContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    els.continueWrap.style.display = "none";
-    els.continueBtn.disabled = true;
+    if (els.continueWrap) els.continueWrap.style.display = "none";
   }
 
   function showContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    els.continueWrap.style.display = "";
-    els.continueBtn.disabled = false;
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
-  function clearStoredResult() {
-    sessionStorage.removeItem(STORAGE_KEY);
+  function clearWirelessPipelineState() {
+    try {
+      Object.values(FLOW_KEYS).forEach((key) => sessionStorage.removeItem(key));
+      sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {}
   }
 
   function clearAnalysisBlock() {
@@ -111,8 +108,21 @@ const FLOW_KEYS = {
     clearAnalysisBlock();
   }
 
+  function renderFlowNote() {
+    if (!els.flowNote) return;
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+  }
+
   function invalidate() {
-    clearStoredResult();
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
+
     hideContinue();
 
     if (
@@ -122,10 +132,9 @@ const FLOW_KEYS = {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         category: CATEGORY,
         step: STEP,
+        lane: LANE,
         emptyMessage: "Enter values and press Calculate."
       });
     } else {
@@ -227,47 +236,6 @@ const FLOW_KEYS = {
     return `Use a more conservative RSSI target or denser layout before continuing. The current edge assumption is too loose to treat as comfortable.`;
   }
 
-  function loadPriorContext() {
-    els.flowNote.style.display = "none";
-    els.flowNote.innerHTML = "";
-
-    let saved = null;
-    try {
-      saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-    } catch {
-      saved = null;
-    }
-
-    if (!saved || saved.category !== CATEGORY || saved.step === STEP) return;
-
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: CATEGORY,
-        step: STEP,
-        title: "System Context",
-        intro:
-          "This is the first wireless planning step. Establish a realistic cell radius first so overlap, density, and capacity decisions are built on the same coverage assumption.",
-        customRows: [
-          {
-            label: "Prior wireless step",
-            value: saved.step || "—"
-          }
-        ]
-      });
-      return;
-    }
-
-    els.flowNote.innerHTML = `
-      <strong>Carried over context</strong><br>
-      Prior wireless step: ${saved.step}
-    `;
-    els.flowNote.style.display = "";
-  }
-
   function calculate() {
     const band = els.band.value;
     const environment = els.environment.value;
@@ -279,7 +247,6 @@ const FLOW_KEYS = {
       els.results.innerHTML = `<div class="muted">Enter valid numeric values and press Calculate.</div>`;
       clearAnalysisBlock();
       hideContinue();
-      clearStoredResult();
       return;
     }
 
@@ -399,28 +366,32 @@ const FLOW_KEYS = {
       `).join("");
     }
 
-    const payload = {
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        band,
-        bandLabel: getBandLabel(band),
-        environment,
-        environmentLabel: getEnvironmentLabel(environment),
-        eirpDbm: boundedEirp,
-        targetRssiDbm: boundedTarget,
-        clientClass,
-        clientClassLabel: getClientLabel(clientClass),
-        estimatedRadiusFt: Number(radiusFt.toFixed(1)),
-        estimatedDiameterFt: Number(diameterFt.toFixed(1)),
-        estimatedCellAreaSqFt: Number(cellAreaSqFt.toFixed(0)),
-        coverageClass,
-        status,
-        dominantConstraint
-      }
-    };
+    try {
+      const payload = {
+        category: CATEGORY,
+        step: STEP,
+        data: {
+          band,
+          bandLabel: getBandLabel(band),
+          environment,
+          environmentLabel: getEnvironmentLabel(environment),
+          eirpDbm: boundedEirp,
+          targetRssiDbm: boundedTarget,
+          clientClass,
+          clientClassLabel: getClientLabel(clientClass),
+          estimatedRadiusFt: Number(radiusFt.toFixed(1)),
+          estimatedDiameterFt: Number(diameterFt.toFixed(1)),
+          estimatedCellAreaSqFt: Number(cellAreaSqFt.toFixed(0)),
+          coverageClass,
+          status,
+          dominantConstraint
+        }
+      };
 
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      sessionStorage.setItem(FLOW_KEYS[STEP], JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
+
     showContinue();
   }
 
@@ -430,14 +401,16 @@ const FLOW_KEYS = {
     els.eirp.value = "23";
     els.targetRssi.value = "-67";
     els.clientClass.value = "typical";
-    clearStoredResult();
+
+    clearWirelessPipelineState();
     hideContinue();
     renderEmpty();
-    loadPriorContext();
+    renderFlowNote();
   }
 
   function bindInvalidation() {
     [els.band, els.environment, els.eirp, els.targetRssi, els.clientClass].forEach((el) => {
+      if (!el) return;
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
@@ -452,36 +425,19 @@ const FLOW_KEYS = {
   }
 
   function init() {
+    clearWirelessPipelineState();
     hideContinue();
     renderEmpty();
-    loadPriorContext();
+    renderFlowNote();
     bindInvalidation();
     bindActions();
   }
 
-  init();
+  function boot() {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    init();
+  }
+
+  window.addEventListener("DOMContentLoaded", boot);
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
