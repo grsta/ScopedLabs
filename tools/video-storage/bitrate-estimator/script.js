@@ -210,7 +210,7 @@
     if (els.analysisCopy) {
       els.analysisCopy.style.display = "";
       els.analysisCopy.innerHTML = `
-        <div class="results">
+        <div class="results-grid">
           <div class="result-row">
             <span class="result-label">Status</span>
             <span class="result-value">${status}</span>
