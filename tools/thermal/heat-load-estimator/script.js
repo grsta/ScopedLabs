@@ -1,15 +1,24 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "thermal";
   const STEP = "heat-load-estimator";
   const NEXT_URL = "/tools/thermal/psu-efficiency-heat/";
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const W_TO_BTU = 3.412141633;
+
+  const FLOW_KEYS = {
+    "heat-load-estimator": "scopedlabs:pipeline:thermal:heat-load-estimator",
+    "psu-efficiency-heat": "scopedlabs:pipeline:thermal:psu-efficiency-heat",
+    "btu-converter": "scopedlabs:pipeline:thermal:btu-converter",
+    "rack-thermal-density": "scopedlabs:pipeline:thermal:rack-thermal-density",
+    "airflow-requirement": "scopedlabs:pipeline:thermal:airflow-requirement",
+    "fan-cfm-sizing": "scopedlabs:pipeline:thermal:fan-cfm-sizing",
+    "hot-cold-aisle": "scopedlabs:pipeline:thermal:hot-cold-aisle",
+    "ambient-rise": "scopedlabs:pipeline:thermal:ambient-rise",
+    "exhaust-temperature": "scopedlabs:pipeline:thermal:exhaust-temperature",
+    "room-cooling-capacity": "scopedlabs:pipeline:thermal:room-cooling-capacity"
+  };
 
   const $ = (id) => document.getElementById(id);
 
@@ -28,10 +37,7 @@ const FLOW_KEYS = {
   };
 
   function safeNumber(value, fallback = 0) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.safeNumber === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.safeNumber === "function") {
       return window.ScopedLabsAnalyzer.safeNumber(value, fallback);
     }
     const n = Number(value);
@@ -39,52 +45,38 @@ const FLOW_KEYS = {
   }
 
   function clamp(value, min, max) {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clamp === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clamp === "function") {
       return window.ScopedLabsAnalyzer.clamp(value, min, max);
     }
     return Math.min(max, Math.max(min, value));
   }
 
   function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
   }
 
   function hideContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-
-    els.continueWrap.style.display = "none";
-    els.continueBtn.disabled = true;
+    if (els.continueWrap) els.continueWrap.style.display = "none";
   }
 
   function showContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-
-    els.continueWrap.style.display = "";
-    els.continueBtn.disabled = false;
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
   function renderEmpty() {
-    els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    if (els.results) {
+      els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    }
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
     } else if (els.analysisCopy) {
       els.analysisCopy.style.display = "none";
@@ -92,24 +84,9 @@ const FLOW_KEYS = {
     }
   }
 
-  function loadPrior() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: CATEGORY,
-        step: STEP,
-        title: "System Context",
-        intro:
-          "This is the starting thermal step. Estimate the total working heat load first so every downstream airflow and cooling calculation is based on the same load basis.",
-        customRows: null
-      });
-      return;
-    }
-
-    els.flowNote.style.display = "none";
+  function renderFlowNote() {
+    if (!els.flowNote) return;
+    els.flowNote.hidden = true;
     els.flowNote.innerHTML = "";
   }
 
@@ -168,24 +145,20 @@ const FLOW_KEYS = {
   function invalidate() {
     clearStored();
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.invalidate === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.invalidate === "function") {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         category: CATEGORY,
         step: STEP,
         emptyMessage: "Enter values and press Calculate."
       });
-      return;
+    } else {
+      renderEmpty();
     }
 
     hideContinue();
-    renderEmpty();
+    renderFlowNote();
   }
 
   function calculate() {
@@ -204,14 +177,13 @@ const FLOW_KEYS = {
       utilPctRaw < 0 ||
       marginPctRaw < 0
     ) {
-      els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+      if (els.results) {
+        els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+      }
       hideContinue();
       clearStored();
 
-      if (
-        window.ScopedLabsAnalyzer &&
-        typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
-      ) {
+      if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
         window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
       }
       return;
@@ -251,10 +223,7 @@ const FLOW_KEYS = {
     let status = "HEALTHY";
     let dominantLabel = "Aggregate Equipment Load";
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.resolveStatus === "function") {
       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
         metrics,
         healthyMax: 1.0,
@@ -310,10 +279,7 @@ const FLOW_KEYS = {
       { label: "Heat Load", value: `${btu.toFixed(0)} BTU/hr` }
     ];
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderOutput === "function"
-    ) {
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderOutput === "function") {
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
@@ -322,52 +288,40 @@ const FLOW_KEYS = {
         status,
         interpretation,
         dominantConstraint,
-        guidance
+        guidance,
+        existingChartRef: null,
+        existingWrapRef: null,
+        chart: {
+          labels: [
+            "Aggregate Load",
+            "Utilization Heat",
+            "Planning Margin"
+          ],
+          values: [
+            Number((withMargin / 5000).toFixed(2)),
+            Number((utilPct / 70).toFixed(2)),
+            Number((marginPct / 25).toFixed(2))
+          ],
+          displayValues: [
+            `${withMargin.toFixed(0)} W`,
+            `${utilPct.toFixed(0)}%`,
+            `${marginPct.toFixed(0)}%`
+          ],
+          referenceValue: 1.0,
+          healthyMax: 1.0,
+          watchMax: 1.8,
+          axisTitle: "Thermal Load Pressure",
+          referenceLabel: "Comfort Band",
+          healthyLabel: "Healthy",
+          watchLabel: "Watch",
+          riskLabel: "Risk",
+          chartMax: Math.max(3, Number((withMargin / 5000).toFixed(2)) + 0.5)
+        }
       });
-    } else {
-      els.results.innerHTML = `
-        ${summaryRows.map((row) => `
-          <div class="result-row">
-            <div class="result-label">${row.label}</div>
-            <div class="result-value">${row.value}</div>
-          </div>
-        `).join("")}
-        ${derivedRows.map((row) => `
-          <div class="result-row">
-            <div class="result-label">${row.label}</div>
-            <div class="result-value">${row.value}</div>
-          </div>
-        `).join("")}
-      `;
-
-      if (els.analysisCopy) {
-        els.analysisCopy.style.display = "";
-        els.analysisCopy.innerHTML = `
-          <div class="results">
-            <div class="result-row">
-              <div class="result-label">Status</div>
-              <div class="result-value">${status}</div>
-            </div>
-            <div class="result-row">
-              <div class="result-label">Dominant Constraint</div>
-              <div class="result-value">${dominantConstraint}</div>
-            </div>
-            <div class="result-row">
-              <div class="result-label">Engineering Interpretation</div>
-              <div class="result-value">${interpretation}</div>
-            </div>
-            <div class="result-row">
-              <div class="result-label">Actionable Guidance</div>
-              <div class="result-value">${guidance}</div>
-            </div>
-          </div>
-        `;
-      }
     }
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
+    try {
+      const payload = {
         category: CATEGORY,
         step: STEP,
         data: {
@@ -382,8 +336,11 @@ const FLOW_KEYS = {
           status,
           dominantConstraint
         }
-      })
-    );
+      };
+
+      sessionStorage.setItem(FLOW_KEYS[STEP], JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showContinue();
   }
@@ -396,52 +353,38 @@ const FLOW_KEYS = {
     clearStored();
     hideContinue();
     renderEmpty();
-    loadPrior();
+    renderFlowNote();
   }
 
   function bindInvalidation() {
     [els.w, els.qty, els.util, els.m].forEach((el) => {
+      if (!el) return;
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
   }
 
-  function init() {
-    hideContinue();
-    loadPrior();
-    renderEmpty();
+  function bind() {
     bindInvalidation();
 
-    els.calc.onclick = calculate;
-    els.reset.onclick = reset;
-    els.continueBtn.onclick = () => {
-      window.location.href = NEXT_URL;
-    };
+    if (els.calc) els.calc.addEventListener("click", calculate);
+    if (els.reset) els.reset.addEventListener("click", reset);
+    if (els.continueBtn) {
+      els.continueBtn.addEventListener("click", () => {
+        window.location.href = NEXT_URL;
+      });
+    }
+  }
+
+  function init() {
+    hideContinue();
+    renderFlowNote();
+    renderEmpty();
+    bind();
   }
 
   init();
-})();
 
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
   const year = document.querySelector("[data-year]");
   if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
+})();
