@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Channel Overlap Checker • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=wireless-channel-overlap-003" />
+  <meta
+    name="description"
+    content="Check channel reuse pressure and overlap risk before moving into RF margin and client-loading decisions."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=wireless-channel-overlap-0423" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,8 +18,37 @@
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0407"></script>
-  <script defer src="/assets/app.js?v=0407"></script>
+  <script defer src="/assets/auth.js?v=wireless-channel-overlap-0423"></script>
+  <script defer src="/assets/app.js?v=wireless-channel-overlap-0423"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background: rgba(0,0,0,0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255,255,255,0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="wireless" data-step="channel-overlap" data-lane="v1">
@@ -42,39 +76,32 @@
       <span>Channel Overlap</span>
     </div>
 
-    
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--free">Free Tier</span>
-      </div>
-<h1>Channel Overlap Checker</h1>
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--free">Free Tier</span>
+    </div>
+
+    <h1>Channel Overlap Checker</h1>
 
     <div id="pipeline"></div>
 
-    
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of Channel Overlap Checker.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">
-      Planning check for channel reuse pressure and overlap risk before detailed survey tuning.
-    </p>
-
-    <div id="flow-note" class="card" style="display:none;"></div>
-
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> checking whether your planned coverage footprint is likely to create reuse pressure before moving into RF margin and client-loading decisions.
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool continues the Wireless design flow</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        Use this step to test whether the planned coverage footprint is likely to create unhealthy channel reuse before moving into RF margin analysis.
+      </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        It shows whether AP density, available channels, and channel width are pushing the design into avoidable co-channel contention.
       </p>
     </section>
 
-    <section id="toolCard" class="card tool-card">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> checking whether your planned coverage footprint is likely to create reuse pressure before moving into RF margin and client-loading decisions.
+    </p>
+
+    <div id="flow-note" class="flow-note" hidden></div>
+
+    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
       <h2>Inputs</h2>
 
       <div class="form-grid">
@@ -117,33 +144,31 @@
 
     <section class="card tool-card">
       <h2>Results</h2>
-      <div id="results" class="results">
+      <div id="results" class="results-grid">
         <div class="muted">Enter values and press Calculate.</div>
       </div>
     </section>
 
     <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
 
-    <div id="continue-wrap" class="card" style="display:none;">
-      <button id="continue" class="btn btn-primary" disabled type="button">
+    <div id="continue-wrap" class="btn-row" style="margin-top:12px; display:none;">
+      <a id="continue" class="btn btn-primary" href="/tools/wireless/noise-floor-margin/">
         Continue → Noise Floor Margin
-      </button>
+      </a>
     </div>
-  
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-</main>
 
-  
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=003"></script>
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
 
+  <script src="/assets/tool-flow.js?v=wireless-channel-overlap-0423"></script>
+  <script src="/assets/catalog.js?v=wireless-channel-overlap-0423"></script>
+  <script src="/assets/pipelines.js?v=wireless-channel-overlap-0423"></script>
+  <script src="/assets/pipeline-state.js?v=wireless-channel-overlap-0423"></script>
+  <script src="/assets/pipeline.js?v=wireless-channel-overlap-0423"></script>
+  <script src="/assets/analyzer.js?v=wireless-channel-overlap-0423"></script>
+  <script src="./script.js?v=wireless-channel-overlap-0423"></script>
 </body>
 </html>
 
