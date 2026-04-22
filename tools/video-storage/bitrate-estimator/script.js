@@ -14,6 +14,8 @@
     survivability: "scopedlabs:pipeline:video-storage:survivability"
   };
 
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
+
   const $ = (id) => document.getElementById(id);
 
   const els = {
@@ -65,26 +67,21 @@
     clearAnalysisBlock();
   }
 
-  function renderFlowNote() {
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderFlowNote === "function") {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        flowKey: FLOW_KEYS[STEP],
-        category: CATEGORY,
-        step: STEP,
-        lane: LANE,
-        title: "Flow Context",
-        intro:
-          "This is the first step of the Video & Storage pipeline. Establish the stream bitrate first so storage, retention, RAID impact, and survivability are all based on the same bandwidth assumption.",
-        customRows: null
-      });
-      return;
-    }
+  function clearEntryStepFlow() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.bitrate);
+      sessionStorage.removeItem(FLOW_KEYS.storage);
+      sessionStorage.removeItem(FLOW_KEYS.retention);
+      sessionStorage.removeItem(FLOW_KEYS.raid);
+      sessionStorage.removeItem(FLOW_KEYS.survivability);
+      sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {}
+  }
 
-    if (els.flowNote) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-    }
+  function renderFlowNote() {
+    if (!els.flowNote) return;
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
   }
 
   function syncResolutionFields() {
@@ -173,6 +170,14 @@
   }
 
   function invalidateResult() {
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.bitrate);
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
+
     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.invalidate === "function") {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
@@ -371,8 +376,8 @@
       );
     }
 
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.writeFlow === "function") {
-      window.ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
+    try {
+      const payload = {
         category: CATEGORY,
         step: STEP,
         data: {
@@ -389,8 +394,11 @@
           status,
           dominantConstraint
         }
-      });
-    }
+      };
+
+      sessionStorage.setItem(FLOW_KEYS.bitrate, JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showContinue();
   }
@@ -403,6 +411,8 @@
     els.codec.value = "h264";
     els.scene.value = "med";
     els.quality.value = "balanced";
+
+    clearEntryStepFlow();
     renderEmpty();
     hideContinue();
     renderFlowNote();
@@ -421,6 +431,7 @@
   }
 
   function init() {
+    clearEntryStepFlow();
     hideContinue();
     renderEmpty();
     renderFlowNote();
