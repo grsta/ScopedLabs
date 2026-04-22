@@ -1,162 +1,186 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Client Density Planner *ScopedLabs</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Client Density Planner • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate AP count from site size, client volume, and target clients per AP before moving into AP capacity planning."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0183" />
+  <link rel="stylesheet" href="/assets/style.css?v=wireless-client-density-0423" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
   </script>
+  <script defer src="/assets/auth.js?v=wireless-client-density-0423"></script>
+  <script defer src="/assets/app.js?v=wireless-client-density-0423"></script>
 
-  <script defer src="/assets/auth.js?v=0407"></script>
-  <script defer src="/assets/app.js?v=0407"></script>
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background: rgba(0,0,0,0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255,255,255,0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="wireless" data-step="client-density" data-lane="v1">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/wireless/">Wireless</a>
+      </nav>
+    </div>
+  </header>
 
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-dot"></span>
-      <span class="brand-text">ScopedLabs</span>
-    </a>
-    <nav class="site-nav">
-      <a class="nav-pill" href="/">Home</a>
-      <a class="nav-pill" href="/tools/">Tools</a>
-      <a class="nav-pill" href="/tools/wireless/">Wireless</a>
-    </nav>
-  </div>
-</header>
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a> /
+      <a href="/tools/wireless/">Wireless</a> /
+      Client Density
+    </div>
 
-<main class="container page">
-  <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/wireless/">Wireless</a> /
-    Client Density
-  </div>
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--pro">Pro Tier</span>
+    </div>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-<h1>Client Density Planner</h1>
+    <h1>Client Density Planner</h1>
 
-  <div id="pipeline"></div>
+    <div id="pipeline"></div>
 
-  
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of Client Density Planner.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">Estimate AP count based on area size and target client density.</p>
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool continues the Wireless design flow</h2>
+      <p class="muted" style="margin-bottom: 0;">
+        Use this step to translate site size and total user volume into a realistic AP-count starting point before you size throughput capacity.
+      </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        It helps show whether the design is being pushed more by crowding and density behavior or by the assumptions you are making about clients per AP.
+      </p>
+    </section>
 
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card">
     <p class="tool-best-for">
       <strong>Best for:</strong> translating site size and user count into a realistic AP-count starting point before capacity and overlap planning.
     </p>
-  </section>
 
-  
-      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
+    <div id="flow-note" class="flow-note" hidden></div>
 
-        <h2 class="h2">🔒 Locked</h2>
-        <p class="muted">This tool is included with Pro access for this category.</p>
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+      <div class="pill-row">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
 
-        <p class="muted"><strong>What this models</strong></p>
-        <ul class="muted">
-          <li>TODO: add tool-specific lock summary</li>
-          <li>TODO: add second bullet</li>
-          <li>TODO: add third bullet</li>
-        </ul>
+      <h2 class="h2">🔒 Locked</h2>
+      <p class="muted">This tool is included with Pro access for this category.</p>
 
-        <div class="actions">
-          <a class="btn" href="/tools/">Back to Tools</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-        </div>
-      </section>
+      <p class="muted"><strong>What this models</strong></p>
+      <ul class="muted">
+        <li>Estimated client density across the planned site area</li>
+        <li>Base AP count from clients-per-AP planning targets</li>
+        <li>Adjusted AP count after coverage/density planning factor is applied</li>
+      </ul>
 
-      <section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
+      <div class="actions">
+        <a class="btn" href="/tools/wireless/">Back to Wireless</a>
+        <a class="btn btn-primary" href="/upgrade/?category=wireless#checkout">Unlock Pro</a>
+      </div>
+    </section>
 
-    <div class="form-grid">
-      <label class="field">
-        <span class="label">Area Width (ft)</span>
-        <input id="w" type="number" value="120">
-      </label>
+    <section id="toolCard" class="card tool-card" style="display:none; margin-top:18px;">
+      <h2>Inputs</h2>
 
-      <label class="field">
-        <span class="label">Area Depth (ft)</span>
-        <input id="d" type="number" value="80">
-      </label>
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Area Width (ft)</span>
+          <input id="w" type="number" min="1" step="1" value="120" />
+        </label>
 
-      <label class="field">
-        <span class="label">Total Clients</span>
-        <input id="clients" type="number" value="200">
-      </label>
+        <label class="field">
+          <span class="label">Area Depth (ft)</span>
+          <input id="d" type="number" min="1" step="1" value="80" />
+        </label>
 
-      <label class="field">
-        <span class="label">Target Clients per AP</span>
-        <input id="cpa" type="number" value="35">
-      </label>
+        <label class="field">
+          <span class="label">Total Clients</span>
+          <input id="clients" type="number" min="1" step="1" value="200" />
+        </label>
 
-      <label class="field">
-        <span class="label">Coverage Factor (0.5–1.5)</span>
-        <input id="factor" type="number" step="0.05" value="1.0">
-      </label>
+        <label class="field">
+          <span class="label">Target Clients per AP</span>
+          <input id="cpa" type="number" min="1" step="1" value="35" />
+        </label>
+
+        <label class="field">
+          <span class="label">Coverage Factor (0.5–1.5)</span>
+          <input id="factor" type="number" min="0.5" max="1.5" step="0.05" value="1.0" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+        <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
+      </div>
+    </section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results-grid">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+    </section>
+
+    <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+
+    <div id="continue-wrap" class="btn-row" style="margin-top:12px; display:none;">
+      <a id="continue" class="btn btn-primary" href="/tools/wireless/ap-capacity/">
+        Continue → AP Capacity
+      </a>
     </div>
 
-    <div class="actions">
-      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
-      <button id="reset" class="btn" type="button">Reset</button>
-      <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
-    </div>
-  </section>
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results">
-      <div class="muted">Enter values and press Calculate.</div>
-    </div>
-  </section>
-
-  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
-
-  <div id="continue-wrap" class="card" style="display:none;">
-    <button id="continue" class="btn btn-primary" disabled type="button">
-      Continue → AP Capacity
-    </button>
-  </div>
-
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-</main>
-
-
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=006"></script>
-
+  <script src="/assets/tool-flow.js?v=wireless-client-density-0423"></script>
+  <script src="/assets/catalog.js?v=wireless-client-density-0423"></script>
+  <script src="/assets/pipelines.js?v=wireless-client-density-0423"></script>
+  <script src="/assets/pipeline-state.js?v=wireless-client-density-0423"></script>
+  <script src="/assets/pipeline.js?v=wireless-client-density-0423"></script>
+  <script src="/assets/analyzer.js?v=wireless-client-density-0423"></script>
+  <script src="./script.js?v=wireless-client-density-0423"></script>
 </body>
 </html>
