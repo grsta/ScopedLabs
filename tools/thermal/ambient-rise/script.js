@@ -111,18 +111,10 @@
   }
 
   function hideContinue() {
-  if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.hideContinue === "function") {
-    window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, null);
-    return;
+    if (els.continueWrap) els.continueWrap.style.display = "none";
   }
-  if (els.continueWrap) els.continueWrap.style.display = "none";
-}
 
   function showContinue() {
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.showContinue === "function") {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, null);
-      return;
-    }
     if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
@@ -265,16 +257,15 @@
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         category: CATEGORY,
         step: STEP,
         emptyMessage: "Enter values and press Calculate."
       });
     } else {
       renderEmpty();
-      hideContinue();
     }
+
+hideContinue();
 
     clearChart();
     renderFlowNote();
