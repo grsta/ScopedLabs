@@ -190,38 +190,16 @@
       els.capacityLossPct.value = round(lossPct, 1);
     }
 
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderFlowNote === "function") {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        flowKey: FLOW_KEYS[STEP],
-        category: CATEGORY,
-        step: STEP,
-        lane: LANE,
-        title: "Flow Context",
-        intro: "Imported from RAID Impact. This final step checks how degraded capacity and rebuild stress compress the promised retention window.",
-        customRows: [
-          {
-            label: "Imported target",
-            value: Number.isFinite(importedTargetDays) && importedTargetDays > 0 ? `${importedTargetDays} days` : "—"
-          },
-          {
-            label: "Required storage",
-            value: Number.isFinite(requiredStorageGb) && requiredStorageGb > 0 ? `${(requiredStorageGb / 1000).toFixed(2)} TB` : "—"
-          },
-          {
-            label: "Net usable array",
-            value: Number.isFinite(usableTb) && usableTb > 0 ? `${usableTb.toFixed(2)} TB` : "—"
-          }
-        ]
-      });
-    } else if (els.flowNote) {
+    if (els.flowNote) {
       els.flowNote.hidden = false;
-      if (Number.isFinite(requiredStorageGb) && requiredStorageGb > 0 && Number.isFinite(usableTb) && usableTb > 0) {
-        els.flowNote.textContent =
-          `Imported from RAID Impact. Required storage: ${(requiredStorageGb / 1000).toFixed(2)} TB. Net usable array: ${usableTb.toFixed(2)} TB. Review values and click Calculate.`;
-      } else {
-        els.flowNote.textContent = "Imported from RAID Impact. Review values and click Calculate.";
-      }
+      els.flowNote.innerHTML = `
+        <strong>Final Step — Using RAID Impact results:</strong><br>
+        Target: ${Number.isFinite(importedTargetDays) && importedTargetDays > 0 ? `${importedTargetDays} days` : "—"} |
+        Required Storage: ${Number.isFinite(requiredStorageGb) && requiredStorageGb > 0 ? `${(requiredStorageGb / 1000).toFixed(2)} TB` : "—"} |
+        Net Usable Array: ${Number.isFinite(usableTb) && usableTb > 0 ? `${usableTb.toFixed(2)} TB` : "—"}
+        <br><br>
+        This final step checks how degraded capacity, rebuild stress, and reserve loss compress the promised retention window under failure conditions.
+      `;
     }
   }
 
