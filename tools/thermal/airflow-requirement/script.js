@@ -67,21 +67,11 @@
   }
 
   function hideContinue() {
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.hideContinue === "function") {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
     if (els.continueWrap) els.continueWrap.style.display = "none";
-    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function showContinue() {
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.showContinue === "function") {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
     if (els.continueWrap) els.continueWrap.style.display = "flex";
-    if (els.continueBtn) els.continueBtn.disabled = false;
   }
 
   function renderEmpty() {
