@@ -1,16 +1,20 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const STEP = "storage";
-const CATEGORY = "video-storage";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  const CATEGORY = "video-storage";
+  const STEP = "storage";
+  const PREVIOUS_STEP = "bitrate";
+  const NEXT_URL = "/tools/video-storage/retention-planner/";
+  const LANE = "v1";
 
-(function () {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
+  const FLOW_KEYS = {
+    bitrate: "scopedlabs:pipeline:video-storage:bitrate",
+    storage: "scopedlabs:pipeline:video-storage:storage",
+    retention: "scopedlabs:pipeline:video-storage:retention",
+    raid: "scopedlabs:pipeline:video-storage:raid",
+    survivability: "scopedlabs:pipeline:video-storage:survivability"
+  };
 
-  const y = document.querySelector("[data-year]");
-  if (y) y.textContent = new Date().getFullYear();
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
+  const MbitPerSec_to_GiBperDay = (1e6 * 86400) / 8 / (1024 ** 3);
 
   const $ = (id) => document.getElementById(id);
 
@@ -23,16 +27,12 @@ const FLOW_KEYS = {
     overhead: $("overhead"),
     motionField: $("motionField"),
     nextStepRow: $("next-step-row"),
-    toRetention: $("to-retention"),
+    continueBtn: $("continue"),
     flowNote: $("flow-note"),
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
-    analysisCopy: $("analysis-copy"),
-    perCamDay: $("perCamDay"),
-    totalDay: $("totalDay"),
-    totalRetention: $("totalRetention"),
-    statusText: $("statusText")
+    analysisCopy: $("analysis-copy")
   };
 
   function safeNumber(value, fallback = 0) {
@@ -62,37 +62,29 @@ const FLOW_KEYS = {
     return `${(gib / 1024).toFixed(2)} TiB`;
   }
 
-  const MbitPerSec_to_GiBperDay = (1e6 * 86400) / 8 / (1024 ** 3);
-
   function syncMotion() {
     const isMotion = els.mode.value === "motion";
     if (els.motionField) els.motionField.style.display = isMotion ? "" : "none";
   }
 
   function hideNextStep() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.nextStepRow, els.toRetention);
-      return;
-    }
     if (els.nextStepRow) els.nextStepRow.style.display = "none";
   }
 
   function showNextStep() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.nextStepRow, els.toRetention);
-      return;
-    }
     if (els.nextStepRow) els.nextStepRow.style.display = "flex";
   }
 
   function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS.storage);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
   }
 
   function clearAnalysisBlock() {
@@ -116,31 +108,24 @@ const FLOW_KEYS = {
     clearAnalysisBlock();
   }
 
-  function invalidate() {
-    clearStored();
-    hideNextStep();
+  function readPreviousFlow() {
+    try {
+      const primary = JSON.parse(sessionStorage.getItem(FLOW_KEYS.bitrate) || "null");
+      if (primary && primary.category === CATEGORY) return primary;
+    } catch {}
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.invalidate === "function"
-    ) {
-      window.ScopedLabsAnalyzer.invalidate({
-        resultsEl: els.results,
-        analysisEl: els.analysisCopy,
-        continueWrapEl: els.nextStepRow,
-        continueBtnEl: els.toRetention,
-        category: "video-storage",
-        step: "storage",
-        emptyMessage: "Enter values and press Calculate."
-      });
-    } else {
-      renderEmpty();
-    }
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === PREVIOUS_STEP) return legacy;
+    } catch {}
+
+    return null;
   }
 
   function importFromBitrate() {
     let source = null;
     let bitrate = null;
+    const fromFlow = readPreviousFlow();
 
     if (window.SL_FLOW && typeof window.SL_FLOW.get === "function") {
       source = window.SL_FLOW.get("source");
@@ -160,22 +145,64 @@ const FLOW_KEYS = {
       ) {
         window.ScopedLabsAnalyzer.renderFlowNote({
           flowEl: els.flowNote,
-          category: "video-storage",
-          step: "storage",
+          category: CATEGORY,
+          step: STEP,
           title: "System Context",
           intro:
             "Imported from Bitrate Estimator. This step converts the stream assumption into daily and retained storage requirements.",
           customRows: [
-            {
-              label: "Imported bitrate",
-              value: `${bitrate} Mbps`
-            }
+            { label: "Imported bitrate", value: `${bitrate} Mbps` }
           ]
         });
       } else if (els.flowNote) {
         els.flowNote.hidden = false;
         els.flowNote.textContent = "Imported from Bitrate Estimator. Review values and click Calculate.";
       }
+      return;
+    }
+
+    if (!fromFlow || !els.flowNote) {
+      if (els.flowNote) {
+        els.flowNote.hidden = true;
+        els.flowNote.innerHTML = "";
+      }
+      return;
+    }
+
+    const data = fromFlow.data || {};
+    const importedBitrate = Number(data.bitrateMbps ?? data.bitrateMbpsPerCam ?? 0);
+
+    if (importedBitrate > 0) {
+      els.bitrate.value = importedBitrate.toFixed(2);
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Step 2 — Using Bitrate Estimator results:</strong><br>
+      Imported bitrate: ${importedBitrate > 0 ? `${importedBitrate.toFixed(2)} Mbps` : "—"}
+      <br><br>
+      This step converts the stream assumption into daily and retained storage requirements so the next retention and RAID steps use a concrete capacity target.
+    `;
+  }
+
+  function invalidate() {
+    clearStored();
+    hideNextStep();
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.invalidate === "function"
+    ) {
+      window.ScopedLabsAnalyzer.invalidate({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        category: CATEGORY,
+        step: STEP,
+        lane: LANE,
+        emptyMessage: "Enter values and press Calculate."
+      });
+    } else {
+      renderEmpty();
     }
   }
 
@@ -248,7 +275,7 @@ const FLOW_KEYS = {
     if (els.analysisCopy) {
       els.analysisCopy.style.display = "";
       els.analysisCopy.innerHTML = `
-        <div class="results">
+        <div class="results-grid">
           <div class="result-row">
             <span class="result-label">Status</span>
             <span class="result-value">${status}</span>
@@ -418,15 +445,14 @@ const FLOW_KEYS = {
       unit: "gib"
     });
 
-    if (els.toRetention) {
-      els.toRetention.href = "/tools/video-storage/retention-planner/?" + params.toString();
+    if (els.continueBtn) {
+      els.continueBtn.href = NEXT_URL + "?" + params.toString();
     }
 
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        category: "video-storage",
-        step: "storage",
+    try {
+      const payload = {
+        category: CATEGORY,
+        step: STEP,
         data: {
           cams,
           bitrateMbps: Number(bitrate.toFixed(2)),
@@ -440,8 +466,11 @@ const FLOW_KEYS = {
           status,
           dominantConstraint
         }
-      })
-    );
+      };
+
+      sessionStorage.setItem(FLOW_KEYS.storage, JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showNextStep();
   }
@@ -460,47 +489,36 @@ const FLOW_KEYS = {
     importFromBitrate();
   }
 
-  els.mode.addEventListener("change", () => {
-    syncMotion();
-    invalidate();
-  });
+  function bind() {
+    els.mode.addEventListener("change", () => {
+      syncMotion();
+      invalidate();
+    });
 
-  els.calc.addEventListener("click", calc);
-  els.reset.addEventListener("click", reset);
+    if (els.calc) els.calc.addEventListener("click", calc);
+    if (els.reset) els.reset.addEventListener("click", reset);
 
-  ["cams", "bitrate", "motionPct", "retention", "overhead"].forEach((id) => {
-    const el = $(id);
-    if (el) el.addEventListener("input", invalidate);
-  });
+    [els.cams, els.bitrate, els.motionPct, els.retention, els.overhead].forEach((el) => {
+      if (el) el.addEventListener("input", invalidate);
+    });
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const t = e.target;
-      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
-        e.preventDefault();
-        calc();
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+          e.preventDefault();
+          calc();
+        }
       }
-    }
-  });
+    });
+  }
 
-  reset();
+  function boot() {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    bind();
+    reset();
+  }
+
+  window.addEventListener("DOMContentLoaded", boot);
 })();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
-  });
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
