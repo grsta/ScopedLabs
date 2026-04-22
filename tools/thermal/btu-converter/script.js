@@ -19,6 +19,8 @@
     "room-cooling-capacity": "scopedlabs:pipeline:thermal:room-cooling-capacity"
   };
 
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
+
   const W_TO_BTU = 3.412141633;
   const TON_TO_BTU = 12000;
 
@@ -55,15 +57,31 @@
 
   function readSaved() {
     try {
-      return JSON.parse(sessionStorage.getItem(FLOW_KEYS[PRIOR_STEP]) || "null");
-    } catch {
-      return null;
-    }
+      const primary = JSON.parse(sessionStorage.getItem(FLOW_KEYS[PRIOR_STEP]) || "null");
+      if (primary && primary.category === CATEGORY && primary.step === PRIOR_STEP) {
+        return primary;
+      }
+    } catch {}
+
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === PRIOR_STEP) {
+        return legacy;
+      }
+    } catch {}
+
+    return null;
   }
 
   function clearStored() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
     } catch {}
   }
 
@@ -100,8 +118,10 @@
     }
 
     const data = saved.data || {};
-    const heatLossW = Number(data.heatLossW);
-    const heatLossBtu = Number(data.heatLossBtuHr);
+    const heatLossW =
+      Number(data.heatLossW ?? data.watts ?? data.loadW);
+    const heatLossBtu =
+      Number(data.heatLossBtuHr ?? data.btu ?? data.heatBTU);
 
     if (Number.isFinite(heatLossW) && (!els.w.value || Number(els.w.value) === 3500)) {
       els.w.value = String(Math.round(heatLossW));
@@ -345,20 +365,20 @@
     }
 
     try {
-      sessionStorage.setItem(
-        FLOW_KEYS[STEP],
-        JSON.stringify({
-          category: CATEGORY,
-          step: STEP,
-          data: {
-            watts,
-            btu,
-            tons,
-            status,
-            dominantConstraint
-          }
-        })
-      );
+      const payload = {
+        category: CATEGORY,
+        step: STEP,
+        data: {
+          watts,
+          btu,
+          tons,
+          status,
+          dominantConstraint
+        }
+      };
+
+      sessionStorage.setItem(FLOW_KEYS[STEP], JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
     } catch {}
 
     showContinue();
