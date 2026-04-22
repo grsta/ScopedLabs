@@ -6,14 +6,14 @@
   <title>Video &amp; Storage • ScopedLabs</title>
   <meta name="description" content="Plan retention, storage sizing, RAID impact, and export reality — before the install." />
 
-  <link rel="stylesheet" href="/assets/style.css?v=video-cat-0385" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0326"></script>
-<script defer src="/assets/app.js?v=0326"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=video-cat-0421" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0421"></script>
+  <script defer src="/assets/app.js?v=0421"></script>
 </head>
 
 <body data-category="video-storage">
@@ -35,174 +35,204 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 
 <main class="container">
 
-  <!-- Breadcrumb -->
-  <div class="crumbs">
-    <a href="/tools/">Tools</a>
-    <span class="sep">/</span>
-    <span>Video &amp; Storage</span>
-  </div>
-
-  <!-- Page Head -->
   <section class="page-head">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <span>Video &amp; Storage</span>
+    </div>
+
     <h1 class="h1">Video &amp; Storage</h1>
     <p class="subhead">
       Plan retention, storage sizing, RAID impact, and export reality — before the install.
     </p>
-
-      <section class="card" data-auto-category-pipeline-card="true" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">Start the Video &amp; Storage design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This category includes a guided pipeline so users can move step by step through the core design decisions instead of jumping between isolated tools.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          Update this card later with the exact category-specific flow summary and mini pipeline preview if needed.
-        </p>
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn btn-primary" href="/tools/video-storage/bitrate-estimator/">Start Pipeline</a>
-        </div>
-      </section>
-
   </section>
 
-  <!-- Intro -->
   <section class="card">
     <p class="muted">
       Storage problems rarely show up during quoting. They show up later as “retention is short,”
       “exports don’t fit,” and “we need more drives.” These tools help you size storage from real
-      inputs and understand what RAID does to usable capacity and survivability.
+      inputs and understand what RAID does to usable capacity and survivability before the install
+      gets locked into assumptions that are hard to unwind later.
     </p>
   </section>
 
-  <!-- HERO FREE TOOL -->
-  <section class="card tool-hero">
-    <div class="pill pill-ok">Free tool</div>
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Design Pipeline</div>
+    <h2 class="h2" style="margin-top: 0;">Follow a recommended engineering sequence</h2>
+    <p class="muted" style="margin-bottom: 14px;">
+      Some ScopedLabs tools work as a connected workflow. In Video &amp; Storage, the Design Flow
+      starts with bitrate, rolls into storage sizing, turns that into retention, then finishes by
+      testing RAID behavior and retention survivability under degraded conditions so the design is
+      evaluated as a system instead of as isolated calculator outputs.
+    </p>
 
-    <h2 class="h2">Camera Storage Calculator</h2>
-    <p class="muted">
-      Estimate total storage required by camera count, bitrate, recording mode, and retention days.
+    <div class="pipeline-preview" aria-label="Video &amp; Storage design pipeline preview">
+      <span class="pipeline-preview-label">DESIGN PIPELINE</span>
+      <div class="pipeline-preview-steps">
+        <span class="pipeline-preview-step is-active">Bitrate</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step">Storage</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step">Retention</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step is-pro">RAID Impact</span>
+        <span class="pipeline-preview-sep">→</span>
+        <span class="pipeline-preview-step is-pro">Retention Survivability</span>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top: 14px; margin-bottom: 14px;">
+      Includes both Free and Pro tools. Unlock Pro to complete the full flow.
     </p>
 
     <div class="actions">
-      <a class="btn btn-primary" href="/tools/video-storage/storage-calculator/">Launch Tool</a>
+      <a class="btn btn-primary" href="/tools/video-storage/bitrate-estimator/">Start Design Pipeline</a>
     </div>
   </section>
 
-<!-- FREE -->
-<h3 class="section-divider">Free Tier</h3>
+  <h3 class="section-divider">Free Tier</h3>
 
-<a class="tool-row" href="/tools/video-storage/bitrate-estimator/">
-  <div class="tool-row-left">
-    <div class="tool-title">Bitrate Estimator</div>
-    <div class="tool-desc muted">Estimate per-camera and total bitrate by resolution, codec, and frame rate.</div>
-  </div>
-  <div class="tool-row-right">
-    <span class="pill free">Free Tier</span>
-  </div>
-</a>
+  <div class="stack">
+    <a class="tool-row tool-row--center" href="/tools/video-storage/bitrate-estimator/">
+      <div class="tool-row-center">
+        <div class="tool-row-title">Bitrate Estimator</div>
+        <div class="tool-row-sub">
+          Estimate per-camera and total bitrate by resolution, codec, frame rate, and stream assumptions.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill-ok">Free Tier</span>
+        </div>
+      </div>
+    </a>
 
-<a class="tool-row" href="/tools/video-storage/retention-planner/">
-  <div class="tool-row-left">
-    <div class="tool-title">Retention Planner</div>
-    <div class="tool-desc muted">Convert storage capacity into expected retention days.</div>
-  </div>
-  <div class="tool-row-right">
-    <span class="pill free">Free Tier</span>
-  </div>
-</a>
+    <a class="tool-row tool-row--center" href="/tools/video-storage/storage-calculator/">
+      <div class="tool-row-center">
+        <div class="tool-row-title">Camera Storage Calculator</div>
+        <div class="tool-row-sub">
+          Estimate total storage required by camera count, bitrate, recording mode, and retention days.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill-ok">Free Tier</span>
+        </div>
+      </div>
+    </a>
 
+    <a class="tool-row tool-row--center" href="/tools/video-storage/retention-planner/">
+      <div class="tool-row-center">
+        <div class="tool-row-title">Retention Planner</div>
+        <div class="tool-row-sub">
+          Convert available storage capacity into expected retention days and planning headroom.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill-ok">Free Tier</span>
+        </div>
+      </div>
+    </a>
+  </div>
 
-<!-- PRO -->
-<h3 class="section-divider">Pro Tier</h3>
+  <h3 class="section-divider">Pro Tier</h3>
 
-<a class="tool-row pro" 
-href="/upgrade/?category=video-storage#checkout" 
-data-tool="/tools/video-storage/advanced-storage-planner/">
-  <div class="tool-row-left">
-    <div class="tool-title"><span class="lock-icon"></span>Advanced Storage Planner</div>
-    <div class="tool-desc muted">Model dense systems, exports, peak bitrate spikes, and retention risk.</div>
-  </div>
-  <div class="tool-row-right">
-    <span class="pill pro">Pro Tier</span>
-  </div>
-</a>
+  <div class="stack">
+    <a class="tool-row pro"
+       href="/upgrade/?category=video-storage#checkout"
+       data-tool="/tools/video-storage/advanced-storage-planner/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Advanced Storage Planner</div>
+        <div class="tool-row-sub">
+          Model dense systems, exports, peak bitrate spikes, and retention risk with more detailed planning inputs.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-<a class="tool-row pro" 
-href="/upgrade/?category=video-storage#checkout" 
-data-tool="/tools/video-storage/archive-cost/">
-  <div class="tool-row-left">
-    <div class="tool-title"><span class="lock-icon"></span>Archive Cost</div>
-    <div class="tool-desc muted">Estimate long-term archive storage cost by volume and duration.</div>
-  </div>
-  <div class="tool-row-right">
-    <span class="pill pro">Pro Tier</span>
-  </div>
-</a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=video-storage#checkout"
+       data-tool="/tools/video-storage/archive-cost/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Archive Cost</div>
+        <div class="tool-row-sub">
+          Estimate long-term archive storage cost by retention depth, data volume, and duration.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-<a class="tool-row pro" 
-href="/upgrade/?category=video-storage#checkout" 
-data-tool="/tools/video-storage/codec-efficiency/">
-  <div class="tool-row-left">
-    <div class="tool-title"><span class="lock-icon"></span>Codec Efficiency</div>
-    <div class="tool-desc muted">Compare codec efficiency and expected bitrate reduction ranges.</div>
-  </div>
-  <div class="tool-row-right">
-    <span class="pill pro">Pro Tier</span>
-  </div>
-</a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=video-storage#checkout"
+       data-tool="/tools/video-storage/codec-efficiency/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Codec Efficiency</div>
+        <div class="tool-row-sub">
+          Compare codec efficiency and expected bitrate reduction ranges across storage strategies.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-<a class="tool-row pro" 
-href="/upgrade/?category=video-storage#checkout" 
-data-tool="/tools/video-storage/compression-impact/">
-  <div class="tool-row-left">
-    <div class="tool-title"><span class="lock-icon"></span>Compression Impact</div>
-    <div class="tool-desc muted">Estimate storage savings vs. quality risk from more aggressive compression.</div>
-  </div>
-  <div class="tool-row-right">
-    <span class="pill pro">Pro Tier</span>
-  </div>
-</a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=video-storage#checkout"
+       data-tool="/tools/video-storage/compression-impact/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Compression Impact</div>
+        <div class="tool-row-sub">
+          Estimate storage savings versus image-quality risk from more aggressive compression choices.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-<a class="tool-row pro" 
-href="/upgrade/?category=video-storage#checkout" 
-data-tool="/tools/video-storage/failure-days-lost/">
-  <div class="tool-row-left">
-    <div class="tool-title"><span class="lock-icon"></span>Failure Days Lost</div>
-    <div class="tool-desc muted">Estimate how many retention days are lost during storage failures.</div>
-  </div>
-  <div class="tool-row-right">
-    <span class="pill pro">Pro Tier</span>
-  </div>
-</a>
+    <a class="tool-row pro"
+       href="/upgrade/?category=video-storage#checkout"
+       data-tool="/tools/video-storage/failure-days-lost/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Failure Days Lost</div>
+        <div class="tool-row-sub">
+          Estimate how many retention days are lost during storage failures and recovery events.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
 
-<a class="tool-row pro" 
-href="/upgrade/?category=video-storage#checkout" 
-data-tool="/tools/video-storage/raid-impact/">
-  <div class="tool-row-left">
-    <div class="tool-title"><span class="lock-icon"></span>RAID Impact</div>
-    <div class="tool-desc muted">Calculate usable capacity and fault tolerance tradeoffs.</div>
+    <a class="tool-row pro"
+       href="/upgrade/?category=video-storage#checkout"
+       data-tool="/tools/video-storage/raid-impact/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>RAID Impact</div>
+        <div class="tool-row-sub">
+          Calculate usable capacity, rebuild tradeoffs, and fault-tolerance impact across array choices.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="tool-row pro"
+       href="/upgrade/?category=video-storage#checkout"
+       data-tool="/tools/video-storage/retention-survivability/">
+      <div class="tool-row-center">
+        <div class="tool-row-title"><span class="lock-icon"></span>Retention Survivability</div>
+        <div class="tool-row-sub">
+          Model survivability and retention reduction under degraded arrays, failures, and storage pressure.
+        </div>
+        <div class="tool-row-pill">
+          <span class="pill pill--pro">Pro Tier</span>
+        </div>
+      </div>
+    </a>
   </div>
-  <div class="tool-row-right">
-    <span class="pill pro">Pro Tier</span>
-  </div>
-</a>
 
-<a class="tool-row pro" 
-href="/upgrade/?category=video-storage#checkout" 
-data-tool="/tools/video-storage/retention-survivability/">
-  <div class="tool-row-left">
-    <div class="tool-title"><span class="lock-icon"></span>Retention Survivability</div>
-    <div class="tool-desc muted">Model survivability and retention reduction under degraded arrays.</div>
-  </div>
-  <div class="tool-row-right">
-    <span class="pill pro">Pro Tier</span>
-  </div>
-</a>
-
-
-
-
-  <!-- PRO SUMMARY -->
   <section class="card" style="margin-top:18px;">
     <div class="pill-row">
       <span class="pill pill--pro">Pro access</span>
@@ -210,14 +240,15 @@ data-tool="/tools/video-storage/retention-survivability/">
 
     <h3 class="card-title">Advanced planning tools</h3>
     <p class="card-desc muted">
-      ScopedLabs Pro unlocks advanced storage and retention modeling for high-density systems,
-      long retention requirements, and failure scenarios where margins matter.
+      ScopedLabs Pro unlocks deeper storage and survivability modeling for high-density systems,
+      long retention requirements, archive planning, and degraded-failure scenarios where design
+      margin really matters.
     </p>
 
     <div class="btn-row">
-      <a class="btn btn-primary" 
-      href="/upgrade/?category=video-storage#checkout" 
-      data-tool="/tools/video-storage/">
+      <a class="btn btn-primary"
+         href="/upgrade/?category=video-storage#checkout"
+         data-tool="/tools/video-storage/">
         View Pro features
       </a>
     </div>
@@ -228,9 +259,81 @@ data-tool="/tools/video-storage/retention-survivability/">
   </footer>
 
 </main>
+
+<style>
+  .tool-row--center { text-decoration: none; }
+  .tool-row-center { text-align: center; width: 100%; }
+  .tool-row-title { font-weight: 700; margin-bottom: 6px; }
+  .tool-row-sub { opacity: 0.9; margin-bottom: 10px; }
+  .tool-row-pill { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .lock-icon { margin-right: 6px; }
+
+  .pipeline-preview {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(120,255,120,0.14);
+    background:
+      linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      0 12px 30px rgba(0,0,0,0.18);
+  }
+
+  .pipeline-preview-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(220,255,220,0.78);
+    margin-bottom: 9px;
+  }
+
+  .pipeline-preview-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.98rem;
+    line-height: 1.4;
+  }
+
+  .pipeline-preview-step {
+    color: rgba(220,235,225,0.72);
+    font-weight: 600;
+  }
+
+  .pipeline-preview-step.is-active {
+    color: rgba(255,255,255,0.96);
+    position: relative;
+    padding-left: 15px;
+  }
+
+  .pipeline-preview-step.is-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #57ff7a;
+    transform: translateY(-50%);
+    box-shadow: 0 0 12px rgba(87,255,122,0.55);
+  }
+
+  .pipeline-preview-step.is-pro {
+    color: rgba(210,220,214,0.82);
+  }
+
+  .pipeline-preview-sep {
+    color: rgba(180,205,190,0.42);
+    font-weight: 700;
+  }
+</style>
 </body>
 </html>
-
 
 
 
