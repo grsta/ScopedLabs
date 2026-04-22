@@ -3,22 +3,62 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BTU Converter *ScopedLabs</title>
+  <title>BTU Converter • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Convert between watts, BTU/hr, and cooling tons for thermal planning."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0184" />
+  <link rel="stylesheet" href="/assets/style.css?v=thermal-btu-converter-0421" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
 
-  <script defer src="/assets/auth.js?v=0408"></script>
-  <script defer src="/assets/app.js?v=0408"></script>
+  <script defer src="/assets/auth.js?v=thermal-btu-converter-0421"></script>
+  <script defer src="/assets/app.js?v=thermal-btu-converter-0421"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255, 255, 255, 0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .mini-note {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="thermal" data-step="btu-converter" data-lane="v1">
-
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
@@ -40,40 +80,35 @@
     BTU Converter
   </div>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--free">Free Tier</span>
-      </div>
-<h1>BTU Converter</h1>
+  <div class="pill-row" style="margin-top: 6px;">
+    <span class="pill pill--free">Free Tier</span>
+  </div>
+
+  <h1>BTU Converter</h1>
 
   <div id="pipeline"></div>
 
-  
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This tool has been upgraded to the newer ScopedLabs pipeline wrapper standard.
-          Review and customize this explainer so it reflects the actual purpose of BTU Converter.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          TODO: replace this generic flow copy with tool-specific design guidance.
-        </p>
-      </section>
-<p class="subhead">Convert between Watts, BTU/hr, and Tons of Cooling.</p>
-
-  <div id="flow-note" class="card" style="display:none;"></div>
-
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> translating electrical heat load into HVAC sizing units for airflow and cooling calculations downstream.
+  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+    <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+    <h2 class="h3" style="margin-top: 0;">This tool continues the Thermal design flow</h2>
+    <p class="muted" style="margin-bottom: 0;">
+      Use this step to translate thermal load into consistent HVAC planning units before moving into rack-density and airflow-heavy design decisions.
+    </p>
+    <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+      This is where watts become BTU/hr and cooling tons so downstream thermal planning stays aligned to one heat basis instead of mixed units.
     </p>
   </section>
 
-  <section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
+  <p class="tool-best-for">
+    <strong>Best for:</strong> translating electrical heat load into HVAC sizing units for airflow and cooling calculations downstream.
+  </p>
 
-    <div class="form-grid">
+  <div id="flow-note" class="flow-note" hidden></div>
+
+  <section id="toolCard" class="card tool-card" style="margin-top:18px;">
+    <h2 class="card-title" style="margin-top:0;">Inputs</h2>
+
+    <div class="form-grid" style="margin-top:14px;">
       <label class="field">
         <span class="label">Watts (W)</span>
         <input id="w" type="number" value="3500">
@@ -100,39 +135,41 @@
     </div>
 
     <div class="actions">
-      <button id="calc" class="btn btn-primary">Convert</button>
-      <button id="reset" class="btn">Reset</button>
+      <button id="calc" class="btn btn-primary" type="button">Convert</button>
+      <button id="reset" class="btn" type="button">Reset</button>
     </div>
   </section>
 
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results">
+  <section class="card tool-card" style="margin-top:14px;">
+    <h2 class="card-title" style="margin-top:0;">Results</h2>
+    <div id="results" class="results-grid" aria-live="polite">
       <div class="muted">Enter values and press Convert.</div>
     </div>
+    <div id="analysis-copy" style="display:none;"></div>
+
+    <p class="mini-note">
+      Model: this step is a straight thermal unit translation so later airflow, density, and cooling calculations all use the same underlying heat basis.
+    </p>
   </section>
 
-  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
-
-  <div id="continue-wrap" class="card" style="display:none;">
-    <button id="continue" class="btn btn-primary" disabled>
+  <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
+    <a id="continue" class="btn btn-primary" href="/tools/thermal/rack-thermal-density/">
       Continue → Rack Density
-    </button>
+    </a>
   </div>
 
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
+  <footer class="site-footer">
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+  </footer>
 </main>
 
-
-  <script src="/assets/tool-flow.js?v=pipeline-followup-001"></script>
-  <script src="/assets/catalog.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipelines.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline-state.js?v=pipeline-followup-001"></script>
-  <script src="/assets/pipeline.js?v=pipeline-followup-001"></script>
-  <script src="/assets/analyzer.js?v=pipeline-followup-001"></script>
-  <script src="./script.js?v=003"></script>
+<script src="/assets/tool-flow.js?v=thermal-btu-converter-0421"></script>
+<script src="/assets/catalog.js?v=thermal-btu-converter-0421"></script>
+<script src="/assets/pipelines.js?v=thermal-btu-converter-0421"></script>
+<script src="/assets/pipeline-state.js?v=thermal-btu-converter-0421"></script>
+<script src="/assets/pipeline.js?v=thermal-btu-converter-0421"></script>
+<script src="/assets/analyzer.js?v=thermal-btu-converter-0421"></script>
+<script src="./script.js?v=thermal-btu-converter-0421"></script>
 
 </body>
 </html>
