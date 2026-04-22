@@ -1,14 +1,36 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "wireless";
   const STEP = "ap-capacity";
+  const PREVIOUS_STEP = "client-density";
   const NEXT_URL = "/tools/wireless/link-budget/";
+  const LANE = "v1";
+
+  const FLOW_KEYS = {
+    "coverage-radius": "scopedlabs:pipeline:wireless:coverage-radius",
+    "channel-overlap": "scopedlabs:pipeline:wireless:channel-overlap",
+    "noise-floor-margin": "scopedlabs:pipeline:wireless:noise-floor-margin",
+    "client-density": "scopedlabs:pipeline:wireless:client-density",
+    "ap-capacity": "scopedlabs:pipeline:wireless:ap-capacity",
+    "link-budget": "scopedlabs:pipeline:wireless:link-budget",
+    "mesh-backhaul": "scopedlabs:pipeline:wireless:mesh-backhaul",
+    "ptp-wireless-link": "scopedlabs:pipeline:wireless:ptp-wireless-link",
+    "roaming-thresholds": "scopedlabs:pipeline:wireless:roaming-thresholds"
+  };
+
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
+
+  const DEFAULTS = {
+    clients: 150,
+    mbps: 3,
+    util: 60,
+    apcap: 300,
+    maxc: 35
+  };
+
+  const chartRef = { current: null };
+  const chartWrapRef = { current: null };
 
   const $ = (id) => document.getElementById(id);
 
@@ -24,11 +46,52 @@ const FLOW_KEYS = {
     analysisCopy: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("continue-wrap"),
-    continueBtn: $("continue")
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
 
-  let chartRef = { current: null };
-  let chartWrapRef = { current: null };
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function safeNumber(value, fallback = 0) {
     if (
@@ -52,31 +115,23 @@ const FLOW_KEYS = {
   }
 
   function hideContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
     if (els.continueWrap) els.continueWrap.style.display = "none";
-    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function showContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    if (els.continueWrap) els.continueWrap.style.display = "";
-    if (els.continueBtn) els.continueBtn.disabled = false;
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
   function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
   }
 
   function clearAnalysisBlock() {
@@ -119,6 +174,52 @@ const FLOW_KEYS = {
     clearChart();
   }
 
+  function readPreviousFlow() {
+    try {
+      const primary = JSON.parse(sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]) || "null");
+      if (primary && primary.category === CATEGORY) return primary;
+    } catch {}
+
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === PREVIOUS_STEP) return legacy;
+    } catch {}
+
+    return null;
+  }
+
+  function renderFlowContext() {
+    const saved = readPreviousFlow();
+
+    if (!els.flowNote) return;
+
+    if (!saved) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
+    }
+
+    const data = saved.data || {};
+    const apCount = Number(data.apCount ?? data.recommendedAps ?? 0);
+    const density = data.density ?? data.clientDensity ?? null;
+
+    const parts = [];
+    if (Number.isFinite(apCount) && apCount > 0) {
+      parts.push(`Estimated AP Count: ${Math.round(apCount)}`);
+    }
+    if (density !== null && density !== undefined && density !== "") {
+      parts.push(`Client Density: ${density}`);
+    }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = `
+      <strong>Using Client Density results:</strong><br>
+      ${parts.length ? parts.join(" | ") : "Imported previous-step assumptions."}
+      <br><br>
+      This step converts the density plan into an AP count based on both throughput demand and maximum users per AP so the next link-budget step starts from a realistic cell target.
+    `;
+  }
+
   function invalidate() {
     clearStored();
     hideContinue();
@@ -130,10 +231,9 @@ const FLOW_KEYS = {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         category: CATEGORY,
         step: STEP,
+        lane: LANE,
         emptyMessage: "Enter values and press Calculate."
       });
     } else {
@@ -143,52 +243,7 @@ const FLOW_KEYS = {
     clearChart();
   }
 
-  function loadPrior() {
-    let saved = null;
-    try {
-      saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-    } catch {}
-
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: CATEGORY,
-        step: STEP,
-        title: "System Context",
-        intro:
-          "This step converts client demand into AP count so the next link-budget stage starts from a realistic cell-sizing target.",
-        customRows:
-          saved && saved.category === CATEGORY && saved.step === "client-density"
-            ? [
-                {
-                  label: "Prior Step",
-                  value: "Client Density"
-                },
-                {
-                  label: "Estimated AP Count",
-                  value:
-                    saved.data && Number.isFinite(Number(saved.data.apCount))
-                      ? `${Number(saved.data.apCount).toFixed(0)}`
-                      : "—"
-                },
-                {
-                  label: "Client Density",
-                  value: saved.data?.density ?? "—"
-                }
-              ]
-            : null
-      });
-      return;
-    }
-
-    els.flowNote.style.display = "none";
-    els.flowNote.innerHTML = "";
-  }
-
-  function buildInterpretation(status, dominantConstraint, recommended, byThroughput, byClients) {
+  function buildInterpretation(status, dominantConstraint) {
     if (status === "HEALTHY") {
       return `The recommended AP count stays in a manageable range, and the design is not yet being strained hard by either throughput or client load. This gives you a reasonable planning baseline for coverage and link-budget work.`;
     }
@@ -265,7 +320,7 @@ const FLOW_KEYS = {
     if (els.analysisCopy) {
       els.analysisCopy.style.display = "";
       els.analysisCopy.innerHTML = `
-        <div class="results">
+        <div class="results-grid">
           <div class="result-row">
             <div class="result-label">Status</div>
             <div class="result-value">${status}</div>
@@ -374,14 +429,7 @@ const FLOW_KEYS = {
     const dominantConstraint =
       dominantConstraintMap[dominantLabel] || "Throughput demand pressure";
 
-    const interpretation = buildInterpretation(
-      status,
-      dominantConstraint,
-      recommended,
-      byThroughput,
-      byClients
-    );
-
+    const interpretation = buildInterpretation(status, dominantConstraint);
     const guidance = buildGuidance(status, dominantConstraint);
 
     const summaryRows = [
@@ -461,125 +509,84 @@ const FLOW_KEYS = {
       });
     }
 
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        totalDemand,
-        recommended,
-        byThroughput,
-        byClients,
-        status,
-        dominantConstraint
-      }
-    }));
+    try {
+      const payload = {
+        category: CATEGORY,
+        step: STEP,
+        data: {
+          totalDemand: Number(totalDemand.toFixed(1)),
+          recommendedAps: recommended,
+          byThroughput,
+          byClients,
+          status,
+          dominantConstraint
+        }
+      };
+
+      sessionStorage.setItem(FLOW_KEYS[STEP], JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showContinue();
   }
 
+  function applyDefaults() {
+    els.clients.value = String(DEFAULTS.clients);
+    els.mbps.value = String(DEFAULTS.mbps);
+    els.util.value = String(DEFAULTS.util);
+    els.apcap.value = String(DEFAULTS.apcap);
+    els.maxc.value = String(DEFAULTS.maxc);
+  }
+
   function reset() {
-    els.clients.value = 150;
-    els.mbps.value = 3;
-    els.util.value = 60;
-    els.apcap.value = 300;
-    els.maxc.value = 35;
+    applyDefaults();
     clearStored();
     hideContinue();
     renderEmpty();
-    loadPrior();
+    renderFlowContext();
   }
 
   function bindInvalidation() {
-    [els.clients, els.mbps, els.util, els.apcap, els.maxc].forEach(el => {
+    [els.clients, els.mbps, els.util, els.apcap, els.maxc].forEach((el) => {
+      if (!el) return;
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
   }
 
   function init() {
-    hideContinue();
-    renderEmpty();
-    loadPrior();
     bindInvalidation();
 
-    els.calc.addEventListener("click", calculate);
-    els.reset.addEventListener("click", reset);
-    els.continueBtn.addEventListener("click", () => {
-      window.location.href = NEXT_URL;
+    if (els.calc) els.calc.addEventListener("click", calculate);
+    if (els.reset) els.reset.addEventListener("click", reset);
+
+    if (els.continueBtn) {
+      els.continueBtn.addEventListener("click", () => {
+        window.location.href = NEXT_URL;
+      });
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        calculate();
+      }
     });
   }
 
-  init();
-})();
+  function boot() {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
 
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
+    init();
+    reset();
   }
 
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
+  window.addEventListener("DOMContentLoaded", () => {
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
+    boot();
   });
-}
+})();
