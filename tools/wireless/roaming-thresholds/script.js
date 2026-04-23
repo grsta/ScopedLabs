@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   const CATEGORY = "wireless";
   const STEP = "roaming-thresholds";
   const LANE = "v1";
@@ -110,10 +112,19 @@
     if (els.completionWrap) els.completionWrap.style.display = "";
   }
 
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+  }
+
   function renderEmpty() {
     els.results.innerHTML = `<div class="muted">Enter values and press Suggest.</div>`;
     clearAnalysisBlock();
     hideCompletion();
+    hideContinue();
   }
 
   function invalidate() {
@@ -121,9 +132,6 @@
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
-        flowKey: FLOW_KEYS[STEP],
         category: CATEGORY,
         step: STEP,
         lane: LANE,
@@ -132,7 +140,9 @@
     } else {
       renderEmpty();
     }
+
     hideCompletion();
+    hideContinue();
   }
 
   function loadPrior() {
@@ -148,37 +158,13 @@
 
     const d = saved.data || {};
 
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderFlowNote === "function") {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        flowKey: FLOW_KEYS[STEP],
-        category: CATEGORY,
-        step: STEP,
-        lane: LANE,
-        title: "Flow Context",
-        intro:
-          "PtP Wireless Link validated whether the path closes with enough SNR and throughput. Use this final step to translate that RF quality into practical roaming behavior for the WLAN.",
-        customRows: [
-          {
-            label: "Link SNR",
-            value: d.snr != null ? `${d.snr} dB` : "—"
-          },
-          {
-            label: "Estimated Throughput",
-            value: d.throughput != null ? `${d.throughput} Mbps` : "—"
-          }
-        ]
-      });
-      return;
-    }
-
     els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
       <strong>Flow Context</strong><br>
       Link SNR: <strong>${d.snr ?? "—"} dB</strong> |
       Throughput: <strong>${d.throughput ?? "—"} Mbps</strong>
       <br><br>
-      Use this step to finalize roaming behavior across the network.
+      Use this final step to translate prior RF quality into practical roaming behavior for the WLAN.
     `;
   }
 
@@ -253,6 +239,7 @@
       `;
       clearAnalysisBlock();
       hideCompletion();
+      hideContinue();
       return;
     }
 
@@ -334,8 +321,6 @@
       window.ScopedLabsAnalyzer.renderOutput({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         summaryRows,
         derivedRows,
         status,
@@ -357,24 +342,23 @@
       `).join("");
     }
 
-    ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        roamTrigger: Number(roamTrigger.toFixed(0)),
-        stickyLow: Number(stickyLow.toFixed(0)),
-        preferredRssi: Number(correctedPref.toFixed(0)),
-        targetSnr: Number(targetSnr.toFixed(0)),
-        bandPreference: bandText,
-        status,
-        dominantConstraint
-      }
-    });
-
-    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.showContinue === "function") {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+    if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.writeFlow === "function") {
+      window.ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+        category: CATEGORY,
+        step: STEP,
+        data: {
+          roamTrigger: Number(roamTrigger.toFixed(0)),
+          stickyLow: Number(stickyLow.toFixed(0)),
+          preferredRssi: Number(correctedPref.toFixed(0)),
+          targetSnr: Number(targetSnr.toFixed(0)),
+          bandPreference: bandText,
+          status,
+          dominantConstraint
+        }
+      });
     }
 
+    showContinue();
     showCompletion();
   }
 
@@ -385,11 +369,12 @@
     els.band.value = "5";
     renderEmpty();
     hideCompletion();
+    hideContinue();
     loadPrior();
   }
 
   function bindInvalidation() {
-    [els.min, els.pref, els.snr, els.band].forEach(el => {
+    [els.min, els.pref, els.snr, els.band].forEach((el) => {
       if (!el) return;
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
@@ -398,6 +383,7 @@
 
   function init() {
     hideCompletion();
+    hideContinue();
     loadPrior();
     renderEmpty();
     bindInvalidation();
@@ -406,15 +392,15 @@
     els.reset.addEventListener("click", reset);
   }
 
-  window.addEventListener("DOMContentLoaded", () => {
+  function boot() {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
-    unlockCategoryPage();
-    setTimeout(() => {
-      unlockCategoryPage();
-    }, 400);
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
 
     init();
-  });
+  }
+
+  window.addEventListener("DOMContentLoaded", boot);
 })();

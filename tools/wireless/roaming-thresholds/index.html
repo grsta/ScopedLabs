@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Roaming Thresholds Planner *ScopedLabs</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roaming Thresholds Planner • ScopedLabs</title>
   <meta
     name="description"
     content="Suggest RSSI and SNR thresholds to encourage timely client roaming."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=wireless-roaming-005" />
+  <link rel="stylesheet" href="/assets/style.css?v=wireless-roaming-thresholds-0423" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -17,8 +17,37 @@
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
 
-  <script defer src="/assets/auth.js?v=0407"></script>
-  <script defer src="/assets/app.js?v=0407"></script>
+  <script defer src="/assets/auth.js?v=wireless-roaming-thresholds-0423"></script>
+  <script defer src="/assets/app.js?v=wireless-roaming-thresholds-0423"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background: rgba(0,0,0,0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255,255,255,0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="wireless" data-step="roaming-thresholds" data-lane="v1">
@@ -64,15 +93,11 @@
       </p>
     </section>
 
-    <p class="subhead">Suggest RSSI and SNR thresholds to encourage timely client roaming.</p>
+    <p class="tool-best-for">
+      <strong>Best for:</strong> turning the prior wireless link and coverage work into practical roaming thresholds that reduce sticky clients without making the WLAN overly twitchy.
+    </p>
 
     <div id="flow-note" class="flow-note" hidden></div>
-
-    <section class="card">
-      <p class="tool-best-for">
-        <strong>Best for:</strong> turning the prior wireless link and coverage work into practical roaming thresholds that reduce sticky clients without making the WLAN overly twitchy.
-      </p>
-    </section>
 
     <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
       <div class="pill-row">
@@ -91,27 +116,27 @@
 
       <div class="actions">
         <a class="btn" href="/tools/wireless/">Back to Wireless</a>
-        <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+        <a class="btn btn-primary" href="/upgrade/?category=wireless#checkout">Unlock Pro</a>
       </div>
     </section>
 
-    <section id="toolCard" class="card tool-card">
+    <section id="toolCard" class="card tool-card" style="display:none; margin-top:18px;">
       <h2>Inputs</h2>
 
       <div class="form-grid">
         <label class="field">
           <span class="label">Minimum Service RSSI (dBm)</span>
-          <input id="min" type="number" value="-67">
+          <input id="min" type="number" value="-67" />
         </label>
 
         <label class="field">
           <span class="label">Preferred RSSI (dBm)</span>
-          <input id="pref" type="number" value="-60">
+          <input id="pref" type="number" value="-60" />
         </label>
 
         <label class="field">
           <span class="label">Target SNR (dB)</span>
-          <input id="snr" type="number" value="25">
+          <input id="snr" type="number" value="25" />
         </label>
 
         <label class="field">
@@ -132,7 +157,7 @@
 
     <section class="card tool-card">
       <h2>Suggested Thresholds</h2>
-      <div id="results" class="results">
+      <div id="results" class="results-grid">
         <div class="muted">Enter values and press Suggest.</div>
       </div>
     </section>
@@ -146,7 +171,7 @@
     </div>
 
     <div class="card" id="completion-wrap" style="display:none;">
-      <div class="results">
+      <div class="results-grid">
         <div class="result-row">
           <div class="result-label">Pipeline Status</div>
           <div class="result-value">Wireless v1 complete</div>
@@ -163,13 +188,13 @@
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=wireless-roaming-005"></script>
-  <script src="/assets/catalog.js?v=wireless-roaming-005"></script>
-  <script src="/assets/pipelines.js?v=wireless-roaming-005"></script>
-  <script src="/assets/pipeline-state.js?v=wireless-roaming-005"></script>
-  <script src="/assets/pipeline.js?v=wireless-roaming-005"></script>
-  <script src="/assets/analyzer.js?v=wireless-roaming-005"></script>
-  <script src="./script.js?v=005"></script>
+  <script src="/assets/tool-flow.js?v=wireless-roaming-thresholds-0423"></script>
+  <script src="/assets/catalog.js?v=wireless-roaming-thresholds-0423"></script>
+  <script src="/assets/pipelines.js?v=wireless-roaming-thresholds-0423"></script>
+  <script src="/assets/pipeline-state.js?v=wireless-roaming-thresholds-0423"></script>
+  <script src="/assets/pipeline.js?v=wireless-roaming-thresholds-0423"></script>
+  <script src="/assets/analyzer.js?v=wireless-roaming-thresholds-0423"></script>
+  <script src="./script.js?v=wireless-roaming-thresholds-0423"></script>
 </body>
 </html>
 
