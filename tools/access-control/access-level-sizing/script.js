@@ -1107,8 +1107,8 @@
         datasets: [
           {
             label: "Access Design Metrics",
-            barThickness: 18,
-            maxBarThickness: 18,
+            barThickness: 16,
+            maxBarThickness: 16,
             barPercentage: 0.8,
             categoryPercentage: 0.7,
             data: values,
