@@ -20,7 +20,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  let hasResult = false;
   let upstream = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -135,6 +134,14 @@
     `;
   }
 
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+  }
+
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -145,10 +152,6 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
-      existingChartRef: chartRef,
-      existingWrapRef: chartWrapRef,
       flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
@@ -156,11 +159,11 @@
       emptyMessage: "Run calculation."
     });
 
-    hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
-  function calc() {
+  function calculate() {
     const nodes = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.nodes.value, 1));
     const watts = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.watts.value, 0));
     const peak = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.peak.value, 1));
@@ -325,11 +328,10 @@
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
-    hasResult = true;
+    showContinue();
   }
 
-  els.calc.addEventListener("click", calc);
+  els.calc.addEventListener("click", calculate);
 
   els.reset.addEventListener("click", () => {
     els.nodes.value = 10;
@@ -346,21 +348,14 @@
     el.addEventListener("change", invalidate);
   });
 
-  els.continue.addEventListener("click", () => {
-    if (!hasResult) return;
-    window.location.href = "/tools/compute/raid-rebuild-time/";
-  });
-
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
-    unlockCategoryPage();
-    setTimeout(() => {
-      unlockCategoryPage();
-    }, 400);
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
 
     refreshFlowNote();
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+    hideContinue();
   });
 })();
