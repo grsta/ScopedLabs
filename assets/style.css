@@ -2014,3 +2014,51 @@ main h3.section-title {
     margin-left: 1px;
   }
 }
+
+/* =========================================
+   ScopedLabs nav brand final override
+   ========================================= */
+
+.site-header .brand{
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+}
+
+.site-header .brand-dot{
+  width:8px !important;
+  height:8px !important;
+  min-width:8px !important;
+  min-height:8px !important;
+  margin-right:4px !important;
+  flex:0 0 auto !important;
+}
+
+.site-header .brand-icon-wrap{
+  width:auto !important;
+  height:auto !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border:none !important;
+  outline:none !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+}
+
+.site-header .brand-icon{
+  width:26px !important;
+  height:26px !important;
+  display:block !important;
+  object-fit:contain !important;
+}
+
+.site-header .brand-name{
+  margin-left:0 !important;
+  font-size:1.05rem !important;
+  font-weight:700 !important;
+  letter-spacing:.2px !important;
+}
