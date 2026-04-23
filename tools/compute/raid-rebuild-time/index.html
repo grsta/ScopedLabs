@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RAID Rebuild Time • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=compute-raid-005" />
+  <link rel="stylesheet" href="/assets/style.css?v=compute-raid-0424" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,8 +12,8 @@
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0406"></script>
-  <script defer src="/assets/app.js?v=0406"></script>
+  <script defer src="/assets/auth.js?v=compute-raid-0424"></script>
+  <script defer src="/assets/app.js?v=compute-raid-0424"></script>
 
   <style>
     .results-grid {
@@ -119,7 +119,7 @@
 
       <div class="actions">
         <a class="btn" href="/tools/compute/">Back to Compute</a>
-        <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+        <a class="btn btn-primary" href="/upgrade/?category=compute#checkout">Unlock Pro</a>
       </div>
     </section>
 
@@ -184,9 +184,9 @@
     </section>
 
     <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
-      <button id="continue" class="btn btn-primary" disabled>
+      <a id="continue" class="btn btn-primary" href="/tools/compute/backup-window/">
         Continue → Backup Window
-      </button>
+      </a>
     </div>
 
     <footer class="site-footer">
@@ -194,14 +194,13 @@
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=compute-raid-005"></script>
-  <script src="/assets/catalog.js?v=compute-raid-005"></script>
-  <script src="/assets/pipelines.js?v=compute-raid-005"></script>
-  <script src="/assets/pipeline-state.js?v=compute-raid-005"></script>
-  <script src="/assets/pipeline.js?v=compute-raid-005"></script>
-  <script src="/assets/analyzer.js?v=compute-raid-005"></script>
-  <script src="./script.js?v=005"></script>
-
+  <script src="/assets/tool-flow.js?v=compute-raid-0424"></script>
+  <script src="/assets/catalog.js?v=compute-raid-0424"></script>
+  <script src="/assets/pipelines.js?v=compute-raid-0424"></script>
+  <script src="/assets/pipeline-state.js?v=compute-raid-0424"></script>
+  <script src="/assets/pipeline.js?v=compute-raid-0424"></script>
+  <script src="/assets/analyzer.js?v=compute-raid-0424"></script>
+  <script src="./script.js?v=0424"></script>
 </body>
 </html>
 

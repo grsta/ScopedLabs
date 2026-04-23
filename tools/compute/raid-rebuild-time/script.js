@@ -20,7 +20,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  let hasResult = false;
   let upstream = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -131,6 +130,14 @@
     `;
   }
 
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+  }
+
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -140,10 +147,6 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
-      existingChartRef: chartRef,
-      existingWrapRef: chartWrapRef,
       flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
@@ -151,11 +154,11 @@
       emptyMessage: "Enter values and press Calculate."
     });
 
-    hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
-  function calc() {
+  function calculate() {
     const driveTb = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.driveTb.value, 0));
     const mbps = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.mbps.value, 1));
     const loadFactor = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.load.value, 1));
@@ -313,11 +316,10 @@
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
-    hasResult = true;
+    showContinue();
   }
 
-  els.calc.addEventListener("click", calc);
+  els.calc.addEventListener("click", calculate);
 
   els.reset.addEventListener("click", () => {
     els.driveTb.value = 16;
@@ -334,21 +336,14 @@
     el.addEventListener("change", invalidate);
   });
 
-  els.continue.addEventListener("click", () => {
-    if (!hasResult) return;
-    window.location.href = "/tools/compute/backup-window/";
-  });
-
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
-    unlockCategoryPage();
-    setTimeout(() => {
-      unlockCategoryPage();
-    }, 400);
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
 
     refreshFlowNote();
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+    hideContinue();
   });
 })();
