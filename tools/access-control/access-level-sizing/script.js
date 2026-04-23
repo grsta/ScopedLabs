@@ -159,6 +159,268 @@
     return "";
   }
 
+  function getExportChartImage() {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1200;
+    canvas.height = 620;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return getChartImage();
+
+    const roles = num(els.roles.value);
+    const areas = num(els.areas.value);
+    const schedules = num(els.schedules.value);
+    const groups = num(els.doorGroups.value);
+    const complexity = els.complexity.value;
+
+    const base = roles * areas;
+    const complexityFactor = getComplexityFactor(complexity);
+    const schedulePenalty = 1 + schedules * 0.1;
+    const groupPenalty = 1 + groups * 0.05;
+
+    const total = Math.round(base * schedulePenalty * groupPenalty * complexityFactor);
+    const combinations = base;
+    const recommendedLimit = getRecommendedLimit(complexity);
+
+    const labels = [
+      "Access Levels",
+      "Role-Area Combos",
+      "Schedules",
+      "Door Groups"
+    ];
+
+    const values = [
+      total,
+      combinations,
+      schedules,
+      groups
+    ];
+
+    const maxValue = Math.max(...values, recommendedLimit, 160);
+    const dominantIndex = values.indexOf(Math.max(...values));
+
+    let exportChart = null;
+
+    const bgPlugin = {
+      id: "exportBgPlugin",
+      beforeDraw(chartInstance) {
+        const { ctx, chartArea } = chartInstance;
+        if (!chartArea) return;
+
+        const { left, top, width, height, right, bottom } = chartArea;
+        const x = chartInstance.scales.x;
+
+        ctx.save();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
+
+        ctx.fillStyle = "#f8fbf9";
+        ctx.fillRect(left, top, width, height);
+
+        const healthyMax = Math.min(80, x.max);
+        const watchMax = Math.min(150, x.max);
+
+        if (healthyMax > 0) {
+          ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
+          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
+        }
+
+        if (watchMax > 80) {
+          ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
+          ctx.fillRect(
+            x.getPixelForValue(80),
+            top,
+            x.getPixelForValue(watchMax) - x.getPixelForValue(80),
+            height
+          );
+        }
+
+        if (x.max > 150) {
+          ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
+          ctx.fillRect(
+            x.getPixelForValue(150),
+            top,
+            right - x.getPixelForValue(150),
+            height
+          );
+        }
+
+        ctx.restore();
+      },
+      afterDatasetsDraw(chartInstance) {
+        const { ctx, chartArea, scales } = chartInstance;
+        if (!chartArea || !scales.x || !scales.y) return;
+
+        const x = scales.x;
+        const y = scales.y;
+        const { top, bottom } = chartArea;
+
+        ctx.save();
+
+        const rx = x.getPixelForValue(recommendedLimit);
+        ctx.strokeStyle = "#198754";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 5]);
+        ctx.beginPath();
+        ctx.moveTo(rx, top);
+        ctx.lineTo(rx, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "#1f2937";
+        ctx.font = "600 16px Arial";
+        ctx.fillText(`Recommended Limit (${recommendedLimit})`, rx + 10, bottom - 12);
+
+        ctx.fillStyle = "#15803d";
+        ctx.font = "700 15px Arial";
+        ctx.fillText("Healthy", x.getPixelForValue(8), top + 18);
+
+        ctx.fillStyle = "#b45309";
+        ctx.fillText("Watch", x.getPixelForValue(88), top + 18);
+
+        ctx.fillStyle = "#b91c1c";
+        ctx.fillText("Risk", x.getPixelForValue(158), top + 18);
+
+        const dominantValue = values[dominantIndex];
+        const px = x.getPixelForValue(dominantValue);
+        const py = y.getPixelForValue(labels[dominantIndex]);
+
+        ctx.beginPath();
+        ctx.arc(px, py, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    };
+
+    exportChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Access Design Metrics",
+            data: values,
+            indexAxis: "y",
+            barPercentage: 0.58,
+            categoryPercentage: 0.64,
+            borderRadius: 10,
+            borderSkipped: false,
+            borderWidth: 1.5,
+            backgroundColor: (context) => {
+              const i = context.dataIndex;
+              const v = context.raw;
+
+              if (i === dominantIndex) {
+                if (v > 150) return "#dc2626";
+                if (v > 80) return "#f59e0b";
+                return "#22c55e";
+              }
+
+              if (v > 150) return "rgba(220, 38, 38, 0.55)";
+              if (v > 80) return "rgba(245, 158, 11, 0.50)";
+              return "rgba(59, 130, 246, 0.42)";
+            },
+            borderColor: (context) => {
+              const i = context.dataIndex;
+              const v = context.raw;
+
+              if (i === dominantIndex) {
+                if (v > 150) return "#7f1d1d";
+                if (v > 80) return "#92400e";
+                return "#166534";
+              }
+
+              if (v > 150) return "#991b1b";
+              if (v > 80) return "#b45309";
+              return "#1d4ed8";
+            }
+          }
+        ]
+      },
+      options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        animation: false,
+        indexAxis: "y",
+        layout: {
+          padding: {
+            top: 36,
+            right: 22,
+            bottom: 10,
+            left: 18
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            suggestedMax: Math.ceil(maxValue * 1.08),
+            ticks: {
+              color: "#334155",
+              font: {
+                size: 14,
+                weight: "600"
+              }
+            },
+            grid: {
+              color: "rgba(15, 23, 42, 0.08)"
+            },
+            border: {
+              color: "rgba(15, 23, 42, 0.18)"
+            },
+            title: {
+              display: true,
+              text: "Complexity Magnitude",
+              color: "#0f172a",
+              font: {
+                size: 15,
+                weight: "700"
+              }
+            }
+          },
+          y: {
+            ticks: {
+              color: "#0f172a",
+              font: {
+                size: 15,
+                weight: "700"
+              }
+            },
+            grid: {
+              display: false
+            },
+            border: {
+              color: "rgba(15, 23, 42, 0.18)"
+            }
+          }
+        }
+      },
+      plugins: [bgPlugin]
+    });
+
+    const dataUrl = canvas.toDataURL("image/png", 1);
+
+    if (exportChart) {
+      exportChart.destroy();
+      exportChart = null;
+    }
+
+    return dataUrl;
+  } catch (err) {
+    console.error("Export chart render failed:", err);
+    return getChartImage();
+  }
+}
   function readSnapshots(key) {
     try {
       const raw = localStorage.getItem(key);
@@ -211,7 +473,7 @@
         { label: "Overshoot", value: String(core.outputs.overshoot) }
       ],
       assumptions: assumptionsForTool(),
-      chartImage: getChartImage(),
+      chartImage: getExportChartImage(),
       meta: getReportMeta()
     };
   }
@@ -1048,7 +1310,7 @@
       currentReport = {
         ...currentReport,
         generatedAt: new Date().toISOString(),
-        chartImage: getChartImage(),
+        chartImage: getExportChartImage(),
         meta: getReportMeta()
       };
 
@@ -1067,7 +1329,7 @@
       currentReport = {
         ...currentReport,
         generatedAt: new Date().toISOString(),
-        chartImage: getChartImage(),
+        chartImage: getExportChartImage(),
         meta: getReportMeta()
       };
 
