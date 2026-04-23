@@ -20,7 +20,6 @@
   const LANE = "v1";
   const STEP = "license-plate-range";
   const PREVIOUS_STEP = "face-recognition-range";
-  const NEXT_URL = "/tools/physical-security/";
 
   const chartRef = { current: null };
   const chartWrapRef = { current: null };
@@ -114,30 +113,25 @@
     const signedIn = hasStoredAuth();
     const unlocked = getUnlockedCategories().includes(category);
 
-    const lockedCard = document.getElementById("lockedCard");
-    const toolCard = document.getElementById("toolCard");
-
     if (signedIn && unlocked) {
-      if (lockedCard) lockedCard.style.display = "none";
-      if (toolCard) toolCard.style.display = "";
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
       return true;
     }
 
-    if (lockedCard) lockedCard.style.display = "";
-    if (toolCard) toolCard.style.display = "none";
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
     return false;
   }
 
   function showComplete() {
     if (els.continueWrap) els.continueWrap.style.display = "flex";
     if (els.completeWrap) els.completeWrap.style.display = "block";
-    if (els.continueBtn) els.continueBtn.disabled = false;
   }
 
   function hideComplete() {
     if (els.continueWrap) els.continueWrap.style.display = "none";
     if (els.completeWrap) els.completeWrap.style.display = "none";
-    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function renderFlowNote() {
@@ -458,9 +452,6 @@
 
     els.calc?.addEventListener("click", calc);
     els.reset?.addEventListener("click", reset);
-    els.continueBtn?.addEventListener("click", () => {
-      window.location.href = NEXT_URL;
-    });
   }
 
   function init() {
@@ -473,15 +464,9 @@
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
-    let unlocked = unlockCategoryPage();
-    if (unlocked) init();
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
 
-    setTimeout(() => {
-      unlocked = unlockCategoryPage();
-      if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
-        els.toolCard.dataset.initialized = "true";
-        init();
-      }
-    }, 400);
+    init();
   });
 })();

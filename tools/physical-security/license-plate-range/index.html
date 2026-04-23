@@ -9,15 +9,15 @@
     content="Estimate max distance for readable license plate capture."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=phys-lpr-range-0421" />
+  <link rel="stylesheet" href="/assets/style.css?v=phys-lpr-range-0424" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=phys-lpr-range-0421"></script>
-  <script defer src="/assets/app.js?v=phys-lpr-range-0421"></script>
+  <script defer src="/assets/auth.js?v=phys-lpr-range-0424"></script>
+  <script defer src="/assets/app.js?v=phys-lpr-range-0424"></script>
 
   <style>
     .results-grid {
@@ -131,7 +131,7 @@
 
         <div class="actions">
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Physical Security</a>
+          <a class="btn btn-primary" href="/upgrade/?category=physical-security#checkout">Unlock Pro for Physical Security</a>
         </div>
       </section>
 
@@ -197,9 +197,9 @@
         </div>
 
         <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-          <button id="continue" class="btn btn-primary" type="button">
+          <a id="continue" class="btn btn-primary" href="/tools/physical-security/">
             Return → Physical Security
-          </button>
+          </a>
         </div>
 
         <div id="complete-wrap" class="card" style="display:none; margin-top:12px;">
@@ -207,9 +207,6 @@
             <strong>Pipeline Complete</strong>
             <span class="muted">Physical Security flow complete: illumination → mounting → field of view → coverage area → spacing → blind spots → pixel density → lens → recognition → plate capture.</span>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              <a href="/tools/physical-security/" class="btn">
-                ← Back to Physical Security
-              </a>
               <a href="/tools/" class="btn btn-primary">
                 Explore Tools
               </a>
@@ -225,13 +222,13 @@
     </div>
   </main>
 
-  <script src="/assets/tool-flow.js?v=phys-lpr-range-0421"></script>
-  <script src="/assets/catalog.js?v=phys-lpr-range-0421"></script>
-  <script src="/assets/pipelines.js?v=phys-lpr-range-0421"></script>
-  <script src="/assets/pipeline-state.js?v=phys-lpr-range-0421"></script>
-  <script src="/assets/pipeline.js?v=phys-lpr-range-0421"></script>
-  <script src="/assets/analyzer.js?v=phys-lpr-range-0421"></script>
-  <script src="./script.js?v=phys-lpr-range-0421"></script>
+  <script src="/assets/tool-flow.js?v=phys-lpr-range-0424"></script>
+  <script src="/assets/catalog.js?v=phys-lpr-range-0424"></script>
+  <script src="/assets/pipelines.js?v=phys-lpr-range-0424"></script>
+  <script src="/assets/pipeline-state.js?v=phys-lpr-range-0424"></script>
+  <script src="/assets/pipeline.js?v=phys-lpr-range-0424"></script>
+  <script src="/assets/analyzer.js?v=phys-lpr-range-0424"></script>
+  <script src="./script.js?v=phys-lpr-range-0424"></script>
 </body>
 </html>
 
