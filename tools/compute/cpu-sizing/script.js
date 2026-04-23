@@ -21,7 +21,6 @@
 
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
-  let hasResult = false;
 
   const els = {
     workload: $("workload"),
@@ -52,6 +51,14 @@
     els.flowNote.innerHTML = "";
   }
 
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+  }
+
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -65,25 +72,40 @@
       sessionStorage.removeItem(FLOW_KEYS["backup-window"]);
     } catch {}
 
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
-      existingChartRef: chartRef,
-      existingWrapRef: chartWrapRef,
-      flowKey: FLOW_KEYS[STEP],
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      emptyMessage: "Enter values and press Calculate."
-    });
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.invalidate === "function"
+    ) {
+      window.ScopedLabsAnalyzer.invalidate({
+        resultsEl: els.results,
+        analysisEl: els.analysisCopy,
+        flowKey: FLOW_KEYS[STEP],
+        category: CATEGORY,
+        step: STEP,
+        lane: LANE,
+        emptyMessage: "Enter values and press Calculate."
+      });
+    } else {
+      els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+      if (els.analysisCopy) {
+        els.analysisCopy.style.display = "none";
+        els.analysisCopy.innerHTML = "";
+      }
+      if (chartRef.current) {
+        try { chartRef.current.destroy(); } catch {}
+        chartRef.current = null;
+      }
+      if (chartWrapRef.current && chartWrapRef.current.parentNode) {
+        chartWrapRef.current.parentNode.removeChild(chartWrapRef.current);
+        chartWrapRef.current = null;
+      }
+    }
 
-    hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
-  function calc() {
+  function calculate() {
     const workload = els.workload.value;
     const concurrency = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.concurrency.value, 0));
     const cpuPct = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.cpuPerWorker.value, 0));
@@ -224,11 +246,10 @@
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
-    hasResult = true;
+    showContinue();
   }
 
-  els.calc.addEventListener("click", calc);
+  els.calc.addEventListener("click", calculate);
 
   els.reset.addEventListener("click", () => {
     els.workload.value = "general";
@@ -245,15 +266,10 @@
     $(id).addEventListener("change", invalidate);
   });
 
-  els.continue.addEventListener("click", () => {
-    if (!hasResult) return;
-    window.location.href = "/tools/compute/ram-sizing/";
-  });
-
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
     refreshFlowNote();
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+    hideContinue();
   });
 })();
