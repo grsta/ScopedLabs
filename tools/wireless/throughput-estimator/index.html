@@ -1,10 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Wireless Throughput Estimator *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=vs-raid-pro-0193" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wireless Throughput Estimator • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate usable WLAN throughput from SNR, channel width, client load, and utilization assumptions."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=wireless-throughput-0424" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,99 +17,127 @@
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0412"></script>
-  <script defer src="/assets/app.js?v=0412"></script>
+  <script defer src="/assets/auth.js?v=wireless-throughput-0424"></script>
+  <script defer src="/assets/app.js?v=wireless-throughput-0424"></script>
+
+  <style>
+    .results-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background: rgba(0,0,0,0.18);
+    }
+
+    .result-label,
+    .result-row .k {
+      color: rgba(255,255,255,0.70);
+    }
+
+    .result-value,
+    .result-row .v {
+      font-weight: 800;
+      text-align: right;
+    }
+  </style>
 </head>
 
 <body data-tier="free" data-category="wireless">
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-dot"></span>
-      <span class="brand-text">ScopedLabs</span>
-    </a>
-    <nav class="site-nav">
-      <a class="nav-pill" href="/">Home</a>
-      <a class="nav-pill" href="/tools/">Tools</a>
-      <a class="nav-pill" href="/tools/wireless/">Wireless</a>
-    </nav>
-  </div>
-</header>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        <span class="brand-text">ScopedLabs</span>
+      </a>
+      <nav class="site-nav">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/wireless/">Wireless</a>
+      </nav>
+    </div>
+  </header>
 
-<main class="container page">
-  <div class="crumbs">
-    <a href="/tools/">Tools</a> /
-    <a href="/tools/wireless/">Wireless</a> /
-    Throughput Estimator
-  </div>
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a> /
+      <a href="/tools/wireless/">Wireless</a> /
+      Throughput Estimator
+    </div>
 
-  
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--free">Free Tier</span>
+    <div class="pill-row" style="margin-top: 6px;">
+      <span class="pill pill--free">Free Tier</span>
+    </div>
+
+    <h1>Wireless Throughput Estimator</h1>
+    <p class="subhead">Estimate usable WLAN throughput from SNR, channel width, client load, and utilization assumptions.</p>
+
+    <section class="card">
+      <p class="tool-best-for">
+        <strong>Best for:</strong> estimating how much usable WLAN throughput remains after channel width, contention, and client sharing reduce the theoretical PHY rate.
+      </p>
+    </section>
+
+    <section id="toolCard" class="card tool-card">
+      <h2>Inputs</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">SNR (dB)</span>
+          <input id="snr" type="number" value="28" />
+        </label>
+
+        <label class="field">
+          <span class="label">Channel Width (MHz)</span>
+          <select id="width">
+            <option value="20">20</option>
+            <option value="40">40</option>
+            <option value="80" selected>80</option>
+            <option value="160">160</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Clients Sharing AP</span>
+          <input id="clients" type="number" value="20" />
+        </label>
+
+        <label class="field">
+          <span class="label">Utilization Factor (%)</span>
+          <input id="util" type="number" value="60" />
+        </label>
       </div>
-<h1>Wireless Throughput Estimator</h1>
-  <p class="subhead">Estimate usable throughput from SNR, channel width, and client load.</p>
 
-  <section class="card">
-    <p class="tool-best-for">
-      <strong>Best for:</strong> estimating how much usable WLAN throughput remains after channel width, contention, and client sharing reduce the theoretical PHY rate.
-    </p>
-  </section>
+      <div class="actions">
+        <button id="calc" class="btn btn-primary" type="button">Estimate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
+        <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
+      </div>
+    </section>
 
-  <section id="toolCard" class="card tool-card">
-    <h2>Inputs</h2>
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results-grid">
+        <div class="muted">Enter values and press Estimate.</div>
+      </div>
+    </section>
 
-    <div class="form-grid">
-      <label class="field">
-        <span class="label">SNR (dB)</span>
-        <input id="snr" type="number" value="28">
-      </label>
+    <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
 
-      <label class="field">
-        <span class="label">Channel Width (MHz)</span>
-        <select id="width">
-          <option value="20">20</option>
-          <option value="40">40</option>
-          <option value="80" selected>80</option>
-          <option value="160">160</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span class="label">Clients Sharing AP</span>
-        <input id="clients" type="number" value="20">
-      </label>
-
-      <label class="field">
-        <span class="label">Utilization Factor (%)</span>
-        <input id="util" type="number" value="60">
-      </label>
-    </div>
-
-    <div class="actions">
-      <button id="calc" class="btn btn-primary" type="button">Estimate</button>
-      <button id="reset" class="btn" type="button">Reset</button>
-      <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
-    </div>
-  </section>
-
-  <section class="card tool-card">
-    <h2>Results</h2>
-    <div id="results" class="results">
-      <div class="muted">Enter values and press Estimate.</div>
-    </div>
-  </section>
-
-  <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
-
-      <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
-      </footer>
-
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
   </main>
 
-<script src="/assets/analyzer.js"></script>
-<script src="./script.js?v=005"></script>
+  <script src="/assets/analyzer.js?v=wireless-throughput-0424"></script>
+  <script src="./script.js?v=wireless-throughput-0424"></script>
 </body>
 </html>
 

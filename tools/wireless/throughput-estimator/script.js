@@ -1,5 +1,7 @@
 ﻿(() => {
-  const $ = id => document.getElementById(id);
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     snr: $("snr"),
@@ -92,7 +94,7 @@
     clearChart();
   }
 
-  function baseRate(snr){
+  function baseRate(snr) {
     if (snr >= 35) return 1200;
     if (snr >= 30) return 900;
     if (snr >= 25) return 650;
@@ -101,7 +103,7 @@
     return 100;
   }
 
-  function widthMultiplier(w){
+  function widthMultiplier(w) {
     if (w === 20) return 0.25;
     if (w === 40) return 0.5;
     if (w === 80) return 1;
@@ -109,7 +111,7 @@
     return 1;
   }
 
-  function buildInterpretation(status, dominantConstraint, usable, perClient, clients) {
+  function buildInterpretation(status, dominantConstraint) {
     if (status === "HEALTHY") {
       return `The estimated usable throughput remains in a workable range for the selected SNR, width, and sharing level. Client demand is being divided efficiently enough that the AP should still feel reasonably healthy under this planning load.`;
     }
@@ -176,7 +178,7 @@
     if (els.analysisCopy) {
       els.analysisCopy.style.display = "";
       els.analysisCopy.innerHTML = `
-        <div class="results">
+        <div class="results-grid">
           <div class="result-row">
             <span class="result-label">Status</span>
             <span class="result-value">${status}</span>
@@ -198,7 +200,7 @@
     }
   }
 
-  function calc(){
+  function calculate() {
     const snr = clamp(safeNumber(els.snr.value, NaN), -10, 80);
     const width = parseInt(els.width.value, 10);
     const clients = Math.max(1, parseInt(els.clients.value, 10));
@@ -267,18 +269,18 @@
     const dominantConstraint =
       dominantConstraintMap[dominantLabel] || "SNR pressure";
 
-    const interpretation = buildInterpretation(status, dominantConstraint, usable, perClient, clients);
+    const interpretation = buildInterpretation(status, dominantConstraint);
     const guidance = buildGuidance(status, dominantConstraint);
 
     const summaryRows = [
-      {label:"Estimated PHY Rate", value:`${phy.toFixed(0)} Mbps`},
-      {label:"Usable Throughput", value:`${usable.toFixed(0)} Mbps`},
-      {label:"Clients Sharing AP", value:`${clients}`},
-      {label:"Per-Client Avg Throughput", value:`${perClient.toFixed(1)} Mbps`}
+      { label: "Estimated PHY Rate", value: `${phy.toFixed(0)} Mbps` },
+      { label: "Usable Throughput", value: `${usable.toFixed(0)} Mbps` },
+      { label: "Clients Sharing AP", value: `${clients}` },
+      { label: "Per-Client Avg Throughput", value: `${perClient.toFixed(1)} Mbps` }
     ];
 
     const derivedRows = [
-      {label:"Planning Note", value:"Planning estimate only. Real rates depend on MCS, airtime efficiency, and interference."}
+      { label: "Planning Note", value: "Planning estimate only. Real rates depend on MCS, airtime efficiency, and interference." }
     ];
 
     if (
@@ -332,7 +334,7 @@
     }
   }
 
-  function reset(){
+  function reset() {
     els.snr.value = 28;
     els.width.value = "80";
     els.clients.value = 20;
@@ -340,19 +342,25 @@
     renderEmpty();
   }
 
-  els.calc.onclick = calc;
-  els.reset.onclick = reset;
+  function bindInvalidation() {
+    [els.snr, els.width, els.clients, els.util].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", invalidate);
+      el.addEventListener("change", invalidate);
+    });
+  }
 
-  [els.snr, els.width, els.clients, els.util].forEach((el) => {
-    el.addEventListener("input", invalidate);
-    el.addEventListener("change", invalidate);
+  function init() {
+    renderEmpty();
+    bindInvalidation();
+
+    els.calc.addEventListener("click", calculate);
+    els.reset.addEventListener("click", reset);
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    init();
   });
-
-  renderEmpty();
 })();
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
