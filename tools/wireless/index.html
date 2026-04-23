@@ -2,197 +2,306 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Wireless • ScopedLabs</title>
-  <meta name="description" content="AP density, coverage modeling, and channel planning." />
-  <link rel="stylesheet" href="/assets/style.css?v=wireless-cat-0381" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0317"></script>
-<script defer src="/assets/app.js?v=0317"></script>
+  <meta name="description" content="Coverage planning, overlap control, RF margin, AP density, and wireless backhaul validation before deployment." />
+  <link rel="stylesheet" href="/assets/style.css?v=wireless-cat-0423" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=wireless-cat-0423"></script>
+  <script defer src="/assets/app.js?v=wireless-cat-0423"></script>
 </head>
 
 <body data-protected="true" data-category="wireless">
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
-    <nav class="nav">
-      <a class="nav-link" href="/">Home</a>
-      <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
-      <a class="nav-link" href="/about/">About</a>
-    </nav>
-  </div>
-</header>
+      <nav class="nav">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-link" href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
 
-<main class="container">
+  <main class="container">
+    <section class="page-head">
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <span>Wireless</span>
+      </div>
 
-  <div class="crumbs">
-    <a href="/tools/">Tools</a>
-    <span class="sep">/</span>
-    <span>Wireless</span>
-  </div>
+      <h1 class="h1">Wireless</h1>
+      <p class="subhead">
+        Coverage planning, overlap control, RF margin, AP density, and wireless backhaul validation before deployment.
+      </p>
+    </section>
 
-  <section class="page-head">
-    <h1 class="h1">Wireless</h1>
-    <p class="subhead">AP density, coverage modeling, and channel planning.</p>
+    <section class="card">
+      <p class="muted">
+        Wireless problems rarely begin with the AP datasheet. They show up as sticky clients, poor roaming,
+        overlapping channels, noisy airtime, weak edge performance, and backhaul assumptions that collapse under
+        real load. These tools help you model coverage, RF margin, density, and wireless transport before the site
+        goes live.
+      </p>
+    </section>
 
-      <section class="card" data-auto-category-pipeline-card="true" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--free" style="margin-bottom: 10px; width: fit-content;">Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">Start the Wireless design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
-          This category includes a guided pipeline so users can move step by step through the core design decisions instead of jumping between isolated tools.
-        </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          Update this card later with the exact category-specific flow summary and mini pipeline preview if needed.
-        </p>
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn btn-primary" href="/tools/wireless/channel-overlap/">Start Pipeline</a>
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Design Pipeline</div>
+      <h2 class="h2" style="margin-top: 0;">Follow a recommended engineering sequence</h2>
+      <p class="muted" style="margin-bottom: 14px;">
+        Some ScopedLabs tools work as a connected workflow. In Wireless, the Design Flow carries you from
+        cell-size planning into overlap, RF margin, density, capacity, link validation, and roaming thresholds
+        so you can move from rough layout assumptions to behavior-aware design checks with less re-entry.
+      </p>
+
+      <div class="pipeline-preview" aria-label="Wireless design pipeline preview">
+        <span class="pipeline-preview-label">DESIGN PIPELINE</span>
+        <div class="pipeline-preview-steps">
+          <span class="pipeline-preview-step is-active">Coverage Radius</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step">Channel Overlap</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Noise Floor Margin</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Client Density</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">AP Capacity</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Link Budget</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Mesh Backhaul</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">PtP Wireless Link</span>
+          <span class="pipeline-preview-sep">→</span>
+          <span class="pipeline-preview-step is-pro">Roaming Thresholds</span>
         </div>
-      </section>
+      </div>
 
-  </section>
+      <p class="muted" style="margin-top: 14px; margin-bottom: 14px;">
+        Includes both Free and Pro tools. Unlock Pro to complete the full flow.
+      </p>
 
-  <section class="card">
-    <p class="muted">
-      Wireless problems usually show up as slow speeds, dropped connections, and roaming complaints.
-      These tools help you plan coverage, capacity, and RF margins before deployment.
-    </p>
-  </section>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/wireless/coverage-radius/">Start Design Pipeline</a>
+      </div>
+    </section>
 
-  <!-- HERO (Free tool) -->
-  <section class="card tool-hero">
-    <div class="pill pill-ok">Free tool</div>
-    <h2 class="h2">Throughput Estimator</h2>
-    <p class="muted">Quick throughput sanity check based on channel width and client count.</p>
-    <div class="actions">
-      <a class="btn btn-primary" href="/tools/wireless/throughput-estimator/">Launch Tool</a>
-    </div>
-  </section>
+    <h3 class="section-divider">Free Tier</h3>
 
-  <!-- FREE -->
-  <h3 class="section-divider">Free Tier</h3>
+    <div class="stack">
+      <a class="tool-row tool-row--center" href="/tools/wireless/coverage-radius/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">Coverage Radius</div>
+          <div class="tool-row-sub">
+            Estimate usable wireless cell radius based on band, environment, AP power, and target edge RSSI.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row" href="/tools/wireless/channel-overlap/">
-    <div class="tool-row-left">
-      <div class="tool-title">Channel Overlap</div>
-      <div class="tool-desc muted">Check for overlapping channels and co-channel interference risk.</div>
+      <a class="tool-row tool-row--center" href="/tools/wireless/channel-overlap/">
+        <div class="tool-row-center">
+          <div class="tool-row-title">Channel Overlap Checker</div>
+          <div class="tool-row-sub">
+            Check reuse pressure and overlap risk before moving into RF margin and client-loading decisions.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill-ok">Free Tier</span>
+          </div>
+        </div>
+      </a>
     </div>
-    <div class="tool-row-right">
-      <span class="pill free">Free Tier</span>
-    </div>
-  </a>
 
-  <a class="tool-row" href="/tools/wireless/coverage-radius/">
-    <div class="tool-row-left">
-      <div class="tool-title">Coverage Radius</div>
-      <div class="tool-desc muted">Estimate usable coverage radius based on band and environment.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill free">Free Tier</span>
-    </div>
-  </a>
+    <h3 class="section-divider">Pro Tier</h3>
 
+    <div class="stack">
+      <a class="tool-row pro"
+         href="/upgrade/?category=wireless#checkout"
+         data-tool="/tools/wireless/noise-floor-margin/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Noise Floor Margin</div>
+          <div class="tool-row-sub">
+            Calculate SNR and margin versus target service quality before you size density and AP loading.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <!-- PRO -->
-  <h3 class="section-divider">Pro Tier</h3>
+      <a class="tool-row pro"
+         href="/upgrade/?category=wireless#checkout"
+         data-tool="/tools/wireless/client-density/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Client Density Planner</div>
+          <div class="tool-row-sub">
+            Estimate AP count from site size, user volume, and density assumptions before capacity planning.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=wireless#checkout" 
-  data-tool="/tools/wireless/ap-capacity/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>AP Capacity</div>
-      <div class="tool-desc muted">Client capacity per AP based on airtime and utilization targets.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=wireless#checkout"
+         data-tool="/tools/wireless/ap-capacity/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>AP Capacity Planner</div>
+          <div class="tool-row-sub">
+            Size AP count from client throughput and utilization targets to reveal the real limiting factor.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=wireless#checkout" 
-  data-tool="/tools/wireless/client-density/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Client Density</div>
-      <div class="tool-desc muted">Estimate AP count based on people/devices per area.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=wireless#checkout"
+         data-tool="/tools/wireless/link-budget/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Wireless Link Budget</div>
+          <div class="tool-row-sub">
+            Estimate received signal and link margin using a planning-level free-space path loss model.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=wireless#checkout" 
-  data-tool="/tools/wireless/link-budget/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Link Budget</div>
-      <div class="tool-desc muted">RF link budget helper with fade margin.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=wireless#checkout"
+         data-tool="/tools/wireless/mesh-backhaul/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Mesh Backhaul Estimator</div>
+          <div class="tool-row-sub">
+            Estimate how quickly usable throughput collapses as hops and protocol overhead accumulate.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=wireless#checkout" 
-  data-tool="/tools/wireless/mesh-backhaul/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Mesh Backhaul</div>
-      <div class="tool-desc muted">Estimate backhaul throughput and hop penalties.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+      <a class="tool-row pro"
+         href="/upgrade/?category=wireless#checkout"
+         data-tool="/tools/wireless/ptp-wireless-link/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>PtP Wireless Link Planner</div>
+          <div class="tool-row-sub">
+            Validate whether a longer point-to-point wireless path still closes with enough SNR and throughput.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=wireless#checkout" 
-  data-tool="/tools/wireless/noise-floor-margin/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Noise Floor Margin</div>
-      <div class="tool-desc muted">Check SNR and margin vs modulation targets.</div>
+      <a class="tool-row pro"
+         href="/upgrade/?category=wireless#checkout"
+         data-tool="/tools/wireless/roaming-thresholds/">
+        <div class="tool-row-center">
+          <div class="tool-row-title"><span class="lock-icon"></span>Roaming Thresholds Planner</div>
+          <div class="tool-row-sub">
+            Suggest RSSI and SNR thresholds that reduce sticky clients without making the WLAN overly twitchy.
+          </div>
+          <div class="tool-row-pill">
+            <span class="pill pill--pro">Pro Tier</span>
+          </div>
+        </div>
+      </a>
     </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=wireless#checkout" 
-  data-tool="/tools/wireless/ptp-wireless-link/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>PtP Wireless Link</div>
-      <div class="tool-desc muted">Point-to-point link viability estimator.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
 
-  <a class="tool-row pro" 
-  href="/upgrade/?category=wireless#checkout" 
-  data-tool="/tools/wireless/roaming-thresholds/">
-    <div class="tool-row-left">
-      <div class="tool-title"><span class="lock-icon"></span>Roaming Thresholds</div>
-      <div class="tool-desc muted">RSSI/SNR thresholds for cleaner roaming behavior.</div>
-    </div>
-    <div class="tool-row-right">
-      <span class="pill pro">Pro Tier</span>
-    </div>
-  </a>
+  <style>
+    .tool-row--center { text-decoration: none; }
+    .tool-row-center { text-align: center; width: 100%; }
+    .tool-row-title { font-weight: 700; margin-bottom: 6px; }
+    .tool-row-sub { opacity: 0.9; margin-bottom: 10px; }
+    .tool-row-pill { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .lock-icon { margin-right: 6px; }
 
-  <footer class="site-footer">
-    <a class="muted" href="/tools/">← Back to Tools</a>
-    <div class="muted">© <span data-year></span> ScopedLabs</div>
-  </footer>
+    .pipeline-preview {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(120,255,120,0.14);
+      background:
+        linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 12px 30px rgba(0,0,0,0.18);
+    }
 
-</main>
+    .pipeline-preview-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(220,255,220,0.78);
+      margin-bottom: 9px;
+    }
+
+    .pipeline-preview-steps {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.98rem;
+      line-height: 1.4;
+    }
+
+    .pipeline-preview-step {
+      color: rgba(220,235,225,0.72);
+      font-weight: 600;
+    }
+
+    .pipeline-preview-step.is-active {
+      color: rgba(255,255,255,0.96);
+      position: relative;
+      padding-left: 15px;
+    }
+
+    .pipeline-preview-step.is-active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #57ff7a;
+      transform: translateY(-50%);
+      box-shadow: 0 0 12px rgba(87,255,122,0.55);
+    }
+
+    .pipeline-preview-step.is-pro {
+      color: rgba(210,220,214,0.82);
+    }
+
+    .pipeline-preview-sep {
+      color: rgba(180,205,190,0.42);
+      font-weight: 700;
+    }
+  </style>
 </body>
 </html>
 
