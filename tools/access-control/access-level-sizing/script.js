@@ -564,13 +564,24 @@
   }
 
   function openReportWindow(payload) {
-    const win = window.open("", "_blank", "noopener,noreferrer");
-    if (!win) return false;
-    win.document.open();
-    win.document.write(buildReportHTML(payload));
-    win.document.close();
-    return true;
-  }
+    try {
+      const html = buildReportHTML(payload);
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+
+      if (!win) return false;
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 10000);
+
+      return true;
+    } catch (err) {
+      console.error("Export report open failed:", err);
+      return false;
+    }
+}
 
   function invalidate() {
     if (chart) {
