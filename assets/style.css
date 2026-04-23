@@ -1953,3 +1953,64 @@ main h3.section-title {
     font-size:1rem;
   }
 }
+
+/* =========================================
+   ScopedLabs nav brand polish
+   remove icon outline box + tighten spacing
+   ========================================= */
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:8px; /* slightly tighter overall */
+}
+
+.brand-dot{
+  margin-right: 4px; /* tiny breathing room after the dot */
+}
+
+.brand-icon-wrap{
+  width:auto;
+  height:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  margin:0;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  border-radius:0;
+  flex:0 0 auto;
+}
+
+.brand-icon{
+  width:26px;
+  height:26px;
+  display:block;
+  object-fit:contain;
+}
+
+.brand-name{
+  font-weight:700;
+  letter-spacing:.2px;
+  color:var(--text);
+  font-size:1.05rem;
+  margin-left: 2px; /* keeps it close to the icon */
+}
+
+@media (max-width: 640px){
+  .brand{
+    gap:7px;
+  }
+
+  .brand-icon{
+    width:23px;
+    height:23px;
+  }
+
+  .brand-name{
+    font-size:1rem;
+    margin-left: 1px;
+  }
+}
