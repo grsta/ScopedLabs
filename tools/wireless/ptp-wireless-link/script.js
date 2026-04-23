@@ -1,16 +1,27 @@
-const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-const FLOW_KEYS = {
-  // TODO: replace with real per-step flow keys
-};
+(() => {
+  "use strict";
 
-﻿(() => {
-  const STORAGE_KEY = "scopedlabs:pipeline:last-result";
   const CATEGORY = "wireless";
   const STEP = "ptp-wireless-link";
+  const PREVIOUS_STEP = "mesh-backhaul";
   const NEXT_URL = "/tools/wireless/roaming-thresholds/";
+  const LANE = "v1";
 
-  const $ = id => document.getElementById(id);
+  const FLOW_KEYS = {
+    "coverage-radius": "scopedlabs:pipeline:wireless:coverage-radius",
+    "channel-overlap": "scopedlabs:pipeline:wireless:channel-overlap",
+    "noise-floor-margin": "scopedlabs:pipeline:wireless:noise-floor-margin",
+    "client-density": "scopedlabs:pipeline:wireless:client-density",
+    "ap-capacity": "scopedlabs:pipeline:wireless:ap-capacity",
+    "link-budget": "scopedlabs:pipeline:wireless:link-budget",
+    "mesh-backhaul": "scopedlabs:pipeline:wireless:mesh-backhaul",
+    "ptp-wireless-link": "scopedlabs:pipeline:wireless:ptp-wireless-link",
+    "roaming-thresholds": "scopedlabs:pipeline:wireless:roaming-thresholds"
+  };
+
+  const LEGACY_STORAGE_KEY = "scopedlabs:pipeline:last-result";
+
+  const $ = (id) => document.getElementById(id);
 
   const els = {
     dist: $("dist"),
@@ -27,8 +38,55 @@ const FLOW_KEYS = {
     analysisCopy: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("continue-wrap"),
-    continueBtn: $("continue")
+    continueBtn: $("continue"),
+    lockedCard: $("lockedCard"),
+    toolCard: $("toolCard")
   };
+
+  let chartRef = { current: null };
+  let chartWrapRef = { current: null };
+
+  function hasStoredAuth() {
+    try {
+      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!k) return false;
+      const raw = JSON.parse(localStorage.getItem(k));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function unlockCategoryPage() {
+    const body = document.body;
+    const category = String(body?.dataset?.category || "").trim().toLowerCase();
+    const signedIn = hasStoredAuth();
+    const unlocked = getUnlockedCategories().includes(category);
+
+    if (signedIn && unlocked) {
+      if (els.lockedCard) els.lockedCard.style.display = "none";
+      if (els.toolCard) els.toolCard.style.display = "";
+      return true;
+    }
+
+    if (els.lockedCard) els.lockedCard.style.display = "";
+    if (els.toolCard) els.toolCard.style.display = "none";
+    return false;
+  }
 
   function safeNumber(value, fallback = NaN) {
     if (
@@ -52,31 +110,23 @@ const FLOW_KEYS = {
   }
 
   function hideContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.hideContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    els.continueWrap.style.display = "none";
-    els.continueBtn.disabled = true;
+    if (els.continueWrap) els.continueWrap.style.display = "none";
   }
 
   function showContinue() {
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.showContinue === "function"
-    ) {
-      window.ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-      return;
-    }
-    els.continueWrap.style.display = "";
-    els.continueBtn.disabled = false;
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
   }
 
   function clearStored() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      sessionStorage.removeItem(FLOW_KEYS[STEP]);
+    } catch {}
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+        sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    } catch {}
   }
 
   function clearAnalysisBlock() {
@@ -93,9 +143,30 @@ const FLOW_KEYS = {
     }
   }
 
+  function clearChart() {
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.clearChart === "function"
+    ) {
+      window.ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+      return;
+    }
+
+    if (chartRef.current) {
+      try { chartRef.current.destroy(); } catch {}
+      chartRef.current = null;
+    }
+
+    if (chartWrapRef.current && chartWrapRef.current.parentNode) {
+      chartWrapRef.current.parentNode.removeChild(chartWrapRef.current);
+      chartWrapRef.current = null;
+    }
+  }
+
   function renderEmpty() {
     els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
     clearAnalysisBlock();
+    clearChart();
   }
 
   function invalidate() {
@@ -109,10 +180,9 @@ const FLOW_KEYS = {
       window.ScopedLabsAnalyzer.invalidate({
         resultsEl: els.results,
         analysisEl: els.analysisCopy,
-        continueWrapEl: els.continueWrap,
-        continueBtnEl: els.continueBtn,
         category: CATEGORY,
         step: STEP,
+        lane: LANE,
         emptyMessage: "Enter values and press Calculate."
       });
     } else {
@@ -120,51 +190,40 @@ const FLOW_KEYS = {
     }
   }
 
-  function loadPrior() {
-    els.flowNote.style.display = "none";
-    els.flowNote.innerHTML = "";
-
-    let saved = null;
+  function readPreviousFlow() {
     try {
-      saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+      const primary = JSON.parse(sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]) || "null");
+      if (primary && primary.category === CATEGORY) return primary;
     } catch {}
 
-    if (!saved || saved.category !== CATEGORY || saved.step !== "mesh-backhaul") return;
+    try {
+      const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+      if (legacy && legacy.category === CATEGORY && legacy.step === PREVIOUS_STEP) return legacy;
+    } catch {}
 
-    const d = saved.data || {};
+    return null;
+  }
 
-    if (
-      window.ScopedLabsAnalyzer &&
-      typeof window.ScopedLabsAnalyzer.renderFlowNote === "function"
-    ) {
-      window.ScopedLabsAnalyzer.renderFlowNote({
-        flowEl: els.flowNote,
-        category: CATEGORY,
-        step: STEP,
-        title: "System Context",
-        intro:
-          "Mesh Backhaul estimated how much throughput survives relay penalties. Use this step to validate whether a longer PtP path still closes with enough signal and SNR margin.",
-        customRows: [
-          {
-            label: "Effective throughput",
-            value: d.effective != null ? `${d.effective} Mbps` : "—"
-          },
-          {
-            label: "Mesh hops",
-            value: d.hops != null ? `${d.hops}` : "—"
-          }
-        ]
-      });
+  function loadPrior() {
+    if (!els.flowNote) return;
+
+    const saved = readPreviousFlow();
+
+    if (!saved) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
       return;
     }
 
+    const d = saved.data || {};
+
+    els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
-      <strong>Carried over context</strong><br>
-      Effective Throughput: <strong>${d.effective ?? "—"} Mbps</strong>,
-      Hops: <strong>${d.hops ?? "—"}</strong>.
-      This step validates long-distance link viability.
+      <strong>Using Mesh Backhaul results:</strong><br>
+      Effective Throughput: ${d.effective != null ? `${d.effective} Mbps` : "—"} | Mesh Hops: ${d.hops != null ? `${d.hops}` : "—"}
+      <br><br>
+      This step validates whether the longer PtP path still closes with enough signal and SNR margin to support the backhaul plan.
     `;
-    els.flowNote.style.display = "";
   }
 
   function fspl(distFt, ghz) {
@@ -189,7 +248,7 @@ const FLOW_KEYS = {
     return "Failing";
   }
 
-  function buildInterpretation(status, dominantConstraint, snr, margin, est) {
+  function buildInterpretation(status, dominantConstraint) {
     if (status === "HEALTHY") {
       return `The PtP path closes with comfortable SNR margin, so the modeled link should have enough headroom to support stable service and realistic throughput under normal variation.`;
     }
@@ -269,6 +328,7 @@ const FLOW_KEYS = {
       clearAnalysisBlock();
       hideContinue();
       clearStored();
+      clearChart();
       return;
     }
 
@@ -333,7 +393,7 @@ const FLOW_KEYS = {
     const dominantConstraint =
       dominantConstraintMap[dominantLabel] || "Path loss pressure";
 
-    const interpretation = buildInterpretation(status, dominantConstraint, snr, margin, est);
+    const interpretation = buildInterpretation(status, dominantConstraint);
     const guidance = buildGuidance(status, dominantConstraint);
 
     const summaryRows = [
@@ -377,17 +437,54 @@ const FLOW_KEYS = {
       `).join("");
     }
 
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-      category: CATEGORY,
-      step: STEP,
-      data: {
-        snr: Number(snr.toFixed(1)),
-        margin: Number(margin.toFixed(1)),
-        throughput: est,
-        status: result,
-        dominantConstraint
-      }
-    }));
+    clearChart();
+
+    if (
+      window.ScopedLabsAnalyzer &&
+      typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+    ) {
+      window.ScopedLabsAnalyzer.renderAnalyzerChart({
+        mountEl: els.results,
+        existingChartRef: chartRef,
+        existingWrapRef: chartWrapRef,
+        labels: ["Path Loss", "System Losses", "Margin Pressure"],
+        values: [pathLossPressure, lossBudgetPressure, marginPressure],
+        displayValues: [
+          `${path.toFixed(1)} dB`,
+          `${loss.toFixed(1)} dB`,
+          `${margin.toFixed(1)} dB`
+        ],
+        referenceValue: 1.0,
+        healthyMax: 1.0,
+        watchMax: 1.5,
+        axisTitle: "PtP Pressure",
+        referenceLabel: "Healthy Threshold",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: Math.max(
+          3,
+          Math.ceil(Math.max(pathLossPressure, lossBudgetPressure, marginPressure, 1.5) * 1.15 * 10) / 10
+        )
+      });
+    }
+
+    try {
+      const payload = {
+        category: CATEGORY,
+        step: STEP,
+        data: {
+          snr: Number(snr.toFixed(1)),
+          margin: Number(margin.toFixed(1)),
+          throughput: est,
+          status: result,
+          dominantConstraint
+        }
+      };
+
+      sessionStorage.setItem(FLOW_KEYS[STEP], JSON.stringify(payload));
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
 
     showContinue();
   }
@@ -408,7 +505,8 @@ const FLOW_KEYS = {
   }
 
   function bindInvalidation() {
-    [els.dist, els.ghz, els.tx, els.txg, els.rxg, els.loss, els.noise, els.snr].forEach(el => {
+    [els.dist, els.ghz, els.tx, els.txg, els.rxg, els.loss, els.noise, els.snr].forEach((el) => {
+      if (!el) return;
       el.addEventListener("input", invalidate);
       el.addEventListener("change", invalidate);
     });
@@ -420,82 +518,20 @@ const FLOW_KEYS = {
     renderEmpty();
     bindInvalidation();
 
-    els.calc.onclick = calculate;
-    els.reset.onclick = reset;
-    els.continueBtn.onclick = () => window.location.href = NEXT_URL;
+    els.calc.addEventListener("click", calculate);
+    els.reset.addEventListener("click", reset);
+    els.continueBtn.addEventListener("click", () => window.location.href = NEXT_URL);
   }
 
-  init();
-})();
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function calc() {
-  // TODO: implement calculate handler
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const year = document.querySelector("[data-year]");
-  if (year) year.textContent = new Date().getFullYear();
-});
-
-
-function hasStoredAuth() {
-  try {
-    const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-    if (!k) return false;
-    const raw = JSON.parse(localStorage.getItem(k));
-    return !!(
-      raw?.access_token ||
-      raw?.currentSession?.access_token ||
-      (Array.isArray(raw) ? raw[0]?.access_token : null)
-    );
-  } catch {
-    return false;
-  }
-}
-
-
-function getUnlockedCategories() {
-  try {
-    const raw = localStorage.getItem("sl_unlocked_categories");
-    if (!raw) return [];
-    return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-
-function unlockCategoryPage() {
-  const body = document.body;
-  const category = String(body?.dataset?.category || "").trim().toLowerCase();
-  const signedIn = hasStoredAuth();
-  const unlocked = getUnlockedCategories().includes(category);
-
-  const lockedCard = document.getElementById("lockedCard");
-  const toolCard = document.getElementById("toolCard");
-
-  if (signedIn && unlocked) {
-    if (lockedCard) lockedCard.style.display = "none";
-    if (toolCard) toolCard.style.display = "";
-    return true;
+  function boot() {
+    const year = document.querySelector("[data-year]");
+    if (year) year.textContent = new Date().getFullYear();
+    init();
   }
 
-  if (lockedCard) lockedCard.style.display = "";
-  if (toolCard) toolCard.style.display = "none";
-  return false;
-}
-
-
-function writeFlow(data) {
-  ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP] || STEP, {
-    category: CATEGORY,
-    step: STEP,
-    data
+  window.addEventListener("DOMContentLoaded", () => {
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
+    boot();
   });
-}
+})();
