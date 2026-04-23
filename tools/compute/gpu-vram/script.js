@@ -20,7 +20,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  let hasResult = false;
   let upstreamContext = null;
   let chartRef = { current: null };
   let chartWrapRef = { current: null };
@@ -134,6 +133,14 @@
     `;
   }
 
+  function hideContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "none";
+  }
+
+  function showContinue() {
+    if (els.continueWrap) els.continueWrap.style.display = "flex";
+  }
+
   function invalidate() {
     try {
       sessionStorage.removeItem(FLOW_KEYS[STEP]);
@@ -145,10 +152,6 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysisCopy,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continue,
-      existingChartRef: chartRef,
-      existingWrapRef: chartWrapRef,
       flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
@@ -156,7 +159,7 @@
       emptyMessage: "Run calculation."
     });
 
-    hasResult = false;
+    hideContinue();
     refreshFlowNote();
   }
 
@@ -205,8 +208,7 @@
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
-    hasResult = true;
+    showContinue();
   }
 
   function calcGpuMode() {
@@ -361,11 +363,10 @@
       }
     });
 
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continue);
-    hasResult = true;
+    showContinue();
   }
 
-  function calc() {
+  function calculate() {
     const mode = els.gpuMode.value;
 
     if (mode === "no") {
@@ -376,7 +377,7 @@
     calcGpuMode();
   }
 
-  els.calc.addEventListener("click", calc);
+  els.calc.addEventListener("click", calculate);
 
   els.reset.addEventListener("click", () => {
     els.gpuMode.value = "no";
@@ -393,21 +394,14 @@
     $(id).addEventListener("change", invalidate);
   });
 
-  els.continue.addEventListener("click", () => {
-    if (!hasResult) return;
-    window.location.href = "/tools/compute/power-thermal/";
-  });
-
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
-    unlockCategoryPage();
-    setTimeout(() => {
-      unlockCategoryPage();
-    }, 400);
+    const unlocked = unlockCategoryPage();
+    if (!unlocked) return;
 
     refreshFlowNote();
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continue);
+    hideContinue();
   });
 })();
