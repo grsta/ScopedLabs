@@ -48,7 +48,33 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
-  </style>
+  
+    .export-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .export-grid .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .export-status {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.94rem;
+      line-height: 1.45;
+      min-height: 1.45em;
+    }
+
+    @media (max-width: 860px) {
+      .export-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+</style>
 </head>
 
 <body data-tier="free" data-category="access-control" data-tool="credential-format-helper">
@@ -148,6 +174,52 @@
           Model: decimal capacity uses facility code digits × card number digits. Binary capacity is estimated from usable bits after basic parity allowance. This is planning math, not a controller-specific encoding decoder.
         </p>
       </div>
+      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <div class="pill-row">
+          <span class="pill pill--pro">Documentation & Export</span>
+        </div>
+
+        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <p class="muted" style="margin-bottom: 0;">
+          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+        </p>
+
+        <div class="export-grid">
+          <label class="field">
+            <span class="label">Report Title</span>
+            <input id="reportTitle" type="text" placeholder="Assessment Report" />
+          </label>
+
+          <label class="field">
+            <span class="label">Project Name</span>
+            <input id="projectName" type="text" placeholder="Project Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Client Name</span>
+            <input id="clientName" type="text" placeholder="Client / Site Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Prepared By</span>
+            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          </label>
+
+          <label class="field full">
+            <span class="label">Custom Notes</span>
+            <textarea id="customNotes" placeholder="Optional notes, assumptions, field conditions, or design caveats to include in the report."></textarea>
+          </label>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+        </div>
+
+        <div id="exportStatus" class="export-status"></div>
+      </section>
+
+
 
       <div class="btn-row" style="margin-top: 14px;">
         <a class="btn" href="/tools/access-control/">Back to Access Control</a>

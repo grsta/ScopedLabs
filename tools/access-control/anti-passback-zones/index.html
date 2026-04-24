@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Anti-Passback Zones *ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=ac-apb-pro-0333" />
+  <title>Anti-Passback Zones • ScopedLabs</title>
+  <link rel="stylesheet" href="/assets/style.css?v=ac-apb-pro-0334" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -12,8 +12,8 @@
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInR5cCI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script defer src="/assets/auth.js?v=0333"></script>
-  <script defer src="/assets/app.js?v=0333"></script>
+  <script defer src="/assets/auth.js?v=0334"></script>
+  <script defer src="/assets/app.js?v=0334"></script>
 
   <style>
     .results-grid {
@@ -49,6 +49,31 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
+
+    .export-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .export-grid .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .export-status {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.94rem;
+      line-height: 1.45;
+      min-height: 1.45em;
+    }
+
+    @media (max-width: 860px) {
+      .export-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 
@@ -56,18 +81,18 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-icon-wrap" aria-hidden="true">
-        <img
-          class="brand-icon"
-          src="/assets/favicon/favicon-32x32.png?v=1"
-          alt=""
-          width="32"
-          height="32"
-        />
-      </span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
       <nav class="site-nav" aria-label="Primary">
         <a class="nav-pill" href="/">Home</a>
@@ -153,13 +178,58 @@
         </p>
       </div>
 
+      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <div class="pill-row">
+          <span class="pill pill--pro">Documentation & Export</span>
+        </div>
+
+        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <p class="muted" style="margin-bottom: 0;">
+          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+        </p>
+
+        <div class="export-grid">
+          <label class="field">
+            <span class="label">Report Title</span>
+            <input id="reportTitle" type="text" placeholder="Assessment Report" />
+          </label>
+
+          <label class="field">
+            <span class="label">Project Name</span>
+            <input id="projectName" type="text" placeholder="Project Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Client Name</span>
+            <input id="clientName" type="text" placeholder="Client / Site Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Prepared By</span>
+            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          </label>
+
+          <label class="field full">
+            <span class="label">Custom Notes</span>
+            <textarea id="customNotes" placeholder="Optional notes, assumptions, field conditions, or design caveats to include in the report."></textarea>
+          </label>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+        </div>
+
+        <div id="exportStatus" class="export-status"></div>
+      </section>
+
       <div class="btn-row" style="margin-top: 14px;">
         <a class="btn" href="/tools/access-control/">Back to Access Control</a>
       </div>
     </section>
   </main>
 
-  <script src="./script.js?v=333"></script>
+  <script src="./script.js?v=334"></script>
 </body>
 </html>
 

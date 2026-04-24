@@ -10,7 +10,7 @@
     content="Estimate required power supply capacity based on lock type, current draw, and simultaneous unlock events."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=ac-lock-008" />
+  <link rel="stylesheet" href="/assets/style.css?v=ac-lock-009" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -55,6 +55,31 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
+
+    .export-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .export-grid .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .export-status {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.94rem;
+      line-height: 1.45;
+      min-height: 1.45em;
+    }
+
+    @media (max-width: 860px) {
+      .export-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 
@@ -63,18 +88,18 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-icon-wrap" aria-hidden="true">
-        <img
-          class="brand-icon"
-          src="/assets/favicon/favicon-32x32.png?v=1"
-          alt=""
-          width="32"
-          height="32"
-        />
-      </span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
       <nav class="site-nav" aria-label="Primary">
         <a class="nav-pill" href="/">Home</a>
@@ -198,6 +223,51 @@
           Model: peak load is based on simultaneous unlock demand, then reserve headroom is added to estimate the required supply capacity. This is planning math, not a substitute for manufacturer-specific surge or hold-current documentation.
         </p>
       </div>
+
+      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <div class="pill-row">
+          <span class="pill pill--pro">Documentation & Export</span>
+        </div>
+
+        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <p class="muted" style="margin-bottom: 0;">
+          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+        </p>
+
+        <div class="export-grid">
+          <label class="field">
+            <span class="label">Report Title</span>
+            <input id="reportTitle" type="text" placeholder="Assessment Report" />
+          </label>
+
+          <label class="field">
+            <span class="label">Project Name</span>
+            <input id="projectName" type="text" placeholder="Project Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Client Name</span>
+            <input id="clientName" type="text" placeholder="Client / Site Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Prepared By</span>
+            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          </label>
+
+          <label class="field full">
+            <span class="label">Custom Notes</span>
+            <textarea id="customNotes" placeholder="Optional notes, assumptions, field conditions, or design caveats to include in the report."></textarea>
+          </label>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+        </div>
+
+        <div id="exportStatus" class="export-status"></div>
+      </section>
     </section>
 
     <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
@@ -211,13 +281,13 @@
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=ac-lock-008"></script>
-  <script src="/assets/catalog.js?v=ac-lock-008"></script>
-  <script src="/assets/pipelines.js?v=ac-lock-008"></script>
-  <script src="/assets/pipeline-state.js?v=ac-lock-008"></script>
-  <script src="/assets/pipeline.js?v=ac-lock-008"></script>
-  <script src="/assets/analyzer.js?v=ac-lock-008"></script>
-  <script src="./script.js?v=008"></script>
+  <script src="/assets/tool-flow.js?v=ac-lock-009"></script>
+  <script src="/assets/catalog.js?v=ac-lock-009"></script>
+  <script src="/assets/pipelines.js?v=ac-lock-009"></script>
+  <script src="/assets/pipeline-state.js?v=ac-lock-009"></script>
+  <script src="/assets/pipeline.js?v=ac-lock-009"></script>
+  <script src="/assets/analyzer.js?v=ac-lock-009"></script>
+  <script src="./script.js?v=009"></script>
 
 </body>
 </html>
