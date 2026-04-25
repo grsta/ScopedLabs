@@ -1,61 +1,166 @@
-/* /assets/account.js
-   ScopedLabs Account page controller.
+const fs = require("fs");
 
-   Works with /account/index.html IDs:
-   - #sl-whoami
-   - #sl-login-card
-   - #sl-checkout-card
-   - #sl-email
-   - #sl-sendlink
-   - #sl-email-hint
-   - #sl-entitlements
-   - #sl-signout
-   - #sl-status
+const accountHtmlPath = "account/index.html";
+const accountJsPath = "assets/account.js";
 
-   Requires /assets/auth.js to load first and expose:
-   window.SL_AUTH = { sb, ready }
-*/
+if (!fs.existsSync(accountHtmlPath)) throw new Error("Missing account/index.html");
+if (!fs.existsSync(accountJsPath)) throw new Error("Missing assets/account.js");
 
-(() => {
-  "use strict";
+let html = fs.readFileSync(accountHtmlPath, "utf8");
+let js = fs.readFileSync(accountJsPath, "utf8");
 
-  const els = {
-    whoami: document.getElementById("sl-whoami"),
-    loginCard: document.getElementById("sl-login-card"),
-    checkoutCard: document.getElementById("sl-checkout-card"),
-    email: document.getElementById("sl-email"),
-    sendLink: document.getElementById("sl-sendlink"),
-    emailHint: document.getElementById("sl-email-hint"),
-    entitlements: document.getElementById("sl-entitlements"),
-    signout: document.getElementById("sl-signout"),
-    status: document.getElementById("sl-status"),
-  };
+const styleBlock = `
+  <style data-scopedlabs-account-snapshots>
+    .sl-snapshots-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 1rem;
+    }
 
-  const sb = () => (window.SL_AUTH && window.SL_AUTH.sb ? window.SL_AUTH.sb : null);
-  const ready = () =>
+    .sl-snapshot-row {
+      border: 1px solid rgba(112, 255, 145, 0.18);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(0, 0, 0, 0.14);
+      display: grid;
+      gap: 10px;
+    }
+
+    .sl-snapshot-row-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sl-snapshot-title {
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .sl-snapshot-meta {
+      color: rgba(255, 255, 255, 0.66);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .sl-snapshot-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sl-snapshot-detail {
+      margin-top: 1rem;
+      background: rgba(0, 0, 0, 0.16);
+    }
+
+    .sl-snapshot-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    .sl-snapshot-table td,
+    .sl-snapshot-table th {
+      border-bottom: 1px solid rgba(112, 255, 145, 0.14);
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .sl-snapshot-table td:last-child {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .sl-snapshot-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sl-snapshot-chart {
+      margin-top: 12px;
+      border: 1px solid rgba(112, 255, 145, 0.16);
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .sl-snapshot-chart img {
+      max-width: 100%;
+      height: auto;
+      display: inline-block;
+    }
+
+    @media (max-width: 860px) {
+      .sl-snapshot-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+`;
+
+const snapshotSection = `
+    <section id="sl-snapshots-card" class="card tool-card" style="margin-top:1rem; display:none;">
+      <span class="pill">Saved Snapshots</span>
+      <h2 style="margin-top:.6rem;">Saved tool reports</h2>
+      <p class="muted">
+        Account-backed snapshots saved from ScopedLabs export cards. Use these to revisit prior calculations, report context, and documented outputs.
+      </p>
+
+      <div class="actions" style="margin-top:.85rem;">
+        <button id="sl-refresh-snapshots" class="btn" type="button">Refresh snapshots</button>
+      </div>
+
+      <div id="sl-snapshots-status" class="muted" style="font-size:.9rem; margin-top:.85rem;"></div>
+      <div id="sl-snapshots-list" class="sl-snapshots-list"></div>
+      <div id="sl-snapshot-detail" class="card sl-snapshot-detail" style="display:none;"></div>
+    </section>
+`;
+
+if (!html.includes("data-scopedlabs-account-snapshots")) {
+  html = html.replace("</head>", styleBlock + "\n</head>");
+}
+
+if (!html.includes('id="sl-snapshots-card"')) {
+  html = html.replace("</main>", snapshotSection + "\n  </main>");
+}
+
+html = html.replace(/style\.css\?v=acct-\d+/g, "style.css?v=acct-501");
+html = html.replace(/account\.js\?v=acct-\d+/g, "account.js?v=acct-501");
+
+if (!js.includes("snapshotsCard: document.getElementById")) {
+  js = js.replace(
+    `    status: document.getElementById("sl-status"),
+  };`,
+    `    status: document.getElementById("sl-status"),
+    snapshotsCard: document.getElementById("sl-snapshots-card"),
+    snapshotsStatus: document.getElementById("sl-snapshots-status"),
+    snapshotsList: document.getElementById("sl-snapshots-list"),
+    snapshotDetail: document.getElementById("sl-snapshot-detail"),
+    refreshSnapshots: document.getElementById("sl-refresh-snapshots"),
+  };`
+  );
+}
+
+if (!js.includes("let currentSession = null;")) {
+  js = js.replace(
+    `  const ready = () =>
+    window.SL_AUTH && window.SL_AUTH.ready ? window.SL_AUTH.ready : Promise.resolve();`,
+    `  const ready = () =>
     window.SL_AUTH && window.SL_AUTH.ready ? window.SL_AUTH.ready : Promise.resolve();
 
-  function setStatus(msg) {
-    if (els.status) els.status.textContent = msg || "";
-  }
+  let currentSession = null;
+  let snapshotsCache = [];`
+  );
+}
 
-  function show(el, on) {
-    if (!el) return;
-    el.style.display = on ? "" : "none";
-  }
-
-  function setText(el, txt) {
-    if (!el) return;
-    el.textContent = txt || "";
-  }
-
-  function normalizeCat(c) {
-    return String(c || "")
-      .trim()
-      .toLowerCase();
-  }
-
-
+const snapshotHelpers = `
   function escapeHtml(value) {
     return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")
@@ -68,9 +173,9 @@
   function prettySlug(slug) {
     return String(slug || "")
       .replace(/[-_]+/g, " ")
-      .replace(/\s+/g, " ")
+      .replace(/\\s+/g, " ")
       .trim()
-      .replace(/\b\w/g, function (c) {
+      .replace(/\\b\\w/g, function (c) {
         return c.toUpperCase();
       });
   }
@@ -351,181 +456,117 @@
     }
   }
 
+`;
 
-  function renderEntitlementsList(cats) {
-    if (!els.entitlements) return;
+if (!js.includes("function fetchSnapshots(session)")) {
+  js = js.replace("  function renderEntitlementsList(cats) {", snapshotHelpers + "\n  function renderEntitlementsList(cats) {");
+}
 
-    const list = (cats || []).map(normalizeCat).filter(Boolean);
-
-    if (!list.length) {
-      els.entitlements.textContent = "No unlocks yet. Go to Upgrade to purchase a category.";
-      return;
-    }
-
-    // Pretty label
-    const pretty = (slug) =>
-      slug
-        .split("-")
-        .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
-        .join(" ");
-
-    // Render as inline chips (no CSS dependency—just spans)
-    els.entitlements.innerHTML = "";
-    const wrap = document.createElement("div");
-    wrap.style.display = "flex";
-    wrap.style.flexWrap = "wrap";
-    wrap.style.gap = "8px";
-    wrap.style.marginTop = "8px";
-
-    list.forEach((slug) => {
-      const chip = document.createElement("span");
-      chip.className = "pill"; // uses your existing pill styling
-      chip.textContent = pretty(slug);
-      wrap.appendChild(chip);
-    });
-
-    els.entitlements.appendChild(wrap);
-  }
-
-  async function fetchEntitlements(session) {
-    // Expected backend: GET /api/entitlements
-    // Auth: Authorization: Bearer <supabase access_token>
-    // Acceptable response shapes:
-    // - { categories: ["network","power"] }
-    // - { entitlements: [{category:"network"}] }
-    // - { data: { categories: [...] } }
-    // - ["network","power"]
-    if (!els.entitlements) return;
-
-    setText(els.entitlements, "Loading…");
-
-    try {
-      const token = session?.access_token || "";
-      if (!token) throw new Error("missing_token");
-
-      const res = await fetch("/api/unlocks/list", {
-        method: "GET",
-        headers: {
-          Authorization: "Bearer " + token,
-          Accept: "application/json",
-        },
-      });
-
-      if (!res.ok) throw new Error("bad_status_" + res.status);
-
-      const data = await res.json();
-
-      let cats = null;
-
-      if (Array.isArray(data)) cats = data;
-      else if (data && Array.isArray(data.categories)) cats = data.categories;
-      else if (data && data.data && Array.isArray(data.data.categories)) cats = data.data.categories;
-      else if (data && Array.isArray(data.entitlements))
-        cats = data.entitlements.map((x) => (x ? x.category : null));
-      else if (data && data.data && Array.isArray(data.data.entitlements))
-        cats = data.data.entitlements.map((x) => (x ? x.category : null));
-
-      if (!cats) cats = [];
-
-      renderEntitlementsList(cats);
-      setStatus("");
-    } catch (e) {
-      console.warn("[account.js] entitlements fetch failed:", e);
-      setText(els.entitlements, "Unable to load unlocks right now.");
-      setStatus("Entitlements check unavailable. If you just purchased, refresh in a moment.");
-    }
-  }
-
-  function setSignedOutUI() {
+js = js.replace(
+  `  function setSignedOutUI() {
     setText(els.whoami, "Not signed in");
     show(els.loginCard, true);
     show(els.checkoutCard, false);
     show(els.signout, false);
     setStatus("");
-  }
+  }`,
+  `  function setSignedOutUI() {
+    currentSession = null;
+    setText(els.whoami, "Not signed in");
+    show(els.loginCard, true);
+    show(els.checkoutCard, false);
+    show(els.signout, false);
+    show(els.snapshotsCard, false);
+    if (els.snapshotsList) els.snapshotsList.innerHTML = "";
+    if (els.snapshotDetail) {
+      els.snapshotDetail.style.display = "none";
+      els.snapshotDetail.innerHTML = "";
+    }
+    snapshotStatusText("");
+    setStatus("");
+  }`
+);
 
-  function setSignedInUI(email) {
-    setText(els.whoami, email ? `Signed in as ${email}` : "Signed in");
+js = js.replace(
+  `  function setSignedInUI(email) {
+    setText(els.whoami, email ? \`Signed in as \${email}\` : "Signed in");
     show(els.loginCard, false);
     show(els.checkoutCard, true);
     show(els.signout, true);
-  }
+  }`,
+  `  function setSignedInUI(email) {
+    setText(els.whoami, email ? \`Signed in as \${email}\` : "Signed in");
+    show(els.loginCard, false);
+    show(els.checkoutCard, true);
+    show(els.signout, true);
+    show(els.snapshotsCard, true);
+  }`
+);
 
-  async function refresh() {
-    const client = sb();
-    if (!client) {
-      setStatus("Auth client not available.");
-      return;
+js = js.replace(
+  `      setSignedInUI(session.user?.email || "");
+      await fetchEntitlements(session);`,
+  `      currentSession = session;
+      setSignedInUI(session.user?.email || "");
+      await fetchEntitlements(session);
+      await fetchSnapshots(session);`
+);
+
+js = js.replace(
+  `          setSignedInUI(session.user?.email || "");
+          await fetchEntitlements(session);`,
+  `          currentSession = session;
+          setSignedInUI(session.user?.email || "");
+          await fetchEntitlements(session);
+          await fetchSnapshots(session);`
+);
+
+if (!js.includes("data-snapshot-view")) {
+  js = js.replace(
+    `    // Keep UI in sync with auth changes`,
+    `    if (els.refreshSnapshots) {
+      els.refreshSnapshots.addEventListener("click", async () => {
+        if (!currentSession) {
+          snapshotStatusText("Sign in to view saved snapshots.");
+          return;
+        }
+        await fetchSnapshots(currentSession);
+      });
     }
 
-    try {
-      await ready();
-      const { data } = await client.auth.getSession();
-      const session = data?.session || null;
+    document.addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
 
-      if (!session) {
-        setSignedOutUI();
+      const viewBtn = target.closest("[data-snapshot-view]");
+      if (viewBtn) {
+        event.preventDefault();
+        viewSnapshot(viewBtn.getAttribute("data-snapshot-view"));
         return;
       }
 
-      setSignedInUI(session.user?.email || "");
-      await fetchEntitlements(session);
-    } catch (e) {
-      console.warn("[account.js] refresh failed:", e);
-      setSignedOutUI();
-    }
-  }
+      const deleteBtn = target.closest("[data-snapshot-delete]");
+      if (deleteBtn) {
+        event.preventDefault();
+        deleteSnapshot(deleteBtn.getAttribute("data-snapshot-delete"));
+        return;
+      }
 
-  function bindOnce() {
-    if (window.__SL_ACCOUNT_BOUND) return;
-    window.__SL_ACCOUNT_BOUND = true;
-
-    // Cosmetic hint when sending link (auth.js does the actual signInWithOtp)
-    if (els.sendLink && els.email && els.emailHint) {
-      els.sendLink.addEventListener("click", () => {
-        const email = (els.email.value || "").trim();
-        if (!email) {
-          els.emailHint.textContent = "Enter your email above.";
-          return;
+      const closeBtn = target.closest("[data-snapshot-close]");
+      if (closeBtn) {
+        event.preventDefault();
+        if (els.snapshotDetail) {
+          els.snapshotDetail.style.display = "none";
+          els.snapshotDetail.innerHTML = "";
         }
-        els.emailHint.textContent = `Sending magic link to ${email}…`;
-        setStatus("");
-      });
-    }
+      }
+    });
 
-    // Keep UI in sync with auth changes
-    const client = sb();
-    if (client) {
-      ready().then(() => {
-        if (window.__SL_ACCOUNT_AUTH_SUB) return;
-        window.__SL_ACCOUNT_AUTH_SUB = true;
+    // Keep UI in sync with auth changes`
+  );
+}
 
-        client.auth.onAuthStateChange(async (_evt, session) => {
-          if (!session) {
-            setSignedOutUI();
-            return;
-          }
-          setSignedInUI(session.user?.email || "");
-          await fetchEntitlements(session);
-        });
-      });
-    }
-  }
+fs.writeFileSync(accountHtmlPath, html, "utf8");
+fs.writeFileSync(accountJsPath, js, "utf8");
 
-  async function init() {
-    bindOnce();
-    await refresh();
-  }
-
-  // Normal load
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
-
-  // BFCache restore: refresh only (no re-bind)
-  window.addEventListener("pageshow", () => {
-    refresh();
-  });
-})();
+console.log("Installed account snapshot viewer.");

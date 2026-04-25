@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Account • ScopedLabs</title>
 
-  <link rel="stylesheet" href="/assets/style.css?v=acct-450" />
+  <link rel="stylesheet" href="/assets/style.css?v=acct-501" />
 
   <!-- Supabase client (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,8 +15,103 @@
 </script>
   <!-- Auth / checkout UI glue -->
   <script defer src="/assets/auth.js?v=0314"></script>
-  <script defer src="/assets/account.js?v=acct-450"></script>
+  <script defer src="/assets/account.js?v=acct-501"></script>
   
+
+  <style data-scopedlabs-account-snapshots>
+    .sl-snapshots-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 1rem;
+    }
+
+    .sl-snapshot-row {
+      border: 1px solid rgba(112, 255, 145, 0.18);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(0, 0, 0, 0.14);
+      display: grid;
+      gap: 10px;
+    }
+
+    .sl-snapshot-row-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sl-snapshot-title {
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .sl-snapshot-meta {
+      color: rgba(255, 255, 255, 0.66);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .sl-snapshot-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sl-snapshot-detail {
+      margin-top: 1rem;
+      background: rgba(0, 0, 0, 0.16);
+    }
+
+    .sl-snapshot-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    .sl-snapshot-table td,
+    .sl-snapshot-table th {
+      border-bottom: 1px solid rgba(112, 255, 145, 0.14);
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .sl-snapshot-table td:last-child {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .sl-snapshot-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sl-snapshot-chart {
+      margin-top: 12px;
+      border: 1px solid rgba(112, 255, 145, 0.16);
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .sl-snapshot-chart img {
+      max-width: 100%;
+      height: auto;
+      display: inline-block;
+    }
+
+    @media (max-width: 860px) {
+      .sl-snapshot-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
 </head>
 
 <body class="page-account">
@@ -82,6 +177,23 @@
 
       <div class="muted" id="sl-status" style="font-size:.9rem; margin-top: .85rem;"></div>
     </section>
+  
+    <section id="sl-snapshots-card" class="card tool-card" style="margin-top:1rem; display:none;">
+      <span class="pill">Saved Snapshots</span>
+      <h2 style="margin-top:.6rem;">Saved tool reports</h2>
+      <p class="muted">
+        Account-backed snapshots saved from ScopedLabs export cards. Use these to revisit prior calculations, report context, and documented outputs.
+      </p>
+
+      <div class="actions" style="margin-top:.85rem;">
+        <button id="sl-refresh-snapshots" class="btn" type="button">Refresh snapshots</button>
+      </div>
+
+      <div id="sl-snapshots-status" class="muted" style="font-size:.9rem; margin-top:.85rem;"></div>
+      <div id="sl-snapshots-list" class="sl-snapshots-list"></div>
+      <div id="sl-snapshot-detail" class="card sl-snapshot-detail" style="display:none;"></div>
+    </section>
+
   </main>
 
   <footer class="site-footer">
