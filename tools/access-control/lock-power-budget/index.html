@@ -10,7 +10,7 @@
     content="Estimate required power supply capacity based on lock type, current draw, and simultaneous unlock events."
   />
 
-  <link rel="stylesheet" href="/assets/style.css?v=ac-lock-009" />
+  <link rel="stylesheet" href="/assets/style.css?v=ac-lock-010" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -83,8 +83,7 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="access-control" data-step="lock-power-budget" data-lane="v1">
-
+<body data-protected="true" data-tier="pro" data-category="access-control" data-step="lock-power-budget" data-lane="v1">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -217,7 +216,12 @@
         <div id="results" class="results-grid" aria-live="polite">
           <div class="muted">Run calculation.</div>
         </div>
+
         <div id="analysis-copy" style="display:none;"></div>
+
+        <div id="chartWrap" hidden style="margin-top:16px; min-height:340px;">
+          <canvas id="chart"></canvas>
+        </div>
 
         <p class="mini-note">
           Model: peak load is based on simultaneous unlock demand, then reserve headroom is added to estimate the required supply capacity. This is planning math, not a substitute for manufacturer-specific surge or hold-current documentation.
@@ -237,7 +241,7 @@
         <div class="export-grid">
           <label class="field">
             <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Assessment Report" />
+            <input id="reportTitle" type="text" placeholder="Lock Power Budget Assessment" />
           </label>
 
           <label class="field">
@@ -271,7 +275,7 @@
     </section>
 
     <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
-      <button id="continue" class="btn btn-primary" disabled>
+      <button id="continue" class="btn btn-primary" disabled type="button">
         Continue → Panel Capacity
       </button>
     </div>
@@ -281,14 +285,13 @@
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=ac-lock-009"></script>
-  <script src="/assets/catalog.js?v=ac-lock-009"></script>
-  <script src="/assets/pipelines.js?v=ac-lock-009"></script>
-  <script src="/assets/pipeline-state.js?v=ac-lock-009"></script>
-  <script src="/assets/pipeline.js?v=ac-lock-009"></script>
-  <script src="/assets/analyzer.js?v=ac-lock-009"></script>
-  <script src="./script.js?v=009"></script>
-
+  <script src="/assets/tool-flow.js?v=ac-lock-010"></script>
+  <script src="/assets/catalog.js?v=ac-lock-010"></script>
+  <script src="/assets/pipelines.js?v=ac-lock-010"></script>
+  <script src="/assets/pipeline-state.js?v=ac-lock-010"></script>
+  <script src="/assets/pipeline.js?v=ac-lock-010"></script>
+  <script src="/assets/analyzer.js?v=ac-lock-010"></script>
+  <script src="./script.js?v=010"></script>
 </body>
 </html>
 
