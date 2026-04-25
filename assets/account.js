@@ -653,4 +653,270 @@
   window.addEventListener("load", () => {
     loadSnapshotViewerFallback();
   });
+
+    function slEscapeSnapshotHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  async function slSnapshotToken() {
+    await ready();
+
+    const client = sb();
+    if (!client) throw new Error("missing_auth_client");
+
+    const { data } = await client.auth.getSession();
+    const session = data?.session || null;
+
+    if (!session?.access_token) throw new Error("missing_token");
+
+    return session.access_token;
+  }
+
+  async function slSnapshotApi(path, options = {}) {
+    const token = await slSnapshotToken();
+
+    const res = await fetch(path, {
+      ...options,
+      headers: {
+        Authorization: "Bearer " + token,
+        Accept: "application/json",
+        ...(options.headers || {})
+      }
+    });
+
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!res.ok || data?.ok === false) {
+      throw new Error(data?.error || "snapshot_api_failed");
+    }
+
+    return data;
+  }
+
+  function slSnapshotRows(rows) {
+    const list = Array.isArray(rows) ? rows : [];
+
+    if (!list.length) {
+      return '<tr><td colspan="2" class="muted">No stored rows.</td></tr>';
+    }
+
+    return list.map((row) => {
+      return `
+        <tr>
+          <td>${slEscapeSnapshotHtml(row.label || "")}</td>
+          <td>${slEscapeSnapshotHtml(row.value || "")}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function slRenderSnapshotDetail(snapshot) {
+    const card = document.getElementById("sl-snapshots-card");
+    const detail =
+      document.getElementById("sl-snapshot-detail") ||
+      (() => {
+        const el = document.createElement("div");
+        el.id = "sl-snapshot-detail";
+        el.className = "card sl-snapshot-detail";
+        el.style.marginTop = "1rem";
+        if (card) card.appendChild(el);
+        return el;
+      })();
+
+    if (!detail) return;
+
+    const payload = snapshot?.payload_json || {};
+
+    const title =
+      snapshot.report_title ||
+      payload?.meta?.reportTitle ||
+      payload.tool ||
+      snapshot.tool_label ||
+      "Saved Snapshot";
+
+    const category = snapshot.category_label || payload.category || snapshot.category_slug || "";
+    const tool = snapshot.tool_label || payload.tool || snapshot.tool_slug || "";
+    const status = String(snapshot.status || payload.status || "").toUpperCase();
+    const summary = snapshot.summary || payload.summary || "";
+    const created = snapshot.created_at
+      ? new Date(snapshot.created_at).toLocaleString()
+      : "";
+
+    const project = snapshot.project_name || payload?.meta?.projectName || "";
+    const client = snapshot.client_name || payload?.meta?.clientName || "";
+    const preparedBy = snapshot.prepared_by || payload?.meta?.preparedBy || "";
+    const customNotes = payload?.meta?.customNotes || "";
+
+    const analysisSections = Array.isArray(payload.analysisSections)
+      ? payload.analysisSections
+      : [];
+
+    const analysisHtml = analysisSections.map((section) => {
+      return `
+        <div class="card" style="background:rgba(0,0,0,.14); margin-top:10px;">
+          <h4 style="margin-top:0;">${slEscapeSnapshotHtml(section.title || "Analysis")}</h4>
+          <p class="muted" style="margin-bottom:0;">${slEscapeSnapshotHtml(section.body || "")}</p>
+        </div>
+      `;
+    }).join("");
+
+    const chartHtml = payload.chartImage
+      ? `
+        <div class="sl-snapshot-chart" style="margin-top:12px;">
+          <img src="${slEscapeSnapshotHtml(payload.chartImage)}" alt="${slEscapeSnapshotHtml(tool)} chart snapshot" style="max-width:100%; height:auto;" />
+        </div>
+      `
+      : "";
+
+    detail.style.display = "";
+    detail.innerHTML = `
+      <div class="sl-snapshot-row-head">
+        <div>
+          <span class="pill">Snapshot Detail</span>
+          <h3 style="margin:.65rem 0 .25rem;">${slEscapeSnapshotHtml(title)}</h3>
+          <p class="muted" style="margin:0;">
+            ${slEscapeSnapshotHtml(category)} · ${slEscapeSnapshotHtml(tool)}<br>
+            ${project ? "Project: " + slEscapeSnapshotHtml(project) + " · " : ""}
+            ${client ? "Client: " + slEscapeSnapshotHtml(client) + " · " : ""}
+            ${preparedBy ? "Prepared by: " + slEscapeSnapshotHtml(preparedBy) + " · " : ""}
+            ${slEscapeSnapshotHtml(created)}
+          </p>
+        </div>
+        ${status ? `<span class="pill">${slEscapeSnapshotHtml(status)}</span>` : ""}
+      </div>
+
+      ${summary ? `
+        <div class="card" style="background:rgba(0,0,0,.14); margin-top:14px;">
+          <strong>Summary</strong>
+          <p class="muted" style="margin-bottom:0;">${slEscapeSnapshotHtml(summary)}</p>
+        </div>
+      ` : ""}
+
+      <div class="sl-snapshot-grid" style="margin-top:14px;">
+        <div>
+          <h4>Inputs</h4>
+          <table class="sl-snapshot-table">
+            <tbody>${slSnapshotRows(payload.inputs)}</tbody>
+          </table>
+        </div>
+
+        <div>
+          <h4>Calculated Outputs</h4>
+          <table class="sl-snapshot-table">
+            <tbody>${slSnapshotRows(payload.outputs)}</tbody>
+          </table>
+        </div>
+      </div>
+
+      ${payload.interpretation ? `
+        <div class="card" style="background:rgba(0,0,0,.14); margin-top:10px;">
+          <h4 style="margin-top:0;">Engineering Interpretation</h4>
+          <p class="muted" style="margin-bottom:0;">${slEscapeSnapshotHtml(payload.interpretation)}</p>
+        </div>
+      ` : ""}
+
+      ${analysisHtml}
+      ${chartHtml}
+
+      ${customNotes ? `
+        <div class="card" style="background:rgba(0,0,0,.14); margin-top:10px;">
+          <h4 style="margin-top:0;">Custom Notes</h4>
+          <p class="muted" style="margin-bottom:0;">${slEscapeSnapshotHtml(customNotes)}</p>
+        </div>
+      ` : ""}
+
+      <div class="actions" style="margin-top:14px;">
+        <button class="btn" type="button" data-snapshot-close>Close</button>
+        <button class="btn" type="button" data-snapshot-delete="${slEscapeSnapshotHtml(snapshot.id || "")}">Delete Snapshot</button>
+      </div>
+    `;
+
+    detail.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  if (!window.__SL_ACCOUNT_SNAPSHOT_ACTIONS_BOUND) {
+    window.__SL_ACCOUNT_SNAPSHOT_ACTIONS_BOUND = true;
+
+    document.addEventListener("click", async (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+
+      const status = document.getElementById("sl-snapshots-status");
+
+      const viewBtn = target.closest("[data-snapshot-view]");
+      if (viewBtn) {
+        event.preventDefault();
+
+        const id = viewBtn.getAttribute("data-snapshot-view");
+        if (!id) return;
+
+        try {
+          if (status) status.textContent = "Loading snapshot…";
+
+          const data = await slSnapshotApi("/api/snapshots/" + encodeURIComponent(id), {
+            method: "GET"
+          });
+
+          slRenderSnapshotDetail(data.snapshot);
+
+          if (status) status.textContent = "";
+        } catch (err) {
+          console.warn("[account.js] snapshot view failed:", err);
+          if (status) status.textContent = "Unable to open that snapshot.";
+        }
+
+        return;
+      }
+
+      const deleteBtn = target.closest("[data-snapshot-delete]");
+      if (deleteBtn) {
+        event.preventDefault();
+
+        const id = deleteBtn.getAttribute("data-snapshot-delete");
+        if (!id) return;
+
+        if (!confirm("Delete this saved snapshot?")) return;
+
+        try {
+          if (status) status.textContent = "Deleting snapshot…";
+
+          await slSnapshotApi("/api/snapshots/" + encodeURIComponent(id), {
+            method: "DELETE"
+          });
+
+          document.querySelector(`[data-snapshot-id="${CSS.escape(id)}"]`)?.remove();
+
+          const detail = document.getElementById("sl-snapshot-detail");
+          if (detail) {
+            detail.style.display = "none";
+            detail.innerHTML = "";
+          }
+
+          if (status) status.textContent = "Snapshot deleted.";
+        } catch (err) {
+          console.warn("[account.js] snapshot delete failed:", err);
+          if (status) status.textContent = "Unable to delete that snapshot.";
+        }
+
+        return;
+      }
+
+      const closeBtn = target.closest("[data-snapshot-close]");
+      if (closeBtn) {
+        event.preventDefault();
+
+        const detail = document.getElementById("sl-snapshot-detail");
+        if (detail) {
+          detail.style.display = "none";
+          detail.innerHTML = "";
+        }
+      }
+    });
+  }
 })();
