@@ -3,15 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Anti-Passback Zones • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=ac-apb-pro-0334" />
+  <meta
+    name="description"
+    content="Estimate anti-passback zone structure, enforcement pressure, and operational risk for access-control designs."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=ac-apb-pro-0335" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInR5cCI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script defer src="/assets/auth.js?v=0334"></script>
   <script defer src="/assets/app.js?v=0334"></script>
 
@@ -169,7 +177,7 @@
           <div class="muted">Enter values and press Calculate.</div>
         </div>
 
-        <div style="margin-top:16px; min-height:340px;">
+        <div id="chartWrap" hidden style="margin-top:16px; min-height:340px;">
           <canvas id="chart"></canvas>
         </div>
 
@@ -191,7 +199,7 @@
         <div class="export-grid">
           <label class="field">
             <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Assessment Report" />
+            <input id="reportTitle" type="text" placeholder="Anti-Passback Zone Assessment" />
           </label>
 
           <label class="field">
@@ -229,10 +237,9 @@
     </section>
   </main>
 
-  <script src="./script.js?v=334"></script>
+  <script src="./script.js?v=335"></script>
 </body>
 </html>
-
 
 
 
