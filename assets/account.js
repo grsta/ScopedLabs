@@ -571,4 +571,86 @@
   window.addEventListener("pageshow", () => {
     refresh();
   });
+
+    async function loadSnapshotViewerFallback() {
+    const card = document.getElementById("sl-snapshots-card");
+    const list = document.getElementById("sl-snapshots-list");
+    const status = document.getElementById("sl-snapshots-status");
+
+    if (!card || !list) return;
+
+    card.style.display = "";
+
+    try {
+      await ready();
+
+      const client = sb();
+      if (!client) throw new Error("missing_auth_client");
+
+      const { data } = await client.auth.getSession();
+      const session = data?.session || null;
+
+      if (!session?.access_token) {
+        if (status) status.textContent = "Sign in to view saved snapshots.";
+        return;
+      }
+
+      if (status) status.textContent = "Loading snapshots…";
+
+      const res = await fetch("/api/snapshots/list?limit=50", {
+        method: "GET",
+        headers: {
+          Authorization: "Bearer " + session.access_token,
+          Accept: "application/json"
+        }
+      });
+
+      const payload = await res.json();
+
+      if (!res.ok || !payload?.ok) {
+        throw new Error(payload?.error || "snapshot_list_failed");
+      }
+
+      const snapshots = Array.isArray(payload.snapshots) ? payload.snapshots : [];
+
+      if (!snapshots.length) {
+        list.innerHTML = '<div class="muted">No saved snapshots yet.</div>';
+        if (status) status.textContent = "";
+        return;
+      }
+
+      list.innerHTML = snapshots.map((s) => {
+        const title = s.report_title || s.tool_label || "Saved Snapshot";
+        const category = s.category_label || s.category_slug || "";
+        const tool = s.tool_label || s.tool_slug || "";
+        const created = s.created_at ? new Date(s.created_at).toLocaleString() : "";
+        const statusText = s.status ? String(s.status).toUpperCase() : "";
+
+        return `
+          <article class="sl-snapshot-row" data-snapshot-id="${s.id}">
+            <div class="sl-snapshot-row-head">
+              <div>
+                <div class="sl-snapshot-title">${title}</div>
+                <div class="sl-snapshot-meta">${category} · ${tool}<br>${created}</div>
+              </div>
+              ${statusText ? `<span class="pill">${statusText}</span>` : ""}
+            </div>
+            <div class="sl-snapshot-actions">
+              <button class="btn btn-primary" type="button" data-snapshot-view="${s.id}">View Snapshot</button>
+              <button class="btn" type="button" data-snapshot-delete="${s.id}">Delete</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      if (status) status.textContent = "";
+    } catch (err) {
+      console.warn("[account.js] snapshot fallback load failed:", err);
+      if (status) status.textContent = "Unable to load saved snapshots right now.";
+    }
+  }
+
+  window.addEventListener("load", () => {
+    loadSnapshotViewerFallback();
+  });
 })();
