@@ -435,325 +435,140 @@
     return `${state.options.toolLabel} report generated from the current visible calculator results.`;
   }
 
-  function captureVisibleChart() {
-    function findVisibleCanvas() {
-      const candidates = Array.from(document.querySelectorAll("canvas"));
+  function getAnalysisSections() {
+  const titles = [
+    "Engineering Interpretation",
+    "Dominant Constraint",
+    "Actionable Guidance",
+    "Recommended Action",
+    "Recommended Actions",
+    "Design Guidance",
+    "Best Practices"
+  ];
 
-      return candidates.find((canvas) => {
-        const rect = canvas.getBoundingClientRect();
-        const hiddenParent = canvas.closest("[hidden], .hidden");
-        return !hiddenParent && rect.width > 0 && rect.height > 0;
+  const roots = [
+    $(state.options.resultSelector),
+    document.querySelector("#analysis-copy")
+  ].filter(Boolean);
+
+  const sections = [];
+  const seen = new Set();
+
+  function cleanText(value) {
+    return String(value || "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function titleMatch(text) {
+    const clean = cleanText(text).toLowerCase();
+
+    return titles.find((title) => {
+      const t = title.toLowerCase();
+      return clean === t || clean.startsWith(`${t} `);
+    });
+  }
+
+  for (const root of roots) {
+    const nodes = Array.from(
+      root.querySelectorAll("h2, h3, h4, strong, b, .h2, .h3, .analysis-title")
+    );
+
+    for (const node of nodes) {
+      const matchedTitle = titleMatch(node.textContent);
+
+      if (!matchedTitle) continue;
+
+      const container =
+        node.closest(".card") ||
+        node.closest(".analysis-card") ||
+        node.closest(".result-card") ||
+        node.parentElement;
+
+      if (!container) continue;
+
+      let body = cleanText(container.textContent);
+      body = body.replace(new RegExp(`^${matchedTitle}\\s*`, "i"), "").trim();
+
+      if (!body || body.toLowerCase() === matchedTitle.toLowerCase()) continue;
+
+      const key = `${matchedTitle}:${body}`;
+
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      sections.push({
+        title: matchedTitle,
+        body
       });
     }
+  }
 
-    function numericValue(raw) {
-      if (typeof raw === "number") return raw;
+  return sections;
+}
 
-      if (raw && typeof raw === "object") {
-        if (Number.isFinite(Number(raw.x))) return Number(raw.x);
-        if (Number.isFinite(Number(raw.y))) return Number(raw.y);
-        if (Number.isFinite(Number(raw.value))) return Number(raw.value);
-      }
+  function captureVisibleChart() {
+  function findVisibleCanvas() {
+    const candidates = Array.from(document.querySelectorAll("canvas"));
 
-      const n = Number(raw);
-      return Number.isFinite(n) ? n : 0;
-    }
+    return candidates.find((canvas) => {
+      const rect = canvas.getBoundingClientRect();
+      const hiddenParent = canvas.closest("[hidden], .hidden");
+      return !hiddenParent && rect.width > 0 && rect.height > 0;
+    });
+  }
 
-    function renderLightChartFromExistingChart(sourceCanvas) {
-      if (typeof Chart === "undefined" || typeof Chart.getChart !== "function") {
-        return "";
-      }
+  function exportCanvasWithBackground(sourceCanvas) {
+    const sourceWidth = sourceCanvas.width || Math.round(sourceCanvas.getBoundingClientRect().width);
+    const sourceHeight = sourceCanvas.height || Math.round(sourceCanvas.getBoundingClientRect().height);
 
-      const sourceChart = Chart.getChart(sourceCanvas);
-      if (!sourceChart) return "";
+    if (!sourceWidth || !sourceHeight) return "";
 
-      const labels = Array.from(sourceChart.data?.labels || []).map((x) => String(x));
-      const dataset = sourceChart.data?.datasets?.[0];
+    const canvas = document.createElement("canvas");
+    canvas.width = sourceWidth;
+    canvas.height = sourceHeight;
 
-      if (!labels.length || !dataset?.data?.length) return "";
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
 
-      const values = Array.from(dataset.data).map(numericValue);
-      const finiteValues = values.filter((v) => Number.isFinite(v));
+    ctx.save();
 
-      if (!finiteValues.length) return "";
+    /*
+      Important:
+      Do NOT reinterpret the chart values, bands, threshold lines, or colors here.
+      The page chart is the source of truth. We only add a dark backing layer so
+      transparent analyzer labels remain readable inside the white report.
+    */
+    ctx.fillStyle = "#07120d";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const maxValue = Math.max(...finiteValues, 85);
-      const chartMax = Math.max(100, Math.ceil(maxValue * 1.12));
-      const dominantIndex = values.indexOf(Math.max(...finiteValues));
+    ctx.drawImage(sourceCanvas, 0, 0, canvas.width, canvas.height);
 
-      const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = Math.max(520, labels.length * 86 + 180);
+    ctx.restore();
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return "";
+    return canvas.toDataURL("image/png", 1);
+  }
 
-      let exportChart = null;
-
-      const bgPlugin = {
-        id: "scopedLabsLightExportBg",
-        beforeDraw(chartInstance) {
-          const { ctx, chartArea } = chartInstance;
-          if (!chartArea) return;
-
-          const { left, top, width, height, right } = chartArea;
-          const x = chartInstance.scales.x;
-
-          ctx.save();
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
-
-          ctx.fillStyle = "#f8fbf9";
-          ctx.fillRect(left, top, width, height);
-
-          const healthyMax = Math.min(65, x.max);
-          const watchMax = Math.min(85, x.max);
-
-          if (healthyMax > 0) {
-            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
-            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
-          }
-
-          if (watchMax > 65) {
-            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
-            ctx.fillRect(
-              x.getPixelForValue(65),
-              top,
-              x.getPixelForValue(watchMax) - x.getPixelForValue(65),
-              height
-            );
-          }
-
-          if (x.max > 85) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
-            ctx.fillRect(
-              x.getPixelForValue(85),
-              top,
-              right - x.getPixelForValue(85),
-              height
-            );
-          }
-
-          ctx.restore();
-        },
-        afterDatasetsDraw(chartInstance) {
-          const { ctx, chartArea, scales } = chartInstance;
-          if (!chartArea || !scales.x || !scales.y) return;
-
-          const x = scales.x;
-          const y = scales.y;
-          const { top, bottom } = chartArea;
-
-          ctx.save();
-
-          const rx = x.getPixelForValue(65);
-
-          ctx.strokeStyle = "#198754";
-          ctx.lineWidth = 3;
-          ctx.setLineDash([6, 5]);
-          ctx.beginPath();
-          ctx.moveTo(rx, top);
-          ctx.lineTo(rx, bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.fillStyle = "#1f2937";
-          ctx.font = "600 16px Arial";
-          ctx.fillText("Healthy Margin Floor", rx + 10, bottom - 12);
-
-          ctx.fillStyle = "#15803d";
-          ctx.font = "700 15px Arial";
-          ctx.fillText("Healthy", x.getPixelForValue(6), top + 18);
-
-          ctx.fillStyle = "#b45309";
-          ctx.fillText("Watch", x.getPixelForValue(69), top + 18);
-
-          ctx.fillStyle = "#b91c1c";
-          ctx.fillText("Risk", x.getPixelForValue(89), top + 18);
-
-          if (dominantIndex >= 0 && labels[dominantIndex]) {
-            const dominantValue = values[dominantIndex];
-            const px = x.getPixelForValue(dominantValue);
-            const py = y.getPixelForValue(labels[dominantIndex]);
-
-            ctx.beginPath();
-            ctx.arc(px, py, 6, 0, Math.PI * 2);
-            ctx.fillStyle = "#ffffff";
-            ctx.fill();
-            ctx.strokeStyle = "#111827";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.fillStyle = "#1f2937";
-            ctx.font = "600 15px Arial";
-            ctx.fillText(
-              `${Math.round(dominantValue)}${dominantValue <= 120 ? "%" : ""}`,
-              Math.min(px + 10, chartArea.right - 90),
-              py - 10
-            );
-          }
-
-          ctx.restore();
-        }
-      };
-
-      try {
-        exportChart = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: dataset.label || "Analyzer Metrics",
-                data: values,
-                indexAxis: "y",
-                barThickness: 18,
-                maxBarThickness: 18,
-                barPercentage: 0.8,
-                categoryPercentage: 0.7,
-                borderRadius: 8,
-                borderSkipped: false,
-                borderWidth: 1.5,
-                backgroundColor(context) {
-                  const i = context.dataIndex;
-                  const v = Number(context.raw) || 0;
-
-                  if (i === dominantIndex) {
-                    if (v > 85) return "#dc2626";
-                    if (v > 65) return "#f59e0b";
-                    return "#22c55e";
-                  }
-
-                  if (v > 85) return "rgba(220, 38, 38, 0.55)";
-                  if (v > 65) return "rgba(245, 158, 11, 0.50)";
-                  return "rgba(59, 130, 246, 0.42)";
-                },
-                borderColor(context) {
-                  const i = context.dataIndex;
-                  const v = Number(context.raw) || 0;
-
-                  if (i === dominantIndex) {
-                    if (v > 85) return "#7f1d1d";
-                    if (v > 65) return "#92400e";
-                    return "#166534";
-                  }
-
-                  if (v > 85) return "#991b1b";
-                  if (v > 65) return "#b45309";
-                  return "#1d4ed8";
-                }
-              }
-            ]
-          },
-          options: {
-            responsive: false,
-            maintainAspectRatio: false,
-            animation: false,
-            indexAxis: "y",
-            layout: {
-              padding: {
-                top: 36,
-                right: 24,
-                bottom: 12,
-                left: 18
-              }
-            },
-            plugins: {
-              legend: { display: false },
-              tooltip: { enabled: false }
-            },
-            scales: {
-              x: {
-                beginAtZero: true,
-                suggestedMax: chartMax,
-                ticks: {
-                  color: "#334155",
-                  font: {
-                    size: 14,
-                    weight: "600"
-                  }
-                },
-                grid: {
-                  color: "rgba(15, 23, 42, 0.08)"
-                },
-                border: {
-                  color: "rgba(15, 23, 42, 0.18)"
-                },
-                title: {
-                  display: true,
-                  text: sourceChart.options?.scales?.x?.title?.text || "Analyzer Metric Magnitude",
-                  color: "#0f172a",
-                  font: {
-                    size: 15,
-                    weight: "700"
-                  }
-                }
-              },
-              y: {
-                ticks: {
-                  color: "#0f172a",
-                  font: {
-                    size: 15,
-                    weight: "700"
-                  }
-                },
-                grid: {
-                  display: false
-                },
-                border: {
-                  color: "rgba(15, 23, 42, 0.18)"
-                }
-              }
-            }
-          },
-          plugins: [bgPlugin]
-        });
-
-        const dataUrl = canvas.toDataURL("image/png", 1);
-
-        if (exportChart) {
-          exportChart.destroy();
-          exportChart = null;
-        }
-
-        return dataUrl;
-      } catch (err) {
-        console.warn("ScopedLabs light export chart render failed:", err);
-
-        if (exportChart) {
-          try {
-            exportChart.destroy();
-          } catch {}
-        }
-
-        return "";
-      }
-    }
-
-    if (typeof state.options.getChartImage === "function") {
-      try {
-        const custom = state.options.getChartImage();
-        if (custom) return custom;
-      } catch (err) {
-        console.warn("ScopedLabs export custom chart capture failed:", err);
-      }
-    }
-
+  if (typeof state.options.getChartImage === "function") {
     try {
-      const visibleCanvas = findVisibleCanvas();
-
-      if (!visibleCanvas) return "";
-
-      const lightChart = renderLightChartFromExistingChart(visibleCanvas);
-      if (lightChart) return lightChart;
-
-      return visibleCanvas.toDataURL("image/png", 1);
+      const custom = state.options.getChartImage();
+      if (custom) return custom;
     } catch (err) {
-      console.warn("ScopedLabs export chart capture failed:", err);
-      return "";
+      console.warn("ScopedLabs export custom chart capture failed:", err);
     }
   }
+
+  try {
+    const visibleCanvas = findVisibleCanvas();
+
+    if (!visibleCanvas) return "";
+
+    return exportCanvasWithBackground(visibleCanvas);
+  } catch (err) {
+    console.warn("ScopedLabs export chart capture failed:", err);
+    return "";
+  }
+}
 
   function buildPayload() {
     const outputs = getResultRows();
@@ -763,8 +578,19 @@
     const inputs = getInputRows();
     const meta = getMeta();
     const status = getStatusFromOutputs(outputs);
-    const interpretation = getInterpretationFromOutputs(outputs);
-    const chartImage = captureVisibleChart();
+const analysisSections = getAnalysisSections();
+
+let interpretation = getInterpretationFromOutputs(outputs);
+
+const interpretationSection = analysisSections.find((section) => {
+  return normalizeSlug(section.title) === normalizeSlug("Engineering Interpretation");
+});
+
+if (!interpretation && interpretationSection?.body) {
+  interpretation = interpretationSection.body;
+}
+
+const chartImage = captureVisibleChart();
 
     return {
       reportId: makeReportId(state.options.reportPrefix),
@@ -776,6 +602,7 @@
       status,
       summary: getSummaryFromOutputs(outputs),
       interpretation,
+      analysisSections,
       inputs,
       outputs,
       assumptions: state.options.assumptions,
@@ -866,6 +693,18 @@
         </section>
       `
       : "";
+
+      const additionalAnalysisBlock = (payload.analysisSections || [])
+  .filter((section) => {
+    return normalizeSlug(section.title) !== normalizeSlug("Engineering Interpretation");
+  })
+  .map((section) => `
+    <section class="section">
+      <h2>${escapeHtml(section.title)}</h2>
+      <div class="body-copy">${escapeHtml(section.body)}</div>
+    </section>
+  `)
+  .join("");
 
     const statusClass = String(payload.status || "").toLowerCase();
 
@@ -1137,6 +976,7 @@
       </section>
 
       ${interpretationBlock}
+      ${additionalAnalysisBlock}
       ${chartBlock}
       ${notesBlock}
 
