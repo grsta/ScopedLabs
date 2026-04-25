@@ -206,6 +206,13 @@
   function setExportEnabled(enabled) {
     if (els.exportReport) els.exportReport.disabled = !enabled;
     if (els.saveSnapshot) els.saveSnapshot.disabled = !enabled;
+    if (window.ScopedLabsExport) {
+      if (enabled && typeof window.ScopedLabsExport.refresh === "function") {
+        window.ScopedLabsExport.refresh();
+      } else if (!enabled && typeof window.ScopedLabsExport.invalidate === "function") {
+        window.ScopedLabsExport.invalidate("Inputs changed. Run the calculator again to refresh export.");
+      }
+    }
   }
 
   function setExportStatus(message = "") {
@@ -919,52 +926,6 @@
     if (els.nextBtn) {
       els.nextBtn.addEventListener("click", () => {
         window.location.href = "/tools/access-control/lock-power-budget/";
-      });
-    }
-
-    if (els.exportReport) {
-      els.exportReport.addEventListener("click", () => {
-        if (!hasExportAccess()) {
-          updateExportControls("Export is available with Access Control category unlock.");
-          return;
-        }
-
-        if (!currentReport) {
-          updateExportControls("Run recommendation before exporting a report.");
-          return;
-        }
-
-        currentReport = {
-          ...currentReport,
-          generatedAt: new Date().toISOString(),
-          meta: getReportMeta()
-        };
-
-        const ok = openReportWindow(currentReport);
-        updateExportControls(ok ? "Export report opened in a new tab." : "Popup blocked or export failed.");
-      });
-    }
-
-    if (els.saveSnapshot) {
-      els.saveSnapshot.addEventListener("click", () => {
-        if (!hasExportAccess()) {
-          updateExportControls("Export is available with Access Control category unlock.");
-          return;
-        }
-
-        if (!currentReport) {
-          updateExportControls("Run recommendation before saving a snapshot.");
-          return;
-        }
-
-        currentReport = {
-          ...currentReport,
-          generatedAt: new Date().toISOString(),
-          meta: getReportMeta()
-        };
-
-        const count = saveSnapshotToStorage(REPORT_SAVE_KEY, currentReport, 25);
-        updateExportControls(`Saved locally. ${count} snapshot${count === 1 ? "" : "s"} stored for this tool.`);
       });
     }
 
