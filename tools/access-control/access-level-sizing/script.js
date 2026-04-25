@@ -33,6 +33,7 @@
     calc: $("calc"),
     reset: $("reset"),
     chart: $("chart"),
+    chartWrap: $("chartWrap"),
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard"),
     reportTitle: $("reportTitle"),
@@ -45,33 +46,145 @@
     exportStatus: $("exportStatus")
   };
 
+  function normalizeSlug(value) {
+    return String(value ?? "").trim().toLowerCase();
+  }
+
   function hasStoredAuth() {
     try {
-      const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
-      if (!k) return false;
-      const raw = JSON.parse(localStorage.getItem(k));
-      return !!(
-        raw?.access_token ||
-        raw?.currentSession?.access_token ||
-        (Array.isArray(raw) ? raw[0]?.access_token : null)
-      );
-    } catch {
-      return false;
+      const keys = Object.keys(localStorage);
+
+      for (const key of keys) {
+        if (!key.startsWith("sb-")) continue;
+
+        const rawText = localStorage.getItem(key);
+        if (!rawText) continue;
+
+        const raw = JSON.parse(rawText);
+
+        if (
+          raw?.access_token ||
+          raw?.currentSession?.access_token ||
+          raw?.session?.access_token ||
+          raw?.user?.aud === "authenticated" ||
+          (Array.isArray(raw) && raw.some((item) => item?.access_token))
+        ) {
+          return true;
+        }
+      }
+    } catch {}
+
+    return false;
+  }
+
+  function valueContainsCategory(value, category) {
+    const target = normalizeSlug(category);
+
+    if (value == null) return false;
+
+    if (typeof value === "string") {
+      return normalizeSlug(value).includes(target);
     }
+
+    if (Array.isArray(value)) {
+      return value.some((item) => valueContainsCategory(item, target));
+    }
+
+    if (typeof value === "object") {
+      return Object.entries(value).some(([key, val]) => {
+        const k = normalizeSlug(key);
+
+        if (k === target && (val === true || val === "true" || val === 1 || val === "1")) {
+          return true;
+        }
+
+        if (
+          ["category", "category_slug", "categorySlug", "slug", "id", "name"].includes(key) &&
+          normalizeSlug(val) === target
+        ) {
+          return true;
+        }
+
+        return valueContainsCategory(val, target);
+      });
+    }
+
+    return false;
   }
 
   function getUnlockedCategories() {
+    const found = new Set();
+
     try {
-      const raw = localStorage.getItem("sl_unlocked_categories");
-      if (!raw) return [];
-      return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-    } catch {
-      return [];
-    }
+      const direct = localStorage.getItem("sl_unlocked_categories");
+
+      if (direct) {
+        try {
+          const parsed = JSON.parse(direct);
+
+          if (Array.isArray(parsed)) {
+            parsed.forEach((item) => {
+              if (typeof item === "string") found.add(normalizeSlug(item));
+              else if (item?.category) found.add(normalizeSlug(item.category));
+              else if (item?.category_slug) found.add(normalizeSlug(item.category_slug));
+              else if (item?.slug) found.add(normalizeSlug(item.slug));
+            });
+          } else if (typeof parsed === "object" && parsed) {
+            Object.entries(parsed).forEach(([key, value]) => {
+              if (value === true || value === "true" || value === 1 || value === "1") {
+                found.add(normalizeSlug(key));
+              }
+
+              if (typeof value === "string") {
+                found.add(normalizeSlug(value));
+              }
+            });
+          }
+        } catch {
+          direct
+            .split(",")
+            .map((x) => normalizeSlug(x))
+            .filter(Boolean)
+            .forEach((x) => found.add(x));
+        }
+      }
+
+      Object.keys(localStorage).forEach((key) => {
+        const lowerKey = normalizeSlug(key);
+
+        if (
+          !lowerKey.includes("unlock") &&
+          !lowerKey.includes("entitlement") &&
+          !lowerKey.includes("category")
+        ) {
+          return;
+        }
+
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+
+        if (normalizeSlug(raw).includes(CATEGORY)) {
+          found.add(CATEGORY);
+        }
+
+        try {
+          const parsed = JSON.parse(raw);
+          if (valueContainsCategory(parsed, CATEGORY)) {
+            found.add(CATEGORY);
+          }
+        } catch {}
+      });
+    } catch {}
+
+    return Array.from(found).filter(Boolean);
+  }
+
+  function hasExportAccess() {
+    return hasStoredAuth() && getUnlockedCategories().includes(CATEGORY);
   }
 
   function unlockCategoryPage() {
-    const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+    const category = normalizeSlug(document.body?.dataset?.category || CATEGORY);
     const signedIn = hasStoredAuth();
     const unlocked = getUnlockedCategories().includes(category);
 
@@ -89,8 +202,8 @@
   function row(label, value) {
     return `
       <div class="result-row">
-        <span class="result-label">${label}</span>
-        <span class="result-value">${value}</span>
+        <span class="result-label">${escapeHtml(label)}</span>
+        <span class="result-value">${escapeHtml(value)}</span>
       </div>
     `;
   }
@@ -140,6 +253,30 @@
     if (els.exportStatus) els.exportStatus.textContent = message;
   }
 
+  function updateExportControls(message) {
+    const unlocked = hasExportAccess();
+    const ready = !!currentReport;
+
+    setExportEnabled(unlocked && ready);
+
+    if (message !== undefined) {
+      setExportStatus(message);
+      return;
+    }
+
+    if (!unlocked) {
+      setExportStatus("Export is available with Access Control category unlock.");
+      return;
+    }
+
+    if (!ready) {
+      setExportStatus("Run analysis to enable export.");
+      return;
+    }
+
+    setExportStatus("Analysis ready. Open Export Report or Save Snapshot.");
+  }
+
   function getReportMeta() {
     return {
       reportTitle: (els.reportTitle?.value || "").trim() || "Access Level Sizing Assessment",
@@ -156,273 +293,283 @@
         return chart.toBase64Image("image/png", 1);
       }
     } catch {}
+
     return "";
   }
 
+  function showChartWrap() {
+    if (els.chartWrap) els.chartWrap.hidden = false;
+  }
+
+  function hideChartWrap() {
+    if (els.chartWrap) els.chartWrap.hidden = true;
+  }
+
   function getExportChartImage() {
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1200;
-    canvas.height = 620;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1200;
+      canvas.height = 620;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return getChartImage();
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return getChartImage();
 
-    const roles = num(els.roles.value);
-    const areas = num(els.areas.value);
-    const schedules = num(els.schedules.value);
-    const groups = num(els.doorGroups.value);
-    const complexity = els.complexity.value;
+      const roles = num(els.roles.value);
+      const areas = num(els.areas.value);
+      const schedules = num(els.schedules.value);
+      const groups = num(els.doorGroups.value);
+      const complexity = els.complexity.value;
 
-    const base = roles * areas;
-    const complexityFactor = getComplexityFactor(complexity);
-    const schedulePenalty = 1 + schedules * 0.1;
-    const groupPenalty = 1 + groups * 0.05;
+      const base = roles * areas;
+      const complexityFactor = getComplexityFactor(complexity);
+      const schedulePenalty = 1 + schedules * 0.1;
+      const groupPenalty = 1 + groups * 0.05;
 
-    const total = Math.round(base * schedulePenalty * groupPenalty * complexityFactor);
-    const combinations = base;
-    const recommendedLimit = getRecommendedLimit(complexity);
+      const total = Math.round(base * schedulePenalty * groupPenalty * complexityFactor);
+      const combinations = base;
+      const recommendedLimit = getRecommendedLimit(complexity);
 
-    const labels = [
-      "Access Levels",
-      "Role-Area Combos",
-      "Schedules",
-      "Door Groups"
-    ];
+      const labels = [
+        "Access Levels",
+        "Role-Area Combos",
+        "Schedules",
+        "Door Groups"
+      ];
 
-    const values = [
-      total,
-      combinations,
-      schedules,
-      groups
-    ];
+      const values = [
+        total,
+        combinations,
+        schedules,
+        groups
+      ];
 
-    const maxValue = Math.max(...values, recommendedLimit, 160);
-    const dominantIndex = values.indexOf(Math.max(...values));
+      const maxValue = Math.max(...values, recommendedLimit, 160);
+      const dominantIndex = values.indexOf(Math.max(...values));
 
-    let exportChart = null;
+      let exportChart = null;
 
-    const bgPlugin = {
-      id: "exportBgPlugin",
-      beforeDraw(chartInstance) {
-        const { ctx, chartArea } = chartInstance;
-        if (!chartArea) return;
+      const bgPlugin = {
+        id: "exportBgPlugin",
+        beforeDraw(chartInstance) {
+          const { ctx, chartArea } = chartInstance;
+          if (!chartArea) return;
 
-        const { left, top, width, height, right, bottom } = chartArea;
-        const x = chartInstance.scales.x;
+          const { left, top, width, height, right, bottom } = chartArea;
+          const x = chartInstance.scales.x;
 
-        ctx.save();
+          ctx.save();
 
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
 
-        ctx.fillStyle = "#f8fbf9";
-        ctx.fillRect(left, top, width, height);
+          ctx.fillStyle = "#f8fbf9";
+          ctx.fillRect(left, top, width, height);
 
-        const healthyMax = Math.min(80, x.max);
-        const watchMax = Math.min(150, x.max);
+          const healthyMax = Math.min(80, x.max);
+          const watchMax = Math.min(150, x.max);
 
-        if (healthyMax > 0) {
-          ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
-          ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
+          if (healthyMax > 0) {
+            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
+            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
+          }
+
+          if (watchMax > 80) {
+            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
+            ctx.fillRect(
+              x.getPixelForValue(80),
+              top,
+              x.getPixelForValue(watchMax) - x.getPixelForValue(80),
+              height
+            );
+          }
+
+          if (x.max > 150) {
+            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
+            ctx.fillRect(
+              x.getPixelForValue(150),
+              top,
+              right - x.getPixelForValue(150),
+              height
+            );
+          }
+
+          ctx.restore();
+        },
+        afterDatasetsDraw(chartInstance) {
+          const { ctx, chartArea, scales } = chartInstance;
+          if (!chartArea || !scales.x || !scales.y) return;
+
+          const x = scales.x;
+          const y = scales.y;
+          const { top, bottom } = chartArea;
+
+          ctx.save();
+
+          const rx = x.getPixelForValue(recommendedLimit);
+          ctx.strokeStyle = "#198754";
+          ctx.lineWidth = 3;
+          ctx.setLineDash([6, 5]);
+          ctx.beginPath();
+          ctx.moveTo(rx, top);
+          ctx.lineTo(rx, bottom);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = "#1f2937";
+          ctx.font = "600 16px Arial";
+          ctx.fillText(`Recommended Limit (${recommendedLimit})`, rx + 10, bottom - 12);
+
+          ctx.fillStyle = "#15803d";
+          ctx.font = "700 15px Arial";
+          ctx.fillText("Healthy", x.getPixelForValue(8), top + 18);
+
+          ctx.fillStyle = "#b45309";
+          ctx.fillText("Watch", x.getPixelForValue(88), top + 18);
+
+          ctx.fillStyle = "#b91c1c";
+          ctx.fillText("Risk", x.getPixelForValue(158), top + 18);
+
+          const dominantValue = values[dominantIndex];
+          const px = x.getPixelForValue(dominantValue);
+          const py = y.getPixelForValue(labels[dominantIndex]);
+
+          ctx.beginPath();
+          ctx.arc(px, py, 6, 0, Math.PI * 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+          ctx.strokeStyle = "#111827";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.restore();
         }
+      };
 
-        if (watchMax > 80) {
-          ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
-          ctx.fillRect(
-            x.getPixelForValue(80),
-            top,
-            x.getPixelForValue(watchMax) - x.getPixelForValue(80),
-            height
-          );
-        }
+      exportChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Access Design Metrics",
+              data: values,
+              indexAxis: "y",
+              barThickness: 18,
+              maxBarThickness: 18,
+              barPercentage: 0.8,
+              categoryPercentage: 0.7,
+              borderRadius: 8,
+              borderSkipped: false,
+              borderWidth: 1.5,
+              backgroundColor: (context) => {
+                const i = context.dataIndex;
+                const v = context.raw;
 
-        if (x.max > 150) {
-          ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
-          ctx.fillRect(
-            x.getPixelForValue(150),
-            top,
-            right - x.getPixelForValue(150),
-            height
-          );
-        }
+                if (i === dominantIndex) {
+                  if (v > 150) return "#dc2626";
+                  if (v > 80) return "#f59e0b";
+                  return "#22c55e";
+                }
 
-        ctx.restore();
-      },
-      afterDatasetsDraw(chartInstance) {
-        const { ctx, chartArea, scales } = chartInstance;
-        if (!chartArea || !scales.x || !scales.y) return;
+                if (v > 150) return "rgba(220, 38, 38, 0.55)";
+                if (v > 80) return "rgba(245, 158, 11, 0.50)";
+                return "rgba(59, 130, 246, 0.42)";
+              },
+              borderColor: (context) => {
+                const i = context.dataIndex;
+                const v = context.raw;
 
-        const x = scales.x;
-        const y = scales.y;
-        const { top, bottom } = chartArea;
+                if (i === dominantIndex) {
+                  if (v > 150) return "#7f1d1d";
+                  if (v > 80) return "#92400e";
+                  return "#166534";
+                }
 
-        ctx.save();
-
-        const rx = x.getPixelForValue(recommendedLimit);
-        ctx.strokeStyle = "#198754";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([6, 5]);
-        ctx.beginPath();
-        ctx.moveTo(rx, top);
-        ctx.lineTo(rx, bottom);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = "#1f2937";
-        ctx.font = "600 16px Arial";
-        ctx.fillText(`Recommended Limit (${recommendedLimit})`, rx + 10, bottom - 12);
-
-        ctx.fillStyle = "#15803d";
-        ctx.font = "700 15px Arial";
-        ctx.fillText("Healthy", x.getPixelForValue(8), top + 18);
-
-        ctx.fillStyle = "#b45309";
-        ctx.fillText("Watch", x.getPixelForValue(88), top + 18);
-
-        ctx.fillStyle = "#b91c1c";
-        ctx.fillText("Risk", x.getPixelForValue(158), top + 18);
-
-        const dominantValue = values[dominantIndex];
-        const px = x.getPixelForValue(dominantValue);
-        const py = y.getPixelForValue(labels[dominantIndex]);
-
-        ctx.beginPath();
-        ctx.arc(px, py, 6, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.restore();
-      }
-    };
-
-    exportChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Access Design Metrics",
-            data: values,
-            indexAxis: "y",
-            barThickness: 18,
-            maxBarThickness: 18,
-            barPercentage: 0.8,
-            categoryPercentage: 0.7,
-            borderRadius: 8,
-            borderSkipped: false,
-            borderWidth: 1.5,
-            backgroundColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 150) return "#dc2626";
-                if (v > 80) return "#f59e0b";
-                return "#22c55e";
+                if (v > 150) return "#991b1b";
+                if (v > 80) return "#b45309";
+                return "#1d4ed8";
               }
-
-              if (v > 150) return "rgba(220, 38, 38, 0.55)";
-              if (v > 80) return "rgba(245, 158, 11, 0.50)";
-              return "rgba(59, 130, 246, 0.42)";
-            },
-            borderColor: (context) => {
-              const i = context.dataIndex;
-              const v = context.raw;
-
-              if (i === dominantIndex) {
-                if (v > 150) return "#7f1d1d";
-                if (v > 80) return "#92400e";
-                return "#166534";
-              }
-
-              if (v > 150) return "#991b1b";
-              if (v > 80) return "#b45309";
-              return "#1d4ed8";
             }
-          }
-        ]
-      },
-      options: {
-        responsive: false,
-        maintainAspectRatio: false,
-        animation: false,
-        indexAxis: "y",
-        layout: {
-          padding: {
-            top: 36,
-            right: 22,
-            bottom: 10,
-            left: 18
-          }
+          ]
         },
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            suggestedMax: Math.ceil(maxValue * 1.08),
-            ticks: {
-              color: "#334155",
-              font: {
-                size: 14,
-                weight: "600"
-              }
-            },
-            grid: {
-              color: "rgba(15, 23, 42, 0.08)"
-            },
-            border: {
-              color: "rgba(15, 23, 42, 0.18)"
-            },
-            title: {
-              display: true,
-              text: "Complexity Magnitude",
-              color: "#0f172a",
-              font: {
-                size: 15,
-                weight: "700"
-              }
+        options: {
+          responsive: false,
+          maintainAspectRatio: false,
+          animation: false,
+          indexAxis: "y",
+          layout: {
+            padding: {
+              top: 36,
+              right: 22,
+              bottom: 10,
+              left: 18
             }
           },
-          y: {
-            ticks: {
-              color: "#0f172a",
-              font: {
-                size: 15,
-                weight: "700"
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              suggestedMax: Math.ceil(maxValue * 1.08),
+              ticks: {
+                color: "#334155",
+                font: {
+                  size: 14,
+                  weight: "600"
+                }
+              },
+              grid: {
+                color: "rgba(15, 23, 42, 0.08)"
+              },
+              border: {
+                color: "rgba(15, 23, 42, 0.18)"
+              },
+              title: {
+                display: true,
+                text: "Complexity Magnitude",
+                color: "#0f172a",
+                font: {
+                  size: 15,
+                  weight: "700"
+                }
               }
             },
-            grid: {
-              display: false
-            },
-            border: {
-              color: "rgba(15, 23, 42, 0.18)"
+            y: {
+              ticks: {
+                color: "#0f172a",
+                font: {
+                  size: 15,
+                  weight: "700"
+                }
+              },
+              grid: {
+                display: false
+              },
+              border: {
+                color: "rgba(15, 23, 42, 0.18)"
+              }
             }
           }
-        }
-      },
-      plugins: [bgPlugin]
-    });
+        },
+        plugins: [bgPlugin]
+      });
 
-    const dataUrl = canvas.toDataURL("image/png", 1);
+      const dataUrl = canvas.toDataURL("image/png", 1);
 
-    if (exportChart) {
-      exportChart.destroy();
-      exportChart = null;
+      if (exportChart) {
+        exportChart.destroy();
+        exportChart = null;
+      }
+
+      return dataUrl;
+    } catch (err) {
+      console.error("Export chart render failed:", err);
+      return getChartImage();
     }
-
-    return dataUrl;
-  } catch (err) {
-    console.error("Export chart render failed:", err);
-    return getChartImage();
   }
-}
+
   function readSnapshots(key) {
     try {
       const raw = localStorage.getItem(key);
@@ -439,12 +586,15 @@
 
   function saveSnapshot(key, payload, limit = 25) {
     const existing = readSnapshots(key);
+
     existing.unshift({
       ...payload,
       savedAt: new Date().toISOString()
     });
+
     const trimmed = existing.slice(0, limit);
     writeSnapshots(key, trimmed);
+
     return trimmed.length;
   }
 
@@ -453,7 +603,9 @@
       reportId: makeReportId("SL-ACC-ALS"),
       generatedAt: new Date().toISOString(),
       category: "Access Control",
+      categorySlug: CATEGORY,
       tool: "Access Level Sizing",
+      toolSlug: STEP,
       status: core.status,
       summary: core.summary,
       interpretation: core.interpretation,
@@ -693,9 +845,13 @@
       letter-spacing:.06em;
     }
     tr:last-child td{border-bottom:none}
+    td:first-child{
+      width:42%;
+      color:var(--muted);
+    }
     td:last-child{
       font-weight:700;
-      text-align:right;
+      text-align:left;
     }
     .assumptions{
       margin:0;
@@ -727,7 +883,6 @@
       .report{padding:20px}
       .report-head{flex-direction:column}
       .grid{grid-template-columns:1fr}
-      td:last-child{text-align:left}
     }
     @media print{
       body{background:#fff;padding:0}
@@ -814,7 +969,7 @@
       <section class="section">
         <h2>Disclaimer</h2>
         <div class="body-copy">
-          ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, or manufacturer documentation.
+          ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform policy review.
         </div>
       </section>
 
@@ -845,19 +1000,18 @@
       console.error("Export report open failed:", err);
       return false;
     }
-}
+  }
 
-  function invalidate() {
+  function invalidate(message = "Inputs changed. Press Analyze to refresh results.") {
     if (chart) {
       chart.destroy();
       chart = null;
     }
 
+    hideChartWrap();
     currentReport = null;
-    setExportEnabled(false);
-    setExportStatus("");
 
-    els.completeWrap.style.display = "none";
+    if (els.completeWrap) els.completeWrap.style.display = "none";
 
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
@@ -868,14 +1022,26 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      emptyMessage: "Run analysis."
+      emptyMessage: message
     });
 
     loadFlow();
+    updateExportControls();
+  }
+
+  function resetAll() {
+    if (els.roles) els.roles.value = 6;
+    if (els.areas) els.areas.value = 8;
+    if (els.schedules) els.schedules.value = 4;
+    if (els.doorGroups) els.doorGroups.value = 0;
+    if (els.complexity) els.complexity.value = "normal";
+
+    invalidate("Run analysis.");
   }
 
   function loadFlow() {
     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+
     if (!raw) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
@@ -883,6 +1049,7 @@
     }
 
     let parsed = null;
+
     try {
       parsed = JSON.parse(raw);
     } catch {
@@ -906,12 +1073,13 @@
     const utilization = num(d.utilizationPct);
 
     const lines = [];
-    if (panels) lines.push(`Panels: <strong>${panels}</strong>`);
-    if (expansions || expansions === 0) lines.push(`Expansions: <strong>${expansions}</strong>`);
-    if (readers) lines.push(`Readers: <strong>${readers}</strong>`);
-    if (panelCapacity) lines.push(`Panel Capacity: <strong>${panelCapacity}</strong> readers`);
-    if (utilization) lines.push(`Utilization: <strong>${utilization.toFixed(1)}%</strong>`);
-    if (powerBudget) lines.push(`Estimated Controller Load: <strong>${powerBudget.toFixed(1)} W</strong>`);
+
+    if (panels) lines.push(`Panels: <strong>${escapeHtml(panels)}</strong>`);
+    if (expansions || expansions === 0) lines.push(`Expansions: <strong>${escapeHtml(expansions)}</strong>`);
+    if (readers) lines.push(`Readers: <strong>${escapeHtml(readers)}</strong>`);
+    if (panelCapacity) lines.push(`Panel Capacity: <strong>${escapeHtml(panelCapacity)}</strong> readers`);
+    if (utilization) lines.push(`Utilization: <strong>${escapeHtml(utilization.toFixed(1))}%</strong>`);
+    if (powerBudget) lines.push(`Estimated Controller Load: <strong>${escapeHtml(powerBudget.toFixed(1))} W</strong>`);
 
     if (!lines.length) {
       els.flowNote.hidden = true;
@@ -976,6 +1144,8 @@
   function renderChart(total, roles, areas, schedules, groups, recommendedLimit) {
     if (!els.chart) return;
 
+    showChartWrap();
+
     if (chart) {
       chart.destroy();
       chart = null;
@@ -1004,6 +1174,7 @@
         const { ctx, chartArea } = c;
         if (!chartArea) return;
         const { left, top, width, height } = chartArea;
+
         ctx.save();
         ctx.fillStyle = "rgba(255,255,255,0.05)";
         ctx.fillRect(left, top, width, height);
@@ -1216,7 +1387,7 @@
     const complexity = els.complexity.value;
 
     if (roles <= 0 || areas <= 0 || schedules < 0 || groups < 0) {
-      invalidate();
+      invalidate("Enter valid positive values, then run analysis.");
       return;
     }
 
@@ -1235,6 +1406,7 @@
     const risk = getRisk(total);
 
     let thresholdMessage = "Structure remains below the recommended complexity limit.";
+
     if (total > recommendedLimit) {
       thresholdMessage = `Design exceeds the recommended complexity limit by ${overshoot} levels.`;
     } else {
@@ -1257,7 +1429,7 @@
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
 
-    els.completeWrap.style.display = "block";
+    if (els.completeWrap) els.completeWrap.style.display = "block";
 
     const flowData = {
       total,
@@ -1272,6 +1444,7 @@
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       data: flowData
     });
 
@@ -1298,16 +1471,22 @@
       }
     });
 
-    setExportEnabled(true);
-    setExportStatus("Analysis ready. Open Export Report or Save Snapshot.");
+    updateExportControls();
   }
 
-  els.calc.addEventListener("click", calc);
+  if (els.calc) {
+    els.calc.addEventListener("click", calc);
+  }
 
   if (els.exportReport) {
     els.exportReport.addEventListener("click", () => {
+      if (!hasExportAccess()) {
+        updateExportControls("Export is available with Access Control category unlock.");
+        return;
+      }
+
       if (!currentReport) {
-        setExportStatus("Run analysis before exporting a report.");
+        updateExportControls("Run analysis before exporting a report.");
         return;
       }
 
@@ -1319,14 +1498,19 @@
       };
 
       const ok = openReportWindow(currentReport);
-      setExportStatus(ok ? "Export report opened in a new tab." : "Popup blocked. Allow popups for ScopedLabs and try again.");
+      updateExportControls(ok ? "Export report opened in a new tab." : "Popup blocked. Allow popups for ScopedLabs and try again.");
     });
   }
 
   if (els.saveSnapshot) {
     els.saveSnapshot.addEventListener("click", () => {
+      if (!hasExportAccess()) {
+        updateExportControls("Export is available with Access Control category unlock.");
+        return;
+      }
+
       if (!currentReport) {
-        setExportStatus("Run analysis before saving a snapshot.");
+        updateExportControls("Run analysis before saving a snapshot.");
         return;
       }
 
@@ -1338,13 +1522,13 @@
       };
 
       const count = saveSnapshot(REPORT_SAVE_KEY, currentReport, 25);
-      setExportStatus(`Saved locally. ${count} snapshot${count === 1 ? "" : "s"} stored for this tool.`);
+      updateExportControls(`Saved locally. ${count} snapshot${count === 1 ? "" : "s"} stored for this tool.`);
     });
   }
 
-  els.reset.addEventListener("click", () => {
-    invalidate();
-  });
+  if (els.reset) {
+    els.reset.addEventListener("click", resetAll);
+  }
 
   [
     els.roles,
@@ -1354,8 +1538,8 @@
     els.complexity
   ].forEach((el) => {
     if (!el) return;
-    el.addEventListener("input", invalidate);
-    el.addEventListener("change", invalidate);
+    el.addEventListener("input", () => invalidate());
+    el.addEventListener("change", () => invalidate());
   });
 
   [
@@ -1368,7 +1552,7 @@
     if (!el) return;
     el.addEventListener("input", () => {
       if (!currentReport) return;
-      setExportStatus("Export details updated.");
+      updateExportControls("Export details updated.");
     });
   });
 
@@ -1382,12 +1566,20 @@
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
+    hideChartWrap();
     unlockCategoryPage();
+
     setTimeout(() => {
       unlockCategoryPage();
+      updateExportControls();
     }, 400);
 
+    setTimeout(() => {
+      unlockCategoryPage();
+      updateExportControls();
+    }, 1200);
+
     loadFlow();
-    setExportEnabled(false);
+    updateExportControls();
   });
 })();
