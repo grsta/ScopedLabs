@@ -154,50 +154,7 @@
       </ul>
 
       
-      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
-
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
-        <p class="muted" style="margin-bottom: 0;">
-          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
-        </p>
-
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Compute Power &amp; Thermal Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
-
-        <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
-          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
-        </div>
-
-        <div id="exportStatus" class="export-status"></div>
-      </section>
+      
 
 <div class="actions">
         <a class="btn" href="/tools/compute/">Back to Compute</a>
@@ -251,7 +208,52 @@
           Model: node count and per-node draw are converted into total rack watts, BTU/hr, cooling tons, and circuit draw. This is an infrastructure planning view, not a substitute for measured power telemetry under actual load.
         </p>
       </div>
-    </section>
+    
+<section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <div class="pill-row">
+          <span class="pill pill--pro">Documentation & Export</span>
+        </div>
+
+        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <p class="muted" style="margin-bottom: 0;">
+          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+        </p>
+
+        <div class="export-grid">
+          <label class="field">
+            <span class="label">Report Title</span>
+            <input id="reportTitle" type="text" placeholder="Compute Power &amp; Thermal Assessment" />
+          </label>
+
+          <label class="field">
+            <span class="label">Project Name</span>
+            <input id="projectName" type="text" placeholder="Project Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Client Name</span>
+            <input id="clientName" type="text" placeholder="Client / Site Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Prepared By</span>
+            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          </label>
+
+          <label class="field full">
+            <span class="label">Custom Notes</span>
+            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
+          </label>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+        </div>
+
+        <div id="exportStatus" class="export-status"></div>
+      </section>
+</section>
 
     <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
       <a id="continue" class="btn btn-primary" href="/tools/compute/raid-rebuild-time/">

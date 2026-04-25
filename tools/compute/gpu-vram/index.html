@@ -155,7 +155,28 @@
       </ul>
 
       
-      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      
+
+<div class="actions">
+        <a class="btn" href="/tools/compute/">Back to Compute</a>
+        <a class="btn btn-primary" href="/upgrade/?category=compute#checkout">Unlock Pro</a>
+      </div>
+    </section>
+
+    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+      <h2 class="card-title" style="margin-top: 0;">Workload Mode</h2>
+
+      <div class="form-grid" style="margin-top: 14px;">
+        <label class="field">
+          <span class="label">GPU Required?</span>
+          <select id="gpuMode">
+            <option value="no" selected>No (CPU-only)</option>
+            <option value="yes">Yes (AI / GPU workload)</option>
+          </select>
+        </label>
+      </div>
+    
+<section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
         </div>
@@ -199,26 +220,7 @@
 
         <div id="exportStatus" class="export-status"></div>
       </section>
-
-<div class="actions">
-        <a class="btn" href="/tools/compute/">Back to Compute</a>
-        <a class="btn btn-primary" href="/upgrade/?category=compute#checkout">Unlock Pro</a>
-      </div>
-    </section>
-
-    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
-      <h2 class="card-title" style="margin-top: 0;">Workload Mode</h2>
-
-      <div class="form-grid" style="margin-top: 14px;">
-        <label class="field">
-          <span class="label">GPU Required?</span>
-          <select id="gpuMode">
-            <option value="no" selected>No (CPU-only)</option>
-            <option value="yes">Yes (AI / GPU workload)</option>
-          </select>
-        </label>
-      </div>
-    </section>
+</section>
 
     <section class="card tool-card" style="margin-top: 18px;">
       <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
