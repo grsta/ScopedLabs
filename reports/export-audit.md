@@ -1,14 +1,14 @@
 # ScopedLabs Export Audit
 
-Generated: 2026-04-25T18:17:37.102Z
+Generated: 2026-04-25T18:23:16.632Z
 
 Tool pages scanned: **101**
 
 ## Status Counts
 
 - **ADD_EXPORT_JS**: 5
-- **INSTALL_EXPORT_CARD**: 46
-- **READY_SHARED_EXPORT**: 40
+- **INSTALL_EXPORT_CARD**: 36
+- **READY_SHARED_EXPORT**: 50
 - **REVIEW_MANUAL_NO_FORMGRID**: 2
 - **REVIEW_MANUAL_NO_RESULTS**: 1
 - **REVIEW_MANUAL_NO_TOOLCARD**: 7
@@ -67,16 +67,16 @@ Tool pages scanned: **101**
 | tools/performance/network-congestion/index.html | pro | performance | network-congestion | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/performance/queue-depth/index.html | pro | performance | queue-depth | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/performance/response-time-sla/index.html | free | performance | response-time-sla | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
-| tools/physical-security/blind-spot-check/index.html | pro | physical-security | blind-spot-check | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/physical-security/camera-coverage-area/index.html | pro | physical-security | camera-coverage-area | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/physical-security/camera-spacing/index.html | pro | physical-security | camera-spacing | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/physical-security/face-recognition-range/index.html | pro | physical-security | face-recognition-range | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/physical-security/field-of-view/index.html | free | physical-security | field-of-view | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/physical-security/lens-selection/index.html | pro | physical-security | lens-selection | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/physical-security/license-plate-range/index.html | pro | physical-security | license-plate-range | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/physical-security/mounting-height/index.html | free | physical-security | mounting-height | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/physical-security/pixel-density/index.html | free | physical-security | pixel-density | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/physical-security/scene-illumination/index.html | pro | physical-security | scene-illumination | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
+| tools/physical-security/blind-spot-check/index.html | pro | physical-security | blind-spot-check | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/physical-security/camera-coverage-area/index.html | pro | physical-security | camera-coverage-area | no | yes | yes | no | yes | yes | - | READY_SHARED_EXPORT |
+| tools/physical-security/camera-spacing/index.html | pro | physical-security | camera-spacing | no | yes | yes | no | yes | yes | - | READY_SHARED_EXPORT |
+| tools/physical-security/face-recognition-range/index.html | pro | physical-security | face-recognition-range | no | yes | yes | no | yes | yes | - | READY_SHARED_EXPORT |
+| tools/physical-security/field-of-view/index.html | free | physical-security | field-of-view | no | yes | yes | no | yes | yes | - | READY_SHARED_EXPORT |
+| tools/physical-security/lens-selection/index.html | pro | physical-security | lens-selection | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/physical-security/license-plate-range/index.html | pro | physical-security | license-plate-range | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/physical-security/mounting-height/index.html | free | physical-security | mounting-height | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/physical-security/pixel-density/index.html | free | physical-security | pixel-density | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/physical-security/scene-illumination/index.html | pro | physical-security | scene-illumination | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/power/battery-bank-sizer/index.html | pro | power | battery-bank-sizer | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/power/battery-sizing/index.html | free | power | battery-sizing | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/power/failure-runtime-loss/index.html | pro | power | failure-runtime-loss | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |

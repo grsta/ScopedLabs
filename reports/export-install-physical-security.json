@@ -1,0 +1,122 @@
+[
+  {
+    "path": "tools/physical-security/blind-spot-check/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/physical-security/camera-coverage-area/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/physical-security/camera-spacing/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/physical-security/face-recognition-range/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/physical-security/field-of-view/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/physical-security/lens-selection/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/physical-security/license-plate-range/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/physical-security/mounting-height/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/physical-security/pixel-density/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/physical-security/scene-illumination/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  }
+]
