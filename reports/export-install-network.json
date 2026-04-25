@@ -1,0 +1,66 @@
+[
+  {
+    "path": "tools/network/bandwidth/index.html",
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
+  },
+  {
+    "path": "tools/network/growth-simulator/index.html",
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
+  },
+  {
+    "path": "tools/network/latency-jitter-buffer/index.html",
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
+  },
+  {
+    "path": "tools/network/latency/index.html",
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
+  },
+  {
+    "path": "tools/network/mtu-fragmentation/index.html",
+    "status": "UNCHANGED",
+    "reason": "no changes needed or safe insertion failed",
+    "changes": [],
+    "warnings": [
+      "could not find safe insertion point for export card",
+      "missing export IDs after processing: reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus"
+    ]
+  },
+  {
+    "path": "tools/network/oversubscription/index.html",
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
+  },
+  {
+    "path": "tools/network/packet-loss-impact/index.html",
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
+  },
+  {
+    "path": "tools/network/poe-budget/index.html",
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
+  },
+  {
+    "path": "tools/network/uplink-failure-impact/index.html",
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
+  },
+  {
+    "path": "tools/network/vpn-overhead/index.html",
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
+  }
+]

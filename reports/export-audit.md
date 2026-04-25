@@ -1,14 +1,14 @@
 # ScopedLabs Export Audit
 
-Generated: 2026-04-25T17:14:43.286Z
+Generated: 2026-04-25T17:35:54.141Z
 
 Tool pages scanned: **101**
 
 ## Status Counts
 
 - **ADD_EXPORT_JS**: 5
-- **INSTALL_EXPORT_CARD**: 66
-- **READY_SHARED_EXPORT**: 20
+- **INSTALL_EXPORT_CARD**: 56
+- **READY_SHARED_EXPORT**: 30
 - **REVIEW_MANUAL_NO_FORMGRID**: 2
 - **REVIEW_MANUAL_NO_RESULTS**: 1
 - **REVIEW_MANUAL_NO_TOOLCARD**: 7
@@ -47,16 +47,16 @@ Tool pages scanned: **101**
 | tools/infrastructure/rack-weight-load/index.html | free | infrastructure | rack-weight-load | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/infrastructure/room-square-footage/index.html | pro | infrastructure | room-square-footage | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/infrastructure/ups-room-sizing/index.html | pro | infrastructure | ups-room-sizing | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
-| tools/network/bandwidth/index.html | free | network | bandwidth | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/network/growth-simulator/index.html | pro | network | growth-simulator | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/network/latency-jitter-buffer/index.html | pro | network | latency-jitter-buffer | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/network/latency/index.html | pro | network | latency | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/network/mtu-fragmentation/index.html | free | network | mtu-fragmentation | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/network/oversubscription/index.html | pro | network | oversubscription | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/network/packet-loss-impact/index.html | pro | network | packet-loss-impact | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/network/poe-budget/index.html | free | network | poe-budget | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/network/uplink-failure-impact/index.html | pro | network | uplink-failure-impact | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/network/vpn-overhead/index.html | pro | network | vpn-overhead | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
+| tools/network/bandwidth/index.html | free | network | bandwidth | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/network/growth-simulator/index.html | pro | network | growth-simulator | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/network/latency-jitter-buffer/index.html | pro | network | latency-jitter-buffer | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/network/latency/index.html | pro | network | latency | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/network/mtu-fragmentation/index.html | free | network | mtu-fragmentation | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/network/oversubscription/index.html | pro | network | oversubscription | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/network/packet-loss-impact/index.html | pro | network | packet-loss-impact | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/network/poe-budget/index.html | free | network | poe-budget | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/network/uplink-failure-impact/index.html | pro | network | uplink-failure-impact | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/network/vpn-overhead/index.html | pro | network | vpn-overhead | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/performance/bottleneck-analyzer/index.html | pro | performance | bottleneck-analyzer | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/performance/cache-hit-ratio/index.html | free | performance | cache-hit-ratio | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/performance/concurrency-scaling/index.html | pro | performance | concurrency-scaling | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
