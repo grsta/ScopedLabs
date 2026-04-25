@@ -1,0 +1,112 @@
+[
+  {
+    "path": "tools/video-storage/advanced-storage-planner/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/video-storage/archive-cost/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/video-storage/bitrate-estimator/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": [
+      "could not find safe insertion point for export card",
+      "missing export IDs after processing: reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus"
+    ]
+  },
+  {
+    "path": "tools/video-storage/codec-efficiency/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/video-storage/compression-impact/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/video-storage/failure-days-lost/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/video-storage/raid-impact/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/video-storage/retention-planner/index.html",
+    "status": "SKIPPED",
+    "reason": "REVIEW_MANUAL_NO_TOOLCARD",
+    "changes": []
+  },
+  {
+    "path": "tools/video-storage/retention-survivability/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/video-storage/storage-calculator/index.html",
+    "status": "SKIPPED",
+    "reason": "REVIEW_MANUAL_NO_TOOLCARD",
+    "changes": []
+  }
+]

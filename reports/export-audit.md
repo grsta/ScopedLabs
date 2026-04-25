@@ -1,14 +1,14 @@
 # ScopedLabs Export Audit
 
-Generated: 2026-04-25T19:49:29.458Z
+Generated: 2026-04-25T20:25:10.381Z
 
 Tool pages scanned: **101**
 
 ## Status Counts
 
 - **ADD_EXPORT_JS**: 5
-- **INSTALL_EXPORT_CARD**: 18
-- **READY_SHARED_EXPORT**: 68
+- **INSTALL_EXPORT_CARD**: 10
+- **READY_SHARED_EXPORT**: 76
 - **REVIEW_MANUAL_NO_FORMGRID**: 2
 - **REVIEW_MANUAL_NO_RESULTS**: 1
 - **REVIEW_MANUAL_NO_TOOLCARD**: 7
@@ -98,16 +98,16 @@ Tool pages scanned: **101**
 | tools/thermal/psu-efficiency-heat/index.html | pro | thermal | psu-efficiency-heat | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/thermal/rack-thermal-density/index.html | pro | thermal | rack-thermal-density | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/thermal/room-cooling-capacity/index.html | pro | thermal | room-cooling-capacity | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
-| tools/video-storage/advanced-storage-planner/index.html | pro | video-storage | advanced-storage-planner | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/video-storage/archive-cost/index.html | pro | video-storage | archive-cost | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/video-storage/bitrate-estimator/index.html | free | video-storage | bitrate | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/video-storage/codec-efficiency/index.html | pro | video-storage | codec-efficiency | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/video-storage/compression-impact/index.html | pro | video-storage | compression-impact | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/video-storage/failure-days-lost/index.html | pro | video-storage | failure-days-lost | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/video-storage/raid-impact/index.html | pro | video-storage | raid-impact | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/video-storage/retention-planner/index.html | free | video-storage | retention | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | REVIEW_MANUAL_NO_TOOLCARD |
-| tools/video-storage/retention-survivability/index.html | pro | video-storage | survivability | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/video-storage/storage-calculator/index.html | free | video-storage | storage | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | REVIEW_MANUAL_NO_TOOLCARD |
+| tools/video-storage/advanced-storage-planner/index.html | pro | video-storage | advanced-storage-planner | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/video-storage/archive-cost/index.html | pro | video-storage | archive-cost | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/video-storage/bitrate-estimator/index.html | free | video-storage | bitrate | no | yes | yes | no | yes | yes | - | READY_SHARED_EXPORT |
+| tools/video-storage/codec-efficiency/index.html | pro | video-storage | codec-efficiency | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/video-storage/compression-impact/index.html | pro | video-storage | compression-impact | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/video-storage/failure-days-lost/index.html | pro | video-storage | failure-days-lost | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/video-storage/raid-impact/index.html | pro | video-storage | raid-impact | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/video-storage/retention-planner/index.html | free | video-storage | retention | no | yes | yes | yes | yes | yes | - | REVIEW_MANUAL_NO_TOOLCARD |
+| tools/video-storage/retention-survivability/index.html | pro | video-storage | survivability | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/video-storage/storage-calculator/index.html | free | video-storage | storage | no | yes | yes | no | yes | yes | - | REVIEW_MANUAL_NO_TOOLCARD |
 | tools/wireless/ap-capacity/index.html | pro | wireless | ap-capacity | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/wireless/channel-overlap/index.html | free | wireless | channel-overlap | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/wireless/client-density/index.html | pro | wireless | client-density | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
