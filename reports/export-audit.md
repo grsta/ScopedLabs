@@ -1,14 +1,14 @@
 # ScopedLabs Export Audit
 
-Generated: 2026-04-25T18:46:08.666Z
+Generated: 2026-04-25T19:11:24.302Z
 
 Tool pages scanned: **101**
 
 ## Status Counts
 
 - **ADD_EXPORT_JS**: 5
-- **INSTALL_EXPORT_CARD**: 36
-- **READY_SHARED_EXPORT**: 50
+- **INSTALL_EXPORT_CARD**: 28
+- **READY_SHARED_EXPORT**: 58
 - **REVIEW_MANUAL_NO_FORMGRID**: 2
 - **REVIEW_MANUAL_NO_RESULTS**: 1
 - **REVIEW_MANUAL_NO_TOOLCARD**: 7
@@ -77,17 +77,17 @@ Tool pages scanned: **101**
 | tools/physical-security/mounting-height/index.html | free | physical-security | mounting-height | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/physical-security/pixel-density/index.html | free | physical-security | pixel-density | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/physical-security/scene-illumination/index.html | pro | physical-security | scene-illumination | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
-| tools/power/battery-bank-sizer/index.html | pro | power | battery-bank-sizer | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/power/battery-sizing/index.html | free | power | battery-sizing | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/power/failure-runtime-loss/index.html | pro | power | failure-runtime-loss | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/power/inverter-efficiency/index.html | free | power | inverter-efficiency | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/power/load-growth/index.html | pro | power | load-growth | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/power/redundancy-impact/index.html | pro | power | redundancy-impact | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | REVIEW_MANUAL_NO_FORMGRID |
-| tools/power/scenario-comparator/index.html | pro | power | scenario-comparator | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
+| tools/power/battery-bank-sizer/index.html | pro | power | battery-bank-sizer | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/power/battery-sizing/index.html | free | power | battery-sizing | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/power/failure-runtime-loss/index.html | pro | power | failure-runtime-loss | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/power/inverter-efficiency/index.html | free | power | inverter-efficiency | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/power/load-growth/index.html | pro | power | load-growth | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/power/redundancy-impact/index.html | pro | power | redundancy-impact | no | no | yes | yes | yes | yes | - | REVIEW_MANUAL_NO_FORMGRID |
+| tools/power/scenario-comparator/index.html | pro | power | scenario-comparator | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/power/ups-runtime-advanced/index.html | pro | power | ups-runtime-advanced | no | no | no | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | REVIEW_MANUAL_NO_RESULTS |
-| tools/power/ups-runtime/index.html | pro | power | ups-runtime | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/power/va-watts-amps/index.html | free | power | va-watts-amps | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/power/worst-case-runtime/index.html | pro | power | worst-case-runtime | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | REVIEW_MANUAL_NO_FORMGRID |
+| tools/power/ups-runtime/index.html | pro | power | ups-runtime | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/power/va-watts-amps/index.html | free | power | va-watts-amps | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/power/worst-case-runtime/index.html | pro | power | worst-case-runtime | no | no | yes | yes | yes | yes | - | REVIEW_MANUAL_NO_FORMGRID |
 | tools/thermal/airflow-requirement/index.html | free | thermal | airflow-requirement | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/thermal/ambient-rise/index.html | pro | thermal | ambient-rise | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/thermal/btu-converter/index.html | free | thermal | btu-converter | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
