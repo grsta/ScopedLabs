@@ -357,7 +357,46 @@
     };
   }
 
+  function getVisiblePageStatus() {
+  const roots = [
+    $(state.options.resultSelector),
+    document.querySelector("#analysis-copy")
+  ].filter(Boolean);
+
+  const visibleTexts = [];
+
+  function isVisible(el) {
+    const rect = el.getBoundingClientRect();
+    const style = getComputedStyle(el);
+    return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+  }
+
+  for (const root of roots) {
+    const nodes = Array.from(root.querySelectorAll("*"));
+
+    for (const node of nodes) {
+      if (!isVisible(node)) continue;
+
+      const text = String(node.textContent || "").replace(/\s+/g, " ").trim();
+      if (!text) continue;
+
+      if (/status\s*:\s*risk/i.test(text) || /^risk$/i.test(text)) visibleTexts.push("RISK");
+      if (/status\s*:\s*watch/i.test(text) || /^watch$/i.test(text)) visibleTexts.push("WATCH");
+      if (/status\s*:\s*healthy/i.test(text) || /^healthy$/i.test(text)) visibleTexts.push("HEALTHY");
+    }
+  }
+
+  if (visibleTexts.includes("RISK")) return "RISK";
+  if (visibleTexts.includes("WATCH")) return "WATCH";
+  if (visibleTexts.includes("HEALTHY")) return "HEALTHY";
+
+  return "";
+}
+
   function getStatusFromOutputs(outputs) {
+  const visibleStatus = getVisiblePageStatus();
+  if (visibleStatus) return visibleStatus;
+
   function classifyText(value) {
     const raw = normalizeSlug(value);
 

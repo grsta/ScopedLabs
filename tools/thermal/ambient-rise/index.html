@@ -194,6 +194,20 @@
       <button id="reset" class="btn" type="button">Reset</button>
     </div>
   
+
+</section>
+
+  <section class="card tool-card" style="margin-top:14px;">
+    <h2 class="card-title" style="margin-top:0;">Results</h2>
+    <div id="results" class="results-grid" aria-live="polite">
+      <div class="muted">Enter values and press Calculate.</div>
+    </div>
+    <div id="analysis-copy" style="display:none;"></div>
+
+    <p class="mini-note">
+      Model: ambient rise is estimated from the current heat load and available airflow using a simplified heat-removal relationship. This is a planning pass, not a CFD or fan-curve simulation.
+    </p>
+  </section>
 <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
@@ -238,19 +252,7 @@
 
         <div id="exportStatus" class="export-status"></div>
       </section>
-</section>
 
-  <section class="card tool-card" style="margin-top:14px;">
-    <h2 class="card-title" style="margin-top:0;">Results</h2>
-    <div id="results" class="results-grid" aria-live="polite">
-      <div class="muted">Enter values and press Calculate.</div>
-    </div>
-    <div id="analysis-copy" style="display:none;"></div>
-
-    <p class="mini-note">
-      Model: ambient rise is estimated from the current heat load and available airflow using a simplified heat-removal relationship. This is a planning pass, not a CFD or fan-curve simulation.
-    </p>
-  </section>
 
   <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
     <a id="continue" class="btn btn-primary" href="/tools/thermal/exhaust-temperature/">
@@ -284,7 +286,7 @@
 };
   </script>
 
-<script src="/assets/export.js?v=thermal-export-001"></script>
+<script src="/assets/export.js?v=shared-export-004"></script>
 
 <script src="./script.js?v=thermal-export-001"></script>
 
