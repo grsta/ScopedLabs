@@ -49,6 +49,33 @@
       text-align: right;
     }
   </style>
+
+  <style data-scopedlabs-export-card-styles>
+    .export-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .export-grid .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .export-status {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.94rem;
+      line-height: 1.45;
+      min-height: 1.45em;
+    }
+
+    @media (max-width: 860px) {
+      .export-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 
 <body data-tier="pro" data-category="wireless" data-step="ptp-wireless-link" data-lane="v1">
@@ -122,7 +149,10 @@
         <li>Approximate throughput tier based on resulting signal quality</li>
       </ul>
 
-      <div class="actions">
+      
+      
+
+<div class="actions">
         <a class="btn" href="/tools/wireless/">Back to Wireless</a>
         <a class="btn btn-primary" href="/upgrade/?category=wireless#checkout">Unlock Pro</a>
       </div>
@@ -178,7 +208,9 @@
         <button id="reset" class="btn" type="button">Reset</button>
         <a class="btn" href="/tools/wireless/">← Back to Wireless</a>
       </div>
-    </section>
+    
+
+</section>
 
     <section class="card tool-card">
       <h2>Results</h2>
@@ -188,6 +220,51 @@
     </section>
 
     <section id="analysis-copy" class="card tool-card" style="display:none;"></section>
+<section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <div class="pill-row">
+          <span class="pill pill--pro">Documentation & Export</span>
+        </div>
+
+        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <p class="muted" style="margin-bottom: 0;">
+          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+        </p>
+
+        <div class="export-grid">
+          <label class="field">
+            <span class="label">Report Title</span>
+            <input id="reportTitle" type="text" placeholder="PtP Wireless Link Planner Assessment" />
+          </label>
+
+          <label class="field">
+            <span class="label">Project Name</span>
+            <input id="projectName" type="text" placeholder="Project Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Client Name</span>
+            <input id="clientName" type="text" placeholder="Client / Site Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Prepared By</span>
+            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          </label>
+
+          <label class="field full">
+            <span class="label">Custom Notes</span>
+            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
+          </label>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+        </div>
+
+        <div id="exportStatus" class="export-status"></div>
+      </section>
+
 
     <div id="continue-wrap" class="btn-row" style="margin-top:12px; display:none;">
       <a id="continue" class="btn btn-primary" href="/tools/wireless/roaming-thresholds/">
@@ -205,8 +282,25 @@
   <script src="/assets/pipelines.js?v=wireless-ptp-link-0423"></script>
   <script src="/assets/pipeline-state.js?v=wireless-ptp-link-0423"></script>
   <script src="/assets/pipeline.js?v=wireless-ptp-link-0423"></script>
-  <script src="/assets/analyzer.js?v=wireless-ptp-link-0423"></script>
-  <script src="./script.js?v=wireless-ptp-link-0423"></script>
+  <script src="/assets/analyzer.js?v=wireless-ptp-link-0423"></script>  <script data-scopedlabs-export-config>
+    window.ScopedLabsExportConfig = {
+      "categoryLabel": "Wireless",
+      "categorySlug": "wireless",
+      "toolLabel": "PtP Wireless Link Planner",
+      "toolSlug": "ptp-wireless-link",
+      "reportPrefix": "SL-W-PWL",
+      "assumptions": [
+            "This report reflects the visible PtP Wireless Link Planner inputs and outputs at the time the export was generated.",
+            "The calculation output is intended for planning, comparison, and documentation support.",
+            "Final design decisions should be verified against project requirements, manufacturer documentation, site-specific conditions, and applicable standards."
+      ],
+      "disclaimer": "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
+};
+  </script>
+
+  <script src="/assets/export.js?v=wireless-export-001"></script>
+
+  <script src="./script.js?v=wireless-export-001"></script>
 </body>
 </html>
 

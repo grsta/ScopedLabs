@@ -1,14 +1,13 @@
 # ScopedLabs Export Audit
 
-Generated: 2026-04-25T20:39:46.729Z
+Generated: 2026-04-25T20:49:27.784Z
 
 Tool pages scanned: **101**
 
 ## Status Counts
 
 - **ADD_EXPORT_JS**: 5
-- **INSTALL_EXPORT_CARD**: 10
-- **READY_SHARED_EXPORT**: 76
+- **READY_SHARED_EXPORT**: 86
 - **REVIEW_MANUAL_NO_FORMGRID**: 2
 - **REVIEW_MANUAL_NO_RESULTS**: 1
 - **REVIEW_MANUAL_NO_TOOLCARD**: 7
@@ -108,16 +107,16 @@ Tool pages scanned: **101**
 | tools/video-storage/retention-planner/index.html | free | video-storage | retention | no | yes | yes | yes | yes | yes | - | REVIEW_MANUAL_NO_TOOLCARD |
 | tools/video-storage/retention-survivability/index.html | pro | video-storage | survivability | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/video-storage/storage-calculator/index.html | free | video-storage | storage | no | yes | yes | no | yes | yes | - | REVIEW_MANUAL_NO_TOOLCARD |
-| tools/wireless/ap-capacity/index.html | pro | wireless | ap-capacity | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/wireless/channel-overlap/index.html | free | wireless | channel-overlap | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/wireless/client-density/index.html | pro | wireless | client-density | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/wireless/coverage-radius/index.html | free | wireless | coverage-radius | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/wireless/link-budget/index.html | pro | wireless | link-budget | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/wireless/mesh-backhaul/index.html | pro | wireless | mesh-backhaul | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/wireless/noise-floor-margin/index.html | pro | wireless | noise-floor-margin | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/wireless/ptp-wireless-link/index.html | pro | wireless | ptp-wireless-link | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/wireless/roaming-thresholds/index.html | pro | wireless | roaming-thresholds | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/wireless/throughput-estimator/index.html | free | wireless | throughput-estimator | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
+| tools/wireless/ap-capacity/index.html | pro | wireless | ap-capacity | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/wireless/channel-overlap/index.html | free | wireless | channel-overlap | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/wireless/client-density/index.html | pro | wireless | client-density | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/wireless/coverage-radius/index.html | free | wireless | coverage-radius | no | yes | yes | no | yes | yes | - | READY_SHARED_EXPORT |
+| tools/wireless/link-budget/index.html | pro | wireless | link-budget | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/wireless/mesh-backhaul/index.html | pro | wireless | mesh-backhaul | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/wireless/noise-floor-margin/index.html | pro | wireless | noise-floor-margin | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/wireless/ptp-wireless-link/index.html | pro | wireless | ptp-wireless-link | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/wireless/roaming-thresholds/index.html | pro | wireless | roaming-thresholds | no | yes | yes | no | yes | yes | - | READY_SHARED_EXPORT |
+| tools/wireless/throughput-estimator/index.html | free | wireless | throughput-estimator | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 
 ## Recommended Next Moves
 
