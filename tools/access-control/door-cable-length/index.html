@@ -3,14 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Door Cable Length Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=ac-cable-002" />
+  <meta
+    name="description"
+    content="Estimate realistic access-control door cable quantities and routing difficulty based on distance, slack, door count, and cable run strategy."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=ac-cable-003" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script defer src="/assets/auth.js?v=0334"></script>
   <script defer src="/assets/app.js?v=0334"></script>
@@ -77,7 +84,7 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="access-control" data-tool="door-cable-length">
+<body data-protected="true" data-tier="pro" data-category="access-control" data-tool="door-cable-length">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -174,7 +181,7 @@
           <div class="muted">Enter values and press Calculate.</div>
         </div>
 
-        <div style="margin-top:16px; min-height:340px;">
+        <div id="chartWrap" hidden style="margin-top:16px; min-height:340px;">
           <canvas id="chart"></canvas>
         </div>
 
@@ -196,7 +203,7 @@
         <div class="export-grid">
           <label class="field">
             <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Assessment Report" />
+            <input id="reportTitle" type="text" placeholder="Door Cable Length Assessment" />
           </label>
 
           <label class="field">
@@ -234,10 +241,9 @@
     </section>
   </main>
 
-  <script src="./script.js?v=8"></script>
+  <script src="./script.js?v=9"></script>
 </body>
 </html>
-
 
 
 
