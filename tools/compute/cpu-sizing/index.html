@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>CPU Sizing Estimator • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=cpu-pipeline-0424" />
+  <meta
+    name="description"
+    content="Estimate CPU core requirements, workload pressure, and compute headroom before continuing through the Compute design flow."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=compute-export-001" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,8 +18,8 @@
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=cpu-pipeline-0424"></script>
-  <script defer src="/assets/app.js?v=cpu-pipeline-0424"></script>
+  <script defer src="/assets/auth.js?v=compute-export-001"></script>
+  <script defer src="/assets/app.js?v=compute-export-001"></script>
 
   <style>
     .results-grid {
@@ -50,6 +55,31 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
+
+    .export-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .export-grid .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .export-status {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.94rem;
+      line-height: 1.45;
+      min-height: 1.45em;
+    }
+
+    @media (max-width: 860px) {
+      .export-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 
@@ -57,18 +87,18 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-icon-wrap" aria-hidden="true">
-        <img
-          class="brand-icon"
-          src="/assets/favicon/favicon-32x32.png?v=1"
-          alt=""
-          width="32"
-          height="32"
-        />
-      </span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
       <nav class="site-nav" aria-label="Primary">
         <a class="nav-pill" href="/">Home</a>
@@ -178,6 +208,51 @@
         </p>
       </div>
 
+      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <div class="pill-row">
+          <span class="pill pill--pro">Documentation & Export</span>
+        </div>
+
+        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <p class="muted" style="margin-bottom: 0;">
+          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+        </p>
+
+        <div class="export-grid">
+          <label class="field">
+            <span class="label">Report Title</span>
+            <input id="reportTitle" type="text" placeholder="CPU Sizing Assessment" />
+          </label>
+
+          <label class="field">
+            <span class="label">Project Name</span>
+            <input id="projectName" type="text" placeholder="Project Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Client Name</span>
+            <input id="clientName" type="text" placeholder="Client / Site Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Prepared By</span>
+            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          </label>
+
+          <label class="field full">
+            <span class="label">Custom Notes</span>
+            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
+          </label>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+        </div>
+
+        <div id="exportStatus" class="export-status"></div>
+      </section>
+
       <div class="btn-row" style="margin-top: 14px;">
         <a class="btn" href="/tools/compute/">Back to Compute</a>
       </div>
@@ -194,16 +269,42 @@
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=cpu-pipeline-0424"></script>
-  <script src="/assets/catalog.js?v=cpu-pipeline-0424"></script>
-  <script src="/assets/pipelines.js?v=cpu-pipeline-0424"></script>
-  <script src="/assets/pipeline-state.js?v=cpu-pipeline-0424"></script>
-  <script src="/assets/pipeline.js?v=cpu-pipeline-0424"></script>
-  <script src="/assets/analyzer.js?v=cpu-pipeline-0424"></script>
-  <script src="./script.js?v=0424"></script>
+  <script src="/assets/tool-flow.js?v=compute-export-001"></script>
+  <script src="/assets/catalog.js?v=compute-export-001"></script>
+  <script src="/assets/pipelines.js?v=compute-export-001"></script>
+  <script src="/assets/pipeline-state.js?v=compute-export-001"></script>
+  <script src="/assets/pipeline.js?v=compute-export-001"></script>
+  <script src="/assets/analyzer.js?v=compute-export-001"></script>
+
+  <script>
+    window.ScopedLabsExportConfig = {
+      categoryLabel: "Compute",
+      categorySlug: "compute",
+      toolLabel: "CPU Sizing Estimator",
+      toolSlug: "cpu-sizing",
+      reportPrefix: "SL-COMPUTE-CPU",
+      assumptions: [
+        "CPU sizing is estimated from workload type, concurrency, per-worker utilization, burst factor, SMT mode, and target utilization ceiling.",
+        "This export reflects the current visible tool inputs and outputs at the time the report was generated.",
+        "The model is intended for planning and comparison, not for replacing benchmark testing, production telemetry, or vendor sizing guidance.",
+        "Final CPU selection should be validated against real workload behavior, licensing constraints, platform limits, and growth expectations."
+      ],
+      disclaimer:
+        "ScopedLabs outputs are planning aids only and do not replace benchmark testing, formal engineering review, vendor sizing guidance, site-specific validation, or production workload analysis.",
+      summaryBuilder(outputs) {
+        const logical = outputs.find((x) => x.label === "Recommended Logical Cores")?.value || "";
+        const physical = outputs.find((x) => x.label === "Recommended Physical Cores")?.value || "";
+        const constraint = outputs.find((x) => x.label === "Primary Constraint")?.value || "";
+        const status = outputs.find((x) => x.label === "Status")?.value || "";
+
+        return `CPU sizing recommends ${logical || "N/A"} logical cores and ${physical || "N/A"} physical cores. Primary constraint: ${constraint || "N/A"}. Overall status: ${status || "N/A"}.`;
+      }
+    };
+  </script>
+  <script src="/assets/export.js?v=compute-export-001"></script>
+  <script src="./script.js?v=compute-export-001"></script>
 </body>
 </html>
-
 
 
 

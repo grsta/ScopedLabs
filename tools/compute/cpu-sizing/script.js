@@ -87,14 +87,19 @@
       });
     } else {
       els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+
       if (els.analysisCopy) {
         els.analysisCopy.style.display = "none";
         els.analysisCopy.innerHTML = "";
       }
+
       if (chartRef.current) {
-        try { chartRef.current.destroy(); } catch {}
+        try {
+          chartRef.current.destroy();
+        } catch {}
         chartRef.current = null;
       }
+
       if (chartWrapRef.current && chartWrapRef.current.parentNode) {
         chartWrapRef.current.parentNode.removeChild(chartWrapRef.current);
         chartWrapRef.current = null;
@@ -103,6 +108,10 @@
 
     hideContinue();
     refreshFlowNote();
+
+    if (window.ScopedLabsExport && typeof window.ScopedLabsExport.invalidate === "function") {
+      window.ScopedLabsExport.invalidate("Inputs changed. Run the calculator again to refresh export.");
+    }
   }
 
   function calculate() {
@@ -159,6 +168,7 @@
     });
 
     let dominantConstraint = "Balanced CPU profile";
+
     if (analyzer.dominant.label === "Load Pressure") {
       dominantConstraint = "Burst / scheduling pressure";
     } else if (analyzer.dominant.label === "Core Demand") {
@@ -168,6 +178,7 @@
     }
 
     let interpretation = "";
+
     if (analyzer.status === "RISK") {
       interpretation =
         "CPU sizing is being pushed too close to the edge. The workload is likely to hit scheduling pressure, burst contention, or reduced responsiveness before downstream memory and storage layers can be evaluated cleanly.";
@@ -180,6 +191,7 @@
     }
 
     let guidance = "";
+
     if (analyzer.status === "HEALTHY") {
       guidance =
         "You have usable headroom. The next failure point is more likely to appear in memory density, storage latency, or workload imbalance before raw CPU exhaustion becomes the dominant issue.";
@@ -247,6 +259,10 @@
     });
 
     showContinue();
+
+    if (window.ScopedLabsExport && typeof window.ScopedLabsExport.refresh === "function") {
+      window.ScopedLabsExport.refresh();
+    }
   }
 
   els.calc.addEventListener("click", calculate);
