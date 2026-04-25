@@ -3,8 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Elevator Reader Count • ScopedLabs</title>
-  <link rel="stylesheet" href="/assets/style.css?v=ac-elevator-pro-004" />
+  <meta
+    name="description"
+    content="Estimate elevator reader count, DCS integration impact, and access-control planning complexity for elevator access designs."
+  />
+
+  <link rel="stylesheet" href="/assets/style.css?v=ac-elevator-pro-005" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -12,8 +18,8 @@
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script defer src="/assets/auth.js?v=0333"></script>
-  <script defer src="/assets/app.js?v=0333"></script>
+  <script defer src="/assets/auth.js?v=0334"></script>
+  <script defer src="/assets/app.js?v=0334"></script>
 
   <style>
     .results-grid {
@@ -77,7 +83,7 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="access-control" data-tool="elevator-reader-count">
+<body data-protected="true" data-tier="pro" data-category="access-control" data-tool="elevator-reader-count">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
@@ -169,7 +175,7 @@
           <div class="muted">Enter values and press Calculate.</div>
         </div>
 
-        <div style="margin-top:16px; min-height:340px;">
+        <div id="chartWrap" hidden style="margin-top:16px; min-height:340px;">
           <canvas id="chart"></canvas>
         </div>
 
@@ -191,7 +197,7 @@
         <div class="export-grid">
           <label class="field">
             <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Assessment Report" />
+            <input id="reportTitle" type="text" placeholder="Elevator Reader Count Assessment" />
           </label>
 
           <label class="field">
@@ -229,7 +235,7 @@
     </section>
   </main>
 
-  <script src="./script.js?v=5"></script>
+  <script src="./script.js?v=6"></script>
 </body>
 </html>
 
