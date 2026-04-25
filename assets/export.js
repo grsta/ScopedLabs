@@ -358,44 +358,113 @@
   }
 
   function getStatusFromOutputs(outputs) {
-    const candidates = [
-      "System Status",
-      "Status",
-      "Operational Risk",
-      "Install Difficulty",
-      "Complexity",
-      "Risk",
-      "Health"
-    ];
+  function classifyText(value) {
+    const raw = normalizeSlug(value);
 
-    const found = outputs.find((row) =>
-      candidates.some((label) => normalizeSlug(row.label) === normalizeSlug(label))
-    );
-
-    const raw = normalizeSlug(found?.value || "");
+    if (!raw) return "";
 
     if (
       raw.includes("risk") ||
-      raw.includes("high") ||
       raw.includes("critical") ||
+      raw.includes("failed") ||
+      raw.includes("failure") ||
       raw.includes("overload") ||
-      raw.includes("failed")
+      raw.includes("saturation") ||
+      raw.includes("unsafe") ||
+      raw.includes("out of range") ||
+      raw.includes("exceeded") ||
+      raw.includes("exceeds") ||
+      raw.includes("problematic")
     ) {
       return "RISK";
     }
 
     if (
       raw.includes("watch") ||
+      raw.includes("warning") ||
+      raw.includes("caution") ||
       raw.includes("moderate") ||
       raw.includes("tight") ||
-      raw.includes("warning") ||
-      raw.includes("caution")
+      raw.includes("limited") ||
+      raw.includes("borderline") ||
+      raw.includes("elevated")
     ) {
       return "WATCH";
     }
 
-    return "HEALTHY";
+    if (
+      raw.includes("healthy") ||
+      raw.includes("good") ||
+      raw.includes("pass") ||
+      raw.includes("acceptable") ||
+      raw.includes("balanced") ||
+      raw.includes("excellent") ||
+      raw.includes("safe") ||
+      raw.includes("normal")
+    ) {
+      return "HEALTHY";
+    }
+
+    return "";
   }
+
+  const priorityLabels = [
+    "System Status",
+    "Status",
+    "Operational Risk",
+    "Install Difficulty",
+    "Complexity",
+    "Risk",
+    "Health",
+    "CPU Class",
+    "Capacity Class",
+    "Density Class",
+    "Throughput Class",
+    "Performance Class",
+    "Latency Class",
+    "Power Class",
+    "Thermal Class",
+    "Assessment",
+    "Result Class"
+  ];
+
+  for (const label of priorityLabels) {
+    const found = outputs.find((row) => {
+      return normalizeSlug(row.label) === normalizeSlug(label);
+    });
+
+    const status = classifyText(found?.value || "");
+    if (status) return status;
+  }
+
+  const classLikeRow = outputs.find((row) => {
+    const label = normalizeSlug(row.label);
+
+    return (
+      label.includes("status") ||
+      label.includes("risk") ||
+      label.includes("class") ||
+      label.includes("assessment") ||
+      label.includes("condition") ||
+      label.includes("health")
+    );
+  });
+
+  const classLikeStatus = classifyText(classLikeRow?.value || "");
+  if (classLikeStatus) return classLikeStatus;
+
+  for (const row of outputs) {
+    const status = classifyText(row.value || "");
+    if (status === "RISK") return "RISK";
+  }
+
+  for (const row of outputs) {
+    const status = classifyText(row.value || "");
+    if (status === "WATCH") return "WATCH";
+  }
+
+  return "HEALTHY";
+}
 
   function getInterpretationFromOutputs(outputs) {
     const found = outputs.find((row) => {
