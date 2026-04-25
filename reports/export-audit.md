@@ -1,14 +1,14 @@
 # ScopedLabs Export Audit
 
-Generated: 2026-04-25T17:35:54.141Z
+Generated: 2026-04-25T18:17:37.102Z
 
 Tool pages scanned: **101**
 
 ## Status Counts
 
 - **ADD_EXPORT_JS**: 5
-- **INSTALL_EXPORT_CARD**: 56
-- **READY_SHARED_EXPORT**: 30
+- **INSTALL_EXPORT_CARD**: 46
+- **READY_SHARED_EXPORT**: 40
 - **REVIEW_MANUAL_NO_FORMGRID**: 2
 - **REVIEW_MANUAL_NO_RESULTS**: 1
 - **REVIEW_MANUAL_NO_TOOLCARD**: 7
@@ -57,16 +57,16 @@ Tool pages scanned: **101**
 | tools/network/poe-budget/index.html | free | network | poe-budget | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/network/uplink-failure-impact/index.html | pro | network | uplink-failure-impact | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/network/vpn-overhead/index.html | pro | network | vpn-overhead | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
-| tools/performance/bottleneck-analyzer/index.html | pro | performance | bottleneck-analyzer | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/performance/cache-hit-ratio/index.html | free | performance | cache-hit-ratio | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/performance/concurrency-scaling/index.html | pro | performance | concurrency-scaling | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/performance/cpu-utilization-impact/index.html | pro | performance | cpu-utilization-impact | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/performance/disk-saturation/index.html | pro | performance | disk-saturation | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/performance/headroom-target/index.html | free | performance | headroom-target | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/performance/latency-vs-throughput/index.html | pro | performance | latency-vs-throughput | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/performance/network-congestion/index.html | pro | performance | network-congestion | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/performance/queue-depth/index.html | pro | performance | queue-depth | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/performance/response-time-sla/index.html | free | performance | response-time-sla | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
+| tools/performance/bottleneck-analyzer/index.html | pro | performance | bottleneck-analyzer | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/performance/cache-hit-ratio/index.html | free | performance | cache-hit-ratio | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/performance/concurrency-scaling/index.html | pro | performance | concurrency-scaling | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/performance/cpu-utilization-impact/index.html | pro | performance | cpu-utilization-impact | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/performance/disk-saturation/index.html | pro | performance | disk-saturation | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/performance/headroom-target/index.html | free | performance | headroom-target | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/performance/latency-vs-throughput/index.html | pro | performance | latency-vs-throughput | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/performance/network-congestion/index.html | pro | performance | network-congestion | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/performance/queue-depth/index.html | pro | performance | queue-depth | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/performance/response-time-sla/index.html | free | performance | response-time-sla | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/physical-security/blind-spot-check/index.html | pro | physical-security | blind-spot-check | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/physical-security/camera-coverage-area/index.html | pro | physical-security | camera-coverage-area | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/physical-security/camera-spacing/index.html | pro | physical-security | camera-spacing | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
