@@ -1,5 +1,32 @@
 ﻿(() => {
+  const CATEGORY = "access-control";
+  const CATEGORY_LABEL = "Access Control";
+  const TOOL = "credential-format-helper";
+  const TOOL_LABEL = "Credential Format Helper";
+  const REPORT_SAVE_KEY = "scopedlabs:reports:access-control:credential-format-helper";
+
   const $ = (id) => document.getElementById(id);
+
+  const els = {
+    fcDigits: $("fcDigits"),
+    cardDigits: $("cardDigits"),
+    fmt: $("fmt"),
+    bits: $("bits"),
+    pop: $("pop"),
+    results: $("results"),
+    calc: $("calc"),
+    reset: $("reset"),
+    reportTitle: $("reportTitle"),
+    projectName: $("projectName"),
+    clientName: $("clientName"),
+    preparedBy: $("preparedBy"),
+    customNotes: $("customNotes"),
+    exportReport: $("exportReport"),
+    saveSnapshot: $("saveSnapshot"),
+    exportStatus: $("exportStatus")
+  };
+
+  let currentReport = null;
 
   function n(id) {
     const el = $(id);
@@ -7,30 +34,614 @@
     return Number.isFinite(v) ? v : 0;
   }
 
+  function pow10(d) {
+    return Math.pow(10, Math.max(0, d));
+  }
+
+  function formatNumber(value) {
+    if (!Number.isFinite(value)) return "Very large";
+    return value.toLocaleString();
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function formatDateTime(isoString) {
+    try {
+      return new Date(isoString).toLocaleString();
+    } catch {
+      return String(isoString || "");
+    }
+  }
+
+  function makeReportId(prefix = "SL-REPORT") {
+    const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+    return `${prefix}-${stamp}`;
+  }
+
+  function hasStoredAuth() {
+    try {
+      const key = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+      if (!key) return false;
+
+      const raw = JSON.parse(localStorage.getItem(key));
+      return !!(
+        raw?.access_token ||
+        raw?.currentSession?.access_token ||
+        (Array.isArray(raw) ? raw[0]?.access_token : null)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function getUnlockedCategories() {
+    try {
+      const raw = localStorage.getItem("sl_unlocked_categories");
+      if (!raw) return [];
+
+      return raw
+        .split(",")
+        .map((x) => String(x).trim().toLowerCase())
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function hasExportAccess() {
+    return hasStoredAuth() && getUnlockedCategories().includes(CATEGORY);
+  }
+
+  function setExportEnabled(enabled) {
+    if (els.exportReport) els.exportReport.disabled = !enabled;
+    if (els.saveSnapshot) els.saveSnapshot.disabled = !enabled;
+  }
+
+  function setExportStatus(message = "") {
+    if (els.exportStatus) els.exportStatus.textContent = message;
+  }
+
+  function updateExportControls(message) {
+    const unlocked = hasExportAccess();
+    const ready = !!currentReport;
+    setExportEnabled(unlocked && ready);
+
+    if (message !== undefined) {
+      setExportStatus(message);
+      return;
+    }
+
+    if (!unlocked) {
+      setExportStatus("Export is available with Access Control category unlock.");
+      return;
+    }
+
+    if (!ready) {
+      setExportStatus("Run the calculator to enable export.");
+      return;
+    }
+
+    setExportStatus("Calculation ready. Open Export Report or Save Snapshot.");
+  }
+
+  function getReportMeta() {
+    return {
+      reportTitle: (els.reportTitle?.value || "").trim() || "Credential Format Assessment",
+      projectName: (els.projectName?.value || "").trim(),
+      clientName: (els.clientName?.value || "").trim(),
+      preparedBy: (els.preparedBy?.value || "").trim(),
+      customNotes: (els.customNotes?.value || "").trim()
+    };
+  }
+
+  function assumptionsForTool() {
+    return [
+      "Decimal capacity is estimated from facility-code digit capacity multiplied by card-number digit capacity.",
+      "Binary capacity is estimated using bit length minus a basic parity allowance and does not decode manufacturer-specific structures.",
+      "The result is intended for planning and migration review, not controller-specific credential programming validation.",
+      "Credential format decisions should be verified against the access-control platform, reader compatibility, card vendor, and site operating policy."
+    ];
+  }
+
   function render(rows) {
-    const el = $("results");
-    el.innerHTML = "";
+    if (!els.results) return;
+
+    els.results.innerHTML = "";
+
     rows.forEach((r) => {
       const div = document.createElement("div");
       div.className = "result-row";
       div.innerHTML = `
-        <span class="result-label">${r.label}</span>
-        <span class="result-value">${r.value}</span>
+        <span class="result-label">${escapeHtml(r.label)}</span>
+        <span class="result-value">${escapeHtml(r.value)}</span>
       `;
-      el.appendChild(div);
+      els.results.appendChild(div);
     });
   }
 
-  function pow10(d) {
-    return Math.pow(10, Math.max(0, d));
+  function getRenderedRows() {
+    if (!els.results) return [];
+
+    return Array.from(els.results.querySelectorAll(".result-row")).map((row) => {
+      const label = row.querySelector(".result-label")?.textContent?.trim() || "";
+      const value = row.querySelector(".result-value")?.textContent?.trim() || "";
+      return { label, value };
+    }).filter((item) => item.label || item.value);
+  }
+
+  function readSnapshots(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeSnapshots(key, items) {
+    localStorage.setItem(key, JSON.stringify(items));
+  }
+
+  function saveSnapshot(key, payload, limit = 25) {
+    const existing = readSnapshots(key);
+    existing.unshift({
+      ...payload,
+      savedAt: new Date().toISOString()
+    });
+
+    const trimmed = existing.slice(0, limit);
+    writeSnapshots(key, trimmed);
+    return trimmed.length;
+  }
+
+  function buildReportPayload(core) {
+    return {
+      reportId: makeReportId("SL-ACC-CFH"),
+      generatedAt: new Date().toISOString(),
+      category: CATEGORY_LABEL,
+      categorySlug: CATEGORY,
+      tool: TOOL_LABEL,
+      toolSlug: TOOL,
+      status: core.status,
+      summary: core.summary,
+      interpretation: core.interpretation,
+      inputs: [
+        { label: "Facility Code Digits", value: String(core.inputs.fcDigits) },
+        { label: "Card Number Digits", value: String(core.inputs.cardDigits) },
+        { label: "Format Type", value: core.inputs.formatLabel },
+        { label: "Bit Length", value: `${core.inputs.bits}-bit` },
+        { label: "Estimated Badge Population", value: String(core.inputs.population) }
+      ],
+      outputs: core.outputs,
+      assumptions: assumptionsForTool(),
+      meta: getReportMeta()
+    };
+  }
+
+  function buildReportHTML(payload) {
+    const inputRows = (payload.inputs || []).map((item) => `
+      <tr>
+        <td>${escapeHtml(item.label)}</td>
+        <td>${escapeHtml(item.value)}</td>
+      </tr>
+    `).join("");
+
+    const outputRows = (payload.outputs || []).map((item) => `
+      <tr>
+        <td>${escapeHtml(item.label)}</td>
+        <td>${escapeHtml(item.value)}</td>
+      </tr>
+    `).join("");
+
+    const assumptions = (payload.assumptions || []).map((item) => `
+      <li>${escapeHtml(item)}</li>
+    `).join("");
+
+    const projectDetails = [
+      payload.meta?.projectName ? `<div><strong>Project:</strong> ${escapeHtml(payload.meta.projectName)}</div>` : "",
+      payload.meta?.clientName ? `<div><strong>Client:</strong> ${escapeHtml(payload.meta.clientName)}</div>` : "",
+      payload.meta?.preparedBy ? `<div><strong>Prepared By:</strong> ${escapeHtml(payload.meta.preparedBy)}</div>` : ""
+    ].filter(Boolean).join("");
+
+    const notesBlock = payload.meta?.customNotes
+      ? `
+        <section class="section">
+          <h2>Custom Notes</h2>
+          <div class="body-copy">${escapeHtml(payload.meta.customNotes).replace(/\n/g, "<br>")}</div>
+        </section>
+      `
+      : "";
+
+    const statusClass = String(payload.status || "").toLowerCase();
+
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(payload.meta?.reportTitle || payload.tool || "ScopedLabs Report")} • ScopedLabs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root{
+      --ink:#101715;
+      --muted:#52615c;
+      --line:#d7e2db;
+      --soft:#f5f8f6;
+      --accent:#1d8f55;
+      --accent-soft:#eaf7f0;
+      --watch:#a66d00;
+      --watch-soft:#fff6df;
+      --risk:#b42318;
+      --risk-soft:#fff0ee;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:#eef2ef;color:var(--ink);font-family:Inter, Arial, sans-serif}
+    body{padding:28px}
+    .page{
+      max-width:980px;
+      margin:0 auto;
+      background:#fff;
+      border:1px solid var(--line);
+      box-shadow:0 18px 50px rgba(0,0,0,.08);
+    }
+    .toolbar{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding:14px 18px;
+      border-bottom:1px solid var(--line);
+      background:#fbfcfb;
+    }
+    .toolbar button{
+      appearance:none;
+      border:1px solid #c9d8cf;
+      background:#fff;
+      color:var(--ink);
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .toolbar button:hover{background:#f3f7f5}
+    .report{padding:28px 30px 32px}
+    .brand-row{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .brand-row img{
+      width:28px;
+      height:28px;
+      display:block;
+    }
+    .brand-name{
+      font-size:1.15rem;
+      font-weight:800;
+      letter-spacing:.02em;
+    }
+    .tagline{
+      color:var(--muted);
+      font-size:.95rem;
+      margin-bottom:18px;
+    }
+    .report-head{
+      display:flex;
+      justify-content:space-between;
+      gap:18px;
+      align-items:flex-start;
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      padding:18px 0;
+      margin-bottom:22px;
+    }
+    .report-title{
+      font-size:1.7rem;
+      line-height:1.15;
+      margin:0 0 6px;
+    }
+    .report-meta{
+      color:var(--muted);
+      font-size:.95rem;
+      line-height:1.6;
+    }
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:.82rem;
+      font-weight:800;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      border:1px solid transparent;
+      white-space:nowrap;
+    }
+    .status-pill.healthy{
+      color:var(--accent);
+      background:var(--accent-soft);
+      border-color:#c9ead7;
+    }
+    .status-pill.watch{
+      color:var(--watch);
+      background:var(--watch-soft);
+      border-color:#f2dfad;
+    }
+    .status-pill.risk{
+      color:var(--risk);
+      background:var(--risk-soft);
+      border-color:#f3c6c1;
+    }
+    .section{margin-top:24px}
+    .section h2{
+      margin:0 0 10px;
+      font-size:1rem;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+    .summary,
+    .body-copy{
+      border:1px solid var(--line);
+      background:#fafcfb;
+      border-radius:14px;
+      padding:16px 18px;
+      line-height:1.65;
+    }
+    .project-details{
+      display:grid;
+      gap:6px;
+      margin-top:10px;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:18px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      font-size:.95rem;
+    }
+    th,td{
+      padding:11px 12px;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+    }
+    th{
+      text-align:left;
+      background:#f7faf8;
+      font-size:.82rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    tr:last-child td{border-bottom:none}
+    td:first-child{
+      width:42%;
+      color:var(--muted);
+    }
+    td:last-child{
+      font-weight:700;
+      text-align:left;
+    }
+    .assumptions{
+      margin:0;
+      padding-left:18px;
+      line-height:1.7;
+    }
+    .foot{
+      margin-top:26px;
+      padding-top:16px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.7;
+    }
+    @media (max-width: 760px){
+      body{padding:14px}
+      .report{padding:20px}
+      .report-head{flex-direction:column}
+      .grid{grid-template-columns:1fr}
+    }
+    @media print{
+      body{background:#fff;padding:0}
+      .page{max-width:none;border:none;box-shadow:none}
+      .toolbar{display:none !important}
+      .report{padding:0}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="toolbar">
+      <button type="button" onclick="window.print()">Print / Save PDF</button>
+      <button type="button" onclick="window.close()">Close</button>
+    </div>
+
+    <div class="report">
+      <div class="brand-row">
+        <img src="https://scopedlabs.com/assets/favicon/favicon-32x32.png?v=1" alt="">
+        <div class="brand-name">ScopedLabs</div>
+      </div>
+      <div class="tagline">Engineering · Analysis · Tools</div>
+
+      <div class="report-head">
+        <div>
+          <h1 class="report-title">${escapeHtml(payload.meta?.reportTitle || payload.tool || "ScopedLabs Report")}</h1>
+          <div class="report-meta">
+            <div><strong>Category:</strong> ${escapeHtml(payload.category || "")}</div>
+            <div><strong>Tool:</strong> ${escapeHtml(payload.tool || "")}</div>
+            <div><strong>Generated:</strong> ${escapeHtml(formatDateTime(payload.generatedAt || ""))}</div>
+            <div><strong>Report ID:</strong> ${escapeHtml(payload.reportId || "")}</div>
+          </div>
+        </div>
+        <div class="status-pill ${statusClass}">${escapeHtml(payload.status || "")}</div>
+      </div>
+
+      <section class="section">
+        <h2>Executive Summary</h2>
+        <div class="summary">
+          ${escapeHtml(payload.summary || "")}
+          <div class="project-details">${projectDetails}</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="grid">
+          <div>
+            <h2>Inputs</h2>
+            <table>
+              <thead>
+                <tr><th>Input</th><th>Value</th></tr>
+              </thead>
+              <tbody>${inputRows}</tbody>
+            </table>
+          </div>
+
+          <div>
+            <h2>Calculated Outputs</h2>
+            <table>
+              <thead>
+                <tr><th>Output</th><th>Value</th></tr>
+              </thead>
+              <tbody>${outputRows}</tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Engineering Interpretation</h2>
+        <div class="body-copy">${escapeHtml(payload.interpretation || "")}</div>
+      </section>
+
+      ${notesBlock}
+
+      <section class="section">
+        <h2>Assumptions</h2>
+        <div class="body-copy">
+          <ul class="assumptions">${assumptions}</ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Disclaimer</h2>
+        <div class="body-copy">
+          ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, controller programming review, or manufacturer documentation.
+        </div>
+      </section>
+
+      <div class="foot">
+        ScopedLabs Pro export preview for internal and client-facing documentation workflows.
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+  }
+
+  function openReportWindow(payload) {
+    try {
+      const html = buildReportHTML(payload);
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+
+      if (!win) return false;
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 10000);
+
+      return true;
+    } catch (err) {
+      console.error("Export report open failed:", err);
+      return false;
+    }
+  }
+
+  function classifyUtilization(utilization) {
+    if (utilization < 10) {
+      return {
+        fit: "Excellent headroom",
+        status: "HEALTHY",
+        summary:
+          "The selected credential format has abundant numbering headroom for the expected badge population.",
+        interpretation:
+          "This format leaves abundant numbering headroom relative to the expected badge population. Collision pressure is low, and future migration pressure should remain manageable if badge count grows modestly."
+      };
+    }
+
+    if (utilization < 30) {
+      return {
+        fit: "Good headroom",
+        status: "HEALTHY",
+        summary:
+          "The selected credential format has comfortable remaining capacity for the expected badge population.",
+        interpretation:
+          "This format still has comfortable remaining capacity. The design should scale reasonably well, although format standardization and clean documentation still matter if multiple sites, tenants, or credential batches are involved."
+      };
+    }
+
+    if (utilization < 60) {
+      return {
+        fit: "Moderate headroom",
+        status: "WATCH",
+        summary:
+          "The selected credential format is workable, but remaining numbering headroom is no longer generous.",
+        interpretation:
+          "This format is workable, but headroom is no longer generous. Growth, tenant separation, replacement badge ranges, or mixed credential populations can consume the remaining numbering space faster than expected."
+      };
+    }
+
+    if (utilization < 90) {
+      return {
+        fit: "Tight / risk of collisions",
+        status: "WATCH",
+        summary:
+          "The selected credential format is entering a tight planning band and should be reviewed before broader rollout.",
+        interpretation:
+          "This format is entering a tight planning band. You may still deploy it, but future growth and migration flexibility are becoming constrained enough that collisions, numbering overlap, or format partitioning deserve attention now."
+      };
+    }
+
+    return {
+      fit: "Over capacity / collision likely",
+      status: "RISK",
+      summary:
+        "The selected credential format is effectively overcommitted for the expected badge population.",
+      interpretation:
+        "This format is effectively overcommitted for the expected badge population. Collision risk or numbering overlap becomes likely enough that a larger or more carefully partitioned format should be considered before rollout."
+    };
+  }
+
+  function buildBestPractices() {
+    return [
+      "Standardize one format across the site to avoid reader/panel interpretation mismatches.",
+      "Document the exact format clearly: bit length, facility code range, and card range.",
+      "If multi-tenant, partition facility codes intentionally instead of ad hoc growth.",
+      "If migrating, plan card translation or dual-format acceptance during the cutover window."
+    ].join(" ");
   }
 
   function calc() {
     const fcDigits = Math.max(0, Math.floor(n("fcDigits")));
     const cardDigits = Math.max(1, Math.floor(n("cardDigits")));
-    const fmt = $("fmt").value;
-    const bits = parseInt($("bits").value, 10);
-    const pop = Math.max(0, Math.floor(n("pop")));
+    const fmt = els.fmt?.value || "decimal";
+    const bits = parseInt(els.bits?.value || "26", 10);
+    const population = Math.max(0, Math.floor(n("pop")));
 
     const fcCap = pow10(fcDigits);
     const cardCap = pow10(cardDigits);
@@ -40,65 +651,155 @@
     const totalBinary = Math.pow(2, usableBits);
 
     const chosenTotal = fmt === "decimal" ? totalDecimal : totalBinary;
-    const utilization = chosenTotal > 0 ? (pop / chosenTotal) * 100 : 0;
+    const utilization = chosenTotal > 0 && Number.isFinite(chosenTotal)
+      ? (population / chosenTotal) * 100
+      : 0;
 
-    const fit =
-      utilization < 10 ? "Excellent headroom" :
-      utilization < 30 ? "Good headroom" :
-      utilization < 60 ? "Moderate headroom" :
-      utilization < 90 ? "Tight / risk of collisions" :
-      "Over capacity / collision likely";
+    const result = classifyUtilization(utilization);
+    const formatLabel = fmt === "decimal" ? "Decimal" : "Binary";
+    const bestPractices = buildBestPractices();
 
-    let interpretation = "";
-    if (utilization < 10) {
-      interpretation = "This format leaves abundant numbering headroom relative to the expected badge population. Collision pressure is low, and you are less likely to create future migration pain if badge count grows modestly.";
-    } else if (utilization < 30) {
-      interpretation = "This format still has comfortable remaining capacity. The design should scale reasonably well, although format standardization and clean documentation still matter if multiple sites or tenants are involved.";
-    } else if (utilization < 60) {
-      interpretation = "This format is workable, but headroom is no longer generous. Growth, tenant separation, or mixed credential populations can consume the remaining numbering space faster than expected.";
-    } else if (utilization < 90) {
-      interpretation = "This format is entering a tight planning band. You may still deploy it, but future growth and migration flexibility are becoming constrained enough that collisions or numbering overlap deserve attention now.";
-    } else {
-      interpretation = "This format is effectively overcommitted for the expected badge population. Collision risk or numbering overlap becomes likely enough that a larger or more carefully partitioned format should be considered before rollout.";
+    const rows = [
+      { label: "Format Type", value: formatLabel.toUpperCase() },
+      { label: "Badge Population", value: `${population}` },
+      { label: "Decimal Capacity (FC × Card)", value: `${formatNumber(totalDecimal)} (${formatNumber(fcCap)} × ${formatNumber(cardCap)})` },
+      { label: "Binary Capacity (approx)", value: `${formatNumber(totalBinary)} (usable bits ~ ${usableBits})` },
+      { label: "Capacity Used", value: `${utilization.toFixed(2)} %` },
+      { label: "Assessment", value: result.fit },
+      { label: "Engineering Interpretation", value: result.interpretation },
+      { label: "Best Practices", value: bestPractices }
+    ];
+
+    render(rows);
+
+    currentReport = buildReportPayload({
+      status: result.status,
+      summary: result.summary,
+      interpretation: result.interpretation,
+      inputs: {
+        fcDigits,
+        cardDigits,
+        formatLabel,
+        bits,
+        population
+      },
+      outputs: getRenderedRows()
+    });
+
+    updateExportControls();
+  }
+
+  function invalidate() {
+    currentReport = null;
+
+    if (els.results) {
+      els.results.innerHTML = `<div class="muted">Inputs changed. Press Calculate to refresh results.</div>`;
     }
 
-    const tips = [
-      "Standardize one format across the site to avoid reader/panel interpretation mismatches.",
-      "Document the exact format clearly: bit length, facility code range, and card range.",
-      "If multi-tenant, partition facility codes intentionally instead of ad hoc growth.",
-      "If migrating, plan card translation or dual-format acceptance during the cutover window."
-    ].join(" ");
-
-    render([
-      { label: "Format Type", value: fmt.toUpperCase() },
-      { label: "Badge Population", value: `${pop}` },
-      { label: "Decimal Capacity (FC × Card)", value: `${totalDecimal.toLocaleString()} (${fcCap.toLocaleString()} × ${cardCap.toLocaleString()})` },
-      { label: "Binary Capacity (approx)", value: `${totalBinary.toLocaleString()} (usable bits ~ ${usableBits})` },
-      { label: "Capacity Used", value: `${utilization.toFixed(2)} %` },
-      { label: "Assessment", value: fit },
-      { label: "Engineering Interpretation", value: interpretation },
-      { label: "Best Practices", value: tips }
-    ]);
+    updateExportControls();
   }
 
   function reset() {
-    $("fcDigits").value = 3;
-    $("cardDigits").value = 5;
-    $("fmt").value = "decimal";
-    $("bits").value = "26";
-    $("pop").value = 500;
-    $("results").innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    if (els.fcDigits) els.fcDigits.value = 3;
+    if (els.cardDigits) els.cardDigits.value = 5;
+    if (els.fmt) els.fmt.value = "decimal";
+    if (els.bits) els.bits.value = "26";
+    if (els.pop) els.pop.value = 500;
+
+    currentReport = null;
+
+    if (els.results) {
+      els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+    }
+
+    updateExportControls();
   }
 
-  $("calc").addEventListener("click", calc);
-  $("reset").addEventListener("click", reset);
+  if (els.calc) {
+    els.calc.addEventListener("click", calc);
+  }
 
-  [$("fcDigits"), $("cardDigits"), $("fmt"), $("bits"), $("pop")].forEach((el) => {
+  if (els.reset) {
+    els.reset.addEventListener("click", reset);
+  }
+
+  if (els.exportReport) {
+    els.exportReport.addEventListener("click", () => {
+      if (!hasExportAccess()) {
+        updateExportControls("Export is available with Access Control category unlock.");
+        return;
+      }
+
+      if (!currentReport) {
+        updateExportControls("Run the calculator before exporting a report.");
+        return;
+      }
+
+      currentReport = {
+        ...currentReport,
+        generatedAt: new Date().toISOString(),
+        meta: getReportMeta()
+      };
+
+      const ok = openReportWindow(currentReport);
+      updateExportControls(ok ? "Export report opened in a new tab." : "Popup blocked. Allow popups for ScopedLabs and try again.");
+    });
+  }
+
+  if (els.saveSnapshot) {
+    els.saveSnapshot.addEventListener("click", () => {
+      if (!hasExportAccess()) {
+        updateExportControls("Export is available with Access Control category unlock.");
+        return;
+      }
+
+      if (!currentReport) {
+        updateExportControls("Run the calculator before saving a snapshot.");
+        return;
+      }
+
+      currentReport = {
+        ...currentReport,
+        generatedAt: new Date().toISOString(),
+        meta: getReportMeta()
+      };
+
+      const count = saveSnapshot(REPORT_SAVE_KEY, currentReport, 25);
+      updateExportControls(`Saved locally. ${count} snapshot${count === 1 ? "" : "s"} stored for this tool.`);
+    });
+  }
+
+  [
+    els.fcDigits,
+    els.cardDigits,
+    els.fmt,
+    els.bits,
+    els.pop
+  ].forEach((el) => {
     if (!el) return;
-    el.addEventListener("input", reset);
-    el.addEventListener("change", reset);
+    el.addEventListener("input", invalidate);
+    el.addEventListener("change", invalidate);
   });
 
-  reset();
-})();
+  [
+    els.reportTitle,
+    els.projectName,
+    els.clientName,
+    els.preparedBy,
+    els.customNotes
+  ].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", () => {
+      if (!currentReport) return;
+      updateExportControls("Export details updated.");
+    });
+  });
 
+  window.addEventListener("DOMContentLoaded", () => {
+    reset();
+
+    setTimeout(() => {
+      updateExportControls();
+    }, 500);
+  });
+})();
