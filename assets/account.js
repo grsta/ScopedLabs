@@ -35,6 +35,9 @@
   const ready = () =>
     window.SL_AUTH && window.SL_AUTH.ready ? window.SL_AUTH.ready : Promise.resolve();
 
+  let currentSession = null;
+  let snapshotsCache = [];
+
   function setStatus(msg) {
     if (els.status) els.status.textContent = msg || "";
   }
@@ -462,6 +465,7 @@
       await ready();
       const { data } = await client.auth.getSession();
       const session = data?.session || null;
+      currentSession = session;
 
       if (!session) {
         setSignedOutUI();
@@ -544,6 +548,7 @@
         window.__SL_ACCOUNT_AUTH_SUB = true;
 
         client.auth.onAuthStateChange(async (_evt, session) => {
+          currentSession = session || null;
           if (!session) {
             setSignedOutUI();
             return;
@@ -589,6 +594,7 @@
 
       const { data } = await client.auth.getSession();
       const session = data?.session || null;
+      currentSession = session;
 
       if (!session?.access_token) {
         if (status) status.textContent = "Sign in to view saved snapshots.";
@@ -671,6 +677,7 @@
 
     const { data } = await client.auth.getSession();
     const session = data?.session || null;
+      currentSession = session;
 
     if (!session?.access_token) throw new Error("missing_token");
 
