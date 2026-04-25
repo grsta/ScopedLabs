@@ -1,15 +1,9 @@
 [
   {
     "path": "tools/compute/backup-window/index.html",
-    "status": "MODIFIED",
-    "reason": "",
-    "changes": [
-      "added export styles",
-      "inserted export card before category back button",
-      "added export config and /assets/export.js",
-      "bumped local script include"
-    ],
-    "warnings": []
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
   },
   {
     "path": "tools/compute/cpu-sizing/index.html",
@@ -19,98 +13,50 @@
   },
   {
     "path": "tools/compute/gpu-vram/index.html",
-    "status": "MODIFIED",
-    "reason": "",
-    "changes": [
-      "added export styles",
-      "inserted export card before category back button",
-      "added export config and /assets/export.js",
-      "bumped local script include"
-    ],
-    "warnings": []
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
   },
   {
     "path": "tools/compute/nic-bonding/index.html",
-    "status": "MODIFIED",
-    "reason": "",
-    "changes": [
-      "added export styles",
-      "inserted export card before category back button",
-      "added export config and /assets/export.js",
-      "bumped local script include"
-    ],
-    "warnings": []
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
   },
   {
     "path": "tools/compute/power-thermal/index.html",
-    "status": "MODIFIED",
-    "reason": "",
-    "changes": [
-      "added export styles",
-      "inserted export card before category back button",
-      "added export config and /assets/export.js",
-      "bumped local script include"
-    ],
-    "warnings": []
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
   },
   {
     "path": "tools/compute/raid-rebuild-time/index.html",
-    "status": "MODIFIED",
-    "reason": "",
-    "changes": [
-      "added export styles",
-      "inserted export card before category back button",
-      "added export config and /assets/export.js",
-      "bumped local script include"
-    ],
-    "warnings": []
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
   },
   {
     "path": "tools/compute/ram-sizing/index.html",
-    "status": "MODIFIED",
-    "reason": "",
-    "changes": [
-      "added export styles",
-      "inserted export card before tool section close",
-      "added export config and /assets/export.js",
-      "bumped local script include"
-    ],
-    "warnings": []
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
   },
   {
     "path": "tools/compute/storage-iops/index.html",
-    "status": "MODIFIED",
-    "reason": "",
-    "changes": [
-      "added export styles",
-      "inserted export card before tool section close",
-      "added export config and /assets/export.js",
-      "bumped local script include"
-    ],
-    "warnings": []
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
   },
   {
     "path": "tools/compute/storage-throughput/index.html",
-    "status": "MODIFIED",
-    "reason": "",
-    "changes": [
-      "added export styles",
-      "inserted export card before category back button",
-      "added export config and /assets/export.js",
-      "bumped local script include"
-    ],
-    "warnings": []
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
   },
   {
     "path": "tools/compute/vm-density/index.html",
-    "status": "MODIFIED",
-    "reason": "",
-    "changes": [
-      "added export styles",
-      "inserted export card before category back button",
-      "added export config and /assets/export.js",
-      "bumped local script include"
-    ],
-    "warnings": []
+    "status": "SKIPPED",
+    "reason": "already using shared export",
+    "changes": []
   }
 ]
