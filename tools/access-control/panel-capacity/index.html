@@ -5,17 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Panel Capacity Planner • ScopedLabs</title>
+  <meta
+    name="description"
+    content="Estimate access-control panel count, expansion capacity, reader demand, and growth pressure for scalable controller planning."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=ac-panel-007" />
+  <link rel="stylesheet" href="/assets/style.css?v=ac-panel-008" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script defer src="/assets/auth.js?v=0408"></script>
-  <script defer src="/assets/app.js?v=0408"></script>
+  <script defer src="/assets/auth.js?v=0410"></script>
+  <script defer src="/assets/app.js?v=0410"></script>
 
   <style>
     .results-grid {
@@ -79,218 +83,219 @@
   </style>
 </head>
 
-<body data-tier="pro" data-category="access-control" data-step="panel-capacity" data-lane="v1">
+<body data-protected="true" data-tier="pro" data-category="access-control" data-step="panel-capacity" data-lane="v1">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/" aria-label="ScopedLabs Home">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-icon-wrap" aria-hidden="true">
-        <img
-          class="brand-icon"
-          src="/assets/favicon/favicon-32x32.png?v=1"
-          alt=""
-          width="32"
-          height="32"
-        />
-      </span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a class="nav-pill" href="/">Home</a>
+        <a class="nav-pill" href="/tools/">Tools</a>
+        <a class="nav-pill" href="/tools/access-control/">Access Control</a>
+      </nav>
+    </div>
+  </header>
 
-    <nav class="site-nav">
-      <a class="nav-pill" href="/">Home</a>
-      <a class="nav-pill" href="/tools/">Tools</a>
-      <a class="nav-pill" href="/tools/access-control/">Access Control</a>
-    </nav>
-  </div>
-</header>
+  <main class="container page">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/access-control/">Access Control</a>
+      <span class="sep">/</span>
+      <span>Panel Capacity</span>
+    </div>
 
-<main class="container page">
-
-  <div class="crumbs">
-    <a href="/tools/">Tools</a>
-    <span class="sep">/</span>
-    <a href="/tools/access-control/">Access Control</a>
-    <span class="sep">/</span>
-    <span>Panel Capacity</span>
-  </div>
-
-  <div class="pill-row" style="margin-top: 6px;">
-    <span class="pill pill--pro">Pro Tier</span>
-  </div>
-
-  <h1>Panel Capacity Planner</h1>
-
-  <div id="pipeline"></div>
-
-  <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-    <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-    <h2 class="h3" style="margin-top: 0;">This tool continues the Access Control design flow</h2>
-    <p class="muted" style="margin-bottom: 0;">
-      Use this step to translate door counts, reader counts, and planned growth margin into actual controller and expansion requirements.
-    </p>
-    <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-      This is where access design stops being conceptual and starts becoming deployable panel architecture with measurable spare capacity and expansion pressure.
-    </p>
-  </section>
-
-  <p class="tool-best-for">
-    <strong>Best for:</strong> determining how many panels and expansion boards are required for a scalable system design.
-  </p>
-
-  <div id="flow-note" class="flow-note" hidden></div>
-
-  <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-    <div class="pill-row">
+    <div class="pill-row" style="margin-top: 6px;">
       <span class="pill pill--pro">Pro Tier</span>
     </div>
 
-    <h2 class="h2">🔒 Locked</h2>
-    <p class="muted">This tool is included with Pro access for this category.</p>
+    <h1>Panel Capacity Planner</h1>
 
-    <p class="muted"><strong>What this models</strong></p>
-    <ul class="muted">
-      <li>Required panel count from door and reader demand</li>
-      <li>Expansion-board pressure and remaining growth margin</li>
-      <li>Whether the system is balanced or already crowding controller capacity</li>
-    </ul>
+    <div id="pipeline"></div>
 
-    <div class="actions">
-      <a class="btn" href="/tools/access-control/">Back to Access Control</a>
-      <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
-    </div>
-  </section>
-
-  <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
-    <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
-
-    <div class="form-grid" style="margin-top: 14px;">
-      <label class="field">
-        <span class="label">Doors</span>
-        <input id="doors" type="number" value="24" />
-      </label>
-
-      <label class="field">
-        <span class="label">Readers per Door</span>
-        <select id="readersPerDoor">
-          <option value="1">1</option>
-          <option value="2">2</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span class="label">Inputs per Door</span>
-        <input id="inputsPerDoor" type="number" value="2" />
-      </label>
-
-      <label class="field">
-        <span class="label">Outputs per Door</span>
-        <input id="outputsPerDoor" type="number" value="1" />
-      </label>
-
-      <label class="field">
-        <span class="label">Base Doors</span>
-        <input id="baseDoors" type="number" value="4" />
-      </label>
-
-      <label class="field">
-        <span class="label">Expansion Doors</span>
-        <input id="expDoors" type="number" value="2" />
-      </label>
-
-      <label class="field">
-        <span class="label">Max Expansions</span>
-        <input id="maxExp" type="number" value="8" />
-      </label>
-
-      <label class="field">
-        <span class="label">Spare %</span>
-        <input id="spare" type="number" value="20" />
-      </label>
-    </div>
-
-    <div class="btn-row" style="margin-top: 14px;">
-      <button id="calc" class="btn btn-primary" type="button">Calculate</button>
-      <button id="reset" class="btn" type="button">Reset</button>
-    </div>
-
-    <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-      <h3 class="h3" style="margin-top: 0;">Results</h3>
-      <div id="results" class="results-grid" aria-live="polite">
-        <div class="muted">Run calculation.</div>
-      </div>
-      <div id="analysis-copy" style="display:none;"></div>
-
-      <p class="mini-note">
-        Model: panel requirement is based on door count plus spare capacity target, then compared against base panel capacity and expansion capacity to estimate system load and growth pressure.
-      </p>
-    </div>
-
-    <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-      <div class="pill-row">
-        <span class="pill pill--pro">Documentation & Export</span>
-      </div>
-
-      <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+    <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+      <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+      <h2 class="h3" style="margin-top: 0;">This tool continues the Access Control design flow</h2>
       <p class="muted" style="margin-bottom: 0;">
-        Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+        Use this step to translate door counts, reader counts, and planned growth margin into actual controller and expansion requirements.
       </p>
+      <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        This is where access design stops being conceptual and starts becoming deployable panel architecture with measurable spare capacity and expansion pressure.
+      </p>
+    </section>
 
-      <div class="export-grid">
+    <p class="tool-best-for">
+      <strong>Best for:</strong> determining how many panels and expansion boards are required for a scalable system design.
+    </p>
+
+    <div id="flow-note" class="flow-note" hidden></div>
+
+    <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+      <div class="pill-row">
+        <span class="pill pill--pro">Pro Tier</span>
+      </div>
+
+      <h2 class="h2">🔒 Locked</h2>
+      <p class="muted">This tool is included with Pro access for this category.</p>
+
+      <p class="muted"><strong>What this models</strong></p>
+      <ul class="muted">
+        <li>Required panel count from door and reader demand</li>
+        <li>Expansion-board pressure and remaining growth margin</li>
+        <li>Whether the system is balanced or already crowding controller capacity</li>
+      </ul>
+
+      <div class="actions">
+        <a class="btn" href="/tools/access-control/">Back to Access Control</a>
+        <a class="btn btn-primary" href="/upgrade/">Unlock Pro</a>
+      </div>
+    </section>
+
+    <section id="toolCard" class="card tool-card" style="margin-top: 18px;">
+      <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+
+      <div class="form-grid" style="margin-top: 14px;">
         <label class="field">
-          <span class="label">Report Title</span>
-          <input id="reportTitle" type="text" placeholder="Assessment Report" />
+          <span class="label">Doors</span>
+          <input id="doors" type="number" min="1" step="1" value="24" />
         </label>
 
         <label class="field">
-          <span class="label">Project Name</span>
-          <input id="projectName" type="text" placeholder="Project Name" />
+          <span class="label">Readers per Door</span>
+          <select id="readersPerDoor">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
         </label>
 
         <label class="field">
-          <span class="label">Client Name</span>
-          <input id="clientName" type="text" placeholder="Client / Site Name" />
+          <span class="label">Inputs per Door</span>
+          <input id="inputsPerDoor" type="number" min="0" step="1" value="2" />
         </label>
 
         <label class="field">
-          <span class="label">Prepared By</span>
-          <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          <span class="label">Outputs per Door</span>
+          <input id="outputsPerDoor" type="number" min="0" step="1" value="1" />
         </label>
 
-        <label class="field full">
-          <span class="label">Custom Notes</span>
-          <textarea id="customNotes" placeholder="Optional notes, assumptions, field conditions, or design caveats to include in the report."></textarea>
+        <label class="field">
+          <span class="label">Base Doors</span>
+          <input id="baseDoors" type="number" min="1" step="1" value="4" />
+        </label>
+
+        <label class="field">
+          <span class="label">Expansion Doors</span>
+          <input id="expDoors" type="number" min="1" step="1" value="2" />
+        </label>
+
+        <label class="field">
+          <span class="label">Max Expansions</span>
+          <input id="maxExp" type="number" min="1" step="1" value="8" />
+        </label>
+
+        <label class="field">
+          <span class="label">Spare %</span>
+          <input id="spare" type="number" min="0" step="1" value="20" />
         </label>
       </div>
 
       <div class="btn-row" style="margin-top: 14px;">
-        <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
-        <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+        <button id="calc" class="btn btn-primary" type="button">Calculate</button>
+        <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-      <div id="exportStatus" class="export-status"></div>
+      <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <h3 class="h3" style="margin-top: 0;">Results</h3>
+        <div id="results" class="results-grid" aria-live="polite">
+          <div class="muted">Run calculation.</div>
+        </div>
+        <div id="analysis-copy" style="display:none;"></div>
+
+        <div id="chartWrap" hidden style="margin-top:16px; min-height:340px;">
+          <canvas id="chart"></canvas>
+        </div>
+
+        <p class="mini-note">
+          Model: panel requirement is based on door count plus spare capacity target, then compared against base panel capacity and expansion capacity to estimate system load and growth pressure.
+        </p>
+      </div>
+
+      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <div class="pill-row">
+          <span class="pill pill--pro">Documentation & Export</span>
+        </div>
+
+        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <p class="muted" style="margin-bottom: 0;">
+          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+        </p>
+
+        <div class="export-grid">
+          <label class="field">
+            <span class="label">Report Title</span>
+            <input id="reportTitle" type="text" placeholder="Panel Capacity Planner Assessment" />
+          </label>
+
+          <label class="field">
+            <span class="label">Project Name</span>
+            <input id="projectName" type="text" placeholder="Project Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Client Name</span>
+            <input id="clientName" type="text" placeholder="Client / Site Name" />
+          </label>
+
+          <label class="field">
+            <span class="label">Prepared By</span>
+            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          </label>
+
+          <label class="field full">
+            <span class="label">Custom Notes</span>
+            <textarea id="customNotes" placeholder="Optional notes, assumptions, field conditions, or design caveats to include in the report."></textarea>
+          </label>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+        </div>
+
+        <div id="exportStatus" class="export-status"></div>
+      </section>
     </section>
-  </section>
 
-  <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
-    <button id="continue" class="btn btn-primary" disabled>
-      Continue → Access Level Sizing
-    </button>
-  </div>
+    <div id="continue-wrap" class="btn-row" style="display:none; margin-top:12px;">
+      <button id="continue" class="btn btn-primary" disabled type="button">
+        Continue → Access Level Sizing
+      </button>
+    </div>
 
-  <footer class="site-footer">
-    <div class="muted">© <span data-year></span> ScopedLabs</div>
-  </footer>
-</main>
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+    </footer>
+  </main>
 
-  <script src="/assets/tool-flow.js?v=ac-panel-007"></script>
-  <script src="/assets/catalog.js?v=ac-panel-007"></script>
-  <script src="/assets/pipelines.js?v=ac-panel-007"></script>
-  <script src="/assets/pipeline-state.js?v=ac-panel-007"></script>
-  <script src="/assets/pipeline.js?v=ac-panel-007"></script>
-  <script src="/assets/analyzer.js?v=ac-panel-007"></script>
-  <script src="./script.js?v=007"></script>
-
+  <script src="/assets/tool-flow.js?v=ac-panel-008"></script>
+  <script src="/assets/catalog.js?v=ac-panel-008"></script>
+  <script src="/assets/pipelines.js?v=ac-panel-008"></script>
+  <script src="/assets/pipeline-state.js?v=ac-panel-008"></script>
+  <script src="/assets/pipeline.js?v=ac-panel-008"></script>
+  <script src="/assets/analyzer.js?v=ac-panel-008"></script>
+  <script src="./script.js?v=008"></script>
 </body>
 </html>
 
