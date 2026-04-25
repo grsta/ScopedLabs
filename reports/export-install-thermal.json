@@ -1,0 +1,122 @@
+[
+  {
+    "path": "tools/thermal/airflow-requirement/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before tool section close",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/thermal/ambient-rise/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/thermal/btu-converter/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before tool section close",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/thermal/exhaust-temperature/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/thermal/fan-cfm-sizing/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/thermal/heat-load-estimator/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before tool section close",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/thermal/hot-cold-aisle/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/thermal/psu-efficiency-heat/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/thermal/rack-thermal-density/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  },
+  {
+    "path": "tools/thermal/room-cooling-capacity/index.html",
+    "status": "MODIFIED",
+    "reason": "",
+    "changes": [
+      "added export styles",
+      "inserted export card before category back button",
+      "added export config and /assets/export.js",
+      "bumped local script include"
+    ],
+    "warnings": []
+  }
+]

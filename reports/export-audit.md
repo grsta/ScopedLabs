@@ -1,14 +1,14 @@
 # ScopedLabs Export Audit
 
-Generated: 2026-04-25T19:15:05.143Z
+Generated: 2026-04-25T19:26:56.101Z
 
 Tool pages scanned: **101**
 
 ## Status Counts
 
 - **ADD_EXPORT_JS**: 5
-- **INSTALL_EXPORT_CARD**: 28
-- **READY_SHARED_EXPORT**: 58
+- **INSTALL_EXPORT_CARD**: 18
+- **READY_SHARED_EXPORT**: 68
 - **REVIEW_MANUAL_NO_FORMGRID**: 2
 - **REVIEW_MANUAL_NO_RESULTS**: 1
 - **REVIEW_MANUAL_NO_TOOLCARD**: 7
@@ -88,16 +88,16 @@ Tool pages scanned: **101**
 | tools/power/ups-runtime/index.html | pro | power | ups-runtime | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/power/va-watts-amps/index.html | free | power | va-watts-amps | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/power/worst-case-runtime/index.html | pro | power | worst-case-runtime | no | no | yes | yes | yes | yes | - | REVIEW_MANUAL_NO_FORMGRID |
-| tools/thermal/airflow-requirement/index.html | free | thermal | airflow-requirement | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/thermal/ambient-rise/index.html | pro | thermal | ambient-rise | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/thermal/btu-converter/index.html | free | thermal | btu-converter | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/thermal/exhaust-temperature/index.html | pro | thermal | exhaust-temperature | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/thermal/fan-cfm-sizing/index.html | pro | thermal | fan-cfm-sizing | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/thermal/heat-load-estimator/index.html | free | thermal | heat-load-estimator | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/thermal/hot-cold-aisle/index.html | pro | thermal | hot-cold-aisle | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/thermal/psu-efficiency-heat/index.html | pro | thermal | psu-efficiency-heat | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/thermal/rack-thermal-density/index.html | pro | thermal | rack-thermal-density | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/thermal/room-cooling-capacity/index.html | pro | thermal | room-cooling-capacity | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
+| tools/thermal/airflow-requirement/index.html | free | thermal | airflow-requirement | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/thermal/ambient-rise/index.html | pro | thermal | ambient-rise | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/thermal/btu-converter/index.html | free | thermal | btu-converter | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/thermal/exhaust-temperature/index.html | pro | thermal | exhaust-temperature | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/thermal/fan-cfm-sizing/index.html | pro | thermal | fan-cfm-sizing | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/thermal/heat-load-estimator/index.html | free | thermal | heat-load-estimator | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/thermal/hot-cold-aisle/index.html | pro | thermal | hot-cold-aisle | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/thermal/psu-efficiency-heat/index.html | pro | thermal | psu-efficiency-heat | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/thermal/rack-thermal-density/index.html | pro | thermal | rack-thermal-density | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/thermal/room-cooling-capacity/index.html | pro | thermal | room-cooling-capacity | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/video-storage/advanced-storage-planner/index.html | pro | video-storage | advanced-storage-planner | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/video-storage/archive-cost/index.html | pro | video-storage | archive-cost | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/video-storage/bitrate-estimator/index.html | free | video-storage | bitrate | no | yes | yes | no | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
