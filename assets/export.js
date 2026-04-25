@@ -436,6 +436,301 @@
   }
 
   function captureVisibleChart() {
+    function findVisibleCanvas() {
+      const candidates = Array.from(document.querySelectorAll("canvas"));
+
+      return candidates.find((canvas) => {
+        const rect = canvas.getBoundingClientRect();
+        const hiddenParent = canvas.closest("[hidden], .hidden");
+        return !hiddenParent && rect.width > 0 && rect.height > 0;
+      });
+    }
+
+    function numericValue(raw) {
+      if (typeof raw === "number") return raw;
+
+      if (raw && typeof raw === "object") {
+        if (Number.isFinite(Number(raw.x))) return Number(raw.x);
+        if (Number.isFinite(Number(raw.y))) return Number(raw.y);
+        if (Number.isFinite(Number(raw.value))) return Number(raw.value);
+      }
+
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function renderLightChartFromExistingChart(sourceCanvas) {
+      if (typeof Chart === "undefined" || typeof Chart.getChart !== "function") {
+        return "";
+      }
+
+      const sourceChart = Chart.getChart(sourceCanvas);
+      if (!sourceChart) return "";
+
+      const labels = Array.from(sourceChart.data?.labels || []).map((x) => String(x));
+      const dataset = sourceChart.data?.datasets?.[0];
+
+      if (!labels.length || !dataset?.data?.length) return "";
+
+      const values = Array.from(dataset.data).map(numericValue);
+      const finiteValues = values.filter((v) => Number.isFinite(v));
+
+      if (!finiteValues.length) return "";
+
+      const maxValue = Math.max(...finiteValues, 85);
+      const chartMax = Math.max(100, Math.ceil(maxValue * 1.12));
+      const dominantIndex = values.indexOf(Math.max(...finiteValues));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 1200;
+      canvas.height = Math.max(520, labels.length * 86 + 180);
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return "";
+
+      let exportChart = null;
+
+      const bgPlugin = {
+        id: "scopedLabsLightExportBg",
+        beforeDraw(chartInstance) {
+          const { ctx, chartArea } = chartInstance;
+          if (!chartArea) return;
+
+          const { left, top, width, height, right } = chartArea;
+          const x = chartInstance.scales.x;
+
+          ctx.save();
+
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, chartInstance.width, chartInstance.height);
+
+          ctx.fillStyle = "#f8fbf9";
+          ctx.fillRect(left, top, width, height);
+
+          const healthyMax = Math.min(65, x.max);
+          const watchMax = Math.min(85, x.max);
+
+          if (healthyMax > 0) {
+            ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
+            ctx.fillRect(left, top, x.getPixelForValue(healthyMax) - left, height);
+          }
+
+          if (watchMax > 65) {
+            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
+            ctx.fillRect(
+              x.getPixelForValue(65),
+              top,
+              x.getPixelForValue(watchMax) - x.getPixelForValue(65),
+              height
+            );
+          }
+
+          if (x.max > 85) {
+            ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
+            ctx.fillRect(
+              x.getPixelForValue(85),
+              top,
+              right - x.getPixelForValue(85),
+              height
+            );
+          }
+
+          ctx.restore();
+        },
+        afterDatasetsDraw(chartInstance) {
+          const { ctx, chartArea, scales } = chartInstance;
+          if (!chartArea || !scales.x || !scales.y) return;
+
+          const x = scales.x;
+          const y = scales.y;
+          const { top, bottom } = chartArea;
+
+          ctx.save();
+
+          const rx = x.getPixelForValue(65);
+
+          ctx.strokeStyle = "#198754";
+          ctx.lineWidth = 3;
+          ctx.setLineDash([6, 5]);
+          ctx.beginPath();
+          ctx.moveTo(rx, top);
+          ctx.lineTo(rx, bottom);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = "#1f2937";
+          ctx.font = "600 16px Arial";
+          ctx.fillText("Healthy Margin Floor", rx + 10, bottom - 12);
+
+          ctx.fillStyle = "#15803d";
+          ctx.font = "700 15px Arial";
+          ctx.fillText("Healthy", x.getPixelForValue(6), top + 18);
+
+          ctx.fillStyle = "#b45309";
+          ctx.fillText("Watch", x.getPixelForValue(69), top + 18);
+
+          ctx.fillStyle = "#b91c1c";
+          ctx.fillText("Risk", x.getPixelForValue(89), top + 18);
+
+          if (dominantIndex >= 0 && labels[dominantIndex]) {
+            const dominantValue = values[dominantIndex];
+            const px = x.getPixelForValue(dominantValue);
+            const py = y.getPixelForValue(labels[dominantIndex]);
+
+            ctx.beginPath();
+            ctx.arc(px, py, 6, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+            ctx.strokeStyle = "#111827";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = "#1f2937";
+            ctx.font = "600 15px Arial";
+            ctx.fillText(
+              `${Math.round(dominantValue)}${dominantValue <= 120 ? "%" : ""}`,
+              Math.min(px + 10, chartArea.right - 90),
+              py - 10
+            );
+          }
+
+          ctx.restore();
+        }
+      };
+
+      try {
+        exportChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: dataset.label || "Analyzer Metrics",
+                data: values,
+                indexAxis: "y",
+                barThickness: 18,
+                maxBarThickness: 18,
+                barPercentage: 0.8,
+                categoryPercentage: 0.7,
+                borderRadius: 8,
+                borderSkipped: false,
+                borderWidth: 1.5,
+                backgroundColor(context) {
+                  const i = context.dataIndex;
+                  const v = Number(context.raw) || 0;
+
+                  if (i === dominantIndex) {
+                    if (v > 85) return "#dc2626";
+                    if (v > 65) return "#f59e0b";
+                    return "#22c55e";
+                  }
+
+                  if (v > 85) return "rgba(220, 38, 38, 0.55)";
+                  if (v > 65) return "rgba(245, 158, 11, 0.50)";
+                  return "rgba(59, 130, 246, 0.42)";
+                },
+                borderColor(context) {
+                  const i = context.dataIndex;
+                  const v = Number(context.raw) || 0;
+
+                  if (i === dominantIndex) {
+                    if (v > 85) return "#7f1d1d";
+                    if (v > 65) return "#92400e";
+                    return "#166534";
+                  }
+
+                  if (v > 85) return "#991b1b";
+                  if (v > 65) return "#b45309";
+                  return "#1d4ed8";
+                }
+              }
+            ]
+          },
+          options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            animation: false,
+            indexAxis: "y",
+            layout: {
+              padding: {
+                top: 36,
+                right: 24,
+                bottom: 12,
+                left: 18
+              }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                suggestedMax: chartMax,
+                ticks: {
+                  color: "#334155",
+                  font: {
+                    size: 14,
+                    weight: "600"
+                  }
+                },
+                grid: {
+                  color: "rgba(15, 23, 42, 0.08)"
+                },
+                border: {
+                  color: "rgba(15, 23, 42, 0.18)"
+                },
+                title: {
+                  display: true,
+                  text: sourceChart.options?.scales?.x?.title?.text || "Analyzer Metric Magnitude",
+                  color: "#0f172a",
+                  font: {
+                    size: 15,
+                    weight: "700"
+                  }
+                }
+              },
+              y: {
+                ticks: {
+                  color: "#0f172a",
+                  font: {
+                    size: 15,
+                    weight: "700"
+                  }
+                },
+                grid: {
+                  display: false
+                },
+                border: {
+                  color: "rgba(15, 23, 42, 0.18)"
+                }
+              }
+            }
+          },
+          plugins: [bgPlugin]
+        });
+
+        const dataUrl = canvas.toDataURL("image/png", 1);
+
+        if (exportChart) {
+          exportChart.destroy();
+          exportChart = null;
+        }
+
+        return dataUrl;
+      } catch (err) {
+        console.warn("ScopedLabs light export chart render failed:", err);
+
+        if (exportChart) {
+          try {
+            exportChart.destroy();
+          } catch {}
+        }
+
+        return "";
+      }
+    }
+
     if (typeof state.options.getChartImage === "function") {
       try {
         const custom = state.options.getChartImage();
@@ -446,16 +741,14 @@
     }
 
     try {
-      const candidates = Array.from(document.querySelectorAll("canvas"));
-      const visible = candidates.find((canvas) => {
-        const rect = canvas.getBoundingClientRect();
-        const wrap = canvas.closest("[hidden], .hidden");
-        return !wrap && rect.width > 0 && rect.height > 0;
-      });
+      const visibleCanvas = findVisibleCanvas();
 
-      if (!visible) return "";
+      if (!visibleCanvas) return "";
 
-      return visible.toDataURL("image/png", 1);
+      const lightChart = renderLightChartFromExistingChart(visibleCanvas);
+      if (lightChart) return lightChart;
+
+      return visibleCanvas.toDataURL("image/png", 1);
     } catch (err) {
       console.warn("ScopedLabs export chart capture failed:", err);
       return "";
@@ -756,20 +1049,17 @@
       line-height:1.7;
     }
     .chart-wrap{
-  border:1px solid #16351f;
-  border-radius:14px;
-  background:
-    radial-gradient(circle at top left, rgba(37, 112, 58, 0.24), transparent 34%),
-    linear-gradient(180deg, #07120d 0%, #0b1712 100%);
-  padding:18px;
-  text-align:center;
-}
-.chart-wrap img{
-  max-width:100%;
-  height:auto;
-  display:inline-block;
-  border-radius:10px;
-}
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      padding:18px;
+      text-align:center;
+    }
+    .chart-wrap img{
+      max-width:100%;
+      height:auto;
+      display:inline-block;
+    }
     .foot{
       margin-top:26px;
       padding-top:16px;
