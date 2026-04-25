@@ -5,10 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <title>Fail-Safe vs Fail-Secure • ScopedLabs</title>
-  <meta name="description" content="Determine correct door behavior based on life safety, threat level, and power conditions." />
+  <meta
+    name="description"
+    content="Determine correct door behavior based on life safety, threat level, and power conditions."
+  />
 
-  <link rel="stylesheet" href="/assets/style.css?v=ac-fail-006" />
+  <link rel="stylesheet" href="/assets/style.css?v=ac-fail-007" />
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+
   <script defer src="/assets/auth.js?v=0406"></script>
   <script defer src="/assets/app.js?v=0406"></script>
 
@@ -46,7 +55,7 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
-  
+
     .export-grid {
       display: grid;
       gap: 14px;
@@ -71,27 +80,25 @@
         grid-template-columns: 1fr;
       }
     }
-
-</style>
+  </style>
 </head>
 
 <body data-tier="free" data-category="access-control" data-step="fail-safe-fail-secure" data-lane="v1">
-
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-icon-wrap" aria-hidden="true">
-        <img
-          class="brand-icon"
-          src="/assets/favicon/favicon-32x32.png?v=1"
-          alt=""
-          width="32"
-          height="32"
-        />
-      </span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
       <nav class="site-nav">
         <a class="nav-pill" href="/">Home</a>
@@ -201,6 +208,7 @@
           Model: recommendation is based on life safety, threat pressure, power reliability, fire integration, and door function. This is a planning decision tool, not a substitute for code compliance review or AHJ requirements.
         </p>
       </div>
+
       <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
@@ -214,7 +222,7 @@
         <div class="export-grid">
           <label class="field">
             <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Assessment Report" />
+            <input id="reportTitle" type="text" placeholder="Fail-Safe vs Fail-Secure Assessment" />
           </label>
 
           <label class="field">
@@ -246,8 +254,6 @@
         <div id="exportStatus" class="export-status"></div>
       </section>
 
-
-
       <div class="btn-row" style="margin-top: 14px;">
         <a class="btn" href="/tools/access-control/">Back to Access Control</a>
       </div>
@@ -262,14 +268,13 @@
     </footer>
   </main>
 
-  <script src="/assets/tool-flow.js?v=ac-fail-006"></script>
-  <script src="/assets/catalog.js?v=ac-fail-006"></script>
-  <script src="/assets/pipelines.js?v=ac-fail-006"></script>
-  <script src="/assets/pipeline-state.js?v=ac-fail-006"></script>
-  <script src="/assets/pipeline.js?v=ac-fail-006"></script>
-  <script src="/assets/analyzer.js?v=ac-fail-006"></script>
-  <script src="./script.js?v=006"></script>
-
+  <script src="/assets/tool-flow.js?v=ac-fail-007"></script>
+  <script src="/assets/catalog.js?v=ac-fail-007"></script>
+  <script src="/assets/pipelines.js?v=ac-fail-007"></script>
+  <script src="/assets/pipeline-state.js?v=ac-fail-007"></script>
+  <script src="/assets/pipeline.js?v=ac-fail-007"></script>
+  <script src="/assets/analyzer.js?v=ac-fail-007"></script>
+  <script src="./script.js?v=007"></script>
 </body>
 </html>
 
