@@ -756,17 +756,20 @@
       line-height:1.7;
     }
     .chart-wrap{
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:#fff;
-      padding:18px;
-      text-align:center;
-    }
-    .chart-wrap img{
-      max-width:100%;
-      height:auto;
-      display:inline-block;
-    }
+  border:1px solid #16351f;
+  border-radius:14px;
+  background:
+    radial-gradient(circle at top left, rgba(37, 112, 58, 0.24), transparent 34%),
+    linear-gradient(180deg, #07120d 0%, #0b1712 100%);
+  padding:18px;
+  text-align:center;
+}
+.chart-wrap img{
+  max-width:100%;
+  height:auto;
+  display:inline-block;
+  border-radius:10px;
+}
     .foot{
       margin-top:26px;
       padding-top:16px;
