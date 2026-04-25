@@ -440,6 +440,7 @@
   }
 
   function setSignedOutUI() {
+    currentSession = null;
     setText(els.whoami, "Not signed in");
     show(els.loginCard, true);
     show(els.checkoutCard, false);
@@ -465,6 +466,7 @@
       await ready();
       const { data } = await client.auth.getSession();
       const session = data?.session || null;
+      currentSession = session;
       currentSession = session;
 
       if (!session) {
@@ -549,6 +551,7 @@
 
         client.auth.onAuthStateChange(async (_evt, session) => {
           currentSession = session || null;
+          currentSession = session || null;
           if (!session) {
             setSignedOutUI();
             return;
@@ -594,6 +597,7 @@
 
       const { data } = await client.auth.getSession();
       const session = data?.session || null;
+      currentSession = session;
       currentSession = session;
 
       if (!session?.access_token) {
@@ -677,6 +681,7 @@
 
     const { data } = await client.auth.getSession();
     const session = data?.session || null;
+      currentSession = session;
       currentSession = session;
 
     if (!session?.access_token) throw new Error("missing_token");
