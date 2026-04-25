@@ -435,8 +435,8 @@
     "hasChartJs": true,
     "hasCanvas": false,
     "hasChartWrap": false,
-    "cssHref": "/assets/style.css?v=compute-vm-004",
-    "localScript": "./script.js?v=compute-export-001",
+    "cssHref": "/assets/style.css?v=compute-vm-005",
+    "localScript": "./script.js?v=compute-export-002",
     "status": "READY_SHARED_EXPORT"
   },
   {
