@@ -1,14 +1,14 @@
 # ScopedLabs Export Audit
 
-Generated: 2026-04-25T05:52:36.245Z
+Generated: 2026-04-25T17:14:43.286Z
 
 Tool pages scanned: **101**
 
 ## Status Counts
 
 - **ADD_EXPORT_JS**: 5
-- **INSTALL_EXPORT_CARD**: 76
-- **READY_SHARED_EXPORT**: 10
+- **INSTALL_EXPORT_CARD**: 66
+- **READY_SHARED_EXPORT**: 20
 - **REVIEW_MANUAL_NO_FORMGRID**: 2
 - **REVIEW_MANUAL_NO_RESULTS**: 1
 - **REVIEW_MANUAL_NO_TOOLCARD**: 7
@@ -37,16 +37,16 @@ Tool pages scanned: **101**
 | tools/compute/storage-iops/index.html | free | compute | storage-iops | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/compute/storage-throughput/index.html | pro | compute | storage-throughput | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/compute/vm-density/index.html | pro | compute | vm-density | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
-| tools/infrastructure/cable-tray-fill/index.html | pro | infrastructure | cable-tray-fill | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/infrastructure/conduit-fill/index.html | free | infrastructure | conduit-fill | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/infrastructure/equipment-spacing/index.html | pro | infrastructure | equipment-spacing | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/infrastructure/floor-load-rating/index.html | pro | infrastructure | floor-load-rating | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/infrastructure/generator-runtime/index.html | pro | infrastructure | generator-runtime | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/infrastructure/grounding-estimator/index.html | pro | infrastructure | grounding-estimator | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/infrastructure/rack-ru-planner/index.html | free | infrastructure | rack-ru-planner | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/infrastructure/rack-weight-load/index.html | free | infrastructure | rack-weight-load | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/infrastructure/room-square-footage/index.html | pro | infrastructure | room-square-footage | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
-| tools/infrastructure/ups-room-sizing/index.html | pro | infrastructure | ups-room-sizing | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
+| tools/infrastructure/cable-tray-fill/index.html | pro | infrastructure | cable-tray-fill | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/infrastructure/conduit-fill/index.html | free | infrastructure | conduit-fill | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/infrastructure/equipment-spacing/index.html | pro | infrastructure | equipment-spacing | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/infrastructure/floor-load-rating/index.html | pro | infrastructure | floor-load-rating | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/infrastructure/generator-runtime/index.html | pro | infrastructure | generator-runtime | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/infrastructure/grounding-estimator/index.html | pro | infrastructure | grounding-estimator | no | no | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/infrastructure/rack-ru-planner/index.html | free | infrastructure | rack-ru-planner | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/infrastructure/rack-weight-load/index.html | free | infrastructure | rack-weight-load | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/infrastructure/room-square-footage/index.html | pro | infrastructure | room-square-footage | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
+| tools/infrastructure/ups-room-sizing/index.html | pro | infrastructure | ups-room-sizing | no | yes | yes | yes | yes | yes | - | READY_SHARED_EXPORT |
 | tools/network/bandwidth/index.html | free | network | bandwidth | no | yes | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/network/growth-simulator/index.html | pro | network | growth-simulator | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
 | tools/network/latency-jitter-buffer/index.html | pro | network | latency-jitter-buffer | no | no | yes | yes | no | no | reportTitle, projectName, clientName, preparedBy, customNotes, exportReport, saveSnapshot, exportStatus | INSTALL_EXPORT_CARD |
