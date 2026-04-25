@@ -470,7 +470,7 @@
 
       setSignedInUI(session.user?.email || "");
       await fetchEntitlements(session);
-    } catch (e) {
+      await fetchSnapshots(session);} catch (e) {
       console.warn("[account.js] refresh failed:", e);
       setSignedOutUI();
     }
@@ -493,6 +493,49 @@
       });
     }
 
+    if (!window.__SL_SNAPSHOT_ACCOUNT_EVENTS_BOUND) {
+      window.__SL_SNAPSHOT_ACCOUNT_EVENTS_BOUND = true;
+
+      if (els.refreshSnapshots) {
+        els.refreshSnapshots.addEventListener("click", async () => {
+          if (!currentSession) {
+            snapshotStatusText("Sign in to view saved snapshots.");
+            return;
+          }
+
+          await fetchSnapshots(currentSession);
+        });
+      }
+
+      document.addEventListener("click", (event) => {
+        const target = event.target instanceof Element ? event.target : null;
+        if (!target) return;
+
+        const viewBtn = target.closest("[data-snapshot-view]");
+        if (viewBtn) {
+          event.preventDefault();
+          viewSnapshot(viewBtn.getAttribute("data-snapshot-view"));
+          return;
+        }
+
+        const deleteBtn = target.closest("[data-snapshot-delete]");
+        if (deleteBtn) {
+          event.preventDefault();
+          deleteSnapshot(deleteBtn.getAttribute("data-snapshot-delete"));
+          return;
+        }
+
+        const closeBtn = target.closest("[data-snapshot-close]");
+        if (closeBtn) {
+          event.preventDefault();
+          if (els.snapshotDetail) {
+            els.snapshotDetail.style.display = "none";
+            els.snapshotDetail.innerHTML = "";
+          }
+        }
+      });
+    }
+
     // Keep UI in sync with auth changes
     const client = sb();
     if (client) {
@@ -507,7 +550,7 @@
           }
           setSignedInUI(session.user?.email || "");
           await fetchEntitlements(session);
-        });
+      await fetchSnapshots(session);});
       });
     }
   }
