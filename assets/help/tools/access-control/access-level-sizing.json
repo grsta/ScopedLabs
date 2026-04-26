@@ -1,0 +1,91 @@
+{
+  "title": "Access Level Sizing Guide",
+  "eyebrow": "Tool Knowledge Base",
+  "summary": "Use this guide to understand what the Access Level Sizing tool is checking, how to think about the inputs, and how to interpret the result.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates the structural complexity of an access-control design. It is not just counting doors. It looks at how roles, areas, schedules, door groups, concurrence, and operational rules combine into a system that may be easy to manage or hard to maintain.",
+        "The goal is to flag when an access model is starting to become fragile, over-complicated, or likely to create administrative mistakes."
+      ],
+      "bullets": [
+        "Use it before building access levels in a platform.",
+        "Use it when comparing simple role-based access against more granular segmented access.",
+        "Use it to explain why a design may need simplification before deployment."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use this tool during early design, expansion planning, or cleanup of an existing access-control system. It is especially useful when a site has multiple departments, different operating schedules, restricted areas, or frequent user changes."
+      ],
+      "bullets": [
+        "New building or campus access planning.",
+        "Door expansion projects.",
+        "Role cleanup after years of accumulated access levels.",
+        "Comparing a simple access model against a highly segmented model."
+      ]
+    },
+    {
+      "title": "Inputs explained",
+      "body": [
+        "The inputs are meant to represent how much logic the access system has to manage. A small site with a few doors and one schedule may stay simple. A larger site with many roles, areas, schedules, and exceptions can become difficult to audit and support."
+      ],
+      "bullets": [
+        "Roles: groups of users with similar access needs.",
+        "Areas: logical zones or departments that need separate access treatment.",
+        "Schedules: time windows that affect access decisions.",
+        "Door groups: sets of doors managed together.",
+        "Concurrency or worker count: how many people may need access under the same model.",
+        "Special rules: exceptions, restricted areas, or non-standard access behavior."
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "A healthy result usually means the access model is manageable and likely to be understandable by admins. A watch result means the system may still work, but the design deserves review before implementation. A risk result means the structure may become difficult to maintain, audit, or troubleshoot."
+      ],
+      "bullets": [
+        "Healthy: clean model, manageable structure, low administrative friction.",
+        "Watch: workable, but review grouping, schedules, and exceptions.",
+        "Risk: simplify the design or split the problem into clearer zones, roles, or phases."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "The most common mistake is treating every small access difference as a new access level. That can create a system that works on paper but becomes painful to administer."
+      ],
+      "bullets": [
+        "Creating too many one-off access levels.",
+        "Mixing departments, schedules, and exceptions into the same access group.",
+        "Designing for every edge case instead of building a clean baseline and handling exceptions separately.",
+        "Forgetting that someone has to audit and maintain the system later."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This tool assumes complexity increases as roles, areas, schedules, and grouped permissions multiply. It does not know the exact rules of every access-control platform, so the result should be treated as planning guidance rather than a manufacturer-specific limit."
+      ],
+      "bullets": [
+        "Manufacturer limits still matter.",
+        "Platform licensing, controller capacity, and credential rules may impose separate constraints.",
+        "A simpler model is usually easier to support, document, and audit."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual access-control platform.",
+        "Confirm project requirements and owner expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
