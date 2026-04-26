@@ -2066,7 +2066,7 @@ main h3.section-title {
 
 /* SCOPEDLABS BROWSER TAB NAV - START */
 
-/* Header line/tab-strip anchor */
+/* Browser-style tabs anchored to the header bottom line */
 .site-header {
   position: relative;
   border-bottom: 1px solid rgba(120, 255, 120, 0.16);
@@ -2081,17 +2081,17 @@ main h3.section-title {
 
 .site-header .brand {
   align-self: center;
+  flex: 0 0 auto;
 }
 
-/* Browser-tab nav sits directly on the header bottom line */
 .site-header .nav-tabs {
   display: flex !important;
   align-items: flex-end !important;
   justify-content: flex-end;
   gap: 8px !important;
   flex-wrap: wrap;
-
   align-self: flex-end;
+
   min-height: 43px;
   padding: 0 !important;
   margin: 0 0 -1px 0 !important;
@@ -2133,9 +2133,9 @@ main h3.section-title {
     0 8px 18px rgba(0,0,0,0.24) !important;
 
   outline: none !important;
-  transform: none;
   isolation: isolate;
   overflow: visible;
+  transform: none;
 
   transition:
     color 160ms ease,
@@ -2145,7 +2145,7 @@ main h3.section-title {
     transform 160ms ease;
 }
 
-/* Disable old trapezoid / pseudo-tab shapes */
+/* Kill all old trapezoid / pseudo-shape tab rules */
 .site-header .nav-tabs .nav-tab::before {
   content: none !important;
   display: none !important;
@@ -2161,8 +2161,8 @@ main h3.section-title {
   height: 2px;
   border-radius: 999px;
   background: transparent;
-  box-shadow: none;
   opacity: 0;
+  box-shadow: none;
   transition:
     background 160ms ease,
     box-shadow 160ms ease,
