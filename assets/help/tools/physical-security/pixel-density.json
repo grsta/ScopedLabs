@@ -1,0 +1,156 @@
+{
+  "title": "Pixel Density Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand pixels per foot, target detail, camera resolution, scene width, and image usefulness.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether a camera view has enough pixel density for the intended surveillance task."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch camera design problems before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when checking whether a camera can support detection, observation, recognition, identification, or forensic review."
+      ],
+      "bullets": [
+        "Early camera layout planning.",
+        "Expansion or retrofit review.",
+        "Existing-site validation.",
+        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+      ],
+      "items": [
+        {
+          "label": "Camera Resolution",
+          "description": "The total image resolution produced by the camera.",
+          "examples": [
+            "1080p",
+            "4 MP",
+            "8 MP",
+            "12 MP"
+          ],
+          "whyItMatters": "Resolution affects how many pixels are available across the scene.",
+          "commonMistake": "Buying higher resolution without checking lens and scene width."
+        },
+        {
+          "label": "Scene Width",
+          "description": "The width of the area captured in the image.",
+          "examples": [
+            "Doorway",
+            "Drive lane",
+            "Parking lot",
+            "Lobby"
+          ],
+          "whyItMatters": "Wider scenes spread pixels over more area and reduce detail.",
+          "commonMistake": "Covering a huge scene with one camera and expecting identification."
+        },
+        {
+          "label": "Target Width",
+          "description": "The physical width of the object or person being evaluated.",
+          "examples": [
+            "Face width",
+            "Vehicle width",
+            "Doorway width"
+          ],
+          "whyItMatters": "Target size affects how many pixels land on the subject.",
+          "commonMistake": "Using scene-level coverage instead of target-level detail."
+        },
+        {
+          "label": "Detail Goal",
+          "description": "The surveillance task the image must support.",
+          "examples": [
+            "Detect",
+            "Observe",
+            "Recognize",
+            "Identify"
+          ],
+          "whyItMatters": "Different goals require different pixel density.",
+          "commonMistake": "Saying the camera covers the area without defining the goal."
+        },
+        {
+          "label": "Lens / Zoom",
+          "description": "How tightly the camera view is framed.",
+          "examples": [
+            "Wide lens",
+            "Varifocal",
+            "Telephoto"
+          ],
+          "whyItMatters": "A tighter view usually increases pixel density at the target.",
+          "commonMistake": "Using wide lenses where detail is required."
+        },
+        {
+          "label": "Target Distance",
+          "description": "The distance from camera to subject.",
+          "examples": [
+            "10 ft",
+            "40 ft",
+            "100 ft"
+          ],
+          "whyItMatters": "Longer distance usually reduces useful detail unless the view is narrowed.",
+          "commonMistake": "Ignoring distance when judging image quality."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means pixel density appears aligned with the goal. Watch means detail may be marginal. Risk means the image may not support the intended use."
+      ],
+      "bullets": [
+        "Healthy: the design appears aligned with the entered assumptions.",
+        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
+        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+      ],
+      "bullets": [
+        "Using one wide camera where a dedicated detail view is needed.",
+        "Ignoring target distance, angle, lighting, and obstructions.",
+        "Expecting overview cameras to perform identification tasks.",
+        "Failing to document the design goal for each camera."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+      ],
+      "bullets": [
+        "Camera specs still need to be validated against the actual model.",
+        "Lighting and mounting conditions can change real image quality.",
+        "A good design usually separates overview views from detail views.",
+        "Field testing remains important for critical camera views."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual camera, lens, lighting, and mounting location.",
+        "Confirm owner expectations and security objectives.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

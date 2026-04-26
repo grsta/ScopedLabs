@@ -1,0 +1,152 @@
+{
+  "title": "Face Recognition Range Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how distance, pixel density, angle, lighting, and camera placement affect face detail.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate whether a camera view is likely to support usable face recognition or face review at a target distance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch camera design problems before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning entrances, lobbies, counters, gates, turnstiles, or any scene where face detail matters."
+      ],
+      "bullets": [
+        "Early camera layout planning.",
+        "Expansion or retrofit review.",
+        "Existing-site validation.",
+        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+      ],
+      "items": [
+        {
+          "label": "Target Distance",
+          "description": "The distance from camera to the person's face.",
+          "examples": [
+            "5 ft",
+            "15 ft",
+            "30 ft"
+          ],
+          "whyItMatters": "Distance affects pixel density and face size in the image.",
+          "commonMistake": "Expecting face detail from an overview camera far away."
+        },
+        {
+          "label": "Face Width / Target Size",
+          "description": "The approximate size of the face in the scene.",
+          "examples": [
+            "Human face",
+            "Head-and-shoulders view"
+          ],
+          "whyItMatters": "Face size determines how many pixels are available for detail.",
+          "commonMistake": "Evaluating the whole person instead of the face."
+        },
+        {
+          "label": "Camera Resolution",
+          "description": "The resolution of the camera image.",
+          "examples": [
+            "1080p",
+            "4 MP",
+            "8 MP"
+          ],
+          "whyItMatters": "Resolution helps only if the view is framed tightly enough.",
+          "commonMistake": "Assuming high megapixels always equals face recognition."
+        },
+        {
+          "label": "Scene Width",
+          "description": "How much horizontal area the camera is covering.",
+          "examples": [
+            "Doorway",
+            "Lobby",
+            "Wide hall"
+          ],
+          "whyItMatters": "Wider views reduce pixels on each face.",
+          "commonMistake": "Using a wide lobby camera for face recognition."
+        },
+        {
+          "label": "Viewing Angle",
+          "description": "The angle between camera and face.",
+          "examples": [
+            "Straight-on",
+            "Side angle",
+            "Steep downward angle"
+          ],
+          "whyItMatters": "Face recognition works best with more frontal views.",
+          "commonMistake": "Mounting too high and capturing hats or tops of heads."
+        },
+        {
+          "label": "Lighting Quality",
+          "description": "Light level and contrast on the face.",
+          "examples": [
+            "Backlit doorway",
+            "Even lobby lighting",
+            "Low light"
+          ],
+          "whyItMatters": "Poor lighting can ruin face detail even with enough pixels.",
+          "commonMistake": "Checking pixel density while ignoring backlight and shadows."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means face detail appears likely to be usable. Watch means lighting, angle, or distance should be reviewed. Risk means the camera may not provide reliable face detail."
+      ],
+      "bullets": [
+        "Healthy: the design appears aligned with the entered assumptions.",
+        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
+        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+      ],
+      "bullets": [
+        "Using one wide camera where a dedicated detail view is needed.",
+        "Ignoring target distance, angle, lighting, and obstructions.",
+        "Expecting overview cameras to perform identification tasks.",
+        "Failing to document the design goal for each camera."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+      ],
+      "bullets": [
+        "Camera specs still need to be validated against the actual model.",
+        "Lighting and mounting conditions can change real image quality.",
+        "A good design usually separates overview views from detail views.",
+        "Field testing remains important for critical camera views."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual camera, lens, lighting, and mounting location.",
+        "Confirm owner expectations and security objectives.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "version": "help-007",
+  "version": "help-008",
   "label": "ScopedLabs Help Index",
   "toolHelp": {
     "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json",
@@ -51,6 +51,16 @@
     "performance/latency-vs-throughput": "tools/performance/latency-vs-throughput.json",
     "performance/network-congestion": "tools/performance/network-congestion.json",
     "performance/queue-depth": "tools/performance/queue-depth.json",
-    "performance/response-time-sla": "tools/performance/response-time-sla.json"
+    "performance/response-time-sla": "tools/performance/response-time-sla.json",
+    "physical-security/field-of-view": "tools/physical-security/field-of-view.json",
+    "physical-security/camera-coverage-area": "tools/physical-security/camera-coverage-area.json",
+    "physical-security/camera-spacing": "tools/physical-security/camera-spacing.json",
+    "physical-security/pixel-density": "tools/physical-security/pixel-density.json",
+    "physical-security/lens-selection": "tools/physical-security/lens-selection.json",
+    "physical-security/mounting-height": "tools/physical-security/mounting-height.json",
+    "physical-security/face-recognition-range": "tools/physical-security/face-recognition-range.json",
+    "physical-security/license-plate-range": "tools/physical-security/license-plate-range.json",
+    "physical-security/scene-illumination": "tools/physical-security/scene-illumination.json",
+    "physical-security/blind-spot-check": "tools/physical-security/blind-spot-check.json"
   }
 }

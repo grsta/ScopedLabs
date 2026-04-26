@@ -1,0 +1,157 @@
+{
+  "title": "Lens Selection Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how focal length, distance, coverage width, and detail goals affect lens choice.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps choose a practical lens range based on the scene width and target distance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch camera design problems before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it before selecting fixed or varifocal cameras, planning camera placement, or deciding whether one camera can cover a scene with enough detail."
+      ],
+      "bullets": [
+        "Early camera layout planning.",
+        "Expansion or retrofit review.",
+        "Existing-site validation.",
+        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+      ],
+      "items": [
+        {
+          "label": "Target Distance",
+          "description": "The distance from the camera to the primary subject or area.",
+          "examples": [
+            "Entrance door",
+            "Gate",
+            "Cash counter",
+            "Vehicle lane"
+          ],
+          "whyItMatters": "Distance strongly affects lens choice.",
+          "commonMistake": "Choosing lens size before measuring distance."
+        },
+        {
+          "label": "Desired Scene Width",
+          "description": "How much horizontal area should be visible at the target distance.",
+          "examples": [
+            "Single door",
+            "Lobby width",
+            "Drive lane",
+            "Parking row"
+          ],
+          "whyItMatters": "Scene width determines whether the lens needs to be wide or narrow.",
+          "commonMistake": "Trying to capture too much width and still expect fine detail."
+        },
+        {
+          "label": "Sensor Size",
+          "description": "The camera sensor format.",
+          "examples": [
+            "1/2.8 inch",
+            "1/1.8 inch",
+            "1/3 inch"
+          ],
+          "whyItMatters": "Sensor size changes the view produced by a given lens.",
+          "commonMistake": "Using generic lens charts without matching the sensor."
+        },
+        {
+          "label": "Detail Requirement",
+          "description": "The detail level required from the image.",
+          "examples": [
+            "Awareness",
+            "Recognition",
+            "Identification",
+            "License plate"
+          ],
+          "whyItMatters": "Higher detail usually requires a narrower field of view.",
+          "commonMistake": "Using a wide overview camera for identification."
+        },
+        {
+          "label": "Lens Type",
+          "description": "Whether the camera uses a fixed, varifocal, or motorized zoom lens.",
+          "examples": [
+            "Fixed lens",
+            "Varifocal",
+            "Motorized zoom"
+          ],
+          "whyItMatters": "Lens type affects installation flexibility and tuning.",
+          "commonMistake": "Selecting a fixed lens before the scene is fully known."
+        },
+        {
+          "label": "Mounting Constraint",
+          "description": "Limits on where the camera can be installed.",
+          "examples": [
+            "Existing pole",
+            "Ceiling corner",
+            "Wall box",
+            "Low mounting point"
+          ],
+          "whyItMatters": "Mount location may force a different lens choice.",
+          "commonMistake": "Choosing the lens without considering where the camera can actually go."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the lens range likely fits the coverage goal. Watch means the view/detail tradeoff should be reviewed. Risk means the lens may be too wide or too narrow for the job."
+      ],
+      "bullets": [
+        "Healthy: the design appears aligned with the entered assumptions.",
+        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
+        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+      ],
+      "bullets": [
+        "Using one wide camera where a dedicated detail view is needed.",
+        "Ignoring target distance, angle, lighting, and obstructions.",
+        "Expecting overview cameras to perform identification tasks.",
+        "Failing to document the design goal for each camera."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+      ],
+      "bullets": [
+        "Camera specs still need to be validated against the actual model.",
+        "Lighting and mounting conditions can change real image quality.",
+        "A good design usually separates overview views from detail views.",
+        "Field testing remains important for critical camera views."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual camera, lens, lighting, and mounting location.",
+        "Confirm owner expectations and security objectives.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

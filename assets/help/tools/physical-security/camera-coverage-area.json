@@ -1,0 +1,154 @@
+{
+  "title": "Camera Coverage Area Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how camera count, field of view, distance, overlap, and target detail affect coverage planning.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether cameras can cover an area with enough overlap and usable detail."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch camera design problems before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when laying out cameras for rooms, lots, corridors, perimeters, warehouses, or any scene where coverage gaps matter."
+      ],
+      "bullets": [
+        "Early camera layout planning.",
+        "Expansion or retrofit review.",
+        "Existing-site validation.",
+        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+      ],
+      "items": [
+        {
+          "label": "Area Width",
+          "description": "The width of the space being covered.",
+          "examples": [
+            "Room width",
+            "Parking lot width",
+            "Warehouse aisle"
+          ],
+          "whyItMatters": "Area width affects how many cameras or how wide a view is required.",
+          "commonMistake": "Using total property width instead of the actual target zone."
+        },
+        {
+          "label": "Area Length",
+          "description": "The depth or distance of the coverage area.",
+          "examples": [
+            "Corridor length",
+            "Lot depth",
+            "Fence run"
+          ],
+          "whyItMatters": "Longer areas may need multiple cameras or narrower views.",
+          "commonMistake": "Expecting one camera to cover too much depth."
+        },
+        {
+          "label": "Camera Count",
+          "description": "The number of cameras assigned to the area.",
+          "examples": [
+            "1 camera",
+            "4 cameras",
+            "Perimeter row"
+          ],
+          "whyItMatters": "Camera count affects overlap, detail, and blind spot risk.",
+          "commonMistake": "Adding cameras without checking their actual view geometry."
+        },
+        {
+          "label": "Field of View",
+          "description": "The visible angle or scene width produced by each camera.",
+          "examples": [
+            "Wide view",
+            "Narrow view",
+            "Varifocal lens"
+          ],
+          "whyItMatters": "FOV determines how coverage spreads across the scene.",
+          "commonMistake": "Confusing wide coverage with useful detail."
+        },
+        {
+          "label": "Overlap",
+          "description": "Shared coverage between adjacent cameras.",
+          "examples": [
+            "10% overlap",
+            "20% overlap",
+            "Cross coverage"
+          ],
+          "whyItMatters": "Overlap helps reduce blind spots and improves continuity.",
+          "commonMistake": "Designing cameras edge-to-edge with no margin."
+        },
+        {
+          "label": "Target Detail",
+          "description": "The level of visual detail needed in the covered area.",
+          "examples": [
+            "Detection",
+            "Observation",
+            "Recognition",
+            "Identification"
+          ],
+          "whyItMatters": "Higher detail needs tighter views or more cameras.",
+          "commonMistake": "Using one coverage camera for identification-level tasks."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means coverage appears practical. Watch means overlap or detail should be reviewed. Risk means the design may leave blind spots or insufficient target detail."
+      ],
+      "bullets": [
+        "Healthy: the design appears aligned with the entered assumptions.",
+        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
+        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+      ],
+      "bullets": [
+        "Using one wide camera where a dedicated detail view is needed.",
+        "Ignoring target distance, angle, lighting, and obstructions.",
+        "Expecting overview cameras to perform identification tasks.",
+        "Failing to document the design goal for each camera."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+      ],
+      "bullets": [
+        "Camera specs still need to be validated against the actual model.",
+        "Lighting and mounting conditions can change real image quality.",
+        "A good design usually separates overview views from detail views.",
+        "Field testing remains important for critical camera views."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual camera, lens, lighting, and mounting location.",
+        "Confirm owner expectations and security objectives.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
