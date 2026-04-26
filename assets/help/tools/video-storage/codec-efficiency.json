@@ -1,0 +1,155 @@
+{
+  "title": "Codec Efficiency Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how codec choice affects bitrate savings, compatibility, and image quality.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This guide explains the planning logic behind Codec Efficiency. It helps turn video, storage, bitrate, retention, and failure assumptions into practical design guidance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch storage or video-quality issues before deployment."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it during video system planning, recorder/storage review, expansion planning, retention validation, or when explaining bitrate, storage, quality, and survivability tradeoffs."
+      ],
+      "bullets": [
+        "Early video system planning.",
+        "Storage or retention review.",
+        "Recorder or VMS upgrade planning.",
+        "Explaining assumptions to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical video and storage planning terms."
+      ],
+      "items": [
+        {
+          "label": "Current Codec",
+          "description": "The baseline codec.",
+          "examples": [
+            "H.264",
+            "MJPEG",
+            "older H.265"
+          ],
+          "whyItMatters": "Baseline determines the starting bitrate.",
+          "commonMistake": "Comparing savings without matching scene quality."
+        },
+        {
+          "label": "New Codec",
+          "description": "The codec being considered.",
+          "examples": [
+            "H.265",
+            "H.265+",
+            "smart codec"
+          ],
+          "whyItMatters": "New codecs may reduce bitrate but require support.",
+          "commonMistake": "Assuming every recorder or client supports the newer codec."
+        },
+        {
+          "label": "Scene Complexity",
+          "description": "How hard the scene is to compress.",
+          "examples": [
+            "static",
+            "busy",
+            "trees",
+            "parking lot"
+          ],
+          "whyItMatters": "Busy scenes reduce codec savings.",
+          "commonMistake": "Expecting maximum savings in high-motion scenes."
+        },
+        {
+          "label": "Quality Target",
+          "description": "Desired image quality after compression.",
+          "examples": [
+            "high",
+            "balanced",
+            "storage saving"
+          ],
+          "whyItMatters": "Higher quality reduces savings.",
+          "commonMistake": "Saving bitrate at the expense of detail."
+        },
+        {
+          "label": "Compatibility",
+          "description": "Whether the full system supports the codec.",
+          "examples": [
+            "recorder",
+            "browser",
+            "mobile app",
+            "analytics"
+          ],
+          "whyItMatters": "Unsupported codec choices can break workflows.",
+          "commonMistake": "Turning on a codec that breaks playback."
+        },
+        {
+          "label": "Savings Estimate",
+          "description": "Expected bitrate or storage reduction.",
+          "examples": [
+            "20%",
+            "40%",
+            "50%"
+          ],
+          "whyItMatters": "Savings should be treated as an estimate.",
+          "commonMistake": "Using marketing savings as guaranteed results."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the design appears manageable based on the entered assumptions. Watch means bitrate, storage, retention, quality, or failure assumptions deserve review. Risk means the design may need more storage, lower load, adjusted retention, or validation before implementation."
+      ],
+      "bullets": [
+        "Healthy: assumptions appear workable.",
+        "Watch: review the sizing assumptions before relying on them.",
+        "Risk: adjust storage, bitrate, retention, or failure planning before deployment."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most video storage problems come from using optimistic bitrate assumptions, ignoring overhead, or reducing bitrate until footage is no longer useful."
+      ],
+      "bullets": [
+        "Using default bitrate values without scene validation.",
+        "Planning from raw storage instead of usable storage.",
+        "Ignoring RAID, filesystem, recorder, and reserve overhead.",
+        "Reducing bitrate or compression without reviewing image quality."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, recorder/VMS validation, legal retention requirements, or project-specific design judgment."
+      ],
+      "bullets": [
+        "Real bitrate depends on scene, codec, motion, and camera settings.",
+        "Usable storage is lower than raw drive capacity.",
+        "Retention should include margin for overhead and growth.",
+        "Image quality should be validated on real scenes when possible."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, legal/compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual cameras, recorder/VMS, and storage hardware.",
+        "Confirm owner expectations and retention requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

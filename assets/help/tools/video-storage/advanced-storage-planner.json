@@ -1,0 +1,153 @@
+{
+  "title": "Advanced Storage Planner Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand multi-camera storage planning with bitrate variation, RAID overhead, reserve capacity, and growth margin.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This guide explains the planning logic behind Advanced Storage Planner. It helps turn video, storage, bitrate, retention, and failure assumptions into practical design guidance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch storage or video-quality issues before deployment."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it during video system planning, recorder/storage review, expansion planning, retention validation, or when explaining bitrate, storage, quality, and survivability tradeoffs."
+      ],
+      "bullets": [
+        "Early video system planning.",
+        "Storage or retention review.",
+        "Recorder or VMS upgrade planning.",
+        "Explaining assumptions to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical video and storage planning terms."
+      ],
+      "items": [
+        {
+          "label": "Camera Groups",
+          "description": "Sets of cameras with similar recording behavior.",
+          "examples": [
+            "Indoor cameras",
+            "Parking cameras",
+            "High-resolution cameras"
+          ],
+          "whyItMatters": "Grouping prevents one unrealistic average from driving the whole storage estimate.",
+          "commonMistake": "Averaging every camera into one generic bitrate."
+        },
+        {
+          "label": "Group Bitrate",
+          "description": "Average bitrate for a group of cameras.",
+          "examples": [
+            "2 Mbps",
+            "4 Mbps",
+            "8 Mbps"
+          ],
+          "whyItMatters": "Bitrate is the main storage driver.",
+          "commonMistake": "Using camera defaults without validating scene activity."
+        },
+        {
+          "label": "Retention Target",
+          "description": "How long video should be stored.",
+          "examples": [
+            "30 days",
+            "60 days",
+            "180 days"
+          ],
+          "whyItMatters": "Retention target determines required storage capacity.",
+          "commonMistake": "Promising retention before checking usable capacity."
+        },
+        {
+          "label": "RAID / Overhead",
+          "description": "Storage lost to RAID, formatting, VMS reserves, and filesystem overhead.",
+          "examples": [
+            "RAID 6",
+            "filesystem reserve",
+            "recorder overhead"
+          ],
+          "whyItMatters": "Overhead reduces usable video storage.",
+          "commonMistake": "Using raw drive size as final usable capacity."
+        },
+        {
+          "label": "Growth Allowance",
+          "description": "Extra storage reserved for future cameras or higher bitrate.",
+          "examples": [
+            "10%",
+            "25%",
+            "Phase 2"
+          ],
+          "whyItMatters": "Growth keeps the design from being maxed out on day one.",
+          "commonMistake": "Sizing only for the initial camera count."
+        },
+        {
+          "label": "Recording Behavior",
+          "description": "How cameras record over time.",
+          "examples": [
+            "24/7",
+            "motion",
+            "business hours"
+          ],
+          "whyItMatters": "Recording behavior changes daily storage consumption.",
+          "commonMistake": "Assuming motion savings without validating the scene."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the design appears manageable based on the entered assumptions. Watch means bitrate, storage, retention, quality, or failure assumptions deserve review. Risk means the design may need more storage, lower load, adjusted retention, or validation before implementation."
+      ],
+      "bullets": [
+        "Healthy: assumptions appear workable.",
+        "Watch: review the sizing assumptions before relying on them.",
+        "Risk: adjust storage, bitrate, retention, or failure planning before deployment."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most video storage problems come from using optimistic bitrate assumptions, ignoring overhead, or reducing bitrate until footage is no longer useful."
+      ],
+      "bullets": [
+        "Using default bitrate values without scene validation.",
+        "Planning from raw storage instead of usable storage.",
+        "Ignoring RAID, filesystem, recorder, and reserve overhead.",
+        "Reducing bitrate or compression without reviewing image quality."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, recorder/VMS validation, legal retention requirements, or project-specific design judgment."
+      ],
+      "bullets": [
+        "Real bitrate depends on scene, codec, motion, and camera settings.",
+        "Usable storage is lower than raw drive capacity.",
+        "Retention should include margin for overhead and growth.",
+        "Image quality should be validated on real scenes when possible."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, legal/compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual cameras, recorder/VMS, and storage hardware.",
+        "Confirm owner expectations and retention requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
