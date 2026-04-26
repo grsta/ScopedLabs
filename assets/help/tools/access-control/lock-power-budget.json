@@ -1,0 +1,152 @@
+{
+  "title": "Lock Power Budget Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand lock current, power supply sizing, inrush, duty cycle, and spare capacity.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether the planned power supply can support the connected locks and related door hardware."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when sizing access-control power supplies, adding doors to an existing supply, or comparing 12 VDC and 24 VDC hardware loads."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical access-control terms."
+      ],
+      "items": [
+        {
+          "label": "Lock Count",
+          "description": "The number of powered locking devices connected to the supply.",
+          "examples": [
+            "Electric strikes",
+            "Maglocks",
+            "Electrified locks"
+          ],
+          "whyItMatters": "More locks increase total current draw.",
+          "commonMistake": "Counting doors but not the number of powered lock devices."
+        },
+        {
+          "label": "Current Per Lock",
+          "description": "The current each lock draws during operation.",
+          "examples": [
+            "250 mA",
+            "500 mA",
+            "1 A"
+          ],
+          "whyItMatters": "Current draw drives power supply size and voltage-drop concerns.",
+          "commonMistake": "Using catalog averages instead of actual model current."
+        },
+        {
+          "label": "Voltage",
+          "description": "The operating voltage of the lock circuit.",
+          "examples": [
+            "12 VDC",
+            "24 VDC"
+          ],
+          "whyItMatters": "Voltage affects current, power, and cable behavior.",
+          "commonMistake": "Mixing voltages on the same design without clear separation."
+        },
+        {
+          "label": "Duty Cycle",
+          "description": "How long the device stays energized.",
+          "examples": [
+            "Momentary strike",
+            "Continuous maglock",
+            "Scheduled unlock"
+          ],
+          "whyItMatters": "Continuous loads create more heat and battery demand.",
+          "commonMistake": "Treating a maglock like a momentary strike."
+        },
+        {
+          "label": "Simultaneous Activation",
+          "description": "How many locks may draw power at the same time.",
+          "examples": [
+            "Single door release",
+            "Fire alarm release",
+            "Global unlock"
+          ],
+          "whyItMatters": "Worst-case activation can exceed normal operating load.",
+          "commonMistake": "Sizing only for average usage."
+        },
+        {
+          "label": "Headroom",
+          "description": "Spare capacity reserved for reliability and future changes.",
+          "examples": [
+            "20% spare",
+            "30% spare",
+            "Future doors"
+          ],
+          "whyItMatters": "Headroom reduces nuisance issues and supports expansion.",
+          "commonMistake": "Filling the supply to its rated maximum."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the supply has reasonable capacity. Watch means current draw or spare headroom should be reviewed. Risk means the supply may be undersized or vulnerable during simultaneous activation."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
+      ],
+      "bullets": [
+        "Designing only for the initial install instead of the system lifecycle.",
+        "Ignoring exceptions, expansion, or administrative workload.",
+        "Assuming manufacturer capacity limits are the same as practical design limits.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer limits still matter.",
+        "Local code and life-safety requirements still apply.",
+        "Site conditions may change the final design.",
+        "A simpler design is usually easier to support, audit, and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual product and platform being installed.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

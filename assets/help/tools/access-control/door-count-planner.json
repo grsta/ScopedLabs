@@ -1,0 +1,155 @@
+{
+  "title": "Door Count Planner Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how door counts affect panels, modules, power, licensing, expansion, and installation scope.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps translate door count into planning pressure across controllers, inputs, outputs, readers, power, and future expansion."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it during early access-control scoping, takeoffs, phased expansions, or when comparing controller architecture options."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical access-control terms."
+      ],
+      "items": [
+        {
+          "label": "Door Count",
+          "description": "The number of controlled openings in the project.",
+          "examples": [
+            "Single doors",
+            "Double doors",
+            "Gates",
+            "Turnstiles"
+          ],
+          "whyItMatters": "Door count drives panels, licensing, power, and labor.",
+          "commonMistake": "Counting only readers and forgetting controlled openings."
+        },
+        {
+          "label": "Readers Per Door",
+          "description": "How many readers are used on each opening.",
+          "examples": [
+            "Entry only",
+            "Entry and exit",
+            "Turnstile readers"
+          ],
+          "whyItMatters": "More readers increase wiring, modules, and licensing impact.",
+          "commonMistake": "Assuming every door is one reader."
+        },
+        {
+          "label": "Inputs",
+          "description": "Monitoring points tied to the door.",
+          "examples": [
+            "Door contact",
+            "REX",
+            "Aux input",
+            "Tamper"
+          ],
+          "whyItMatters": "Inputs affect controller/module capacity.",
+          "commonMistake": "Forgetting door contacts or REX devices in the count."
+        },
+        {
+          "label": "Outputs",
+          "description": "Controlled outputs used by the door.",
+          "examples": [
+            "Lock relay",
+            "Aux relay",
+            "Alarm output"
+          ],
+          "whyItMatters": "Outputs affect board selection and expansion modules.",
+          "commonMistake": "Assuming every door only needs one output."
+        },
+        {
+          "label": "Panel Capacity",
+          "description": "How many doors a controller or panel can support.",
+          "examples": [
+            "2-door panel",
+            "4-door panel",
+            "8-door controller"
+          ],
+          "whyItMatters": "Capacity determines how many panels are needed.",
+          "commonMistake": "Filling panels to the limit with no spare capacity."
+        },
+        {
+          "label": "Future Growth",
+          "description": "Expected additional doors after the initial install.",
+          "examples": [
+            "Phase 2 expansion",
+            "Tenant buildout",
+            "New wing"
+          ],
+          "whyItMatters": "Growth affects whether spare capacity should be designed in.",
+          "commonMistake": "Designing only for today and forcing replacement later."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the door count is likely manageable in the selected structure. Watch means expansion and panel grouping should be reviewed. Risk means the design may need more panels, power segmentation, or a phased architecture."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
+      ],
+      "bullets": [
+        "Designing only for the initial install instead of the system lifecycle.",
+        "Ignoring exceptions, expansion, or administrative workload.",
+        "Assuming manufacturer capacity limits are the same as practical design limits.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer limits still matter.",
+        "Local code and life-safety requirements still apply.",
+        "Site conditions may change the final design.",
+        "A simpler design is usually easier to support, audit, and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual product and platform being installed.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

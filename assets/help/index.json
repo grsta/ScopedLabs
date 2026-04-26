@@ -1,7 +1,16 @@
 {
-  "version": "help-002",
+  "version": "help-003",
   "label": "ScopedLabs Help Index",
   "toolHelp": {
-    "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json"
+    "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json",
+    "access-control/anti-passback-zones": "tools/access-control/anti-passback-zones.json",
+    "access-control/credential-format": "tools/access-control/credential-format.json",
+    "access-control/door-cable-length": "tools/access-control/door-cable-length.json",
+    "access-control/door-count-planner": "tools/access-control/door-count-planner.json",
+    "access-control/elevator-reader-count": "tools/access-control/elevator-reader-count.json",
+    "access-control/fail-safe-fail-secure": "tools/access-control/fail-safe-fail-secure.json",
+    "access-control/lock-power-budget": "tools/access-control/lock-power-budget.json",
+    "access-control/panel-capacity": "tools/access-control/panel-capacity.json",
+    "access-control/reader-type-selector": "tools/access-control/reader-type-selector.json"
   }
 }

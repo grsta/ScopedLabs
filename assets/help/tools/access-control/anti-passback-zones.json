@@ -1,0 +1,155 @@
+{
+  "title": "Anti-Passback Zones Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how anti-passback zones affect entry/exit logic, user flow, and operational risk.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate whether anti-passback rules are likely to work cleanly based on zone count, reader placement, traffic flow, and exception handling."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning turnstiles, secure areas, parking access, controlled entry/exit paths, or facilities where credential sharing is a concern."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical access-control terms."
+      ],
+      "items": [
+        {
+          "label": "Zones",
+          "description": "Controlled areas where the system tracks whether a credential is inside or outside.",
+          "examples": [
+            "Main building",
+            "Parking area",
+            "Secure lab",
+            "Data center"
+          ],
+          "whyItMatters": "More zones increase tracking complexity and the chance of state errors.",
+          "commonMistake": "Creating more zones than operations can realistically manage."
+        },
+        {
+          "label": "Entry Readers",
+          "description": "Readers that move a credential into a controlled zone.",
+          "examples": [
+            "Main entry reader",
+            "Turnstile reader",
+            "Parking gate reader"
+          ],
+          "whyItMatters": "Entry readers define where anti-passback state begins.",
+          "commonMistake": "Using entry readers without a clear exit path."
+        },
+        {
+          "label": "Exit Readers",
+          "description": "Readers that move a credential out of a controlled zone.",
+          "examples": [
+            "Exit turnstile",
+            "Parking exit gate",
+            "Secure area exit"
+          ],
+          "whyItMatters": "Exit readers are required for clean state tracking.",
+          "commonMistake": "Leaving exits uncontrolled while enforcing strict anti-passback."
+        },
+        {
+          "label": "Traffic Volume",
+          "description": "How many people or credentials move through the zone during normal operation.",
+          "examples": [
+            "Low office traffic",
+            "Shift change",
+            "Event rush"
+          ],
+          "whyItMatters": "High traffic increases the chance of tailgating, missed reads, and support issues.",
+          "commonMistake": "Designing for normal traffic but ignoring shift-change peaks."
+        },
+        {
+          "label": "Reset Policy",
+          "description": "How the system handles users who become stuck in the wrong anti-passback state.",
+          "examples": [
+            "Manual reset",
+            "Timed reset",
+            "Daily reset"
+          ],
+          "whyItMatters": "Reset policy affects support load and user frustration.",
+          "commonMistake": "Using strict anti-passback without a practical reset process."
+        },
+        {
+          "label": "Exceptions",
+          "description": "Users or conditions that bypass normal anti-passback rules.",
+          "examples": [
+            "Security staff",
+            "Emergency access",
+            "Visitors",
+            "Contractors"
+          ],
+          "whyItMatters": "Too many exceptions weaken the control and complicate audits.",
+          "commonMistake": "Creating broad exceptions instead of limited operational overrides."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the zone model is likely understandable and enforceable. Watch means user flow and exception handling need review. Risk means the design may create lockouts, support calls, or unreliable enforcement."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
+      ],
+      "bullets": [
+        "Designing only for the initial install instead of the system lifecycle.",
+        "Ignoring exceptions, expansion, or administrative workload.",
+        "Assuming manufacturer capacity limits are the same as practical design limits.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer limits still matter.",
+        "Local code and life-safety requirements still apply.",
+        "Site conditions may change the final design.",
+        "A simpler design is usually easier to support, audit, and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual product and platform being installed.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

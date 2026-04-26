@@ -2,31 +2,30 @@
   "title": "Access Level Sizing Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Use this guide to understand what the Access Level Sizing tool is checking, how to think about the inputs, and how to interpret the result.",
+  "summary": "Understand how roles, areas, schedules, and door groups combine into access-control complexity.",
   "updated": "2026-04-26",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates the structural complexity of an access-control design. It is not just counting doors. It looks at how roles, areas, schedules, door groups, concurrency, and operational rules combine into a system that may be easy to manage or hard to maintain.",
-        "The goal is to flag when an access model is starting to become fragile, over-complicated, or likely to create administrative mistakes."
+        "This tool estimates the structural complexity of an access-control design. It helps identify whether the proposed access model will stay manageable as the system grows."
       ],
       "bullets": [
-        "Use it before building access levels in a platform.",
-        "Use it when comparing simple role-based access against more granular segmented access.",
-        "Use it to explain why a design may need simplification before deployment."
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use this tool during early design, expansion planning, or cleanup of an existing access-control system. It is especially useful when a site has multiple departments, different operating schedules, restricted areas, or frequent user changes."
+        "Use it before building access levels, during expansions, or when cleaning up an access-control system that has become hard to audit."
       ],
       "bullets": [
-        "New building or campus access planning.",
-        "Door expansion projects.",
-        "Role cleanup after years of accumulated access levels.",
-        "Comparing a simple access model against a highly segmented model."
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
@@ -38,117 +37,113 @@
       "items": [
         {
           "label": "Roles",
-          "description": "A role is a group of users with similar access needs, such as employees, managers, cleaning staff, warehouse staff, or IT personnel.",
+          "description": "Groups of users with similar access needs, such as employees, managers, janitorial staff, warehouse staff, IT, or visitors.",
           "examples": [
             "Employee",
             "Manager",
             "Janitorial",
             "IT",
-            "Warehouse",
-            "Visitor"
+            "Warehouse"
           ],
-          "whyItMatters": "More roles usually means more access combinations to manage and audit.",
-          "commonMistake": "Creating a new role for every small exception instead of grouping users by real operational need."
+          "whyItMatters": "More roles usually means more permission combinations to manage.",
+          "commonMistake": "Creating a new role for every small exception instead of grouping users by operational need."
         },
         {
           "label": "Areas",
-          "description": "An area is a logical zone or part of the site that needs separate access treatment.",
+          "description": "Logical zones or departments that need separate access treatment.",
           "examples": [
             "Office",
             "Warehouse",
             "Server room",
             "Lobby",
-            "Mechanical room",
             "Restricted storage"
           ],
-          "whyItMatters": "More areas can increase the number of role-area combinations needed in the access model.",
-          "commonMistake": "Breaking the building into too many tiny zones when a simpler grouping would be easier to maintain."
+          "whyItMatters": "More areas increase the role-area combinations in the access model.",
+          "commonMistake": "Splitting the building into too many tiny zones when simpler groupings would work."
         },
         {
           "label": "Door Groups",
-          "description": "A door group is a set of doors managed together because they share similar access behavior.",
+          "description": "Sets of doors managed together because they share similar access behavior.",
           "examples": [
             "Exterior doors",
             "Office doors",
             "Warehouse doors",
-            "Server room doors",
-            "Employee entrances"
+            "Server room doors"
           ],
-          "whyItMatters": "More door groups usually means more permission combinations to manage, document, and troubleshoot.",
-          "commonMistake": "Creating a separate door group for every small exception instead of grouping doors by real operational purpose."
+          "whyItMatters": "More door groups increase the number of permission combinations to document and audit.",
+          "commonMistake": "Creating a separate group for every small exception."
         },
         {
           "label": "Schedules",
-          "description": "A schedule is a time window that controls when access is allowed or restricted.",
+          "description": "Time windows that control when access is allowed or restricted.",
           "examples": [
             "Business hours",
             "After-hours access",
             "Weekend access",
-            "Shift schedule",
-            "Holiday lockout"
+            "Shift schedule"
           ],
-          "whyItMatters": "Schedules add another layer of logic. Too many schedules can make access behavior harder to predict and audit.",
-          "commonMistake": "Using many overlapping schedules instead of standardizing around a few clear operating windows."
+          "whyItMatters": "Schedules add another layer of logic and can make access behavior harder to predict.",
+          "commonMistake": "Using many overlapping schedules instead of a few clear operating windows."
         },
         {
           "label": "Concurrency",
-          "description": "Concurrency represents how many users or access cases may need to operate under the same access model at the same time.",
+          "description": "How many users or access cases may operate under the same model at the same time.",
           "examples": [
             "Single shift",
             "Multiple departments",
-            "High employee turnover",
+            "High turnover",
             "Contractor-heavy site"
           ],
-          "whyItMatters": "Higher concurrency can make mistakes more visible because more people depend on the same access structure working correctly.",
-          "commonMistake": "Designing access rules for a small test group without considering how the model behaves at full operating scale."
+          "whyItMatters": "Higher concurrency makes mistakes more visible because more people depend on the model.",
+          "commonMistake": "Testing with a small group and forgetting full operating scale."
         },
         {
           "label": "Special Rules",
-          "description": "Special rules are exceptions or restrictions that do not fit the normal access pattern.",
+          "description": "Exceptions or restrictions that do not fit the normal access pattern.",
           "examples": [
             "Dual authorization",
             "Restricted rooms",
-            "Temporary contractor access",
-            "Manager-only override",
+            "Temporary contractors",
             "After-hours exceptions"
           ],
-          "whyItMatters": "Exceptions are often where access systems become hard to support. A few are normal; too many can create long-term administrative risk.",
-          "commonMistake": "Solving every exception with a permanent access rule instead of keeping the baseline clean and documenting exceptions separately."
+          "whyItMatters": "Exceptions are where access systems often become difficult to support.",
+          "commonMistake": "Solving every exception with a permanent access rule instead of keeping a clean baseline."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "A healthy result usually means the access model is manageable and likely to be understandable by admins. A watch result means the system may still work, but the design deserves review before implementation. A risk result means the structure may become difficult to maintain, audit, or troubleshoot."
+        "Healthy means the model is likely manageable. Watch means the design should be reviewed before implementation. Risk means the access model may become difficult to maintain or troubleshoot."
       ],
       "bullets": [
-        "Healthy: clean model, manageable structure, low administrative friction.",
-        "Watch: workable, but review grouping, schedules, and exceptions.",
-        "Risk: simplify the design or split the problem into clearer zones, roles, or phases."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "The most common mistake is treating every small access difference as a new access level. That can create a system that works on paper but becomes painful to administer."
+        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
       ],
       "bullets": [
-        "Creating too many one-off access levels.",
-        "Mixing departments, schedules, and exceptions into the same access group.",
-        "Designing for every edge case instead of building a clean baseline and handling exceptions separately.",
-        "Forgetting that someone has to audit and maintain the system later."
+        "Designing only for the initial install instead of the system lifecycle.",
+        "Ignoring exceptions, expansion, or administrative workload.",
+        "Assuming manufacturer capacity limits are the same as practical design limits.",
+        "Failing to document assumptions before the system is built."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This tool assumes complexity increases as roles, areas, schedules, and grouped permissions multiply. It does not know the exact rules of every access-control platform, so the result should be treated as planning guidance rather than a manufacturer-specific limit."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
       ],
       "bullets": [
         "Manufacturer limits still matter.",
-        "Platform licensing, controller capacity, and credential rules may impose separate constraints.",
-        "A simpler model is usually easier to support, document, and audit."
+        "Local code and life-safety requirements still apply.",
+        "Site conditions may change the final design.",
+        "A simpler design is usually easier to support, audit, and explain."
       ]
     },
     {
@@ -157,8 +152,8 @@
         "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual access-control platform.",
-        "Confirm project requirements and owner expectations.",
+        "Validate against the actual product and platform being installed.",
+        "Confirm owner requirements and operating procedures.",
         "Document assumptions before implementation."
       ]
     }

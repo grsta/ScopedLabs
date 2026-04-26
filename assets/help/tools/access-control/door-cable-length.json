@@ -1,0 +1,155 @@
+{
+  "title": "Door Cable Length Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how cable distance affects voltage drop, lock power, reader reliability, and door hardware behavior.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether a door circuit length is reasonable for the planned hardware and power arrangement."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning reader wiring, lock power, REX devices, door contacts, long hallway pulls, or remote door hardware."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical access-control terms."
+      ],
+      "items": [
+        {
+          "label": "Cable Length",
+          "description": "The estimated wire distance from the power/control source to the door device.",
+          "examples": [
+            "Panel to door",
+            "Power supply to lock",
+            "Reader homerun"
+          ],
+          "whyItMatters": "Longer cable increases voltage drop and troubleshooting risk.",
+          "commonMistake": "Measuring straight-line distance instead of actual cable path."
+        },
+        {
+          "label": "Wire Gauge",
+          "description": "The conductor size used for the circuit.",
+          "examples": [
+            "18 AWG",
+            "16 AWG",
+            "14 AWG",
+            "22 AWG"
+          ],
+          "whyItMatters": "Larger wire can reduce voltage drop over distance.",
+          "commonMistake": "Using small wire for high-current lock loads."
+        },
+        {
+          "label": "Device Current",
+          "description": "How much current the connected device draws.",
+          "examples": [
+            "Reader current",
+            "Maglock current",
+            "Strike current"
+          ],
+          "whyItMatters": "Higher current increases voltage drop over the same cable length.",
+          "commonMistake": "Sizing wire without checking actual device current."
+        },
+        {
+          "label": "Voltage",
+          "description": "The operating voltage of the circuit.",
+          "examples": [
+            "12 VDC",
+            "24 VDC"
+          ],
+          "whyItMatters": "Lower-voltage circuits are more sensitive to voltage drop.",
+          "commonMistake": "Assuming 12 VDC and 24 VDC behave the same over long runs."
+        },
+        {
+          "label": "Power Source",
+          "description": "Where the circuit receives power.",
+          "examples": [
+            "Access panel",
+            "Central power supply",
+            "Local door power supply"
+          ],
+          "whyItMatters": "Power location affects run length and serviceability.",
+          "commonMistake": "Powering everything from one distant source when local power would be cleaner."
+        },
+        {
+          "label": "Hardware Type",
+          "description": "The kind of door device being powered or monitored.",
+          "examples": [
+            "Reader",
+            "Electric strike",
+            "Maglock",
+            "REX",
+            "Door contact"
+          ],
+          "whyItMatters": "Different devices have different tolerance and current needs.",
+          "commonMistake": "Treating low-current sensors and lock hardware the same."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means cable distance is likely manageable. Watch means voltage drop or device reliability should be checked. Risk means the run may need different wire, local power, or a design change."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
+      ],
+      "bullets": [
+        "Designing only for the initial install instead of the system lifecycle.",
+        "Ignoring exceptions, expansion, or administrative workload.",
+        "Assuming manufacturer capacity limits are the same as practical design limits.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer limits still matter.",
+        "Local code and life-safety requirements still apply.",
+        "Site conditions may change the final design.",
+        "A simpler design is usually easier to support, audit, and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual product and platform being installed.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

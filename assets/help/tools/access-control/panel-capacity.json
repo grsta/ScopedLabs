@@ -1,0 +1,154 @@
+{
+  "title": "Panel Capacity Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand controller capacity, reader count, inputs, outputs, expansion modules, and spare room.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate whether a panel/controller layout has enough capacity for the planned access-control hardware."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when selecting controllers, adding doors to existing panels, or checking whether a panel layout is too close to its limit."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical access-control terms."
+      ],
+      "items": [
+        {
+          "label": "Panel Type",
+          "description": "The controller or panel class being used.",
+          "examples": [
+            "2-door panel",
+            "4-door panel",
+            "8-door controller"
+          ],
+          "whyItMatters": "Panel type defines the baseline capacity.",
+          "commonMistake": "Assuming every controller expands the same way."
+        },
+        {
+          "label": "Reader Count",
+          "description": "The number of readers connected to the panel.",
+          "examples": [
+            "Entry readers",
+            "Exit readers",
+            "Elevator readers"
+          ],
+          "whyItMatters": "Reader count is often a hard controller limit.",
+          "commonMistake": "Counting doors instead of actual readers."
+        },
+        {
+          "label": "Inputs",
+          "description": "Monitoring points wired to the panel.",
+          "examples": [
+            "Door contact",
+            "REX",
+            "Tamper",
+            "Aux input"
+          ],
+          "whyItMatters": "Inputs can consume expansion capacity quickly.",
+          "commonMistake": "Ignoring auxiliary inputs until installation."
+        },
+        {
+          "label": "Outputs",
+          "description": "Controlled relays or outputs used by locks and accessories.",
+          "examples": [
+            "Lock relay",
+            "Alarm relay",
+            "Aux output"
+          ],
+          "whyItMatters": "Output demand affects module selection.",
+          "commonMistake": "Forgetting outputs for alarms, shunts, or elevator controls."
+        },
+        {
+          "label": "Expansion Modules",
+          "description": "Additional boards used to increase capacity.",
+          "examples": [
+            "Input module",
+            "Output module",
+            "Reader module"
+          ],
+          "whyItMatters": "Modules add capacity but also cost, space, and wiring complexity.",
+          "commonMistake": "Assuming expansion is always available in the cabinet."
+        },
+        {
+          "label": "Spare Capacity",
+          "description": "Unused capacity reserved for future doors or changes.",
+          "examples": [
+            "One spare reader",
+            "Two spare inputs",
+            "Future module space"
+          ],
+          "whyItMatters": "Spare capacity prevents immediate redesign during small expansions.",
+          "commonMistake": "Designing with zero spare capacity."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the panel layout has room to operate and grow. Watch means expansion capacity should be reviewed. Risk means the design may be overloaded or difficult to expand."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
+      ],
+      "bullets": [
+        "Designing only for the initial install instead of the system lifecycle.",
+        "Ignoring exceptions, expansion, or administrative workload.",
+        "Assuming manufacturer capacity limits are the same as practical design limits.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer limits still matter.",
+        "Local code and life-safety requirements still apply.",
+        "Site conditions may change the final design.",
+        "A simpler design is usually easier to support, audit, and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual product and platform being installed.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
