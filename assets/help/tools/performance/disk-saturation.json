@@ -1,0 +1,153 @@
+{
+  "title": "Disk Saturation Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand disk busy time, IOPS pressure, throughput pressure, queue depth, and storage bottlenecks.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate whether storage is becoming saturated and limiting system performance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch performance constraints before they become user-facing problems."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when databases, backups, VMs, logging, analytics, or file services slow down under disk activity."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system troubleshooting.",
+        "Explaining performance tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical performance planning terms."
+      ],
+      "items": [
+        {
+          "label": "Disk Utilization",
+          "description": "How busy the storage device or array is.",
+          "examples": [
+            "60% busy",
+            "85% busy",
+            "Near 100% busy"
+          ],
+          "whyItMatters": "High busy time can indicate the disk is the limiting resource.",
+          "commonMistake": "Assuming capacity free space means performance is fine."
+        },
+        {
+          "label": "IOPS Demand",
+          "description": "The number of read/write operations required per second.",
+          "examples": [
+            "Database IOPS",
+            "VM workload",
+            "Logging writes"
+          ],
+          "whyItMatters": "IOPS pressure can saturate disks even at low MB/s.",
+          "commonMistake": "Only checking throughput."
+        },
+        {
+          "label": "Throughput Demand",
+          "description": "The sustained amount of data read or written per second.",
+          "examples": [
+            "MB/s",
+            "Backup stream",
+            "Large file transfer"
+          ],
+          "whyItMatters": "Throughput pressure matters for sequential workloads.",
+          "commonMistake": "Only checking IOPS."
+        },
+        {
+          "label": "Queue Depth",
+          "description": "How much disk work is waiting.",
+          "examples": [
+            "Disk queue",
+            "Pending writes",
+            "Storage backlog"
+          ],
+          "whyItMatters": "Queue depth reveals saturation and wait time.",
+          "commonMistake": "Ignoring queues because operations eventually finish."
+        },
+        {
+          "label": "Latency",
+          "description": "How long storage operations take to complete.",
+          "examples": [
+            "Read latency",
+            "Write latency",
+            "Commit delay"
+          ],
+          "whyItMatters": "Latency is often what users feel.",
+          "commonMistake": "Looking only at utilization without response time."
+        },
+        {
+          "label": "Workload Mix",
+          "description": "The balance between random, sequential, read, and write behavior.",
+          "examples": [
+            "Random write",
+            "Sequential read",
+            "Mixed VM load"
+          ],
+          "whyItMatters": "Workload mix affects saturation behavior.",
+          "commonMistake": "Testing with one workload type and deploying another."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means storage load appears manageable. Watch means queueing or latency should be reviewed. Risk means the disk layer may be saturated."
+      ],
+      "bullets": [
+        "Healthy: the system appears to have enough margin based on the entered assumptions.",
+        "Watch: the system may still work, but the assumptions deserve review.",
+        "Risk: reduce load, add capacity, tune the system, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most performance planning problems come from trusting averages, ignoring peaks, or optimizing the wrong resource."
+      ],
+      "bullets": [
+        "Using average values while ignoring peak or percentile behavior.",
+        "Fixing the easiest resource instead of the actual bottleneck.",
+        "Ignoring queueing, latency, and user impact.",
+        "Failing to document assumptions before the system is built or tuned."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace load testing, monitoring, vendor guidance, application profiling, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Performance depends on workload behavior, not just hardware capacity.",
+        "Peak periods and tail latency matter.",
+        "A design with headroom is usually easier to operate and troubleshoot.",
+        "Real-world validation is still required for critical systems."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, application testing, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual workload and platform.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

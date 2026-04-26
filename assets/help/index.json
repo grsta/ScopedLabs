@@ -1,5 +1,5 @@
 {
-  "version": "help-006",
+  "version": "help-007",
   "label": "ScopedLabs Help Index",
   "toolHelp": {
     "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json",
@@ -41,6 +41,16 @@
     "network/oversubscription": "tools/network/oversubscription.json",
     "network/packet-loss-impact": "tools/network/packet-loss-impact.json",
     "network/uplink-failure-impact": "tools/network/uplink-failure-impact.json",
-    "network/vpn-overhead": "tools/network/vpn-overhead.json"
+    "network/vpn-overhead": "tools/network/vpn-overhead.json",
+    "performance/bottleneck-analyzer": "tools/performance/bottleneck-analyzer.json",
+    "performance/cache-hit-ratio": "tools/performance/cache-hit-ratio.json",
+    "performance/concurrency-scaling": "tools/performance/concurrency-scaling.json",
+    "performance/cpu-utilization-impact": "tools/performance/cpu-utilization-impact.json",
+    "performance/disk-saturation": "tools/performance/disk-saturation.json",
+    "performance/headroom-target": "tools/performance/headroom-target.json",
+    "performance/latency-vs-throughput": "tools/performance/latency-vs-throughput.json",
+    "performance/network-congestion": "tools/performance/network-congestion.json",
+    "performance/queue-depth": "tools/performance/queue-depth.json",
+    "performance/response-time-sla": "tools/performance/response-time-sla.json"
   }
 }

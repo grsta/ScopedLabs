@@ -1,0 +1,154 @@
+{
+  "title": "CPU Utilization Impact Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how CPU utilization affects response time, queueing, headroom, and stability.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate whether CPU utilization is likely to affect system responsiveness or create performance risk."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch performance constraints before they become user-facing problems."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when reviewing server load, VM sizing, analytics workloads, application performance, or systems operating near CPU limits."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system troubleshooting.",
+        "Explaining performance tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical performance planning terms."
+      ],
+      "items": [
+        {
+          "label": "Average CPU",
+          "description": "Typical CPU utilization during normal operation.",
+          "examples": [
+            "35%",
+            "55%",
+            "70%"
+          ],
+          "whyItMatters": "Average load shows baseline pressure.",
+          "commonMistake": "Assuming average CPU tells the whole story."
+        },
+        {
+          "label": "Peak CPU",
+          "description": "Highest CPU utilization during busy periods.",
+          "examples": [
+            "80%",
+            "95%",
+            "Sustained peak"
+          ],
+          "whyItMatters": "Peak CPU determines user-visible slowdowns.",
+          "commonMistake": "Ignoring spikes because averages look fine."
+        },
+        {
+          "label": "Core Count",
+          "description": "The available CPU cores or vCPU allocation.",
+          "examples": [
+            "4 cores",
+            "8 vCPU",
+            "16 cores"
+          ],
+          "whyItMatters": "Core count affects parallel processing capacity.",
+          "commonMistake": "Treating all vCPU as guaranteed physical capacity."
+        },
+        {
+          "label": "Workload Type",
+          "description": "The kind of work consuming CPU.",
+          "examples": [
+            "Database",
+            "Web app",
+            "Video analytics",
+            "Compression"
+          ],
+          "whyItMatters": "Different workloads respond differently to CPU pressure.",
+          "commonMistake": "Using the same threshold for every workload."
+        },
+        {
+          "label": "Queueing Sensitivity",
+          "description": "How quickly work backs up when CPU is busy.",
+          "examples": [
+            "Interactive users",
+            "Batch jobs",
+            "Real-time processing"
+          ],
+          "whyItMatters": "Sensitive workloads need more CPU headroom.",
+          "commonMistake": "Letting interactive workloads run near saturation."
+        },
+        {
+          "label": "Headroom",
+          "description": "CPU capacity reserved for bursts and growth.",
+          "examples": [
+            "20%",
+            "30%",
+            "Peak reserve"
+          ],
+          "whyItMatters": "Headroom reduces slowdowns during unexpected load.",
+          "commonMistake": "Calling 95% CPU efficient when users need responsiveness."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means CPU load appears to have margin. Watch means utilization should be monitored. Risk means high CPU may cause queueing, slow response, or unstable peak behavior."
+      ],
+      "bullets": [
+        "Healthy: the system appears to have enough margin based on the entered assumptions.",
+        "Watch: the system may still work, but the assumptions deserve review.",
+        "Risk: reduce load, add capacity, tune the system, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most performance planning problems come from trusting averages, ignoring peaks, or optimizing the wrong resource."
+      ],
+      "bullets": [
+        "Using average values while ignoring peak or percentile behavior.",
+        "Fixing the easiest resource instead of the actual bottleneck.",
+        "Ignoring queueing, latency, and user impact.",
+        "Failing to document assumptions before the system is built or tuned."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace load testing, monitoring, vendor guidance, application profiling, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Performance depends on workload behavior, not just hardware capacity.",
+        "Peak periods and tail latency matter.",
+        "A design with headroom is usually easier to operate and troubleshoot.",
+        "Real-world validation is still required for critical systems."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, application testing, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual workload and platform.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

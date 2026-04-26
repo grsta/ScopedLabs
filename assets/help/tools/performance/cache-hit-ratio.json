@@ -1,0 +1,153 @@
+{
+  "title": "Cache Hit Ratio Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand cache effectiveness, miss penalties, memory pressure, and backend load.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate whether a cache is reducing backend work or if misses are still driving performance problems."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch performance constraints before they become user-facing problems."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when tuning applications, databases, storage, CDN behavior, or any system where repeated access should be served from cache."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system troubleshooting.",
+        "Explaining performance tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical performance planning terms."
+      ],
+      "items": [
+        {
+          "label": "Cache Hits",
+          "description": "Requests served directly from cache.",
+          "examples": [
+            "Repeated queries",
+            "Cached files",
+            "Memory-resident data"
+          ],
+          "whyItMatters": "Hits avoid slower backend work.",
+          "commonMistake": "Only measuring total requests without separating hits and misses."
+        },
+        {
+          "label": "Cache Misses",
+          "description": "Requests that could not be served from cache.",
+          "examples": [
+            "Cold data",
+            "Expired entries",
+            "Uncached queries"
+          ],
+          "whyItMatters": "Misses force the system to use slower backend resources.",
+          "commonMistake": "Ignoring misses because the cache exists."
+        },
+        {
+          "label": "Working Set",
+          "description": "The active data set users repeatedly access.",
+          "examples": [
+            "Hot records",
+            "Frequent files",
+            "Recent video chunks"
+          ],
+          "whyItMatters": "The cache must fit the working set to be effective.",
+          "commonMistake": "Sizing cache for total storage instead of hot data."
+        },
+        {
+          "label": "Miss Penalty",
+          "description": "The performance cost when the cache does not have the requested item.",
+          "examples": [
+            "Database query",
+            "Disk read",
+            "Remote fetch"
+          ],
+          "whyItMatters": "High miss penalty makes cache misses more painful.",
+          "commonMistake": "Treating all misses as equal."
+        },
+        {
+          "label": "Eviction Rate",
+          "description": "How often cached items are removed to make room.",
+          "examples": [
+            "Frequent churn",
+            "LRU eviction",
+            "TTL expiry"
+          ],
+          "whyItMatters": "High eviction can mean the cache is too small or poorly tuned.",
+          "commonMistake": "Increasing cache time without checking memory pressure."
+        },
+        {
+          "label": "Backend Load",
+          "description": "The system load created when cache misses fall through.",
+          "examples": [
+            "Database load",
+            "Disk load",
+            "API load"
+          ],
+          "whyItMatters": "Poor cache performance can overload the backend.",
+          "commonMistake": "Only checking cache ratio without checking backend impact."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the cache is likely helping. Watch means miss rate or working set size should be reviewed. Risk means the cache may be too small, poorly tuned, or ineffective."
+      ],
+      "bullets": [
+        "Healthy: the system appears to have enough margin based on the entered assumptions.",
+        "Watch: the system may still work, but the assumptions deserve review.",
+        "Risk: reduce load, add capacity, tune the system, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most performance planning problems come from trusting averages, ignoring peaks, or optimizing the wrong resource."
+      ],
+      "bullets": [
+        "Using average values while ignoring peak or percentile behavior.",
+        "Fixing the easiest resource instead of the actual bottleneck.",
+        "Ignoring queueing, latency, and user impact.",
+        "Failing to document assumptions before the system is built or tuned."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace load testing, monitoring, vendor guidance, application profiling, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Performance depends on workload behavior, not just hardware capacity.",
+        "Peak periods and tail latency matter.",
+        "A design with headroom is usually easier to operate and troubleshoot.",
+        "Real-world validation is still required for critical systems."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, application testing, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual workload and platform.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

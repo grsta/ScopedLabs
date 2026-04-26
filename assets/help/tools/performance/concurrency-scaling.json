@@ -1,0 +1,153 @@
+{
+  "title": "Concurrency Scaling Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand simultaneous users, worker capacity, queueing, response time, and scale limits.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether a system can support the expected number of simultaneous users, jobs, sessions, or requests."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch performance constraints before they become user-facing problems."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning application servers, APIs, analytics systems, remote access, web services, or any workload where concurrency affects performance."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system troubleshooting.",
+        "Explaining performance tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical performance planning terms."
+      ],
+      "items": [
+        {
+          "label": "Concurrent Users",
+          "description": "Users or sessions active at the same time.",
+          "examples": [
+            "50 active users",
+            "500 sessions",
+            "Operators online"
+          ],
+          "whyItMatters": "Concurrency drives simultaneous demand more than total user count.",
+          "commonMistake": "Sizing from total accounts instead of active users."
+        },
+        {
+          "label": "Request Rate",
+          "description": "How many requests, jobs, or actions arrive over time.",
+          "examples": [
+            "Requests per second",
+            "Jobs per minute",
+            "Transactions"
+          ],
+          "whyItMatters": "Request rate determines how much work must be processed.",
+          "commonMistake": "Ignoring bursts and only using daily totals."
+        },
+        {
+          "label": "Worker Capacity",
+          "description": "How many requests or jobs the system can process in parallel.",
+          "examples": [
+            "Threads",
+            "Workers",
+            "Application instances"
+          ],
+          "whyItMatters": "Worker capacity controls how much concurrency can be handled before queues build.",
+          "commonMistake": "Adding users without increasing workers or capacity."
+        },
+        {
+          "label": "Processing Time",
+          "description": "How long each request or job takes to complete.",
+          "examples": [
+            "100 ms",
+            "2 seconds",
+            "Batch task duration"
+          ],
+          "whyItMatters": "Longer processing time reduces effective throughput.",
+          "commonMistake": "Only counting requests and ignoring how long they occupy resources."
+        },
+        {
+          "label": "Queue Depth",
+          "description": "How much work is waiting to be processed.",
+          "examples": [
+            "Pending requests",
+            "Job queue",
+            "Backlog"
+          ],
+          "whyItMatters": "Growing queues are an early sign of overload.",
+          "commonMistake": "Treating queues as harmless because work eventually completes."
+        },
+        {
+          "label": "Scale Target",
+          "description": "The performance level the system should maintain under load.",
+          "examples": [
+            "Response time target",
+            "Max queue depth",
+            "User experience target"
+          ],
+          "whyItMatters": "A clear target tells you when scaling is needed.",
+          "commonMistake": "Scaling only after users complain."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means concurrency appears manageable. Watch means worker count, queueing, or response time should be reviewed. Risk means the system may slow down sharply as simultaneous demand rises."
+      ],
+      "bullets": [
+        "Healthy: the system appears to have enough margin based on the entered assumptions.",
+        "Watch: the system may still work, but the assumptions deserve review.",
+        "Risk: reduce load, add capacity, tune the system, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most performance planning problems come from trusting averages, ignoring peaks, or optimizing the wrong resource."
+      ],
+      "bullets": [
+        "Using average values while ignoring peak or percentile behavior.",
+        "Fixing the easiest resource instead of the actual bottleneck.",
+        "Ignoring queueing, latency, and user impact.",
+        "Failing to document assumptions before the system is built or tuned."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace load testing, monitoring, vendor guidance, application profiling, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Performance depends on workload behavior, not just hardware capacity.",
+        "Peak periods and tail latency matter.",
+        "A design with headroom is usually easier to operate and troubleshoot.",
+        "Real-world validation is still required for critical systems."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, application testing, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual workload and platform.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

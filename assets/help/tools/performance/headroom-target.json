@@ -1,0 +1,153 @@
+{
+  "title": "Headroom Target Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand spare capacity targets, operating margin, burst tolerance, and growth planning.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps set a practical headroom target for systems that should not run near their limits."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch performance constraints before they become user-facing problems."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning CPU, RAM, storage, network, power, thermal, or any resource where margin affects reliability."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system troubleshooting.",
+        "Explaining performance tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical performance planning terms."
+      ],
+      "items": [
+        {
+          "label": "Current Utilization",
+          "description": "How much of the resource is currently used.",
+          "examples": [
+            "50%",
+            "70%",
+            "85%"
+          ],
+          "whyItMatters": "Current utilization sets the baseline for margin.",
+          "commonMistake": "Ignoring current load and only planning future growth."
+        },
+        {
+          "label": "Target Headroom",
+          "description": "Spare capacity you want to preserve.",
+          "examples": [
+            "20%",
+            "30%",
+            "40%"
+          ],
+          "whyItMatters": "Headroom keeps the system stable during bursts and growth.",
+          "commonMistake": "Choosing a target with no operational reason."
+        },
+        {
+          "label": "Peak Load",
+          "description": "The highest expected demand.",
+          "examples": [
+            "Daily peak",
+            "Backup window",
+            "Shift change"
+          ],
+          "whyItMatters": "Peak load determines whether headroom is real.",
+          "commonMistake": "Setting headroom based only on averages."
+        },
+        {
+          "label": "Growth Rate",
+          "description": "Expected future increase in demand.",
+          "examples": [
+            "10% yearly",
+            "Phase expansion",
+            "More users"
+          ],
+          "whyItMatters": "Growth consumes headroom over time.",
+          "commonMistake": "Treating headroom as permanent."
+        },
+        {
+          "label": "Criticality",
+          "description": "How important the system is to operations.",
+          "examples": [
+            "Low priority",
+            "Production",
+            "Critical system"
+          ],
+          "whyItMatters": "Critical systems usually need more margin.",
+          "commonMistake": "Using the same headroom for critical and non-critical systems."
+        },
+        {
+          "label": "Recovery Difficulty",
+          "description": "How hard it is to add capacity later.",
+          "examples": [
+            "Easy upgrade",
+            "Requires outage",
+            "Requires construction"
+          ],
+          "whyItMatters": "Hard-to-upgrade systems deserve more reserve.",
+          "commonMistake": "Under-sizing systems that are expensive to change later."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means headroom appears appropriate. Watch means margin may be thin. Risk means the system may have little room for bursts, growth, or abnormal conditions."
+      ],
+      "bullets": [
+        "Healthy: the system appears to have enough margin based on the entered assumptions.",
+        "Watch: the system may still work, but the assumptions deserve review.",
+        "Risk: reduce load, add capacity, tune the system, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most performance planning problems come from trusting averages, ignoring peaks, or optimizing the wrong resource."
+      ],
+      "bullets": [
+        "Using average values while ignoring peak or percentile behavior.",
+        "Fixing the easiest resource instead of the actual bottleneck.",
+        "Ignoring queueing, latency, and user impact.",
+        "Failing to document assumptions before the system is built or tuned."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace load testing, monitoring, vendor guidance, application profiling, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Performance depends on workload behavior, not just hardware capacity.",
+        "Peak periods and tail latency matter.",
+        "A design with headroom is usually easier to operate and troubleshoot.",
+        "Real-world validation is still required for critical systems."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, application testing, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual workload and platform.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

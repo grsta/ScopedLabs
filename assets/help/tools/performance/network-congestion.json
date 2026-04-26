@@ -1,0 +1,154 @@
+{
+  "title": "Network Congestion Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand utilization, queueing, packet loss, jitter, and shared-link pressure.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate whether a network path is likely congested or approaching congestion."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch performance constraints before they become user-facing problems."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when users report slowness, voice/video glitches, delayed transfers, backup interference, or overloaded uplinks."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system troubleshooting.",
+        "Explaining performance tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical performance planning terms."
+      ],
+      "items": [
+        {
+          "label": "Link Utilization",
+          "description": "How much of the link capacity is being used.",
+          "examples": [
+            "50%",
+            "75%",
+            "95%"
+          ],
+          "whyItMatters": "High utilization can create queueing and delay.",
+          "commonMistake": "Assuming a link is fine until it hits 100%."
+        },
+        {
+          "label": "Traffic Mix",
+          "description": "Types of traffic sharing the link.",
+          "examples": [
+            "Voice",
+            "Video",
+            "Backups",
+            "User data"
+          ],
+          "whyItMatters": "Mixed traffic can cause sensitive services to suffer.",
+          "commonMistake": "Letting backups compete with real-time traffic."
+        },
+        {
+          "label": "Burst Traffic",
+          "description": "Short periods of high traffic.",
+          "examples": [
+            "Shift change",
+            "Backup start",
+            "Camera export"
+          ],
+          "whyItMatters": "Bursts can cause temporary congestion even if averages look fine.",
+          "commonMistake": "Only checking five-minute averages."
+        },
+        {
+          "label": "Queueing",
+          "description": "Traffic waiting to be transmitted.",
+          "examples": [
+            "Switch queue",
+            "WAN queue",
+            "Firewall buffer"
+          ],
+          "whyItMatters": "Queues increase latency and jitter.",
+          "commonMistake": "Ignoring buffers because no packets are dropping yet."
+        },
+        {
+          "label": "Packet Loss",
+          "description": "Packets discarded due to congestion or errors.",
+          "examples": [
+            "0.1%",
+            "1%",
+            "3%"
+          ],
+          "whyItMatters": "Loss can severely affect TCP and real-time traffic.",
+          "commonMistake": "Treating small loss as harmless."
+        },
+        {
+          "label": "QoS / Priority",
+          "description": "Traffic prioritization rules.",
+          "examples": [
+            "Voice priority",
+            "Camera VLAN",
+            "Backup lower priority"
+          ],
+          "whyItMatters": "Priority can protect critical services during congestion.",
+          "commonMistake": "Adding QoS without fixing under-capacity."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the path appears to have margin. Watch means traffic timing or utilization should be reviewed. Risk means congestion is likely affecting performance."
+      ],
+      "bullets": [
+        "Healthy: the system appears to have enough margin based on the entered assumptions.",
+        "Watch: the system may still work, but the assumptions deserve review.",
+        "Risk: reduce load, add capacity, tune the system, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most performance planning problems come from trusting averages, ignoring peaks, or optimizing the wrong resource."
+      ],
+      "bullets": [
+        "Using average values while ignoring peak or percentile behavior.",
+        "Fixing the easiest resource instead of the actual bottleneck.",
+        "Ignoring queueing, latency, and user impact.",
+        "Failing to document assumptions before the system is built or tuned."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace load testing, monitoring, vendor guidance, application profiling, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Performance depends on workload behavior, not just hardware capacity.",
+        "Peak periods and tail latency matter.",
+        "A design with headroom is usually easier to operate and troubleshoot.",
+        "Real-world validation is still required for critical systems."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, application testing, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual workload and platform.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
