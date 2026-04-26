@@ -2066,18 +2066,12 @@ main h3.section-title {
 
 /* SCOPEDLABS BROWSER TAB NAV - START */
 
-/*
-  Final nav rule:
-  - no trapezoids
-  - no pseudo corner blobs
-  - tabs sit directly on the site-header bottom rule
-  - overrides older .site-nav / nav-pill rules
-*/
-
 .site-header {
   position: relative;
   z-index: 40;
-  border-bottom: 1px solid rgba(120, 255, 120, 0.16) !important;
+  border-bottom: 1px solid rgba(120, 255, 120, 0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(4, 10, 10, 0.96), rgba(3, 8, 9, 0.94)) !important;
 }
 
 .site-header .header-inner {
@@ -2086,7 +2080,7 @@ main h3.section-title {
   justify-content: space-between !important;
   gap: 18px !important;
   min-height: 72px !important;
-  padding-top: 12px !important;
+  padding-top: 10px !important;
   padding-bottom: 0 !important;
 }
 
@@ -2096,113 +2090,112 @@ main h3.section-title {
   flex: 0 0 auto !important;
 }
 
-/* Tab strip */
-.site-header .nav.site-nav.nav-tabs,
+/* tab strip */
+.site-header .nav-tabs,
 .site-header .site-nav.nav-tabs,
-.site-header .nav-tabs {
+.site-header .nav.site-nav.nav-tabs {
   display: flex !important;
   align-items: flex-end !important;
   justify-content: flex-end !important;
   gap: 8px !important;
   flex-wrap: wrap !important;
 
-  align-self: flex-end !important;
   margin-left: auto !important;
   margin-bottom: -1px !important;
   padding: 0 !important;
-  min-height: 42px !important;
 
   background: transparent !important;
   border: 0 !important;
-  border-radius: 0 !important;
   box-shadow: none !important;
 }
 
-/* Individual browser-style tab */
-.site-header .nav.site-nav.nav-tabs .nav-tab,
-.site-header .site-nav.nav-tabs .nav-tab,
-.site-header .nav-tabs .nav-tab {
-  box-sizing: border-box !important;
-  position: relative !important;
+/* kill old nav/pill leftovers */
+.site-header .nav-tabs::before,
+.site-header .nav-tabs::after,
+.site-header .nav-tabs .nav-tab::before,
+.site-header .nav-tabs .nav-tab::after,
+.site-header .site-nav a::before,
+.site-header .site-nav a::after,
+.site-header .site-nav .nav-pill::before,
+.site-header .site-nav .nav-pill::after {
+  content: none !important;
+  display: none !important;
+}
 
+/* base tab */
+.site-header .nav-tabs .nav-tab,
+.site-header .site-nav.nav-tabs .nav-tab,
+.site-header .nav.site-nav.nav-tabs .nav-tab {
+  position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
 
   min-width: 104px !important;
-  height: 40px !important;
+  height: 38px !important;
   padding: 0 18px !important;
   margin: 0 !important;
 
-  color: rgba(255, 255, 255, 0.82) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
   text-decoration: none !important;
-  font-size: 0.94rem !important;
-  font-weight: 750 !important;
-  letter-spacing: 0.01em !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
   line-height: 1 !important;
+  letter-spacing: 0.01em !important;
 
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.018)),
-    rgba(10, 20, 22, 0.92) !important;
-
-  border: 1px solid rgba(255,255,255,0.11) !important;
-  border-bottom-color: rgba(10, 20, 22, 0.96) !important;
+    linear-gradient(180deg, rgba(28, 38, 40, 0.98), rgba(15, 22, 24, 0.98)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-bottom: 1px solid rgba(3, 8, 9, 0.98) !important;
   border-radius: 13px 13px 0 0 !important;
 
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.06),
-    0 8px 18px rgba(0,0,0,0.20) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 18px rgba(0, 0, 0, 0.24) !important;
 
-  outline: none !important;
-  isolation: isolate !important;
-  overflow: visible !important;
-  transform: none !important;
   clip-path: none !important;
+  transform: none !important;
+  overflow: visible !important;
+  isolation: isolate !important;
 
   transition:
-    color 160ms ease,
     background 160ms ease,
     border-color 160ms ease,
+    color 160ms ease,
     box-shadow 160ms ease;
 }
 
-/* Kill inherited pill/trapezoid/pseudo styling completely */
-.site-header .nav-tabs .nav-tab::before,
-.site-header .nav-tabs .nav-tab::after,
-.site-header .site-nav.nav-tabs .nav-tab::before,
-.site-header .site-nav.nav-tabs .nav-tab::after {
-  content: none !important;
-  display: none !important;
-  clip-path: none !important;
-  box-shadow: none !important;
-}
-
-/* Hover/focus: no movement, stays seated on the line */
-.site-header .nav.site-nav.nav-tabs .nav-tab:hover,
-.site-header .nav.site-nav.nav-tabs .nav-tab:focus-visible,
-.site-header .site-nav.nav-tabs .nav-tab:hover,
-.site-header .site-nav.nav-tabs .nav-tab:focus-visible,
+/* hover */
 .site-header .nav-tabs .nav-tab:hover,
 .site-header .nav-tabs .nav-tab:focus-visible {
-  color: rgba(245, 255, 246, 1) !important;
-
+  color: #ffffff !important;
   background:
-    linear-gradient(180deg, rgba(120,255,120,0.12), rgba(120,255,120,0.025)),
-    rgba(14, 30, 24, 0.98) !important;
-
-  border-color: rgba(120,255,120,0.30) !important;
-  border-bottom-color: rgba(14, 30, 24, 0.98) !important;
-
+    linear-gradient(180deg, rgba(40, 58, 46, 0.98), rgba(20, 30, 24, 0.98)) !important;
+  border-color: rgba(120, 255, 120, 0.28) !important;
+  border-bottom-color: rgba(3, 8, 9, 0.98) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    0 0 0 1px rgba(120,255,120,0.05),
-    0 0 18px rgba(120,255,120,0.13),
-    0 8px 18px rgba(0,0,0,0.22) !important;
-
-  transform: none !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(120, 255, 120, 0.05),
+    0 0 14px rgba(120, 255, 120, 0.10),
+    0 8px 18px rgba(0, 0, 0, 0.26) !important;
 }
 
-/* Mobile: convert to compact pills */
+/* active/current page tab */
+.site-header .nav-tabs .nav-tab[aria-current="page"],
+.site-header .nav-tabs .nav-tab.is-active,
+.site-header .nav-tabs .nav-tab.active {
+  color: #f4fff4 !important;
+  background:
+    linear-gradient(180deg, rgba(44, 77, 46, 0.98), rgba(26, 47, 29, 0.98)) !important;
+  border-color: rgba(120, 255, 120, 0.34) !important;
+  border-bottom-color: rgba(3, 8, 9, 0.98) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 16px rgba(120, 255, 120, 0.12),
+    0 8px 18px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* mobile fallback */
 @media (max-width: 860px) {
   .site-header .header-inner {
     align-items: center !important;
@@ -2213,26 +2206,25 @@ main h3.section-title {
     margin-bottom: 0 !important;
   }
 
-  .site-header .nav.site-nav.nav-tabs,
+  .site-header .nav-tabs,
   .site-header .site-nav.nav-tabs,
-  .site-header .nav-tabs {
+  .site-header .nav.site-nav.nav-tabs {
     width: 100% !important;
     justify-content: center !important;
     gap: 6px !important;
-    margin-left: 0 !important;
     margin-bottom: 0 !important;
     padding-top: 8px !important;
   }
 
-  .site-header .nav-tabs .nav-tab {
+  .site-header .nav-tabs .nav-tab,
+  .site-header .site-nav.nav-tabs .nav-tab,
+  .site-header .nav.site-nav.nav-tabs .nav-tab {
     min-width: auto !important;
     height: 36px !important;
     padding: 0 14px !important;
-    font-size: 0.86rem !important;
     border-radius: 999px !important;
-    border-bottom-color: rgba(255,255,255,0.11) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.14) !important;
   }
 }
 
 /* SCOPEDLABS BROWSER TAB NAV - END */
-
