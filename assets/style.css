@@ -2071,9 +2071,9 @@ main h3.section-title {
   justify-content: flex-end;
   gap: 8px !important;
   flex-wrap: wrap;
-  min-height: 48px;
+  min-height: 44px;
   padding: 0 !important;
-  margin: 0;
+  margin: 0 0 -1px 0 !important;
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -2085,42 +2085,49 @@ main h3.section-title {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
+
   min-width: 112px;
   height: 42px;
   padding: 0 20px !important;
   margin: 0 !important;
+
   color: rgba(255, 255, 255, 0.78) !important;
   text-decoration: none !important;
   font-size: 0.94rem;
   font-weight: 750;
   letter-spacing: 0.01em;
   line-height: 1;
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
+
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.018)),
+    rgba(10, 20, 22, 0.88) !important;
+
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-bottom-color: rgba(120,255,120,0.22) !important;
+  border-radius: 14px 14px 0 0 !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 8px 18px rgba(0,0,0,0.24) !important;
+
   outline: none !important;
   transform: none;
   isolation: isolate;
   overflow: visible;
-  transition: color 160ms ease, transform 160ms ease;
+
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
+/* hard-disable old pseudo-shape tab rules */
 .nav-tabs .nav-tab::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+  content: none !important;
+  display: none !important;
   clip-path: none !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.018)),
-    rgba(10, 20, 22, 0.88);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-bottom-color: rgba(120,255,120,0.22);
-  border-radius: 14px 14px 0 0;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.07),
-    0 8px 18px rgba(0,0,0,0.24);
 }
 
 .nav-tabs .nav-tab::after {
@@ -2128,38 +2135,36 @@ main h3.section-title {
   position: absolute;
   left: 16px;
   right: 16px;
-  bottom: 0;
+  bottom: -1px;
   height: 2px;
   border-radius: 999px;
   background: transparent;
   box-shadow: none;
   opacity: 0;
-  transition: background 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
 }
 
 .nav-tabs .nav-tab:hover,
 .nav-tabs .nav-tab:focus-visible {
   color: rgba(235, 255, 240, 0.98) !important;
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  transform: translateY(-1px);
-}
 
-.nav-tabs .nav-tab:hover::before,
-.nav-tabs .nav-tab:focus-visible::before {
-  clip-path: none !important;
   background:
     linear-gradient(180deg, rgba(120,255,120,0.12), rgba(120,255,120,0.025)),
-    rgba(16, 34, 28, 0.94);
-  border-color: rgba(120,255,120,0.32);
-  border-bottom-color: rgba(120,255,120,0.56);
+    rgba(16, 34, 28, 0.94) !important;
+
+  border-color: rgba(120,255,120,0.32) !important;
+  border-bottom-color: rgba(120,255,120,0.56) !important;
+
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.09),
     0 0 0 1px rgba(120,255,120,0.055),
     0 0 18px rgba(120,255,120,0.13),
-    0 10px 22px rgba(0,0,0,0.30);
+    0 10px 22px rgba(0,0,0,0.30) !important;
+
+  transform: translateY(-1px);
 }
 
 .nav-tabs .nav-tab:hover::after,
@@ -2183,6 +2188,7 @@ main h3.section-title {
     gap: 6px !important;
     min-height: auto;
     padding-top: 8px !important;
+    margin-bottom: 0 !important;
   }
 
   .nav-tabs .nav-tab {
@@ -2190,10 +2196,11 @@ main h3.section-title {
     height: 36px;
     padding: 0 14px !important;
     font-size: 0.86rem;
+    border-radius: 999px !important;
   }
 
-  .nav-tabs .nav-tab::before {
-    border-radius: 999px;
+  .nav-tabs .nav-tab::after {
+    bottom: 2px;
   }
 }
 /* SCOPEDLABS BROWSER TAB NAV - END */
