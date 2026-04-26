@@ -1,0 +1,154 @@
+{
+  "title": "Rack Weight Load Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand rack weight, floor loading, cabinet ratings, batteries, and equipment concentration.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether rack equipment weight is reasonable for the rack, floor, and room conditions."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch infrastructure constraints before field work begins."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning heavy servers, UPS systems, batteries, dense storage, or racks placed on raised floors or older structures."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-site validation.",
+        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Rack Weight Rating",
+          "description": "The maximum weight the rack or cabinet is rated to support.",
+          "examples": [
+            "1000 lb",
+            "1500 lb",
+            "Static load rating"
+          ],
+          "whyItMatters": "Rack rating determines whether the cabinet itself can safely hold the equipment.",
+          "commonMistake": "Using a rack without checking static load rating."
+        },
+        {
+          "label": "Equipment Weight",
+          "description": "The combined weight of mounted gear.",
+          "examples": [
+            "Servers",
+            "Switches",
+            "Storage arrays",
+            "UPS"
+          ],
+          "whyItMatters": "Dense equipment can create major point loads.",
+          "commonMistake": "Estimating equipment weight instead of checking datasheets."
+        },
+        {
+          "label": "Battery / UPS Weight",
+          "description": "Weight from UPS units or battery packs.",
+          "examples": [
+            "Rack UPS",
+            "External battery module",
+            "Battery cabinet"
+          ],
+          "whyItMatters": "Batteries are often the heaviest rack components.",
+          "commonMistake": "Adding batteries without checking rack/floor impact."
+        },
+        {
+          "label": "Floor Rating",
+          "description": "The floor or room load capacity.",
+          "examples": [
+            "Concrete slab",
+            "Raised floor",
+            "Office floor"
+          ],
+          "whyItMatters": "Floor rating can be the limiting factor even when the rack is rated higher.",
+          "commonMistake": "Assuming any room can support dense equipment."
+        },
+        {
+          "label": "Weight Distribution",
+          "description": "How weight is positioned in the rack.",
+          "examples": [
+            "Bottom-heavy UPS",
+            "Top-mounted equipment",
+            "Balanced layout"
+          ],
+          "whyItMatters": "Poor distribution can make the rack unstable or hard to service.",
+          "commonMistake": "Mounting heavy gear too high."
+        },
+        {
+          "label": "Growth Allowance",
+          "description": "Future added equipment weight.",
+          "examples": [
+            "Additional servers",
+            "Future UPS",
+            "Storage expansion"
+          ],
+          "whyItMatters": "Weight often increases as systems grow.",
+          "commonMistake": "Designing around current equipment only."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the weight appears manageable. Watch means cabinet/floor ratings should be reviewed. Risk means the design may exceed practical or structural limits."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add space, capacity, clearance, or validation before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+      ],
+      "bullets": [
+        "Sizing only for the initial install.",
+        "Ignoring service clearance and future access.",
+        "Using theoretical capacity as if it were practical capacity.",
+        "Failing to document assumptions before construction or installation begins."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer and code requirements still matter.",
+        "Site conditions may change the final design.",
+        "Clearance, service access, and future growth should be planned early.",
+        "A design with margin is usually easier to install, support, and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual equipment and site conditions.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "title": "Cable Tray Fill Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand tray capacity, cable quantity, pathway headroom, bend space, and future expansion.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether a cable tray has enough practical capacity for planned cabling and future growth."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch infrastructure constraints before field work begins."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning cable pathways, tray sizing, camera/security cabling, network cabling, or infrastructure expansions."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-site validation.",
+        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Tray Width",
+          "description": "The usable internal width of the cable tray.",
+          "examples": [
+            "6 in",
+            "12 in",
+            "18 in"
+          ],
+          "whyItMatters": "Width affects how many cables can be placed without overcrowding.",
+          "commonMistake": "Using outside tray dimensions instead of usable space."
+        },
+        {
+          "label": "Tray Depth",
+          "description": "The usable depth available for cable fill.",
+          "examples": [
+            "2 in",
+            "4 in",
+            "6 in"
+          ],
+          "whyItMatters": "Depth affects cable stacking and accessibility.",
+          "commonMistake": "Treating full physical depth as practical fill depth."
+        },
+        {
+          "label": "Cable Count",
+          "description": "The number of cables planned for the tray.",
+          "examples": [
+            "Network drops",
+            "Camera runs",
+            "Access-control cabling"
+          ],
+          "whyItMatters": "Cable count drives fill and serviceability.",
+          "commonMistake": "Counting only current pulls and ignoring future cables."
+        },
+        {
+          "label": "Cable Diameter",
+          "description": "The average size of each cable.",
+          "examples": [
+            "Cat6",
+            "Fiber",
+            "Composite cable",
+            "Power/control cable"
+          ],
+          "whyItMatters": "Larger cables consume tray space faster.",
+          "commonMistake": "Using one generic size for mixed cable types."
+        },
+        {
+          "label": "Fill Target",
+          "description": "The intended maximum tray fill percentage.",
+          "examples": [
+            "40%",
+            "50%",
+            "60%"
+          ],
+          "whyItMatters": "Lower fill targets improve serviceability and future growth.",
+          "commonMistake": "Filling trays to the point where adding cables later is painful."
+        },
+        {
+          "label": "Growth Allowance",
+          "description": "Extra tray space reserved for future cables.",
+          "examples": [
+            "Future cameras",
+            "New drops",
+            "Tenant expansion"
+          ],
+          "whyItMatters": "Cable pathways usually need expansion room.",
+          "commonMistake": "Installing a tray that only fits the initial cable count."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the tray has reasonable spare capacity. Watch means fill and routing should be reviewed. Risk means the tray may become difficult to install, maintain, or expand."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add space, capacity, clearance, or validation before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+      ],
+      "bullets": [
+        "Sizing only for the initial install.",
+        "Ignoring service clearance and future access.",
+        "Using theoretical capacity as if it were practical capacity.",
+        "Failing to document assumptions before construction or installation begins."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer and code requirements still matter.",
+        "Site conditions may change the final design.",
+        "Clearance, service access, and future growth should be planned early.",
+        "A design with margin is usually easier to install, support, and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual equipment and site conditions.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

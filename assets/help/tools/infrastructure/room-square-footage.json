@@ -1,0 +1,154 @@
+{
+  "title": "Room Square Footage Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how room size affects equipment layout, clearance, service access, and future growth.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether a room has enough usable space for equipment, service clearances, access paths, and expansion."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch infrastructure constraints before field work begins."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning equipment rooms, IDF/MDF rooms, security closets, server rooms, or any infrastructure space where layout matters."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-site validation.",
+        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Room Length",
+          "description": "The usable length of the room after accounting for walls, obstructions, and access paths.",
+          "examples": [
+            "12 ft",
+            "18 ft",
+            "25 ft"
+          ],
+          "whyItMatters": "Length affects rack placement, aisle access, and equipment layout.",
+          "commonMistake": "Using architectural room size without subtracting unusable areas."
+        },
+        {
+          "label": "Room Width",
+          "description": "The usable width available for equipment and movement.",
+          "examples": [
+            "8 ft",
+            "10 ft",
+            "14 ft"
+          ],
+          "whyItMatters": "Width controls aisle clearance and whether equipment can be serviced safely.",
+          "commonMistake": "Forgetting door swing, wall-mounted equipment, or panels."
+        },
+        {
+          "label": "Rack Count",
+          "description": "The number of racks or cabinets planned for the room.",
+          "examples": [
+            "1 rack",
+            "2 racks",
+            "4 cabinets"
+          ],
+          "whyItMatters": "Rack count drives footprint, clearance, cable routing, and cooling pressure.",
+          "commonMistake": "Counting only rack footprint and ignoring service clearance."
+        },
+        {
+          "label": "Clearance Requirement",
+          "description": "Space reserved around equipment for access and maintenance.",
+          "examples": [
+            "Front clearance",
+            "Rear clearance",
+            "Side access"
+          ],
+          "whyItMatters": "Clearance affects safety, serviceability, and code/manufacturer requirements.",
+          "commonMistake": "Pushing equipment against walls to make it fit on paper."
+        },
+        {
+          "label": "Growth Allowance",
+          "description": "Extra space reserved for future racks, panels, batteries, or cable paths.",
+          "examples": [
+            "Future rack",
+            "Wall field expansion",
+            "Battery cabinet"
+          ],
+          "whyItMatters": "Infrastructure rooms usually grow over time.",
+          "commonMistake": "Designing the room around day-one equipment only."
+        },
+        {
+          "label": "Obstructions",
+          "description": "Items that reduce usable space.",
+          "examples": [
+            "Columns",
+            "Door swings",
+            "Electrical panels",
+            "Existing conduit"
+          ],
+          "whyItMatters": "Obstructions can make a room unusable even if square footage looks adequate.",
+          "commonMistake": "Treating total square footage as fully usable."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the room size appears practical. Watch means clearances or growth should be reviewed. Risk means the space may become difficult to install, service, or expand."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add space, capacity, clearance, or validation before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+      ],
+      "bullets": [
+        "Sizing only for the initial install.",
+        "Ignoring service clearance and future access.",
+        "Using theoretical capacity as if it were practical capacity.",
+        "Failing to document assumptions before construction or installation begins."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer and code requirements still matter.",
+        "Site conditions may change the final design.",
+        "Clearance, service access, and future growth should be planned early.",
+        "A design with margin is usually easier to install, support, and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual equipment and site conditions.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "title": "Grounding Estimator Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand grounding path planning, bonding, equipment protection, noise reduction, and installation assumptions.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps think through grounding and bonding considerations for infrastructure equipment."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch infrastructure constraints before field work begins."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning racks, panels, equipment rooms, cable pathways, surge protection, or metallic infrastructure."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-site validation.",
+        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Equipment Type",
+          "description": "The kind of infrastructure equipment being grounded or bonded.",
+          "examples": [
+            "Rack",
+            "Cabinet",
+            "Cable tray",
+            "Panel",
+            "Surge device"
+          ],
+          "whyItMatters": "Different equipment has different grounding needs.",
+          "commonMistake": "Assuming every device grounds the same way."
+        },
+        {
+          "label": "Bonding Path",
+          "description": "The physical path from equipment to the grounding system.",
+          "examples": [
+            "Ground bar",
+            "Building steel",
+            "Electrical ground",
+            "Rack bonding conductor"
+          ],
+          "whyItMatters": "A clear bonding path is critical for safety and performance.",
+          "commonMistake": "Relying on incidental contact as a grounding path."
+        },
+        {
+          "label": "Conductor Length",
+          "description": "The distance between equipment and grounding point.",
+          "examples": [
+            "Short bond",
+            "Long pathway",
+            "Remote room"
+          ],
+          "whyItMatters": "Longer paths may increase impedance or installation complexity.",
+          "commonMistake": "Routing grounding conductors casually after layout is done."
+        },
+        {
+          "label": "Environment",
+          "description": "The condition of the installation area.",
+          "examples": [
+            "Indoor room",
+            "Industrial area",
+            "Outdoor cabinet"
+          ],
+          "whyItMatters": "Environment affects corrosion, bonding, and protection requirements.",
+          "commonMistake": "Using indoor assumptions outdoors."
+        },
+        {
+          "label": "Surge Exposure",
+          "description": "Likelihood of transient or lightning-related energy.",
+          "examples": [
+            "Outdoor cable",
+            "Inter-building link",
+            "Rooftop equipment"
+          ],
+          "whyItMatters": "Higher exposure may require stronger bonding and surge planning.",
+          "commonMistake": "Ignoring surge path and grounding coordination."
+        },
+        {
+          "label": "Review Requirement",
+          "description": "Whether the condition requires formal electrical review.",
+          "examples": [
+            "Standard closet",
+            "Critical site",
+            "Code-sensitive area"
+          ],
+          "whyItMatters": "Grounding decisions may require qualified electrical design.",
+          "commonMistake": "Treating grounding as a low-voltage-only detail."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the grounding plan appears straightforward. Watch means bonding path or site conditions should be reviewed. Risk means qualified electrical review may be needed."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add space, capacity, clearance, or validation before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+      ],
+      "bullets": [
+        "Sizing only for the initial install.",
+        "Ignoring service clearance and future access.",
+        "Using theoretical capacity as if it were practical capacity.",
+        "Failing to document assumptions before construction or installation begins."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer and code requirements still matter.",
+        "Site conditions may change the final design.",
+        "Clearance, service access, and future growth should be planned early.",
+        "A design with margin is usually easier to install, support, and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual equipment and site conditions.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

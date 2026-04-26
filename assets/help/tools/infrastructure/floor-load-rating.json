@@ -1,0 +1,155 @@
+{
+  "title": "Floor Load Rating Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand equipment weight, floor capacity, point loads, rack placement, and structural risk.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether equipment weight is reasonable for the floor or room where it will be installed."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch infrastructure constraints before field work begins."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when placing racks, UPS systems, batteries, storage arrays, cabinets, or dense infrastructure equipment."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-site validation.",
+        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Equipment Weight",
+          "description": "The total weight of the equipment being placed.",
+          "examples": [
+            "Rack load",
+            "UPS weight",
+            "Battery cabinet",
+            "Storage array"
+          ],
+          "whyItMatters": "Weight drives floor loading and safety concerns.",
+          "commonMistake": "Using rough guesses instead of datasheet weights."
+        },
+        {
+          "label": "Footprint Area",
+          "description": "The area over which the equipment weight is distributed.",
+          "examples": [
+            "Rack footprint",
+            "Cabinet base",
+            "Battery footprint"
+          ],
+          "whyItMatters": "Smaller footprints create higher point loads.",
+          "commonMistake": "Only checking total room load and ignoring concentrated weight."
+        },
+        {
+          "label": "Floor Rating",
+          "description": "The rated capacity of the floor or platform.",
+          "examples": [
+            "Office floor",
+            "Concrete slab",
+            "Raised floor"
+          ],
+          "whyItMatters": "Floor rating determines whether the space can safely support the load.",
+          "commonMistake": "Assuming all floors can support infrastructure equipment."
+        },
+        {
+          "label": "Load Distribution",
+          "description": "How weight is spread across feet, casters, rails, or base pads.",
+          "examples": [
+            "Casters",
+            "Leveling feet",
+            "Base frame"
+          ],
+          "whyItMatters": "Distribution affects point pressure.",
+          "commonMistake": "Leaving heavy racks on small casters without review."
+        },
+        {
+          "label": "Room Type",
+          "description": "The type of space where equipment will sit.",
+          "examples": [
+            "IDF closet",
+            "Office room",
+            "Data room",
+            "Raised floor"
+          ],
+          "whyItMatters": "Room type affects available ratings and practical placement.",
+          "commonMistake": "Treating an office closet like a data center room."
+        },
+        {
+          "label": "Growth Weight",
+          "description": "Expected future weight additions.",
+          "examples": [
+            "More servers",
+            "More batteries",
+            "Additional racks"
+          ],
+          "whyItMatters": "Future equipment can push a safe layout into a risky one.",
+          "commonMistake": "Checking only the first install phase."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the floor load appears reasonable. Watch means ratings or placement should be reviewed. Risk means structural review may be needed before installation."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add space, capacity, clearance, or validation before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+      ],
+      "bullets": [
+        "Sizing only for the initial install.",
+        "Ignoring service clearance and future access.",
+        "Using theoretical capacity as if it were practical capacity.",
+        "Failing to document assumptions before construction or installation begins."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer and code requirements still matter.",
+        "Site conditions may change the final design.",
+        "Clearance, service access, and future growth should be planned early.",
+        "A design with margin is usually easier to install, support, and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual equipment and site conditions.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

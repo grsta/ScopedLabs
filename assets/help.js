@@ -188,7 +188,7 @@
     }
   }
 
-  var VERSION_PLACEHOLDER = "help-004";
+  var VERSION_PLACEHOLDER = "help-005";
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initHelp);

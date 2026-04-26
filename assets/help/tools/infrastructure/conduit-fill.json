@@ -1,0 +1,153 @@
+{
+  "title": "Conduit Fill Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand conduit size, cable diameter, fill percentage, pull difficulty, and future capacity.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether conduit has enough practical fill capacity for planned cables."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch infrastructure constraints before field work begins."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning conduit pathways, cable pulls, security wiring, network drops, access-control cabling, or future expansion routes."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-site validation.",
+        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Conduit Size",
+          "description": "The trade size or internal diameter of the conduit.",
+          "examples": [
+            "3/4 in",
+            "1 in",
+            "2 in"
+          ],
+          "whyItMatters": "Conduit size limits how many cables can fit and how difficult the pull becomes.",
+          "commonMistake": "Using nominal conduit size without checking usable internal area."
+        },
+        {
+          "label": "Cable Count",
+          "description": "The number of cables planned in the conduit.",
+          "examples": [
+            "1 cable",
+            "4 cables",
+            "12 cables"
+          ],
+          "whyItMatters": "More cables increase fill and pull friction.",
+          "commonMistake": "Adding extra cables without recalculating fill."
+        },
+        {
+          "label": "Cable Diameter",
+          "description": "The approximate outside diameter of the cable.",
+          "examples": [
+            "Cat6",
+            "Fiber",
+            "Composite cable"
+          ],
+          "whyItMatters": "Cable diameter strongly affects fill percentage.",
+          "commonMistake": "Using small cable assumptions for larger composite cables."
+        },
+        {
+          "label": "Fill Limit",
+          "description": "The target maximum fill percentage.",
+          "examples": [
+            "40%",
+            "50%",
+            "Code/design limit"
+          ],
+          "whyItMatters": "Fill limits protect pullability and compliance.",
+          "commonMistake": "Treating physical fit as acceptable design."
+        },
+        {
+          "label": "Bend Count",
+          "description": "The number of bends in the conduit path.",
+          "examples": [
+            "One bend",
+            "Multiple bends",
+            "Long run with offsets"
+          ],
+          "whyItMatters": "Bends make cable pulls harder even at acceptable fill.",
+          "commonMistake": "Ignoring route difficulty and only checking fill math."
+        },
+        {
+          "label": "Future Spare",
+          "description": "Extra capacity reserved for later cable additions.",
+          "examples": [
+            "One spare cable",
+            "Future drops",
+            "Expansion path"
+          ],
+          "whyItMatters": "Spare conduit capacity avoids future rework.",
+          "commonMistake": "Filling a conduit completely during the first pull."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means conduit fill appears manageable. Watch means pull difficulty or future growth should be reviewed. Risk means the conduit may be overfilled or hard to pull."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add space, capacity, clearance, or validation before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+      ],
+      "bullets": [
+        "Sizing only for the initial install.",
+        "Ignoring service clearance and future access.",
+        "Using theoretical capacity as if it were practical capacity.",
+        "Failing to document assumptions before construction or installation begins."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer and code requirements still matter.",
+        "Site conditions may change the final design.",
+        "Clearance, service access, and future growth should be planned early.",
+        "A design with margin is usually easier to install, support, and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual equipment and site conditions.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

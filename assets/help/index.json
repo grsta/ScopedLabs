@@ -1,5 +1,5 @@
 {
-  "version": "help-004",
+  "version": "help-005",
   "label": "ScopedLabs Help Index",
   "toolHelp": {
     "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json",
@@ -21,6 +21,16 @@
     "compute/power-thermal": "tools/compute/power-thermal.json",
     "compute/raid-rebuild-time": "tools/compute/raid-rebuild-time.json",
     "compute/backup-window": "tools/compute/backup-window.json",
-    "compute/nic-bonding": "tools/compute/nic-bonding.json"
+    "compute/nic-bonding": "tools/compute/nic-bonding.json",
+    "infrastructure/room-square-footage": "tools/infrastructure/room-square-footage.json",
+    "infrastructure/rack-ru-planner": "tools/infrastructure/rack-ru-planner.json",
+    "infrastructure/rack-weight-load": "tools/infrastructure/rack-weight-load.json",
+    "infrastructure/cable-tray-fill": "tools/infrastructure/cable-tray-fill.json",
+    "infrastructure/conduit-fill": "tools/infrastructure/conduit-fill.json",
+    "infrastructure/equipment-spacing": "tools/infrastructure/equipment-spacing.json",
+    "infrastructure/floor-load-rating": "tools/infrastructure/floor-load-rating.json",
+    "infrastructure/generator-runtime": "tools/infrastructure/generator-runtime.json",
+    "infrastructure/grounding-estimator": "tools/infrastructure/grounding-estimator.json",
+    "infrastructure/ups-room-sizing": "tools/infrastructure/ups-room-sizing.json"
   }
 }

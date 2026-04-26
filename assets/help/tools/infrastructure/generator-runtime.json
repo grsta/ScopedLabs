@@ -1,0 +1,153 @@
+{
+  "title": "Generator Runtime Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand load, fuel capacity, consumption rate, reserve margin, and outage planning.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate generator runtime based on load and fuel assumptions."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch infrastructure constraints before field work begins."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning backup power, estimating outage coverage, sizing fuel reserves, or documenting runtime expectations."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-site validation.",
+        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Connected Load",
+          "description": "The electrical load supported by the generator.",
+          "examples": [
+            "Critical systems",
+            "IT load",
+            "Security load",
+            "HVAC support"
+          ],
+          "whyItMatters": "Load determines fuel burn and runtime.",
+          "commonMistake": "Using nameplate load instead of realistic operating load."
+        },
+        {
+          "label": "Generator Capacity",
+          "description": "The generator output rating.",
+          "examples": [
+            "10 kW",
+            "50 kW",
+            "250 kW"
+          ],
+          "whyItMatters": "Capacity affects whether the generator can support the load with margin.",
+          "commonMistake": "Running too close to generator rating."
+        },
+        {
+          "label": "Fuel Capacity",
+          "description": "The amount of usable fuel available.",
+          "examples": [
+            "Diesel tank",
+            "Propane tank",
+            "Natural gas supply"
+          ],
+          "whyItMatters": "Fuel capacity limits runtime for stored-fuel systems.",
+          "commonMistake": "Counting total tank size instead of usable fuel."
+        },
+        {
+          "label": "Fuel Burn Rate",
+          "description": "Fuel consumed at the expected load level.",
+          "examples": [
+            "Gallons per hour",
+            "Percent-load curve"
+          ],
+          "whyItMatters": "Burn rate changes with load.",
+          "commonMistake": "Using full-load burn rate for all cases or ignoring load variation."
+        },
+        {
+          "label": "Reserve Margin",
+          "description": "Fuel or runtime held back as a safety margin.",
+          "examples": [
+            "10% reserve",
+            "Emergency reserve",
+            "Refuel buffer"
+          ],
+          "whyItMatters": "Reserve protects against longer outages or refuel delays.",
+          "commonMistake": "Planning to run fuel completely empty."
+        },
+        {
+          "label": "Target Runtime",
+          "description": "The outage duration the generator should cover.",
+          "examples": [
+            "4 hours",
+            "24 hours",
+            "72 hours"
+          ],
+          "whyItMatters": "Target runtime determines whether fuel capacity is enough.",
+          "commonMistake": "Setting runtime expectations without checking fuel logistics."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means runtime appears aligned with the target. Watch means load or reserve assumptions should be reviewed. Risk means the generator may not cover the required outage duration."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add space, capacity, clearance, or validation before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+      ],
+      "bullets": [
+        "Sizing only for the initial install.",
+        "Ignoring service clearance and future access.",
+        "Using theoretical capacity as if it were practical capacity.",
+        "Failing to document assumptions before construction or installation begins."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer and code requirements still matter.",
+        "Site conditions may change the final design.",
+        "Clearance, service access, and future growth should be planned early.",
+        "A design with margin is usually easier to install, support, and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual equipment and site conditions.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

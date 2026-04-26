@@ -1,0 +1,155 @@
+{
+  "title": "Rack RU Planner Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand rack unit usage, spare capacity, patching, airflow, and expansion planning.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether a rack has enough rack-unit space for planned equipment, patch panels, cable management, and future growth."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch infrastructure constraints before field work begins."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it before ordering racks, adding equipment, consolidating gear, or planning an IDF/MDF layout."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-site validation.",
+        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Rack Size",
+          "description": "The total rack units available in the rack or cabinet.",
+          "examples": [
+            "24U",
+            "42U",
+            "45U"
+          ],
+          "whyItMatters": "Rack size sets the physical limit for mounted equipment.",
+          "commonMistake": "Assuming every rack unit can be used."
+        },
+        {
+          "label": "Equipment RU",
+          "description": "Rack units consumed by active equipment.",
+          "examples": [
+            "Switches",
+            "Servers",
+            "UPS",
+            "NVR",
+            "Patch panels"
+          ],
+          "whyItMatters": "Equipment RU drives rack density and service access.",
+          "commonMistake": "Forgetting rails, blank panels, or non-standard equipment depth."
+        },
+        {
+          "label": "Patch Panels",
+          "description": "Rack units used for copper, fiber, or structured cabling termination.",
+          "examples": [
+            "Copper patch panel",
+            "Fiber tray",
+            "Security terminations"
+          ],
+          "whyItMatters": "Patching can consume significant rack space in network/security rooms.",
+          "commonMistake": "Only counting active electronics."
+        },
+        {
+          "label": "Cable Management",
+          "description": "Rack space reserved for horizontal or vertical cable organization.",
+          "examples": [
+            "1U managers",
+            "Brush panels",
+            "Lacing bars"
+          ],
+          "whyItMatters": "Good cable management improves serviceability and airflow.",
+          "commonMistake": "Skipping cable management to squeeze in more equipment."
+        },
+        {
+          "label": "Blanking / Airflow",
+          "description": "Space or panels reserved to control airflow and keep the rack clean.",
+          "examples": [
+            "Blank panels",
+            "Airflow spacing",
+            "Thermal separation"
+          ],
+          "whyItMatters": "Airflow planning reduces heat issues and messy layouts.",
+          "commonMistake": "Packing equipment with no airflow consideration."
+        },
+        {
+          "label": "Spare RU",
+          "description": "Unused rack units reserved for future growth.",
+          "examples": [
+            "10% spare",
+            "20% spare",
+            "Future switch"
+          ],
+          "whyItMatters": "Spare RU prevents immediate rack replacement during small expansions.",
+          "commonMistake": "Filling the rack to 100% on day one."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the rack has practical spare space. Watch means layout and growth should be reviewed. Risk means the rack may be too full to service or expand."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add space, capacity, clearance, or validation before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+      ],
+      "bullets": [
+        "Sizing only for the initial install.",
+        "Ignoring service clearance and future access.",
+        "Using theoretical capacity as if it were practical capacity.",
+        "Failing to document assumptions before construction or installation begins."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer and code requirements still matter.",
+        "Site conditions may change the final design.",
+        "Clearance, service access, and future growth should be planned early.",
+        "A design with margin is usually easier to install, support, and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual equipment and site conditions.",
+        "Confirm owner requirements and operating procedures.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
