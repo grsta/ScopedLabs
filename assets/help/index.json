@@ -1,5 +1,5 @@
 {
-  "version": "help-005",
+  "version": "help-006",
   "label": "ScopedLabs Help Index",
   "toolHelp": {
     "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json",
@@ -31,6 +31,16 @@
     "infrastructure/floor-load-rating": "tools/infrastructure/floor-load-rating.json",
     "infrastructure/generator-runtime": "tools/infrastructure/generator-runtime.json",
     "infrastructure/grounding-estimator": "tools/infrastructure/grounding-estimator.json",
-    "infrastructure/ups-room-sizing": "tools/infrastructure/ups-room-sizing.json"
+    "infrastructure/ups-room-sizing": "tools/infrastructure/ups-room-sizing.json",
+    "network/bandwidth": "tools/network/bandwidth.json",
+    "network/mtu-fragmentation": "tools/network/mtu-fragmentation.json",
+    "network/poe-budget": "tools/network/poe-budget.json",
+    "network/growth-simulator": "tools/network/growth-simulator.json",
+    "network/latency": "tools/network/latency.json",
+    "network/latency-jitter-buffer": "tools/network/latency-jitter-buffer.json",
+    "network/oversubscription": "tools/network/oversubscription.json",
+    "network/packet-loss-impact": "tools/network/packet-loss-impact.json",
+    "network/uplink-failure-impact": "tools/network/uplink-failure-impact.json",
+    "network/vpn-overhead": "tools/network/vpn-overhead.json"
   }
 }

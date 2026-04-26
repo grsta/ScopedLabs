@@ -1,0 +1,155 @@
+{
+  "title": "VPN Overhead Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand encryption overhead, tunnel MTU, usable throughput, and VPN performance limits.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates how much capacity may be lost to VPN encapsulation, encryption, and tunnel behavior."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch network constraints before they become field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning site-to-site VPNs, remote access, cloud tunnels, encrypted WAN paths, or tunneled application traffic."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-network validation.",
+        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical network planning terms."
+      ],
+      "items": [
+        {
+          "label": "Raw Link Speed",
+          "description": "The nominal speed of the internet, WAN, or transport link.",
+          "examples": [
+            "100 Mbps",
+            "500 Mbps",
+            "1 Gbps"
+          ],
+          "whyItMatters": "Raw speed is not the same as usable VPN throughput.",
+          "commonMistake": "Expecting encrypted traffic to use full link speed."
+        },
+        {
+          "label": "Encryption Overhead",
+          "description": "Processing and protocol overhead added by VPN encryption.",
+          "examples": [
+            "IPsec",
+            "SSL VPN",
+            "WireGuard",
+            "OpenVPN"
+          ],
+          "whyItMatters": "Overhead reduces usable payload capacity.",
+          "commonMistake": "Ignoring CPU and encryption cost."
+        },
+        {
+          "label": "Tunnel MTU",
+          "description": "The usable MTU inside the VPN tunnel.",
+          "examples": [
+            "1400 bytes",
+            "1436 bytes",
+            "Reduced MTU"
+          ],
+          "whyItMatters": "Tunnel MTU affects fragmentation and payload size.",
+          "commonMistake": "Keeping default 1500 MTU through every tunnel."
+        },
+        {
+          "label": "Traffic Type",
+          "description": "The workload carried by the VPN.",
+          "examples": [
+            "Remote desktop",
+            "File transfer",
+            "VoIP",
+            "Camera stream"
+          ],
+          "whyItMatters": "Some workloads are more sensitive to delay and overhead.",
+          "commonMistake": "Treating all VPN traffic as generic data."
+        },
+        {
+          "label": "Endpoint Capacity",
+          "description": "The VPN device or firewall processing capability.",
+          "examples": [
+            "Firewall VPN throughput",
+            "Cloud gateway",
+            "Small router"
+          ],
+          "whyItMatters": "VPN performance may be limited by endpoint CPU.",
+          "commonMistake": "Sizing by ISP speed while ignoring firewall limits."
+        },
+        {
+          "label": "Headroom",
+          "description": "Spare VPN capacity above expected load.",
+          "examples": [
+            "20%",
+            "30%",
+            "Burst margin"
+          ],
+          "whyItMatters": "Headroom reduces congestion and retransmission under load.",
+          "commonMistake": "Running encrypted tunnels at their maximum tested rate."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means VPN overhead appears manageable. Watch means MTU and throughput should be reviewed. Risk means the VPN may reduce usable capacity or cause fragmentation/performance issues."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+      ],
+      "bullets": [
+        "Sizing from theoretical maximums instead of usable throughput.",
+        "Ignoring protocol overhead, VPN overhead, or retransmission.",
+        "Sizing for average traffic and forgetting peak windows.",
+        "Failing to document assumptions before the network is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Real throughput is usually lower than rated link speed.",
+        "Traffic mix and timing matter.",
+        "Latency, loss, and jitter can be as important as bandwidth.",
+        "A design with headroom is usually easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual network equipment and services being deployed.",
+        "Confirm stakeholder expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

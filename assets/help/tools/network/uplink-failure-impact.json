@@ -1,0 +1,154 @@
+{
+  "title": "Uplink Failure Impact Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand redundancy, failover capacity, degraded operation, and single-path risk.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates what happens when an uplink fails and remaining paths must carry the load."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch network constraints before they become field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning switch uplinks, redundant paths, LAGs, WAN failover, stacked switches, or critical network segments."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-network validation.",
+        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical network planning terms."
+      ],
+      "items": [
+        {
+          "label": "Normal Uplinks",
+          "description": "The uplinks available during normal operation.",
+          "examples": [
+            "Two 1G links",
+            "Four 10G links",
+            "Primary and backup WAN"
+          ],
+          "whyItMatters": "Normal uplinks define available capacity before failure.",
+          "commonMistake": "Counting links without checking how traffic is distributed."
+        },
+        {
+          "label": "Failed Links",
+          "description": "The uplinks assumed unavailable during the failure scenario.",
+          "examples": [
+            "One failed link",
+            "Switch failure",
+            "WAN outage"
+          ],
+          "whyItMatters": "Failure scenario determines degraded capacity.",
+          "commonMistake": "Testing only total outage and not partial degradation."
+        },
+        {
+          "label": "Remaining Capacity",
+          "description": "Capacity left after the failure.",
+          "examples": [
+            "Single uplink",
+            "Backup WAN",
+            "Reduced LAG"
+          ],
+          "whyItMatters": "Remaining capacity must carry critical traffic.",
+          "commonMistake": "Assuming failover path can carry the same load."
+        },
+        {
+          "label": "Critical Load",
+          "description": "Traffic that must continue during the failure.",
+          "examples": [
+            "Security traffic",
+            "Voice",
+            "Business applications"
+          ],
+          "whyItMatters": "Critical load should fit even in degraded state.",
+          "commonMistake": "Letting backup traffic consume failover capacity."
+        },
+        {
+          "label": "Failover Method",
+          "description": "How traffic moves to the remaining path.",
+          "examples": [
+            "LACP",
+            "STP",
+            "Routing failover",
+            "Manual failover"
+          ],
+          "whyItMatters": "Failover method affects downtime and traffic distribution.",
+          "commonMistake": "Assuming failover is instant without testing."
+        },
+        {
+          "label": "Degraded Headroom",
+          "description": "Spare capacity retained after failover.",
+          "examples": [
+            "10%",
+            "20%",
+            "Emergency margin"
+          ],
+          "whyItMatters": "Headroom prevents the backup path from immediately saturating.",
+          "commonMistake": "Designing failover capacity with zero margin."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means failover capacity is likely adequate. Watch means degraded-state load should be reviewed. Risk means a single failure may overload the remaining path."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+      ],
+      "bullets": [
+        "Sizing from theoretical maximums instead of usable throughput.",
+        "Ignoring protocol overhead, VPN overhead, or retransmission.",
+        "Sizing for average traffic and forgetting peak windows.",
+        "Failing to document assumptions before the network is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Real throughput is usually lower than rated link speed.",
+        "Traffic mix and timing matter.",
+        "Latency, loss, and jitter can be as important as bandwidth.",
+        "A design with headroom is usually easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual network equipment and services being deployed.",
+        "Confirm stakeholder expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

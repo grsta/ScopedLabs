@@ -1,0 +1,154 @@
+{
+  "title": "Bandwidth Planner Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand bandwidth demand, stream count, overhead, headroom, and uplink sizing.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether a network link has enough capacity for the expected traffic load with practical overhead and headroom."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch network constraints before they become field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning uplinks, camera networks, branch connections, server links, or any system where traffic load may exceed available bandwidth."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-network validation.",
+        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical network planning terms."
+      ],
+      "items": [
+        {
+          "label": "Traffic Source",
+          "description": "The system or workload creating network traffic.",
+          "examples": [
+            "Camera streams",
+            "Server traffic",
+            "Backup traffic",
+            "Client devices"
+          ],
+          "whyItMatters": "Different sources create different traffic patterns and peaks.",
+          "commonMistake": "Treating all traffic as smooth and predictable."
+        },
+        {
+          "label": "Per-Device Bandwidth",
+          "description": "The estimated bandwidth used by each device or stream.",
+          "examples": [
+            "4 Mbps camera",
+            "20 Mbps backup job",
+            "User session traffic"
+          ],
+          "whyItMatters": "Small per-device errors can multiply across many endpoints.",
+          "commonMistake": "Using best-case bandwidth instead of realistic sustained usage."
+        },
+        {
+          "label": "Device Count",
+          "description": "The number of devices, streams, or users sharing the link.",
+          "examples": [
+            "16 cameras",
+            "40 clients",
+            "8 servers"
+          ],
+          "whyItMatters": "Device count multiplies total traffic demand.",
+          "commonMistake": "Counting devices but not simultaneous active traffic."
+        },
+        {
+          "label": "Overhead",
+          "description": "Extra bandwidth consumed by protocol, encryption, retransmission, or encapsulation.",
+          "examples": [
+            "TCP/IP overhead",
+            "VPN overhead",
+            "Storage protocol overhead"
+          ],
+          "whyItMatters": "Overhead reduces usable link capacity.",
+          "commonMistake": "Assuming payload bandwidth equals link bandwidth."
+        },
+        {
+          "label": "Headroom",
+          "description": "Capacity reserved above expected load.",
+          "examples": [
+            "20% spare",
+            "30% spare",
+            "Burst margin"
+          ],
+          "whyItMatters": "Headroom protects the network during bursts and growth.",
+          "commonMistake": "Running a link at 95–100% utilization."
+        },
+        {
+          "label": "Link Capacity",
+          "description": "The rated speed of the network connection.",
+          "examples": [
+            "100 Mbps",
+            "1 Gbps",
+            "10 Gbps"
+          ],
+          "whyItMatters": "Link capacity is the ceiling everything must fit under.",
+          "commonMistake": "Trusting nominal speed without accounting for usable throughput."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the link has reasonable margin. Watch means overhead, growth, or peak traffic should be reviewed. Risk means the link may saturate or degrade service."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+      ],
+      "bullets": [
+        "Sizing from theoretical maximums instead of usable throughput.",
+        "Ignoring protocol overhead, VPN overhead, or retransmission.",
+        "Sizing for average traffic and forgetting peak windows.",
+        "Failing to document assumptions before the network is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Real throughput is usually lower than rated link speed.",
+        "Traffic mix and timing matter.",
+        "Latency, loss, and jitter can be as important as bandwidth.",
+        "A design with headroom is usually easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual network equipment and services being deployed.",
+        "Confirm stakeholder expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

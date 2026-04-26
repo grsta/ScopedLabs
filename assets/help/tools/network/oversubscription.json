@@ -1,0 +1,155 @@
+{
+  "title": "Oversubscription Estimator Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand access-to-uplink ratios, shared capacity, peak load, and congestion risk.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether downstream device capacity is too high for the uplink or shared network path."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch network constraints before they become field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning switches, uplinks, access layers, camera networks, wireless backhaul, or shared infrastructure."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-network validation.",
+        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical network planning terms."
+      ],
+      "items": [
+        {
+          "label": "Access Capacity",
+          "description": "The total downstream port or device capacity feeding into the uplink.",
+          "examples": [
+            "24 x 1G ports",
+            "Camera switch",
+            "AP switch"
+          ],
+          "whyItMatters": "Access capacity can exceed uplink capacity by a large amount.",
+          "commonMistake": "Assuming users will never use the ports heavily."
+        },
+        {
+          "label": "Uplink Capacity",
+          "description": "The shared link capacity leaving the switch or segment.",
+          "examples": [
+            "1 Gbps",
+            "10 Gbps",
+            "LAG uplink"
+          ],
+          "whyItMatters": "Uplink capacity is the bottleneck shared by downstream devices.",
+          "commonMistake": "Counting multiple uplinks without understanding traffic distribution."
+        },
+        {
+          "label": "Active Load",
+          "description": "The expected traffic actually used at the same time.",
+          "examples": [
+            "Average load",
+            "Peak load",
+            "Burst traffic"
+          ],
+          "whyItMatters": "Oversubscription only matters when devices are active concurrently.",
+          "commonMistake": "Using total port speed as if every port is fully active."
+        },
+        {
+          "label": "Traffic Mix",
+          "description": "The kind of traffic sharing the uplink.",
+          "examples": [
+            "Video",
+            "User data",
+            "Backups",
+            "Storage"
+          ],
+          "whyItMatters": "Some traffic is steady, some is bursty, and some is latency-sensitive.",
+          "commonMistake": "Mixing heavy workloads without priority or separation."
+        },
+        {
+          "label": "Peak Window",
+          "description": "When the highest simultaneous usage occurs.",
+          "examples": [
+            "Shift change",
+            "Backup window",
+            "Camera export",
+            "Morning login"
+          ],
+          "whyItMatters": "Peak windows reveal oversubscription problems.",
+          "commonMistake": "Sizing from quiet-period utilization."
+        },
+        {
+          "label": "Headroom",
+          "description": "Spare uplink capacity reserved above expected load.",
+          "examples": [
+            "20%",
+            "30%",
+            "Burst margin"
+          ],
+          "whyItMatters": "Headroom protects against congestion and unexpected traffic.",
+          "commonMistake": "Treating uplink saturation as acceptable."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the oversubscription ratio is likely reasonable. Watch means peak load and traffic mix should be reviewed. Risk means uplinks may congest during busy periods."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+      ],
+      "bullets": [
+        "Sizing from theoretical maximums instead of usable throughput.",
+        "Ignoring protocol overhead, VPN overhead, or retransmission.",
+        "Sizing for average traffic and forgetting peak windows.",
+        "Failing to document assumptions before the network is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Real throughput is usually lower than rated link speed.",
+        "Traffic mix and timing matter.",
+        "Latency, loss, and jitter can be as important as bandwidth.",
+        "A design with headroom is usually easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual network equipment and services being deployed.",
+        "Confirm stakeholder expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

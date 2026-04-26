@@ -1,0 +1,154 @@
+{
+  "title": "Latency / Jitter Buffer Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand delay variation, buffer sizing, real-time traffic, and smooth playback/communication.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps estimate whether jitter buffering is likely to smooth real-time traffic without adding too much delay."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch network constraints before they become field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it for voice, video, streaming, intercom, conferencing, or other real-time traffic affected by delay variation."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-network validation.",
+        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical network planning terms."
+      ],
+      "items": [
+        {
+          "label": "Average Latency",
+          "description": "The typical delay between endpoints.",
+          "examples": [
+            "20 ms",
+            "80 ms",
+            "150 ms"
+          ],
+          "whyItMatters": "Average latency contributes to total user-perceived delay.",
+          "commonMistake": "Ignoring baseline latency when adding buffer time."
+        },
+        {
+          "label": "Jitter",
+          "description": "Variation in packet arrival time.",
+          "examples": [
+            "5 ms",
+            "20 ms",
+            "50 ms"
+          ],
+          "whyItMatters": "Jitter causes real-time traffic to stutter unless buffered.",
+          "commonMistake": "Only checking average latency."
+        },
+        {
+          "label": "Buffer Size",
+          "description": "The delay intentionally added to smooth traffic.",
+          "examples": [
+            "20 ms",
+            "50 ms",
+            "100 ms"
+          ],
+          "whyItMatters": "Larger buffers smooth more jitter but add delay.",
+          "commonMistake": "Making the buffer huge and creating noticeable lag."
+        },
+        {
+          "label": "Packet Loss",
+          "description": "Packets that never arrive or arrive too late to use.",
+          "examples": [
+            "0.1%",
+            "1%",
+            "3%"
+          ],
+          "whyItMatters": "Loss can cause glitches even with a buffer.",
+          "commonMistake": "Assuming jitter buffer fixes packet loss."
+        },
+        {
+          "label": "Traffic Type",
+          "description": "The real-time workload being protected.",
+          "examples": [
+            "VoIP",
+            "Video call",
+            "Intercom",
+            "Streaming"
+          ],
+          "whyItMatters": "Each traffic type has different tolerance.",
+          "commonMistake": "Using the same buffer expectation for every service."
+        },
+        {
+          "label": "Network Stability",
+          "description": "How consistent the network path is during busy periods.",
+          "examples": [
+            "Stable LAN",
+            "WAN link",
+            "Wireless bridge"
+          ],
+          "whyItMatters": "Unstable paths require more conservative planning.",
+          "commonMistake": "Testing during quiet hours only."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means jitter appears manageable. Watch means buffer sizing should be reviewed. Risk means users may experience audio/video issues or added delay."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+      ],
+      "bullets": [
+        "Sizing from theoretical maximums instead of usable throughput.",
+        "Ignoring protocol overhead, VPN overhead, or retransmission.",
+        "Sizing for average traffic and forgetting peak windows.",
+        "Failing to document assumptions before the network is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Real throughput is usually lower than rated link speed.",
+        "Traffic mix and timing matter.",
+        "Latency, loss, and jitter can be as important as bandwidth.",
+        "A design with headroom is usually easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual network equipment and services being deployed.",
+        "Confirm stakeholder expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
