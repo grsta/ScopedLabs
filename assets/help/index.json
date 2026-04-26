@@ -1,5 +1,5 @@
 {
-  "version": "help-011",
+  "version": "help-012",
   "label": "ScopedLabs Help Index",
   "toolHelp": {
     "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json",
@@ -91,6 +91,16 @@
     "video-storage/raid-impact": "tools/video-storage/raid-impact.json",
     "video-storage/retention-planner": "tools/video-storage/retention-planner.json",
     "video-storage/retention-survivability": "tools/video-storage/retention-survivability.json",
-    "video-storage/storage-calculator": "tools/video-storage/storage-calculator.json"
+    "video-storage/storage-calculator": "tools/video-storage/storage-calculator.json",
+    "wireless/ap-capacity": "tools/wireless/ap-capacity.json",
+    "wireless/channel-overlap": "tools/wireless/channel-overlap.json",
+    "wireless/client-density": "tools/wireless/client-density.json",
+    "wireless/coverage-radius": "tools/wireless/coverage-radius.json",
+    "wireless/link-budget": "tools/wireless/link-budget.json",
+    "wireless/mesh-backhaul": "tools/wireless/mesh-backhaul.json",
+    "wireless/noise-floor-margin": "tools/wireless/noise-floor-margin.json",
+    "wireless/ptp-wireless-link": "tools/wireless/ptp-wireless-link.json",
+    "wireless/roaming-thresholds": "tools/wireless/roaming-thresholds.json",
+    "wireless/throughput-estimator": "tools/wireless/throughput-estimator.json"
   }
 }

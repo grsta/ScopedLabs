@@ -1,0 +1,154 @@
+{
+  "title": "AP Capacity Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how access point capacity is affected by client count, airtime, bandwidth demand, bands, and real-world usage.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This guide explains the planning logic behind AP Capacity. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch wireless design issues before deployment."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+      ],
+      "bullets": [
+        "Early wireless design planning.",
+        "Expansion or AP placement review.",
+        "Existing-site validation.",
+        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical wireless planning terms."
+      ],
+      "items": [
+        {
+          "label": "Client Count",
+          "description": "The number of devices expected to connect to the access point.",
+          "examples": [
+            "25 clients",
+            "50 clients",
+            "100 clients"
+          ],
+          "whyItMatters": "More clients share the same airtime and can reduce usable performance.",
+          "commonMistake": "Counting connected clients without considering how active they are."
+        },
+        {
+          "label": "Active Clients",
+          "description": "Devices actually passing traffic at the same time.",
+          "examples": [
+            "students online",
+            "conference room users",
+            "warehouse scanners"
+          ],
+          "whyItMatters": "Active clients matter more than total associated clients.",
+          "commonMistake": "Sizing only from total device count."
+        },
+        {
+          "label": "Per-Client Demand",
+          "description": "Expected bandwidth or application load per active device.",
+          "examples": [
+            "web browsing",
+            "video call",
+            "scanner traffic",
+            "file sync"
+          ],
+          "whyItMatters": "Higher demand consumes more airtime and throughput.",
+          "commonMistake": "Assuming every device uses the same amount of traffic."
+        },
+        {
+          "label": "Wi-Fi Band",
+          "description": "The frequency band used by the clients.",
+          "examples": [
+            "2.4 GHz",
+            "5 GHz",
+            "6 GHz"
+          ],
+          "whyItMatters": "Bands differ in capacity, range, channel width, and interference behavior.",
+          "commonMistake": "Expecting 2.4 GHz to carry dense client loads."
+        },
+        {
+          "label": "Channel Width",
+          "description": "The channel size configured for the AP.",
+          "examples": [
+            "20 MHz",
+            "40 MHz",
+            "80 MHz"
+          ],
+          "whyItMatters": "Wider channels can increase peak throughput but reduce channel reuse.",
+          "commonMistake": "Using wide channels everywhere in dense deployments."
+        },
+        {
+          "label": "Airtime Headroom",
+          "description": "Spare airtime reserved for management traffic, retransmissions, roaming, and bursts.",
+          "examples": [
+            "20% spare",
+            "30% spare",
+            "high-density margin"
+          ],
+          "whyItMatters": "Wireless capacity depends on airtime, not just Mbps.",
+          "commonMistake": "Running airtime too close to saturation."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+      ],
+      "bullets": [
+        "Healthy: assumptions appear workable.",
+        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
+        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+      ],
+      "bullets": [
+        "Using advertised PHY rate as real throughput.",
+        "Adding APs without managing channel overlap.",
+        "Designing only for signal strength while ignoring airtime and client density.",
+        "Using transmit power as the answer to every coverage issue."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+      ],
+      "bullets": [
+        "Real wireless performance depends on clients, walls, interference, and AP placement.",
+        "Airtime matters as much as bandwidth.",
+        "Roaming behavior depends heavily on client devices.",
+        "Critical wireless designs should be validated onsite."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual APs, antennas, client devices, and site conditions.",
+        "Confirm owner expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

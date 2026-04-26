@@ -1,0 +1,153 @@
+{
+  "title": "Wireless Throughput Estimator Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand real Wi-Fi throughput after PHY rate, airtime, signal quality, clients, and overhead are considered.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This guide explains the planning logic behind Wireless Throughput Estimator. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch wireless design issues before deployment."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+      ],
+      "bullets": [
+        "Early wireless design planning.",
+        "Expansion or AP placement review.",
+        "Existing-site validation.",
+        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical wireless planning terms."
+      ],
+      "items": [
+        {
+          "label": "PHY Rate",
+          "description": "The negotiated wireless link rate before overhead.",
+          "examples": [
+            "286 Mbps",
+            "866 Mbps",
+            "1200 Mbps"
+          ],
+          "whyItMatters": "PHY rate is not the same as usable throughput.",
+          "commonMistake": "Quoting PHY rate as real application speed."
+        },
+        {
+          "label": "Signal Quality",
+          "description": "The strength and stability of the wireless connection.",
+          "examples": [
+            "strong",
+            "moderate",
+            "weak"
+          ],
+          "whyItMatters": "Poor signal lowers modulation and increases retries.",
+          "commonMistake": "Only checking that the device is connected."
+        },
+        {
+          "label": "Client Count",
+          "description": "Number of clients sharing airtime.",
+          "examples": [
+            "5 clients",
+            "30 clients",
+            "100 clients"
+          ],
+          "whyItMatters": "More clients reduce per-client throughput.",
+          "commonMistake": "Testing with one client and expecting the same result with many."
+        },
+        {
+          "label": "Channel Width",
+          "description": "Configured channel width.",
+          "examples": [
+            "20 MHz",
+            "40 MHz",
+            "80 MHz"
+          ],
+          "whyItMatters": "Wider channels can increase peak speed but reduce reuse.",
+          "commonMistake": "Using wide channels in crowded areas."
+        },
+        {
+          "label": "Protocol Overhead",
+          "description": "MAC, encryption, management, contention, and retransmission overhead.",
+          "examples": [
+            "Wi-Fi overhead",
+            "encryption",
+            "retries"
+          ],
+          "whyItMatters": "Overhead reduces usable throughput below link rate.",
+          "commonMistake": "Ignoring overhead and contention."
+        },
+        {
+          "label": "Airtime Utilization",
+          "description": "How busy the channel is.",
+          "examples": [
+            "low",
+            "moderate",
+            "high"
+          ],
+          "whyItMatters": "Busy airtime limits throughput and raises latency.",
+          "commonMistake": "Adding bandwidth demand without checking airtime."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+      ],
+      "bullets": [
+        "Healthy: assumptions appear workable.",
+        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
+        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+      ],
+      "bullets": [
+        "Using advertised PHY rate as real throughput.",
+        "Adding APs without managing channel overlap.",
+        "Designing only for signal strength while ignoring airtime and client density.",
+        "Using transmit power as the answer to every coverage issue."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+      ],
+      "bullets": [
+        "Real wireless performance depends on clients, walls, interference, and AP placement.",
+        "Airtime matters as much as bandwidth.",
+        "Roaming behavior depends heavily on client devices.",
+        "Critical wireless designs should be validated onsite."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual APs, antennas, client devices, and site conditions.",
+        "Confirm owner expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

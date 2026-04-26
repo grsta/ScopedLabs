@@ -1,0 +1,156 @@
+{
+  "title": "Client Density Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how user/device density affects airtime, AP count, throughput, roaming, and channel planning.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This guide explains the planning logic behind Client Density. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch wireless design issues before deployment."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+      ],
+      "bullets": [
+        "Early wireless design planning.",
+        "Expansion or AP placement review.",
+        "Existing-site validation.",
+        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical wireless planning terms."
+      ],
+      "items": [
+        {
+          "label": "Area Size",
+          "description": "The physical area where wireless clients are located.",
+          "examples": [
+            "classroom",
+            "warehouse",
+            "conference room",
+            "office floor"
+          ],
+          "whyItMatters": "Area size affects AP placement and density planning.",
+          "commonMistake": "Using square footage alone without considering where people gather."
+        },
+        {
+          "label": "Client Count",
+          "description": "Total wireless devices expected in the area.",
+          "examples": [
+            "50 devices",
+            "200 devices",
+            "BYOD environment"
+          ],
+          "whyItMatters": "Client count drives density pressure.",
+          "commonMistake": "Counting only users and forgetting phones, tablets, scanners, and IoT."
+        },
+        {
+          "label": "Active Ratio",
+          "description": "Percentage of clients likely active at the same time.",
+          "examples": [
+            "30%",
+            "60%",
+            "90%"
+          ],
+          "whyItMatters": "Active ratio determines real airtime demand.",
+          "commonMistake": "Assuming all connected devices are idle."
+        },
+        {
+          "label": "Application Mix",
+          "description": "Types of traffic clients generate.",
+          "examples": [
+            "web",
+            "voice",
+            "video",
+            "scanner traffic",
+            "file sync"
+          ],
+          "whyItMatters": "Application mix changes latency and bandwidth needs.",
+          "commonMistake": "Treating voice/video and basic browsing the same."
+        },
+        {
+          "label": "AP Count",
+          "description": "Number of APs serving the area.",
+          "examples": [
+            "1 AP",
+            "3 APs",
+            "dense AP layout"
+          ],
+          "whyItMatters": "AP count affects capacity and channel reuse.",
+          "commonMistake": "Adding APs without a channel plan."
+        },
+        {
+          "label": "Airtime Target",
+          "description": "The maximum airtime utilization you want to allow.",
+          "examples": [
+            "50%",
+            "65%",
+            "75%"
+          ],
+          "whyItMatters": "Lower airtime targets improve responsiveness.",
+          "commonMistake": "Letting airtime saturation become the normal condition."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+      ],
+      "bullets": [
+        "Healthy: assumptions appear workable.",
+        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
+        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+      ],
+      "bullets": [
+        "Using advertised PHY rate as real throughput.",
+        "Adding APs without managing channel overlap.",
+        "Designing only for signal strength while ignoring airtime and client density.",
+        "Using transmit power as the answer to every coverage issue."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+      ],
+      "bullets": [
+        "Real wireless performance depends on clients, walls, interference, and AP placement.",
+        "Airtime matters as much as bandwidth.",
+        "Roaming behavior depends heavily on client devices.",
+        "Critical wireless designs should be validated onsite."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual APs, antennas, client devices, and site conditions.",
+        "Confirm owner expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

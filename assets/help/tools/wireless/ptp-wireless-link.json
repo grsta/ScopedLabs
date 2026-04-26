@@ -1,0 +1,154 @@
+{
+  "title": "Point-to-Point Wireless Link Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand link distance, antenna gain, line of sight, frequency, fade margin, and throughput planning.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This guide explains the planning logic behind Point-to-Point Wireless Link. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch wireless design issues before deployment."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+      ],
+      "bullets": [
+        "Early wireless design planning.",
+        "Expansion or AP placement review.",
+        "Existing-site validation.",
+        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical wireless planning terms."
+      ],
+      "items": [
+        {
+          "label": "Link Distance",
+          "description": "Distance between the two wireless endpoints.",
+          "examples": [
+            "500 ft",
+            "1 mile",
+            "5 miles"
+          ],
+          "whyItMatters": "Distance drives path loss and reliability requirements.",
+          "commonMistake": "Estimating distance without mapping the real path."
+        },
+        {
+          "label": "Line of Sight",
+          "description": "Whether the link path is visually and RF clear.",
+          "examples": [
+            "clear LOS",
+            "partial obstruction",
+            "trees/buildings"
+          ],
+          "whyItMatters": "Point-to-point links depend heavily on clear path conditions.",
+          "commonMistake": "Assuming near line-of-sight is good enough."
+        },
+        {
+          "label": "Antenna Gain",
+          "description": "Directional gain of each endpoint antenna.",
+          "examples": [
+            "13 dBi",
+            "19 dBi",
+            "30 dBi"
+          ],
+          "whyItMatters": "Higher gain can improve received signal but narrows alignment tolerance.",
+          "commonMistake": "Using high gain without proper alignment."
+        },
+        {
+          "label": "Frequency",
+          "description": "The band used by the link.",
+          "examples": [
+            "2.4 GHz",
+            "5 GHz",
+            "6 GHz",
+            "60 GHz"
+          ],
+          "whyItMatters": "Frequency affects path loss, interference, and weather sensitivity.",
+          "commonMistake": "Choosing frequency only by advertised speed."
+        },
+        {
+          "label": "Throughput Target",
+          "description": "The usable data rate required across the link.",
+          "examples": [
+            "50 Mbps",
+            "300 Mbps",
+            "1 Gbps"
+          ],
+          "whyItMatters": "Throughput target determines signal and hardware requirements.",
+          "commonMistake": "Using PHY rate as real throughput."
+        },
+        {
+          "label": "Fade Margin",
+          "description": "Reserve signal margin for weather, alignment, foliage, and interference.",
+          "examples": [
+            "10 dB",
+            "20 dB",
+            "30 dB"
+          ],
+          "whyItMatters": "Fade margin separates reliable links from fragile links.",
+          "commonMistake": "Designing the link to barely connect."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+      ],
+      "bullets": [
+        "Healthy: assumptions appear workable.",
+        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
+        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+      ],
+      "bullets": [
+        "Using advertised PHY rate as real throughput.",
+        "Adding APs without managing channel overlap.",
+        "Designing only for signal strength while ignoring airtime and client density.",
+        "Using transmit power as the answer to every coverage issue."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+      ],
+      "bullets": [
+        "Real wireless performance depends on clients, walls, interference, and AP placement.",
+        "Airtime matters as much as bandwidth.",
+        "Roaming behavior depends heavily on client devices.",
+        "Critical wireless designs should be validated onsite."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual APs, antennas, client devices, and site conditions.",
+        "Confirm owner expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "title": "Coverage Radius Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how AP range is affected by transmit power, band, walls, antenna behavior, and signal target.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This guide explains the planning logic behind Coverage Radius. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch wireless design issues before deployment."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+      ],
+      "bullets": [
+        "Early wireless design planning.",
+        "Expansion or AP placement review.",
+        "Existing-site validation.",
+        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical wireless planning terms."
+      ],
+      "items": [
+        {
+          "label": "Transmit Power",
+          "description": "Radio power output from the AP.",
+          "examples": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "whyItMatters": "Transmit power affects coverage size but can create overlap issues.",
+          "commonMistake": "Turning power up without considering client return power."
+        },
+        {
+          "label": "Wi-Fi Band",
+          "description": "The frequency band used for coverage.",
+          "examples": [
+            "2.4 GHz",
+            "5 GHz",
+            "6 GHz"
+          ],
+          "whyItMatters": "Higher bands usually have shorter range and more wall loss.",
+          "commonMistake": "Expecting 6 GHz to cover like 2.4 GHz."
+        },
+        {
+          "label": "Wall / Obstruction Loss",
+          "description": "Signal loss caused by materials between AP and client.",
+          "examples": [
+            "drywall",
+            "concrete",
+            "metal racks",
+            "glass"
+          ],
+          "whyItMatters": "Obstructions can reduce range dramatically.",
+          "commonMistake": "Planning coverage from open-air distance only."
+        },
+        {
+          "label": "Signal Target",
+          "description": "Minimum signal level needed for the design.",
+          "examples": [
+            "-67 dBm",
+            "-70 dBm",
+            "-75 dBm"
+          ],
+          "whyItMatters": "Stronger targets are needed for voice, roaming, and higher data rates.",
+          "commonMistake": "Accepting weak signal because the device still connects."
+        },
+        {
+          "label": "Antenna Type",
+          "description": "The antenna pattern used by the AP.",
+          "examples": [
+            "omnidirectional",
+            "directional",
+            "internal antenna"
+          ],
+          "whyItMatters": "Antenna pattern changes where signal is strongest.",
+          "commonMistake": "Assuming all APs radiate evenly in every direction."
+        },
+        {
+          "label": "Client Capability",
+          "description": "How well client devices transmit and receive.",
+          "examples": [
+            "phones",
+            "laptops",
+            "scanners",
+            "IoT devices"
+          ],
+          "whyItMatters": "Clients may have weaker radios than APs.",
+          "commonMistake": "Designing only from AP transmit power."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+      ],
+      "bullets": [
+        "Healthy: assumptions appear workable.",
+        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
+        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+      ],
+      "bullets": [
+        "Using advertised PHY rate as real throughput.",
+        "Adding APs without managing channel overlap.",
+        "Designing only for signal strength while ignoring airtime and client density.",
+        "Using transmit power as the answer to every coverage issue."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+      ],
+      "bullets": [
+        "Real wireless performance depends on clients, walls, interference, and AP placement.",
+        "Airtime matters as much as bandwidth.",
+        "Roaming behavior depends heavily on client devices.",
+        "Critical wireless designs should be validated onsite."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual APs, antennas, client devices, and site conditions.",
+        "Confirm owner expectations and application requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
