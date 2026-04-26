@@ -2065,22 +2065,44 @@ main h3.section-title {
 
 
 /* SCOPEDLABS BROWSER TAB NAV - START */
-.nav-tabs {
+
+/* Header line/tab-strip anchor */
+.site-header {
+  position: relative;
+  border-bottom: 1px solid rgba(120, 255, 120, 0.16);
+}
+
+.site-header .header-inner {
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: space-between;
+  min-height: 72px;
+}
+
+.site-header .brand {
+  align-self: center;
+}
+
+/* Browser-tab nav sits directly on the header bottom line */
+.site-header .nav-tabs {
   display: flex !important;
   align-items: flex-end !important;
   justify-content: flex-end;
   gap: 8px !important;
   flex-wrap: wrap;
-  min-height: 44px;
+
+  align-self: flex-end;
+  min-height: 43px;
   padding: 0 !important;
   margin: 0 0 -1px 0 !important;
+
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
 
-.nav-tabs .nav-tab {
+.site-header .nav-tabs .nav-tab {
   position: relative;
   display: inline-flex !important;
   align-items: center;
@@ -2123,14 +2145,14 @@ main h3.section-title {
     transform 160ms ease;
 }
 
-/* hard-disable old pseudo-shape tab rules */
-.nav-tabs .nav-tab::before {
+/* Disable old trapezoid / pseudo-tab shapes */
+.site-header .nav-tabs .nav-tab::before {
   content: none !important;
   display: none !important;
   clip-path: none !important;
 }
 
-.nav-tabs .nav-tab::after {
+.site-header .nav-tabs .nav-tab::after {
   content: "";
   position: absolute;
   left: 16px;
@@ -2147,8 +2169,8 @@ main h3.section-title {
     opacity 160ms ease;
 }
 
-.nav-tabs .nav-tab:hover,
-.nav-tabs .nav-tab:focus-visible {
+.site-header .nav-tabs .nav-tab:hover,
+.site-header .nav-tabs .nav-tab:focus-visible {
   color: rgba(235, 255, 240, 0.98) !important;
 
   background:
@@ -2167,22 +2189,26 @@ main h3.section-title {
   transform: translateY(-1px);
 }
 
-.nav-tabs .nav-tab:hover::after,
-.nav-tabs .nav-tab:focus-visible::after {
+.site-header .nav-tabs .nav-tab:hover::after,
+.site-header .nav-tabs .nav-tab:focus-visible::after {
   background: rgba(120,255,120,0.95);
   box-shadow: 0 0 12px rgba(120,255,120,0.45);
   opacity: 1;
 }
 
-.nav-tabs a,
-.nav-tabs a:hover,
-.nav-tabs a:focus,
-.nav-tabs a:focus-visible {
+.site-header .nav-tabs a,
+.site-header .nav-tabs a:hover,
+.site-header .nav-tabs a:focus,
+.site-header .nav-tabs a:focus-visible {
   text-decoration: none !important;
 }
 
 @media (max-width: 860px) {
-  .nav-tabs {
+  .site-header .header-inner {
+    align-items: center !important;
+  }
+
+  .site-header .nav-tabs {
     width: 100%;
     justify-content: center;
     gap: 6px !important;
@@ -2191,7 +2217,7 @@ main h3.section-title {
     margin-bottom: 0 !important;
   }
 
-  .nav-tabs .nav-tab {
+  .site-header .nav-tabs .nav-tab {
     min-width: auto;
     height: 36px;
     padding: 0 14px !important;
@@ -2199,9 +2225,10 @@ main h3.section-title {
     border-radius: 999px !important;
   }
 
-  .nav-tabs .nav-tab::after {
+  .site-header .nav-tabs .nav-tab::after {
     bottom: 2px;
   }
 }
+
 /* SCOPEDLABS BROWSER TAB NAV - END */
 
