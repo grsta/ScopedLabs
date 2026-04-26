@@ -1,0 +1,154 @@
+{
+  "title": "Rack Thermal Density Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand rack heat density, watts per rack, airflow demand, cooling limits, and expansion risk.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether a rack's heat density is practical for the cooling environment."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch thermal issues before equipment overheats."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning rack loads, server rooms, network closets, UPS cabinets, NVR racks, or high-density equipment layouts."
+      ],
+      "bullets": [
+        "Early thermal planning.",
+        "Equipment-room or rack review.",
+        "Expansion or heat-load evaluation.",
+        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+      ],
+      "items": [
+        {
+          "label": "Rack Load",
+          "description": "Total electrical load installed in the rack.",
+          "examples": [
+            "1 kW",
+            "3 kW",
+            "8 kW"
+          ],
+          "whyItMatters": "Rack load becomes rack heat output.",
+          "commonMistake": "Counting rack units without checking power draw."
+        },
+        {
+          "label": "Rack Size",
+          "description": "The physical rack or cabinet size.",
+          "examples": [
+            "24U",
+            "42U",
+            "Wall cabinet"
+          ],
+          "whyItMatters": "Rack size affects density and airflow path.",
+          "commonMistake": "Assuming a small cabinet can cool like a full rack."
+        },
+        {
+          "label": "Cooling Method",
+          "description": "How heat is removed from the rack.",
+          "examples": [
+            "Room HVAC",
+            "Rear-door fan",
+            "Cabinet fan",
+            "Hot/cold aisle"
+          ],
+          "whyItMatters": "Cooling method determines how much density is practical.",
+          "commonMistake": "Putting high-density equipment in a passive cabinet."
+        },
+        {
+          "label": "Airflow Path",
+          "description": "How air moves through the rack.",
+          "examples": [
+            "Front-to-back",
+            "Bottom-to-top",
+            "Side airflow"
+          ],
+          "whyItMatters": "Poor airflow paths trap heat.",
+          "commonMistake": "Blocking intake or exhaust with cable clutter."
+        },
+        {
+          "label": "Blanking / Sealing",
+          "description": "Controls that prevent hot air recirculation.",
+          "examples": [
+            "Blanking panels",
+            "Brush strips",
+            "Sealed cabinet"
+          ],
+          "whyItMatters": "Sealing improves cooling effectiveness.",
+          "commonMistake": "Leaving open rack gaps that let hot air loop back."
+        },
+        {
+          "label": "Growth Load",
+          "description": "Future heat added to the rack.",
+          "examples": [
+            "More switches",
+            "Additional servers",
+            "More PoE"
+          ],
+          "whyItMatters": "Rack thermal density often grows over time.",
+          "commonMistake": "Filling the rack thermally on day one."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means rack density appears manageable. Watch means airflow or cooling capacity should be reviewed. Risk means the rack may exceed practical cooling limits."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
+        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+      ],
+      "bullets": [
+        "Ignoring UPS, PSU, PoE, or conversion heat.",
+        "Using fan free-air ratings without considering restrictions.",
+        "Cooling the room generally instead of managing intake and exhaust paths.",
+        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Equipment heat should be based on real load when possible.",
+        "Cooling capacity should be validated under actual site conditions.",
+        "Airflow requires both supply and exhaust paths.",
+        "A design with thermal margin is easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment ratings and site conditions.",
+        "Confirm temperature limits and owner expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "title": "Airflow Requirement Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how heat load, temperature rise, airflow, and cooling margin affect equipment-room ventilation.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates the airflow needed to remove heat from equipment or a room based on thermal load and acceptable temperature rise."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch thermal issues before equipment overheats."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning closets, racks, cabinets, equipment rooms, exhaust paths, or cooling support for electronics."
+      ],
+      "bullets": [
+        "Early thermal planning.",
+        "Equipment-room or rack review.",
+        "Expansion or heat-load evaluation.",
+        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+      ],
+      "items": [
+        {
+          "label": "Heat Load",
+          "description": "The amount of heat produced by equipment in the space.",
+          "examples": [
+            "Network switches",
+            "Servers",
+            "UPS",
+            "NVR",
+            "Power supplies"
+          ],
+          "whyItMatters": "Almost all electrical load becomes heat that must be removed.",
+          "commonMistake": "Sizing airflow from room size instead of actual equipment heat."
+        },
+        {
+          "label": "Allowed Temperature Rise",
+          "description": "How much warmer the exhaust or room air can become above intake/ambient temperature.",
+          "examples": [
+            "5°F rise",
+            "10°F rise",
+            "15°F rise"
+          ],
+          "whyItMatters": "A smaller allowed rise requires more airflow.",
+          "commonMistake": "Allowing too much temperature rise and stressing equipment."
+        },
+        {
+          "label": "Airflow",
+          "description": "The volume of air moved through the space.",
+          "examples": [
+            "CFM",
+            "Exhaust fan airflow",
+            "Cabinet fan airflow"
+          ],
+          "whyItMatters": "Airflow determines how quickly heat is removed.",
+          "commonMistake": "Using fan nameplate CFM without accounting for restrictions."
+        },
+        {
+          "label": "Ambient Temperature",
+          "description": "The air temperature entering the room or equipment.",
+          "examples": [
+            "Office ambient",
+            "Closet ambient",
+            "Outdoor intake"
+          ],
+          "whyItMatters": "Higher intake temperature leaves less thermal margin.",
+          "commonMistake": "Assuming room air stays cool under load."
+        },
+        {
+          "label": "Vent Path",
+          "description": "The path air takes into and out of the space.",
+          "examples": [
+            "Door grille",
+            "Ceiling exhaust",
+            "Ducted fan",
+            "Open closet"
+          ],
+          "whyItMatters": "Restricted paths reduce effective airflow.",
+          "commonMistake": "Adding a fan without providing intake air."
+        },
+        {
+          "label": "Thermal Margin",
+          "description": "Extra cooling capacity reserved for uncertainty or future growth.",
+          "examples": [
+            "20% spare",
+            "30% spare",
+            "Future equipment"
+          ],
+          "whyItMatters": "Margin protects against dust, aging fans, and load growth.",
+          "commonMistake": "Sizing exactly to the calculated minimum."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means airflow appears aligned with the heat load. Watch means temperature rise or margin should be reviewed. Risk means heat may accumulate faster than the space can remove it."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
+        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+      ],
+      "bullets": [
+        "Ignoring UPS, PSU, PoE, or conversion heat.",
+        "Using fan free-air ratings without considering restrictions.",
+        "Cooling the room generally instead of managing intake and exhaust paths.",
+        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Equipment heat should be based on real load when possible.",
+        "Cooling capacity should be validated under actual site conditions.",
+        "Airflow requires both supply and exhaust paths.",
+        "A design with thermal margin is easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment ratings and site conditions.",
+        "Confirm temperature limits and owner expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

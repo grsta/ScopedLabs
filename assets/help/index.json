@@ -1,5 +1,5 @@
 {
-  "version": "help-009",
+  "version": "help-010",
   "label": "ScopedLabs Help Index",
   "toolHelp": {
     "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json",
@@ -71,6 +71,16 @@
     "power/redundancy-impact": "tools/power/redundancy-impact.json",
     "power/failure-runtime-loss": "tools/power/failure-runtime-loss.json",
     "power/inverter-efficiency": "tools/power/inverter-efficiency.json",
-    "power/scenario-comparator": "tools/power/scenario-comparator.json"
+    "power/scenario-comparator": "tools/power/scenario-comparator.json",
+    "thermal/airflow-requirement": "tools/thermal/airflow-requirement.json",
+    "thermal/ambient-rise": "tools/thermal/ambient-rise.json",
+    "thermal/btu-converter": "tools/thermal/btu-converter.json",
+    "thermal/exhaust-temperature": "tools/thermal/exhaust-temperature.json",
+    "thermal/fan-cfm-sizing": "tools/thermal/fan-cfm-sizing.json",
+    "thermal/heat-load-estimator": "tools/thermal/heat-load-estimator.json",
+    "thermal/hot-cold-aisle": "tools/thermal/hot-cold-aisle.json",
+    "thermal/psu-efficiency-heat": "tools/thermal/psu-efficiency-heat.json",
+    "thermal/rack-thermal-density": "tools/thermal/rack-thermal-density.json",
+    "thermal/room-cooling-capacity": "tools/thermal/room-cooling-capacity.json"
   }
 }

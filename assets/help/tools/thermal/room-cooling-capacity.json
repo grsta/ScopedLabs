@@ -1,0 +1,154 @@
+{
+  "title": "Room Cooling Capacity Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand room heat load, HVAC capacity, safety margin, ambient conditions, and future growth.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether a room's cooling capacity can remove the expected equipment heat load."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch thermal issues before equipment overheats."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning equipment rooms, server closets, MDF/IDF spaces, security rooms, or any room with continuous electronic load."
+      ],
+      "bullets": [
+        "Early thermal planning.",
+        "Equipment-room or rack review.",
+        "Expansion or heat-load evaluation.",
+        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+      ],
+      "items": [
+        {
+          "label": "Room Heat Load",
+          "description": "Total heat produced inside the room.",
+          "examples": [
+            "Rack load",
+            "UPS heat",
+            "PoE switches",
+            "Servers"
+          ],
+          "whyItMatters": "Heat load determines required cooling.",
+          "commonMistake": "Only checking room size and ignoring equipment watts."
+        },
+        {
+          "label": "Cooling Capacity",
+          "description": "The amount of heat the cooling system can remove.",
+          "examples": [
+            "BTU/hr",
+            "Tons of cooling",
+            "Mini-split capacity"
+          ],
+          "whyItMatters": "Cooling capacity must exceed heat load with margin.",
+          "commonMistake": "Using nominal HVAC capacity without checking actual room service."
+        },
+        {
+          "label": "Ambient Conditions",
+          "description": "The temperature conditions around or supplying the room.",
+          "examples": [
+            "Conditioned office",
+            "Warm closet",
+            "Exterior wall room"
+          ],
+          "whyItMatters": "Warm ambient conditions reduce margin.",
+          "commonMistake": "Assuming the room stays at office temperature."
+        },
+        {
+          "label": "Ventilation",
+          "description": "Air exchange with the surrounding space.",
+          "examples": [
+            "Return air",
+            "Exhaust fan",
+            "Door grille"
+          ],
+          "whyItMatters": "Ventilation affects how heat leaves the room.",
+          "commonMistake": "Closing equipment in a room with no air path."
+        },
+        {
+          "label": "Cooling Margin",
+          "description": "Extra capacity reserved above calculated load.",
+          "examples": [
+            "20%",
+            "30%",
+            "Growth reserve"
+          ],
+          "whyItMatters": "Margin protects against hot days, dirty filters, and added equipment.",
+          "commonMistake": "Sizing cooling exactly to current load."
+        },
+        {
+          "label": "Future Load",
+          "description": "Expected future equipment heat.",
+          "examples": [
+            "More racks",
+            "More switches",
+            "Battery expansion"
+          ],
+          "whyItMatters": "Future load can exceed cooling quickly.",
+          "commonMistake": "Designing cooling for today's load only."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means cooling capacity appears adequate. Watch means heat load or margin should be reviewed. Risk means the room may overheat or require dedicated cooling."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
+        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+      ],
+      "bullets": [
+        "Ignoring UPS, PSU, PoE, or conversion heat.",
+        "Using fan free-air ratings without considering restrictions.",
+        "Cooling the room generally instead of managing intake and exhaust paths.",
+        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Equipment heat should be based on real load when possible.",
+        "Cooling capacity should be validated under actual site conditions.",
+        "Airflow requires both supply and exhaust paths.",
+        "A design with thermal margin is easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment ratings and site conditions.",
+        "Confirm temperature limits and owner expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

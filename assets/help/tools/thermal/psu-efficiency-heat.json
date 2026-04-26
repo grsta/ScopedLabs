@@ -1,0 +1,153 @@
+{
+  "title": "PSU Efficiency Heat Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how power supply efficiency creates heat loss and affects cooling demand.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates how much heat is created by power supply inefficiency."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch thermal issues before equipment overheats."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when evaluating server power supplies, UPS losses, DC supplies, PoE power supplies, inverters, or any conversion stage that creates heat."
+      ],
+      "bullets": [
+        "Early thermal planning.",
+        "Equipment-room or rack review.",
+        "Expansion or heat-load evaluation.",
+        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+      ],
+      "items": [
+        {
+          "label": "Output Load",
+          "description": "Useful power delivered to the equipment.",
+          "examples": [
+            "Server load",
+            "DC load",
+            "PoE output"
+          ],
+          "whyItMatters": "Output load determines how hard the power supply works.",
+          "commonMistake": "Sizing from PSU rating instead of actual load."
+        },
+        {
+          "label": "Efficiency",
+          "description": "The percentage of input power converted to useful output.",
+          "examples": [
+            "80%",
+            "90%",
+            "94%"
+          ],
+          "whyItMatters": "Lower efficiency means more heat is wasted.",
+          "commonMistake": "Assuming all input power becomes useful output."
+        },
+        {
+          "label": "Input Power",
+          "description": "Power drawn from the electrical source.",
+          "examples": [
+            "AC input",
+            "UPS input",
+            "DC input"
+          ],
+          "whyItMatters": "Input power includes useful output plus losses.",
+          "commonMistake": "Ignoring input draw when planning power and heat."
+        },
+        {
+          "label": "Heat Loss",
+          "description": "Power wasted as heat during conversion.",
+          "examples": [
+            "PSU heat",
+            "UPS heat",
+            "Inverter heat"
+          ],
+          "whyItMatters": "Heat loss adds to room cooling demand.",
+          "commonMistake": "Only cooling the equipment load and not conversion losses."
+        },
+        {
+          "label": "Load Level",
+          "description": "How heavily the PSU is loaded compared to its rating.",
+          "examples": [
+            "Light load",
+            "50% load",
+            "High load"
+          ],
+          "whyItMatters": "Efficiency changes with load level.",
+          "commonMistake": "Assuming efficiency is constant at all loads."
+        },
+        {
+          "label": "Cooling Impact",
+          "description": "How conversion heat affects the space.",
+          "examples": [
+            "Rack heat",
+            "Closet heat",
+            "Cabinet heat"
+          ],
+          "whyItMatters": "Even small losses add up across many devices.",
+          "commonMistake": "Ignoring many small power supplies."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means conversion losses appear manageable. Watch means losses and cooling should be reviewed. Risk means inefficient conversion may create significant heat or reduce runtime."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
+        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+      ],
+      "bullets": [
+        "Ignoring UPS, PSU, PoE, or conversion heat.",
+        "Using fan free-air ratings without considering restrictions.",
+        "Cooling the room generally instead of managing intake and exhaust paths.",
+        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Equipment heat should be based on real load when possible.",
+        "Cooling capacity should be validated under actual site conditions.",
+        "Airflow requires both supply and exhaust paths.",
+        "A design with thermal margin is easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment ratings and site conditions.",
+        "Confirm temperature limits and owner expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

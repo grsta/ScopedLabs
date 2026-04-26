@@ -1,0 +1,153 @@
+{
+  "title": "Hot / Cold Aisle Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand airflow separation, intake temperature, exhaust management, and rack cooling effectiveness.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate whether rack airflow is organized to separate cool intake air from hot exhaust air."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch thermal issues before equipment overheats."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning rack rows, equipment rooms, server rooms, high-density closets, or any space with front-to-back airflow equipment."
+      ],
+      "bullets": [
+        "Early thermal planning.",
+        "Equipment-room or rack review.",
+        "Expansion or heat-load evaluation.",
+        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+      ],
+      "items": [
+        {
+          "label": "Rack Orientation",
+          "description": "How racks face relative to each other and airflow.",
+          "examples": [
+            "Front-to-front",
+            "Back-to-back",
+            "Mixed orientation"
+          ],
+          "whyItMatters": "Orientation controls hot and cold aisle behavior.",
+          "commonMistake": "Pointing equipment exhaust toward another rack intake."
+        },
+        {
+          "label": "Intake Side",
+          "description": "Where equipment pulls cool air from.",
+          "examples": [
+            "Rack front",
+            "Cabinet front",
+            "Cold aisle"
+          ],
+          "whyItMatters": "Intake side should receive the coolest available air.",
+          "commonMistake": "Blocking intake with doors, clutter, or poor layout."
+        },
+        {
+          "label": "Exhaust Side",
+          "description": "Where equipment discharges hot air.",
+          "examples": [
+            "Rack rear",
+            "Hot aisle",
+            "Ceiling return"
+          ],
+          "whyItMatters": "Exhaust should be kept away from intake.",
+          "commonMistake": "Letting hot exhaust recirculate into the front of the rack."
+        },
+        {
+          "label": "Aisle Separation",
+          "description": "How well hot and cold air paths are separated.",
+          "examples": [
+            "Open room",
+            "Blanking panels",
+            "Containment"
+          ],
+          "whyItMatters": "Better separation improves cooling efficiency.",
+          "commonMistake": "Leaving open rack gaps that allow recirculation."
+        },
+        {
+          "label": "Airflow Direction",
+          "description": "The direction equipment fans move air.",
+          "examples": [
+            "Front-to-back",
+            "Side-to-side",
+            "Back-to-front"
+          ],
+          "whyItMatters": "Mixed airflow equipment can break aisle assumptions.",
+          "commonMistake": "Assuming every device uses front-to-back airflow."
+        },
+        {
+          "label": "Cooling Supply",
+          "description": "Where conditioned air enters the room or aisle.",
+          "examples": [
+            "Floor tile",
+            "Wall unit",
+            "Ceiling supply"
+          ],
+          "whyItMatters": "Supply location affects whether cold air reaches equipment intakes.",
+          "commonMistake": "Cooling the room generally without directing air to the load."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means airflow separation appears practical. Watch means recirculation or rack orientation should be reviewed. Risk means hot exhaust may mix with intake air and reduce cooling effectiveness."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
+        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+      ],
+      "bullets": [
+        "Ignoring UPS, PSU, PoE, or conversion heat.",
+        "Using fan free-air ratings without considering restrictions.",
+        "Cooling the room generally instead of managing intake and exhaust paths.",
+        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Equipment heat should be based on real load when possible.",
+        "Cooling capacity should be validated under actual site conditions.",
+        "Airflow requires both supply and exhaust paths.",
+        "A design with thermal margin is easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment ratings and site conditions.",
+        "Confirm temperature limits and owner expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "title": "Fan CFM Sizing Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand fan airflow, heat removal, static pressure, restrictions, and cooling margin.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates the fan airflow needed to remove heat from an enclosure, rack, closet, or equipment space."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch thermal issues before equipment overheats."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when selecting exhaust fans, cabinet fans, rack ventilation, wall fans, or airflow upgrades for heat-producing equipment."
+      ],
+      "bullets": [
+        "Early thermal planning.",
+        "Equipment-room or rack review.",
+        "Expansion or heat-load evaluation.",
+        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+      ],
+      "items": [
+        {
+          "label": "Heat Load",
+          "description": "The heat the fan must remove.",
+          "examples": [
+            "Switch heat",
+            "Server load",
+            "UPS losses",
+            "Cabinet load"
+          ],
+          "whyItMatters": "Fan size should be based on heat load, not just enclosure size.",
+          "commonMistake": "Choosing a fan because it physically fits."
+        },
+        {
+          "label": "Target Temperature Rise",
+          "description": "The maximum acceptable rise between intake and exhaust air.",
+          "examples": [
+            "5°F",
+            "10°F",
+            "15°F"
+          ],
+          "whyItMatters": "Lower rise requires more airflow.",
+          "commonMistake": "Allowing excessive rise to make the fan look adequate."
+        },
+        {
+          "label": "Fan CFM",
+          "description": "The rated airflow of the fan.",
+          "examples": [
+            "50 CFM",
+            "200 CFM",
+            "500 CFM"
+          ],
+          "whyItMatters": "CFM determines heat-removal capability.",
+          "commonMistake": "Using free-air CFM without accounting for grilles, filters, or ducting."
+        },
+        {
+          "label": "Static Pressure",
+          "description": "Resistance the fan must overcome.",
+          "examples": [
+            "Filter",
+            "Louver",
+            "Duct",
+            "Tight cabinet"
+          ],
+          "whyItMatters": "Restrictions reduce actual airflow.",
+          "commonMistake": "Ignoring static pressure and airflow loss."
+        },
+        {
+          "label": "Intake Area",
+          "description": "How air enters the space.",
+          "examples": [
+            "Door vent",
+            "Cabinet grille",
+            "Open bottom"
+          ],
+          "whyItMatters": "Exhaust fans need enough intake air to work.",
+          "commonMistake": "Adding exhaust without an intake path."
+        },
+        {
+          "label": "Redundancy / Margin",
+          "description": "Extra airflow or backup fan capacity.",
+          "examples": [
+            "20% spare",
+            "Dual fans",
+            "Fan failure margin"
+          ],
+          "whyItMatters": "Margin protects against dust, aging, and fan failure.",
+          "commonMistake": "Sizing one fan exactly to calculated need."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the fan airflow appears adequate. Watch means restrictions or fan performance should be reviewed. Risk means the fan may not remove enough heat in real conditions."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
+        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+      ],
+      "bullets": [
+        "Ignoring UPS, PSU, PoE, or conversion heat.",
+        "Using fan free-air ratings without considering restrictions.",
+        "Cooling the room generally instead of managing intake and exhaust paths.",
+        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Equipment heat should be based on real load when possible.",
+        "Cooling capacity should be validated under actual site conditions.",
+        "Airflow requires both supply and exhaust paths.",
+        "A design with thermal margin is easier to support and expand."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment ratings and site conditions.",
+        "Confirm temperature limits and owner expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
