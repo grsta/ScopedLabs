@@ -1,0 +1,156 @@
+{
+  "title": "VA / Watts / Amps Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand the relationship between apparent power, real power, current draw, voltage, and power factor.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool converts between VA, watts, amps, voltage, and power factor so power loads can be compared consistently."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch power or runtime issues before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when sizing UPS systems, power supplies, circuits, inverters, rack loads, or any equipment where electrical load values are provided in different units."
+      ],
+      "bullets": [
+        "Early power design planning.",
+        "Backup runtime review.",
+        "Expansion or load-growth evaluation.",
+        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical power and runtime planning terms."
+      ],
+      "items": [
+        {
+          "label": "Voltage",
+          "description": "The electrical voltage used by the load or circuit.",
+          "examples": [
+            "120 VAC",
+            "208 VAC",
+            "240 VAC",
+            "24 VDC"
+          ],
+          "whyItMatters": "Voltage determines how much current is required for a given power load.",
+          "commonMistake": "Mixing AC and DC assumptions or using the wrong system voltage."
+        },
+        {
+          "label": "Watts",
+          "description": "Real power consumed by the equipment.",
+          "examples": [
+            "Server load",
+            "Camera power",
+            "UPS load",
+            "Power supply output"
+          ],
+          "whyItMatters": "Watts represent usable real power and heat-producing load.",
+          "commonMistake": "Treating watts and VA as identical when power factor matters."
+        },
+        {
+          "label": "VA",
+          "description": "Apparent power, which combines real power and power factor effects.",
+          "examples": [
+            "UPS rating",
+            "Transformer rating",
+            "Apparent load"
+          ],
+          "whyItMatters": "VA is commonly used for UPS and electrical equipment capacity.",
+          "commonMistake": "Sizing a UPS only from watts without checking VA rating."
+        },
+        {
+          "label": "Amps",
+          "description": "Electrical current drawn by the load.",
+          "examples": [
+            "Circuit current",
+            "Power supply draw",
+            "Rack current"
+          ],
+          "whyItMatters": "Current affects breaker, wiring, and power supply sizing.",
+          "commonMistake": "Ignoring current draw after calculating watts."
+        },
+        {
+          "label": "Power Factor",
+          "description": "The ratio between real power and apparent power.",
+          "examples": [
+            "0.8 PF",
+            "0.9 PF",
+            "1.0 PF"
+          ],
+          "whyItMatters": "Lower power factor increases VA for the same watt load.",
+          "commonMistake": "Assuming every load has perfect power factor."
+        },
+        {
+          "label": "Load Type",
+          "description": "The kind of equipment being powered.",
+          "examples": [
+            "IT equipment",
+            "Motor load",
+            "Lighting",
+            "Power supply"
+          ],
+          "whyItMatters": "Different loads may have different power factor and startup behavior.",
+          "commonMistake": "Using one generic conversion for every load type."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the converted values appear reasonable for the entered assumptions. Watch or risk conditions usually mean current draw, power factor, or available capacity should be reviewed before design decisions are made."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
+        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+      ],
+      "bullets": [
+        "Sizing from best-case runtime.",
+        "Ignoring power factor, efficiency, battery age, or reserve margin.",
+        "Leaving non-critical loads on backup power.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer ratings still matter.",
+        "Battery condition and temperature can change runtime.",
+        "Real loads should be measured when possible.",
+        "A design with reserve is usually easier to support and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment, batteries, and electrical conditions.",
+        "Confirm owner requirements and outage expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

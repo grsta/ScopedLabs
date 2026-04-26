@@ -1,0 +1,154 @@
+{
+  "title": "Worst-Case Runtime Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand runtime under high load, aged batteries, efficiency losses, and conservative assumptions.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates runtime using conservative worst-case conditions instead of best-case assumptions."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch power or runtime issues before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when the backup system must work under stress, during extended outages, or when documenting realistic runtime expectations."
+      ],
+      "bullets": [
+        "Early power design planning.",
+        "Backup runtime review.",
+        "Expansion or load-growth evaluation.",
+        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical power and runtime planning terms."
+      ],
+      "items": [
+        {
+          "label": "Peak Load",
+          "description": "The highest expected load during the outage.",
+          "examples": [
+            "Full rack load",
+            "All cameras active",
+            "IR/heaters active"
+          ],
+          "whyItMatters": "Worst-case runtime should use peak or critical load, not idle load.",
+          "commonMistake": "Calculating from normal load when outage behavior is heavier."
+        },
+        {
+          "label": "Battery Derating",
+          "description": "Capacity reduction from age, temperature, or condition.",
+          "examples": [
+            "80% capacity",
+            "Cold-weather derate",
+            "Aged batteries"
+          ],
+          "whyItMatters": "Derating reflects real battery performance.",
+          "commonMistake": "Using brand-new battery ratings forever."
+        },
+        {
+          "label": "Efficiency Loss",
+          "description": "Power lost through UPS, inverter, wiring, or conversion.",
+          "examples": [
+            "UPS loss",
+            "Inverter loss",
+            "DC conversion loss"
+          ],
+          "whyItMatters": "Losses reduce actual runtime.",
+          "commonMistake": "Ignoring conversion losses."
+        },
+        {
+          "label": "Runtime Target",
+          "description": "The required minimum runtime under worst-case assumptions.",
+          "examples": [
+            "15 minutes",
+            "1 hour",
+            "8 hours"
+          ],
+          "whyItMatters": "The target defines pass/fail expectations.",
+          "commonMistake": "Accepting best-case runtime as the requirement."
+        },
+        {
+          "label": "Critical Load",
+          "description": "Only the equipment that must remain powered.",
+          "examples": [
+            "Core switch",
+            "Firewall",
+            "Access panel",
+            "Communication gear"
+          ],
+          "whyItMatters": "Separating critical from non-critical load can improve runtime.",
+          "commonMistake": "Backing up unnecessary loads during an outage."
+        },
+        {
+          "label": "Reserve Margin",
+          "description": "Extra runtime or energy held back for uncertainty.",
+          "examples": [
+            "10% reserve",
+            "20% reserve",
+            "Emergency margin"
+          ],
+          "whyItMatters": "Reserve protects against underestimated load or battery degradation.",
+          "commonMistake": "Planning to use every last minute of calculated runtime."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means runtime still meets the target under conservative assumptions. Watch means assumptions should be reviewed. Risk means the backup system may fail to meet the required runtime during real events."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
+        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+      ],
+      "bullets": [
+        "Sizing from best-case runtime.",
+        "Ignoring power factor, efficiency, battery age, or reserve margin.",
+        "Leaving non-critical loads on backup power.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer ratings still matter.",
+        "Battery condition and temperature can change runtime.",
+        "Real loads should be measured when possible.",
+        "A design with reserve is usually easier to support and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment, batteries, and electrical conditions.",
+        "Confirm owner requirements and outage expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

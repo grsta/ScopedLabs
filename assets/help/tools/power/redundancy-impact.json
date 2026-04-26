@@ -1,0 +1,155 @@
+{
+  "title": "Redundancy Impact Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how redundant power paths, UPS systems, supplies, and load sharing affect resilience.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate how redundancy changes power availability, failure exposure, and remaining capacity after a component fails."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch power or runtime issues before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning dual power supplies, A/B UPS feeds, redundant power supplies, parallel equipment, or critical infrastructure power paths."
+      ],
+      "bullets": [
+        "Early power design planning.",
+        "Backup runtime review.",
+        "Expansion or load-growth evaluation.",
+        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical power and runtime planning terms."
+      ],
+      "items": [
+        {
+          "label": "Normal Capacity",
+          "description": "Total power capacity available during normal operation.",
+          "examples": [
+            "A/B UPS capacity",
+            "Dual PSU capacity",
+            "Parallel supply capacity"
+          ],
+          "whyItMatters": "Normal capacity can look safe until a failure removes part of it.",
+          "commonMistake": "Counting redundant capacity as if it is all usable at once."
+        },
+        {
+          "label": "Critical Load",
+          "description": "Load that must remain powered during a failure.",
+          "examples": [
+            "Network core",
+            "Servers",
+            "Access-control panels",
+            "Security systems"
+          ],
+          "whyItMatters": "Critical load must fit inside remaining capacity.",
+          "commonMistake": "Including non-critical equipment in the critical path."
+        },
+        {
+          "label": "Redundancy Type",
+          "description": "The power resilience method being used.",
+          "examples": [
+            "N+1",
+            "A/B feed",
+            "Dual power supply",
+            "Parallel UPS"
+          ],
+          "whyItMatters": "Different redundancy types behave differently during failure.",
+          "commonMistake": "Assuming all redundancy designs provide the same protection."
+        },
+        {
+          "label": "Failed Capacity",
+          "description": "Capacity lost when one component or path fails.",
+          "examples": [
+            "One UPS failed",
+            "One PSU failed",
+            "One circuit failed"
+          ],
+          "whyItMatters": "Failed capacity determines degraded-state operation.",
+          "commonMistake": "Only checking normal operation."
+        },
+        {
+          "label": "Load Sharing",
+          "description": "How load is split between redundant sources.",
+          "examples": [
+            "Balanced A/B",
+            "Active/passive",
+            "Shared load"
+          ],
+          "whyItMatters": "Load sharing affects what happens when one side fails.",
+          "commonMistake": "Assuming automatic failover will not change load on the remaining path."
+        },
+        {
+          "label": "Degraded Headroom",
+          "description": "Spare capacity left after failure.",
+          "examples": [
+            "10%",
+            "20%",
+            "Emergency margin"
+          ],
+          "whyItMatters": "Headroom keeps the remaining path from running at the edge.",
+          "commonMistake": "Designing failover with zero spare capacity."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means redundancy appears to preserve enough capacity after failure. Watch means degraded-state margin should be reviewed. Risk means a single failure may overload the remaining power path."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
+        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+      ],
+      "bullets": [
+        "Sizing from best-case runtime.",
+        "Ignoring power factor, efficiency, battery age, or reserve margin.",
+        "Leaving non-critical loads on backup power.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer ratings still matter.",
+        "Battery condition and temperature can change runtime.",
+        "Real loads should be measured when possible.",
+        "A design with reserve is usually easier to support and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment, batteries, and electrical conditions.",
+        "Confirm owner requirements and outage expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

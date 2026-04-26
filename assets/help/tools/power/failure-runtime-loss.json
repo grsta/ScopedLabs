@@ -1,0 +1,155 @@
+{
+  "title": "Failure Runtime Loss Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how failures, lost battery strings, failed UPS modules, and degraded capacity reduce runtime.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates how much runtime may be lost when part of a backup power system fails or becomes unavailable."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch power or runtime issues before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when evaluating UPS redundancy, battery string failure, module failure, maintenance bypass conditions, or degraded backup power scenarios."
+      ],
+      "bullets": [
+        "Early power design planning.",
+        "Backup runtime review.",
+        "Expansion or load-growth evaluation.",
+        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical power and runtime planning terms."
+      ],
+      "items": [
+        {
+          "label": "Normal Runtime",
+          "description": "Expected runtime before the failure.",
+          "examples": [
+            "30 minutes",
+            "2 hours",
+            "8 hours"
+          ],
+          "whyItMatters": "Normal runtime is the baseline for comparison.",
+          "commonMistake": "Only documenting normal runtime and ignoring degraded cases."
+        },
+        {
+          "label": "Failed Component",
+          "description": "The part of the system assumed unavailable.",
+          "examples": [
+            "Battery string",
+            "UPS module",
+            "Power supply",
+            "Inverter path"
+          ],
+          "whyItMatters": "The failed component determines how much capacity is lost.",
+          "commonMistake": "Assuming all failures have the same runtime impact."
+        },
+        {
+          "label": "Remaining Capacity",
+          "description": "Capacity still available after the failure.",
+          "examples": [
+            "One battery string left",
+            "Reduced UPS capacity",
+            "Backup path only"
+          ],
+          "whyItMatters": "Remaining capacity determines degraded runtime.",
+          "commonMistake": "Forgetting that runtime may drop faster than capacity percentage suggests."
+        },
+        {
+          "label": "Critical Load",
+          "description": "Load that still needs backup during the failure.",
+          "examples": [
+            "Core network",
+            "Access control",
+            "Servers",
+            "Security systems"
+          ],
+          "whyItMatters": "Higher load reduces runtime from remaining capacity.",
+          "commonMistake": "Leaving non-critical loads connected during degraded operation."
+        },
+        {
+          "label": "Reserve Requirement",
+          "description": "Minimum runtime or capacity that must remain after failure.",
+          "examples": [
+            "15 minutes",
+            "1 hour",
+            "Emergency requirement"
+          ],
+          "whyItMatters": "Reserve requirement defines whether degraded operation is acceptable.",
+          "commonMistake": "Accepting degraded runtime without checking the requirement."
+        },
+        {
+          "label": "Failure Scenario",
+          "description": "The condition being tested.",
+          "examples": [
+            "Single failure",
+            "Maintenance bypass",
+            "Battery degradation"
+          ],
+          "whyItMatters": "Different scenarios can produce different runtime losses.",
+          "commonMistake": "Testing only the easiest failure case."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means runtime remains acceptable after the failure. Watch means degraded runtime should be reviewed. Risk means the system may not meet runtime requirements after a failure."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
+        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+      ],
+      "bullets": [
+        "Sizing from best-case runtime.",
+        "Ignoring power factor, efficiency, battery age, or reserve margin.",
+        "Leaving non-critical loads on backup power.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer ratings still matter.",
+        "Battery condition and temperature can change runtime.",
+        "Real loads should be measured when possible.",
+        "A design with reserve is usually easier to support and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment, batteries, and electrical conditions.",
+        "Confirm owner requirements and outage expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

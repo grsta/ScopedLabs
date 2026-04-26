@@ -1,0 +1,153 @@
+{
+  "title": "Battery Bank Sizer Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand battery voltage, amp-hours, load demand, inverter losses, depth of discharge, and runtime.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates battery bank size for a required load and runtime target."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch power or runtime issues before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning backup battery systems, DC power, inverter-backed loads, remote equipment, or extended runtime systems."
+      ],
+      "bullets": [
+        "Early power design planning.",
+        "Backup runtime review.",
+        "Expansion or load-growth evaluation.",
+        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical power and runtime planning terms."
+      ],
+      "items": [
+        {
+          "label": "Load Watts",
+          "description": "The real power draw supported by the battery bank.",
+          "examples": [
+            "Network load",
+            "Security load",
+            "Remote equipment"
+          ],
+          "whyItMatters": "Load watts directly drive battery energy requirement.",
+          "commonMistake": "Using idle load instead of expected operating load."
+        },
+        {
+          "label": "Runtime Target",
+          "description": "How long the battery bank should support the load.",
+          "examples": [
+            "1 hour",
+            "4 hours",
+            "24 hours"
+          ],
+          "whyItMatters": "Runtime target determines required energy storage.",
+          "commonMistake": "Choosing batteries before defining runtime."
+        },
+        {
+          "label": "System Voltage",
+          "description": "The DC voltage of the battery bank or inverter system.",
+          "examples": [
+            "12 VDC",
+            "24 VDC",
+            "48 VDC"
+          ],
+          "whyItMatters": "System voltage affects current and battery configuration.",
+          "commonMistake": "Mixing battery voltage assumptions with inverter requirements."
+        },
+        {
+          "label": "Inverter Efficiency",
+          "description": "Losses from converting battery DC power to AC output.",
+          "examples": [
+            "85%",
+            "90%",
+            "95%"
+          ],
+          "whyItMatters": "Efficiency reduces usable runtime.",
+          "commonMistake": "Assuming batteries deliver all stored energy to the load."
+        },
+        {
+          "label": "Depth of Discharge",
+          "description": "How much of the battery capacity is allowed to be used.",
+          "examples": [
+            "50%",
+            "80%",
+            "Lithium usable range"
+          ],
+          "whyItMatters": "Depth of discharge affects battery life and usable energy.",
+          "commonMistake": "Draining batteries too deeply for the chemistry."
+        },
+        {
+          "label": "Reserve Margin",
+          "description": "Extra capacity reserved for aging, temperature, and uncertainty.",
+          "examples": [
+            "20%",
+            "30%",
+            "Cold-weather reserve"
+          ],
+          "whyItMatters": "Reserve improves reliability and battery life.",
+          "commonMistake": "Sizing to the exact calculated minimum."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the battery bank appears appropriately sized. Watch means efficiency, depth of discharge, or growth should be reviewed. Risk means the bank may be undersized or too aggressive for battery health."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
+        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+      ],
+      "bullets": [
+        "Sizing from best-case runtime.",
+        "Ignoring power factor, efficiency, battery age, or reserve margin.",
+        "Leaving non-critical loads on backup power.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer ratings still matter.",
+        "Battery condition and temperature can change runtime.",
+        "Real loads should be measured when possible.",
+        "A design with reserve is usually easier to support and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment, batteries, and electrical conditions.",
+        "Confirm owner requirements and outage expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

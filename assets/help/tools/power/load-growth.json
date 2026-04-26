@@ -1,0 +1,153 @@
+{
+  "title": "Load Growth Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand how future equipment growth affects power load, UPS sizing, circuit planning, and runtime margin.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool projects how a power load may increase over time so the design is not sized only for day-one equipment."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch power or runtime issues before installation."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning UPS systems, rack power, security equipment, network closets, power supplies, or phased expansions."
+      ],
+      "bullets": [
+        "Early power design planning.",
+        "Backup runtime review.",
+        "Expansion or load-growth evaluation.",
+        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical power and runtime planning terms."
+      ],
+      "items": [
+        {
+          "label": "Current Load",
+          "description": "The power load currently connected or planned for day one.",
+          "examples": [
+            "300 W",
+            "750 W",
+            "1.5 kW"
+          ],
+          "whyItMatters": "Current load is the baseline for all growth projection.",
+          "commonMistake": "Starting with a rough guess instead of a real equipment estimate."
+        },
+        {
+          "label": "Growth Rate",
+          "description": "How quickly the load is expected to increase.",
+          "examples": [
+            "10% per year",
+            "New cameras",
+            "Additional switches"
+          ],
+          "whyItMatters": "Growth rate determines how quickly capacity is consumed.",
+          "commonMistake": "Assuming the load will stay flat."
+        },
+        {
+          "label": "Planning Window",
+          "description": "How far into the future the design should remain useful.",
+          "examples": [
+            "1 year",
+            "3 years",
+            "5 years"
+          ],
+          "whyItMatters": "Longer windows usually need more conservative spare capacity.",
+          "commonMistake": "Planning only for installation day."
+        },
+        {
+          "label": "Available Capacity",
+          "description": "The usable power capacity of the UPS, circuit, inverter, or supply.",
+          "examples": [
+            "UPS watts",
+            "Circuit capacity",
+            "Power supply capacity"
+          ],
+          "whyItMatters": "Capacity sets the limit the projected load must stay under.",
+          "commonMistake": "Using nameplate capacity without derating or margin."
+        },
+        {
+          "label": "Headroom Target",
+          "description": "Spare capacity reserved after growth.",
+          "examples": [
+            "20%",
+            "30%",
+            "Future expansion margin"
+          ],
+          "whyItMatters": "Headroom protects against load changes and uncertainty.",
+          "commonMistake": "Using all available capacity and leaving no reserve."
+        },
+        {
+          "label": "Expansion Events",
+          "description": "Known future additions that may increase load.",
+          "examples": [
+            "Phase 2 cameras",
+            "Additional rack",
+            "New access panels"
+          ],
+          "whyItMatters": "Known additions may matter more than percentage growth.",
+          "commonMistake": "Ignoring planned expansions because they are not installed yet."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means projected growth fits inside the available capacity. Watch means growth margin should be reviewed. Risk means the power design may become undersized during the planning window."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
+        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+      ],
+      "bullets": [
+        "Sizing from best-case runtime.",
+        "Ignoring power factor, efficiency, battery age, or reserve margin.",
+        "Leaving non-critical loads on backup power.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Manufacturer ratings still matter.",
+        "Battery condition and temperature can change runtime.",
+        "Real loads should be measured when possible.",
+        "A design with reserve is usually easier to support and explain."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against actual equipment, batteries, and electrical conditions.",
+        "Confirm owner requirements and outage expectations.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

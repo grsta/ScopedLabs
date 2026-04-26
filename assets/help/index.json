@@ -1,5 +1,5 @@
 {
-  "version": "help-008",
+  "version": "help-009",
   "label": "ScopedLabs Help Index",
   "toolHelp": {
     "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json",
@@ -61,6 +61,16 @@
     "physical-security/face-recognition-range": "tools/physical-security/face-recognition-range.json",
     "physical-security/license-plate-range": "tools/physical-security/license-plate-range.json",
     "physical-security/scene-illumination": "tools/physical-security/scene-illumination.json",
-    "physical-security/blind-spot-check": "tools/physical-security/blind-spot-check.json"
+    "physical-security/blind-spot-check": "tools/physical-security/blind-spot-check.json",
+    "power/va-watts-amps": "tools/power/va-watts-amps.json",
+    "power/load-growth": "tools/power/load-growth.json",
+    "power/ups-runtime": "tools/power/ups-runtime.json",
+    "power/battery-bank-sizer": "tools/power/battery-bank-sizer.json",
+    "power/battery-sizing": "tools/power/battery-sizing.json",
+    "power/worst-case-runtime": "tools/power/worst-case-runtime.json",
+    "power/redundancy-impact": "tools/power/redundancy-impact.json",
+    "power/failure-runtime-loss": "tools/power/failure-runtime-loss.json",
+    "power/inverter-efficiency": "tools/power/inverter-efficiency.json",
+    "power/scenario-comparator": "tools/power/scenario-comparator.json"
   }
 }
