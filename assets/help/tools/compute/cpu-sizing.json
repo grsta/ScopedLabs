@@ -1,0 +1,158 @@
+{
+  "title": "CPU Sizing Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand CPU demand, workload pressure, concurrency, headroom, and growth before selecting compute resources.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether a CPU allocation is likely to handle the expected workload without running too close to saturation."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when sizing servers, virtual machines, application hosts, analytics nodes, or any system where processor headroom affects reliability."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Workload Type",
+          "description": "The general kind of workload the CPU will support.",
+          "examples": [
+            "General application",
+            "Database",
+            "Video analytics",
+            "Virtualization host",
+            "Batch processing"
+          ],
+          "whyItMatters": "Different workloads stress CPU differently. A database, analytics engine, and basic app server may all need different headroom.",
+          "commonMistake": "Using one generic CPU rule for every workload."
+        },
+        {
+          "label": "CPU Cores",
+          "description": "The number of processor cores allocated or available to the workload.",
+          "examples": [
+            "4 cores",
+            "8 cores",
+            "16 cores",
+            "Virtual CPUs"
+          ],
+          "whyItMatters": "Core count affects how much parallel work the system can handle.",
+          "commonMistake": "Counting vCPU the same as physical cores without considering host contention."
+        },
+        {
+          "label": "Concurrency",
+          "description": "How many users, sessions, jobs, or services may be active at the same time.",
+          "examples": [
+            "Active users",
+            "Simultaneous jobs",
+            "Camera analytics streams",
+            "VM workload bursts"
+          ],
+          "whyItMatters": "Concurrency often drives peak CPU pressure more than average load.",
+          "commonMistake": "Sizing for average use and ignoring busy periods."
+        },
+        {
+          "label": "Utilization Target",
+          "description": "The intended maximum steady-state CPU utilization.",
+          "examples": [
+            "60%",
+            "70%",
+            "80%"
+          ],
+          "whyItMatters": "Lower targets leave more headroom for spikes, background tasks, and growth.",
+          "commonMistake": "Designing around 95–100% utilization and calling it efficient."
+        },
+        {
+          "label": "Peak Load",
+          "description": "The highest expected workload during busy periods.",
+          "examples": [
+            "Morning login rush",
+            "Report generation",
+            "Shift change",
+            "Maintenance window"
+          ],
+          "whyItMatters": "Peak load is where undersized CPUs become obvious.",
+          "commonMistake": "Sizing only for normal load."
+        },
+        {
+          "label": "Growth Allowance",
+          "description": "Extra capacity reserved for future workload increases.",
+          "examples": [
+            "10% growth",
+            "25% growth",
+            "Phase 2 expansion"
+          ],
+          "whyItMatters": "Growth allowance prevents the design from becoming obsolete immediately.",
+          "commonMistake": "Building for day-one load with no reserve."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the CPU plan has reasonable operating margin. Watch means utilization, concurrency, or growth should be reviewed. Risk means the workload may experience slowdowns, queuing, or poor peak performance."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+      ],
+      "bullets": [
+        "Sizing only for average load instead of peak behavior.",
+        "Ignoring headroom, background tasks, maintenance, and growth.",
+        "Trusting theoretical maximums as if they are sustained real-world capacity.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Vendor specifications still matter.",
+        "Application behavior may change the final requirement.",
+        "Site conditions and operating procedures may affect the design.",
+        "A design with headroom is usually easier to support and grow."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual hardware, platform, and software being deployed.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

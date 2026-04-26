@@ -1,0 +1,153 @@
+{
+  "title": "RAID Rebuild Time Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand rebuild duration, array risk, disk size, usable performance, and degraded-state exposure.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates how long a RAID array may remain in a degraded or rebuilding state."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning storage arrays, evaluating large-disk RAID sets, or explaining why rebuild exposure matters."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Drive Size",
+          "description": "The capacity of each disk in the array.",
+          "examples": [
+            "4 TB",
+            "12 TB",
+            "20 TB"
+          ],
+          "whyItMatters": "Larger drives usually take longer to rebuild.",
+          "commonMistake": "Using large drives without considering rebuild time."
+        },
+        {
+          "label": "Array Type",
+          "description": "The RAID level or redundancy model.",
+          "examples": [
+            "RAID 5",
+            "RAID 6",
+            "RAID 10"
+          ],
+          "whyItMatters": "RAID level affects rebuild behavior and fault tolerance.",
+          "commonMistake": "Choosing RAID only by usable capacity."
+        },
+        {
+          "label": "Rebuild Rate",
+          "description": "The sustained speed of the rebuild process.",
+          "examples": [
+            "100 MB/s",
+            "200 MB/s",
+            "Throttled rebuild"
+          ],
+          "whyItMatters": "Rebuild rate controls degraded-state duration.",
+          "commonMistake": "Assuming rebuild uses full drive speed."
+        },
+        {
+          "label": "Array Load",
+          "description": "Normal workload running during rebuild.",
+          "examples": [
+            "Idle",
+            "Moderate load",
+            "Production workload"
+          ],
+          "whyItMatters": "Active workloads can slow rebuilds and increase risk.",
+          "commonMistake": "Testing rebuild time on an idle system only."
+        },
+        {
+          "label": "Spare Strategy",
+          "description": "How failed disks are replaced.",
+          "examples": [
+            "Hot spare",
+            "Manual replacement",
+            "No spare"
+          ],
+          "whyItMatters": "Spare strategy affects how quickly rebuild can begin.",
+          "commonMistake": "Waiting for manual replacement in critical systems."
+        },
+        {
+          "label": "Risk Tolerance",
+          "description": "How much degraded-state exposure the environment can accept.",
+          "examples": [
+            "Low risk tolerance",
+            "Archive storage",
+            "Production system"
+          ],
+          "whyItMatters": "Some systems cannot tolerate long rebuild windows.",
+          "commonMistake": "Treating all storage workloads as equal."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means rebuild time is likely manageable. Watch means degraded-state exposure should be reviewed. Risk means the array may remain vulnerable for too long."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+      ],
+      "bullets": [
+        "Sizing only for average load instead of peak behavior.",
+        "Ignoring headroom, background tasks, maintenance, and growth.",
+        "Trusting theoretical maximums as if they are sustained real-world capacity.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Vendor specifications still matter.",
+        "Application behavior may change the final requirement.",
+        "Site conditions and operating procedures may affect the design.",
+        "A design with headroom is usually easier to support and grow."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual hardware, platform, and software being deployed.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

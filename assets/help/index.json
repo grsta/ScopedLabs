@@ -1,5 +1,5 @@
 {
-  "version": "help-003",
+  "version": "help-004",
   "label": "ScopedLabs Help Index",
   "toolHelp": {
     "access-control/access-level-sizing": "tools/access-control/access-level-sizing.json",
@@ -11,6 +11,16 @@
     "access-control/fail-safe-fail-secure": "tools/access-control/fail-safe-fail-secure.json",
     "access-control/lock-power-budget": "tools/access-control/lock-power-budget.json",
     "access-control/panel-capacity": "tools/access-control/panel-capacity.json",
-    "access-control/reader-type-selector": "tools/access-control/reader-type-selector.json"
+    "access-control/reader-type-selector": "tools/access-control/reader-type-selector.json",
+    "compute/cpu-sizing": "tools/compute/cpu-sizing.json",
+    "compute/ram-sizing": "tools/compute/ram-sizing.json",
+    "compute/storage-iops": "tools/compute/storage-iops.json",
+    "compute/storage-throughput": "tools/compute/storage-throughput.json",
+    "compute/vm-density": "tools/compute/vm-density.json",
+    "compute/gpu-vram": "tools/compute/gpu-vram.json",
+    "compute/power-thermal": "tools/compute/power-thermal.json",
+    "compute/raid-rebuild-time": "tools/compute/raid-rebuild-time.json",
+    "compute/backup-window": "tools/compute/backup-window.json",
+    "compute/nic-bonding": "tools/compute/nic-bonding.json"
   }
 }

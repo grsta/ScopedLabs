@@ -1,0 +1,154 @@
+{
+  "title": "NIC Bonding Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand link aggregation, failover behavior, throughput expectations, and network-path redundancy.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool helps evaluate whether a NIC bonding or teaming design matches the desired throughput and resiliency goal."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning server network ports, virtualization hosts, NAS links, backup networks, or redundant uplinks."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "NIC Count",
+          "description": "The number of network interfaces in the bond/team.",
+          "examples": [
+            "2 NICs",
+            "4 NICs",
+            "Dual-port adapter"
+          ],
+          "whyItMatters": "More NICs can add redundancy or aggregate capacity depending on mode.",
+          "commonMistake": "Assuming two NICs always doubles single-flow speed."
+        },
+        {
+          "label": "Link Speed",
+          "description": "The speed of each physical link.",
+          "examples": [
+            "1 GbE",
+            "10 GbE",
+            "25 GbE"
+          ],
+          "whyItMatters": "Per-link speed limits individual traffic flows in many bonding modes.",
+          "commonMistake": "Expecting one connection to use every link at once."
+        },
+        {
+          "label": "Bond Mode",
+          "description": "The teaming method used.",
+          "examples": [
+            "Active-backup",
+            "LACP",
+            "Static aggregation"
+          ],
+          "whyItMatters": "Mode determines failover and load-sharing behavior.",
+          "commonMistake": "Configuring LACP on the server without matching switch support."
+        },
+        {
+          "label": "Traffic Type",
+          "description": "The kind of traffic crossing the bond.",
+          "examples": [
+            "VM traffic",
+            "Backup traffic",
+            "Storage traffic",
+            "Management"
+          ],
+          "whyItMatters": "Traffic pattern affects whether load balancing helps.",
+          "commonMistake": "Designing for aggregate throughput when traffic is mostly one large flow."
+        },
+        {
+          "label": "Switch Support",
+          "description": "Whether the upstream switch supports the selected mode.",
+          "examples": [
+            "LACP capable",
+            "Separate switches",
+            "Stacked switches"
+          ],
+          "whyItMatters": "Switch behavior determines whether the bond works reliably.",
+          "commonMistake": "Connecting bonded links to unrelated switches without supported design."
+        },
+        {
+          "label": "Failover Goal",
+          "description": "What should happen when a link or switch path fails.",
+          "examples": [
+            "Link failover",
+            "Switch redundancy",
+            "Maintenance tolerance"
+          ],
+          "whyItMatters": "Redundancy goals may require active-backup or MLAG-style designs.",
+          "commonMistake": "Confusing throughput aggregation with true path redundancy."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the bond design is likely aligned with the goal. Watch means mode, switch support, or traffic distribution should be reviewed. Risk means the design may not provide the expected throughput or failover behavior."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+      ],
+      "bullets": [
+        "Sizing only for average load instead of peak behavior.",
+        "Ignoring headroom, background tasks, maintenance, and growth.",
+        "Trusting theoretical maximums as if they are sustained real-world capacity.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Vendor specifications still matter.",
+        "Application behavior may change the final requirement.",
+        "Site conditions and operating procedures may affect the design.",
+        "A design with headroom is usually easier to support and grow."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual hardware, platform, and software being deployed.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

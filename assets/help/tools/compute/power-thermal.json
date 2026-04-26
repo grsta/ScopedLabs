@@ -1,0 +1,154 @@
+{
+  "title": "Power / Thermal Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand compute power draw, heat output, rack impact, cooling pressure, and operating margin.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates the power and heat impact of compute equipment so the environment can support it."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning servers, racks, closets, UPS load, room cooling, or equipment expansion."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Equipment Load",
+          "description": "The electrical load of the compute equipment.",
+          "examples": [
+            "Server watts",
+            "Rack load",
+            "GPU node load"
+          ],
+          "whyItMatters": "Electrical load turns into heat that must be removed.",
+          "commonMistake": "Treating power as separate from cooling."
+        },
+        {
+          "label": "Runtime / Duty",
+          "description": "How often the equipment runs at load.",
+          "examples": [
+            "Idle-heavy",
+            "Business hours",
+            "24/7 high load"
+          ],
+          "whyItMatters": "Continuous loads create sustained heat.",
+          "commonMistake": "Sizing cooling around idle draw."
+        },
+        {
+          "label": "Rack Capacity",
+          "description": "The power and cooling capacity available in the rack.",
+          "examples": [
+            "15A circuit",
+            "20A circuit",
+            "Dual PDU",
+            "Rack cooling limit"
+          ],
+          "whyItMatters": "Rack limits can be reached before room limits.",
+          "commonMistake": "Adding servers because space is available without checking power."
+        },
+        {
+          "label": "Room Cooling",
+          "description": "The cooling available to remove heat from the space.",
+          "examples": [
+            "Closet AC",
+            "Data room cooling",
+            "Shared office HVAC"
+          ],
+          "whyItMatters": "Cooling determines whether the room can hold temperature.",
+          "commonMistake": "Assuming office HVAC can handle equipment closets."
+        },
+        {
+          "label": "Redundancy",
+          "description": "Backup or duplicated power/cooling capacity.",
+          "examples": [
+            "A/B power",
+            "UPS",
+            "N+1 cooling"
+          ],
+          "whyItMatters": "Redundancy affects how the system behaves during failure or maintenance.",
+          "commonMistake": "Counting redundant capacity as normal usable capacity."
+        },
+        {
+          "label": "Growth",
+          "description": "Expected future increase in power or heat load.",
+          "examples": [
+            "More servers",
+            "GPU expansion",
+            "Additional switches"
+          ],
+          "whyItMatters": "Growth can quickly overwhelm closets and racks.",
+          "commonMistake": "Designing for today's load with no spare cooling."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means power and heat appear manageable. Watch means rack/room capacity should be reviewed. Risk means the equipment may exceed power or cooling limits."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+      ],
+      "bullets": [
+        "Sizing only for average load instead of peak behavior.",
+        "Ignoring headroom, background tasks, maintenance, and growth.",
+        "Trusting theoretical maximums as if they are sustained real-world capacity.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Vendor specifications still matter.",
+        "Application behavior may change the final requirement.",
+        "Site conditions and operating procedures may affect the design.",
+        "A design with headroom is usually easier to support and grow."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual hardware, platform, and software being deployed.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

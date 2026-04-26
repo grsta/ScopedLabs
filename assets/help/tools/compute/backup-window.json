@@ -1,0 +1,153 @@
+{
+  "title": "Backup Window Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand whether backup volume, throughput, and overhead fit inside the available backup window.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether the required backup can complete in the time available."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when planning backup jobs, archive copies, offsite replication, maintenance windows, or recovery documentation."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Backup Size",
+          "description": "The amount of data that must be backed up.",
+          "examples": [
+            "500 GB",
+            "2 TB",
+            "Daily change set"
+          ],
+          "whyItMatters": "Backup size drives required throughput.",
+          "commonMistake": "Sizing only for today's data and ignoring growth."
+        },
+        {
+          "label": "Backup Window",
+          "description": "The time available for the backup job to complete.",
+          "examples": [
+            "4 hours",
+            "Overnight",
+            "Weekend window"
+          ],
+          "whyItMatters": "Shorter windows require higher sustained throughput.",
+          "commonMistake": "Assuming backups can run into production hours."
+        },
+        {
+          "label": "Throughput",
+          "description": "The real sustained transfer rate of the backup path.",
+          "examples": [
+            "NAS speed",
+            "WAN speed",
+            "Disk-to-disk speed"
+          ],
+          "whyItMatters": "Real throughput is often lower than link speed.",
+          "commonMistake": "Using theoretical network speed as backup speed."
+        },
+        {
+          "label": "Compression / Deduplication",
+          "description": "Reduction methods that may lower transferred data but add processing overhead.",
+          "examples": [
+            "Compression",
+            "Deduplication",
+            "Incremental backup"
+          ],
+          "whyItMatters": "These can help, but may also consume CPU or time.",
+          "commonMistake": "Assuming dedupe always saves the same amount."
+        },
+        {
+          "label": "Overhead",
+          "description": "Extra time from scanning, verification, encryption, snapshots, or job startup.",
+          "examples": [
+            "Verification",
+            "Encryption",
+            "Snapshot prep"
+          ],
+          "whyItMatters": "Overhead can make a backup miss its window even if transfer math looks good.",
+          "commonMistake": "Ignoring non-transfer time."
+        },
+        {
+          "label": "Growth",
+          "description": "Expected future increase in backup size.",
+          "examples": [
+            "More data",
+            "More servers",
+            "Longer retention"
+          ],
+          "whyItMatters": "Backup windows can fail later as data grows.",
+          "commonMistake": "Sizing only for the first backup cycle."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the backup should fit comfortably. Watch means throughput or job schedule should be reviewed. Risk means the backup may overrun the window."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+      ],
+      "bullets": [
+        "Sizing only for average load instead of peak behavior.",
+        "Ignoring headroom, background tasks, maintenance, and growth.",
+        "Trusting theoretical maximums as if they are sustained real-world capacity.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Vendor specifications still matter.",
+        "Application behavior may change the final requirement.",
+        "Site conditions and operating procedures may affect the design.",
+        "A design with headroom is usually easier to support and grow."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual hardware, platform, and software being deployed.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

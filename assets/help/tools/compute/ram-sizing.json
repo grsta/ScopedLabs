@@ -1,0 +1,155 @@
+{
+  "title": "RAM Sizing Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand memory demand, operating-system overhead, workload cache, concurrency, and safe headroom.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether a memory allocation is likely to support the workload without excessive paging, cache pressure, or instability."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when sizing servers, virtual machines, database hosts, application workloads, analytics systems, or multi-service compute nodes."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Base Memory",
+          "description": "The starting memory needed by the operating system and core application.",
+          "examples": [
+            "OS overhead",
+            "Application baseline",
+            "Service stack"
+          ],
+          "whyItMatters": "The system needs memory before user load or data processing is considered.",
+          "commonMistake": "Forgetting OS and background service overhead."
+        },
+        {
+          "label": "Workload Memory",
+          "description": "Memory consumed by the primary workload.",
+          "examples": [
+            "Database buffer",
+            "Application heap",
+            "Analytics model",
+            "Cache"
+          ],
+          "whyItMatters": "Workload memory often grows with users, data, or service count.",
+          "commonMistake": "Only sizing the installed software minimum."
+        },
+        {
+          "label": "Concurrency",
+          "description": "How many users, sessions, tasks, or workloads may run at the same time.",
+          "examples": [
+            "Active users",
+            "VMs",
+            "Jobs",
+            "Streams"
+          ],
+          "whyItMatters": "More concurrency usually means more memory pressure.",
+          "commonMistake": "Sizing for idle or test conditions."
+        },
+        {
+          "label": "Cache / Buffer",
+          "description": "Memory reserved for caching data, buffering activity, or improving performance.",
+          "examples": [
+            "Database cache",
+            "File cache",
+            "Queue buffer"
+          ],
+          "whyItMatters": "Cache can reduce disk pressure and improve response time.",
+          "commonMistake": "Treating cache as optional when the workload depends on it."
+        },
+        {
+          "label": "Headroom",
+          "description": "Extra memory reserved above calculated demand.",
+          "examples": [
+            "20% spare",
+            "30% spare",
+            "Future growth"
+          ],
+          "whyItMatters": "Headroom protects against spikes, leaks, and future expansion.",
+          "commonMistake": "Running memory too close to the limit."
+        },
+        {
+          "label": "Growth Allowance",
+          "description": "Expected future increase in memory demand.",
+          "examples": [
+            "More users",
+            "More data",
+            "Additional services"
+          ],
+          "whyItMatters": "Memory upgrades may be harder later if the platform or host is constrained.",
+          "commonMistake": "Ignoring near-term expansion."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means memory has reasonable headroom. Watch means the allocation may work but should be reviewed. Risk means the workload may page, stall, or become unreliable under load."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+      ],
+      "bullets": [
+        "Sizing only for average load instead of peak behavior.",
+        "Ignoring headroom, background tasks, maintenance, and growth.",
+        "Trusting theoretical maximums as if they are sustained real-world capacity.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Vendor specifications still matter.",
+        "Application behavior may change the final requirement.",
+        "Site conditions and operating procedures may affect the design.",
+        "A design with headroom is usually easier to support and grow."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual hardware, platform, and software being deployed.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

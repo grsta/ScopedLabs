@@ -1,0 +1,153 @@
+{
+  "title": "Storage IOPS Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand random storage operations, read/write mix, latency pressure, and workload suitability.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether a storage design can support the required input/output operations per second for the workload."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it when sizing storage for databases, virtual machines, logging, application workloads, analytics systems, or any random-I/O-heavy workload."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Read IOPS",
+          "description": "The number of read operations expected per second.",
+          "examples": [
+            "Database reads",
+            "VM boot reads",
+            "Application queries"
+          ],
+          "whyItMatters": "Read demand affects storage responsiveness and cache dependency.",
+          "commonMistake": "Assuming reads are free because cache may help."
+        },
+        {
+          "label": "Write IOPS",
+          "description": "The number of write operations expected per second.",
+          "examples": [
+            "Logs",
+            "Database writes",
+            "VM disk writes"
+          ],
+          "whyItMatters": "Write demand is often more expensive than reads, especially with redundancy.",
+          "commonMistake": "Underestimating writes because they look small in capacity terms."
+        },
+        {
+          "label": "Read / Write Mix",
+          "description": "The balance between reads and writes.",
+          "examples": [
+            "80/20 read-heavy",
+            "50/50 mixed",
+            "Write-heavy logging"
+          ],
+          "whyItMatters": "Different storage systems handle read-heavy and write-heavy workloads differently.",
+          "commonMistake": "Using a generic IOPS number without checking the mix."
+        },
+        {
+          "label": "Block Size",
+          "description": "The size of each storage operation.",
+          "examples": [
+            "4 KB",
+            "8 KB",
+            "64 KB"
+          ],
+          "whyItMatters": "Block size changes the throughput created by a given IOPS level.",
+          "commonMistake": "Comparing IOPS numbers without matching block size."
+        },
+        {
+          "label": "Latency Target",
+          "description": "The acceptable response time for storage operations.",
+          "examples": [
+            "Low latency",
+            "Moderate latency",
+            "Batch tolerant"
+          ],
+          "whyItMatters": "High IOPS with poor latency can still feel slow.",
+          "commonMistake": "Only checking IOPS and ignoring latency."
+        },
+        {
+          "label": "Headroom",
+          "description": "Extra IOPS capacity reserved above expected demand.",
+          "examples": [
+            "20% spare",
+            "30% spare",
+            "Peak bursts"
+          ],
+          "whyItMatters": "Headroom protects the design during bursts and background maintenance.",
+          "commonMistake": "Running storage at its advertised maximum."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the IOPS plan has reasonable margin. Watch means workload assumptions deserve review. Risk means the storage layer may become a bottleneck."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+      ],
+      "bullets": [
+        "Sizing only for average load instead of peak behavior.",
+        "Ignoring headroom, background tasks, maintenance, and growth.",
+        "Trusting theoretical maximums as if they are sustained real-world capacity.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Vendor specifications still matter.",
+        "Application behavior may change the final requirement.",
+        "Site conditions and operating procedures may affect the design.",
+        "A design with headroom is usually easier to support and grow."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual hardware, platform, and software being deployed.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

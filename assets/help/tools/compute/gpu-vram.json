@@ -1,0 +1,153 @@
+{
+  "title": "GPU VRAM Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand GPU memory demand, model size, batch size, resolution, analytics load, and safe margin.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether a GPU has enough VRAM for the intended workload."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it for AI inference, video analytics, machine learning experiments, rendering workloads, or GPU-accelerated compute tasks."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Model / Workload Size",
+          "description": "The memory footprint of the GPU workload.",
+          "examples": [
+            "AI model",
+            "Video analytics model",
+            "Rendering scene"
+          ],
+          "whyItMatters": "Larger models consume more VRAM before live data is processed.",
+          "commonMistake": "Only checking GPU compute power and ignoring memory."
+        },
+        {
+          "label": "Batch Size",
+          "description": "How many items are processed at once.",
+          "examples": [
+            "Single frame",
+            "Batch of images",
+            "Multiple streams"
+          ],
+          "whyItMatters": "Larger batches usually increase VRAM demand.",
+          "commonMistake": "Increasing batch size without checking memory headroom."
+        },
+        {
+          "label": "Resolution",
+          "description": "The input size or visual resolution being processed.",
+          "examples": [
+            "1080p",
+            "4K",
+            "High-resolution images"
+          ],
+          "whyItMatters": "Higher resolution increases memory use.",
+          "commonMistake": "Testing at low resolution and deploying at high resolution."
+        },
+        {
+          "label": "Stream Count",
+          "description": "How many simultaneous video or data streams use the GPU.",
+          "examples": [
+            "1 stream",
+            "8 streams",
+            "16 streams"
+          ],
+          "whyItMatters": "More streams can multiply VRAM requirements.",
+          "commonMistake": "Sizing for one stream and scaling without recalculating."
+        },
+        {
+          "label": "VRAM Capacity",
+          "description": "The total GPU memory available.",
+          "examples": [
+            "8 GB",
+            "12 GB",
+            "24 GB"
+          ],
+          "whyItMatters": "VRAM capacity determines whether the workload can fit.",
+          "commonMistake": "Assuming faster GPU means enough memory."
+        },
+        {
+          "label": "Headroom",
+          "description": "VRAM reserved for overhead, drivers, buffers, and growth.",
+          "examples": [
+            "10% spare",
+            "20% spare",
+            "Future models"
+          ],
+          "whyItMatters": "Headroom reduces failure risk during bursts or model changes.",
+          "commonMistake": "Running VRAM at the edge of capacity."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means VRAM appears adequate. Watch means workload settings or growth should be reviewed. Risk means the job may fail, spill, or require a smaller model/batch/resolution."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+      ],
+      "bullets": [
+        "Sizing only for average load instead of peak behavior.",
+        "Ignoring headroom, background tasks, maintenance, and growth.",
+        "Trusting theoretical maximums as if they are sustained real-world capacity.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Vendor specifications still matter.",
+        "Application behavior may change the final requirement.",
+        "Site conditions and operating procedures may affect the design.",
+        "A design with headroom is usually easier to support and grow."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual hardware, platform, and software being deployed.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}

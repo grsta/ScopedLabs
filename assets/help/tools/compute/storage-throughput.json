@@ -1,0 +1,156 @@
+{
+  "title": "Storage Throughput Guide",
+  "eyebrow": "Knowledge Base",
+  "defaultOpen": false,
+  "summary": "Understand sustained MB/s demand, sequential workload pressure, storage path limits, and transfer windows.",
+  "updated": "2026-04-26",
+  "sections": [
+    {
+      "title": "What this tool does",
+      "body": [
+        "This tool estimates whether a storage system can move enough data per second for the expected workload."
+      ],
+      "bullets": [
+        "Use it as a planning and sanity-check aid.",
+        "Use it to document assumptions before implementation.",
+        "Use it to catch design pressure before it becomes field trouble."
+      ]
+    },
+    {
+      "title": "When to use it",
+      "body": [
+        "Use it for backups, archives, video workloads, file transfers, analytics reads, large data imports, or sequential storage activity."
+      ],
+      "bullets": [
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
+      ]
+    },
+    {
+      "title": "Input descriptions",
+      "type": "glossary",
+      "body": [
+        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+      ],
+      "items": [
+        {
+          "label": "Data Volume",
+          "description": "The amount of data that must be moved or processed.",
+          "examples": [
+            "500 GB",
+            "2 TB",
+            "Daily archive",
+            "Backup set"
+          ],
+          "whyItMatters": "Data volume drives the required transfer rate when time is limited.",
+          "commonMistake": "Sizing storage capacity but ignoring how fast data must move."
+        },
+        {
+          "label": "Transfer Window",
+          "description": "The time available to complete the transfer.",
+          "examples": [
+            "Overnight backup",
+            "One-hour export",
+            "Maintenance window"
+          ],
+          "whyItMatters": "Short windows require higher sustained throughput.",
+          "commonMistake": "Assuming a transfer can run forever."
+        },
+        {
+          "label": "Read Throughput",
+          "description": "The sustained rate data can be read from storage.",
+          "examples": [
+            "Sequential read",
+            "Archive read",
+            "Backup source"
+          ],
+          "whyItMatters": "Read limits can bottleneck even if the destination is fast.",
+          "commonMistake": "Only checking write speed."
+        },
+        {
+          "label": "Write Throughput",
+          "description": "The sustained rate data can be written to storage.",
+          "examples": [
+            "Backup target",
+            "Archive volume",
+            "Import destination"
+          ],
+          "whyItMatters": "Write speed affects whether the destination can keep up.",
+          "commonMistake": "Trusting peak write specs instead of sustained behavior."
+        },
+        {
+          "label": "Network Path",
+          "description": "The network link involved in moving the data.",
+          "examples": [
+            "1 GbE",
+            "10 GbE",
+            "NAS link",
+            "WAN path"
+          ],
+          "whyItMatters": "Network throughput may become the real bottleneck.",
+          "commonMistake": "Sizing disks without checking the network path."
+        },
+        {
+          "label": "Overhead",
+          "description": "Extra load from protocol, filesystem, encryption, compression, or parity behavior.",
+          "examples": [
+            "SMB overhead",
+            "Encryption",
+            "RAID parity",
+            "Compression"
+          ],
+          "whyItMatters": "Overhead reduces usable throughput.",
+          "commonMistake": "Assuming theoretical speed equals real transfer speed."
+        }
+      ]
+    },
+    {
+      "title": "How to read the results",
+      "body": [
+        "Healthy means the storage path has reasonable throughput margin. Watch means transfer windows or bottlenecks should be reviewed. Risk means the storage path may not complete work in the required time."
+      ],
+      "bullets": [
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+      ]
+    },
+    {
+      "title": "Common mistakes",
+      "body": [
+        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+      ],
+      "bullets": [
+        "Sizing only for average load instead of peak behavior.",
+        "Ignoring headroom, background tasks, maintenance, and growth.",
+        "Trusting theoretical maximums as if they are sustained real-world capacity.",
+        "Failing to document assumptions before the system is built."
+      ]
+    },
+    {
+      "title": "Planning assumptions",
+      "body": [
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+      ],
+      "bullets": [
+        "Vendor specifications still matter.",
+        "Application behavior may change the final requirement.",
+        "Site conditions and operating procedures may affect the design.",
+        "A design with headroom is usually easier to support and grow."
+      ]
+    },
+    {
+      "title": "Professional responsibility",
+      "body": [
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+      ],
+      "bullets": [
+        "Validate against the actual hardware, platform, and software being deployed.",
+        "Confirm stakeholder expectations and operating requirements.",
+        "Document assumptions before implementation."
+      ]
+    }
+  ]
+}
