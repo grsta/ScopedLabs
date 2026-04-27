@@ -1,0 +1,5040 @@
+# ScopedLabs Category Formula Review Packet
+Category: performance
+Generated: 2026-04-27T23:32:05.362Z
+Tools found: 10
+
+
+
+============================================================
+TOOL: bottleneck-analyzer
+============================================================
+Title: Bottleneck Analyzer
+Tier: pro
+Meta description: Identify which subsystem is most likely constraining performance and determine where pressure is concentrated.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- CPU Utilization
+- Memory Utilization
+- Disk Utilization
+- Network Utilization
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- cpu
+- ram
+- disk
+- net
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "bottleneck-analyzer";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "cache-hit-ratio";
+   8:   const NEXT_URL = "/tools/performance/headroom-target/";
+   9: 
+  10:   const FLOW_KEYS = {
+  11:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  12:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  13:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  14:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  15:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  16:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  17:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  18:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  19:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  20:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  21:   };
+  22: 
+  23:   const chartRef = { current: null };
+  24:   const chartWrapRef = { current: null };
+  25:   const $ = (id) => document.getElementById(id);
+  26: 
+  27:   let hasResult = false;
+  28: 
+  29:   const els = {
+  30:     cpu: $("cpu"),
+  31:     ram: $("ram"),
+  32:     disk: $("disk"),
+  33:     net: $("net"),
+  34:     calc: $("calc"),
+  35:     reset: $("reset"),
+  36:     results: $("results"),
+  37:     analysis: $("analysis-copy"),
+  38:     flowNote: $("flow-note"),
+  39:     continueWrap: $("continue-wrap"),
+  40:     continueBtn: $("continue"),
+  41:     lockedCard: $("lockedCard"),
+  42:     toolCard: $("toolCard")
+  43:   };
+  44: 
+  45:   const DEFAULTS = {
+  46:     cpu: 70,
+  47:     ram: 65,
+  48:     disk: 55,
+  49:     net: 40
+  50:   };
+  51: 
+  52:   function hasStoredAuth() {
+  53:     try {
+  54:       const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+  55:       if (!k) return false;
+  56:       const raw = JSON.parse(localStorage.getItem(k));
+  57:       return !!(
+  58:         raw?.access_token ||
+  59:         raw?.currentSession?.access_token ||
+  60:         (Array.isArray(raw) ? raw[0]?.access_token : null)
+  61:       );
+  62:     } catch {
+  63:       return false;
+  64:     }
+  65:   }
+  66: 
+  67:   function getUnlockedCategories() {
+  68:     try {
+  69:       const raw = localStorage.getItem("sl_unlocked_categories");
+  70:       if (!raw) return [];
+
+--- CORE BLOCK 2 ---
+  99:   }
+ 100: 
+ 101:   function fmt(value, digits = 1) {
+ 102:     return Number.isFinite(value) ? value.toFixed(digits) : "—";
+ 103:   }
+ 104: 
+ 105:   function fmtPct(value, digits = 1) {
+ 106:     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+ 107:   }
+ 108: 
+ 109:   function showContinue() {
+ 110:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+ 111:     if (els.continueBtn) els.continueBtn.disabled = false;
+ 112:   }
+ 113: 
+ 114:   function hideContinue() {
+ 115:     if (els.continueWrap) els.continueWrap.style.display = "none";
+ 116:     if (els.continueBtn) els.continueBtn.disabled = true;
+ 117:   }
+ 118: 
+ 119:   function applyDefaults() {
+ 120:     els.cpu.value = String(DEFAULTS.cpu);
+ 121:     els.ram.value = String(DEFAULTS.ram);
+ 122:     els.disk.value = String(DEFAULTS.disk);
+ 123:     els.net.value = String(DEFAULTS.net);
+ 124:   }
+ 125: 
+ 126:   function invalidate() {
+ 127:     try {
+ 128:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 129:       sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+ 130:     } catch {}
+ 131: 
+ 132:     ScopedLabsAnalyzer.invalidate({
+ 133:       resultsEl: els.results,
+ 134:       analysisEl: els.analysis,
+ 135:       continueWrapEl: null,
+ 136:       continueBtnEl: null,
+ 137:       existingChartRef: chartRef,
+ 138:       existingWrapRef: chartWrapRef,
+ 139:       flowKey: FLOW_KEYS[STEP],
+ 140:       category: CATEGORY,
+ 141:       step: STEP,
+ 142:       lane: LANE,
+ 143:       emptyMessage: "Enter values and press Analyze."
+ 144:     });
+ 145: 
+ 146:     hasResult = false;
+ 147:     hideContinue();
+ 148:   }
+ 149: 
+ 150:   function loadPrior() {
+ 151:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+ 152:     if (!raw) {
+ 153:       els.flowNote.hidden = true;
+ 154:       els.flowNote.innerHTML = "";
+ 155:       return;
+ 156:     }
+ 157: 
+ 158:     let parsed = null;
+ 159:     try {
+ 160:       parsed = JSON.parse(raw);
+ 161:     } catch {
+ 162:       els.flowNote.hidden = true;
+ 163:       els.flowNote.innerHTML = "";
+ 164:       return;
+ 165:     }
+ 166: 
+ 167:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 168:       els.flowNote.hidden = true;
+ 169:       els.flowNote.innerHTML = "";
+ 170:       return;
+ 171:     }
+ 172: 
+ 173:     const d = parsed.data || {};
+ 174:     const rows = [];
+ 175: 
+ 176:     const cacheHitRatioPct =
+ 177:       num(d.cacheHitRatioPct) ??
+ 178:       (Number.isFinite(num(d.cacheHit)) ? num(d.cacheHit) * 100 : NaN);
+ 179: 
+ 180:     const missRequestsPerSecond =
+ 181:       num(d.missRequestsPerSecond) ??
+ 182:       num(d.backendLoadRps) ??
+ 183:       num(d.backendLoad);
+ 184: 
+ 185:     const cacheStatus =
+ 186:       d.cacheStatus ||
+ 187:       d.status ||
+ 188:       (Number.isFinite(cacheHitRatioPct)
+ 189:         ? cacheHitRatioPct >= 90 ? "EXCELLENT"
+ 190:         : cacheHitRatioPct >= 80 ? "GOOD"
+ 191:         : cacheHitRatioPct >= 65 ? "MODERATE"
+ 192:         : "WEAK"
+ 193:         : null);
+ 194: 
+ 195:     if (Number.isFinite(cacheHitRatioPct)) {
+ 196:       rows.push(`Cache Hit Ratio: <strong>${cacheHitRatioPct.toFixed(1)}%</strong>`);
+ 197:     }
+ 198:     if (Number.isFinite(missRequestsPerSecond)) {
+ 199:       rows.push(`Cache Miss Load: <strong>${missRequestsPerSecond.toFixed(0)} rps</strong>`);
+ 200:     }
+ 201:     if (cacheStatus) {
+ 202:       rows.push(`Cache Status: <strong>${cacheStatus}</strong>`);
+ 203:     }
+ 204: 
+ 205:     if (!rows.length) {
+ 206:       els.flowNote.hidden = true;
+ 207:       els.flowNote.innerHTML = "";
+ 208:       return;
+ 209:     }
+ 210: 
+ 211:     els.flowNote.hidden = false;
+ 212:     els.flowNote.innerHTML = `
+ 213:       <strong>Flow Context</strong><br>
+ 214:       ${rows.join(" | ")}
+ 215:       <br><br>
+ 216:       This step estimates which subsystem is most likely to become the active bottleneck after cache efficiency has reduced some portion of repeated backend demand.
+ 217:     `;
+ 218: 
+ 219:     if (cacheStatus === "EXCELLENT") {
+ 220:       els.cpu.value = "42";
+ 221:       els.ram.value = "48";
+ 222:       els.disk.value = "36";
+ 223:       els.net.value = "30";
+ 224:     } else if (cacheStatus === "GOOD") {
+ 225:       els.cpu.value = "56";
+ 226:       els.ram.value = "60";
+ 227:       els.disk.value = "46";
+ 228:       els.net.value = "38";
+ 229:     } else if (cacheStatus === "MODERATE") {
+ 230:       els.cpu.value = "70";
+ 231:       els.ram.value = "68";
+ 232:       els.disk.value = "58";
+ 233:       els.net.value = "46";
+ 234:     } else if (cacheStatus === "WEAK") {
+ 235:       els.cpu.value = "84";
+ 236:       els.ram.value = "76";
+ 237:       els.disk.value = "66";
+ 238:       els.net.value = "54";
+ 239:     }
+ 240: 
+ 241:     if (Number.isFinite(missRequestsPerSecond)) {
+ 242:       if (missRequestsPerSecond <= 500) {
+ 243:         els.cpu.value = "40";
+ 244:         els.ram.value = "46";
+ 245:         els.disk.value = "34";
+ 246:         els.net.value = "28";
+ 247:       } else if (missRequestsPerSecond <= 1500) {
+ 248:         els.cpu.value = "55";
+ 249:         els.ram.value = "58";
+ 250:         els.disk.value = "45";
+ 251:         els.net.value = "36";
+ 252:       } else if (missRequestsPerSecond <= 3000) {
+ 253:         els.cpu.value = "68";
+ 254:         els.ram.value = "66";
+ 255:         els.disk.value = "56";
+ 256:         els.net.value = "44";
+ 257:       } else {
+ 258:         els.cpu.value = "82";
+ 259:         els.ram.value = "74";
+ 260:         els.disk.value = "64";
+ 261:         els.net.value = "52";
+ 262:       }
+ 263:     }
+ 264:   }
+ 265: 
+ 266:   function getInputs() {
+ 267:     const cpu = num(els.cpu.value);
+ 268:     const ram = num(els.ram.value);
+ 269:     const disk = num(els.disk.value);
+ 270:     const net = num(els.net.value);
+ 271: 
+ 272:     const metrics = [
+ 273:       { name: "CPU", val: cpu },
+ 274:       { name: "Memory", val: ram },
+ 275:       { name: "Disk", val: disk },
+ 276:       { name: "Network", val: net }
+ 277:     ];
+ 278: 
+ 279:     const invalid = metrics.some((m) => !Number.isFinite(m.val) || m.val < 0 || m.val > 100);
+ 280:     if (invalid) {
+ 281:       return { ok: false, message: "Enter valid utilization values from 0 to 100 and press Analyze." };
+ 282:     }
+ 283: 
+ 284:     return { ok: true, metrics };
+ 285:   }
+ 286: 
+ 287:   function calculateModel() {
+ 288:     const input = getInputs();
+ 289:     if (!input.ok) return input;
+ 290: 
+ 291:     const metrics = input.metrics;
+ 292:     const byWorst = [...metrics].sort((a, b) => b.val - a.val);
+ 293: 
+ 294:     const worst = byWorst[0];
+ 295:     const second = byWorst[1];
+ 296:     const spread = worst.val - second.val;
+ 297:     const avgUtil = metrics.reduce((sum, m) => sum + m.val, 0) / metrics.length;
+ 298: 
+ 299:     let balanceStatus = "BALANCED";
+ 300:     if (spread >= 20) balanceStatus = "STRONGLY SKEWED";
+ 301:     else if (spread >= 10) balanceStatus = "MODERATELY SKEWED";
+ 302: 
+ 303:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 304:       compositeScore: worst.val,
+ 305:       metrics: metrics.map((m) => ({
+ 306:         label: m.name,
+ 307:         value: m.val,
+ 308:         displayValue: fmtPct(m.val)
+ 309:       })),
+ 310:       healthyMax: 60,
+ 311:       watchMax: 80
+ 312:     });
+ 313: 
+ 314:     let interpretation = `The highest-utilization subsystem is ${worst.name} at ${fmtPct(worst.val)}, followed by ${second.name} at ${fmtPct(second.val)}. That means ${worst.name.toLowerCase()} is currently carrying the largest share of load pressure and is the most likely active performance bottleneck.`;
+ 315: 
+ 316:     if (statusPack.status === "RISK") {
+ 317:       interpretation += ` This is no longer just a mild imbalance. ${worst.name} is operating in a critical pressure band where saturation, queueing, or response-time collapse become much more likely before the other subsystems do.`;
+ 318:     } else if (statusPack.status === "WATCH") {
+ 319:       interpretation += ` The environment is still functioning, but ${worst.name.toLowerCase()} is now elevated enough that it should be treated as the first subsystem to investigate as demand rises.`;
+ 320:     } else {
+ 321:       interpretation += ` Overall pressure is still in a controlled range, but ${worst.name.toLowerCase()} remains the first place where capacity risk will emerge if load increases.`;
+ 322:     }
+ 323: 
+ 324:     let dominantConstraint = `${worst.name} is the dominant limiter because it is the highest-utilization subsystem in the current profile.`;
+ 325:     if (spread >= 20) {
+ 326:       dominantConstraint += ` The ${fmt(spread, 1)}-point gap over ${second.name} indicates a strongly skewed load pattern, so tuning lower-utilization components first is unlikely to materially improve performance.`;
+ 327:     } else if (spread >= 10) {
+ 328:       dominantConstraint += ` The ${fmt(spread, 1)}-point gap over ${second.name} shows a meaningful lead, so ${worst.name.toLowerCase()} is the clearest near-term investigation target.`;
+ 329:     } else {
+ 330:       dominantConstraint += ` The gap to ${second.name} is only ${fmt(spread, 1)} points, so the system is comparatively balanced and the bottleneck may shift more easily as workloads change.`;
+ 331:     }
+ 332: 
+ 333:     let guidance = "";
+ 334:     if (statusPack.status === "RISK") {
+ 335:       guidance = `Investigate ${worst.name.toLowerCase()} first before optimizing anything else. Validate saturation, queue depth, scheduler pressure, or dependency contention in that subsystem before assuming the rest of the platform is the real problem.`;
+ 336:     } else if (statusPack.status === "WATCH") {
+ 337:       guidance = `Treat ${worst.name.toLowerCase()} as the leading tuning target and confirm whether the measured utilization reflects sustained demand or short burst behavior.`;
+ 338:     } else {
+ 339:       guidance = `No severe bottleneck is indicated yet, but ${worst.name.toLowerCase()} should remain the first subsystem reviewed during capacity planning and headroom sizing.`;
+ 340:     }
+ 341: 
+ 342:     return {
+ 343:       ok: true,
+ 344:       metrics,
+ 345:       worst,
+ 346:       second,
+ 347:       spread,
+ 348:       avgUtil,
+ 349:       balanceStatus,
+ 350:       status: statusPack.status,
+ 351:       interpretation,
+ 352:       dominantConstraint,
+ 353:       guidance
+ 354:     };
+ 355:   }
+ 356: 
+ 357:   function writeFlow(data) {
+ 358:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 359:       category: CATEGORY,
+ 360:       step: STEP,
+ 361:       data: {
+ 362:         cpuUtilizationPct: data.metrics.find((m) => m.name === "CPU").val,
+ 363:         memoryUtilizationPct: data.metrics.find((m) => m.name === "Memory").val,
+ 364:         diskUtilizationPct: data.metrics.find((m) => m.name === "Disk").val,
+ 365:         networkUtilizationPct: data.metrics.find((m) => m.name === "Network").val,
+ 366:         highestSubsystem: data.worst.name,
+ 367:         highestUtilizationPct: data.worst.val,
+ 368:         secondHighestSubsystem: data.second.name,
+ 369:         secondHighestUtilizationPct: data.second.val,
+ 370:         bottleneckGapPts: data.spread,
+ 371:         averageUtilizationPct: data.avgUtil,
+ 372:         balanceStatus: data.balanceStatus,
+ 373:         bottleneckStatus: data.status
+ 374:       }
+ 375:     });
+ 376:   }
+ 377: 
+ 378:   function calc() {
+ 379:     const data = calculateModel();
+ 380:     if (!data.ok) {
+ 381:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 382:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 383:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 384:       hideContinue();
+ 385:       return;
+ 386:     }
+ 387: 
+ 388:     ScopedLabsAnalyzer.renderOutput({
+ 389:       resultsEl: els.results,
+ 390:       analysisEl: els.analysis,
+ 391:       existingChartRef: chartRef,
+ 392:       existingWrapRef: chartWrapRef,
+ 393:       summaryRows: [
+ 394:         { label: "Highest Utilization", value: `${data.worst.name} (${fmtPct(data.worst.val)})` },
+ 395:         { label: "Second Highest", value: `${data.second.name} (${fmtPct(data.second.val)})` },
+ 396:         { label: "Likely Bottleneck", value: data.worst.name },
+ 397:         { label: "Average Utilization", value: fmtPct(data.avgUtil) }
+ 398:       ],
+ 399:       derivedRows: [
+ 400:         { label: "CPU Utilization", value: fmtPct(data.metrics.find((m) => m.name === "CPU").val) },
+ 401:         { label: "Memory Utilization", value: fmtPct(data.metrics.find((m) => m.name === "Memory").val) },
+ 402:         { label: "Disk Utilization", value: fmtPct(data.metrics.find((m) => m.name === "Disk").val) },
+ 403:         { label: "Network Utilization", value: fmtPct(data.metrics.find((m) => m.name === "Network").val) },
+ 404:         { label: "Bottleneck Gap", value: `${fmt(data.spread, 1)} pts` },
+ 405:         { label: "Load Balance", value: data.balanceStatus }
+ 406:       ],
+ 407:       status: data.status,
+ 408:       interpretation: data.interpretation,
+ 409:       dominantConstraint: data.dominantConstraint,
+ 410:       guidance: data.guidance,
+ 411:       chart: {
+ 412:         labels: data.metrics.map((m) => m.name),
+ 413:         values: data.metrics.map((m) => Number(m.val.toFixed(1))),
+ 414:         displayValues: data.metrics.map((m) => fmtPct(m.val)),
+ 415:         referenceValue: 60,
+ 416:         healthyMax: 60,
+ 417:         watchMax: 80,
+ 418:         axisTitle: "Subsystem Utilization (%)",
+ 419:         referenceLabel: "Comfort Band",
+ 420:         healthyLabel: "Healthy",
+ 421:         watchLabel: "Watch",
+ 422:         riskLabel: "Risk",
+ 423:         chartMax: Math.max(
+ 424:           100,
+ 425:           Math.ceil(Math.max(...data.metrics.map((m) => m.val), 80) * 1.1)
+ 426:         )
+ 427:       }
+ 428:     });
+ 429: 
+ 430:     writeFlow(data);
+ 431:     hasResult = true;
+ 432:     showContinue();
+ 433:   }
+ 434: 
+ 435:   function reset() {
+ 436:     applyDefaults();
+ 437:     loadPrior();
+ 438:     invalidate();
+ 439:   }
+ 440: 
+ 441:   function bind() {
+ 442:     [els.cpu, els.ram, els.disk, els.net].forEach((el) => {
+ 443:       el.addEventListener("input", invalidate);
+ 444:       el.addEventListener("change", invalidate);
+ 445:     });
+ 446: 
+ 447:     els.calc.addEventListener("click", calc);
+ 448:     els.reset.addEventListener("click", reset);
+ 449:     els.continueBtn.addEventListener("click", () => {
+ 450:       if (!hasResult) return;
+ 451:       window.location.href = NEXT_URL;
+ 452:     });
+ 453:   }
+ 454: 
+ 455:   function init() {
+ 456:     bind();
+ 457:     loadPrior();
+ 458:     invalidate();
+ 459:   }
+ 460: 
+ 461:   window.addEventListener("DOMContentLoaded", () => {
+ 462:     const year = document.querySelector("[data-year]");
+ 463:     if (year) year.textContent = new Date().getFullYear();
+ 464: 
+ 465:     unlockCategoryPage();
+ 466:     setTimeout(() => {
+ 467:       unlockCategoryPage();
+ 468:     }, 400);
+ 469: 
+ 470:     init();
+ 471:   });
+ 472: })();
+
+
+============================================================
+TOOL: cache-hit-ratio
+============================================================
+Title: Cache Hit Ratio Calculator
+Tier: free/unknown
+Meta description: Estimate cache effectiveness, backend miss pressure, and latency reduction under load.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Requests / Second
+- Cache Hit Ratio (%)
+- Hit Latency (ms)
+- Miss Latency (ms)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- rps
+- hit
+- hitLat
+- missLat
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "cache-hit-ratio";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "network-congestion";
+   8:   const NEXT_URL = "/tools/performance/bottleneck-analyzer/";
+   9: 
+  10:   const FLOW_KEYS = {
+  11:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  12:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  13:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  14:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  15:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  16:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  17:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  18:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  19:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  20:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  21:   };
+  22: 
+  23:   const chartRef = { current: null };
+  24:   const chartWrapRef = { current: null };
+  25:   const $ = (id) => document.getElementById(id);
+  26: 
+  27:   let hasResult = false;
+  28: 
+  29:   const els = {
+  30:     rps: $("rps"),
+  31:     hit: $("hit"),
+  32:     hitLat: $("hitLat"),
+  33:     missLat: $("missLat"),
+  34:     calc: $("calc"),
+  35:     reset: $("reset"),
+  36:     results: $("results"),
+  37:     analysis: $("analysis-copy"),
+  38:     flowNote: $("flow-note"),
+  39:     continueWrap: $("continue-wrap"),
+  40:     continueBtn: $("continue")
+  41:   };
+  42: 
+  43:   const DEFAULTS = {
+  44:     rps: 5000,
+  45:     hit: 85,
+  46:     hitLat: 2,
+  47:     missLat: 40
+  48:   };
+  49: 
+  50:   function num(value) {
+  51:     return ScopedLabsAnalyzer.safeNumber(value, NaN);
+  52:   }
+  53: 
+  54:   function fmtNumber(value, digits = 0) {
+  55:     return Number.isFinite(value) ? value.toFixed(digits) : "—";
+  56:   }
+  57: 
+  58:   function fmtPct(value, digits = 1) {
+  59:     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+  60:   }
+  61: 
+  62:   function fmtMs(value, digits = 2) {
+  63:     return Number.isFinite(value) ? `${value.toFixed(digits)} ms` : "—";
+  64:   }
+  65: 
+  66:   function fmtRps(value, digits = 0) {
+  67:     return Number.isFinite(value) ? `${value.toFixed(digits)} req/s` : "—";
+  68:   }
+  69: 
+  70:   function showContinue() {
+  71:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+  72:     if (els.continueBtn) els.continueBtn.disabled = false;
+  73:   }
+  74: 
+  75:   function hideContinue() {
+  76:     if (els.continueWrap) els.continueWrap.style.display = "none";
+  77:     if (els.continueBtn) els.continueBtn.disabled = true;
+  78:   }
+  79: 
+  80:   function applyDefaults() {
+  81:     els.rps.value = String(DEFAULTS.rps);
+  82:     els.hit.value = String(DEFAULTS.hit);
+  83:     els.hitLat.value = String(DEFAULTS.hitLat);
+  84:     els.missLat.value = String(DEFAULTS.missLat);
+  85:   }
+  86: 
+  87:   function invalidate() {
+  88:     try {
+  89:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+  90:       sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+  91:       sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+  92:     } catch {}
+  93: 
+  94:     ScopedLabsAnalyzer.invalidate({
+  95:       resultsEl: els.results,
+  96:       analysisEl: els.analysis,
+  97:       continueWrapEl: null,
+  98:       continueBtnEl: null,
+  99:       existingChartRef: chartRef,
+ 100:       existingWrapRef: chartWrapRef,
+ 101:       flowKey: FLOW_KEYS[STEP],
+ 102:       category: CATEGORY,
+ 103:       step: STEP,
+ 104:       lane: LANE,
+ 105:       emptyMessage: "Enter values and press Calculate."
+ 106:     });
+ 107: 
+ 108:     hasResult = false;
+ 109:     hideContinue();
+ 110:   }
+ 111: 
+ 112:   function loadPrior() {
+ 113:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+ 114:     if (!raw) {
+ 115:       els.flowNote.hidden = true;
+ 116:       els.flowNote.innerHTML = "";
+ 117:       return;
+ 118:     }
+ 119: 
+ 120:     let parsed = null;
+ 121:     try {
+ 122:       parsed = JSON.parse(raw);
+ 123:     } catch {
+ 124:       els.flowNote.hidden = true;
+ 125:       els.flowNote.innerHTML = "";
+ 126:       return;
+ 127:     }
+ 128: 
+ 129:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 130:       els.flowNote.hidden = true;
+ 131:       els.flowNote.innerHTML = "";
+ 132:       return;
+ 133:     }
+ 134: 
+ 135:     const d = parsed.data || {};
+ 136: 
+ 137:     const peakTrafficMbps =
+ 138:       num(d.peakTrafficMbps) ??
+ 139:       num(d.trafficMbps) ??
+ 140:       num(d.throughputMbps);
+ 141: 
+ 142:     const utilization =
+ 143:       num(d.utilization) ??
+ 144:       num(d.networkUtilization) ??
+ 145:       num(d.linkUtilization);
+ 146: 
+ 147:     const congestionRisk =
+ 148:       d.congestionRisk ??
+ 149:       d.status ??
+ 150:       d.classification ??
+ 151:       null;
+ 152: 
+ 153:     const packetLossPct =
+ 154:       num(d.packetLossPct) ??
+ 155:       num(d.packetLoss) ??
+ 156:       num(d.dropRatePct);
+ 157: 
+ 158:     const queueDelayMs =
+ 159:       num(d.queueDelayMs) ??
+ 160:       num(d.latencyPenaltyMs) ??
+ 161:       num(d.addedLatencyMs);
+ 162: 
+ 163:     const rpsFromPrior =
+ 164:       num(d.requestsPerSecond) ??
+ 165:       num(d.rps) ??
+ 166:       num(d.projectedRps) ??
+ 167:       num(d.adjustedRps) ??
+ 168:       num(d.loadRps);
+ 169: 
+ 170:     let derivedRps = null;
+ 171: 
+ 172:     if (Number.isFinite(rpsFromPrior)) {
+ 173:       derivedRps = rpsFromPrior;
+ 174:     } else if (Number.isFinite(peakTrafficMbps)) {
+ 175:       derivedRps = Math.round(peakTrafficMbps * 5);
+ 176:     }
+ 177: 
+ 178:     if (Number.isFinite(derivedRps) && derivedRps > 0) {
+ 179:       els.rps.value = String(Math.round(derivedRps));
+ 180:     }
+ 181: 
+ 182:     if (congestionRisk === "HIGH") {
+ 183:       els.hit.value = "92";
+ 184:       els.hitLat.value = "2.0";
+ 185:       els.missLat.value = Number.isFinite(queueDelayMs) ? String(Math.max(40, queueDelayMs)) : "50";
+ 186:     } else if (congestionRisk === "MEDIUM") {
+ 187:       els.hit.value = "88";
+ 188:       els.hitLat.value = "2.0";
+ 189:       els.missLat.value = Number.isFinite(queueDelayMs) ? String(Math.max(35, queueDelayMs)) : "40";
+ 190:     } else if (congestionRisk === "LOW") {
+ 191:       els.hit.value = "82";
+ 192:       els.hitLat.value = "2.0";
+ 193:       els.missLat.value = Number.isFinite(queueDelayMs) ? String(Math.max(25, queueDelayMs)) : "30";
+ 194:     }
+ 195: 
+ 196:     const contextParts = [];
+ 197: 
+ 198:     if (Number.isFinite(peakTrafficMbps)) {
+ 199:       contextParts.push(`Peak Traffic: <strong>${fmtNumber(peakTrafficMbps, 0)} Mbps</strong>`);
+ 200:     }
+ 201: 
+ 202:     if (Number.isFinite(utilization)) {
+ 203:       const utilPct = utilization <= 1 ? utilization * 100 : utilization;
+ 204:       contextParts.push(`Network Utilization: <strong>${fmtNumber(utilPct, 1)}%</strong>`);
+ 205:     }
+ 206: 
+ 207:     if (Number.isFinite(packetLossPct)) {
+ 208:       contextParts.push(`Packet Loss: <strong>${fmtNumber(packetLossPct, 2)}%</strong>`);
+ 209:     }
+ 210: 
+ 211:     if (Number.isFinite(queueDelayMs)) {
+ 212:       contextParts.push(`Queue Delay: <strong>${fmtNumber(queueDelayMs, 1)} ms</strong>`);
+ 213:     }
+ 214: 
+ 215:     if (congestionRisk) {
+ 216:       contextParts.push(`Congestion Risk: <strong>${congestionRisk}</strong>`);
+ 217:     }
+ 218: 
+ 219:     if (!contextParts.length) {
+ 220:       els.flowNote.hidden = true;
+ 221:       els.flowNote.innerHTML = "";
+ 222:       return;
+ 223:     }
+ 224: 
+ 225:     els.flowNote.hidden = false;
+ 226:     els.flowNote.innerHTML = `
+ 227:       <strong>Flow Context</strong><br>
+ 228:       ${contextParts.join(" | ")}
+ 229:       <br><br>
+ 230:       This step evaluates whether caching can reduce backend pressure and average latency under the upstream network conditions from the previous step.
+ 231:     `;
+ 232:   }
+ 233: 
+ 234:   function getInputs() {
+ 235:     const rps = num(els.rps.value);
+ 236:     const hitPct = num(els.hit.value);
+ 237:     const hitLat = num(els.hitLat.value);
+ 238:     const missLat = num(els.missLat.value);
+ 239: 
+ 240:     if (
+ 241:       !Number.isFinite(rps) || rps < 0 ||
+ 242:       !Number.isFinite(hitPct) || hitPct < 0 || hitPct > 100 ||
+ 243:       !Number.isFinite(hitLat) || hitLat < 0 ||
+ 244:       !Number.isFinite(missLat) || missLat < 0
+ 245:     ) {
+ 246:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 247:     }
+ 248: 
+ 249:     return { ok: true, rps, hitPct, hitLat, missLat };
+ 250:   }
+ 251: 
+ 252:   function calculateModel() {
+ 253:     const input = getInputs();
+ 254:     if (!input.ok) return input;
+ 255: 
+ 256:     const { rps, hitPct, hitLat, missLat } = input;
+ 257: 
+ 258:     const hit = hitPct / 100;
+ 259:     const miss = 1 - hit;
+ 260: 
+ 261:     const hitRps = rps * hit;
+ 262:     const missRps = rps * miss;
+ 263:     const avgLat = (hit * hitLat) + (miss * missLat);
+ 264:     const reductionPct = missLat > 0 ? ((missLat - avgLat) / missLat) * 100 : 0;
+ 265:     const backendLoadReductionPct = hitPct;
+ 266: 
+ 267:     const cacheMissPressure = 100 - hitPct;
+ 268:     const latencyRetentionPressure = 100 - reductionPct;
+ 269: 
+ 270:     let backendMissPressure = 0;
+ 271:     if (missRps <= 500) backendMissPressure = 12;
+ 272:     else if (missRps <= 1000) backendMissPressure = 24;
+ 273:     else if (missRps <= 2000) backendMissPressure = 42;
+ 274:     else if (missRps <= 3500) backendMissPressure = 62;
+ 275:     else backendMissPressure = 82;
+ 276: 
+ 277:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 278:       compositeScore: Math.max(cacheMissPressure, backendMissPressure, latencyRetentionPressure),
+ 279:       metrics: [
+ 280:         {
+ 281:           label: "Cache Miss Pressure",
+ 282:           value: cacheMissPressure,
+ 283:           displayValue: fmtPct(cacheMissPressure)
+ 284:         },
+ 285:         {
+ 286:           label: "Backend Miss Pressure",
+ 287:           value: backendMissPressure,
+ 288:           displayValue: fmtRps(missRps)
+ 289:         },
+ 290:         {
+ 291:           label: "Latency Retention Pressure",
+ 292:           value: latencyRetentionPressure,
+ 293:           displayValue: fmtPct(latencyRetentionPressure)
+ 294:         }
+ 295:       ],
+ 296:       healthyMax: 20,
+ 297:       watchMax: 40
+ 298:     });
+ 299: 
+ 300:     let cacheStatus = "WEAK";
+ 301:     if (statusPack.status === "HEALTHY") cacheStatus = "EXCELLENT";
+ 302:     else if (statusPack.status === "WATCH") cacheStatus = "GOOD";
+ 303:     else if (Math.max(cacheMissPressure, backendMissPressure, latencyRetentionPressure) <= 65) cacheStatus = "MODERATE";
+ 304: 
+ 305:     const dominantLabel = statusPack.dominant.label;
+ 306: 
+ 307:     let interpretation = `At ${fmtPct(hitPct)}, the cache serves ${fmtRps(hitRps)} while ${fmtRps(missRps)} still reaches the backend. Average latency falls to ${fmtMs(avgLat)}, which represents a ${fmtPct(reductionPct)} reduction from the miss path.`;
+ 308: 
+ 309:     if (statusPack.status === "RISK") {
+ 310:       interpretation += ` The dominant pressure is already in a risk band, so caching is not yet acting as a strong shield for the origin tier. In practice, too much repeated demand is still leaking through to the backend or too much latency is being retained on the average path.`;
+ 311:     } else if (statusPack.status === "WATCH") {
+ 312:       interpretation += ` Cache behavior is helping, but the dominant pressure remains elevated enough that backend systems can still feel sustained peaks and latency improvement is not yet comfortably protected.`;
+ 313:     } else {
+ 314:       interpretation += ` Cache behavior is in a controlled band. Repeated demand is being absorbed effectively enough that the backend sees materially less pressure and average latency is being reduced in a meaningful way.`;
+ 315:     }
+ 316: 
+ 317:     let dominantConstraint = "";
+ 318:     if (dominantLabel === "Cache Miss Pressure") {
+ 319:       dominantConstraint = "Cache miss pressure is the dominant limiter. The main issue is that too much traffic is missing the cache outright, so improving cacheability, TTLs, or reuse patterns should move the needle first.";
+ 320:     } else if (dominantLabel === "Backend Miss Pressure") {
+ 321:       dominantConstraint = "Backend miss pressure is the dominant limiter. Even with a decent hit ratio on paper, the absolute miss volume is still large enough to keep the origin tier exposed under load.";
+ 322:     } else {
+ 323:       dominantConstraint = "Latency retention pressure is the dominant limiter. The cache may be offloading work, but the average latency profile is still carrying too much of the miss-path penalty to feel fully optimized.";
+ 324:     }
+ 325: 
+ 326:     let guidance = "";
+ 327:     if (statusPack.status === "RISK") {
+ 328:       guidance = "Review cacheability rules, TTL strategy, eviction behavior, and request locality first. If repeated requests are still bypassing cache or missing too often, downstream bottlenecks will remain exposed no matter how much backend capacity you add.";
+ 329:     } else if (statusPack.status === "WATCH") {
+ 330:       guidance = "The cache is helping, but not enough to be ignored. Validate whether miss traffic is bursty or sustained and confirm that hot content is actually remaining resident under peak load.";
+ 331:     } else {
+ 332:       guidance = "Cache performance is balanced. Continue into Bottleneck Analyzer next to see which subsystem remains the most likely active constraint after cache offload has reduced backend pressure.";
+ 333:     }
+ 334: 
+ 335:     return {
+ 336:       ok: true,
+ 337:       rps,
+ 338:       hitPct,
+ 339:       hitLat,
+ 340:       missLat,
+ 341:       hitRps,
+ 342:       missRps,
+ 343:       avgLat,
+ 344:       reductionPct,
+ 345:       backendLoadReductionPct,
+ 346:       cacheMissPressure,
+ 347:       backendMissPressure,
+ 348:       latencyRetentionPressure,
+ 349:       cacheStatus,
+ 350:       status: statusPack.status,
+ 351:       interpretation,
+ 352:       dominantConstraint,
+ 353:       guidance
+ 354:     };
+ 355:   }
+ 356: 
+ 357:   function calc() {
+ 358:     const data = calculateModel();
+ 359:     if (!data.ok) {
+ 360:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 361:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 362:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 363:       hideContinue();
+ 364:       return;
+ 365:     }
+ 366: 
+ 367:     ScopedLabsAnalyzer.renderOutput({
+ 368:       resultsEl: els.results,
+ 369:       analysisEl: els.analysis,
+ 370:       existingChartRef: chartRef,
+ 371:       existingWrapRef: chartWrapRef,
+ 372:       summaryRows: [
+ 373:         { label: "Hit Requests / sec", value: fmtRps(data.hitRps) },
+ 374:         { label: "Miss Requests / sec", value: fmtRps(data.missRps) },
+ 375:         { label: "Average Latency", value: fmtMs(data.avgLat) },
+ 376:         { label: "Cache Efficiency Status", value: data.cacheStatus }
+ 377:       ],
+ 378:       derivedRows: [
+ 379:         { label: "Cache Hit Ratio", value: fmtPct(data.hitPct) },
+ 380:         { label: "Latency Reduction", value: fmtPct(data.reductionPct) },
+ 381:         { label: "Backend Load Reduction", value: fmtPct(data.backendLoadReductionPct) },
+ 382:         { label: "Hit Latency", value: fmtMs(data.hitLat) },
+ 383:         { label: "Miss Latency", value: fmtMs(data.missLat) },
+ 384:         { label: "Total Requests / sec", value: fmtRps(data.rps) }
+ 385:       ],
+ 386:       status: data.status,
+ 387:       interpretation: data.interpretation,
+ 388:       dominantConstraint: data.dominantConstraint,
+ 389:       guidance: data.guidance,
+ 390:       chart: {
+ 391:         labels: [
+ 392:           "Cache Miss Pressure",
+ 393:           "Backend Miss Pressure",
+ 394:           "Latency Retention Pressure"
+ 395:         ],
+ 396:         values: [
+ 397:           Number(data.cacheMissPressure.toFixed(1)),
+ 398:           Number(data.backendMissPressure.toFixed(1)),
+ 399:           Number(data.latencyRetentionPressure.toFixed(1))
+ 400:         ],
+ 401:         displayValues: [
+ 402:           fmtPct(data.cacheMissPressure),
+ 403:           fmtRps(data.missRps),
+ 404:           fmtPct(data.latencyRetentionPressure)
+ 405:         ],
+ 406:         referenceValue: 20,
+ 407:         healthyMax: 20,
+ 408:         watchMax: 40,
+ 409:         axisTitle: "Cache Pressure",
+ 410:         referenceLabel: "Comfort Band",
+ 411:         healthyLabel: "Healthy",
+ 412:         watchLabel: "Watch",
+ 413:         riskLabel: "Risk",
+ 414:         chartMax: Math.max(
+ 415:           100,
+ 416:           Math.ceil(
+ 417:             Math.max(
+ 418:               data.cacheMissPressure,
+ 419:               data.backendMissPressure,
+ 420:               data.latencyRetentionPressure,
+ 421:               40
+ 422:             ) * 1.12
+ 423:           )
+ 424:         )
+ 425:       }
+ 426:     });
+ 427: 
+ 428:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 429:       category: CATEGORY,
+ 430:       step: STEP,
+ 431:       data: {
+ 432:         requestsPerSecond: data.rps,
+ 433:         cacheHitRatioPct: data.hitPct,
+ 434:         hitRequestsPerSecond: data.hitRps,
+ 435:         missRequestsPerSecond: data.missRps,
+ 436:         avgLatencyMs: data.avgLat,
+ 437:         latencyReductionPct: data.reductionPct,
+ 438:         backendLoadRps: data.missRps,
+ 439:         backendLoadReductionPct: data.backendLoadReductionPct,
+ 440:         cacheStatus: data.cacheStatus
+ 441:       }
+ 442:     });
+ 443: 
+ 444:     hasResult = true;
+ 445:     showContinue();
+ 446:   }
+ 447: 
+ 448:   function reset() {
+ 449:     applyDefaults();
+ 450:     loadPrior();
+ 451:     invalidate();
+ 452:   }
+ 453: 
+ 454:   function bind() {
+ 455:     [els.rps, els.hit, els.hitLat, els.missLat].forEach((el) => {
+ 456:       el.addEventListener("input", invalidate);
+ 457:       el.addEventListener("change", invalidate);
+ 458:     });
+ 459: 
+ 460:     els.calc.addEventListener("click", calc);
+ 461:     els.reset.addEventListener("click", reset);
+ 462:     els.continueBtn.addEventListener("click", () => {
+ 463:       if (!hasResult) return;
+ 464:       window.location.href = NEXT_URL;
+ 465:     });
+ 466:   }
+ 467: 
+ 468:   function init() {
+ 469:     bind();
+ 470:     loadPrior();
+ 471:     invalidate();
+ 472:   }
+ 473: 
+ 474:   window.addEventListener("DOMContentLoaded", () => {
+ 475:     const year = document.querySelector("[data-year]");
+ 476:     if (year) year.textContent = new Date().getFullYear();
+ 477:     init();
+ 478:   });
+ 479: })();
+
+
+============================================================
+TOOL: concurrency-scaling
+============================================================
+Title: Concurrency Scaling Estimator
+Tier: pro
+Meta description: Estimate throughput gains from additional workers and identify when coordination overhead starts eroding scaling efficiency.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Baseline Throughput (req/sec)
+- Workers (current)
+- Workers (target)
+- Parallel Fraction (%)
+- Coordination Overhead (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- base
+- w0
+- w1
+- p
+- oh
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "concurrency-scaling";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "queue-depth";
+   8:   const NEXT_URL = "/tools/performance/cpu-utilization-impact/";
+   9: 
+  10:   const FLOW_KEYS = {
+  11:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  12:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  13:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  14:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  15:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  16:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  17:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  18:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  19:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  20:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  21:   };
+  22: 
+  23:   const chartRef = { current: null };
+  24:   const chartWrapRef = { current: null };
+  25:   const $ = (id) => document.getElementById(id);
+  26: 
+  27:   let hasResult = false;
+  28: 
+  29:   const els = {
+  30:     base: $("base"),
+  31:     w0: $("w0"),
+  32:     w1: $("w1"),
+  33:     p: $("p"),
+  34:     oh: $("oh"),
+  35:     calc: $("calc"),
+  36:     reset: $("reset"),
+  37:     results: $("results"),
+  38:     analysis: $("analysis-copy"),
+  39:     flowNote: $("flow-note"),
+  40:     continueWrap: $("continue-wrap"),
+  41:     continueBtn: $("continue"),
+  42:     lockedCard: $("lockedCard"),
+  43:     toolCard: $("toolCard")
+  44:   };
+  45: 
+  46:   const DEFAULTS = {
+  47:     base: 1200,
+  48:     w0: 4,
+  49:     w1: 12,
+  50:     p: 85,
+  51:     oh: 8
+  52:   };
+  53: 
+  54:   function hasStoredAuth() {
+  55:     try {
+  56:       const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+  57:       if (!k) return false;
+  58:       const raw = JSON.parse(localStorage.getItem(k));
+  59:       return !!(
+  60:         raw?.access_token ||
+  61:         raw?.currentSession?.access_token ||
+  62:         (Array.isArray(raw) ? raw[0]?.access_token : null)
+  63:       );
+  64:     } catch {
+  65:       return false;
+  66:     }
+  67:   }
+  68: 
+  69:   function getUnlockedCategories() {
+  70:     try {
+
+--- CORE BLOCK 2 ---
+ 110: 
+ 111:   function fmtRps(value, digits = 0) {
+ 112:     return Number.isFinite(value) ? `${value.toFixed(digits)} req/s` : "—";
+ 113:   }
+ 114: 
+ 115:   function speedup(workers, parallelFraction) {
+ 116:     return 1 / ((1 - parallelFraction) + (parallelFraction / workers));
+ 117:   }
+ 118: 
+ 119:   function showContinue() {
+ 120:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+ 121:     if (els.continueBtn) els.continueBtn.disabled = false;
+ 122:   }
+ 123: 
+ 124:   function hideContinue() {
+ 125:     if (els.continueWrap) els.continueWrap.style.display = "none";
+ 126:     if (els.continueBtn) els.continueBtn.disabled = true;
+ 127:   }
+ 128: 
+ 129:   function applyDefaults() {
+ 130:     els.base.value = String(DEFAULTS.base);
+ 131:     els.w0.value = String(DEFAULTS.w0);
+ 132:     els.w1.value = String(DEFAULTS.w1);
+ 133:     els.p.value = String(DEFAULTS.p);
+ 134:     els.oh.value = String(DEFAULTS.oh);
+ 135:   }
+ 136: 
+ 137:   function invalidate() {
+ 138:     try {
+ 139:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 140:       sessionStorage.removeItem(FLOW_KEYS["cpu-utilization-impact"]);
+ 141:       sessionStorage.removeItem(FLOW_KEYS["disk-saturation"]);
+ 142:       sessionStorage.removeItem(FLOW_KEYS["network-congestion"]);
+ 143:       sessionStorage.removeItem(FLOW_KEYS["cache-hit-ratio"]);
+ 144:       sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+ 145:       sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+ 146:     } catch {}
+ 147: 
+ 148:     ScopedLabsAnalyzer.invalidate({
+ 149:       resultsEl: els.results,
+ 150:       analysisEl: els.analysis,
+ 151:       continueWrapEl: null,
+ 152:       continueBtnEl: null,
+ 153:       existingChartRef: chartRef,
+ 154:       existingWrapRef: chartWrapRef,
+ 155:       flowKey: FLOW_KEYS[STEP],
+ 156:       category: CATEGORY,
+ 157:       step: STEP,
+ 158:       lane: LANE,
+ 159:       emptyMessage: "Enter values and press Calculate."
+ 160:     });
+ 161: 
+ 162:     hasResult = false;
+ 163:     hideContinue();
+ 164:   }
+ 165: 
+ 166:   function loadPrior() {
+ 167:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+ 168:     if (!raw) {
+ 169:       els.flowNote.hidden = true;
+ 170:       els.flowNote.innerHTML = "";
+ 171:       return;
+ 172:     }
+ 173: 
+ 174:     let parsed = null;
+ 175:     try {
+ 176:       parsed = JSON.parse(raw);
+ 177:     } catch {
+ 178:       els.flowNote.hidden = true;
+ 179:       els.flowNote.innerHTML = "";
+ 180:       return;
+ 181:     }
+ 182: 
+ 183:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 184:       els.flowNote.hidden = true;
+ 185:       els.flowNote.innerHTML = "";
+ 186:       return;
+ 187:     }
+ 188: 
+ 189:     const d = parsed.data || {};
+ 190:     const queueDepth = num(d.queueDepth);
+ 191:     const utilization = num(d.utilization);
+ 192:     const responseTime = num(d.responseTime);
+ 193:     const workers = num(d.workers);
+ 194:     const capacity = num(d.capacity);
+ 195: 
+ 196:     if (Number.isFinite(capacity) && capacity > 0) {
+ 197:       els.base.value = String(Math.round(capacity));
+ 198:     }
+ 199: 
+ 200:     if (Number.isFinite(workers) && workers > 0) {
+ 201:       const currentWorkers = Math.max(1, Math.round(workers));
+ 202:       els.w0.value = String(currentWorkers);
+ 203:       els.w1.value = String(Math.max(currentWorkers + 2, currentWorkers * 2));
+ 204:     }
+ 205: 
+ 206:     if (Number.isFinite(utilization)) {
+ 207:       let suggestedOverhead = 8;
+ 208:       if (utilization >= 0.90) suggestedOverhead = 15;
+ 209:       else if (utilization >= 0.75) suggestedOverhead = 10;
+ 210:       else if (utilization <= 0.50) suggestedOverhead = 5;
+ 211:       els.oh.value = String(suggestedOverhead);
+ 212:     }
+ 213: 
+ 214:     if (Number.isFinite(queueDepth) && queueDepth > 5) {
+ 215:       els.p.value = "90";
+ 216:     } else if (Number.isFinite(queueDepth) && queueDepth > 2) {
+ 217:       els.p.value = "85";
+ 218:     } else if (Number.isFinite(queueDepth) && queueDepth <= 2) {
+ 219:       els.p.value = "75";
+ 220:     }
+ 221: 
+ 222:     const contextParts = [];
+ 223:     if (Number.isFinite(queueDepth)) {
+ 224:       contextParts.push(`Queue Depth: <strong>${fmt(queueDepth, 2)}</strong>`);
+ 225:     }
+ 226:     if (Number.isFinite(utilization)) {
+ 227:       contextParts.push(`Utilization: <strong>${fmt(utilization * 100, 1)}%</strong>`);
+ 228:     }
+ 229:     if (Number.isFinite(responseTime)) {
+ 230:       contextParts.push(`Response Time: <strong>${fmt(responseTime, 2)} ms</strong>`);
+ 231:     }
+ 232:     if (Number.isFinite(capacity)) {
+ 233:       contextParts.push(`Capacity: <strong>${fmt(capacity, 0)} req/s</strong>`);
+ 234:     }
+ 235:     if (Number.isFinite(workers)) {
+ 236:       contextParts.push(`Workers: <strong>${fmt(workers, 0)}</strong>`);
+ 237:     }
+ 238: 
+ 239:     if (!contextParts.length) {
+ 240:       els.flowNote.hidden = true;
+ 241:       els.flowNote.innerHTML = "";
+ 242:       return;
+ 243:     }
+ 244: 
+ 245:     els.flowNote.hidden = false;
+ 246:     els.flowNote.innerHTML = `
+ 247:       <strong>Flow Context</strong><br>
+ 248:       ${contextParts.join(" | ")}
+ 249:       <br><br>
+ 250:       This step estimates whether adding concurrency will materially improve throughput after the upstream queue-depth condition has already been observed.
+ 251:     `;
+ 252:   }
+ 253: 
+ 254:   function getInputs() {
+ 255:     const base = num(els.base.value);
+ 256:     const w0 = Math.max(1, num(els.w0.value));
+ 257:     const w1 = Math.max(1, num(els.w1.value));
+ 258:     const p = num(els.p.value);
+ 259:     const oh = num(els.oh.value);
+ 260: 
+ 261:     if (
+ 262:       !Number.isFinite(base) || base < 0 ||
+ 263:       !Number.isFinite(w0) || w0 < 1 ||
+ 264:       !Number.isFinite(w1) || w1 < 1 ||
+ 265:       !Number.isFinite(p) || p < 0 || p > 100 ||
+ 266:       !Number.isFinite(oh) || oh < 0 || oh > 95
+ 267:     ) {
+ 268:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 269:     }
+ 270: 
+ 271:     return { ok: true, base, w0, w1, p, oh };
+ 272:   }
+ 273: 
+ 274:   function calculateModel() {
+ 275:     const input = getInputs();
+ 276:     if (!input.ok) return input;
+ 277: 
+ 278:     const { base, w0, w1, p, oh } = input;
+ 279: 
+ 280:     const parallelFraction = p / 100;
+ 281:     const overheadFraction = oh / 100;
+ 282: 
+ 283:     const s0 = speedup(w0, parallelFraction);
+ 284:     const s1 = speedup(w1, parallelFraction);
+ 285: 
+ 286:     const rel = s1 / s0;
+ 287:     const rawTarget = base * rel;
+ 288:     const target = rawTarget * (1 - overheadFraction);
+ 289:     const idealLinearGainPct = (w1 / w0) * 100;
+ 290:     const actualGainPct = rel * 100;
+ 291:     const efficiency = (rel / (w1 / w0)) * 100;
+ 292:     const overheadDragPct = oh;
+ 293:     const scalingLossPct = Math.max(0, idealLinearGainPct - actualGainPct);
+ 294: 
+ 295:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 296:       compositeScore: Math.max(100 - efficiency, overheadDragPct * 2, scalingLossPct / 2),
+ 297:       metrics: [
+ 298:         {
+ 299:           label: "Efficiency Loss",
+ 300:           value: 100 - efficiency,
+ 301:           displayValue: fmtPct(100 - efficiency)
+ 302:         },
+ 303:         {
+ 304:           label: "Coordination Drag",
+ 305:           value: overheadDragPct * 2,
+ 306:           displayValue: fmtPct(overheadDragPct)
+ 307:         },
+ 308:         {
+ 309:           label: "Non-Linear Scaling Loss",
+ 310:           value: scalingLossPct / 2,
+ 311:           displayValue: fmtPct(scalingLossPct)
+ 312:         }
+ 313:       ],
+ 314:       healthyMax: 20,
+ 315:       watchMax: 40
+ 316:     });
+ 317: 
+ 318:     let scalingClass = "STRONG";
+ 319:     if (statusPack.status === "WATCH") scalingClass = "MODERATE";
+ 320:     if (statusPack.status === "RISK") scalingClass = "LIMITED";
+ 321: 
+ 322:     const dominantLabel = statusPack.dominant.label;
+ 323: 
+ 324:     let interpretation = `Moving from ${fmt(w0, 0)} to ${fmt(w1, 0)} workers increases modeled throughput from ${fmtRps(base)} to ${fmtRps(target)} after coordination overhead, with a scaling efficiency of ${fmtPct(efficiency)}.`;
+ 325: 
+ 326:     if (statusPack.status === "RISK") {
+ 327:       interpretation += ` Scaling benefit is now limited. The dominant drag is large enough that extra workers are no longer converting cleanly into usable throughput, which usually points to serial work, contention, coordination cost, or a shared downstream constraint.`;
+ 328:     } else if (statusPack.status === "WATCH") {
+ 329:       interpretation += ` Scaling is still helping, but diminishing returns are already visible. Additional workers improve output, though the gain is no longer keeping pace with the worker increase.`;
+ 330:     } else {
+ 331:       interpretation += ` Scaling remains in a controlled band. Added workers are still translating into meaningful throughput improvement without excessive coordination loss.`;
+ 332:     }
+ 333: 
+ 334:     let dominantConstraint = "";
+ 335:     if (dominantLabel === "Efficiency Loss") {
+ 336:       dominantConstraint = "Efficiency loss is the dominant limiter. The biggest concern is that added workers are no longer translating into proportional useful work.";
+ 337:     } else if (dominantLabel === "Coordination Drag") {
+ 338:       dominantConstraint = "Coordination drag is the dominant limiter. Synchronization, scheduling, lock contention, or cross-worker overhead is consuming too much of the theoretical gain.";
+ 339:     } else {
+ 340:       dominantConstraint = "Non-linear scaling loss is the dominant limiter. The workload’s serial fraction is now preventing extra workers from delivering near-linear improvement.";
+ 341:     }
+ 342: 
+ 343:     let guidance = "";
+ 344:     if (statusPack.status === "RISK") {
+ 345:       guidance = "Do not assume that adding more workers is the next best fix. Validate lock contention, queue ownership, shard imbalance, or shared resource pressure before scaling concurrency further.";
+ 346:     } else if (statusPack.status === "WATCH") {
+ 347:       guidance = "Additional workers are still useful, but profile where the extra coordination cost is accumulating. This is the point where worker growth should be paired with architectural validation, not just raw horizontal expansion.";
+ 348:     } else {
+ 349:       guidance = "The concurrency model is healthy. Continue into CPU Utilization Impact next to see whether the projected gain is likely to create a new processor-side pressure point.";
+ 350:     }
+ 351: 
+ 352:     return {
+ 353:       ok: true,
+ 354:       base,
+ 355:       w0,
+ 356:       w1,
+ 357:       p,
+ 358:       oh,
+ 359:       rawTarget,
+ 360:       target,
+ 361:       rel,
+ 362:       efficiency,
+ 363:       idealLinearGainPct,
+ 364:       actualGainPct,
+ 365:       overheadDragPct,
+ 366:       scalingLossPct,
+ 367:       scalingClass,
+ 368:       status: statusPack.status,
+ 369:       interpretation,
+ 370:       dominantConstraint,
+ 371:       guidance
+ 372:     };
+ 373:   }
+ 374: 
+ 375:   function calc() {
+ 376:     const data = calculateModel();
+ 377:     if (!data.ok) {
+ 378:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 379:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 380:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 381:       hideContinue();
+ 382:       return;
+ 383:     }
+ 384: 
+ 385:     ScopedLabsAnalyzer.renderOutput({
+ 386:       resultsEl: els.results,
+ 387:       analysisEl: els.analysis,
+ 388:       existingChartRef: chartRef,
+ 389:       existingWrapRef: chartWrapRef,
+ 390:       summaryRows: [
+ 391:         { label: "Baseline Throughput", value: fmtRps(data.base) },
+ 392:         { label: "After Overhead", value: fmtRps(data.target) },
+ 393:         { label: "Scaling Efficiency", value: fmtPct(data.efficiency) },
+ 394:         { label: "Scaling Class", value: data.scalingClass }
+ 395:       ],
+ 396:       derivedRows: [
+ 397:         { label: "Current Workers", value: fmt(data.w0, 0) },
+ 398:         { label: "Target Workers", value: fmt(data.w1, 0) },
+ 399:         { label: "Raw Target", value: fmtRps(data.rawTarget) },
+ 400:         { label: "Actual Gain", value: fmtPct(data.actualGainPct) },
+ 401:         { label: "Ideal Linear Gain", value: fmtPct(data.idealLinearGainPct) },
+ 402:         { label: "Coordination Overhead", value: fmtPct(data.oh) }
+ 403:       ],
+ 404:       status: data.status,
+ 405:       interpretation: data.interpretation,
+ 406:       dominantConstraint: data.dominantConstraint,
+ 407:       guidance: data.guidance,
+ 408:       chart: {
+ 409:         labels: [
+ 410:           "Efficiency Loss",
+ 411:           "Coordination Drag",
+ 412:           "Non-Linear Scaling Loss"
+ 413:         ],
+ 414:         values: [
+ 415:           Number((100 - data.efficiency).toFixed(1)),
+ 416:           Number((data.overheadDragPct * 2).toFixed(1)),
+ 417:           Number((data.scalingLossPct / 2).toFixed(1))
+ 418:         ],
+ 419:         displayValues: [
+ 420:           fmtPct(100 - data.efficiency),
+ 421:           fmtPct(data.overheadDragPct),
+ 422:           fmtPct(data.scalingLossPct)
+ 423:         ],
+ 424:         referenceValue: 20,
+ 425:         healthyMax: 20,
+ 426:         watchMax: 40,
+ 427:         axisTitle: "Scaling Pressure",
+ 428:         referenceLabel: "Comfort Band",
+ 429:         healthyLabel: "Healthy",
+ 430:         watchLabel: "Watch",
+ 431:         riskLabel: "Risk",
+ 432:         chartMax: Math.max(
+ 433:           100,
+ 434:           Math.ceil(
+ 435:             Math.max(
+ 436:               100 - data.efficiency,
+ 437:               data.overheadDragPct * 2,
+ 438:               data.scalingLossPct / 2,
+ 439:               40
+ 440:             ) * 1.12
+ 441:           )
+ 442:         )
+ 443:       }
+ 444:     });
+ 445: 
+ 446:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 447:       category: CATEGORY,
+ 448:       step: STEP,
+ 449:       data: {
+ 450:         baselineThroughput: data.base,
+ 451:         currentWorkers: data.w0,
+ 452:         targetWorkers: data.w1,
+ 453:         parallelFraction: data.p / 100,
+ 454:         overheadPct: data.oh,
+ 455:         throughput: data.target,
+ 456:         scalingGain: data.rel,
+ 457:         scalingEfficiencyPct: data.efficiency,
+ 458:         scalingClass: data.scalingClass
+ 459:       }
+ 460:     });
+ 461: 
+ 462:     hasResult = true;
+ 463:     showContinue();
+ 464:   }
+ 465: 
+ 466:   function reset() {
+ 467:     applyDefaults();
+ 468:     loadPrior();
+ 469:     invalidate();
+ 470:   }
+ 471: 
+ 472:   function bind() {
+ 473:     [els.base, els.w0, els.w1, els.p, els.oh].forEach((el) => {
+ 474:       el.addEventListener("input", invalidate);
+ 475:       el.addEventListener("change", invalidate);
+ 476:     });
+ 477: 
+ 478:     els.calc.addEventListener("click", calc);
+ 479:     els.reset.addEventListener("click", reset);
+ 480:     els.continueBtn.addEventListener("click", () => {
+ 481:       if (!hasResult) return;
+ 482:       window.location.href = NEXT_URL;
+ 483:     });
+ 484:   }
+ 485: 
+ 486:   function init() {
+ 487:     bind();
+ 488:     loadPrior();
+ 489:     invalidate();
+ 490:   }
+ 491: 
+ 492:   window.addEventListener("DOMContentLoaded", () => {
+ 493:     unlockCategoryPage();
+ 494:     setTimeout(() => {
+ 495:       unlockCategoryPage();
+ 496:     }, 400);
+ 497: 
+ 498:     const year = document.querySelector("[data-year]");
+ 499:     if (year) year.textContent = new Date().getFullYear();
+ 500:     init();
+ 501:   });
+ 502: })();
+
+
+============================================================
+TOOL: cpu-utilization-impact
+============================================================
+Title: CPU Utilization Impact
+Tier: pro
+Meta description: Estimate latency blow-up as CPU utilization approaches saturation and determine whether processor headroom remains safe.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Current CPU Utilization (%)
+- Target CPU Utilization (%)
+- Baseline Latency (ms)
+- Headroom Target (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- u
+- u2
+- lat
+- head
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "cpu-utilization-impact";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "concurrency-scaling";
+   8:   const NEXT_URL = "/tools/performance/disk-saturation/";
+   9: 
+  10:   const FLOW_KEYS = {
+  11:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  12:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  13:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  14:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  15:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  16:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  17:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  18:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  19:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  20:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  21:   };
+  22: 
+  23:   const chartRef = { current: null };
+  24:   const chartWrapRef = { current: null };
+  25:   const $ = (id) => document.getElementById(id);
+  26: 
+  27:   let hasResult = false;
+  28: 
+  29:   const els = {
+  30:     u: $("u"),
+  31:     u2: $("u2"),
+  32:     lat: $("lat"),
+  33:     head: $("head"),
+  34:     calc: $("calc"),
+  35:     reset: $("reset"),
+  36:     results: $("results"),
+  37:     analysis: $("analysis-copy"),
+  38:     flowNote: $("flow-note"),
+  39:     continueWrap: $("continue-wrap"),
+  40:     continueBtn: $("continue"),
+  41:     lockedCard: $("lockedCard"),
+  42:     toolCard: $("toolCard")
+  43:   };
+  44: 
+  45:   const DEFAULTS = {
+  46:     u: 65,
+  47:     u2: 85,
+  48:     lat: 25,
+  49:     head: 20
+  50:   };
+  51: 
+  52:   function hasStoredAuth() {
+  53:     try {
+  54:       const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+  55:       if (!k) return false;
+  56:       const raw = JSON.parse(localStorage.getItem(k));
+  57:       return !!(
+  58:         raw?.access_token ||
+  59:         raw?.currentSession?.access_token ||
+  60:         (Array.isArray(raw) ? raw[0]?.access_token : null)
+  61:       );
+  62:     } catch {
+  63:       return false;
+  64:     }
+  65:   }
+  66: 
+  67:   function getUnlockedCategories() {
+  68:     try {
+  69:       const raw = localStorage.getItem("sl_unlocked_categories");
+  70:       if (!raw) return [];
+
+--- CORE BLOCK 2 ---
+ 107:   }
+ 108: 
+ 109:   function fmtMs(value, digits = 1) {
+ 110:     return Number.isFinite(value) ? `${value.toFixed(digits)} ms` : "—";
+ 111:   }
+ 112: 
+ 113:   function showContinue() {
+ 114:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+ 115:     if (els.continueBtn) els.continueBtn.disabled = false;
+ 116:   }
+ 117: 
+ 118:   function hideContinue() {
+ 119:     if (els.continueWrap) els.continueWrap.style.display = "none";
+ 120:     if (els.continueBtn) els.continueBtn.disabled = true;
+ 121:   }
+ 122: 
+ 123:   function applyDefaults() {
+ 124:     els.u.value = String(DEFAULTS.u);
+ 125:     els.u2.value = String(DEFAULTS.u2);
+ 126:     els.lat.value = String(DEFAULTS.lat);
+ 127:     els.head.value = String(DEFAULTS.head);
+ 128:   }
+ 129: 
+ 130:   function invalidate() {
+ 131:     try {
+ 132:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 133:       sessionStorage.removeItem(FLOW_KEYS["disk-saturation"]);
+ 134:       sessionStorage.removeItem(FLOW_KEYS["network-congestion"]);
+ 135:       sessionStorage.removeItem(FLOW_KEYS["cache-hit-ratio"]);
+ 136:       sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+ 137:       sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+ 138:     } catch {}
+ 139: 
+ 140:     ScopedLabsAnalyzer.invalidate({
+ 141:       resultsEl: els.results,
+ 142:       analysisEl: els.analysis,
+ 143:       continueWrapEl: null,
+ 144:       continueBtnEl: null,
+ 145:       existingChartRef: chartRef,
+ 146:       existingWrapRef: chartWrapRef,
+ 147:       flowKey: FLOW_KEYS[STEP],
+ 148:       category: CATEGORY,
+ 149:       step: STEP,
+ 150:       lane: LANE,
+ 151:       emptyMessage: "Enter values and press Calculate."
+ 152:     });
+ 153: 
+ 154:     hasResult = false;
+ 155:     hideContinue();
+ 156:   }
+ 157: 
+ 158:   function loadPrior() {
+ 159:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+ 160:     if (!raw) {
+ 161:       els.flowNote.hidden = true;
+ 162:       els.flowNote.innerHTML = "";
+ 163:       return;
+ 164:     }
+ 165: 
+ 166:     let parsed = null;
+ 167:     try {
+ 168:       parsed = JSON.parse(raw);
+ 169:     } catch {
+ 170:       els.flowNote.hidden = true;
+ 171:       els.flowNote.innerHTML = "";
+ 172:       return;
+ 173:     }
+ 174: 
+ 175:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 176:       els.flowNote.hidden = true;
+ 177:       els.flowNote.innerHTML = "";
+ 178:       return;
+ 179:     }
+ 180: 
+ 181:     const d = parsed.data || {};
+ 182:     const throughput = num(d.throughput);
+ 183:     const scalingGain = num(d.scalingGain);
+ 184:     const efficiency = num(d.scalingEfficiencyPct);
+ 185:     const currentWorkers = num(d.currentWorkers);
+ 186:     const targetWorkers = num(d.targetWorkers);
+ 187: 
+ 188:     if (Number.isFinite(throughput)) {
+ 189:       if (throughput <= 1500) {
+ 190:         els.u.value = "48";
+ 191:         els.u2.value = "62";
+ 192:         els.lat.value = "18";
+ 193:       } else if (throughput <= 3000) {
+ 194:         els.u.value = "58";
+ 195:         els.u2.value = "74";
+ 196:         els.lat.value = "22";
+ 197:       } else if (throughput <= 5000) {
+ 198:         els.u.value = "68";
+ 199:         els.u2.value = "84";
+ 200:         els.lat.value = "28";
+ 201:       } else {
+ 202:         els.u.value = "78";
+ 203:         els.u2.value = "92";
+ 204:         els.lat.value = "35";
+ 205:       }
+ 206:     }
+ 207: 
+ 208:     if (Number.isFinite(efficiency)) {
+ 209:       if (efficiency < 60) els.head.value = "30";
+ 210:       else if (efficiency < 75) els.head.value = "25";
+ 211:       else els.head.value = "20";
+ 212:     }
+ 213: 
+ 214:     const parts = [];
+ 215:     if (Number.isFinite(throughput)) parts.push(`Scaled Throughput: <strong>${fmt(throughput, 0)} req/s</strong>`);
+ 216:     if (Number.isFinite(scalingGain)) parts.push(`Scaling Gain: <strong>${fmtPct(scalingGain * 100)}</strong>`);
+ 217:     if (Number.isFinite(efficiency)) parts.push(`Scaling Efficiency: <strong>${fmtPct(efficiency)}</strong>`);
+ 218:     if (Number.isFinite(currentWorkers) && Number.isFinite(targetWorkers)) {
+ 219:       parts.push(`Workers: <strong>${fmt(currentWorkers, 0)} → ${fmt(targetWorkers, 0)}</strong>`);
+ 220:     }
+ 221: 
+ 222:     if (!parts.length) {
+ 223:       els.flowNote.hidden = true;
+ 224:       els.flowNote.innerHTML = "";
+ 225:       return;
+ 226:     }
+ 227: 
+ 228:     els.flowNote.hidden = false;
+ 229:     els.flowNote.innerHTML = `
+ 230:       <strong>Flow Context</strong><br>
+ 231:       ${parts.join(" | ")}
+ 232:       <br><br>
+ 233:       This step evaluates whether the concurrency gain from the previous step is likely to create a processor-side saturation problem.
+ 234:     `;
+ 235:   }
+
+--- CORE BLOCK 3 ---
+ 244:     const u2 = num(els.u2.value);
+ 245:     const lat = num(els.lat.value);
+ 246:     const head = num(els.head.value);
+ 247: 
+ 248:     if (
+ 249:       !Number.isFinite(u) || u < 0 || u > 100 ||
+ 250:       !Number.isFinite(u2) || u2 < 0 || u2 > 100 ||
+ 251:       !Number.isFinite(lat) || lat < 0 ||
+ 252:       !Number.isFinite(head) || head < 0 || head > 95
+ 253:     ) {
+ 254:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 255:     }
+ 256: 
+ 257:     return { ok: true, u, u2, lat, head };
+ 258:   }
+ 259: 
+ 260:   function calculateModel() {
+ 261:     const input = getInputs();
+ 262:     if (!input.ok) return input;
+ 263: 
+ 264:     const currentUtil = input.u / 100;
+ 265:     const targetUtil = input.u2 / 100;
+ 266:     const safeUtil = 1 - (input.head / 100);
+ 267: 
+ 268:     const currentLatency = blowup(input.lat, Math.min(0.99, currentUtil));
+ 269:     const targetLatency = blowup(input.lat, Math.min(0.99, targetUtil));
+ 270:     const latencyGrowthPct =
+ 271:       currentLatency > 0 ? ((targetLatency - currentLatency) / currentLatency) * 100 : 0;
+ 272: 
+ 273:     const targetPressure = targetUtil * 100;
+ 274:     const headroomGapPct = Math.max(0, (targetUtil - safeUtil) * 100);
+ 275:     const queueingPressure = Math.max(0, (targetUtil - 0.70) * 100 * 2);
+ 276: 
+ 277:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 278:       compositeScore: Math.max(targetPressure - 60, headroomGapPct * 2, queueingPressure),
+ 279:       metrics: [
+ 280:         {
+ 281:           label: "Target CPU Pressure",
+ 282:           value: targetPressure,
+ 283:           displayValue: fmtPct(targetPressure)
+ 284:         },
+ 285:         {
+ 286:           label: "Headroom Deficit",
+ 287:           value: headroomGapPct * 2,
+ 288:           displayValue: fmtPct(headroomGapPct)
+ 289:         },
+ 290:         {
+ 291:           label: "Queueing Pressure",
+ 292:           value: queueingPressure,
+ 293:           displayValue: fmtMs(targetLatency)
+ 294:         }
+ 295:       ],
+ 296:       healthyMax: 35,
+ 297:       watchMax: 70
+ 298:     });
+ 299: 
+ 300:     let cpuClass = "COMFORTABLE";
+ 301:     if (statusPack.status === "WATCH") cpuClass = "RISING";
+ 302:     if (statusPack.status === "RISK") cpuClass = "SATURATION RISK";
+ 303: 
+ 304:     const dominantLabel = statusPack.dominant.label;
+ 305: 
+ 306:     let interpretation = `CPU utilization rises from ${fmtPct(input.u)} to ${fmtPct(input.u2)}, which increases modeled latency from ${fmtMs(currentLatency)} to ${fmtMs(targetLatency)}.`;
+ 307: 
+ 308:     if (statusPack.status === "RISK") {
+ 309:       interpretation += ` The dominant processor-side pressure is already in a risk band, so this is the point where CPU is likely to become the active bottleneck and latency can accelerate sharply rather than climb gradually.`;
+ 310:     } else if (statusPack.status === "WATCH") {
+ 311:       interpretation += ` CPU pressure is climbing into a meaningful warning zone. The system may still function acceptably, but processor contention and queueing behavior are becoming much more likely to drive visible response-time growth.`;
+ 312:     } else {
+ 313:       interpretation += ` CPU remains in a controlled band, so the modeled utilization increase does not yet indicate a severe saturation problem under the current assumptions.`;
+ 314:     }
+ 315: 
+ 316:     let dominantConstraint = "";
+ 317:     if (dominantLabel === "Target CPU Pressure") {
+ 318:       dominantConstraint = "Target CPU pressure is the dominant limiter. The main concern is simply how close the processor is being pushed toward saturation.";
+ 319:     } else if (dominantLabel === "Headroom Deficit") {
+ 320:       dominantConstraint = "Headroom deficit is the dominant limiter. The design is consuming more CPU reserve than the stated target allows, so resilience is weakening before full saturation is even reached.";
+ 321:     } else {
+ 322:       dominantConstraint = "Queueing pressure is the dominant limiter. The biggest practical risk is not just raw utilization, but the latency amplification that begins once CPU demand gets too close to saturation.";
+ 323:     }
+ 324: 
+ 325:     let guidance = "";
+ 326:     if (statusPack.status === "RISK") {
+ 327:       guidance = "Treat CPU as the leading bottleneck candidate. Validate scheduler contention, steal time, run queue pressure, and thread placement before assuming downstream systems are the primary issue.";
+ 328:     } else if (statusPack.status === "WATCH") {
+ 329:       guidance = "CPU is still manageable, but you should verify whether the utilization increase is sustained or bursty. This is the point where extra workload can start turning latency growth non-linear.";
+ 330:     } else {
+ 331:       guidance = "CPU headroom is balanced. Continue into Disk Saturation next to confirm that storage does not become the next dominant limiter once processor pressure remains under control.";
+ 332:     }
+ 333: 
+ 334:     return {
+ 335:       ok: true,
+ 336:       currentUtilPct: input.u,
+ 337:       targetUtilPct: input.u2,
+ 338:       baselineLatencyMs: input.lat,
+ 339:       currentLatency,
+ 340:       targetLatency,
+ 341:       safeUtilPct: safeUtil * 100,
+ 342:       latencyGrowthPct,
+ 343:       cpuClass,
+ 344:       targetPressure,
+ 345:       headroomGapPct,
+ 346:       queueingPressure,
+ 347:       status: statusPack.status,
+ 348:       interpretation,
+ 349:       dominantConstraint,
+ 350:       guidance
+ 351:     };
+ 352:   }
+ 353: 
+ 354:   function calc() {
+ 355:     const data = calculateModel();
+ 356:     if (!data.ok) {
+ 357:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 358:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 359:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 360:       hideContinue();
+ 361:       return;
+ 362:     }
+ 363: 
+ 364:     ScopedLabsAnalyzer.renderOutput({
+ 365:       resultsEl: els.results,
+ 366:       analysisEl: els.analysis,
+ 367:       existingChartRef: chartRef,
+ 368:       existingWrapRef: chartWrapRef,
+ 369:       summaryRows: [
+ 370:         { label: "Latency @ Current", value: fmtMs(data.currentLatency) },
+ 371:         { label: "Latency @ Target", value: fmtMs(data.targetLatency) },
+ 372:         { label: "Recommended Max Util", value: fmtPct(data.safeUtilPct) },
+ 373:         { label: "CPU Class", value: data.cpuClass }
+ 374:       ],
+ 375:       derivedRows: [
+ 376:         { label: "Current CPU Utilization", value: fmtPct(data.currentUtilPct) },
+ 377:         { label: "Target CPU Utilization", value: fmtPct(data.targetUtilPct) },
+ 378:         { label: "Baseline Latency", value: fmtMs(data.baselineLatencyMs) },
+ 379:         { label: "Latency Growth", value: fmtPct(data.latencyGrowthPct) },
+ 380:         { label: "Headroom Gap", value: fmtPct(data.headroomGapPct) },
+ 381:         { label: "Queueing Pressure", value: fmt(data.queueingPressure, 1) }
+ 382:       ],
+ 383:       status: data.status,
+ 384:       interpretation: data.interpretation,
+ 385:       dominantConstraint: data.dominantConstraint,
+ 386:       guidance: data.guidance,
+ 387:       chart: {
+ 388:         labels: [
+ 389:           "Target CPU Pressure",
+ 390:           "Headroom Deficit",
+ 391:           "Queueing Pressure"
+ 392:         ],
+ 393:         values: [
+ 394:           Number(data.targetPressure.toFixed(1)),
+ 395:           Number((data.headroomGapPct * 2).toFixed(1)),
+ 396:           Number(data.queueingPressure.toFixed(1))
+ 397:         ],
+ 398:         displayValues: [
+ 399:           fmtPct(data.targetUtilPct),
+ 400:           fmtPct(data.headroomGapPct),
+ 401:           fmtMs(data.targetLatency)
+ 402:         ],
+ 403:         referenceValue: 35,
+ 404:         healthyMax: 35,
+ 405:         watchMax: 70,
+ 406:         axisTitle: "CPU Saturation Pressure",
+ 407:         referenceLabel: "Comfort Band",
+ 408:         healthyLabel: "Healthy",
+ 409:         watchLabel: "Watch",
+ 410:         riskLabel: "Risk",
+ 411:         chartMax: Math.max(
+ 412:           100,
+ 413:           Math.ceil(
+ 414:             Math.max(
+ 415:               data.targetPressure,
+ 416:               data.headroomGapPct * 2,
+ 417:               data.queueingPressure,
+ 418:               70
+ 419:             ) * 1.12
+ 420:           )
+ 421:         )
+ 422:       }
+ 423:     });
+ 424: 
+ 425:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 426:       category: CATEGORY,
+ 427:       step: STEP,
+ 428:       data: {
+ 429:         currentCpuUtilizationPct: data.currentUtilPct,
+ 430:         targetCpuUtilizationPct: data.targetUtilPct,
+ 431:         baselineLatencyMs: data.baselineLatencyMs,
+ 432:         targetLatencyMs: data.targetLatency,
+ 433:         safeCpuUtilizationPct: data.safeUtilPct,
+ 434:         latencyGrowthPct: data.latencyGrowthPct,
+ 435:         cpuClass: data.cpuClass
+ 436:       }
+ 437:     });
+ 438: 
+ 439:     hasResult = true;
+ 440:     showContinue();
+ 441:   }
+ 442: 
+ 443:   function reset() {
+ 444:     applyDefaults();
+ 445:     loadPrior();
+ 446:     invalidate();
+ 447:   }
+ 448: 
+ 449:   function bind() {
+ 450:     [els.u, els.u2, els.lat, els.head].forEach((el) => {
+ 451:       el.addEventListener("input", invalidate);
+ 452:       el.addEventListener("change", invalidate);
+ 453:     });
+ 454: 
+ 455:     els.calc.addEventListener("click", calc);
+ 456:     els.reset.addEventListener("click", reset);
+ 457:     els.continueBtn.addEventListener("click", () => {
+ 458:       if (!hasResult) return;
+ 459:       window.location.href = NEXT_URL;
+ 460:     });
+ 461:   }
+ 462: 
+ 463:   function init() {
+ 464:     bind();
+ 465:     loadPrior();
+ 466:     invalidate();
+ 467:   }
+ 468: 
+ 469:   window.addEventListener("DOMContentLoaded", () => {
+ 470:     unlockCategoryPage();
+ 471:     setTimeout(() => {
+ 472:       unlockCategoryPage();
+ 473:     }, 400);
+ 474: 
+ 475:     const year = document.querySelector("[data-year]");
+ 476:     if (year) year.textContent = new Date().getFullYear();
+ 477:     init();
+ 478:   });
+ 479: })();
+
+
+============================================================
+TOOL: disk-saturation
+============================================================
+Title: Disk Saturation Estimator
+Tier: pro
+Meta description: Estimate disk saturation from IOPS and throughput against storage bandwidth limits and target utilization.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Read IOPS
+- Write IOPS
+- Avg IO Size (KB)
+- Disk Throughput Capacity (MB/s)
+- Target Utilization (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- riops
+- wiops
+- iosz
+- cap
+- util
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "disk-saturation";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "cpu-utilization-impact";
+   8:   const NEXT_URL = "/tools/performance/network-congestion/";
+   9: 
+  10:   const FLOW_KEYS = {
+  11:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  12:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  13:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  14:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  15:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  16:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  17:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  18:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  19:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  20:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  21:   };
+  22: 
+  23:   const chartRef = { current: null };
+  24:   const chartWrapRef = { current: null };
+  25:   const $ = (id) => document.getElementById(id);
+  26: 
+  27:   let hasResult = false;
+  28: 
+  29:   const els = {
+  30:     riops: $("riops"),
+  31:     wiops: $("wiops"),
+  32:     iosz: $("iosz"),
+  33:     cap: $("cap"),
+  34:     util: $("util"),
+  35:     calc: $("calc"),
+  36:     reset: $("reset"),
+  37:     results: $("results"),
+  38:     analysis: $("analysis-copy"),
+  39:     flowNote: $("flow-note"),
+  40:     continueWrap: $("continue-wrap"),
+  41:     continueBtn: $("continue"),
+  42:     lockedCard: $("lockedCard"),
+  43:     toolCard: $("toolCard")
+  44:   };
+  45: 
+  46:   const DEFAULTS = {
+  47:     riops: 12000,
+  48:     wiops: 6000,
+  49:     iosz: 16,
+  50:     cap: 1500,
+  51:     util: 75
+  52:   };
+  53: 
+  54:   function hasStoredAuth() {
+  55:     try {
+  56:       const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+  57:       if (!k) return false;
+  58:       const raw = JSON.parse(localStorage.getItem(k));
+  59:       return !!(
+  60:         raw?.access_token ||
+  61:         raw?.currentSession?.access_token ||
+  62:         (Array.isArray(raw) ? raw[0]?.access_token : null)
+  63:       );
+  64:     } catch {
+  65:       return false;
+  66:     }
+  67:   }
+  68: 
+  69:   function getUnlockedCategories() {
+  70:     try {
+
+--- CORE BLOCK 2 ---
+ 113:   }
+ 114: 
+ 115:   function fmtIOPS(value, digits = 0) {
+ 116:     return Number.isFinite(value) ? `${value.toFixed(digits)} IOPS` : "—";
+ 117:   }
+ 118: 
+ 119:   function showContinue() {
+ 120:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+ 121:     if (els.continueBtn) els.continueBtn.disabled = false;
+ 122:   }
+ 123: 
+ 124:   function hideContinue() {
+ 125:     if (els.continueWrap) els.continueWrap.style.display = "none";
+ 126:     if (els.continueBtn) els.continueBtn.disabled = true;
+ 127:   }
+ 128: 
+ 129:   function applyDefaults() {
+ 130:     els.riops.value = String(DEFAULTS.riops);
+ 131:     els.wiops.value = String(DEFAULTS.wiops);
+ 132:     els.iosz.value = String(DEFAULTS.iosz);
+ 133:     els.cap.value = String(DEFAULTS.cap);
+ 134:     els.util.value = String(DEFAULTS.util);
+ 135:   }
+ 136: 
+ 137:   function invalidate() {
+ 138:     try {
+ 139:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 140:       sessionStorage.removeItem(FLOW_KEYS["network-congestion"]);
+ 141:       sessionStorage.removeItem(FLOW_KEYS["cache-hit-ratio"]);
+ 142:       sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+ 143:       sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+ 144:     } catch {}
+ 145: 
+ 146:     ScopedLabsAnalyzer.invalidate({
+ 147:       resultsEl: els.results,
+ 148:       analysisEl: els.analysis,
+ 149:       continueWrapEl: null,
+ 150:       continueBtnEl: null,
+ 151:       existingChartRef: chartRef,
+ 152:       existingWrapRef: chartWrapRef,
+ 153:       flowKey: FLOW_KEYS[STEP],
+ 154:       category: CATEGORY,
+ 155:       step: STEP,
+ 156:       lane: LANE,
+ 157:       emptyMessage: "Enter values and press Calculate."
+ 158:     });
+ 159: 
+ 160:     hasResult = false;
+ 161:     hideContinue();
+ 162:   }
+ 163: 
+ 164:   function loadPrior() {
+ 165:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+ 166:     if (!raw) {
+ 167:       els.flowNote.hidden = true;
+ 168:       els.flowNote.innerHTML = "";
+ 169:       return;
+ 170:     }
+ 171: 
+ 172:     let parsed = null;
+ 173:     try {
+ 174:       parsed = JSON.parse(raw);
+ 175:     } catch {
+ 176:       els.flowNote.hidden = true;
+ 177:       els.flowNote.innerHTML = "";
+ 178:       return;
+ 179:     }
+ 180: 
+ 181:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 182:       els.flowNote.hidden = true;
+ 183:       els.flowNote.innerHTML = "";
+ 184:       return;
+ 185:     }
+ 186: 
+ 187:     const d = parsed.data || {};
+ 188: 
+ 189:     const currentCpu = num(d.currentCpuUtilizationPct);
+ 190:     const targetCpu = num(d.targetCpuUtilizationPct);
+ 191:     const targetLatency = num(d.targetLatencyMs);
+ 192:     const safeCpu = num(d.safeCpuUtilizationPct);
+ 193: 
+ 194:     if (Number.isFinite(safeCpu) && safeCpu > 0) {
+ 195:       els.util.value = String(Math.round(safeCpu));
+ 196:     } else if (Number.isFinite(targetCpu) && targetCpu > 0) {
+ 197:       els.util.value = String(Math.round(targetCpu));
+ 198:     }
+ 199: 
+ 200:     if (Number.isFinite(targetLatency)) {
+ 201:       if (targetLatency > 200) els.cap.value = "2500";
+ 202:       else if (targetLatency > 100) els.cap.value = "2000";
+ 203:       else if (targetLatency > 50) els.cap.value = "1700";
+ 204:       else els.cap.value = "1500";
+ 205:     }
+ 206: 
+ 207:     const parts = [];
+ 208:     if (Number.isFinite(currentCpu)) parts.push(`Current CPU: <strong>${fmtPct(currentCpu)}</strong>`);
+ 209:     if (Number.isFinite(targetCpu)) parts.push(`Target CPU: <strong>${fmtPct(targetCpu)}</strong>`);
+ 210:     if (Number.isFinite(targetLatency)) parts.push(`Target Latency: <strong>${fmt(targetLatency, 1)} ms</strong>`);
+ 211:     if (Number.isFinite(safeCpu)) parts.push(`Safe CPU Ceiling: <strong>${fmtPct(safeCpu)}</strong>`);
+ 212: 
+ 213:     if (!parts.length) {
+ 214:       els.flowNote.hidden = true;
+ 215:       els.flowNote.innerHTML = "";
+ 216:       return;
+ 217:     }
+ 218: 
+ 219:     els.flowNote.hidden = false;
+ 220:     els.flowNote.innerHTML = `
+ 221:       <strong>Flow Context</strong><br>
+ 222:       ${parts.join(" | ")}
+ 223:       <br><br>
+ 224:       This step checks whether storage throughput becomes the next active limiter after processor-side pressure has already been estimated.
+ 225:     `;
+ 226:   }
+ 227: 
+ 228:   function getInputs() {
+ 229:     const riops = num(els.riops.value);
+ 230:     const wiops = num(els.wiops.value);
+ 231:     const iosz = num(els.iosz.value);
+ 232:     const cap = num(els.cap.value);
+ 233:     const util = num(els.util.value);
+ 234: 
+ 235:     if (
+ 236:       !Number.isFinite(riops) || riops < 0 ||
+ 237:       !Number.isFinite(wiops) || wiops < 0 ||
+ 238:       !Number.isFinite(iosz) || iosz <= 0 ||
+ 239:       !Number.isFinite(cap) || cap <= 0 ||
+ 240:       !Number.isFinite(util) || util <= 0 || util > 95
+ 241:     ) {
+ 242:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 243:     }
+ 244: 
+ 245:     return { ok: true, riops, wiops, iosz, cap, util };
+ 246:   }
+ 247: 
+ 248:   function calculateModel() {
+ 249:     const input = getInputs();
+ 250:     if (!input.ok) return input;
+ 251: 
+ 252:     const totalIops = input.riops + input.wiops;
+ 253:     const throughput = (totalIops * input.iosz) / 1024;
+ 254:     const utilizationPct = (throughput / input.cap) * 100;
+ 255:     const targetLimitMBs = input.cap * (input.util / 100);
+ 256: 
+ 257:     const throughputPressure = utilizationPct;
+ 258:     const headroomDeficitPct = Math.max(0, utilizationPct - input.util);
+ 259:     const saturationOverrunPct = Math.max(0, utilizationPct - 90) * 2;
+ 260:     const readWriteImbalancePct =
+ 261:       totalIops > 0 ? Math.abs(input.riops - input.wiops) / totalIops * 100 : 0;
+ 262: 
+ 263:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 264:       compositeScore: Math.max(throughputPressure - 40, headroomDeficitPct * 2, saturationOverrunPct),
+ 265:       metrics: [
+ 266:         {
+ 267:           label: "Throughput Pressure",
+ 268:           value: throughputPressure,
+ 269:           displayValue: fmtPct(utilizationPct)
+ 270:         },
+ 271:         {
+ 272:           label: "Headroom Deficit",
+ 273:           value: headroomDeficitPct * 2,
+ 274:           displayValue: fmtPct(headroomDeficitPct)
+ 275:         },
+ 276:         {
+ 277:           label: "Saturation Overrun",
+ 278:           value: saturationOverrunPct,
+ 279:           displayValue: fmtMBs(throughput)
+ 280:         }
+ 281:       ],
+ 282:       healthyMax: 35,
+ 283:       watchMax: 70
+ 284:     });
+ 285: 
+ 286:     let diskClass = "COMFORTABLE";
+ 287:     if (statusPack.status === "WATCH") diskClass = "ELEVATED";
+ 288:     if (statusPack.status === "RISK") diskClass = "SATURATED";
+ 289: 
+ 290:     const dominantLabel = statusPack.dominant.label;
+ 291: 
+ 292:     let interpretation = `The workload drives approximately ${fmtMBs(throughput)} of disk throughput from ${fmtIOPS(totalIops)} at an average IO size of ${fmt(input.iosz, 1)} KB. That places storage utilization at ${fmtPct(utilizationPct)} against a capacity of ${fmtMBs(input.cap)}.`;
+ 293: 
+ 294:     if (statusPack.status === "RISK") {
+ 295:       interpretation += ` The dominant storage pressure is already in a risk band, which means the disk tier is no longer just busy — it is approaching a point where queueing, service-time inflation, and application-visible slowdown become likely.`;
+ 296:     } else if (statusPack.status === "WATCH") {
+ 297:       interpretation += ` Storage remains usable, but the pressure profile is already elevated enough that moderate growth or burst activity can push the disk tier into a visible bottleneck state.`;
+ 298:     } else {
+ 299:       interpretation += ` Storage remains in a controlled band, so the workload does not yet indicate a severe throughput-side saturation problem under the current assumptions.`;
+ 300:     }
+ 301: 
+ 302:     let dominantConstraint = "";
+ 303:     if (dominantLabel === "Throughput Pressure") {
+ 304:       dominantConstraint = "Throughput pressure is the dominant limiter. The main concern is the raw fraction of available disk bandwidth the workload is already consuming.";
+ 305:     } else if (dominantLabel === "Headroom Deficit") {
+ 306:       dominantConstraint = "Headroom deficit is the dominant limiter. The design is exceeding the intended operating band even before absolute saturation is reached, so resilience is already being consumed.";
+ 307:     } else {
+ 308:       dominantConstraint = "Saturation overrun is the dominant limiter. The biggest practical risk is that storage is being pushed far enough that service time and queueing behavior can degrade sharply.";
+ 309:     }
+ 310: 
+ 311:     let guidance = "";
+ 312:     if (statusPack.status === "RISK") {
+ 313:       guidance = "Treat storage as the active bottleneck candidate. Validate queue depth, latency, controller contention, and read/write amplification before assuming the next subsystem in the stack is the primary issue.";
+ 314:     } else if (statusPack.status === "WATCH") {
+ 315:       guidance = "Disk pressure is rising. Confirm whether this load is sustained or bursty and whether the throughput assumptions reflect real production peak behavior rather than averages.";
+ 316:     } else {
+ 317:       guidance = "Disk capacity is balanced for the current model. Continue into Network Congestion next to determine whether the path beyond storage becomes the next limiting layer.";
+ 318:     }
+ 319: 
+ 320:     return {
+ 321:       ok: true,
+ 322:       totalIops,
+ 323:       throughput,
+ 324:       utilizationPct,
+ 325:       targetLimitMBs,
+ 326:       headroomMBs: targetLimitMBs - throughput,
+ 327:       targetUtilizationPct: input.util,
+ 328:       capacityMBs: input.cap,
+ 329:       ioszKB: input.iosz,
+ 330:       readIops: input.riops,
+ 331:       writeIops: input.wiops,
+ 332:       readWriteImbalancePct,
+ 333:       diskClass,
+ 334:       status: statusPack.status,
+ 335:       interpretation,
+ 336:       dominantConstraint,
+ 337:       guidance,
+ 338:       throughputPressure,
+ 339:       headroomDeficitPct,
+ 340:       saturationOverrunPct
+ 341:     };
+ 342:   }
+ 343: 
+ 344:   function calc() {
+ 345:     const data = calculateModel();
+ 346:     if (!data.ok) {
+ 347:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 348:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 349:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 350:       hideContinue();
+ 351:       return;
+ 352:     }
+ 353: 
+ 354:     ScopedLabsAnalyzer.renderOutput({
+ 355:       resultsEl: els.results,
+ 356:       analysisEl: els.analysis,
+ 357:       existingChartRef: chartRef,
+ 358:       existingWrapRef: chartWrapRef,
+ 359:       summaryRows: [
+ 360:         { label: "Total IOPS", value: fmtIOPS(data.totalIops) },
+ 361:         { label: "Throughput", value: fmtMBs(data.throughput) },
+ 362:         { label: "Utilization", value: fmtPct(data.utilizationPct) },
+ 363:         { label: "Disk Class", value: data.diskClass }
+ 364:       ],
+ 365:       derivedRows: [
+ 366:         { label: "Capacity", value: fmtMBs(data.capacityMBs) },
+ 367:         { label: "Target Limit", value: fmtMBs(data.targetLimitMBs) },
+ 368:         { label: "Headroom", value: fmtMBs(data.headroomMBs) },
+ 369:         { label: "Read IOPS", value: fmtIOPS(data.readIops) },
+ 370:         { label: "Write IOPS", value: fmtIOPS(data.writeIops) },
+ 371:         { label: "Read/Write Imbalance", value: fmtPct(data.readWriteImbalancePct) }
+ 372:       ],
+ 373:       status: data.status,
+ 374:       interpretation: data.interpretation,
+ 375:       dominantConstraint: data.dominantConstraint,
+ 376:       guidance: data.guidance,
+ 377:       chart: {
+ 378:         labels: [
+ 379:           "Throughput Pressure",
+ 380:           "Headroom Deficit",
+ 381:           "Saturation Overrun"
+ 382:         ],
+ 383:         values: [
+ 384:           Number(data.throughputPressure.toFixed(1)),
+ 385:           Number((data.headroomDeficitPct * 2).toFixed(1)),
+ 386:           Number(data.saturationOverrunPct.toFixed(1))
+ 387:         ],
+ 388:         displayValues: [
+ 389:           fmtPct(data.utilizationPct),
+ 390:           fmtPct(data.headroomDeficitPct),
+ 391:           fmtMBs(data.throughput)
+ 392:         ],
+ 393:         referenceValue: 35,
+ 394:         healthyMax: 35,
+ 395:         watchMax: 70,
+ 396:         axisTitle: "Storage Saturation Pressure",
+ 397:         referenceLabel: "Comfort Band",
+ 398:         healthyLabel: "Healthy",
+ 399:         watchLabel: "Watch",
+ 400:         riskLabel: "Risk",
+ 401:         chartMax: Math.max(
+ 402:           100,
+ 403:           Math.ceil(
+ 404:             Math.max(
+ 405:               data.throughputPressure,
+ 406:               data.headroomDeficitPct * 2,
+ 407:               data.saturationOverrunPct,
+ 408:               70
+ 409:             ) * 1.12
+ 410:           )
+ 411:         )
+ 412:       }
+ 413:     });
+ 414: 
+ 415:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 416:       category: CATEGORY,
+ 417:       step: STEP,
+ 418:       data: {
+ 419:         totalIops: data.totalIops,
+ 420:         throughputMBps: data.throughput,
+ 421:         diskUtilizationPct: data.utilizationPct,
+ 422:         targetUtilizationPct: data.targetUtilizationPct,
+ 423:         capacityMBps: data.capacityMBs,
+ 424:         diskClass: data.diskClass,
+ 425:         saturated: data.status === "RISK"
+ 426:       }
+ 427:     });
+ 428: 
+ 429:     hasResult = true;
+ 430:     showContinue();
+ 431:   }
+ 432: 
+ 433:   function reset() {
+ 434:     applyDefaults();
+ 435:     loadPrior();
+ 436:     invalidate();
+ 437:   }
+ 438: 
+ 439:   function bind() {
+ 440:     [els.riops, els.wiops, els.iosz, els.cap, els.util].forEach((el) => {
+ 441:       el.addEventListener("input", invalidate);
+ 442:       el.addEventListener("change", invalidate);
+ 443:     });
+ 444: 
+ 445:     els.calc.addEventListener("click", calc);
+ 446:     els.reset.addEventListener("click", reset);
+ 447:     els.continueBtn.addEventListener("click", () => {
+ 448:       if (!hasResult) return;
+ 449:       window.location.href = NEXT_URL;
+ 450:     });
+ 451:   }
+ 452: 
+ 453:   function init() {
+ 454:     bind();
+ 455:     loadPrior();
+ 456:     invalidate();
+ 457:   }
+ 458: 
+ 459:   window.addEventListener("DOMContentLoaded", () => {
+ 460:     unlockCategoryPage();
+ 461:     setTimeout(() => {
+ 462:       unlockCategoryPage();
+ 463:     }, 400);
+ 464: 
+ 465:     const year = document.querySelector("[data-year]");
+ 466:     if (year) year.textContent = new Date().getFullYear();
+ 467:     init();
+ 468:   });
+ 469: })();
+ 470: 
+
+
+============================================================
+TOOL: headroom-target
+============================================================
+Title: Headroom Target Calculator
+Tier: free/unknown
+Meta description: Convert current utilization into a safer operating target with reserved headroom for bursts, failover, and growth.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Current Utilization (%)
+- Desired Headroom (%)
+- Current Capacity
+- Unit req/s Mbps IOPS
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- u
+- h
+- cap
+- unit
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- continue
+- complete-wrap
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "headroom-target";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "bottleneck-analyzer";
+   8: 
+   9:   const FLOW_KEYS = {
+  10:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  11:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  12:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  13:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  14:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  15:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  16:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  17:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  18:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  19:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  20:   };
+  21: 
+  22:   const chartRef = { current: null };
+  23:   const chartWrapRef = { current: null };
+  24:   const $ = (id) => document.getElementById(id);
+  25: 
+  26:   let hasResult = false;
+  27: 
+  28:   const els = {
+  29:     u: $("u"),
+  30:     h: $("h"),
+  31:     cap: $("cap"),
+  32:     unit: $("unit"),
+  33:     calc: $("calc"),
+  34:     reset: $("reset"),
+  35:     results: $("results"),
+  36:     analysis: $("analysis-copy"),
+  37:     flowNote: $("flow-note"),
+  38:     continueWrap: $("next-step-row"),
+  39:     continueBtn: $("continue"),
+  40:     completeWrap: $("complete-wrap")
+  41:   };
+  42: 
+  43:   const DEFAULTS = {
+  44:     u: 60,
+  45:     h: 25,
+  46:     cap: 1000,
+  47:     unit: "req/s"
+  48:   };
+  49: 
+  50:   function num(value) {
+  51:     return ScopedLabsAnalyzer.safeNumber(value, NaN);
+  52:   }
+  53: 
+  54:   function fmt(value, digits = 1) {
+  55:     return Number.isFinite(value) ? value.toFixed(digits) : "—";
+  56:   }
+  57: 
+  58:   function fmtPct(value, digits = 1) {
+  59:     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+  60:   }
+  61: 
+  62:   function showComplete() {
+  63:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+  64:     if (els.completeWrap) els.completeWrap.style.display = "block";
+  65:     if (els.continueBtn) els.continueBtn.setAttribute("aria-disabled", "false");
+  66:   }
+  67: 
+  68:   function hideComplete() {
+  69:     if (els.continueWrap) els.continueWrap.style.display = "none";
+
+--- CORE BLOCK 2 ---
+ 104:   function loadPrior() {
+ 105:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+ 106:     if (!raw) {
+ 107:       els.flowNote.hidden = true;
+ 108:       els.flowNote.innerHTML = "";
+ 109:       return;
+ 110:     }
+ 111: 
+ 112:     let parsed = null;
+ 113:     try {
+ 114:       parsed = JSON.parse(raw);
+ 115:     } catch {
+ 116:       els.flowNote.hidden = true;
+ 117:       els.flowNote.innerHTML = "";
+ 118:       return;
+ 119:     }
+ 120: 
+ 121:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 122:       els.flowNote.hidden = true;
+ 123:       els.flowNote.innerHTML = "";
+ 124:       return;
+ 125:     }
+ 126: 
+ 127:     const d = parsed.data || {};
+ 128: 
+ 129:     const highestSubsystem =
+ 130:       d.highestSubsystem ||
+ 131:       d.likelyBottleneck ||
+ 132:       d.bottleneckSubsystem ||
+ 133:       null;
+ 134: 
+ 135:     const highestUtilizationPct =
+ 136:       num(d.highestUtilizationPct) ??
+ 137:       num(d.highestUtilization) ??
+ 138:       num(d.maxUtilizationPct) ??
+ 139:       num(d.currentUtilizationPct);
+ 140: 
+ 141:     const secondHighestSubsystem = d.secondHighestSubsystem || null;
+ 142:     const secondHighestUtilizationPct =
+ 143:       num(d.secondHighestUtilizationPct) ??
+ 144:       num(d.secondHighestUtilization);
+ 145: 
+ 146:     const bottleneckStatus =
+ 147:       d.bottleneckStatus ||
+ 148:       d.status ||
+ 149:       d.severity ||
+ 150:       null;
+ 151: 
+ 152:     const bottleneckGapPts =
+ 153:       num(d.bottleneckGapPts) ??
+ 154:       num(d.spread) ??
+ 155:       num(d.utilizationGapPts);
+ 156: 
+ 157:     const averageUtilizationPct =
+ 158:       num(d.averageUtilizationPct) ??
+ 159:       num(d.avgUtilizationPct);
+ 160: 
+ 161:     const balanceStatus =
+ 162:       d.balanceStatus ||
+ 163:       d.loadBalance ||
+ 164:       null;
+ 165: 
+ 166:     if (Number.isFinite(highestUtilizationPct)) {
+ 167:       els.u.value = String(Math.round(highestUtilizationPct));
+ 168: 
+ 169:       if (highestUtilizationPct >= 90) {
+ 170:         els.h.value = "30";
+ 171:       } else if (highestUtilizationPct >= 80) {
+ 172:         els.h.value = "25";
+ 173:       } else if (highestUtilizationPct >= 70) {
+ 174:         els.h.value = "20";
+ 175:       } else {
+ 176:         els.h.value = "15";
+ 177:       }
+ 178:     }
+ 179: 
+ 180:     if (highestSubsystem === "CPU") {
+ 181:       els.unit.value = "req/s";
+ 182:       els.cap.value = "1000";
+ 183:     } else if (highestSubsystem === "Network") {
+ 184:       els.unit.value = "Mbps";
+ 185:       els.cap.value = "1000";
+ 186:     } else if (highestSubsystem === "Disk") {
+ 187:       els.unit.value = "IOPS";
+ 188:       els.cap.value = "10000";
+ 189:     } else if (highestSubsystem === "Memory") {
+ 190:       els.unit.value = "req/s";
+ 191:       els.cap.value = "1000";
+ 192:     }
+ 193: 
+ 194:     const parts = [];
+ 195: 
+ 196:     if (highestSubsystem && Number.isFinite(highestUtilizationPct)) {
+ 197:       parts.push(`Likely Bottleneck: <strong>${highestSubsystem} (${fmt(highestUtilizationPct, 1)}%)</strong>`);
+ 198:     }
+ 199:     if (secondHighestSubsystem && Number.isFinite(secondHighestUtilizationPct)) {
+ 200:       parts.push(`Second Highest: <strong>${secondHighestSubsystem} (${fmt(secondHighestUtilizationPct, 1)}%)</strong>`);
+ 201:     }
+ 202:     if (bottleneckStatus) {
+ 203:       parts.push(`Severity: <strong>${bottleneckStatus}</strong>`);
+ 204:     }
+ 205:     if (Number.isFinite(bottleneckGapPts)) {
+ 206:       parts.push(`Gap: <strong>${fmt(bottleneckGapPts, 1)} pts</strong>`);
+ 207:     }
+ 208:     if (Number.isFinite(averageUtilizationPct)) {
+ 209:       parts.push(`Average Utilization: <strong>${fmt(averageUtilizationPct, 1)}%</strong>`);
+ 210:     }
+ 211:     if (balanceStatus) {
+ 212:       parts.push(`Load Balance: <strong>${balanceStatus}</strong>`);
+ 213:     }
+ 214: 
+ 215:     if (!parts.length) {
+ 216:       els.flowNote.hidden = true;
+ 217:       els.flowNote.innerHTML = "";
+ 218:       return;
+ 219:     }
+ 220: 
+ 221:     els.flowNote.hidden = false;
+ 222:     els.flowNote.innerHTML = `
+ 223:       <strong>Flow Context</strong><br>
+ 224:       ${parts.join(" | ")}
+ 225:       <br><br>
+ 226:       This final step converts the identified bottleneck into a safer operating target by reserving headroom for bursts, failover conditions, and future growth.
+ 227:     `;
+ 228:   }
+ 229: 
+ 230:   function getInputs() {
+ 231:     const uPct = num(els.u.value);
+ 232:     const hPct = num(els.h.value);
+ 233:     const cap = num(els.cap.value);
+ 234:     const unit = els.unit.value;
+ 235: 
+ 236:     if (
+ 237:       !Number.isFinite(uPct) || uPct < 0 || uPct > 100 ||
+ 238:       !Number.isFinite(hPct) || hPct < 0 || hPct >= 100 ||
+ 239:       !Number.isFinite(cap) || cap <= 0
+ 240:     ) {
+ 241:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 242:     }
+ 243: 
+ 244:     return { ok: true, uPct, hPct, cap, unit };
+ 245:   }
+ 246: 
+ 247:   function calculateModel() {
+ 248:     const input = getInputs();
+ 249:     if (!input.ok) return input;
+ 250: 
+ 251:     const { uPct, hPct, cap, unit } = input;
+ 252: 
+ 253:     const u = uPct / 100;
+ 254:     const h = hPct / 100;
+ 255:     const safeUtil = 1 - h;
+ 256:     const currentLoad = cap * u;
+ 257:     const maxLoad = cap * safeUtil;
+ 258:     const remainingSafeCapacity = maxLoad - currentLoad;
+ 259:     const growthUntilLimitPct = maxLoad > 0 ? (remainingSafeCapacity / maxLoad) * 100 : 0;
+ 260:     const overloadAgainstTarget = Math.max(0, currentLoad - maxLoad);
+ 261: 
+ 262:     const operatingPressure = uPct;
+ 263:     const headroomDeficitPct = Math.max(0, uPct - (safeUtil * 100));
+ 264:     const reserveTightnessPct = Math.max(0, (uPct + hPct) - 100);
+ 265: 
+ 266:     const operatingPressureMetric = operatingPressure;
+ 267:     const headroomDeficitMetric = headroomDeficitPct * 2;
+ 268:     const reserveTightnessMetric = reserveTightnessPct * 2;
+ 269: 
+ 270:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 271:       compositeScore: Math.max(
+ 272:         operatingPressureMetric,
+ 273:         headroomDeficitMetric,
+ 274:         reserveTightnessMetric
+ 275:       ),
+ 276:       metrics: [
+ 277:         {
+ 278:           label: "Operating Pressure",
+ 279:           value: operatingPressureMetric,
+ 280:           displayValue: fmtPct(uPct)
+ 281:         },
+ 282:         {
+ 283:           label: "Headroom Deficit",
+ 284:           value: headroomDeficitMetric,
+ 285:           displayValue: fmtPct(headroomDeficitPct)
+ 286:         },
+ 287:         {
+ 288:           label: "Reserve Tightness",
+ 289:           value: reserveTightnessMetric,
+ 290:           displayValue: fmtPct(hPct)
+ 291:         }
+ 292:       ],
+ 293:       healthyMax: 70,
+ 294:       watchMax: 85
+ 295:     });
+ 296: 
+ 297:     let headroomStatus = "HEALTHY";
+ 298:     if (statusPack.status === "WATCH") headroomStatus = "WATCH";
+ 299:     if (statusPack.status === "RISK") {
+ 300:       headroomStatus = overloadAgainstTarget > 0 ? "OVER TARGET" : "TIGHT";
+ 301:     }
+ 302: 
+ 303:     let interpretation = `Current utilization is ${fmtPct(uPct)} with a desired reserve of ${fmtPct(hPct)}. That translates to a recommended maximum operating utilization of ${fmtPct(safeUtil * 100)} and a recommended maximum load of ${fmt(maxLoad, 1)} ${unit}.`;
+ 304: 
+ 305:     if (statusPack.status === "RISK") {
+ 306:       interpretation += ` The operating point is already too close to, or beyond, the intended safe band. In engineering terms, the system is now consuming reserve that should have been preserved for bursts, failover, or growth, so resilience is materially reduced.`;
+ 307:     } else if (statusPack.status === "WATCH") {
+ 308:       interpretation += ` The system is still inside the target envelope, but reserve is tight enough that growth or transient peaks can erode the remaining margin faster than expected.`;
+ 309:     } else {
+ 310:       interpretation += ` The operating point remains in a controlled band, so reserve capacity is still available for bursts, transient degradation, and moderate growth.`;
+ 311:     }
+ 312: 
+ 313:     let dominantConstraint = "";
+ 314:     if (statusPack.dominant.label === "Operating Pressure") {
+ 315:       dominantConstraint = "Operating pressure is the dominant limiter. The main concern is the current fraction of capacity already being consumed.";
+ 316:     } else if (statusPack.dominant.label === "Headroom Deficit") {
+ 317:       dominantConstraint = "Headroom deficit is the dominant limiter. The design is already overrunning the intended safe operating band rather than merely approaching it.";
+ 318:     } else {
+ 319:       dominantConstraint = "Reserve tightness is the dominant limiter. The biggest risk is not today’s load alone, but how little reserve remains once the desired headroom is honored.";
+ 320:     }
+ 321: 
+ 322:     let guidance = "";
+ 323:     if (statusPack.status === "RISK") {
+ 324:       guidance = "Lower sustained load, add capacity, or reduce the required burst envelope before treating this target as safe. A system that has already consumed its reserve is much less tolerant of failure, spikes, or growth.";
+ 325:     } else if (statusPack.status === "WATCH") {
+ 326:       guidance = "The target is serviceable, but expansion planning should start before the remaining reserve is consumed. Validate whether the chosen headroom percentage truly reflects expected burst and failover conditions.";
+ 327:     } else {
+ 328:       guidance = "This headroom target is balanced. Use it as a practical safe operating ceiling for ongoing planning and monitoring rather than relying on raw maximum capacity alone.";
+ 329:     }
+ 330: 
+ 331:     return {
+ 332:       ok: true,
+ 333:       uPct,
+ 334:       hPct,
+ 335:       cap,
+ 336:       unit,
+ 337:       currentLoad,
+ 338:       maxLoad,
+ 339:       remainingSafeCapacity,
+ 340:       growthUntilLimitPct,
+ 341:       overloadAgainstTarget,
+ 342:       recommendedMaxUtilizationPct: safeUtil * 100,
+ 343:       headroomStatus,
+ 344:       status: statusPack.status,
+ 345:       interpretation,
+ 346:       dominantConstraint,
+ 347:       guidance,
+ 348:       operatingPressure,
+ 349:       headroomDeficitPct,
+ 350:       reserveTightnessPct,
+ 351:       operatingPressureMetric,
+ 352:       headroomDeficitMetric,
+ 353:       reserveTightnessMetric
+ 354:     };
+ 355:   }
+ 356: 
+ 357:   function calc() {
+ 358:     const data = calculateModel();
+ 359:     if (!data.ok) {
+ 360:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 361:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 362:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 363:       hideComplete();
+ 364:       return;
+ 365:     }
+ 366: 
+ 367:     ScopedLabsAnalyzer.renderOutput({
+ 368:       resultsEl: els.results,
+ 369:       analysisEl: els.analysis,
+ 370:       existingChartRef: chartRef,
+ 371:       existingWrapRef: chartWrapRef,
+ 372:       summaryRows: [
+ 373:         { label: "Current Load", value: `${fmt(data.currentLoad, 1)} ${data.unit}` },
+ 374:         { label: "Recommended Max Load", value: `${fmt(data.maxLoad, 1)} ${data.unit}` },
+ 375:         { label: "Recommended Max Utilization", value: fmtPct(data.recommendedMaxUtilizationPct) },
+ 376:         { label: "Headroom Status", value: data.headroomStatus }
+ 377:       ],
+ 378:       derivedRows: [
+ 379:         { label: "Desired Headroom", value: fmtPct(data.hPct) },
+ 380:         { label: "Remaining Safe Capacity", value: `${fmt(data.remainingSafeCapacity, 1)} ${data.unit}` },
+ 381:         { label: "Growth Until Target Limit", value: fmtPct(data.growthUntilLimitPct) },
+ 382:         { label: "Current Capacity", value: `${fmt(data.cap, 1)} ${data.unit}` },
+ 383:         { label: "Overload Against Target", value: `${fmt(data.overloadAgainstTarget, 1)} ${data.unit}` },
+ 384:         { label: "Current Utilization", value: fmtPct(data.uPct) }
+ 385:       ],
+ 386:       status: data.status,
+ 387:       interpretation: data.interpretation,
+ 388:       dominantConstraint: data.dominantConstraint,
+ 389:       guidance: data.guidance,
+ 390:       chart: {
+ 391:         labels: [
+ 392:           "Operating Pressure",
+ 393:           "Headroom Deficit",
+ 394:           "Reserve Tightness"
+ 395:         ],
+ 396:         values: [
+ 397:           Number(data.operatingPressureMetric.toFixed(1)),
+ 398:           Number(data.headroomDeficitMetric.toFixed(1)),
+ 399:           Number(data.reserveTightnessMetric.toFixed(1))
+ 400:         ],
+ 401:         displayValues: [
+ 402:           fmtPct(data.uPct),
+ 403:           fmtPct(data.headroomDeficitPct),
+ 404:           fmtPct(data.hPct)
+ 405:         ],
+ 406:         referenceValue: 70,
+ 407:         healthyMax: 70,
+ 408:         watchMax: 85,
+ 409:         axisTitle: "Headroom Pressure",
+ 410:         referenceLabel: "Comfort Band",
+ 411:         healthyLabel: "Healthy",
+ 412:         watchLabel: "Watch",
+ 413:         riskLabel: "Risk",
+ 414:         chartMax: Math.max(
+ 415:           100,
+ 416:           Math.ceil(
+ 417:             Math.max(
+ 418:               data.operatingPressureMetric,
+ 419:               data.headroomDeficitMetric,
+ 420:               data.reserveTightnessMetric,
+ 421:               85
+ 422:             ) * 1.12
+ 423:           )
+ 424:         )
+ 425:       }
+ 426:     });
+ 427: 
+ 428:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 429:       category: CATEGORY,
+ 430:       step: STEP,
+ 431:       data: {
+ 432:         currentUtilizationPct: data.uPct,
+ 433:         desiredHeadroomPct: data.hPct,
+ 434:         currentCapacity: data.cap,
+ 435:         unit: data.unit,
+ 436:         currentLoad: data.currentLoad,
+ 437:         recommendedMaxLoad: data.maxLoad,
+ 438:         recommendedMaxUtilizationPct: data.recommendedMaxUtilizationPct,
+ 439:         remainingSafeCapacity: data.remainingSafeCapacity,
+ 440:         growthUntilLimitPct: data.growthUntilLimitPct,
+ 441:         overloadAgainstTarget: data.overloadAgainstTarget,
+ 442:         headroomStatus: data.headroomStatus
+ 443:       }
+ 444:     });
+ 445: 
+ 446:     hasResult = true;
+ 447:     showComplete();
+ 448:   }
+ 449: 
+ 450:   function reset() {
+ 451:     applyDefaults();
+ 452:     loadPrior();
+ 453:     invalidate();
+ 454:   }
+ 455: 
+ 456:   function bind() {
+ 457:     [els.u, els.h, els.cap, els.unit].forEach((el) => {
+ 458:       el.addEventListener("input", invalidate);
+ 459:       el.addEventListener("change", invalidate);
+ 460:     });
+ 461: 
+ 462:     els.calc.addEventListener("click", calc);
+ 463:     els.reset.addEventListener("click", reset);
+ 464:   }
+ 465: 
+ 466:   function init() {
+ 467:     bind();
+ 468:     loadPrior();
+ 469:     invalidate();
+ 470:   }
+ 471: 
+ 472:   window.addEventListener("DOMContentLoaded", () => {
+ 473:     const year = document.querySelector("[data-year]");
+ 474:     if (year) year.textContent = new Date().getFullYear();
+ 475:     init();
+ 476:   });
+ 477: })();
+
+
+============================================================
+TOOL: latency-vs-throughput
+============================================================
+Title: Latency vs Throughput Estimator
+Tier: pro
+Meta description: Estimate how latency accelerates as throughput approaches system capacity and identify when the load curve becomes dangerous.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Base Latency (ms)
+- Current Throughput
+- Target Throughput
+- System Capacity
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- baseLat
+- t0
+- t1
+- cap
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "latency-vs-throughput";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "response-time-sla";
+   8:   const NEXT_URL = "/tools/performance/queue-depth/";
+   9: 
+  10:   const FLOW_KEYS = {
+  11:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  12:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  13:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  14:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  15:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  16:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  17:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  18:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  19:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  20:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  21:   };
+  22: 
+  23:   const chartRef = { current: null };
+  24:   const chartWrapRef = { current: null };
+  25:   const $ = (id) => document.getElementById(id);
+  26: 
+  27:   let hasResult = false;
+  28: 
+  29:   const els = {
+  30:     baseLat: $("baseLat"),
+  31:     t0: $("t0"),
+  32:     t1: $("t1"),
+  33:     cap: $("cap"),
+  34:     calc: $("calc"),
+  35:     reset: $("reset"),
+  36:     results: $("results"),
+  37:     analysis: $("analysis-copy"),
+  38:     flowNote: $("flow-note"),
+  39:     continueWrap: $("continue-wrap"),
+  40:     continueBtn: $("continue"),
+  41:     lockedCard: $("lockedCard"),
+  42:     toolCard: $("toolCard")
+  43:   };
+  44: 
+  45:   const DEFAULTS = {
+  46:     baseLat: 25,
+  47:     t0: 1200,
+  48:     t1: 1800,
+  49:     cap: 2000
+  50:   };
+  51: 
+  52:   function hasStoredAuth() {
+  53:     try {
+  54:       const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+  55:       if (!k) return false;
+  56:       const raw = JSON.parse(localStorage.getItem(k));
+  57:       return !!(
+  58:         raw?.access_token ||
+  59:         raw?.currentSession?.access_token ||
+  60:         (Array.isArray(raw) ? raw[0]?.access_token : null)
+  61:       );
+  62:     } catch {
+  63:       return false;
+  64:     }
+  65:   }
+  66: 
+  67:   function getUnlockedCategories() {
+  68:     try {
+  69:       const raw = localStorage.getItem("sl_unlocked_categories");
+  70:       if (!raw) return [];
+
+--- CORE BLOCK 2 ---
+ 109:   function fmtMs(value, digits = 1) {
+ 110:     return Number.isFinite(value) ? `${value.toFixed(digits)} ms` : "—";
+ 111:   }
+ 112: 
+ 113:   function fmtTput(value, digits = 0) {
+ 114:     return Number.isFinite(value) ? `${value.toFixed(digits)}` : "—";
+ 115:   }
+ 116: 
+ 117:   function showContinue() {
+ 118:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+ 119:     if (els.continueBtn) els.continueBtn.disabled = false;
+ 120:   }
+ 121: 
+ 122:   function hideContinue() {
+ 123:     if (els.continueWrap) els.continueWrap.style.display = "none";
+ 124:     if (els.continueBtn) els.continueBtn.disabled = true;
+ 125:   }
+ 126: 
+ 127:   function applyDefaults() {
+ 128:     els.baseLat.value = String(DEFAULTS.baseLat);
+ 129:     els.t0.value = String(DEFAULTS.t0);
+ 130:     els.t1.value = String(DEFAULTS.t1);
+ 131:     els.cap.value = String(DEFAULTS.cap);
+ 132:   }
+ 133: 
+ 134:   function invalidate() {
+ 135:     try {
+ 136:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 137:       sessionStorage.removeItem(FLOW_KEYS["queue-depth"]);
+ 138:       sessionStorage.removeItem(FLOW_KEYS["concurrency-scaling"]);
+ 139:       sessionStorage.removeItem(FLOW_KEYS["cpu-utilization-impact"]);
+ 140:       sessionStorage.removeItem(FLOW_KEYS["disk-saturation"]);
+ 141:       sessionStorage.removeItem(FLOW_KEYS["network-congestion"]);
+ 142:       sessionStorage.removeItem(FLOW_KEYS["cache-hit-ratio"]);
+ 143:       sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+ 144:       sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+ 145:     } catch {}
+ 146: 
+ 147:     ScopedLabsAnalyzer.invalidate({
+ 148:       resultsEl: els.results,
+ 149:       analysisEl: els.analysis,
+ 150:       continueWrapEl: null,
+ 151:       continueBtnEl: null,
+ 152:       existingChartRef: chartRef,
+ 153:       existingWrapRef: chartWrapRef,
+ 154:       flowKey: FLOW_KEYS[STEP],
+ 155:       category: CATEGORY,
+ 156:       step: STEP,
+ 157:       lane: LANE,
+ 158:       emptyMessage: "Enter values and press Calculate."
+ 159:     });
+ 160: 
+ 161:     hasResult = false;
+ 162:     hideContinue();
+ 163:   }
+ 164: 
+ 165:   function loadPrior() {
+ 166:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+ 167:     if (!raw) {
+ 168:       els.flowNote.hidden = true;
+ 169:       els.flowNote.innerHTML = "";
+ 170:       return;
+ 171:     }
+ 172: 
+ 173:     let parsed = null;
+ 174:     try {
+ 175:       parsed = JSON.parse(raw);
+ 176:     } catch {
+ 177:       els.flowNote.hidden = true;
+ 178:       els.flowNote.innerHTML = "";
+ 179:       return;
+ 180:     }
+ 181: 
+ 182:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 183:       els.flowNote.hidden = true;
+ 184:       els.flowNote.innerHTML = "";
+ 185:       return;
+ 186:     }
+ 187: 
+ 188:     const d = parsed.data || {};
+ 189: 
+ 190:     const sla =
+ 191:       num(d.sla) ??
+ 192:       num(d.slaMs) ??
+ 193:       num(d.targetLatencyMs);
+ 194: 
+ 195:     const currentLatency =
+ 196:       num(d.currentLatency) ??
+ 197:       num(d.currentLatencyMs) ??
+ 198:       num(d.latencyMs);
+ 199: 
+ 200:     const status =
+ 201:       d.status ||
+ 202:       d.slaStatus ||
+ 203:       null;
+ 204: 
+ 205:     if (Number.isFinite(currentLatency) && currentLatency > 0) {
+ 206:       if (currentLatency <= 20) {
+ 207:         els.baseLat.value = "12";
+ 208:       } else if (currentLatency <= 50) {
+ 209:         els.baseLat.value = "20";
+ 210:       } else if (currentLatency <= 100) {
+ 211:         els.baseLat.value = "30";
+ 212:       } else {
+ 213:         els.baseLat.value = "40";
+ 214:       }
+ 215:     }
+ 216: 
+ 217:     if (Number.isFinite(sla)) {
+ 218:       if (sla <= 50) {
+ 219:         els.cap.value = "1800";
+ 220:         els.t0.value = "900";
+ 221:         els.t1.value = "1350";
+ 222:       } else if (sla <= 100) {
+ 223:         els.cap.value = "2000";
+ 224:         els.t0.value = "1200";
+ 225:         els.t1.value = "1700";
+ 226:       } else {
+ 227:         els.cap.value = "2500";
+ 228:         els.t0.value = "1400";
+ 229:         els.t1.value = "2100";
+ 230:       }
+ 231:     }
+ 232: 
+ 233:     const parts = [];
+ 234:     if (Number.isFinite(sla)) parts.push(`SLA Target: <strong>${fmt(sla, 1)} ms</strong>`);
+ 235:     if (Number.isFinite(currentLatency)) parts.push(`Current Latency: <strong>${fmt(currentLatency, 1)} ms</strong>`);
+ 236:     if (status) parts.push(`SLA Status: <strong>${status}</strong>`);
+ 237: 
+ 238:     if (!parts.length) {
+ 239:       els.flowNote.hidden = true;
+ 240:       els.flowNote.innerHTML = "";
+ 241:       return;
+ 242:     }
+ 243: 
+ 244:     els.flowNote.hidden = false;
+ 245:     els.flowNote.innerHTML = `
+ 246:       <strong>Flow Context</strong><br>
+ 247:       ${parts.join(" | ")}
+ 248:       <br><br>
+ 249:       This step evaluates how rising load will affect latency after the upstream SLA target and current response-time expectations have already been defined.
+ 250:     `;
+ 251:   }
+ 252: 
+ 253:   function estLatency(base, utilFraction) {
+ 254:     const denom = Math.max(0.02, 1 - utilFraction);
+ 255:     return base / denom;
+ 256:   }
+ 257: 
+ 258:   function getInputs() {
+ 259:     const baseLat = num(els.baseLat.value);
+ 260:     const t0 = num(els.t0.value);
+ 261:     const t1 = num(els.t1.value);
+ 262:     const cap = num(els.cap.value);
+ 263: 
+ 264:     if (
+ 265:       !Number.isFinite(baseLat) || baseLat < 0 ||
+ 266:       !Number.isFinite(t0) || t0 < 0 ||
+ 267:       !Number.isFinite(t1) || t1 < 0 ||
+ 268:       !Number.isFinite(cap) || cap <= 0
+ 269:     ) {
+ 270:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 271:     }
+ 272: 
+ 273:     return { ok: true, baseLat, t0, t1, cap };
+ 274:   }
+ 275: 
+ 276:   function calculateModel() {
+ 277:     const input = getInputs();
+ 278:     if (!input.ok) return input;
+ 279: 
+ 280:     const u0 = Math.min(0.98, input.t0 / input.cap);
+ 281:     const u1 = Math.min(0.98, input.t1 / input.cap);
+ 282: 
+ 283:     const l0 = estLatency(input.baseLat, u0);
+ 284:     const l1 = estLatency(input.baseLat, u1);
+ 285:     const growth = l0 > 0 ? ((l1 / l0) - 1) * 100 : 0;
+ 286: 
+ 287:     const currentUtilPct = u0 * 100;
+ 288:     const targetUtilPct = u1 * 100;
+ 289:     const utilizationRisePct = targetUtilPct - currentUtilPct;
+ 290: 
+ 291:     const saturationPressure = targetUtilPct;
+ 292:     const latencyGrowthPressure = growth;
+ 293:     const remainingCapacityPct = Math.max(0, (1 - u1) * 100);
+ 294:     const reserveTightness = Math.max(0, 100 - remainingCapacityPct);
+ 295: 
+ 296:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 297:       compositeScore: Math.max(
+ 298:         saturationPressure,
+ 299:         latencyGrowthPressure,
+ 300:         reserveTightness
+ 301:       ),
+ 302:       metrics: [
+ 303:         {
+ 304:           label: "Saturation Pressure",
+ 305:           value: saturationPressure,
+ 306:           displayValue: fmtPct(targetUtilPct)
+ 307:         },
+ 308:         {
+ 309:           label: "Latency Growth Pressure",
+ 310:           value: latencyGrowthPressure,
+ 311:           displayValue: fmtPct(growth)
+ 312:         },
+ 313:         {
+ 314:           label: "Reserve Tightness",
+ 315:           value: reserveTightness,
+ 316:           displayValue: fmtPct(remainingCapacityPct)
+ 317:         }
+ 318:       ],
+ 319:       healthyMax: 70,
+ 320:       watchMax: 85
+ 321:     });
+ 322: 
+ 323:     let loadClass = "STABLE";
+ 324:     if (statusPack.status === "WATCH") loadClass = "RISING";
+ 325:     if (statusPack.status === "RISK") loadClass = "SATURATION RISK";
+ 326: 
+ 327:     let interpretation = `At current throughput, utilization is ${fmtPct(currentUtilPct)} with modeled latency of ${fmtMs(l0)}. At target throughput, utilization rises to ${fmtPct(targetUtilPct)} and modeled latency increases to ${fmtMs(l1)}.`;
+ 328: 
+ 329:     if (statusPack.status === "RISK") {
+ 330:       interpretation += ` The system is being pushed into a region where small increases in offered load can cause disproportionately large latency growth. This is the classic pre-saturation knee where response time stops scaling gracefully.`;
+ 331:     } else if (statusPack.status === "WATCH") {
+ 332:       interpretation += ` The system is still functioning, but the load curve is already bending enough that latency begins to rise faster than throughput. This is where sustained demand can start eroding user experience quicker than expected.`;
+ 333:     } else {
+ 334:       interpretation += ` The load curve remains in a controlled region, so the modeled latency increase is still proportionate and the system retains usable margin before true saturation behavior begins.`;
+ 335:     }
+ 336: 
+ 337:     let dominantConstraint = "";
+ 338:     if (statusPack.dominant.label === "Saturation Pressure") {
+ 339:       dominantConstraint = "Saturation pressure is the dominant limiter. The main risk is how close target throughput is pushing the system toward its capacity ceiling.";
+ 340:     } else if (statusPack.dominant.label === "Latency Growth Pressure") {
+ 341:       dominantConstraint = "Latency growth pressure is the dominant limiter. The key problem is not just high utilization, but how sharply response time is starting to expand under additional load.";
+ 342:     } else {
+ 343:       dominantConstraint = "Reserve tightness is the dominant limiter. The system is losing too much remaining capacity at the target load, which reduces tolerance for bursts and variance.";
+ 344:     }
+ 345: 
+ 346:     let guidance = "";
+ 347:     if (statusPack.status === "RISK") {
+ 348:       guidance = "Treat this as a load-shaping or capacity-planning problem now rather than later. Reducing offered throughput or increasing capacity will usually be more effective than trying to tune latency after the curve has already steepened.";
+ 349:     } else if (statusPack.status === "WATCH") {
+ 350:       guidance = "The system is serviceable, but keep an eye on transient spikes and queueing. This is the point where a little more throughput can produce a lot more latency.";
+ 351:     } else {
+ 352:       guidance = "The throughput target is balanced. Continue into Queue Depth next to see how the same pressure translates into queue build-up and service delay under load.";
+ 353:     }
+ 354: 
+ 355:     return {
+ 356:       ok: true,
+ 357:       baseLat: input.baseLat,
+ 358:       currentThroughput: input.t0,
+ 359:       targetThroughput: input.t1,
+ 360:       capacity: input.cap,
+ 361:       currentUtilPct,
+ 362:       targetUtilPct,
+ 363:       utilizationRisePct,
+ 364:       currentLatencyMs: l0,
+ 365:       targetLatencyMs: l1,
+ 366:       latencyGrowthPct: growth,
+ 367:       remainingCapacityPct,
+ 368:       saturationPressure,
+ 369:       latencyGrowthPressure,
+ 370:       reserveTightness,
+ 371:       loadClass,
+ 372:       status: statusPack.status,
+ 373:       interpretation,
+ 374:       dominantConstraint,
+ 375:       guidance
+ 376:     };
+ 377:   }
+ 378: 
+ 379:   function calc() {
+ 380:     const data = calculateModel();
+ 381:     if (!data.ok) {
+ 382:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 383:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 384:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 385:       hideContinue();
+ 386:       return;
+ 387:     }
+ 388: 
+ 389:     ScopedLabsAnalyzer.renderOutput({
+ 390:       resultsEl: els.results,
+ 391:       analysisEl: els.analysis,
+ 392:       existingChartRef: chartRef,
+ 393:       existingWrapRef: chartWrapRef,
+ 394:       summaryRows: [
+ 395:         { label: "Current Utilization", value: fmtPct(data.currentUtilPct) },
+ 396:         { label: "Latency @ Current", value: fmtMs(data.currentLatencyMs) },
+ 397:         { label: "Target Utilization", value: fmtPct(data.targetUtilPct) },
+ 398:         { label: "Latency @ Target", value: fmtMs(data.targetLatencyMs) }
+ 399:       ],
+ 400:       derivedRows: [
+ 401:         { label: "Base Latency", value: fmtMs(data.baseLat) },
+ 402:         { label: "Current Throughput", value: fmtTput(data.currentThroughput, 0) },
+ 403:         { label: "Target Throughput", value: fmtTput(data.targetThroughput, 0) },
+ 404:         { label: "System Capacity", value: fmtTput(data.capacity, 0) },
+ 405:         { label: "Latency Growth", value: fmtPct(data.latencyGrowthPct) },
+ 406:         { label: "Load Class", value: data.loadClass }
+ 407:       ],
+ 408:       status: data.status,
+ 409:       interpretation: data.interpretation,
+ 410:       dominantConstraint: data.dominantConstraint,
+ 411:       guidance: data.guidance,
+ 412:       chart: {
+ 413:         labels: [
+ 414:           "Saturation Pressure",
+ 415:           "Latency Growth Pressure",
+ 416:           "Reserve Tightness"
+ 417:         ],
+ 418:         values: [
+ 419:           Number(data.saturationPressure.toFixed(1)),
+ 420:           Number(data.latencyGrowthPressure.toFixed(1)),
+ 421:           Number(data.reserveTightness.toFixed(1))
+ 422:         ],
+ 423:         displayValues: [
+ 424:           fmtPct(data.targetUtilPct),
+ 425:           fmtPct(data.latencyGrowthPct),
+ 426:           fmtPct(data.remainingCapacityPct)
+ 427:         ],
+ 428:         referenceValue: 70,
+ 429:         healthyMax: 70,
+ 430:         watchMax: 85,
+ 431:         axisTitle: "Load Curve Pressure",
+ 432:         referenceLabel: "Comfort Band",
+ 433:         healthyLabel: "Healthy",
+ 434:         watchLabel: "Watch",
+ 435:         riskLabel: "Risk",
+ 436:         chartMax: Math.max(
+ 437:           100,
+ 438:           Math.ceil(
+ 439:             Math.max(
+ 440:               data.saturationPressure,
+ 441:               data.latencyGrowthPressure,
+ 442:               data.reserveTightness,
+ 443:               85
+ 444:             ) * 1.12
+ 445:           )
+ 446:         )
+ 447:       }
+ 448:     });
+ 449: 
+ 450:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 451:       category: CATEGORY,
+ 452:       step: STEP,
+ 453:       data: {
+ 454:         currentThroughput: data.currentThroughput,
+ 455:         targetThroughput: data.targetThroughput,
+ 456:         capacity: data.capacity,
+ 457:         utilization: data.targetUtilPct / 100,
+ 458:         currentUtilizationPct: data.currentUtilPct,
+ 459:         targetUtilizationPct: data.targetUtilPct,
+ 460:         currentLatencyMs: data.currentLatencyMs,
+ 461:         latency: data.targetLatencyMs,
+ 462:         targetLatencyMs: data.targetLatencyMs,
+ 463:         growth: data.latencyGrowthPct,
+ 464:         latencyGrowthPct: data.latencyGrowthPct,
+ 465:         loadClass: data.loadClass
+ 466:       }
+ 467:     });
+ 468: 
+ 469:     hasResult = true;
+ 470:     showContinue();
+ 471:   }
+ 472: 
+ 473:   function reset() {
+ 474:     applyDefaults();
+ 475:     loadPrior();
+ 476:     invalidate();
+ 477:   }
+ 478: 
+ 479:   function bind() {
+ 480:     [els.baseLat, els.t0, els.t1, els.cap].forEach((el) => {
+ 481:       el.addEventListener("input", invalidate);
+ 482:       el.addEventListener("change", invalidate);
+ 483:     });
+ 484: 
+ 485:     els.calc.addEventListener("click", calc);
+ 486:     els.reset.addEventListener("click", reset);
+ 487:     els.continueBtn.addEventListener("click", () => {
+ 488:       if (!hasResult) return;
+ 489:       window.location.href = NEXT_URL;
+ 490:     });
+ 491:   }
+ 492: 
+ 493:   function init() {
+ 494:     bind();
+ 495:     loadPrior();
+ 496:     invalidate();
+ 497:   }
+ 498: 
+ 499:   window.addEventListener("DOMContentLoaded", () => {
+ 500:     unlockCategoryPage();
+ 501:     setTimeout(() => {
+ 502:       unlockCategoryPage();
+ 503:     }, 400);
+ 504: 
+ 505:     const year = document.querySelector("[data-year]");
+ 506:     if (year) year.textContent = new Date().getFullYear();
+ 507:     init();
+ 508:   });
+ 509: })();
+
+
+============================================================
+TOOL: network-congestion
+============================================================
+Title: Network Congestion Estimator
+Tier: pro
+Meta description: Estimate congestion risk from current and peak traffic against link capacity and target utilization.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Current Traffic (Mbps)
+- Peak Traffic (Mbps)
+- Link Capacity (Mbps)
+- Target Utilization (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- cur
+- peak
+- cap
+- util
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "network-congestion";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "disk-saturation";
+   8:   const NEXT_URL = "/tools/performance/cache-hit-ratio/";
+   9: 
+  10:   const FLOW_KEYS = {
+  11:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  12:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  13:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  14:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  15:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  16:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  17:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  18:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  19:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  20:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  21:   };
+  22: 
+  23:   const chartRef = { current: null };
+  24:   const chartWrapRef = { current: null };
+  25:   const $ = (id) => document.getElementById(id);
+  26: 
+  27:   let hasResult = false;
+  28: 
+  29:   const els = {
+  30:     cur: $("cur"),
+  31:     peak: $("peak"),
+  32:     cap: $("cap"),
+  33:     util: $("util"),
+  34:     calc: $("calc"),
+  35:     reset: $("reset"),
+  36:     results: $("results"),
+  37:     analysis: $("analysis-copy"),
+  38:     flowNote: $("flow-note"),
+  39:     continueWrap: $("continue-wrap"),
+  40:     continueBtn: $("continue"),
+  41:     lockedCard: $("lockedCard"),
+  42:     toolCard: $("toolCard")
+  43:   };
+  44: 
+  45:   const DEFAULTS = {
+  46:     cur: 600,
+  47:     peak: 900,
+  48:     cap: 1000,
+  49:     util: 75
+  50:   };
+  51: 
+  52:   function hasStoredAuth() {
+  53:     try {
+  54:       const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+  55:       if (!k) return false;
+  56:       const raw = JSON.parse(localStorage.getItem(k));
+  57:       return !!(
+  58:         raw?.access_token ||
+  59:         raw?.currentSession?.access_token ||
+  60:         (Array.isArray(raw) ? raw[0]?.access_token : null)
+  61:       );
+  62:     } catch {
+  63:       return false;
+  64:     }
+  65:   }
+  66: 
+  67:   function getUnlockedCategories() {
+  68:     try {
+  69:       const raw = localStorage.getItem("sl_unlocked_categories");
+  70:       if (!raw) return [];
+
+--- CORE BLOCK 2 ---
+ 105:   function fmtPct(value, digits = 1) {
+ 106:     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+ 107:   }
+ 108: 
+ 109:   function fmtMbps(value, digits = 1) {
+ 110:     return Number.isFinite(value) ? `${value.toFixed(digits)} Mbps` : "—";
+ 111:   }
+ 112: 
+ 113:   function showContinue() {
+ 114:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+ 115:     if (els.continueBtn) els.continueBtn.disabled = false;
+ 116:   }
+ 117: 
+ 118:   function hideContinue() {
+ 119:     if (els.continueWrap) els.continueWrap.style.display = "none";
+ 120:     if (els.continueBtn) els.continueBtn.disabled = true;
+ 121:   }
+ 122: 
+ 123:   function applyDefaults() {
+ 124:     els.cur.value = String(DEFAULTS.cur);
+ 125:     els.peak.value = String(DEFAULTS.peak);
+ 126:     els.cap.value = String(DEFAULTS.cap);
+ 127:     els.util.value = String(DEFAULTS.util);
+ 128:   }
+ 129: 
+ 130:   function invalidate() {
+ 131:     try {
+ 132:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 133:       sessionStorage.removeItem(FLOW_KEYS["cache-hit-ratio"]);
+ 134:       sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+ 135:       sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+ 136:     } catch {}
+ 137: 
+ 138:     ScopedLabsAnalyzer.invalidate({
+ 139:       resultsEl: els.results,
+ 140:       analysisEl: els.analysis,
+ 141:       continueWrapEl: null,
+ 142:       continueBtnEl: null,
+ 143:       existingChartRef: chartRef,
+ 144:       existingWrapRef: chartWrapRef,
+ 145:       flowKey: FLOW_KEYS[STEP],
+ 146:       category: CATEGORY,
+ 147:       step: STEP,
+ 148:       lane: LANE,
+ 149:       emptyMessage: "Enter values and press Calculate."
+ 150:     });
+ 151: 
+ 152:     hasResult = false;
+ 153:     hideContinue();
+ 154:   }
+ 155: 
+ 156:   function loadPrior() {
+ 157:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+ 158:     if (!raw) {
+ 159:       els.flowNote.hidden = true;
+ 160:       els.flowNote.innerHTML = "";
+ 161:       return;
+ 162:     }
+ 163: 
+ 164:     let parsed = null;
+ 165:     try {
+ 166:       parsed = JSON.parse(raw);
+ 167:     } catch {
+ 168:       els.flowNote.hidden = true;
+ 169:       els.flowNote.innerHTML = "";
+ 170:       return;
+ 171:     }
+ 172: 
+ 173:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 174:       els.flowNote.hidden = true;
+ 175:       els.flowNote.innerHTML = "";
+ 176:       return;
+ 177:     }
+ 178: 
+ 179:     const d = parsed.data || {};
+ 180: 
+ 181:     const throughputMBps =
+ 182:       num(d.throughputMBps) ??
+ 183:       num(d.throughput) ??
+ 184:       num(d.diskThroughputMBps);
+ 185: 
+ 186:     const diskUtilizationPct =
+ 187:       num(d.diskUtilizationPct) ??
+ 188:       num(d.utilizationPct);
+ 189: 
+ 190:     const capacityMBps =
+ 191:       num(d.capacityMBps) ??
+ 192:       num(d.capacity);
+ 193: 
+ 194:     const totalIops = num(d.totalIops);
+ 195:     const saturated = Boolean(d.saturated);
+ 196:     const targetUtilizationPct = num(d.targetUtilizationPct);
+ 197: 
+ 198:     if (Number.isFinite(throughputMBps) && throughputMBps > 0) {
+ 199:       els.cur.value = String(Math.round(throughputMBps));
+ 200:       els.peak.value = String(Math.round(throughputMBps * (saturated ? 1.35 : 1.20)));
+ 201:     }
+ 202: 
+ 203:     if (Number.isFinite(capacityMBps) && capacityMBps > 0) {
+ 204:       els.cap.value = String(Math.round(capacityMBps));
+ 205:     }
+ 206: 
+ 207:     if (Number.isFinite(targetUtilizationPct) && targetUtilizationPct > 0) {
+ 208:       els.util.value = String(Math.round(targetUtilizationPct));
+ 209:     } else if (Number.isFinite(diskUtilizationPct) && diskUtilizationPct > 0) {
+ 210:       els.util.value = String(Math.round(diskUtilizationPct));
+ 211:     }
+ 212: 
+ 213:     const parts = [];
+ 214:     if (Number.isFinite(throughputMBps)) parts.push(`Disk Throughput: <strong>${fmt(throughputMBps, 1)} MB/s</strong>`);
+ 215:     if (Number.isFinite(diskUtilizationPct)) parts.push(`Disk Utilization: <strong>${fmt(diskUtilizationPct, 1)}%</strong>`);
+ 216:     if (Number.isFinite(capacityMBps)) parts.push(`Disk Capacity: <strong>${fmt(capacityMBps, 0)} MB/s</strong>`);
+ 217:     if (Number.isFinite(totalIops)) parts.push(`Total IOPS: <strong>${fmt(totalIops, 0)}</strong>`);
+ 218:     parts.push(`Saturation Risk: <strong>${saturated ? "Yes" : "No"}</strong>`);
+ 219: 
+ 220:     if (!parts.length) {
+ 221:       els.flowNote.hidden = true;
+ 222:       els.flowNote.innerHTML = "";
+ 223:       return;
+ 224:     }
+ 225: 
+ 226:     els.flowNote.hidden = false;
+ 227:     els.flowNote.innerHTML = `
+ 228:       <strong>Flow Context</strong><br>
+ 229:       ${parts.join(" | ")}
+ 230:       <br><br>
+ 231:       This step checks whether network bandwidth becomes the next limiter after storage throughput and disk saturation were evaluated.
+ 232:     `;
+ 233:   }
+ 234: 
+ 235:   function getInputs() {
+ 236:     const cur = num(els.cur.value);
+ 237:     const peak = num(els.peak.value);
+ 238:     const cap = num(els.cap.value);
+ 239:     const utilPct = num(els.util.value);
+ 240: 
+ 241:     if (
+ 242:       !Number.isFinite(cur) || cur < 0 ||
+ 243:       !Number.isFinite(peak) || peak < 0 ||
+ 244:       !Number.isFinite(cap) || cap <= 0 ||
+ 245:       !Number.isFinite(utilPct) || utilPct <= 0 || utilPct > 95
+ 246:     ) {
+ 247:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 248:     }
+ 249: 
+ 250:     return { ok: true, cur, peak, cap, utilPct };
+ 251:   }
+ 252: 
+ 253:   function calculateModel() {
+ 254:     const input = getInputs();
+ 255:     if (!input.ok) return input;
+ 256: 
+ 257:     const currentUtilizationPct = (input.cur / input.cap) * 100;
+ 258:     const peakUtilizationPct = (input.peak / input.cap) * 100;
+ 259:     const targetThroughputMbps = input.cap * (input.utilPct / 100);
+ 260: 
+ 261:     const congestionRisk =
+ 262:       input.peak > targetThroughputMbps ? "HIGH" :
+ 263:       input.cur > targetThroughputMbps ? "MEDIUM" :
+ 264:       "LOW";
+ 265: 
+ 266:     const saturationPressure = peakUtilizationPct;
+ 267:     const targetBandOverrunPct = Math.max(0, peakUtilizationPct - input.utilPct);
+ 268:     const reserveTightnessPct = Math.max(0, 100 - (100 - peakUtilizationPct));
+ 269: 
+ 270:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 271:       compositeScore: Math.max(
+ 272:         saturationPressure,
+ 273:         targetBandOverrunPct * 2,
+ 274:         reserveTightnessPct
+ 275:       ),
+ 276:       metrics: [
+ 277:         {
+ 278:           label: "Saturation Pressure",
+ 279:           value: saturationPressure,
+ 280:           displayValue: fmtPct(peakUtilizationPct)
+ 281:         },
+ 282:         {
+ 283:           label: "Target Band Overrun",
+ 284:           value: targetBandOverrunPct * 2,
+ 285:           displayValue: fmtPct(targetBandOverrunPct)
+ 286:         },
+ 287:         {
+ 288:           label: "Reserve Tightness",
+ 289:           value: reserveTightnessPct,
+ 290:           displayValue: fmtPct(100 - peakUtilizationPct)
+ 291:         }
+ 292:       ],
+ 293:       healthyMax: 70,
+ 294:       watchMax: 85
+ 295:     });
+ 296: 
+ 297:     let congestionClass = "LOW";
+ 298:     if (statusPack.status === "WATCH") congestionClass = "MEDIUM";
+ 299:     if (statusPack.status === "RISK") congestionClass = "HIGH";
+ 300: 
+ 301:     let interpretation = `Current traffic uses ${fmtPct(currentUtilizationPct)} of link capacity and peak traffic reaches ${fmtPct(peakUtilizationPct)}. The target operating band allows about ${fmtMbps(targetThroughputMbps)} before congestion planning limits are exceeded.`;
+ 302: 
+ 303:     if (statusPack.status === "RISK") {
+ 304:       interpretation += ` The path is already in a congestion-prone region where queueing, retransmits, latency spikes, and throughput collapse become much more likely under peak conditions.`;
+ 305:     } else if (statusPack.status === "WATCH") {
+ 306:       interpretation += ` The link remains usable, but pressure is high enough that bursts can start producing meaningful delay and jitter instead of remaining invisible to applications.`;
+ 307:     } else {
+ 308:       interpretation += ` The link still has practical room before congestion becomes the dominant limiter, so network pressure remains in a controlled band under the current assumptions.`;
+ 309:     }
+ 310: 
+ 311:     let dominantConstraint = "";
+ 312:     if (statusPack.dominant.label === "Saturation Pressure") {
+ 313:       dominantConstraint = "Saturation pressure is the dominant limiter. The main concern is how close peak traffic is pushing the link toward full utilization.";
+ 314:     } else if (statusPack.dominant.label === "Target Band Overrun") {
+ 315:       dominantConstraint = "Target band overrun is the dominant limiter. The design is exceeding its intended operating band before the link is technically full, which reduces resilience under bursts.";
+ 316:     } else {
+ 317:       dominantConstraint = "Reserve tightness is the dominant limiter. The link is losing too much spare capacity at peak load, leaving less tolerance for spikes, retries, and mixed traffic behavior.";
+ 318:     }
+ 319: 
+ 320:     let guidance = "";
+ 321:     if (statusPack.status === "RISK") {
+ 322:       guidance = "Treat network capacity as the next bottleneck candidate. Validate queueing behavior, burst profile, and transport retries before assuming downstream application layers are the primary cause of delay.";
+ 323:     } else if (statusPack.status === "WATCH") {
+ 324:       guidance = "The path is still serviceable, but monitor burst behavior closely. This is where moderate growth can turn a healthy link into a congestion-sensitive one.";
+ 325:     } else {
+ 326:       guidance = "Network headroom is balanced. Continue into Cache Hit Ratio next to determine whether caching can further reduce backend pressure and response-time instability.";
+ 327:     }
+ 328: 
+ 329:     return {
+ 330:       ok: true,
+ 331:       currentTrafficMbps: input.cur,
+ 332:       peakTrafficMbps: input.peak,
+ 333:       linkCapacityMbps: input.cap,
+ 334:       currentUtilizationPct,
+ 335:       peakUtilizationPct,
+ 336:       targetThroughputMbps,
+ 337:       targetUtilizationPct: input.utilPct,
+ 338:       targetBandOverrunPct,
+ 339:       reserveTightnessPct,
+ 340:       congestionClass,
+ 341:       congestionRisk,
+ 342:       status: statusPack.status,
+ 343:       interpretation,
+ 344:       dominantConstraint,
+ 345:       guidance,
+ 346:       saturationPressure
+ 347:     };
+ 348:   }
+ 349: 
+ 350:   function calc() {
+ 351:     const data = calculateModel();
+ 352:     if (!data.ok) {
+ 353:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 354:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 355:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 356:       hideContinue();
+ 357:       return;
+ 358:     }
+ 359: 
+ 360:     ScopedLabsAnalyzer.renderOutput({
+ 361:       resultsEl: els.results,
+ 362:       analysisEl: els.analysis,
+ 363:       existingChartRef: chartRef,
+ 364:       existingWrapRef: chartWrapRef,
+ 365:       summaryRows: [
+ 366:         { label: "Current Utilization", value: fmtPct(data.currentUtilizationPct) },
+ 367:         { label: "Peak Utilization", value: fmtPct(data.peakUtilizationPct) },
+ 368:         { label: "Target Throughput @ Util", value: fmtMbps(data.targetThroughputMbps) },
+ 369:         { label: "Congestion Class", value: data.congestionClass }
+ 370:       ],
+ 371:       derivedRows: [
+ 372:         { label: "Current Traffic", value: fmtMbps(data.currentTrafficMbps) },
+ 373:         { label: "Peak Traffic", value: fmtMbps(data.peakTrafficMbps) },
+ 374:         { label: "Link Capacity", value: fmtMbps(data.linkCapacityMbps) },
+ 375:         { label: "Target Utilization", value: fmtPct(data.targetUtilizationPct) },
+ 376:         { label: "Target Band Overrun", value: fmtPct(data.targetBandOverrunPct) },
+ 377:         { label: "Reserve Remaining", value: fmtPct(100 - data.peakUtilizationPct) }
+ 378:       ],
+ 379:       status: data.status,
+ 380:       interpretation: data.interpretation,
+ 381:       dominantConstraint: data.dominantConstraint,
+ 382:       guidance: data.guidance,
+ 383:       chart: {
+ 384:         labels: [
+ 385:           "Saturation Pressure",
+ 386:           "Target Band Overrun",
+ 387:           "Reserve Tightness"
+ 388:         ],
+ 389:         values: [
+ 390:           Number(data.saturationPressure.toFixed(1)),
+ 391:           Number((data.targetBandOverrunPct * 2).toFixed(1)),
+ 392:           Number(data.reserveTightnessPct.toFixed(1))
+ 393:         ],
+ 394:         displayValues: [
+ 395:           fmtPct(data.peakUtilizationPct),
+ 396:           fmtPct(data.targetBandOverrunPct),
+ 397:           fmtPct(100 - data.peakUtilizationPct)
+ 398:         ],
+ 399:         referenceValue: 70,
+ 400:         healthyMax: 70,
+ 401:         watchMax: 85,
+ 402:         axisTitle: "Congestion Pressure",
+ 403:         referenceLabel: "Comfort Band",
+ 404:         healthyLabel: "Healthy",
+ 405:         watchLabel: "Watch",
+ 406:         riskLabel: "Risk",
+ 407:         chartMax: Math.max(
+ 408:           100,
+ 409:           Math.ceil(
+ 410:             Math.max(
+ 411:               data.saturationPressure,
+ 412:               data.targetBandOverrunPct * 2,
+ 413:               data.reserveTightnessPct,
+ 414:               85
+ 415:             ) * 1.12
+ 416:           )
+ 417:         )
+ 418:       }
+ 419:     });
+ 420: 
+ 421:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 422:       category: CATEGORY,
+ 423:       step: STEP,
+ 424:       data: {
+ 425:         currentTrafficMbps: data.currentTrafficMbps,
+ 426:         peakTrafficMbps: data.peakTrafficMbps,
+ 427:         linkCapacityMbps: data.linkCapacityMbps,
+ 428:         utilization: data.peakUtilizationPct / 100,
+ 429:         currentUtilizationPct: data.currentUtilizationPct,
+ 430:         peakUtilizationPct: data.peakUtilizationPct,
+ 431:         targetUtilizationPct: data.targetUtilizationPct,
+ 432:         targetThroughputMbps: data.targetThroughputMbps,
+ 433:         congestionRisk: data.congestionRisk,
+ 434:         congestionClass: data.congestionClass
+ 435:       }
+ 436:     });
+ 437: 
+ 438:     hasResult = true;
+ 439:     showContinue();
+ 440:   }
+ 441: 
+ 442:   function reset() {
+ 443:     applyDefaults();
+ 444:     loadPrior();
+ 445:     invalidate();
+ 446:   }
+ 447: 
+ 448:   function bind() {
+ 449:     [els.cur, els.peak, els.cap, els.util].forEach((el) => {
+ 450:       el.addEventListener("input", invalidate);
+ 451:       el.addEventListener("change", invalidate);
+ 452:     });
+ 453: 
+ 454:     els.calc.addEventListener("click", calc);
+ 455:     els.reset.addEventListener("click", reset);
+ 456:     els.continueBtn.addEventListener("click", () => {
+ 457:       if (!hasResult) return;
+ 458:       window.location.href = NEXT_URL;
+ 459:     });
+ 460:   }
+ 461: 
+ 462:   function init() {
+ 463:     bind();
+ 464:     loadPrior();
+ 465:     invalidate();
+ 466:   }
+ 467: 
+ 468:   window.addEventListener("DOMContentLoaded", () => {
+ 469:     unlockCategoryPage();
+ 470:     setTimeout(() => {
+ 471:       unlockCategoryPage();
+ 472:     }, 400);
+ 473: 
+ 474:     const year = document.querySelector("[data-year]");
+ 475:     if (year) year.textContent = new Date().getFullYear();
+ 476:     init();
+ 477:   });
+ 478: })();
+
+
+============================================================
+TOOL: queue-depth
+============================================================
+Title: Queue Depth Estimator
+Tier: pro
+Meta description: Estimate backlog formation, queue pressure, and response-time growth from arrival rate, service rate, and worker count.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Arrival Rate (req/s)
+- Service Rate (req/s)
+- Servers / Workers
+- Base Service Time (ms)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- lambda
+- mu
+- k
+- svc
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "queue-depth";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "latency-vs-throughput";
+   8:   const NEXT_URL = "/tools/performance/concurrency-scaling/";
+   9: 
+  10:   const FLOW_KEYS = {
+  11:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  12:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  13:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  14:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  15:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  16:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  17:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  18:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  19:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  20:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  21:   };
+  22: 
+  23:   const chartRef = { current: null };
+  24:   const chartWrapRef = { current: null };
+  25:   const $ = (id) => document.getElementById(id);
+  26: 
+  27:   let hasResult = false;
+  28: 
+  29:   const els = {
+  30:     lambda: $("lambda"),
+  31:     mu: $("mu"),
+  32:     k: $("k"),
+  33:     svc: $("svc"),
+  34:     calc: $("calc"),
+  35:     reset: $("reset"),
+  36:     results: $("results"),
+  37:     analysis: $("analysis-copy"),
+  38:     flowNote: $("flow-note"),
+  39:     continueWrap: $("continue-wrap"),
+  40:     continueBtn: $("continue"),
+  41:     lockedCard: $("lockedCard"),
+  42:     toolCard: $("toolCard")
+  43:   };
+  44: 
+  45:   const DEFAULTS = {
+  46:     lambda: 900,
+  47:     mu: 1200,
+  48:     k: 1,
+  49:     svc: 4
+  50:   };
+  51: 
+  52:   function hasStoredAuth() {
+  53:     try {
+  54:       const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+  55:       if (!k) return false;
+  56:       const raw = JSON.parse(localStorage.getItem(k));
+  57:       return !!(
+  58:         raw?.access_token ||
+  59:         raw?.currentSession?.access_token ||
+  60:         (Array.isArray(raw) ? raw[0]?.access_token : null)
+  61:       );
+  62:     } catch {
+  63:       return false;
+  64:     }
+  65:   }
+  66: 
+  67:   function getUnlockedCategories() {
+  68:     try {
+  69:       const raw = localStorage.getItem("sl_unlocked_categories");
+  70:       if (!raw) return [];
+
+--- CORE BLOCK 2 ---
+ 108: 
+ 109:   function fmtMs(value, digits = 2) {
+ 110:     return Number.isFinite(value) ? `${value.toFixed(digits)} ms` : "—";
+ 111:   }
+ 112: 
+ 113:   function fmtRps(value, digits = 0) {
+ 114:     return Number.isFinite(value) ? `${value.toFixed(digits)} req/s` : "—";
+ 115:   }
+ 116: 
+ 117:   function showContinue() {
+ 118:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+ 119:     if (els.continueBtn) els.continueBtn.disabled = false;
+ 120:   }
+ 121: 
+ 122:   function hideContinue() {
+ 123:     if (els.continueWrap) els.continueWrap.style.display = "none";
+ 124:     if (els.continueBtn) els.continueBtn.disabled = true;
+ 125:   }
+ 126: 
+ 127:   function applyDefaults() {
+ 128:     els.lambda.value = String(DEFAULTS.lambda);
+ 129:     els.mu.value = String(DEFAULTS.mu);
+ 130:     els.k.value = String(DEFAULTS.k);
+ 131:     els.svc.value = String(DEFAULTS.svc);
+ 132:   }
+ 133: 
+ 134:   function invalidate() {
+ 135:     try {
+ 136:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 137:       sessionStorage.removeItem(FLOW_KEYS["concurrency-scaling"]);
+ 138:       sessionStorage.removeItem(FLOW_KEYS["cpu-utilization-impact"]);
+ 139:       sessionStorage.removeItem(FLOW_KEYS["disk-saturation"]);
+ 140:       sessionStorage.removeItem(FLOW_KEYS["network-congestion"]);
+ 141:       sessionStorage.removeItem(FLOW_KEYS["cache-hit-ratio"]);
+ 142:       sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+ 143:       sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+ 144:     } catch {}
+ 145: 
+ 146:     ScopedLabsAnalyzer.invalidate({
+ 147:       resultsEl: els.results,
+ 148:       analysisEl: els.analysis,
+ 149:       continueWrapEl: null,
+ 150:       continueBtnEl: null,
+ 151:       existingChartRef: chartRef,
+ 152:       existingWrapRef: chartWrapRef,
+ 153:       flowKey: FLOW_KEYS[STEP],
+ 154:       category: CATEGORY,
+ 155:       step: STEP,
+ 156:       lane: LANE,
+ 157:       emptyMessage: "Enter values and press Calculate."
+ 158:     });
+ 159: 
+ 160:     hasResult = false;
+ 161:     hideContinue();
+ 162:   }
+ 163: 
+ 164:   function loadPrior() {
+ 165:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+ 166:     if (!raw) {
+ 167:       els.flowNote.hidden = true;
+ 168:       els.flowNote.innerHTML = "";
+ 169:       return;
+ 170:     }
+ 171: 
+ 172:     let parsed = null;
+ 173:     try {
+ 174:       parsed = JSON.parse(raw);
+ 175:     } catch {
+ 176:       els.flowNote.hidden = true;
+ 177:       els.flowNote.innerHTML = "";
+ 178:       return;
+ 179:     }
+ 180: 
+ 181:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 182:       els.flowNote.hidden = true;
+ 183:       els.flowNote.innerHTML = "";
+ 184:       return;
+ 185:     }
+ 186: 
+ 187:     const d = parsed.data || {};
+ 188: 
+ 189:     const currentUtilizationPct =
+ 190:       num(d.currentUtilizationPct) ??
+ 191:       (Number.isFinite(num(d.currentUtilization)) ? num(d.currentUtilization) * 100 : NaN);
+ 192: 
+ 193:     const targetUtilizationPct =
+ 194:       num(d.targetUtilizationPct) ??
+ 195:       (Number.isFinite(num(d.utilization)) ? num(d.utilization) * 100 : NaN);
+ 196: 
+ 197:     const currentLatencyMs =
+ 198:       num(d.currentLatencyMs) ??
+ 199:       num(d.currentLatency);
+ 200: 
+ 201:     const targetLatencyMs =
+ 202:       num(d.targetLatencyMs) ??
+ 203:       num(d.latency);
+ 204: 
+ 205:     const capacity =
+ 206:       num(d.capacity) ??
+ 207:       num(d.systemCapacity);
+ 208: 
+ 209:     const currentThroughput =
+ 210:       num(d.currentThroughput);
+ 211: 
+ 212:     const targetThroughput =
+ 213:       num(d.targetThroughput);
+ 214: 
+ 215:     if (Number.isFinite(currentThroughput) && currentThroughput > 0) {
+ 216:       els.lambda.value = String(Math.round(currentThroughput));
+ 217:     } else if (Number.isFinite(capacity) && Number.isFinite(currentUtilizationPct)) {
+ 218:       els.lambda.value = String(Math.round(capacity * (currentUtilizationPct / 100)));
+ 219:     }
+ 220: 
+ 221:     if (Number.isFinite(capacity) && capacity > 0) {
+ 222:       const serviceRate = Number.isFinite(targetThroughput) && targetThroughput > 0
+ 223:         ? Math.max(capacity, targetThroughput)
+ 224:         : capacity;
+ 225:       els.mu.value = String(Math.round(serviceRate));
+ 226:     }
+ 227: 
+ 228:     if (Number.isFinite(targetUtilizationPct)) {
+ 229:       if (targetUtilizationPct >= 90) {
+ 230:         els.k.value = "1";
+ 231:       } else if (targetUtilizationPct >= 75) {
+ 232:         els.k.value = "2";
+ 233:       } else {
+ 234:         els.k.value = "3";
+ 235:       }
+ 236:     }
+ 237: 
+ 238:     if (Number.isFinite(currentLatencyMs)) {
+ 239:       if (currentLatencyMs <= 10) els.svc.value = "2";
+ 240:       else if (currentLatencyMs <= 25) els.svc.value = "4";
+ 241:       else if (currentLatencyMs <= 60) els.svc.value = "6";
+ 242:       else els.svc.value = "8";
+ 243:     }
+ 244: 
+ 245:     const parts = [];
+ 246:     if (Number.isFinite(currentUtilizationPct)) parts.push(`Current Utilization: <strong>${fmt(currentUtilizationPct, 1)}%</strong>`);
+ 247:     if (Number.isFinite(targetUtilizationPct)) parts.push(`Target Utilization: <strong>${fmt(targetUtilizationPct, 1)}%</strong>`);
+ 248:     if (Number.isFinite(currentLatencyMs)) parts.push(`Current Latency: <strong>${fmt(currentLatencyMs, 1)} ms</strong>`);
+ 249:     if (Number.isFinite(targetLatencyMs)) parts.push(`Target Latency: <strong>${fmt(targetLatencyMs, 1)} ms</strong>`);
+ 250:     if (Number.isFinite(capacity)) parts.push(`Capacity: <strong>${fmt(capacity, 0)}</strong>`);
+ 251: 
+ 252:     if (!parts.length) {
+ 253:       els.flowNote.hidden = true;
+ 254:       els.flowNote.innerHTML = "";
+ 255:       return;
+ 256:     }
+ 257: 
+ 258:     els.flowNote.hidden = false;
+ 259:     els.flowNote.innerHTML = `
+ 260:       <strong>Flow Context</strong><br>
+ 261:       ${parts.join(" | ")}
+ 262:       <br><br>
+ 263:       This step evaluates backlog formation after the upstream latency-versus-throughput relationship has already shown how fast delay grows near saturation.
+ 264:     `;
+ 265:   }
+ 266: 
+ 267:   function getInputs() {
+ 268:     const lambda = num(els.lambda.value);
+ 269:     const mu = num(els.mu.value);
+ 270:     const k = Math.max(1, Math.floor(num(els.k.value)));
+ 271:     const svc = num(els.svc.value);
+ 272: 
+ 273:     if (
+ 274:       !Number.isFinite(lambda) || lambda < 0 ||
+ 275:       !Number.isFinite(mu) || mu <= 0 ||
+ 276:       !Number.isFinite(k) || k < 1 ||
+ 277:       !Number.isFinite(svc) || svc < 0
+ 278:     ) {
+ 279:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 280:     }
+ 281: 
+ 282:     return { ok: true, lambda, mu, k, svc };
+ 283:   }
+ 284: 
+ 285:   function calculateModel() {
+ 286:     const input = getInputs();
+ 287:     if (!input.ok) return input;
+ 288: 
+ 289:     const capacity = input.mu * input.k;
+ 290:     const rho = input.lambda / capacity;
+ 291: 
+ 292:     let q;
+ 293:     if (rho >= 1) {
+ 294:       q = Infinity;
+ 295:     } else {
+ 296:       q = (rho * rho) / (1 - rho);
+ 297:     }
+ 298: 
+ 299:     let rt;
+ 300:     if (!Number.isFinite(q)) {
+ 301:       rt = Infinity;
+ 302:     } else if (input.lambda <= 0) {
+ 303:       rt = input.svc;
+ 304:     } else {
+ 305:       const waitMs = (q / input.lambda) * 1000;
+ 306:       rt = input.svc + waitMs;
+ 307:     }
+ 308: 
+ 309:     const utilizationPct = rho * 100;
+ 310:     const queueDepthMetric = Number.isFinite(q) ? Math.min(q * 4, 100) : 100;
+ 311:     const responseTimeMetric = Number.isFinite(rt) ? Math.min(rt, 100) : 100;
+ 312:     const saturationPressure = Math.min(Math.max(utilizationPct, 0), 100);
+ 313: 
+ 314:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 315:       compositeScore: Math.max(
+ 316:         saturationPressure,
+ 317:         queueDepthMetric,
+ 318:         responseTimeMetric
+ 319:       ),
+ 320:       metrics: [
+ 321:         {
+ 322:           label: "Saturation Pressure",
+ 323:           value: saturationPressure,
+ 324:           displayValue: fmtPct(utilizationPct)
+ 325:         },
+ 326:         {
+ 327:           label: "Queue Depth Pressure",
+ 328:           value: queueDepthMetric,
+ 329:           displayValue: Number.isFinite(q) ? fmt(q, 2) : "RUNAWAY"
+ 330:         },
+ 331:         {
+ 332:           label: "Response Time Pressure",
+ 333:           value: responseTimeMetric,
+ 334:           displayValue: Number.isFinite(rt) ? fmtMs(rt) : "UNBOUNDED"
+ 335:         }
+ 336:       ],
+ 337:       healthyMax: 70,
+ 338:       watchMax: 85
+ 339:     });
+ 340: 
+ 341:     let queueClass = "STABLE";
+ 342:     if (statusPack.status === "WATCH") queueClass = "RISING";
+ 343:     if (statusPack.status === "RISK") {
+ 344:       queueClass = Number.isFinite(q) ? "HEAVY" : "RUNAWAY";
+ 345:     }
+ 346: 
+ 347:     let interpretation = `Total service capacity is ${fmtRps(capacity)} with utilization at ${fmtPct(utilizationPct)}. The modeled queue depth is ${Number.isFinite(q) ? fmt(q, 2) : "RUNAWAY"} and the resulting response time is ${Number.isFinite(rt) ? fmtMs(rt) : "UNBOUNDED"}.`;
+ 348: 
+ 349:     if (statusPack.status === "RISK") {
+ 350:       interpretation += ` The queue is now in a dangerous region where backlog formation becomes the dominant problem. At this point, small increases in arrival rate can cause queue growth and delay to accelerate much faster than service can recover.`;
+ 351:     } else if (statusPack.status === "WATCH") {
+ 352:       interpretation += ` Queueing is present but not yet catastrophic. The system is still working, though delay is already beginning to accumulate instead of remaining flat under load.`;
+ 353:     } else {
+ 354:       interpretation += ` Queue pressure remains in a controlled band, so the arrival and service rates are still close enough that backlog stays limited under the current assumptions.`;
+ 355:     }
+ 356: 
+ 357:     let dominantConstraint = "";
+ 358:     if (statusPack.dominant.label === "Saturation Pressure") {
+ 359:       dominantConstraint = "Saturation pressure is the dominant limiter. The main concern is how closely arrival rate is approaching total service capacity.";
+ 360:     } else if (statusPack.dominant.label === "Queue Depth Pressure") {
+ 361:       dominantConstraint = "Queue depth pressure is the dominant limiter. The backlog itself is becoming the first practical sign that the system is losing equilibrium under load.";
+ 362:     } else {
+ 363:       dominantConstraint = "Response time pressure is the dominant limiter. The system may still be processing work, but service delay is already growing enough to become the user-visible problem.";
+ 364:     }
+ 365: 
+ 366:     let guidance = "";
+ 367:     if (statusPack.status === "RISK") {
+ 368:       guidance = "Treat backlog as the active bottleneck signal. Either reduce arrival rate, raise service capacity, or add concurrency before assuming downstream optimizations will fix the visible delay.";
+ 369:     } else if (statusPack.status === "WATCH") {
+ 370:       guidance = "The queue is serviceable but rising. This is the point where small load increases can start creating non-trivial backlog, so use concurrency carefully and validate burst behavior.";
+ 371:     } else {
+ 372:       guidance = "Queue pressure is balanced. Continue into Concurrency Scaling next to see whether additional workers will improve throughput cleanly or introduce coordination drag.";
+ 373:     }
+ 374: 
+ 375:     return {
+ 376:       ok: true,
+ 377:       arrivalRate: input.lambda,
+ 378:       serviceRate: input.mu,
+ 379:       workers: input.k,
+ 380:       serviceTimeMs: input.svc,
+ 381:       capacity,
+ 382:       rho,
+ 383:       utilizationPct,
+ 384:       queueDepth: q,
+ 385:       responseTimeMs: rt,
+ 386:       queueClass,
+ 387:       saturationPressure,
+ 388:       queueDepthMetric,
+ 389:       responseTimeMetric,
+ 390:       status: statusPack.status,
+ 391:       interpretation,
+ 392:       dominantConstraint,
+ 393:       guidance
+ 394:     };
+ 395:   }
+ 396: 
+ 397:   function calc() {
+ 398:     const data = calculateModel();
+ 399:     if (!data.ok) {
+ 400:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 401:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 402:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 403:       hideContinue();
+ 404:       return;
+ 405:     }
+ 406: 
+ 407:     ScopedLabsAnalyzer.renderOutput({
+ 408:       resultsEl: els.results,
+ 409:       analysisEl: els.analysis,
+ 410:       existingChartRef: chartRef,
+ 411:       existingWrapRef: chartWrapRef,
+ 412:       summaryRows: [
+ 413:         { label: "Total Capacity", value: fmtRps(data.capacity) },
+ 414:         { label: "Utilization", value: fmtPct(data.utilizationPct) },
+ 415:         { label: "Queue Depth", value: Number.isFinite(data.queueDepth) ? fmt(data.queueDepth, 2) : "RUNAWAY" },
+ 416:         { label: "Response Time", value: Number.isFinite(data.responseTimeMs) ? fmtMs(data.responseTimeMs) : "UNBOUNDED" }
+ 417:       ],
+ 418:       derivedRows: [
+ 419:         { label: "Arrival Rate", value: fmtRps(data.arrivalRate) },
+ 420:         { label: "Service Rate", value: fmtRps(data.serviceRate) },
+ 421:         { label: "Workers", value: fmt(data.workers, 0) },
+ 422:         { label: "Base Service Time", value: fmtMs(data.serviceTimeMs, 1) },
+ 423:         { label: "Queue Class", value: data.queueClass },
+ 424:         { label: "Utilization (ρ)", value: fmt(data.rho, 3) }
+ 425:       ],
+ 426:       status: data.status,
+ 427:       interpretation: data.interpretation,
+ 428:       dominantConstraint: data.dominantConstraint,
+ 429:       guidance: data.guidance,
+ 430:       chart: {
+ 431:         labels: [
+ 432:           "Saturation Pressure",
+ 433:           "Queue Depth Pressure",
+ 434:           "Response Time Pressure"
+ 435:         ],
+ 436:         values: [
+ 437:           Number(data.saturationPressure.toFixed(1)),
+ 438:           Number(data.queueDepthMetric.toFixed(1)),
+ 439:           Number(data.responseTimeMetric.toFixed(1))
+ 440:         ],
+ 441:         displayValues: [
+ 442:           fmtPct(data.utilizationPct),
+ 443:           Number.isFinite(data.queueDepth) ? fmt(data.queueDepth, 2) : "RUNAWAY",
+ 444:           Number.isFinite(data.responseTimeMs) ? fmtMs(data.responseTimeMs) : "UNBOUNDED"
+ 445:         ],
+ 446:         referenceValue: 70,
+ 447:         healthyMax: 70,
+ 448:         watchMax: 85,
+ 449:         axisTitle: "Queue Pressure",
+ 450:         referenceLabel: "Comfort Band",
+ 451:         healthyLabel: "Healthy",
+ 452:         watchLabel: "Watch",
+ 453:         riskLabel: "Risk",
+ 454:         chartMax: 100
+ 455:       }
+ 456:     });
+ 457: 
+ 458:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 459:       category: CATEGORY,
+ 460:       step: STEP,
+ 461:       data: {
+ 462:         queueDepth: data.queueDepth,
+ 463:         utilization: data.rho,
+ 464:         utilizationPct: data.utilizationPct,
+ 465:         responseTime: data.responseTimeMs,
+ 466:         responseTimeMs: data.responseTimeMs,
+ 467:         workers: data.workers,
+ 468:         capacity: data.capacity,
+ 469:         queueClass: data.queueClass
+ 470:       }
+ 471:     });
+ 472: 
+ 473:     hasResult = true;
+ 474:     showContinue();
+ 475:   }
+ 476: 
+ 477:   function reset() {
+ 478:     applyDefaults();
+ 479:     loadPrior();
+ 480:     invalidate();
+ 481:   }
+ 482: 
+ 483:   function bind() {
+ 484:     [els.lambda, els.mu, els.k, els.svc].forEach((el) => {
+ 485:       el.addEventListener("input", invalidate);
+ 486:       el.addEventListener("change", invalidate);
+ 487:     });
+ 488: 
+ 489:     els.calc.addEventListener("click", calc);
+ 490:     els.reset.addEventListener("click", reset);
+ 491:     els.continueBtn.addEventListener("click", () => {
+ 492:       if (!hasResult) return;
+ 493:       window.location.href = NEXT_URL;
+ 494:     });
+ 495:   }
+ 496: 
+ 497:   function init() {
+ 498:     bind();
+ 499:     loadPrior();
+ 500:     invalidate();
+ 501:   }
+ 502: 
+ 503:   window.addEventListener("DOMContentLoaded", () => {
+ 504:     unlockCategoryPage();
+ 505:     setTimeout(() => {
+ 506:       unlockCategoryPage();
+ 507:     }, 400);
+ 508: 
+ 509:     const year = document.querySelector("[data-year]");
+ 510:     if (year) year.textContent = new Date().getFullYear();
+ 511:     init();
+ 512:   });
+ 513: })();
+
+
+============================================================
+TOOL: response-time-sla
+============================================================
+Title: Response Time SLA Checker
+Tier: free/unknown
+Meta description: Check whether current and target response times stay inside SLA boundaries and whether latency reserve remains safe.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Current Avg Latency (ms)
+- Target Avg Latency (ms)
+- SLA Threshold (ms)
+- Allowed Error Budget (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- cur
+- tgt
+- sla
+- eb
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "performance";
+   5:   const STEP = "response-time-sla";
+   6:   const LANE = "v1";
+   7:   const NEXT_URL = "/tools/performance/latency-vs-throughput/";
+   8: 
+   9:   const FLOW_KEYS = {
+  10:     "response-time-sla": "scopedlabs:pipeline:performance:response-time-sla",
+  11:     "latency-vs-throughput": "scopedlabs:pipeline:performance:latency-vs-throughput",
+  12:     "queue-depth": "scopedlabs:pipeline:performance:queue-depth",
+  13:     "concurrency-scaling": "scopedlabs:pipeline:performance:concurrency-scaling",
+  14:     "cpu-utilization-impact": "scopedlabs:pipeline:performance:cpu-utilization-impact",
+  15:     "disk-saturation": "scopedlabs:pipeline:performance:disk-saturation",
+  16:     "network-congestion": "scopedlabs:pipeline:performance:network-congestion",
+  17:     "cache-hit-ratio": "scopedlabs:pipeline:performance:cache-hit-ratio",
+  18:     "bottleneck-analyzer": "scopedlabs:pipeline:performance:bottleneck-analyzer",
+  19:     "headroom-target": "scopedlabs:pipeline:performance:headroom-target"
+  20:   };
+  21: 
+  22:   const chartRef = { current: null };
+  23:   const chartWrapRef = { current: null };
+  24:   const $ = (id) => document.getElementById(id);
+  25: 
+  26:   let hasResult = false;
+  27: 
+  28:   const els = {
+  29:     cur: $("cur"),
+  30:     tgt: $("tgt"),
+  31:     sla: $("sla"),
+  32:     eb: $("eb"),
+  33:     calc: $("calc"),
+  34:     reset: $("reset"),
+  35:     results: $("results"),
+  36:     analysis: $("analysis-copy"),
+  37:     flowNote: $("flow-note"),
+  38:     continueWrap: $("continue-wrap"),
+  39:     continueBtn: $("continue")
+  40:   };
+  41: 
+  42:   const DEFAULTS = {
+  43:     cur: 120,
+  44:     tgt: 180,
+  45:     sla: 200,
+  46:     eb: 1
+  47:   };
+  48: 
+  49:   function num(value) {
+  50:     return ScopedLabsAnalyzer.safeNumber(value, NaN);
+  51:   }
+  52: 
+  53:   function fmt(value, digits = 1) {
+  54:     return Number.isFinite(value) ? value.toFixed(digits) : "—";
+  55:   }
+  56: 
+  57:   function fmtMs(value, digits = 1) {
+  58:     return Number.isFinite(value) ? `${value.toFixed(digits)} ms` : "—";
+  59:   }
+  60: 
+  61:   function fmtPct(value, digits = 1) {
+  62:     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+  63:   }
+  64: 
+  65:   function showContinue() {
+  66:     if (els.continueWrap) els.continueWrap.style.display = "flex";
+  67:     if (els.continueBtn) els.continueBtn.disabled = false;
+  68:   }
+  69: 
+  70:   function hideContinue() {
+  71:     if (els.continueWrap) els.continueWrap.style.display = "none";
+  72:     if (els.continueBtn) els.continueBtn.disabled = true;
+  73:   }
+  74: 
+  75:   function applyDefaults() {
+  76:     els.cur.value = String(DEFAULTS.cur);
+  77:     els.tgt.value = String(DEFAULTS.tgt);
+  78:     els.sla.value = String(DEFAULTS.sla);
+  79:     els.eb.value = String(DEFAULTS.eb);
+  80:   }
+  81: 
+  82:   function clearFlowNote() {
+  83:     if (!els.flowNote) return;
+  84:     els.flowNote.hidden = true;
+  85:     els.flowNote.innerHTML = "";
+  86:   }
+  87: 
+  88:   function invalidate() {
+  89:     try {
+  90:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+  91:       sessionStorage.removeItem(FLOW_KEYS["latency-vs-throughput"]);
+  92:       sessionStorage.removeItem(FLOW_KEYS["queue-depth"]);
+  93:       sessionStorage.removeItem(FLOW_KEYS["concurrency-scaling"]);
+  94:       sessionStorage.removeItem(FLOW_KEYS["cpu-utilization-impact"]);
+  95:       sessionStorage.removeItem(FLOW_KEYS["disk-saturation"]);
+  96:       sessionStorage.removeItem(FLOW_KEYS["network-congestion"]);
+  97:       sessionStorage.removeItem(FLOW_KEYS["cache-hit-ratio"]);
+  98:       sessionStorage.removeItem(FLOW_KEYS["bottleneck-analyzer"]);
+  99:       sessionStorage.removeItem(FLOW_KEYS["headroom-target"]);
+ 100:     } catch {}
+ 101: 
+ 102:     ScopedLabsAnalyzer.invalidate({
+ 103:       resultsEl: els.results,
+ 104:       analysisEl: els.analysis,
+ 105:       continueWrapEl: null,
+ 106:       continueBtnEl: null,
+ 107:       existingChartRef: chartRef,
+ 108:       existingWrapRef: chartWrapRef,
+ 109:       flowKey: FLOW_KEYS[STEP],
+ 110:       category: CATEGORY,
+ 111:       step: STEP,
+ 112:       lane: LANE,
+ 113:       emptyMessage: "Enter values and press Check SLA."
+ 114:     });
+ 115: 
+ 116:     hasResult = false;
+ 117:     hideContinue();
+ 118:     clearFlowNote();
+ 119:   }
+ 120: 
+ 121:   function getInputs() {
+ 122:     const cur = num(els.cur.value);
+ 123:     const tgt = num(els.tgt.value);
+ 124:     const sla = num(els.sla.value);
+ 125:     const eb = num(els.eb.value);
+ 126: 
+ 127:     if (
+ 128:       !Number.isFinite(cur) || cur < 0 ||
+ 129:       !Number.isFinite(tgt) || tgt < 0 ||
+ 130:       !Number.isFinite(sla) || sla <= 0 ||
+ 131:       !Number.isFinite(eb) || eb < 0 || eb > 100
+ 132:     ) {
+ 133:       return { ok: false, message: "Enter valid values and press Check SLA." };
+ 134:     }
+ 135: 
+ 136:     return { ok: true, cur, tgt, sla, eb };
+ 137:   }
+ 138: 
+ 139:   function classifyLatency(lat, sla) {
+ 140:     if (lat <= sla) return "PASS";
+ 141:     if (lat <= sla * 1.1) return "RISK";
+ 142:     return "FAIL";
+ 143:   }
+ 144: 
+ 145:   function calculateModel() {
+ 146:     const input = getInputs();
+ 147:     if (!input.ok) return input;
+ 148: 
+ 149:     const currentStatus = classifyLatency(input.cur, input.sla);
+ 150:     const targetStatus = classifyLatency(input.tgt, input.sla);
+ 151: 
+ 152:     const currentOverrunPct = Math.max(0, ((input.cur - input.sla) / input.sla) * 100);
+ 153:     const targetOverrunPct = Math.max(0, ((input.tgt - input.sla) / input.sla) * 100);
+ 154:     const errorBudgetPressure = input.eb * 10;
+ 155:     const currentPressure = (input.cur / input.sla) * 100;
+ 156:     const targetPressure = (input.tgt / input.sla) * 100;
+ 157: 
+ 158:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 159:       compositeScore: Math.max(currentPressure, targetPressure, errorBudgetPressure),
+ 160:       metrics: [
+ 161:         {
+ 162:           label: "Current SLA Pressure",
+ 163:           value: currentPressure,
+ 164:           displayValue: fmtMs(input.cur)
+ 165:         },
+ 166:         {
+ 167:           label: "Target SLA Pressure",
+ 168:           value: targetPressure,
+ 169:           displayValue: fmtMs(input.tgt)
+ 170:         },
+ 171:         {
+ 172:           label: "Error Budget Pressure",
+ 173:           value: errorBudgetPressure,
+ 174:           displayValue: fmtPct(input.eb)
+ 175:         }
+ 176:       ],
+ 177:       healthyMax: 100,
+ 178:       watchMax: 110
+ 179:     });
+ 180: 
+ 181:     let slaClass = "PASS";
+ 182:     if (statusPack.status === "WATCH") slaClass = "RISK";
+ 183:     if (statusPack.status === "RISK") slaClass = "FAIL";
+ 184: 
+ 185:     let interpretation = `The SLA threshold is ${fmtMs(input.sla)}. Current latency is ${fmtMs(input.cur)} and target latency is ${fmtMs(input.tgt)}.`;
+ 186: 
+ 187:     if (statusPack.status === "RISK") {
+ 188:       interpretation += ` The model is already beyond an acceptable SLA band. At this point, response time is exceeding the defined service boundary enough that the system should be treated as out-of-policy rather than merely close to target.`;
+ 189:     } else if (statusPack.status === "WATCH") {
+ 190:       interpretation += ` The system is near the SLA boundary. Small regressions or transient spikes could push it into violation, so downstream planning should assume latency reserve is already thin.`;
+ 191:     } else {
+ 192:       interpretation += ` The current and target values remain inside a controlled SLA band, so downstream calculations can treat the latency objective as still achievable under the entered assumptions.`;
+ 193:     }
+ 194: 
+ 195:     let dominantConstraint = "";
+ 196:     if (statusPack.dominant.label === "Current SLA Pressure") {
+ 197:       dominantConstraint = "Current SLA pressure is the dominant limiter. The present operating point is already the strongest indicator of risk against the defined response-time boundary.";
+ 198:     } else if (statusPack.dominant.label === "Target SLA Pressure") {
+ 199:       dominantConstraint = "Target SLA pressure is the dominant limiter. The future operating target is more aggressive than the current state and is the first place SLA margin begins to disappear.";
+ 200:     } else {
+ 201:       dominantConstraint = "Error budget pressure is the dominant limiter. The primary concern is how little additional latency variance or failure allowance the policy leaves available.";
+ 202:     }
+ 203: 
+ 204:     let guidance = "";
+ 205:     if (statusPack.status === "RISK") {
+ 206:       guidance = "Treat the latency target as already broken or functionally unsafe. Reduce service time, lower load, or revise the SLA assumptions before trusting downstream capacity calculations.";
+ 207:     } else if (statusPack.status === "WATCH") {
+ 208:       guidance = "The SLA is still technically reachable, but reserve is limited. Use the downstream tools to identify where throughput, queueing, or concurrency is most likely to push latency over the line.";
+ 209:     } else {
+ 210:       guidance = "The SLA boundary is healthy. Continue into Latency vs Throughput next to see how close rising throughput will push the system toward this response-time limit.";
+ 211:     }
+ 212: 
+ 213:     return {
+ 214:       ok: true,
+ 215:       sla: input.sla,
+ 216:       currentLatency: input.cur,
+ 217:       targetLatency: input.tgt,
+ 218:       errorBudget: input.eb,
+ 219:       currentStatus,
+ 220:       targetStatus,
+ 221:       currentOverrunPct,
+ 222:       targetOverrunPct,
+ 223:       currentPressure,
+ 224:       targetPressure,
+ 225:       errorBudgetPressure,
+ 226:       slaClass,
+ 227:       status: statusPack.status,
+ 228:       interpretation,
+ 229:       dominantConstraint,
+ 230:       guidance
+ 231:     };
+ 232:   }
+ 233: 
+ 234:   function calc() {
+ 235:     const data = calculateModel();
+ 236:     if (!data.ok) {
+ 237:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 238:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 239:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 240:       hideContinue();
+ 241:       return;
+ 242:     }
+ 243: 
+ 244:     ScopedLabsAnalyzer.renderOutput({
+ 245:       resultsEl: els.results,
+ 246:       analysisEl: els.analysis,
+ 247:       existingChartRef: chartRef,
+ 248:       existingWrapRef: chartWrapRef,
+ 249:       summaryRows: [
+ 250:         { label: "SLA Threshold", value: fmtMs(data.sla) },
+ 251:         { label: "Current Avg", value: `${fmtMs(data.currentLatency)} (${data.currentStatus})` },
+ 252:         { label: "Target Avg", value: `${fmtMs(data.targetLatency)} (${data.targetStatus})` },
+ 253:         { label: "SLA Class", value: data.slaClass }
+ 254:       ],
+ 255:       derivedRows: [
+ 256:         { label: "Error Budget", value: fmtPct(data.errorBudget) },
+ 257:         { label: "Current Overrun", value: fmtPct(data.currentOverrunPct) },
+ 258:         { label: "Target Overrun", value: fmtPct(data.targetOverrunPct) },
+ 259:         { label: "Current SLA Pressure", value: fmtPct(data.currentPressure) },
+ 260:         { label: "Target SLA Pressure", value: fmtPct(data.targetPressure) },
+ 261:         { label: "Error Budget Pressure", value: fmt(data.errorBudgetPressure, 1) }
+ 262:       ],
+ 263:       status: data.status,
+ 264:       interpretation: data.interpretation,
+ 265:       dominantConstraint: data.dominantConstraint,
+ 266:       guidance: data.guidance,
+ 267:       chart: {
+ 268:         labels: [
+ 269:           "Current SLA Pressure",
+ 270:           "Target SLA Pressure",
+ 271:           "Error Budget Pressure"
+ 272:         ],
+ 273:         values: [
+ 274:           Number(data.currentPressure.toFixed(1)),
+ 275:           Number(data.targetPressure.toFixed(1)),
+ 276:           Number(data.errorBudgetPressure.toFixed(1))
+ 277:         ],
+ 278:         displayValues: [
+ 279:           fmtMs(data.currentLatency),
+ 280:           fmtMs(data.targetLatency),
+ 281:           fmtPct(data.errorBudget)
+ 282:         ],
+ 283:         referenceValue: 100,
+ 284:         healthyMax: 100,
+ 285:         watchMax: 110,
+ 286:         axisTitle: "SLA Pressure",
+ 287:         referenceLabel: "SLA Boundary",
+ 288:         healthyLabel: "Healthy",
+ 289:         watchLabel: "Watch",
+ 290:         riskLabel: "Risk",
+ 291:         chartMax: Math.max(
+ 292:           120,
+ 293:           Math.ceil(
+ 294:             Math.max(
+ 295:               data.currentPressure,
+ 296:               data.targetPressure,
+ 297:               data.errorBudgetPressure,
+ 298:               110
+ 299:             ) * 1.08
+ 300:           )
+ 301:         )
+ 302:       }
+ 303:     });
+ 304: 
+ 305:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 306:       category: CATEGORY,
+ 307:       step: STEP,
+ 308:       data: {
+ 309:         sla: data.sla,
+ 310:         slaMs: data.sla,
+ 311:         currentLatency: data.currentLatency,
+ 312:         currentLatencyMs: data.currentLatency,
+ 313:         targetLatency: data.targetLatency,
+ 314:         targetLatencyMs: data.targetLatency,
+ 315:         errorBudget: data.errorBudget,
+ 316:         errorBudgetPct: data.errorBudget,
+ 317:         status: data.slaClass,
+ 318:         slaStatus: data.slaClass
+ 319:       }
+ 320:     });
+ 321: 
+ 322:     hasResult = true;
+ 323:     showContinue();
+ 324:   }
+ 325: 
+ 326:   function reset() {
+ 327:     applyDefaults();
+ 328:     invalidate();
+ 329:   }
+ 330: 
+ 331:   function bind() {
+ 332:     [els.cur, els.tgt, els.sla, els.eb].forEach((el) => {
+ 333:       el.addEventListener("input", invalidate);
+ 334:       el.addEventListener("change", invalidate);
+ 335:     });
+ 336: 
+ 337:     els.calc.addEventListener("click", calc);
+ 338:     els.reset.addEventListener("click", reset);
+ 339:     els.continueBtn.addEventListener("click", () => {
+ 340:       if (!hasResult) return;
+ 341:       window.location.href = NEXT_URL;
+ 342:     });
+ 343:   }
+ 344: 
+ 345:   function init() {
+ 346:     bind();
+ 347:     invalidate();
+ 348:   }
+ 349: 
+ 350:   window.addEventListener("DOMContentLoaded", () => {
+ 351:     const year = document.querySelector("[data-year]");
+ 352:     if (year) year.textContent = new Date().getFullYear();
+ 353:     init();
+ 354:   });
+ 355: })();

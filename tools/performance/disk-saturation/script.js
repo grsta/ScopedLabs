@@ -261,7 +261,7 @@
       totalIops > 0 ? Math.abs(input.riops - input.wiops) / totalIops * 100 : 0;
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: Math.max(throughputPressure - 40, headroomDeficitPct * 2, saturationOverrunPct),
+      compositeScore: Math.max(throughputPressure, headroomDeficitPct * 2, saturationOverrunPct),
       metrics: [
         {
           label: "Throughput Pressure",
@@ -279,8 +279,8 @@
           displayValue: fmtMBs(throughput)
         }
       ],
-      healthyMax: 35,
-      watchMax: 70
+      healthyMax: 70,
+      watchMax: 90
     });
 
     let diskClass = "COMFORTABLE";
@@ -390,9 +390,9 @@
           fmtPct(data.headroomDeficitPct),
           fmtMBs(data.throughput)
         ],
-        referenceValue: 35,
-        healthyMax: 35,
-        watchMax: 70,
+        referenceValue: 70,
+        healthyMax: 70,
+        watchMax: 90,
         axisTitle: "Storage Saturation Pressure",
         referenceLabel: "Comfort Band",
         healthyLabel: "Healthy",
@@ -405,7 +405,7 @@
               data.throughputPressure,
               data.headroomDeficitPct * 2,
               data.saturationOverrunPct,
-              70
+              90
             ) * 1.12
           )
         )

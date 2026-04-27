@@ -275,7 +275,7 @@
     const queueingPressure = Math.max(0, (targetUtil - 0.70) * 100 * 2);
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: Math.max(targetPressure - 60, headroomGapPct * 2, queueingPressure),
+      compositeScore: Math.max(targetPressure, headroomGapPct * 2, queueingPressure),
       metrics: [
         {
           label: "Target CPU Pressure",
@@ -293,8 +293,8 @@
           displayValue: fmtMs(targetLatency)
         }
       ],
-      healthyMax: 35,
-      watchMax: 70
+      healthyMax: 70,
+      watchMax: 85
     });
 
     let cpuClass = "COMFORTABLE";
@@ -400,9 +400,9 @@
           fmtPct(data.headroomGapPct),
           fmtMs(data.targetLatency)
         ],
-        referenceValue: 35,
-        healthyMax: 35,
-        watchMax: 70,
+        referenceValue: 70,
+        healthyMax: 70,
+        watchMax: 85,
         axisTitle: "CPU Saturation Pressure",
         referenceLabel: "Comfort Band",
         healthyLabel: "Healthy",
@@ -415,7 +415,7 @@
               data.targetPressure,
               data.headroomGapPct * 2,
               data.queueingPressure,
-              70
+              85
             ) * 1.12
           )
         )

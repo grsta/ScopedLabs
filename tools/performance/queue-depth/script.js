@@ -212,27 +212,38 @@
     const targetThroughput =
       num(d.targetThroughput);
 
-    if (Number.isFinite(currentThroughput) && currentThroughput > 0) {
-      els.lambda.value = String(Math.round(currentThroughput));
-    } else if (Number.isFinite(capacity) && Number.isFinite(currentUtilizationPct)) {
-      els.lambda.value = String(Math.round(capacity * (currentUtilizationPct / 100)));
-    }
-
-    if (Number.isFinite(capacity) && capacity > 0) {
-      const serviceRate = Number.isFinite(targetThroughput) && targetThroughput > 0
-        ? Math.max(capacity, targetThroughput)
-        : capacity;
-      els.mu.value = String(Math.round(serviceRate));
-    }
+    let selectedWorkers = Math.max(1, Math.floor(num(els.k.value) || DEFAULTS.k));
 
     if (Number.isFinite(targetUtilizationPct)) {
       if (targetUtilizationPct >= 90) {
-        els.k.value = "1";
+        selectedWorkers = 1;
       } else if (targetUtilizationPct >= 75) {
-        els.k.value = "2";
+        selectedWorkers = 2;
       } else {
-        els.k.value = "3";
+        selectedWorkers = 3;
       }
+
+      els.k.value = String(selectedWorkers);
+    }
+
+    const arrivalRate =
+      Number.isFinite(targetThroughput) && targetThroughput > 0
+        ? targetThroughput
+        : Number.isFinite(currentThroughput) && currentThroughput > 0
+          ? currentThroughput
+          : Number.isFinite(capacity) && Number.isFinite(targetUtilizationPct)
+            ? capacity * (targetUtilizationPct / 100)
+            : Number.isFinite(capacity) && Number.isFinite(currentUtilizationPct)
+              ? capacity * (currentUtilizationPct / 100)
+              : NaN;
+
+    if (Number.isFinite(arrivalRate) && arrivalRate > 0) {
+      els.lambda.value = String(Math.round(arrivalRate));
+    }
+
+    if (Number.isFinite(capacity) && capacity > 0) {
+      const perWorkerServiceRate = capacity / selectedWorkers;
+      els.mu.value = String(Math.round(perWorkerServiceRate));
     }
 
     if (Number.isFinite(currentLatencyMs)) {
