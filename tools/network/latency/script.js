@@ -133,6 +133,12 @@ const CATEGORY = "network";
 
   function syncResultsForExport() {
     if (!els.results || !els.out || els.results === els.out) return;
+
+    // Keep #results as a hidden export/snapshot mirror.
+    // #out remains the only visible calculator result block.
+    els.results.hidden = true;
+    els.results.setAttribute("aria-hidden", "true");
+    els.results.style.display = "none";
     els.results.innerHTML = els.out.innerHTML;
   }
 
@@ -487,6 +493,12 @@ const CATEGORY = "network";
         calculate();
       }
     });
+
+    if (els.results && els.out && els.results !== els.out) {
+      els.results.hidden = true;
+      els.results.setAttribute("aria-hidden", "true");
+      els.results.style.display = "none";
+    }
 
     reset();
   }
