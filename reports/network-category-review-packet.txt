@@ -1,0 +1,3786 @@
+# ScopedLabs Category Formula Review Packet
+Category: network
+Generated: 2026-04-27T04:40:14.124Z
+Tools found: 10
+
+
+
+============================================================
+TOOL: bandwidth
+============================================================
+Title: Bandwidth Planner
+Tier: free/unknown
+Meta description: Estimate mixed network throughput, uplink utilization, and recommended capacity using average load, peak factor, and traffic overhead.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Active streams / devices
+- Average Mbps per stream / device
+- Peak factor
+- Protocol overhead (%)
+- Other traffic allowance (Mbps)
+- Current uplink capacity (Mbps)
+- Target max utilization (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- devices
+- bitrate
+- peakFactor
+- overheadPct
+- otherTraffic
+- uplinkMbps
+- safeUtil
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- to-oversubscription
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  75:   function clearDownstreamState() {
+  76:     try {
+  77:       sessionStorage.removeItem(FLOW_KEYS.bandwidth);
+  78:       sessionStorage.removeItem(FLOW_KEYS.oversub);
+  79:       sessionStorage.removeItem(FLOW_KEYS.latency);
+  80:     } catch {}
+  81:   }
+  82: 
+  83:   function renderFlowContext() {
+  84:     if (!els.flowNote) return null;
+  85: 
+  86:     const flow = getStoredFlow(FLOW_KEYS.poe);
+  87:     const validUpstream =
+  88:       flow &&
+  89:       flow.category === "network" &&
+  90:       flow.step === "poe-budget" &&
+  91:       flow.data;
+  92: 
+  93:     if (!validUpstream) {
+  94:       els.flowNote.hidden = false;
+  95:       els.flowNote.innerHTML = `
+  96:         <strong>Step 2 — Network pipeline:</strong><br>
+  97:         After confirming edge power, estimate the traffic those devices place on the network before checking aggregation pressure.
+  98:       `;
+  99:       return null;
+ 100:     }
+ 101: 
+ 102:     const data = flow.data || {};
+ 103:     const poeBudgetW = ScopedLabsAnalyzer.safeNumber(data.poeBudgetW, NaN);
+ 104:     const safeBudgetW = ScopedLabsAnalyzer.safeNumber(data.safeBudgetW, NaN);
+ 105:     const headroomW = ScopedLabsAnalyzer.safeNumber(data.poeHeadroomW ?? data.headroomW, NaN);
+ 106:     const utilPct = ScopedLabsAnalyzer.safeNumber(data.poeUtilPct ?? data.utilizationPct, NaN);
+ 107:     const poweredDevices = ScopedLabsAnalyzer.safeNumber(
+ 108:       data.poweredDevices ?? data.devices ?? data.modeledDevices,
+ 109:       NaN
+ 110:     );
+ 111:     const status =
+ 112:       typeof data.poeStatus === "string"
+ 113:         ? data.poeStatus
+ 114:         : typeof data.status === "string"
+ 115:         ? data.status
+ 116:         : "";
+ 117: 
+ 118:     const parts = [];
+ 119:     if (Number.isFinite(poeBudgetW)) parts.push(`PoE Budget: ${poeBudgetW.toFixed(0)} W`);
+ 120:     if (Number.isFinite(safeBudgetW)) parts.push(`Safe Budget: ${safeBudgetW.toFixed(0)} W`);
+ 121:     if (Number.isFinite(headroomW)) parts.push(`PoE Headroom: ${headroomW.toFixed(0)} W`);
+ 122:     if (Number.isFinite(utilPct)) parts.push(`PoE Util: ${utilPct.toFixed(0)}%`);
+ 123:     if (Number.isFinite(poweredDevices)) parts.push(`Powered Devices: ${Math.round(poweredDevices)}`);
+ 124:     if (status) parts.push(`PoE Status: ${String(status).toUpperCase()}`);
+ 125: 
+ 126:     els.flowNote.hidden = false;
+ 127:     els.flowNote.innerHTML = parts.length
+ 128:       ? `<strong>Step 2 — Using PoE results:</strong><br>${parts.join(" | ")}`
+ 129:       : `
+ 130:         <strong>Step 2 — Network pipeline:</strong><br>
+ 131:         After confirming edge power, estimate the traffic those devices place on the network before checking aggregation pressure.
+ 132:       `;
+ 133: 
+ 134:     return flow;
+ 135:   }
+ 136: 
+ 137:   function maybePrefillFromUpstream(upstream) {
+ 138:     if (!upstream || !upstream.data) return;
+ 139: 
+ 140:     const poweredDevices = ScopedLabsAnalyzer.safeNumber(
+ 141:       upstream.data.poweredDevices ??
+ 142:       upstream.data.devices ??
+ 143:       upstream.data.modeledDevices,
+ 144:       NaN
+ 145:     );
+ 146: 
+ 147:     if (Number.isFinite(poweredDevices) && poweredDevices > 0) {
+ 148:       els.devices.value = String(Math.round(poweredDevices));
+ 149:     }
+ 150:   }
+ 151: 
+ 152:   function invalidate({ clearFlow = true } = {}) {
+ 153:     if (clearFlow) clearDownstreamState();
+ 154: 
+ 155:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 156:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 157:     els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+ 158:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 159:     renderFlowContext();
+ 160:   }
+ 161: 
+ 162:   function getInputs() {
+ 163:     const devices = ScopedLabsAnalyzer.safeNumber(els.devices.value, NaN);
+ 164:     const bitrate = ScopedLabsAnalyzer.safeNumber(els.bitrate.value, NaN);
+ 165:     const peakFactor = ScopedLabsAnalyzer.safeNumber(els.peakFactor.value, NaN);
+ 166:     const overheadPct = ScopedLabsAnalyzer.safeNumber(els.overheadPct.value, NaN);
+ 167:     const otherTraffic = ScopedLabsAnalyzer.safeNumber(els.otherTraffic.value, NaN);
+ 168:     const uplinkMbps = ScopedLabsAnalyzer.safeNumber(els.uplinkMbps.value, NaN);
+ 169:     const safeUtil = ScopedLabsAnalyzer.clamp(
+ 170:       ScopedLabsAnalyzer.safeNumber(els.safeUtil.value, NaN),
+ 171:       1,
+ 172:       99
+ 173:     );
+ 174: 
+ 175:     if ([devices, bitrate, peakFactor, overheadPct, otherTraffic, uplinkMbps, safeUtil].some((v) => !Number.isFinite(v))) {
+ 176:       return { ok: false, message: "Enter valid numeric values." };
+ 177:     }
+ 178: 
+ 179:     if (devices <= 0) return { ok: false, message: "Active streams / devices must be greater than 0." };
+ 180:     if (bitrate < 0) return { ok: false, message: "Average Mbps per stream / device cannot be negative." };
+ 181:     if (peakFactor < 1) return { ok: false, message: "Peak factor must be at least 1." };
+ 182:     if (overheadPct < 0) return { ok: false, message: "Protocol overhead cannot be negative." };
+ 183:     if (otherTraffic < 0) return { ok: false, message: "Other traffic allowance cannot be negative." };
+ 184:     if (uplinkMbps <= 0) return { ok: false, message: "Current uplink capacity must be greater than 0 Mbps." };
+ 185: 
+ 186:     return { ok: true, devices, bitrate, peakFactor, overheadPct, otherTraffic, uplinkMbps, safeUtil };
+ 187:   }
+ 188: 
+ 189:   function calculateModel() {
+ 190:     const input = getInputs();
+ 191:     if (!input.ok) return input;
+ 192: 
+ 193:     const { devices, bitrate, peakFactor, overheadPct, otherTraffic, uplinkMbps, safeUtil } = input;
+ 194:     const overheadMultiplier = 1 + (overheadPct / 100);
+ 195: 
+ 196:     const avgStream = devices * bitrate;
+ 197:     const peakStream = avgStream * peakFactor;
+ 198:     const avgWithOverhead = avgStream * overheadMultiplier;
+ 199:     const peakWithOverhead = peakStream * overheadMultiplier;
+ 200:     const avgTotal = avgWithOverhead + otherTraffic;
+ 201:     const peakTotal = peakWithOverhead + otherTraffic;
+ 202: 
+ 203:     const utilAvg = (avgTotal / uplinkMbps) * 100;
+ 204:     const utilPeak = (peakTotal / uplinkMbps) * 100;
+ 205:     const burstDeltaPct = ((peakTotal - avgTotal) / uplinkMbps) * 100;
+ 206:     const protocolAndBackgroundPct = ((peakTotal - peakStream) / uplinkMbps) * 100;
+ 207:     const recUplink = peakTotal / (safeUtil / 100);
+ 208:     const shortfallMbps = Math.max(0, recUplink - uplinkMbps);
+ 209: 
+ 210:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 211:       compositeScore: utilPeak,
+ 212:       metrics: [
+ 213:         { label: "Average Load", value: utilAvg, displayValue: fmtPct(utilAvg) },
+ 214:         { label: "Peak Load", value: utilPeak, displayValue: fmtPct(utilPeak) },
+ 215:         { label: "Burst Delta", value: burstDeltaPct, displayValue: fmtPct(burstDeltaPct) }
+ 216:       ],
+ 217:       healthyMax: safeUtil,
+ 218:       watchMax: Math.min(100, safeUtil + 15)
+ 219:     });
+ 220: 
+ 221:     const dominantLabel = statusPack.dominant.label;
+ 222: 
+ 223:     let interpretation = "";
+ 224:     let dominantConstraint = "";
+ 225:     let guidance = "";
+ 226: 
+ 227:     if (statusPack.status === "RISK") {
+ 228:       interpretation = `Peak modeled traffic reaches ${fmtMbps(peakTotal)} on a ${fmtMbps(uplinkMbps)} uplink, which pushes the design into a congestion-prone band. Under burst conditions, queueing delay, retransmits, and user-visible slowdown become more likely because the link is being consumed faster than comfortable headroom can absorb.`;
+ 229:       dominantConstraint = `${dominantLabel} is the limiting factor. The current link is being pressured hardest by peak demand rather than steady-state average traffic, so the failure mode shows up first during bursts, synchronized device activity, or background tasks that overlap production traffic.`;
+ 230:       guidance = shortfallMbps > 0
+ 231:         ? `Resize the uplink toward at least ${fmtMbps(recUplink)} if you want to hold peak conditions near your ${safeUtil.toFixed(0)}% target. If that is not practical, reduce modeled demand, split traffic across more uplinks, or isolate heavy traffic classes before moving to oversubscription analysis.`
+ 232:         : `Even though the current link technically fits the traffic, the pressure pattern is too aggressive for comfortable operation. Reduce burst demand, segment traffic, or tighten assumptions before moving downstream in the design chain.`;
+ 233:     } else if (statusPack.status === "WATCH") {
+ 234:       interpretation = `Average modeled demand stays reasonable, but peak loading reaches ${fmtPct(utilPeak)} of the uplink. This is still operable, but margin is getting thin enough that burst traffic, retries, client churn, or future adds can start consuming the remaining headroom faster than expected.`;
+ 235:       dominantConstraint = `${dominantLabel} is the dominant limiter. The design is not failing outright yet, but the network is being shaped more by transient peak behavior than by comfortable sustained utilization, which makes future growth and unexpected spikes harder to absorb cleanly.`;
+ 236:       guidance = `Validate the peak assumptions and compare this result against your actual aggregation design next. If this uplink will also carry management traffic, backups, or growth, consider stepping up link capacity now rather than waiting until the operating band is consistently tight.`;
+ 237:     } else {
+ 238:       interpretation = `Average load is ${fmtMbps(avgTotal)} and peak load is ${fmtMbps(peakTotal)} on a ${fmtMbps(uplinkMbps)} uplink. That leaves usable operating margin under the selected assumptions, so the link is less likely to become the first point of visible performance degradation during normal bursts.`;
+ 239:       dominantConstraint = `${dominantLabel} is still the highest-pressure metric, but it remains inside a controlled band. In practice, this means the design is being governed by normal demand behavior rather than by a chronic capacity shortfall.`;
+ 240:       guidance = `This uplink sizing is aligned with your selected headroom target. Continue into Oversubscription next to verify that the aggregation layer does not reintroduce pressure once multiple edge segments are combined upstream.`;
+ 241:     }
+ 242: 
+ 243:     return {
+ 244:       ok: true,
+ 245:       input,
+ 246:       avgStream,
+ 247:       peakStream,
+ 248:       avgWithOverhead,
+ 249:       peakWithOverhead,
+ 250:       avgTotal,
+ 251:       peakTotal,
+ 252:       utilAvg,
+ 253:       utilPeak,
+ 254:       burstDeltaPct,
+ 255:       protocolAndBackgroundPct,
+ 256:       recUplink,
+ 257:       shortfallMbps,
+ 258:       status: statusPack.status,
+ 259:       dominant: statusPack.dominant,
+ 260:       interpretation,
+ 261:       dominantConstraint,
+ 262:       guidance
+ 263:     };
+ 264:   }
+ 265: 
+ 266:   function renderError(message) {
+ 267:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 268:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 269:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 270:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 271:   }
+ 272: 
+ 273:   function writeFlow(data) {
+ 274:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.bandwidth, {
+ 275:       category: "network",
+ 276:       step: "bandwidth",
+ 277:       data: {
+ 278:         devices: data.input.devices,
+ 279:         avgPerDeviceMbps: data.input.bitrate,
+ 280:         peakFactor: data.input.peakFactor,
+ 281:         overheadPct: data.input.overheadPct,
+ 282:         otherTrafficMbps: data.input.otherTraffic,
+ 283:         uplinkMbps: data.input.uplinkMbps,
+ 284:         targetUtilizationPct: data.input.safeUtil,
+ 285:         averageTotalMbps: Number(data.avgTotal.toFixed(2)),
+ 286:         peakTotalMbps: Number(data.peakTotal.toFixed(2)),
+ 287:         averageUtilizationPct: Number(data.utilAvg.toFixed(1)),
+ 288:         peakUtilizationPct: Number(data.utilPeak.toFixed(1)),
+ 289:         recommendedUplinkMbps: Number(data.recUplink.toFixed(2)),
+ 290:         bandwidthStatus: data.status
+ 291:       }
+ 292:     });
+ 293:   }
+ 294: 
+ 295:   function renderSuccess(data) {
+ 296:     const safeUtil = data.input.safeUtil;
+ 297:     const watchMax = Math.min(100, safeUtil + 15);
+ 298: 
+ 299:     ScopedLabsAnalyzer.renderOutput({
+ 300:       resultsEl: els.results,
+ 301:       analysisEl: els.analysis,
+ 302:       existingChartRef: chartRef,
+ 303:       existingWrapRef: chartWrapRef,
+ 304:       summaryRows: [
+ 305:         { label: "Average modeled traffic", value: fmtMbps(data.avgStream) },
+ 306:         { label: "Peak modeled traffic", value: fmtMbps(data.peakStream) },
+ 307:         { label: "Average total incl. overhead + other traffic", value: fmtMbps(data.avgTotal) },
+ 308:         { label: "Peak total incl. overhead + other traffic", value: fmtMbps(data.peakTotal) }
+ 309:       ],
+ 310:       derivedRows: [
+ 311:         { label: "Uplink utilization (average)", value: fmtPct(data.utilAvg) },
+ 312:         { label: "Uplink utilization (peak)", value: fmtPct(data.utilPeak) },
+ 313:         { label: "Burst delta on uplink", value: fmtPct(data.burstDeltaPct) },
+ 314:         { label: "Protocol + background share", value: fmtPct(data.protocolAndBackgroundPct) },
+ 315:         { label: "Recommended uplink at target utilization", value: fmtMbps(data.recUplink) },
+ 316:         { label: "Additional uplink needed", value: fmtMbps(data.shortfallMbps) }
+ 317:       ],
+ 318:       status: data.status,
+ 319:       interpretation: data.interpretation,
+ 320:       dominantConstraint: data.dominantConstraint,
+ 321:       guidance: data.guidance,
+ 322:       chart: {
+ 323:         labels: ["Average Load", "Peak Load", "Burst Delta"],
+ 324:         values: [
+ 325:           Number(data.utilAvg.toFixed(1)),
+ 326:           Number(data.utilPeak.toFixed(1)),
+ 327:           Number(data.burstDeltaPct.toFixed(1))
+ 328:         ],
+ 329:         displayValues: [
+ 330:           fmtPct(data.utilAvg),
+ 331:           fmtPct(data.utilPeak),
+ 332:           fmtPct(data.burstDeltaPct)
+ 333:         ],
+ 334:         referenceValue: safeUtil,
+ 335:         healthyMax: safeUtil,
+ 336:         watchMax,
+ 337:         axisTitle: "Uplink Pressure (%)",
+ 338:         referenceLabel: `Target Utilization (${safeUtil.toFixed(0)}%)`,
+ 339:         healthyLabel: "Healthy",
+ 340:         watchLabel: "Watch",
+ 341:         riskLabel: "Risk",
+ 342:         chartMax: Math.max(
+ 343:           100,
+ 344:           Math.ceil(Math.max(data.utilPeak, data.utilAvg, data.burstDeltaPct, safeUtil, watchMax) * 1.18)
+ 345:         )
+ 346:       }
+ 347:     });
+ 348: 
+ 349:     writeFlow(data);
+ 350:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 351:   }
+ 352: 
+ 353:   function calculate() {
+ 354:     const data = calculateModel();
+ 355:     if (!data.ok) {
+ 356:       renderError(data.message);
+ 357:       return;
+ 358:     }
+ 359:     renderSuccess(data);
+ 360:   }
+ 361: 
+ 362:   function reset() {
+ 363:     applyDefaults();
+ 364:     const upstream = renderFlowContext();
+ 365:     maybePrefillFromUpstream(upstream);
+ 366:     invalidate({ clearFlow: false });
+ 367:   }
+ 368: 
+ 369:   function bindInvalidation() {
+ 370:     [
+ 371:       els.devices,
+ 372:       els.bitrate,
+ 373:       els.peakFactor,
+ 374:       els.overheadPct,
+ 375:       els.otherTraffic,
+ 376:       els.uplinkMbps,
+ 377:       els.safeUtil
+ 378:     ].forEach((el) => {
+ 379:       if (!el) return;
+ 380:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 381:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 382:     });
+ 383:   }
+ 384: 
+ 385:   window.addEventListener("DOMContentLoaded", () => {
+ 386:     const year = document.querySelector("[data-year]");
+ 387:     if (year) year.textContent = new Date().getFullYear();
+ 388:     bindInvalidation();
+ 389:     els.calc?.addEventListener("click", calculate);
+ 390:     els.reset?.addEventListener("click", reset);
+ 391: 
+ 392:     document.addEventListener("keydown", (e) => {
+ 393:       if (e.key !== "Enter") return;
+ 394:       const target = e.target;
+ 395:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+ 396:         e.preventDefault();
+ 397:         calculate();
+ 398:       }
+ 399:     });
+ 400: 
+ 401:     reset();
+ 402:   });
+ 403: })();
+ 404: 
+ 405: function renderFlowNote() {
+ 406:   // TODO: implement upstream flow-note carry-over
+ 407: }
+ 408: 
+ 409: 
+ 410: function calc() {
+ 411:   // TODO: implement calculate handler
+ 412: }
+ 413: 
+ 414: 
+ 415: function invalidate() {
+ 416:   ScopedLabsAnalyzer.invalidate({
+ 417:     resultsEl: els.results,
+ 418:     analysisEl: els.analysis,
+ 419:     continueWrapEl: els.continueWrap,
+ 420:     continueBtnEl: els.continueBtn,
+ 421:     flowKey: FLOW_KEYS[STEP] || "",
+ 422:     category: CATEGORY,
+ 423:     step: STEP,
+ 424:     lane: LANE,
+ 425:     emptyMessage: "Enter values and press Calculate."
+ 426:   });
+ 427: }
+ 428: 
+
+
+============================================================
+TOOL: growth-simulator
+============================================================
+Title: Network Growth Simulator
+Tier: pro
+Meta description: Project future bandwidth demand, required uplink capacity, and upgrade timing using growth, peak, and headroom assumptions.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Current Demand (Mbps)
+- Monthly Growth (%)
+- Months to Project
+- Peak Factor 1.0 1.15 1.30 1.50 2.00
+- Overhead (%)
+- Target Utilization (%)
+- Uplink Size (Gbps) 0.1 0.5 1 2 5 10 25 40
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- startMbps
+- growthPct
+- months
+- peak
+- overhead
+- util
+- uplink
+- calc
+- reset
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- results
+- analysis-copy
+- tableWrap
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  48:     els.peak.value = String(DEFAULTS.peak);
+  49:     els.overhead.value = String(DEFAULTS.overhead);
+  50:     els.util.value = String(DEFAULTS.util);
+  51:     els.uplink.value = String(DEFAULTS.uplink);
+  52:   }
+  53: 
+  54:   function clearTable() {
+  55:     els.tableWrap.innerHTML = `<div class="muted">Simulation output will appear here.</div>`;
+  56:   }
+  57: 
+  58:   function invalidate() {
+  59:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+  60:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+  61:     els.results.innerHTML = `<div class="muted">Enter values and press Simulate.</div>`;
+  62:     clearTable();
+  63:   }
+  64: 
+  65:   function buildTable(months, series, safeLimitGbps) {
+  66:     els.tableWrap.innerHTML = "";
+  67: 
+  68:     const table = document.createElement("table");
+  69:     table.className = "table";
+  70: 
+  71:     const thead = document.createElement("thead");
+  72:     thead.innerHTML = `
+  73:       <tr>
+  74:         <th style="text-align:left;">Month</th>
+  75:         <th style="text-align:right;">Base (Mbps)</th>
+  76:         <th style="text-align:right;">Required (Mbps)</th>
+  77:         <th style="text-align:right;">Required (Gbps)</th>
+  78:         <th style="text-align:right;">Utilization</th>
+  79:         <th style="text-align:right;">Links Needed</th>
+  80:       </tr>
+  81:     `;
+  82:     table.appendChild(thead);
+  83: 
+  84:     const tbody = document.createElement("tbody");
+  85: 
+  86:     for (let i = 0; i <= months; i++) {
+  87:       const s = series[i];
+  88:       const utilPct = safeLimitGbps > 0 ? (s.reqGbps / safeLimitGbps) * 100 : 0;
+  89: 
+  90:       const tr = document.createElement("tr");
+  91:       tr.innerHTML = `
+  92:         <td style="text-align:left;">${i}</td>
+  93:         <td style="text-align:right;">${s.base.toFixed(1)}</td>
+  94:         <td style="text-align:right;">${s.req.toFixed(1)}</td>
+  95:         <td style="text-align:right;">${s.reqGbps.toFixed(3)}</td>
+  96:         <td style="text-align:right;">${utilPct.toFixed(1)}%</td>
+  97:         <td style="text-align:right;">${s.links}</td>
+  98:       `;
+  99:       tbody.appendChild(tr);
+ 100:     }
+ 101: 
+ 102:     table.appendChild(tbody);
+ 103:     els.tableWrap.appendChild(table);
+ 104:   }
+ 105: 
+ 106:   function estimateSaturationMonth(series, safeLimitGbps) {
+ 107:     for (let i = 0; i < series.length; i++) {
+ 108:       if (series[i].reqGbps > safeLimitGbps) return i;
+ 109:     }
+ 110:     return null;
+ 111:   }
+ 112: 
+ 113:   function getInputs() {
+ 114:     const startMbps = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.startMbps.value, NaN));
+ 115:     const growthPct = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.growthPct.value, NaN));
+ 116:     const months = Math.max(1, Math.floor(ScopedLabsAnalyzer.safeNumber(els.months.value, NaN)));
+ 117:     const peak = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.peak.value, NaN));
+ 118:     const overheadPct = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.overhead.value, NaN));
+ 119:     const utilPct = ScopedLabsAnalyzer.clamp(
+ 120:       ScopedLabsAnalyzer.safeNumber(els.util.value, NaN),
+ 121:       10,
+ 122:       100
+ 123:     );
+ 124:     const uplinkGbps = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.uplink.value, NaN));
+ 125: 
+ 126:     if ([startMbps, growthPct, months, peak, overheadPct, utilPct, uplinkGbps].some((v) => !Number.isFinite(v))) {
+ 127:       return { ok: false, message: "Enter valid numeric values." };
+ 128:     }
+
+--- CORE BLOCK 2 ---
+ 149:       months,
+ 150:       peak,
+ 151:       overheadPct,
+ 152:       utilPct,
+ 153:       uplinkGbps
+ 154:     } = input;
+ 155: 
+ 156:     const series = [];
+ 157:     let base = startMbps;
+ 158: 
+ 159:     for (let m = 0; m <= months; m++) {
+ 160:       const peakMbps = base * peak;
+ 161:       const req = peakMbps * (1 + overheadPct / 100);
+ 162:       const reqGbps = req / 1000;
+ 163:       const neededAtTarget = reqGbps / (utilPct / 100);
+ 164:       const links = Math.max(1, Math.ceil(neededAtTarget / uplinkGbps));
+ 165: 
+ 166:       series.push({ base, req, reqGbps, links });
+ 167:       base = base * (1 + growthPct / 100);
+ 168:     }
+ 169: 
+ 170:     const end = series[months];
+ 171:     const start = series[0];
+ 172:     const safeLimitGbps = uplinkGbps * (utilPct / 100);
+ 173:     const safeLimitMbps = safeLimitGbps * 1000;
+ 174:     const saturationMonth = estimateSaturationMonth(series, safeLimitGbps);
+ 175: 
+ 176:     const startUtilPct = safeLimitMbps > 0 ? (start.req / safeLimitMbps) * 100 : 0;
+ 177:     const endUtilPct = safeLimitMbps > 0 ? (end.req / safeLimitMbps) * 100 : 0;
+ 178:     const growthRatio = startMbps > 0 ? end.req / startMbps : 0;
+ 179:     const requiredHeadroomGbps = end.reqGbps / (utilPct / 100);
+ 180:     const upgradeGapGbps = Math.max(0, requiredHeadroomGbps - uplinkGbps);
+ 181: 
+ 182:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 183:       compositeScore: endUtilPct,
+ 184:       metrics: [
+ 185:         {
+ 186:           label: "Start Load Pressure",
+ 187:           value: startUtilPct,
+ 188:           displayValue: fmtPct(startUtilPct)
+ 189:         },
+ 190:         {
+ 191:           label: "End Load Pressure",
+ 192:           value: endUtilPct,
+ 193:           displayValue: fmtPct(endUtilPct)
+ 194:         },
+ 195:         {
+ 196:           label: "Growth Expansion",
+ 197:           value: growthRatio * 100,
+ 198:           displayValue: `${growthRatio.toFixed(2)}x`
+ 199:         }
+ 200:       ],
+ 201:       healthyMax: 85,
+ 202:       watchMax: 100
+ 203:     });
+ 204: 
+ 205:     const dominantLabel = statusPack.dominant.label;
+ 206: 
+ 207:     let interpretation = `Projected required bandwidth grows from ${fmtMbps(start.req)} today to ${fmtMbps(end.req)} by month ${months}. At your selected utilization target, that places the end-state demand at ${fmtPct(endUtilPct)} of the comfortable operating band for a ${uplinkGbps} Gbps uplink.`;
+ 208: 
+ 209:     if (growthRatio >= 2) {
+ 210:       interpretation += " This is not a minor expansion. It represents a real capacity planning event where growth itself becomes a design pressure, not just daily traffic variance.";
+ 211:     } else if (growthRatio >= 1.35) {
+ 212:       interpretation += " The design remains workable early on, but growth is strong enough that capacity margin erodes meaningfully across the projection window.";
+ 213:     } else {
+ 214:       interpretation += " Growth is comparatively moderate, so the design pressure is driven more by current link sizing than by runaway demand expansion.";
+ 215:     }
+ 216: 
+ 217:     let dominantConstraint = `${dominantLabel} is the dominant limiter. In practice, that means the future design will be constrained first by how close projected demand gets to your comfort band, rather than by today’s observed load alone.`;
+ 218: 
+ 219:     if (saturationMonth !== null) {
+ 220:       dominantConstraint += ` The current design crosses the selected utilization threshold around month ${saturationMonth}, which means congestion risk starts rising before the end of the planning window.`;
+ 221:     } else {
+ 222:       dominantConstraint += " The projection does not cross the selected utilization threshold inside this window, so the current uplink remains serviceable under the modeled assumptions.";
+ 223:     }
+ 224: 
+ 225:     let guidance = "";
+ 226:     if (statusPack.status === "RISK") {
+ 227:       guidance = `Plan for an uplink or aggregation change before month ${saturationMonth ?? months}. The modeled end-state really wants about ${fmtGbps(requiredHeadroomGbps)} of uplink capacity to stay near the ${utilPct.toFixed(0)}% operating target. If an outright upgrade is not practical, split traffic domains or reduce peak overlap before this growth becomes production pain.`;
+ 228:     } else if (statusPack.status === "WATCH") {
+ 229:       guidance = `The design is not failing immediately, but usable headroom is thinning. Validate the growth assumption against actual history and compare this result with Oversubscription or Latency tools if this uplink also carries bursty shared traffic.`;
+ 230:     } else {
+ 231:       guidance = `This projection stays inside a controlled band. Keep reviewing real utilization quarterly, and revisit sooner if demand composition changes faster than simple monthly growth suggests.`;
+ 232:     }
+ 233: 
+ 234:     return {
+ 235:       ok: true,
+ 236:       input,
+ 237:       series,
+ 238:       start,
+ 239:       end,
+ 240:       safeLimitGbps,
+ 241:       safeLimitMbps,
+ 242:       saturationMonth,
+ 243:       startUtilPct,
+ 244:       endUtilPct,
+ 245:       growthRatio,
+ 246:       requiredHeadroomGbps,
+ 247:       upgradeGapGbps,
+ 248:       status: statusPack.status,
+ 249:       dominant: statusPack.dominant,
+ 250:       interpretation,
+ 251:       dominantConstraint,
+ 252:       guidance
+ 253:     };
+ 254:   }
+ 255: 
+ 256:   function renderError(message) {
+ 257:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 258:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 259:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 260:     clearTable();
+ 261:   }
+ 262: 
+ 263:   function renderSuccess(data) {
+ 264:     const {
+ 265:       input,
+ 266:       start,
+ 267:       end,
+ 268:       safeLimitGbps,
+ 269:       saturationMonth,
+ 270:       startUtilPct,
+ 271:       endUtilPct,
+ 272:       growthRatio,
+ 273:       requiredHeadroomGbps,
+ 274:       upgradeGapGbps,
+ 275:       status,
+ 276:       interpretation,
+ 277:       dominantConstraint,
+ 278:       guidance
+ 279:     } = data;
+ 280: 
+ 281:     ScopedLabsAnalyzer.renderOutput({
+ 282:       resultsEl: els.results,
+ 283:       analysisEl: els.analysis,
+ 284:       existingChartRef: chartRef,
+ 285:       existingWrapRef: chartWrapRef,
+ 286:       summaryRows: [
+ 287:         { label: "Current required bandwidth", value: `${fmtMbps(start.req)} (${fmtGbps(start.reqGbps)})` },
+ 288:         { label: "Projected end-month required bandwidth", value: `${fmtMbps(end.req)} (${fmtGbps(end.reqGbps)})` },
+ 289:         { label: "Selected uplink", value: `${input.uplinkGbps} Gbps` },
+ 290:         { label: "Comfort-band capacity at target utilization", value: fmtGbps(safeLimitGbps) }
+ 291:       ],
+ 292:       derivedRows: [
+ 293:         { label: "Start load pressure", value: fmtPct(startUtilPct) },
+ 294:         { label: "End load pressure", value: fmtPct(endUtilPct) },
+ 295:         { label: "Growth expansion", value: `${growthRatio.toFixed(2)}x` },
+ 296:         { label: "Recommended uplink at target utilization", value: fmtGbps(requiredHeadroomGbps) },
+ 297:         { label: "Additional uplink needed", value: fmtGbps(upgradeGapGbps) },
+ 298:         {
+ 299:           label: "Saturation month",
+ 300:           value: saturationMonth === null ? "Not reached in this window" : `Month ${saturationMonth}`
+ 301:         }
+ 302:       ],
+ 303:       status,
+ 304:       interpretation,
+ 305:       dominantConstraint,
+ 306:       guidance,
+ 307:       chart: {
+ 308:         labels: [
+ 309:           "Start Load Pressure",
+ 310:           "End Load Pressure",
+ 311:           "Growth Expansion"
+ 312:         ],
+ 313:         values: [
+ 314:           Number(startUtilPct.toFixed(1)),
+ 315:           Number(endUtilPct.toFixed(1)),
+ 316:           Number((growthRatio * 100).toFixed(1))
+ 317:         ],
+ 318:         displayValues: [
+ 319:           fmtPct(startUtilPct),
+ 320:           fmtPct(endUtilPct),
+ 321:           `${growthRatio.toFixed(2)}x`
+ 322:         ],
+ 323:         referenceValue: 85,
+ 324:         healthyMax: 85,
+ 325:         watchMax: 100,
+ 326:         axisTitle: "Growth Pressure",
+ 327:         referenceLabel: "Healthy Margin Floor",
+ 328:         healthyLabel: "Healthy",
+ 329:         watchLabel: "Watch",
+ 330:         riskLabel: "Risk",
+ 331:         chartMax: Math.max(
+ 332:           110,
+ 333:           Math.ceil(
+ 334:             Math.max(startUtilPct, endUtilPct, growthRatio * 100, 100) * 1.12
+ 335:           )
+ 336:         )
+ 337:       }
+ 338:     });
+ 339: 
+ 340:     buildTable(data.input.months, data.series, data.safeLimitGbps);
+ 341:   }
+ 342: 
+ 343:   function simulate() {
+ 344:     const data = simulateModel();
+ 345:     if (!data.ok) {
+ 346:       renderError(data.message);
+ 347:       return;
+ 348:     }
+ 349:     renderSuccess(data);
+ 350:   }
+ 351: 
+ 352:   function reset() {
+ 353:     applyDefaults();
+ 354:     invalidate();
+ 355:   }
+ 356: 
+ 357:   function bindInvalidation() {
+ 358:     [
+ 359:       els.startMbps,
+ 360:       els.growthPct,
+ 361:       els.months,
+ 362:       els.peak,
+ 363:       els.overhead,
+ 364:       els.util,
+ 365:       els.uplink
+ 366:     ].forEach((el) => {
+ 367:       if (!el) return;
+ 368:       el.addEventListener("input", invalidate);
+ 369:       el.addEventListener("change", invalidate);
+ 370:     });
+ 371:   }
+ 372: 
+ 373:   window.addEventListener("DOMContentLoaded", () => {
+ 374:   const year = document.querySelector("[data-year]");
+ 375:   if (year) year.textContent = new Date().getFullYear();
+ 376:     bindInvalidation();
+ 377: 
+ 378:     els.calc.addEventListener("click", simulate);
+ 379:     els.reset.addEventListener("click", reset);
+ 380: 
+ 381:     document.addEventListener("keydown", (e) => {
+ 382:       if (e.key !== "Enter") return;
+ 383:       const target = e.target;
+ 384:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+ 385:         e.preventDefault();
+ 386:         simulate();
+ 387:       }
+ 388:     });
+ 389: 
+ 390:     reset();
+ 391:   });
+ 392: })();
+ 393: 
+ 394: 
+ 395: function hasStoredAuth() {
+ 396:   try {
+ 397:     const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+ 398:     if (!k) return false;
+ 399:     const raw = JSON.parse(localStorage.getItem(k));
+ 400:     return !!(
+ 401:       raw?.access_token ||
+ 402:       raw?.currentSession?.access_token ||
+ 403:       (Array.isArray(raw) ? raw[0]?.access_token : null)
+ 404:     );
+ 405:   } catch {
+ 406:     return false;
+ 407:   }
+ 408: }
+ 409: 
+ 410: 
+ 411: function getUnlockedCategories() {
+ 412:   try {
+ 413:     const raw = localStorage.getItem("sl_unlocked_categories");
+ 414:     if (!raw) return [];
+ 415:     return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+ 416:   } catch {
+ 417:     return [];
+ 418:   }
+ 419: }
+
+
+============================================================
+TOOL: latency
+============================================================
+Title: Latency Budget Calculator
+Tier: pro
+Meta description: Build an end-to-end latency budget and identify where delay is introduced across encode, transport, decode, and render stages.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Source / encode latency
+- Switching / routing
+- Uplink / aggregation
+- WAN / VPN transport
+- Decode / processing
+- Client render
+- Jitter buffer / reserve
+- Target latency budget (ms)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- encodeMs
+- switchMs
+- uplinkMs
+- wanMs
+- decodeMs
+- renderMs
+- bufferMs
+- targetMs
+- calc
+- reset
+- out
+- results
+- analysis-copy
+- next-step-row
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 123:     els.encodeMs.value = String(DEFAULTS.encodeMs);
+ 124:     els.switchMs.value = String(DEFAULTS.switchMs);
+ 125:     els.uplinkMs.value = String(DEFAULTS.uplinkMs);
+ 126:     els.wanMs.value = String(DEFAULTS.wanMs);
+ 127:     els.decodeMs.value = String(DEFAULTS.decodeMs);
+ 128:     els.renderMs.value = String(DEFAULTS.renderMs);
+ 129:     els.bufferMs.value = String(DEFAULTS.bufferMs);
+ 130:     els.targetMs.value = String(DEFAULTS.targetMs);
+ 131:   }
+ 132: 
+ 133:   function clearOwnState() {
+ 134:     try {
+ 135:       sessionStorage.removeItem(FLOW_KEYS.latency);
+ 136:     } catch {}
+ 137:   }
+ 138: 
+ 139:   function renderFlowContext() {
+ 140:     const flow = getStoredFlow(FLOW_KEYS.oversub);
+ 141: 
+ 142:     if (!flow || !flow.data) {
+ 143:       els.flowNote.hidden = false;
+ 144:       els.flowNote.innerHTML = `
+ 145:         <strong>Step 4 — Network pipeline:</strong><br>
+ 146:         This is the final step of the Network pipeline. Use carried-forward transport assumptions to judge whether the design still feels responsive in practice.
+ 147:       `;
+ 148:       return null;
+ 149:     }
+ 150: 
+ 151:     const data = flow.data;
+ 152:     const peakUtil = ScopedLabsAnalyzer.safeNumber(
+ 153:       data.peakUtilizationPct ?? data.coreUtilPct ?? data.transportUtilizationPct,
+ 154:       NaN
+ 155:     );
+ 156:     const demandMbps = ScopedLabsAnalyzer.safeNumber(
+ 157:       data.peakTotalMbps ?? data.coreDemandMbps,
+ 158:       NaN
+ 159:     );
+ 160:     const transportMbps = ScopedLabsAnalyzer.safeNumber(
+ 161:       data.wanMbps ?? data.uplinkMbps ?? data.transportMbps,
+ 162:       NaN
+ 163:     );
+ 164: 
+ 165:     if (Number.isFinite(peakUtil)) {
+ 166:       if (peakUtil > 90) {
+ 167:         els.wanMs.value = "70";
+ 168:         els.bufferMs.value = "40";
+ 169:       } else if (peakUtil > 75) {
+ 170:         els.wanMs.value = "55";
+ 171:         els.bufferMs.value = "30";
+ 172:       } else {
+ 173:         els.wanMs.value = "40";
+ 174:         els.bufferMs.value = "20";
+ 175:       }
+ 176:     }
+ 177: 
+ 178:     if (Number.isFinite(demandMbps) && Number.isFinite(transportMbps)) {
+ 179:       const note = [];
+ 180:       if (Number.isFinite(peakUtil)) note.push(`Peak transport pressure: <strong>${fmt(peakUtil, 1)}%</strong>`);
+ 181:       note.push(`Demand: <strong>${fmt(demandMbps, 1)} Mbps</strong>`);
+ 182:       note.push(`Transport capacity: <strong>${fmt(transportMbps, 1)} Mbps</strong>`);
+ 183:       els.flowNote.hidden = false;
+ 184:       els.flowNote.innerHTML = `<strong>Step 4 → Using Oversubscription results:</strong><br>${note.join(" | ")}`;
+ 185:     }
+ 186: 
+ 187:     return flow;
+ 188:   }
+ 189: 
+ 190:   function invalidate({ clearFlow = true } = {}) {
+ 191:     if (clearFlow) clearOwnState();
+ 192: 
+ 193:     ScopedLabsAnalyzer.invalidate({
+ 194:       resultsEl: els.out,
+ 195:       analysisEl: els.analysis,
+ 196:       continueWrapEl: els.continueWrap,
+ 197:       existingChartRef: chartRef,
+ 198:       existingWrapRef: chartWrapRef,
+ 199:       flowKey: FLOW_KEYS.latency,
+ 200:       category: "network",
+ 201:       step: "latency",
+ 202:       emptyMessage: "Run the calculator to see total latency, dominant contributors, and practical guidance."
+ 203:     });
+ 204: 
+ 205:     renderFlowContext();
+ 206:   }
+ 207: 
+ 208:   function getInputs() {
+ 209:     const encodeMs = readNumber(els.encodeMs);
+ 210:     const switchMs = readNumber(els.switchMs);
+ 211:     const uplinkMs = readNumber(els.uplinkMs);
+ 212:     const wanMs = readNumber(els.wanMs);
+ 213:     const decodeMs = readNumber(els.decodeMs);
+ 214:     const renderMs = readNumber(els.renderMs);
+ 215:     const bufferMs = readNumber(els.bufferMs);
+ 216:     const targetMs = readNumber(els.targetMs);
+ 217: 
+ 218:     if ([encodeMs, switchMs, uplinkMs, wanMs, decodeMs, renderMs, bufferMs, targetMs].some((v) => !Number.isFinite(v))) {
+ 219:       return { ok: false, message: "Enter valid values." };
+ 220:     }
+ 221: 
+ 222:     const contributors = [
+ 223:       { label: "Source / encode", value: Math.max(0, encodeMs) },
+ 224:       { label: "Switching / routing", value: Math.max(0, switchMs) },
+ 225:       { label: "Uplink / aggregation", value: Math.max(0, uplinkMs) },
+ 226:       { label: "WAN / VPN transport", value: Math.max(0, wanMs) },
+ 227:       { label: "Decode / processing", value: Math.max(0, decodeMs) },
+ 228:       { label: "Client render", value: Math.max(0, renderMs) },
+ 229:       { label: "Jitter buffer / reserve", value: Math.max(0, bufferMs) }
+ 230:     ];
+ 231: 
+ 232:     return {
+ 233:       ok: true,
+ 234:       contributors,
+ 235:       targetMs: Math.max(0, targetMs)
+ 236:     };
+ 237:   }
+ 238: 
+ 239:   function calculateModel() {
+ 240:     const input = getInputs();
+ 241:     if (!input.ok) return input;
+ 242: 
+ 243:     const totalMs = input.contributors.reduce((sum, s) => sum + s.value, 0);
+ 244:     const targetMs = input.targetMs;
+ 245:     const dominant = [...input.contributors].sort((a, b) => b.value - a.value)[0];
+ 246:     const dominantPct = totalMs > 0 ? (dominant.value / totalMs) * 100 : 0;
+ 247: 
+ 248:     const networkTransportMs = input.contributors
+ 249:       .filter((x) => ["Switching / routing", "Uplink / aggregation", "WAN / VPN transport"].includes(x.label))
+ 250:       .reduce((sum, s) => sum + s.value, 0);
+ 251: 
+ 252:     const processingMs = input.contributors
+ 253:       .filter((x) => ["Source / encode", "Decode / processing", "Client render"].includes(x.label))
+ 254:       .reduce((sum, s) => sum + s.value, 0);
+ 255: 
+ 256:     const budgetUsePct = targetMs > 0 ? (totalMs / targetMs) * 100 : 0;
+ 257:     const overTargetMs = Math.max(0, totalMs - targetMs);
+ 258:     const reserveMs = Math.max(0, targetMs - totalMs);
+ 259: 
+ 260:     const perStageHealthyMax = Math.max(targetMs / 4, 1);
+ 261:     const perStageWatchMax = Math.max(targetMs / 2, 1);
+ 262: 
+ 263:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 264:       compositeScore: dominant.value,
+ 265:       metrics: input.contributors.map((item) => ({
+ 266:         label: item.label,
+ 267:         value: item.value,
+ 268:         displayValue: fmtMs(item.value)
+ 269:       })),
+ 270:       healthyMax: perStageHealthyMax,
+ 271:       watchMax: perStageWatchMax
+ 272:     });
+ 273: 
+ 274:     let interpretation = `Total modeled latency is ${fmtMs(totalMs)} against a target budget of ${fmtMs(targetMs)}. ${dominant.label} is the single largest contributor at ${fmtMs(dominant.value)}, which means that stage will shape how responsive the workflow feels before smaller contributors do.`;
+ 275: 
+ 276:     if (statusPack.status === "RISK") {
+ 277:       interpretation += " The dominant stage is consuming too much of the latency budget by itself, which means the path is already fragile before the smaller contributors are even added. In practice, users will usually experience noticeable sluggishness because the largest delay source is oversized, not because the path is uniformly slow.";
+ 278:     } else if (statusPack.status === "WATCH") {
+ 279:       interpretation += " The path may still remain inside the total budget, but the dominant stage is already large enough to erode responsiveness margin on its own. That usually means the workflow still works, but it starts feeling less immediate once real transport variation, client performance, or additional buffering is introduced.";
+ 280:     } else {
+ 281:       interpretation += " The dominant stage remains inside a controlled band, so no single contributor is disproportionately consuming the latency budget. That keeps the design more balanced and easier to tune if requirements change later.";
+ 282:     }
+ 283: 
+ 284:     let dominantConstraint = `${dominant.label} is the dominant limiter. In practice, reducing smaller stages first will not materially improve perceived responsiveness until this largest contributor is addressed or validated.`;
+ 285: 
+ 286:     if (networkTransportMs > processingMs) {
+ 287:       dominantConstraint += " The network/transport side is currently consuming more of the path than source and client processing, so the design feels constrained more by movement through the network than by endpoint render behavior.";
+ 288:     } else {
+ 289:       dominantConstraint += " Endpoint processing and rendering are consuming more of the path than pure transport, so the biggest gains may come from codec, decode, or display changes rather than link upgrades alone.";
+ 290:     }
+ 291: 
+ 292:     let guidance = "";
+ 293:     if (statusPack.status === "RISK") {
+ 294:       guidance = `Reduce ${dominant.label.toLowerCase()} first. That stage is too large relative to the per-stage comfort band, so the system is carrying an oversized contributor that will dominate the user experience even if the total path still appears mathematically acceptable.`;
+ 295:     } else if (statusPack.status === "WATCH") {
+ 296:       guidance = `Validate whether ${dominant.label.toLowerCase()} is realistic and worth optimizing. The path is still workable, but the dominant stage is now large enough that it can become the first source of perceived sluggishness as the environment gets less ideal.`;
+ 297:     } else {
+ 298:       guidance = `This latency profile is balanced. Keep the dominant stage visible during design review, because that is still the first place where latency risk will grow if buffering, transport delay, or client processing expands later.`;
+ 299:     }
+ 300: 
+ 301:     return {
+ 302:       ok: true,
+ 303:       input,
+ 304:       totalMs,
+ 305:       targetMs,
+ 306:       dominant,
+ 307:       dominantPct,
+ 308:       networkTransportMs,
+ 309:       processingMs,
+ 310:       budgetUsePct,
+ 311:       overTargetMs,
+ 312:       reserveMs,
+ 313:       perStageHealthyMax,
+ 314:       perStageWatchMax,
+ 315:       status: statusPack.status,
+ 316:       interpretation,
+ 317:       dominantConstraint,
+ 318:       guidance
+ 319:     };
+ 320:   }
+ 321: 
+ 322:   function renderError(message) {
+ 323:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 324:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 325:     els.out.innerHTML = `<div class="muted">${message}</div>`;
+ 326:     if (els.continueWrap) els.continueWrap.style.display = "none";
+ 327:   }
+ 328: 
+ 329:   function writeFlow(data) {
+ 330:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.latency, {
+ 331:       category: "network",
+ 332:       step: "latency",
+ 333:       data: {
+ 334:         totalLatencyMs: Number(data.totalMs.toFixed(0)),
+ 335:         targetLatencyMs: Number(data.targetMs.toFixed(0)),
+ 336:         dominantLatencyStage: data.dominant.label,
+ 337:         dominantLatencyMs: Number(data.dominant.value.toFixed(0)),
+ 338:         budgetConsumptionPct: Number(data.budgetUsePct.toFixed(1)),
+ 339:         latencyStatus: data.status
+ 340:       }
+ 341:     });
+ 342:   }
+ 343: 
+ 344:   function renderSuccess(data) {
+ 345:     ScopedLabsAnalyzer.renderOutput({
+ 346:       resultsEl: els.out,
+ 347:       analysisEl: els.analysis,
+ 348:       existingChartRef: chartRef,
+ 349:       existingWrapRef: chartWrapRef,
+ 350:       summaryRows: [
+ 351:         { label: "Total latency", value: fmtMs(data.totalMs) },
+ 352:         { label: "Target latency budget", value: fmtMs(data.targetMs) },
+ 353:         { label: "Dominant stage", value: data.dominant.label },
+ 354:         { label: "Dominant stage contribution", value: fmtMs(data.dominant.value) }
+ 355:       ],
+ 356:       derivedRows: [
+ 357:         { label: "Budget consumption", value: fmtPct(data.budgetUsePct) },
+ 358:         { label: "Dominant stage share", value: fmtPct(data.dominantPct) },
+ 359:         { label: "Transport stack total", value: fmtMs(data.networkTransportMs) },
+ 360:         { label: "Processing stack total", value: fmtMs(data.processingMs) },
+ 361:         { label: "Reserve inside budget", value: fmtMs(data.reserveMs) },
+ 362:         { label: "Over target", value: fmtMs(data.overTargetMs) }
+ 363:       ],
+ 364:       status: data.status,
+ 365:       interpretation: data.interpretation,
+ 366:       dominantConstraint: data.dominantConstraint,
+ 367:       guidance: data.guidance,
+ 368:       chart: {
+ 369:         labels: data.input.contributors.map((x) => x.label),
+ 370:         values: data.input.contributors.map((x) => Number(x.value.toFixed(1))),
+ 371:         displayValues: data.input.contributors.map((x) => fmtMs(x.value)),
+ 372:         referenceValue: data.perStageHealthyMax,
+ 373:         healthyMax: data.perStageHealthyMax,
+ 374:         watchMax: data.perStageWatchMax,
+ 375:         axisTitle: "Latency Contribution (ms)",
+ 376:         referenceLabel: "Per-Stage Comfort Target",
+ 377:         healthyLabel: "Healthy",
+ 378:         watchLabel: "Watch",
+ 379:         riskLabel: "Risk",
+ 380:         chartMax: Math.max(
+ 381:           100,
+ 382:           Math.ceil(Math.max(...data.input.contributors.map((x) => x.value), data.perStageWatchMax) * 1.18)
+ 383:         )
+ 384:       }
+ 385:     });
+ 386: 
+ 387:     writeFlow(data);
+ 388: 
+ 389:     if (els.continueWrap) {
+ 390:       els.continueWrap.style.display = "flex";
+ 391:     }
+ 392:   }
+ 393: 
+ 394:   function calculate() {
+ 395:     const data = calculateModel();
+ 396:     if (!data.ok) {
+ 397:       renderError(data.message);
+ 398:       return;
+ 399:     }
+ 400:     renderSuccess(data);
+ 401:   }
+ 402: 
+ 403:   function reset() {
+ 404:     applyDefaults();
+ 405:     renderFlowContext();
+ 406:     invalidate({ clearFlow: false });
+ 407:   }
+ 408: 
+ 409:   function initTool() {
+ 410:     if (initialized) return;
+ 411:     initialized = true;
+ 412: 
+ 413:     [
+ 414:       els.encodeMs,
+ 415:       els.switchMs,
+ 416:       els.uplinkMs,
+ 417:       els.wanMs,
+ 418:       els.decodeMs,
+ 419:       els.renderMs,
+ 420:       els.bufferMs,
+ 421:       els.targetMs
+ 422:     ].forEach((el) => {
+ 423:       if (!el) return;
+ 424:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 425:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 426:     });
+ 427: 
+ 428:     els.calc?.addEventListener("click", calculate);
+ 429:     els.reset?.addEventListener("click", reset);
+ 430: 
+ 431:     document.addEventListener("keydown", (e) => {
+ 432:       if (e.key !== "Enter") return;
+ 433:       const target = e.target;
+ 434:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+ 435:         e.preventDefault();
+ 436:         calculate();
+ 437:       }
+ 438:     });
+ 439: 
+ 440:     reset();
+ 441:   }
+ 442: 
+ 443:   window.addEventListener("DOMContentLoaded", () => {
+ 444:     const year = document.querySelector("[data-year]");
+ 445:     if (year) year.textContent = new Date().getFullYear();
+ 446:     let unlocked = unlockCategoryPage();
+ 447:     if (unlocked) initTool();
+ 448: 
+ 449:     setTimeout(() => {
+ 450:       unlocked = unlockCategoryPage();
+ 451:       if (unlocked) initTool();
+ 452:     }, 400);
+ 453:   });
+ 454: })();
+ 455: 
+ 456: 
+ 457: function renderFlowNote() {
+ 458:   // TODO: implement upstream flow-note carry-over
+ 459: }
+ 460: 
+ 461: 
+ 462: function calc() {
+ 463:   // TODO: implement calculate handler
+ 464: }
+ 465: 
+
+
+============================================================
+TOOL: latency-jitter-buffer
+============================================================
+Title: Jitter Buffer Sizing
+Tier: pro
+Meta description: Estimate recommended jitter buffer size, added latency, and stability tradeoffs based on average jitter, variation, and safety margin.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Average Jitter (ms)
+- Jitter Variation (ms)
+- Safety Margin (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- avgJitter
+- variation
+- margin
+- calc
+- reset
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- results
+- analysis-copy
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: ﻿(() => {
+   2:   const DEFAULTS = {
+   3:     avgJitter: 20,
+   4:     variation: 10,
+   5:     margin: 20
+   6:   };
+   7: 
+   8:   const chartRef = { current: null };
+   9:   const chartWrapRef = { current: null };
+  10: 
+  11:   const $ = (id) => document.getElementById(id);
+  12: 
+  13:   const els = {
+  14:     avgJitter: $("avgJitter"),
+  15:     variation: $("variation"),
+  16:     margin: $("margin"),
+  17:     calc: $("calc"),
+  18:     reset: $("reset"),
+  19:     results: $("results"),
+  20:     analysis: $("analysis-copy")
+  21:   };
+  22: 
+  23:   function fmtMs(v, d = 1) {
+  24:     return Number.isFinite(v) ? `${v.toFixed(d)} ms` : "—";
+  25:   }
+  26: 
+  27:   function fmtPct(v, d = 1) {
+  28:     return Number.isFinite(v) ? `${v.toFixed(d)}%` : "—";
+  29:   }
+  30: 
+  31:   function readNumber(el, fallback = NaN) {
+  32:     return ScopedLabsAnalyzer.safeNumber(el?.value, fallback);
+  33:   }
+  34: 
+  35:   function applyDefaults() {
+  36:     els.avgJitter.value = String(DEFAULTS.avgJitter);
+  37:     els.variation.value = String(DEFAULTS.variation);
+  38:     els.margin.value = String(DEFAULTS.margin);
+  39:   }
+  40: 
+  41:   function invalidate() {
+  42:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+  43:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+  44:     els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+  45:   }
+  46: 
+  47:   function getInputs() {
+  48:     const avgJitter = readNumber(els.avgJitter);
+  49:     const variation = readNumber(els.variation);
+  50:     const margin = readNumber(els.margin);
+  51: 
+  52:     if ([avgJitter, variation, margin].some((v) => !Number.isFinite(v))) {
+  53:       return { ok: false, message: "Enter valid numeric values." };
+  54:     }
+  55: 
+  56:     if (avgJitter < 0) return { ok: false, message: "Average jitter cannot be negative." };
+  57:     if (variation < 0) return { ok: false, message: "Jitter variation cannot be negative." };
+  58:     if (margin < 0) return { ok: false, message: "Safety margin cannot be negative." };
+  59: 
+  60:     return {
+  61:       ok: true,
+  62:       avgJitter,
+  63:       variation,
+  64:       margin
+  65:     };
+  66:   }
+  67: 
+  68:   function calculateModel() {
+  69:     const input = getInputs();
+  70:     if (!input.ok) return input;
+  71: 
+  72:     const { avgJitter, variation, margin } = input;
+  73: 
+  74:     const jitterEnvelope = avgJitter + variation;
+  75:     const recommendedBuffer = jitterEnvelope * (1 + margin / 100);
+  76:     const addedLatency = recommendedBuffer;
+  77:     const marginContribution = recommendedBuffer - jitterEnvelope;
+  78:     const variationShare = recommendedBuffer > 0 ? (variation / recommendedBuffer) * 100 : 0;
+  79:     const marginShare = recommendedBuffer > 0 ? (marginContribution / recommendedBuffer) * 100 : 0;
+  80: 
+  81:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+  82:       compositeScore: recommendedBuffer,
+  83:       metrics: [
+  84:         {
+  85:           label: "Average Jitter",
+  86:           value: avgJitter,
+  87:           displayValue: fmtMs(avgJitter)
+  88:         },
+  89:         {
+  90:           label: "Variation Pressure",
+  91:           value: variation,
+  92:           displayValue: fmtMs(variation)
+  93:         },
+  94:         {
+  95:           label: "Recommended Buffer",
+  96:           value: recommendedBuffer,
+  97:           displayValue: fmtMs(recommendedBuffer)
+  98:         }
+  99:       ],
+ 100:       healthyMax: 40,
+ 101:       watchMax: 80
+ 102:     });
+ 103: 
+ 104:     const dominantLabel = statusPack.dominant.label;
+ 105: 
+ 106:     let interpretation = `The recommended jitter buffer is ${fmtMs(recommendedBuffer)} based on ${fmtMs(avgJitter)} of average jitter, ${fmtMs(variation)} of variation, and a ${fmtPct(margin, 0)} safety margin. Because the jitter buffer directly adds playback or transport delay, the real design question is not just whether the stream survives jitter, but how much responsiveness is sacrificed to get that stability.`;
+ 107: 
+ 108:     if (statusPack.status === "RISK") {
+ 109:       interpretation += " The buffer requirement is now large enough that the design is being driven more by instability protection than by low-latency behavior. In practice, this usually means the path may stop stuttering, but it starts feeling noticeably delayed.";
+ 110:     } else if (statusPack.status === "WATCH") {
+ 111:       interpretation += " The buffer size is still workable, but it is no longer lightweight. This is the range where the design often feels stable enough, yet responsiveness starts becoming a tradeoff rather than a free benefit.";
+ 112:     } else {
+ 113:       interpretation += " The recommended buffer remains in a controlled band, so the path can absorb moderate jitter without forcing a heavy added-latency penalty.";
+ 114:     }
+ 115: 
+ 116:     let dominantConstraint = `${dominantLabel} is the dominant limiter. That means the final buffer recommendation is being shaped most by ${
+ 117:       dominantLabel === "Recommended Buffer"
+ 118:         ? "the total protection requirement"
+ 119:         : dominantLabel === "Variation Pressure"
+ 120:         ? "jitter volatility rather than average network behavior"
+ 121:         : "the baseline jitter floor itself"
+ 122:     }.`;
+ 123: 
+ 124:     if (variation > avgJitter) {
+ 125:       dominantConstraint += " Variation exceeds the average jitter floor, which usually signals an unstable path where moment-to-moment spikes are harder to tame than the steady-state condition.";
+ 126:     } else {
+ 127:       dominantConstraint += " Average jitter remains the larger component, which usually points to a path that is consistently soft rather than wildly unstable.";
+ 128:     }
+ 129: 
+ 130:     let guidance = "";
+ 131:     if (statusPack.status === "RISK") {
+ 132:       guidance = "Treat this as a path-quality problem first, not just a player-buffer problem. Reducing jitter and its variation upstream will usually produce a better user experience than simply accepting a very large buffer.";
+ 133:     } else if (statusPack.status === "WATCH") {
+ 134:       guidance = "The recommendation is serviceable, but review whether this workflow can tolerate the added delay. If not, focus on reducing jitter spikes before increasing the safety margin further.";
+ 135:     } else {
+ 136:       guidance = "This buffer recommendation is balanced. Keep the safety margin modest unless the path is known to be bursty, because unnecessary reserve turns directly into user-visible delay.";
+ 137:     }
+ 138: 
+ 139:     return {
+ 140:       ok: true,
+ 141:       input,
+ 142:       jitterEnvelope,
+ 143:       recommendedBuffer,
+ 144:       addedLatency,
+ 145:       marginContribution,
+ 146:       variationShare,
+ 147:       marginShare,
+ 148:       status: statusPack.status,
+ 149:       interpretation,
+ 150:       dominantConstraint,
+ 151:       guidance
+ 152:     };
+ 153:   }
+ 154: 
+ 155:   function renderError(message) {
+ 156:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 157:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 158:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 159:   }
+ 160: 
+ 161:   function renderSuccess(data) {
+ 162:     ScopedLabsAnalyzer.renderOutput({
+ 163:       resultsEl: els.results,
+ 164:       analysisEl: els.analysis,
+ 165:       existingChartRef: chartRef,
+ 166:       existingWrapRef: chartWrapRef,
+ 167:       summaryRows: [
+ 168:         { label: "Average jitter", value: fmtMs(data.input.avgJitter) },
+ 169:         { label: "Jitter variation", value: fmtMs(data.input.variation) },
+ 170:         { label: "Safety margin", value: fmtPct(data.input.margin, 0) },
+ 171:         { label: "Recommended jitter buffer", value: fmtMs(data.recommendedBuffer) }
+ 172:       ],
+ 173:       derivedRows: [
+ 174:         { label: "Estimated added latency", value: fmtMs(data.addedLatency) },
+ 175:         { label: "Pre-margin jitter envelope", value: fmtMs(data.jitterEnvelope) },
+ 176:         { label: "Margin contribution", value: fmtMs(data.marginContribution) },
+ 177:         { label: "Variation share of final buffer", value: fmtPct(data.variationShare) },
+ 178:         { label: "Margin share of final buffer", value: fmtPct(data.marginShare) }
+ 179:       ],
+ 180:       status: data.status,
+ 181:       interpretation: data.interpretation,
+ 182:       dominantConstraint: data.dominantConstraint,
+ 183:       guidance: data.guidance,
+ 184:       chart: {
+ 185:         labels: [
+ 186:           "Average Jitter",
+ 187:           "Variation Pressure",
+ 188:           "Recommended Buffer"
+ 189:         ],
+ 190:         values: [
+ 191:           Number(data.input.avgJitter.toFixed(1)),
+ 192:           Number(data.input.variation.toFixed(1)),
+ 193:           Number(data.recommendedBuffer.toFixed(1))
+ 194:         ],
+ 195:         displayValues: [
+ 196:           fmtMs(data.input.avgJitter),
+ 197:           fmtMs(data.input.variation),
+ 198:           fmtMs(data.recommendedBuffer)
+ 199:         ],
+ 200:         referenceValue: 40,
+ 201:         healthyMax: 40,
+ 202:         watchMax: 80,
+ 203:         axisTitle: "Buffer Pressure (ms)",
+ 204:         referenceLabel: "Comfort Band",
+ 205:         healthyLabel: "Healthy",
+ 206:         watchLabel: "Watch",
+ 207:         riskLabel: "Risk",
+ 208:         chartMax: Math.max(
+ 209:           100,
+ 210:           Math.ceil(
+ 211:             Math.max(
+ 212:               data.input.avgJitter,
+ 213:               data.input.variation,
+ 214:               data.recommendedBuffer,
+ 215:               80
+ 216:             ) * 1.18
+ 217:           )
+ 218:         )
+ 219:       }
+ 220:     });
+ 221:   }
+ 222: 
+ 223:   function calculate() {
+ 224:     const data = calculateModel();
+ 225:     if (!data.ok) {
+ 226:       renderError(data.message);
+ 227:       return;
+ 228:     }
+ 229:     renderSuccess(data);
+ 230:   }
+ 231: 
+ 232:   function reset() {
+ 233:     applyDefaults();
+ 234:     invalidate();
+ 235:   }
+ 236: 
+ 237:   function bindInvalidation() {
+ 238:     [els.avgJitter, els.variation, els.margin].forEach((el) => {
+ 239:       if (!el) return;
+ 240:       el.addEventListener("input", invalidate);
+ 241:       el.addEventListener("change", invalidate);
+ 242:     });
+ 243:   }
+ 244: 
+ 245:   window.addEventListener("DOMContentLoaded", () => {
+ 246:   const year = document.querySelector("[data-year]");
+ 247:   if (year) year.textContent = new Date().getFullYear();
+ 248:     bindInvalidation();
+ 249: 
+ 250:     els.calc?.addEventListener("click", calculate);
+ 251:     els.reset?.addEventListener("click", reset);
+ 252: 
+ 253:     document.addEventListener("keydown", (e) => {
+ 254:       if (e.key !== "Enter") return;
+ 255:       const target = e.target;
+ 256:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+ 257:         e.preventDefault();
+ 258:         calculate();
+ 259:       }
+ 260:     });
+ 261: 
+ 262:     reset();
+ 263:   });
+ 264: })();
+ 265: 
+ 266: 
+ 267: 
+ 268: function hasStoredAuth() {
+ 269:   try {
+ 270:     const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+ 271:     if (!k) return false;
+ 272:     const raw = JSON.parse(localStorage.getItem(k));
+ 273:     return !!(
+ 274:       raw?.access_token ||
+ 275:       raw?.currentSession?.access_token ||
+ 276:       (Array.isArray(raw) ? raw[0]?.access_token : null)
+ 277:     );
+ 278:   } catch {
+ 279:     return false;
+ 280:   }
+ 281: }
+ 282: 
+ 283: 
+ 284: function getUnlockedCategories() {
+ 285:   try {
+ 286:     const raw = localStorage.getItem("sl_unlocked_categories");
+ 287:     if (!raw) return [];
+ 288:     return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+ 289:   } catch {
+ 290:     return [];
+ 291:   }
+
+
+============================================================
+TOOL: mtu-fragmentation
+============================================================
+Title: MTU &amp; Fragmentation Helper
+Tier: free/unknown
+Meta description: Estimate effective payload ceiling, fragmentation risk, and MTU pressure based on IP version, transport, and encapsulation overhead.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- MTU (bytes)
+- IP Version IPv4 IPv6
+- Transport TCP UDP
+- Extra Overhead (bytes)
+- Test Payload (bytes)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- toolCard
+- mtu
+- ipver
+- l4
+- extra
+- payload
+- calc
+- reset
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- results
+- analysis-copy
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  71:   function calculateModel() {
+  72:     const input = getInputs();
+  73:     if (!input.ok) return input;
+  74: 
+  75:     const { mtu, extra, payload, ipver, l4 } = input;
+  76: 
+  77:     const ipHdr = ipver === "6" ? 40 : 20;
+  78:     const l4Hdr = l4 === "udp" ? 8 : 20;
+  79:     const totalHdr = ipHdr + l4Hdr + extra;
+  80: 
+  81:     const maxPayload = Math.max(0, mtu - totalHdr);
+  82:     const willFragment = payload > maxPayload;
+  83:     const overflowBytes = Math.max(0, payload - maxPayload);
+  84:     const overheadPct = mtu > 0 ? (totalHdr / mtu) * 100 : 0;
+  85:     const payloadFitPct = maxPayload > 0 ? (payload / maxPayload) * 100 : 0;
+  86:     const usablePayloadPct = mtu > 0 ? (maxPayload / mtu) * 100 : 0;
+  87: 
+  88:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+  89:       compositeScore: payloadFitPct,
+  90:       metrics: [
+  91:         {
+  92:           label: "Header Pressure",
+  93:           value: overheadPct,
+  94:           displayValue: fmtPct(overheadPct)
+  95:         },
+  96:         {
+  97:           label: "Payload Fit",
+  98:           value: payloadFitPct,
+  99:           displayValue: fmtPct(payloadFitPct)
+ 100:         },
+ 101:         {
+ 102:           label: "Overflow Beyond Ceiling",
+ 103:           value: overflowBytes,
+ 104:           displayValue: fmtBytes(overflowBytes)
+ 105:         }
+ 106:       ],
+ 107:       healthyMax: 100,
+ 108:       watchMax: 110
+ 109:     });
+ 110: 
+ 111:     let interpretation = `With an MTU of ${fmtBytes(mtu)}, the effective no-fragment payload ceiling is ${fmtBytes(maxPayload)} after ${fmtBytes(totalHdr)} of total protocol and encapsulation overhead.`;
+ 112: 
+ 113:     if (willFragment) {
+ 114:       interpretation += ` The test payload of ${fmtBytes(payload)} exceeds that ceiling, so fragmentation pressure is real. In practice, this usually means either fragmentation, packet drops on DF-constrained paths, or inconsistent performance across overlays and VPNs where hidden overhead already consumes part of the frame.`;
+ 115:     } else if (payloadFitPct >= 90) {
+ 116:       interpretation += ` The payload still fits, but margin is thin. That means the path is technically workable while remaining vulnerable to extra encapsulation, option headers, or path-MTU mismatches that were not explicitly modeled here.`;
+ 117:     } else {
+ 118:       interpretation += ` The payload fits with usable headroom, so the design is less likely to run into surprise fragmentation as long as additional overhead layers are limited and path MTU remains consistent.`;
+ 119:     }
+ 120: 
+ 121:     let dominantConstraint = "";
+ 122:     if (overflowBytes > 0) {
+ 123:       dominantConstraint = `Overflow beyond the payload ceiling is the dominant limiter. The requested packet is simply larger than the path can comfortably carry without fragmentation once all headers are counted.`;
+ 124:     } else if (overheadPct >= 15) {
+ 125:       dominantConstraint = `Header and encapsulation pressure are the dominant limiter. Even if the test packet still fits, overhead is consuming a meaningful share of the MTU and reducing flexibility for future encapsulation or option growth.`;
+ 126:     } else {
+ 127:       dominantConstraint = `Payload fit is currently controlled. The path still has usable room between the requested packet and the calculated payload ceiling, so fragmentation risk is being managed rather than merely avoided by luck.`;
+ 128:     }
+ 129: 
+ 130:     let guidance = "";
+ 131:     if (willFragment) {
+ 132:       guidance = `Reduce payload size, lower MSS, or raise effective path MTU before assuming the transport is healthy. If this traffic crosses overlays, VPNs, or tunnels, validate real path MTU rather than trusting interface MTU alone.`;
+ 133:     } else if (payloadFitPct >= 90) {
+ 134:       guidance = `The packet fits, but the path is tight. Leave more headroom if this traffic will cross encapsulated or mixed networks, because small hidden overhead increases can erase the remaining margin quickly.`;
+ 135:     } else {
+ 136:       guidance = `This payload sizing is in a comfortable band. Keep an eye on extra overhead when introducing tunnels, VPNs, or additional encapsulation layers, because that is the fastest way to turn a clean path into a fragmentation problem.`;
+ 137:     }
+ 138: 
+ 139:     return {
+ 140:       ok: true,
+ 141:       input,
+ 142:       ipHdr,
+ 143:       l4Hdr,
+ 144:       totalHdr,
+ 145:       maxPayload,
+ 146:       willFragment,
+ 147:       overflowBytes,
+ 148:       overheadPct,
+ 149:       payloadFitPct,
+ 150:       usablePayloadPct,
+ 151:       status: statusPack.status,
+ 152:       interpretation,
+ 153:       dominantConstraint,
+ 154:       guidance
+ 155:     };
+ 156:   }
+ 157: 
+ 158:   function renderError(message) {
+ 159:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 160:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 161:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 162:   }
+ 163: 
+ 164:   function renderSuccess(data) {
+ 165:     ScopedLabsAnalyzer.renderOutput({
+ 166:       resultsEl: els.results,
+ 167:       analysisEl: els.analysis,
+ 168:       existingChartRef: chartRef,
+ 169:       existingWrapRef: chartWrapRef,
+ 170:       summaryRows: [
+ 171:         { label: "MTU", value: fmtBytes(data.input.mtu) },
+ 172:         { label: "IP header", value: fmtBytes(data.ipHdr) },
+ 173:         { label: "Transport header", value: `${fmtBytes(data.l4Hdr)} (${data.input.l4.toUpperCase()})` },
+ 174:         { label: "Total overhead", value: fmtBytes(data.totalHdr) }
+ 175:       ],
+ 176:       derivedRows: [
+ 177:         { label: "Max payload without fragmentation", value: fmtBytes(data.maxPayload) },
+ 178:         { label: "Test payload", value: fmtBytes(data.input.payload) },
+ 179:         { label: "Fragmentation risk", value: data.willFragment ? "YES" : "NO" },
+ 180:         { label: "Overflow beyond ceiling", value: fmtBytes(data.overflowBytes) },
+ 181:         { label: "Header pressure vs MTU", value: fmtPct(data.overheadPct) },
+ 182:         { label: "Usable payload share of MTU", value: fmtPct(data.usablePayloadPct) }
+ 183:       ],
+ 184:       status: data.status,
+ 185:       interpretation: data.interpretation,
+ 186:       dominantConstraint: data.dominantConstraint,
+ 187:       guidance: data.guidance,
+ 188:       chart: {
+ 189:         labels: [
+ 190:           "Total Overhead",
+ 191:           "No-Fragment Ceiling",
+ 192:           "Test Payload",
+ 193:           "Overflow Beyond Ceiling"
+ 194:         ],
+ 195:         values: [
+ 196:           Number(data.totalHdr.toFixed(1)),
+ 197:           Number(data.maxPayload.toFixed(1)),
+ 198:           Number(data.input.payload.toFixed(1)),
+ 199:           Number(data.overflowBytes.toFixed(1))
+ 200:         ],
+ 201:         displayValues: [
+ 202:           fmtBytes(data.totalHdr),
+ 203:           fmtBytes(data.maxPayload),
+ 204:           fmtBytes(data.input.payload),
+ 205:           fmtBytes(data.overflowBytes)
+ 206:         ],
+ 207:         referenceValue: data.maxPayload,
+ 208:         healthyMax: data.maxPayload,
+ 209:         watchMax: data.maxPayload * 1.1,
+ 210:         axisTitle: "Payload Pressure (bytes)",
+ 211:         referenceLabel: "No-Fragment Payload Ceiling",
+ 212:         healthyLabel: "Healthy",
+ 213:         watchLabel: "Watch",
+ 214:         riskLabel: "Risk",
+ 215:         chartMax: Math.max(
+ 216:           1600,
+ 217:           Math.ceil(
+ 218:             Math.max(
+ 219:               data.totalHdr,
+ 220:               data.maxPayload,
+ 221:               data.input.payload,
+ 222:               data.maxPayload * 1.1
+ 223:             ) * 1.08
+ 224:           )
+ 225:         )
+ 226:       }
+ 227:     });
+ 228:   }
+ 229: 
+ 230:   function calculate() {
+ 231:     const data = calculateModel();
+ 232:     if (!data.ok) {
+ 233:       renderError(data.message);
+ 234:       return;
+ 235:     }
+ 236:     renderSuccess(data);
+ 237:   }
+ 238: 
+ 239:   function reset() {
+ 240:     applyDefaults();
+ 241:     invalidate();
+ 242:   }
+ 243: 
+ 244:   function bindInvalidation() {
+ 245:     [els.mtu, els.ipver, els.l4, els.extra, els.payload].forEach((el) => {
+ 246:       if (!el) return;
+ 247:       el.addEventListener("input", invalidate);
+ 248:       el.addEventListener("change", invalidate);
+ 249:     });
+ 250:   }
+ 251: 
+ 252:   window.addEventListener("DOMContentLoaded", () => {
+ 253:   const year = document.querySelector("[data-year]");
+ 254:   if (year) year.textContent = new Date().getFullYear();
+ 255:     bindInvalidation();
+ 256: 
+ 257:     els.calc?.addEventListener("click", calculate);
+ 258:     els.reset?.addEventListener("click", reset);
+ 259: 
+ 260:     document.addEventListener("keydown", (e) => {
+ 261:       if (e.key !== "Enter") return;
+ 262:       const target = e.target;
+ 263:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+ 264:         e.preventDefault();
+ 265:         calculate();
+ 266:       }
+ 267:     });
+ 268: 
+ 269:     reset();
+ 270:   });
+ 271: })();
+ 272: 
+
+
+============================================================
+TOOL: oversubscription
+============================================================
+Title: Oversubscription Estimator
+Tier: pro
+Meta description: Estimate oversubscription at access, aggregation, and WAN layers and flag congestion risk using peak-demand assumptions.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Edge / downstream demand (Mbps)
+- Access uplink capacity (Mbps)
+- Aggregation downstream demand (Mbps)
+- Aggregation upstream capacity (Mbps)
+- Core / WAN expected peak demand (Mbps)
+- WAN / core transport capacity (Mbps)
+- Overhead reserve (%)
+- Target peak utilization (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- edgeDownMbps
+- edgeUpMbps
+- aggDownMbps
+- aggUpMbps
+- coreDemandMbps
+- wanMbps
+- overheadPct
+- targetUtilPct
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- next-step-btn
+- continue
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  63:   function fmtRatio(v) {
+  64:     return Number.isFinite(v) ? `${v.toFixed(2)} : 1` : "—";
+  65:   }
+
+--- CORE BLOCK 2 ---
+ 120:     els.coreDemandMbps.value = String(DEFAULTS.coreDemandMbps);
+ 121:     els.wanMbps.value = String(DEFAULTS.wanMbps);
+ 122:     els.overheadPct.value = String(DEFAULTS.overheadPct);
+ 123:     els.targetUtilPct.value = String(DEFAULTS.targetUtilPct);
+ 124:   }
+ 125: 
+ 126:   function getStoredFlow(key) {
+ 127:     const raw = sessionStorage.getItem(key);
+ 128:     if (!raw) return null;
+ 129:     try {
+ 130:       return JSON.parse(raw);
+ 131:     } catch {
+ 132:       return null;
+ 133:     }
+ 134:   }
+ 135: 
+ 136:   function clearDownstreamState() {
+ 137:     try {
+ 138:       sessionStorage.removeItem(FLOW_KEYS.oversub);
+ 139:       sessionStorage.removeItem(FLOW_KEYS.latency);
+ 140:     } catch {}
+ 141:   }
+ 142: 
+ 143:   function renderFlowContext() {
+ 144:     const flow = getStoredFlow(FLOW_KEYS.bandwidth);
+ 145: 
+ 146:     if (!flow || !flow.data) {
+ 147:       els.flowNote.hidden = false;
+ 148:       els.flowNote.innerHTML = `
+ 149:         <strong>Step 3 — Network pipeline:</strong><br>
+ 150:         Use Bandwidth results here to test whether peak demand still fits through the uplink hierarchy with usable headroom.
+ 151:       `;
+ 152:       return null;
+ 153:     }
+ 154: 
+ 155:     const peakTotalMbps = ScopedLabsAnalyzer.safeNumber(
+ 156:       flow.data.peakTotalMbps ?? flow.data.bandwidthPeakMbps,
+ 157:       NaN
+ 158:     );
+ 159:     const recommendedUplinkMbps = ScopedLabsAnalyzer.safeNumber(flow.data.recommendedUplinkMbps, NaN);
+ 160:     const actualUplinkMbps = ScopedLabsAnalyzer.safeNumber(flow.data.uplinkMbps, NaN);
+ 161:     const peakUtilPct = ScopedLabsAnalyzer.safeNumber(flow.data.peakUtilizationPct, NaN);
+ 162: 
+ 163:     if (Number.isFinite(peakTotalMbps) && peakTotalMbps > 0) {
+ 164:       els.coreDemandMbps.value = String(Math.round(peakTotalMbps));
+ 165:     }
+ 166:     if (Number.isFinite(actualUplinkMbps) && actualUplinkMbps > 0) {
+ 167:       els.wanMbps.value = String(Math.round(actualUplinkMbps));
+ 168:       els.edgeUpMbps.value = String(Math.round(actualUplinkMbps));
+ 169:     }
+ 170:     if (Number.isFinite(recommendedUplinkMbps) && recommendedUplinkMbps > 0) {
+ 171:       els.aggUpMbps.value = String(Math.round(recommendedUplinkMbps));
+ 172:     }
+ 173: 
+ 174:     if (Number.isFinite(peakTotalMbps) && peakTotalMbps > 0 && Number.isFinite(actualUplinkMbps) && actualUplinkMbps > 0) {
+ 175:       const parts = [
+ 176:         `Peak demand: <strong>${fmt(peakTotalMbps, 1)} Mbps</strong>`,
+ 177:         `Current uplink: <strong>${fmt(actualUplinkMbps, 1)} Mbps</strong>`
+ 178:       ];
+ 179: 
+ 180:       if (Number.isFinite(recommendedUplinkMbps) && recommendedUplinkMbps > 0) {
+ 181:         parts.push(`Recommended uplink: <strong>${fmt(recommendedUplinkMbps, 1)} Mbps</strong>`);
+ 182:       }
+ 183:       if (Number.isFinite(peakUtilPct)) {
+ 184:         parts.push(`Peak utilization: <strong>${fmt(peakUtilPct, 1)}%</strong>`);
+ 185:       }
+ 186: 
+ 187:       els.flowNote.hidden = false;
+ 188:       els.flowNote.innerHTML = `<strong>Step 3 → Using Bandwidth results:</strong><br>${parts.join(" | ")}`;
+ 189:     }
+ 190: 
+ 191:     return flow;
+ 192:   }
+ 193: 
+ 194:   function invalidate({ clearFlow = true } = {}) {
+ 195:     if (clearFlow) clearDownstreamState();
+ 196: 
+ 197:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 198:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 199:     els.results.innerHTML = `<div class="muted">Run the estimator to see oversubscription ratios, congestion risk, and carried-forward demand context.</div>`;
+ 200:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 201:     renderFlowContext();
+ 202:   }
+ 203: 
+ 204:   function getInputs() {
+ 205:     const edgeDownRaw = safeNum(els.edgeDownMbps);
+ 206:     const edgeUp = safeNum(els.edgeUpMbps);
+ 207:     const aggDownRaw = safeNum(els.aggDownMbps);
+ 208:     const aggUp = safeNum(els.aggUpMbps);
+ 209:     const coreDemandRaw = safeNum(els.coreDemandMbps);
+ 210:     const wanMbps = safeNum(els.wanMbps);
+ 211:     const overheadPct = ScopedLabsAnalyzer.clamp(safeNum(els.overheadPct), 0, 60);
+ 212:     const targetUtilPct = ScopedLabsAnalyzer.clamp(safeNum(els.targetUtilPct), 10, 95);
+ 213: 
+ 214:     if ([edgeDownRaw, edgeUp, aggDownRaw, aggUp, coreDemandRaw, wanMbps, overheadPct, targetUtilPct].some((v) => !Number.isFinite(v))) {
+ 215:       return { ok: false, message: "Enter valid numeric values." };
+ 216:     }
+ 217: 
+ 218:     if (edgeUp <= 0 || aggUp <= 0 || wanMbps <= 0) {
+ 219:       return { ok: false, message: "Uplink and transport capacities must be greater than 0." };
+ 220:     }
+ 221: 
+ 222:     if (edgeDownRaw < 0 || aggDownRaw < 0 || coreDemandRaw < 0) {
+ 223:       return { ok: false, message: "Demand values cannot be negative." };
+ 224:     }
+ 225: 
+ 226:     return {
+ 227:       ok: true,
+ 228:       edgeDownRaw,
+ 229:       edgeUp,
+ 230:       aggDownRaw,
+ 231:       aggUp,
+ 232:       coreDemandRaw,
+ 233:       wanMbps,
+ 234:       overheadPct,
+ 235:       targetUtilPct
+ 236:     };
+ 237:   }
+ 238: 
+ 239:   function calculateModel() {
+ 240:     const input = getInputs();
+ 241:     if (!input.ok) return input;
+ 242: 
+ 243:     const overheadMult = 1 + (input.overheadPct / 100);
+ 244:     const edgeDown = input.edgeDownRaw * overheadMult;
+ 245:     const aggDown = input.aggDownRaw * overheadMult;
+ 246:     const coreDemand = input.coreDemandRaw * overheadMult;
+ 247: 
+ 248:     const edgeRatio = edgeDown / input.edgeUp;
+ 249:     const aggRatio = aggDown / input.aggUp;
+ 250:     const coreRatio = coreDemand / input.wanMbps;
+ 251: 
+ 252:     const edgeUtil = edgeRatio * 100;
+ 253:     const aggUtil = aggRatio * 100;
+ 254:     const coreUtil = coreRatio * 100;
+ 255: 
+ 256:     const safeEdgeCap = input.edgeUp * (input.targetUtilPct / 100);
+ 257:     const safeAggCap = input.aggUp * (input.targetUtilPct / 100);
+ 258:     const safeCoreCap = input.wanMbps * (input.targetUtilPct / 100);
+ 259: 
+ 260:     const edgeHeadroom = safeEdgeCap - edgeDown;
+ 261:     const aggHeadroom = safeAggCap - aggDown;
+ 262:     const coreHeadroom = safeCoreCap - coreDemand;
+ 263: 
+ 264:     const recommendedEdge = edgeDown / (input.targetUtilPct / 100);
+ 265:     const recommendedAgg = aggDown / (input.targetUtilPct / 100);
+ 266:     const recommendedCore = coreDemand / (input.targetUtilPct / 100);
+ 267: 
+ 268:     const dominantMetric = [
+ 269:       { label: "Access Layer", value: edgeUtil, ratio: edgeRatio, headroom: edgeHeadroom },
+ 270:       { label: "Aggregation Layer", value: aggUtil, ratio: aggRatio, headroom: aggHeadroom },
+ 271:       { label: "Core / WAN", value: coreUtil, ratio: coreRatio, headroom: coreHeadroom }
+ 272:     ].sort((a, b) => b.value - a.value)[0];
+ 273: 
+ 274:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 275:       compositeScore: dominantMetric.value,
+ 276:       metrics: [
+ 277:         { label: "Access Layer", value: edgeUtil, displayValue: fmtPct(edgeUtil) },
+ 278:         { label: "Aggregation Layer", value: aggUtil, displayValue: fmtPct(aggUtil) },
+ 279:         { label: "Core / WAN", value: coreUtil, displayValue: fmtPct(coreUtil) }
+ 280:       ],
+ 281:       healthyMax: input.targetUtilPct,
+ 282:       watchMax: 95
+ 283:     });
+ 284: 
+ 285:     let interpretation = `After applying ${fmt(input.overheadPct, 0)}% reserve, the modeled peak loads are ${fmtMbps(edgeDown)}, ${fmtMbps(aggDown)}, and ${fmtMbps(coreDemand)} across the access, aggregation, and core/WAN boundaries. ${dominantMetric.label} is carrying the highest pressure at ${fmtPct(dominantMetric.value)}, so that layer will hit queueing and congestion symptoms first under burst conditions.`;
+ 286: 
+ 287:     if (statusPack.status === "RISK") {
+ 288:       interpretation += " The dominant layer is beyond a comfortable operating band, which means this is no longer just an abstract oversubscription ratio issue. In practice, the path is being asked to push more peak demand through the uplink hierarchy than the design can absorb cleanly.";
+ 289:     } else if (statusPack.status === "WATCH") {
+ 290:       interpretation += " The hierarchy is still operable, but the dominant layer is now tight enough that retries, burst overlap, or modest growth can push it into visible congestion behavior faster than expected.";
+ 291:     } else {
+ 292:       interpretation += " The modeled peak demand remains inside a controlled band, so the hierarchy still has usable room for burst behavior without immediately turning oversubscription into a performance problem.";
+ 293:     }
+ 294: 
+ 295:     let dominantConstraint = `${dominantMetric.label} is the dominant limiter. That means this design is constrained first by the layer where peak utilization is highest, not by the raw oversubscription label elsewhere in the stack.`;
+ 296: 
+ 297:     if (dominantMetric.headroom < 0) {
+ 298:       dominantConstraint += " That layer is already beyond the selected target operating band, so the design is effectively borrowing from margin that should have been reserved for burst behavior and transient spikes.";
+ 299:     } else {
+ 300:       dominantConstraint += " That layer still has some operating margin, but it is the first place where future demand or overhead increases will start eroding performance headroom.";
+ 301:     }
+ 302: 
+ 303:     let guidance = "";
+ 304:     if (statusPack.status === "RISK") {
+ 305:       guidance = `Reduce pressure at ${dominantMetric.label.toLowerCase()} first or increase upstream capacity there. The model wants about ${
+ 306:         dominantMetric.label === "Access Layer"
+ 307:           ? fmtMbps(recommendedEdge)
+ 308:           : dominantMetric.label === "Aggregation Layer"
+ 309:           ? fmtMbps(recommendedAgg)
+ 310:           : fmtMbps(recommendedCore)
+ 311:       } at that boundary to stay near the ${fmt(input.targetUtilPct, 0)}% planning target.`;
+ 312:     } else if (statusPack.status === "WATCH") {
+ 313:       guidance = `The design is workable but tight. Validate whether the dominant layer’s demand assumption is realistic and compare the next step in the pipeline, because latency usually gets worse quickly once this kind of oversubscription pressure starts creating queueing.`;
+ 314:     } else {
+ 315:       guidance = "This oversubscription profile is balanced for the assumptions entered here. Continue into Latency next to verify that the transport path still feels responsive once delay contributors are added on top of the capacity model.";
+ 316:     }
+ 317: 
+ 318:     return {
+ 319:       ok: true,
+ 320:       input,
+ 321:       edgeDown,
+ 322:       aggDown,
+ 323:       coreDemand,
+ 324:       edgeRatio,
+ 325:       aggRatio,
+ 326:       coreRatio,
+ 327:       edgeUtil,
+ 328:       aggUtil,
+ 329:       coreUtil,
+ 330:       edgeHeadroom,
+ 331:       aggHeadroom,
+ 332:       coreHeadroom,
+ 333:       recommendedEdge,
+ 334:       recommendedAgg,
+ 335:       recommendedCore,
+ 336:       dominantMetric,
+ 337:       status: statusPack.status,
+ 338:       interpretation,
+ 339:       dominantConstraint,
+ 340:       guidance
+ 341:     };
+ 342:   }
+ 343: 
+ 344:   function renderError(message) {
+ 345:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 346:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 347:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 348:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 349:   }
+ 350: 
+ 351:   function writeFlow(data) {
+ 352:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.oversub, {
+ 353:       category: "network",
+ 354:       step: "oversubscription",
+ 355:       data: {
+ 356:         edgeUtilPct: Number(data.edgeUtil.toFixed(1)),
+ 357:         aggUtilPct: Number(data.aggUtil.toFixed(1)),
+ 358:         coreUtilPct: Number(data.coreUtil.toFixed(1)),
+ 359:         coreDemandMbps: Number(data.coreDemand.toFixed(1)),
+ 360:         wanMbps: Number(data.input.wanMbps.toFixed(1)),
+ 361:         targetUtilPct: Number(data.input.targetUtilPct.toFixed(0)),
+ 362:         oversubscriptionStatus: data.status
+ 363:       }
+ 364:     });
+ 365:   }
+ 366: 
+ 367:   function renderSuccess(data) {
+ 368:     ScopedLabsAnalyzer.renderOutput({
+ 369:       resultsEl: els.results,
+ 370:       analysisEl: els.analysis,
+ 371:       existingChartRef: chartRef,
+ 372:       existingWrapRef: chartWrapRef,
+ 373:       summaryRows: [
+ 374:         { label: "Access ratio", value: fmtRatio(data.edgeRatio) },
+ 375:         { label: "Aggregation ratio", value: fmtRatio(data.aggRatio) },
+ 376:         { label: "Core / WAN ratio", value: fmtRatio(data.coreRatio) },
+ 377:         { label: "Dominant layer", value: data.dominantMetric.label }
+ 378:       ],
+ 379:       derivedRows: [
+ 380:         { label: "Access utilization", value: fmtPct(data.edgeUtil) },
+ 381:         { label: "Aggregation utilization", value: fmtPct(data.aggUtil) },
+ 382:         { label: "Core / WAN utilization", value: fmtPct(data.coreUtil) },
+ 383:         { label: "Access headroom at target band", value: fmtMbps(data.edgeHeadroom) },
+ 384:         { label: "Aggregation headroom at target band", value: fmtMbps(data.aggHeadroom) },
+ 385:         { label: "Core / WAN headroom at target band", value: fmtMbps(data.coreHeadroom) },
+ 386:         { label: "Recommended access capacity", value: fmtMbps(data.recommendedEdge) },
+ 387:         { label: "Recommended aggregation capacity", value: fmtMbps(data.recommendedAgg) },
+ 388:         { label: "Recommended core / WAN capacity", value: fmtMbps(data.recommendedCore) }
+ 389:       ],
+ 390:       status: data.status,
+ 391:       interpretation: data.interpretation,
+ 392:       dominantConstraint: data.dominantConstraint,
+ 393:       guidance: data.guidance,
+ 394:       chart: {
+ 395:         labels: ["Access Layer", "Aggregation Layer", "Core / WAN"],
+ 396:         values: [
+ 397:           Number(data.edgeUtil.toFixed(1)),
+ 398:           Number(data.aggUtil.toFixed(1)),
+ 399:           Number(data.coreUtil.toFixed(1))
+ 400:         ],
+ 401:         displayValues: [
+ 402:           fmtPct(data.edgeUtil),
+ 403:           fmtPct(data.aggUtil),
+ 404:           fmtPct(data.coreUtil)
+ 405:         ],
+ 406:         referenceValue: data.input.targetUtilPct,
+ 407:         healthyMax: data.input.targetUtilPct,
+ 408:         watchMax: 95,
+ 409:         axisTitle: "Peak Utilization (%)",
+ 410:         referenceLabel: `Target Utilization (${fmt(data.input.targetUtilPct, 0)}%)`,
+ 411:         healthyLabel: "Healthy",
+ 412:         watchLabel: "Watch",
+ 413:         riskLabel: "Risk",
+ 414:         chartMax: Math.max(
+ 415:           110,
+ 416:           Math.ceil(Math.max(data.edgeUtil, data.aggUtil, data.coreUtil, 95) * 1.12)
+ 417:         )
+ 418:       }
+ 419:     });
+ 420: 
+ 421:     writeFlow(data);
+ 422:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 423:   }
+ 424: 
+ 425:   function calculate() {
+ 426:     const data = calculateModel();
+ 427:     if (!data.ok) {
+ 428:       renderError(data.message);
+ 429:       return;
+ 430:     }
+ 431:     renderSuccess(data);
+ 432:   }
+ 433: 
+ 434:   function reset() {
+ 435:     applyDefaults();
+ 436:     renderFlowContext();
+ 437:     invalidate({ clearFlow: false });
+ 438:   }
+ 439: 
+ 440:   function bindInvalidation() {
+ 441:     [
+ 442:       els.edgeDownMbps,
+ 443:       els.edgeUpMbps,
+ 444:       els.aggDownMbps,
+ 445:       els.aggUpMbps,
+ 446:       els.coreDemandMbps,
+ 447:       els.wanMbps,
+ 448:       els.overheadPct,
+ 449:       els.targetUtilPct
+ 450:     ].forEach((el) => {
+ 451:       if (!el) return;
+ 452:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 453:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 454:     });
+ 455:   }
+ 456: 
+ 457:   function initTool() {
+ 458:     bindInvalidation();
+ 459:     els.calc?.addEventListener("click", calculate);
+ 460:     els.reset?.addEventListener("click", reset);
+ 461: 
+ 462:     document.addEventListener("keydown", (e) => {
+ 463:       if (e.key !== "Enter") return;
+ 464:       const t = e.target;
+ 465:       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 466:         e.preventDefault();
+ 467:         calculate();
+ 468:       }
+ 469:     });
+ 470: 
+ 471:     reset();
+ 472:   }
+ 473: 
+ 474:   window.addEventListener("DOMContentLoaded", () => {
+ 475:     const year = document.querySelector("[data-year]");
+ 476:     if (year) year.textContent = new Date().getFullYear();
+ 477: 
+ 478:     let unlocked = unlockCategoryPage();
+ 479:     if (unlocked) initTool();
+ 480: 
+ 481:     setTimeout(() => {
+ 482:       unlocked = unlockCategoryPage();
+ 483:       if (unlocked && !els.toolCard.dataset.initialized) {
+ 484:         els.toolCard.dataset.initialized = "true";
+ 485:         initTool();
+ 486:       }
+ 487:     }, 400);
+ 488:   });
+ 489: })();
+ 490: 
+ 491: function renderFlowNote() {
+ 492:   // TODO: implement upstream flow-note carry-over
+ 493: }
+ 494: 
+ 495: 
+ 496: function calc() {
+ 497:   // TODO: implement calculate handler
+ 498: }
+ 499: 
+ 500: 
+
+
+============================================================
+TOOL: packet-loss-impact
+============================================================
+Title: Packet Loss Impact
+Tier: pro
+Meta description: Estimate delivered throughput, retransmission pressure, and user-experience risk at a given packet loss rate.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Baseline Throughput (Mbps)
+- Packet Loss (%)
+- RTT (ms)
+- Traffic Type Voice / VoIP Video / Streaming General Data
+- Protocol UDP (real-time) TCP (retransmits)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- baseline
+- lossPct
+- rtt
+- traffic
+- proto
+- calc
+- reset
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- results
+- analysis-copy
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  66:     if ([baseline, lossPct, rtt].some((v) => !Number.isFinite(v))) {
+  67:       return { ok: false, message: "Enter valid numeric values." };
+  68:     }
+  69: 
+  70:     if (baseline <= 0) {
+  71:       return { ok: false, message: "Baseline Throughput must be greater than 0 Mbps." };
+  72:     }
+  73: 
+  74:     return {
+  75:       ok: true,
+  76:       baseline,
+  77:       lossPct,
+  78:       rtt,
+  79:       traffic,
+  80:       proto
+  81:     };
+  82:   }
+  83: 
+  84:   function trafficSensitivity(traffic) {
+  85:     if (traffic === "voice") return 1.35;
+  86:     if (traffic === "video") return 1.1;
+  87:     return 0.85;
+  88:   }
+  89: 
+  90:   function protocolSensitivity(proto) {
+  91:     return proto === "udp" ? 1.15 : 1.0;
+  92:   }
+  93: 
+  94:   function experienceLabel(status, proto) {
+  95:     if (proto === "udp") {
+  96:       if (status === "RISK") return "Poor / visible or audible impairment likely";
+  97:       if (status === "WATCH") return "Degraded / artifacts or instability possible";
+  98:       return "Controlled / generally acceptable";
+  99:     }
+ 100: 
+ 101:     if (status === "RISK") return "Poor / retransmit drag likely user-visible";
+ 102:     if (status === "WATCH") return "Degraded / reduced responsiveness likely";
+ 103:     return "Controlled / loss impact manageable";
+ 104:   }
+ 105: 
+ 106:   function calculateModel() {
+ 107:     const input = getInputs();
+ 108:     if (!input.ok) return input;
+ 109: 
+ 110:     const { baseline, lossPct, rtt, traffic, proto } = input;
+ 111:     const loss = lossPct / 100;
+ 112: 
+ 113:     const K = 6.0;
+ 114:     let delivered;
+ 115:     if (proto === "udp") {
+ 116:       delivered = baseline * (1 - loss);
+ 117:     } else {
+ 118:       const penalty = 1 / (1 + loss * (rtt / 1000) * K);
+ 119:       delivered = baseline * (1 - loss) * penalty;
+ 120:     }
+ 121: 
+ 122:     delivered = Math.max(0, delivered);
+ 123: 
+ 124:     const lostMbps = Math.max(0, baseline - delivered);
+ 125:     const deliveredPct = baseline > 0 ? (delivered / baseline) * 100 : 0;
+ 126:     const throughputLossPct = baseline > 0 ? (lostMbps / baseline) * 100 : 0;
+ 127: 
+ 128:     const sensitivity = trafficSensitivity(traffic) * protocolSensitivity(proto);
+ 129: 
+ 130:     const lossPressure = lossPct * sensitivity * 10;
+ 131:     const retransmitPressure =
+ 132:       proto === "tcp"
+ 133:         ? lossPct * Math.max(1, rtt / 20) * trafficSensitivity(traffic) * 3.5
+ 134:         : lossPct * trafficSensitivity(traffic) * 6;
+ 135:     const throughputPressure = throughputLossPct * 2.5;
+ 136: 
+ 137:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 138:       compositeScore: Math.max(lossPressure, retransmitPressure, throughputPressure),
+ 139:       metrics: [
+ 140:         {
+ 141:           label: "Loss Pressure",
+ 142:           value: lossPressure,
+ 143:           displayValue: fmtPct(lossPct)
+ 144:         },
+ 145:         {
+ 146:           label: "RTT Retransmit Pressure",
+ 147:           value: retransmitPressure,
+ 148:           displayValue: proto === "tcp" ? `${fmt(rtt, 0)} ms RTT` : "Real-time sensitivity"
+ 149:         },
+ 150:         {
+ 151:           label: "Throughput Loss",
+ 152:           value: throughputPressure,
+ 153:           displayValue: fmtPct(throughputLossPct)
+ 154:         }
+ 155:       ],
+ 156:       healthyMax: 35,
+ 157:       watchMax: 70
+ 158:     });
+ 159: 
+ 160:     const experienceRisk = experienceLabel(statusPack.status, proto);
+ 161:     const dominantLabel = statusPack.dominant.label;
+ 162: 
+ 163:     let interpretation = `With ${fmtPct(lossPct)} packet loss on a ${fmt(rtt, 0)} ms RTT path, estimated delivered throughput falls to ${fmtMbps(delivered)} from a ${fmtMbps(baseline)} baseline.`;
+ 164: 
+ 165:     if (proto === "udp") {
+ 166:       interpretation += ` For ${traffic} traffic over UDP, loss is exposed directly to the application, so damage usually appears as missing audio, visible artifacts, or stream instability rather than hidden recovery.`;
+ 167:     } else {
+ 168:       interpretation += ` For ${traffic} traffic over TCP, the transport can hide some loss through retransmissions, but the tradeoff is lower goodput and added delay pressure as RTT stretches recovery time.`;
+ 169:     }
+ 170: 
+ 171:     if (statusPack.status === "RISK") {
+ 172:       interpretation += ` The dominant pressure is already in a risk band, so this is no longer a minor impairment. The link is now behaving in a way users are likely to describe as bad quality, buffering, or sluggish response rather than merely imperfect conditions.`;
+ 173:     } else if (statusPack.status === "WATCH") {
+ 174:       interpretation += ` The path is still usable, but the dominant loss-related pressure is large enough that peak periods or additional congestion can push the experience from acceptable into clearly degraded.`;
+ 175:     } else {
+ 176:       interpretation += ` The path remains inside a controlled band, so packet loss exists but is not yet dominating the user experience under the entered assumptions.`;
+ 177:     }
+ 178: 
+ 179:     let dominantConstraint = "";
+ 180:     if (dominantLabel === "Loss Pressure") {
+ 181:       dominantConstraint = `Loss percentage itself is the dominant limiter. The path quality is poor enough that fixing raw loss rate will matter more than chasing throughput estimates alone.`;
+ 182:     } else if (dominantLabel === "RTT Retransmit Pressure") {
+ 183:       dominantConstraint = `RTT retransmit pressure is the dominant limiter. The combination of loss and round-trip delay is making recovery expensive, so performance degrades faster than the raw loss percentage alone suggests.`;
+ 184:     } else {
+ 185:       dominantConstraint = `Throughput loss is the dominant limiter. The path is shedding enough effective bandwidth that applications feel constrained even before you account for secondary user-experience effects.`;
+ 186:     }
+ 187: 
+ 188:     let guidance = "";
+ 189:     if (statusPack.status === "RISK") {
+ 190:       guidance = `Treat this as a path-quality problem first. Check physical errors, Wi-Fi RF quality, congestion, and queueing behavior before assuming the application is at fault. ${
+ 191:         traffic === "voice"
+ 192:           ? "Voice paths should usually stay around or below 0.3% loss."
+ 193:           : traffic === "video"
+ 194:           ? "Video paths usually behave best around or below 0.5% loss."
+ 195:           : "Even general data traffic can become painful when loss and RTT reinforce each other."
+ 196:       }`;
+ 197:     } else if (statusPack.status === "WATCH") {
+ 198:       guidance = `The path is workable but soft. Validate whether the loss is bursty or sustained, because intermittent loss spikes often hurt real traffic more than the average value alone implies.`;
+ 199:     } else {
+ 200:       guidance = `This loss level is manageable under the current assumptions. Keep monitoring during busy periods, because packet loss often becomes meaningful only when it stacks with congestion or RF instability.`;
+ 201:     }
+ 202: 
+ 203:     return {
+ 204:       ok: true,
+ 205:       input,
+ 206:       delivered,
+ 207:       lostMbps,
+ 208:       deliveredPct,
+ 209:       throughputLossPct,
+ 210:       lossPressure,
+ 211:       retransmitPressure,
+ 212:       throughputPressure,
+ 213:       experienceRisk,
+ 214:       status: statusPack.status,
+ 215:       interpretation,
+ 216:       dominantConstraint,
+ 217:       guidance
+ 218:     };
+ 219:   }
+ 220: 
+ 221:   function renderError(message) {
+ 222:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 223:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 224:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 225:   }
+ 226: 
+ 227:   function renderSuccess(data) {
+ 228:     const { input } = data;
+ 229: 
+ 230:     ScopedLabsAnalyzer.renderOutput({
+ 231:       resultsEl: els.results,
+ 232:       analysisEl: els.analysis,
+ 233:       existingChartRef: chartRef,
+ 234:       existingWrapRef: chartWrapRef,
+ 235:       summaryRows: [
+ 236:         { label: "Baseline Throughput", value: fmtMbps(input.baseline) },
+ 237:         { label: "Packet Loss", value: fmtPct(input.lossPct) },
+ 238:         { label: "RTT", value: `${fmt(input.rtt, 0)} ms` },
+ 239:         { label: "Estimated Delivered Throughput", value: fmtMbps(data.delivered) }
+ 240:       ],
+ 241:       derivedRows: [
+ 242:         { label: "Estimated Lost Throughput", value: fmtMbps(data.lostMbps) },
+ 243:         { label: "Delivered Share of Baseline", value: fmtPct(data.deliveredPct) },
+ 244:         { label: "Throughput Loss", value: fmtPct(data.throughputLossPct) },
+ 245:         { label: "Traffic Type", value: input.traffic.toUpperCase() },
+ 246:         { label: "Protocol", value: input.proto.toUpperCase() },
+ 247:         { label: "Experience Risk", value: data.experienceRisk }
+ 248:       ],
+ 249:       status: data.status,
+ 250:       interpretation: data.interpretation,
+ 251:       dominantConstraint: data.dominantConstraint,
+ 252:       guidance: data.guidance,
+ 253:       chart: {
+ 254:         labels: [
+ 255:           "Loss Pressure",
+ 256:           "RTT Retransmit Pressure",
+ 257:           "Throughput Loss"
+ 258:         ],
+ 259:         values: [
+ 260:           Number(data.lossPressure.toFixed(1)),
+ 261:           Number(data.retransmitPressure.toFixed(1)),
+ 262:           Number(data.throughputPressure.toFixed(1))
+ 263:         ],
+ 264:         displayValues: [
+ 265:           fmtPct(input.lossPct),
+ 266:           input.proto === "tcp" ? `${fmt(input.rtt, 0)} ms RTT` : "Real-time sensitivity",
+ 267:           fmtPct(data.throughputLossPct)
+ 268:         ],
+ 269:         referenceValue: 35,
+ 270:         healthyMax: 35,
+ 271:         watchMax: 70,
+ 272:         axisTitle: "Loss Impact Pressure",
+ 273:         referenceLabel: "Comfort Band",
+ 274:         healthyLabel: "Healthy",
+ 275:         watchLabel: "Watch",
+ 276:         riskLabel: "Risk",
+ 277:         chartMax: Math.max(
+ 278:           100,
+ 279:           Math.ceil(
+ 280:             Math.max(
+ 281:               data.lossPressure,
+ 282:               data.retransmitPressure,
+ 283:               data.throughputPressure,
+ 284:               70
+ 285:             ) * 1.12
+ 286:           )
+ 287:         )
+ 288:       }
+ 289:     });
+ 290:   }
+ 291: 
+ 292:   function calculate() {
+ 293:     const data = calculateModel();
+ 294:     if (!data.ok) {
+ 295:       renderError(data.message);
+ 296:       return;
+ 297:     }
+ 298:     renderSuccess(data);
+ 299:   }
+ 300: 
+ 301:   function reset() {
+ 302:     applyDefaults();
+ 303:     invalidate();
+ 304:   }
+ 305: 
+ 306:   function bindInvalidation() {
+ 307:     [els.baseline, els.lossPct, els.rtt, els.traffic, els.proto].forEach((el) => {
+ 308:       if (!el) return;
+ 309:       el.addEventListener("input", invalidate);
+ 310:       el.addEventListener("change", invalidate);
+ 311:     });
+ 312:   }
+ 313: 
+ 314:   window.addEventListener("DOMContentLoaded", () => {
+ 315:   const year = document.querySelector("[data-year]");
+ 316:   if (year) year.textContent = new Date().getFullYear();
+ 317:     bindInvalidation();
+ 318: 
+ 319:     els.calc?.addEventListener("click", calculate);
+ 320:     els.reset?.addEventListener("click", reset);
+ 321: 
+ 322:     document.addEventListener("keydown", (e) => {
+ 323:       if (e.key !== "Enter") return;
+ 324:       const target = e.target;
+ 325:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+ 326:         e.preventDefault();
+ 327:         calculate();
+ 328:       }
+ 329:     });
+ 330: 
+ 331:     reset();
+ 332:   });
+ 333: })();
+ 334: 
+ 335: 
+ 336: 
+ 337: function hasStoredAuth() {
+ 338:   try {
+ 339:     const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+ 340:     if (!k) return false;
+ 341:     const raw = JSON.parse(localStorage.getItem(k));
+ 342:     return !!(
+ 343:       raw?.access_token ||
+ 344:       raw?.currentSession?.access_token ||
+ 345:       (Array.isArray(raw) ? raw[0]?.access_token : null)
+ 346:     );
+ 347:   } catch {
+ 348:     return false;
+ 349:   }
+ 350: }
+ 351: 
+ 352: 
+ 353: function getUnlockedCategories() {
+ 354:   try {
+ 355:     const raw = localStorage.getItem("sl_unlocked_categories");
+ 356:     if (!raw) return [];
+ 357:     return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+ 358:   } catch {
+ 359:     return [];
+ 360:   }
+
+
+============================================================
+TOOL: poe-budget
+============================================================
+Title: PoE Budget &amp; Switch Margin Analyzer
+Tier: free/unknown
+Meta description: Calculate PoE load, safe switch budget, and installation headroom before deployment.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Switch PoE budget (W)
+- Safety margin (%)
+- PoE standard (assumption)
+- PoE ports used (count)
+- Cameras (count)
+- Camera watts (each)
+- Wireless APs (count)
+- AP watts (each)
+- VoIP phones (count)
+- Phone watts (each)
+- Other devices (count)
+- Other watts (each)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- poeBudgetW
+- marginPct
+- poeStandard
+- poePorts
+- camsCount
+- camsW
+- apsCount
+- apsW
+- phonesCount
+- phonesW
+- otherCount
+- otherW
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   const CATEGORY = "network";
+   3:   const STEP = "poe-budget";
+   4:   const LANE = "v1";
+   5: 
+   6:   const FLOW_KEYS = {
+   7:     poe: "scopedlabs:pipeline:network:poe-budget",
+   8:     bandwidth: "scopedlabs:pipeline:network:bandwidth",
+   9:     oversub: "scopedlabs:pipeline:network:oversubscription",
+  10:     latency: "scopedlabs:pipeline:network:latency"
+  11:   };
+  12: 
+  13:   const DEFAULTS = {
+  14:     poeBudgetW: 370,
+  15:     marginPct: 20,
+  16:     poeStandard: "at",
+  17:     poePorts: 16,
+  18:     camsCount: 12,
+  19:     camsW: 12,
+  20:     apsCount: 2,
+  21:     apsW: 15,
+  22:     phonesCount: 0,
+  23:     phonesW: 5,
+  24:     otherCount: 0,
+  25:     otherW: 10
+  26:   };
+  27: 
+  28:   const chartRef = { current: null };
+  29:   const chartWrapRef = { current: null };
+  30: 
+  31:   const $ = (id) => document.getElementById(id);
+  32: 
+  33:   const els = {
+  34:     poeBudgetW: $("poeBudgetW"),
+  35:     marginPct: $("marginPct"),
+  36:     poeStandard: $("poeStandard"),
+  37:     poePorts: $("poePorts"),
+  38:     camsCount: $("camsCount"),
+  39:     camsW: $("camsW"),
+  40:     apsCount: $("apsCount"),
+  41:     apsW: $("apsW"),
+  42:     phonesCount: $("phonesCount"),
+  43:     phonesW: $("phonesW"),
+  44:     otherCount: $("otherCount"),
+  45:     otherW: $("otherW"),
+  46:     calc: $("calc"),
+  47:     reset: $("reset"),
+  48:     results: $("results"),
+  49:     analysis: $("analysis-copy"),
+  50:     flowNote: $("flow-note"),
+  51:     continueWrap: $("next-step-row"),
+  52:     continueBtn: $("continue")
+  53:   };
+  54: 
+  55:   function safeNum(el, fallback = NaN) {
+  56:     return ScopedLabsAnalyzer.safeNumber(el?.value, fallback);
+  57:   }
+  58: 
+  59:   function fmtW(x) {
+  60:     return Number.isFinite(x) ? `${x.toFixed(1)} W` : "—";
+  61:   }
+  62: 
+  63:   function fmtPct(x) {
+  64:     return Number.isFinite(x) ? `${x.toFixed(1)}%` : "—";
+  65:   }
+  66: 
+  67:   function fmtCount(x) {
+  68:     return Number.isFinite(x) ? `${Math.round(x)}` : "—";
+  69:   }
+  70: 
+  71:   function applyDefaults() {
+  72:     els.poeBudgetW.value = String(DEFAULTS.poeBudgetW);
+  73:     els.marginPct.value = String(DEFAULTS.marginPct);
+  74:     els.poeStandard.value = DEFAULTS.poeStandard;
+  75:     els.poePorts.value = String(DEFAULTS.poePorts);
+  76:     els.camsCount.value = String(DEFAULTS.camsCount);
+  77:     els.camsW.value = String(DEFAULTS.camsW);
+  78:     els.apsCount.value = String(DEFAULTS.apsCount);
+  79:     els.apsW.value = String(DEFAULTS.apsW);
+  80:     els.phonesCount.value = String(DEFAULTS.phonesCount);
+  81:     els.phonesW.value = String(DEFAULTS.phonesW);
+  82:     els.otherCount.value = String(DEFAULTS.otherCount);
+  83:     els.otherW.value = String(DEFAULTS.otherW);
+  84:   }
+  85: 
+  86:   function clearNetworkPipelineState() {
+  87:     try {
+  88:       Object.values(FLOW_KEYS).forEach((key) => sessionStorage.removeItem(key));
+  89:     } catch {}
+  90:   }
+  91: 
+  92:   function renderFlowContext() {
+  93:     if (!els.flowNote) return;
+  94:     els.flowNote.hidden = false;
+  95:     els.flowNote.innerHTML = `
+  96:       <strong>Start here for the Network pipeline.</strong><br>
+  97:       Confirm switch power headroom before estimating traffic demand.
+  98:     `;
+  99:   }
+ 100: 
+ 101:   function invalidate() {
+ 102:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 103:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 104:     els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+ 105:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 106:     renderFlowContext();
+ 107:   }
+ 108: 
+ 109:   function getInputs() {
+ 110:     const poeBudgetW = safeNum(els.poeBudgetW);
+ 111:     const marginPct = ScopedLabsAnalyzer.clamp(safeNum(els.marginPct), 0, 80);
+ 112:     const poePorts = Math.max(0, Math.floor(safeNum(els.poePorts)));
+ 113:     const camsCount = Math.max(0, Math.floor(safeNum(els.camsCount)));
+ 114:     const camsW = Math.max(0, safeNum(els.camsW));
+ 115:     const apsCount = Math.max(0, Math.floor(safeNum(els.apsCount)));
+ 116:     const apsW = Math.max(0, safeNum(els.apsW));
+ 117:     const phonesCount = Math.max(0, Math.floor(safeNum(els.phonesCount)));
+ 118:     const phonesW = Math.max(0, safeNum(els.phonesW));
+ 119:     const otherCount = Math.max(0, Math.floor(safeNum(els.otherCount)));
+ 120:     const otherW = Math.max(0, safeNum(els.otherW));
+ 121:     const poeStandard = String(els.poeStandard?.value || "at");
+ 122: 
+ 123:     const required = [
+ 124:       poeBudgetW, marginPct, poePorts,
+ 125:       camsCount, camsW,
+ 126:       apsCount, apsW,
+ 127:       phonesCount, phonesW,
+ 128:       otherCount, otherW
+ 129:     ];
+ 130: 
+ 131:     if (required.some((v) => !Number.isFinite(v) || v < 0)) {
+ 132:       return { ok: false, message: "Enter valid non-negative values." };
+ 133:     }
+ 134: 
+ 135:     return {
+ 136:       ok: true,
+ 137:       poeBudgetW,
+ 138:       marginPct,
+ 139:       poePorts,
+ 140:       camsCount,
+ 141:       camsW,
+ 142:       apsCount,
+ 143:       apsW,
+ 144:       phonesCount,
+ 145:       phonesW,
+ 146:       otherCount,
+ 147:       otherW,
+ 148:       poeStandard
+ 149:     };
+ 150:   }
+ 151: 
+ 152:   function calculateModel() {
+ 153:     const input = getInputs();
+ 154:     if (!input.ok) return input;
+ 155: 
+ 156:     const totalDevices = input.camsCount + input.apsCount + input.phonesCount + input.otherCount;
+ 157: 
+ 158:     const totalDrawW =
+ 159:       (input.camsCount * input.camsW) +
+ 160:       (input.apsCount * input.apsW) +
+ 161:       (input.phonesCount * input.phonesW) +
+ 162:       (input.otherCount * input.otherW);
+ 163: 
+ 164:     const safeBudgetW = input.poeBudgetW * (1 - (input.marginPct / 100));
+ 165:     const headroomW = safeBudgetW - totalDrawW;
+ 166:     const utilPct = input.poeBudgetW > 0 ? (totalDrawW / input.poeBudgetW) * 100 : 0;
+ 167:     const safeBandPct = input.poeBudgetW > 0 ? (safeBudgetW / input.poeBudgetW) * 100 : 0;
+ 168:     const portWarn = input.poePorts > 0 && totalDevices > input.poePorts;
+ 169:     const portsRemaining = input.poePorts - totalDevices;
+ 170: 
+ 171:     const standardComforts = { af: 12.95, at: 25.5, bt: 60 };
+ 172:     const perPortComfort = standardComforts[input.poeStandard] || 25.5;
+ 173:     const averagePerDeviceW = totalDevices > 0 ? totalDrawW / totalDevices : 0;
+ 174:     const portPowerPressurePct = perPortComfort > 0 ? (averagePerDeviceW / perPortComfort) * 100 : 0;
+ 175: 
+ 176:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 177:       compositeScore: utilPct,
+ 178:       metrics: [
+ 179:         { label: "Switch Budget Pressure", value: utilPct, displayValue: fmtPct(utilPct) },
+ 180:         {
+ 181:           label: "Safe-Band Pressure",
+ 182:           value: safeBudgetW > 0 ? (totalDrawW / safeBudgetW) * 100 : 0,
+ 183:           displayValue: safeBudgetW > 0 ? fmtPct((totalDrawW / safeBudgetW) * 100) : "—"
+ 184:         },
+ 185:         {
+ 186:           label: "Per-Port Load Pressure",
+ 187:           value: portPowerPressurePct,
+ 188:           displayValue: fmtPct(portPowerPressurePct)
+ 189:         }
+ 190:       ],
+ 191:       healthyMax: safeBandPct,
+ 192:       watchMax: 95
+ 193:     });
+ 194: 
+ 195:     let interpretation = `Estimated PoE draw is ${fmtW(totalDrawW)} against a switch budget of ${fmtW(input.poeBudgetW)}. After holding back a ${fmtPct(input.marginPct)} planning reserve, the usable safe budget is ${fmtW(safeBudgetW)}.`;
+ 196: 
+ 197:     if (statusPack.status === "RISK") {
+ 198:       interpretation += " The modeled load is now too close to, or beyond, the safe operating band. In practice, this is where IR, heaters, startup events, or accessory modules can push the switch into unstable behavior or force load shedding long before the nameplate budget looks fully consumed.";
+ 199:     } else if (statusPack.status === "WATCH") {
+ 200:       interpretation += " The design is still workable on paper, but margin is thin enough that field behavior and seasonal draw variation can start consuming the remaining reserve faster than expected.";
+ 201:     } else {
+ 202:       interpretation += " The design remains inside a controlled planning band, so the switch still has usable reserve for normal real-world variance under the assumptions entered here.";
+ 203:     }
+ 204: 
+ 205:     let dominantConstraint = statusPack.dominant.label === "Per-Port Load Pressure"
+ 206:       ? "Per-port load pressure is the dominant limiter. That means the issue is not just total switch budget, but how aggressively each powered endpoint is being assumed relative to the selected PoE standard."
+ 207:       : statusPack.dominant.label === "Safe-Band Pressure"
+ 208:       ? "Safe-band pressure is the dominant limiter. The total design is consuming the reserved planning margin too quickly, even if it has not fully exhausted the raw switch budget yet."
+ 209:       : "Switch budget pressure is the dominant limiter. The overall switch power envelope is the first hard limit that will constrain this design under peak draw conditions.";
+ 210: 
+ 211:     if (portWarn) {
+ 212:       dominantConstraint += " Device count also exceeds the available powered port count, so the design is not physically supportable as entered even before power headroom is considered.";
+ 213:     }
+ 214: 
+ 215:     let guidance = "";
+ 216:     if (statusPack.status === "RISK") {
+ 217:       guidance = "Reduce powered load, split endpoints across switches, or move to a larger PoE budget before deployment. If cameras use IR, heaters, or high-draw accessories, validate field worst-case draw instead of relying on typical idle numbers.";
+ 218:     } else if (statusPack.status === "WATCH") {
+ 219:       guidance = "The design is serviceable but tight. Keep reserve higher if endpoints can surge, and verify whether your watt assumptions reflect realistic field behavior rather than nominal specs.";
+ 220:     } else {
+ 221:       guidance = "This PoE plan is balanced. Continue into Bandwidth next so the traffic model is built on a switch design that already has power headroom under control.";
+ 222:     }
+ 223: 
+ 224:     return {
+ 225:       ok: true,
+ 226:       input,
+ 227:       totalDevices,
+ 228:       totalDrawW,
+ 229:       safeBudgetW,
+ 230:       headroomW,
+ 231:       utilPct,
+ 232:       safeBandPct,
+ 233:       portWarn,
+ 234:       portsRemaining,
+ 235:       averagePerDeviceW,
+ 236:       portPowerPressurePct,
+ 237:       status: statusPack.status,
+ 238:       interpretation,
+ 239:       dominantConstraint,
+ 240:       guidance
+ 241:     };
+ 242:   }
+ 243: 
+ 244:   function renderError(message) {
+ 245:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 246:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 247:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 248:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 249:   }
+ 250: 
+ 251:   function writeFlow(data) {
+ 252:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.poe, {
+ 253:       category: "network",
+ 254:       step: "poe-budget",
+ 255:       data: {
+ 256:         poeBudgetW: Number(data.input.poeBudgetW.toFixed(1)),
+ 257:         safeBudgetW: Number(data.safeBudgetW.toFixed(1)),
+ 258:         poeHeadroomW: Number(data.headroomW.toFixed(1)),
+ 259:         poeUtilPct: Number(data.utilPct.toFixed(1)),
+ 260:         poweredDevices: Number(data.totalDevices),
+ 261:         poeStatus: data.status
+ 262:       }
+ 263:     });
+ 264:   }
+ 265: 
+ 266:   function renderSuccess(data) {
+ 267:     ScopedLabsAnalyzer.renderOutput({
+ 268:       resultsEl: els.results,
+ 269:       analysisEl: els.analysis,
+ 270:       existingChartRef: chartRef,
+ 271:       existingWrapRef: chartWrapRef,
+ 272:       summaryRows: [
+ 273:         { label: "Total device draw", value: fmtW(data.totalDrawW) },
+ 274:         { label: "Safe budget (after margin)", value: fmtW(data.safeBudgetW) },
+ 275:         { label: "Headroom", value: fmtW(data.headroomW) },
+ 276:         { label: "Powered devices", value: fmtCount(data.totalDevices) }
+ 277:       ],
+ 278:       derivedRows: [
+ 279:         { label: "Utilization (vs switch budget)", value: fmtPct(data.utilPct) },
+ 280:         { label: "Ports used", value: fmtCount(data.input.poePorts) },
+ 281:         { label: "Ports remaining", value: fmtCount(data.portsRemaining) },
+ 282:         { label: "Average watts per device", value: fmtW(data.averagePerDeviceW) },
+ 283:         { label: "Per-port load pressure", value: fmtPct(data.portPowerPressurePct) },
+ 284:         { label: "Port-count warning", value: data.portWarn ? "YES" : "NO" }
+ 285:       ],
+ 286:       status: data.status,
+ 287:       interpretation: data.interpretation,
+ 288:       dominantConstraint: data.dominantConstraint,
+ 289:       guidance: data.guidance,
+ 290:       chart: {
+ 291:         labels: ["Total Device Draw", "Safe Budget", "Headroom"],
+ 292:         values: [
+ 293:           Number(data.totalDrawW.toFixed(1)),
+ 294:           Number(data.safeBudgetW.toFixed(1)),
+ 295:           Number(Math.max(0, data.headroomW).toFixed(1))
+ 296:         ],
+ 297:         displayValues: [
+ 298:           fmtW(data.totalDrawW),
+ 299:           fmtW(data.safeBudgetW),
+ 300:           fmtW(Math.max(0, data.headroomW))
+ 301:         ],
+ 302:         referenceValue: data.safeBudgetW,
+ 303:         healthyMax: data.safeBudgetW,
+ 304:         watchMax: data.input.poeBudgetW,
+ 305:         axisTitle: "PoE Capacity (W)",
+ 306:         referenceLabel: "Safe Budget",
+ 307:         healthyLabel: "Healthy",
+ 308:         watchLabel: "Watch",
+ 309:         riskLabel: "Risk",
+ 310:         chartMax: Math.max(
+ 311:           100,
+ 312:           Math.ceil(
+ 313:             Math.max(data.totalDrawW, data.safeBudgetW, data.input.poeBudgetW) * 1.12
+ 314:           )
+ 315:         )
+ 316:       }
+ 317:     });
+ 318: 
+ 319:     writeFlow(data);
+ 320:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 321:   }
+ 322: 
+ 323:   function calculate() {
+ 324:     const data = calculateModel();
+ 325:     if (!data.ok) {
+ 326:       renderError(data.message);
+ 327:       return;
+ 328:     }
+ 329:     renderSuccess(data);
+ 330:   }
+ 331: 
+ 332:   function reset() {
+ 333:     clearNetworkPipelineState();
+ 334:     applyDefaults();
+ 335:     renderFlowContext();
+ 336:     invalidate();
+ 337:   }
+ 338: 
+ 339:   function bindInvalidation() {
+ 340:     [
+ 341:       els.poeBudgetW,
+ 342:       els.marginPct,
+ 343:       els.poeStandard,
+ 344:       els.poePorts,
+ 345:       els.camsCount,
+ 346:       els.camsW,
+ 347:       els.apsCount,
+ 348:       els.apsW,
+ 349:       els.phonesCount,
+ 350:       els.phonesW,
+ 351:       els.otherCount,
+ 352:       els.otherW
+ 353:     ].forEach((el) => {
+ 354:       if (!el) return;
+ 355:       el.addEventListener("input", invalidate);
+ 356:       el.addEventListener("change", invalidate);
+ 357:     });
+ 358:   }
+ 359: 
+ 360:   window.addEventListener("DOMContentLoaded", () => {
+ 361:     const year = document.querySelector("[data-year]");
+ 362:     if (year) year.textContent = new Date().getFullYear();
+ 363: 
+ 364:     bindInvalidation();
+ 365:     els.calc?.addEventListener("click", calculate);
+ 366:     els.reset?.addEventListener("click", reset);
+ 367: 
+ 368:     document.addEventListener("keydown", (e) => {
+ 369:       if (e.key !== "Enter") return;
+ 370:       const t = e.target;
+ 371:       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 372:         e.preventDefault();
+ 373:         calculate();
+ 374:       }
+ 375:     });
+ 376: 
+ 377:     reset();
+ 378:   });
+ 379: })();
+
+
+============================================================
+TOOL: uplink-failure-impact
+============================================================
+Title: Uplink Failure Impact
+Tier: pro
+Meta description: Estimate business and operational impact when an uplink is degraded or offline, including failover, application criticality, and outage duration.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Sites / Branches Affected
+- Users Affected
+- Critical Apps Email / Web Mixed (SaaS + VoIP) VoIP / POS / Cameras / VPN Critical
+- Failover Available? Yes (2nd ISP / LTE) Partial (limited bandwidth) No
+- Estimated Outage Duration (minutes)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- sites
+- users
+- apps
+- failover
+- minutes
+- calc
+- reset
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- results
+- analysis-copy
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   7:     minutes: 60
+   8:   };
+   9: 
+  10:   const chartRef = { current: null };
+  11:   const chartWrapRef = { current: null };
+  12: 
+  13:   const $ = (id) => document.getElementById(id);
+  14: 
+  15:   const els = {
+  16:     sites: $("sites"),
+  17:     users: $("users"),
+  18:     apps: $("apps"),
+  19:     failover: $("failover"),
+  20:     minutes: $("minutes"),
+  21:     calc: $("calc"),
+  22:     reset: $("reset"),
+  23:     results: $("results"),
+  24:     analysis: $("analysis-copy")
+  25:   };
+  26: 
+  27:   function safeNum(el, fallback = NaN) {
+  28:     return ScopedLabsAnalyzer.safeNumber(el?.value, fallback);
+  29:   }
+  30: 
+  31:   function fmt(value, decimals = 1) {
+  32:     if (!Number.isFinite(value)) return "—";
+  33:     return value.toFixed(decimals);
+  34:   }
+  35: 
+  36:   function impactLabel(status) {
+  37:     if (status === "RISK") return "Critical restoration priority";
+  38:     if (status === "WATCH") return "Elevated restoration priority";
+  39:     return "Controlled / lower immediate impact";
+  40:   }
+  41: 
+  42:   function applyDefaults() {
+  43:     els.sites.value = String(DEFAULTS.sites);
+  44:     els.users.value = String(DEFAULTS.users);
+  45:     els.apps.value = DEFAULTS.apps;
+  46:     els.failover.value = DEFAULTS.failover;
+  47:     els.minutes.value = String(DEFAULTS.minutes);
+  48:   }
+  49: 
+  50:   function invalidate() {
+  51:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+  52:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+  53:     els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+  54:   }
+  55: 
+  56:   function getInputs() {
+  57:     const sites = Math.max(1, Math.floor(safeNum(els.sites)));
+  58:     const users = Math.max(0, Math.floor(safeNum(els.users)));
+  59:     const minutes = Math.max(0, safeNum(els.minutes));
+  60:     const apps = String(els.apps?.value || "mixed");
+  61:     const failover = String(els.failover?.value || "no");
+  62: 
+  63:     if ([sites, users, minutes].some((v) => !Number.isFinite(v))) {
+  64:       return { ok: false, message: "Enter valid numeric values." };
+  65:     }
+  66: 
+  67:     return { ok: true, sites, users, minutes, apps, failover };
+  68:   }
+  69: 
+  70:   function calculateModel() {
+  71:     const input = getInputs();
+  72:     if (!input.ok) return input;
+  73: 
+  74:     const { sites, users, apps, failover, minutes } = input;
+  75: 
+  76:     const sitePressure = Math.min(sites * 12, 36);
+  77:     const userPressure = Math.min(users * 0.8, 32);
+  78:     const scalePressure = sitePressure + userPressure;
+  79: 
+  80:     let appPressure = 0;
+  81:     if (apps === "basic") appPressure = 10;
+  82:     if (apps === "mixed") appPressure = 20;
+  83:     if (apps === "critical") appPressure = 32;
+  84: 
+  85:     let failoverPenalty = 0;
+  86:     if (failover === "yes") failoverPenalty = 8;
+  87:     if (failover === "partial") failoverPenalty = 18;
+  88:     if (failover === "no") failoverPenalty = 26;
+  89: 
+  90:     const durationPressure = Math.min((minutes / 60) * 6, 24);
+  91: 
+  92:     const failoverRelief = failover === "yes" ? 18 : failover === "partial" ? 8 : 0;
+  93:     const preFailoverScore = scalePressure + appPressure + durationPressure;
+  94:     const finalScore = ScopedLabsAnalyzer.clamp(preFailoverScore - failoverRelief, 0, 100);
+  95: 
+  96:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+  97:       compositeScore: Math.max(scalePressure, appPressure, failoverPenalty, durationPressure),
+  98:       metrics: [
+  99:         {
+ 100:           label: "Scale Pressure",
+ 101:           value: scalePressure,
+ 102:           displayValue: `${fmt(scalePressure, 0)} pts`
+ 103:         },
+ 104:         {
+ 105:           label: "Application Criticality",
+ 106:           value: appPressure,
+ 107:           displayValue: apps.toUpperCase()
+ 108:         },
+ 109:         {
+ 110:           label: "Failover Weakness",
+ 111:           value: failoverPenalty,
+ 112:           displayValue: failover.toUpperCase()
+ 113:         },
+ 114:         {
+ 115:           label: "Duration Pressure",
+ 116:           value: durationPressure,
+ 117:           displayValue: `${fmt(minutes, 0)} min`
+ 118:         }
+ 119:       ],
+ 120:       healthyMax: 35,
+ 121:       watchMax: 70
+ 122:     });
+ 123: 
+ 124:     const peopleImpact = sites * users;
+ 125:     const impactClass = impactLabel(statusPack.status);
+ 126:     const dominantLabel = statusPack.dominant.label;
+ 127: 
+ 128:     let interpretation = `The modeled outage impact score is ${fmt(finalScore, 0)} / 100 for ${sites} affected site${sites === 1 ? "" : "s"} and ${users} affected user${users === 1 ? "" : "s"}, with an expected outage duration of ${fmt(minutes, 0)} minutes. The active severity band is being set by ${dominantLabel.toLowerCase()}, which is the strongest operational pressure in the current model.`;
+ 129: 
+ 130:     if (failover === "no") {
+ 131:       interpretation += " There is no alternate transport path, so this is a full dependency failure rather than a degraded-capacity event.";
+ 132:     } else if (failover === "partial") {
+ 133:       interpretation += " Partial failover exists, but it does not fully remove risk because limited backup bandwidth often preserves connectivity while still degrading business-critical workflows.";
+ 134:     } else {
+ 135:       interpretation += " Full failover materially reduces blended impact, but it does not eliminate operational pressure if the applications behind the link are latency- or continuity-sensitive.";
+ 136:     }
+ 137: 
+ 138:     if (statusPack.status === "RISK") {
+ 139:       interpretation += " The dominant pressure is already in a risk band, so the outage should be treated as a high-consequence event even before secondary factors are added together.";
+ 140:     } else if (statusPack.status === "WATCH") {
+ 141:       interpretation += " The dominant pressure is elevated enough that restoration priority should be higher than a routine connectivity issue, especially if conditions worsen or multiple dependencies stack behind the same uplink.";
+ 142:     } else {
+ 143:       interpretation += " No single pressure source is dominating the model aggressively, so the outage remains more contained than broadly disruptive under the assumptions entered here.";
+ 144:     }
+ 145: 
+ 146:     let dominantConstraint = "";
+ 147:     if (dominantLabel === "Scale Pressure") {
+ 148:       dominantConstraint = "Scale pressure is the dominant limiter. The link supports enough users or sites that restoring connectivity quickly matters more than any single application detail.";
+ 149:     } else if (dominantLabel === "Application Criticality") {
+ 150:       dominantConstraint = "Application criticality is the dominant limiter. Even a smaller outage becomes a major event when voice, cameras, POS, VPN, or other operationally essential services depend on the path.";
+ 151:     } else if (dominantLabel === "Failover Weakness") {
+ 152:       dominantConstraint = "Failover weakness is the dominant limiter. The biggest problem is not just the outage itself, but the lack of an adequate alternate path when the primary uplink is lost.";
+ 153:     } else {
+ 154:       dominantConstraint = "Duration pressure is the dominant limiter. The outage becomes progressively more serious because recovery time itself is large enough to amplify business pain.";
+ 155:     }
+ 156: 
+ 157:     let guidance = "";
+ 158:     if (statusPack.status === "RISK") {
+ 159:       guidance = "Treat this as a restoration-first event. Verify physical link state, optics, handoff, power, WAN interface errors, and ISP demarc status immediately. If failover exists, validate routing, NAT, and policy behavior before assuming backup service is actually protecting production workflows.";
+ 160:     } else if (statusPack.status === "WATCH") {
+ 161:       guidance = "Escalate troubleshooting early and confirm whether the backup path can actually carry the affected application mix. Mixed SaaS and voice traffic often fail in practice even when partial connectivity remains.";
+ 162:     } else {
+ 163:       guidance = "The modeled impact is controlled, but use this as a resilience check. If the same link later supports more users, more sites, or more critical traffic, the restoration priority will rise quickly.";
+ 164:     }
+ 165: 
+ 166:     return {
+ 167:       ok: true,
+ 168:       input,
+ 169:       sitePressure,
+ 170:       userPressure,
+ 171:       scalePressure,
+ 172:       appPressure,
+ 173:       failoverPenalty,
+ 174:       durationPressure,
+ 175:       preFailoverScore,
+ 176:       finalScore,
+ 177:       peopleImpact,
+ 178:       impactClass,
+ 179:       status: statusPack.status,
+ 180:       interpretation,
+ 181:       dominantConstraint,
+ 182:       guidance
+ 183:     };
+ 184:   }
+ 185: 
+ 186:   function renderError(message) {
+ 187:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 188:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 189:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 190:   }
+ 191: 
+ 192:   function renderSuccess(data) {
+ 193:     const { input } = data;
+ 194: 
+ 195:     ScopedLabsAnalyzer.renderOutput({
+ 196:       resultsEl: els.results,
+ 197:       analysisEl: els.analysis,
+ 198:       existingChartRef: chartRef,
+ 199:       existingWrapRef: chartWrapRef,
+ 200:       summaryRows: [
+ 201:         { label: "Impact Score", value: `${fmt(data.finalScore, 0)} / 100` },
+ 202:         { label: "Impact Class", value: data.impactClass },
+ 203:         { label: "Sites Affected", value: `${input.sites}` },
+ 204:         { label: "Users Affected", value: `${input.users}` }
+ 205:       ],
+ 206:       derivedRows: [
+ 207:         { label: "Application Profile", value: input.apps.toUpperCase() },
+ 208:         { label: "Failover State", value: input.failover.toUpperCase() },
+ 209:         { label: "Outage Duration", value: `${fmt(input.minutes, 0)} min` },
+ 210:         { label: "Scale Pressure", value: `${fmt(data.scalePressure, 0)} pts` },
+ 211:         { label: "Application Criticality Pressure", value: `${fmt(data.appPressure, 0)} pts` },
+ 212:         { label: "Failover Weakness Pressure", value: `${fmt(data.failoverPenalty, 0)} pts` },
+ 213:         { label: "Duration Pressure", value: `${fmt(data.durationPressure, 0)} pts` },
+ 214:         { label: "People Impact Index", value: `${data.peopleImpact}` }
+ 215:       ],
+ 216:       status: data.status,
+ 217:       interpretation: data.interpretation,
+ 218:       dominantConstraint: data.dominantConstraint,
+ 219:       guidance: data.guidance,
+ 220:       chart: {
+ 221:         labels: [
+ 222:           "Scale Pressure",
+ 223:           "Application Criticality",
+ 224:           "Failover Weakness",
+ 225:           "Duration Pressure"
+ 226:         ],
+ 227:         values: [
+ 228:           Number(data.scalePressure.toFixed(1)),
+ 229:           Number(data.appPressure.toFixed(1)),
+ 230:           Number(data.failoverPenalty.toFixed(1)),
+ 231:           Number(data.durationPressure.toFixed(1))
+ 232:         ],
+ 233:         displayValues: [
+ 234:           `${fmt(data.scalePressure, 0)} pts`,
+ 235:           input.apps.toUpperCase(),
+ 236:           input.failover.toUpperCase(),
+ 237:           `${fmt(input.minutes, 0)} min`
+ 238:         ],
+ 239:         referenceValue: 35,
+ 240:         healthyMax: 35,
+ 241:         watchMax: 70,
+ 242:         axisTitle: "Outage Impact Pressure",
+ 243:         referenceLabel: "Comfort Band",
+ 244:         healthyLabel: "Healthy",
+ 245:         watchLabel: "Watch",
+ 246:         riskLabel: "Risk",
+ 247:         chartMax: Math.max(
+ 248:           80,
+ 249:           Math.ceil(
+ 250:             Math.max(
+ 251:               data.scalePressure,
+ 252:               data.appPressure,
+ 253:               data.failoverPenalty,
+ 254:               data.durationPressure,
+ 255:               70
+ 256:             ) * 1.15
+ 257:           )
+ 258:         )
+ 259:       }
+ 260:     });
+ 261:   }
+ 262: 
+ 263:   function calculate() {
+ 264:     const data = calculateModel();
+ 265:     if (!data.ok) {
+ 266:       renderError(data.message);
+ 267:       return;
+ 268:     }
+ 269:     renderSuccess(data);
+ 270:   }
+ 271: 
+ 272:   function reset() {
+ 273:     applyDefaults();
+ 274:     invalidate();
+ 275:   }
+ 276: 
+ 277:   function bindInvalidation() {
+ 278:     [els.sites, els.users, els.apps, els.failover, els.minutes].forEach((el) => {
+ 279:       if (!el) return;
+ 280:       el.addEventListener("input", invalidate);
+ 281:       el.addEventListener("change", invalidate);
+ 282:     });
+ 283:   }
+ 284: 
+ 285:   window.addEventListener("DOMContentLoaded", () => {
+ 286:   const year = document.querySelector("[data-year]");
+ 287:   if (year) year.textContent = new Date().getFullYear();
+ 288:     bindInvalidation();
+ 289: 
+ 290:     els.calc?.addEventListener("click", calculate);
+ 291:     els.reset?.addEventListener("click", reset);
+ 292: 
+ 293:     document.addEventListener("keydown", (e) => {
+ 294:       if (e.key !== "Enter") return;
+ 295:       const target = e.target;
+ 296:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+ 297:         e.preventDefault();
+ 298:         calculate();
+ 299:       }
+ 300:     });
+ 301: 
+ 302:     reset();
+ 303:   });
+ 304: })();
+ 305: 
+ 306: 
+ 307: function hasStoredAuth() {
+ 308:   try {
+ 309:     const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+ 310:     if (!k) return false;
+ 311:     const raw = JSON.parse(localStorage.getItem(k));
+ 312:     return !!(
+ 313:       raw?.access_token ||
+ 314:       raw?.currentSession?.access_token ||
+ 315:       (Array.isArray(raw) ? raw[0]?.access_token : null)
+ 316:     );
+ 317:   } catch {
+ 318:     return false;
+ 319:   }
+ 320: }
+ 321: 
+ 322: 
+ 323: function getUnlockedCategories() {
+ 324:   try {
+ 325:     const raw = localStorage.getItem("sl_unlocked_categories");
+ 326:     if (!raw) return [];
+ 327:     return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+ 328:   } catch {
+ 329:     return [];
+ 330:   }
+ 331: }
+
+
+============================================================
+TOOL: vpn-overhead
+============================================================
+Title: VPN Overhead Estimator
+Tier: pro
+Meta description: Estimate delivered throughput, encapsulation overhead, and MTU pressure caused by VPN tunneling.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Baseline Throughput (Mbps)
+- Encryption Type IPsec OpenVPN WireGuard
+- Tunnel Mode UDP TCP
+- Hardware Offload? Yes No
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- baseline
+- enc
+- mode
+- offload
+- calc
+- reset
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- results
+- analysis-copy
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  78:   function calculateModel() {
+  79:     const input = getInputs();
+  80:     if (!input.ok) return input;
+  81: 
+  82:     const { baseline, enc, mode, offload } = input;
+  83: 
+  84:     let overheadPct = 15;
+  85:     if (enc === "wireguard") overheadPct = 8;
+  86:     if (enc === "ipsec") overheadPct = 12;
+  87: 
+  88:     if (mode === "tcp") overheadPct += 5;
+  89:     if (offload === "yes") overheadPct -= 3;
+  90: 
+  91:     overheadPct = Math.max(2, overheadPct);
+  92: 
+  93:     let mtuLoss = 60;
+  94:     if (enc === "wireguard") mtuLoss = 40;
+  95:     if (enc === "ipsec") mtuLoss = 56;
+  96:     if (mode === "tcp") mtuLoss += 12;
+  97:     if (offload === "yes") mtuLoss = Math.max(32, mtuLoss - 4);
+  98: 
+  99:     const delivered = baseline * (1 - overheadPct / 100);
+ 100:     const lost = baseline - delivered;
+ 101:     const deliveredPct = baseline > 0 ? (delivered / baseline) * 100 : 0;
+ 102: 
+ 103:     const mtuPressure = Math.min((mtuLoss / 120) * 100, 100);
+ 104:     const overheadPressure = overheadPct * 3.2;
+ 105:     const throughputLossPressure = (lost / baseline) * 100 * 3.4;
+ 106: 
+ 107:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 108:       compositeScore: Math.max(overheadPressure, throughputLossPressure, mtuPressure),
+ 109:       metrics: [
+ 110:         {
+ 111:           label: "Encapsulation Overhead",
+ 112:           value: overheadPressure,
+ 113:           displayValue: fmtPct(overheadPct)
+ 114:         },
+ 115:         {
+ 116:           label: "Throughput Loss",
+ 117:           value: throughputLossPressure,
+ 118:           displayValue: fmtMbps(lost)
+ 119:         },
+ 120:         {
+ 121:           label: "MTU Reduction Pressure",
+ 122:           value: mtuPressure,
+ 123:           displayValue: fmtBytes(mtuLoss)
+ 124:         }
+ 125:       ],
+ 126:       healthyMax: 35,
+ 127:       watchMax: 70
+ 128:     });
+ 129: 
+ 130:     const dominantLabel = statusPack.dominant.label;
+ 131: 
+ 132:     let interpretation = `Estimated delivered throughput is ${fmtMbps(delivered)} from a baseline of ${fmtMbps(baseline)} with roughly ${fmtPct(overheadPct)} tunnel overhead and an estimated MTU reduction of ${fmtBytes(mtuLoss)}.`;
+ 133: 
+ 134:     if (enc === "wireguard") {
+ 135:       interpretation += " WireGuard stays comparatively lean, so the tunnel is being shaped more by path behavior and baseline link capacity than by heavy encapsulation overhead.";
+ 136:     } else if (enc === "ipsec") {
+ 137:       interpretation += " IPsec is moderate in overhead, but it still consumes enough header space and crypto processing budget to matter on tighter links or smaller-MTU paths.";
+ 138:     } else {
+ 139:       interpretation += " OpenVPN is one of the heavier options in practical deployments, so goodput loss and MTU pressure can become noticeable sooner than many people expect.";
+ 140:     }
+ 141: 
+ 142:     if (mode === "tcp") {
+ 143:       interpretation += " TCP tunnel mode adds extra penalty because the design becomes more sensitive to retransmit inefficiency and head-of-line behavior.";
+ 144:     }
+ 145: 
+ 146:     if (statusPack.status === "RISK") {
+ 147:       interpretation += " The dominant pressure is already in a risk band, so this tunnel choice is no longer just a small efficiency tax. It is large enough to materially affect throughput planning or trigger fragmentation-related pain if MTU tuning is ignored.";
+ 148:     } else if (statusPack.status === "WATCH") {
+ 149:       interpretation += " The tunnel remains workable, but the dominant overhead pressure is high enough that real-world performance can drift away from the raw line-rate expectation under load.";
+ 150:     } else {
+ 151:       interpretation += " The tunnel overhead remains in a controlled band, so the design still has reasonable efficiency under the entered assumptions.";
+ 152:     }
+ 153: 
+ 154:     let dominantConstraint = "";
+ 155:     if (dominantLabel === "Encapsulation Overhead") {
+ 156:       dominantConstraint = "Encapsulation overhead is the dominant limiter. The main cost comes from the protocol stack itself, so efficiency loss is being driven more by tunnel choice than by MTU pressure alone.";
+ 157:     } else if (dominantLabel === "Throughput Loss") {
+ 158:       dominantConstraint = "Throughput loss is the dominant limiter. The practical problem is not just theoretical header overhead, but the amount of usable goodput the tunnel is taking away from the link.";
+ 159:     } else {
+ 160:       dominantConstraint = "MTU reduction pressure is the dominant limiter. The most likely real-world pain point is fragmentation, MSS mismatch, or hidden path-MTU trouble rather than headline throughput alone.";
+ 161:     }
+ 162: 
+ 163:     let guidance = "";
+ 164:     if (statusPack.status === "RISK") {
+ 165:       guidance = "Validate MTU and MSS behavior immediately, and do not assume the raw link speed will survive the tunnel intact. If this is performance-sensitive traffic, compare a leaner tunnel profile or enable offload where supported.";
+ 166:     } else if (statusPack.status === "WATCH") {
+ 167:       guidance = "The tunnel is serviceable, but check whether the application mix can tolerate the goodput loss and MTU penalty. Interactive and high-throughput workloads usually expose VPN inefficiency faster than casual traffic.";
+ 168:     } else {
+ 169:       guidance = "This tunnel profile is balanced. Keep an eye on MTU only if the path crosses mixed providers, overlays, or devices with inconsistent MSS handling.";
+ 170:     }
+ 171: 
+ 172:     return {
+ 173:       ok: true,
+ 174:       input,
+ 175:       overheadPct,
+ 176:       delivered,
+ 177:       lost,
+ 178:       deliveredPct,
+ 179:       mtuLoss,
+ 180:       overheadPressure,
+ 181:       throughputLossPressure,
+ 182:       mtuPressure,
+ 183:       status: statusPack.status,
+ 184:       interpretation,
+ 185:       dominantConstraint,
+ 186:       guidance
+ 187:     };
+ 188:   }
+ 189: 
+ 190:   function renderError(message) {
+ 191:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 192:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 193:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 194:   }
+ 195: 
+ 196:   function renderSuccess(data) {
+ 197:     const { input } = data;
+ 198: 
+ 199:     ScopedLabsAnalyzer.renderOutput({
+ 200:       resultsEl: els.results,
+ 201:       analysisEl: els.analysis,
+ 202:       existingChartRef: chartRef,
+ 203:       existingWrapRef: chartWrapRef,
+ 204:       summaryRows: [
+ 205:         { label: "Baseline Throughput", value: fmtMbps(input.baseline) },
+ 206:         { label: "Estimated Overhead", value: fmtPct(data.overheadPct) },
+ 207:         { label: "Delivered Throughput", value: fmtMbps(data.delivered) },
+ 208:         { label: "Estimated MTU Reduction", value: fmtBytes(data.mtuLoss) }
+ 209:       ],
+ 210:       derivedRows: [
+ 211:         { label: "Throughput Lost", value: fmtMbps(data.lost) },
+ 212:         { label: "Delivered Share of Baseline", value: fmtPct(data.deliveredPct) },
+ 213:         { label: "Encryption Type", value: input.enc.toUpperCase() },
+ 214:         { label: "Tunnel Mode", value: input.mode.toUpperCase() },
+ 215:         { label: "Hardware Offload", value: input.offload.toUpperCase() }
+ 216:       ],
+ 217:       status: data.status,
+ 218:       interpretation: data.interpretation,
+ 219:       dominantConstraint: data.dominantConstraint,
+ 220:       guidance: data.guidance,
+ 221:       chart: {
+ 222:         labels: [
+ 223:           "Encapsulation Overhead",
+ 224:           "Throughput Loss",
+ 225:           "MTU Reduction Pressure"
+ 226:         ],
+ 227:         values: [
+ 228:           Number(data.overheadPressure.toFixed(1)),
+ 229:           Number(data.throughputLossPressure.toFixed(1)),
+ 230:           Number(data.mtuPressure.toFixed(1))
+ 231:         ],
+ 232:         displayValues: [
+ 233:           fmtPct(data.overheadPct),
+ 234:           fmtMbps(data.lost),
+ 235:           fmtBytes(data.mtuLoss)
+ 236:         ],
+ 237:         referenceValue: 35,
+ 238:         healthyMax: 35,
+ 239:         watchMax: 70,
+ 240:         axisTitle: "VPN Overhead Pressure",
+ 241:         referenceLabel: "Comfort Band",
+ 242:         healthyLabel: "Healthy",
+ 243:         watchLabel: "Watch",
+ 244:         riskLabel: "Risk",
+ 245:         chartMax: Math.max(
+ 246:           100,
+ 247:           Math.ceil(
+ 248:             Math.max(
+ 249:               data.overheadPressure,
+ 250:               data.throughputLossPressure,
+ 251:               data.mtuPressure,
+ 252:               70
+ 253:             ) * 1.12
+ 254:           )
+ 255:         )
+ 256:       }
+ 257:     });
+ 258:   }
+ 259: 
+ 260:   function calculate() {
+ 261:     const data = calculateModel();
+ 262:     if (!data.ok) {
+ 263:       renderError(data.message);
+ 264:       return;
+ 265:     }
+ 266:     renderSuccess(data);
+ 267:   }
+ 268: 
+ 269:   function reset() {
+ 270:     applyDefaults();
+ 271:     invalidate();
+ 272:   }
+ 273: 
+ 274:   function bindInvalidation() {
+ 275:     [els.baseline, els.enc, els.mode, els.offload].forEach((el) => {
+ 276:       if (!el) return;
+ 277:       el.addEventListener("input", invalidate);
+ 278:       el.addEventListener("change", invalidate);
+ 279:     });
+ 280:   }
+ 281: 
+ 282:   window.addEventListener("DOMContentLoaded", () => {
+ 283:   const year = document.querySelector("[data-year]");
+ 284:   if (year) year.textContent = new Date().getFullYear();
+ 285:     bindInvalidation();
+ 286: 
+ 287:     els.calc?.addEventListener("click", calculate);
+ 288:     els.reset?.addEventListener("click", reset);
+ 289: 
+ 290:     document.addEventListener("keydown", (e) => {
+ 291:       if (e.key !== "Enter") return;
+ 292:       const target = e.target;
+ 293:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+ 294:         e.preventDefault();
+ 295:         calculate();
+ 296:       }
+ 297:     });
+ 298: 
+ 299:     reset();
+ 300:   });
+ 301: })();
+ 302: 
+ 303: 
+ 304: function hasStoredAuth() {
+ 305:   try {
+ 306:     const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+ 307:     if (!k) return false;
+ 308:     const raw = JSON.parse(localStorage.getItem(k));
+ 309:     return !!(
+ 310:       raw?.access_token ||
+ 311:       raw?.currentSession?.access_token ||
+ 312:       (Array.isArray(raw) ? raw[0]?.access_token : null)
+ 313:     );
+ 314:   } catch {
+ 315:     return false;
+ 316:   }
+ 317: }
+ 318: 
+ 319: 
+ 320: function getUnlockedCategories() {
+ 321:   try {
+ 322:     const raw = localStorage.getItem("sl_unlocked_categories");
+ 323:     if (!raw) return [];
+ 324:     return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+ 325:   } catch {
+ 326:     return [];
+ 327:   }
+ 328: }

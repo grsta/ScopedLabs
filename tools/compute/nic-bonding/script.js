@@ -165,7 +165,7 @@
     const targetUsable = aggregate * util;
 
     const oversubscriptionPressure = ScopedLabsAnalyzer.clamp((targetUsable / Math.max(totalRaw, 0.001)) * 100, 0, 180);
-    const singleFlowConstraint = ScopedLabsAnalyzer.clamp((speed / Math.max(targetUsable, 0.001)) * 100 * 1.1, 0, 180);
+    const singleFlowConstraint = ScopedLabsAnalyzer.clamp((targetUsable / Math.max(perFlowCap, 0.001)) * 100, 0, 180);
     const distributionStress = ScopedLabsAnalyzer.clamp((1 - balanceEfficiency) * 140, 0, 180);
 
     const metrics = [

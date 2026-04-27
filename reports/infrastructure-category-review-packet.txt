@@ -1,0 +1,2893 @@
+# ScopedLabs Category Formula Review Packet
+Category: infrastructure
+Generated: 2026-04-27T04:36:34.472Z
+Tools found: 10
+
+
+
+============================================================
+TOOL: cable-tray-fill
+============================================================
+Title: Cable Tray Fill Calculator
+Tier: pro
+Meta description: Estimate cable tray fill using tray dimensions, cable count, cable diameter, practical fill targets, and future expansion margin.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Tray Width (inches)
+- Tray Depth (inches)
+- Cable Diameter (inches)
+- Number of Cables
+- Max Fill Allowed (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- trayW
+- trayD
+- cableDia
+- count
+- maxFill
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  69:       resultsEl: els.results,
+  70:       analysisEl: els.analysisCopy,
+  71:       existingChartRef: chartRef,
+  72:       existingWrapRef: chartWrapRef,
+  73:       flowKey: TOOL_KEY,
+  74:       category: CATEGORY,
+  75:       step: "cable-tray-fill",
+  76:       emptyMessage: "Enter values and press Calculate."
+  77:     });
+  78:   }
+  79: 
+  80:   function calc() {
+  81:     const trayW = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.trayW.value, 0));
+  82:     const trayD = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.trayD.value, 0));
+  83:     const cableDia = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.cableDia.value, 0));
+  84:     const count = Math.max(0, Math.floor(ScopedLabsAnalyzer.safeNumber(els.count.value, 0)));
+  85:     const maxFill = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.maxFill.value, 50), 1, 100);
+  86: 
+  87:     if (trayW <= 0 || trayD <= 0 || cableDia <= 0) {
+  88:       invalidate();
+  89:       return;
+  90:     }
+  91: 
+  92:     const trayArea = trayW * trayD;
+  93:     const cableArea = Math.PI * Math.pow(cableDia / 2, 2);
+  94:     const totalCableArea = cableArea * count;
+  95: 
+  96:     const fillPct = trayArea > 0 ? (totalCableArea / trayArea) * 100 : 0;
+  97:     const maxUsableArea = trayArea * (maxFill / 100);
+  98:     const remainingArea = Math.max(0, maxUsableArea - totalCableArea);
+  99:     const remainingCableCapacity = cableArea > 0 ? Math.floor(remainingArea / cableArea) : 0;
+ 100:     const marginPct = Math.max(0, maxFill - fillPct);
+ 101: 
+ 102:     const fillPressure = ScopedLabsAnalyzer.clamp((fillPct / maxFill) * 100, 0, 180);
+ 103:     const growthPressure = ScopedLabsAnalyzer.clamp(
+ 104:       ((count + Math.max(1, Math.ceil(count * 0.25))) * cableArea / Math.max(maxUsableArea, 0.0001)) * 100,
+ 105:       0,
+ 106:       180
+ 107:     );
+ 108:     const serviceabilityStress = ScopedLabsAnalyzer.clamp(
+ 109:       100 - ((marginPct / maxFill) * 100),
+ 110:       0,
+ 111:       180
+ 112:     );
+ 113: 
+ 114:     const metrics = [
+ 115:       {
+ 116:         label: "Fill Pressure",
+ 117:         value: fillPressure,
+ 118:         displayValue: `${Math.round(fillPressure)}%`
+ 119:       },
+ 120:       {
+ 121:         label: "Growth Pressure",
+ 122:         value: growthPressure,
+ 123:         displayValue: `${Math.round(growthPressure)}%`
+ 124:       },
+ 125:       {
+ 126:         label: "Serviceability Stress",
+ 127:         value: serviceabilityStress,
+ 128:         displayValue: `${Math.round(serviceabilityStress)}%`
+ 129:       }
+ 130:     ];
+ 131: 
+ 132:     const compositeScore = Math.round(
+ 133:       (fillPressure * 0.50) +
+ 134:       (growthPressure * 0.30) +
+ 135:       (serviceabilityStress * 0.20)
+ 136:     );
+ 137: 
+ 138:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+ 139:       compositeScore,
+ 140:       metrics,
+ 141:       healthyMax: 65,
+ 142:       watchMax: 85
+ 143:     });
+ 144: 
+ 145:     let dominantConstraint = "Balanced tray capacity";
+ 146:     if (analyzer.dominant.label === "Fill Pressure") {
+ 147:       dominantConstraint = "Immediate tray fill limit";
+ 148:     } else if (analyzer.dominant.label === "Growth Pressure") {
+ 149:       dominantConstraint = "Expansion headroom";
+ 150:     } else if (analyzer.dominant.label === "Serviceability Stress") {
+ 151:       dominantConstraint = "Maintenance / routing margin";
+ 152:     }
+ 153: 
+ 154:     let statusText = "PASS";
+ 155:     if (fillPct > maxFill) statusText = "EXCEEDS LIMIT";
+ 156:     else if (marginPct < 10) statusText = "PASS / TIGHT";
+ 157:     else if (marginPct < 20) statusText = "PASS / WATCH";
+ 158: 
+ 159:     let fillClass = "Comfortable fill";
+ 160:     if (fillPct > maxFill) fillClass = "Overfilled";
+ 161:     else if (fillPct > maxFill * 0.85) fillClass = "Tight tray";
+ 162:     else if (fillPct > maxFill * 0.65) fillClass = "Moderate tray fill";
+ 163: 
+ 164:     let interpretation = "";
+ 165:     if (analyzer.status === "RISK") {
+ 166:       interpretation =
+ 167:         "The tray is too close to its usable capacity envelope. Future adds, rework, or cable movement will become difficult before the tray’s physical dimensions appear fully consumed.";
+ 168:     } else if (analyzer.status === "WATCH") {
+ 169:       interpretation =
+ 170:         "The tray is workable, but growth room is tightening. The current count may pass today, although modest expansion or less orderly routing will consume margin faster than the raw fill percentage suggests.";
+ 171:     } else {
+ 172:       interpretation =
+ 173:         "The tray remains inside a manageable fill envelope. Current cable count, allowed fill, and remaining area still leave usable room for normal growth and service access.";
+ 174:     }
+ 175: 
+ 176:     let guidance = "";
+ 177:     if (analyzer.status === "HEALTHY") {
+ 178:       guidance =
+ 179:         "Maintain the current tray size, but keep future adds in view. The next pressure increase will usually appear in growth headroom before it appears in a formal pass/fail fill check.";
+ 180:     } else if (analyzer.status === "WATCH") {
+ 181:       guidance =
+ 182:         "Validate expected growth, bundle behavior, and routing discipline before locking the tray size. Watch what fails first: spare area, serviceability, or future add capacity.";
+ 183:     } else {
+ 184:       guidance =
+ 185:         `Rework the tray plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not just current cable count. Increase tray size, reduce cable occupancy, or split routes before the design hardens around an overfilled path.`;
+ 186:     }
+ 187: 
+ 188:     const summaryRows = [
+ 189:       { label: "Tray Area", value: `${trayArea.toFixed(2)} in²` },
+ 190:       { label: "Cable Area Each", value: `${cableArea.toFixed(3)} in²` },
+ 191:       { label: "Total Cable Area", value: `${totalCableArea.toFixed(2)} in²` },
+ 192:       { label: "Fill Percentage", value: `${fillPct.toFixed(1)} %` },
+ 193:       { label: "Max Fill Allowed", value: `${maxFill.toFixed(0)} %` },
+ 194:       { label: "Status", value: statusText }
+ 195:     ];
+ 196: 
+ 197:     const derivedRows = [
+ 198:       { label: "Remaining Usable Area", value: `${remainingArea.toFixed(2)} in²` },
+ 199:       { label: "Additional Cable Capacity", value: `${remainingCableCapacity}` },
+ 200:       { label: "Margin to Limit", value: `${marginPct.toFixed(1)} %` },
+ 201:       { label: "Fill Class", value: fillClass }
+ 202:     ];
+ 203: 
+ 204:     ScopedLabsAnalyzer.renderOutput({
+ 205:       resultsEl: els.results,
+ 206:       analysisEl: els.analysisCopy,
+ 207:       existingChartRef: chartRef,
+ 208:       existingWrapRef: chartWrapRef,
+ 209:       summaryRows,
+ 210:       derivedRows,
+ 211:       status: analyzer.status,
+ 212:       interpretation,
+ 213:       dominantConstraint,
+ 214:       guidance,
+ 215:       chart: {
+ 216:         labels: metrics.map((m) => m.label),
+ 217:         values: metrics.map((m) => m.value),
+ 218:         displayValues: metrics.map((m) => m.displayValue),
+ 219:         referenceValue: 65,
+ 220:         healthyMax: 65,
+ 221:         watchMax: 85,
+ 222:         axisTitle: "Tray Fill Risk Magnitude",
+ 223:         referenceLabel: "Healthy Margin Floor",
+ 224:         healthyLabel: "Healthy",
+ 225:         watchLabel: "Watch",
+ 226:         riskLabel: "Risk",
+ 227:         chartMax: Math.max(
+ 228:           120,
+ 229:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 230:         )
+ 231:       }
+ 232:     });
+ 233: 
+ 234:     ScopedLabsAnalyzer.writeFlow(TOOL_KEY, {
+ 235:       category: CATEGORY,
+ 236:       step: "cable-tray-fill",
+ 237:       data: {
+ 238:         fillPct,
+ 239:         remainingArea,
+ 240:         remainingCableCapacity,
+ 241:         fillClass,
+ 242:         status: analyzer.status
+ 243:       }
+ 244:     });
+ 245:   }
+ 246: 
+ 247:   function reset() {
+ 248:     els.trayW.value = 12;
+ 249:     els.trayD.value = 4;
+ 250:     els.cableDia.value = 0.30;
+ 251:     els.count.value = 50;
+ 252:     els.maxFill.value = 50;
+ 253:     invalidate();
+ 254:   }
+ 255: 
+ 256:   els.calc.addEventListener("click", calc);
+ 257:   els.reset.addEventListener("click", reset);
+ 258: 
+ 259:   ["trayW", "trayD", "cableDia", "count", "maxFill"].forEach((id) => {
+ 260:     const el = $(id);
+ 261:     el.addEventListener("input", invalidate);
+ 262:     el.addEventListener("change", invalidate);
+ 263:   });
+ 264: 
+ 265:   window.addEventListener("DOMContentLoaded", () => {
+ 266:     const year = document.querySelector("[data-year]");
+ 267:     if (year) year.textContent = new Date().getFullYear();
+ 268: 
+ 269:     unlockCategoryPage();
+ 270:     setTimeout(() => {
+ 271:       unlockCategoryPage();
+ 272:     }, 400);
+ 273: 
+ 274:     invalidate();
+ 275:   });
+ 276: })();
+
+
+============================================================
+TOOL: conduit-fill
+============================================================
+Title: Conduit Fill Calculator
+Tier: free/unknown
+Meta description: Estimate conduit fill and pull difficulty using conduit size, cable count, cable diameter, bend count, and spare capacity.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Conduit Inner Diameter (in)
+- Cable Outer Diameter (in)
+- Number of Cables
+- Allowed Fill (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- toolCard
+- condDia
+- cableDia
+- count
+- limit
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  24:     ScopedLabsAnalyzer.invalidate({
+  25:       resultsEl: els.results,
+  26:       analysisEl: els.analysisCopy,
+  27:       existingChartRef: chartRef,
+  28:       existingWrapRef: chartWrapRef,
+  29:       flowKey: TOOL_KEY,
+  30:       category: CATEGORY,
+  31:       step: "conduit-fill",
+  32:       emptyMessage: "Enter values and press Calculate."
+  33:     });
+  34:   }
+  35: 
+  36:   function calc() {
+  37:     const condDia = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.condDia.value, 0));
+  38:     const cableDia = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.cableDia.value, 0));
+  39:     const count = Math.max(0, Math.floor(ScopedLabsAnalyzer.safeNumber(els.count.value, 0)));
+  40:     const limit = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.limit.value, 40), 1, 100);
+  41: 
+  42:     if (condDia <= 0 || cableDia <= 0) {
+  43:       invalidate();
+  44:       return;
+  45:     }
+  46: 
+  47:     const conduitArea = Math.PI * Math.pow(condDia / 2, 2);
+  48:     const oneCableArea = Math.PI * Math.pow(cableDia / 2, 2);
+  49:     const cableArea = oneCableArea * count;
+  50:     const fillPct = conduitArea > 0 ? (cableArea / conduitArea) * 100 : 0;
+  51: 
+  52:     const allowedArea = conduitArea * (limit / 100);
+  53:     const remainingArea = Math.max(0, allowedArea - cableArea);
+  54:     const spareCableCapacity = oneCableArea > 0 ? Math.floor(remainingArea / oneCableArea) : 0;
+  55:     const marginPct = Math.max(0, limit - fillPct);
+  56: 
+  57:     const fillPressure = ScopedLabsAnalyzer.clamp((fillPct / limit) * 100, 0, 180);
+  58:     const growthPressure = ScopedLabsAnalyzer.clamp(
+  59:       (((count + Math.max(1, Math.ceil(count * 0.25))) * oneCableArea) / Math.max(allowedArea, 0.0001)) * 100,
+  60:       0,
+  61:       180
+  62:     );
+  63:     const pullStress = ScopedLabsAnalyzer.clamp(100 - ((marginPct / limit) * 100), 0, 180);
+  64: 
+  65:     const metrics = [
+  66:       {
+  67:         label: "Fill Pressure",
+  68:         value: fillPressure,
+  69:         displayValue: `${Math.round(fillPressure)}%`
+  70:       },
+  71:       {
+  72:         label: "Growth Pressure",
+  73:         value: growthPressure,
+  74:         displayValue: `${Math.round(growthPressure)}%`
+  75:       },
+  76:       {
+  77:         label: "Pull Stress",
+  78:         value: pullStress,
+  79:         displayValue: `${Math.round(pullStress)}%`
+  80:       }
+  81:     ];
+  82: 
+  83:     const compositeScore = Math.round(
+  84:       (fillPressure * 0.50) +
+  85:       (growthPressure * 0.30) +
+  86:       (pullStress * 0.20)
+  87:     );
+  88: 
+  89:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+  90:       compositeScore,
+  91:       metrics,
+  92:       healthyMax: 65,
+  93:       watchMax: 85
+  94:     });
+  95: 
+  96:     let dominantConstraint = "Balanced conduit capacity";
+  97:     if (analyzer.dominant.label === "Fill Pressure") {
+  98:       dominantConstraint = "Immediate conduit fill limit";
+  99:     } else if (analyzer.dominant.label === "Growth Pressure") {
+ 100:       dominantConstraint = "Expansion headroom";
+ 101:     } else if (analyzer.dominant.label === "Pull Stress") {
+ 102:       dominantConstraint = "Pulling and service margin";
+ 103:     }
+ 104: 
+ 105:     let statusText = "PASS";
+ 106:     if (fillPct > limit) statusText = "EXCEEDS LIMIT";
+ 107:     else if (marginPct < 10) statusText = "PASS / TIGHT";
+ 108:     else if (marginPct < 20) statusText = "PASS / WATCH";
+ 109: 
+ 110:     let fillClass = "Comfortable fill";
+ 111:     if (fillPct > limit) fillClass = "Overfilled";
+ 112:     else if (fillPct > limit * 0.85) fillClass = "Tight conduit";
+ 113:     else if (fillPct > limit * 0.65) fillClass = "Moderate conduit fill";
+ 114: 
+ 115:     let interpretation = "";
+ 116:     if (analyzer.status === "RISK") {
+ 117:       interpretation =
+ 118:         "The conduit is too close to its usable envelope. Future adds, pulling effort, or rework access will become difficult before the installation even appears completely full by simple dimensional check.";
+ 119:     } else if (analyzer.status === "WATCH") {
+ 120:       interpretation =
+ 121:         "The conduit is workable, but margin is tightening. The current count may still pass today, although modest growth or less orderly cable behavior will consume usable headroom faster than the raw fill percentage suggests.";
+ 122:     } else {
+ 123:       interpretation =
+ 124:         "The conduit remains inside a manageable fill envelope. Current cable area, allowed fill, and remaining margin still leave usable room for normal adds and service access.";
+ 125:     }
+ 126: 
+ 127:     let guidance = "";
+ 128:     if (analyzer.status === "HEALTHY") {
+ 129:       guidance =
+ 130:         "Maintain the current conduit size, but keep future cable additions in view. The next pressure increase will usually appear in pull difficulty and growth headroom before it appears in a formal pass/fail fill check.";
+ 131:     } else if (analyzer.status === "WATCH") {
+ 132:       guidance =
+ 133:         "Validate expected growth, pulling conditions, and field routing discipline before locking the conduit size. Watch what fails first: spare area, pullability, or future add capacity.";
+ 134:     } else {
+ 135:       guidance =
+ 136:         `Rework the conduit plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not just current cable count. Increase conduit size, reduce cable occupancy, or split routes before the design hardens around an overfilled path.`;
+ 137:     }
+ 138: 
+ 139:     const summaryRows = [
+ 140:       { label: "Conduit Area", value: `${conduitArea.toFixed(2)} in²` },
+ 141:       { label: "Cable Area", value: `${cableArea.toFixed(2)} in²` },
+ 142:       { label: "Fill Percentage", value: `${fillPct.toFixed(1)} %` },
+ 143:       { label: "Allowed Fill", value: `${limit.toFixed(0)} %` },
+ 144:       { label: "Status", value: statusText }
+ 145:     ];
+ 146: 
+ 147:     const derivedRows = [
+ 148:       { label: "Remaining Usable Area", value: `${remainingArea.toFixed(2)} in²` },
+ 149:       { label: "Additional Cable Capacity", value: `${spareCableCapacity}` },
+ 150:       { label: "Margin to Limit", value: `${marginPct.toFixed(1)} %` },
+ 151:       { label: "Fill Class", value: fillClass }
+ 152:     ];
+ 153: 
+ 154:     ScopedLabsAnalyzer.renderOutput({
+ 155:       resultsEl: els.results,
+ 156:       analysisEl: els.analysisCopy,
+ 157:       existingChartRef: chartRef,
+ 158:       existingWrapRef: chartWrapRef,
+ 159:       summaryRows,
+ 160:       derivedRows,
+ 161:       status: analyzer.status,
+ 162:       interpretation,
+ 163:       dominantConstraint,
+ 164:       guidance,
+ 165:       chart: {
+ 166:         labels: metrics.map((m) => m.label),
+ 167:         values: metrics.map((m) => m.value),
+ 168:         displayValues: metrics.map((m) => m.displayValue),
+ 169:         referenceValue: 65,
+ 170:         healthyMax: 65,
+ 171:         watchMax: 85,
+ 172:         axisTitle: "Conduit Fill Risk Magnitude",
+ 173:         referenceLabel: "Healthy Margin Floor",
+ 174:         healthyLabel: "Healthy",
+ 175:         watchLabel: "Watch",
+ 176:         riskLabel: "Risk",
+ 177:         chartMax: Math.max(
+ 178:           120,
+ 179:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 180:         )
+ 181:       }
+ 182:     });
+ 183: 
+ 184:     ScopedLabsAnalyzer.writeFlow(TOOL_KEY, {
+ 185:       category: CATEGORY,
+ 186:       step: "conduit-fill",
+ 187:       data: {
+ 188:         fillPct,
+ 189:         remainingArea,
+ 190:         spareCableCapacity,
+ 191:         fillClass,
+ 192:         status: analyzer.status
+ 193:       }
+ 194:     });
+ 195:   }
+ 196: 
+ 197:   function reset() {
+ 198:     els.condDia.value = 1.0;
+ 199:     els.cableDia.value = 0.30;
+ 200:     els.count.value = 3;
+ 201:     els.limit.value = 40;
+ 202:     invalidate();
+ 203:   }
+ 204: 
+ 205:   els.calc.addEventListener("click", calc);
+ 206:   els.reset.addEventListener("click", reset);
+ 207: 
+ 208:   ["condDia", "cableDia", "count", "limit"].forEach((id) => {
+ 209:     const el = $(id);
+ 210:     el.addEventListener("input", invalidate);
+ 211:     el.addEventListener("change", invalidate);
+ 212:   });
+ 213: 
+ 214:   window.addEventListener("DOMContentLoaded", () => {
+ 215:     const year = document.querySelector("[data-year]");
+ 216:     if (year) year.textContent = new Date().getFullYear();
+ 217:     invalidate();
+ 218:   });
+ 219: })();
+
+
+============================================================
+TOOL: equipment-spacing
+============================================================
+Title: Equipment Spacing Planner
+Tier: pro
+Meta description: Plan equipment spacing using device dimensions, service clearance, ventilation needs, access paths, and maintenance requirements.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Rack Rows
+- Racks per Row
+- Rack Width (in)
+- Rack Depth (in)
+- Cold Aisle (in)
+- Hot Aisle (in)
+- End Clearance (in)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- rows
+- racksPer
+- rackW
+- rackD
+- cold
+- hot
+- end
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  96: 
+  97:   function refreshFlowNote() {
+  98:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+  99:     if (!raw) {
+ 100:       els.flowNote.hidden = true;
+ 101:       els.flowNote.innerHTML = "";
+ 102:       upstreamContext = null;
+ 103:       return;
+ 104:     }
+ 105: 
+ 106:     let parsed = null;
+ 107:     try {
+ 108:       parsed = JSON.parse(raw);
+ 109:     } catch {
+ 110:       els.flowNote.hidden = true;
+ 111:       els.flowNote.innerHTML = "";
+ 112:       upstreamContext = null;
+ 113:       return;
+ 114:     }
+ 115: 
+ 116:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 117:       els.flowNote.hidden = true;
+ 118:       els.flowNote.innerHTML = "";
+ 119:       upstreamContext = null;
+ 120:       return;
+ 121:     }
+ 122: 
+ 123:     upstreamContext = parsed.data || {};
+ 124: 
+ 125:     const rows = [];
+ 126:     if (typeof upstreamContext.status === "string") rows.push(`RU Status: <strong>${upstreamContext.status}</strong>`);
+ 127:     if (typeof upstreamContext.fillClass === "string") rows.push(`Rack Fill: <strong>${upstreamContext.fillClass}</strong>`);
+ 128:     if (typeof upstreamContext.growthHeadroom === "number") rows.push(`Growth Headroom: <strong>${Number(upstreamContext.growthHeadroom).toFixed(1)}%</strong>`);
+ 129:     if (typeof upstreamContext.recommendedRu === "number") rows.push(`Recommended RU: <strong>${upstreamContext.recommendedRu}</strong>`);
+ 130: 
+ 131:     if (!rows.length) {
+ 132:       els.flowNote.hidden = true;
+ 133:       els.flowNote.innerHTML = "";
+ 134:       return;
+ 135:     }
+ 136: 
+ 137:     els.flowNote.hidden = false;
+ 138:     els.flowNote.innerHTML = `
+ 139:       <strong>Flow Context</strong><br>
+ 140:       ${rows.join(" | ")}
+ 141:       <br><br>
+ 142:       This step checks whether the room still preserves workable aisle widths, service access, and future flexibility after rack capacity has already been defined.
+ 143:     `;
+ 144:   }
+ 145: 
+ 146:   function invalidate() {
+ 147:     try {
+ 148:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 149:       sessionStorage.removeItem(FLOW_KEYS["rack-weight-load"]);
+ 150:       sessionStorage.removeItem(FLOW_KEYS["floor-load-rating"]);
+ 151:       sessionStorage.removeItem(FLOW_KEYS["ups-room-sizing"]);
+ 152:       sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+ 153:     } catch {}
+ 154: 
+ 155:     ScopedLabsAnalyzer.invalidate({
+ 156:       resultsEl: els.results,
+ 157:       analysisEl: els.analysisCopy,
+ 158:       continueWrapEl: null,
+ 159:       continueBtnEl: null,
+ 160:       existingChartRef: chartRef,
+ 161:       existingWrapRef: chartWrapRef,
+ 162:       flowKey: FLOW_KEYS[STEP],
+ 163:       category: CATEGORY,
+ 164:       step: STEP,
+ 165:       lane: LANE,
+ 166:       emptyMessage: "Run calculation."
+ 167:     });
+ 168: 
+ 169:     hasResult = false;
+ 170:     hideContinue();
+ 171:     refreshFlowNote();
+ 172:   }
+ 173: 
+ 174:   function calc() {
+ 175:     const rows = Math.max(1, Math.floor(ScopedLabsAnalyzer.safeNumber(els.rows.value, 1)));
+ 176:     const racksPer = Math.max(1, Math.floor(ScopedLabsAnalyzer.safeNumber(els.racksPer.value, 1)));
+ 177:     const rackW = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.rackW.value, 1));
+ 178:     const rackD = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.rackD.value, 1));
+ 179:     const cold = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.cold.value, 0));
+ 180:     const hot = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.hot.value, 0));
+ 181:     const end = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.end.value, 0));
+ 182: 
+ 183:     const lengthIn = racksPer * rackW + 2 * end;
+ 184: 
+ 185:     let widthIn = 0;
+ 186:     for (let i = 0; i < rows; i++) {
+ 187:       widthIn += rackD;
+ 188:       if (i < rows - 1) {
+ 189:         widthIn += (i % 2 === 0) ? cold : hot;
+ 190:       }
+ 191:     }
+ 192: 
+ 193:     const lengthFt = lengthIn / 12;
+ 194:     const widthFt = widthIn / 12;
+ 195:     const areaSqFt = lengthFt * widthFt;
+ 196: 
+ 197:     const coldAisleFt = cold / 12;
+ 198:     const hotAisleFt = hot / 12;
+ 199:     const endClearFt = end / 12;
+ 200:     const rackFootprintSqFt = (rows * racksPer * rackW * rackD) / 144;
+ 201:     const layoutEfficiency = areaSqFt > 0 ? (rackFootprintSqFt / areaSqFt) * 100 : 0;
+ 202: 
+ 203:     const serviceMargin = Math.min(coldAisleFt, hotAisleFt, endClearFt);
+ 204:     const growthPadding = Math.max(0, (areaSqFt - rackFootprintSqFt) / Math.max(areaSqFt, 1) * 100);
+ 205: 
+ 206:     const servicePressure = ScopedLabsAnalyzer.clamp((4 / Math.max(serviceMargin, 0.1)) * 45, 0, 180);
+ 207:     const densityPressure = ScopedLabsAnalyzer.clamp(layoutEfficiency * 1.4, 0, 180);
+ 208:     const growthPressure = ScopedLabsAnalyzer.clamp((35 - growthPadding) * 4, 0, 180);
+ 209: 
+ 210:     const metrics = [
+ 211:       {
+ 212:         label: "Service Pressure",
+ 213:         value: servicePressure,
+ 214:         displayValue: `${Math.round(servicePressure)}%`
+ 215:       },
+ 216:       {
+ 217:         label: "Density Pressure",
+ 218:         value: densityPressure,
+ 219:         displayValue: `${Math.round(densityPressure)}%`
+ 220:       },
+ 221:       {
+ 222:         label: "Growth Pressure",
+ 223:         value: growthPressure,
+ 224:         displayValue: `${Math.round(growthPressure)}%`
+ 225:       }
+ 226:     ];
+ 227: 
+ 228:     const compositeScore = Math.round(
+ 229:       (servicePressure * 0.45) +
+ 230:       (densityPressure * 0.30) +
+ 231:       (growthPressure * 0.25)
+ 232:     );
+ 233: 
+ 234:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+ 235:       compositeScore,
+ 236:       metrics,
+ 237:       healthyMax: 65,
+ 238:       watchMax: 85
+ 239:     });
+ 240: 
+ 241:     let layout = "Balanced";
+ 242:     if (serviceMargin < 3 || widthFt < 10) layout = "Tight";
+ 243:     else if (growthPadding > 35 && widthFt > 20) layout = "Spacious";
+ 244: 
+ 245:     let dominantConstraint = "Balanced equipment layout";
+ 246:     if (analyzer.dominant.label === "Service Pressure") {
+ 247:       dominantConstraint = "Aisle and service clearance";
+ 248:     } else if (analyzer.dominant.label === "Density Pressure") {
+ 249:       dominantConstraint = "Layout density";
+ 250:     } else if (analyzer.dominant.label === "Growth Pressure") {
+ 251:       dominantConstraint = "Future expansion padding";
+ 252:     }
+ 253: 
+ 254:     let crossCheck = "The room layout appears reasonably aligned with the upstream rack plan";
+ 255:     if (upstreamContext && typeof upstreamContext.status === "string" && upstreamContext.status === "RISK" && analyzer.status !== "RISK") {
+ 256:       crossCheck = "Rack density may already be tight enough that RU planning still constrains the overall layout";
+ 257:     } else if (serviceMargin < 3) {
+ 258:       crossCheck = "The layout fits dimensionally, but service margin is already being squeezed";
+ 259:     } else if (growthPadding < 20) {
+ 260:       crossCheck = "The room layout may work today, but future adds will consume flexibility quickly";
+ 261:     }
+ 262: 
+ 263:     let interpretation = "";
+ 264:     if (analyzer.status === "RISK") {
+ 265:       interpretation =
+ 266:         "The layout is crowding usable deployment margin. Even if racks fit dimensionally, serviceability and future adjustment space are becoming the real constraint.";
+ 267:     } else if (analyzer.status === "WATCH") {
+ 268:       interpretation =
+ 269:         "The layout fits, but aisle margin or expansion room is tightening. Service access and airflow flexibility will become harder as density increases.";
+ 270:     } else {
+ 271:       interpretation =
+ 272:         "The layout is within a workable deployment standard. Aisles, service margin, and layout growth still appear balanced enough for normal operation and maintenance.";
+ 273:     }
+ 274: 
+ 275:     let guidance = "Maintain this layout, but preserve future rack growth and access planning in the room design.";
+ 276:     if (analyzer.status === "WATCH") {
+ 277:       guidance =
+ 278:         "Validate technician access, door swing, and cable/service approach before locking this room plan. Watch what tightens first: aisle usability, end clearance, or growth room.";
+ 279:     }
+ 280:     if (analyzer.status === "RISK") {
+ 281:       guidance =
+ 282:         `Rework the room plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not raw floor area. Increase aisle or end clearance, reduce row density, or enlarge the room before finalizing deployment.`;
+ 283:     }
+ 284: 
+ 285:     const summaryRows = [
+ 286:       { label: "Room Length", value: `${lengthFt.toFixed(1)} ft` },
+ 287:       { label: "Room Width", value: `${widthFt.toFixed(1)} ft` },
+ 288:       { label: "Floor Area", value: `${areaSqFt.toFixed(0)} sq ft` },
+ 289:       { label: "Layout Density", value: layout },
+ 290:       { label: "Status", value: analyzer.status }
+ 291:     ];
+ 292: 
+ 293:     const derivedRows = [
+ 294:       { label: "Rack Footprint", value: `${rackFootprintSqFt.toFixed(0)} sq ft` },
+ 295:       { label: "Layout Efficiency", value: `${layoutEfficiency.toFixed(1)} %` },
+ 296:       { label: "Service Margin", value: `${serviceMargin.toFixed(1)} ft` },
+ 297:       { label: "Growth Padding", value: `${growthPadding.toFixed(1)} %` },
+ 298:       { label: "Cross-Check", value: crossCheck }
+ 299:     ];
+ 300: 
+ 301:     ScopedLabsAnalyzer.renderOutput({
+ 302:       resultsEl: els.results,
+ 303:       analysisEl: els.analysisCopy,
+ 304:       existingChartRef: chartRef,
+ 305:       existingWrapRef: chartWrapRef,
+ 306:       summaryRows,
+ 307:       derivedRows,
+ 308:       status: analyzer.status,
+ 309:       interpretation,
+ 310:       dominantConstraint,
+ 311:       guidance,
+ 312:       chart: {
+ 313:         labels: metrics.map((m) => m.label),
+ 314:         values: metrics.map((m) => m.value),
+ 315:         displayValues: metrics.map((m) => m.displayValue),
+ 316:         referenceValue: 65,
+ 317:         healthyMax: 65,
+ 318:         watchMax: 85,
+ 319:         axisTitle: "Layout Stress Magnitude",
+ 320:         referenceLabel: "Healthy Margin Floor",
+ 321:         healthyLabel: "Healthy",
+ 322:         watchLabel: "Watch",
+ 323:         riskLabel: "Risk",
+ 324:         chartMax: Math.max(
+ 325:           120,
+ 326:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 327:         )
+ 328:       }
+ 329:     });
+ 330: 
+ 331:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 332:       category: CATEGORY,
+ 333:       step: STEP,
+ 334:       data: {
+ 335:         lengthFt,
+ 336:         widthFt,
+ 337:         areaSqFt,
+ 338:         layout,
+ 339:         status: analyzer.status,
+ 340:         clearanceClass: layout,
+ 341:         crossCheck
+ 342:       }
+ 343:     });
+ 344: 
+ 345:     hasResult = true;
+ 346:     showContinue();
+ 347:   }
+ 348: 
+ 349:   function reset() {
+ 350:     els.rows.value = 2;
+ 351:     els.racksPer.value = 6;
+ 352:     els.rackW.value = 24;
+ 353:     els.rackD.value = 42;
+ 354:     els.cold.value = 48;
+ 355:     els.hot.value = 48;
+ 356:     els.end.value = 36;
+ 357:     invalidate();
+ 358:   }
+ 359: 
+ 360:   els.calc.addEventListener("click", calc);
+ 361:   els.reset.addEventListener("click", reset);
+ 362: 
+ 363:   ["rows", "racksPer", "rackW", "rackD", "cold", "hot", "end"].forEach((id) => {
+ 364:     $(id).addEventListener("input", invalidate);
+ 365:     $(id).addEventListener("change", invalidate);
+ 366:   });
+ 367: 
+ 368:   els.continue.addEventListener("click", () => {
+ 369:     if (!hasResult) return;
+ 370:     window.location.href = "/tools/infrastructure/rack-weight-load/";
+ 371:   });
+ 372: 
+ 373:   window.addEventListener("DOMContentLoaded", () => {
+ 374:     const year = document.querySelector("[data-year]");
+ 375:     if (year) year.textContent = new Date().getFullYear();
+ 376: 
+ 377:     unlockCategoryPage();
+ 378:     setTimeout(() => {
+ 379:       unlockCategoryPage();
+ 380:     }, 400);
+ 381: 
+ 382:     refreshFlowNote();
+ 383:     hideContinue();
+ 384:   });
+ 385: })();
+ 386: 
+
+
+============================================================
+TOOL: floor-load-rating
+============================================================
+Title: Floor Load Rating
+Tier: pro
+Meta description: Estimate floor loading risk for racks, UPS systems, batteries, cabinets, and dense equipment based on weight and footprint.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Rack Weight (lbs)
+- Rack Width (in)
+- Rack Depth (in)
+- Floor Rating (psf)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- weight
+- w
+- d
+- rating
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  94:   function refreshFlowNote() {
+  95:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+  96:     if (!raw) {
+  97:       els.flowNote.hidden = true;
+  98:       els.flowNote.innerHTML = "";
+  99:       upstream = null;
+ 100:       return;
+ 101:     }
+ 102: 
+ 103:     let parsed = null;
+ 104:     try {
+ 105:       parsed = JSON.parse(raw);
+ 106:     } catch {
+ 107:       els.flowNote.hidden = true;
+ 108:       els.flowNote.innerHTML = "";
+ 109:       upstream = null;
+ 110:       return;
+ 111:     }
+ 112: 
+ 113:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 114:       els.flowNote.hidden = true;
+ 115:       els.flowNote.innerHTML = "";
+ 116:       upstream = null;
+ 117:       return;
+ 118:     }
+ 119: 
+ 120:     upstream = parsed.data || {};
+ 121: 
+ 122:     const rows = [];
+ 123:     if (typeof upstream.total === "number") rows.push(`Rack Weight: <strong>${upstream.total.toFixed(0)} lbs</strong>`);
+ 124:     if (typeof upstream.status === "string") rows.push(`Load Status: <strong>${upstream.status}</strong>`);
+ 125:     if (typeof upstream.classification === "string") rows.push(`Load Class: <strong>${upstream.classification}</strong>`);
+ 126: 
+ 127:     if (!rows.length) {
+ 128:       els.flowNote.hidden = true;
+ 129:       els.flowNote.innerHTML = "";
+ 130:       return;
+ 131:     }
+ 132: 
+ 133:     els.flowNote.hidden = false;
+ 134:     els.flowNote.innerHTML = `
+ 135:       <strong>Flow Context</strong><br>
+ 136:       ${rows.join(" | ")}
+ 137:       <br><br>
+ 138:       This step checks whether the rack footprint still preserves real structural margin once concentrated floor loading is considered.
+ 139:     `;
+ 140:   }
+ 141: 
+ 142:   function invalidate() {
+ 143:     try {
+ 144:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 145:       sessionStorage.removeItem(FLOW_KEYS["ups-room-sizing"]);
+ 146:       sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+ 147:     } catch {}
+ 148: 
+ 149:     ScopedLabsAnalyzer.invalidate({
+ 150:       resultsEl: els.results,
+ 151:       analysisEl: els.analysisCopy,
+ 152:       continueWrapEl: null,
+ 153:       continueBtnEl: null,
+ 154:       existingChartRef: chartRef,
+ 155:       existingWrapRef: chartWrapRef,
+ 156:       flowKey: FLOW_KEYS[STEP],
+ 157:       category: CATEGORY,
+ 158:       step: STEP,
+ 159:       lane: LANE,
+ 160:       emptyMessage: "Run calculation."
+ 161:     });
+ 162: 
+ 163:     hasResult = false;
+ 164:     hideContinue();
+ 165:     refreshFlowNote();
+ 166:   }
+ 167: 
+ 168:   function calc() {
+ 169:     const weight = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.weight.value, 0));
+ 170:     const w = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.w.value, 0.1));
+ 171:     const d = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.d.value, 0.1));
+ 172:     const rating = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.rating.value, 1));
+ 173: 
+ 174:     const areaSqFt = (w / 12) * (d / 12);
+ 175:     const psf = weight / areaSqFt;
+ 176:     const marginPsf = rating - psf;
+ 177:     const remainingMarginPct = (marginPsf / rating) * 100;
+ 178: 
+ 179:     const loadPressure = ScopedLabsAnalyzer.clamp((psf / rating) * 100, 0, 180);
+ 180:     const concentrationStress = ScopedLabsAnalyzer.clamp((weight / Math.max(areaSqFt * 25, 1)) * 100, 0, 180);
+ 181:     const safetyMarginStress = ScopedLabsAnalyzer.clamp(100 - remainingMarginPct, 0, 180);
+ 182: 
+ 183:     const metrics = [
+ 184:       {
+ 185:         label: "Load Pressure",
+ 186:         value: loadPressure,
+ 187:         displayValue: `${Math.round(loadPressure)}%`
+ 188:       },
+ 189:       {
+ 190:         label: "Concentration Stress",
+ 191:         value: concentrationStress,
+ 192:         displayValue: `${Math.round(concentrationStress)}%`
+ 193:       },
+ 194:       {
+ 195:         label: "Safety Margin Stress",
+ 196:         value: safetyMarginStress,
+ 197:         displayValue: `${Math.round(safetyMarginStress)}%`
+ 198:       }
+ 199:     ];
+ 200: 
+ 201:     const compositeScore = Math.round(
+ 202:       (loadPressure * 0.55) +
+ 203:       (concentrationStress * 0.25) +
+ 204:       (safetyMarginStress * 0.20)
+ 205:     );
+ 206: 
+ 207:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+ 208:       compositeScore,
+ 209:       metrics,
+ 210:       healthyMax: 65,
+ 211:       watchMax: 85
+ 212:     });
+ 213: 
+ 214:     let statusText = "Within Limit";
+ 215:     if (psf > rating * 0.8) statusText = "High Load";
+ 216:     if (psf > rating) statusText = "Exceeds Rating";
+ 217: 
+ 218:     let dominantConstraint = "Balanced structural profile";
+ 219:     if (analyzer.dominant.label === "Load Pressure") {
+ 220:       dominantConstraint = "Floor rating envelope";
+ 221:     } else if (analyzer.dominant.label === "Concentration Stress") {
+ 222:       dominantConstraint = "Point-load concentration";
+ 223:     } else if (analyzer.dominant.label === "Safety Margin Stress") {
+ 224:       dominantConstraint = "Remaining structural margin";
+ 225:     }
+ 226: 
+ 227:     let loadClass = "Comfortable structural load";
+ 228:     if (psf > rating) loadClass = "Overloaded footprint";
+ 229:     else if (psf > rating * 0.9) loadClass = "Critical structural load";
+ 230:     else if (psf > rating * 0.75) loadClass = "Elevated structural load";
+ 231: 
+ 232:     let crossCheck = "Load appears structurally manageable across the modeled footprint";
+ 233:     if (upstream && typeof upstream.status === "string" && upstream.status.includes("High")) {
+ 234:       crossCheck = "The upstream rack loading is already elevated, so concentrated floor loading deserves closer structural review";
+ 235:     } else if (areaSqFt < 6) {
+ 236:       crossCheck = "A compact footprint can amplify floor pressure faster than total rack weight suggests";
+ 237:     } else if (remainingMarginPct < 15) {
+ 238:       crossCheck = "Structural reserve is now tight enough that installation tolerances and real load distribution begin to matter materially";
+ 239:     }
+ 240: 
+ 241:     let interpretation = "";
+ 242:     if (analyzer.status === "RISK") {
+ 243:       interpretation =
+ 244:         "The rack footprint is crowding its usable structural envelope. Floor rating, concentrated loading, or low remaining margin will become the first deployment limiter before the room is considered safely usable.";
+ 245:     } else if (analyzer.status === "WATCH") {
+ 246:       interpretation =
+ 247:         "The structural profile is workable, but reserve is tightening. The installation may still pass, although concentrated loading and low remaining margin will consume safety headroom faster than the raw psf number suggests.";
+ 248:     } else {
+ 249:       interpretation =
+ 250:         "The floor loading remains inside a manageable structural envelope. Rack weight, footprint area, and remaining margin still leave usable reserve before floor rating becomes the first deployment risk.";
+ 251:     }
+ 252: 
+ 253:     let guidance = "";
+ 254:     if (analyzer.status === "HEALTHY") {
+ 255:       guidance =
+ 256:         "Maintain the current footprint plan, but verify final installed weight once equipment is fully populated. The next pressure increase will usually appear in margin-to-rating before it appears in the nominal rack weight alone.";
+ 257:     } else if (analyzer.status === "WATCH") {
+ 258:       guidance =
+ 259:         "Validate actual rack population, equipment distribution, and any raised-floor or slab assumptions before locking the placement. Watch what tightens first: margin-to-rating, point-load concentration, or local structural constraints.";
+ 260:     } else {
+ 261:       guidance =
+ 262:         `Rework the placement plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not just total rack weight. Increase footprint area, reduce rack loading, or move to a structurally stronger location before deployment.`;
+ 263:     }
+ 264: 
+ 265:     const summaryRows = [
+ 266:       { label: "Footprint Area", value: `${areaSqFt.toFixed(2)} sq ft` },
+ 267:       { label: "Calculated Load", value: `${psf.toFixed(1)} psf` },
+ 268:       { label: "Floor Rating", value: `${rating.toFixed(1)} psf` },
+ 269:       { label: "Margin to Rating", value: `${marginPsf.toFixed(1)} psf` },
+ 270:       { label: "Load Status", value: statusText }
+ 271:     ];
+ 272: 
+ 273:     const derivedRows = [
+ 274:       { label: "Remaining Margin", value: `${remainingMarginPct.toFixed(1)} %` },
+ 275:       { label: "Load Class", value: loadClass },
+ 276:       { label: "Cross-Check", value: crossCheck }
+ 277:     ];
+ 278: 
+ 279:     ScopedLabsAnalyzer.renderOutput({
+ 280:       resultsEl: els.results,
+ 281:       analysisEl: els.analysisCopy,
+ 282:       existingChartRef: chartRef,
+ 283:       existingWrapRef: chartWrapRef,
+ 284:       summaryRows,
+ 285:       derivedRows,
+ 286:       status: analyzer.status,
+ 287:       interpretation,
+ 288:       dominantConstraint,
+ 289:       guidance,
+ 290:       chart: {
+ 291:         labels: metrics.map((m) => m.label),
+ 292:         values: metrics.map((m) => m.value),
+ 293:         displayValues: metrics.map((m) => m.displayValue),
+ 294:         referenceValue: 65,
+ 295:         healthyMax: 65,
+ 296:         watchMax: 85,
+ 297:         axisTitle: "Floor Load Risk Magnitude",
+ 298:         referenceLabel: "Healthy Margin Floor",
+ 299:         healthyLabel: "Healthy",
+ 300:         watchLabel: "Watch",
+ 301:         riskLabel: "Risk",
+ 302:         chartMax: Math.max(
+ 303:           120,
+ 304:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 305:         )
+ 306:       }
+ 307:     });
+ 308: 
+ 309:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 310:       category: CATEGORY,
+ 311:       step: STEP,
+ 312:       data: {
+ 313:         psf,
+ 314:         status: analyzer.status,
+ 315:         classification: loadClass
+ 316:       }
+ 317:     });
+ 318: 
+ 319:     hasResult = true;
+ 320:     showContinue();
+ 321:   }
+ 322: 
+ 323:   function reset() {
+ 324:     els.weight.value = 2500;
+ 325:     els.w.value = 24;
+ 326:     els.d.value = 42;
+ 327:     els.rating.value = 150;
+ 328:     invalidate();
+ 329:   }
+ 330: 
+ 331:   els.calc.addEventListener("click", calc);
+ 332:   els.reset.addEventListener("click", reset);
+ 333: 
+ 334:   ["weight", "w", "d", "rating"].forEach((id) => {
+ 335:     $(id).addEventListener("input", invalidate);
+ 336:     $(id).addEventListener("change", invalidate);
+ 337:   });
+ 338: 
+ 339:   els.continue.addEventListener("click", () => {
+ 340:     if (!hasResult) return;
+ 341:     window.location.href = "/tools/infrastructure/ups-room-sizing/";
+ 342:   });
+ 343: 
+ 344:   window.addEventListener("DOMContentLoaded", () => {
+ 345:     const year = document.querySelector("[data-year]");
+ 346:     if (year) year.textContent = new Date().getFullYear();
+ 347: 
+ 348:     unlockCategoryPage();
+ 349:     setTimeout(() => {
+ 350:       unlockCategoryPage();
+ 351:     }, 400);
+ 352: 
+ 353:     refreshFlowNote();
+ 354:     hideContinue();
+ 355:   });
+ 356: })();
+ 357: 
+
+
+============================================================
+TOOL: generator-runtime
+============================================================
+Title: Generator Runtime
+Tier: pro
+Meta description: Estimate generator runtime and resilience under real-world load conditions.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Fuel Capacity (gal)
+- Consumption Rate (gal/hr)
+- Load Factor 1.0 (full) 0.75 0.5 0.3
+- Reserve Fuel (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- fuel
+- rate
+- load
+- reserve
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- continue
+- complete-wrap
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 110:       upstream = null;
+ 111:       return;
+ 112:     }
+ 113: 
+ 114:     let parsed = null;
+ 115:     try {
+ 116:       parsed = JSON.parse(raw);
+ 117:     } catch {
+ 118:       els.flowNote.hidden = true;
+ 119:       els.flowNote.innerHTML = "";
+ 120:       upstream = null;
+ 121:       return;
+ 122:     }
+ 123: 
+ 124:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 125:       els.flowNote.hidden = true;
+ 126:       els.flowNote.innerHTML = "";
+ 127:       upstream = null;
+ 128:       return;
+ 129:     }
+ 130: 
+ 131:     upstream = parsed.data || {};
+ 132:     const rows = [];
+ 133: 
+ 134:     if (typeof upstream.finalArea === "number") {
+ 135:       rows.push(`UPS Area: <strong>${upstream.finalArea.toFixed(0)} sq ft</strong>`);
+ 136:     }
+ 137:     if (typeof upstream.density === "string") {
+ 138:       rows.push(`Layout Density: <strong>${upstream.density}</strong>`);
+ 139:     }
+ 140:     if (typeof upstream.status === "string") {
+ 141:       rows.push(`Previous Status: <strong>${upstream.status}</strong>`);
+ 142:     }
+ 143: 
+ 144:     if (!rows.length) {
+ 145:       els.flowNote.hidden = true;
+ 146:       els.flowNote.innerHTML = "";
+ 147:       return;
+ 148:     }
+ 149: 
+ 150:     els.flowNote.hidden = false;
+ 151:     els.flowNote.innerHTML = `
+ 152:       <strong>Flow Context</strong><br>
+ 153:       ${rows.join(" | ")}
+ 154:       <br><br>
+ 155:       This final step checks whether backup power endurance is actually aligned with the physical infrastructure already modeled, or whether outage duration becomes the last hidden failure point.
+ 156:     `;
+ 157:   }
+ 158: 
+ 159:   function invalidate() {
+ 160:     ScopedLabsAnalyzer.invalidate({
+ 161:       resultsEl: els.results,
+ 162:       analysisEl: els.analysisCopy,
+ 163:       continueWrapEl: null,
+ 164:       continueBtnEl: null,
+ 165:       existingChartRef: chartRef,
+ 166:       existingWrapRef: chartWrapRef,
+ 167:       flowKey: FLOW_KEYS[STEP],
+ 168:       category: CATEGORY,
+ 169:       step: STEP,
+ 170:       lane: LANE,
+ 171:       emptyMessage: "Run calculation."
+ 172:     });
+ 173: 
+ 174:     hideComplete();
+ 175:     hasResult = false;
+ 176:     refreshFlowNote();
+ 177:   }
+ 178: 
+ 179:   function calc() {
+ 180:     const fuel = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.fuel.value, 0));
+ 181:     const rate = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.rate.value, 0.1));
+ 182:     const load = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.load.value, 0.1));
+ 183:     const reserve = ScopedLabsAnalyzer.clamp(ScopedLabsAnalyzer.safeNumber(els.reserve.value, 10), 0, 80);
+ 184: 
+ 185:     const usable = fuel * (1 - reserve / 100);
+ 186:     const effRate = rate * load;
+ 187:     const hours = usable / effRate;
+ 188:     const runtimeDays = hours / 24;
+ 189: 
+ 190:     const runtimePressure = ScopedLabsAnalyzer.clamp((12 / Math.max(hours, 0.01)) * 100, 0, 180);
+ 191:     const reserveStress = ScopedLabsAnalyzer.clamp((reserve / 25) * 100, 0, 180);
+ 192:     const burnPressure = ScopedLabsAnalyzer.clamp((effRate / Math.max(rate, 0.001)) * 100, 0, 180);
+ 193: 
+ 194:     const metrics = [
+ 195:       {
+ 196:         label: "Runtime Pressure",
+ 197:         value: runtimePressure,
+ 198:         displayValue: `${Math.round(runtimePressure)}%`
+ 199:       },
+ 200:       {
+ 201:         label: "Reserve Stress",
+ 202:         value: reserveStress,
+ 203:         displayValue: `${Math.round(reserveStress)}%`
+ 204:       },
+ 205:       {
+ 206:         label: "Burn Pressure",
+ 207:         value: burnPressure,
+ 208:         displayValue: `${Math.round(burnPressure)}%`
+ 209:       }
+ 210:     ];
+ 211: 
+ 212:     const compositeScore = Math.round(
+ 213:       (runtimePressure * 0.55) +
+ 214:       (reserveStress * 0.20) +
+ 215:       (burnPressure * 0.25)
+ 216:     );
+ 217: 
+ 218:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+ 219:       compositeScore,
+ 220:       metrics,
+ 221:       healthyMax: 65,
+ 222:       watchMax: 85
+ 223:     });
+ 224: 
+ 225:     let tier = "Standard Backup";
+ 226:     if (hours < 8) tier = "Short Duration";
+ 227:     if (hours > 24) tier = "Extended Runtime";
+ 228:     if (hours > 72) tier = "Long-Haul Runtime";
+ 229: 
+ 230:     let dominantConstraint = "Balanced runtime profile";
+ 231:     if (analyzer.dominant.label === "Runtime Pressure") {
+ 232:       dominantConstraint = "Available outage endurance";
+ 233:     } else if (analyzer.dominant.label === "Reserve Stress") {
+ 234:       dominantConstraint = "Fuel reserve policy";
+ 235:     } else if (analyzer.dominant.label === "Burn Pressure") {
+ 236:       dominantConstraint = "Load-driven fuel burn";
+ 237:     }
+ 238: 
+ 239:     let crossCheck = "Runtime appears aligned with a manageable outage profile";
+ 240:     if (upstream && typeof upstream.status === "string" && upstream.status === "RISK") {
+ 241:       crossCheck = "Earlier infrastructure steps were already under pressure, so runtime resilience may not be the only operational limiter";
+ 242:     } else if (hours < 8) {
+ 243:       crossCheck = "This runtime is likely too short for sustained outage resilience without rapid refueling";
+ 244:     } else if (hours > 24) {
+ 245:       crossCheck = "Extended runtime materially improves survivability, but refueling logistics and maintenance cycles still matter";
+ 246:     }
+ 247: 
+ 248:     let interpretation = "";
+ 249:     if (analyzer.status === "RISK") {
+ 250:       interpretation =
+ 251:         "Generator endurance is too tight for a resilient backup profile. Outage duration, fuel reserve policy, or burn rate under load will become the first failure point before the site can ride through a meaningful disruption.";
+ 252:     } else if (analyzer.status === "WATCH") {
+ 253:       interpretation =
+ 254:         "The runtime profile is workable, but reserve is tightening. The generator may still support a moderate outage, although sustained loading or delayed refueling will consume resilience margin faster than the raw runtime suggests.";
+ 255:     } else {
+ 256:       interpretation =
+ 257:         "Generator runtime remains inside a manageable outage envelope. Fuel capacity, burn rate, and reserve policy still leave useful endurance before backup power becomes the first resilience constraint.";
+ 258:     }
+ 259: 
+ 260:     let guidance = "";
+ 261:     if (analyzer.status === "HEALTHY") {
+ 262:       guidance =
+ 263:         "Maintain the current fuel and reserve plan, but validate real consumption under actual site load. The next pressure increase will usually appear in outage duration coverage before it appears in nominal fuel capacity alone.";
+ 264:     } else if (analyzer.status === "WATCH") {
+ 265:       guidance =
+ 266:         "Validate refueling assumptions, outage duration expectations, and actual loaded burn rate before locking the resilience plan. Watch what tightens first: reserve policy, loaded burn, or runtime-to-refuel gap.";
+ 267:     } else {
+ 268:       guidance =
+ 269:         `Rework the backup power plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not just total fuel volume. Increase storage, reduce supported load, or improve refueling and endurance strategy before relying on this runtime profile.`;
+ 270:     }
+ 271: 
+ 272:     const summaryRows = [
+ 273:       { label: "Usable Fuel", value: `${usable.toFixed(1)} gal` },
+ 274:       { label: "Effective Burn Rate", value: `${effRate.toFixed(2)} gal/hr` },
+ 275:       { label: "Runtime", value: fmtHours(hours) },
+ 276:       { label: "Runtime Days", value: `${runtimeDays.toFixed(2)} d` },
+ 277:       { label: "Resilience Tier", value: tier }
+ 278:     ];
+ 279: 
+ 280:     const derivedRows = [
+ 281:       { label: "Fuel Reserve", value: `${reserve.toFixed(1)} %` },
+ 282:       { label: "Load Factor", value: `${load.toFixed(2)}` },
+ 283:       { label: "Cross-Check", value: crossCheck }
+ 284:     ];
+ 285: 
+ 286:     ScopedLabsAnalyzer.renderOutput({
+ 287:       resultsEl: els.results,
+ 288:       analysisEl: els.analysisCopy,
+ 289:       existingChartRef: chartRef,
+ 290:       existingWrapRef: chartWrapRef,
+ 291:       summaryRows,
+ 292:       derivedRows,
+ 293:       status: analyzer.status,
+ 294:       interpretation,
+ 295:       dominantConstraint,
+ 296:       guidance,
+ 297:       chart: {
+ 298:         labels: metrics.map((m) => m.label),
+ 299:         values: metrics.map((m) => m.value),
+ 300:         displayValues: metrics.map((m) => m.displayValue),
+ 301:         referenceValue: 65,
+ 302:         healthyMax: 65,
+ 303:         watchMax: 85,
+ 304:         axisTitle: "Generator Runtime Risk Magnitude",
+ 305:         referenceLabel: "Healthy Margin Floor",
+ 306:         healthyLabel: "Healthy",
+ 307:         watchLabel: "Watch",
+ 308:         riskLabel: "Risk",
+ 309:         chartMax: Math.max(
+ 310:           120,
+ 311:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 312:         )
+ 313:       }
+ 314:     });
+ 315: 
+ 316:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 317:       category: CATEGORY,
+ 318:       step: STEP,
+ 319:       data: {
+ 320:         hours,
+ 321:         tier,
+ 322:         status: analyzer.status,
+ 323:         usable,
+ 324:         effRate
+ 325:       }
+ 326:     });
+ 327: 
+ 328:     showComplete();
+ 329:     hasResult = true;
+ 330:   }
+ 331: 
+ 332:   function reset() {
+ 333:     els.fuel.value = 100;
+ 334:     els.rate.value = 4.0;
+ 335:     els.load.value = "0.75";
+ 336:     els.reserve.value = 10;
+ 337:     invalidate();
+ 338:   }
+ 339: 
+ 340:   els.calc.addEventListener("click", calc);
+ 341:   els.reset.addEventListener("click", reset);
+ 342: 
+ 343:   ["fuel", "rate", "load", "reserve"].forEach((id) => {
+ 344:     const el = $(id);
+ 345:     if (!el) return;
+ 346:     el.addEventListener("input", invalidate);
+ 347:     el.addEventListener("change", invalidate);
+ 348:   });
+ 349: 
+ 350:   window.addEventListener("DOMContentLoaded", () => {
+ 351:     const year = document.querySelector("[data-year]");
+ 352:     if (year) year.textContent = new Date().getFullYear();
+ 353: 
+ 354:     unlockCategoryPage();
+ 355:     setTimeout(() => {
+ 356:       unlockCategoryPage();
+ 357:     }, 400);
+ 358: 
+ 359:     refreshFlowNote();
+ 360:     hideComplete();
+ 361:     invalidate();
+ 362:   });
+ 363: })();
+
+
+============================================================
+TOOL: grounding-estimator
+============================================================
+Title: Grounding Estimator
+Tier: pro
+Meta description: Review grounding and bonding planning assumptions for racks, panels, cable trays, surge protection, and infrastructure equipment.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Circuit Amperage (A)
+- Conductor Material Copper Aluminum
+- Target Ground Resistance (Ω)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- amps
+- mat
+- res
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  96: 
+  97:   function calc() {
+  98:     const amps = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.amps.value, 0));
+  99:     const mat = els.mat.value;
+ 100:     const res = Math.max(0.1, ScopedLabsAnalyzer.safeNumber(els.res.value, 5));
+ 101: 
+ 102:     const size = sizeFromAmps(amps, mat);
+ 103: 
+ 104:     const currentPressure = ScopedLabsAnalyzer.clamp((amps / 400) * 100, 0, 180);
+ 105:     const resistanceStress = res <= 2 ? 90 : res <= 5 ? 65 : res <= 10 ? 45 : 30;
+ 106:     const materialConstraint = mat === "al" ? 65 : 40;
+ 107: 
+ 108:     const metrics = [
+ 109:       {
+ 110:         label: "Current Sizing Pressure",
+ 111:         value: currentPressure,
+ 112:         displayValue: `${Math.round(currentPressure)}%`
+ 113:       },
+ 114:       {
+ 115:         label: "Resistance Target Stress",
+ 116:         value: resistanceStress,
+ 117:         displayValue: `${Math.round(resistanceStress)}%`
+ 118:       },
+ 119:       {
+ 120:         label: "Material Constraint",
+ 121:         value: materialConstraint,
+ 122:         displayValue: `${Math.round(materialConstraint)}%`
+ 123:       }
+ 124:     ];
+ 125: 
+ 126:     const compositeScore = Math.round(
+ 127:       (currentPressure * 0.45) +
+ 128:       (resistanceStress * 0.35) +
+ 129:       (materialConstraint * 0.20)
+ 130:     );
+ 131: 
+ 132:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+ 133:       compositeScore,
+ 134:       metrics,
+ 135:       healthyMax: 65,
+ 136:       watchMax: 85
+ 137:     });
+ 138: 
+ 139:     let resistanceClass = "Standard grounding target";
+ 140:     if (res <= 2) resistanceClass = "Aggressive low-resistance target";
+ 141:     else if (res <= 5) resistanceClass = "Strong commercial target";
+ 142:     else if (res <= 10) resistanceClass = "Typical grounding target";
+ 143:     else resistanceClass = "Loose / high-resistance target";
+ 144: 
+ 145:     let dominantConstraint = "Balanced grounding profile";
+ 146:     if (analyzer.dominant.label === "Current Sizing Pressure") {
+ 147:       dominantConstraint = "Grounding conductor current scale";
+ 148:     } else if (analyzer.dominant.label === "Resistance Target Stress") {
+ 149:       dominantConstraint = "Ground electrode performance target";
+ 150:     } else if (analyzer.dominant.label === "Material Constraint") {
+ 151:       dominantConstraint = "Conductor material and installation practicality";
+ 152:     }
+ 153: 
+ 154:     let interpretation = "";
+ 155:     if (analyzer.status === "RISK") {
+ 156:       interpretation =
+ 157:         "This grounding objective is no longer a simple conductor-size exercise. Current scale, resistance target, or material choice are pushing the design toward a more engineered grounding solution than a basic rule-of-thumb installation.";
+ 158:     } else if (analyzer.status === "WATCH") {
+ 159:       interpretation =
+ 160:         "The grounding plan is workable, but it is tightening beyond a simple default installation. The conductor may be straightforward to size, although the resistance target or material choice could still drive field complexity.";
+ 161:     } else {
+ 162:       interpretation =
+ 163:         "The grounding profile remains inside a manageable planning envelope. Current, material, and resistance target are aligned well enough for preliminary sizing without immediately forcing a specialized grounding approach.";
+ 164:     }
+ 165: 
+ 166:     let guidance = "";
+ 167:     if (analyzer.status === "HEALTHY") {
+ 168:       guidance =
+ 169:         "Use this as a planning baseline, then verify final conductor sizing against NEC or CEC tables and confirm resistance with site testing. The next pressure increase will usually appear in electrode performance before conductor size becomes the hard problem.";
+ 170:     } else if (analyzer.status === "WATCH") {
+ 171:       guidance =
+ 172:         "Validate the electrode approach early. Watch what tightens first: conductor installation practicality, resistance target achievement, or the need for multiple rods, rings, or a more deliberate grounding grid.";
+ 173:     } else {
+ 174:       guidance =
+ 175:         `Treat this as an engineered grounding problem, not just a sizing lookup. The primary limiter is ${dominantConstraint.toLowerCase()}, so final design should include code-table verification, site conditions, and likely a stronger electrode strategy.`;
+ 176:     }
+ 177: 
+ 178:     const summaryRows = [
+ 179:       { label: "Circuit Current", value: `${amps.toFixed(0)} A` },
+ 180:       { label: "Material", value: mat === "cu" ? "Copper" : "Aluminum" },
+ 181:       { label: "Suggested Ground Conductor", value: size },
+ 182:       { label: "Target Ground Resistance", value: `${res.toFixed(1)} Ω` },
+ 183:       { label: "Grounding Class", value: resistanceClass }
+ 184:     ];
+ 185: 
+ 186:     const derivedRows = [
+ 187:       { label: "Primary Constraint", value: dominantConstraint },
+ 188:       { label: "Final Design Note", value: "Verify final sizing with NEC/CEC tables and field-test actual resistance." },
+ 189:       { label: "Electrode Strategy Hint", value: res <= 5 ? "Multiple rods, ring, or enhanced grounding may be needed." : "Standard electrode arrangements may be sufficient depending on soil and code." }
+ 190:     ];
+ 191: 
+ 192:     ScopedLabsAnalyzer.renderOutput({
+ 193:       resultsEl: els.results,
+ 194:       analysisEl: els.analysisCopy,
+ 195:       existingChartRef: chartRef,
+ 196:       existingWrapRef: chartWrapRef,
+ 197:       summaryRows,
+ 198:       derivedRows,
+ 199:       status: analyzer.status,
+ 200:       interpretation,
+ 201:       dominantConstraint,
+ 202:       guidance,
+ 203:       chart: {
+ 204:         labels: metrics.map((m) => m.label),
+ 205:         values: metrics.map((m) => m.value),
+ 206:         displayValues: metrics.map((m) => m.displayValue),
+ 207:         referenceValue: 65,
+ 208:         healthyMax: 65,
+ 209:         watchMax: 85,
+ 210:         axisTitle: "Grounding Risk Magnitude",
+ 211:         referenceLabel: "Healthy Margin Floor",
+ 212:         healthyLabel: "Healthy",
+ 213:         watchLabel: "Watch",
+ 214:         riskLabel: "Risk",
+ 215:         chartMax: Math.max(
+ 216:           120,
+ 217:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 218:         )
+ 219:       }
+ 220:     });
+ 221: 
+ 222:     ScopedLabsAnalyzer.writeFlow(TOOL_KEY, {
+ 223:       category: CATEGORY,
+ 224:       step: "grounding-estimator",
+ 225:       data: {
+ 226:         amps,
+ 227:         material: mat,
+ 228:         targetResistance: res,
+ 229:         suggestedSize: size,
+ 230:         status: analyzer.status
+ 231:       }
+ 232:     });
+ 233:   }
+ 234: 
+ 235:   function reset() {
+ 236:     els.amps.value = 60;
+ 237:     els.mat.value = "cu";
+ 238:     els.res.value = 5;
+ 239:     invalidate();
+ 240:   }
+ 241: 
+ 242:   els.calc.addEventListener("click", calc);
+ 243:   els.reset.addEventListener("click", reset);
+ 244: 
+ 245:   ["amps", "mat", "res"].forEach((id) => {
+ 246:     const el = $(id);
+ 247:     el.addEventListener("input", invalidate);
+ 248:     el.addEventListener("change", invalidate);
+ 249:   });
+ 250: 
+ 251:   window.addEventListener("DOMContentLoaded", () => {
+ 252:     const year = document.querySelector("[data-year]");
+ 253:     if (year) year.textContent = new Date().getFullYear();
+ 254: 
+ 255:     unlockCategoryPage();
+ 256:     setTimeout(() => {
+ 257:       unlockCategoryPage();
+ 258:     }, 400);
+ 259: 
+ 260:     invalidate();
+ 261:   });
+ 262: })();
+ 263: 
+
+
+============================================================
+TOOL: rack-ru-planner
+============================================================
+Title: Rack RU Planner
+Tier: free/unknown
+Meta description: Plan rack unit usage for active equipment, patch panels, cable management, airflow, spare capacity, and future expansion.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Rack Total RU
+- Used RU
+- Growth Reserve (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- total
+- used
+- reserve
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  50:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+  51:     if (!raw) {
+  52:       els.flowNote.hidden = true;
+  53:       els.flowNote.innerHTML = "";
+  54:       upstreamContext = null;
+  55:       return;
+  56:     }
+  57: 
+  58:     let parsed = null;
+  59:     try {
+  60:       parsed = JSON.parse(raw);
+  61:     } catch {
+  62:       els.flowNote.hidden = true;
+  63:       els.flowNote.innerHTML = "";
+  64:       upstreamContext = null;
+  65:       return;
+  66:     }
+  67: 
+  68:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+  69:       els.flowNote.hidden = true;
+  70:       els.flowNote.innerHTML = "";
+  71:       upstreamContext = null;
+  72:       return;
+  73:     }
+  74: 
+  75:     upstreamContext = parsed.data || {};
+  76: 
+  77:     const rows = [];
+  78:     if (typeof upstreamContext.total === "number") rows.push(`Room Size: <strong>${upstreamContext.total.toFixed(0)} sq ft</strong>`);
+  79:     if (typeof upstreamContext.density === "string") rows.push(`Planning Density: <strong>${upstreamContext.density}</strong>`);
+  80:     if (typeof upstreamContext.status === "string") rows.push(`Previous Status: <strong>${upstreamContext.status}</strong>`);
+  81: 
+  82:     if (!rows.length) {
+  83:       els.flowNote.hidden = true;
+  84:       els.flowNote.innerHTML = "";
+  85:       return;
+  86:     }
+  87: 
+  88:     els.flowNote.hidden = false;
+  89:     els.flowNote.innerHTML = `
+  90:       <strong>Flow Context</strong><br>
+  91:       ${rows.join(" | ")}
+  92:       <br><br>
+  93:       This step checks whether the rack plan only fits on paper or still leaves usable reserve for growth, service access, and future hardware additions.
+  94:     `;
+  95:   }
+  96: 
+  97:   function invalidate() {
+  98:     try {
+  99:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 100:       sessionStorage.removeItem(FLOW_KEYS["equipment-spacing"]);
+ 101:       sessionStorage.removeItem(FLOW_KEYS["rack-weight-load"]);
+ 102:       sessionStorage.removeItem(FLOW_KEYS["floor-load-rating"]);
+ 103:       sessionStorage.removeItem(FLOW_KEYS["ups-room-sizing"]);
+ 104:       sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+ 105:     } catch {}
+ 106: 
+ 107:     ScopedLabsAnalyzer.invalidate({
+ 108:       resultsEl: els.results,
+ 109:       analysisEl: els.analysisCopy,
+ 110:       continueWrapEl: null,
+ 111:       continueBtnEl: null,
+ 112:       existingChartRef: chartRef,
+ 113:       existingWrapRef: chartWrapRef,
+ 114:       flowKey: FLOW_KEYS[STEP],
+ 115:       category: CATEGORY,
+ 116:       step: STEP,
+ 117:       lane: LANE,
+ 118:       emptyMessage: "Run calculation."
+ 119:     });
+ 120: 
+ 121:     hasResult = false;
+ 122:     hideContinue();
+ 123:     refreshFlowNote();
+ 124:   }
+ 125: 
+ 126:   function calc() {
+ 127:     const total = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.total.value, 1));
+ 128:     const used = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.used.value, 0));
+ 129:     const reservePct = ScopedLabsAnalyzer.clamp(
+ 130:       ScopedLabsAnalyzer.safeNumber(els.reserve.value, 20),
+ 131:       0,
+ 132:       80
+ 133:     );
+ 134: 
+ 135:     const free = total - used;
+ 136:     const reserved = total * (reservePct / 100);
+ 137:     const available = free - reserved;
+ 138:     const usedPct = (used / total) * 100;
+ 139:     const postReserveUtil = ((used + reserved) / total) * 100;
+ 140:     const growthHeadroom = Math.max(0, (available / total) * 100);
+ 141: 
+ 142:     const capacityPressure = ScopedLabsAnalyzer.clamp((postReserveUtil / 100) * 100, 0, 180);
+ 143:     const reserveStress = ScopedLabsAnalyzer.clamp((reservePct / 25) * 100, 0, 180);
+ 144:     const headroomStress = ScopedLabsAnalyzer.clamp(100 - growthHeadroom * 2.2, 0, 180);
+ 145: 
+ 146:     const metrics = [
+ 147:       {
+ 148:         label: "Capacity Pressure",
+ 149:         value: capacityPressure,
+ 150:         displayValue: `${Math.round(capacityPressure)}%`
+ 151:       },
+ 152:       {
+ 153:         label: "Reserve Stress",
+ 154:         value: reserveStress,
+ 155:         displayValue: `${Math.round(reserveStress)}%`
+ 156:       },
+ 157:       {
+ 158:         label: "Headroom Stress",
+ 159:         value: headroomStress,
+ 160:         displayValue: `${Math.round(headroomStress)}%`
+ 161:       }
+ 162:     ];
+ 163: 
+ 164:     const compositeScore = Math.round(
+ 165:       (capacityPressure * 0.50) +
+ 166:       (reserveStress * 0.25) +
+ 167:       (headroomStress * 0.25)
+ 168:     );
+ 169: 
+ 170:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+ 171:       compositeScore,
+ 172:       metrics,
+ 173:       healthyMax: 65,
+ 174:       watchMax: 85
+ 175:     });
+ 176: 
+ 177:     let capacityClass = "Comfortable rack reserve";
+ 178:     if (available < 2 || postReserveUtil > 95) {
+ 179:       capacityClass = "Effectively full rack";
+ 180:     } else if (available < 6 || postReserveUtil > 80) {
+ 181:       capacityClass = "Tight rack reserve";
+ 182:     } else if (growthHeadroom > 35) {
+ 183:       capacityClass = "Expansion-friendly rack";
+ 184:     }
+ 185: 
+ 186:     let dominantConstraint = "Balanced rack utilization";
+ 187:     if (analyzer.dominant.label === "Capacity Pressure") {
+ 188:       dominantConstraint = "Installed rack utilization";
+ 189:     } else if (analyzer.dominant.label === "Reserve Stress") {
+ 190:       dominantConstraint = "Growth reserve policy";
+ 191:     } else if (analyzer.dominant.label === "Headroom Stress") {
+ 192:       dominantConstraint = "Remaining expansion margin";
+ 193:     }
+ 194: 
+ 195:     let interpretation = "";
+ 196:     if (analyzer.status === "RISK") {
+ 197:       interpretation =
+ 198:         "The rack is effectively full once real growth reserve is respected. Expansion will become difficult before the raw free RU figure suggests, because reserve and service margin have already been consumed.";
+ 199:     } else if (analyzer.status === "WATCH") {
+ 200:       interpretation =
+ 201:         "The rack is workable, but reserve is tightening. The current deployment may fit, although modest adds or late-stage hardware changes will consume usable headroom faster than the visible free RU count suggests.";
+ 202:     } else {
+ 203:       interpretation =
+ 204:         "The rack remains inside a manageable capacity envelope. Current utilization and growth reserve still leave usable room before rack space becomes the first deployment limiter.";
+ 205:     }
+ 206: 
+ 207:     let guidance = "";
+ 208:     if (analyzer.status === "HEALTHY") {
+ 209:       guidance =
+ 210:         "Maintain the current rack plan, but keep realistic reserve policy in place. The next pressure increase will usually appear in growth reserve before it appears in absolute rack fullness.";
+ 211:     } else if (analyzer.status === "WATCH") {
+ 212:       guidance =
+ 213:         "Validate near-term equipment additions and cable/service access before locking this rack as complete. Watch what tightens first: usable reserve, service margin, or late-stage device additions.";
+ 214:     } else {
+ 215:       guidance =
+ 216:         `Rework the rack plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not just nominal free RU. Reduce density, add another rack, or lower the fill target before hardening the deployment layout.`;
+ 217:     }
+ 218: 
+ 219:     const summaryRows = [
+ 220:       { label: "Total Rack RU", value: `${total}` },
+ 221:       { label: "Used RU", value: `${used}` },
+ 222:       { label: "Free RU", value: `${free.toFixed(1)}` },
+ 223:       { label: "Reserved for Growth", value: `${reserved.toFixed(1)} RU` },
+ 224:       { label: "Available RU After Reserve", value: `${available.toFixed(1)} RU` },
+ 225:       { label: "Capacity Status", value: analyzer.status }
+ 226:     ];
+ 227: 
+ 228:     const derivedRows = [
+ 229:       { label: "Raw Utilization", value: `${usedPct.toFixed(1)} %` },
+ 230:       { label: "Post-Reserve Utilization", value: `${postReserveUtil.toFixed(1)} %` },
+ 231:       { label: "Growth Headroom", value: `${growthHeadroom.toFixed(1)} %` },
+ 232:       { label: "Capacity Class", value: capacityClass }
+ 233:     ];
+ 234: 
+ 235:     ScopedLabsAnalyzer.renderOutput({
+ 236:       resultsEl: els.results,
+ 237:       analysisEl: els.analysisCopy,
+ 238:       existingChartRef: chartRef,
+ 239:       existingWrapRef: chartWrapRef,
+ 240:       summaryRows,
+ 241:       derivedRows,
+ 242:       status: analyzer.status,
+ 243:       interpretation,
+ 244:       dominantConstraint,
+ 245:       guidance,
+ 246:       chart: {
+ 247:         labels: metrics.map((m) => m.label),
+ 248:         values: metrics.map((m) => m.value),
+ 249:         displayValues: metrics.map((m) => m.displayValue),
+ 250:         referenceValue: 65,
+ 251:         healthyMax: 65,
+ 252:         watchMax: 85,
+ 253:         axisTitle: "Rack Capacity Stress Magnitude",
+ 254:         referenceLabel: "Healthy Margin Floor",
+ 255:         healthyLabel: "Healthy",
+ 256:         watchLabel: "Watch",
+ 257:         riskLabel: "Risk",
+ 258:         chartMax: Math.max(
+ 259:           120,
+ 260:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 261:         )
+ 262:       }
+ 263:     });
+ 264: 
+ 265:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 266:       category: CATEGORY,
+ 267:       step: STEP,
+ 268:       data: {
+ 269:         total,
+ 270:         used,
+ 271:         free,
+ 272:         available,
+ 273:         status: analyzer.status,
+ 274:         fillClass: capacityClass,
+ 275:         growthHeadroom
+ 276:       }
+ 277:     });
+ 278: 
+ 279:     hasResult = true;
+ 280:     showContinue();
+ 281:   }
+ 282: 
+ 283:   function reset() {
+ 284:     els.total.value = 42;
+ 285:     els.used.value = 18;
+ 286:     els.reserve.value = 20;
+ 287:     invalidate();
+ 288:   }
+ 289: 
+ 290:   els.calc.addEventListener("click", calc);
+ 291:   els.reset.addEventListener("click", reset);
+ 292: 
+ 293:   ["total", "used", "reserve"].forEach((id) => {
+ 294:     $(id).addEventListener("input", invalidate);
+ 295:     $(id).addEventListener("change", invalidate);
+ 296:   });
+ 297: 
+ 298:   els.continue.addEventListener("click", () => {
+ 299:     if (!hasResult) return;
+ 300:     window.location.href = "/tools/infrastructure/equipment-spacing/";
+ 301:   });
+ 302: 
+ 303:   window.addEventListener("DOMContentLoaded", () => {
+ 304:     const year = document.querySelector("[data-year]");
+ 305:     if (year) year.textContent = new Date().getFullYear();
+ 306: 
+ 307:     refreshFlowNote();
+ 308:     hideContinue();
+ 309:   });
+ 310: })();
+
+
+============================================================
+TOOL: rack-weight-load
+============================================================
+Title: Rack Weight Load
+Tier: free/unknown
+Meta description: Estimate rack weight load using equipment weight, UPS and battery weight, floor rating, distribution, and growth assumptions.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Number of Devices
+- Average Device Weight (lbs)
+- Rack Rated Capacity (lbs)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- count
+- each
+- cap
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  50:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+  51:     if (!raw) {
+  52:       els.flowNote.hidden = true;
+  53:       els.flowNote.innerHTML = "";
+  54:       upstreamContext = null;
+  55:       return;
+  56:     }
+  57: 
+  58:     let parsed = null;
+  59:     try {
+  60:       parsed = JSON.parse(raw);
+  61:     } catch {
+  62:       els.flowNote.hidden = true;
+  63:       els.flowNote.innerHTML = "";
+  64:       upstreamContext = null;
+  65:       return;
+  66:     }
+  67: 
+  68:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+  69:       els.flowNote.hidden = true;
+  70:       els.flowNote.innerHTML = "";
+  71:       upstreamContext = null;
+  72:       return;
+  73:     }
+  74: 
+  75:     upstreamContext = parsed.data || {};
+  76: 
+  77:     const rows = [];
+  78:     if (typeof upstreamContext.areaSqFt === "number") rows.push(`Room Area: <strong>${upstreamContext.areaSqFt.toFixed(0)} sq ft</strong>`);
+  79:     if (typeof upstreamContext.layout === "string") rows.push(`Layout Type: <strong>${upstreamContext.layout}</strong>`);
+  80:     if (typeof upstreamContext.status === "string") rows.push(`Previous Status: <strong>${upstreamContext.status}</strong>`);
+  81: 
+  82:     if (!rows.length) {
+  83:       els.flowNote.hidden = true;
+  84:       els.flowNote.innerHTML = "";
+  85:       return;
+  86:     }
+  87: 
+  88:     els.flowNote.hidden = false;
+  89:     els.flowNote.innerHTML = `
+  90:       <strong>Flow Context</strong><br>
+  91:       ${rows.join(" | ")}
+  92:       <br><br>
+  93:       This step checks whether the rack weight plan only fits nominally or still leaves real structural margin before placement and population.
+  94:     `;
+  95:   }
+  96: 
+  97:   function invalidate() {
+  98:     try {
+  99:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 100:       sessionStorage.removeItem(FLOW_KEYS["floor-load-rating"]);
+ 101:       sessionStorage.removeItem(FLOW_KEYS["ups-room-sizing"]);
+ 102:       sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+ 103:     } catch {}
+ 104: 
+ 105:     ScopedLabsAnalyzer.invalidate({
+ 106:       resultsEl: els.results,
+ 107:       analysisEl: els.analysisCopy,
+ 108:       continueWrapEl: null,
+ 109:       continueBtnEl: null,
+ 110:       existingChartRef: chartRef,
+ 111:       existingWrapRef: chartWrapRef,
+ 112:       flowKey: FLOW_KEYS[STEP],
+ 113:       category: CATEGORY,
+ 114:       step: STEP,
+ 115:       lane: LANE,
+ 116:       emptyMessage: "Run calculation."
+ 117:     });
+ 118: 
+ 119:     hasResult = false;
+ 120:     hideContinue();
+ 121:     refreshFlowNote();
+ 122:   }
+ 123: 
+ 124:   function calc() {
+ 125:     const count = Math.max(0, Math.floor(ScopedLabsAnalyzer.safeNumber(els.count.value, 0)));
+ 126:     const each = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.each.value, 0));
+ 127:     const cap = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.cap.value, 1));
+ 128: 
+ 129:     const total = count * each;
+ 130:     const percent = (total / cap) * 100;
+ 131:     const remaining = cap - total;
+ 132:     const remainingPct = (remaining / cap) * 100;
+ 133: 
+ 134:     const loadPressure = ScopedLabsAnalyzer.clamp((total / cap) * 100, 0, 180);
+ 135:     const reserveStress = ScopedLabsAnalyzer.clamp(100 - remainingPct, 0, 180);
+ 136:     const densityStress = ScopedLabsAnalyzer.clamp((count / 30) * 100, 0, 180);
+ 137: 
+ 138:     const metrics = [
+ 139:       {
+ 140:         label: "Load Pressure",
+ 141:         value: loadPressure,
+ 142:         displayValue: `${Math.round(loadPressure)}%`
+ 143:       },
+ 144:       {
+ 145:         label: "Reserve Stress",
+ 146:         value: reserveStress,
+ 147:         displayValue: `${Math.round(reserveStress)}%`
+ 148:       },
+ 149:       {
+ 150:         label: "Device Density",
+ 151:         value: densityStress,
+ 152:         displayValue: `${Math.round(densityStress)}%`
+ 153:       }
+ 154:     ];
+ 155: 
+ 156:     const compositeScore = Math.round(
+ 157:       (loadPressure * 0.55) +
+ 158:       (reserveStress * 0.30) +
+ 159:       (densityStress * 0.15)
+ 160:     );
+ 161: 
+ 162:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+ 163:       compositeScore,
+ 164:       metrics,
+ 165:       healthyMax: 65,
+ 166:       watchMax: 85
+ 167:     });
+ 168: 
+ 169:     let statusText = "Within Capacity";
+ 170:     if (percent > 80) statusText = "High Load";
+ 171:     if (percent > 100) statusText = "Over Capacity";
+ 172: 
+ 173:     let loadClass = "Comfortable rack load";
+ 174:     if (percent > 100) loadClass = "Overloaded rack";
+ 175:     else if (percent > 90) loadClass = "Critical rack load";
+ 176:     else if (percent > 75) loadClass = "Elevated rack load";
+ 177: 
+ 178:     let dominantConstraint = "Balanced rack loading";
+ 179:     if (analyzer.dominant.label === "Load Pressure") {
+ 180:       dominantConstraint = "Rack structural capacity";
+ 181:     } else if (analyzer.dominant.label === "Reserve Stress") {
+ 182:       dominantConstraint = "Remaining load margin";
+ 183:     } else if (analyzer.dominant.label === "Device Density") {
+ 184:       dominantConstraint = "Equipment concentration";
+ 185:     }
+ 186: 
+ 187:     let interpretation = "";
+ 188:     if (analyzer.status === "RISK") {
+ 189:       interpretation =
+ 190:         "The rack is too close to its structural envelope. Even if the load is technically supportable on paper, remaining margin is too small to treat the rack as comfortably deployable.";
+ 191:     } else if (analyzer.status === "WATCH") {
+ 192:       interpretation =
+ 193:         "The rack loading is workable, but reserve is tightening. The population plan may still fit, although late-stage device additions or inaccurate equipment weights will consume structural margin faster than the raw percentage suggests.";
+ 194:     } else {
+ 195:       interpretation =
+ 196:         "The rack loading remains inside a manageable structural envelope. Device count, total weight, and remaining margin still leave useful reserve before rack capacity becomes the first deployment limiter.";
+ 197:     }
+ 198: 
+ 199:     let guidance = "";
+ 200:     if (analyzer.status === "HEALTHY") {
+ 201:       guidance =
+ 202:         "Maintain the current population plan, but keep actual installed device weights in view. The next pressure increase will usually appear in reserve margin before it appears in absolute capacity.";
+ 203:     } else if (analyzer.status === "WATCH") {
+ 204:       guidance =
+ 205:         "Validate real equipment weights and late-stage additions before locking the rack bill of materials. Watch what tightens first: remaining load margin, device concentration, or final installed accessories.";
+ 206:     } else {
+ 207:       guidance =
+ 208:         `Rework the rack population plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not just device count. Reduce equipment concentration, split the load, or move to a stronger rack before deployment.`;
+ 209:     }
+ 210: 
+ 211:     const summaryRows = [
+ 212:       { label: "Devices", value: `${count}` },
+ 213:       { label: "Total Weight", value: `${total.toFixed(0)} lbs` },
+ 214:       { label: "Rack Capacity", value: `${cap.toFixed(0)} lbs` },
+ 215:       { label: "Load %", value: `${percent.toFixed(1)} %` },
+ 216:       { label: "Load Status", value: statusText }
+ 217:     ];
+ 218: 
+ 219:     const derivedRows = [
+ 220:       { label: "Remaining Capacity", value: `${remaining.toFixed(0)} lbs` },
+ 221:       { label: "Remaining Margin", value: `${remainingPct.toFixed(1)} %` },
+ 222:       { label: "Load Class", value: loadClass }
+ 223:     ];
+ 224: 
+ 225:     ScopedLabsAnalyzer.renderOutput({
+ 226:       resultsEl: els.results,
+ 227:       analysisEl: els.analysisCopy,
+ 228:       existingChartRef: chartRef,
+ 229:       existingWrapRef: chartWrapRef,
+ 230:       summaryRows,
+ 231:       derivedRows,
+ 232:       status: analyzer.status,
+ 233:       interpretation,
+ 234:       dominantConstraint,
+ 235:       guidance,
+ 236:       chart: {
+ 237:         labels: metrics.map((m) => m.label),
+ 238:         values: metrics.map((m) => m.value),
+ 239:         displayValues: metrics.map((m) => m.displayValue),
+ 240:         referenceValue: 65,
+ 241:         healthyMax: 65,
+ 242:         watchMax: 85,
+ 243:         axisTitle: "Rack Load Risk Magnitude",
+ 244:         referenceLabel: "Healthy Margin Floor",
+ 245:         healthyLabel: "Healthy",
+ 246:         watchLabel: "Watch",
+ 247:         riskLabel: "Risk",
+ 248:         chartMax: Math.max(
+ 249:           120,
+ 250:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 251:         )
+ 252:       }
+ 253:     });
+ 254: 
+ 255:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 256:       category: CATEGORY,
+ 257:       step: STEP,
+ 258:       data: {
+ 259:         total,
+ 260:         percent,
+ 261:         status: analyzer.status,
+ 262:         classification: loadClass
+ 263:       }
+ 264:     });
+ 265: 
+ 266:     hasResult = true;
+ 267:     showContinue();
+ 268:   }
+ 269: 
+ 270:   function reset() {
+ 271:     els.count.value = 20;
+ 272:     els.each.value = 35;
+ 273:     els.cap.value = 3000;
+ 274:     invalidate();
+ 275:   }
+ 276: 
+ 277:   els.calc.addEventListener("click", calc);
+ 278:   els.reset.addEventListener("click", reset);
+ 279: 
+ 280:   ["count", "each", "cap"].forEach((id) => {
+ 281:     $(id).addEventListener("input", invalidate);
+ 282:     $(id).addEventListener("change", invalidate);
+ 283:   });
+ 284: 
+ 285:   els.continue.addEventListener("click", () => {
+ 286:     if (!hasResult) return;
+ 287:     window.location.href = "/tools/infrastructure/floor-load-rating/";
+ 288:   });
+ 289: 
+ 290:   window.addEventListener("DOMContentLoaded", () => {
+ 291:     const year = document.querySelector("[data-year]");
+ 292:     if (year) year.textContent = new Date().getFullYear();
+ 293: 
+ 294:     refreshFlowNote();
+ 295:     hideContinue();
+ 296:   });
+ 297: })();
+
+
+============================================================
+TOOL: room-square-footage
+============================================================
+Title: Room Square Footage Planner
+Tier: pro
+Meta description: Estimate equipment room square footage needs based on racks, clearance, obstructions, access paths, and future growth.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Equipment Footprint (sq ft)
+- Clearance / Aisle Factor (×)
+- Growth Reserve (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- equip
+- factor
+- growth
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 130:   function calc() {
+ 131:     const equip = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.equip.value, 0));
+ 132:     const factor = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.factor.value, 0));
+ 133:     const growth = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.growth.value, 0));
+ 134: 
+ 135:     const base = equip * factor;
+ 136:     const total = base * (1 + growth / 100);
+ 137:     const clearanceArea = Math.max(0, base - equip);
+ 138:     const growthArea = Math.max(0, total - base);
+ 139:     const equipmentDensity = total > 0 ? (equip / total) * 100 : 0;
+ 140: 
+ 141:     const clearancePressure = ScopedLabsAnalyzer.clamp((1.8 / factor) * 50, 0, 180);
+ 142:     const growthPressure = ScopedLabsAnalyzer.clamp((20 - growth) * 4, 0, 180);
+ 143:     const densityPressure = ScopedLabsAnalyzer.clamp((equipmentDensity / 70) * 100, 0, 180);
+ 144: 
+ 145:     const metrics = [
+ 146:       {
+ 147:         label: "Clearance Pressure",
+ 148:         value: clearancePressure,
+ 149:         displayValue: `${Math.round(clearancePressure)}%`
+ 150:       },
+ 151:       {
+ 152:         label: "Growth Pressure",
+ 153:         value: growthPressure,
+ 154:         displayValue: `${Math.round(growthPressure)}%`
+ 155:       },
+ 156:       {
+ 157:         label: "Density Pressure",
+ 158:         value: densityPressure,
+ 159:         displayValue: `${Math.round(densityPressure)}%`
+ 160:       }
+ 161:     ];
+ 162: 
+ 163:     const compositeScore = Math.round(
+ 164:       (clearancePressure * 0.40) +
+ 165:       (growthPressure * 0.30) +
+ 166:       (densityPressure * 0.30)
+ 167:     );
+ 168: 
+ 169:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+ 170:       compositeScore,
+ 171:       metrics,
+ 172:       healthyMax: 65,
+ 173:       watchMax: 85
+ 174:     });
+ 175: 
+ 176:     let density = "Balanced";
+ 177:     if (factor < 1.6 || equipmentDensity > 65) density = "Tight";
+ 178:     else if (factor > 2.6 && growth >= 25) density = "Conservative";
+ 179: 
+ 180:     let dominantConstraint = "Balanced room sizing";
+ 181:     if (analyzer.dominant.label === "Clearance Pressure") {
+ 182:       dominantConstraint = "Clearance / aisle allowance";
+ 183:     } else if (analyzer.dominant.label === "Growth Pressure") {
+ 184:       dominantConstraint = "Future growth reserve";
+ 185:     } else if (analyzer.dominant.label === "Density Pressure") {
+ 186:       dominantConstraint = "Equipment density concentration";
+ 187:     }
+ 188: 
+ 189:     let interpretation = "";
+ 190:     if (analyzer.status === "RISK") {
+ 191:       interpretation =
+ 192:         "The room plan is crowding usable deployment margin too tightly. Even if the footprint fits numerically, aisle flexibility, service access, or future growth will become the first practical limitation.";
+ 193:     } else if (analyzer.status === "WATCH") {
+ 194:       interpretation =
+ 195:         "The room plan is workable, but margin is tightening. The current estimate may support the initial build, although service clearances and growth reserve are being consumed faster than the raw square-foot total suggests.";
+ 196:     } else {
+ 197:       interpretation =
+ 198:         "The room plan remains inside a manageable planning envelope. Equipment footprint, clearance allowance, and reserve still leave useful room before space becomes the first infrastructure limiter.";
+ 199:     }
+ 200: 
+ 201:     let guidance = "";
+ 202:     if (analyzer.status === "HEALTHY") {
+ 203:       guidance =
+ 204:         "Maintain this planning baseline, but keep final aisle, service, and growth assumptions explicit as the layout evolves. The next pressure increase will usually appear in reserve consumption before total square footage looks obviously small.";
+ 205:     } else if (analyzer.status === "WATCH") {
+ 206:       guidance =
+ 207:         "Validate aisle width, service clearances, and realistic expansion assumptions before locking the room size. Watch what tightens first: clearance margin, growth reserve, or usable deployment density.";
+ 208:     } else {
+ 209:       guidance =
+ 210:         `Rework the room baseline. The primary limiter is ${dominantConstraint.toLowerCase()}, not just total square footage. Increase floor area, raise the clearance factor, or preserve more future reserve before continuing into rack layout.`;
+ 211:     }
+ 212: 
+ 213:     const summaryRows = [
+ 214:       { label: "Equipment Footprint", value: `${equip.toFixed(0)} sq ft` },
+ 215:       { label: "Clearance Factor", value: `${factor.toFixed(1)}×` },
+ 216:       { label: "Base Room Size", value: `${base.toFixed(0)} sq ft` },
+ 217:       { label: "Growth Reserve", value: `${growth.toFixed(0)}%` },
+ 218:       { label: "Estimated Room Size", value: `${total.toFixed(0)} sq ft` },
+ 219:       { label: "Planning Density", value: density }
+ 220:     ];
+ 221: 
+ 222:     const derivedRows = [
+ 223:       { label: "Clearance / Aisle Area", value: `${clearanceArea.toFixed(0)} sq ft` },
+ 224:       { label: "Growth Reserve Area", value: `${growthArea.toFixed(0)} sq ft` },
+ 225:       { label: "Equipment Density", value: `${equipmentDensity.toFixed(1)}%` },
+ 226:       { label: "Primary Constraint", value: dominantConstraint }
+ 227:     ];
+ 228: 
+ 229:     ScopedLabsAnalyzer.renderOutput({
+ 230:       resultsEl: els.results,
+ 231:       analysisEl: els.analysisCopy,
+ 232:       existingChartRef: chartRef,
+ 233:       existingWrapRef: chartWrapRef,
+ 234:       summaryRows,
+ 235:       derivedRows,
+ 236:       status: analyzer.status,
+ 237:       interpretation,
+ 238:       dominantConstraint,
+ 239:       guidance,
+ 240:       chart: {
+ 241:         labels: metrics.map((m) => m.label),
+ 242:         values: metrics.map((m) => m.value),
+ 243:         displayValues: metrics.map((m) => m.displayValue),
+ 244:         referenceValue: 65,
+ 245:         healthyMax: 65,
+ 246:         watchMax: 85,
+ 247:         axisTitle: "Room Planning Stress Magnitude",
+ 248:         referenceLabel: "Healthy Margin Floor",
+ 249:         healthyLabel: "Healthy",
+ 250:         watchLabel: "Watch",
+ 251:         riskLabel: "Risk",
+ 252:         chartMax: Math.max(
+ 253:           120,
+ 254:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 255:         )
+ 256:       }
+ 257:     });
+ 258: 
+ 259:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 260:       category: CATEGORY,
+ 261:       step: STEP,
+ 262:       data: {
+ 263:         equip,
+ 264:         factor,
+ 265:         growth,
+ 266:         base,
+ 267:         total,
+ 268:         density,
+ 269:         status: analyzer.status
+ 270:       }
+ 271:     });
+ 272: 
+ 273:     hasResult = true;
+ 274:     showContinue();
+ 275:   }
+ 276: 
+ 277:   function reset() {
+ 278:     els.equip.value = 250;
+ 279:     els.factor.value = 2.0;
+ 280:     els.growth.value = 20;
+ 281:     invalidate();
+ 282:   }
+ 283: 
+ 284:   els.calc.addEventListener("click", calc);
+ 285:   els.reset.addEventListener("click", reset);
+ 286: 
+ 287:   ["equip", "factor", "growth"].forEach((id) => {
+ 288:     const el = $(id);
+ 289:     el.addEventListener("input", invalidate);
+ 290:     el.addEventListener("change", invalidate);
+ 291:   });
+ 292: 
+ 293:   els.continue.addEventListener("click", () => {
+ 294:     if (!hasResult) return;
+ 295:     window.location.href = "/tools/infrastructure/rack-ru-planner/";
+ 296:   });
+ 297: 
+ 298:   window.addEventListener("DOMContentLoaded", () => {
+ 299:     const year = document.querySelector("[data-year]");
+ 300:     if (year) year.textContent = new Date().getFullYear();
+ 301: 
+ 302:     unlockCategoryPage();
+ 303:     setTimeout(() => {
+ 304:       unlockCategoryPage();
+ 305:     }, 400);
+ 306: 
+ 307:     refreshFlowNote();
+ 308:     hideContinue();
+ 309:   });
+ 310: })();
+
+
+============================================================
+TOOL: ups-room-sizing
+============================================================
+Title: UPS Room Sizing
+Tier: pro
+Meta description: Estimate UPS room space needs using UPS footprint, battery footprint, service clearance, ventilation, heat output, and future expansion.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- UPS Cabinets
+- Battery Cabinets
+- Area per Cabinet (sq ft)
+- Clearance Factor
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- ups
+- batt
+- areaEach
+- factor
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- continue-wrap
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  97:   function refreshFlowNote() {
+  98:     const raw = sessionStorage.getItem(FLOW_KEYS[PREVIOUS_STEP]);
+  99:     if (!raw) {
+ 100:       els.flowNote.hidden = true;
+ 101:       els.flowNote.innerHTML = "";
+ 102:       upstreamContext = null;
+ 103:       return;
+ 104:     }
+ 105: 
+ 106:     let parsed = null;
+ 107:     try {
+ 108:       parsed = JSON.parse(raw);
+ 109:     } catch {
+ 110:       els.flowNote.hidden = true;
+ 111:       els.flowNote.innerHTML = "";
+ 112:       upstreamContext = null;
+ 113:       return;
+ 114:     }
+ 115: 
+ 116:     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+ 117:       els.flowNote.hidden = true;
+ 118:       els.flowNote.innerHTML = "";
+ 119:       upstreamContext = null;
+ 120:       return;
+ 121:     }
+ 122: 
+ 123:     upstreamContext = parsed.data || {};
+ 124: 
+ 125:     const rows = [];
+ 126:     if (typeof upstreamContext.psf === "number") rows.push(`Floor Load: <strong>${upstreamContext.psf.toFixed(1)} psf</strong>`);
+ 127:     if (typeof upstreamContext.status === "string") rows.push(`Load Status: <strong>${upstreamContext.status}</strong>`);
+ 128:     if (typeof upstreamContext.classification === "string") rows.push(`Load Class: <strong>${upstreamContext.classification}</strong>`);
+ 129: 
+ 130:     if (!rows.length) {
+ 131:       els.flowNote.hidden = true;
+ 132:       els.flowNote.innerHTML = "";
+ 133:       return;
+ 134:     }
+ 135: 
+ 136:     els.flowNote.hidden = false;
+ 137:     els.flowNote.innerHTML = `
+ 138:       <strong>Flow Context</strong><br>
+ 139:       ${rows.join(" | ")}
+ 140:       <br><br>
+ 141:       This step checks whether the UPS room is only fitting nominal equipment footprint or still preserving enough access, service, and expansion margin for real deployment.
+ 142:     `;
+ 143:   }
+ 144: 
+ 145:   function invalidate() {
+ 146:     try {
+ 147:       sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 148:       sessionStorage.removeItem(FLOW_KEYS["generator-runtime"]);
+ 149:     } catch {}
+ 150: 
+ 151:     ScopedLabsAnalyzer.invalidate({
+ 152:       resultsEl: els.results,
+ 153:       analysisEl: els.analysisCopy,
+ 154:       continueWrapEl: null,
+ 155:       continueBtnEl: null,
+ 156:       existingChartRef: chartRef,
+ 157:       existingWrapRef: chartWrapRef,
+ 158:       flowKey: FLOW_KEYS[STEP],
+ 159:       category: CATEGORY,
+ 160:       step: STEP,
+ 161:       lane: LANE,
+ 162:       emptyMessage: "Run calculation."
+ 163:     });
+ 164: 
+ 165:     hasResult = false;
+ 166:     hideContinue();
+ 167:     refreshFlowNote();
+ 168:   }
+ 169: 
+ 170:   function calc() {
+ 171:     const ups = Math.max(0, Math.floor(ScopedLabsAnalyzer.safeNumber(els.ups.value, 0)));
+ 172:     const batt = Math.max(0, Math.floor(ScopedLabsAnalyzer.safeNumber(els.batt.value, 0)));
+ 173:     const areaEach = Math.max(0, ScopedLabsAnalyzer.safeNumber(els.areaEach.value, 0));
+ 174:     const factor = Math.max(1, ScopedLabsAnalyzer.safeNumber(els.factor.value, 1));
+ 175: 
+ 176:     const totalCab = ups + batt;
+ 177:     const baseArea = totalCab * areaEach;
+ 178:     const finalArea = baseArea * factor;
+ 179: 
+ 180:     const clearanceArea = Math.max(0, finalArea - baseArea);
+ 181:     const densityPct = finalArea > 0 ? (baseArea / finalArea) * 100 : 0;
+ 182:     const reservePct = Math.max(0, 100 - densityPct);
+ 183: 
+ 184:     const clearancePressure = ScopedLabsAnalyzer.clamp((1.6 / factor) * 55, 0, 180);
+ 185:     const reserveStress = ScopedLabsAnalyzer.clamp((25 - reservePct) * 4, 0, 180);
+ 186:     const densityPressure = ScopedLabsAnalyzer.clamp((densityPct / 75) * 100, 0, 180);
+ 187: 
+ 188:     const metrics = [
+ 189:       {
+ 190:         label: "Clearance Pressure",
+ 191:         value: clearancePressure,
+ 192:         displayValue: `${Math.round(clearancePressure)}%`
+ 193:       },
+ 194:       {
+ 195:         label: "Reserve Stress",
+ 196:         value: reserveStress,
+ 197:         displayValue: `${Math.round(reserveStress)}%`
+ 198:       },
+ 199:       {
+ 200:         label: "Density Pressure",
+ 201:         value: densityPressure,
+ 202:         displayValue: `${Math.round(densityPressure)}%`
+ 203:       }
+ 204:     ];
+ 205: 
+ 206:     const compositeScore = Math.round(
+ 207:       (clearancePressure * 0.40) +
+ 208:       (reserveStress * 0.30) +
+ 209:       (densityPressure * 0.30)
+ 210:     );
+ 211: 
+ 212:     const analyzer = ScopedLabsAnalyzer.resolveStatus({
+ 213:       compositeScore,
+ 214:       metrics,
+ 215:       healthyMax: 65,
+ 216:       watchMax: 85
+ 217:     });
+ 218: 
+ 219:     let density = "Balanced";
+ 220:     if (factor < 1.35 || densityPct > 70) density = "Tight";
+ 221:     else if (factor > 2.0 && reservePct > 35) density = "Spacious";
+ 222: 
+ 223:     let dominantConstraint = "Balanced UPS room sizing";
+ 224:     if (analyzer.dominant.label === "Clearance Pressure") {
+ 225:       dominantConstraint = "Clearance / service allowance";
+ 226:     } else if (analyzer.dominant.label === "Reserve Stress") {
+ 227:       dominantConstraint = "Future expansion reserve";
+ 228:     } else if (analyzer.dominant.label === "Density Pressure") {
+ 229:       dominantConstraint = "Cabinet density concentration";
+ 230:     }
+ 231: 
+ 232:     let interpretation = "";
+ 233:     if (analyzer.status === "RISK") {
+ 234:       interpretation =
+ 235:         "The UPS room plan is crowding usable deployment margin too tightly. Even if the cabinet count fits numerically, service clearances and future battery or UPS changes will become the first practical limitation.";
+ 236:     } else if (analyzer.status === "WATCH") {
+ 237:       interpretation =
+ 238:         "The UPS room sizing is workable, but reserve is tightening. The current cabinet plan may fit, although service access and growth margin are being consumed faster than the raw room total suggests.";
+ 239:     } else {
+ 240:       interpretation =
+ 241:         "The UPS room sizing remains inside a manageable planning envelope. Cabinet footprint, clearance allowance, and reserve still leave useful room before space becomes the first infrastructure limiter.";
+ 242:     }
+ 243: 
+ 244:     let guidance = "";
+ 245:     if (analyzer.status === "HEALTHY") {
+ 246:       guidance =
+ 247:         "Maintain this room baseline, but keep battery growth, service clearances, and replacement access explicit in the final layout. The next pressure increase will usually appear in reserve consumption before total room size looks obviously undersized.";
+ 248:     } else if (analyzer.status === "WATCH") {
+ 249:       guidance =
+ 250:         "Validate maintenance access, battery replacement path, and future cabinet growth before locking the room size. Watch what tightens first: clearances, reserve area, or cabinet density.";
+ 251:     } else {
+ 252:       guidance =
+ 253:         `Rework the UPS room plan. The primary limiter is ${dominantConstraint.toLowerCase()}, not just total cabinet count. Increase room area, raise clearance allowance, or preserve more reserve before finalizing deployment.`;
+ 254:     }
+ 255: 
+ 256:     const summaryRows = [
+ 257:       { label: "Total Cabinets", value: `${totalCab}` },
+ 258:       { label: "Base Equipment Area", value: `${baseArea.toFixed(0)} sq ft` },
+ 259:       { label: "Clearance Factor", value: `${factor.toFixed(1)}×` },
+ 260:       { label: "Estimated Room Size", value: `${finalArea.toFixed(0)} sq ft` },
+ 261:       { label: "Layout Density", value: density }
+ 262:     ];
+ 263: 
+ 264:     const derivedRows = [
+ 265:       { label: "Clearance / Service Area", value: `${clearanceArea.toFixed(0)} sq ft` },
+ 266:       { label: "Cabinet Density", value: `${densityPct.toFixed(1)} %` },
+ 267:       { label: "Reserve Area", value: `${reservePct.toFixed(1)} %` },
+ 268:       { label: "Primary Constraint", value: dominantConstraint }
+ 269:     ];
+ 270: 
+ 271:     ScopedLabsAnalyzer.renderOutput({
+ 272:       resultsEl: els.results,
+ 273:       analysisEl: els.analysisCopy,
+ 274:       existingChartRef: chartRef,
+ 275:       existingWrapRef: chartWrapRef,
+ 276:       summaryRows,
+ 277:       derivedRows,
+ 278:       status: analyzer.status,
+ 279:       interpretation,
+ 280:       dominantConstraint,
+ 281:       guidance,
+ 282:       chart: {
+ 283:         labels: metrics.map((m) => m.label),
+ 284:         values: metrics.map((m) => m.value),
+ 285:         displayValues: metrics.map((m) => m.displayValue),
+ 286:         referenceValue: 65,
+ 287:         healthyMax: 65,
+ 288:         watchMax: 85,
+ 289:         axisTitle: "UPS Room Stress Magnitude",
+ 290:         referenceLabel: "Healthy Margin Floor",
+ 291:         healthyLabel: "Healthy",
+ 292:         watchLabel: "Watch",
+ 293:         riskLabel: "Risk",
+ 294:         chartMax: Math.max(
+ 295:           120,
+ 296:           Math.ceil(Math.max(...metrics.map((m) => m.value), 85) * 1.08)
+ 297:         )
+ 298:       }
+ 299:     });
+ 300: 
+ 301:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 302:       category: CATEGORY,
+ 303:       step: STEP,
+ 304:       data: {
+ 305:         totalCab,
+ 306:         baseArea,
+ 307:         finalArea,
+ 308:         density,
+ 309:         status: analyzer.status
+ 310:       }
+ 311:     });
+ 312: 
+ 313:     hasResult = true;
+ 314:     showContinue();
+ 315:   }
+ 316: 
+ 317:   function reset() {
+ 318:     els.ups.value = 2;
+ 319:     els.batt.value = 4;
+ 320:     els.areaEach.value = 20;
+ 321:     els.factor.value = 1.5;
+ 322:     invalidate();
+ 323:   }
+ 324: 
+ 325:   els.calc.addEventListener("click", calc);
+ 326:   els.reset.addEventListener("click", reset);
+ 327: 
+ 328:   ["ups", "batt", "areaEach", "factor"].forEach((id) => {
+ 329:     $(id).addEventListener("input", invalidate);
+ 330:     $(id).addEventListener("change", invalidate);
+ 331:   });
+ 332: 
+ 333:   els.continue.addEventListener("click", () => {
+ 334:     if (!hasResult) return;
+ 335:     window.location.href = "/tools/infrastructure/generator-runtime/";
+ 336:   });
+ 337: 
+ 338:   window.addEventListener("DOMContentLoaded", () => {
+ 339:     const year = document.querySelector("[data-year]");
+ 340:     if (year) year.textContent = new Date().getFullYear();
+ 341: 
+ 342:     unlockCategoryPage();
+ 343:     setTimeout(() => {
+ 344:       unlockCategoryPage();
+ 345:     }, 400);
+ 346: 
+ 347:     refreshFlowNote();
+ 348:     hideContinue();
+ 349:   });
+ 350: })();
