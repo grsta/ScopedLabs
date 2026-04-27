@@ -1,6 +1,6 @@
 # ScopedLabs Category Formula Review Packet
 Category: performance
-Generated: 2026-04-27T23:32:05.362Z
+Generated: 2026-04-27T23:46:35.895Z
 Tools found: 10
 
 
@@ -1862,7 +1862,7 @@ Focused core logic:
  275:     const queueingPressure = Math.max(0, (targetUtil - 0.70) * 100 * 2);
  276: 
  277:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
- 278:       compositeScore: Math.max(targetPressure - 60, headroomGapPct * 2, queueingPressure),
+ 278:       compositeScore: Math.max(targetPressure, headroomGapPct * 2, queueingPressure),
  279:       metrics: [
  280:         {
  281:           label: "Target CPU Pressure",
@@ -1880,8 +1880,8 @@ Focused core logic:
  293:           displayValue: fmtMs(targetLatency)
  294:         }
  295:       ],
- 296:       healthyMax: 35,
- 297:       watchMax: 70
+ 296:       healthyMax: 70,
+ 297:       watchMax: 85
  298:     });
  299: 
  300:     let cpuClass = "COMFORTABLE";
@@ -1987,9 +1987,9 @@ Focused core logic:
  400:           fmtPct(data.headroomGapPct),
  401:           fmtMs(data.targetLatency)
  402:         ],
- 403:         referenceValue: 35,
- 404:         healthyMax: 35,
- 405:         watchMax: 70,
+ 403:         referenceValue: 70,
+ 404:         healthyMax: 70,
+ 405:         watchMax: 85,
  406:         axisTitle: "CPU Saturation Pressure",
  407:         referenceLabel: "Comfort Band",
  408:         healthyLabel: "Healthy",
@@ -2002,7 +2002,7 @@ Focused core logic:
  415:               data.targetPressure,
  416:               data.headroomGapPct * 2,
  417:               data.queueingPressure,
- 418:               70
+ 418:               85
  419:             ) * 1.12
  420:           )
  421:         )
@@ -2347,7 +2347,7 @@ Focused core logic:
  261:       totalIops > 0 ? Math.abs(input.riops - input.wiops) / totalIops * 100 : 0;
  262: 
  263:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
- 264:       compositeScore: Math.max(throughputPressure - 40, headroomDeficitPct * 2, saturationOverrunPct),
+ 264:       compositeScore: Math.max(throughputPressure, headroomDeficitPct * 2, saturationOverrunPct),
  265:       metrics: [
  266:         {
  267:           label: "Throughput Pressure",
@@ -2365,8 +2365,8 @@ Focused core logic:
  279:           displayValue: fmtMBs(throughput)
  280:         }
  281:       ],
- 282:       healthyMax: 35,
- 283:       watchMax: 70
+ 282:       healthyMax: 70,
+ 283:       watchMax: 90
  284:     });
  285: 
  286:     let diskClass = "COMFORTABLE";
@@ -2476,9 +2476,9 @@ Focused core logic:
  390:           fmtPct(data.headroomDeficitPct),
  391:           fmtMBs(data.throughput)
  392:         ],
- 393:         referenceValue: 35,
- 394:         healthyMax: 35,
- 395:         watchMax: 70,
+ 393:         referenceValue: 70,
+ 394:         healthyMax: 70,
+ 395:         watchMax: 90,
  396:         axisTitle: "Storage Saturation Pressure",
  397:         referenceLabel: "Comfort Band",
  398:         healthyLabel: "Healthy",
@@ -2491,7 +2491,7 @@ Focused core logic:
  405:               data.throughputPressure,
  406:               data.headroomDeficitPct * 2,
  407:               data.saturationOverrunPct,
- 408:               70
+ 408:               90
  409:             ) * 1.12
  410:           )
  411:         )
@@ -4328,305 +4328,316 @@ Focused core logic:
  212:     const targetThroughput =
  213:       num(d.targetThroughput);
  214: 
- 215:     if (Number.isFinite(currentThroughput) && currentThroughput > 0) {
- 216:       els.lambda.value = String(Math.round(currentThroughput));
- 217:     } else if (Number.isFinite(capacity) && Number.isFinite(currentUtilizationPct)) {
- 218:       els.lambda.value = String(Math.round(capacity * (currentUtilizationPct / 100)));
- 219:     }
- 220: 
- 221:     if (Number.isFinite(capacity) && capacity > 0) {
- 222:       const serviceRate = Number.isFinite(targetThroughput) && targetThroughput > 0
- 223:         ? Math.max(capacity, targetThroughput)
- 224:         : capacity;
- 225:       els.mu.value = String(Math.round(serviceRate));
- 226:     }
- 227: 
- 228:     if (Number.isFinite(targetUtilizationPct)) {
- 229:       if (targetUtilizationPct >= 90) {
- 230:         els.k.value = "1";
- 231:       } else if (targetUtilizationPct >= 75) {
- 232:         els.k.value = "2";
- 233:       } else {
- 234:         els.k.value = "3";
- 235:       }
- 236:     }
- 237: 
- 238:     if (Number.isFinite(currentLatencyMs)) {
- 239:       if (currentLatencyMs <= 10) els.svc.value = "2";
- 240:       else if (currentLatencyMs <= 25) els.svc.value = "4";
- 241:       else if (currentLatencyMs <= 60) els.svc.value = "6";
- 242:       else els.svc.value = "8";
- 243:     }
- 244: 
- 245:     const parts = [];
- 246:     if (Number.isFinite(currentUtilizationPct)) parts.push(`Current Utilization: <strong>${fmt(currentUtilizationPct, 1)}%</strong>`);
- 247:     if (Number.isFinite(targetUtilizationPct)) parts.push(`Target Utilization: <strong>${fmt(targetUtilizationPct, 1)}%</strong>`);
- 248:     if (Number.isFinite(currentLatencyMs)) parts.push(`Current Latency: <strong>${fmt(currentLatencyMs, 1)} ms</strong>`);
- 249:     if (Number.isFinite(targetLatencyMs)) parts.push(`Target Latency: <strong>${fmt(targetLatencyMs, 1)} ms</strong>`);
- 250:     if (Number.isFinite(capacity)) parts.push(`Capacity: <strong>${fmt(capacity, 0)}</strong>`);
- 251: 
- 252:     if (!parts.length) {
- 253:       els.flowNote.hidden = true;
- 254:       els.flowNote.innerHTML = "";
- 255:       return;
- 256:     }
- 257: 
- 258:     els.flowNote.hidden = false;
- 259:     els.flowNote.innerHTML = `
- 260:       <strong>Flow Context</strong><br>
- 261:       ${parts.join(" | ")}
- 262:       <br><br>
- 263:       This step evaluates backlog formation after the upstream latency-versus-throughput relationship has already shown how fast delay grows near saturation.
- 264:     `;
- 265:   }
- 266: 
- 267:   function getInputs() {
- 268:     const lambda = num(els.lambda.value);
- 269:     const mu = num(els.mu.value);
- 270:     const k = Math.max(1, Math.floor(num(els.k.value)));
- 271:     const svc = num(els.svc.value);
- 272: 
- 273:     if (
- 274:       !Number.isFinite(lambda) || lambda < 0 ||
- 275:       !Number.isFinite(mu) || mu <= 0 ||
- 276:       !Number.isFinite(k) || k < 1 ||
- 277:       !Number.isFinite(svc) || svc < 0
- 278:     ) {
- 279:       return { ok: false, message: "Enter valid values and press Calculate." };
- 280:     }
- 281: 
- 282:     return { ok: true, lambda, mu, k, svc };
- 283:   }
- 284: 
- 285:   function calculateModel() {
- 286:     const input = getInputs();
- 287:     if (!input.ok) return input;
- 288: 
- 289:     const capacity = input.mu * input.k;
- 290:     const rho = input.lambda / capacity;
- 291: 
- 292:     let q;
- 293:     if (rho >= 1) {
- 294:       q = Infinity;
- 295:     } else {
- 296:       q = (rho * rho) / (1 - rho);
- 297:     }
- 298: 
- 299:     let rt;
- 300:     if (!Number.isFinite(q)) {
- 301:       rt = Infinity;
- 302:     } else if (input.lambda <= 0) {
- 303:       rt = input.svc;
- 304:     } else {
- 305:       const waitMs = (q / input.lambda) * 1000;
- 306:       rt = input.svc + waitMs;
- 307:     }
- 308: 
- 309:     const utilizationPct = rho * 100;
- 310:     const queueDepthMetric = Number.isFinite(q) ? Math.min(q * 4, 100) : 100;
- 311:     const responseTimeMetric = Number.isFinite(rt) ? Math.min(rt, 100) : 100;
- 312:     const saturationPressure = Math.min(Math.max(utilizationPct, 0), 100);
- 313: 
- 314:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
- 315:       compositeScore: Math.max(
- 316:         saturationPressure,
- 317:         queueDepthMetric,
- 318:         responseTimeMetric
- 319:       ),
- 320:       metrics: [
- 321:         {
- 322:           label: "Saturation Pressure",
- 323:           value: saturationPressure,
- 324:           displayValue: fmtPct(utilizationPct)
- 325:         },
- 326:         {
- 327:           label: "Queue Depth Pressure",
- 328:           value: queueDepthMetric,
- 329:           displayValue: Number.isFinite(q) ? fmt(q, 2) : "RUNAWAY"
- 330:         },
- 331:         {
- 332:           label: "Response Time Pressure",
- 333:           value: responseTimeMetric,
- 334:           displayValue: Number.isFinite(rt) ? fmtMs(rt) : "UNBOUNDED"
- 335:         }
- 336:       ],
- 337:       healthyMax: 70,
- 338:       watchMax: 85
- 339:     });
- 340: 
- 341:     let queueClass = "STABLE";
- 342:     if (statusPack.status === "WATCH") queueClass = "RISING";
- 343:     if (statusPack.status === "RISK") {
- 344:       queueClass = Number.isFinite(q) ? "HEAVY" : "RUNAWAY";
- 345:     }
- 346: 
- 347:     let interpretation = `Total service capacity is ${fmtRps(capacity)} with utilization at ${fmtPct(utilizationPct)}. The modeled queue depth is ${Number.isFinite(q) ? fmt(q, 2) : "RUNAWAY"} and the resulting response time is ${Number.isFinite(rt) ? fmtMs(rt) : "UNBOUNDED"}.`;
- 348: 
- 349:     if (statusPack.status === "RISK") {
- 350:       interpretation += ` The queue is now in a dangerous region where backlog formation becomes the dominant problem. At this point, small increases in arrival rate can cause queue growth and delay to accelerate much faster than service can recover.`;
- 351:     } else if (statusPack.status === "WATCH") {
- 352:       interpretation += ` Queueing is present but not yet catastrophic. The system is still working, though delay is already beginning to accumulate instead of remaining flat under load.`;
- 353:     } else {
- 354:       interpretation += ` Queue pressure remains in a controlled band, so the arrival and service rates are still close enough that backlog stays limited under the current assumptions.`;
- 355:     }
- 356: 
- 357:     let dominantConstraint = "";
- 358:     if (statusPack.dominant.label === "Saturation Pressure") {
- 359:       dominantConstraint = "Saturation pressure is the dominant limiter. The main concern is how closely arrival rate is approaching total service capacity.";
- 360:     } else if (statusPack.dominant.label === "Queue Depth Pressure") {
- 361:       dominantConstraint = "Queue depth pressure is the dominant limiter. The backlog itself is becoming the first practical sign that the system is losing equilibrium under load.";
- 362:     } else {
- 363:       dominantConstraint = "Response time pressure is the dominant limiter. The system may still be processing work, but service delay is already growing enough to become the user-visible problem.";
- 364:     }
- 365: 
- 366:     let guidance = "";
- 367:     if (statusPack.status === "RISK") {
- 368:       guidance = "Treat backlog as the active bottleneck signal. Either reduce arrival rate, raise service capacity, or add concurrency before assuming downstream optimizations will fix the visible delay.";
- 369:     } else if (statusPack.status === "WATCH") {
- 370:       guidance = "The queue is serviceable but rising. This is the point where small load increases can start creating non-trivial backlog, so use concurrency carefully and validate burst behavior.";
- 371:     } else {
- 372:       guidance = "Queue pressure is balanced. Continue into Concurrency Scaling next to see whether additional workers will improve throughput cleanly or introduce coordination drag.";
- 373:     }
- 374: 
- 375:     return {
- 376:       ok: true,
- 377:       arrivalRate: input.lambda,
- 378:       serviceRate: input.mu,
- 379:       workers: input.k,
- 380:       serviceTimeMs: input.svc,
- 381:       capacity,
- 382:       rho,
- 383:       utilizationPct,
- 384:       queueDepth: q,
- 385:       responseTimeMs: rt,
- 386:       queueClass,
- 387:       saturationPressure,
- 388:       queueDepthMetric,
- 389:       responseTimeMetric,
- 390:       status: statusPack.status,
- 391:       interpretation,
- 392:       dominantConstraint,
- 393:       guidance
- 394:     };
- 395:   }
- 396: 
- 397:   function calc() {
- 398:     const data = calculateModel();
- 399:     if (!data.ok) {
- 400:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
- 401:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
- 402:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
- 403:       hideContinue();
- 404:       return;
- 405:     }
- 406: 
- 407:     ScopedLabsAnalyzer.renderOutput({
- 408:       resultsEl: els.results,
- 409:       analysisEl: els.analysis,
- 410:       existingChartRef: chartRef,
- 411:       existingWrapRef: chartWrapRef,
- 412:       summaryRows: [
- 413:         { label: "Total Capacity", value: fmtRps(data.capacity) },
- 414:         { label: "Utilization", value: fmtPct(data.utilizationPct) },
- 415:         { label: "Queue Depth", value: Number.isFinite(data.queueDepth) ? fmt(data.queueDepth, 2) : "RUNAWAY" },
- 416:         { label: "Response Time", value: Number.isFinite(data.responseTimeMs) ? fmtMs(data.responseTimeMs) : "UNBOUNDED" }
- 417:       ],
- 418:       derivedRows: [
- 419:         { label: "Arrival Rate", value: fmtRps(data.arrivalRate) },
- 420:         { label: "Service Rate", value: fmtRps(data.serviceRate) },
- 421:         { label: "Workers", value: fmt(data.workers, 0) },
- 422:         { label: "Base Service Time", value: fmtMs(data.serviceTimeMs, 1) },
- 423:         { label: "Queue Class", value: data.queueClass },
- 424:         { label: "Utilization (ρ)", value: fmt(data.rho, 3) }
- 425:       ],
- 426:       status: data.status,
- 427:       interpretation: data.interpretation,
- 428:       dominantConstraint: data.dominantConstraint,
- 429:       guidance: data.guidance,
- 430:       chart: {
- 431:         labels: [
- 432:           "Saturation Pressure",
- 433:           "Queue Depth Pressure",
- 434:           "Response Time Pressure"
- 435:         ],
- 436:         values: [
- 437:           Number(data.saturationPressure.toFixed(1)),
- 438:           Number(data.queueDepthMetric.toFixed(1)),
- 439:           Number(data.responseTimeMetric.toFixed(1))
- 440:         ],
- 441:         displayValues: [
- 442:           fmtPct(data.utilizationPct),
- 443:           Number.isFinite(data.queueDepth) ? fmt(data.queueDepth, 2) : "RUNAWAY",
- 444:           Number.isFinite(data.responseTimeMs) ? fmtMs(data.responseTimeMs) : "UNBOUNDED"
- 445:         ],
- 446:         referenceValue: 70,
- 447:         healthyMax: 70,
- 448:         watchMax: 85,
- 449:         axisTitle: "Queue Pressure",
- 450:         referenceLabel: "Comfort Band",
- 451:         healthyLabel: "Healthy",
- 452:         watchLabel: "Watch",
- 453:         riskLabel: "Risk",
- 454:         chartMax: 100
- 455:       }
- 456:     });
- 457: 
- 458:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
- 459:       category: CATEGORY,
- 460:       step: STEP,
- 461:       data: {
- 462:         queueDepth: data.queueDepth,
- 463:         utilization: data.rho,
- 464:         utilizationPct: data.utilizationPct,
- 465:         responseTime: data.responseTimeMs,
- 466:         responseTimeMs: data.responseTimeMs,
- 467:         workers: data.workers,
- 468:         capacity: data.capacity,
- 469:         queueClass: data.queueClass
- 470:       }
- 471:     });
- 472: 
- 473:     hasResult = true;
- 474:     showContinue();
- 475:   }
- 476: 
- 477:   function reset() {
- 478:     applyDefaults();
- 479:     loadPrior();
- 480:     invalidate();
- 481:   }
- 482: 
- 483:   function bind() {
- 484:     [els.lambda, els.mu, els.k, els.svc].forEach((el) => {
- 485:       el.addEventListener("input", invalidate);
- 486:       el.addEventListener("change", invalidate);
- 487:     });
- 488: 
- 489:     els.calc.addEventListener("click", calc);
- 490:     els.reset.addEventListener("click", reset);
- 491:     els.continueBtn.addEventListener("click", () => {
- 492:       if (!hasResult) return;
- 493:       window.location.href = NEXT_URL;
- 494:     });
- 495:   }
- 496: 
- 497:   function init() {
- 498:     bind();
- 499:     loadPrior();
- 500:     invalidate();
- 501:   }
- 502: 
- 503:   window.addEventListener("DOMContentLoaded", () => {
- 504:     unlockCategoryPage();
- 505:     setTimeout(() => {
- 506:       unlockCategoryPage();
- 507:     }, 400);
- 508: 
- 509:     const year = document.querySelector("[data-year]");
- 510:     if (year) year.textContent = new Date().getFullYear();
- 511:     init();
- 512:   });
- 513: })();
+ 215:     let selectedWorkers = Math.max(1, Math.floor(num(els.k.value) || DEFAULTS.k));
+ 216: 
+ 217:     if (Number.isFinite(targetUtilizationPct)) {
+ 218:       if (targetUtilizationPct >= 90) {
+ 219:         selectedWorkers = 1;
+ 220:       } else if (targetUtilizationPct >= 75) {
+ 221:         selectedWorkers = 2;
+ 222:       } else {
+ 223:         selectedWorkers = 3;
+ 224:       }
+ 225: 
+ 226:       els.k.value = String(selectedWorkers);
+ 227:     }
+ 228: 
+ 229:     const arrivalRate =
+ 230:       Number.isFinite(targetThroughput) && targetThroughput > 0
+ 231:         ? targetThroughput
+ 232:         : Number.isFinite(currentThroughput) && currentThroughput > 0
+ 233:           ? currentThroughput
+ 234:           : Number.isFinite(capacity) && Number.isFinite(targetUtilizationPct)
+ 235:             ? capacity * (targetUtilizationPct / 100)
+ 236:             : Number.isFinite(capacity) && Number.isFinite(currentUtilizationPct)
+ 237:               ? capacity * (currentUtilizationPct / 100)
+ 238:               : NaN;
+ 239: 
+ 240:     if (Number.isFinite(arrivalRate) && arrivalRate > 0) {
+ 241:       els.lambda.value = String(Math.round(arrivalRate));
+ 242:     }
+ 243: 
+ 244:     if (Number.isFinite(capacity) && capacity > 0) {
+ 245:       const perWorkerServiceRate = capacity / selectedWorkers;
+ 246:       els.mu.value = String(Math.round(perWorkerServiceRate));
+ 247:     }
+ 248: 
+ 249:     if (Number.isFinite(currentLatencyMs)) {
+ 250:       if (currentLatencyMs <= 10) els.svc.value = "2";
+ 251:       else if (currentLatencyMs <= 25) els.svc.value = "4";
+ 252:       else if (currentLatencyMs <= 60) els.svc.value = "6";
+ 253:       else els.svc.value = "8";
+ 254:     }
+ 255: 
+ 256:     const parts = [];
+ 257:     if (Number.isFinite(currentUtilizationPct)) parts.push(`Current Utilization: <strong>${fmt(currentUtilizationPct, 1)}%</strong>`);
+ 258:     if (Number.isFinite(targetUtilizationPct)) parts.push(`Target Utilization: <strong>${fmt(targetUtilizationPct, 1)}%</strong>`);
+ 259:     if (Number.isFinite(currentLatencyMs)) parts.push(`Current Latency: <strong>${fmt(currentLatencyMs, 1)} ms</strong>`);
+ 260:     if (Number.isFinite(targetLatencyMs)) parts.push(`Target Latency: <strong>${fmt(targetLatencyMs, 1)} ms</strong>`);
+ 261:     if (Number.isFinite(capacity)) parts.push(`Capacity: <strong>${fmt(capacity, 0)}</strong>`);
+ 262: 
+ 263:     if (!parts.length) {
+ 264:       els.flowNote.hidden = true;
+ 265:       els.flowNote.innerHTML = "";
+ 266:       return;
+ 267:     }
+ 268: 
+ 269:     els.flowNote.hidden = false;
+ 270:     els.flowNote.innerHTML = `
+ 271:       <strong>Flow Context</strong><br>
+ 272:       ${parts.join(" | ")}
+ 273:       <br><br>
+ 274:       This step evaluates backlog formation after the upstream latency-versus-throughput relationship has already shown how fast delay grows near saturation.
+ 275:     `;
+ 276:   }
+ 277: 
+ 278:   function getInputs() {
+ 279:     const lambda = num(els.lambda.value);
+ 280:     const mu = num(els.mu.value);
+ 281:     const k = Math.max(1, Math.floor(num(els.k.value)));
+ 282:     const svc = num(els.svc.value);
+ 283: 
+ 284:     if (
+ 285:       !Number.isFinite(lambda) || lambda < 0 ||
+ 286:       !Number.isFinite(mu) || mu <= 0 ||
+ 287:       !Number.isFinite(k) || k < 1 ||
+ 288:       !Number.isFinite(svc) || svc < 0
+ 289:     ) {
+ 290:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 291:     }
+ 292: 
+ 293:     return { ok: true, lambda, mu, k, svc };
+ 294:   }
+ 295: 
+ 296:   function calculateModel() {
+ 297:     const input = getInputs();
+ 298:     if (!input.ok) return input;
+ 299: 
+ 300:     const capacity = input.mu * input.k;
+ 301:     const rho = input.lambda / capacity;
+ 302: 
+ 303:     let q;
+ 304:     if (rho >= 1) {
+ 305:       q = Infinity;
+ 306:     } else {
+ 307:       q = (rho * rho) / (1 - rho);
+ 308:     }
+ 309: 
+ 310:     let rt;
+ 311:     if (!Number.isFinite(q)) {
+ 312:       rt = Infinity;
+ 313:     } else if (input.lambda <= 0) {
+ 314:       rt = input.svc;
+ 315:     } else {
+ 316:       const waitMs = (q / input.lambda) * 1000;
+ 317:       rt = input.svc + waitMs;
+ 318:     }
+ 319: 
+ 320:     const utilizationPct = rho * 100;
+ 321:     const queueDepthMetric = Number.isFinite(q) ? Math.min(q * 4, 100) : 100;
+ 322:     const responseTimeMetric = Number.isFinite(rt) ? Math.min(rt, 100) : 100;
+ 323:     const saturationPressure = Math.min(Math.max(utilizationPct, 0), 100);
+ 324: 
+ 325:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 326:       compositeScore: Math.max(
+ 327:         saturationPressure,
+ 328:         queueDepthMetric,
+ 329:         responseTimeMetric
+ 330:       ),
+ 331:       metrics: [
+ 332:         {
+ 333:           label: "Saturation Pressure",
+ 334:           value: saturationPressure,
+ 335:           displayValue: fmtPct(utilizationPct)
+ 336:         },
+ 337:         {
+ 338:           label: "Queue Depth Pressure",
+ 339:           value: queueDepthMetric,
+ 340:           displayValue: Number.isFinite(q) ? fmt(q, 2) : "RUNAWAY"
+ 341:         },
+ 342:         {
+ 343:           label: "Response Time Pressure",
+ 344:           value: responseTimeMetric,
+ 345:           displayValue: Number.isFinite(rt) ? fmtMs(rt) : "UNBOUNDED"
+ 346:         }
+ 347:       ],
+ 348:       healthyMax: 70,
+ 349:       watchMax: 85
+ 350:     });
+ 351: 
+ 352:     let queueClass = "STABLE";
+ 353:     if (statusPack.status === "WATCH") queueClass = "RISING";
+ 354:     if (statusPack.status === "RISK") {
+ 355:       queueClass = Number.isFinite(q) ? "HEAVY" : "RUNAWAY";
+ 356:     }
+ 357: 
+ 358:     let interpretation = `Total service capacity is ${fmtRps(capacity)} with utilization at ${fmtPct(utilizationPct)}. The modeled queue depth is ${Number.isFinite(q) ? fmt(q, 2) : "RUNAWAY"} and the resulting response time is ${Number.isFinite(rt) ? fmtMs(rt) : "UNBOUNDED"}.`;
+ 359: 
+ 360:     if (statusPack.status === "RISK") {
+ 361:       interpretation += ` The queue is now in a dangerous region where backlog formation becomes the dominant problem. At this point, small increases in arrival rate can cause queue growth and delay to accelerate much faster than service can recover.`;
+ 362:     } else if (statusPack.status === "WATCH") {
+ 363:       interpretation += ` Queueing is present but not yet catastrophic. The system is still working, though delay is already beginning to accumulate instead of remaining flat under load.`;
+ 364:     } else {
+ 365:       interpretation += ` Queue pressure remains in a controlled band, so the arrival and service rates are still close enough that backlog stays limited under the current assumptions.`;
+ 366:     }
+ 367: 
+ 368:     let dominantConstraint = "";
+ 369:     if (statusPack.dominant.label === "Saturation Pressure") {
+ 370:       dominantConstraint = "Saturation pressure is the dominant limiter. The main concern is how closely arrival rate is approaching total service capacity.";
+ 371:     } else if (statusPack.dominant.label === "Queue Depth Pressure") {
+ 372:       dominantConstraint = "Queue depth pressure is the dominant limiter. The backlog itself is becoming the first practical sign that the system is losing equilibrium under load.";
+ 373:     } else {
+ 374:       dominantConstraint = "Response time pressure is the dominant limiter. The system may still be processing work, but service delay is already growing enough to become the user-visible problem.";
+ 375:     }
+ 376: 
+ 377:     let guidance = "";
+ 378:     if (statusPack.status === "RISK") {
+ 379:       guidance = "Treat backlog as the active bottleneck signal. Either reduce arrival rate, raise service capacity, or add concurrency before assuming downstream optimizations will fix the visible delay.";
+ 380:     } else if (statusPack.status === "WATCH") {
+ 381:       guidance = "The queue is serviceable but rising. This is the point where small load increases can start creating non-trivial backlog, so use concurrency carefully and validate burst behavior.";
+ 382:     } else {
+ 383:       guidance = "Queue pressure is balanced. Continue into Concurrency Scaling next to see whether additional workers will improve throughput cleanly or introduce coordination drag.";
+ 384:     }
+ 385: 
+ 386:     return {
+ 387:       ok: true,
+ 388:       arrivalRate: input.lambda,
+ 389:       serviceRate: input.mu,
+ 390:       workers: input.k,
+ 391:       serviceTimeMs: input.svc,
+ 392:       capacity,
+ 393:       rho,
+ 394:       utilizationPct,
+ 395:       queueDepth: q,
+ 396:       responseTimeMs: rt,
+ 397:       queueClass,
+ 398:       saturationPressure,
+ 399:       queueDepthMetric,
+ 400:       responseTimeMetric,
+ 401:       status: statusPack.status,
+ 402:       interpretation,
+ 403:       dominantConstraint,
+ 404:       guidance
+ 405:     };
+ 406:   }
+ 407: 
+ 408:   function calc() {
+ 409:     const data = calculateModel();
+ 410:     if (!data.ok) {
+ 411:       ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 412:       ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 413:       els.results.innerHTML = `<div class="muted">${data.message}</div>`;
+ 414:       hideContinue();
+ 415:       return;
+ 416:     }
+ 417: 
+ 418:     ScopedLabsAnalyzer.renderOutput({
+ 419:       resultsEl: els.results,
+ 420:       analysisEl: els.analysis,
+ 421:       existingChartRef: chartRef,
+ 422:       existingWrapRef: chartWrapRef,
+ 423:       summaryRows: [
+ 424:         { label: "Total Capacity", value: fmtRps(data.capacity) },
+ 425:         { label: "Utilization", value: fmtPct(data.utilizationPct) },
+ 426:         { label: "Queue Depth", value: Number.isFinite(data.queueDepth) ? fmt(data.queueDepth, 2) : "RUNAWAY" },
+ 427:         { label: "Response Time", value: Number.isFinite(data.responseTimeMs) ? fmtMs(data.responseTimeMs) : "UNBOUNDED" }
+ 428:       ],
+ 429:       derivedRows: [
+ 430:         { label: "Arrival Rate", value: fmtRps(data.arrivalRate) },
+ 431:         { label: "Service Rate", value: fmtRps(data.serviceRate) },
+ 432:         { label: "Workers", value: fmt(data.workers, 0) },
+ 433:         { label: "Base Service Time", value: fmtMs(data.serviceTimeMs, 1) },
+ 434:         { label: "Queue Class", value: data.queueClass },
+ 435:         { label: "Utilization (ρ)", value: fmt(data.rho, 3) }
+ 436:       ],
+ 437:       status: data.status,
+ 438:       interpretation: data.interpretation,
+ 439:       dominantConstraint: data.dominantConstraint,
+ 440:       guidance: data.guidance,
+ 441:       chart: {
+ 442:         labels: [
+ 443:           "Saturation Pressure",
+ 444:           "Queue Depth Pressure",
+ 445:           "Response Time Pressure"
+ 446:         ],
+ 447:         values: [
+ 448:           Number(data.saturationPressure.toFixed(1)),
+ 449:           Number(data.queueDepthMetric.toFixed(1)),
+ 450:           Number(data.responseTimeMetric.toFixed(1))
+ 451:         ],
+ 452:         displayValues: [
+ 453:           fmtPct(data.utilizationPct),
+ 454:           Number.isFinite(data.queueDepth) ? fmt(data.queueDepth, 2) : "RUNAWAY",
+ 455:           Number.isFinite(data.responseTimeMs) ? fmtMs(data.responseTimeMs) : "UNBOUNDED"
+ 456:         ],
+ 457:         referenceValue: 70,
+ 458:         healthyMax: 70,
+ 459:         watchMax: 85,
+ 460:         axisTitle: "Queue Pressure",
+ 461:         referenceLabel: "Comfort Band",
+ 462:         healthyLabel: "Healthy",
+ 463:         watchLabel: "Watch",
+ 464:         riskLabel: "Risk",
+ 465:         chartMax: 100
+ 466:       }
+ 467:     });
+ 468: 
+ 469:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 470:       category: CATEGORY,
+ 471:       step: STEP,
+ 472:       data: {
+ 473:         queueDepth: data.queueDepth,
+ 474:         utilization: data.rho,
+ 475:         utilizationPct: data.utilizationPct,
+ 476:         responseTime: data.responseTimeMs,
+ 477:         responseTimeMs: data.responseTimeMs,
+ 478:         workers: data.workers,
+ 479:         capacity: data.capacity,
+ 480:         queueClass: data.queueClass
+ 481:       }
+ 482:     });
+ 483: 
+ 484:     hasResult = true;
+ 485:     showContinue();
+ 486:   }
+ 487: 
+ 488:   function reset() {
+ 489:     applyDefaults();
+ 490:     loadPrior();
+ 491:     invalidate();
+ 492:   }
+ 493: 
+ 494:   function bind() {
+ 495:     [els.lambda, els.mu, els.k, els.svc].forEach((el) => {
+ 496:       el.addEventListener("input", invalidate);
+ 497:       el.addEventListener("change", invalidate);
+ 498:     });
+ 499: 
+ 500:     els.calc.addEventListener("click", calc);
+ 501:     els.reset.addEventListener("click", reset);
+ 502:     els.continueBtn.addEventListener("click", () => {
+ 503:       if (!hasResult) return;
+ 504:       window.location.href = NEXT_URL;
+ 505:     });
+ 506:   }
+ 507: 
+ 508:   function init() {
+ 509:     bind();
+ 510:     loadPrior();
+ 511:     invalidate();
+ 512:   }
+ 513: 
+ 514:   window.addEventListener("DOMContentLoaded", () => {
+ 515:     unlockCategoryPage();
+ 516:     setTimeout(() => {
+ 517:       unlockCategoryPage();
+ 518:     }, 400);
+ 519: 
+ 520:     const year = document.querySelector("[data-year]");
+ 521:     if (year) year.textContent = new Date().getFullYear();
+ 522:     init();
+ 523:   });
+ 524: })();
 
 
 ============================================================
