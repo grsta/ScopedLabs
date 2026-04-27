@@ -1,5 +1,5 @@
 const LANE = "v1";
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
+const PREVIOUS_STEP = "oversubscription";
 const STEP = "latency";
 const CATEGORY = "network";
 (() => {
@@ -40,6 +40,7 @@ const CATEGORY = "network";
     calc: $("calc"),
     reset: $("reset"),
     out: $("out"),
+    results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     lockedCard: $("lockedCard"),
@@ -130,6 +131,27 @@ const CATEGORY = "network";
     els.targetMs.value = String(DEFAULTS.targetMs);
   }
 
+  function syncResultsForExport() {
+    if (!els.results || !els.out || els.results === els.out) return;
+    els.results.innerHTML = els.out.innerHTML;
+  }
+
+  function refreshExportReady() {
+    syncResultsForExport();
+
+    if (window.ScopedLabsExport && typeof window.ScopedLabsExport.refresh === "function") {
+      window.ScopedLabsExport.refresh();
+    }
+  }
+
+  function invalidateExport(message = "Inputs changed. Run the calculator again to refresh export.") {
+    syncResultsForExport();
+
+    if (window.ScopedLabsExport && typeof window.ScopedLabsExport.invalidate === "function") {
+      window.ScopedLabsExport.invalidate(message);
+    }
+  }
+
   function clearOwnState() {
     try {
       sessionStorage.removeItem(FLOW_KEYS.latency);
@@ -203,6 +225,7 @@ const CATEGORY = "network";
     });
 
     renderFlowContext();
+    invalidateExport();
   }
 
   function getInputs() {
@@ -260,7 +283,7 @@ const CATEGORY = "network";
     const perStageHealthyMax = Math.max(targetMs / 4, 1);
     const perStageWatchMax = Math.max(targetMs / 2, 1);
 
-    const statusPack = ScopedLabsAnalyzer.resolveStatus({
+    const stageStatusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: dominant.value,
       metrics: input.contributors.map((item) => ({
         label: item.label,
@@ -271,7 +294,32 @@ const CATEGORY = "network";
       watchMax: perStageWatchMax
     });
 
+    const budgetStatus =
+      budgetUsePct > 100 ? "RISK" :
+      budgetUsePct > 85 ? "WATCH" :
+      "HEALTHY";
+
+    const statusRank = {
+      HEALTHY: 0,
+      WATCH: 1,
+      RISK: 2
+    };
+
+    const statusPack = {
+      ...stageStatusPack,
+      status:
+        statusRank[budgetStatus] > statusRank[stageStatusPack.status]
+          ? budgetStatus
+          : stageStatusPack.status
+    };
+
     let interpretation = `Total modeled latency is ${fmtMs(totalMs)} against a target budget of ${fmtMs(targetMs)}. ${dominant.label} is the single largest contributor at ${fmtMs(dominant.value)}, which means that stage will shape how responsive the workflow feels before smaller contributors do.`;
+
+    if (budgetUsePct > 100) {
+      interpretation += ` The total path is over target by ${fmtMs(overTargetMs)}, so the overall latency budget is exhausted even if no single stage appears extreme by itself.`;
+    } else if (budgetUsePct > 85) {
+      interpretation += ` The total path is using ${fmtPct(budgetUsePct)} of the latency budget, so remaining margin is thin even before real-world jitter or client variation is added.`;
+    }
 
     if (statusPack.status === "RISK") {
       interpretation += " The dominant stage is consuming too much of the latency budget by itself, which means the path is already fragile before the smaller contributors are even added. In practice, users will usually experience noticeable sluggishness because the largest delay source is oversized, not because the path is uniformly slow.";
@@ -323,6 +371,8 @@ const CATEGORY = "network";
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     els.out.innerHTML = `<div class="muted">${message}</div>`;
+    syncResultsForExport();
+    invalidateExport("Calculation could not run. Review inputs and try again.");
     if (els.continueWrap) els.continueWrap.style.display = "none";
   }
 
@@ -385,6 +435,7 @@ const CATEGORY = "network";
     });
 
     writeFlow(data);
+    refreshExportReady();
 
     if (els.continueWrap) {
       els.continueWrap.style.display = "flex";
@@ -452,13 +503,3 @@ const CATEGORY = "network";
     }, 400);
   });
 })();
-
-
-function renderFlowNote() {
-  // TODO: implement upstream flow-note carry-over
-}
-
-
-function calc() {
-  // TODO: implement calculate handler
-}

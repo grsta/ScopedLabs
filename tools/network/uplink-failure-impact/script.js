@@ -94,7 +94,7 @@
     const finalScore = ScopedLabsAnalyzer.clamp(preFailoverScore - failoverRelief, 0, 100);
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: Math.max(scalePressure, appPressure, failoverPenalty, durationPressure),
+      compositeScore: finalScore,
       metrics: [
         {
           label: "Scale Pressure",
