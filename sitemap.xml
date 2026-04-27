@@ -1,45 +1,191 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-<url>
-<loc>https://scopedlabs.com/</loc>
-</url>
-
-<url>
-<loc>https://scopedlabs.com/tools/</loc>
-</url>
-
-<url>
-<loc>https://scopedlabs.com/tools/network/</loc>
-</url>
-
-<url>
-<loc>https://scopedlabs.com/tools/power/</loc>
-</url>
-
-<url>
-<loc>https://scopedlabs.com/tools/video-storage/</loc>
-</url>
-
-<url>
-<loc>https://scopedlabs.com/tools/compute/</loc>
-</url>
-
-<url>
-<loc>https://scopedlabs.com/tools/infrastructure/</loc>
-</url>
-
-<url>
-<loc>https://scopedlabs.com/tools/performance/</loc>
-</url>
-
-<url>
-<loc>https://scopedlabs.com/tools/wireless/</loc>
-</url>
-
-<url>
-<loc>https://scopedlabs.com/tools/thermal/</loc>
-</url>
-
+  <url>
+    <loc>https://scopedlabs.com/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/about/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/changelog/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/contact/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/disclaimer/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/access-control/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/access-control/credential-format/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/access-control/fail-safe-fail-secure/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/access-control/reader-type-selector/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/compute/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/compute/cpu-sizing/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/compute/ram-sizing/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/compute/storage-iops/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/infrastructure/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/infrastructure/conduit-fill/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/infrastructure/rack-ru-planner/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/infrastructure/rack-weight-load/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/network/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/network/bandwidth/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/network/mtu-fragmentation/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/network/poe-budget/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/performance/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/performance/cache-hit-ratio/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/performance/headroom-target/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/performance/response-time-sla/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/physical-security/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/physical-security/field-of-view/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/physical-security/mounting-height/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/physical-security/pixel-density/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/power/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/power/battery-sizing/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/power/inverter-efficiency/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/power/va-watts-amps/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/thermal/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/thermal/airflow-requirement/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/thermal/btu-converter/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/thermal/heat-load-estimator/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/video-storage/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/video-storage/bitrate-estimator/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/video-storage/retention-planner/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/video-storage/storage-calculator/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/wireless/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/wireless/channel-overlap/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/wireless/coverage-radius/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/tools/wireless/throughput-estimator/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://scopedlabs.com/upgrade/</loc>
+    <lastmod>2026-04-27</lastmod>
+  </url>
 </urlset>
