@@ -376,7 +376,7 @@
 
     const throughputPressure = byThroughput / 4;
     const clientDensityPressure = byClients / 4;
-    const utilizationPressure = 60 / utilPct;
+    const utilizationPressure = utilPct / 60;
 
     const metrics = [
       {
