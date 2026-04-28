@@ -751,7 +751,40 @@ const chartImage = captureVisibleChart();
     return trimmed.length;
   }
 
+    function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function withTimeout(promise, ms, fallback = null) {
+    let timer;
+
+    try {
+      return await Promise.race([
+        promise,
+        new Promise((resolve) => {
+          timer = setTimeout(() => resolve(fallback), ms);
+        })
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function waitForAuthReady() {
+    try {
+      if (window.SL_AUTH?.ready && typeof window.SL_AUTH.ready.then === "function") {
+        await withTimeout(window.SL_AUTH.ready, 2500, null);
+      }
+    } catch {}
+  }
+
   async function getSupabaseSession() {
+    await waitForAuthReady();
+
+    if (window.SL_AUTH?.__session?.access_token) {
+      return window.SL_AUTH.__session;
+    }
+
     const candidates = [
       window.SL_AUTH?.sb,
       window.ScopedLabsAuth?.sb,
@@ -762,14 +795,19 @@ const chartImage = captureVisibleChart();
     for (const client of candidates) {
       if (!client?.auth?.getSession) continue;
 
-      try {
-        const result = await client.auth.getSession();
-        const session = result?.data?.session || result?.session || null;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          const result = await withTimeout(client.auth.getSession(), 2500, null);
+          const session = result?.data?.session || result?.session || null;
 
-        if (session?.access_token) {
-          return session;
-        }
-      } catch {}
+          if (session?.access_token) {
+            if (window.SL_AUTH) window.SL_AUTH.__session = session;
+            return session;
+          }
+        } catch {}
+
+        await sleep(250);
+      }
     }
 
     return null;
@@ -801,9 +839,19 @@ const chartImage = captureVisibleChart();
     return "";
   }
 
-  async function getSnapshotAccessToken() {
+    async function getSnapshotAccessToken() {
     const session = await getSupabaseSession();
     if (session?.access_token) return session.access_token;
+
+    // Last-resort fallback for pages that have localStorage hydrated before Supabase client is ready.
+    const stored = findStoredAccessToken();
+    if (stored) return stored;
+
+    // One short retry covers the first page load immediately after magic-link auth.
+    await sleep(500);
+
+    const retrySession = await getSupabaseSession();
+    if (retrySession?.access_token) return retrySession.access_token;
 
     return findStoredAccessToken();
   }
@@ -1324,7 +1372,7 @@ const chartImage = captureVisibleChart();
       });
     }
 
-    if (snapshotBtn) {
+        if (snapshotBtn) {
       snapshotBtn.addEventListener("click", async () => {
         if (!hasExportAccess()) {
           refresh(`${state.options.categoryLabel} export is available with category unlock.`);
@@ -1341,19 +1389,34 @@ const chartImage = captureVisibleChart();
         setButtonsEnabled(false);
         setStatus("Saving snapshot...");
 
-        const result = await saveSnapshot(payload);
+        try {
+          const result = await withTimeout(saveSnapshot(payload), 12000, {
+            ok: false,
+            mode: "timeout",
+            reason: "save_timeout",
+            localCount: 0
+          });
 
-        if (result.ok && result.mode === "account") {
-          refresh("Snapshot saved to your account.");
-          return;
+          if (result.ok && result.mode === "account") {
+            refresh("Snapshot saved to your account.");
+            return;
+          }
+
+          if (result.reason === "not_signed_in") {
+            refresh(`Saved locally. Sign in to save snapshots to your account. ${result.localCount} local snapshot${result.localCount === 1 ? "" : "s"} stored for this tool.`);
+            return;
+          }
+
+          if (result.reason === "save_timeout") {
+            refresh("Snapshot save timed out. Refresh the page after signing in and try again.");
+            return;
+          }
+
+          refresh(`Account save failed; saved locally as fallback. ${result.localCount} local snapshot${result.localCount === 1 ? "" : "s"} stored for this tool.`);
+        } catch (err) {
+          console.warn("ScopedLabs snapshot save failed:", err);
+          refresh("Snapshot save failed. Refresh the page and try again.");
         }
-
-        if (result.reason === "not_signed_in") {
-          refresh(`Saved locally. Sign in to save snapshots to your account. ${result.localCount} local snapshot${result.localCount === 1 ? "" : "s"} stored for this tool.`);
-          return;
-        }
-
-        refresh(`Account save failed; saved locally as fallback. ${result.localCount} local snapshot${result.localCount === 1 ? "" : "s"} stored for this tool.`);
       });
     }
 
