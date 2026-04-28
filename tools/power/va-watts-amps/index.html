@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VA / Watts / Amps Converter • ScopedLabs</title>
-    <meta name="description" content="Convert VA, watts, amps, voltage, and power factor for practical UPS, circuit, power supply, and equipment-load planning." />
+  <meta name="description" content="Convert VA, watts, amps, voltage, and power factor for practical UPS, circuit, power supply, and equipment-load planning." />
 
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-017" />
 
@@ -12,7 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ5Ym56anR1ZWNpcnphanJhZGRmdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzcwNTg2MDYxLCJleHAiOjIwODYxNjIwNjF9.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script defer src="/assets/auth.js?v=power-va-watts-amps-0421"></script>
   <script defer src="/assets/app.js?v=power-va-watts-amps-0421"></script>
@@ -85,20 +85,20 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-icon-wrap" aria-hidden="true">
-        <img
-          class="brand-icon"
-          src="/assets/favicon/favicon-32x32.png?v=1"
-          alt=""
-          width="32"
-          height="32"
-        />
-      </span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
-                                          <nav class="nav site-nav nav-tabs" aria-label="Primary">
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
         <a class="nav-tab" href="/">Home</a>
         <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
         <a class="nav-tab" href="/about/">About</a>
@@ -171,54 +171,7 @@
         <button id="calc" class="btn btn-primary" type="button">Calculate</button>
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
-    
-
-      <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
-
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
-        <p class="muted" style="margin-bottom: 0;">
-          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
-        </p>
-
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="VA / Watts / Amps Converter Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
-
-        <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
-          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
-        </div>
-
-        <div id="exportStatus" class="export-status"></div>
-      </section>
-
-</section>
+    </section>
 
     <section class="card tool-card" style="margin-top:14px;">
       <h2 class="card-title" style="margin-top:0;">Results</h2>
@@ -238,21 +191,66 @@
       </div>
     </section>
 
+    <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+      <div class="pill-row">
+        <span class="pill pill--pro">Documentation & Export</span>
+      </div>
+
+      <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+      <p class="muted" style="margin-bottom: 0;">
+        Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+      </p>
+
+      <div class="export-grid">
+        <label class="field">
+          <span class="label">Report Title</span>
+          <input id="reportTitle" type="text" placeholder="VA / Watts / Amps Converter Assessment" />
+        </label>
+
+        <label class="field">
+          <span class="label">Project Name</span>
+          <input id="projectName" type="text" placeholder="Project Name" />
+        </label>
+
+        <label class="field">
+          <span class="label">Client Name</span>
+          <input id="clientName" type="text" placeholder="Client / Site Name" />
+        </label>
+
+        <label class="field">
+          <span class="label">Prepared By</span>
+          <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+        </label>
+
+        <label class="field full">
+          <span class="label">Custom Notes</span>
+          <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
+        </label>
+      </div>
+
+      <div class="btn-row" style="margin-top: 14px;">
+        <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+        <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+      </div>
+
+      <div id="exportStatus" class="export-status"></div>
+    </section>
+
     <div class="btn-row" style="margin-top:12px;">
       <a class="btn" href="/tools/power/">&larr; Back to Power Tools</a>
     </div>
 
     <footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>
-            <div class="footer-links">
-      <a href="/tools/">Tools</a>
-      <a href="/upgrade/">Upgrade</a>
-      <a href="/about/">About</a>
-      <a href="/contact/">Contact</a>
-      <a href="/changelog/">Changelog</a>
-      <a href="/disclaimer/">Disclaimer</a>
-    </div>
-</footer>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
   </main>
 
   <script src="/assets/tool-flow.js?v=power-va-watts-amps-0421"></script>
@@ -260,24 +258,25 @@
   <script src="/assets/pipelines.js?v=power-va-watts-amps-0421"></script>
   <script src="/assets/pipeline-state.js?v=power-va-watts-amps-0421"></script>
   <script src="/assets/pipeline.js?v=power-va-watts-amps-0421"></script>
-  <script src="/assets/analyzer.js?v=power-va-watts-amps-0421"></script>  <script data-scopedlabs-export-config>
+  <script src="/assets/analyzer.js?v=power-va-watts-amps-0421"></script>
+
+  <script data-scopedlabs-export-config>
     window.ScopedLabsExportConfig = {
-      "categoryLabel": "Power",
-      "categorySlug": "power",
-      "toolLabel": "VA / Watts / Amps Converter",
-      "toolSlug": "va-watts-amps",
-      "reportPrefix": "SL-P-VWA",
-      "assumptions": [
-            "This report reflects the visible VA / Watts / Amps Converter inputs and outputs at the time the export was generated.",
-            "The calculation output is intended for planning, comparison, and documentation support.",
-            "Final design decisions should be verified against project requirements, manufacturer documentation, site-specific conditions, and applicable standards."
+      categoryLabel: "Power",
+      categorySlug: "power",
+      toolLabel: "VA / Watts / Amps Converter",
+      toolSlug: "va-watts-amps",
+      reportPrefix: "SL-P-VWA",
+      assumptions: [
+        "This report reflects the visible VA / Watts / Amps Converter inputs and outputs at the time the export was generated.",
+        "The calculation output is intended for planning, comparison, and documentation support.",
+        "Final design decisions should be verified against project requirements, manufacturer documentation, site-specific conditions, and applicable standards."
       ],
-      "disclaimer": "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
-};
+      disclaimer: "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
+    };
   </script>
 
   <script src="/assets/export.js?v=shared-export-005"></script>
-
   <script src="./script.js?v=power-formula-002"></script>
   <script defer src="/assets/help.js?v=help-012"></script>
 </body>
