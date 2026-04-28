@@ -14,9 +14,9 @@
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
-  <script src="/assets/stripe-map.js?v=launch-polish-001"></script>
-  <script defer src="/assets/auth.js?v=launch-polish-001"></script>
-  <script defer src="/assets/app.js?v=launch-polish-001"></script>
+  <script src="/assets/stripe-map.js?v=launch-polish-002"></script>
+  <script defer src="/assets/auth.js?v=launch-polish-002"></script>
+  <script defer src="/assets/app.js?v=launch-polish-002"></script>
 
   <style>
     .muted { opacity: 0.85; }
@@ -79,6 +79,31 @@
       white-space: nowrap;
     }
 
+    .upgrade-card p {
+      margin-bottom: 0.7rem;
+    }
+
+    .upgrade-card ul {
+      margin-top: 0.45rem !important;
+      margin-bottom: 0 !important;
+    }
+
+    .upgrade-card li {
+      margin-bottom: 0.2rem;
+    }
+
+    .upgrade-note {
+      font-size: 0.82rem;
+      margin-top: 0.55rem;
+    }
+
+    body .site-footer {
+      max-width: var(--upgrade-max) !important;
+      margin: 28px auto 0 !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+
     @media (max-width: 900px) {
       .sl-upgrade-grid {
         grid-template-columns: 1fr;
@@ -87,6 +112,11 @@
       .sl-price {
         margin-left: 0;
         text-align: left;
+      }
+
+      body .site-footer {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
       }
     }
   </style>
@@ -213,190 +243,160 @@
         <div class="card upgrade-card" id="access-control">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Access Control</h3>
-          <p class="muted">Door planning, access levels, controller capacity, reader selection, lock power, and cabling checks.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>Access level and door count planning</li>
-            <li>Panel capacity and lock power budget checks</li>
-            <li>Reader type, cabling, and fail-safe / fail-secure analysis</li>
+          <p class="muted">Door planning, panels, readers, lock power, and access level scale.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>Access levels + panel capacity</li>
+            <li>Lock power + cabling checks</li>
+            <li>Reader and door planning</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=access-control#checkout" data-tool="/tools/access-control/">Unlock Access Control Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Access Control</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
         <div class="card upgrade-card" id="compute">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Compute</h3>
-          <p class="muted">CPU, RAM, storage IOPS, throughput, VM density, GPU memory, power, and backup planning.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>CPU, RAM, IOPS, and throughput sizing</li>
-            <li>VM density, GPU VRAM, and RAID rebuild planning</li>
-            <li>Power, thermal, and backup window estimates</li>
+          <p class="muted">CPU, RAM, storage, VM density, GPU memory, and backup planning.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>CPU, RAM, IOPS + throughput</li>
+            <li>VM density + GPU VRAM</li>
+            <li>RAID, backup + thermal planning</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=compute#checkout" data-tool="/tools/compute/">Unlock Compute Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Compute</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
         <div class="card upgrade-card" id="infrastructure">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Infrastructure</h3>
-          <p class="muted">Rack space, room sizing, floor load, conduit fill, cable tray fill, grounding, and equipment layout planning.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>Rack RU, weight, and equipment spacing checks</li>
-            <li>Room square footage, floor load, and UPS room sizing</li>
-            <li>Conduit, cable tray, grounding, and generator runtime planning</li>
+          <p class="muted">Rack space, room sizing, floor load, conduit, cable tray, and grounding.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>Rack RU, weight + spacing</li>
+            <li>Room, floor + UPS sizing</li>
+            <li>Conduit, tray + generator checks</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=infrastructure#checkout" data-tool="/tools/infrastructure/">Unlock Infrastructure Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Infrastructure</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
         <div class="card upgrade-card" id="network">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Network &amp; Throughput</h3>
-          <p class="muted">Bandwidth planning, PoE budgets, oversubscription, latency, packet loss, VPN overhead, and growth modeling.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>Bandwidth, oversubscription, and growth planning</li>
-            <li>Latency, jitter buffer, packet loss, and MTU checks</li>
-            <li>PoE budget, uplink failure, and VPN overhead analysis</li>
+          <p class="muted">Bandwidth, PoE, oversubscription, latency, packet loss, and VPN overhead.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>Bandwidth + oversubscription</li>
+            <li>Latency, jitter + packet loss</li>
+            <li>PoE, MTU + VPN overhead</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=network#checkout" data-tool="/tools/network/">Unlock Network Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Network</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
         <div class="card upgrade-card" id="performance">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Performance &amp; Risk</h3>
-          <p class="muted">Headroom, bottlenecks, response time, queue depth, congestion, saturation, concurrency, and SLA planning.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>Bottleneck, CPU impact, and disk saturation analysis</li>
-            <li>Queue depth, latency vs throughput, and network congestion checks</li>
-            <li>Headroom, SLA response time, and concurrency scaling estimates</li>
+          <p class="muted">Headroom, bottlenecks, response time, queue depth, congestion, and saturation.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>Bottleneck + saturation checks</li>
+            <li>Queue depth + congestion</li>
+            <li>Headroom, SLA + concurrency</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=performance#checkout" data-tool="/tools/performance/">Unlock Performance Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Performance</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
         <div class="card upgrade-card" id="physical-security">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Physical Security</h3>
-          <p class="muted">Camera field of view, pixel density, mounting height, lens selection, blind spots, coverage, and capture range.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>Field of view, lens selection, and pixel density planning</li>
-            <li>Camera spacing, coverage area, and blind spot checks</li>
-            <li>Face recognition, license plate range, mounting height, and illumination estimates</li>
+          <p class="muted">Camera coverage, pixel density, mounting height, lenses, blind spots, and capture range.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>FOV, lens + pixel density</li>
+            <li>Coverage, spacing + blind spots</li>
+            <li>Recognition, plate + illumination checks</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=physical-security#checkout" data-tool="/tools/physical-security/">Unlock Physical Security Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Physical Security</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
         <div class="card upgrade-card" id="power">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Power &amp; Runtime</h3>
-          <p class="muted">UPS sizing, runtime estimates, load growth, battery banks, redundancy impact, and worst-case planning.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>VA / watts / amps conversion and load growth planning</li>
-            <li>UPS runtime and battery bank sizing</li>
-            <li>Redundancy, failure runtime loss, and worst-case runtime modeling</li>
+          <p class="muted">UPS sizing, runtime, load growth, battery banks, redundancy, and worst-case planning.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>VA / watts / amps + load growth</li>
+            <li>UPS runtime + battery banks</li>
+            <li>Redundancy + worst-case runtime</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=power#checkout" data-tool="/tools/power/">Unlock Power Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Power &amp; Runtime</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
         <div class="card upgrade-card" id="thermal">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Thermal &amp; Environment</h3>
-          <p class="muted">Heat load, airflow, ambient rise, exhaust temperature, rack density, PSU heat loss, and cooling capacity.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>BTU conversion, heat load, and airflow requirements</li>
-            <li>Ambient rise, exhaust temperature, and fan CFM sizing</li>
-            <li>Rack thermal density, PSU heat loss, and room cooling capacity</li>
+          <p class="muted">Heat load, airflow, ambient rise, exhaust temperature, rack density, and cooling capacity.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>BTU, heat load + airflow</li>
+            <li>Ambient rise + exhaust temp</li>
+            <li>Rack density + cooling checks</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=thermal#checkout" data-tool="/tools/thermal/">Unlock Thermal Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Thermal &amp; Environment</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
         <div class="card upgrade-card" id="video-storage">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Video &amp; Storage</h3>
-          <p class="muted">Bitrate, storage, retention, RAID impact, survivability, codec efficiency, compression, and archive cost.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>Bitrate, storage, and retention planning</li>
-            <li>RAID impact, retention survivability, and failure days lost</li>
-            <li>Codec efficiency, compression impact, advanced storage, and archive cost estimates</li>
+          <p class="muted">Bitrate, storage, retention, RAID impact, survivability, codec efficiency, and archive cost.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>Bitrate, storage + retention</li>
+            <li>RAID impact + survivability</li>
+            <li>Codec, compression + archive cost</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=video-storage#checkout" data-tool="/tools/video-storage/">Unlock Video &amp; Storage Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Video &amp; Storage</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
         <div class="card upgrade-card" id="wireless">
           <span class="pill">🔒 Pro — Category Unlock</span>
           <h3 style="margin-top:.6rem;">Wireless</h3>
-          <p class="muted">Coverage radius, channel overlap, noise floor margin, client density, AP capacity, link budget, and roaming checks.</p>
-          <div class="spacer-md"></div>
-          <div class="muted" style="font-size:.95rem;"><strong>Includes examples like:</strong></div>
-          <ul class="muted" style="margin: .5rem 0 0 1.15rem;">
-            <li>Coverage radius, channel overlap, and noise floor margin</li>
-            <li>Client density, AP capacity, and link budget planning</li>
-            <li>Mesh backhaul, point-to-point links, and roaming threshold checks</li>
+          <p class="muted">Coverage radius, channel overlap, noise margin, client density, AP capacity, and link budget.</p>
+          <div class="muted" style="font-size:.95rem;"><strong>Includes:</strong></div>
+          <ul class="muted">
+            <li>Coverage + channel planning</li>
+            <li>Client density + AP capacity</li>
+            <li>Link budget, mesh + roaming checks</li>
           </ul>
           <div class="upgrade-cta">
             <a class="btn btn-primary" href="/upgrade/?category=wireless#checkout" data-tool="/tools/wireless/">Unlock Wireless Pro</a>
-            <div class="muted" style="font-size:.85rem; margin-top:.6rem;">
-              You’ll also receive future Pro tools added to <em>Wireless</em>.
-            </div>
+            <div class="muted upgrade-note">Includes future Pro tools in this category.</div>
           </div>
         </div>
 
