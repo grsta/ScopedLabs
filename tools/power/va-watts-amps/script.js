@@ -3,7 +3,9 @@
 
   const CATEGORY = "power";
   const STEP = "va-watts-amps";
+  const LANE = "v1";
   const NEXT_URL = "/tools/power/load-growth/";
+  const BRANCH_REFERENCE_AMPS = 20;
 
   const FLOW_KEYS = {
     "va-watts-amps": "scopedlabs:pipeline:power:va-watts-amps",
@@ -22,8 +24,8 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
-    continueWrap: $("continueWrap"),
-    continueBtn: $("continueBtn"),
+    continueWrap: $("next-step-row"),
+    continueBtn: $("continue"),
     calc: $("calc"),
     reset: $("reset")
   };
@@ -62,10 +64,12 @@
 
   function hideContinue() {
     if (els.continueWrap) els.continueWrap.style.display = "none";
+    if (els.continueBtn) els.continueBtn.disabled = true;
   }
 
   function showContinue() {
     if (els.continueWrap) els.continueWrap.style.display = "flex";
+    if (els.continueBtn) els.continueBtn.disabled = false;
   }
 
   function savePipelineResult(payload) {
@@ -107,9 +111,12 @@
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
+      continueWrapEl: null,
+      continueBtnEl: null,
       flowKey: FLOW_KEYS[STEP],
       category: CATEGORY,
       step: STEP,
+      lane: LANE,
       emptyMessage: "Enter Watts or VA, then press Calculate."
     });
     invalidatePipelineResult();
@@ -171,12 +178,14 @@
     const designWatts20 = finalWatts * 1.2;
     const continuousWatts125 = finalWatts * 1.25;
     const designVA20 = finalVA * 1.2;
-    const branch80Watts = input.volts * amps * 0.8 * input.powerFactor;
+    const branchReferenceAmps = BRANCH_REFERENCE_AMPS;
+    const branchContinuousAmps = branchReferenceAmps * 0.8;
+    const branch80Watts = input.volts * branchContinuousAmps * input.powerFactor;
     const utilizationPct80 = branch80Watts > 0 ? (finalWatts / branch80Watts) * 100 : 0;
 
     const pfPenaltyMetric = ScopedLabsAnalyzer.clamp((1 - input.powerFactor) * 100, 0, 100);
     const branchUtilMetric = ScopedLabsAnalyzer.clamp(utilizationPct80, 0, 100);
-    const currentPressureMetric = ScopedLabsAnalyzer.clamp((amps / 20) * 100, 0, 100);
+    const currentPressureMetric = ScopedLabsAnalyzer.clamp((amps / branchReferenceAmps) * 100, 0, 100);
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(branchUtilMetric, currentPressureMetric, pfPenaltyMetric),
@@ -210,7 +219,7 @@
       planningClass = "Low Power Factor Load";
     }
 
-    let interpretation = `At ${fmtVolts(input.volts)} and power factor ${fmtRatio(input.powerFactor, 2)}, the load converts to ${fmtWatts(finalWatts)} and ${fmtVA(finalVA)} with current draw of about ${fmtAmps(amps)}. A simple +20% growth headroom projects to about ${fmtWatts(designWatts20)}, while a 125% continuous-design reference is about ${fmtWatts(continuousWatts125)}.`;
+    let interpretation = `At ${fmtVolts(input.volts)} and power factor ${fmtRatio(input.powerFactor, 2)}, the load converts to ${fmtWatts(finalWatts)} and ${fmtVA(finalVA)} with current draw of about ${fmtAmps(amps)}. A simple +20% growth headroom projects to about ${fmtWatts(designWatts20)}, while a 125% continuous-design reference is about ${fmtWatts(continuousWatts125)}. Against a ${fmtAmps(branchReferenceAmps, 0)} reference branch, the estimated 80% continuous-planning watt allowance is ${fmtWatts(branch80Watts)}.`;
 
     if (utilizationPct80 > 100) {
       interpretation += ` This load exceeds a simple 80% continuous-planning threshold, so today's value is already too high for comfortable branch or UPS planning without resizing.`;
@@ -253,6 +262,8 @@
       designWatts20,
       continuousWatts125,
       designVA20,
+      branchReferenceAmps,
+      branchContinuousAmps,
       branch80Watts,
       utilizationPct80,
       planningClass,
@@ -285,13 +296,36 @@
         { label: "+20% Growth Headroom", value: fmtWatts(data.designWatts20) },
         { label: "125% Continuous Design", value: fmtWatts(data.continuousWatts125) },
         { label: "+20% Design VA", value: fmtVA(data.designVA20) },
+        { label: "Reference Branch", value: fmtAmps(data.branchReferenceAmps, 0) },
         { label: "80% Branch Planning Watts", value: fmtWatts(data.branch80Watts) },
         { label: "Utilization vs 80% Planning", value: fmtPct(data.utilizationPct80) }
       ],
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance
+      guidance: data.guidance,
+      chart: {
+        labels: ["Branch Utilization", "Current Pressure", "Power Factor Penalty"],
+        values: [
+          Number(ScopedLabsAnalyzer.clamp(data.utilizationPct80, 0, 100).toFixed(1)),
+          Number(ScopedLabsAnalyzer.clamp((data.amps / data.branchReferenceAmps) * 100, 0, 100).toFixed(1)),
+          Number(ScopedLabsAnalyzer.clamp((1 - data.powerFactor) * 100, 0, 100).toFixed(1))
+        ],
+        displayValues: [
+          fmtPct(data.utilizationPct80),
+          fmtAmps(data.amps),
+          fmtRatio(data.powerFactor, 2)
+        ],
+        referenceValue: 60,
+        healthyMax: 60,
+        watchMax: 85,
+        axisTitle: "Electrical Planning Pressure",
+        referenceLabel: "Comfort Band",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk",
+        chartMax: 100
+      }
     });
 
     savePipelineResult({
@@ -304,6 +338,8 @@
       designWatts20: data.designWatts20,
       continuousWatts125: data.continuousWatts125,
       designVA20: data.designVA20,
+      branchReferenceAmps: data.branchReferenceAmps,
+      branchContinuousAmps: data.branchContinuousAmps,
       branch80Watts: data.branch80Watts,
       utilizationPct80: data.utilizationPct80,
       baseLoadKw: data.kw,

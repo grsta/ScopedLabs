@@ -1,0 +1,3516 @@
+# ScopedLabs Category Formula Review Packet
+Category: power
+Generated: 2026-04-28T00:23:33.819Z
+Tools found: 11
+
+
+
+============================================================
+TOOL: battery-bank-sizer
+============================================================
+Title: Battery Bank Sizer
+Tier: pro
+Meta description: Determine total battery capacity required after UPS runtime, efficiency, and depth-of-discharge constraints are applied.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Load (Watts)
+- Runtime (Hours)
+- System Voltage (V)
+- Depth of Discharge (%)
+- Efficiency (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- load
+- hours
+- voltage
+- dod
+- efficiency
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- complete-wrap
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 175: 
+ 176:     const va = num(prev.va, NaN);
+ 177:     const watts = num(prev.watts, NaN);
+ 178:     const runtimeClass = prev.runtimeClass || prev.status || "";
+ 179: 
+ 180:     if (Number.isFinite(load) && load > 0) {
+ 181:       els.load.value = String(Math.round(load));
+ 182:     }
+ 183:     if (Number.isFinite(runtime) && runtime > 0) {
+ 184:       els.hours.value = String(runtime);
+ 185:     }
+ 186: 
+ 187:     const parts = [];
+ 188:     if (Number.isFinite(load) && load > 0) parts.push(`Load: <strong>${fmtWatts(load)}</strong>`);
+ 189:     if (Number.isFinite(runtime) && runtime > 0) parts.push(`Runtime: <strong>${fmtHours(runtime)}</strong>`);
+ 190:     if (Number.isFinite(va) && va > 0) parts.push(`VA: <strong>${fmt(va, 0)}</strong>`);
+ 191:     if (Number.isFinite(watts) && watts > 0) parts.push(`Watts: <strong>${fmtWatts(watts)}</strong>`);
+ 192:     if (runtimeClass) parts.push(`Runtime Result: <strong>${runtimeClass}</strong>`);
+ 193: 
+ 194:     if (!parts.length) {
+ 195:       els.flowNote.hidden = true;
+ 196:       els.flowNote.innerHTML = "";
+ 197:       return;
+ 198:     }
+ 199: 
+ 200:     els.flowNote.hidden = false;
+ 201:     els.flowNote.innerHTML = `
+ 202:       <strong>Flow Context</strong><br>
+ 203:       ${parts.join(" | ")}
+ 204:       <br><br>
+ 205:       This final step converts the validated runtime target into required stored energy and amp-hour capacity.
+ 206:     `;
+ 207:   }
+ 208: 
+ 209:   function invalidate() {
+ 210:     ScopedLabsAnalyzer.invalidate({
+ 211:       resultsEl: els.results,
+ 212:       analysisEl: els.analysis,
+ 213:       continueWrapEl: null,
+ 214:       continueBtnEl: null,
+ 215:       existingChartRef: chartRef,
+ 216:       existingWrapRef: chartWrapRef,
+ 217:       flowKey: FLOW_KEYS.bank,
+ 218:       category: CATEGORY,
+ 219:       step: STEP,
+ 220:       lane: LANE,
+ 221:       emptyMessage: "Enter values and calculate."
+ 222:     });
+ 223: 
+ 224:     hideComplete();
+ 225:     renderFlowNote();
+ 226:   }
+ 227: 
+ 228:   function getInputs() {
+ 229:     const load = num(els.load.value);
+ 230:     const hours = num(els.hours.value);
+ 231:     const voltage = num(els.voltage.value);
+ 232:     const dodPct = num(els.dod.value);
+ 233:     const effPct = num(els.efficiency.value);
+ 234: 
+ 235:     if (
+ 236:       !Number.isFinite(load) || load <= 0 ||
+ 237:       !Number.isFinite(hours) || hours <= 0 ||
+ 238:       !Number.isFinite(voltage) || voltage <= 0 ||
+ 239:       !Number.isFinite(dodPct) || dodPct <= 0 || dodPct > 100 ||
+ 240:       !Number.isFinite(effPct) || effPct <= 0 || effPct > 100
+ 241:     ) {
+ 242:       return { ok: false, message: "Enter valid values and calculate." };
+ 243:     }
+ 244: 
+ 245:     return {
+ 246:       ok: true,
+ 247:       load,
+ 248:       hours,
+ 249:       voltage,
+ 250:       dodPct,
+ 251:       effPct,
+ 252:       dod: dodPct / 100,
+ 253:       eff: effPct / 100
+ 254:     };
+ 255:   }
+ 256: 
+ 257:   function calculateModel() {
+ 258:     const input = getInputs();
+ 259:     if (!input.ok) return input;
+ 260: 
+ 261:     const requiredLoadWh = input.load * input.hours;
+ 262:     const adjustedWh = requiredLoadWh / input.eff;
+ 263:     const totalWh = adjustedWh / input.dod;
+ 264:     const batteryAh = totalWh / input.voltage;
+ 265: 
+ 266:     const reserveMultiplier = totalWh / requiredLoadWh;
+ 267:     const effectiveUsablePct = (input.dodPct * input.effPct) / 100;
+ 268: 
+ 269:     const efficiencyLossPct = 100 - input.effPct;
+ 270:     const dodPressurePct = 100 - input.dodPct;
+ 271:     const reservePressurePct = Math.min((reserveMultiplier - 1) * 100, 100);
+ 272: 
+ 273:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 274:       compositeScore: Math.max(reservePressurePct, efficiencyLossPct, dodPressurePct),
+ 275:       metrics: [
+ 276:         {
+ 277:           label: "Reserve Pressure",
+ 278:           value: reservePressurePct,
+ 279:           displayValue: `${fmt(reserveMultiplier, 2)}x`
+ 280:         },
+ 281:         {
+ 282:           label: "Efficiency Loss",
+ 283:           value: efficiencyLossPct,
+ 284:           displayValue: fmtPct(efficiencyLossPct)
+ 285:         },
+ 286:         {
+ 287:           label: "Discharge Constraint",
+ 288:           value: dodPressurePct,
+ 289:           displayValue: fmtPct(dodPressurePct)
+ 290:         }
+ 291:       ],
+ 292:       healthyMax: 20,
+ 293:       watchMax: 45
+ 294:     });
+ 295: 
+ 296:     let sizingClass = "Balanced Battery Design";
+ 297:     if (batteryAh >= 400) sizingClass = "Large Battery Bank";
+ 298:     else if (batteryAh >= 200) sizingClass = "Moderate Battery Bank";
+ 299:     else if (batteryAh < 100) sizingClass = "Compact Battery Bank";
+ 300: 
+ 301:     let interpretation = `A ${fmtWatts(input.load)} load for ${fmtHours(input.hours)} requires ${fmtWh(requiredLoadWh)} of raw runtime energy. After applying ${fmtPct(input.effPct)} system efficiency and limiting discharge to ${fmtPct(input.dodPct)}, total required stored energy rises to about ${fmtWh(totalWh)}, or ${fmtAh(batteryAh)} at ${fmtVolts(input.voltage)}.`;
+ 302: 
+ 303:     if (batteryAh >= 400) {
+ 304:       interpretation += ` This is a substantial battery requirement, so bank layout, conductor sizing, charging profile, and installation footprint become meaningful design constraints.`;
+ 305:     } else if (reserveMultiplier > 1.5) {
+ 306:       interpretation += ` A large portion of the final capacity is being driven by losses and discharge limits rather than load alone, so reserve policy is now a major sizing factor.`;
+ 307:     } else {
+ 308:       interpretation += ` The battery requirement is in a practical range, with losses and reserve constraints still staying proportionate to the runtime target.`;
+ 309:     }
+ 310: 
+ 311:     let dominantConstraint = "";
+ 312:     if (reservePressurePct >= efficiencyLossPct && reservePressurePct >= dodPressurePct && reservePressurePct > 20) {
+ 313:       dominantConstraint = "Reserve pressure is the dominant limiter. The final bank size is being driven more by protection margins and usable-capacity rules than by the raw load itself.";
+ 314:     } else if (efficiencyLossPct >= dodPressurePct && efficiencyLossPct > 15) {
+ 315:       dominantConstraint = "Efficiency loss is the dominant limiter. Conversion losses are materially increasing required stored energy, so system design quality matters to final battery size.";
+ 316:     } else if (dodPressurePct > 20) {
+ 317:       dominantConstraint = "Discharge constraint is the dominant limiter. Limiting usable battery depth is preserving battery life, but it is increasing the required installed capacity.";
+ 318:     } else {
+ 319:       dominantConstraint = "The battery design is balanced. Runtime target, efficiency, and discharge strategy are all staying in a practical range.";
+ 320:     }
+ 321: 
+ 322:     let guidance = "";
+ 323:     if (batteryAh >= 400) {
+ 324:       guidance = "Validate physical battery count, enclosure space, charging current, and conductor sizing before treating this as deployable. Large banks can become installation-limited quickly.";
+ 325:     } else if (reserveMultiplier > 1.5) {
+ 326:       guidance = "Review whether depth-of-discharge policy or conversion efficiency assumptions are intentionally conservative. Small changes there can materially reduce final battery size.";
+ 327:     } else {
+ 328:       guidance = "Battery sizing is in a workable range. Use this as the final power-pipeline baseline for battery count, charger sizing, and enclosure planning.";
+ 329:     }
+ 330: 
+ 331:     return {
+ 332:       ok: true,
+ 333:       ...input,
+ 334:       requiredLoadWh,
+ 335:       adjustedWh,
+ 336:       totalWh,
+ 337:       batteryAh,
+ 338:       reserveMultiplier,
+ 339:       effectiveUsablePct,
+ 340:       sizingClass,
+ 341:       status: statusPack.status,
+ 342:       interpretation,
+ 343:       dominantConstraint,
+ 344:       guidance,
+ 345:       reservePressurePct,
+ 346:       efficiencyLossPct,
+ 347:       dodPressurePct
+ 348:     };
+ 349:   }
+ 350: 
+ 351:   function writeFlow(data) {
+ 352:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.bank, {
+ 353:       category: CATEGORY,
+ 354:       step: STEP,
+ 355:       data: {
+ 356:         designLoadWatts: data.load,
+ 357:         runtimeHours: data.hours,
+ 358:         voltage: data.voltage,
+ 359:         dodPct: data.dodPct,
+ 360:         effPct: data.effPct,
+ 361:         requiredWh: data.totalWh,
+ 362:         batteryAh: data.batteryAh,
+ 363:         reserveMultiplier: data.reserveMultiplier,
+ 364:         sizingClass: data.sizingClass,
+ 365:         interpretation: data.interpretation,
+ 366:         guidance: data.guidance
+ 367:       }
+ 368:     });
+ 369:   }
+ 370: 
+ 371:   function renderError(message) {
+ 372:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 373:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 374:     hideComplete();
+ 375:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 376:   }
+ 377: 
+ 378:   function renderSuccess(data) {
+ 379:     ScopedLabsAnalyzer.renderOutput({
+ 380:       resultsEl: els.results,
+ 381:       analysisEl: els.analysis,
+ 382:       existingChartRef: chartRef,
+ 383:       existingWrapRef: chartWrapRef,
+ 384:       summaryRows: [
+ 385:         { label: "Required Runtime Energy", value: fmtWh(data.requiredLoadWh) },
+ 386:         { label: "Total Stored Energy Required", value: fmtWh(data.totalWh) },
+ 387:         { label: "Battery Capacity", value: fmtAh(data.batteryAh) },
+ 388:         { label: "Sizing Result", value: data.sizingClass }
+ 389:       ],
+ 390:       derivedRows: [
+ 391:         { label: "Load", value: fmtWatts(data.load) },
+ 392:         { label: "Runtime", value: fmtHours(data.hours) },
+ 393:         { label: "System Voltage", value: fmtVolts(data.voltage) },
+ 394:         { label: "Depth of Discharge", value: fmtPct(data.dodPct) },
+ 395:         { label: "Efficiency", value: fmtPct(data.effPct) },
+ 396:         { label: "Reserve Multiplier", value: `${fmt(data.reserveMultiplier, 2)}x` },
+ 397:         { label: "Effective Usable Capacity", value: fmtPct(data.effectiveUsablePct, 1) }
+ 398:       ],
+ 399:       status: data.status,
+ 400:       interpretation: data.interpretation,
+ 401:       dominantConstraint: data.dominantConstraint,
+ 402:       guidance: data.guidance,
+ 403:       chart: {
+ 404:         labels: ["Reserve Pressure", "Efficiency Loss", "Discharge Constraint"],
+ 405:         values: [
+ 406:           Number(data.reservePressurePct.toFixed(1)),
+ 407:           Number(data.efficiencyLossPct.toFixed(1)),
+ 408:           Number(data.dodPressurePct.toFixed(1))
+ 409:         ],
+ 410:         displayValues: [
+ 411:           `${fmt(data.reserveMultiplier, 2)}x`,
+ 412:           fmtPct(data.efficiencyLossPct),
+ 413:           fmtPct(data.dodPressurePct)
+ 414:         ],
+ 415:         referenceValue: 20,
+ 416:         healthyMax: 20,
+ 417:         watchMax: 45,
+ 418:         axisTitle: "Battery Sizing Pressure",
+ 419:         referenceLabel: "Comfort Band",
+ 420:         healthyLabel: "Healthy",
+ 421:         watchLabel: "Watch",
+ 422:         riskLabel: "Risk",
+ 423:         chartMax: 100
+ 424:       }
+ 425:     });
+ 426: 
+ 427:     writeFlow(data);
+ 428:     showComplete();
+ 429:   }
+ 430: 
+ 431:   function calculate() {
+ 432:     const data = calculateModel();
+ 433:     if (!data.ok) return renderError(data.message);
+ 434:     renderSuccess(data);
+ 435:   }
+ 436: 
+ 437:   function reset() {
+ 438:     applyDefaults();
+ 439:     renderFlowNote();
+ 440:     invalidate();
+ 441:   }
+ 442: 
+ 443:   function bind() {
+ 444:     ["load", "hours", "voltage", "dod", "efficiency"].forEach((id) => {
+ 445:       const el = $(id);
+ 446:       if (!el) return;
+ 447:       el.addEventListener("input", invalidate);
+ 448:       el.addEventListener("change", invalidate);
+ 449:     });
+ 450: 
+ 451:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 452:     if (els.reset) els.reset.addEventListener("click", reset);
+ 453:     if (els.continueBtn) {
+ 454:       els.continueBtn.addEventListener("click", () => {
+ 455:         window.location.href = "/tools/power/";
+ 456:       });
+ 457:     }
+ 458:   }
+ 459: 
+ 460:   function init() {
+ 461:     hideComplete();
+ 462:     bind();
+ 463:     renderFlowNote();
+ 464:     invalidate();
+ 465:   }
+ 466: 
+ 467:   window.addEventListener("DOMContentLoaded", () => {
+ 468:     const year = document.querySelector("[data-year]");
+ 469:     if (year) year.textContent = new Date().getFullYear();
+ 470: 
+ 471:     let unlocked = unlockCategoryPage();
+ 472:     if (unlocked) init();
+ 473: 
+ 474:     setTimeout(() => {
+ 475:       unlocked = unlockCategoryPage();
+ 476:       if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+ 477:         els.toolCard.dataset.initialized = "true";
+ 478:         init();
+ 479:       }
+ 480:     }, 400);
+ 481:   });
+ 482: })();
+ 483: 
+
+
+============================================================
+TOOL: battery-sizing
+============================================================
+Title: Battery Sizing
+Tier: free/unknown
+Meta description: Estimate required battery capacity from voltage, load, runtime, and system efficiency.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- System Voltage (V) Select voltage 12 V 24 V 48 V
+- Load Watts (W)
+- Load Amps (A)
+- Runtime (hours)
+- Efficiency (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- toolCard
+- voltage
+- watts
+- amps
+- hours
+- eff
+- calc
+- reset
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- results
+- analysis-copy
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 116:   function calculateModel() {
+ 117:     const input = deriveInputs();
+ 118:     if (!input.ok) return input;
+ 119: 
+ 120:     const requiredWh = (input.loadWatts * input.hours) / input.eff;
+ 121:     const requiredAh = requiredWh / input.voltage;
+ 122:     const rawAhWithoutLoss = (input.loadWatts * input.hours) / input.voltage;
+ 123:     const reserveMultiplier = requiredAh / rawAhWithoutLoss;
+ 124: 
+ 125:     const efficiencyLossPct = 100 - input.effPct;
+ 126:     const runtimeDemandMetric = Math.min((input.hours / 24) * 100, 100);
+ 127:     const efficiencyLossMetric = efficiencyLossPct;
+ 128:     const reservePressureMetric = Math.min((reserveMultiplier - 1) * 100, 100);
+ 129: 
+ 130:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 131:       compositeScore: Math.max(runtimeDemandMetric, efficiencyLossMetric, reservePressureMetric),
+ 132:       metrics: [
+ 133:         {
+ 134:           label: "Runtime Demand",
+ 135:           value: runtimeDemandMetric,
+ 136:           displayValue: fmtHours(input.hours)
+ 137:         },
+ 138:         {
+ 139:           label: "Efficiency Loss",
+ 140:           value: efficiencyLossMetric,
+ 141:           displayValue: fmtPct(efficiencyLossPct)
+ 142:         },
+ 143:         {
+ 144:           label: "Reserve Pressure",
+ 145:           value: reservePressureMetric,
+ 146:           displayValue: `${fmt(reserveMultiplier, 2)}x`
+ 147:         }
+ 148:       ],
+ 149:       healthyMax: 20,
+ 150:       watchMax: 45
+ 151:     });
+ 152: 
+ 153:     let sizingClass = "Balanced Battery Size";
+ 154:     if (requiredAh >= 400) sizingClass = "Very Large Battery Bank";
+ 155:     else if (requiredAh >= 200) sizingClass = "Large Battery Bank";
+ 156:     else if (requiredAh >= 100) sizingClass = "Moderate Battery Bank";
+ 157:     else sizingClass = "Compact Battery Bank";
+ 158: 
+ 159:     let interpretation = `A ${fmtWatts(input.loadWatts)} load for ${fmtHours(input.hours)} at ${fmtVolts(input.voltage)} requires about ${fmtWh(requiredWh)} of stored energy after applying ${fmtPct(input.effPct)} efficiency. That translates to roughly ${fmtAh(requiredAh)} of battery capacity.`;
+ 160: 
+ 161:     if (requiredAh >= 400) {
+ 162:       interpretation += ` This is a substantial battery requirement, so enclosure space, conductor sizing, charging rate, and installation practicality become major constraints.`;
+ 163:     } else if (input.hours >= 12) {
+ 164:       interpretation += ` Runtime duration is doing most of the sizing work here, so even modest load increases will push battery capacity upward quickly.`;
+ 165:     } else if (efficiencyLossPct >= 15) {
+ 166:       interpretation += ` Conversion losses are materially inflating final capacity, which means system efficiency is no longer a minor detail in the design.`;
+ 167:     } else {
+ 168:       interpretation += ` Capacity remains in a practical range, and losses are still proportionate to the runtime target.`;
+ 169:     }
+ 170: 
+ 171:     let dominantConstraint = "";
+ 172:     if (runtimeDemandMetric >= efficiencyLossMetric && runtimeDemandMetric >= reservePressureMetric && input.hours >= 8) {
+ 173:       dominantConstraint = "Runtime demand is the dominant limiter. The storage requirement is being driven mainly by how long the system must stay online.";
+ 174:     } else if (efficiencyLossMetric >= reservePressureMetric && efficiencyLossMetric > 15) {
+ 175:       dominantConstraint = "Efficiency loss is the dominant limiter. Energy conversion losses are increasing required battery capacity more than the raw load suggests.";
+ 176:     } else if (reservePressureMetric > 20) {
+ 177:       dominantConstraint = "Reserve pressure is the dominant limiter. Final battery size is being pushed up by usable-capacity overhead rather than raw runtime energy alone.";
+ 178:     } else {
+ 179:       dominantConstraint = "The battery sizing inputs are balanced. Load, runtime, and efficiency are staying in a practical range.";
+ 180:     }
+ 181: 
+ 182:     let guidance = "";
+ 183:     if (requiredAh >= 400) {
+ 184:       guidance = "Validate physical battery count, charger sizing, enclosure space, and conductor sizing before treating this as deployable. Large battery banks become installation-limited quickly.";
+ 185:     } else if (input.hours >= 12) {
+ 186:       guidance = "If this battery size feels excessive, review whether the runtime target is truly required or whether staged load shedding would be acceptable.";
+ 187:     } else if (efficiencyLossPct >= 15) {
+ 188:       guidance = "Review inverter, converter, or driver efficiency assumptions. Small efficiency gains can materially reduce required battery size.";
+ 189:     } else {
+ 190:       guidance = "Battery capacity is in a workable range. Use this result as a planning baseline for battery count and charger selection.";
+ 191:     }
+ 192: 
+ 193:     return {
+ 194:       ok: true,
+ 195:       ...input,
+ 196:       requiredWh,
+ 197:       requiredAh,
+ 198:       rawAhWithoutLoss,
+ 199:       reserveMultiplier,
+ 200:       sizingClass,
+ 201:       status: statusPack.status,
+ 202:       interpretation,
+ 203:       dominantConstraint,
+ 204:       guidance,
+ 205:       runtimeDemandMetric,
+ 206:       efficiencyLossMetric,
+ 207:       reservePressureMetric
+ 208:     };
+ 209:   }
+ 210: 
+ 211:   function renderError(message) {
+ 212:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 213:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 214:     els.results.innerHTML = `<div class="muted">⚠ ${message}</div>`;
+ 215:   }
+ 216: 
+ 217:   function renderSuccess(data) {
+ 218:     ScopedLabsAnalyzer.renderOutput({
+ 219:       resultsEl: els.results,
+ 220:       analysisEl: els.analysis,
+ 221:       existingChartRef: chartRef,
+ 222:       existingWrapRef: chartWrapRef,
+ 223:       summaryRows: [
+ 224:         { label: "Load Power", value: fmtWatts(data.loadWatts) },
+ 225:         { label: "Runtime", value: fmtHours(data.hours) },
+ 226:         { label: "Required Capacity", value: fmtWh(data.requiredWh) },
+ 227:         { label: "Estimated Battery Size", value: fmtAh(data.requiredAh) }
+ 228:       ],
+ 229:       derivedRows: [
+ 230:         { label: "System Voltage", value: fmtVolts(data.voltage) },
+ 231:         { label: "Derived Load Current", value: fmtAmps(data.loadAmps) },
+ 232:         { label: "Efficiency Used", value: fmtPct(data.effPct) },
+ 233:         { label: "Raw Capacity Before Losses", value: fmtAh(data.rawAhWithoutLoss) },
+ 234:         { label: "Reserve Multiplier", value: `${fmt(data.reserveMultiplier, 2)}x` },
+ 235:         { label: "Sizing Result", value: data.sizingClass }
+ 236:       ],
+ 237:       status: data.status,
+ 238:       interpretation: data.interpretation,
+ 239:       dominantConstraint: data.dominantConstraint,
+ 240:       guidance: data.guidance,
+ 241:       chart: {
+ 242:         labels: ["Runtime Demand", "Efficiency Loss", "Reserve Pressure"],
+ 243:         values: [
+ 244:           Number(data.runtimeDemandMetric.toFixed(1)),
+ 245:           Number(data.efficiencyLossMetric.toFixed(1)),
+ 246:           Number(data.reservePressureMetric.toFixed(1))
+ 247:         ],
+ 248:         displayValues: [
+ 249:           fmtHours(data.hours),
+ 250:           fmtPct(100 - data.effPct),
+ 251:           `${fmt(data.reserveMultiplier, 2)}x`
+ 252:         ],
+ 253:         referenceValue: 20,
+ 254:         healthyMax: 20,
+ 255:         watchMax: 45,
+ 256:         axisTitle: "Battery Sizing Pressure",
+ 257:         referenceLabel: "Comfort Band",
+ 258:         healthyLabel: "Healthy",
+ 259:         watchLabel: "Watch",
+ 260:         riskLabel: "Risk",
+ 261:         chartMax: 100
+ 262:       }
+ 263:     });
+ 264:   }
+ 265: 
+ 266:   function calc() {
+ 267:     const data = calculateModel();
+ 268:     if (!data.ok) return renderError(data.message);
+ 269:     renderSuccess(data);
+ 270:   }
+ 271: 
+ 272:   function reset() {
+ 273:     if (els.voltage) els.voltage.value = "";
+ 274:     ["watts", "amps", "hours", "eff"].forEach((id) => {
+ 275:       const el = $(id);
+ 276:       if (el) el.value = "";
+ 277:     });
+ 278:     invalidate();
+ 279:   }
+ 280: 
+ 281:   function bind() {
+ 282:     ["voltage", "watts", "amps", "hours", "eff"].forEach((id) => {
+ 283:       const el = $(id);
+ 284:       if (!el) return;
+ 285:       el.addEventListener("input", invalidate);
+ 286:       el.addEventListener("change", invalidate);
+ 287:     });
+ 288: 
+ 289:     if (els.calc) els.calc.addEventListener("click", calc);
+ 290:     if (els.reset) els.reset.addEventListener("click", reset);
+ 291:   }
+ 292: 
+ 293:   function boot() {
+ 294:     bind();
+ 295:     invalidate();
+ 296: 
+ 297:     const year = document.querySelector("[data-year]");
+ 298:     if (year) year.textContent = new Date().getFullYear();
+ 299:   }
+ 300: 
+ 301:   if (document.readyState === "loading") {
+ 302:     document.addEventListener("DOMContentLoaded", boot);
+ 303:   } else {
+ 304:     boot();
+ 305:   }
+ 306: })();
+
+
+============================================================
+TOOL: failure-runtime-loss
+============================================================
+Title: Failure Runtime Loss
+Tier: pro
+Meta description: Model how a higher failure-state load reduces usable runtime and backup resilience.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Baseline Load (W)
+- Failure Load (W)
+- Battery Capacity (Wh)
+- System Voltage
+- Efficiency (%)
+- Max Depth of Discharge (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- baselineLoad
+- failureLoad
+- batteryWh
+- voltage
+- efficiency
+- dod
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 144:     return {
+ 145:       ok: true,
+ 146:       baselineLoad,
+ 147:       failureLoad,
+ 148:       batteryWh,
+ 149:       voltage,
+ 150:       efficiencyPct,
+ 151:       dodPct,
+ 152:       efficiency: efficiencyPct / 100,
+ 153:       dod: dodPct / 100
+ 154:     };
+ 155:   }
+ 156: 
+ 157:   function calculateModel() {
+ 158:     const input = getInputs();
+ 159:     if (!input.ok) return input;
+ 160: 
+ 161:     const usableWh = input.batteryWh * input.efficiency * input.dod;
+ 162: 
+ 163:     const baselineRuntime = usableWh / input.baselineLoad;
+ 164:     const failureRuntime = usableWh / input.failureLoad;
+ 165: 
+ 166:     const runtimeLost = baselineRuntime - failureRuntime;
+ 167:     const percentLost = baselineRuntime > 0 ? (runtimeLost / baselineRuntime) * 100 : 0;
+ 168:     const loadIncreasePct = ((input.failureLoad - input.baselineLoad) / input.baselineLoad) * 100;
+ 169: 
+ 170:     const loadShockMetric = ScopedLabsAnalyzer.clamp(loadIncreasePct, 0, 100);
+ 171:     const runtimeLossMetric = ScopedLabsAnalyzer.clamp(percentLost, 0, 100);
+ 172:     const remainingRuntimePct =
+ 173:       baselineRuntime > 0 ? (failureRuntime / baselineRuntime) * 100 : 0;
+ 174:     const remainingMarginMetric = 100 - ScopedLabsAnalyzer.clamp(remainingRuntimePct, 0, 100);
+ 175: 
+ 176:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 177:       compositeScore: Math.max(loadShockMetric, runtimeLossMetric, remainingMarginMetric),
+ 178:       metrics: [
+ 179:         {
+ 180:           label: "Load Shock",
+ 181:           value: loadShockMetric,
+ 182:           displayValue: fmtPct(loadIncreasePct)
+ 183:         },
+ 184:         {
+ 185:           label: "Runtime Loss",
+ 186:           value: runtimeLossMetric,
+ 187:           displayValue: fmtPct(percentLost)
+ 188:         },
+ 189:         {
+ 190:           label: "Remaining Runtime Margin",
+ 191:           value: remainingMarginMetric,
+ 192:           displayValue: fmtPct(remainingRuntimePct)
+ 193:         }
+ 194:       ],
+ 195:       healthyMax: 20,
+ 196:       watchMax: 45
+ 197:     });
+ 198: 
+ 199:     let resilienceClass = "Stable Runtime Resilience";
+ 200:     if (percentLost >= 40) resilienceClass = "Severe Runtime Degradation";
+ 201:     else if (percentLost >= 20) resilienceClass = "Moderate Runtime Degradation";
+ 202:     else if (percentLost >= 10) resilienceClass = "Noticeable Runtime Loss";
+ 203: 
+ 204:     let interpretation = `With ${fmtWh(input.batteryWh)} of installed battery capacity, ${fmtPct(input.efficiencyPct)} efficiency, and ${fmtPct(input.dodPct)} usable discharge, the system has about ${fmtWh(usableWh)} of usable energy. Baseline runtime is about ${fmtHours(baselineRuntime)}, while the failure-state load cuts runtime to about ${fmtHours(failureRuntime)}.`;
+ 205: 
+ 206:     if (percentLost >= 40) {
+ 207:       interpretation += ` The failure state is consuming runtime aggressively, which means resilience collapses quickly once the system leaves normal operating conditions.`;
+ 208:     } else if (percentLost >= 20) {
+ 209:       interpretation += ` The degraded load meaningfully compresses runtime, so backup duration under failure is materially weaker than baseline expectations.`;
+ 210:     } else {
+ 211:       interpretation += ` Runtime resilience is still reasonably controlled, so the failed-state load does not erase backup duration as aggressively.`;
+ 212:     }
+ 213: 
+ 214:     let dominantConstraint = "";
+ 215:     if (runtimeLossMetric >= loadShockMetric && runtimeLossMetric >= remainingMarginMetric && percentLost >= 20) {
+ 216:       dominantConstraint = "Runtime loss is the dominant limiter. Backup duration falls away quickly once the system transitions into the higher-load failure condition.";
+ 217:     } else if (loadShockMetric >= remainingMarginMetric && loadIncreasePct >= 20) {
+ 218:       dominantConstraint = "Load shock is the dominant limiter. The jump from baseline to failure-state demand is what drives most of the resilience loss.";
+ 219:     } else if (remainingMarginMetric > 25) {
+ 220:       dominantConstraint = "Remaining runtime margin is the dominant limiter. There is not much battery headroom left once the failed-state load is applied.";
+ 221:     } else {
+ 222:       dominantConstraint = "The failure scenario is still reasonably contained. Battery capacity, efficiency, and degraded load remain in a workable range.";
+ 223:     }
+ 224: 
+ 225:     let guidance = "";
+ 226:     if (percentLost >= 40) {
+ 227:       guidance = "Treat this as weak failure resilience. Increase battery capacity, reduce failed-state load, or shorten required outage duration before relying on it operationally.";
+ 228:     } else if (percentLost >= 20) {
+ 229:       guidance = "Review whether failed-state load can be shed or segmented. Even modest reduction during failure can materially restore runtime.";
+ 230:     } else {
+ 231:       guidance = "Runtime resilience is acceptable for planning purposes. Use this result to compare normal-vs-failure survivability across backup options.";
+ 232:     }
+ 233: 
+ 234:     return {
+ 235:       ok: true,
+ 236:       ...input,
+ 237:       usableWh,
+ 238:       baselineRuntime,
+ 239:       failureRuntime,
+ 240:       runtimeLost,
+ 241:       percentLost,
+ 242:       loadIncreasePct,
+ 243:       remainingRuntimePct,
+ 244:       resilienceClass,
+ 245:       status: statusPack.status,
+ 246:       interpretation,
+ 247:       dominantConstraint,
+ 248:       guidance,
+ 249:       loadShockMetric,
+ 250:       runtimeLossMetric,
+ 251:       remainingMarginMetric
+ 252:     };
+ 253:   }
+ 254: 
+ 255:   function renderError(message) {
+ 256:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 257:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 258:     els.results.innerHTML = `<div class="muted">⚠ ${message}</div>`;
+ 259:   }
+ 260: 
+ 261:   function renderSuccess(data) {
+ 262:     ScopedLabsAnalyzer.renderOutput({
+ 263:       resultsEl: els.results,
+ 264:       analysisEl: els.analysis,
+ 265:       existingChartRef: chartRef,
+ 266:       existingWrapRef: chartWrapRef,
+ 267:       summaryRows: [
+ 268:         { label: "Baseline Runtime", value: fmtHours(data.baselineRuntime) },
+ 269:         { label: "Failure Runtime", value: fmtHours(data.failureRuntime) },
+ 270:         { label: "Runtime Lost", value: fmtHours(data.runtimeLost) },
+ 271:         { label: "Resilience Result", value: data.resilienceClass }
+ 272:       ],
+ 273:       derivedRows: [
+ 274:         { label: "Baseline Load", value: fmtWatts(data.baselineLoad) },
+ 275:         { label: "Failure Load", value: fmtWatts(data.failureLoad) },
+ 276:         { label: "Load Increase", value: fmtPct(data.loadIncreasePct) },
+ 277:         { label: "Battery Capacity", value: fmtWh(data.batteryWh) },
+ 278:         { label: "Usable Battery Energy", value: fmtWh(data.usableWh) },
+ 279:         { label: "Efficiency Used", value: fmtPct(data.efficiencyPct) },
+ 280:         { label: "Max DoD Used", value: fmtPct(data.dodPct) },
+ 281:         { label: "System Voltage", value: fmtVolts(data.voltage) }
+ 282:       ],
+ 283:       status: data.status,
+ 284:       interpretation: data.interpretation,
+ 285:       dominantConstraint: data.dominantConstraint,
+ 286:       guidance: data.guidance,
+ 287:       chart: {
+ 288:         labels: ["Load Shock", "Runtime Loss", "Remaining Runtime Margin"],
+ 289:         values: [
+ 290:           Number(data.loadShockMetric.toFixed(1)),
+ 291:           Number(data.runtimeLossMetric.toFixed(1)),
+ 292:           Number(data.remainingMarginMetric.toFixed(1))
+ 293:         ],
+ 294:         displayValues: [
+ 295:           fmtPct(data.loadIncreasePct),
+ 296:           fmtPct(data.percentLost),
+ 297:           fmtPct(data.remainingRuntimePct)
+ 298:         ],
+ 299:         referenceValue: 20,
+ 300:         healthyMax: 20,
+ 301:         watchMax: 45,
+ 302:         axisTitle: "Runtime Resilience Pressure",
+ 303:         referenceLabel: "Comfort Band",
+ 304:         healthyLabel: "Healthy",
+ 305:         watchLabel: "Watch",
+ 306:         riskLabel: "Risk",
+ 307:         chartMax: 100
+ 308:       }
+ 309:     });
+ 310:   }
+ 311: 
+ 312:   function calculate() {
+ 313:     const data = calculateModel();
+ 314:     if (!data.ok) return renderError(data.message);
+ 315:     renderSuccess(data);
+ 316:   }
+ 317: 
+ 318:   function resetForm() {
+ 319:     applyDefaults();
+ 320:     invalidate();
+ 321:   }
+ 322: 
+ 323:   function bind() {
+ 324:     ["baselineLoad", "failureLoad", "batteryWh", "voltage", "efficiency", "dod"].forEach((id) => {
+ 325:       const el = $(id);
+ 326:       if (!el) return;
+ 327:       el.addEventListener("input", invalidate);
+ 328:       el.addEventListener("change", invalidate);
+ 329:     });
+ 330: 
+ 331:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 332:     if (els.reset) els.reset.addEventListener("click", resetForm);
+ 333:   }
+ 334: 
+ 335:   function boot() {
+ 336:     bind();
+ 337:     invalidate();
+ 338: 
+ 339:     const year = document.querySelector("[data-year]");
+ 340:     if (year) year.textContent = new Date().getFullYear();
+ 341:   }
+ 342: 
+ 343:   window.addEventListener("DOMContentLoaded", () => {
+ 344:     let unlocked = unlockCategoryPage();
+ 345:     if (unlocked) boot();
+ 346: 
+ 347:     setTimeout(() => {
+ 348:       unlocked = unlockCategoryPage();
+ 349:       if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+ 350:         els.toolCard.dataset.initialized = "true";
+ 351:         boot();
+ 352:       }
+ 353:     }, 400);
+ 354:   });
+ 355: })();
+
+
+============================================================
+TOOL: inverter-efficiency
+============================================================
+Title: Inverter Efficiency
+Tier: free/unknown
+Meta description: Estimate DC draw and heat loss from an AC load and inverter efficiency.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- AC Load (W)
+- Efficiency (%)
+- DC Voltage (V)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- toolCard
+- loadW
+- eff
+- dcV
+- calc
+- reset
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- results
+- analysis-copy
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  49:   function fmtRatio(x, d = 2) {
+  50:     return Number.isFinite(x) ? `${x.toFixed(d)}x` : "—";
+  51:   }
+
+--- CORE BLOCK 2 ---
+  94:   function calculateModel() {
+  95:     const input = getInputs();
+  96:     if (!input.ok) return input;
+  97: 
+  98:     const dcInW = input.loadW / input.eff;
+  99:     const lossW = dcInW - input.loadW;
+ 100:     const dcA = dcInW / input.dcV;
+ 101:     const lossPct = dcInW > 0 ? (lossW / dcInW) * 100 : 0;
+ 102:     const inputMultiplier = dcInW / input.loadW;
+ 103: 
+ 104:     const efficiencyLossMetric = 100 - input.effPct;
+ 105:     const currentPressureMetric = ScopedLabsAnalyzer.clamp((dcA / 50) * 100, 0, 100);
+ 106:     const multiplierMetric = ScopedLabsAnalyzer.clamp((inputMultiplier - 1) * 100, 0, 100);
+ 107: 
+ 108:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 109:       compositeScore: Math.max(efficiencyLossMetric, currentPressureMetric, multiplierMetric),
+ 110:       metrics: [
+ 111:         {
+ 112:           label: "Efficiency Loss",
+ 113:           value: efficiencyLossMetric,
+ 114:           displayValue: fmtPct(efficiencyLossMetric)
+ 115:         },
+ 116:         {
+ 117:           label: "DC Current Pressure",
+ 118:           value: currentPressureMetric,
+ 119:           displayValue: fmtAmps(dcA)
+ 120:         },
+ 121:         {
+ 122:           label: "Input Multiplier",
+ 123:           value: multiplierMetric,
+ 124:           displayValue: fmtRatio(inputMultiplier)
+ 125:         }
+ 126:       ],
+ 127:       healthyMax: 15,
+ 128:       watchMax: 35
+ 129:     });
+ 130: 
+ 131:     let operatingClass = "Efficient Conversion";
+ 132:     if (input.effPct < 80) operatingClass = "Loss-Heavy Conversion";
+ 133:     else if (dcA > 40) operatingClass = "High DC Current Demand";
+ 134:     else if (input.effPct < 90) operatingClass = "Moderate Conversion Loss";
+ 135: 
+ 136:     let interpretation = `A ${fmtWatts(input.loadW)} AC load at ${fmtPct(input.effPct)} inverter efficiency requires about ${fmtWatts(dcInW)} from the DC side. That means roughly ${fmtWatts(lossW)} is being burned as conversion loss, and the source must supply about ${fmtAmps(dcA)} at ${fmtVolts(input.dcV)}.`;
+ 137: 
+ 138:     if (input.effPct < 80) {
+ 139:       interpretation += ` Efficiency is low enough that inverter losses are no longer a small rounding factor. They become a meaningful battery and thermal design burden.`;
+ 140:     } else if (dcA > 40) {
+ 141:       interpretation += ` DC current is climbing into a range where conductor sizing, voltage drop, fuse coordination, and terminal heating deserve closer attention.`;
+ 142:     } else {
+ 143:       interpretation += ` Conversion losses remain manageable, and DC-side demand is still in a practical range for many small to moderate systems.`;
+ 144:     }
+ 145: 
+ 146:     let dominantConstraint = "";
+ 147:     if (efficiencyLossMetric >= currentPressureMetric && efficiencyLossMetric >= multiplierMetric && input.effPct < 90) {
+ 148:       dominantConstraint = "Efficiency loss is the dominant limiter. The inverter is increasing upstream battery and thermal burden more than the AC load alone suggests.";
+ 149:     } else if (currentPressureMetric >= multiplierMetric && dcA > 25) {
+ 150:       dominantConstraint = "DC current pressure is the dominant limiter. Cable sizing and battery-side current handling become the first practical concern.";
+ 151:     } else if (multiplierMetric > 10) {
+ 152:       dominantConstraint = "Input multiplier is the dominant limiter. The DC source must deliver materially more power than the AC nameplate load implies.";
+ 153:     } else {
+ 154:       dominantConstraint = "The inverter operating point is balanced. Conversion loss, DC current, and power overhead remain in a practical range.";
+ 155:     }
+ 156: 
+ 157:     let guidance = "";
+ 158:     if (input.effPct < 80) {
+ 159:       guidance = "Review inverter selection first. Improving efficiency can materially reduce battery draw, heat loss, and conductor burden without changing the AC load.";
+ 160:     } else if (dcA > 40) {
+ 161:       guidance = "Validate conductor sizing, voltage-drop limits, overcurrent protection, and connector ratings before treating this DC load path as finalized.";
+ 162:     } else {
+ 163:       guidance = "This is a workable conversion point. Use the DC input power and current values as upstream sizing inputs for battery and wiring decisions.";
+ 164:     }
+ 165: 
+ 166:     return {
+ 167:       ok: true,
+ 168:       ...input,
+ 169:       dcInW,
+ 170:       lossW,
+ 171:       dcA,
+ 172:       lossPct,
+ 173:       inputMultiplier,
+ 174:       operatingClass,
+ 175:       status: statusPack.status,
+ 176:       interpretation,
+ 177:       dominantConstraint,
+ 178:       guidance,
+ 179:       efficiencyLossMetric,
+ 180:       currentPressureMetric,
+ 181:       multiplierMetric
+ 182:     };
+ 183:   }
+
+--- CORE BLOCK 3 ---
+ 197:       summaryRows: [
+ 198:         { label: "AC Load", value: fmtWatts(data.loadW) },
+ 199:         { label: "DC Input Power", value: fmtWatts(data.dcInW) },
+ 200:         { label: "Estimated Loss", value: fmtWatts(data.lossW) },
+ 201:         { label: "Operating Result", value: data.operatingClass }
+ 202:       ],
+ 203:       derivedRows: [
+ 204:         { label: "Efficiency Used", value: fmtPct(data.effPct) },
+ 205:         { label: "DC Voltage", value: fmtVolts(data.dcV) },
+ 206:         { label: "DC Current", value: fmtAmps(data.dcA) },
+ 207:         { label: "Loss Share", value: fmtPct(data.lossPct, 1) },
+ 208:         { label: "Input Multiplier", value: fmtRatio(data.inputMultiplier) }
+ 209:       ],
+ 210:       status: data.status,
+ 211:       interpretation: data.interpretation,
+ 212:       dominantConstraint: data.dominantConstraint,
+ 213:       guidance: data.guidance,
+ 214:       chart: {
+ 215:         labels: ["Efficiency Loss", "DC Current Pressure", "Input Multiplier"],
+ 216:         values: [
+ 217:           Number(data.efficiencyLossMetric.toFixed(1)),
+ 218:           Number(data.currentPressureMetric.toFixed(1)),
+ 219:           Number(data.multiplierMetric.toFixed(1))
+ 220:         ],
+ 221:         displayValues: [
+ 222:           fmtPct(100 - data.effPct),
+ 223:           fmtAmps(data.dcA),
+ 224:           fmtRatio(data.inputMultiplier)
+ 225:         ],
+ 226:         referenceValue: 15,
+ 227:         healthyMax: 15,
+ 228:         watchMax: 35,
+ 229:         axisTitle: "Conversion Pressure",
+ 230:         referenceLabel: "Comfort Band",
+ 231:         healthyLabel: "Healthy",
+ 232:         watchLabel: "Watch",
+ 233:         riskLabel: "Risk",
+ 234:         chartMax: 100
+ 235:       }
+ 236:     });
+ 237:   }
+ 238: 
+ 239:   function calc() {
+ 240:     const data = calculateModel();
+ 241:     if (!data.ok) return renderError(data.message);
+ 242:     renderSuccess(data);
+ 243:   }
+ 244: 
+ 245:   function reset() {
+ 246:     applyDefaults();
+ 247:     invalidate();
+ 248:   }
+ 249: 
+ 250:   function bind() {
+ 251:     ["loadW", "eff", "dcV"].forEach((id) => {
+ 252:       const el = $(id);
+ 253:       if (!el) return;
+ 254:       el.addEventListener("input", invalidate);
+ 255:       el.addEventListener("change", invalidate);
+ 256:     });
+ 257: 
+ 258:     els.calc?.addEventListener("click", calc);
+ 259:     els.reset?.addEventListener("click", reset);
+ 260: 
+ 261:     document.addEventListener("keydown", (e) => {
+ 262:       if (e.key === "Enter" && (e.target?.tagName === "INPUT" || e.target?.tagName === "SELECT")) {
+ 263:         e.preventDefault();
+ 264:         calc();
+ 265:       }
+ 266:     });
+ 267:   }
+ 268: 
+ 269:   function boot() {
+ 270:     applyDefaults();
+ 271:     bind();
+ 272:     invalidate();
+ 273: 
+ 274:     const year = document.querySelector("[data-year]");
+ 275:     if (year) year.textContent = new Date().getFullYear();
+ 276:   }
+ 277: 
+ 278:   if (document.readyState === "loading") {
+ 279:     document.addEventListener("DOMContentLoaded", boot);
+ 280:   } else {
+ 281:     boot();
+ 282:   }
+ 283: })();
+
+
+============================================================
+TOOL: load-growth
+============================================================
+Title: Load Growth Estimator
+Tier: pro
+Meta description: Project future power load growth so UPS, battery, circuit, and runtime designs keep enough capacity and headroom over time.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Current Load (kW)
+- Annual Growth (%)
+- Time Horizon (Years)
+- Planning Headroom (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- baseLoad
+- growthPct
+- years
+- headroomPct
+- calc
+- reset
+- resultsCard
+- results
+- analysis-copy
+- yearTable
+- notes
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- errorCard
+- errorText
+- next-step-row
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   "use strict";
+   3: 
+   4:   const CATEGORY = "power";
+   5:   const STEP = "load-growth";
+   6:   const LANE = "v1";
+   7:   const PREVIOUS_STEP = "va-watts-amps";
+   8: 
+   9:   const FLOW_KEYS = {
+  10:     "va-watts-amps": "scopedlabs:pipeline:power:va-watts-amps",
+  11:     "load-growth": "scopedlabs:pipeline:power:load-growth",
+  12:     "ups-runtime": "scopedlabs:pipeline:power:ups-runtime",
+  13:     "battery-bank-sizer": "scopedlabs:pipeline:power:battery-bank-sizer"
+  14:   };
+  15: 
+  16:   const $ = (id) => document.getElementById(id);
+  17: 
+  18:   const chartRef = { current: null };
+  19:   const chartWrapRef = { current: null };
+  20: 
+  21:   const els = {
+  22:     baseLoad: $("baseLoad"),
+  23:     growthPct: $("growthPct"),
+  24:     years: $("years"),
+  25:     headroomPct: $("headroomPct"),
+  26:     flowNote: $("flow-note"),
+  27:     resultsCard: $("resultsCard"),
+  28:     errorCard: $("errorCard"),
+  29:     errorText: $("errorText"),
+  30:     notes: $("notes"),
+  31:     analysis: $("analysis-copy"),
+  32:     results: $("results"),
+  33:     calc: $("calc"),
+  34:     reset: $("reset"),
+  35:     continueWrap: $("next-step-row"),
+  36:     continueBtn: $("continue"),
+  37:     lockedCard: $("lockedCard"),
+  38:     toolCard: $("toolCard")
+  39:   };
+  40: 
+  41:   function analyzer() {
+  42:     return window.ScopedLabsAnalyzer || null;
+  43:   }
+  44: 
+  45:   function safeNumber(value, fallback = NaN) {
+  46:     const a = analyzer();
+  47:     if (a && typeof a.safeNumber === "function") return a.safeNumber(value, fallback);
+  48:     const n = Number(value);
+  49:     return Number.isFinite(n) ? n : fallback;
+  50:   }
+  51: 
+  52:   function clamp(value, min, max) {
+  53:     const a = analyzer();
+  54:     if (a && typeof a.clamp === "function") return a.clamp(value, min, max);
+  55:     return Math.min(max, Math.max(min, value));
+  56:   }
+  57: 
+  58:   function clearAnalysisBlock(el) {
+  59:     const a = analyzer();
+  60:     if (a && typeof a.clearAnalysisBlock === "function") {
+  61:       a.clearAnalysisBlock(el);
+  62:       return;
+  63:     }
+  64:     if (el) {
+  65:       el.style.display = "none";
+  66:       el.innerHTML = "";
+  67:     }
+  68:   }
+  69: 
+  70:   function hideContinue(wrap, btn) {
+  71:     const a = analyzer();
+  72:     if (a && typeof a.hideContinue === "function") {
+  73:       a.hideContinue(wrap, btn);
+  74:       return;
+  75:     }
+
+--- CORE BLOCK 2 ---
+ 159:   function savePipelineResult(payload) {
+ 160:     try {
+ 161:       sessionStorage.setItem(
+ 162:         FLOW_KEYS[STEP],
+ 163:         JSON.stringify({
+ 164:           category: CATEGORY,
+ 165:           step: STEP,
+ 166:           ts: Date.now(),
+ 167:           data: payload
+ 168:         })
+ 169:       );
+ 170:     } catch {}
+ 171:   }
+ 172: 
+ 173:   function invalidatePipelineResult() {
+ 174:     try {
+ 175:       const raw = sessionStorage.getItem(FLOW_KEYS[STEP]);
+ 176:       if (!raw) return;
+ 177:       const parsed = JSON.parse(raw);
+ 178:       if (parsed && parsed.category === CATEGORY && parsed.step === STEP) {
+ 179:         sessionStorage.removeItem(FLOW_KEYS[STEP]);
+ 180:       }
+ 181:     } catch {}
+ 182:   }
+
+--- CORE BLOCK 3 ---
+ 264:   function showResults() {
+ 265:     if (els.errorCard) els.errorCard.hidden = true;
+ 266:     if (els.resultsCard) els.resultsCard.hidden = false;
+ 267:   }
+ 268: 
+ 269:   function invalidateOutput() {
+ 270:     const a = analyzer();
+ 271:     if (a && typeof a.invalidate === "function") {
+ 272:       a.invalidate({
+ 273:         resultsEl: els.results,
+ 274:         analysisEl: els.analysis,
+ 275:         continueWrapEl: els.continueWrap,
+ 276:         continueBtnEl: els.continueBtn,
+ 277:         existingChartRef: chartRef,
+ 278:         existingWrapRef: chartWrapRef,
+ 279:         flowKey: FLOW_KEYS[STEP],
+ 280:         category: CATEGORY,
+ 281:         step: STEP,
+ 282:         lane: LANE,
+ 283:         emptyMessage: "Enter values and press Calculate."
+ 284:       });
+ 285:       return;
+ 286:     }
+ 287: 
+ 288:     if (els.results) {
+ 289:       els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+ 290:     }
+ 291:     clearAnalysisBlock(els.analysis);
+ 292:     hideContinue(els.continueWrap, els.continueBtn);
+ 293:   }
+ 294: 
+ 295:   function getInputs() {
+ 296:     const baseLoad = safeNumber(els.baseLoad?.value, NaN);
+ 297:     const growthPct = safeNumber(els.growthPct?.value, NaN);
+ 298:     const years = Math.floor(safeNumber(els.years?.value, NaN));
+ 299:     const headroomPctRaw = safeNumber(els.headroomPct?.value, NaN);
+ 300: 
+ 301:     if (!Number.isFinite(baseLoad) || baseLoad < 0) {
+ 302:       return { ok: false, message: "Enter a valid Current Load (kW). Example: 12.5" };
+ 303:     }
+ 304: 
+ 305:     if (!Number.isFinite(growthPct) || growthPct < 0) {
+ 306:       return { ok: false, message: "Enter a valid Annual Growth (%). Example: 6" };
+ 307:     }
+ 308: 
+ 309:     if (!Number.isFinite(years) || years < 1 || years > 50) {
+ 310:       return { ok: false, message: "Enter a valid Time Horizon (Years) between 1 and 50." };
+ 311:     }
+ 312: 
+ 313:     const headroomPct = Number.isFinite(headroomPctRaw) && headroomPctRaw >= 0 ? headroomPctRaw : 0;
+ 314: 
+ 315:     return {
+ 316:       ok: true,
+ 317:       baseLoad,
+ 318:       growthPct,
+ 319:       years,
+ 320:       headroomPct,
+ 321:       g: growthPct / 100,
+ 322:       h: headroomPct / 100
+ 323:     };
+ 324:   }
+ 325: 
+ 326:   function calculateModel() {
+ 327:     const input = getInputs();
+ 328:     if (!input.ok) return input;
+ 329: 
+ 330:     const yearly = [{ year: 0, projected: input.baseLoad, delta: 0, deltaPct: 0 }];
+ 331: 
+ 332:     for (let y = 1; y <= input.years; y++) {
+ 333:       const projected = input.baseLoad * Math.pow(1 + input.g, y);
+ 334:       const delta = projected - input.baseLoad;
+ 335:       const deltaPct = input.baseLoad === 0 ? 0 : (delta / input.baseLoad) * 100;
+ 336:       yearly.push({ year: y, projected, delta, deltaPct });
+ 337:     }
+ 338: 
+ 339:     const finalLoad = input.baseLoad * Math.pow(1 + input.g, input.years);
+ 340:     const totalIncrease = finalLoad - input.baseLoad;
+ 341:     const totalIncreasePct = input.baseLoad === 0 ? 0 : (totalIncrease / input.baseLoad) * 100;
+ 342:     const recommendedCapacity = finalLoad * (1 + input.h);
+ 343: 
+ 344:     const baseLoadWatts = input.baseLoad * 1000;
+ 345:     const finalLoadWatts = finalLoad * 1000;
+ 346:     const recommendedCapacityWatts = recommendedCapacity * 1000;
+ 347:     const averageAnnualAddedKw = input.years > 0 ? totalIncrease / input.years : 0;
+ 348:     const averageAnnualAddedWatts = averageAnnualAddedKw * 1000;
+ 349:     const threeYearCheck = input.baseLoad * Math.pow(1 + input.g, Math.min(3, input.years));
+ 350:     const fiveYearCheck = input.baseLoad * Math.pow(1 + input.g, Math.min(5, input.years));
+ 351:     const continuousDesignKw = recommendedCapacity * 1.25;
+ 352:     const continuousDesignWatts = continuousDesignKw * 1000;
+ 353: 
+ 354:     const growthPressureMetric = clamp(input.growthPct * 4, 0, 100);
+ 355:     const planningHorizonMetric = clamp((input.years / 10) * 100, 0, 100);
+ 356:     const headroomMetric = clamp(input.headroomPct * 2, 0, 100);
+ 357: 
+ 358:     const a = analyzer();
+ 359:     let status = "HEALTHY";
+ 360:     if (a && typeof a.resolveStatus === "function") {
+ 361:       const statusPack = a.resolveStatus({
+ 362:         compositeScore: Math.max(growthPressureMetric, planningHorizonMetric, headroomMetric),
+ 363:         metrics: [
+ 364:           { label: "Growth Pressure", value: growthPressureMetric, displayValue: fmtPct(input.growthPct) },
+ 365:           { label: "Planning Horizon", value: planningHorizonMetric, displayValue: `${input.years} years` },
+ 366:           { label: "Headroom Buffer", value: headroomMetric, displayValue: fmtPct(input.headroomPct) }
+ 367:         ],
+ 368:         healthyMax: 20,
+ 369:         watchMax: 45
+ 370:       });
+ 371:       status = statusPack.status;
+ 372:     }
+ 373: 
+ 374:     let growthClass = "Balanced Expansion Planning";
+ 375:     if (input.growthPct >= 10) growthClass = "Aggressive Growth Planning";
+ 376:     else if (input.growthPct >= 5 || input.years >= 5) growthClass = "Moderate Growth Planning";
+ 377:     else if (input.growthPct === 0) growthClass = "Static Load Planning";
+ 378: 
+ 379:     let interpretation = `A current load of ${fmtKw(input.baseLoad)} growing at ${fmtPct(input.growthPct)} for ${input.years} year${input.years === 1 ? "" : "s"} projects to about ${fmtKw(finalLoad)} by the end of the planning horizon. With ${fmtPct(input.headroomPct)} planning headroom, the recommended design capacity rises to about ${fmtKw(recommendedCapacity)}.`;
+ 380: 
+ 381:     if (input.growthPct >= 10) {
+ 382:       interpretation += " Growth is aggressive enough that today's measured load is no longer a safe proxy for future sizing. Infrastructure selected only on present load will age out quickly.";
+ 383:     } else if (input.years >= 5) {
+ 384:       interpretation += " The long planning horizon materially compounds even moderate annual growth, so future capacity drift becomes a practical design concern.";
+ 385:     } else if (input.headroomPct >= 20) {
+ 386:       interpretation += " Headroom policy is doing a meaningful amount of the sizing work, which is appropriate when phased expansion risk matters more than initial cost.";
+ 387:     } else {
+ 388:       interpretation += " Growth and buffer remain in a practical range, so the recommended design load stays reasonably proportional to today's connected demand.";
+ 389:     }
+ 390: 
+ 391:     let dominantConstraint = "";
+ 392:     if (growthPressureMetric >= planningHorizonMetric && growthPressureMetric >= headroomMetric && input.growthPct >= 5) {
+ 393:       dominantConstraint = "Growth pressure is the dominant limiter. Annual expansion rate is what most strongly pushes the final design load above today's baseline.";
+ 394:     } else if (planningHorizonMetric >= headroomMetric && input.years >= 5) {
+ 395:       dominantConstraint = "Planning horizon is the dominant limiter. Compound growth over a longer deployment life is driving more of the final capacity requirement.";
+ 396:     } else if (headroomMetric > 20) {
+ 397:       dominantConstraint = "Headroom buffer is the dominant limiter. Design capacity is being intentionally pushed upward to preserve future flexibility.";
+ 398:     } else {
+ 399:       dominantConstraint = "The load-planning assumptions are balanced. Growth rate, time horizon, and headroom remain in a practical range.";
+ 400:     }
+ 401: 
+ 402:     let guidance = "";
+ 403:     if (input.growthPct >= 10) {
+ 404:       guidance = "Use the recommended capacity, not today's load, as the upstream design input for UPS runtime and battery sizing. Aggressive growth will otherwise undercut resilience planning.";
+ 405:     } else if (input.years >= 5) {
+ 406:       guidance = "Review whether the time horizon matches the real refresh cycle. Long planning windows can justify larger upstream infrastructure even with moderate annual growth.";
+ 407:     } else if (input.headroomPct >= 20) {
+ 408:       guidance = "Confirm that the added headroom is intentional. If budget pressure is high, this buffer may be worth revisiting before carrying it forward.";
+ 409:     } else {
+ 410:       guidance = "This is a workable projected design load. Continue to UPS Runtime next so backup sizing reflects future demand instead of present-day baseline only.";
+ 411:     }
+ 412: 
+ 413:     const notes = [];
+ 414:     notes.push(`Model: compound growth (Load × (1 + g)^years).`);
+ 415:     notes.push(`Average added load: ${fmt(averageAnnualAddedKw)} kW/year.`);
+ 416:     notes.push(`3-year check: ${fmtKw(threeYearCheck)}. 5-year check: ${fmtKw(fiveYearCheck)}.`);
+ 417:     if (input.headroomPct > 0) notes.push(`Headroom applied: ${fmtPct(input.headroomPct)}.`);
+ 418:     notes.push(
+ 419:       `Engineering planning note: recommended capacity is ${fmtKw(recommendedCapacity)}, while a more conservative 125% continuous-design reference would be about ${fmtKw(continuousDesignKw)}.`
+ 420:     );
+ 421: 
+ 422:     return {
+ 423:       ok: true,
+ 424:       ...input,
+ 425:       yearly,
+ 426:       finalLoad,
+ 427:       totalIncrease,
+ 428:       totalIncreasePct,
+ 429:       recommendedCapacity,
+ 430:       baseLoadWatts,
+ 431:       finalLoadWatts,
+ 432:       recommendedCapacityWatts,
+ 433:       averageAnnualAddedKw,
+ 434:       averageAnnualAddedWatts,
+ 435:       threeYearCheck,
+ 436:       fiveYearCheck,
+ 437:       continuousDesignKw,
+ 438:       continuousDesignWatts,
+ 439:       designLoadWatts: recommendedCapacityWatts,
+ 440:       growthClass,
+ 441:       status,
+ 442:       interpretation,
+ 443:       dominantConstraint,
+ 444:       guidance,
+ 445:       notesText: notes.join(" ")
+ 446:     };
+ 447:   }
+ 448: 
+ 449:   function renderSuccess(data) {
+ 450:     clearTable();
+ 451:     data.yearly.forEach((row) => addRow(row.year, row.projected, row.delta, row.deltaPct));
+ 452: 
+ 453:     if (els.notes) els.notes.textContent = data.notesText;
+ 454: 
+ 455:     const a = analyzer();
+ 456:     if (a && typeof a.renderOutput === "function") {
+ 457:       a.renderOutput({
+ 458:         resultsEl: els.results,
+ 459:         analysisEl: els.analysis,
+ 460:         continueWrapEl: els.continueWrap,
+ 461:         continueBtnEl: els.continueBtn,
+ 462:         existingChartRef: chartRef,
+ 463:         existingWrapRef: chartWrapRef,
+ 464:         summaryRows: [
+ 465:           { label: "Projected Load (Final Year)", value: fmtKw(data.finalLoad) },
+ 466:           { label: "Total Increase", value: `${fmtKw(data.totalIncrease)} (${fmtPct(data.totalIncreasePct)})` },
+ 467:           { label: "Recommended Capacity", value: fmtKw(data.recommendedCapacity) }
+ 468:         ],
+ 469:         derivedRows: [
+ 470:           { label: "Growth Classification", value: data.growthClass },
+ 471:           { label: "3-Year Check", value: fmtKw(data.threeYearCheck) },
+ 472:           { label: "5-Year Check", value: fmtKw(data.fiveYearCheck) }
+ 473:         ],
+ 474:         status: data.status,
+ 475:         interpretation: data.interpretation,
+ 476:         dominantConstraint: data.dominantConstraint,
+ 477:         guidance: data.guidance,
+ 478:         chart: {
+ 479:           labels: ["Growth Pressure", "Planning Horizon", "Headroom Buffer"],
+ 480:           values: [
+ 481:             clamp(data.growthPct * 4, 0, 100),
+ 482:             clamp((data.years / 10) * 100, 0, 100),
+ 483:             clamp(data.headroomPct * 2, 0, 100)
+ 484:           ],
+ 485:           displayValues: [
+ 486:             fmtPct(data.growthPct),
+ 487:             `${data.years} years`,
+ 488:             fmtPct(data.headroomPct)
+ 489:           ],
+ 490:           referenceValue: 20,
+ 491:           healthyMax: 20,
+ 492:           watchMax: 45,
+ 493:           axisTitle: "Growth Planning Pressure",
+ 494:           referenceLabel: "Comfort Band",
+ 495:           healthyLabel: "Healthy",
+ 496:           watchLabel: "Watch",
+ 497:           riskLabel: "Risk",
+ 498:           chartMax: 100
+ 499:         }
+ 500:       });
+ 501:     }
+ 502: 
+ 503:     savePipelineResult({
+ 504:       baseLoadKw: data.baseLoad,
+ 505:       baseLoadWatts: data.baseLoadWatts,
+ 506:       growthPct: data.growthPct,
+ 507:       years: data.years,
+ 508:       headroomPct: data.headroomPct,
+ 509:       finalLoadKw: data.finalLoad,
+ 510:       finalLoadWatts: data.finalLoadWatts,
+ 511:       totalIncreaseKw: data.totalIncrease,
+ 512:       totalIncreasePct: data.totalIncreasePct,
+ 513:       recommendedCapacityKw: data.recommendedCapacity,
+ 514:       recommendedCapacityWatts: data.recommendedCapacityWatts,
+ 515:       averageAnnualAddedKw: data.averageAnnualAddedKw,
+ 516:       averageAnnualAddedWatts: data.averageAnnualAddedWatts,
+ 517:       threeYearCheckKw: data.threeYearCheck,
+ 518:       fiveYearCheckKw: data.fiveYearCheck,
+ 519:       continuousDesignKw: data.continuousDesignKw,
+ 520:       continuousDesignWatts: data.continuousDesignWatts,
+ 521:       designLoadWatts: data.designLoadWatts,
+ 522:       status: data.growthClass,
+ 523:       interpretation: data.interpretation,
+ 524:       guidance: data.guidance
+ 525:     });
+ 526: 
+ 527:     clearError();
+ 528:     showResults();
+ 529:     showContinue(els.continueWrap, els.continueBtn);
+ 530:   }
+ 531: 
+ 532:   function calc() {
+ 533:     const data = calculateModel();
+ 534:     if (!data.ok) return showError(data.message);
+ 535:     renderSuccess(data);
+ 536:   }
+ 537: 
+ 538:   function reset() {
+ 539:     clearTable();
+ 540:     clearError();
+ 541:     invalidatePipelineResult();
+ 542: 
+ 543:     ["baseLoad", "growthPct", "years", "headroomPct"].forEach((id) => {
+ 544:       const el = $(id);
+ 545:       if (el) el.value = "";
+ 546:     });
+ 547: 
+ 548:     if (els.resultsCard) els.resultsCard.hidden = true;
+ 549:     if (els.notes) els.notes.textContent = "";
+ 550:     clearAnalysisBlock(els.analysis);
+ 551:     hideContinue(els.continueWrap, els.continueBtn);
+ 552: 
+ 553:     if (els.flowNote) {
+ 554:       els.flowNote.hidden = true;
+ 555:       els.flowNote.innerHTML = "";
+ 556:     }
+ 557: 
+ 558:     renderImportedFlow();
+ 559:     invalidateOutput();
+ 560:   }
+ 561: 
+ 562:   function bind() {
+ 563:     els.calc?.addEventListener("click", calc);
+ 564:     els.reset?.addEventListener("click", reset);
+ 565: 
+ 566:     ["baseLoad", "growthPct", "years", "headroomPct"].forEach((id) => {
+ 567:       const el = $(id);
+ 568:       if (!el) return;
+ 569: 
+ 570:       el.addEventListener("keydown", (e) => {
+ 571:         if (e.key === "Enter") {
+ 572:           e.preventDefault();
+ 573:           calc();
+ 574:         }
+ 575:       });
+ 576: 
+ 577:       const onChange = () => {
+ 578:         clearTable();
+ 579:         clearError();
+ 580:         invalidatePipelineResult();
+ 581:         hideContinue(els.continueWrap, els.continueBtn);
+ 582:         clearAnalysisBlock(els.analysis);
+ 583:         if (els.resultsCard) els.resultsCard.hidden = true;
+ 584:         if (els.notes) els.notes.textContent = "";
+ 585:         renderImportedFlow();
+ 586:         invalidateOutput();
+ 587:       };
+ 588: 
+ 589:       el.addEventListener("input", onChange);
+ 590:       el.addEventListener("change", onChange);
+ 591:     });
+ 592:   }
+ 593: 
+ 594:   function boot() {
+ 595:     const year = document.querySelector("[data-year]");
+ 596:     if (year) year.textContent = new Date().getFullYear();
+ 597: 
+ 598:     bind();
+ 599:     renderImportedFlow();
+ 600:     hideContinue(els.continueWrap, els.continueBtn);
+ 601:     if (els.resultsCard) els.resultsCard.hidden = true;
+ 602:     invalidateOutput();
+ 603:   }
+ 604: 
+ 605:   window.addEventListener("DOMContentLoaded", () => {
+ 606:     let unlocked = unlockCategoryPage();
+ 607:     if (unlocked) boot();
+ 608: 
+ 609:     setTimeout(() => {
+ 610:       unlocked = unlockCategoryPage();
+ 611:       if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+ 612:         els.toolCard.dataset.initialized = "true";
+ 613:         boot();
+ 614:       }
+ 615:     }, 400);
+ 616:   });
+
+
+============================================================
+TOOL: redundancy-impact
+============================================================
+Title: Redundancy Impact Model
+Tier: pro
+Meta description: Quantify how redundancy changes downtime, maintenance exposure, and overall availability.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- UPS MTBF (hours)
+- Repair Time per Failure (hours)
+- Maintenance Events / Year
+- Maintenance Duration (hours)
+- Failover Efficiency Penalty (%)
+- Redundancy Architecture Single UPS N+1 Dual Independent
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- mtbf
+- mttr
+- maintN
+- maintH
+- penalty
+- arch
+- calc
+- reset
+- out
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 151:   function calculateModel() {
+ 152:     const input = getInputs();
+ 153:     if (!input.ok) return input;
+ 154: 
+ 155:     let failureDowntime = (8760 / input.mtbf) * input.mttr;
+ 156:     let maintenanceDowntime = input.maintN * input.maintH;
+ 157: 
+ 158:     if (input.arch === "nplus1") {
+ 159:       failureDowntime *= 0.3;
+ 160:       maintenanceDowntime *= 0.5;
+ 161:     }
+ 162: 
+ 163:     if (input.arch === "dual") {
+ 164:       failureDowntime *= 0.1;
+ 165:       maintenanceDowntime *= 0.2;
+ 166:     }
+ 167: 
+ 168:     const failoverPenaltyHours = input.penalty * 8760;
+ 169:     const totalDowntime = failureDowntime + maintenanceDowntime + failoverPenaltyHours;
+ 170:     const availability = ((8760 - totalDowntime) / 8760) * 100;
+ 171: 
+ 172:     const failureMetric = Math.min((failureDowntime / 10) * 100, 100);
+ 173:     const maintenanceMetric = Math.min((maintenanceDowntime / 10) * 100, 100);
+ 174:     const penaltyMetric = Math.min(input.penaltyPct * 2, 100);
+ 175: 
+ 176:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 177:       compositeScore: Math.max(failureMetric, maintenanceMetric, penaltyMetric),
+ 178:       metrics: [
+ 179:         {
+ 180:           label: "Failure Downtime Pressure",
+ 181:           value: failureMetric,
+ 182:           displayValue: fmtHours(failureDowntime)
+ 183:         },
+ 184:         {
+ 185:           label: "Maintenance Downtime Pressure",
+ 186:           value: maintenanceMetric,
+ 187:           displayValue: fmtHours(maintenanceDowntime)
+ 188:         },
+ 189:         {
+ 190:           label: "Failover Penalty",
+ 191:           value: penaltyMetric,
+ 192:           displayValue: `${fmt(input.penaltyPct, 2)}%`
+ 193:         }
+ 194:       ],
+ 195:       healthyMax: 20,
+ 196:       watchMax: 45
+ 197:     });
+ 198: 
+ 199:     let resilienceClass = "High Availability Design";
+ 200:     if (availability < 99) resilienceClass = "Weak Availability Design";
+ 201:     else if (availability < 99.9) resilienceClass = "Moderate Availability Design";
+ 202:     else if (availability < 99.99) resilienceClass = "Strong Availability Design";
+ 203: 
+ 204:     let interpretation = `${architectureLabel(input.arch)} architecture produces about ${fmtHours(totalDowntime)} of modeled downtime per year, yielding approximately ${fmtPct(availability)} availability. Failure downtime contributes ${fmtHours(failureDowntime)}, maintenance contributes ${fmtHours(maintenanceDowntime)}, and failover penalty contributes ${fmtHours(failoverPenaltyHours)}.`;
+ 205: 
+ 206:     if (input.arch === "single") {
+ 207:       interpretation += ` Single-path power keeps the model simple, but it leaves both maintenance and real failure events directly exposed to downtime.`;
+ 208:     } else if (input.arch === "nplus1") {
+ 209:       interpretation += ` N+1 redundancy materially reduces both failure and maintenance exposure, but it still leaves some shared-path operational dependence in play.`;
+ 210:     } else {
+ 211:       interpretation += ` Dual independent architecture strongly compresses direct downtime exposure, making it the most resilient option of the three when properly implemented.`;
+ 212:     }
+ 213: 
+ 214:     let dominantConstraint = "";
+ 215:     if (penaltyMetric >= failureMetric && penaltyMetric >= maintenanceMetric && input.penaltyPct > 2) {
+ 216:       dominantConstraint = "Failover penalty is the dominant limiter. Operational inefficiency during transfer or degraded mode is eroding availability more than raw hardware events.";
+ 217:     } else if (failureMetric >= maintenanceMetric && failureDowntime > 1) {
+ 218:       dominantConstraint = "Failure downtime is the dominant limiter. Repair exposure after unplanned UPS events is the largest contributor to lost availability.";
+ 219:     } else if (maintenanceDowntime > 1) {
+ 220:       dominantConstraint = "Maintenance downtime is the dominant limiter. Planned service windows are still consuming meaningful availability budget.";
+ 221:     } else {
+ 222:       dominantConstraint = "Downtime contributors are reasonably controlled. Architecture choice and maintenance burden remain in a practical range.";
+ 223:     }
+ 224: 
+ 225:     let guidance = "";
+ 226:     if (input.arch === "single") {
+ 227:       guidance = "If uptime is business-critical, compare this against N+1 or dual independent before finalizing the design. Single architecture usually becomes the limiting resilience choice fastest.";
+ 228:     } else if (input.arch === "nplus1") {
+ 229:       guidance = "Validate whether shared upstream dependencies still create hidden single points of failure. N+1 improves resilience, but implementation detail matters.";
+ 230:     } else {
+ 231:       guidance = "Use this as a strong availability baseline, but verify transfer logic, maintenance isolation, and real operating procedures so theoretical redundancy becomes real resilience.";
+ 232:     }
+ 233: 
+ 234:     return {
+ 235:       ok: true,
+ 236:       ...input,
+ 237:       failureDowntime,
+ 238:       maintenanceDowntime,
+ 239:       failoverPenaltyHours,
+ 240:       totalDowntime,
+ 241:       availability,
+ 242:       resilienceClass,
+ 243:       status: statusPack.status,
+ 244:       interpretation,
+ 245:       dominantConstraint,
+ 246:       guidance,
+ 247:       failureMetric,
+ 248:       maintenanceMetric,
+ 249:       penaltyMetric
+ 250:     };
+ 251:   }
+
+--- CORE BLOCK 2 ---
+ 272:         { label: "Failure Downtime", value: fmtHours(data.failureDowntime) },
+ 273:         { label: "Maintenance Downtime", value: fmtHours(data.maintenanceDowntime) },
+ 274:         { label: "Failover Penalty Impact", value: fmtHours(data.failoverPenaltyHours) },
+ 275:         { label: "UPS MTBF", value: `${fmt(data.mtbf, 0)} hrs` },
+ 276:         { label: "Repair Time per Failure", value: fmtHours(data.mttr) },
+ 277:         { label: "Maintenance Events / Year", value: fmt(data.maintN, 0) },
+ 278:         { label: "Maintenance Duration", value: fmtHours(data.maintH) },
+ 279:         { label: "Failover Efficiency Penalty", value: `${fmt(data.penaltyPct, 2)}%` }
+ 280:       ],
+ 281:       status: data.status,
+ 282:       interpretation: data.interpretation,
+ 283:       dominantConstraint: data.dominantConstraint,
+ 284:       guidance: data.guidance,
+ 285:       chart: {
+ 286:         labels: [
+ 287:           "Failure Downtime Pressure",
+ 288:           "Maintenance Downtime Pressure",
+ 289:           "Failover Penalty"
+ 290:         ],
+ 291:         values: [
+ 292:           Number(data.failureMetric.toFixed(1)),
+ 293:           Number(data.maintenanceMetric.toFixed(1)),
+ 294:           Number(data.penaltyMetric.toFixed(1))
+ 295:         ],
+ 296:         displayValues: [
+ 297:           fmtHours(data.failureDowntime),
+ 298:           fmtHours(data.maintenanceDowntime),
+ 299:           `${fmt(data.penaltyPct, 2)}%`
+ 300:         ],
+ 301:         referenceValue: 20,
+ 302:         healthyMax: 20,
+ 303:         watchMax: 45,
+ 304:         axisTitle: "Availability Pressure",
+ 305:         referenceLabel: "Comfort Band",
+ 306:         healthyLabel: "Healthy",
+ 307:         watchLabel: "Watch",
+ 308:         riskLabel: "Risk",
+ 309:         chartMax: 100
+ 310:       }
+ 311:     });
+ 312:   }
+ 313: 
+ 314:   function calculate() {
+ 315:     const data = calculateModel();
+ 316:     if (!data.ok) return renderError(data.message);
+ 317:     renderSuccess(data);
+ 318:   }
+ 319: 
+ 320:   function resetForm() {
+ 321:     applyDefaults();
+ 322:     invalidate();
+ 323:   }
+ 324: 
+ 325:   function bind() {
+ 326:     ["mtbf", "mttr", "maintN", "maintH", "penalty", "arch"].forEach((id) => {
+ 327:       const el = $(id);
+ 328:       if (!el) return;
+ 329:       el.addEventListener("input", invalidate);
+ 330:       el.addEventListener("change", invalidate);
+ 331:     });
+ 332: 
+ 333:     els.calc?.addEventListener("click", calculate);
+ 334:     els.reset?.addEventListener("click", resetForm);
+ 335:   }
+ 336: 
+ 337:   function boot() {
+ 338:     applyDefaults();
+ 339:     bind();
+ 340:     invalidate();
+ 341: 
+ 342:     const year = document.querySelector("[data-year]");
+ 343:     if (year) year.textContent = new Date().getFullYear();
+ 344:   }
+ 345: 
+ 346:   window.addEventListener("DOMContentLoaded", () => {
+ 347:     let unlocked = unlockCategoryPage();
+ 348:     if (unlocked) boot();
+ 349: 
+ 350:     setTimeout(() => {
+ 351:       unlocked = unlockCategoryPage();
+ 352:       if (unlocked && els.tool && !els.tool.dataset.initialized) {
+ 353:         els.tool.dataset.initialized = "true";
+ 354:         boot();
+ 355:       }
+ 356:     }, 400);
+ 357:   });
+ 358: })();
+
+
+============================================================
+TOOL: scenario-comparator
+============================================================
+Title: Scenario Comparator
+Tier: pro
+Meta description: Compare two UPS or battery scenarios side by side and see runtime tradeoffs instantly.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Load (Watts)
+- Battery Capacity (Wh)
+- Efficiency (%)
+- Reserve / Derate (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- a_load_w
+- a_batt_wh
+- a_eff_pct
+- a_reserve_pct
+- b_load_w
+- b_batt_wh
+- b_eff_pct
+- b_reserve_pct
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 104:   function runtimeHours(loadW, battWh, effPct, reservePct) {
+ 105:     const eff = effPct / 100;
+ 106:     const reserve = reservePct / 100;
+ 107:     const usableWh = battWh * eff * (1 - reserve);
+ 108: 
+ 109:     if (!(usableWh > 0) || !(loadW > 0)) return NaN;
+ 110:     return usableWh / loadW;
+ 111:   }
+
+--- CORE BLOCK 2 ---
+ 157:   function calculateModel() {
+ 158:     const A = readScenario("a");
+ 159:     const B = readScenario("b");
+ 160: 
+ 161:     if (!A.ok || !B.ok) {
+ 162:       return {
+ 163:         ok: false,
+ 164:         message: "Enter valid values (Loads & Wh > 0, Efficiency 1–100, Reserve 0–99)."
+ 165:       };
+ 166:     }
+ 167: 
+ 168:     const deltaHrs = B.runtime - A.runtime;
+ 169:     const pctChange = A.runtime === 0 ? NaN : (deltaHrs / A.runtime) * 100;
+ 170: 
+ 171:     const usableWhDelta = B.usableWh - A.usableWh;
+ 172:     const efficiencyDelta = B.effPct - A.effPct;
+ 173:     const reserveDeltaPct = B.reservePct - A.reservePct;
+ 174:     const loadDeltaPct = A.loadW > 0 ? ((B.loadW - A.loadW) / A.loadW) * 100 : 0;
+ 175: 
+ 176:     const runtimeGapMetric = ScopedLabsAnalyzer.clamp(Math.abs(pctChange), 0, 100);
+ 177:     const usableEnergyGapMetric = Math.max(A.usableWh, B.usableWh) > 0
+ 178:       ? ScopedLabsAnalyzer.clamp((Math.abs(usableWhDelta) / Math.max(A.usableWh, B.usableWh)) * 100, 0, 100)
+ 179:       : 0;
+ 180:     const efficiencyShiftMetric = ScopedLabsAnalyzer.clamp(Math.abs(efficiencyDelta) * 4, 0, 100);
+ 181:     const reserveShiftMetric = ScopedLabsAnalyzer.clamp(Math.abs(reserveDeltaPct) * 2, 0, 100);
+ 182: 
+ 183:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 184:       compositeScore: Math.max(runtimeGapMetric, efficiencyShiftMetric, reserveShiftMetric),
+ 185:       metrics: [
+ 186:         {
+ 187:           label: "Runtime Difference",
+ 188:           value: runtimeGapMetric,
+ 189:           displayValue: Number.isFinite(pctChange) ? fmtPct(Math.abs(pctChange)) : "—"
+ 190:         },
+ 191:         {
+ 192:           label: "Efficiency Shift",
+ 193:           value: efficiencyShiftMetric,
+ 194:           displayValue: fmtPct(Math.abs(efficiencyDelta))
+ 195:         },
+ 196:         {
+ 197:           label: "Reserve Shift",
+ 198:           value: reserveShiftMetric,
+ 199:           displayValue: fmtPct(Math.abs(reserveDeltaPct))
+ 200:         }
+ 201:       ],
+ 202:       healthyMax: 15,
+ 203:       watchMax: 35
+ 204:     });
+ 205: 
+ 206:     let comparisonClass = "Minor Difference";
+ 207:     if (Math.abs(pctChange) >= 40) comparisonClass = "Large Runtime Difference";
+ 208:     else if (Math.abs(pctChange) >= 15) comparisonClass = "Moderate Runtime Difference";
+ 209: 
+ 210:     let betterLabel = "Neither scenario";
+ 211:     if (deltaHrs > 0) betterLabel = "Scenario B";
+ 212:     if (deltaHrs < 0) betterLabel = "Scenario A";
+ 213: 
+ 214:     let interpretation = `Scenario A delivers about ${fmtHrs(A.runtime)} of runtime from ${fmtWh(A.usableWh)} usable energy, while Scenario B delivers about ${fmtHrs(B.runtime)} from ${fmtWh(B.usableWh)} usable energy. The runtime difference is ${fmtHrs(Math.abs(deltaHrs))}, which is ${Number.isFinite(pctChange) ? fmtPct(Math.abs(pctChange)) : "—"} relative to Scenario A.`;
+ 215: 
+ 216:     if (Math.abs(pctChange) >= 40) {
+ 217:       interpretation += ` The scenarios are materially different, so one of the assumptions — battery size, efficiency, reserve policy, or load — is meaningfully changing resilience.`;
+ 218:     } else if (Math.abs(pctChange) >= 15) {
+ 219:       interpretation += ` The runtime spread is large enough to affect planning decisions, especially if outage targets are tight.`;
+ 220:     } else {
+ 221:       interpretation += ` The scenarios are relatively close, so the decision is more about preference, margin philosophy, or small efficiency advantages than a major runtime shift.`;
+ 222:     }
+ 223: 
+ 224:     let dominantConstraint = "";
+ 225:     if (reserveShiftMetric >= efficiencyShiftMetric && reserveShiftMetric >= runtimeGapMetric && Math.abs(reserveDeltaPct) >= 10) {
+ 226:       dominantConstraint = "Reserve policy is the dominant limiter. The runtime spread is being driven mainly by how aggressively each scenario protects usable battery energy.";
+ 227:     } else if (efficiencyShiftMetric >= reserveShiftMetric && Math.abs(efficiencyDelta) >= 3) {
+ 228:       dominantConstraint = "Efficiency is the dominant limiter. Conversion quality is materially changing how much of the installed battery capacity becomes usable runtime.";
+ 229:     } else if (Math.abs(loadDeltaPct) >= 10) {
+ 230:       dominantConstraint = "Load difference is the dominant limiter. Runtime is moving primarily because one scenario is carrying a meaningfully different demand level.";
+ 231:     } else {
+ 232:       dominantConstraint = "Battery capacity difference is the dominant limiter. Installed energy is doing most of the work in separating the two runtime outcomes.";
+ 233:     }
+ 234: 
+ 235:     let guidance = "";
+ 236:     if (Math.abs(pctChange) >= 40) {
+ 237:       guidance = `${betterLabel} is the stronger runtime design on paper, but validate whether that advantage comes from realistic assumptions and not overly optimistic efficiency or reserve settings.`;
+ 238:     } else if (Math.abs(pctChange) >= 15) {
+ 239:       guidance = "Use the better-performing scenario as the planning baseline, then review whether the weaker scenario can be improved through modest battery, efficiency, or reserve changes.";
+ 240:     } else {
+ 241:       guidance = "Since runtime is close, choose based on cost, space, thermal behavior, or maintenance preference rather than expecting a dramatic runtime advantage.";
+ 242:     }
+ 243: 
+ 244:     const runtimeLeader = deltaHrs > 0
+ 245:       ? `Scenario B +${fmtHrs(Math.abs(deltaHrs))}`
+ 246:       : deltaHrs < 0
+ 247:         ? `Scenario A +${fmtHrs(Math.abs(deltaHrs))}`
+ 248:         : "Tie";
+ 249: 
+ 250:     const usableLeader = usableWhDelta > 0
+ 251:       ? `Scenario B +${fmtWh(Math.abs(usableWhDelta))}`
+ 252:       : usableWhDelta < 0
+ 253:         ? `Scenario A +${fmtWh(Math.abs(usableWhDelta))}`
+ 254:         : "Tie";
+ 255: 
+ 256:     return {
+ 257:       ok: true,
+ 258:       A,
+ 259:       B,
+ 260:       deltaHrs,
+ 261:       pctChange,
+ 262:       usableWhDelta,
+ 263:       efficiencyDelta,
+ 264:       reserveDeltaPct,
+ 265:       loadDeltaPct,
+ 266:       comparisonClass,
+ 267:       betterLabel,
+ 268:       runtimeLeader,
+ 269:       usableLeader,
+ 270:       runtimeGapMetric,
+ 271:       usableEnergyGapMetric,
+ 272:       efficiencyShiftMetric,
+ 273:       reserveShiftMetric,
+ 274:       status: statusPack.status,
+ 275:       interpretation,
+ 276:       dominantConstraint,
+ 277:       guidance
+ 278:     };
+ 279:   }
+ 280: 
+ 281:   function renderError(message) {
+ 282:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+
+--- CORE BLOCK 3 ---
+ 303:         { label: "Scenario B Usable Energy", value: fmtWh(data.B.usableWh) },
+ 304:         { label: "% Change vs A", value: Number.isFinite(data.pctChange) ? fmtPct(data.pctChange) : "—" },
+ 305:         { label: "Efficiency Shift", value: fmtPct(data.efficiencyDelta) },
+ 306:         { label: "Reserve Shift", value: fmtPct(data.reserveDeltaPct) },
+ 307:         { label: "Comparison Result", value: data.comparisonClass }
+ 308:       ],
+ 309:       status: data.status,
+ 310:       interpretation: data.interpretation,
+ 311:       dominantConstraint: data.dominantConstraint,
+ 312:       guidance: data.guidance,
+ 313:       chart: {
+ 314:         labels: [
+ 315:           "Runtime Advantage",
+ 316:           "Usable Energy Advantage",
+ 317:           "Efficiency Gap",
+ 318:           "Reserve Policy Gap"
+ 319:         ],
+ 320:         values: [
+ 321:           Number(data.runtimeGapMetric.toFixed(1)),
+ 322:           Number(data.usableEnergyGapMetric.toFixed(1)),
+ 323:           Number(data.efficiencyShiftMetric.toFixed(1)),
+ 324:           Number(data.reserveShiftMetric.toFixed(1))
+ 325:         ],
+ 326:         displayValues: [
+ 327:           data.runtimeLeader,
+ 328:           data.usableLeader,
+ 329:           fmtPct(Math.abs(data.efficiencyDelta)),
+ 330:           fmtPct(Math.abs(data.reserveDeltaPct))
+ 331:         ],
+ 332:         referenceValue: 15,
+ 333:         healthyMax: 15,
+ 334:         watchMax: 35,
+ 335:         axisTitle: "Comparison Difference Pressure",
+ 336:         referenceLabel: "Meaningful Difference",
+ 337:         healthyLabel: "Minor",
+ 338:         watchLabel: "Moderate",
+ 339:         riskLabel: "Large",
+ 340:         chartMax: 100
+ 341:       }
+ 342:     });
+ 343:   }
+ 344: 
+ 345:   function calculate() {
+ 346:     const data = calculateModel();
+ 347:     if (!data.ok) return renderError(data.message);
+ 348:     renderSuccess(data);
+ 349:   }
+ 350: 
+ 351:   function resetForm() {
+ 352:     applyDefaults();
+ 353:     invalidate();
+ 354:   }
+ 355: 
+ 356:   function invalidate() {
+ 357:     ScopedLabsAnalyzer.invalidate({
+ 358:       resultsEl: els.results,
+ 359:       analysisEl: els.analysis,
+ 360:       existingChartRef: chartRef,
+ 361:       existingWrapRef: chartWrapRef,
+ 362:       emptyMessage: "Enter values and press Calculate."
+ 363:     });
+ 364:   }
+ 365: 
+ 366:   function bind() {
+ 367:     [
+ 368:       "a_load_w", "a_batt_wh", "a_eff_pct", "a_reserve_pct",
+ 369:       "b_load_w", "b_batt_wh", "b_eff_pct", "b_reserve_pct"
+ 370:     ].forEach((id) => {
+ 371:       const el = $(id);
+ 372:       if (!el) return;
+ 373:       el.addEventListener("input", invalidate);
+ 374:       el.addEventListener("change", invalidate);
+ 375:     });
+ 376: 
+ 377:     els.calc?.addEventListener("click", calculate);
+ 378:     els.reset?.addEventListener("click", resetForm);
+ 379:   }
+ 380: 
+ 381:   function boot() {
+ 382:     applyDefaults();
+ 383:     bind();
+ 384:     invalidate();
+ 385: 
+ 386:     const year = document.querySelector("[data-year]");
+ 387:     if (year) year.textContent = new Date().getFullYear();
+ 388:   }
+ 389: 
+ 390:   window.addEventListener("DOMContentLoaded", () => {
+ 391:     let unlocked = unlockCategoryPage();
+ 392:     if (unlocked) boot();
+ 393: 
+ 394:     setTimeout(() => {
+ 395:       unlocked = unlockCategoryPage();
+ 396:       if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+ 397:         els.toolCard.dataset.initialized = "true";
+ 398:         boot();
+ 399:       }
+ 400:     }, 400);
+ 401:   });
+ 402: })();
+
+
+============================================================
+TOOL: ups-runtime
+============================================================
+Title: UPS Runtime Estimator
+Tier: pro
+Meta description: Estimate runtime from projected load, UPS capacity, and usable battery watt-hours.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Estimated load (Watts)
+- UPS rating (VA)
+- Power factor (0.50–1.00)
+- Battery capacity (Wh)
+- Inverter efficiency (%)
+- Battery health / derate (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- loadW
+- upsVA
+- pf
+- batteryWh
+- effPct
+- deratePct
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 132:   }
+ 133: 
+ 134:   function writePipelineResult(payload) {
+ 135:     try {
+ 136:       sessionStorage.setItem(
+ 137:         FLOW_KEYS[STEP],
+ 138:         JSON.stringify({
+ 139:           category: CATEGORY,
+ 140:           step: STEP,
+ 141:           ts: Date.now(),
+ 142:           data: payload
+ 143:         })
+ 144:       );
+ 145:     } catch {}
+ 146:   }
+ 147: 
+ 148:   function renderFlowNote() {
+ 149:     const incoming = readPipelineInput();
+ 150: 
+ 151:     if (!incoming || !incoming.data || incoming.step !== PREVIOUS_STEP) {
+ 152:       if (els.flowNote) {
+ 153:         els.flowNote.hidden = true;
+ 154:         els.flowNote.innerHTML = "";
+ 155:       }
+ 156:       return;
+ 157:     }
+ 158: 
+ 159:     importedPayload = incoming;
+ 160:     const data = incoming.data || {};
+ 161:     const loadW =
+ 162:       Number(data.recommendedCapacityWatts) ||
+ 163:       Number(data.designLoadWatts) ||
+ 164:       Number(data.baseLoadWatts) ||
+ 165:       0;
+ 166: 
+ 167:     if (loadW > 0 && els.loadW && (!els.loadW.value || Number(els.loadW.value) === 250)) {
+ 168:       els.loadW.value = String(Math.round(loadW));
+ 169:     }
+ 170: 
+ 171:     const lines = [];
+ 172:     if (Number.isFinite(Number(data.baseLoadWatts))) {
+ 173:       lines.push(`Base load <strong>${fmt0(Number(data.baseLoadWatts))} W</strong>`);
+ 174:     }
+ 175:     if (Number.isFinite(Number(data.designLoadWatts))) {
+ 176:       lines.push(`Projected design load <strong>${fmt0(Number(data.designLoadWatts))} W</strong>`);
+ 177:     }
+ 178:     if (Number.isFinite(Number(data.growthPct))) {
+ 179:       lines.push(`Growth <strong>${fmt1(Number(data.growthPct))}%</strong>`);
+ 180:     }
+ 181:     if (Number.isFinite(Number(data.headroomPct))) {
+ 182:       lines.push(`Headroom <strong>${fmt1(Number(data.headroomPct))}%</strong>`);
+ 183:     }
+ 184: 
+ 185:     if (els.flowNote && lines.length) {
+ 186:       els.flowNote.innerHTML = `
+ 187:         <strong>Flow Context</strong><br>
+ 188:         Imported from Load Growth.<br>
+ 189:         ${lines.join("<br>")}
+ 190:         <br><br>
+ 191:         Review values and click <strong>Calculate</strong>.
+ 192:       `;
+ 193:       els.flowNote.hidden = false;
+ 194:     }
+ 195:   }
+ 196: 
+ 197:   function invalidate() {
+ 198:     ScopedLabsAnalyzer.invalidate({
+ 199:       resultsEl: els.results,
+ 200:       analysisEl: els.analysis,
+ 201:       existingChartRef: chartRef,
+ 202:       existingWrapRef: chartWrapRef,
+ 203:       flowKey: FLOW_KEYS[STEP],
+ 204:       category: CATEGORY,
+ 205:       step: STEP,
+ 206:       lane: LANE,
+ 207:       emptyMessage: "Enter values and calculate."
+ 208:     });
+ 209:     hideContinue();
+ 210:     renderFlowNote();
+ 211:   }
+ 212: 
+ 213:   function getInputs() {
+ 214:     const loadW = num(els.loadW);
+ 215:     const upsVA = num(els.upsVA);
+ 216:     const pf = ScopedLabsAnalyzer.clamp(num(els.pf), 0.5, 1.0);
+ 217:     const batteryWh = num(els.batteryWh);
+ 218:     const effPct = ScopedLabsAnalyzer.clamp(num(els.effPct), 50, 98);
+ 219:     const deratePct = ScopedLabsAnalyzer.clamp(num(els.deratePct), 50, 100);
+ 220: 
+ 221:     if (
+ 222:       !Number.isFinite(loadW) || loadW <= 0 ||
+ 223:       !Number.isFinite(upsVA) || upsVA <= 0 ||
+ 224:       !Number.isFinite(batteryWh) || batteryWh <= 0
+ 225:     ) {
+ 226:       return {
+ 227:         ok: false,
+ 228:         message: "Load W, UPS VA, and Battery Wh must be greater than 0."
+ 229:       };
+ 230:     }
+ 231: 
+ 232:     return {
+ 233:       ok: true,
+ 234:       loadW,
+ 235:       upsVA,
+ 236:       pf,
+ 237:       batteryWh,
+ 238:       effPct,
+ 239:       deratePct
+ 240:     };
+ 241:   }
+ 242: 
+ 243:   function calculateModel() {
+ 244:     const input = getInputs();
+ 245:     if (!input.ok) return input;
+ 246: 
+ 247:     const upsWattCap = input.upsVA * input.pf;
+ 248:     const loadPct = (input.loadW / upsWattCap) * 100;
+ 249:     const usableWh = input.batteryWh * (input.effPct / 100) * (input.deratePct / 100);
+ 250:     const runtimeHrs = usableWh / input.loadW;
+ 251:     const runtimeMin = runtimeHrs * 60;
+ 252: 
+ 253:     const overloadMetric = input.loadPct > 100 ? 100 : loadPct;
+ 254:     const runtimeTightnessMetric =
+ 255:       runtimeMin >= 30 ? Math.max(0, 100 - runtimeMin) :
+ 256:       runtimeMin >= 10 ? 60 + (30 - runtimeMin) * 2 :
+ 257:       Math.min(100, 85 + (10 - runtimeMin));
+ 258:     const energyMarginMetric =
+ 259:       input.batteryWh > 0 ? Math.min((usableWh / input.batteryWh) * 100, 100) : 0;
+ 260: 
+ 261:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 262:       compositeScore: Math.max(overloadMetric, runtimeTightnessMetric, 100 - energyMarginMetric),
+ 263:       metrics: [
+ 264:         {
+ 265:           label: "Load Pressure",
+ 266:           value: Number(Math.min(loadPct, 100).toFixed(1)),
+ 267:           displayValue: fmtPct(loadPct, 1)
+ 268:         },
+ 269:         {
+ 270:           label: "Runtime Tightness",
+ 271:           value: Number(runtimeTightnessMetric.toFixed(1)),
+ 272:           displayValue: fmtMinutes(runtimeMin)
+ 273:         },
+ 274:         {
+ 275:           label: "Usable Energy Loss",
+ 276:           value: Number((100 - energyMarginMetric).toFixed(1)),
+ 277:           displayValue: fmtWh(usableWh)
+ 278:         }
+ 279:       ],
+ 280:       healthyMax: 60,
+ 281:       watchMax: 85
+ 282:     });
+ 283: 
+ 284:     let runtimeClass = "Healthy Runtime Margin";
+ 285:     if (input.loadW > upsWattCap) {
+ 286:       runtimeClass = "UPS Overload Risk";
+ 287:     } else if (runtimeMin < 10) {
+ 288:       runtimeClass = "Thin Runtime Margin";
+ 289:     } else if (runtimeMin < 30) {
+ 290:       runtimeClass = "Tight Runtime Margin";
+ 291:     }
+ 292: 
+ 293:     let interpretation = `A ${fmtWatts(input.loadW)} design load against a ${fmt0(input.upsVA)} VA UPS at power factor ${fmt1(input.pf)} yields about ${fmtWatts(upsWattCap)} of usable UPS watt capacity. With ${fmtWh(input.batteryWh)} installed battery, ${fmtPct(input.effPct, 0)} inverter efficiency, and ${fmtPct(input.deratePct, 0)} battery derate, usable battery energy is about ${fmtWh(usableWh)} and estimated runtime is about ${fmtMinutes(runtimeMin)} (${fmtHours(runtimeHrs)}).`;
+ 294: 
+ 295:     if (input.loadW > upsWattCap) {
+ 296:       interpretation += ` The design load exceeds usable UPS watt capacity, so runtime math becomes secondary to overload risk. This is not a safe operating point.`;
+ 297:     } else if (runtimeMin < 10) {
+ 298:       interpretation += ` Runtime is very limited, so even short outages or degraded batteries can collapse resilience quickly.`;
+ 299:     } else if (runtimeMin < 30) {
+ 300:       interpretation += ` Runtime is workable for brief outages, but the buffer is not generous. Aging batteries, cold rooms, or load spikes can erode this quickly.`;
+ 301:     } else {
+ 302:       interpretation += ` Runtime margin is reasonably healthy for planning purposes, assuming the battery condition and environmental assumptions are realistic.`;
+ 303:     }
+ 304: 
+ 305:     let dominantConstraint = "";
+ 306:     if (loadPct > 100) {
+ 307:       dominantConstraint = "Load pressure is the dominant limiter. The projected demand is outrunning usable UPS watt capacity before battery runtime even becomes the main issue.";
+ 308:     } else if (runtimeMin < 30) {
+ 309:       dominantConstraint = "Runtime tightness is the dominant limiter. Available battery energy is not creating much outage headroom once the projected design load is applied.";
+ 310:     } else if ((100 - energyMarginMetric) > 20) {
+ 311:       dominantConstraint = "Usable energy loss is the dominant limiter. Efficiency and battery derate assumptions are materially reducing how much of the installed battery energy actually reaches the load.";
+ 312:     } else {
+ 313:       dominantConstraint = "The UPS design assumptions are balanced. Capacity, usable energy, and runtime margin remain in a practical range.";
+ 314:     }
+ 315: 
+ 316:     let guidance = "";
+ 317:     if (loadPct > 100) {
+ 318:       guidance = "Reduce projected load, increase UPS size, or revisit the power factor assumption before treating this runtime result as deployable.";
+ 319:     } else if (runtimeMin < 10) {
+ 320:       guidance = "Treat this as a weak runtime design. Increase battery energy, reduce load, or relax outage expectations before moving on to battery-bank sizing.";
+ 321:     } else if (runtimeMin < 30) {
+ 322:       guidance = "The design is workable but tight. Validate whether 10–30 minutes really meets the operating goal before carrying this into final battery sizing.";
+ 323:     } else {
+ 324:       guidance = "This is a workable UPS runtime baseline. Continue to Battery Bank Sizer next so stored energy planning stays aligned with the validated design load.";
+ 325:     }
+ 326: 
+ 327:     return {
+ 328:       ok: true,
+ 329:       ...input,
+ 330:       upsWattCap,
+ 331:       loadPct,
+ 332:       usableWh,
+ 333:       runtimeHrs,
+ 334:       runtimeMin,
+ 335:       runtimeClass,
+ 336:       status: statusPack.status,
+ 337:       interpretation,
+ 338:       dominantConstraint,
+ 339:       guidance
+ 340:     };
+ 341:   }
+ 342: 
+ 343:   function renderError(message) {
+ 344:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 345:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 346:     hideContinue();
+ 347:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 348:   }
+ 349: 
+ 350:   function renderSuccess(data) {
+ 351:     ScopedLabsAnalyzer.renderOutput({
+ 352:       resultsEl: els.results,
+ 353:       analysisEl: els.analysis,
+ 354:       existingChartRef: chartRef,
+ 355:       existingWrapRef: chartWrapRef,
+ 356:       summaryRows: [
+ 357:         { label: "Usable UPS Watt Capacity", value: fmtWatts(data.upsWattCap) },
+ 358:         { label: "Load as % of Capacity", value: fmtPct(data.loadPct, 1) },
+ 359:         { label: "Estimated Runtime", value: `${fmtMinutes(data.runtimeMin)} (${fmtHours(data.runtimeHrs)})` },
+ 360:         { label: "Runtime Result", value: data.runtimeClass }
+ 361:       ],
+ 362:       derivedRows: [
+ 363:         { label: "Estimated Load", value: fmtWatts(data.loadW) },
+ 364:         { label: "UPS Rating", value: `${fmt0(data.upsVA)} VA` },
+ 365:         { label: "Power Factor", value: fmt1(data.pf) },
+ 366:         { label: "Installed Battery Energy", value: fmtWh(data.batteryWh) },
+ 367:         { label: "Usable Battery Energy", value: fmtWh(data.usableWh) },
+ 368:         { label: "Inverter Efficiency", value: fmtPct(data.effPct, 0) },
+ 369:         { label: "Battery Derate", value: fmtPct(data.deratePct, 0) }
+ 370:       ],
+ 371:       status: data.status,
+ 372:       interpretation: data.interpretation,
+ 373:       dominantConstraint: data.dominantConstraint,
+ 374:       guidance: data.guidance,
+ 375:       chart: {
+ 376:         labels: [
+ 377:           "Load Pressure",
+ 378:           "Runtime Tightness",
+ 379:           "Usable Energy Loss"
+ 380:         ],
+ 381:         values: [
+ 382:           Number(Math.min(data.loadPct, 100).toFixed(1)),
+ 383:           Number((
+ 384:             data.runtimeMin >= 30 ? Math.max(0, 100 - data.runtimeMin) :
+ 385:             data.runtimeMin >= 10 ? 60 + (30 - data.runtimeMin) * 2 :
+ 386:             Math.min(100, 85 + (10 - data.runtimeMin))
+ 387:           ).toFixed(1)),
+ 388:           Number((100 - ((data.usableWh / data.batteryWh) * 100)).toFixed(1))
+ 389:         ],
+ 390:         displayValues: [
+ 391:           fmtPct(data.loadPct, 1),
+ 392:           fmtMinutes(data.runtimeMin),
+ 393:           fmtWh(data.usableWh)
+ 394:         ],
+ 395:         referenceValue: 60,
+ 396:         healthyMax: 60,
+ 397:         watchMax: 85,
+ 398:         axisTitle: "Runtime Risk Pressure",
+ 399:         referenceLabel: "Comfort Band",
+ 400:         healthyLabel: "Healthy",
+ 401:         watchLabel: "Watch",
+ 402:         riskLabel: "Risk",
+ 403:         chartMax: 100
+ 404:       }
+ 405:     });
+ 406: 
+ 407:     writePipelineResult({
+ 408:       source: "UPS Runtime",
+ 409:       loadW: data.loadW,
+ 410:       upsVA: data.upsVA,
+ 411:       powerFactor: data.pf,
+ 412:       batteryWh: data.batteryWh,
+ 413:       effPct: data.effPct,
+ 414:       deratePct: data.deratePct,
+ 415:       usableWh: data.usableWh,
+ 416:       upsWattCap: data.upsWattCap,
+ 417:       loadPct: data.loadPct,
+ 418:       runtimeHrs: data.runtimeHrs,
+ 419:       runtimeMin: data.runtimeMin,
+ 420:       requiredUsableWh: data.usableWh,
+ 421:       targetRuntimeHours: data.runtimeHrs,
+ 422:       designLoadWatts: data.loadW,
+ 423:       importedFrom: importedPayload?.step || null,
+ 424:       interpretation: data.interpretation,
+ 425:       guidance: data.guidance
+ 426:     });
+ 427: 
+ 428:     showContinue();
+ 429:   }
+ 430: 
+ 431:   function writePipelineResult(payload) {
+ 432:     try {
+ 433:       sessionStorage.setItem(
+ 434:         FLOW_KEYS[STEP],
+ 435:         JSON.stringify({
+ 436:           category: CATEGORY,
+ 437:           step: STEP,
+ 438:           ts: Date.now(),
+ 439:           data: payload
+ 440:         })
+ 441:       );
+ 442:     } catch {}
+ 443:   }
+ 444: 
+ 445:   function calculate() {
+ 446:     const data = calculateModel();
+ 447:     if (!data.ok) return renderError(data.message);
+ 448:     renderSuccess(data);
+ 449:   }
+ 450: 
+ 451:   function resetAll() {
+ 452:     if (els.loadW) els.loadW.value = "250";
+ 453:     if (els.upsVA) els.upsVA.value = "1500";
+ 454:     if (els.pf) els.pf.value = "0.90";
+ 455:     if (els.batteryWh) els.batteryWh.value = "300";
+ 456:     if (els.effPct) els.effPct.value = "85";
+ 457:     if (els.deratePct) els.deratePct.value = "80";
+ 458:     importedPayload = null;
+ 459:     invalidate();
+ 460:   }
+ 461: 
+ 462:   function bind() {
+ 463:     els.calc?.addEventListener("click", calculate);
+ 464:     els.reset?.addEventListener("click", resetAll);
+ 465: 
+ 466:     [els.loadW, els.upsVA, els.pf, els.batteryWh, els.effPct, els.deratePct].forEach((el) => {
+ 467:       if (!el) return;
+ 468: 
+ 469:       el.addEventListener("keydown", (e) => {
+ 470:         if (e.key === "Enter") {
+ 471:           e.preventDefault();
+ 472:           calculate();
+ 473:         }
+ 474:       });
+ 475: 
+ 476:       el.addEventListener("input", invalidate);
+ 477:       el.addEventListener("change", invalidate);
+ 478:     });
+ 479:   }
+ 480: 
+ 481:   function boot() {
+ 482:     bind();
+ 483:     renderFlowNote();
+ 484:     hideContinue();
+ 485:     invalidate();
+ 486: 
+ 487:     const year = document.querySelector("[data-year]");
+ 488:     if (year) year.textContent = new Date().getFullYear();
+ 489:   }
+ 490: 
+ 491:   window.addEventListener("DOMContentLoaded", () => {
+ 492:     let unlocked = unlockCategoryPage();
+ 493:     if (unlocked) boot();
+ 494: 
+ 495:     setTimeout(() => {
+ 496:       unlocked = unlockCategoryPage();
+ 497:       if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+ 498:         els.toolCard.dataset.initialized = "true";
+ 499:         boot();
+ 500:       }
+ 501:     }, 400);
+ 502:   });
+ 503: })();
+
+
+============================================================
+TOOL: ups-runtime-advanced
+============================================================
+Title: UPS Runtime (Advanced)
+Tier: pro
+Meta description: (missing)
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": false,
+  "helpJs": false,
+  "analyzer": false
+}
+
+Input labels:
+- Load Input Mode Watts (W) Volts + Amps
+- Load (Watts)
+- Load Voltage (V)
+- Load Amps (A)
+- UPS Rating (VA)
+- Power Factor (0.5–1.0)
+- Battery Input Mode Watt-hours (Wh) Volts + Amp-hours
+- Battery Capacity (Wh)
+- Battery Voltage (V)
+- Battery Capacity (Ah)
+- Efficiency (%)
+- Battery Health / Derate (%)
+- Planning: Load Growth (% / year)
+- Planning Horizon (years)
+- Target Runtime (minutes)
+
+Important IDs/names:
+- viewport
+- robots
+- lockedCard
+- toolCard
+- loadMode
+- loadW
+- loadV
+- loadA
+- upsVA
+- pf
+- battMode
+- batteryWh
+- batteryV
+- batteryAh
+- effPct
+- deratePct
+- growthPct
+- years
+- targetMin
+- calc
+- reset
+- copy
+- out
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  65:   function wattsFromLoad() {
+  66:     const mode = els.loadMode.value;
+  67: 
+  68:     if (mode === "va") {
+  69:       const v = num(els.loadV);
+  70:       const a = num(els.loadA);
+  71:       if (!Number.isFinite(v) || v <= 0 || !Number.isFinite(a) || a <= 0) return NaN;
+  72:       return v * a;
+  73:     }
+  74: 
+  75:     const w = num(els.loadW);
+  76:     if (!Number.isFinite(w) || w <= 0) return NaN;
+  77:     return w;
+  78:   }
+
+--- CORE BLOCK 2 ---
+  88:     }
+  89: 
+  90:     const wh = num(els.batteryWh);
+  91:     if (!Number.isFinite(wh) || wh <= 0) return NaN;
+  92:     return wh;
+  93:   }
+  94: 
+  95:   function compute(loadW, batteryWh, upsVA, pf, effPct, deratePct) {
+  96:     const upsWattCap = upsVA * pf;
+  97:     const loadPct = (loadW / upsWattCap) * 100;
+  98: 
+  99:     const usableWh = batteryWh * (effPct / 100) * (deratePct / 100);
+ 100: 
+ 101:     const runtimeHrs = usableWh / loadW;
+ 102:     const runtimeMin = runtimeHrs * 60;
+ 103: 
+ 104:     return {
+ 105:       upsWattCap,
+ 106:       loadPct,
+ 107:       usableWh,
+ 108:       runtimeMin,
+ 109:       runtimeHrs,
+ 110:       overload: loadW > upsWattCap,
+ 111:     };
+ 112:   }
+ 113: 
+ 114:   function statusFor(result) {
+ 115:     if (result.overload) {
+ 116:       return {
+ 117:         label: "RED",
+ 118:         note: "Overload risk: estimated load exceeds usable UPS watt capacity.",
+ 119:       };
+ 120:     }
+ 121:     if (result.runtimeMin >= 30) {
+ 122:       return {
+ 123:         label: "GREEN",
+ 124:         note: "Healthy buffer for typical power blips. Still account for aging and spikes.",
+ 125:       };
+ 126:     }
+ 127:     if (result.runtimeMin >= 10) {
+ 128:       return {
+ 129:         label: "YELLOW",
+ 130:         note: "Moderate buffer. Older batteries/spikes can push you into trouble.",
+ 131:       };
+ 132:     }
+ 133:     return {
+ 134:       label: "RED",
+ 135:       note: "Thin buffer. Drops likely during brief outages or load spikes.",
+ 136:     };
+ 137:   }
+ 138: 
+ 139:   function calc() {
+ 140:     const loadW = wattsFromLoad();
+ 141:     const upsVA = num(els.upsVA);
+ 142:     const pf = clamp(num(els.pf), 0.5, 1.0);
+ 143:     const batteryWh = whFromBattery();
+ 144:     const effPct = clamp(num(els.effPct), 50, 98);
+ 145:     const deratePct = clamp(num(els.deratePct), 50, 100);
+ 146: 
+ 147:     const growthPct = clamp(num(els.growthPct), 0, 50);
+ 148:     const years = clamp(num(els.years), 0, 25);
+ 149:     const targetMin = clamp(num(els.targetMin), 1, 600);
+ 150: 
+ 151:     if (
+ 152:       !Number.isFinite(loadW) || loadW <= 0 ||
+ 153:       !Number.isFinite(upsVA) || upsVA <= 0 ||
+ 154:       !Number.isFinite(batteryWh) || batteryWh <= 0
+ 155:     ) {
+ 156:       els.out.innerHTML = `<div class="muted">Check inputs: Load, UPS VA, and Battery capacity must be &gt; 0.</div>`;
+ 157:       return;
+ 158:     }
+ 159: 
+ 160:     // Now
+ 161:     const now = compute(loadW, batteryWh, upsVA, pf, effPct, deratePct);
+ 162:     const nowStatus = statusFor(now);
+ 163: 
+ 164:     // Future load
+ 165:     const futureLoadW = loadW * Math.pow(1 + growthPct / 100, years);
+ 166:     const future = compute(futureLoadW, batteryWh, upsVA, pf, effPct, deratePct);
+ 167:     const futureStatus = statusFor(future);
+ 168: 
+ 169:     // Target solver (required Wh and Ah based on selected battery mode voltage)
+ 170:     const neededUsableWh = (targetMin / 60) * loadW;
+ 171:     const requiredRawWh = neededUsableWh / ((effPct / 100) * (deratePct / 100));
+ 172:     const battV = clamp(num(els.batteryV), 1, 1000);
+ 173:     const requiredAhAtV = requiredRawWh / battV;
+ 174: 
+ 175:     const summaryText =
+ 176:       `UPS Runtime (Advanced)\n` +
+ 177:       `Load: ${Math.round(loadW)} W\n` +
+ 178:       `UPS: ${Math.round(upsVA)} VA @ PF ${round(pf, 2)} (Cap ~ ${Math.round(now.upsWattCap)} W)\n` +
+ 179:       `Battery: ${Math.round(batteryWh)} Wh (usable ~ ${Math.round(now.usableWh)} Wh)\n` +
+ 180:       `Efficiency: ${round(effPct, 1)}% | Derate: ${round(deratePct, 1)}%\n` +
+ 181:       `Runtime (now): ${fmtMin(now.runtimeMin)} | Status: ${nowStatus.label}\n` +
+ 182:       `Planning: ${round(growthPct, 1)}%/yr for ${round(years, 1)} yrs → Load ${Math.round(futureLoadW)} W → Runtime ${fmtMin(future.runtimeMin)} | Status: ${futureStatus.label}\n` +
+ 183:       `Target ${Math.round(targetMin)} min → Required ~ ${Math.round(requiredRawWh)} Wh (~ ${round(requiredAhAtV, 1)} Ah @ ${Math.round(battV)} V)\n`;
+ 184: 
+ 185:     els.out.innerHTML = `
+ 186:       <div class="pill">NOW: ${nowStatus.label}</div>
+ 187:       <div class="muted" style="margin-top:.5rem;">
+ 188:         UPS usable watt capacity: <strong>${Math.round(now.upsWattCap)} W</strong><br>
+ 189:         Load as % of capacity: <strong>${Math.round(now.loadPct)}%</strong><br>
+ 190:         Usable battery energy: <strong>${Math.round(now.usableWh)} Wh</strong><br>
+ 191:         Runtime (ideal/adjusted): <strong>${fmtMin(now.runtimeMin)}</strong><br>
+ 192:         <span class="muted">${nowStatus.note}</span>
+ 193:       </div>
+ 194: 
+ 195:       <div class="spacer-md"></div>
+ 196: 
+ 197:       <div class="pill">PLANNING: ${futureStatus.label}</div>
+ 198:       <div class="muted" style="margin-top:.5rem;">
+ 199:         Load growth: <strong>${round(growthPct,1)}%</strong> / year for <strong>${round(years,1)}</strong> years<br>
+ 200:         Future load: <strong>${Math.round(futureLoadW)} W</strong><br>
+ 201:         Future runtime: <strong>${fmtMin(future.runtimeMin)}</strong><br>
+ 202:         <span class="muted">${futureStatus.note}</span>
+ 203:       </div>
+ 204: 
+ 205:       <div class="spacer-md"></div>
+ 206: 
+ 207:       <div class="pill">TARGET SOLVER</div>
+ 208:       <div class="muted" style="margin-top:.5rem;">
+ 209:         Target runtime: <strong>${Math.round(targetMin)} min</strong><br>
+ 210:         Required battery capacity: <strong>~ ${Math.round(requiredRawWh)} Wh</strong><br>
+ 211:         Approx Ah at battery voltage (${Math.round(battV)} V): <strong>~ ${round(requiredAhAtV,1)} Ah</strong>
+ 212:       </div>
+ 213: 
+ 214:       <div class="spacer-md"></div>
+ 215: 
+ 216:       <textarea class="card" style="width:100%; min-height:140px; background:rgba(0,0,0,.14);" readonly>${summaryText}</textarea>
+ 217:     `;
+ 218: 
+ 219:     // store for copy
+ 220:     els.out.dataset.summary = summaryText;
+ 221:   }
+ 222: 
+ 223:   function reset() {
+ 224:     els.loadMode.value = "w";
+ 225:     els.loadW.value = 250;
+ 226:     els.loadV.value = 120;
+ 227:     els.loadA.value = 2.1;
+ 228: 
+ 229:     els.upsVA.value = 1500;
+ 230:     els.pf.value = 0.90;
+ 231: 
+ 232:     els.battMode.value = "wh";
+ 233:     els.batteryWh.value = 300;
+ 234:     els.batteryV.value = 24;
+ 235:     els.batteryAh.value = 12.5;
+ 236: 
+ 237:     els.effPct.value = 85;
+ 238:     els.deratePct.value = 80;
+ 239: 
+ 240:     els.growthPct.value = 10;
+ 241:     els.years.value = 3;
+ 242: 
+ 243:     els.targetMin.value = 30;
+ 244: 
+ 245:     els.out.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+ 246:     delete els.out.dataset.summary;
+ 247:   }
+ 248: 
+ 249:   async function copySummary() {
+ 250:     const text = els.out.dataset.summary || "";
+ 251:     if (!text) {
+ 252:       els.out.innerHTML = `<div class="muted">Run Calculate first, then Copy Summary.</div>`;
+ 253:       return;
+ 254:     }
+ 255: 
+ 256:     try {
+ 257:       await navigator.clipboard.writeText(text);
+ 258:       // subtle confirmation without changing the whole UI
+ 259:       const stamp = `<div class="muted" style="margin-top:.75rem;">Copied summary to clipboard.</div>`;
+ 260:       if (!els.out.innerHTML.includes("Copied summary")) els.out.innerHTML += stamp;
+ 261:     } catch {
+ 262:       els.out.innerHTML += `<div class="muted" style="margin-top:.75rem;">Copy failed (browser blocked). Select the text box and copy manually.</div>`;
+ 263:     }
+ 264:   }
+ 265: 
+ 266:   els.calc.addEventListener("click", calc);
+ 267:   els.reset.addEventListener("click", reset);
+ 268:   els.copy.addEventListener("click", copySummary);
+ 269: 
+ 270:   // Initial state
+ 271:   reset();
+ 272: })();
+ 273: 
+
+
+============================================================
+TOOL: va-watts-amps
+============================================================
+Title: VA / Watts / Amps Converter
+Tier: free/unknown
+Meta description: Convert VA, watts, amps, voltage, and power factor for practical UPS, circuit, power supply, and equipment-load planning.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Voltage (V)
+- Power Factor (0.5 - 1.0)
+- Watts (W)
+- Volt-Amps (VA)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- volts
+- pf
+- watts
+- va
+- calc
+- reset
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- results
+- analysis-copy
+- next-step-row
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  61:   function fmtRatio(v, decimals = 2) {
+  62:     return Number.isFinite(v) ? v.toFixed(decimals) : "—";
+  63:   }
+
+--- CORE BLOCK 2 ---
+  75:   function savePipelineResult(payload) {
+  76:     try {
+  77:       sessionStorage.setItem(
+  78:         FLOW_KEYS[STEP],
+  79:         JSON.stringify({
+  80:           category: CATEGORY,
+  81:           step: STEP,
+  82:           ts: Date.now(),
+  83:           data: payload
+  84:         })
+  85:       );
+  86:     } catch (err) {
+  87:       console.warn("Could not save pipeline payload:", err);
+  88:     }
+  89:   }
+  90: 
+  91:   function invalidatePipelineResult() {
+  92:     try {
+  93:       const raw = sessionStorage.getItem(FLOW_KEYS[STEP]);
+  94:       if (!raw) return;
+  95:       const parsed = JSON.parse(raw);
+  96:       if (parsed && parsed.category === CATEGORY && parsed.step === STEP) {
+  97:         sessionStorage.removeItem(FLOW_KEYS[STEP]);
+  98:       }
+  99:     } catch (err) {
+ 100:       console.warn("Could not invalidate pipeline payload:", err);
+ 101:     }
+ 102:   }
+
+--- CORE BLOCK 3 ---
+ 154:       volts: V,
+ 155:       powerFactor: PF,
+ 156:       wattsIn: hasWatts ? W : null,
+ 157:       vaIn: hasVA ? VAin : null
+ 158:     };
+ 159:   }
+ 160: 
+ 161:   function calculateModel() {
+ 162:     const input = getInputs();
+ 163:     if (!input.ok) return input;
+ 164: 
+ 165:     let finalWatts = 0;
+ 166:     let finalVA = 0;
+ 167: 
+ 168:     if (Number.isFinite(input.wattsIn)) {
+ 169:       finalWatts = input.wattsIn;
+ 170:       finalVA = finalWatts / input.powerFactor;
+ 171:     } else {
+ 172:       finalVA = input.vaIn;
+ 173:       finalWatts = finalVA * input.powerFactor;
+ 174:     }
+ 175: 
+ 176:     const amps = finalVA / input.volts;
+ 177:     const kw = finalWatts / 1000;
+ 178:     const designWatts20 = finalWatts * 1.2;
+ 179:     const continuousWatts125 = finalWatts * 1.25;
+ 180:     const designVA20 = finalVA * 1.2;
+ 181:     const branchReferenceAmps = BRANCH_REFERENCE_AMPS;
+ 182:     const branchContinuousAmps = branchReferenceAmps * 0.8;
+ 183:     const branch80Watts = input.volts * branchContinuousAmps * input.powerFactor;
+ 184:     const utilizationPct80 = branch80Watts > 0 ? (finalWatts / branch80Watts) * 100 : 0;
+ 185: 
+ 186:     const pfPenaltyMetric = ScopedLabsAnalyzer.clamp((1 - input.powerFactor) * 100, 0, 100);
+ 187:     const branchUtilMetric = ScopedLabsAnalyzer.clamp(utilizationPct80, 0, 100);
+ 188:     const currentPressureMetric = ScopedLabsAnalyzer.clamp((amps / branchReferenceAmps) * 100, 0, 100);
+ 189: 
+ 190:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 191:       compositeScore: Math.max(branchUtilMetric, currentPressureMetric, pfPenaltyMetric),
+ 192:       metrics: [
+ 193:         {
+ 194:           label: "Branch Utilization",
+ 195:           value: branchUtilMetric,
+ 196:           displayValue: fmtPct(utilizationPct80)
+ 197:         },
+ 198:         {
+ 199:           label: "Current Pressure",
+ 200:           value: currentPressureMetric,
+ 201:           displayValue: fmtAmps(amps)
+ 202:         },
+ 203:         {
+ 204:           label: "Power Factor Penalty",
+ 205:           value: pfPenaltyMetric,
+ 206:           displayValue: fmtRatio(input.powerFactor, 2)
+ 207:         }
+ 208:       ],
+ 209:       healthyMax: 60,
+ 210:       watchMax: 85
+ 211:     });
+ 212: 
+ 213:     let planningClass = "Balanced Electrical Planning";
+ 214:     if (utilizationPct80 > 100) {
+ 215:       planningClass = "Over Continuous Planning Limit";
+ 216:     } else if (utilizationPct80 > 80) {
+ 217:       planningClass = "Approaching Continuous Limit";
+ 218:     } else if (input.powerFactor < 0.8) {
+ 219:       planningClass = "Low Power Factor Load";
+ 220:     }
+ 221: 
+ 222:     let interpretation = `At ${fmtVolts(input.volts)} and power factor ${fmtRatio(input.powerFactor, 2)}, the load converts to ${fmtWatts(finalWatts)} and ${fmtVA(finalVA)} with current draw of about ${fmtAmps(amps)}. A simple +20% growth headroom projects to about ${fmtWatts(designWatts20)}, while a 125% continuous-design reference is about ${fmtWatts(continuousWatts125)}. Against a ${fmtAmps(branchReferenceAmps, 0)} reference branch, the estimated 80% continuous-planning watt allowance is ${fmtWatts(branch80Watts)}.`;
+ 223: 
+ 224:     if (utilizationPct80 > 100) {
+ 225:       interpretation += ` This load exceeds a simple 80% continuous-planning threshold, so today's value is already too high for comfortable branch or UPS planning without resizing.`;
+ 226:     } else if (utilizationPct80 > 80) {
+ 227:       interpretation += ` The load is approaching a typical continuous-use planning threshold, so future growth and startup behavior matter more than the raw conversion alone suggests.`;
+ 228:     } else if (input.powerFactor < 0.8) {
+ 229:       interpretation += ` Power factor is low enough that apparent power rises materially above real power, which can make UPS and circuit sizing feel larger than watts alone would imply.`;
+ 230:     } else {
+ 231:       interpretation += ` The converted load is in a practical planning range, and the relationships between watts, VA, and amps are behaving normally.`;
+ 232:     }
+ 233: 
+ 234:     let dominantConstraint = "";
+ 235:     if (utilizationPct80 > 85) {
+ 236:       dominantConstraint = "Branch utilization is the dominant limiter. The converted load is consuming a large share of a simple continuous-planning allowance.";
+ 237:     } else if (amps > 16) {
+ 238:       dominantConstraint = "Current draw is the dominant limiter. Conductor, circuit, and upstream UPS sizing will feel the effect of this load level first.";
+ 239:     } else if (input.powerFactor < 0.8) {
+ 240:       dominantConstraint = "Power factor is the dominant limiter. Apparent power inflation is pushing VA and amperage upward relative to real watts.";
+ 241:     } else {
+ 242:       dominantConstraint = "The conversion is balanced. Voltage, power factor, and load remain in a practical range for upstream planning.";
+ 243:     }
+ 244: 
+ 245:     let guidance = "";
+ 246:     if (utilizationPct80 > 100) {
+ 247:       guidance = "Treat this as an overloaded planning point. Revisit branch size, UPS size, or expected connected load before moving forward.";
+ 248:     } else if (utilizationPct80 > 80) {
+ 249:       guidance = "Carry the projected design watts, not just the raw input value, into Load Growth so future power planning does not start from an already-tight baseline.";
+ 250:     } else {
+ 251:       guidance = "Use the converted watts and planning references as the baseline for Load Growth so the rest of the power pipeline starts from a realistic design input.";
+ 252:     }
+ 253: 
+ 254:     return {
+ 255:       ok: true,
+ 256:       volts: input.volts,
+ 257:       powerFactor: input.powerFactor,
+ 258:       watts: finalWatts,
+ 259:       va: finalVA,
+ 260:       amps,
+ 261:       kw,
+ 262:       designWatts20,
+ 263:       continuousWatts125,
+ 264:       designVA20,
+ 265:       branchReferenceAmps,
+ 266:       branchContinuousAmps,
+ 267:       branch80Watts,
+ 268:       utilizationPct80,
+ 269:       planningClass,
+ 270:       status: statusPack.status,
+ 271:       interpretation,
+ 272:       dominantConstraint,
+ 273:       guidance
+ 274:     };
+ 275:   }
+ 276: 
+ 277:   function renderError(message) {
+ 278:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 279:     hideContinue();
+ 280:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 281:   }
+ 282: 
+ 283:   function renderSuccess(data) {
+ 284:     ScopedLabsAnalyzer.renderOutput({
+ 285:       resultsEl: els.results,
+ 286:       analysisEl: els.analysis,
+ 287:       summaryRows: [
+ 288:         { label: "Watts", value: fmtWatts(data.watts) },
+ 289:         { label: "VA", value: fmtVA(data.va) },
+ 290:         { label: "Amps", value: fmtAmps(data.amps) },
+ 291:         { label: "Planning Result", value: data.planningClass }
+ 292:       ],
+ 293:       derivedRows: [
+ 294:         { label: "Voltage", value: fmtVolts(data.volts) },
+ 295:         { label: "Power Factor", value: fmtRatio(data.powerFactor, 2) },
+ 296:         { label: "+20% Growth Headroom", value: fmtWatts(data.designWatts20) },
+ 297:         { label: "125% Continuous Design", value: fmtWatts(data.continuousWatts125) },
+ 298:         { label: "+20% Design VA", value: fmtVA(data.designVA20) },
+ 299:         { label: "Reference Branch", value: fmtAmps(data.branchReferenceAmps, 0) },
+ 300:         { label: "80% Branch Planning Watts", value: fmtWatts(data.branch80Watts) },
+ 301:         { label: "Utilization vs 80% Planning", value: fmtPct(data.utilizationPct80) }
+ 302:       ],
+ 303:       status: data.status,
+ 304:       interpretation: data.interpretation,
+ 305:       dominantConstraint: data.dominantConstraint,
+ 306:       guidance: data.guidance,
+ 307:       chart: {
+ 308:         labels: ["Branch Utilization", "Current Pressure", "Power Factor Penalty"],
+ 309:         values: [
+ 310:           Number(ScopedLabsAnalyzer.clamp(data.utilizationPct80, 0, 100).toFixed(1)),
+ 311:           Number(ScopedLabsAnalyzer.clamp((data.amps / data.branchReferenceAmps) * 100, 0, 100).toFixed(1)),
+ 312:           Number(ScopedLabsAnalyzer.clamp((1 - data.powerFactor) * 100, 0, 100).toFixed(1))
+ 313:         ],
+ 314:         displayValues: [
+ 315:           fmtPct(data.utilizationPct80),
+ 316:           fmtAmps(data.amps),
+ 317:           fmtRatio(data.powerFactor, 2)
+ 318:         ],
+ 319:         referenceValue: 60,
+ 320:         healthyMax: 60,
+ 321:         watchMax: 85,
+ 322:         axisTitle: "Electrical Planning Pressure",
+ 323:         referenceLabel: "Comfort Band",
+ 324:         healthyLabel: "Healthy",
+ 325:         watchLabel: "Watch",
+ 326:         riskLabel: "Risk",
+ 327:         chartMax: 100
+ 328:       }
+ 329:     });
+ 330: 
+ 331:     savePipelineResult({
+ 332:       volts: data.volts,
+ 333:       powerFactor: data.powerFactor,
+ 334:       watts: data.watts,
+ 335:       va: data.va,
+ 336:       amps: data.amps,
+ 337:       kw: data.kw,
+ 338:       designWatts20: data.designWatts20,
+ 339:       continuousWatts125: data.continuousWatts125,
+ 340:       designVA20: data.designVA20,
+ 341:       branchReferenceAmps: data.branchReferenceAmps,
+ 342:       branchContinuousAmps: data.branchContinuousAmps,
+ 343:       branch80Watts: data.branch80Watts,
+ 344:       utilizationPct80: data.utilizationPct80,
+ 345:       baseLoadKw: data.kw,
+ 346:       loadWatts: data.watts,
+ 347:       designLoadWatts: data.designWatts20,
+ 348:       planningClass: data.planningClass,
+ 349:       interpretation: data.interpretation,
+ 350:       guidance: data.guidance
+ 351:     });
+ 352: 
+ 353:     showContinue();
+ 354:   }
+ 355: 
+ 356:   function calculate() {
+ 357:     const data = calculateModel();
+ 358:     if (!data.ok) return renderError(data.message);
+ 359:     renderSuccess(data);
+ 360:   }
+ 361: 
+ 362:   function reset() {
+ 363:     if (els.volts) els.volts.value = "120";
+ 364:     if (els.pf) els.pf.value = "0.90";
+ 365:     if (els.watts) els.watts.value = "";
+ 366:     if (els.va) els.va.value = "";
+ 367:     invalidate();
+ 368:   }
+ 369: 
+ 370:   function bind() {
+ 371:     els.calc?.addEventListener("click", calculate);
+ 372:     els.reset?.addEventListener("click", reset);
+ 373: 
+ 374:     ["volts", "pf", "watts", "va"].forEach((id) => {
+ 375:       const el = $(id);
+ 376:       if (!el) return;
+ 377: 
+ 378:       el.addEventListener("input", invalidate);
+ 379:       el.addEventListener("change", invalidate);
+ 380: 
+ 381:       el.addEventListener("keydown", (e) => {
+ 382:         if (e.key === "Enter") {
+ 383:           e.preventDefault();
+ 384:           calculate();
+ 385:         }
+ 386:       });
+ 387:     });
+ 388: 
+ 389:     els.continueBtn?.addEventListener("click", () => {
+ 390:       window.location.href = NEXT_URL;
+ 391:     });
+ 392:   }
+ 393: 
+ 394:   function init() {
+ 395:     bind();
+ 396:     renderFlowNote();
+ 397:     hideContinue();
+ 398:     invalidate();
+ 399: 
+ 400:     const year = document.querySelector("[data-year]");
+ 401:     if (year) year.textContent = new Date().getFullYear();
+ 402:   }
+ 403: 
+ 404:   if (document.readyState === "loading") {
+ 405:     document.addEventListener("DOMContentLoaded", init);
+ 406:   } else {
+ 407:     init();
+ 408:   }
+ 409: })();
+ 410: 
+
+
+============================================================
+TOOL: worst-case-runtime
+============================================================
+Title: Worst-Case Runtime Simulator
+Tier: pro
+Meta description: Stress-test runtime assumptions and compare normal-day versus worst-case outage duration.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Load (Watts)
+- UPS Rated Output (Watts)
+- Usable Battery Energy (Wh)
+- Inverter Efficiency (%)
+- Battery Health Derate (% loss)
+- Temperature Derate (% loss)
+- Load Spike Multiplier (x)
+- Runtime Floor Target (minutes)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- loadW
+- upsMaxW
+- usableWh
+- effPct
+- healthLossPct
+- tempLossPct
+- spikeX
+- floorMin
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 168:   function calculateModel() {
+ 169:     const input = getInputs();
+ 170:     if (!input.ok) return input;
+ 171: 
+ 172:     const overloadWorst = (input.loadW * input.spikeX) > input.upsMaxW;
+ 173: 
+ 174:     const baselineMin = minutesFromWh(input.usableWh, input.effPct, 0, 0, input.loadW, 1);
+ 175:     const worstMin = minutesFromWh(
+ 176:       input.usableWh,
+ 177:       input.effPct,
+ 178:       input.healthLossPct,
+ 179:       input.tempLossPct,
+ 180:       input.loadW,
+ 181:       input.spikeX
+ 182:     );
+ 183: 
+ 184:     const passWorst = worstMin >= input.floorMin && !overloadWorst;
+ 185:     const runtimeLossMin = baselineMin - worstMin;
+ 186:     const runtimeLossPct = baselineMin > 0 ? (runtimeLossMin / baselineMin) * 100 : 0;
+ 187: 
+ 188:     const worstLoad = input.loadW * input.spikeX;
+ 189:     const loadPressurePct = (worstLoad / input.upsMaxW) * 100;
+ 190: 
+ 191:     const overloadMetric = Math.min(loadPressurePct, 100);
+ 192:     const runtimeLossMetric = Math.min(Math.max(runtimeLossPct, 0), 100);
+ 193:     const floorGapMetric = worstMin >= input.floorMin
+ 194:       ? Math.max(0, 100 - worstMin)
+ 195:       : Math.min(100, 70 + (input.floorMin - worstMin) * 2);
+ 196: 
+ 197:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 198:       compositeScore: Math.max(overloadMetric, runtimeLossMetric, floorGapMetric),
+ 199:       metrics: [
+ 200:         {
+ 201:           label: "Load Pressure",
+ 202:           value: Number(overloadMetric.toFixed(1)),
+ 203:           displayValue: fmtPct(loadPressurePct, 1)
+ 204:         },
+ 205:         {
+ 206:           label: "Runtime Loss",
+ 207:           value: Number(runtimeLossMetric.toFixed(1)),
+ 208:           displayValue: fmtMin(runtimeLossMin, 1)
+ 209:         },
+ 210:         {
+ 211:           label: "Floor Tightness",
+ 212:           value: Number(floorGapMetric.toFixed(1)),
+ 213:           displayValue: `${fmtMin(worstMin, 1)} vs ${fmtMin(input.floorMin, 0)}`
+ 214:         }
+ 215:       ],
+ 216:       healthyMax: 60,
+ 217:       watchMax: 85
+ 218:     });
+ 219: 
+ 220:     let resultClass = "Worst-Case Acceptable";
+ 221:     if (overloadWorst) resultClass = "Worst-Case Overload";
+ 222:     else if (!passWorst) resultClass = "Worst-Case Runtime Fail";
+ 223:     else if (runtimeLossPct >= 40) resultClass = "Heavy Worst-Case Penalty";
+ 224: 
+ 225:     let interpretation = `Baseline runtime is about ${fmtMin(baselineMin, 1)}, while worst-case runtime drops to about ${fmtMin(worstMin, 1)} after applying ${fmtPct(input.healthLossPct, 0)} battery health loss, ${fmtPct(input.tempLossPct, 0)} temperature derate, ${fmtPct(100 - input.effPct, 0)} inverter loss, and a ${fmt(input.spikeX, 2)}x load spike. Worst-case instantaneous load becomes ${fmtWatts(worstLoad)}, compared with UPS capacity of ${fmtWatts(input.upsMaxW)}.`;
+ 226: 
+ 227:     if (overloadWorst) {
+ 228:       interpretation += ` The spike condition exceeds UPS output capability, so overload risk becomes the first failure mode before runtime math even matters.`;
+ 229:     } else if (!passWorst) {
+ 230:       interpretation += ` The design stays online, but worst-case runtime falls below the required floor target, so outage resilience is weaker than the planning goal.`;
+ 231:     } else if (runtimeLossPct >= 40) {
+ 232:       interpretation += ` The design still passes, but the bad-day penalty is large enough that aging, environment, and surge behavior are doing meaningful damage to resilience.`;
+ 233:     } else {
+ 234:       interpretation += ` Worst-case penalties are present but still reasonably controlled, so the runtime floor survives with usable planning margin.`;
+ 235:     }
+ 236: 
+ 237:     let dominantConstraint = "";
+ 238:     if (overloadWorst || loadPressurePct > 100) {
+ 239:       dominantConstraint = "Load pressure is the dominant limiter. The spike-adjusted demand is outrunning UPS output capability.";
+ 240:     } else if (!passWorst || worstMin < input.floorMin) {
+ 241:       dominantConstraint = "Runtime floor is the dominant limiter. The bad-day scenario erodes runtime below the minimum acceptable resilience target.";
+ 242:     } else if (runtimeLossPct >= 25) {
+ 243:       dominantConstraint = "Worst-case runtime loss is the dominant limiter. Derates and spike behavior are consuming too much of the original runtime margin.";
+ 244:     } else {
+ 245:       dominantConstraint = "The stress assumptions are reasonably balanced. Worst-case penalties remain within a practical planning range.";
+ 246:     }
+ 247: 
+ 248:     let guidance = "";
+ 249:     if (overloadWorst) {
+ 250:       guidance = "Reduce spike demand, increase UPS size, or separate startup surges before treating this system as resilient under worst-case conditions.";
+ 251:     } else if (!passWorst) {
+ 252:       guidance = "Increase usable battery energy, lower the floor target only if justified, or reduce worst-case load assumptions before depending on this design.";
+ 253:     } else if (runtimeLossPct >= 40) {
+ 254:       guidance = "The design passes, but with a heavy penalty. Recheck aging assumptions, room temperature, and startup surge behavior before finalizing it.";
+ 255:     } else {
+ 256:       guidance = "Worst-case margin is workable. Use this as the stress-tested planning baseline for final runtime and battery decisions.";
+ 257:     }
+ 258: 
+ 259:     return {
+ 260:       ok: true,
+ 261:       ...input,
+ 262:       overloadWorst,
+ 263:       baselineMin,
+ 264:       worstMin,
+ 265:       passWorst,
+ 266:       runtimeLossMin,
+ 267:       runtimeLossPct,
+ 268:       worstLoad,
+ 269:       loadPressurePct,
+ 270:       resultClass,
+ 271:       status: statusPack.status,
+ 272:       interpretation,
+ 273:       dominantConstraint,
+ 274:       guidance,
+ 275:       overloadMetric,
+ 276:       runtimeLossMetric,
+ 277:       floorGapMetric
+ 278:     };
+ 279:   }
+ 280: 
+ 281:   function renderError(message) {
+ 282:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 283:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 284:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 285:   }
+ 286: 
+ 287:   function renderSuccess(data) {
+ 288:     ScopedLabsAnalyzer.renderOutput({
+ 289:       resultsEl: els.results,
+ 290:       analysisEl: els.analysis,
+ 291:       existingChartRef: chartRef,
+ 292:       existingWrapRef: chartWrapRef,
+ 293:       summaryRows: [
+ 294:         { label: "Baseline Runtime", value: fmtMin(data.baselineMin, 1) },
+ 295:         { label: "Worst-Case Runtime", value: fmtMin(data.worstMin, 1) },
+ 296:         { label: "Floor Target", value: fmtMin(data.floorMin, 0) },
+ 297:         { label: "Worst-Case Result", value: data.resultClass }
+ 298:       ],
+ 299:       derivedRows: [
+ 300:         { label: "Baseline Load", value: fmtWatts(data.loadW) },
+ 301:         { label: "Worst-Case Spike Load", value: fmtWatts(data.worstLoad) },
+ 302:         { label: "UPS Rated Output", value: fmtWatts(data.upsMaxW) },
+ 303:         { label: "Usable Battery Energy", value: fmtWh(data.usableWh) },
+ 304:         { label: "Battery Health Loss", value: fmtPct(data.healthLossPct, 0) },
+ 305:         { label: "Temperature Loss", value: fmtPct(data.tempLossPct, 0) },
+ 306:         { label: "Inverter Efficiency", value: fmtPct(data.effPct, 0) },
+ 307:         { label: "Runtime Loss", value: fmtMin(data.runtimeLossMin, 1) }
+ 308:       ],
+ 309:       status: data.status,
+ 310:       interpretation: data.interpretation,
+ 311:       dominantConstraint: data.dominantConstraint,
+ 312:       guidance: data.guidance,
+ 313:       chart: {
+ 314:         labels: [
+ 315:           "Load Pressure",
+ 316:           "Runtime Loss",
+ 317:           "Floor Tightness"
+ 318:         ],
+ 319:         values: [
+ 320:           Number(data.overloadMetric.toFixed(1)),
+ 321:           Number(data.runtimeLossMetric.toFixed(1)),
+ 322:           Number(data.floorGapMetric.toFixed(1))
+ 323:         ],
+ 324:         displayValues: [
+ 325:           fmtPct(data.loadPressurePct, 1),
+ 326:           fmtMin(data.runtimeLossMin, 1),
+ 327:           `${fmtMin(data.worstMin, 1)} vs ${fmtMin(data.floorMin, 0)}`
+ 328:         ],
+ 329:         referenceValue: 60,
+ 330:         healthyMax: 60,
+ 331:         watchMax: 85,
+ 332:         axisTitle: "Worst-Case Runtime Pressure",
+ 333:         referenceLabel: "Comfort Band",
+ 334:         healthyLabel: "Healthy",
+ 335:         watchLabel: "Watch",
+ 336:         riskLabel: "Risk",
+ 337:         chartMax: 100
+ 338:       }
+ 339:     });
+ 340:   }
+ 341: 
+ 342:   function run() {
+ 343:     const data = calculateModel();
+ 344:     if (!data.ok) return renderError(data.message);
+ 345:     renderSuccess(data);
+ 346:   }
+ 347: 
+ 348:   function resetForm() {
+ 349:     applyDefaults();
+ 350:     invalidate();
+ 351:   }
+ 352: 
+ 353:   function bind() {
+ 354:     Object.keys(DEFAULTS).forEach((key) => {
+ 355:       const el = els[key];
+ 356:       if (!el) return;
+ 357:       el.addEventListener("input", invalidate);
+ 358:       el.addEventListener("change", invalidate);
+ 359:     });
+ 360: 
+ 361:     if (els.calc) els.calc.addEventListener("click", run);
+ 362:     if (els.reset) els.reset.addEventListener("click", resetForm);
+ 363:   }
+ 364: 
+ 365:   function boot() {
+ 366:     applyDefaults();
+ 367:     bind();
+ 368:     invalidate();
+ 369: 
+ 370:     const y = document.querySelector("[data-year]");
+ 371:     if (y) y.textContent = new Date().getFullYear();
+ 372:   }
+ 373: 
+ 374:   window.addEventListener("DOMContentLoaded", () => {
+ 375:     let unlocked = unlockCategoryPage();
+ 376:     if (unlocked) boot();
+ 377: 
+ 378:     setTimeout(() => {
+ 379:       unlocked = unlockCategoryPage();
+ 380:       if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+ 381:         els.toolCard.dataset.initialized = "true";
+ 382:         boot();
+ 383:       }
+ 384:     }, 400);
+ 385:   });
+ 386: })();
+ 387: 
