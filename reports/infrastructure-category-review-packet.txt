@@ -1,6 +1,6 @@
 # ScopedLabs Category Formula Review Packet
 Category: infrastructure
-Generated: 2026-04-27T22:48:45.535Z
+Generated: 2026-04-28T01:14:34.054Z
 Tools found: 10
 
 

@@ -1,6 +1,6 @@
 # ScopedLabs Category Formula Review Packet
 Category: thermal
-Generated: 2026-04-28T00:39:59.142Z
+Generated: 2026-04-28T01:14:34.662Z
 Tools found: 10
 
 

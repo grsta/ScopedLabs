@@ -1,6 +1,6 @@
 # ScopedLabs Category Formula Review Packet
 Category: compute
-Generated: 2026-04-27T04:36:34.014Z
+Generated: 2026-04-28T01:14:33.463Z
 Tools found: 10
 
 
@@ -1018,7 +1018,7 @@ Focused core logic:
  165:     const targetUsable = aggregate * util;
  166: 
  167:     const oversubscriptionPressure = ScopedLabsAnalyzer.clamp((targetUsable / Math.max(totalRaw, 0.001)) * 100, 0, 180);
- 168:     const singleFlowConstraint = ScopedLabsAnalyzer.clamp((speed / Math.max(targetUsable, 0.001)) * 100 * 1.1, 0, 180);
+ 168:     const singleFlowConstraint = ScopedLabsAnalyzer.clamp((targetUsable / Math.max(perFlowCap, 0.001)) * 100, 0, 180);
  169:     const distributionStress = ScopedLabsAnalyzer.clamp((1 - balanceEfficiency) * 140, 0, 180);
  170: 
  171:     const metrics = [
@@ -1536,7 +1536,7 @@ Flags: {
 Input labels:
 - Drive Size (TB)
 - Rebuild Speed (MB/s)
-- Array Utilization During Rebuild Light (50% effective speed) Moderate (70% effective speed) Heavy (85% effective speed) Dedicated (100% effective speed)
+- Array Utilization During Rebuild Light workload (85% effective speed) Moderate workload (70% effective speed) Heavy workload (50% effective speed) Dedicated rebuild window (100% effective speed)
 - RAID Type RAID 5 RAID 6 RAID 10
 - Verify / Scrub After Rebuild? No Yes (adds extra pass)
 - Report Title

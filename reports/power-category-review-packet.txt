@@ -1,6 +1,6 @@
 # ScopedLabs Category Formula Review Packet
 Category: power
-Generated: 2026-04-28T00:35:05.249Z
+Generated: 2026-04-28T01:14:34.542Z
 Tools found: 11
 
 

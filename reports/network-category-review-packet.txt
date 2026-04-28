@@ -1,6 +1,6 @@
 # ScopedLabs Category Formula Review Packet
 Category: network
-Generated: 2026-04-27T22:54:14.032Z
+Generated: 2026-04-28T01:14:34.186Z
 Tools found: 10
 
 
@@ -396,30 +396,6 @@ Focused core logic:
  402:   });
  403: })();
  404: 
- 405: function renderFlowNote() {
- 406:   // TODO: implement upstream flow-note carry-over
- 407: }
- 408: 
- 409: 
- 410: function calc() {
- 411:   // TODO: implement calculate handler
- 412: }
- 413: 
- 414: 
- 415: function invalidate() {
- 416:   ScopedLabsAnalyzer.invalidate({
- 417:     resultsEl: els.results,
- 418:     analysisEl: els.analysis,
- 419:     continueWrapEl: els.continueWrap,
- 420:     continueBtnEl: els.continueBtn,
- 421:     flowKey: FLOW_KEYS[STEP] || "",
- 422:     category: CATEGORY,
- 423:     step: STEP,
- 424:     lane: LANE,
- 425:     emptyMessage: "Enter values and press Calculate."
- 426:   });
- 427: }
- 428: 
 
 
 ============================================================
@@ -901,349 +877,391 @@ Important IDs/names:
 
 Focused core logic:
 --- CORE BLOCK 1 ---
- 123:     els.encodeMs.value = String(DEFAULTS.encodeMs);
- 124:     els.switchMs.value = String(DEFAULTS.switchMs);
- 125:     els.uplinkMs.value = String(DEFAULTS.uplinkMs);
- 126:     els.wanMs.value = String(DEFAULTS.wanMs);
- 127:     els.decodeMs.value = String(DEFAULTS.decodeMs);
- 128:     els.renderMs.value = String(DEFAULTS.renderMs);
- 129:     els.bufferMs.value = String(DEFAULTS.bufferMs);
- 130:     els.targetMs.value = String(DEFAULTS.targetMs);
- 131:   }
- 132: 
- 133:   function clearOwnState() {
- 134:     try {
- 135:       sessionStorage.removeItem(FLOW_KEYS.latency);
- 136:     } catch {}
- 137:   }
- 138: 
- 139:   function renderFlowContext() {
- 140:     const flow = getStoredFlow(FLOW_KEYS.oversub);
- 141: 
- 142:     if (!flow || !flow.data) {
- 143:       els.flowNote.hidden = false;
- 144:       els.flowNote.innerHTML = `
- 145:         <strong>Step 4 — Network pipeline:</strong><br>
- 146:         This is the final step of the Network pipeline. Use carried-forward transport assumptions to judge whether the design still feels responsive in practice.
- 147:       `;
- 148:       return null;
- 149:     }
- 150: 
- 151:     const data = flow.data;
- 152:     const peakUtil = ScopedLabsAnalyzer.safeNumber(
- 153:       data.peakUtilizationPct ?? data.coreUtilPct ?? data.transportUtilizationPct,
- 154:       NaN
- 155:     );
- 156:     const demandMbps = ScopedLabsAnalyzer.safeNumber(
- 157:       data.peakTotalMbps ?? data.coreDemandMbps,
- 158:       NaN
- 159:     );
- 160:     const transportMbps = ScopedLabsAnalyzer.safeNumber(
- 161:       data.wanMbps ?? data.uplinkMbps ?? data.transportMbps,
- 162:       NaN
- 163:     );
- 164: 
- 165:     if (Number.isFinite(peakUtil)) {
- 166:       if (peakUtil > 90) {
- 167:         els.wanMs.value = "70";
- 168:         els.bufferMs.value = "40";
- 169:       } else if (peakUtil > 75) {
- 170:         els.wanMs.value = "55";
- 171:         els.bufferMs.value = "30";
- 172:       } else {
- 173:         els.wanMs.value = "40";
- 174:         els.bufferMs.value = "20";
- 175:       }
- 176:     }
- 177: 
- 178:     if (Number.isFinite(demandMbps) && Number.isFinite(transportMbps)) {
- 179:       const note = [];
- 180:       if (Number.isFinite(peakUtil)) note.push(`Peak transport pressure: <strong>${fmt(peakUtil, 1)}%</strong>`);
- 181:       note.push(`Demand: <strong>${fmt(demandMbps, 1)} Mbps</strong>`);
- 182:       note.push(`Transport capacity: <strong>${fmt(transportMbps, 1)} Mbps</strong>`);
- 183:       els.flowNote.hidden = false;
- 184:       els.flowNote.innerHTML = `<strong>Step 4 → Using Oversubscription results:</strong><br>${note.join(" | ")}`;
- 185:     }
- 186: 
- 187:     return flow;
- 188:   }
- 189: 
- 190:   function invalidate({ clearFlow = true } = {}) {
- 191:     if (clearFlow) clearOwnState();
+ 134:   function syncResultsForExport() {
+ 135:     if (!els.results || !els.out || els.results === els.out) return;
+ 136: 
+ 137:     // Keep #results as a hidden export/snapshot mirror.
+ 138:     // #out remains the only visible calculator result block.
+ 139:     els.results.hidden = true;
+ 140:     els.results.setAttribute("aria-hidden", "true");
+ 141:     els.results.style.display = "none";
+ 142:     els.results.innerHTML = els.out.innerHTML;
+ 143:   }
+ 144: 
+ 145:   function refreshExportReady() {
+ 146:     syncResultsForExport();
+ 147: 
+ 148:     if (window.ScopedLabsExport && typeof window.ScopedLabsExport.refresh === "function") {
+ 149:       window.ScopedLabsExport.refresh();
+ 150:     }
+ 151:   }
+ 152: 
+ 153:   function invalidateExport(message = "Inputs changed. Run the calculator again to refresh export.") {
+ 154:     syncResultsForExport();
+ 155: 
+ 156:     if (window.ScopedLabsExport && typeof window.ScopedLabsExport.invalidate === "function") {
+ 157:       window.ScopedLabsExport.invalidate(message);
+ 158:     }
+ 159:   }
+ 160: 
+ 161:   function clearOwnState() {
+ 162:     try {
+ 163:       sessionStorage.removeItem(FLOW_KEYS.latency);
+ 164:     } catch {}
+ 165:   }
+ 166: 
+ 167:   function renderFlowContext() {
+ 168:     const flow = getStoredFlow(FLOW_KEYS.oversub);
+ 169: 
+ 170:     if (!flow || !flow.data) {
+ 171:       els.flowNote.hidden = false;
+ 172:       els.flowNote.innerHTML = `
+ 173:         <strong>Step 4 — Network pipeline:</strong><br>
+ 174:         This is the final step of the Network pipeline. Use carried-forward transport assumptions to judge whether the design still feels responsive in practice.
+ 175:       `;
+ 176:       return null;
+ 177:     }
+ 178: 
+ 179:     const data = flow.data;
+ 180:     const peakUtil = ScopedLabsAnalyzer.safeNumber(
+ 181:       data.peakUtilizationPct ?? data.coreUtilPct ?? data.transportUtilizationPct,
+ 182:       NaN
+ 183:     );
+ 184:     const demandMbps = ScopedLabsAnalyzer.safeNumber(
+ 185:       data.peakTotalMbps ?? data.coreDemandMbps,
+ 186:       NaN
+ 187:     );
+ 188:     const transportMbps = ScopedLabsAnalyzer.safeNumber(
+ 189:       data.wanMbps ?? data.uplinkMbps ?? data.transportMbps,
+ 190:       NaN
+ 191:     );
  192: 
- 193:     ScopedLabsAnalyzer.invalidate({
- 194:       resultsEl: els.out,
- 195:       analysisEl: els.analysis,
- 196:       continueWrapEl: els.continueWrap,
- 197:       existingChartRef: chartRef,
- 198:       existingWrapRef: chartWrapRef,
- 199:       flowKey: FLOW_KEYS.latency,
- 200:       category: "network",
- 201:       step: "latency",
- 202:       emptyMessage: "Run the calculator to see total latency, dominant contributors, and practical guidance."
- 203:     });
- 204: 
- 205:     renderFlowContext();
- 206:   }
- 207: 
- 208:   function getInputs() {
- 209:     const encodeMs = readNumber(els.encodeMs);
- 210:     const switchMs = readNumber(els.switchMs);
- 211:     const uplinkMs = readNumber(els.uplinkMs);
- 212:     const wanMs = readNumber(els.wanMs);
- 213:     const decodeMs = readNumber(els.decodeMs);
- 214:     const renderMs = readNumber(els.renderMs);
- 215:     const bufferMs = readNumber(els.bufferMs);
- 216:     const targetMs = readNumber(els.targetMs);
+ 193:     if (Number.isFinite(peakUtil)) {
+ 194:       if (peakUtil > 90) {
+ 195:         els.wanMs.value = "70";
+ 196:         els.bufferMs.value = "40";
+ 197:       } else if (peakUtil > 75) {
+ 198:         els.wanMs.value = "55";
+ 199:         els.bufferMs.value = "30";
+ 200:       } else {
+ 201:         els.wanMs.value = "40";
+ 202:         els.bufferMs.value = "20";
+ 203:       }
+ 204:     }
+ 205: 
+ 206:     if (Number.isFinite(demandMbps) && Number.isFinite(transportMbps)) {
+ 207:       const note = [];
+ 208:       if (Number.isFinite(peakUtil)) note.push(`Peak transport pressure: <strong>${fmt(peakUtil, 1)}%</strong>`);
+ 209:       note.push(`Demand: <strong>${fmt(demandMbps, 1)} Mbps</strong>`);
+ 210:       note.push(`Transport capacity: <strong>${fmt(transportMbps, 1)} Mbps</strong>`);
+ 211:       els.flowNote.hidden = false;
+ 212:       els.flowNote.innerHTML = `<strong>Step 4 → Using Oversubscription results:</strong><br>${note.join(" | ")}`;
+ 213:     }
+ 214: 
+ 215:     return flow;
+ 216:   }
  217: 
- 218:     if ([encodeMs, switchMs, uplinkMs, wanMs, decodeMs, renderMs, bufferMs, targetMs].some((v) => !Number.isFinite(v))) {
- 219:       return { ok: false, message: "Enter valid values." };
- 220:     }
- 221: 
- 222:     const contributors = [
- 223:       { label: "Source / encode", value: Math.max(0, encodeMs) },
- 224:       { label: "Switching / routing", value: Math.max(0, switchMs) },
- 225:       { label: "Uplink / aggregation", value: Math.max(0, uplinkMs) },
- 226:       { label: "WAN / VPN transport", value: Math.max(0, wanMs) },
- 227:       { label: "Decode / processing", value: Math.max(0, decodeMs) },
- 228:       { label: "Client render", value: Math.max(0, renderMs) },
- 229:       { label: "Jitter buffer / reserve", value: Math.max(0, bufferMs) }
- 230:     ];
- 231: 
- 232:     return {
- 233:       ok: true,
- 234:       contributors,
- 235:       targetMs: Math.max(0, targetMs)
- 236:     };
- 237:   }
- 238: 
- 239:   function calculateModel() {
- 240:     const input = getInputs();
- 241:     if (!input.ok) return input;
- 242: 
- 243:     const totalMs = input.contributors.reduce((sum, s) => sum + s.value, 0);
- 244:     const targetMs = input.targetMs;
- 245:     const dominant = [...input.contributors].sort((a, b) => b.value - a.value)[0];
- 246:     const dominantPct = totalMs > 0 ? (dominant.value / totalMs) * 100 : 0;
- 247: 
- 248:     const networkTransportMs = input.contributors
- 249:       .filter((x) => ["Switching / routing", "Uplink / aggregation", "WAN / VPN transport"].includes(x.label))
- 250:       .reduce((sum, s) => sum + s.value, 0);
- 251: 
- 252:     const processingMs = input.contributors
- 253:       .filter((x) => ["Source / encode", "Decode / processing", "Client render"].includes(x.label))
- 254:       .reduce((sum, s) => sum + s.value, 0);
- 255: 
- 256:     const budgetUsePct = targetMs > 0 ? (totalMs / targetMs) * 100 : 0;
- 257:     const overTargetMs = Math.max(0, totalMs - targetMs);
- 258:     const reserveMs = Math.max(0, targetMs - totalMs);
- 259: 
- 260:     const perStageHealthyMax = Math.max(targetMs / 4, 1);
- 261:     const perStageWatchMax = Math.max(targetMs / 2, 1);
- 262: 
- 263:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
- 264:       compositeScore: dominant.value,
- 265:       metrics: input.contributors.map((item) => ({
- 266:         label: item.label,
- 267:         value: item.value,
- 268:         displayValue: fmtMs(item.value)
- 269:       })),
- 270:       healthyMax: perStageHealthyMax,
- 271:       watchMax: perStageWatchMax
- 272:     });
- 273: 
- 274:     let interpretation = `Total modeled latency is ${fmtMs(totalMs)} against a target budget of ${fmtMs(targetMs)}. ${dominant.label} is the single largest contributor at ${fmtMs(dominant.value)}, which means that stage will shape how responsive the workflow feels before smaller contributors do.`;
- 275: 
- 276:     if (statusPack.status === "RISK") {
- 277:       interpretation += " The dominant stage is consuming too much of the latency budget by itself, which means the path is already fragile before the smaller contributors are even added. In practice, users will usually experience noticeable sluggishness because the largest delay source is oversized, not because the path is uniformly slow.";
- 278:     } else if (statusPack.status === "WATCH") {
- 279:       interpretation += " The path may still remain inside the total budget, but the dominant stage is already large enough to erode responsiveness margin on its own. That usually means the workflow still works, but it starts feeling less immediate once real transport variation, client performance, or additional buffering is introduced.";
- 280:     } else {
- 281:       interpretation += " The dominant stage remains inside a controlled band, so no single contributor is disproportionately consuming the latency budget. That keeps the design more balanced and easier to tune if requirements change later.";
- 282:     }
- 283: 
- 284:     let dominantConstraint = `${dominant.label} is the dominant limiter. In practice, reducing smaller stages first will not materially improve perceived responsiveness until this largest contributor is addressed or validated.`;
- 285: 
- 286:     if (networkTransportMs > processingMs) {
- 287:       dominantConstraint += " The network/transport side is currently consuming more of the path than source and client processing, so the design feels constrained more by movement through the network than by endpoint render behavior.";
- 288:     } else {
- 289:       dominantConstraint += " Endpoint processing and rendering are consuming more of the path than pure transport, so the biggest gains may come from codec, decode, or display changes rather than link upgrades alone.";
- 290:     }
+ 218:   function invalidate({ clearFlow = true } = {}) {
+ 219:     if (clearFlow) clearOwnState();
+ 220: 
+ 221:     ScopedLabsAnalyzer.invalidate({
+ 222:       resultsEl: els.out,
+ 223:       analysisEl: els.analysis,
+ 224:       continueWrapEl: els.continueWrap,
+ 225:       existingChartRef: chartRef,
+ 226:       existingWrapRef: chartWrapRef,
+ 227:       flowKey: FLOW_KEYS.latency,
+ 228:       category: "network",
+ 229:       step: "latency",
+ 230:       emptyMessage: "Run the calculator to see total latency, dominant contributors, and practical guidance."
+ 231:     });
+ 232: 
+ 233:     renderFlowContext();
+ 234:     invalidateExport();
+ 235:   }
+ 236: 
+ 237:   function getInputs() {
+ 238:     const encodeMs = readNumber(els.encodeMs);
+ 239:     const switchMs = readNumber(els.switchMs);
+ 240:     const uplinkMs = readNumber(els.uplinkMs);
+ 241:     const wanMs = readNumber(els.wanMs);
+ 242:     const decodeMs = readNumber(els.decodeMs);
+ 243:     const renderMs = readNumber(els.renderMs);
+ 244:     const bufferMs = readNumber(els.bufferMs);
+ 245:     const targetMs = readNumber(els.targetMs);
+ 246: 
+ 247:     if ([encodeMs, switchMs, uplinkMs, wanMs, decodeMs, renderMs, bufferMs, targetMs].some((v) => !Number.isFinite(v))) {
+ 248:       return { ok: false, message: "Enter valid values." };
+ 249:     }
+ 250: 
+ 251:     const contributors = [
+ 252:       { label: "Source / encode", value: Math.max(0, encodeMs) },
+ 253:       { label: "Switching / routing", value: Math.max(0, switchMs) },
+ 254:       { label: "Uplink / aggregation", value: Math.max(0, uplinkMs) },
+ 255:       { label: "WAN / VPN transport", value: Math.max(0, wanMs) },
+ 256:       { label: "Decode / processing", value: Math.max(0, decodeMs) },
+ 257:       { label: "Client render", value: Math.max(0, renderMs) },
+ 258:       { label: "Jitter buffer / reserve", value: Math.max(0, bufferMs) }
+ 259:     ];
+ 260: 
+ 261:     return {
+ 262:       ok: true,
+ 263:       contributors,
+ 264:       targetMs: Math.max(0, targetMs)
+ 265:     };
+ 266:   }
+ 267: 
+ 268:   function calculateModel() {
+ 269:     const input = getInputs();
+ 270:     if (!input.ok) return input;
+ 271: 
+ 272:     const totalMs = input.contributors.reduce((sum, s) => sum + s.value, 0);
+ 273:     const targetMs = input.targetMs;
+ 274:     const dominant = [...input.contributors].sort((a, b) => b.value - a.value)[0];
+ 275:     const dominantPct = totalMs > 0 ? (dominant.value / totalMs) * 100 : 0;
+ 276: 
+ 277:     const networkTransportMs = input.contributors
+ 278:       .filter((x) => ["Switching / routing", "Uplink / aggregation", "WAN / VPN transport"].includes(x.label))
+ 279:       .reduce((sum, s) => sum + s.value, 0);
+ 280: 
+ 281:     const processingMs = input.contributors
+ 282:       .filter((x) => ["Source / encode", "Decode / processing", "Client render"].includes(x.label))
+ 283:       .reduce((sum, s) => sum + s.value, 0);
+ 284: 
+ 285:     const budgetUsePct = targetMs > 0 ? (totalMs / targetMs) * 100 : 0;
+ 286:     const overTargetMs = Math.max(0, totalMs - targetMs);
+ 287:     const reserveMs = Math.max(0, targetMs - totalMs);
+ 288: 
+ 289:     const perStageHealthyMax = Math.max(targetMs / 4, 1);
+ 290:     const perStageWatchMax = Math.max(targetMs / 2, 1);
  291: 
- 292:     let guidance = "";
- 293:     if (statusPack.status === "RISK") {
- 294:       guidance = `Reduce ${dominant.label.toLowerCase()} first. That stage is too large relative to the per-stage comfort band, so the system is carrying an oversized contributor that will dominate the user experience even if the total path still appears mathematically acceptable.`;
- 295:     } else if (statusPack.status === "WATCH") {
- 296:       guidance = `Validate whether ${dominant.label.toLowerCase()} is realistic and worth optimizing. The path is still workable, but the dominant stage is now large enough that it can become the first source of perceived sluggishness as the environment gets less ideal.`;
- 297:     } else {
- 298:       guidance = `This latency profile is balanced. Keep the dominant stage visible during design review, because that is still the first place where latency risk will grow if buffering, transport delay, or client processing expands later.`;
- 299:     }
- 300: 
- 301:     return {
- 302:       ok: true,
- 303:       input,
- 304:       totalMs,
- 305:       targetMs,
- 306:       dominant,
- 307:       dominantPct,
- 308:       networkTransportMs,
- 309:       processingMs,
- 310:       budgetUsePct,
- 311:       overTargetMs,
- 312:       reserveMs,
- 313:       perStageHealthyMax,
- 314:       perStageWatchMax,
- 315:       status: statusPack.status,
- 316:       interpretation,
- 317:       dominantConstraint,
- 318:       guidance
- 319:     };
- 320:   }
+ 292:     const stageStatusPack = ScopedLabsAnalyzer.resolveStatus({
+ 293:       compositeScore: dominant.value,
+ 294:       metrics: input.contributors.map((item) => ({
+ 295:         label: item.label,
+ 296:         value: item.value,
+ 297:         displayValue: fmtMs(item.value)
+ 298:       })),
+ 299:       healthyMax: perStageHealthyMax,
+ 300:       watchMax: perStageWatchMax
+ 301:     });
+ 302: 
+ 303:     const budgetStatus =
+ 304:       budgetUsePct > 100 ? "RISK" :
+ 305:       budgetUsePct > 85 ? "WATCH" :
+ 306:       "HEALTHY";
+ 307: 
+ 308:     const statusRank = {
+ 309:       HEALTHY: 0,
+ 310:       WATCH: 1,
+ 311:       RISK: 2
+ 312:     };
+ 313: 
+ 314:     const statusPack = {
+ 315:       ...stageStatusPack,
+ 316:       status:
+ 317:         statusRank[budgetStatus] > statusRank[stageStatusPack.status]
+ 318:           ? budgetStatus
+ 319:           : stageStatusPack.status
+ 320:     };
  321: 
- 322:   function renderError(message) {
- 323:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
- 324:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
- 325:     els.out.innerHTML = `<div class="muted">${message}</div>`;
- 326:     if (els.continueWrap) els.continueWrap.style.display = "none";
- 327:   }
- 328: 
- 329:   function writeFlow(data) {
- 330:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.latency, {
- 331:       category: "network",
- 332:       step: "latency",
- 333:       data: {
- 334:         totalLatencyMs: Number(data.totalMs.toFixed(0)),
- 335:         targetLatencyMs: Number(data.targetMs.toFixed(0)),
- 336:         dominantLatencyStage: data.dominant.label,
- 337:         dominantLatencyMs: Number(data.dominant.value.toFixed(0)),
- 338:         budgetConsumptionPct: Number(data.budgetUsePct.toFixed(1)),
- 339:         latencyStatus: data.status
- 340:       }
- 341:     });
- 342:   }
- 343: 
- 344:   function renderSuccess(data) {
- 345:     ScopedLabsAnalyzer.renderOutput({
- 346:       resultsEl: els.out,
- 347:       analysisEl: els.analysis,
- 348:       existingChartRef: chartRef,
- 349:       existingWrapRef: chartWrapRef,
- 350:       summaryRows: [
- 351:         { label: "Total latency", value: fmtMs(data.totalMs) },
- 352:         { label: "Target latency budget", value: fmtMs(data.targetMs) },
- 353:         { label: "Dominant stage", value: data.dominant.label },
- 354:         { label: "Dominant stage contribution", value: fmtMs(data.dominant.value) }
- 355:       ],
- 356:       derivedRows: [
- 357:         { label: "Budget consumption", value: fmtPct(data.budgetUsePct) },
- 358:         { label: "Dominant stage share", value: fmtPct(data.dominantPct) },
- 359:         { label: "Transport stack total", value: fmtMs(data.networkTransportMs) },
- 360:         { label: "Processing stack total", value: fmtMs(data.processingMs) },
- 361:         { label: "Reserve inside budget", value: fmtMs(data.reserveMs) },
- 362:         { label: "Over target", value: fmtMs(data.overTargetMs) }
- 363:       ],
- 364:       status: data.status,
- 365:       interpretation: data.interpretation,
- 366:       dominantConstraint: data.dominantConstraint,
- 367:       guidance: data.guidance,
- 368:       chart: {
- 369:         labels: data.input.contributors.map((x) => x.label),
- 370:         values: data.input.contributors.map((x) => Number(x.value.toFixed(1))),
- 371:         displayValues: data.input.contributors.map((x) => fmtMs(x.value)),
- 372:         referenceValue: data.perStageHealthyMax,
- 373:         healthyMax: data.perStageHealthyMax,
- 374:         watchMax: data.perStageWatchMax,
- 375:         axisTitle: "Latency Contribution (ms)",
- 376:         referenceLabel: "Per-Stage Comfort Target",
- 377:         healthyLabel: "Healthy",
- 378:         watchLabel: "Watch",
- 379:         riskLabel: "Risk",
- 380:         chartMax: Math.max(
- 381:           100,
- 382:           Math.ceil(Math.max(...data.input.contributors.map((x) => x.value), data.perStageWatchMax) * 1.18)
- 383:         )
- 384:       }
- 385:     });
- 386: 
- 387:     writeFlow(data);
- 388: 
- 389:     if (els.continueWrap) {
- 390:       els.continueWrap.style.display = "flex";
- 391:     }
- 392:   }
- 393: 
- 394:   function calculate() {
- 395:     const data = calculateModel();
- 396:     if (!data.ok) {
- 397:       renderError(data.message);
- 398:       return;
- 399:     }
- 400:     renderSuccess(data);
- 401:   }
- 402: 
- 403:   function reset() {
- 404:     applyDefaults();
- 405:     renderFlowContext();
- 406:     invalidate({ clearFlow: false });
- 407:   }
- 408: 
- 409:   function initTool() {
- 410:     if (initialized) return;
- 411:     initialized = true;
- 412: 
- 413:     [
- 414:       els.encodeMs,
- 415:       els.switchMs,
- 416:       els.uplinkMs,
- 417:       els.wanMs,
- 418:       els.decodeMs,
- 419:       els.renderMs,
- 420:       els.bufferMs,
- 421:       els.targetMs
- 422:     ].forEach((el) => {
- 423:       if (!el) return;
- 424:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
- 425:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
- 426:     });
- 427: 
- 428:     els.calc?.addEventListener("click", calculate);
- 429:     els.reset?.addEventListener("click", reset);
- 430: 
- 431:     document.addEventListener("keydown", (e) => {
- 432:       if (e.key !== "Enter") return;
- 433:       const target = e.target;
- 434:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
- 435:         e.preventDefault();
- 436:         calculate();
- 437:       }
- 438:     });
- 439: 
- 440:     reset();
- 441:   }
+ 322:     let interpretation = `Total modeled latency is ${fmtMs(totalMs)} against a target budget of ${fmtMs(targetMs)}. ${dominant.label} is the single largest contributor at ${fmtMs(dominant.value)}, which means that stage will shape how responsive the workflow feels before smaller contributors do.`;
+ 323: 
+ 324:     if (budgetUsePct > 100) {
+ 325:       interpretation += ` The total path is over target by ${fmtMs(overTargetMs)}, so the overall latency budget is exhausted even if no single stage appears extreme by itself.`;
+ 326:     } else if (budgetUsePct > 85) {
+ 327:       interpretation += ` The total path is using ${fmtPct(budgetUsePct)} of the latency budget, so remaining margin is thin even before real-world jitter or client variation is added.`;
+ 328:     }
+ 329: 
+ 330:     if (statusPack.status === "RISK") {
+ 331:       interpretation += " The dominant stage is consuming too much of the latency budget by itself, which means the path is already fragile before the smaller contributors are even added. In practice, users will usually experience noticeable sluggishness because the largest delay source is oversized, not because the path is uniformly slow.";
+ 332:     } else if (statusPack.status === "WATCH") {
+ 333:       interpretation += " The path may still remain inside the total budget, but the dominant stage is already large enough to erode responsiveness margin on its own. That usually means the workflow still works, but it starts feeling less immediate once real transport variation, client performance, or additional buffering is introduced.";
+ 334:     } else {
+ 335:       interpretation += " The dominant stage remains inside a controlled band, so no single contributor is disproportionately consuming the latency budget. That keeps the design more balanced and easier to tune if requirements change later.";
+ 336:     }
+ 337: 
+ 338:     let dominantConstraint = `${dominant.label} is the dominant limiter. In practice, reducing smaller stages first will not materially improve perceived responsiveness until this largest contributor is addressed or validated.`;
+ 339: 
+ 340:     if (networkTransportMs > processingMs) {
+ 341:       dominantConstraint += " The network/transport side is currently consuming more of the path than source and client processing, so the design feels constrained more by movement through the network than by endpoint render behavior.";
+ 342:     } else {
+ 343:       dominantConstraint += " Endpoint processing and rendering are consuming more of the path than pure transport, so the biggest gains may come from codec, decode, or display changes rather than link upgrades alone.";
+ 344:     }
+ 345: 
+ 346:     let guidance = "";
+ 347:     if (statusPack.status === "RISK") {
+ 348:       guidance = `Reduce ${dominant.label.toLowerCase()} first. That stage is too large relative to the per-stage comfort band, so the system is carrying an oversized contributor that will dominate the user experience even if the total path still appears mathematically acceptable.`;
+ 349:     } else if (statusPack.status === "WATCH") {
+ 350:       guidance = `Validate whether ${dominant.label.toLowerCase()} is realistic and worth optimizing. The path is still workable, but the dominant stage is now large enough that it can become the first source of perceived sluggishness as the environment gets less ideal.`;
+ 351:     } else {
+ 352:       guidance = `This latency profile is balanced. Keep the dominant stage visible during design review, because that is still the first place where latency risk will grow if buffering, transport delay, or client processing expands later.`;
+ 353:     }
+ 354: 
+ 355:     return {
+ 356:       ok: true,
+ 357:       input,
+ 358:       totalMs,
+ 359:       targetMs,
+ 360:       dominant,
+ 361:       dominantPct,
+ 362:       networkTransportMs,
+ 363:       processingMs,
+ 364:       budgetUsePct,
+ 365:       overTargetMs,
+ 366:       reserveMs,
+ 367:       perStageHealthyMax,
+ 368:       perStageWatchMax,
+ 369:       status: statusPack.status,
+ 370:       interpretation,
+ 371:       dominantConstraint,
+ 372:       guidance
+ 373:     };
+ 374:   }
+ 375: 
+ 376:   function renderError(message) {
+ 377:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 378:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 379:     els.out.innerHTML = `<div class="muted">${message}</div>`;
+ 380:     syncResultsForExport();
+ 381:     invalidateExport("Calculation could not run. Review inputs and try again.");
+ 382:     if (els.continueWrap) els.continueWrap.style.display = "none";
+ 383:   }
+ 384: 
+ 385:   function writeFlow(data) {
+ 386:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.latency, {
+ 387:       category: "network",
+ 388:       step: "latency",
+ 389:       data: {
+ 390:         totalLatencyMs: Number(data.totalMs.toFixed(0)),
+ 391:         targetLatencyMs: Number(data.targetMs.toFixed(0)),
+ 392:         dominantLatencyStage: data.dominant.label,
+ 393:         dominantLatencyMs: Number(data.dominant.value.toFixed(0)),
+ 394:         budgetConsumptionPct: Number(data.budgetUsePct.toFixed(1)),
+ 395:         latencyStatus: data.status
+ 396:       }
+ 397:     });
+ 398:   }
+ 399: 
+ 400:   function renderSuccess(data) {
+ 401:     ScopedLabsAnalyzer.renderOutput({
+ 402:       resultsEl: els.out,
+ 403:       analysisEl: els.analysis,
+ 404:       existingChartRef: chartRef,
+ 405:       existingWrapRef: chartWrapRef,
+ 406:       summaryRows: [
+ 407:         { label: "Total latency", value: fmtMs(data.totalMs) },
+ 408:         { label: "Target latency budget", value: fmtMs(data.targetMs) },
+ 409:         { label: "Dominant stage", value: data.dominant.label },
+ 410:         { label: "Dominant stage contribution", value: fmtMs(data.dominant.value) }
+ 411:       ],
+ 412:       derivedRows: [
+ 413:         { label: "Budget consumption", value: fmtPct(data.budgetUsePct) },
+ 414:         { label: "Dominant stage share", value: fmtPct(data.dominantPct) },
+ 415:         { label: "Transport stack total", value: fmtMs(data.networkTransportMs) },
+ 416:         { label: "Processing stack total", value: fmtMs(data.processingMs) },
+ 417:         { label: "Reserve inside budget", value: fmtMs(data.reserveMs) },
+ 418:         { label: "Over target", value: fmtMs(data.overTargetMs) }
+ 419:       ],
+ 420:       status: data.status,
+ 421:       interpretation: data.interpretation,
+ 422:       dominantConstraint: data.dominantConstraint,
+ 423:       guidance: data.guidance,
+ 424:       chart: {
+ 425:         labels: data.input.contributors.map((x) => x.label),
+ 426:         values: data.input.contributors.map((x) => Number(x.value.toFixed(1))),
+ 427:         displayValues: data.input.contributors.map((x) => fmtMs(x.value)),
+ 428:         referenceValue: data.perStageHealthyMax,
+ 429:         healthyMax: data.perStageHealthyMax,
+ 430:         watchMax: data.perStageWatchMax,
+ 431:         axisTitle: "Latency Contribution (ms)",
+ 432:         referenceLabel: "Per-Stage Comfort Target",
+ 433:         healthyLabel: "Healthy",
+ 434:         watchLabel: "Watch",
+ 435:         riskLabel: "Risk",
+ 436:         chartMax: Math.max(
+ 437:           100,
+ 438:           Math.ceil(Math.max(...data.input.contributors.map((x) => x.value), data.perStageWatchMax) * 1.18)
+ 439:         )
+ 440:       }
+ 441:     });
  442: 
- 443:   window.addEventListener("DOMContentLoaded", () => {
- 444:     const year = document.querySelector("[data-year]");
- 445:     if (year) year.textContent = new Date().getFullYear();
- 446:     let unlocked = unlockCategoryPage();
- 447:     if (unlocked) initTool();
- 448: 
- 449:     setTimeout(() => {
- 450:       unlocked = unlockCategoryPage();
- 451:       if (unlocked) initTool();
- 452:     }, 400);
- 453:   });
- 454: })();
- 455: 
- 456: 
- 457: function renderFlowNote() {
- 458:   // TODO: implement upstream flow-note carry-over
- 459: }
- 460: 
- 461: 
- 462: function calc() {
- 463:   // TODO: implement calculate handler
- 464: }
+ 443:     writeFlow(data);
+ 444:     refreshExportReady();
+ 445: 
+ 446:     if (els.continueWrap) {
+ 447:       els.continueWrap.style.display = "flex";
+ 448:     }
+ 449:   }
+ 450: 
+ 451:   function calculate() {
+ 452:     const data = calculateModel();
+ 453:     if (!data.ok) {
+ 454:       renderError(data.message);
+ 455:       return;
+ 456:     }
+ 457:     renderSuccess(data);
+ 458:   }
+ 459: 
+ 460:   function reset() {
+ 461:     applyDefaults();
+ 462:     renderFlowContext();
+ 463:     invalidate({ clearFlow: false });
+ 464:   }
  465: 
+ 466:   function initTool() {
+ 467:     if (initialized) return;
+ 468:     initialized = true;
+ 469: 
+ 470:     [
+ 471:       els.encodeMs,
+ 472:       els.switchMs,
+ 473:       els.uplinkMs,
+ 474:       els.wanMs,
+ 475:       els.decodeMs,
+ 476:       els.renderMs,
+ 477:       els.bufferMs,
+ 478:       els.targetMs
+ 479:     ].forEach((el) => {
+ 480:       if (!el) return;
+ 481:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 482:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 483:     });
+ 484: 
+ 485:     els.calc?.addEventListener("click", calculate);
+ 486:     els.reset?.addEventListener("click", reset);
+ 487: 
+ 488:     document.addEventListener("keydown", (e) => {
+ 489:       if (e.key !== "Enter") return;
+ 490:       const target = e.target;
+ 491:       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT")) {
+ 492:         e.preventDefault();
+ 493:         calculate();
+ 494:       }
+ 495:     });
+ 496: 
+ 497:     if (els.results && els.out && els.results !== els.out) {
+ 498:       els.results.hidden = true;
+ 499:       els.results.setAttribute("aria-hidden", "true");
+ 500:       els.results.style.display = "none";
+ 501:     }
+ 502: 
+ 503:     reset();
+ 504:   }
+ 505: 
+ 506:   window.addEventListener("DOMContentLoaded", () => {
+ 507:     const year = document.querySelector("[data-year]");
+ 508:     if (year) year.textContent = new Date().getFullYear();
+ 509:     let unlocked = unlockCategoryPage();
+ 510:     if (unlocked) initTool();
+ 511: 
+ 512:     setTimeout(() => {
+ 513:       unlocked = unlockCategoryPage();
+ 514:       if (unlocked) initTool();
+ 515:     }, 400);
+ 516:   });
+ 517: })();
+ 518: 
 
 
 ============================================================
@@ -3244,7 +3262,7 @@ Focused core logic:
   94:     const finalScore = ScopedLabsAnalyzer.clamp(preFailoverScore - failoverRelief, 0, 100);
   95: 
   96:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-  97:       compositeScore: Math.max(scalePressure, appPressure, failoverPenalty, durationPressure),
+  97:       compositeScore: finalScore,
   98:       metrics: [
   99:         {
  100:           label: "Scale Pressure",
