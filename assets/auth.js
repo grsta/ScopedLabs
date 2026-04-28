@@ -45,6 +45,29 @@
     if (el) el.textContent = v == null ? "" : String(v);
   }
 
+    function resetSignedOutUi() {
+    const signed = $("sl-signedin");
+    const status = $("sl-auth-status");
+    const whoami = $("sl-whoami");
+    const emailWrap = $("sl-email-wrap");
+    const emailInput = $("sl-email");
+    const sendLink = $("sl-sendlink");
+    const signOut = $("sl-signout");
+
+    if (signed) signed.textContent = "Not signed in";
+    if (status) status.textContent = "Not signed in";
+    if (whoami) whoami.textContent = "Not signed in";
+
+    if (emailWrap) emailWrap.style.display = "";
+    if (emailInput) {
+      emailInput.disabled = false;
+      emailInput.value = "";
+    }
+
+    if (sendLink) sendLink.disabled = false;
+    if (signOut) signOut.disabled = false;
+  }
+
   function getCategoryForRedirect() {
     try {
       const u = new URL(location.href);
@@ -129,17 +152,26 @@
         await sb.auth.signOut();
       } catch (e) {
         console.warn("[auth.js] signOut error (continuing):", e);
-      } finally {
+            } finally {
         window.SL_AUTH.__session = null;
+        resetSignedOutUi();
 
         try {
-          // localStorage.removeItem("sl_selected_category");
+          localStorage.removeItem("sl_unlocked_categories");
         } catch {}
 
-        location.replace("/upgrade/#checkout");
+        const target = "/upgrade/#checkout";
+
+        if (
+          location.pathname === "/upgrade/" &&
+          location.search === "" &&
+          location.hash === "#checkout"
+        ) {
+          location.reload();
+        } else {
+          location.replace(target);
+        }
       }
-    });
-  }
 
   async function cleanupAuthHashIfPresent() {
     const hash = location.hash || "";
