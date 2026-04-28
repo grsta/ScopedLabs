@@ -189,13 +189,30 @@
   }
 
   function buildInterpretation(status, dominantConstraint, savingsPct, oldGB, newGB) {
+    const isSavings = savingsPct >= 0;
+    const absPct = Math.abs(savingsPct);
+    const oldLabel = Number.isFinite(oldGB) ? oldGB.toFixed(1) : "0.0";
+    const newLabel = Number.isFinite(newGB) ? newGB.toFixed(1) : "0.0";
+
+    if (!isSavings) {
+      if (status === "HEALTHY") {
+        return `The target codec increases estimated storage instead of reducing it. Baseline storage is about ${oldLabel} GB and target storage is about ${newLabel} GB, so this should be treated as a storage increase rather than a savings opportunity.`;
+      }
+
+      if (status === "WATCH") {
+        return `The target codec increases storage demand by about ${absPct.toFixed(1)}%. That may be acceptable for compatibility, quality, or workflow reasons, but the storage plan should carry the increase explicitly instead of presenting it as savings.`;
+      }
+
+      return `The target codec creates a significant storage increase. This comparison should be treated as a capacity penalty, not an efficiency gain, and downstream storage planning should use the larger target storage value.`;
+    }
+
     if (status === "HEALTHY") {
-      return `The codec change produces meaningful savings without pushing the design into a fragile edge case. The storage benefit is real, and the difference between the current and target codec is large enough to matter operationally over retention windows.`;
+      return `The codec change produces storage savings without pushing the design into a fragile edge case. Baseline storage is about ${oldLabel} GB and target storage is about ${newLabel} GB, so the change is useful while still remaining straightforward to plan around.`;
     }
 
     if (status === "WATCH") {
       if (dominantConstraint === "Codec delta strength") {
-        return `The primary story here is the size of the codec efficiency change itself. Savings exist, but they are not so large that the move alone will transform the storage design unless camera count or retention is also substantial.`;
+        return `The primary story here is the size of the codec efficiency change itself. Savings exist, but they should still be validated against quality, playback, and recorder support before being treated as fully bankable.`;
       }
 
       if (dominantConstraint === "Retention burden") {
@@ -217,6 +234,21 @@
   }
 
   function buildGuidance(status, dominantConstraint, savingsPct) {
+    const isSavings = savingsPct >= 0;
+    const absPct = Math.abs(savingsPct);
+
+    if (!isSavings) {
+      if (status === "HEALTHY") {
+        return `Use the target codec only if compatibility, quality, or workflow needs justify the added storage. Otherwise, keep the more efficient baseline codec or revise bitrate assumptions.`;
+      }
+
+      if (status === "WATCH") {
+        return `The target codec increases storage by about ${absPct.toFixed(1)}%, so validate the larger capacity requirement before treating this codec path as acceptable.`;
+      }
+
+      return `Do not treat this as an optimization path. The target codec materially increases retained storage demand, so the storage plan should be reworked around the larger footprint or the codec choice should be revisited.`;
+    }
+
     if (status === "HEALTHY") {
       return `Use the target codec estimate as a practical storage-planning alternative, but validate encoder support, quality acceptance, and playback workflow before assuming the savings are fully bankable.`;
     }
@@ -323,6 +355,14 @@
 
     const savingsGB = oldGB - newGB;
     const savingsPct = oldGB > 0 ? (savingsGB / oldGB) * 100 : 0;
+    const isStorageSavings = savingsGB >= 0;
+    const storageChangeLabel = isStorageSavings ? "Estimated Savings" : "Estimated Increase";
+    const storageChangeValue = isStorageSavings
+      ? `${savingsGB.toFixed(1)} GB saved (${savingsPct.toFixed(1)}%)`
+      : `${Math.abs(savingsGB).toFixed(1)} GB increase (${Math.abs(savingsPct).toFixed(1)}%)`;
+    const codecDeltaDisplay = isStorageSavings
+      ? `${savingsPct.toFixed(1)}% savings`
+      : `${Math.abs(savingsPct).toFixed(1)}% increase`;
 
     const codecDeltaStrength = Math.abs(1 - (eff(toCodec) / eff(fromCodec))) * 3;
     const retentionBurden = Math.max(0.1, days / 30);
@@ -332,7 +372,7 @@
       {
         label: "Codec Delta Strength",
         value: codecDeltaStrength,
-        displayValue: `${savingsPct.toFixed(1)}%`
+        displayValue: codecDeltaDisplay
       },
       {
         label: "Retention Burden",
@@ -381,7 +421,7 @@
     const derivedRows = [
       { label: "Storage (Baseline)", value: `${oldGB.toFixed(1)} GB` },
       { label: "Storage (Target)", value: `${newGB.toFixed(1)} GB` },
-      { label: "Estimated Savings", value: `${savingsGB.toFixed(1)} GB (${savingsPct.toFixed(1)}%)` },
+      { label: "Storage Change", value: storageChangeValue },
       { label: "Planning Basis", value: "Rule-of-thumb codec efficiency comparison" }
     ];
 
@@ -433,14 +473,14 @@
           fleetScale
         ],
         displayValues: [
-          `${savingsPct.toFixed(1)}%`,
+          codecDeltaDisplay,
           `${days.toFixed(0)} days`,
           `${cams} cams`
         ],
         referenceValue: 1.0,
         healthyMax: 1.0,
         watchMax: 1.35,
-        axisTitle: "Savings Pressure",
+        axisTitle: "Codec Change Pressure",
         referenceLabel: "Healthy Threshold",
         healthyLabel: "Healthy",
         watchLabel: "Watch",

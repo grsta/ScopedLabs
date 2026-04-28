@@ -321,7 +321,7 @@
 
     const retentionBurden = days / 30;
     const fleetScaleBurden = cams / 16;
-    const overheadPressure = 1 + (overheadPct / 25);
+    const overheadPressure = overheadPct / 25;
 
     const metrics = [
       {
