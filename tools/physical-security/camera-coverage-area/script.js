@@ -231,7 +231,7 @@
     const height = halfH * 2;
 
     const effWidth = width * (1 - ov);
-    const effHeight = height * (1 - ov);
+    const effHeight = height;
 
     const area = width * height;
     const effArea = effWidth * effHeight;
@@ -245,8 +245,8 @@
 
     const metrics = [
       { label: "Reserve Pressure", value: reserveLossPct, displayValue: fmtPct(reserveLossPct, 1) },
-      { label: "Width Retention Loss", value: 100 - widthRetentionPct, displayValue: fmtPct(widthRetentionPct, 1) },
-      { label: "Area Retention Loss", value: 100 - areaRetentionPct, displayValue: fmtPct(areaRetentionPct, 1) }
+      { label: "Width Retention Loss", value: 100 - widthRetentionPct, displayValue: fmtPct(100 - widthRetentionPct, 1) },
+      { label: "Area Retention Loss", value: 100 - areaRetentionPct, displayValue: fmtPct(100 - areaRetentionPct, 1) }
     ];
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
@@ -268,7 +268,7 @@
       dominantConstraint = "Field geometry is balanced. Most of the lens footprint remains usable after reserve is applied, which gives the next spacing step a healthier starting point.";
     }
 
-    const interpretation = `At ${fmtFt(input.dist)}, the modeled lens footprint is about ${fmtFt(width)} wide by ${fmtFt(height)} high, producing ${fmtSqFt(area)} of raw area. After reserving ${fmtPct(input.ovPct)} for overlap, effective coverage drops to ${fmtFt(effWidth)} by ${fmtFt(effHeight)}, or about ${fmtSqFt(effArea)} of usable scene coverage. ${interpretationCore}`;
+    const interpretation = `At ${fmtFt(input.dist)}, the modeled lens footprint is about ${fmtFt(width)} wide by ${fmtFt(height)} high, producing ${fmtSqFt(area)} of raw area. After reserving ${fmtPct(input.ovPct)} for side-to-side overlap, effective usable width drops to ${fmtFt(effWidth)} while vertical coverage remains ${fmtFt(effHeight)}, leaving about ${fmtSqFt(effArea)} of usable scene coverage. ${interpretationCore}`;
 
     const guidance = `${guidanceCore} Continue to Camera Spacing next so you can translate this usable width into actual camera-to-camera placement.`;
 
@@ -400,7 +400,10 @@
     if (year) year.textContent = new Date().getFullYear();
 
     let unlocked = unlockCategoryPage();
-    if (unlocked) initTool();
+    if (unlocked && !els.toolCard.dataset.initialized) {
+      els.toolCard.dataset.initialized = "true";
+      initTool();
+    }
 
     setTimeout(() => {
       unlocked = unlockCategoryPage();

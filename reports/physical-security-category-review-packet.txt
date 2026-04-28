@@ -1,0 +1,3186 @@
+# ScopedLabs Category Formula Review Packet
+Category: physical-security
+Generated: 2026-04-28T00:07:45.664Z
+Tools found: 10
+
+
+
+============================================================
+TOOL: blind-spot-check
+============================================================
+Title: Blind Spot Check
+Tier: pro
+Meta description: Estimate whether camera spacing and effective field of view leave blind spots across the protected width.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Area Width (ft)
+- Area Depth (ft)
+- Camera Horizontal FOV (deg)
+- Mounting Distance to Target Zone (ft)
+- Number of Cameras
+- Overlap Target (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- w
+- d
+- hfov
+- dist
+- cams
+- overlap
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 211:     const overlapPct = num(els.overlap.value);
+ 212: 
+ 213:     if (
+ 214:       !Number.isFinite(w) || w <= 0 ||
+ 215:       !Number.isFinite(d) || d <= 0 ||
+ 216:       !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
+ 217:       !Number.isFinite(dist) || dist <= 0 ||
+ 218:       !Number.isFinite(cams) || cams < 1 ||
+ 219:       !Number.isFinite(overlapPct) || overlapPct < 0 || overlapPct > 95
+ 220:     ) {
+ 221:       return { ok: false, message: "Enter valid values and press Check Coverage." };
+ 222:     }
+ 223: 
+ 224:     return { ok: true, w, d, hfov, dist, cams, overlapPct };
+ 225:   }
+ 226: 
+ 227:   function calculateModel() {
+ 228:     const input = getInputs();
+ 229:     if (!input.ok) return input;
+ 230: 
+ 231:     const overlap = input.overlapPct / 100;
+ 232:     const coveragePerCameraFt = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
+ 233:     const overlapFt = coveragePerCameraFt * overlap;
+ 234:     const effectiveCoverageFt = coveragePerCameraFt - overlapFt;
+ 235:     const totalCoverageFt = input.cams <= 1
+ 236:       ? coveragePerCameraFt
+ 237:       : coveragePerCameraFt + ((input.cams - 1) * effectiveCoverageFt);
+ 238:     const gapFt = Math.max(0, input.w - totalCoverageFt);
+ 239:     const gapPct = input.w > 0 ? (gapFt / input.w) * 100 : 0;
+ 240:     const overCoverageFt = Math.max(0, totalCoverageFt - input.w);
+ 241:     const coverageMarginPct = input.w > 0 ? (overCoverageFt / input.w) * 100 : 0;
+ 242: 
+ 243:     const gapPressureMetric = gapFt <= 0 ? 0 : Math.min(gapPct * 4, 100);
+ 244:     const shortfallMetric = gapFt <= 0 ? 0 : Math.min(gapPct * 3, 100);
+ 245:     const overlapMetric = Math.min(input.overlapPct, 100);
+ 246: 
+ 247:     const metrics = [
+ 248:       {
+ 249:         label: "Gap Pressure",
+ 250:         value: gapPressureMetric,
+ 251:         displayValue: gapFt <= 0 ? "0.0 ft" : fmtFt(gapFt)
+ 252:       },
+ 253:       {
+ 254:         label: "Coverage Shortfall",
+ 255:         value: shortfallMetric,
+ 256:         displayValue: fmtPct(gapPct)
+ 257:       },
+ 258:       {
+ 259:         label: "Overlap Compression",
+ 260:         value: overlapMetric,
+ 261:         displayValue: fmtPct(input.overlapPct)
+ 262:       }
+ 263:     ];
+ 264: 
+ 265:     const dominantMetric = Math.max(gapPressureMetric, shortfallMetric, overlapMetric);
+ 266: 
+ 267:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 268:       compositeScore: dominantMetric,
+ 269:       metrics,
+ 270:       healthyMax: 25,
+ 271:       watchMax: 60
+ 272:     });
+ 273: 
+ 274:     let coverageClass = "FULL COVERAGE";
+ 275:     if (gapFt > 0 && gapPct <= 10) coverageClass = "MINOR GAPS";
+ 276:     if (gapFt > 0 && gapPct > 10) coverageClass = "BLIND SPOTS";
+ 277: 
+ 278:     let interpretation = `Each camera covers about ${fmtFt(coveragePerCameraFt)} horizontally at the target zone. After applying ${fmtPct(input.overlapPct)} overlap between adjacent camera footprints, each additional camera contributes about ${fmtFt(effectiveCoverageFt)} of usable added width, giving total usable width of ${fmtFt(totalCoverageFt)} across ${fmt(input.cams, 0)} cameras.`;
+ 279: 
+ 280:     if (coverageClass === "BLIND SPOTS") {
+ 281:       interpretation += ` The modeled layout leaves a meaningful gap of ${fmtFt(gapFt)}, so blind spots are likely unless spacing, count, or field of view changes.`;
+ 282:     } else if (coverageClass === "MINOR GAPS") {
+ 283:       interpretation += ` Coverage is close, but a remaining gap of ${fmtFt(gapFt)} means real-world alignment tolerances, edge performance, and installation drift can still expose weak spots.`;
+ 284:     } else if (input.overlapPct >= 25) {
+ 285:       interpretation += ` Coverage is continuous, but overlap is consuming more usable width than necessary. The layout works geometrically, yet you are giving up footprint efficiency to maintain comfort margin.`;
+ 286:     } else {
+ 287:       interpretation += ` Coverage is continuous with remaining margin of about ${fmtFt(overCoverageFt)} across the protected width, so blind spots are not indicated by the geometric model.`;
+ 288:     }
+ 289: 
+ 290:     let dominantConstraint = "";
+ 291:     if (coverageClass === "BLIND SPOTS") {
+ 292:       dominantConstraint = "Coverage shortfall is the dominant limiter. The total effective footprint is too narrow for the required width once overlap is honored.";
+ 293:     } else if (coverageClass === "MINOR GAPS") {
+ 294:       dominantConstraint = "Gap pressure is the dominant limiter. The layout is almost workable, but the remaining uncovered width is still large enough to matter in field conditions.";
+ 295:     } else if (input.overlapPct >= 25) {
+ 296:       dominantConstraint = "Overlap compression is the dominant limiter. Coverage is complete, but heavy overlap is consuming usable width faster than necessary.";
+ 297:     } else {
+ 298:       dominantConstraint = "Field geometry is balanced. The camera count, spacing, and effective width remain aligned with the protected span.";
+ 299:     }
+ 300: 
+ 301:     let guidance = "";
+ 302:     if (coverageClass === "BLIND SPOTS") {
+ 303:       guidance = "Do not lock this layout yet. Reduce spacing, add cameras, widen the effective footprint, or revise upstream spacing assumptions before moving forward.";
+ 304:     } else if (coverageClass === "MINOR GAPS") {
+ 305:       guidance = "Coverage is close, but verify corners and overlap assumptions on the real mounting geometry before finalizing the design.";
+ 306:     } else if (input.overlapPct >= 25) {
+ 307:       guidance = "Coverage is acceptable, but review whether overlap is intentionally this high. You may be able to recover usable width or reduce camera count without creating blind spots.";
+ 308:     } else {
+ 309:       guidance = "Coverage is acceptable from a blind-spot standpoint. Continue to Pixel Density next to confirm that this same layout also delivers enough subject detail.";
+ 310:     }
+ 311: 
+ 312:     return {
+ 313:       ok: true,
+ 314:       ...input,
+ 315:       coveragePerCameraFt,
+ 316:       overlapFt,
+ 317:       effectiveCoverageFt,
+ 318:       totalCoverageFt,
+ 319:       gapFt,
+ 320:       gapPct,
+ 321:       overCoverageFt,
+ 322:       coverageMarginPct,
+ 323:       coverageClass,
+ 324:       status: statusPack.status,
+ 325:       interpretation,
+ 326:       dominantConstraint,
+ 327:       guidance,
+ 328:       gapPressureMetric,
+ 329:       shortfallMetric,
+ 330:       overlapMetric
+ 331:     };
+ 332:   }
+ 333: 
+ 334:   function writeFlow(data) {
+ 335:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.blind, {
+ 336:       category: CATEGORY,
+ 337:       step: STEP,
+ 338:       data: {
+ 339:         w: data.w,
+ 340:         d: data.d,
+ 341:         hfov: data.hfov,
+ 342:         dist: data.dist,
+ 343:         cams: data.cams,
+ 344:         overlap: data.overlapPct / 100,
+ 345:         overlapPct: data.overlapPct,
+ 346:         cov: data.coveragePerCameraFt,
+ 347:         overlapFt: data.overlapFt,
+ 348:         eff: data.effectiveCoverageFt,
+ 349:         total: data.totalCoverageFt,
+ 350:         gap: data.gapFt,
+ 351:         gapPct: data.gapPct,
+ 352:         status: data.coverageClass,
+ 353:         interp: data.interpretation,
+ 354:         guide: data.guidance
+ 355:       }
+ 356:     });
+ 357:   }
+ 358: 
+ 359:   function renderError(message) {
+ 360:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 361:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 362:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 363:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 364:   }
+ 365: 
+ 366:   function renderSuccess(data) {
+ 367:     ScopedLabsAnalyzer.renderOutput({
+ 368:       resultsEl: els.results,
+ 369:       analysisEl: els.analysis,
+ 370:       existingChartRef: chartRef,
+ 371:       existingWrapRef: chartWrapRef,
+ 372:       summaryRows: [
+ 373:         { label: "Coverage per Camera", value: fmtFt(data.coveragePerCameraFt) },
+ 374:         { label: "Effective Coverage", value: fmtFt(data.effectiveCoverageFt) },
+ 375:         { label: "Total Coverage", value: fmtFt(data.totalCoverageFt) },
+ 376:         { label: "Result", value: data.coverageClass }
+ 377:       ],
+ 378:       derivedRows: [
+ 379:         { label: "Area Width", value: fmtFt(data.w) },
+ 380:         { label: "Area Depth", value: fmtFt(data.d) },
+ 381:         { label: "Gap", value: data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt) },
+ 382:         { label: "Overlap Target", value: fmtPct(data.overlapPct) },
+ 383:         { label: "Coverage Margin", value: fmtPct(data.coverageMarginPct) },
+ 384:         { label: "Camera Count", value: fmt(data.cams, 0) }
+ 385:       ],
+ 386:       status: data.status,
+ 387:       interpretation: data.interpretation,
+ 388:       dominantConstraint: data.dominantConstraint,
+ 389:       guidance: data.guidance,
+ 390:       chart: {
+ 391:         labels: ["Gap Pressure", "Coverage Shortfall", "Overlap Compression"],
+ 392:         values: [
+ 393:           Number(data.gapPressureMetric.toFixed(1)),
+ 394:           Number(data.shortfallMetric.toFixed(1)),
+ 395:           Number(data.overlapMetric.toFixed(1))
+ 396:         ],
+ 397:         displayValues: [
+ 398:           data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt),
+ 399:           fmtPct(data.gapPct),
+ 400:           fmtPct(data.overlapPct)
+ 401:         ],
+ 402:         referenceValue: 25,
+ 403:         healthyMax: 25,
+ 404:         watchMax: 60,
+ 405:         axisTitle: "Coverage Risk Pressure",
+ 406:         referenceLabel: "Comfort Band",
+ 407:         healthyLabel: "Healthy",
+ 408:         watchLabel: "Watch",
+ 409:         riskLabel: "Risk",
+ 410:         chartMax: 100
+ 411:       }
+ 412:     });
+ 413: 
+ 414:     writeFlow(data);
+ 415:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 416:   }
+ 417: 
+ 418:   function calc() {
+ 419:     const data = calculateModel();
+ 420:     if (!data.ok) return renderError(data.message);
+ 421:     renderSuccess(data);
+ 422:   }
+ 423: 
+ 424:   function reset() {
+ 425:     applyDefaults();
+ 426:     renderFlowNote();
+ 427:     invalidate({ clearFlow: true });
+ 428:   }
+ 429: 
+ 430:   function bind() {
+ 431:     ["w", "d", "hfov", "dist", "cams", "overlap"].forEach((id) => {
+ 432:       const el = $(id);
+ 433:       if (!el) return;
+ 434:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 435:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 436:     });
+ 437: 
+ 438:     els.calc?.addEventListener("click", calc);
+ 439:     els.reset?.addEventListener("click", reset);
+ 440: 
+ 441:     document.addEventListener("keydown", (e) => {
+ 442:       if (e.key !== "Enter") return;
+ 443:       const t = e.target;
+ 444:       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 445:         e.preventDefault();
+ 446:         calc();
+ 447:       }
+ 448:     });
+ 449:   }
+ 450: 
+ 451:   function initTool() {
+ 452:     bind();
+ 453:     renderFlowNote();
+ 454:     invalidate({ clearFlow: false });
+ 455:   }
+ 456: 
+ 457:   window.addEventListener("DOMContentLoaded", () => {
+ 458:     const year = document.querySelector("[data-year]");
+ 459:     if (year) year.textContent = new Date().getFullYear();
+ 460: 
+ 461:     let unlocked = unlockCategoryPage();
+ 462:     if (unlocked && !els.toolCard.dataset.initialized) {
+ 463:       els.toolCard.dataset.initialized = "true";
+ 464:       initTool();
+ 465:     }
+ 466: 
+ 467:     setTimeout(() => {
+ 468:       unlocked = unlockCategoryPage();
+ 469:       if (unlocked && !els.toolCard.dataset.initialized) {
+ 470:         els.toolCard.dataset.initialized = "true";
+ 471:         initTool();
+ 472:       }
+ 473:     }, 400);
+ 474:   });
+ 475: })();
+
+
+============================================================
+TOOL: camera-coverage-area
+============================================================
+Title: Camera Coverage Area
+Tier: pro
+Meta description: Estimate raw and usable camera coverage area at a target plane after overlap reserve is applied.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Horizontal FOV (deg)
+- Vertical FOV (deg)
+- Distance to Target Plane (ft)
+- Overlap Reserve (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- hfov
+- vfov
+- dist
+- ov
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 104:     return false;
+ 105:   }
+ 106: 
+ 107:   function classifyOverlap(ovPct) {
+ 108:     if (ovPct < 10) return "Low Overlap";
+ 109:     if (ovPct <= 25) return "Balanced Overlap";
+ 110:     return "High Overlap";
+ 111:   }
+ 112: 
+ 113:   function classifyCoverageEfficiency(effAreaRatioPct) {
+ 114:     if (effAreaRatioPct < 65) return "Heavy Reserve";
+ 115:     if (effAreaRatioPct < 85) return "Practical Reserve";
+ 116:     return "Minimal Reserve";
+ 117:   }
+ 118: 
+ 119:   function overlapInterpretation(overlapClass) {
+ 120:     if (overlapClass === "Low Overlap") {
+ 121:       return "Low overlap maximizes individual camera footprint, but increases the chance of soft gaps between adjacent views.";
+ 122:     }
+ 123:     if (overlapClass === "Balanced Overlap") {
+ 124:       return "Balanced overlap is usually the best planning range for continuous scene coverage without wasting too much usable width.";
+ 125:     }
+ 126:     return "High overlap improves continuity and handoff between cameras, but reduces usable coverage efficiency and can increase camera count.";
+ 127:   }
+ 128: 
+ 129:   function reserveGuidance(effWidthRatioPct) {
+ 130:     if (effWidthRatioPct < 70) {
+ 131:       return "Usable width drops quickly once overlap reserve gets aggressive. This is appropriate when continuity matters more than raw coverage efficiency.";
+ 132:     }
+ 133:     if (effWidthRatioPct < 90) {
+ 134:       return "This is a healthy reserve range for many practical layouts. You preserve usable width while still protecting against blind edges.";
+ 135:     }
+ 136:     return "Very little width is being reserved for overlap. Coverage efficiency is high, but spacing tolerance between cameras will be tighter.";
+ 137:   }
+ 138: 
+ 139:   function applyDefaults() {
+ 140:     els.hfov.value = String(DEFAULTS.hfov);
+ 141:     els.vfov.value = String(DEFAULTS.vfov);
+ 142:     els.dist.value = String(DEFAULTS.dist);
+ 143:     els.ov.value = String(DEFAULTS.ov);
+ 144:   }
+ 145: 
+ 146:   function renderFlowNote() {
+ 147:     const flow = ScopedLabsAnalyzer.renderFlowNote({
+ 148:       flowEl: els.flowNote,
+ 149:       flowKey: FLOW_KEYS.area,
+ 150:       category: CATEGORY,
+ 151:       step: STEP,
+ 152:       lane: LANE,
+ 153:       title: "Flow Context",
+ 154:       intro: "This step converts field-of-view results into real usable scene coverage after overlap reserve is applied."
+ 155:     });
+ 156: 
+ 157:     if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+ 158: 
+ 159:     const data = flow.data || {};
+ 160:     const sceneWidth = num(data.sceneWidth, 0);
+ 161:     const dist = num(data.dist, 0);
+ 162:     const hfov = num(data.hfov, 0);
+ 163:     const fitClass = data.fitClass || "";
+ 164: 
+ 165:     if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
+ 166:     if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+ 167: 
+ 168:     const parts = [];
+ 169:     if (sceneWidth > 0) parts.push(`Scene width: <strong>${fmtFt(sceneWidth)}</strong>`);
+ 170:     if (dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
+ 171:     if (hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}°</strong>`);
+ 172:     if (fitClass) parts.push(`Fit class: <strong>${fitClass}</strong>`);
+ 173: 
+ 174:     if (parts.length) {
+ 175:       els.flowNote.hidden = false;
+ 176:       els.flowNote.innerHTML = `
+ 177:         <strong>Flow Context</strong><br>
+ 178:         ${parts.join(" | ")}
+ 179:       `;
+ 180:     }
+ 181:   }
+ 182: 
+ 183:   function invalidate({ clearFlow = true } = {}) {
+ 184:     if (clearFlow) {
+
+--- CORE BLOCK 2 ---
+ 221:   function calculateModel() {
+ 222:     const input = getInputs();
+ 223:     if (!input.ok) return input;
+ 224: 
+ 225:     const ov = input.ovPct / 100;
+ 226: 
+ 227:     const halfW = Math.tan(deg2rad(input.hfov / 2)) * input.dist;
+ 228:     const halfH = Math.tan(deg2rad(input.vfov / 2)) * input.dist;
+ 229: 
+ 230:     const width = halfW * 2;
+ 231:     const height = halfH * 2;
+ 232: 
+ 233:     const effWidth = width * (1 - ov);
+ 234:     const effHeight = height;
+ 235: 
+ 236:     const area = width * height;
+ 237:     const effArea = effWidth * effHeight;
+ 238: 
+ 239:     const widthRetentionPct = width > 0 ? (effWidth / width) * 100 : 0;
+ 240:     const areaRetentionPct = area > 0 ? (effArea / area) * 100 : 0;
+ 241:     const reserveLossPct = 100 - areaRetentionPct;
+ 242: 
+ 243:     const overlapClass = classifyOverlap(input.ovPct);
+ 244:     const efficiencyClass = classifyCoverageEfficiency(areaRetentionPct);
+ 245: 
+ 246:     const metrics = [
+ 247:       { label: "Reserve Pressure", value: reserveLossPct, displayValue: fmtPct(reserveLossPct, 1) },
+ 248:       { label: "Width Retention Loss", value: 100 - widthRetentionPct, displayValue: fmtPct(100 - widthRetentionPct, 1) },
+ 249:       { label: "Area Retention Loss", value: 100 - areaRetentionPct, displayValue: fmtPct(100 - areaRetentionPct, 1) }
+ 250:     ];
+ 251: 
+ 252:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 253:       compositeScore: Math.max(reserveLossPct, 100 - widthRetentionPct, 100 - areaRetentionPct),
+ 254:       metrics,
+ 255:       healthyMax: 20,
+ 256:       watchMax: 35
+ 257:     });
+ 258: 
+ 259:     const interpretationCore = overlapInterpretation(overlapClass);
+ 260:     const guidanceCore = reserveGuidance(widthRetentionPct);
+ 261: 
+ 262:     let dominantConstraint = "";
+ 263:     if (reserveLossPct >= 35) {
+ 264:       dominantConstraint = "Reserve pressure is the dominant limiter. Too much usable scene area is being sacrificed to overlap, which can drive camera count and reduce layout efficiency.";
+ 265:     } else if (reserveLossPct >= 20) {
+ 266:       dominantConstraint = "Coverage efficiency is the dominant limiter. The reserve strategy is still workable, but it is beginning to compress usable scene width enough to affect downstream spacing.";
+ 267:     } else {
+ 268:       dominantConstraint = "Field geometry is balanced. Most of the lens footprint remains usable after reserve is applied, which gives the next spacing step a healthier starting point.";
+ 269:     }
+ 270: 
+ 271:     const interpretation = `At ${fmtFt(input.dist)}, the modeled lens footprint is about ${fmtFt(width)} wide by ${fmtFt(height)} high, producing ${fmtSqFt(area)} of raw area. After reserving ${fmtPct(input.ovPct)} for side-to-side overlap, effective usable width drops to ${fmtFt(effWidth)} while vertical coverage remains ${fmtFt(effHeight)}, leaving about ${fmtSqFt(effArea)} of usable scene coverage. ${interpretationCore}`;
+ 272: 
+ 273:     const guidance = `${guidanceCore} Continue to Camera Spacing next so you can translate this usable width into actual camera-to-camera placement.`;
+ 274: 
+ 275:     return {
+ 276:       ok: true,
+ 277:       ...input,
+ 278:       ov,
+ 279:       width,
+ 280:       height,
+ 281:       area,
+ 282:       effWidth,
+ 283:       effHeight,
+ 284:       effArea,
+ 285:       widthRetentionPct,
+ 286:       areaRetentionPct,
+ 287:       reserveLossPct,
+ 288:       overlapClass,
+ 289:       efficiencyClass,
+ 290:       status: statusPack.status,
+ 291:       interpretation,
+ 292:       dominantConstraint,
+ 293:       guidance
+ 294:     };
+ 295:   }
+ 296: 
+ 297:   function writeFlow(data) {
+ 298:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.area, {
+ 299:       category: CATEGORY,
+ 300:       step: STEP,
+ 301:       data: {
+ 302:         hfov: data.hfov,
+ 303:         vfov: data.vfov,
+ 304:         dist: data.dist,
+ 305:         ov: data.ov,
+ 306:         ovPct: data.ovPct,
+
+--- CORE BLOCK 3 ---
+ 352:       guidance: data.guidance
+ 353:     });
+ 354: 
+ 355:     writeFlow(data);
+ 356:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 357:   }
+ 358: 
+ 359:   function calc() {
+ 360:     const result = calculateModel();
+ 361:     if (!result.ok) return renderError(result.message);
+ 362:     renderSuccess(result);
+ 363:   }
+ 364: 
+ 365:   function reset() {
+ 366:     applyDefaults();
+ 367:     renderFlowNote();
+ 368:     invalidate({ clearFlow: true });
+ 369:   }
+ 370: 
+ 371:   function bind() {
+ 372:     els.calc?.addEventListener("click", calc);
+ 373:     els.reset?.addEventListener("click", reset);
+ 374: 
+ 375:     ["hfov", "vfov", "dist", "ov"].forEach((id) => {
+ 376:       const el = $(id);
+ 377:       if (!el) return;
+ 378:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 379:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 380:     });
+ 381: 
+ 382:     document.addEventListener("keydown", (e) => {
+ 383:       if (e.key !== "Enter") return;
+ 384:       const t = e.target;
+ 385:       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 386:         e.preventDefault();
+ 387:         calc();
+ 388:       }
+ 389:     });
+ 390:   }
+ 391: 
+ 392:   function initTool() {
+ 393:     bind();
+ 394:     renderFlowNote();
+ 395:     invalidate({ clearFlow: false });
+ 396:   }
+ 397: 
+ 398:   window.addEventListener("DOMContentLoaded", () => {
+ 399:     const year = document.querySelector("[data-year]");
+ 400:     if (year) year.textContent = new Date().getFullYear();
+ 401: 
+ 402:     let unlocked = unlockCategoryPage();
+ 403:     if (unlocked && !els.toolCard.dataset.initialized) {
+ 404:       els.toolCard.dataset.initialized = "true";
+ 405:       initTool();
+ 406:     }
+ 407: 
+ 408:     setTimeout(() => {
+ 409:       unlocked = unlockCategoryPage();
+ 410:       if (unlocked && !els.toolCard.dataset.initialized) {
+ 411:         els.toolCard.dataset.initialized = "true";
+ 412:         initTool();
+ 413:       }
+
+
+============================================================
+TOOL: camera-spacing
+============================================================
+Title: Camera Spacing Planner
+Tier: pro
+Meta description: Estimate practical camera spacing and camera count from usable coverage width and overlap target.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Perimeter Length (ft)
+- Distance to Target Plane (ft)
+- Horizontal FOV (deg)
+- Overlap Target (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- len
+- dist
+- hfov
+- ov
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 196:   function classifySpacing(ratio) {
+ 197:     if (ratio < 0.8) return "Tight Spacing";
+ 198:     if (ratio <= 1.05) return "Balanced Spacing";
+ 199:     return "Wide Spacing";
+ 200:   }
+ 201: 
+ 202:   function calculateModel() {
+ 203:     const input = getInputs();
+ 204:     if (!input.ok) return input;
+ 205: 
+ 206:     const rawWidth = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
+ 207:     const usableWidth = rawWidth * (1 - (input.ovPct / 100));
+ 208: 
+ 209:     const cams = Math.max(1, Math.ceil(input.len / usableWidth));
+ 210:     const spacing = input.len / cams;
+ 211:     const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
+ 212: 
+ 213:     const gapExposureMetric = ratio > 1 ? Math.min((ratio - 1) * 250, 100) : 0;
+ 214:     const compressionMetric = ratio < 1 ? Math.min((1 - ratio) * 100, 100) : 0;
+ 215:     const reserveMetric = input.ovPct;
+ 216: 
+ 217:     const metrics = [
+ 218:       {
+ 219:         label: "Gap Exposure",
+ 220:         value: gapExposureMetric,
+ 221:         displayValue: ratio > 1 ? fmtPct((ratio - 1) * 100, 1) : "0.0%"
+ 222:       },
+ 223:       {
+ 224:         label: "Spacing Compression",
+ 225:         value: compressionMetric,
+ 226:         displayValue: ratio < 1 ? fmtPct((1 - ratio) * 100, 1) : "0.0%"
+ 227:       },
+ 228:       {
+ 229:         label: "Overlap Reserve",
+ 230:         value: reserveMetric,
+ 231:         displayValue: fmtPct(input.ovPct, 1)
+ 232:       }
+ 233:     ];
+ 234: 
+ 235:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 236:       compositeScore: Math.max(gapExposureMetric, compressionMetric, reserveMetric),
+ 237:       metrics,
+ 238:       healthyMax: 20,
+ 239:       watchMax: 35
+ 240:     });
+ 241: 
+ 242:     const spacingClass = classifySpacing(ratio);
+ 243: 
+ 244:     let interpretation = `With a usable camera footprint of about ${fmtFt(usableWidth)}, a ${fmtFt(input.len)} perimeter needs ${cams} camera${cams === 1 ? "" : "s"} to maintain the requested overlap. That produces an actual spacing of about ${fmtFt(spacing)} between camera centers.`;
+ 245: 
+ 246:     if (spacingClass === "Wide Spacing") {
+ 247:       interpretation += ` The layout is running wider than the usable footprint, which raises the chance of soft gaps or outright blind zones once real mounting tolerances and scene geometry are applied.`;
+ 248:     } else if (spacingClass === "Tight Spacing") {
+ 249:       interpretation += ` The layout is conservative and overlap-heavy, which reduces blind-spot risk but drives camera count and compresses coverage efficiency.`;
+ 250:     } else {
+ 251:       interpretation += ` The spacing is balanced against usable width, which is typically the healthiest tradeoff between continuity and camera efficiency.`;
+ 252:     }
+ 253: 
+ 254:     let dominantConstraint = "";
+ 255:     if (spacingClass === "Wide Spacing") {
+ 256:       dominantConstraint = "Gap exposure is the dominant limiter. Camera spacing is outrunning the usable footprint, so weak zones between views become the first operational risk.";
+ 257:     } else if (spacingClass === "Tight Spacing") {
+ 258:       dominantConstraint = "Spacing compression is the dominant limiter. The design is safe from a continuity standpoint, but it is consuming more cameras than the coverage width strictly requires.";
+ 259:     } else if (input.ovPct >= 25) {
+ 260:       dominantConstraint = "Overlap reserve is the dominant limiter. The spacing still works, but the reserve target is starting to compress usable width enough to affect layout efficiency.";
+ 261:     } else {
+ 262:       dominantConstraint = "The layout is balanced. Spacing, usable width, and reserve target are still working together without a strong limiting factor.";
+ 263:     }
+ 264: 
+ 265:     let guidance = "";
+ 266:     if (spacingClass === "Wide Spacing") {
+ 267:       guidance = "Reduce spacing, widen usable footprint, or increase camera count before treating this as a final layout. Then use Blind Spot Check to confirm the remaining continuity risk.";
+ 268:     } else if (spacingClass === "Tight Spacing") {
+ 269:       guidance = "This layout is conservative. Review whether the overlap target or camera count can be relaxed without creating coverage gaps, then confirm in Blind Spot Check.";
+ 270:     } else {
+ 271:       guidance = "Spacing is in a practical range. Continue to Blind Spot Check next to verify that the geometry still closes gaps across the protected span.";
+ 272:     }
+ 273: 
+ 274:     return {
+ 275:       ok: true,
+ 276:       ...input,
+ 277:       rawWidth,
+ 278:       usableWidth,
+ 279:       cams,
+ 280:       spacing,
+ 281:       ratio,
+ 282:       spacingClass,
+ 283:       status: statusPack.status,
+ 284:       interpretation,
+ 285:       dominantConstraint,
+ 286:       guidance
+ 287:     };
+ 288:   }
+ 289: 
+ 290:   function writeFlow(data) {
+ 291:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.spacing, {
+ 292:       category: CATEGORY,
+ 293:       step: STEP,
+ 294:       data: {
+ 295:         len: data.len,
+ 296:         dist: data.dist,
+ 297:         hfov: data.hfov,
+ 298:         ovPct: data.ovPct,
+ 299:         rawWidth: data.rawWidth,
+ 300:         usableWidth: data.usableWidth,
+ 301:         cams: data.cams,
+ 302:         spacing: data.spacing,
+ 303:         ratio: data.ratio,
+ 304:         spacingClass: data.spacingClass,
+ 305:         interpretation: data.interpretation,
+ 306:         guidance: data.guidance
+ 307:       }
+ 308:     });
+ 309:   }
+ 310: 
+ 311:   function renderError(message) {
+ 312:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 313:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 314:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 315:   }
+ 316: 
+ 317:   function renderSuccess(data) {
+
+--- CORE BLOCK 2 ---
+ 345:   function calc() {
+ 346:     const data = calculateModel();
+ 347:     if (!data.ok) return renderError(data.message);
+ 348:     renderSuccess(data);
+ 349:   }
+ 350: 
+ 351:   function reset() {
+ 352:     applyDefaults();
+ 353:     renderFlowNote();
+ 354:     invalidate({ clearFlow: true });
+ 355:   }
+ 356: 
+ 357:   function bind() {
+ 358:     ["len", "dist", "hfov", "ov"].forEach((id) => {
+ 359:       const el = $(id);
+ 360:       if (!el) return;
+ 361:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 362:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 363:     });
+ 364: 
+ 365:     els.calc?.addEventListener("click", calc);
+ 366:     els.reset?.addEventListener("click", reset);
+ 367: 
+ 368:     document.addEventListener("keydown", (e) => {
+ 369:       if (e.key !== "Enter") return;
+ 370:       const t = e.target;
+ 371:       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 372:         e.preventDefault();
+ 373:         calc();
+ 374:       }
+ 375:     });
+ 376:   }
+ 377: 
+ 378:   function initTool() {
+ 379:     bind();
+ 380:     renderFlowNote();
+ 381:     invalidate({ clearFlow: false });
+ 382:   }
+ 383: 
+ 384:   window.addEventListener("DOMContentLoaded", () => {
+ 385:     const year = document.querySelector("[data-year]");
+ 386:     if (year) year.textContent = new Date().getFullYear();
+ 387: 
+ 388:     let unlocked = unlockCategoryPage();
+ 389:     if (unlocked) initTool();
+ 390: 
+ 391:     setTimeout(() => {
+ 392:       unlocked = unlockCategoryPage();
+ 393:       if (unlocked && !els.toolCard.dataset.initialized) {
+ 394:         els.toolCard.dataset.initialized = "true";
+ 395:         initTool();
+ 396:       }
+ 397:     }, 400);
+ 398:   });
+ 399: })();
+
+
+============================================================
+TOOL: face-recognition-range
+============================================================
+Title: Face Recognition Range
+Tier: pro
+Meta description: Determine maximum recognition distance based on optics and pixel density.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Horizontal Resolution (px)
+- Horizontal FOV (deg)
+- Target Pixels per Face (px)
+- Face Width (ft)
+- Distance (ft)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- res
+- hfov
+- ppf
+- fw
+- dist
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 182:     const hfov = num(els.hfov.value);
+ 183:     const ppf = num(els.ppf.value);
+ 184:     const fw = num(els.fw.value);
+ 185:     const dist = num(els.dist.value);
+ 186: 
+ 187:     if (
+ 188:       !Number.isFinite(res) || res <= 0 ||
+ 189:       !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
+ 190:       !Number.isFinite(ppf) || ppf <= 0 ||
+ 191:       !Number.isFinite(fw) || fw <= 0 ||
+ 192:       !Number.isFinite(dist) || dist <= 0
+ 193:     ) {
+ 194:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 195:     }
+ 196: 
+ 197:     return { ok: true, res, hfov, ppf, fw, dist };
+ 198:   }
+ 199: 
+ 200:   function classifyRequirement(ppf) {
+ 201:     if (ppf >= 300) return "Identification";
+ 202:     if (ppf >= 250) return "Strong Recognition";
+ 203:     if (ppf >= 180) return "Recognition";
+ 204:     return "Basic Facial Detail";
+ 205:   }
+ 206: 
+ 207:   function calculateModel() {
+ 208:     const input = getInputs();
+ 209:     if (!input.ok) return input;
+ 210: 
+ 211:     const maxDist = (input.res * input.fw) / (2 * Math.tan(deg2rad(input.hfov / 2)) * input.ppf);
+ 212:     const marginFt = maxDist - input.dist;
+ 213:     const utilizationPct = maxDist > 0 ? (input.dist / maxDist) * 100 : 100;
+ 214:     const deliveredPpf = (input.res * input.fw) / (2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist);
+ 215: 
+ 216:     const shortfallMetric = marginFt < 0 ? Math.min(Math.abs(marginFt / maxDist) * 100, 100) : 0;
+ 217:     const utilizationMetric = ScopedLabsAnalyzer.clamp(utilizationPct, 0, 100);
+ 218:     const requirementMetric = input.ppf >= 300 ? 30 : input.ppf >= 250 ? 20 : input.ppf >= 180 ? 10 : 5;
+ 219: 
+ 220:     const metrics = [
+ 221:       {
+ 222:         label: "Range Utilization",
+ 223:         value: utilizationMetric,
+ 224:         displayValue: fmtPct(utilizationPct)
+ 225:       },
+ 226:       {
+ 227:         label: "Distance Shortfall",
+ 228:         value: shortfallMetric,
+ 229:         displayValue: marginFt < 0 ? fmtFt(Math.abs(marginFt)) : "0.0 ft"
+ 230:       },
+ 231:       {
+ 232:         label: "Recognition Requirement",
+ 233:         value: requirementMetric,
+ 234:         displayValue: fmtPx(input.ppf)
+ 235:       }
+ 236:     ];
+ 237: 
+ 238:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 239:       compositeScore: Math.max(utilizationMetric, shortfallMetric, requirementMetric),
+ 240:       metrics,
+ 241:       healthyMax: 75,
+ 242:       watchMax: 95
+ 243:     });
+ 244: 
+ 245:     const classification = classifyRequirement(input.ppf);
+ 246: 
+ 247:     let interpretation = `With ${fmtPx(input.res)} horizontal resolution, ${fmt(input.hfov, 1)}° HFOV, and a face width assumption of ${fmtFt(input.fw, 2)}, the modeled maximum distance to hold ${fmtPx(input.ppf)} is about ${fmtFt(maxDist)}. At the entered working distance of ${fmtFt(input.dist)}, the scene would deliver roughly ${fmtPx(deliveredPpf)} across the face.`;
+ 248: 
+ 249:     if (marginFt < 0) {
+ 250:       interpretation += ` The target is beyond the modeled recognition envelope, so face detail falls off before the requested distance is reached.`;
+ 251:     } else if (utilizationPct > 95) {
+ 252:       interpretation += ` The target distance is right at the edge of the recognition envelope, so mounting error, lighting loss, compression, or motion blur can easily push performance below the requirement.`;
+ 253:     } else if (utilizationPct > 75) {
+ 254:       interpretation += ` The optic can support the requirement, but most of the available recognition range is already being consumed. Field conditions will matter.`;
+ 255:     } else {
+ 256:       interpretation += ` The optic still has usable range margin, so the design is not yet riding the edge of facial-recognition performance.`;
+ 257:     }
+ 258: 
+ 259:     let dominantConstraint = "";
+ 260:     if (marginFt < 0) {
+ 261:       dominantConstraint = "Distance shortfall is the dominant limiter. The target range exceeds what the current resolution, field of view, and facial-detail requirement can support.";
+ 262:     } else if (utilizationPct > 95) {
+ 263:       dominantConstraint = "Range utilization is the dominant limiter. The design is operating at the boundary, where any real-world degradation becomes operationally meaningful.";
+ 264:     } else if (input.ppf >= 300) {
+ 265:       dominantConstraint = "Recognition requirement is the dominant limiter. The design is being held to an identification-grade standard, which compresses usable range more aggressively.";
+ 266:     } else {
+ 267:       dominantConstraint = "The lens and recognition requirement are reasonably balanced. The design still has measurable working-distance headroom.";
+ 268:     }
+ 269: 
+ 270:     let guidance = "";
+ 271:     if (marginFt < 0) {
+ 272:       guidance = "Tighten the field of view, increase resolution, reduce working distance, or lower the facial-detail target before relying on this lens for recognition at that range.";
+ 273:     } else if (utilizationPct > 95) {
+ 274:       guidance = "Treat this as edge-of-range performance. Validate on the real mounting angle and scene lighting before finalizing the design.";
+ 275:     } else if (utilizationPct > 75) {
+ 276:       guidance = "The design is workable, but verify lighting, shutter behavior, and subject motion because the recognition margin is not generous.";
+ 277:     } else {
+ 278:       guidance = "Recognition range has practical headroom. Continue to License Plate next if the same corridor or approach lane also needs vehicle detail validation.";
+ 279:     }
+ 280: 
+ 281:     return {
+ 282:       ok: true,
+ 283:       ...input,
+ 284:       maxDist,
+ 285:       marginFt,
+ 286:       utilizationPct,
+ 287:       deliveredPpf,
+ 288:       classification,
+ 289:       status: statusPack.status,
+ 290:       interpretation,
+ 291:       dominantConstraint,
+ 292:       guidance
+ 293:     };
+ 294:   }
+ 295: 
+ 296:   function writeFlow(data) {
+ 297:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.face, {
+ 298:       category: CATEGORY,
+ 299:       step: STEP,
+ 300:       data: {
+ 301:         dist: data.maxDist,
+ 302:         actualDist: data.dist,
+ 303:         hfov: data.hfov,
+ 304:         ppf: data.ppf,
+ 305:         deliveredPpf: data.deliveredPpf,
+ 306:         classification: data.classification,
+ 307:         marginFt: data.marginFt,
+ 308:         interpretation: data.interpretation,
+ 309:         guidance: data.guidance
+ 310:       }
+ 311:     });
+ 312:   }
+ 313: 
+ 314:   function renderError(message) {
+ 315:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 316:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 317:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 318:   }
+ 319: 
+ 320:   function renderSuccess(data) {
+ 321:     ScopedLabsAnalyzer.renderOutput({
+ 322:       resultsEl: els.results,
+ 323:       analysisEl: els.analysis,
+ 324:       summaryRows: [
+ 325:         { label: "Target Requirement", value: data.classification },
+ 326:         { label: "Max Recognition Distance", value: fmtFt(data.maxDist) },
+ 327:         { label: "Actual Working Distance", value: fmtFt(data.dist) },
+ 328:         { label: "Range Margin", value: data.marginFt >= 0 ? fmtFt(data.marginFt) : `-${fmtFt(Math.abs(data.marginFt))}` }
+ 329:       ],
+ 330:       derivedRows: [
+ 331:         { label: "Horizontal Resolution", value: fmtPx(data.res) },
+ 332:         { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
+ 333:         { label: "Target Pixels per Face", value: fmtPx(data.ppf) },
+ 334:         { label: "Delivered Pixels per Face", value: fmtPx(data.deliveredPpf, 1) },
+ 335:         { label: "Face Width Assumption", value: fmtFt(data.fw, 2) },
+ 336:         { label: "Range Utilization", value: fmtPct(data.utilizationPct) }
+ 337:       ],
+ 338:       status: data.status,
+ 339:       interpretation: data.interpretation,
+ 340:       dominantConstraint: data.dominantConstraint,
+ 341:       guidance: data.guidance
+ 342:     });
+ 343: 
+ 344:     writeFlow(data);
+ 345:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 346:   }
+ 347: 
+ 348:   function calc() {
+ 349:     const data = calculateModel();
+ 350:     if (!data.ok) return renderError(data.message);
+ 351:     renderSuccess(data);
+ 352:   }
+ 353: 
+ 354:   function reset() {
+ 355:     applyDefaults();
+ 356:     renderFlowNote();
+ 357:     invalidate({ clearFlow: true });
+ 358:   }
+ 359: 
+ 360:   function bind() {
+ 361:     ["res", "hfov", "ppf", "fw", "dist"].forEach((id) => {
+ 362:       const el = $(id);
+ 363:       if (!el) return;
+ 364:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 365:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 366:     });
+ 367: 
+ 368:     els.calc?.addEventListener("click", calc);
+ 369:     els.reset?.addEventListener("click", reset);
+ 370:   }
+ 371: 
+ 372:   function init() {
+ 373:     bind();
+ 374:     renderFlowNote();
+ 375:     invalidate({ clearFlow: false });
+ 376:   }
+ 377: 
+ 378:   window.addEventListener("DOMContentLoaded", () => {
+ 379:     const year = document.querySelector("[data-year]");
+ 380:     if (year) year.textContent = new Date().getFullYear();
+ 381: 
+ 382:     const unlocked = unlockCategoryPage();
+ 383:     if (!unlocked) return;
+ 384: 
+ 385:     init();
+ 386:   });
+ 387: })();
+
+
+============================================================
+TOOL: field-of-view
+============================================================
+Title: Field of View Calculator
+Tier: free/unknown
+Meta description: Estimate scene width, fit, and practical coverage from horizontal field of view and target distance.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Target Distance (ft)
+- Horizontal FOV (deg)
+- Scene Width to Cover (ft)
+- Mount Height (ft)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- dist
+- hfov
+- scene
+- h
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  53:   function fmtRatio(value, digits = 2) {
+  54:     return Number.isFinite(value) ? `${value.toFixed(digits)}x` : "—";
+  55:   }
+  56: 
+  57:   function fmtDeg(value, digits = 1) {
+  58:     return Number.isFinite(value) ? `${value.toFixed(digits)}°` : "—";
+  59:   }
+  60: 
+  61:   function classifyFit(coverageRatio) {
+  62:     if (coverageRatio < 0.9) return "Too Narrow";
+  63:     if (coverageRatio <= 1.15) return "Good Fit";
+  64:     return "Too Wide";
+  65:   }
+  66: 
+  67:   function interpretationForFit(fitClass) {
+  68:     if (fitClass === "Too Narrow") {
+  69:       return "Current field of view does not cover the full target scene width. You will likely need a wider lens, shorter standoff distance, or more cameras.";
+  70:     }
+  71:     if (fitClass === "Good Fit") {
+  72:       return "Field of view is in a practical range for the intended scene width. This is a workable baseline for downstream coverage-area and spacing decisions.";
+  73:     }
+  74:     return "Field of view is wider than necessary for the target scene width. This improves coverage breadth, but may dilute detail and weaken identification performance.";
+  75:   }
+  76: 
+  77:   function lensGuidance(hfov) {
+  78:     if (hfov < 50) {
+  79:       return "This is a relatively tight view. Good for concentrating detail, but scene coverage width will be limited.";
+  80:     }
+  81:     if (hfov <= 90) {
+  82:       return "This is a balanced field of view for many general surveillance applications.";
+  83:     }
+  84:     return "This is a wide view. Useful for broad awareness, but watch for reduced target detail at the far edges of coverage.";
+  85:   }
+  86: 
+  87:   function clearDownstream() {
+  88:     sessionStorage.removeItem(FLOW_KEYS.area);
+  89:   }
+  90: 
+  91:   function applyDefaults() {
+  92:     els.dist.value = String(DEFAULTS.dist);
+  93:     els.hfov.value = String(DEFAULTS.hfov);
+  94:     els.scene.value = String(DEFAULTS.scene);
+  95:     els.h.value = String(DEFAULTS.h);
+  96:   }
+  97: 
+  98:   function renderFlowNote() {
+  99:     const flow = ScopedLabsAnalyzer.renderFlowNote({
+ 100:       flowEl: els.flowNote,
+ 101:       flowKey: FLOW_KEYS.fov,
+ 102:       category: CATEGORY,
+ 103:       step: STEP,
+ 104:       lane: LANE,
+ 105:       title: "Flow Context",
+ 106:       intro: "This step uses the prior mounting-height recommendation to estimate how much scene width the selected field of view can realistically cover at the target distance."
+ 107:     });
+ 108: 
+ 109:     if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+ 110: 
+ 111:     const data = flow.data || {};
+ 112:     const h = num(data.h || 0);
+ 113:     const dist = num(data.dist || 0);
+ 114:     const tilt = num(data.tilt || 0);
+ 115:     const tiltClass = data.tiltClass || "";
+ 116: 
+ 117:     if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
+ 118:     if (Number.isFinite(h) && h > 0) els.h.value = String(Math.round(h));
+ 119: 
+ 120:     const parts = [];
+ 121:     if (Number.isFinite(h) && h > 0) parts.push(`Mount height: <strong>${fmtFt(h)}</strong>`);
+ 122:     if (Number.isFinite(dist) && dist > 0) parts.push(`Target distance: <strong>${fmtFt(dist)}</strong>`);
+ 123:     if (Number.isFinite(tilt) && tilt > 0) parts.push(`Suggested tilt: <strong>${fmtDeg(tilt)}</strong>`);
+ 124:     if (tiltClass) parts.push(`Angle quality: <strong>${tiltClass}</strong>`);
+ 125: 
+ 126:     if (parts.length) {
+ 127:       els.flowNote.hidden = false;
+ 128:       els.flowNote.innerHTML = `
+ 129:         <strong>Flow Context</strong><br>
+ 130:         ${parts.join(" | ")}
+ 131:       `;
+ 132:     }
+ 133:   }
+ 134: 
+ 135:   function invalidate({ clearFlow = true } = {}) {
+ 136:     if (clearFlow) {
+ 137:       sessionStorage.removeItem(FLOW_KEYS.fov);
+ 138:       clearDownstream();
+ 139:     }
+ 140: 
+ 141:     ScopedLabsAnalyzer.invalidate({
+ 142:       resultsEl: els.results,
+ 143:       analysisEl: els.analysis,
+ 144:       continueWrapEl: els.continueWrap,
+ 145:       continueBtnEl: els.continueBtn,
+ 146:       flowKey: FLOW_KEYS.fov,
+ 147:       category: CATEGORY,
+ 148:       step: STEP,
+ 149:       lane: LANE,
+ 150:       emptyMessage: "Enter values and press Calculate."
+ 151:     });
+ 152: 
+ 153:     renderFlowNote();
+ 154:   }
+ 155: 
+ 156:   function getInputs() {
+
+--- CORE BLOCK 2 ---
+ 174:   function calculateModel() {
+ 175:     const input = getInputs();
+ 176:     if (!input.ok) return input;
+ 177: 
+ 178:     const sceneWidth = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
+ 179:     const halfWidth = sceneWidth / 2;
+ 180:     const coverageRatio = input.scene > 0 ? sceneWidth / input.scene : 0;
+ 181:     const fitClass = classifyFit(coverageRatio);
+ 182:     const fitText = interpretationForFit(fitClass);
+ 183:     const lensText = lensGuidance(input.hfov);
+ 184:     const diagonalReach = Math.sqrt((sceneWidth * sceneWidth) + (input.dist * input.dist));
+ 185:     const widthPerFootHeight = input.h > 0 ? sceneWidth / input.h : 0;
+ 186: 
+ 187:     const shortfallPct = input.scene > 0 && sceneWidth < input.scene
+ 188:       ? ((input.scene - sceneWidth) / input.scene) * 100
+ 189:       : 0;
+ 190: 
+ 191:     const overshootPct = input.scene > 0 && sceneWidth > input.scene
+ 192:       ? ((sceneWidth - input.scene) / input.scene) * 100
+ 193:       : 0;
+ 194: 
+ 195:     const fitPressureMetric = fitClass === "Too Narrow"
+ 196:       ? Math.min(shortfallPct * 2.5, 100)
+ 197:       : fitClass === "Too Wide"
+ 198:         ? Math.min(overshootPct * 0.9, 100)
+ 199:         : Math.min(Math.abs(coverageRatio - 1) * 100, 100);
+ 200: 
+ 201:     const lensBreadthMetric = input.hfov > 90 ? Math.min((input.hfov - 90) * 1.25, 100) : 0;
+ 202:     const geometryMetric = input.h > 0 && widthPerFootHeight > 8
+ 203:       ? Math.min((widthPerFootHeight - 8) * 8, 100)
+ 204:       : 0;
+ 205: 
+ 206:     const metrics = [
+ 207:       {
+ 208:         label: "Fit Pressure",
+ 209:         value: fitPressureMetric,
+ 210:         displayValue: fitClass === "Good Fit" ? fitClass : fmtRatio(coverageRatio)
+ 211:       },
+ 212:       {
+ 213:         label: "Lens Breadth",
+ 214:         value: lensBreadthMetric,
+ 215:         displayValue: fmtDeg(input.hfov)
+ 216:       },
+ 217:       {
+ 218:         label: "Geometry Spread",
+ 219:         value: geometryMetric,
+ 220:         displayValue: input.h > 0 ? `${fmt(widthPerFootHeight, 2)} ft/ft` : "N/A"
+ 221:       }
+ 222:     ];
+ 223: 
+ 224:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 225:       compositeScore: Math.max(fitPressureMetric, lensBreadthMetric, geometryMetric),
+ 226:       metrics,
+ 227:       healthyMax: 20,
+ 228:       watchMax: 40
+ 229:     });
+ 230: 
+ 231:     const interpretation = `At ${fmtFt(input.dist)}, a ${fmtDeg(input.hfov)} horizontal field of view covers about ${fmtFt(sceneWidth)} of scene width, or ${fmtFt(halfWidth)} to either side of centerline. Against the requested scene width of ${fmtFt(input.scene)}, the layout is classified as ${fitClass}. ${fitText}`;
+ 232: 
+ 233:     let dominantConstraint = "";
+ 234:     if (fitClass === "Too Narrow") {
+ 235:       dominantConstraint = "Fit pressure is the dominant limiter. The lens footprint is not wide enough for the target scene, so coverage gaps or extra cameras become the first downstream issue.";
+ 236:     } else if (fitClass === "Too Wide") {
+ 237:       dominantConstraint = "Lens breadth is the dominant limiter. You can cover the width, but the view is spreading scene detail across a broader footprint than necessary.";
+ 238:     } else if (input.h > 0 && widthPerFootHeight > 8) {
+ 239:       dominantConstraint = "Geometry spread is the dominant limiter. The scene width is expanding quickly relative to mount height, which can make detail distribution less efficient.";
+ 240:     } else {
+ 241:       dominantConstraint = "The field geometry is balanced. Distance, horizontal angle, and target scene width are aligned well enough for the next planning steps.";
+ 242:     }
+ 243: 
+ 244:     let guidance = "";
+ 245:     if (fitClass === "Too Narrow") {
+ 246:       guidance = "Widen the lens, move closer, or plan on additional cameras before trusting this layout. Then continue to Coverage Area once the width fit is acceptable.";
+ 247:     } else if (fitClass === "Too Wide") {
+ 248:       guidance = "Coverage is broad enough, but verify whether this much width is actually desirable for the target detail level. Continue to Coverage Area to translate this width into usable scene footprint.";
+ 249:     } else {
+ 250:       guidance = "This is a workable starting point. Continue to Coverage Area to convert the lens footprint into usable width, height, and effective coverage after reserve is applied.";
+ 251:     }
+ 252: 
+ 253:     return {
+ 254:       ok: true,
+ 255:       ...input,
+ 256:       sceneWidth,
+ 257:       halfWidth,
+ 258:       coverageRatio,
+ 259:       fitClass,
+ 260:       fitText,
+ 261:       lensText,
+ 262:       diagonalReach,
+ 263:       widthPerFootHeight,
+ 264:       interpretation,
+ 265:       dominantConstraint,
+ 266:       guidance,
+ 267:       status: statusPack.status
+ 268:     };
+ 269:   }
+ 270: 
+ 271:   function writeFlow(data) {
+ 272:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.fov, {
+ 273:       category: CATEGORY,
+ 274:       step: STEP,
+ 275:       data: {
+ 276:         dist: data.dist,
+ 277:         hfov: data.hfov,
+ 278:         scene: data.scene,
+
+--- CORE BLOCK 3 ---
+ 320:       guidance: data.guidance
+ 321:     });
+ 322: 
+ 323:     writeFlow(data);
+ 324:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 325:   }
+ 326: 
+ 327:   function calc() {
+ 328:     const data = calculateModel();
+ 329:     if (!data.ok) return renderError(data.message);
+ 330:     renderSuccess(data);
+ 331:   }
+ 332: 
+ 333:   function reset() {
+ 334:     applyDefaults();
+ 335:     renderFlowNote();
+ 336:     invalidate({ clearFlow: true });
+ 337:   }
+ 338: 
+ 339:   function bind() {
+ 340:     els.calc?.addEventListener("click", calc);
+ 341:     els.reset?.addEventListener("click", reset);
+ 342: 
+ 343:     ["dist", "hfov", "scene", "h"].forEach((id) => {
+ 344:       const el = $(id);
+ 345:       if (!el) return;
+ 346:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 347:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 348:     });
+ 349: 
+ 350:     document.addEventListener("keydown", (e) => {
+ 351:       if (e.key !== "Enter") return;
+ 352:       const t = e.target;
+ 353:       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 354:         e.preventDefault();
+ 355:         calc();
+ 356:       }
+ 357:     });
+ 358:   }
+ 359: 
+ 360:   function init() {
+ 361:     const year = document.querySelector("[data-year]");
+ 362:     if (year) year.textContent = new Date().getFullYear();
+ 363: 
+ 364:     bind();
+ 365:     renderFlowNote();
+ 366:     invalidate({ clearFlow: false });
+ 367:   }
+ 368: 
+ 369:   window.addEventListener("DOMContentLoaded", init);
+ 370: })();
+ 371: 
+
+
+============================================================
+TOOL: lens-selection
+============================================================
+Title: Lens Selection Helper
+Tier: pro
+Meta description: Determine focal length and lens class based on scene geometry and validated pixel-density requirements.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Distance to Target (ft)
+- Target Width (ft)
+- Sensor Width (mm)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- dist
+- tw
+- sw
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 133:   function classifyLens(focal) {
+ 134:     if (focal < 3) return "Ultra-Wide (2.8mm)";
+ 135:     if (focal < 5) return "Wide (4mm)";
+ 136:     if (focal < 8) return "Mid (6mm)";
+ 137:     if (focal < 12) return "Telephoto (8–12mm)";
+ 138:     return "Long Range (12mm+)";
+ 139:   }
+ 140: 
+ 141:   function classifyRequirement(ppf) {
+ 142:     if (ppf >= 250) return "High Detail";
+ 143:     if (ppf >= 150) return "Recognition";
+ 144:     if (ppf >= 80) return "Observation";
+ 145:     return "Low Detail";
+ 146:   }
+ 147: 
+ 148:   function lensInterpretation(focal) {
+ 149:     if (focal < 4) {
+ 150:       return "Wide coverage, but reduced detail concentration at distance.";
+ 151:     }
+ 152:     if (focal < 8) {
+ 153:       return "Balanced field of view and usable subject detail.";
+ 154:     }
+ 155:     if (focal < 12) {
+ 156:       return "Narrower view with stronger subject concentration and better target detail.";
+ 157:     }
+ 158:     return "Highly focused view intended for long-range identification or constrained corridors.";
+ 159:   }
+
+--- CORE BLOCK 2 ---
+ 187: 
+ 188:     const dist = num(prev.dist);
+ 189:     const ppf = num(prev.ppf);
+ 190:     const level = prev.level || prev.classification || "";
+ 191: 
+ 192:     if (Number.isFinite(dist) && dist > 0) {
+ 193:       els.dist.value = String(Math.round(dist));
+ 194:     }
+ 195: 
+ 196:     const parts = [];
+ 197:     if (level) {
+ 198:       parts.push(`Pixel Density: <strong>${level}</strong>`);
+ 199:     } else if (Number.isFinite(ppf) && ppf > 0) {
+ 200:       parts.push(`Pixel Density: <strong>${fmtPpf(ppf)}</strong>`);
+ 201:     }
+ 202:     if (Number.isFinite(dist) && dist > 0) {
+ 203:       parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
+ 204:     }
+ 205: 
+ 206:     if (!parts.length) {
+ 207:       els.flowNote.hidden = true;
+ 208:       els.flowNote.innerHTML = "";
+ 209:       return;
+ 210:     }
+ 211: 
+ 212:     els.flowNote.hidden = false;
+ 213:     els.flowNote.innerHTML = `
+ 214:       <strong>Flow Context</strong><br>
+ 215:       ${parts.join(" | ")}
+ 216:       <br><br>
+ 217:       This step converts the validated detail requirement from Pixel Density into a practical focal-length recommendation.
+ 218:     `;
+ 219:   }
+ 220: 
+ 221:   function invalidate({ clearFlow = true } = {}) {
+ 222:     if (clearFlow) clearDownstream();
+ 223: 
+ 224:     ScopedLabsAnalyzer.invalidate({
+ 225:       resultsEl: els.results,
+ 226:       analysisEl: els.analysis,
+ 227:       continueWrapEl: els.continueWrap,
+ 228:       continueBtnEl: els.continueBtn,
+ 229:       existingChartRef: chartRef,
+ 230:       existingWrapRef: chartWrapRef,
+ 231:       flowKey: FLOW_KEYS.lens,
+ 232:       category: CATEGORY,
+ 233:       step: STEP,
+ 234:       lane: LANE,
+ 235:       emptyMessage: "Enter values and press Suggest Lens."
+ 236:     });
+ 237: 
+ 238:     prev = null;
+ 239:     renderFlowNote();
+ 240:   }
+ 241: 
+ 242:   function getInputs() {
+ 243:     const dist = num(els.dist.value);
+ 244:     const tw = num(els.tw.value);
+ 245:     const sw = num(els.sw.value);
+ 246: 
+ 247:     if (
+ 248:       !Number.isFinite(dist) || dist <= 0 ||
+ 249:       !Number.isFinite(tw) || tw <= 0 ||
+ 250:       !Number.isFinite(sw) || sw <= 0
+ 251:     ) {
+ 252:       return { ok: false, message: "Enter valid values and press Suggest Lens." };
+ 253:     }
+ 254: 
+ 255:     return { ok: true, dist, tw, sw };
+ 256:   }
+ 257: 
+ 258:   function adjustForPPF(focal) {
+ 259:     if (!prev) return focal;
+ 260: 
+ 261:     const ppf = num(prev.ppf, 0);
+ 262: 
+ 263:     if (ppf < 40) return focal * 1.4;
+ 264:     if (ppf < 80) return focal * 1.2;
+ 265:     if (ppf > 120) return focal * 0.9;
+ 266: 
+ 267:     return focal;
+ 268:   }
+ 269: 
+ 270:   function calculateModel() {
+ 271:     const input = getInputs();
+ 272:     if (!input.ok) return input;
+ 273: 
+ 274:     const baseFocal = (input.sw * input.dist) / input.tw;
+ 275:     const adjustedFocal = adjustForPPF(baseFocal);
+ 276:     const lensClass = classifyLens(adjustedFocal);
+ 277:     const interp = lensInterpretation(adjustedFocal);
+ 278: 
+ 279:     const ppf = prev ? num(prev.ppf, 0) : 0;
+ 280:     const requirementClass = classifyRequirement(ppf);
+ 281: 
+ 282:     const adjustmentPct = baseFocal > 0
+ 283:       ? ((adjustedFocal - baseFocal) / baseFocal) * 100
+ 284:       : 0;
+ 285: 
+ 286:     const widthPerMm = adjustedFocal > 0 ? input.tw / adjustedFocal : 0;
+ 287: 
+ 288:     const detailPressureMetric =
+ 289:       ppf > 0
+ 290:         ? ppf < 40 ? 85
+ 291:         : ppf < 80 ? 60
+ 292:         : ppf > 120 ? 20
+ 293:         : 35
+ 294:         : 25;
+ 295: 
+ 296:     const focalPressureMetric =
+ 297:       adjustedFocal >= 12 ? 75
+ 298:       : adjustedFocal >= 8 ? 45
+ 299:       : adjustedFocal >= 4 ? 20
+ 300:       : 10;
+ 301: 
+ 302:     const adjustmentMetric = Math.min(Math.abs(adjustmentPct) * 1.5, 100);
+ 303: 
+ 304:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 305:       compositeScore: Math.max(detailPressureMetric, focalPressureMetric, adjustmentMetric),
+ 306:       metrics: [
+ 307:         {
+ 308:           label: "Detail Pressure",
+ 309:           value: detailPressureMetric,
+ 310:           displayValue: ppf > 0 ? fmtPpf(ppf) : "No prior PPF"
+ 311:         },
+ 312:         {
+ 313:           label: "Focal Demand",
+ 314:           value: focalPressureMetric,
+ 315:           displayValue: fmtMm(adjustedFocal)
+ 316:         },
+ 317:         {
+ 318:           label: "Adjustment Shift",
+ 319:           value: adjustmentMetric,
+ 320:           displayValue: `${fmt(adjustmentPct, 1)}%`
+ 321:         }
+ 322:       ],
+ 323:       healthyMax: 25,
+ 324:       watchMax: 60
+ 325:     });
+ 326: 
+ 327:     let dominantConstraint = "";
+ 328:     if (ppf > 0 && ppf < 40) {
+ 329:       dominantConstraint = "Detail pressure is the dominant limiter. The upstream pixel-density requirement is weak, so this tool is tightening focal length to recover usable subject detail.";
+ 330:     } else if (adjustedFocal >= 12) {
+ 331:       dominantConstraint = "Focal demand is the dominant limiter. The scene geometry is pushing the design toward a long-range lens class, which narrows field of view and reduces layout flexibility.";
+ 332:     } else if (Math.abs(adjustmentPct) > 15) {
+ 333:       dominantConstraint = "Adjustment shift is the dominant limiter. The lens choice has to move meaningfully away from the raw geometry solution to satisfy the prior detail requirement.";
+ 334:     } else {
+ 335:       dominantConstraint = "The lens requirement is balanced. Scene width, distance, and detail expectation are staying in a practical range for a standard lens choice.";
+ 336:     }
+ 337: 
+ 338:     let guidance = "Verify the final option against the manufacturer’s real FOV chart before locking the bill of materials.";
+ 339:     if (ppf > 0 && ppf < 40) {
+ 340:       guidance = "Pixel density is low, so a tighter lens is recommended to recover detail. Re-check subject framing and verify that the scene width still matches the operational requirement.";
+ 341:     } else if (ppf > 120) {
+ 342:       guidance = "Pixel density is already strong, so a slightly wider lens may still be acceptable. Validate whether broader coverage is worth the detail tradeoff.";
+ 343:     } else if (adjustedFocal >= 12) {
+ 344:       guidance = "This is a long-range optic recommendation. Check depth-of-field, mounting precision, and scene alignment before treating it as final.";
+ 345:     }
+ 346: 
+ 347:     const interpretation = `At ${fmtFt(input.dist)} with a target width of ${fmtFt(input.tw)} and a ${fmtMm(input.sw, 2)} sensor, the raw geometry calls for about ${fmtMm(baseFocal)}. After applying the upstream detail requirement, the adjusted recommendation becomes ${fmtMm(adjustedFocal)}, which falls into the ${lensClass} class. ${interp}`;
+ 348: 
+ 349:     return {
+ 350:       ok: true,
+ 351:       ...input,
+ 352:       baseFocal,
+ 353:       adjustedFocal,
+ 354:       lensClass,
+ 355:       ppf,
+ 356:       requirementClass,
+ 357:       adjustmentPct,
+ 358:       widthPerMm,
+ 359:       status: statusPack.status,
+ 360:       interpretation,
+ 361:       dominantConstraint,
+ 362:       guidance,
+ 363:       detailPressureMetric,
+ 364:       focalPressureMetric,
+ 365:       adjustmentMetric
+ 366:     };
+ 367:   }
+ 368: 
+ 369:   function writeFlow(data) {
+ 370:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.lens, {
+ 371:       category: CATEGORY,
+ 372:       step: STEP,
+ 373:       data: {
+ 374:         focal: data.adjustedFocal,
+ 375:         baseFocal: data.baseFocal,
+ 376:         lensClass: data.lensClass,
+ 377:         dist: data.dist,
+ 378:         tw: data.tw,
+ 379:         ppf: data.ppf,
+ 380:         requirementClass: data.requirementClass,
+ 381:         adjustmentPct: data.adjustmentPct,
+ 382:         interpretation: data.interpretation,
+ 383:         guidance: data.guidance
+ 384:       }
+ 385:     });
+ 386:   }
+ 387: 
+ 388:   function renderError(message) {
+ 389:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 390:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 391:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 392:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 393:   }
+ 394: 
+ 395:   function renderSuccess(data) {
+ 396:     ScopedLabsAnalyzer.renderOutput({
+ 397:       resultsEl: els.results,
+ 398:       analysisEl: els.analysis,
+ 399:       existingChartRef: chartRef,
+ 400:       existingWrapRef: chartWrapRef,
+ 401:       summaryRows: [
+ 402:         { label: "Raw Focal Length", value: fmtMm(data.baseFocal) },
+ 403:         { label: "Adjusted Focal Length", value: fmtMm(data.adjustedFocal) },
+ 404:         { label: "Suggested Lens Class", value: data.lensClass },
+ 405:         { label: "Upstream Detail Requirement", value: data.ppf > 0 ? data.requirementClass : "No prior PPF" }
+ 406:       ],
+ 407:       derivedRows: [
+ 408:         { label: "Distance to Target", value: fmtFt(data.dist) },
+ 409:         { label: "Target Width", value: fmtFt(data.tw) },
+ 410:         { label: "Sensor Width", value: fmtMm(data.sw, 2) },
+ 411:         { label: "Pixel Density Input", value: data.ppf > 0 ? fmtPpf(data.ppf) : "N/A" },
+ 412:         { label: "Adjustment Shift", value: `${fmt(data.adjustmentPct, 1)}%` },
+ 413:         { label: "Width per mm of Focal Length", value: data.widthPerMm > 0 ? `${fmt(data.widthPerMm, 2)} ft/mm` : "N/A" }
+ 414:       ],
+ 415:       status: data.status,
+ 416:       interpretation: data.interpretation,
+ 417:       dominantConstraint: data.dominantConstraint,
+ 418:       guidance: data.guidance,
+ 419:       chart: {
+ 420:         labels: ["Detail Pressure", "Focal Demand", "Adjustment Shift"],
+ 421:         values: [
+ 422:           Number(data.detailPressureMetric.toFixed(1)),
+ 423:           Number(data.focalPressureMetric.toFixed(1)),
+ 424:           Number(data.adjustmentMetric.toFixed(1))
+ 425:         ],
+ 426:         displayValues: [
+ 427:           data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF",
+ 428:           fmtMm(data.adjustedFocal),
+ 429:           `${fmt(data.adjustmentPct, 1)}%`
+ 430:         ],
+ 431:         referenceValue: 25,
+ 432:         healthyMax: 25,
+ 433:         watchMax: 60,
+ 434:         axisTitle: "Lens Selection Pressure",
+ 435:         referenceLabel: "Comfort Band",
+ 436:         healthyLabel: "Healthy",
+ 437:         watchLabel: "Watch",
+ 438:         riskLabel: "Risk",
+ 439:         chartMax: 100
+ 440:       }
+ 441:     });
+ 442: 
+ 443:     writeFlow(data);
+ 444:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 445:   }
+ 446: 
+ 447:   function calc() {
+ 448:     const data = calculateModel();
+ 449:     if (!data.ok) return renderError(data.message);
+ 450:     renderSuccess(data);
+ 451:   }
+ 452: 
+ 453:   function reset() {
+ 454:     applyDefaults();
+ 455:     renderFlowNote();
+ 456:     invalidate({ clearFlow: true });
+ 457:   }
+ 458: 
+ 459:   function bind() {
+ 460:     ["dist", "tw", "sw"].forEach((id) => {
+ 461:       const el = $(id);
+ 462:       if (!el) return;
+ 463:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 464:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 465:     });
+ 466: 
+ 467:     els.calc?.addEventListener("click", calc);
+ 468:     els.reset?.addEventListener("click", reset);
+ 469:     els.continueBtn?.addEventListener("click", () => {
+ 470:       window.location.href = NEXT_URL;
+ 471:     });
+ 472:   }
+ 473: 
+ 474:   function init() {
+ 475:     bind();
+ 476:     renderFlowNote();
+ 477:     invalidate({ clearFlow: false });
+ 478:   }
+ 479: 
+ 480:   window.addEventListener("DOMContentLoaded", () => {
+ 481:     const year = document.querySelector("[data-year]");
+ 482:     if (year) year.textContent = new Date().getFullYear();
+ 483: 
+ 484:     let unlocked = unlockCategoryPage();
+ 485:     if (unlocked) init();
+ 486: 
+ 487:     setTimeout(() => {
+ 488:       unlocked = unlockCategoryPage();
+ 489:       if (unlocked && els.toolCard && !els.toolCard.dataset.initialized) {
+ 490:         els.toolCard.dataset.initialized = "true";
+ 491:         init();
+ 492:       }
+ 493:     }, 400);
+ 494:   });
+ 495: })();
+
+
+============================================================
+TOOL: license-plate-range
+============================================================
+Title: License Plate Capture Range
+Tier: pro
+Meta description: Estimate license plate capture range using camera resolution, lane width, distance, lens selection, vehicle speed, and lighting assumptions.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Horizontal Resolution (px)
+- Horizontal FOV (deg)
+- Pixels per Plate Target
+- Plate Width (ft)
+- Distance (ft)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- res
+- hfov
+- ppp
+- pw
+- dist
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- complete-wrap
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 218:       emptyMessage: "Enter values and press Calculate."
+ 219:     });
+ 220: 
+ 221:     hideComplete();
+ 222:     renderFlowNote();
+ 223:   }
+ 224: 
+ 225:   function getInputs() {
+ 226:     const res = num(els.res.value);
+ 227:     const hfov = num(els.hfov.value);
+ 228:     const ppp = num(els.ppp.value);
+ 229:     const pw = num(els.pw.value);
+ 230:     const dist = num(els.dist.value);
+ 231: 
+ 232:     if (
+ 233:       !Number.isFinite(res) || res <= 0 ||
+ 234:       !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
+ 235:       !Number.isFinite(ppp) || ppp <= 0 ||
+ 236:       !Number.isFinite(pw) || pw <= 0 ||
+ 237:       !Number.isFinite(dist) || dist <= 0
+ 238:     ) {
+ 239:       return { ok: false, message: "Enter valid values and press Calculate." };
+ 240:     }
+ 241: 
+ 242:     return { ok: true, res, hfov, ppp, pw, dist };
+ 243:   }
+ 244: 
+ 245:   function classifyPlateTarget(ppp) {
+ 246:     if (ppp >= 160) return "High Certainty";
+ 247:     if (ppp >= 130) return "Readable";
+ 248:     if (ppp >= 100) return "Marginal";
+ 249:     return "Weak Capture";
+ 250:   }
+ 251: 
+ 252:   function calculateModel() {
+ 253:     const input = getInputs();
+ 254:     if (!input.ok) return input;
+ 255: 
+ 256:     const maxDist =
+ 257:       (input.res * input.pw) /
+ 258:       (2 * Math.tan(deg2rad(input.hfov / 2)) * input.ppp);
+ 259: 
+ 260:     const marginFt = maxDist - input.dist;
+ 261:     const utilizationPct = maxDist > 0 ? (input.dist / maxDist) * 100 : 100;
+ 262:     const deliveredPpp =
+ 263:       (input.res * input.pw) /
+ 264:       (2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist);
+ 265: 
+ 266:     const classification = classifyPlateTarget(input.ppp);
+ 267: 
+ 268:     const shortfallMetric =
+ 269:       marginFt < 0 && maxDist > 0
+ 270:         ? ScopedLabsAnalyzer.clamp((Math.abs(marginFt) / maxDist) * 100, 0, 100)
+ 271:         : 0;
+ 272: 
+ 273:     const utilizationMetric = ScopedLabsAnalyzer.clamp(utilizationPct, 0, 100);
+ 274: 
+ 275:     const requirementMetric =
+ 276:       input.ppp >= 160 ? 30 :
+ 277:       input.ppp >= 130 ? 20 :
+ 278:       input.ppp >= 100 ? 12 : 5;
+ 279: 
+ 280:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 281:       compositeScore: Math.max(utilizationMetric, shortfallMetric, requirementMetric),
+ 282:       metrics: [
+ 283:         {
+ 284:           label: "Range Utilization",
+ 285:           value: utilizationMetric,
+ 286:           displayValue: fmtPct(utilizationPct)
+ 287:         },
+ 288:         {
+ 289:           label: "Distance Shortfall",
+ 290:           value: shortfallMetric,
+ 291:           displayValue: marginFt < 0 ? fmtFt(Math.abs(marginFt)) : "0.0 ft"
+ 292:         },
+ 293:         {
+ 294:           label: "Plate Readability Demand",
+ 295:           value: requirementMetric,
+ 296:           displayValue: fmtPx(input.ppp)
+ 297:         }
+ 298:       ],
+ 299:       healthyMax: 75,
+ 300:       watchMax: 95
+ 301:     });
+ 302: 
+ 303:     let interpretation = `With ${fmtPx(input.res)} horizontal resolution, ${fmt(input.hfov, 1)}° HFOV, and a plate width assumption of ${fmtFt(input.pw, 2)}, the modeled maximum readable plate distance for ${fmtPx(input.ppp)} is about ${fmtFt(maxDist)}. At the entered working distance of ${fmtFt(input.dist)}, the scene would deliver roughly ${fmtPx(deliveredPpp, 1)} across the plate.`;
+ 304: 
+ 305:     if (marginFt < 0) {
+ 306:       interpretation += ` The requested working distance is beyond the modeled plate-capture envelope, so reliable readability falls off before the target position is reached.`;
+ 307:     } else if (utilizationPct > 95) {
+ 308:       interpretation += ` The design is operating right at the edge of readable plate capture. Mounting angle, shutter speed, glare, and vehicle speed will strongly affect real results.`;
+ 309:     } else if (utilizationPct > 75) {
+ 310:       interpretation += ` The optics can support the requirement, but most of the available plate-capture range is already being consumed. Field conditions matter.`;
+ 311:     } else {
+ 312:       interpretation += ` The design retains usable range margin, so the plate-capture requirement is not yet running at the edge of the optical envelope.`;
+ 313:     }
+ 314: 
+ 315:     let dominantConstraint = "";
+ 316:     if (marginFt < 0) {
+ 317:       dominantConstraint = "Distance shortfall is the dominant limiter. The target range exceeds what the current optical setup can support for readable plate capture.";
+ 318:     } else if (utilizationPct > 95) {
+ 319:       dominantConstraint = "Range utilization is the dominant limiter. The design is operating at the boundary where real-world degradation becomes operationally significant.";
+ 320:     } else if (input.ppp >= 160) {
+ 321:       dominantConstraint = "Plate readability demand is the dominant limiter. The design is being held to a stricter capture standard, which compresses usable distance more aggressively.";
+ 322:     } else {
+ 323:       dominantConstraint = "The optical setup and plate requirement are reasonably balanced. The layout still has measurable distance headroom.";
+ 324:     }
+ 325: 
+ 326:     let guidance = "";
+ 327:     if (marginFt < 0) {
+ 328:       guidance = "Tighten the field of view, increase resolution, reduce working distance, or lower the pixels-per-plate requirement before relying on this setup for plate capture.";
+ 329:     } else if (utilizationPct > 95) {
+ 330:       guidance = "Treat this as edge-of-range performance. Validate shutter speed, glare control, IR behavior, and capture angle before finalizing the design.";
+ 331:     } else if (utilizationPct > 75) {
+ 332:       guidance = "The design is workable, but verify real vehicle speed, plate angle, and scene lighting because plate-capture margin is not generous.";
+ 333:     } else {
+ 334:       guidance = "Plate-capture range has practical headroom. Return to the category and continue building the rest of the design around the same optical assumptions.";
+ 335:     }
+ 336: 
+ 337:     return {
+ 338:       ok: true,
+ 339:       ...input,
+ 340:       maxDist,
+ 341:       marginFt,
+ 342:       utilizationPct,
+ 343:       deliveredPpp,
+ 344:       classification,
+ 345:       status: statusPack.status,
+ 346:       interpretation,
+ 347:       dominantConstraint,
+ 348:       guidance,
+ 349:       utilizationMetric,
+ 350:       shortfallMetric,
+ 351:       requirementMetric
+ 352:     };
+ 353:   }
+ 354: 
+ 355:   function writeFlow(data) {
+ 356:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.plate, {
+ 357:       category: CATEGORY,
+ 358:       step: STEP,
+ 359:       data: {
+ 360:         dist: data.maxDist,
+ 361:         actualDist: data.dist,
+ 362:         classification: data.classification,
+ 363:         ppp: data.ppp,
+ 364:         pw: data.pw,
+ 365:         hfov: data.hfov,
+ 366:         res: data.res,
+ 367:         deliveredPpp: data.deliveredPpp,
+ 368:         interpretation: data.interpretation,
+ 369:         guidance: data.guidance
+ 370:       }
+ 371:     });
+ 372:   }
+ 373: 
+ 374:   function renderError(message) {
+ 375:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 376:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 377:     hideComplete();
+ 378:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 379:   }
+ 380: 
+ 381:   function renderSuccess(data) {
+ 382:     ScopedLabsAnalyzer.renderOutput({
+ 383:       resultsEl: els.results,
+ 384:       analysisEl: els.analysis,
+ 385:       existingChartRef: chartRef,
+ 386:       existingWrapRef: chartWrapRef,
+ 387:       summaryRows: [
+ 388:         { label: "Plate Readability Target", value: data.classification },
+ 389:         { label: "Max Capture Distance", value: fmtFt(data.maxDist) },
+ 390:         { label: "Actual Working Distance", value: fmtFt(data.dist) },
+ 391:         { label: "Range Margin", value: data.marginFt >= 0 ? fmtFt(data.marginFt) : `-${fmtFt(Math.abs(data.marginFt))}` }
+ 392:       ],
+ 393:       derivedRows: [
+ 394:         { label: "Horizontal Resolution", value: fmtPx(data.res) },
+ 395:         { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
+ 396:         { label: "Target Pixels per Plate", value: fmtPx(data.ppp) },
+ 397:         { label: "Delivered Pixels per Plate", value: fmtPx(data.deliveredPpp, 1) },
+ 398:         { label: "Plate Width Assumption", value: fmtFt(data.pw, 2) },
+ 399:         { label: "Range Utilization", value: fmtPct(data.utilizationPct) }
+ 400:       ],
+ 401:       status: data.status,
+ 402:       interpretation: data.interpretation,
+ 403:       dominantConstraint: data.dominantConstraint,
+ 404:       guidance: data.guidance,
+ 405:       chart: {
+ 406:         labels: ["Range Utilization", "Distance Shortfall", "Plate Readability Demand"],
+ 407:         values: [
+ 408:           Number(data.utilizationMetric.toFixed(1)),
+ 409:           Number(data.shortfallMetric.toFixed(1)),
+ 410:           Number(data.requirementMetric.toFixed(1))
+ 411:         ],
+ 412:         displayValues: [
+ 413:           fmtPct(data.utilizationPct),
+ 414:           data.marginFt < 0 ? fmtFt(Math.abs(data.marginFt)) : "0.0 ft",
+ 415:           fmtPx(data.ppp)
+ 416:         ],
+ 417:         referenceValue: 75,
+ 418:         healthyMax: 75,
+ 419:         watchMax: 95,
+ 420:         axisTitle: "Plate Capture Pressure",
+ 421:         referenceLabel: "Comfort Band",
+ 422:         healthyLabel: "Healthy",
+ 423:         watchLabel: "Watch",
+ 424:         riskLabel: "Risk",
+ 425:         chartMax: 100
+ 426:       }
+ 427:     });
+ 428: 
+ 429:     writeFlow(data);
+ 430:     showComplete();
+ 431:   }
+ 432: 
+ 433:   function calc() {
+ 434:     const data = calculateModel();
+ 435:     if (!data.ok) return renderError(data.message);
+ 436:     renderSuccess(data);
+ 437:   }
+ 438: 
+ 439:   function reset() {
+ 440:     applyDefaults();
+ 441:     renderFlowNote();
+ 442:     invalidate({ clearFlow: true });
+ 443:   }
+ 444: 
+ 445:   function bind() {
+ 446:     ["res", "hfov", "ppp", "pw", "dist"].forEach((id) => {
+ 447:       const el = $(id);
+ 448:       if (!el) return;
+ 449:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 450:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 451:     });
+ 452: 
+ 453:     els.calc?.addEventListener("click", calc);
+ 454:     els.reset?.addEventListener("click", reset);
+ 455:   }
+ 456: 
+ 457:   function init() {
+ 458:     bind();
+ 459:     renderFlowNote();
+ 460:     invalidate({ clearFlow: false });
+ 461:   }
+ 462: 
+ 463:   window.addEventListener("DOMContentLoaded", () => {
+ 464:     const year = document.querySelector("[data-year]");
+ 465:     if (year) year.textContent = new Date().getFullYear();
+ 466: 
+ 467:     const unlocked = unlockCategoryPage();
+ 468:     if (!unlocked) return;
+ 469: 
+ 470:     init();
+ 471:   });
+ 472: })();
+
+
+============================================================
+TOOL: mounting-height
+============================================================
+Title: Mounting Height Helper
+Tier: free/unknown
+Meta description: Estimate tilt angle and vertical framing based on mounting height and target distance before locking field of view.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Mount Height (ft)
+- Target Distance (ft)
+- Target Height (ft)
+- Vertical FOV (deg)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- h
+- dist
+- th
+- vfov
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  57:   function fmtFt(value, digits = 1) {
+  58:     return Number.isFinite(value) ? `${value.toFixed(digits)} ft` : "—";
+  59:   }
+  60: 
+  61:   function fmtDeg(value, digits = 1) {
+  62:     return Number.isFinite(value) ? `${value.toFixed(digits)}°` : "—";
+  63:   }
+  64: 
+  65:   function classifyTilt(tilt) {
+  66:     if (tilt < 10) return "Too Shallow";
+  67:     if (tilt < 25) return "Balanced";
+  68:     if (tilt < 45) return "Strong";
+  69:     return "Too Steep";
+  70:   }
+  71: 
+  72:   function angleInterpretation(tilt) {
+  73:     if (tilt < 10) {
+  74:       return "Angle is very shallow. This tends to overemphasize the horizon, weakens face detail, and reduces practical identification quality.";
+  75:     }
+  76:     if (tilt < 25) {
+  77:       return "Angle is balanced for general surveillance. It supports broad situational awareness, but may still be light on subject detail for stronger identification tasks.";
+  78:     }
+  79:     if (tilt < 45) {
+  80:       return "Angle is strong for practical surveillance design. It usually provides a better compromise between coverage and usable subject geometry.";
+  81:     }
+  82:     return "Angle is steep. Coverage may still work, but top-down compression can reduce face detail and make subjects look visually flattened.";
+  83:   }
+  84: 
+  85:   function heightGuidance(h) {
+  86:     if (h < 9) {
+  87:       return "Mount height is relatively low. This can improve subject angle and detail, but raises tamper and vandalism risk.";
+  88:     }
+  89:     if (h <= 15) {
+  90:       return "Mount height is in a practical working range for many building exteriors and perimeter applications.";
+  91:     }
+  92:     return "Mount height is relatively high. This helps with tamper resistance and broad coverage, but can hurt identification geometry if tilt becomes too steep.";
+  93:   }
+  94: 
+  95:   function clearDownstream() {
+  96:     sessionStorage.removeItem(FLOW_KEYS.fov);
+  97:     sessionStorage.removeItem(FLOW_KEYS.area);
+  98:   }
+  99: 
+ 100:   function applyDefaults() {
+ 101:     els.h.value = String(DEFAULTS.h);
+ 102:     els.dist.value = String(DEFAULTS.dist);
+ 103:     els.th.value = String(DEFAULTS.th);
+ 104:     els.vfov.value = String(DEFAULTS.vfov);
+ 105:   }
+ 106: 
+ 107:   function renderFlowNote() {
+ 108:     const flow = ScopedLabsAnalyzer.renderFlowNote({
+ 109:       flowEl: els.flowNote,
+ 110:       flowKey: FLOW_KEYS.mount,
+ 111:       category: CATEGORY,
+ 112:       step: STEP,
+ 113:       lane: LANE,
+ 114:       title: "Flow Context",
+ 115:       intro: "This step uses the prior illumination plan to choose a workable install height before locking field of view."
+ 116:     });
+ 117: 
+ 118:     if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+ 119: 
+ 120:     const data = flow.data || {};
+ 121:     const area = num(data.area || 0);
+ 122:     const fc = num(data.fc || 0);
+ 123:     const lumens = num(data.lumens || 0);
+ 124: 
+ 125:     const parts = [];
+ 126:     if (area > 0) parts.push(`Area: <strong>${fmt(area, 0)} sq ft</strong>`);
+ 127:     if (fc > 0) parts.push(`Target illumination: <strong>${fmt(fc, 2)} fc</strong>`);
+ 128:     if (lumens > 0) parts.push(`Estimated lumens: <strong>${fmt(lumens, 0)} lm</strong>`);
+ 129: 
+ 130:     if (parts.length) {
+ 131:       els.flowNote.hidden = false;
+ 132:       els.flowNote.innerHTML = `
+ 133:         <strong>Flow Context</strong><br>
+ 134:         ${parts.join(" | ")}
+ 135:       `;
+ 136:     }
+ 137:   }
+
+--- CORE BLOCK 2 ---
+ 180:   function calculateModel() {
+ 181:     const input = getInputs();
+ 182:     if (!input.ok) return input;
+ 183: 
+ 184:     const drop = input.h - input.th;
+ 185:     const tilt = rad2deg(Math.atan2(drop, input.dist));
+ 186:     const span = 2 * Math.tan(deg2rad(input.vfov / 2)) * input.dist;
+ 187:     const topEdgeHeight =
+ 188:       input.h - Math.tan(deg2rad(Math.max(0, tilt - (input.vfov / 2)))) * input.dist;
+ 189:     const bottomEdgeHeight =
+ 190:       input.h - Math.tan(deg2rad(tilt + (input.vfov / 2))) * input.dist;
+ 191: 
+ 192:     const tiltClass = classifyTilt(tilt);
+ 193:     const angleText = angleInterpretation(tilt);
+ 194:     const heightText = heightGuidance(input.h);
+ 195: 
+ 196:     const subjectAngleMetric = tilt < 10 ? 85 : tilt < 25 ? 35 : tilt < 45 ? 18 : 78;
+ 197:     const mountPressureMetric = input.h < 9 ? 42 : input.h <= 15 ? 18 : 55;
+ 198:     const framingPressureMetric =
+ 199:       bottomEdgeHeight > 0
+ 200:         ? Math.min(bottomEdgeHeight * 12, 100)
+ 201:         : topEdgeHeight < input.th
+ 202:           ? Math.min((input.th - topEdgeHeight) * 10, 100)
+ 203:           : 12;
+ 204: 
+ 205:     const metrics = [
+ 206:       {
+ 207:         label: "Subject Angle",
+ 208:         value: subjectAngleMetric,
+ 209:         displayValue: fmtDeg(tilt)
+ 210:       },
+ 211:       {
+ 212:         label: "Mount Height Pressure",
+ 213:         value: mountPressureMetric,
+ 214:         displayValue: fmtFt(input.h)
+ 215:       },
+ 216:       {
+ 217:         label: "Vertical Framing Risk",
+ 218:         value: framingPressureMetric,
+ 219:         displayValue: `${fmtFt(topEdgeHeight)} to ${fmtFt(bottomEdgeHeight)}`
+ 220:       }
+ 221:     ];
+ 222: 
+ 223:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 224:       compositeScore: Math.max(subjectAngleMetric, mountPressureMetric, framingPressureMetric),
+ 225:       metrics,
+ 226:       healthyMax: 20,
+ 227:       watchMax: 45
+ 228:     });
+ 229: 
+ 230:     let dominantConstraint = "";
+ 231:     if (tilt < 10) {
+ 232:       dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too shallow across the scene, which weakens practical face detail and identification geometry.";
+ 233:     } else if (tilt >= 45) {
+ 234:       dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too steeply downward, which compresses subjects and reduces usable face detail.";
+ 235:     } else if (input.h > 15) {
+ 236:       dominantConstraint = "Mount height pressure is the dominant limiter. The install point is high enough that tamper resistance improves, but usable subject geometry starts to suffer.";
+ 237:     } else if (bottomEdgeHeight > 0) {
+ 238:       dominantConstraint = "Vertical framing risk is the dominant limiter. The lower edge of view is still floating above grade at the target distance, so ground-level coverage is not fully closing.";
+ 239:     } else {
+ 240:       dominantConstraint = "The geometry is balanced. Mount height, target distance, and vertical framing remain in a practical range for the next field-of-view step.";
+ 241:     }
+ 242: 
+ 243:     const interpretation = `With a mount height of ${fmtFt(input.h)} and a target point ${fmtFt(input.dist)} away at ${fmtFt(input.th)}, the suggested down-tilt is about ${fmtDeg(tilt)}. At that distance, a ${fmtDeg(input.vfov)} vertical field of view spans about ${fmtFt(span)} vertically, with the view landing from roughly ${fmtFt(topEdgeHeight)} down to ${fmtFt(bottomEdgeHeight)}. ${angleText}`;
+ 244: 
+ 245:     let guidance = "";
+ 246:     if (tilt < 10) {
+ 247:       guidance = "Lower the mount, move the target zone farther out, or tighten vertical framing before locking the design. Then continue to Field of View once subject angle is healthier.";
+ 248:     } else if (tilt >= 45) {
+ 249:       guidance = "Reduce mount height or increase standoff distance before finalizing the view. Excessive top-down angle can make downstream detail goals harder to reach.";
+ 250:     } else if (bottomEdgeHeight > 0) {
+ 251:       guidance = "Check whether the lower edge of view needs to reach grade at the target distance. If so, revise height or angle assumptions before moving forward.";
+ 252:     } else {
+ 253:       guidance = "Mounting geometry is workable. Continue to Field of View next to translate this setup into actual scene width coverage.";
+ 254:     }
+ 255: 
+ 256:     return {
+ 257:       ok: true,
+ 258:       ...input,
+ 259:       drop,
+ 260:       tilt,
+ 261:       span,
+ 262:       topEdgeHeight,
+ 263:       bottomEdgeHeight,
+ 264:       tiltClass,
+ 265:       angleText,
+ 266:       heightText,
+ 267:       status: statusPack.status,
+ 268:       interpretation,
+ 269:       dominantConstraint,
+ 270:       guidance,
+ 271:       subjectAngleMetric,
+ 272:       mountPressureMetric,
+ 273:       framingPressureMetric
+ 274:     };
+ 275:   }
+ 276: 
+ 277:   function writeFlow(data) {
+ 278:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.mount, {
+ 279:       category: CATEGORY,
+ 280:       step: STEP,
+ 281:       data: {
+ 282:         h: data.h,
+ 283:         dist: data.dist,
+ 284:         th: data.th,
+ 285:         vfov: data.vfov,
+ 286:         drop: data.drop,
+ 287:         tilt: data.tilt,
+ 288:         span: data.span,
+
+--- CORE BLOCK 3 ---
+ 300:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 301:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 302:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 303:   }
+ 304: 
+ 305:   function renderSuccess(data) {
+ 306:     ScopedLabsAnalyzer.renderOutput({
+ 307:       resultsEl: els.results,
+ 308:       analysisEl: els.analysis,
+ 309:       existingChartRef: chartRef,
+ 310:       existingWrapRef: chartWrapRef,
+ 311:       summaryRows: [
+ 312:         { label: "Vertical Drop", value: fmtFt(data.drop) },
+ 313:         { label: "Suggested Down-Tilt", value: fmtDeg(data.tilt) },
+ 314:         { label: "Vertical Coverage Span", value: fmtFt(data.span) },
+ 315:         { label: "Angle Quality", value: data.tiltClass }
+ 316:       ],
+ 317:       derivedRows: [
+ 318:         { label: "Approx. Top of View @ Distance", value: fmtFt(data.topEdgeHeight) },
+ 319:         { label: "Approx. Bottom of View @ Distance", value: fmtFt(data.bottomEdgeHeight) },
+ 320:         { label: "Mount Height", value: fmtFt(data.h) },
+ 321:         { label: "Target Distance", value: fmtFt(data.dist) },
+ 322:         { label: "Target Height", value: fmtFt(data.th) },
+ 323:         { label: "Height Guidance", value: data.heightText }
+ 324:       ],
+ 325:       status: data.status,
+ 326:       interpretation: data.interpretation,
+ 327:       dominantConstraint: data.dominantConstraint,
+ 328:       guidance: data.guidance,
+ 329:       chart: {
+ 330:         labels: ["Subject Angle", "Mount Height Pressure", "Vertical Framing Risk"],
+ 331:         values: [
+ 332:           Number(data.subjectAngleMetric.toFixed(1)),
+ 333:           Number(data.mountPressureMetric.toFixed(1)),
+ 334:           Number(data.framingPressureMetric.toFixed(1))
+ 335:         ],
+ 336:         displayValues: [
+ 337:           fmtDeg(data.tilt),
+ 338:           fmtFt(data.h),
+ 339:           `${fmtFt(data.topEdgeHeight)} to ${fmtFt(data.bottomEdgeHeight)}`
+ 340:         ],
+ 341:         referenceValue: 20,
+ 342:         healthyMax: 20,
+ 343:         watchMax: 45,
+ 344:         axisTitle: "Mounting Geometry Pressure",
+ 345:         referenceLabel: "Comfort Band",
+ 346:         healthyLabel: "Healthy",
+ 347:         watchLabel: "Watch",
+ 348:         riskLabel: "Risk",
+ 349:         chartMax: 100
+ 350:       }
+ 351:     });
+ 352: 
+ 353:     writeFlow(data);
+ 354:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 355:   }
+ 356: 
+ 357:   function calc() {
+ 358:     const data = calculateModel();
+ 359:     if (!data.ok) return renderError(data.message);
+ 360:     renderSuccess(data);
+ 361:   }
+ 362: 
+ 363:   function reset() {
+ 364:     applyDefaults();
+ 365:     renderFlowNote();
+ 366:     invalidate({ clearFlow: true });
+ 367:   }
+ 368: 
+ 369:   function bind() {
+ 370:     ["h", "dist", "th", "vfov"].forEach((id) => {
+ 371:       const el = $(id);
+ 372:       if (!el) return;
+ 373:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 374:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 375:     });
+ 376: 
+ 377:     els.calc?.addEventListener("click", calc);
+ 378:     els.reset?.addEventListener("click", reset);
+ 379: 
+ 380:     document.addEventListener("keydown", (e) => {
+ 381:       if (e.key !== "Enter") return;
+ 382:       const t = e.target;
+ 383:       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 384:         e.preventDefault();
+ 385:         calc();
+ 386:       }
+ 387:     });
+ 388:   }
+ 389: 
+ 390:   function init() {
+ 391:     const year = document.querySelector("[data-year]");
+ 392:     if (year) year.textContent = new Date().getFullYear();
+ 393: 
+ 394:     bind();
+ 395:     renderFlowNote();
+ 396:     invalidate({ clearFlow: false });
+ 397:   }
+ 398: 
+ 399:   window.addEventListener("DOMContentLoaded", init);
+ 400: })();
+
+
+============================================================
+TOOL: pixel-density
+============================================================
+Title: Pixel Density Calculator
+Tier: free/unknown
+Meta description: Calculate pixels per foot and validate whether the layout delivers enough subject detail for the required surveillance task.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Horizontal Resolution (px)
+- Horizontal FOV (deg)
+- Distance (ft)
+- Target Pixel Density (PPF)
+- Target Width (ft)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- res
+- hfov
+- dist
+- tppf
+- tw
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  67:   }
+  68: 
+  69:   function fmtPct(value, digits = 1) {
+  70:     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
+  71:   }
+  72: 
+  73:   function applyDefaults() {
+  74:     els.res.value = String(DEFAULTS.res);
+  75:     els.hfov.value = String(DEFAULTS.hfov);
+  76:     els.dist.value = String(DEFAULTS.dist);
+  77:     els.tppf.value = String(DEFAULTS.tppf);
+  78:     els.tw.value = String(DEFAULTS.tw);
+  79:   }
+  80: 
+  81:   function renderFlowNote() {
+  82:     const flow = ScopedLabsAnalyzer.renderFlowNote({
+  83:       flowEl: els.flowNote,
+  84:       flowKey: FLOW_KEYS.pixel,
+  85:       category: CATEGORY,
+  86:       step: STEP,
+  87:       lane: LANE,
+  88:       title: "Flow Context",
+  89:       intro: "This step verifies whether the blind-spot-safe layout also delivers enough subject detail at the working distance."
+  90:     });
+  91: 
+  92:     if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+  93: 
+  94:     const prev = flow.data || {};
+  95:     const dist = num(prev.dist);
+  96:     const hfov = num(prev.hfov);
+  97:     const status = prev.status || "";
+  98:     const gap = num(prev.gap);
+  99: 
+ 100:     if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
+ 101:     if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+ 102: 
+ 103:     const parts = [];
+ 104:     if (status) parts.push(`Blind-spot result: <strong>${status}</strong>`);
+ 105:     if (Number.isFinite(dist) && dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
+ 106:     if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}°</strong>`);
+ 107:     if (Number.isFinite(gap)) parts.push(`Gap: <strong>${fmtFt(gap)}</strong>`);
+ 108: 
+ 109:     if (parts.length) {
+ 110:       els.flowNote.hidden = false;
+ 111:       els.flowNote.innerHTML = `
+ 112:         <strong>Flow Context</strong><br>
+ 113:         ${parts.join(" | ")}
+ 114:       `;
+ 115:     }
+ 116:   }
+ 117: 
+ 118:   function invalidate({ clearFlow = true } = {}) {
+ 119:     if (clearFlow) {
+ 120:       sessionStorage.removeItem(FLOW_KEYS.pixel);
+ 121:     }
+ 122: 
+ 123:     ScopedLabsAnalyzer.invalidate({
+ 124:       resultsEl: els.results,
+ 125:       analysisEl: els.analysis,
+ 126:       continueWrapEl: els.continueWrap,
+ 127:       continueBtnEl: els.continueBtn,
+ 128:       existingChartRef: chartRef,
+ 129:       existingWrapRef: chartWrapRef,
+ 130:       flowKey: FLOW_KEYS.pixel,
+ 131:       category: CATEGORY,
+ 132:       step: STEP,
+ 133:       lane: LANE,
+ 134:       emptyMessage: "Enter values and press Calculate."
+ 135:     });
+ 136: 
+ 137:     renderFlowNote();
+ 138:   }
+ 139: 
+ 140:   function getInputs() {
+ 141:     const res = num(els.res.value);
+ 142:     const hfov = num(els.hfov.value);
+ 143:     const dist = num(els.dist.value);
+ 144:     const tppf = num(els.tppf.value);
+ 145:     const tw = num(els.tw.value);
+ 146: 
+ 147:     if (
+
+--- CORE BLOCK 2 ---
+ 160:   function classify(ppf) {
+ 161:     if (ppf < 20) return "Below Detection";
+ 162:     if (ppf < 40) return "Detection";
+ 163:     if (ppf < 80) return "Observation";
+ 164:     if (ppf < 120) return "Recognition";
+ 165:     return "Identification";
+ 166:   }
+ 167: 
+ 168:   function levelInterpretation(level) {
+ 169:     if (level === "Below Detection") {
+ 170:       return "Detail is too weak for reliable subject interpretation. You may see motion or presence, but usable evidence quality is not there.";
+ 171:     }
+ 172:     if (level === "Detection") {
+ 173:       return "Basic subject detection is possible, but scene detail is still limited. This is not a comfortable range for meaningful recognition.";
+ 174:     }
+ 175:     if (level === "Observation") {
+ 176:       return "General activity monitoring is achievable, but facial or object detail is still modest. This supports awareness more than confident recognition.";
+ 177:     }
+ 178:     if (level === "Recognition") {
+ 179:       return "Scene detail is strong enough for practical recognition work. Faces or distinguishing subject features should be meaningfully visible under decent field conditions.";
+ 180:     }
+ 181:     return "Pixel density is strong enough for identification-grade detail, assuming lighting, motion, compression, and angle do not erode the image too heavily.";
+ 182:   }
+ 183: 
+ 184:   function calculateModel() {
+ 185:     const input = getInputs();
+ 186:     if (!input.ok) return input;
+ 187: 
+ 188:     const sceneW = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
+ 189:     const ppf = input.res / sceneW;
+ 190:     const distForTppf = input.res / (2 * Math.tan(deg2rad(input.hfov / 2)) * input.tppf);
+ 191:     const pixelsOnTarget = ppf * input.tw;
+ 192:     const level = classify(ppf);
+ 193: 
+ 194:     const targetGapPct =
+ 195:       input.tppf > 0 ? ((input.tppf - ppf) / input.tppf) * 100 : 0;
+ 196: 
+ 197:     const shortfallMetric =
+ 198:       ppf < input.tppf ? ScopedLabsAnalyzer.clamp(targetGapPct, 0, 100) : 0;
+ 199: 
+ 200:     const utilizationPct =
+ 201:       distForTppf > 0 ? (input.dist / distForTppf) * 100 : 100;
+ 202: 
+ 203:     const utilizationMetric = ScopedLabsAnalyzer.clamp(utilizationPct, 0, 100);
+ 204: 
+ 205:     const requirementMetric =
+ 206:       input.tppf >= 120 ? 30 :
+ 207:       input.tppf >= 80 ? 20 :
+ 208:       input.tppf >= 40 ? 10 : 5;
+ 209: 
+ 210:     const metrics = [
+ 211:       {
+ 212:         label: "Detail Utilization",
+ 213:         value: utilizationMetric,
+ 214:         displayValue: fmtPct(utilizationPct)
+ 215:       },
+ 216:       {
+ 217:         label: "PPF Shortfall",
+ 218:         value: shortfallMetric,
+ 219:         displayValue: ppf < input.tppf ? fmtPpf(input.tppf - ppf) : "0.0 PPF"
+ 220:       },
+ 221:       {
+ 222:         label: "Target Detail Demand",
+ 223:         value: requirementMetric,
+ 224:         displayValue: fmtPpf(input.tppf)
+ 225:       }
+ 226:     ];
+ 227: 
+ 228:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 229:       compositeScore: Math.max(utilizationMetric, shortfallMetric, requirementMetric),
+ 230:       metrics,
+ 231:       healthyMax: 75,
+ 232:       watchMax: 95
+ 233:     });
+ 234: 
+ 235:     const interp = levelInterpretation(level);
+ 236: 
+ 237:     let dominantConstraint = "";
+ 238:     if (ppf < input.tppf) {
+ 239:       dominantConstraint = "PPF shortfall is the dominant limiter. The current geometry is not delivering the target detail level at the entered working distance.";
+ 240:     } else if (utilizationPct > 95) {
+ 241:       dominantConstraint = "Detail utilization is the dominant limiter. The design is operating right at the edge of the usable detail envelope, so real-world losses will matter.";
+ 242:     } else if (input.tppf >= 120) {
+ 243:       dominantConstraint = "Target detail demand is the dominant limiter. The design is being held to an identification-grade requirement, which compresses working-distance headroom quickly.";
+ 244:     } else {
+ 245:       dominantConstraint = "Pixel density is reasonably balanced against the target detail requirement. The layout still has usable headroom.";
+ 246:     }
+ 247: 
+ 248:     const interpretation = `At ${fmtFt(input.dist)} with ${fmt(input.hfov, 1)}° HFOV and ${fmtPx(input.res)} horizontal resolution, the scene width is about ${fmtFt(sceneW)}, producing roughly ${fmtPpf(ppf)}. That places the current layout in the ${level} range. ${interp}`;
+ 249: 
+ 250:     let guidance = "";
+ 251:     if (ppf < input.tppf) {
+ 252:       guidance = "Tighten the field of view, move closer, raise resolution, or narrow the target width before relying on this layout for the requested detail level.";
+ 253:     } else if (utilizationPct > 95) {
+ 254:       guidance = "This is edge-of-envelope detail performance. Validate compression, lighting, motion, and subject angle before finalizing the layout.";
+ 255:     } else if (utilizationPct > 75) {
+ 256:       guidance = "The layout is workable, but most of the available detail range is already being used. Verify whether you want more headroom before locking optics.";
+ 257:     } else {
+ 258:       guidance = "Pixel density has practical headroom. Continue to Lens Selection next so the optical choice stays aligned with the detail requirement you just validated.";
+ 259:     }
+ 260: 
+ 261:     return {
+ 262:       ok: true,
+ 263:       ...input,
+ 264:       sceneW,
+ 265:       ppf,
+ 266:       distForTppf,
+ 267:       pixelsOnTarget,
+ 268:       level,
+ 269:       status: statusPack.status,
+ 270:       interpretation,
+ 271:       dominantConstraint,
+ 272:       guidance,
+ 273:       utilizationMetric,
+ 274:       shortfallMetric,
+ 275:       requirementMetric,
+ 276:       utilizationPct
+ 277:     };
+ 278:   }
+ 279: 
+ 280:   function writeFlow(data) {
+ 281:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.pixel, {
+ 282:       category: CATEGORY,
+ 283:       step: STEP,
+ 284:       data: {
+ 285:         ppf: data.ppf,
+ 286:         level: data.level,
+ 287:         dist: data.dist,
+ 288:         hfov: data.hfov,
+ 289:         tppf: data.tppf,
+ 290:         sceneW: data.sceneW,
+ 291:         pixelsOnTarget: data.pixelsOnTarget,
+ 292:         interpretation: data.interpretation,
+ 293:         guidance: data.guidance
+ 294:       }
+ 295:     });
+ 296:   }
+ 297: 
+ 298:   function renderError(message) {
+ 299:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 300:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 301:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 302:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 303:   }
+ 304: 
+ 305:   function renderSuccess(data) {
+ 306:     ScopedLabsAnalyzer.renderOutput({
+ 307:       resultsEl: els.results,
+ 308:       analysisEl: els.analysis,
+ 309:       existingChartRef: chartRef,
+ 310:       existingWrapRef: chartWrapRef,
+ 311:       summaryRows: [
+ 312:         { label: "Scene Width", value: fmtFt(data.sceneW) },
+ 313:         { label: "Pixel Density", value: fmtPpf(data.ppf) },
+ 314:         { label: "Performance Level", value: data.level },
+ 315:         { label: "Distance for Target PPF", value: fmtFt(data.distForTppf) }
+ 316:       ],
+ 317:       derivedRows: [
+ 318:         { label: "Horizontal Resolution", value: fmtPx(data.res) },
+ 319:         { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
+ 320:         { label: "Target Pixel Density", value: fmtPpf(data.tppf) },
+ 321:         { label: "Target Width", value: fmtFt(data.tw) },
+ 322:         { label: "Pixels on Target", value: fmtPx(data.pixelsOnTarget, 0) },
+ 323:         { label: "Working Distance Utilization", value: fmtPct(data.utilizationPct) }
+ 324:       ],
+ 325:       status: data.status,
+ 326:       interpretation: data.interpretation,
+ 327:       dominantConstraint: data.dominantConstraint,
+ 328:       guidance: data.guidance,
+ 329:       chart: {
+ 330:         labels: ["Detail Utilization", "PPF Shortfall", "Target Detail Demand"],
+ 331:         values: [
+ 332:           Number(data.utilizationMetric.toFixed(1)),
+ 333:           Number(data.shortfallMetric.toFixed(1)),
+ 334:           Number(data.requirementMetric.toFixed(1))
+ 335:         ],
+ 336:         displayValues: [
+ 337:           fmtPct(data.utilizationPct),
+ 338:           data.ppf < data.tppf ? fmtPpf(data.tppf - data.ppf) : "0.0 PPF",
+ 339:           fmtPpf(data.tppf)
+ 340:         ],
+ 341:         referenceValue: 75,
+ 342:         healthyMax: 75,
+ 343:         watchMax: 95,
+ 344:         axisTitle: "Detail Pressure",
+ 345:         referenceLabel: "Comfort Band",
+ 346:         healthyLabel: "Healthy",
+ 347:         watchLabel: "Watch",
+ 348:         riskLabel: "Risk",
+ 349:         chartMax: 100
+ 350:       }
+ 351:     });
+ 352: 
+ 353:     writeFlow(data);
+ 354:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 355:   }
+ 356: 
+ 357:   function calc() {
+ 358:     const data = calculateModel();
+ 359:     if (!data.ok) return renderError(data.message);
+ 360:     renderSuccess(data);
+ 361:   }
+ 362: 
+ 363:   function reset() {
+ 364:     applyDefaults();
+ 365:     renderFlowNote();
+ 366:     invalidate({ clearFlow: true });
+ 367:   }
+ 368: 
+ 369:   function bind() {
+ 370:     ["res", "hfov", "dist", "tppf", "tw"].forEach((id) => {
+ 371:       const el = $(id);
+ 372:       if (!el) return;
+ 373:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 374:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 375:     });
+ 376: 
+ 377:     els.calc?.addEventListener("click", calc);
+ 378:     els.reset?.addEventListener("click", reset);
+ 379: 
+ 380:     document.addEventListener("keydown", (e) => {
+ 381:       if (e.key !== "Enter") return;
+ 382:       const t = e.target;
+ 383:       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 384:         e.preventDefault();
+ 385:         calc();
+ 386:       }
+ 387:     });
+ 388:   }
+ 389: 
+ 390:   function init() {
+ 391:     const year = document.querySelector("[data-year]");
+ 392:     if (year) year.textContent = new Date().getFullYear();
+ 393: 
+ 394:     bind();
+ 395:     renderFlowNote();
+ 396:     invalidate({ clearFlow: false });
+ 397:   }
+ 398: 
+ 399:   window.addEventListener("DOMContentLoaded", init);
+ 400: })();
+
+
+============================================================
+TOOL: scene-illumination
+============================================================
+Title: Scene Illumination Estimator
+Tier: pro
+Meta description: Estimate lumen requirement and illumination pressure across a protected scene before continuing the physical security design flow.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Area Width (ft)
+- Area Depth (ft)
+- Target Footcandles (fc)
+- Utilization Factor (%)
+- Light Loss Factor (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- w
+- d
+- fc
+- uf
+- llf
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  73:   function fmtFactor(v, digits = 2) {
+  74:     return Number.isFinite(v) ? v.toFixed(digits) : "—";
+  75:   }
+
+--- CORE BLOCK 2 ---
+ 167:   function classifyFootcandles(fc) {
+ 168:     if (fc < 1) return "Very Low";
+ 169:     if (fc < 3) return "Low Light";
+ 170:     if (fc < 10) return "Moderate";
+ 171:     return "High";
+ 172:   }
+
+--- CORE BLOCK 3 ---
+ 187:   function nextStepGuidance(fc, lumens, area) {
+ 188:     if (fc < 2) {
+ 189:       return "Before moving into mounting height and field-of-view decisions, confirm whether fixture output or lighting strategy should be improved. Weak illumination can undermine otherwise-correct camera geometry.";
+ 190:     }
+ 191:     if (lumens > 30000 && area < 5000) {
+ 192:       return "Required lumen output is aggressive for the scene size. Re-check whether the footcandle target is truly necessary, or whether fixture aiming and zone coverage should be adjusted.";
+ 193:     }
+ 194:     return "This lighting baseline is workable for continuing into mounting height and field-of-view design. Next steps should validate angle, coverage, and detail against the surveillance objective.";
+ 195:   }
+
+--- CORE BLOCK 4 ---
+ 226:   function calculateModel() {
+ 227:     const input = getInputs();
+ 228:     if (!input.ok) return input;
+ 229: 
+ 230:     const area = input.w * input.d;
+ 231:     const effectiveFactor = Math.max(0.05, input.uf * input.llf);
+ 232:     const lumens = (input.fc * area) / effectiveFactor;
+ 233:     const lumenDensity = area > 0 ? lumens / area : 0;
+ 234: 
+ 235:     const lightingClass = classifyFootcandles(input.fc);
+ 236:     const interpretationBase = suitability(input.fc);
+ 237:     const guidance = nextStepGuidance(input.fc, lumens, area);
+ 238: 
+ 239:     const factorPressureMetric = Math.min(((1 - effectiveFactor) / 0.95) * 100, 100);
+ 240:     const targetDemandMetric = input.fc >= 10 ? 65 : input.fc >= 3 ? 30 : input.fc >= 1 ? 15 : 5;
+ 241:     const outputLoadMetric = Math.min(lumenDensity * 8, 100);
+ 242: 
+ 243:     const metrics = [
+ 244:       {
+ 245:         label: "Planning Factor Pressure",
+ 246:         value: factorPressureMetric,
+ 247:         displayValue: fmtFactor(effectiveFactor)
+ 248:       },
+ 249:       {
+ 250:         label: "Illumination Demand",
+ 251:         value: targetDemandMetric,
+ 252:         displayValue: fmtFc(input.fc)
+ 253:       },
+ 254:       {
+ 255:         label: "Output Load",
+ 256:         value: outputLoadMetric,
+ 257:         displayValue: `${fmt(lumenDensity, 2)} lm/sq ft`
+ 258:       }
+ 259:     ];
+ 260: 
+ 261:     const dominantMetric = Math.max(factorPressureMetric, targetDemandMetric, outputLoadMetric);
+ 262: 
+ 263:     const statusPack = ScopedLabsAnalyzer.resolveStatus({
+ 264:       compositeScore: dominantMetric,
+ 265:       metrics,
+ 266:       healthyMax: 20,
+ 267:       watchMax: 45
+ 268:     });
+ 269: 
+ 270:     let dominantConstraint = "";
+ 271:     if (effectiveFactor < 0.45) {
+ 272:       dominantConstraint = "Planning factor pressure is the dominant limiter. Too much fixture output is being lost through utilization and light-loss assumptions, so the scene demands more lumens than it first appears.";
+ 273:     } else if (input.fc >= 10) {
+ 274:       dominantConstraint = "Illumination demand is the dominant limiter. The target light level is relatively aggressive, which can drive fixture count and power requirements upward quickly.";
+ 275:     } else if (lumenDensity > 6) {
+ 276:       dominantConstraint = "Output load is the dominant limiter. Required lumens per square foot are climbing enough that fixture strategy and aiming deserve closer review.";
+ 277:     } else {
+ 278:       dominantConstraint = "The lighting baseline is balanced. Scene size, target illumination, and planning factors are staying in a practical range for downstream camera design.";
+ 279:     }
+ 280: 
+ 281:     const interpretation = `For an area of ${fmtSqFt(area)} at a target of ${fmtFc(input.fc)}, with a utilization factor of ${fmtPct(input.ufPct)} and light-loss factor of ${fmtPct(input.llfPct)}, the effective planning factor is ${fmtFactor(effectiveFactor)}. The estimated lumen requirement is about ${fmtLumens(lumens)}. Lighting condition is classified as ${lightingClass}. ${interpretationBase}`;
+ 282: 
+ 283:     return {
+ 284:       ok: true,
+ 285:       ...input,
+ 286:       area,
+ 287:       effectiveFactor,
+ 288:       lumens,
+ 289:       lumenDensity,
+ 290:       lightingClass,
+ 291:       status: statusPack.status,
+ 292:       interpretation,
+ 293:       dominantConstraint,
+ 294:       guidance,
+ 295:       factorPressureMetric,
+ 296:       targetDemandMetric,
+ 297:       outputLoadMetric
+ 298:     };
+ 299:   }
+ 300: 
+ 301:   function writeFlow(data) {
+ 302:     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.scene, {
+ 303:       category: CATEGORY,
+ 304:       step: STEP,
+ 305:       data: {
+ 306:         w: data.w,
+ 307:         d: data.d,
+ 308:         fc: data.fc,
+ 309:         uf: data.uf,
+ 310:         llf: data.llf,
+ 311:         ufPct: data.ufPct,
+ 312:         llfPct: data.llfPct,
+ 313:         area: data.area,
+ 314:         effectiveFactor: data.effectiveFactor,
+ 315:         lumens: data.lumens,
+ 316:         lumenDensity: data.lumenDensity,
+ 317:         lightingClass: data.lightingClass,
+ 318:         interpretation: data.interpretation,
+ 319:         guidance: data.guidance
+ 320:       }
+ 321:     });
+ 322:   }
+ 323: 
+ 324:   function renderError(message) {
+ 325:     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+ 326:     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
+ 327:     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+ 328:     els.results.innerHTML = `<div class="muted">${message}</div>`;
+ 329:   }
+ 330: 
+ 331:   function renderSuccess(data) {
+ 332:     ScopedLabsAnalyzer.renderOutput({
+ 333:       resultsEl: els.results,
+ 334:       analysisEl: els.analysis,
+ 335:       existingChartRef: chartRef,
+ 336:       existingWrapRef: chartWrapRef,
+ 337:       summaryRows: [
+ 338:         { label: "Area", value: fmtSqFt(data.area) },
+ 339:         { label: "Target Illumination", value: fmtFc(data.fc) },
+ 340:         { label: "Effective Planning Factor", value: fmtFactor(data.effectiveFactor) },
+ 341:         { label: "Estimated Lumens Required", value: fmtLumens(data.lumens) }
+ 342:       ],
+ 343:       derivedRows: [
+ 344:         { label: "Area Width", value: fmtFt(data.w) },
+ 345:         { label: "Area Depth", value: fmtFt(data.d) },
+ 346:         { label: "Utilization Factor", value: fmtPct(data.ufPct) },
+ 347:         { label: "Light Loss Factor", value: fmtPct(data.llfPct) },
+ 348:         { label: "Lighting Condition", value: data.lightingClass },
+ 349:         { label: "Lumen Density", value: `${fmt(data.lumenDensity, 2)} lm/sq ft` }
+ 350:       ],
+ 351:       status: data.status,
+ 352:       interpretation: data.interpretation,
+ 353:       dominantConstraint: data.dominantConstraint,
+ 354:       guidance: data.guidance,
+ 355:       chart: {
+ 356:         labels: ["Planning Factor Pressure", "Illumination Demand", "Output Load"],
+ 357:         values: [
+ 358:           Number(data.factorPressureMetric.toFixed(1)),
+ 359:           Number(data.targetDemandMetric.toFixed(1)),
+ 360:           Number(data.outputLoadMetric.toFixed(1))
+ 361:         ],
+ 362:         displayValues: [
+ 363:           fmtFactor(data.effectiveFactor),
+ 364:           fmtFc(data.fc),
+ 365:           `${fmt(data.lumenDensity, 2)} lm/sq ft`
+ 366:         ],
+ 367:         referenceValue: 20,
+ 368:         healthyMax: 20,
+ 369:         watchMax: 45,
+ 370:         axisTitle: "Lighting Planning Pressure",
+ 371:         referenceLabel: "Comfort Band",
+ 372:         healthyLabel: "Healthy",
+ 373:         watchLabel: "Watch",
+ 374:         riskLabel: "Risk",
+ 375:         chartMax: 100
+ 376:       }
+ 377:     });
+ 378: 
+ 379:     writeFlow(data);
+ 380:     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+ 381:   }
+ 382: 
+ 383:   function calc() {
+ 384:     const data = calculateModel();
+ 385:     if (!data.ok) return renderError(data.message);
+ 386:     renderSuccess(data);
+ 387:   }
+ 388: 
+ 389:   function reset() {
+ 390:     applyDefaults();
+ 391:     renderFlowNote();
+ 392:     invalidate({ clearFlow: true });
+ 393:   }
+ 394: 
+ 395:   function bind() {
+ 396:     ["w", "d", "fc", "uf", "llf"].forEach((id) => {
+ 397:       const el = $(id);
+ 398:       if (!el) return;
+ 399:       el.addEventListener("input", () => invalidate({ clearFlow: true }));
+ 400:       el.addEventListener("change", () => invalidate({ clearFlow: true }));
+ 401:     });
+ 402: 
+ 403:     els.calc?.addEventListener("click", calc);
+ 404:     els.reset?.addEventListener("click", reset);
+ 405: 
+ 406:     document.addEventListener("keydown", (e) => {
+ 407:       if (e.key !== "Enter") return;
+ 408:       const t = e.target;
+ 409:       if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 410:         e.preventDefault();
+ 411:         calc();
+ 412:       }
+ 413:     });
+ 414:   }
+ 415: 
+ 416:   function initTool() {
+ 417:     bind();
+ 418:     renderFlowNote();
+ 419:     invalidate({ clearFlow: false });
+ 420:   }
+ 421: 
+ 422:   window.addEventListener("DOMContentLoaded", () => {
+ 423:     const year = document.querySelector("[data-year]");
+ 424:     if (year) year.textContent = new Date().getFullYear();
+ 425: 
+ 426:     let unlocked = unlockCategoryPage();
+ 427:     if (unlocked) initTool();
+ 428: 
+ 429:     setTimeout(() => {
+ 430:       unlocked = unlockCategoryPage();
+ 431:       if (unlocked && !els.toolCard.dataset.initialized) {
+ 432:         els.toolCard.dataset.initialized = "true";
+ 433:         initTool();
+ 434:       }
+ 435:     }, 400);
+ 436:   });
+ 437: })();

@@ -230,8 +230,11 @@
 
     const overlap = input.overlapPct / 100;
     const coveragePerCameraFt = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
-    const effectiveCoverageFt = coveragePerCameraFt * (1 - overlap);
-    const totalCoverageFt = effectiveCoverageFt * input.cams;
+    const overlapFt = coveragePerCameraFt * overlap;
+    const effectiveCoverageFt = coveragePerCameraFt - overlapFt;
+    const totalCoverageFt = input.cams <= 1
+      ? coveragePerCameraFt
+      : coveragePerCameraFt + ((input.cams - 1) * effectiveCoverageFt);
     const gapFt = Math.max(0, input.w - totalCoverageFt);
     const gapPct = input.w > 0 ? (gapFt / input.w) * 100 : 0;
     const overCoverageFt = Math.max(0, totalCoverageFt - input.w);
@@ -272,7 +275,7 @@
     if (gapFt > 0 && gapPct <= 10) coverageClass = "MINOR GAPS";
     if (gapFt > 0 && gapPct > 10) coverageClass = "BLIND SPOTS";
 
-    let interpretation = `Each camera covers about ${fmtFt(coveragePerCameraFt)} horizontally at the target zone. After applying ${fmtPct(input.overlapPct)} overlap, effective usable coverage per camera is ${fmtFt(effectiveCoverageFt)}, giving total usable width of ${fmtFt(totalCoverageFt)} across ${fmt(input.cams, 0)} cameras.`;
+    let interpretation = `Each camera covers about ${fmtFt(coveragePerCameraFt)} horizontally at the target zone. After applying ${fmtPct(input.overlapPct)} overlap between adjacent camera footprints, each additional camera contributes about ${fmtFt(effectiveCoverageFt)} of usable added width, giving total usable width of ${fmtFt(totalCoverageFt)} across ${fmt(input.cams, 0)} cameras.`;
 
     if (coverageClass === "BLIND SPOTS") {
       interpretation += ` The modeled layout leaves a meaningful gap of ${fmtFt(gapFt)}, so blind spots are likely unless spacing, count, or field of view changes.`;
@@ -310,6 +313,7 @@
       ok: true,
       ...input,
       coveragePerCameraFt,
+      overlapFt,
       effectiveCoverageFt,
       totalCoverageFt,
       gapFt,
@@ -340,6 +344,7 @@
         overlap: data.overlapPct / 100,
         overlapPct: data.overlapPct,
         cov: data.coveragePerCameraFt,
+        overlapFt: data.overlapFt,
         eff: data.effectiveCoverageFt,
         total: data.totalCoverageFt,
         gap: data.gapFt,
@@ -454,7 +459,10 @@
     if (year) year.textContent = new Date().getFullYear();
 
     let unlocked = unlockCategoryPage();
-    if (unlocked) initTool();
+    if (unlocked && !els.toolCard.dataset.initialized) {
+      els.toolCard.dataset.initialized = "true";
+      initTool();
+    }
 
     setTimeout(() => {
       unlocked = unlockCategoryPage();
