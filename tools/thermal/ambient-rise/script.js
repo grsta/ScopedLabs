@@ -300,8 +300,8 @@ hideContinue();
       },
       {
         label: "Available Airflow Margin",
-        value: btu / Math.max(1, cfm * 1.08 * 10),
-        displayValue: `${(btu / Math.max(1, cfm * 1.08 * 10)).toFixed(2)}`
+        value: btu / Math.max(1, cfm * k * 10),
+        displayValue: `${(btu / Math.max(1, cfm * k * 10)).toFixed(2)}`
       },
       {
         label: "Heat Load Intensity",
@@ -375,12 +375,12 @@ hideContinue();
           ],
           values: [
             dt,
-            btu / Math.max(1, cfm * 1.08 * 10),
+            btu / Math.max(1, cfm * k * 10),
             watts / 4000
           ],
           displayValues: [
             `${dt.toFixed(1)} °F`,
-            `${(btu / Math.max(1, cfm * 1.08 * 10)).toFixed(2)}`,
+            `${(btu / Math.max(1, cfm * k * 10)).toFixed(2)}`,
             `${(watts / 4000).toFixed(2)}`
           ],
           referenceValue: 10,
@@ -391,7 +391,7 @@ hideContinue();
           healthyLabel: "Healthy",
           watchLabel: "Watch",
           riskLabel: "Risk",
-          chartMax: Math.max(24, Math.ceil(Math.max(dt, btu / Math.max(1, cfm * 1.08 * 10), watts / 4000, 10) * 1.15))
+          chartMax: Math.max(24, Math.ceil(Math.max(dt, btu / Math.max(1, cfm * k * 10), watts / 4000, 10) * 1.15))
         }
       });
     }

@@ -318,7 +318,7 @@
     const tout = tin + dt;
     const airflowPerKw = cfm / Math.max(0.1, watts / 1000);
 
-    const airflowMargin = btu / Math.max(1, cfm * 1.08 * 10);
+    const airflowMargin = btu / Math.max(1, cfm * k * 10);
     const heatIntensity = watts / 4000;
 
     const metrics = [

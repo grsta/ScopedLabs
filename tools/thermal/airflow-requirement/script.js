@@ -338,7 +338,7 @@
           healthyLabel: "Healthy",
           watchLabel: "Watch",
           riskLabel: "Risk",
-          chartMax: Math.max(3, Number((cfm / 1000).toFixed(2)) + 0.5)
+          chartMax: Math.max(3, Math.ceil(Math.max(cfm / 1000, 18 / dt, watts / 4000, 1.35) * 1.15 * 100) / 100)
         }
       });
     }
