@@ -3,36 +3,38 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tools ScopedLabs</title>
-    <meta name="description" content="Browse ScopedLabs tool categories for focused calculators, guided design flows, exportable reports, and practical infrastructure planning." />
+  <title>Tools • ScopedLabs</title>
+  <meta name="description" content="Browse ScopedLabs tool categories for focused calculators, guided design flows, exportable reports, saved snapshots, and practical infrastructure planning." />
+
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-017" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-<script defer src="/assets/auth.js?v=0319"></script>
-<script defer src="/assets/app.js?v=0319"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0319"></script>
+  <script defer src="/assets/app.js?v=0319"></script>
 </head>
 
-<body class="page-tools" data-protected="true" data-category="tools">
+<body class="page-tools">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-icon-wrap" aria-hidden="true">
-        <img
-          class="brand-icon"
-          src="/assets/favicon/favicon-32x32.png?v=1"
-          alt=""
-          width="32"
-          height="32"
-        />
-      </span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
-                                          <nav class="nav site-nav nav-tabs" aria-label="Primary">
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
         <a class="nav-tab" href="/">Home</a>
         <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
         <a class="nav-tab" href="/about/">About</a>
@@ -52,97 +54,96 @@ window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
     <section class="page-head">
       <h1 class="h1">Tools</h1>
       <p class="subhead">
-        Choose a category to open focused calculators, guided design flows, and exportable planning reports.
+        Choose a category to open focused calculators, guided design flows, exportable planning reports,
+        and saved snapshots for real-world infrastructure planning.
       </p>
     </section>
 
     <section class="grid category-grid">
 
-  <!-- Access Control -->
-  <a class="card" href="/tools/access-control/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Access Control</h2>
-    <p class="muted">Door counts, controller sizing, power, and expansion planning.</p>
-  </a>
+      <!-- Access Control -->
+      <a class="card" href="/tools/access-control/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Access Control</h2>
+        <p class="muted">Plan door counts, controller capacity, lock power draw, reader types, and access level scale.</p>
+      </a>
 
-  <!-- Compute -->
-  <a class="card" href="/tools/compute/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Compute</h2>
-    <p class="muted">CPU, GPU, RAM sizing, virtualization and workload modeling.</p>
-  </a>
+      <!-- Compute -->
+      <a class="card" href="/tools/compute/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Compute</h2>
+        <p class="muted">Size CPU, RAM, IOPS, throughput, VM density, GPU memory, power, and backup windows.</p>
+      </a>
 
-  <!-- Infrastructure -->
-  <a class="card" href="/tools/infrastructure/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Infrastructure</h2>
-    <p class="muted">Rack space, power density, cooling, and facility planning.</p>
-  </a>
+      <!-- Infrastructure -->
+      <a class="card" href="/tools/infrastructure/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Infrastructure</h2>
+        <p class="muted">Plan rack space, rack weight, conduit fill, cable tray fill, floor load, and room sizing.</p>
+      </a>
 
-  <!-- Network -->
-  <a class="card" href="/tools/network/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Network &amp; Throughput</h2>
-    <p class="muted">Bandwidth, PoE budgets, latency, congestion, topology planning.</p>
-  </a>
+      <!-- Network -->
+      <a class="card" href="/tools/network/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Network &amp; Throughput</h2>
+        <p class="muted">Model bandwidth demand, PoE budgets, oversubscription, latency, MTU, packet loss, and VPN overhead.</p>
+      </a>
 
-  <!-- Performance -->
-  <a class="card" href="/tools/performance/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Performance &amp; Risk</h2>
-    <p class="muted">Failure probability, sensitivity, worst-case planning.</p>
-  </a>
+      <!-- Performance -->
+      <a class="card" href="/tools/performance/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Performance &amp; Risk</h2>
+        <p class="muted">Check headroom, response time, bottlenecks, queue depth, congestion, concurrency, and saturation risk.</p>
+      </a>
 
-  <!-- Physical Security -->
-  <a class="card" href="/tools/physical-security/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Physical Security</h2>
-    <p class="muted">Camera placement, coverage, intrusion, and perimeter design.</p>
-  </a>
+      <!-- Physical Security -->
+      <a class="card" href="/tools/physical-security/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Physical Security</h2>
+        <p class="muted">Plan camera field of view, pixel density, mounting height, lens selection, blind spots, and capture range.</p>
+      </a>
 
-  <!-- Power -->
-  <a class="card" href="/tools/power/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Power &amp; Runtime</h2>
-    <p class="muted">UPS sizing, runtime, load growth, redundancy, failure analysis.</p>
-  </a>
+      <!-- Power -->
+      <a class="card" href="/tools/power/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Power &amp; Runtime</h2>
+        <p class="muted">Size UPS systems, runtime, load growth, battery banks, redundancy impact, and worst-case scenarios.</p>
+      </a>
 
-  <!-- Thermal -->
-  <a class="card" href="/tools/thermal/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Thermal &amp; Environment</h2>
-    <p class="muted">Heat load, enclosure airflow, derating, safety margins.</p>
-  </a>
+      <!-- Thermal -->
+      <a class="card" href="/tools/thermal/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Thermal &amp; Environment</h2>
+        <p class="muted">Estimate heat load, airflow, ambient rise, exhaust temperature, rack density, and cooling capacity.</p>
+      </a>
 
-  <!-- Video -->
-  <a class="card" href="/tools/video-storage/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Video &amp; Storage</h2>
-    <p class="muted">Retention days, bitrate math, RAID impact, archive strategy.</p>
-  </a>
+      <!-- Video -->
+      <a class="card" href="/tools/video-storage/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Video &amp; Storage</h2>
+        <p class="muted">Calculate bitrate, storage, retention windows, RAID impact, survivability, codec efficiency, and archive cost.</p>
+      </a>
 
-  <!-- Wireless -->
-  <a class="card" href="/tools/wireless/">
-    <div class="card-top"><span class="pill">Category</span></div>
-    <h2 class="h2">Wireless</h2>
-    <p class="muted">AP density, coverage modeling, and channel planning.</p>
-  </a>
+      <!-- Wireless -->
+      <a class="card" href="/tools/wireless/">
+        <div class="card-top"><span class="pill">Category</span></div>
+        <h2 class="h2">Wireless</h2>
+        <p class="muted">Plan AP coverage, channel overlap, noise margin, client density, AP capacity, link budget, and roaming thresholds.</p>
+      </a>
 
-</section>
-
-
+    </section>
 
     <footer class="site-footer">
       <div class="muted">© <span data-year></span> ScopedLabs</div>
-            <div class="footer-links">
-      <a href="/tools/">Tools</a>
-      <a href="/upgrade/">Upgrade</a>
-      <a href="/about/">About</a>
-      <a href="/contact/">Contact</a>
-      <a href="/changelog/">Changelog</a>
-      <a href="/disclaimer/">Disclaimer</a>
-    </div>
-</footer>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
   </main>
 </body>
 </html>
