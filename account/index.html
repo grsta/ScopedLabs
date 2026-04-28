@@ -9,16 +9,13 @@
 
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-017" />
 
-  <!-- Supabase client (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-  window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
-  window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
-</script>
-  <!-- Auth / checkout UI glue -->
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
   <script defer src="/assets/auth.js?v=0314"></script>
   <script defer src="/assets/account.js?v=acct-504"></script>
-  
 
   <style data-scopedlabs-account-snapshots>
     .sl-snapshots-list {
@@ -113,27 +110,26 @@
       }
     }
   </style>
-
 </head>
 
 <body class="page-account">
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="ScopedLabs Home">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-icon-wrap" aria-hidden="true">
-        <img
-          class="brand-icon"
-          src="/assets/favicon/favicon-32x32.png?v=1"
-          alt=""
-          width="32"
-          height="32"
-        />
-      </span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
-                                          <nav class="nav site-nav nav-tabs" aria-label="Primary">
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
         <a class="nav-tab" href="/">Home</a>
         <a class="nav-tab" href="/tools/">Tools</a>
         <a class="nav-tab" href="/about/">About</a>
@@ -153,17 +149,19 @@
 
       <div id="sl-login-card" class="card" style="background:rgba(0,0,0,.16);">
         <h3 style="margin-top:0;">Sign in</h3>
-        <p class="muted">We’ll email you a magic link (no password).</p>
+        <p class="muted">
+          We’ll email you a magic link. No password required.
+        </p>
 
         <div class="form-grid" style="margin-top:.75rem;">
           <label class="muted">
             Email
-            <input id="sl-email" type="email" placeholder="you@company.com" />
+            <input id="sl-email" type="email" autocomplete="email" placeholder="you@company.com" />
           </label>
         </div>
 
         <div class="actions" style="margin-top: .85rem;">
-          <button id="sl-sendlink" class="btn btn-primary">Send magic link</button>
+          <button id="sl-sendlink" class="btn btn-primary" type="button">Send magic link</button>
         </div>
 
         <div class="muted" id="sl-email-hint" style="font-size:.9rem; margin-top:.6rem;"></div>
@@ -175,18 +173,19 @@
 
         <div class="actions" style="margin-top: .85rem;">
           <a class="btn btn-primary" href="/upgrade/">Unlock another category</a>
-          <button id="sl-signout" class="btn" style="display:none;">Sign out</button>
+          <button id="sl-signout" class="btn" type="button" style="display:none;">Sign out</button>
         </div>
       </div>
 
       <div class="muted" id="sl-status" style="font-size:.9rem; margin-top: .85rem;"></div>
     </section>
-  
+
     <section id="sl-snapshots-card" class="card tool-card" style="margin-top:1rem;">
       <span class="pill">Saved Snapshots</span>
       <h2 style="margin-top:.6rem;">Saved tool reports</h2>
       <p class="muted">
-        Account-backed snapshots saved from ScopedLabs export cards. Use these to revisit prior calculations, report context, and documented outputs.
+        Account-backed snapshots saved from ScopedLabs export cards. Use these to revisit prior calculations,
+        report context, assumptions, and documented outputs.
       </p>
 
       <div class="actions" style="margin-top:.85rem;">
@@ -198,20 +197,17 @@
       <div id="sl-snapshot-detail" class="card sl-snapshot-detail" style="display:none;"></div>
     </section>
 
+    <footer class="site-footer">
+      <div class="muted">© <span data-year class="year"></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
   </main>
-
-  <footer class="site-footer">
-    <div class="container">
-      <div class="muted">© <span class="year"></span> ScopedLabs</div>
-    </div>
-          <div class="footer-links">
-      <a href="/tools/">Tools</a>
-      <a href="/upgrade/">Upgrade</a>
-      <a href="/about/">About</a>
-      <a href="/contact/">Contact</a>
-      <a href="/changelog/">Changelog</a>
-      <a href="/disclaimer/">Disclaimer</a>
-    </div>
-</footer>
 </body>
 </html>
