@@ -1,0 +1,4483 @@
+# ScopedLabs Category Formula Review Packet
+Category: video-storage
+Generated: 2026-04-28T00:42:27.642Z
+Tools found: 10
+
+
+
+============================================================
+TOOL: advanced-storage-planner
+============================================================
+Title: Advanced Storage Planner
+Tier: pro
+Meta description: Estimate storage ingest and retention under average and peak conditions for video systems.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Camera count
+- Average bitrate per camera (Mbps)
+- Motion / recording duty (%)
+- Peak multiplier (x)
+- Usable storage (TB)
+- Target retention (days)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- cams
+- avgMbps
+- motionPct
+- peakMult
+- usableTb
+- targetDays
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  88:   function clearAnalysisBlock() {
+  89:     if (
+  90:       window.ScopedLabsAnalyzer &&
+  91:       typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+  92:     ) {
+  93:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+  94:     } else if (els.analysisCopy) {
+  95:       els.analysisCopy.style.display = "none";
+  96:       els.analysisCopy.innerHTML = "";
+  97:     }
+  98:   }
+
+--- CORE BLOCK 2 ---
+ 124:       els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+ 125:     }
+ 126:     clearAnalysisBlock();
+ 127:     clearChart();
+ 128:   }
+ 129: 
+ 130:   function invalidate() {
+ 131:     if (
+ 132:       window.ScopedLabsAnalyzer &&
+ 133:       typeof window.ScopedLabsAnalyzer.invalidate === "function"
+ 134:     ) {
+ 135:       window.ScopedLabsAnalyzer.invalidate({
+ 136:         resultsEl: els.results,
+ 137:         analysisEl: els.analysisCopy,
+ 138:         emptyMessage: "Enter values and press Calculate."
+ 139:       });
+ 140:     } else {
+ 141:       renderEmpty();
+ 142:     }
+ 143: 
+ 144:     clearChart();
+ 145:   }
+ 146: 
+ 147:   function mbpsToGBPerDayDecimal(mbps) {
+ 148:     return ((mbps * 1_000_000) / 8) * 86400 / 1_000_000_000;
+ 149:   }
+ 150: 
+ 151:   function statusFromResolver(metrics) {
+ 152:     if (
+ 153:       window.ScopedLabsAnalyzer &&
+ 154:       typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+ 155:     ) {
+ 156:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 157:         metrics,
+ 158:         healthyMax: 1.0,
+ 159:         watchMax: 1.25
+ 160:       });
+ 161: 
+ 162:       return {
+ 163:         status: resolved?.status || "HEALTHY",
+ 164:         dominantLabel: resolved?.dominant?.label || metrics[0].label
+ 165:       };
+ 166:     }
+ 167: 
+ 168:     const dominant = metrics.reduce((best, current) =>
+ 169:       Number(current.value) > Number(best.value) ? current : best
+ 170:     );
+ 171: 
+ 172:     let status = "HEALTHY";
+ 173:     if (Number(dominant.value) > 1.25) status = "RISK";
+ 174:     else if (Number(dominant.value) > 1.0) status = "WATCH";
+ 175: 
+ 176:     return {
+ 177:       status,
+ 178:       dominantLabel: dominant.label
+ 179:     };
+ 180:   }
+ 181: 
+ 182:   function buildInterpretation(status, dominantConstraint, retentionAvgDays, retentionPeakDays, peakMult) {
+ 183:     if (status === "HEALTHY") {
+ 184:       return `Average and peak retention both remain on the safe side of the target, so the current storage plan still has usable headroom. Peak behavior is present, but it is not compressing retention hard enough to undermine the design.`;
+ 185:     }
+ 186: 
+ 187:     if (status === "WATCH") {
+ 188:       if (dominantConstraint === "Peak retention pressure") {
+ 189:         return `The design is starting to lean on peak behavior. Average retention may still look acceptable, but burst conditions are compressing usable retention enough that the system is getting closer to a real planning edge.`;
+ 190:       }
+ 191: 
+ 192:       if (dominantConstraint === "Average retention pressure") {
+ 193:         return `The baseline storage plan itself is getting tight. Even without extreme spikes, the average ingest rate is close enough to the retention target that future bitrate drift or added cameras could erode margin quickly.`;
+ 194:       }
+ 195: 
+ 196:       return `Peak scene behavior is becoming a meaningful planning factor. The system may be acceptable on paper, but spike conditions now have enough leverage to reduce storage confidence if assumptions drift.`;
+ 197:     }
+ 198: 
+ 199:     if (dominantConstraint === "Peak retention pressure") {
+ 200:       return `Peak behavior is forcing retention below a comfortable planning boundary. The system may appear fine in average-state math, but spike-driven ingest is strong enough to create a real retention cliff under heavier conditions.`;
+ 201:     }
+ 202: 
+ 203:     if (dominantConstraint === "Average retention pressure") {
+ 204:       return `The baseline storage plan is under too much pressure. Even before peak behavior is considered, the average ingest rate is already consuming retention margin aggressively enough to make the target unreliable.`;
+ 205:     }
+ 206: 
+ 207:     return `Bitrate surge behavior is severe enough that storage planning cannot rely on average-state assumptions alone. The design is now vulnerable to real-world scene complexity, codec spikes, or motion-heavy periods compressing retention too far.`;
+ 208:   }
+ 209: 
+ 210:   function buildGuidance(status, dominantConstraint, maxPerCamMbpsAtTarget, retentionPeakDays, targetDays) {
+ 211:     if (status === "HEALTHY") {
+ 212:       return `Carry this as a viable planning point, but preserve discipline around future bitrate growth, camera count expansion, and codec changes. You currently have margin, and the goal is to keep it from quietly disappearing.`;
+ 213:     }
+ 214: 
+ 215:     if (status === "WATCH") {
+ 216:       if (dominantConstraint === "Peak retention pressure") {
+ 217:         return `Increase usable storage or reduce worst-case bitrate behavior before the design grows further. Peak retention is already close enough to the edge that small real-world changes can push it below target.`;
+ 218:       }
+ 219: 
+ 220:       if (dominantConstraint === "Average retention pressure") {
+ 221:         return `Reduce sustained average ingest or increase usable storage so the baseline plan stops leaning so hard on the target boundary.`;
+ 222:       }
+ 223: 
+ 224:       return `Treat peak behavior as part of the real design envelope, not an afterthought. The storage plan should remain comfortable even when scenes become more complex than the average case.`;
+ 225:     }
+ 226: 
+ 227:     if (dominantConstraint === "Average retention pressure") {
+ 228:       return `Increase usable storage, lower sustained bitrate, reduce camera count, or shorten the required retention target. The average-state design itself is not carrying enough headroom right now.`;
+ 229:     }
+ 230: 
+ 231:     if (dominantConstraint === "Peak retention pressure") {
+ 232:       return `Bring peak ingest under control or add storage headroom before relying on this plan. Peak compression is currently strong enough to undermine the retention target under harder conditions.`;
+ 233:     }
+ 234: 
+ 235:     return `Rework the peak-behavior assumption before deployment. The current design is too sensitive to spikes, which means the real system is likely to retain less than the planning model suggests.`;
+ 236:   }
+ 237: 
+ 238:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 239:     if (els.results) {
+ 240:       els.results.innerHTML = `
+ 241:         ${summaryRows.map((row) => `
+ 242:           <div class="result-row">
+ 243:             <div class="result-label">${row.label}</div>
+ 244:             <div class="result-value">${row.value}</div>
+ 245:           </div>
+ 246:         `).join("")}
+ 247:         ${derivedRows.map((row) => `
+ 248:           <div class="result-row">
+ 249:             <div class="result-label">${row.label}</div>
+ 250:             <div class="result-value">${row.value}</div>
+ 251:           </div>
+ 252:         `).join("")}
+ 253:       `;
+ 254:     }
+ 255: 
+ 256:     if (els.analysisCopy) {
+ 257:       els.analysisCopy.style.display = "";
+ 258:       els.analysisCopy.innerHTML = `
+ 259:         <div class="results-grid">
+ 260:           <div class="result-row">
+ 261:             <div class="result-label">Status</div>
+ 262:             <div class="result-value">${status}</div>
+ 263:           </div>
+ 264:           <div class="result-row">
+ 265:             <div class="result-label">Dominant Constraint</div>
+ 266:             <div class="result-value">${dominantConstraint}</div>
+ 267:           </div>
+ 268:           <div class="result-row">
+ 269:             <div class="result-label">Engineering Interpretation</div>
+ 270:             <div class="result-value">${interpretation}</div>
+ 271:           </div>
+ 272:           <div class="result-row">
+ 273:             <div class="result-label">Actionable Guidance</div>
+ 274:             <div class="result-value">${guidance}</div>
+ 275:           </div>
+ 276:         </div>
+ 277:       `;
+ 278:     }
+ 279:   }
+ 280: 
+ 281:   function calculate() {
+ 282:     const camsRaw = safeNumber(els.cams.value, NaN);
+ 283:     const avgMbpsRaw = safeNumber(els.avgMbps.value, NaN);
+ 284:     const motionPctRaw = safeNumber(els.motionPct.value, NaN);
+ 285:     const peakMultRaw = safeNumber(els.peakMult.value, NaN);
+ 286:     const usableTbRaw = safeNumber(els.usableTb.value, NaN);
+ 287:     const targetDaysRaw = safeNumber(els.targetDays.value, NaN);
+ 288: 
+ 289:     if (
+ 290:       !Number.isFinite(camsRaw) || camsRaw <= 0 ||
+ 291:       !Number.isFinite(avgMbpsRaw) || avgMbpsRaw <= 0 ||
+ 292:       !Number.isFinite(motionPctRaw) || motionPctRaw <= 0 ||
+ 293:       !Number.isFinite(peakMultRaw) || peakMultRaw < 1 ||
+ 294:       !Number.isFinite(usableTbRaw) || usableTbRaw <= 0 ||
+ 295:       !Number.isFinite(targetDaysRaw) || targetDaysRaw <= 0
+ 296:     ) {
+ 297:       if (els.results) {
+ 298:         els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+ 299:       }
+ 300:       clearAnalysisBlock();
+ 301:       clearChart();
+ 302:       return;
+ 303:     }
+ 304: 
+ 305:     const cams = Math.max(1, Math.floor(clamp(camsRaw, 1, 100000)));
+ 306:     const avgMbps = clamp(avgMbpsRaw, 0.01, 100000);
+ 307:     const motionPct = clamp(motionPctRaw, 1, 100);
+ 308:     const peakMult = clamp(peakMultRaw, 1, 20);
+ 309:     const usableTb = clamp(usableTbRaw, 0.01, 100000);
+ 310:     const targetDays = Math.max(1, Math.floor(clamp(targetDaysRaw, 1, 100000)));
+ 311: 
+ 312:     const duty = motionPct / 100;
+ 313: 
+ 314:     const totalAvgMbps = cams * avgMbps * duty;
+ 315:     const totalPeakMbps = cams * (avgMbps * peakMult) * duty;
+ 316: 
+ 317:     const avgGBday = mbpsToGBPerDayDecimal(totalAvgMbps);
+ 318:     const peakGBday = mbpsToGBPerDayDecimal(totalPeakMbps);
+ 319: 
+ 320:     const usableGB = usableTb * 1000;
+ 321: 
+ 322:     const retentionAvgDays = usableGB / Math.max(0.00001, avgGBday);
+ 323:     const retentionPeakDays = usableGB / Math.max(0.00001, peakGBday);
+ 324: 
+ 325:     const avgMarginDays = retentionAvgDays - targetDays;
+ 326:     const peakMarginDays = retentionPeakDays - targetDays;
+ 327: 
+ 328:     const avgGBdayMax = usableGB / targetDays;
+ 329:     const maxTotalMbpsAtTarget = avgGBdayMax * 1_000_000_000 * 8 / (86400 * 1_000_000);
+ 330:     const maxPerCamMbpsAtTarget = (maxTotalMbpsAtTarget / cams) / duty;
+ 331: 
+ 332:     const avgRetentionPressure = targetDays / retentionAvgDays;
+ 333:     const peakRetentionPressure = targetDays / retentionPeakDays;
+ 334:     const peakSurgePressure = peakMult / 1.5;
+ 335: 
+ 336:     const metrics = [
+ 337:       {
+ 338:         label: "Average Retention Pressure",
+ 339:         value: avgRetentionPressure,
+ 340:         displayValue: `${retentionAvgDays.toFixed(1)} days`
+ 341:       },
+ 342:       {
+ 343:         label: "Peak Retention Pressure",
+ 344:         value: peakRetentionPressure,
+ 345:         displayValue: `${retentionPeakDays.toFixed(1)} days`
+ 346:       },
+ 347:       {
+ 348:         label: "Peak Surge Behavior",
+ 349:         value: peakSurgePressure,
+ 350:         displayValue: `${peakMult.toFixed(2)}x`
+ 351:       }
+ 352:     ];
+ 353: 
+ 354:     const resolved = statusFromResolver(metrics);
+ 355:     const status = resolved.status;
+ 356: 
+ 357:     const dominantConstraintMap = {
+ 358:       "Average Retention Pressure": "Average retention pressure",
+ 359:       "Peak Retention Pressure": "Peak retention pressure",
+ 360:       "Peak Surge Behavior": "Peak surge behavior"
+ 361:     };
+ 362: 
+ 363:     const dominantConstraint =
+ 364:       dominantConstraintMap[resolved.dominantLabel] || "Average retention pressure";
+ 365: 
+ 366:     const interpretation = buildInterpretation(
+ 367:       status,
+ 368:       dominantConstraint,
+ 369:       retentionAvgDays,
+ 370:       retentionPeakDays,
+ 371:       peakMult
+ 372:     );
+ 373: 
+ 374:     const guidance = buildGuidance(
+ 375:       status,
+ 376:       dominantConstraint,
+ 377:       maxPerCamMbpsAtTarget,
+ 378:       retentionPeakDays,
+ 379:       targetDays
+ 380:     );
+ 381: 
+ 382:     const summaryRows = [
+ 383:       { label: "Camera Count", value: `${cams}` },
+ 384:       { label: "Average Bitrate / Cam", value: `${avgMbps.toFixed(2)} Mbps` },
+ 385:       { label: "Motion / Duty", value: `${motionPct.toFixed(0)}%` },
+ 386:       { label: "Usable Storage", value: `${usableTb.toFixed(1)} TB` }
+ 387:     ];
+ 388: 
+ 389:     const derivedRows = [
+ 390:       { label: "Total Average Bitrate", value: `${totalAvgMbps.toFixed(2)} Mbps` },
+ 391:       { label: "Total Peak Bitrate", value: `${totalPeakMbps.toFixed(2)} Mbps` },
+ 392:       { label: "Average Ingest", value: `${avgGBday.toFixed(1)} GB/day` },
+ 393:       { label: "Peak Ingest", value: `${peakGBday.toFixed(1)} GB/day` },
+ 394:       { label: "Retention (Average)", value: `${retentionAvgDays.toFixed(1)} days` },
+ 395:       { label: "Retention (Peak)", value: `${retentionPeakDays.toFixed(1)} days` },
+ 396:       { label: "Target Retention", value: `${targetDays} days` },
+ 397:       { label: "Margin vs Target (Avg)", value: `${avgMarginDays.toFixed(1)} days` },
+ 398:       { label: "Margin vs Target (Peak)", value: `${peakMarginDays.toFixed(1)} days` },
+ 399:       { label: `Max Total Avg Bitrate @ ${targetDays}d`, value: `${maxTotalMbpsAtTarget.toFixed(2)} Mbps` },
+ 400:       { label: `Max Per-Cam Avg Bitrate @ ${targetDays}d`, value: `${maxPerCamMbpsAtTarget.toFixed(2)} Mbps` }
+ 401:     ];
+ 402: 
+ 403:     if (
+ 404:       window.ScopedLabsAnalyzer &&
+ 405:       typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+ 406:     ) {
+ 407:       window.ScopedLabsAnalyzer.renderOutput({
+ 408:         resultsEl: els.results,
+ 409:         analysisEl: els.analysisCopy,
+ 410:         summaryRows,
+ 411:         derivedRows,
+ 412:         status,
+ 413:         interpretation,
+ 414:         dominantConstraint,
+ 415:         guidance,
+ 416:         existingChartRef: null,
+ 417:         existingWrapRef: null
+ 418:       });
+ 419:     } else {
+ 420:       renderFallback(
+ 421:         summaryRows,
+ 422:         derivedRows,
+ 423:         status,
+ 424:         dominantConstraint,
+ 425:         interpretation,
+ 426:         guidance
+ 427:       );
+ 428:     }
+ 429: 
+ 430:     clearChart();
+ 431: 
+ 432:     if (
+ 433:       window.ScopedLabsAnalyzer &&
+ 434:       typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+ 435:     ) {
+ 436:       window.ScopedLabsAnalyzer.renderAnalyzerChart({
+ 437:         mountEl: els.results,
+ 438:         existingChartRef: chartRef,
+ 439:         existingWrapRef: chartWrapRef,
+ 440:         labels: [
+ 441:           "Avg Retention Pressure",
+ 442:           "Peak Retention Pressure",
+ 443:           "Peak Surge Behavior"
+ 444:         ],
+ 445:         values: [
+ 446:           avgRetentionPressure,
+ 447:           peakRetentionPressure,
+ 448:           peakSurgePressure
+ 449:         ],
+ 450:         displayValues: [
+ 451:           `${retentionAvgDays.toFixed(1)} days`,
+ 452:           `${retentionPeakDays.toFixed(1)} days`,
+ 453:           `${peakMult.toFixed(2)}x`
+ 454:         ],
+ 455:         referenceValue: 1.0,
+ 456:         healthyMax: 1.0,
+ 457:         watchMax: 1.25,
+ 458:         axisTitle: "Retention Pressure",
+ 459:         referenceLabel: "Target Boundary",
+ 460:         healthyLabel: "Healthy",
+ 461:         watchLabel: "Watch",
+ 462:         riskLabel: "Risk",
+ 463:         chartMax: Math.max(
+ 464:           1.8,
+ 465:           Math.ceil(Math.max(avgRetentionPressure, peakRetentionPressure, peakSurgePressure, 1.25) * 1.15 * 10) / 10
+ 466:         )
+ 467:       });
+ 468:     }
+ 469:   }
+ 470: 
+ 471:   function reset() {
+ 472:     els.cams.value = "16";
+ 473:     els.avgMbps.value = "4";
+ 474:     els.motionPct.value = "100";
+ 475:     els.peakMult.value = "1.5";
+ 476:     els.usableTb.value = "40";
+ 477:     els.targetDays.value = "30";
+ 478:     renderEmpty();
+ 479:   }
+ 480: 
+ 481:   function bindInvalidation() {
+ 482:     [
+ 483:       els.cams,
+ 484:       els.avgMbps,
+ 485:       els.motionPct,
+ 486:       els.peakMult,
+ 487:       els.usableTb,
+ 488:       els.targetDays
+ 489:     ].forEach((el) => {
+ 490:       if (!el) return;
+ 491:       el.addEventListener("input", invalidate);
+ 492:       el.addEventListener("change", invalidate);
+ 493:     });
+ 494:   }
+ 495: 
+ 496:   function init() {
+ 497:     renderEmpty();
+ 498:     bindInvalidation();
+ 499: 
+ 500:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 501:     if (els.reset) els.reset.addEventListener("click", reset);
+ 502:   }
+ 503: 
+ 504:   function boot() {
+ 505:     const unlocked = unlockCategoryPage();
+ 506:     if (!unlocked) return;
+ 507: 
+ 508:     renderEmpty();
+ 509:     bindInvalidation();
+ 510: 
+ 511:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 512:     if (els.reset) els.reset.addEventListener("click", reset);
+ 513: 
+ 514:     const year = document.querySelector("[data-year]");
+ 515:     if (year) year.textContent = new Date().getFullYear();
+ 516:   }
+ 517: 
+ 518:   window.addEventListener("DOMContentLoaded", boot);
+ 519: })();
+ 520: 
+
+
+============================================================
+TOOL: archive-cost
+============================================================
+Title: Archive Cost Estimator
+Tier: pro
+Meta description: Estimate monthly and forecast archive storage cost based on retained data, replication overhead, and storage pricing.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Retained Storage (TB)
+- Cost per TB / month ($)
+- Replication Copies
+- Growth per Month (%)
+- Forecast Period (months)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- tb
+- costPerTb
+- copies
+- growthPct
+- months
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  92:   function clearAnalysisBlock() {
+  93:     if (
+  94:       window.ScopedLabsAnalyzer &&
+  95:       typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+  96:     ) {
+  97:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+  98:     } else if (els.analysisCopy) {
+  99:       els.analysisCopy.style.display = "none";
+ 100:       els.analysisCopy.innerHTML = "";
+ 101:     }
+ 102:   }
+
+--- CORE BLOCK 2 ---
+ 124:   }
+ 125: 
+ 126:   function renderEmpty() {
+ 127:     if (els.results) {
+ 128:       els.results.innerHTML = `<div class="muted">Enter values and press Calculate.</div>`;
+ 129:     }
+ 130:     clearAnalysisBlock();
+ 131:     clearChart();
+ 132:   }
+ 133: 
+ 134:   function invalidate() {
+ 135:     if (
+ 136:       window.ScopedLabsAnalyzer &&
+ 137:       typeof window.ScopedLabsAnalyzer.invalidate === "function"
+ 138:     ) {
+ 139:       window.ScopedLabsAnalyzer.invalidate({
+ 140:         resultsEl: els.results,
+ 141:         analysisEl: els.analysisCopy,
+ 142:         emptyMessage: "Enter values and press Calculate."
+ 143:       });
+ 144:     } else {
+ 145:       renderEmpty();
+ 146:     }
+ 147: 
+ 148:     clearChart();
+ 149:   }
+ 150: 
+ 151:   function resolveStatus(metrics) {
+ 152:     if (
+ 153:       window.ScopedLabsAnalyzer &&
+ 154:       typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+ 155:     ) {
+ 156:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 157:         metrics,
+ 158:         healthyMax: 1.0,
+ 159:         watchMax: 1.5
+ 160:       });
+ 161: 
+ 162:       return {
+ 163:         status: resolved?.status || "HEALTHY",
+ 164:         dominantLabel: resolved?.dominant?.label || metrics[0].label
+ 165:       };
+ 166:     }
+ 167: 
+ 168:     const dominant = metrics.reduce((best, current) =>
+ 169:       Number(current.value) > Number(best.value) ? current : best
+ 170:     );
+ 171: 
+ 172:     let status = "HEALTHY";
+ 173:     if (Number(dominant.value) > 1.5) status = "RISK";
+ 174:     else if (Number(dominant.value) > 1.0) status = "WATCH";
+ 175: 
+ 176:     return {
+ 177:       status,
+ 178:       dominantLabel: dominant.label
+ 179:     };
+ 180:   }
+ 181: 
+ 182:   function buildInterpretation(status, dominantConstraint, monthlyNow, monthlyEnd, totalCost, growthPct) {
+ 183:     if (status === "HEALTHY") {
+ 184:       return `Archive cost remains in a controlled range across the forecast window. Replication, growth, and billing scale are not yet compounding hard enough to turn the archive plan into a cost-management problem.`;
+ 185:     }
+ 186: 
+ 187:     if (status === "WATCH") {
+ 188:       if (dominantConstraint === "Growth pressure") {
+ 189:         return `Monthly archive growth is beginning to compress cost stability. The current plan may still be workable, but compounding storage growth is now doing enough work that long-horizon spend becomes less forgiving.`;
+ 190:       }
+ 191: 
+ 192:       if (dominantConstraint === "Replication burden") {
+ 193:         return `Replication is becoming the main cost amplifier. The base storage footprint may be reasonable, but multiple copies are multiplying billed volume enough to make archive strategy a more meaningful cost decision.`;
+ 194:       }
+ 195: 
+ 196:       return `The archive plan is drifting into a range where forecast spend matters operationally. Current monthly cost may still look manageable, but the longer planning window is starting to expose a heavier ownership burden.`;
+ 197:     }
+ 198: 
+ 199:     if (dominantConstraint === "Growth pressure") {
+ 200:       return `Storage growth is now the primary cost risk. Even if the starting archive footprint looks acceptable, compounding monthly expansion is large enough to turn a moderate plan into an expensive one over the forecast horizon.`;
+ 201:     }
+ 202: 
+ 203:     if (dominantConstraint === "Replication burden") {
+ 204:       return `Replication overhead is driving archive cost hard enough that billing volume itself becomes the dominant issue. The design may be technically sound, but the number of retained copies is materially changing the economics.`;
+ 205:     }
+ 206: 
+ 207:     return `Forecast spend is high enough that archive storage is becoming a real lifecycle cost constraint. At this point, cost planning depends on deliberate retention policy and growth control instead of assuming archive volume will stay harmless.`;
+ 208:   }
+ 209: 
+ 210:   function buildGuidance(status, dominantConstraint, totalCost, monthlyEnd, copies) {
+ 211:     if (status === "HEALTHY") {
+ 212:       return `Carry this as a workable archive plan, but keep watching retention scope, replication count, and monthly growth so the current cost shape does not quietly drift upward.`;
+ 213:     }
+ 214: 
+ 215:     if (status === "WATCH") {
+ 216:       if (dominantConstraint === "Growth pressure") {
+ 217:         return `Model tighter retention policy or slower archive growth before the plan scales further. Monthly growth is already strong enough to materially change the cost curve over time.`;
+ 218:       }
+ 219: 
+ 220:       if (dominantConstraint === "Replication burden") {
+ 221:         return `Review whether every retained copy is operationally necessary. Reducing replication overhead can improve archive economics faster than trying to optimize storage price alone.`;
+ 222:       }
+ 223: 
+ 224:       return `Forecast archive spend more deliberately before locking policy. The current design is still workable, but cost sensitivity is high enough that future change can become noticeable quickly.`;
+ 225:     }
+ 226: 
+ 227:     if (dominantConstraint === "Growth pressure") {
+ 228:       return `Reduce archive growth, shorten retention scope, or add policy controls before relying on this cost plan. Compounding growth is currently the main reason the forecast is becoming difficult to manage.`;
+ 229:     }
+ 230: 
+ 231:     if (dominantConstraint === "Replication burden") {
+ 232:       return `Rework replication strategy before scaling the archive tier. Too much billed duplication is making the archive plan more expensive than it needs to be.`;
+ 233:     }
+ 234: 
+ 235:     return `Revisit long-term retention assumptions and archive policy before deployment. The forecasted ownership burden is now large enough that storage economics should be treated as a planning constraint, not a background detail.`;
+ 236:   }
+ 237: 
+ 238:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 239:     if (els.results) {
+ 240:       els.results.innerHTML = `
+ 241:         ${summaryRows.map((row) => `
+ 242:           <div class="result-row">
+ 243:             <span class="result-label">${row.label}</span>
+ 244:             <span class="result-value">${row.value}</span>
+ 245:           </div>
+ 246:         `).join("")}
+ 247:         ${derivedRows.map((row) => `
+ 248:           <div class="result-row">
+ 249:             <span class="result-label">${row.label}</span>
+ 250:             <span class="result-value">${row.value}</span>
+ 251:           </div>
+ 252:         `).join("")}
+ 253:       `;
+ 254:     }
+ 255: 
+ 256:     if (els.analysisCopy) {
+ 257:       els.analysisCopy.style.display = "";
+ 258:       els.analysisCopy.innerHTML = `
+ 259:         <div class="results-grid">
+ 260:           <div class="result-row">
+ 261:             <span class="result-label">Status</span>
+ 262:             <span class="result-value">${status}</span>
+ 263:           </div>
+ 264:           <div class="result-row">
+ 265:             <span class="result-label">Dominant Constraint</span>
+
+--- CORE BLOCK 3 ---
+ 281:   function calculate() {
+ 282:     const tbRaw = safeNumber(els.tb.value, NaN);
+ 283:     const costPerTbRaw = safeNumber(els.costPerTb.value, NaN);
+ 284:     const copiesRaw = safeNumber(els.copies.value, NaN);
+ 285:     const growthPctRaw = safeNumber(els.growthPct.value, NaN);
+ 286:     const monthsRaw = safeNumber(els.months.value, NaN);
+ 287: 
+ 288:     if (
+ 289:       !Number.isFinite(tbRaw) || tbRaw < 0 ||
+ 290:       !Number.isFinite(costPerTbRaw) || costPerTbRaw < 0 ||
+ 291:       !Number.isFinite(copiesRaw) || copiesRaw < 1 ||
+ 292:       !Number.isFinite(growthPctRaw) || growthPctRaw < 0 ||
+ 293:       !Number.isFinite(monthsRaw) || monthsRaw < 1
+ 294:     ) {
+ 295:       if (els.results) {
+ 296:         els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+ 297:       }
+ 298:       clearAnalysisBlock();
+ 299:       clearChart();
+ 300:       return;
+ 301:     }
+ 302: 
+ 303:     const tb = clamp(tbRaw, 0, 1000000);
+ 304:     const costPerTb = clamp(costPerTbRaw, 0, 1000000);
+ 305:     const copies = Math.max(1, Math.floor(clamp(copiesRaw, 1, 1000)));
+ 306:     const growthPct = clamp(growthPctRaw, 0, 1000);
+ 307:     const months = Math.max(1, Math.floor(clamp(monthsRaw, 1, 600)));
+ 308: 
+ 309:     const growth = growthPct / 100;
+ 310: 
+ 311:     let totalCost = 0;
+ 312:     let lastMonthTb = tb;
+ 313: 
+ 314:     for (let m = 1; m <= months; m++) {
+ 315:       const thisMonthTb = tb * Math.pow(1 + growth, (m - 1));
+ 316:       lastMonthTb = thisMonthTb;
+ 317:       totalCost += thisMonthTb * copies * costPerTb;
+ 318:     }
+ 319: 
+ 320:     const billedNowTb = tb * copies;
+ 321:     const monthlyNow = billedNowTb * costPerTb;
+ 322: 
+ 323:     const billedEndTb = lastMonthTb * copies;
+ 324:     const monthlyEnd = billedEndTb * costPerTb;
+ 325: 
+ 326:     const avgMonthlyCost = totalCost / months;
+ 327:     const costGrowthMultiplier = monthlyNow > 0 ? (monthlyEnd / monthlyNow) : 1;
+ 328:     const forecastBurden = monthlyNow > 0 ? (avgMonthlyCost / monthlyNow) : 1;
+ 329: 
+ 330:     const metrics = [
+ 331:       {
+ 332:         label: "Growth Pressure",
+ 333:         value: costGrowthMultiplier,
+ 334:         displayValue: `${costGrowthMultiplier.toFixed(2)}x`
+ 335:       },
+ 336:       {
+ 337:         label: "Replication Burden",
+ 338:         value: copies,
+ 339:         displayValue: `${copies} copy${copies === 1 ? "" : "ies"}`
+ 340:       },
+ 341:       {
+ 342:         label: "Forecast Spend Pressure",
+ 343:         value: forecastBurden,
+ 344:         displayValue: money(avgMonthlyCost)
+ 345:       }
+ 346:     ];
+ 347: 
+ 348:     const resolved = resolveStatus(metrics);
+ 349:     const status = resolved.status;
+ 350: 
+ 351:     const dominantConstraintMap = {
+ 352:       "Growth Pressure": "Growth pressure",
+ 353:       "Replication Burden": "Replication burden",
+ 354:       "Forecast Spend Pressure": "Forecast spend pressure"
+ 355:     };
+ 356: 
+ 357:     const dominantConstraint =
+ 358:       dominantConstraintMap[resolved.dominantLabel] || "Growth pressure";
+ 359: 
+ 360:     const interpretation = buildInterpretation(
+ 361:       status,
+ 362:       dominantConstraint,
+ 363:       monthlyNow,
+ 364:       monthlyEnd,
+ 365:       totalCost,
+ 366:       growthPct
+ 367:     );
+ 368: 
+ 369:     const guidance = buildGuidance(
+ 370:       status,
+ 371:       dominantConstraint,
+ 372:       totalCost,
+ 373:       monthlyEnd,
+ 374:       copies
+ 375:     );
+ 376: 
+ 377:     const summaryRows = [
+ 378:       { label: "Base Retained Storage", value: `${tb.toFixed(2)} TB` },
+ 379:       { label: "Cost per TB / Month", value: money(costPerTb) },
+ 380:       { label: "Replication Copies", value: `${copies}` },
+ 381:       { label: "Growth per Month", value: `${growthPct.toFixed(1)}%` }
+ 382:     ];
+ 383: 
+ 384:     const derivedRows = [
+ 385:       { label: "Current Billed Storage", value: `${billedNowTb.toFixed(2)} TB` },
+ 386:       { label: "Current Monthly Cost", value: money(monthlyNow) },
+ 387:       { label: `Billed Storage (Month ${months})`, value: `${billedEndTb.toFixed(2)} TB` },
+ 388:       { label: `Monthly Cost (Month ${months})`, value: money(monthlyEnd) },
+ 389:       { label: `Total Cost (${months} months)`, value: money(totalCost) },
+ 390:       { label: "Average Monthly Cost", value: money(avgMonthlyCost) }
+ 391:     ];
+ 392: 
+ 393:     if (
+ 394:       window.ScopedLabsAnalyzer &&
+ 395:       typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+ 396:     ) {
+ 397:       window.ScopedLabsAnalyzer.renderOutput({
+ 398:         resultsEl: els.results,
+ 399:         analysisEl: els.analysisCopy,
+ 400:         summaryRows,
+ 401:         derivedRows,
+ 402:         status,
+ 403:         interpretation,
+ 404:         dominantConstraint,
+ 405:         guidance,
+ 406:         existingChartRef: null,
+ 407:         existingWrapRef: null
+ 408:       });
+ 409:     } else {
+ 410:       renderFallback(
+ 411:         summaryRows,
+ 412:         derivedRows,
+ 413:         status,
+ 414:         dominantConstraint,
+ 415:         interpretation,
+ 416:         guidance
+ 417:       );
+ 418:     }
+ 419: 
+ 420:     clearChart();
+ 421: 
+ 422:     if (
+ 423:       window.ScopedLabsAnalyzer &&
+ 424:       typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+ 425:     ) {
+ 426:       window.ScopedLabsAnalyzer.renderAnalyzerChart({
+ 427:         mountEl: els.results,
+ 428:         existingChartRef: chartRef,
+ 429:         existingWrapRef: chartWrapRef,
+ 430:         labels: [
+ 431:           "Growth Pressure",
+ 432:           "Replication Burden",
+ 433:           "Forecast Spend"
+ 434:         ],
+ 435:         values: [
+ 436:           costGrowthMultiplier,
+ 437:           copies,
+ 438:           forecastBurden
+ 439:         ],
+ 440:         displayValues: [
+ 441:           `${costGrowthMultiplier.toFixed(2)}x`,
+ 442:           `${copies} copy${copies === 1 ? "" : "ies"}`,
+ 443:           money(avgMonthlyCost)
+ 444:         ],
+ 445:         referenceValue: 1.0,
+ 446:         healthyMax: 1.0,
+ 447:         watchMax: 1.5,
+ 448:         axisTitle: "Cost Pressure",
+ 449:         referenceLabel: "Healthy Threshold",
+ 450:         healthyLabel: "Healthy",
+ 451:         watchLabel: "Watch",
+ 452:         riskLabel: "Risk",
+ 453:         chartMax: Math.max(
+ 454:           3,
+ 455:           Math.ceil(Math.max(costGrowthMultiplier, copies, forecastBurden, 1.5) * 1.15 * 10) / 10
+ 456:         )
+ 457:       });
+ 458:     }
+ 459:   }
+ 460: 
+ 461:   function reset() {
+ 462:     els.tb.value = 20;
+ 463:     els.costPerTb.value = 15;
+ 464:     els.copies.value = 1;
+ 465:     els.growthPct.value = 0;
+ 466:     els.months.value = 12;
+ 467:     renderEmpty();
+ 468:   }
+ 469: 
+ 470:   function bindInvalidation() {
+ 471:     [els.tb, els.costPerTb, els.copies, els.growthPct, els.months].forEach((el) => {
+ 472:       if (!el) return;
+ 473:       el.addEventListener("input", invalidate);
+ 474:       el.addEventListener("change", invalidate);
+ 475:     });
+ 476:   }
+ 477: 
+ 478:   function bind() {
+ 479:     bindInvalidation();
+ 480: 
+ 481:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 482:     if (els.reset) els.reset.addEventListener("click", reset);
+ 483:   }
+ 484: 
+ 485:   function boot() {
+ 486:     const unlocked = unlockCategoryPage();
+ 487:     if (!unlocked) return;
+ 488: 
+ 489:     renderEmpty();
+ 490:     bindInvalidation();
+ 491: 
+ 492:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 493:     if (els.reset) els.reset.addEventListener("click", reset);
+ 494: 
+ 495:     const year = document.querySelector("[data-year]");
+ 496:     if (year) year.textContent = new Date().getFullYear();
+ 497:   }
+ 498: 
+ 499:   window.addEventListener("DOMContentLoaded", boot);
+ 500: })();
+
+
+============================================================
+TOOL: bitrate-estimator
+============================================================
+Title: Bitrate Estimator
+Tier: free/unknown
+Meta description: Estimate video bitrate from resolution, frame rate, codec efficiency, and scene complexity.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Resolution 720p (1280×720) 1080p (1920×1080) 1440p (2560×1440) 4K (3840×2160) Custom
+- Custom Width (px)
+- Custom Height (px)
+- Frame Rate (fps)
+- Codec H.264 H.265 / HEVC VP9 AV1
+- Scene Complexity Low (static) Medium High (motion / foliage)
+- Quality Target Conservative (higher quality) Balanced Aggressive (lower bitrate)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- toolCard
+- res
+- w
+- h
+- fps
+- codec
+- scene
+- quality
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  54:   function clearAnalysisBlock() {
+  55:     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
+  56:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+  57:     } else if (els.analysisCopy) {
+  58:       els.analysisCopy.style.display = "none";
+  59:       els.analysisCopy.innerHTML = "";
+  60:     }
+  61:   }
+
+--- CORE BLOCK 2 ---
+  87:   function syncResolutionFields() {
+  88:     if (!els.res) return;
+  89: 
+  90:     if (els.res.value !== "custom") {
+  91:       const [rw, rh] = els.res.value.split("x").map(Number);
+  92:       els.w.value = rw;
+  93:       els.h.value = rh;
+  94:     }
+  95:   }
+  96: 
+  97:   function codecFactor(codec) {
+  98:     if (codec === "h265") return 0.70;
+  99:     if (codec === "vp9") return 0.75;
+ 100:     if (codec === "av1") return 0.60;
+ 101:     return 1.00;
+ 102:   }
+ 103: 
+ 104:   function sceneFactor(scene) {
+ 105:     if (scene === "low") return 0.75;
+ 106:     if (scene === "high") return 1.35;
+ 107:     return 1.00;
+ 108:   }
+ 109: 
+ 110:   function qualityFactor(q) {
+ 111:     if (q === "conservative") return 1.25;
+ 112:     if (q === "aggressive") return 0.80;
+ 113:     return 1.00;
+ 114:   }
+ 115: 
+ 116:   function buildInterpretation(status, dominantConstraint) {
+ 117:     if (status === "HEALTHY") {
+ 118:       return "Estimated bitrate remains in a manageable range for the selected resolution, frame rate, and codec. This gives the rest of the pipeline a clean planning baseline without putting unusual pressure on storage or transport yet.";
+ 119:     }
+ 120: 
+ 121:     if (status === "WATCH") {
+ 122:       if (dominantConstraint === "Scene motion complexity") {
+ 123:         return "Scene behavior is starting to drive bitrate more than the base image format alone. The stream may still be workable, but motion-heavy conditions now have enough leverage to widen the real operating range.";
+ 124:       }
+ 125: 
+ 126:       if (dominantConstraint === "Frame density burden") {
+ 127:         return "The combination of pixel count and frame rate is pushing bitrate upward. Storage planning should assume the stream is now more sensitive to tuning choices rather than relying on a casual rule-of-thumb.";
+ 128:       }
+ 129: 
+ 130:       return "The selected quality posture is leaning toward a heavier stream. That can be valid, but it means the next storage step should be based on the upper side of the estimate rather than the midpoint alone.";
+ 131:     }
+ 132: 
+ 133:     if (dominantConstraint === "Scene motion complexity") {
+ 134:       return "Motion-driven bitrate pressure is high enough that average-state assumptions become less trustworthy. Real-world scene changes are likely to push the stream toward the top end of the modeled range often enough to matter.";
+ 135:     }
+ 136: 
+ 137:     if (dominantConstraint === "Frame density burden") {
+ 138:       return "The image format itself is now the main bitrate driver. High pixel count combined with frame rate is creating a stream that will materially increase downstream storage and transport burden if left unchanged.";
+ 139:     }
+ 140: 
+ 141:     return "The chosen quality posture is producing a high-bitrate stream expectation. The result may be technically acceptable, but the cost is that storage and retention planning now need more deliberate headroom.";
+ 142:   }
+ 143: 
+ 144:   function buildGuidance(status, dominantConstraint) {
+ 145:     if (status === "HEALTHY") {
+ 146:       return "Use the estimate as the planning bitrate and carry it into storage sizing. Keep the suggested range in mind so the next step does not rely on a single overly-optimistic number.";
+ 147:     }
+ 148: 
+ 149:     if (status === "WATCH") {
+ 150:       if (dominantConstraint === "Scene motion complexity") {
+ 151:         return "Validate the stream under realistic scene activity before locking the design. Motion complexity is now influential enough that live encoder behavior matters more than a static assumption.";
+ 152:       }
+ 153: 
+ 154:       if (dominantConstraint === "Frame density burden") {
+ 155:         return "Review whether frame rate, resolution, or codec choice can be tuned more efficiently before scaling the design. Even a small change here can materially improve storage outcomes later.";
+ 156:       }
+ 157: 
+ 158:       return "Carry the upper suggested range into the storage step instead of the midpoint alone. The current stream has enough bitrate pressure that conservative downstream planning is justified.";
+ 159:     }
+ 160: 
+ 161:     if (dominantConstraint === "Frame density burden") {
+ 162:       return "Reduce stream burden before finalizing the design if storage, uplink, or retention targets are tight. Resolution, frame rate, or codec choice should be reviewed deliberately.";
+ 163:     }
+ 164: 
+ 165:     if (dominantConstraint === "Scene motion complexity") {
+ 166:       return "Use field validation or worst-case bitrate assumptions before trusting this stream at scale. Motion behavior is currently too influential to ignore.";
+ 167:     }
+ 168: 
+ 169:     return "Treat this as a high-bitrate planning case. The remaining pipeline should assume the heavier side of the estimated range unless the stream is intentionally tuned down.";
+ 170:   }
+ 171: 
+ 172:   function invalidateResult() {
+ 173:     try {
+ 174:       sessionStorage.removeItem(FLOW_KEYS.bitrate);
+ 175:       const legacy = JSON.parse(sessionStorage.getItem(LEGACY_STORAGE_KEY) || "null");
+ 176:       if (legacy && legacy.category === CATEGORY && legacy.step === STEP) {
+ 177:         sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+ 178:       }
+ 179:     } catch {}
+ 180: 
+ 181:     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.invalidate === "function") {
+ 182:       window.ScopedLabsAnalyzer.invalidate({
+ 183:         resultsEl: els.results,
+ 184:         analysisEl: els.analysisCopy,
+ 185:         category: CATEGORY,
+ 186:         step: STEP,
+ 187:         lane: LANE,
+ 188:         emptyMessage: "Enter values and press Calculate."
+ 189:       });
+ 190:     } else {
+ 191:       renderEmpty();
+ 192:     }
+ 193: 
+ 194:     hideContinue();
+ 195:   }
+ 196: 
+ 197:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 198:     if (els.results) {
+ 199:       els.results.innerHTML = `
+
+--- CORE BLOCK 3 ---
+ 240:   function calculate() {
+ 241:     syncResolutionFields();
+ 242: 
+ 243:     const res = els.res.value;
+ 244:     let w = safeNumber(els.w.value, NaN);
+ 245:     let h = safeNumber(els.h.value, NaN);
+ 246:     const fps = safeNumber(els.fps.value, NaN);
+ 247:     const codec = els.codec.value;
+ 248:     const scene = els.scene.value;
+ 249:     const quality = els.quality.value;
+ 250: 
+ 251:     if (res !== "custom") {
+ 252:       const [rw, rh] = res.split("x").map(Number);
+ 253:       w = rw;
+ 254:       h = rh;
+ 255:       els.w.value = rw;
+ 256:       els.h.value = rh;
+ 257:     }
+ 258: 
+ 259:     if (
+ 260:       !Number.isFinite(w) || w <= 0 ||
+ 261:       !Number.isFinite(h) || h <= 0 ||
+ 262:       !Number.isFinite(fps) || fps <= 0
+ 263:     ) {
+ 264:       if (els.results) {
+ 265:         els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+ 266:       }
+ 267:       clearAnalysisBlock();
+ 268:       hideContinue();
+ 269:       return;
+ 270:     }
+ 271: 
+ 272:     const pixels = Math.max(1, w * h);
+ 273:     const megapixels = pixels / 1_000_000;
+ 274:     const bpppf = 0.07;
+ 275: 
+ 276:     const est =
+ 277:       (pixels * fps * bpppf *
+ 278:         sceneFactor(scene) *
+ 279:         qualityFactor(quality) *
+ 280:         codecFactor(codec)) / 1_000_000;
+ 281: 
+ 282:     const overhead = 1.10;
+ 283:     const bitrate = est * overhead;
+ 284:     const low = bitrate * 0.8;
+ 285:     const high = bitrate * 1.25;
+ 286: 
+ 287:     const frameDensityPressure = (megapixels * fps) / 30;
+ 288:     const scenePressure = sceneFactor(scene);
+ 289:     const qualityPressure = qualityFactor(quality);
+ 290: 
+ 291:     const metrics = [
+ 292:       {
+ 293:         label: "Frame Density Burden",
+ 294:         value: frameDensityPressure,
+ 295:         displayValue: `${megapixels.toFixed(2)} MP @ ${fps.toFixed(0)} fps`
+ 296:       },
+ 297:       {
+ 298:         label: "Scene Motion Complexity",
+ 299:         value: scenePressure,
+ 300:         displayValue: scene.toUpperCase()
+ 301:       },
+ 302:       {
+ 303:         label: "Quality Bias Pressure",
+ 304:         value: qualityPressure,
+ 305:         displayValue: quality.toUpperCase()
+ 306:       }
+ 307:     ];
+ 308: 
+ 309:     let status = "HEALTHY";
+ 310:     let dominantLabel = "Frame Density Burden";
+ 311: 
+ 312:     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.resolveStatus === "function") {
+ 313:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 314:         metrics,
+ 315:         healthyMax: 1.25,
+ 316:         watchMax: 2.25
+ 317:       });
+ 318: 
+ 319:       status = resolved?.status || "HEALTHY";
+ 320:       dominantLabel = resolved?.dominant?.label || "Frame Density Burden";
+ 321:     } else {
+ 322:       const dominant = metrics.reduce((best, current) =>
+ 323:         Number(current.value) > Number(best.value) ? current : best
+ 324:       );
+ 325:       dominantLabel = dominant.label;
+ 326: 
+ 327:       if (Number(dominant.value) > 2.25) status = "RISK";
+ 328:       else if (Number(dominant.value) > 1.25) status = "WATCH";
+ 329:     }
+ 330: 
+ 331:     const dominantConstraintMap = {
+ 332:       "Frame Density Burden": "Frame density burden",
+ 333:       "Scene Motion Complexity": "Scene motion complexity",
+ 334:       "Quality Bias Pressure": "Quality bias pressure"
+ 335:     };
+ 336: 
+ 337:     const dominantConstraint =
+ 338:       dominantConstraintMap[dominantLabel] || "Frame density burden";
+ 339: 
+ 340:     const interpretation = buildInterpretation(status, dominantConstraint);
+ 341:     const guidance = buildGuidance(status, dominantConstraint);
+ 342: 
+ 343:     const summaryRows = [
+ 344:       { label: "Resolution", value: `${Math.round(w)}×${Math.round(h)}` },
+ 345:       { label: "Frame Rate", value: `${fps.toFixed(0)} fps` },
+ 346:       { label: "Codec", value: codec.toUpperCase() },
+ 347:       { label: "Scene", value: scene.toUpperCase() }
+ 348:     ];
+ 349: 
+ 350:     const derivedRows = [
+ 351:       { label: "Quality Target", value: quality.toUpperCase() },
+ 352:       { label: "Estimated Bitrate", value: `${bitrate.toFixed(2)} Mbps` },
+ 353:       { label: "Suggested Range", value: `${low.toFixed(2)} – ${high.toFixed(2)} Mbps` },
+ 354:       { label: "Planning Basis", value: "Rule-of-thumb stream estimate" }
+ 355:     ];
+ 356: 
+ 357:     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderOutput === "function") {
+ 358:       window.ScopedLabsAnalyzer.renderOutput({
+ 359:         resultsEl: els.results,
+ 360:         analysisEl: els.analysisCopy,
+ 361:         summaryRows,
+ 362:         derivedRows,
+ 363:         status,
+ 364:         interpretation,
+ 365:         dominantConstraint,
+ 366:         guidance
+ 367:       });
+ 368:     } else {
+ 369:       renderFallback(
+ 370:         summaryRows,
+ 371:         derivedRows,
+ 372:         status,
+ 373:         dominantConstraint,
+ 374:         interpretation,
+ 375:         guidance
+ 376:       );
+ 377:     }
+ 378: 
+ 379:     try {
+ 380:       const payload = {
+ 381:         category: CATEGORY,
+ 382:         step: STEP,
+ 383:         data: {
+ 384:           resolution: `${Math.round(w)}x${Math.round(h)}`,
+ 385:           width: Math.round(w),
+ 386:           height: Math.round(h),
+ 387:           fps: Number(fps.toFixed(0)),
+ 388:           codec,
+ 389:           scene,
+ 390:           quality,
+ 391:           bitrateMbps: Number(bitrate.toFixed(2)),
+ 392:           minBitrateMbps: Number(low.toFixed(2)),
+ 393:           maxBitrateMbps: Number(high.toFixed(2)),
+ 394:           status,
+ 395:           dominantConstraint
+ 396:         }
+ 397:       };
+ 398: 
+ 399:       sessionStorage.setItem(FLOW_KEYS.bitrate, JSON.stringify(payload));
+ 400:       sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+ 401:     } catch {}
+ 402: 
+ 403:     showContinue();
+ 404:   }
+
+--- CORE BLOCK 4 ---
+ 420: 
+ 421:   function bindInvalidation() {
+ 422:     [els.res, els.w, els.h, els.fps, els.codec, els.scene, els.quality].forEach((el) => {
+ 423:       if (!el) return;
+ 424:       el.addEventListener("input", invalidateResult);
+ 425:       el.addEventListener("change", invalidateResult);
+ 426:     });
+ 427: 
+ 428:     if (els.res) {
+ 429:       els.res.addEventListener("change", syncResolutionFields);
+ 430:     }
+ 431:   }
+ 432: 
+ 433:   function init() {
+ 434:     clearEntryStepFlow();
+ 435:     hideContinue();
+ 436:     renderEmpty();
+ 437:     renderFlowNote();
+ 438:     bindInvalidation();
+ 439: 
+ 440:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 441:     if (els.reset) els.reset.addEventListener("click", reset);
+ 442:     if (els.continueBtn) {
+ 443:       els.continueBtn.addEventListener("click", () => {
+ 444:         window.location.href = NEXT_URL;
+ 445:       });
+ 446:     }
+ 447:   }
+ 448: 
+ 449:   window.addEventListener("DOMContentLoaded", () => {
+ 450:     const year = document.querySelector("[data-year]");
+ 451:     if (year) year.textContent = new Date().getFullYear();
+ 452:     init();
+ 453:   });
+ 454: })();
+
+
+============================================================
+TOOL: codec-efficiency
+============================================================
+Title: Codec Efficiency Comparator
+Tier: pro
+Meta description: Compare video codec efficiency and estimate how H.264, H.265, smart codecs, scene activity, and quality targets affect storage demand.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Baseline Bitrate (Mbps)
+- Current Codec H.264 H.265 / HEVC VP9 AV1
+- Target Codec H.264 H.265 / HEVC VP9 AV1
+- Hours per Day
+- Days of Retention
+- Camera Count
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- baseline
+- fromCodec
+- toCodec
+- hours
+- days
+- cams
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  88:   function clearAnalysisBlock() {
+  89:     if (
+  90:       window.ScopedLabsAnalyzer &&
+  91:       typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+  92:     ) {
+  93:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+  94:     } else if (els.analysisCopy) {
+  95:       els.analysisCopy.style.display = "none";
+  96:       els.analysisCopy.innerHTML = "";
+  97:     }
+  98:   }
+
+--- CORE BLOCK 2 ---
+ 133:       typeof window.ScopedLabsAnalyzer.invalidate === "function"
+ 134:     ) {
+ 135:       window.ScopedLabsAnalyzer.invalidate({
+ 136:         resultsEl: els.results,
+ 137:         analysisEl: els.analysisCopy,
+ 138:         emptyMessage: "Enter values and press Calculate."
+ 139:       });
+ 140:     } else {
+ 141:       renderEmpty();
+ 142:     }
+ 143: 
+ 144:     clearChart();
+ 145:   }
+ 146: 
+ 147:   function eff(codec) {
+ 148:     if (codec === "av1") return 0.60;
+ 149:     if (codec === "h265") return 0.70;
+ 150:     if (codec === "vp9") return 0.75;
+ 151:     return 1.00;
+ 152:   }
+ 153: 
+ 154:   function gbFromMbps(mbps, hours) {
+ 155:     const bits = mbps * 1_000_000 * (hours * 3600);
+ 156:     const bytes = bits / 8;
+ 157:     return bytes / 1_000_000_000;
+ 158:   }
+ 159: 
+ 160:   function resolveStatus(metrics) {
+ 161:     if (
+ 162:       window.ScopedLabsAnalyzer &&
+ 163:       typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+ 164:     ) {
+ 165:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 166:         metrics,
+ 167:         healthyMax: 1.0,
+ 168:         watchMax: 1.35
+ 169:       });
+ 170: 
+ 171:       return {
+ 172:         status: resolved?.status || "HEALTHY",
+ 173:         dominantLabel: resolved?.dominant?.label || metrics[0].label
+ 174:       };
+ 175:     }
+ 176: 
+ 177:     const dominant = metrics.reduce((best, current) =>
+ 178:       Number(current.value) > Number(best.value) ? current : best
+ 179:     );
+ 180: 
+ 181:     let status = "HEALTHY";
+ 182:     if (Number(dominant.value) > 1.35) status = "RISK";
+ 183:     else if (Number(dominant.value) > 1.0) status = "WATCH";
+ 184: 
+ 185:     return {
+ 186:       status,
+ 187:       dominantLabel: dominant.label
+ 188:     };
+ 189:   }
+ 190: 
+ 191:   function buildInterpretation(status, dominantConstraint, savingsPct, oldGB, newGB) {
+ 192:     if (status === "HEALTHY") {
+ 193:       return `The codec change produces meaningful savings without pushing the design into a fragile edge case. The storage benefit is real, and the difference between the current and target codec is large enough to matter operationally over retention windows.`;
+ 194:     }
+ 195: 
+ 196:     if (status === "WATCH") {
+ 197:       if (dominantConstraint === "Codec delta strength") {
+ 198:         return `The primary story here is the size of the codec efficiency change itself. Savings exist, but they are not so large that the move alone will transform the storage design unless camera count or retention is also substantial.`;
+ 199:       }
+ 200: 
+ 201:       if (dominantConstraint === "Retention burden") {
+ 202:         return `Retention length is making the codec difference more important. Even modest efficiency gains now accumulate into a noticeable storage impact because the archive window is long enough for small stream differences to compound.`;
+ 203:       }
+ 204: 
+ 205:       return `Camera scale is amplifying the codec decision. The per-camera change may look modest, but the fleet-wide effect is large enough that codec choice becomes a real storage-planning lever.`;
+ 206:     }
+ 207: 
+ 208:     if (dominantConstraint === "Retention burden") {
+ 209:       return `Long retention is turning codec efficiency into a major storage driver. The choice of codec now materially changes how much retained data the system must carry over time.`;
+ 210:     }
+ 211: 
+ 212:     if (dominantConstraint === "Camera fleet scale") {
+ 213:       return `Camera count is the main reason this codec decision matters so much. Even moderate per-stream efficiency changes are being magnified into a large aggregate storage burden across the deployment.`;
+ 214:     }
+ 215: 
+ 216:     return `The difference between the current and target codec is large enough to create a significant storage swing. This is no longer a minor tuning choice — it is a structural efficiency decision that can materially alter capacity planning.`;
+ 217:   }
+ 218: 
+ 219:   function buildGuidance(status, dominantConstraint, savingsPct) {
+ 220:     if (status === "HEALTHY") {
+ 221:       return `Use the target codec estimate as a practical storage-planning alternative, but validate encoder support, quality acceptance, and playback workflow before assuming the savings are fully bankable.`;
+ 222:     }
+ 223: 
+ 224:     if (status === "WATCH") {
+ 225:       if (dominantConstraint === "Retention burden") {
+ 226:         return `Prioritize codec validation if long retention is a hard requirement. The archive window is now long enough that codec efficiency can materially change total storage demand.`;
+ 227:       }
+ 228: 
+ 229:       if (dominantConstraint === "Camera fleet scale") {
+ 230:         return `Model the codec decision at full deployment scale before locking the storage plan. Fleet size is large enough that even moderate efficiency changes deserve a deliberate validation pass.`;
+ 231:       }
+ 232: 
+ 233:       return `Treat the savings as useful but not magical. Combine codec choice with bitrate tuning, retention review, and storage policy rather than expecting codec migration alone to solve every capacity issue.`;
+ 234:     }
+ 235: 
+ 236:     if (dominantConstraint === "Codec delta strength") {
+ 237:       return `Validate the migration path seriously. The savings are large enough that codec choice can reshape storage planning, but only if the operational workflow can support the target codec cleanly.`;
+ 238:     }
+ 239: 
+ 240:     if (dominantConstraint === "Retention burden") {
+ 241:       return `Use the more efficient codec path or reduce retention burden. The current archive horizon is making codec efficiency too important to ignore.`;
+ 242:     }
+ 243: 
+ 244:     return `Rework the storage plan around the codec outcome rather than treating codec as a cosmetic setting. The efficiency difference is large enough to change real capacity decisions.`;
+ 245:   }
+ 246: 
+ 247:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 248:     if (els.results) {
+ 249:       els.results.innerHTML = `
+ 250:         ${summaryRows.map((row) => `
+ 251:           <div class="result-row">
+ 252:             <span class="result-label">${row.label}</span>
+ 253:             <span class="result-value">${row.value}</span>
+ 254:           </div>
+ 255:         `).join("")}
+ 256:         ${derivedRows.map((row) => `
+ 257:           <div class="result-row">
+ 258:             <span class="result-label">${row.label}</span>
+ 259:             <span class="result-value">${row.value}</span>
+ 260:           </div>
+ 261:         `).join("")}
+ 262:       `;
+ 263:     }
+ 264: 
+ 265:     if (els.analysisCopy) {
+ 266:       els.analysisCopy.style.display = "";
+ 267:       els.analysisCopy.innerHTML = `
+ 268:         <div class="results-grid">
+ 269:           <div class="result-row">
+ 270:             <span class="result-label">Status</span>
+ 271:             <span class="result-value">${status}</span>
+ 272:           </div>
+ 273:           <div class="result-row">
+ 274:             <span class="result-label">Dominant Constraint</span>
+ 275:             <span class="result-value">${dominantConstraint}</span>
+ 276:           </div>
+ 277:           <div class="result-row">
+ 278:             <span class="result-label">Engineering Interpretation</span>
+ 279:             <span class="result-value">${interpretation}</span>
+ 280:           </div>
+ 281:           <div class="result-row">
+ 282:             <span class="result-label">Actionable Guidance</span>
+ 283:             <span class="result-value">${guidance}</span>
+ 284:           </div>
+ 285:         </div>
+ 286:       `;
+ 287:     }
+ 288:   }
+ 289: 
+ 290:   function calculate() {
+ 291:     const baselineRaw = safeNumber(els.baseline.value, NaN);
+ 292:     const hoursRaw = safeNumber(els.hours.value, NaN);
+ 293:     const daysRaw = safeNumber(els.days.value, NaN);
+ 294:     const camsRaw = safeNumber(els.cams.value, NaN);
+ 295: 
+ 296:     const fromCodec = els.fromCodec.value;
+ 297:     const toCodec = els.toCodec.value;
+ 298: 
+ 299:     if (
+ 300:       !Number.isFinite(baselineRaw) || baselineRaw <= 0 ||
+ 301:       !Number.isFinite(hoursRaw) || hoursRaw < 0 ||
+ 302:       !Number.isFinite(daysRaw) || daysRaw < 0 ||
+ 303:       !Number.isFinite(camsRaw) || camsRaw < 1
+ 304:     ) {
+ 305:       if (els.results) {
+ 306:         els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+ 307:       }
+ 308:       clearAnalysisBlock();
+ 309:       clearChart();
+ 310:       return;
+ 311:     }
+ 312: 
+ 313:     const baseline = clamp(baselineRaw, 0.01, 100000);
+ 314:     const hours = clamp(hoursRaw, 0, 24);
+ 315:     const days = clamp(daysRaw, 0, 3650);
+ 316:     const cams = Math.max(1, Math.floor(clamp(camsRaw, 1, 100000)));
+ 317: 
+ 318:     const newMbps = baseline * (eff(toCodec) / eff(fromCodec));
+ 319: 
+ 320:     const perCamHours = hours * days;
+ 321:     const oldGB = gbFromMbps(baseline, perCamHours) * cams;
+ 322:     const newGB = gbFromMbps(newMbps, perCamHours) * cams;
+ 323: 
+ 324:     const savingsGB = oldGB - newGB;
+ 325:     const savingsPct = oldGB > 0 ? (savingsGB / oldGB) * 100 : 0;
+ 326: 
+ 327:     const codecDeltaStrength = Math.abs(1 - (eff(toCodec) / eff(fromCodec))) * 3;
+ 328:     const retentionBurden = Math.max(0.1, days / 30);
+ 329:     const fleetScale = Math.max(0.1, cams / 8);
+ 330: 
+ 331:     const metrics = [
+ 332:       {
+ 333:         label: "Codec Delta Strength",
+ 334:         value: codecDeltaStrength,
+ 335:         displayValue: `${savingsPct.toFixed(1)}%`
+ 336:       },
+ 337:       {
+ 338:         label: "Retention Burden",
+ 339:         value: retentionBurden,
+ 340:         displayValue: `${days.toFixed(0)} days`
+ 341:       },
+ 342:       {
+ 343:         label: "Camera Fleet Scale",
+ 344:         value: fleetScale,
+ 345:         displayValue: `${cams} cams`
+ 346:       }
+ 347:     ];
+ 348: 
+ 349:     const resolved = resolveStatus(metrics);
+ 350:     const status = resolved.status;
+ 351: 
+ 352:     const dominantConstraintMap = {
+ 353:       "Codec Delta Strength": "Codec delta strength",
+ 354:       "Retention Burden": "Retention burden",
+ 355:       "Camera Fleet Scale": "Camera fleet scale"
+ 356:     };
+ 357: 
+ 358:     const dominantConstraint =
+ 359:       dominantConstraintMap[resolved.dominantLabel] || "Codec delta strength";
+ 360: 
+ 361:     const interpretation = buildInterpretation(
+ 362:       status,
+ 363:       dominantConstraint,
+ 364:       savingsPct,
+ 365:       oldGB,
+ 366:       newGB
+ 367:     );
+ 368: 
+ 369:     const guidance = buildGuidance(
+ 370:       status,
+ 371:       dominantConstraint,
+ 372:       savingsPct
+ 373:     );
+ 374: 
+ 375:     const summaryRows = [
+ 376:       { label: "Baseline Bitrate", value: `${baseline.toFixed(2)} Mbps (${fromCodec.toUpperCase()})` },
+ 377:       { label: "Target Bitrate", value: `${newMbps.toFixed(2)} Mbps (${toCodec.toUpperCase()})` },
+ 378:       { label: "Hours × Days × Cams", value: `${hours.toFixed(1)}h × ${days.toFixed(0)}d × ${cams}` }
+ 379:     ];
+ 380: 
+ 381:     const derivedRows = [
+ 382:       { label: "Storage (Baseline)", value: `${oldGB.toFixed(1)} GB` },
+ 383:       { label: "Storage (Target)", value: `${newGB.toFixed(1)} GB` },
+ 384:       { label: "Estimated Savings", value: `${savingsGB.toFixed(1)} GB (${savingsPct.toFixed(1)}%)` },
+ 385:       { label: "Planning Basis", value: "Rule-of-thumb codec efficiency comparison" }
+ 386:     ];
+ 387: 
+ 388:     if (
+ 389:       window.ScopedLabsAnalyzer &&
+ 390:       typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+ 391:     ) {
+ 392:       window.ScopedLabsAnalyzer.renderOutput({
+ 393:         resultsEl: els.results,
+ 394:         analysisEl: els.analysisCopy,
+ 395:         summaryRows,
+ 396:         derivedRows,
+ 397:         status,
+ 398:         interpretation,
+ 399:         dominantConstraint,
+ 400:         guidance,
+ 401:         existingChartRef: null,
+ 402:         existingWrapRef: null
+ 403:       });
+ 404:     } else {
+ 405:       renderFallback(
+ 406:         summaryRows,
+ 407:         derivedRows,
+ 408:         status,
+ 409:         dominantConstraint,
+ 410:         interpretation,
+ 411:         guidance
+ 412:       );
+ 413:     }
+ 414: 
+ 415:     clearChart();
+ 416: 
+ 417:     if (
+ 418:       window.ScopedLabsAnalyzer &&
+ 419:       typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+ 420:     ) {
+ 421:       window.ScopedLabsAnalyzer.renderAnalyzerChart({
+ 422:         mountEl: els.results,
+ 423:         existingChartRef: chartRef,
+ 424:         existingWrapRef: chartWrapRef,
+ 425:         labels: [
+ 426:           "Codec Delta",
+ 427:           "Retention Burden",
+ 428:           "Fleet Scale"
+ 429:         ],
+ 430:         values: [
+ 431:           codecDeltaStrength,
+ 432:           retentionBurden,
+ 433:           fleetScale
+ 434:         ],
+ 435:         displayValues: [
+ 436:           `${savingsPct.toFixed(1)}%`,
+ 437:           `${days.toFixed(0)} days`,
+ 438:           `${cams} cams`
+ 439:         ],
+ 440:         referenceValue: 1.0,
+ 441:         healthyMax: 1.0,
+ 442:         watchMax: 1.35,
+ 443:         axisTitle: "Savings Pressure",
+ 444:         referenceLabel: "Healthy Threshold",
+ 445:         healthyLabel: "Healthy",
+ 446:         watchLabel: "Watch",
+ 447:         riskLabel: "Risk",
+ 448:         chartMax: Math.max(
+ 449:           3,
+ 450:           Math.ceil(Math.max(codecDeltaStrength, retentionBurden, fleetScale, 1.35) * 1.15 * 10) / 10
+ 451:         )
+ 452:       });
+ 453:     }
+ 454:   }
+ 455: 
+ 456:   function reset() {
+ 457:     els.baseline.value = 4.0;
+ 458:     els.fromCodec.value = "h264";
+ 459:     els.toCodec.value = "h265";
+ 460:     els.hours.value = 24;
+ 461:     els.days.value = 30;
+ 462:     els.cams.value = 8;
+ 463:     renderEmpty();
+ 464:   }
+ 465: 
+ 466:   function bindInvalidation() {
+ 467:     [els.baseline, els.fromCodec, els.toCodec, els.hours, els.days, els.cams].forEach((el) => {
+ 468:       if (!el) return;
+ 469:       el.addEventListener("input", invalidate);
+ 470:       el.addEventListener("change", invalidate);
+ 471:     });
+ 472:   }
+ 473: 
+ 474:   function bind() {
+ 475:     bindInvalidation();
+ 476: 
+ 477:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 478:     if (els.reset) els.reset.addEventListener("click", reset);
+ 479:   }
+ 480: 
+ 481:   function boot() {
+ 482:     const unlocked = unlockCategoryPage();
+ 483:     if (!unlocked) return;
+ 484: 
+ 485:     renderEmpty();
+ 486:     bindInvalidation();
+ 487: 
+ 488:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 489:     if (els.reset) els.reset.addEventListener("click", reset);
+ 490: 
+ 491:     const year = document.querySelector("[data-year]");
+ 492:     if (year) year.textContent = new Date().getFullYear();
+ 493:   }
+ 494: 
+ 495:   window.addEventListener("DOMContentLoaded", boot);
+ 496: })();
+ 497: 
+
+
+============================================================
+TOOL: compression-impact
+============================================================
+Title: Compression Impact
+Tier: pro
+Meta description: Estimate bitrate and storage changes when adjusting quality, motion, and keyframe interval.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Baseline Bitrate (Mbps)
+- Quality Preset High (best image) Medium Low (smaller files)
+- Motion Level Low Medium High
+- Keyframe Interval (seconds)
+- Hours per Day
+- Days of Retention
+- Camera Count
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- baseline
+- quality
+- motion
+- gop
+- hours
+- days
+- cams
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  87:   function clearAnalysisBlock() {
+  88:     if (
+  89:       window.ScopedLabsAnalyzer &&
+  90:       typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+  91:     ) {
+  92:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+  93:     } else if (els.analysisCopy) {
+  94:       els.analysisCopy.style.display = "none";
+  95:       els.analysisCopy.innerHTML = "";
+  96:     }
+  97:   }
+
+--- CORE BLOCK 2 ---
+ 145: 
+ 146:   function qFactor(q) {
+ 147:     if (q === "high") return 1.25;
+ 148:     if (q === "low") return 0.80;
+ 149:     return 1.00;
+ 150:   }
+ 151: 
+ 152:   function mFactor(m) {
+ 153:     if (m === "high") return 1.35;
+ 154:     if (m === "low") return 0.80;
+ 155:     return 1.00;
+ 156:   }
+ 157: 
+ 158:   function gopFactor(gopSec) {
+ 159:     const g = clamp(gopSec, 0.5, 10);
+ 160:     if (g <= 1) return 1.15;
+ 161:     if (g <= 2) return 1.00;
+ 162:     if (g <= 4) return 0.92;
+ 163:     return 0.88;
+ 164:   }
+ 165: 
+ 166:   function gbFromMbps(mbps, hours) {
+ 167:     const bits = mbps * 1_000_000 * (hours * 3600);
+ 168:     const bytes = bits / 8;
+ 169:     return bytes / 1_000_000_000;
+ 170:   }
+ 171: 
+ 172:   function resolveStatus(metrics) {
+ 173:     if (
+ 174:       window.ScopedLabsAnalyzer &&
+ 175:       typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+ 176:     ) {
+ 177:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 178:         metrics,
+ 179:         healthyMax: 1.0,
+ 180:         watchMax: 1.35
+ 181:       });
+ 182: 
+ 183:       return {
+ 184:         status: resolved?.status || "HEALTHY",
+ 185:         dominantLabel: resolved?.dominant?.label || metrics[0].label
+ 186:       };
+ 187:     }
+ 188: 
+ 189:     const dominant = metrics.reduce((best, current) =>
+ 190:       Number(current.value) > Number(best.value) ? current : best
+ 191:     );
+ 192: 
+ 193:     let status = "HEALTHY";
+ 194:     if (Number(dominant.value) > 1.35) status = "RISK";
+ 195:     else if (Number(dominant.value) > 1.0) status = "WATCH";
+ 196: 
+ 197:     return {
+ 198:       status,
+ 199:       dominantLabel: dominant.label
+ 200:     };
+ 201:   }
+ 202: 
+ 203:   function buildInterpretation(status, dominantConstraint, deltaPct, newMbps, baseline) {
+ 204:     if (status === "HEALTHY") {
+ 205:       return `The compression change stays in a manageable range. Stream tuning is affecting storage demand, but not in a way that suggests unusual planning risk if the resulting image quality is still acceptable.`;
+ 206:     }
+ 207: 
+ 208:     if (status === "WATCH") {
+ 209:       if (dominantConstraint === "Motion-driven bitrate pressure") {
+ 210:         return `Motion level is becoming the main reason compression impact matters. Under higher motion, the stream is less forgiving, so tuning choices begin to widen storage outcomes more than they would in static scenes.`;
+ 211:       }
+ 212: 
+ 213:       if (dominantConstraint === "Quality bias pressure") {
+ 214:         return `The selected quality posture is driving a noticeable storage outcome. The stream may still be valid, but the cost of better visual quality is now large enough to show up clearly in retained footage volume.`;
+ 215:       }
+ 216: 
+ 217:       return `Keyframe behavior is starting to matter more. GOP choice is now contributing enough to the final bitrate that compression tuning should be treated as a real storage lever instead of a minor encoder detail.`;
+ 218:     }
+ 219: 
+ 220:     if (dominantConstraint === "Motion-driven bitrate pressure") {
+ 221:       return `Motion pressure is high enough that compression tuning becomes critical. Under harder scenes, the stream is likely to expand enough that storage outcomes can move materially away from the baseline assumption.`;
+ 222:     }
+ 223: 
+ 224:     if (dominantConstraint === "Quality bias pressure") {
+ 225:       return `Quality choice is now the primary reason storage demand is shifting. The resulting bitrate change is large enough that this is no longer a cosmetic image preference — it is a real capacity-planning decision.`;
+ 226:     }
+ 227: 
+ 228:     return `Keyframe interval is exerting a strong effect on final bitrate. The stream is now sensitive enough to encoder structure that storage planning should not assume small GOP changes are harmless.`;
+ 229:   }
+ 230: 
+ 231:   function buildGuidance(status, dominantConstraint, deltaPct) {
+ 232:     if (status === "HEALTHY") {
+ 233:       return `Use the adjusted bitrate as a reasonable planning value, but validate quality acceptance and encoder behavior before standardizing the profile across all cameras.`;
+ 234:     }
+ 235: 
+ 236:     if (status === "WATCH") {
+ 237:       if (dominantConstraint === "Motion-driven bitrate pressure") {
+ 238:         return `Test the stream under real scene activity before locking the profile. Motion is now influential enough that lab-like assumptions may understate storage impact.`;
+ 239:       }
+ 240: 
+ 241:       if (dominantConstraint === "Quality bias pressure") {
+ 242:         return `Review whether the quality target is worth the extra retained storage. The current tuning choice is materially changing long-horizon storage burden.`;
+ 243:       }
+ 244: 
+ 245:       return `Treat GOP as part of the storage design, not just an encoder setting. The current interval has enough influence that it should be chosen deliberately alongside retention and quality goals.`;
+ 246:     }
+ 247: 
+ 248:     if (dominantConstraint === "Motion-driven bitrate pressure") {
+ 249:       return `Tune for worst-case scene behavior before trusting the storage plan. The stream is currently too sensitive to motion for average-state assumptions alone to be safe.`;
+ 250:     }
+ 251: 
+ 252:     if (dominantConstraint === "Quality bias pressure") {
+ 253:       return `Reduce quality bias or increase downstream storage headroom. The current compression posture is pushing the stream far enough away from baseline to matter operationally.`;
+ 254:     }
+ 255: 
+ 256:     return `Rework keyframe interval and overall stream policy before deployment. Encoder structure is now influential enough to materially change retained storage demand.`;
+ 257:   }
+ 258: 
+ 259:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 260:     if (els.results) {
+ 261:       els.results.innerHTML = `
+ 262:         ${summaryRows.map((row) => `
+ 263:           <div class="result-row">
+ 264:             <span class="result-label">${row.label}</span>
+ 265:             <span class="result-value">${row.value}</span>
+ 266:           </div>
+ 267:         `).join("")}
+ 268:         ${derivedRows.map((row) => `
+ 269:           <div class="result-row">
+ 270:             <span class="result-label">${row.label}</span>
+ 271:             <span class="result-value">${row.value}</span>
+ 272:           </div>
+ 273:         `).join("")}
+ 274:       `;
+ 275:     }
+ 276: 
+ 277:     if (els.analysisCopy) {
+ 278:       els.analysisCopy.style.display = "";
+ 279:       els.analysisCopy.innerHTML = `
+ 280:         <div class="results-grid">
+ 281:           <div class="result-row">
+ 282:             <span class="result-label">Status</span>
+ 283:             <span class="result-value">${status}</span>
+ 284:           </div>
+ 285:           <div class="result-row">
+ 286:             <span class="result-label">Dominant Constraint</span>
+ 287:             <span class="result-value">${dominantConstraint}</span>
+ 288:           </div>
+ 289:           <div class="result-row">
+ 290:             <span class="result-label">Engineering Interpretation</span>
+ 291:             <span class="result-value">${interpretation}</span>
+ 292:           </div>
+ 293:           <div class="result-row">
+ 294:             <span class="result-label">Actionable Guidance</span>
+ 295:             <span class="result-value">${guidance}</span>
+ 296:           </div>
+ 297:         </div>
+ 298:       `;
+ 299:     }
+ 300:   }
+ 301: 
+ 302:   function calculate() {
+ 303:     const baselineRaw = safeNumber(els.baseline.value, NaN);
+ 304:     const gopRaw = safeNumber(els.gop.value, NaN);
+ 305:     const hoursRaw = safeNumber(els.hours.value, NaN);
+ 306:     const daysRaw = safeNumber(els.days.value, NaN);
+ 307:     const camsRaw = safeNumber(els.cams.value, NaN);
+ 308: 
+ 309:     const quality = els.quality.value;
+ 310:     const motion = els.motion.value;
+ 311: 
+ 312:     if (
+ 313:       !Number.isFinite(baselineRaw) || baselineRaw <= 0 ||
+ 314:       !Number.isFinite(gopRaw) || gopRaw <= 0 ||
+ 315:       !Number.isFinite(hoursRaw) || hoursRaw < 0 ||
+ 316:       !Number.isFinite(daysRaw) || daysRaw < 0 ||
+ 317:       !Number.isFinite(camsRaw) || camsRaw < 1
+ 318:     ) {
+ 319:       if (els.results) {
+ 320:         els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+ 321:       }
+ 322:       clearAnalysisBlock();
+ 323:       clearChart();
+ 324:       return;
+ 325:     }
+ 326: 
+ 327:     const baseline = clamp(baselineRaw, 0.01, 100000);
+ 328:     const gop = clamp(gopRaw, 0.5, 10);
+ 329:     const hours = clamp(hoursRaw, 0, 24);
+ 330:     const days = clamp(daysRaw, 0, 3650);
+ 331:     const cams = Math.max(1, Math.floor(clamp(camsRaw, 1, 100000)));
+ 332: 
+ 333:     const factor = qFactor(quality) * mFactor(motion) * gopFactor(gop);
+ 334:     const newMbps = baseline * factor;
+ 335: 
+ 336:     const totalHours = hours * days;
+ 337:     const oldGB = gbFromMbps(baseline, totalHours) * cams;
+ 338:     const newGB = gbFromMbps(newMbps, totalHours) * cams;
+ 339: 
+ 340:     const deltaGB = newGB - oldGB;
+ 341:     const deltaPct = oldGB > 0 ? (deltaGB / oldGB) * 100 : 0;
+ 342: 
+ 343:     const qualityPressure =
+ 344:       quality === "high" ? 1.55 :
+ 345:       quality === "med" ? 1.00 :
+ 346:       0.78;
+ 347: 
+ 348:     const motionPressure =
+ 349:       motion === "high" ? 1.85 :
+ 350:       motion === "med" ? 1.00 :
+ 351:       0.75;
+ 352: 
+ 353:     let gopPressure = 1.00;
+ 354:     if (gop <= 1) gopPressure = 1.55;
+ 355:     else if (gop <= 2) gopPressure = 1.15;
+ 356:     else if (gop <= 4) gopPressure = 0.95;
+ 357:     else gopPressure = 0.80;
+ 358: 
+ 359:     const metrics = [
+ 360:       {
+ 361:         label: "Quality Bias Pressure",
+ 362:         value: qualityPressure,
+ 363:         displayValue: quality.toUpperCase()
+ 364:       },
+ 365:       {
+ 366:         label: "Motion-driven Bitrate Pressure",
+ 367:         value: motionPressure,
+ 368:         displayValue: motion.toUpperCase()
+ 369:       },
+ 370:       {
+ 371:         label: "Keyframe Interval Pressure",
+ 372:         value: gopPressure,
+ 373:         displayValue: `${gop.toFixed(1)}s`
+ 374:       }
+ 375:     ];
+ 376: 
+ 377:     const resolved = resolveStatus(metrics);
+ 378:     const status = resolved.status;
+ 379: 
+ 380:     const dominantConstraintMap = {
+ 381:       "Quality Bias Pressure": "Quality bias pressure",
+ 382:       "Motion-driven Bitrate Pressure": "Motion-driven bitrate pressure",
+ 383:       "Keyframe Interval Pressure": "Keyframe interval pressure"
+ 384:     };
+ 385: 
+ 386:     const dominantConstraint =
+ 387:       dominantConstraintMap[resolved.dominantLabel] || "Quality bias pressure";
+ 388: 
+ 389:     const interpretation = buildInterpretation(
+ 390:       status,
+ 391:       dominantConstraint,
+ 392:       deltaPct,
+ 393:       newMbps,
+ 394:       baseline
+ 395:     );
+ 396: 
+ 397:     const guidance = buildGuidance(
+ 398:       status,
+ 399:       dominantConstraint,
+ 400:       deltaPct
+ 401:     );
+ 402: 
+ 403:     const summaryRows = [
+ 404:       { label: "Baseline Bitrate", value: `${baseline.toFixed(2)} Mbps` },
+ 405:       { label: "Adjusted Bitrate", value: `${newMbps.toFixed(2)} Mbps` },
+ 406:       { label: "Compression Multiplier", value: `× ${factor.toFixed(2)}` },
+ 407:       { label: "Hours × Days × Cams", value: `${hours.toFixed(1)}h × ${days.toFixed(0)}d × ${cams}` }
+ 408:     ];
+ 409: 
+ 410:     const derivedRows = [
+ 411:       { label: "Storage (Baseline)", value: `${oldGB.toFixed(1)} GB` },
+ 412:       { label: "Storage (Adjusted)", value: `${newGB.toFixed(1)} GB` },
+ 413:       { label: "Change", value: `${deltaGB.toFixed(1)} GB (${deltaPct.toFixed(1)}%)` },
+ 414:       { label: "Planning Basis", value: "Quality + motion + GOP tuning model" }
+ 415:     ];
+ 416: 
+ 417:     if (
+ 418:       window.ScopedLabsAnalyzer &&
+ 419:       typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+ 420:     ) {
+ 421:       window.ScopedLabsAnalyzer.renderOutput({
+ 422:         resultsEl: els.results,
+ 423:         analysisEl: els.analysisCopy,
+ 424:         summaryRows,
+ 425:         derivedRows,
+ 426:         status,
+ 427:         interpretation,
+ 428:         dominantConstraint,
+ 429:         guidance,
+ 430:         existingChartRef: null,
+ 431:         existingWrapRef: null
+ 432:       });
+ 433:     } else {
+ 434:       renderFallback(
+ 435:         summaryRows,
+ 436:         derivedRows,
+ 437:         status,
+ 438:         dominantConstraint,
+ 439:         interpretation,
+ 440:         guidance
+ 441:       );
+ 442:     }
+ 443: 
+ 444:     clearChart();
+ 445: 
+ 446:     if (
+ 447:       window.ScopedLabsAnalyzer &&
+ 448:       typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+ 449:     ) {
+ 450:       window.ScopedLabsAnalyzer.renderAnalyzerChart({
+ 451:         mountEl: els.results,
+ 452:         existingChartRef: chartRef,
+ 453:         existingWrapRef: chartWrapRef,
+ 454:         labels: [
+ 455:           "Quality Bias",
+ 456:           "Motion Pressure",
+ 457:           "Keyframe Pressure"
+ 458:         ],
+ 459:         values: [
+ 460:           qualityPressure,
+ 461:           motionPressure,
+ 462:           gopPressure
+ 463:         ],
+ 464:         displayValues: [
+ 465:           quality.toUpperCase(),
+ 466:           motion.toUpperCase(),
+ 467:           `${gop.toFixed(1)}s`
+ 468:         ],
+ 469:         referenceValue: 1.0,
+ 470:         healthyMax: 1.0,
+ 471:         watchMax: 1.45,
+ 472:         axisTitle: "Compression Pressure",
+ 473:         referenceLabel: "Healthy Threshold",
+ 474:         healthyLabel: "Healthy",
+ 475:         watchLabel: "Watch",
+ 476:         riskLabel: "Risk",
+ 477:         chartMax: Math.max(
+ 478:           2.5,
+ 479:           Math.ceil(Math.max(qualityPressure, motionPressure, gopPressure, 1.85) * 1.15 * 10) / 10
+ 480:         )
+ 481:       });
+ 482:     }
+ 483:   }
+ 484: 
+ 485:   function reset() {
+ 486:     els.baseline.value = 4.0;
+ 487:     els.quality.value = "med";
+ 488:     els.motion.value = "med";
+ 489:     els.gop.value = 2;
+ 490:     els.hours.value = 24;
+ 491:     els.days.value = 30;
+ 492:     els.cams.value = 8;
+ 493:     renderEmpty();
+ 494:   }
+ 495: 
+ 496:   function bindInvalidation() {
+ 497:     [els.baseline, els.quality, els.motion, els.gop, els.hours, els.days, els.cams].forEach((el) => {
+ 498:       if (!el) return;
+ 499:       el.addEventListener("input", invalidate);
+ 500:       el.addEventListener("change", invalidate);
+ 501:     });
+ 502:   }
+ 503: 
+ 504:   function bind() {
+ 505:     bindInvalidation();
+ 506: 
+ 507:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 508:     if (els.reset) els.reset.addEventListener("click", reset);
+ 509:   }
+ 510: 
+ 511:   function boot() {
+ 512:     const unlocked = unlockCategoryPage();
+ 513:     if (!unlocked) return;
+ 514: 
+ 515:     renderEmpty();
+ 516:     bindInvalidation();
+ 517: 
+ 518:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 519:     if (els.reset) els.reset.addEventListener("click", reset);
+ 520: 
+ 521:     const year = document.querySelector("[data-year]");
+ 522:     if (year) year.textContent = new Date().getFullYear();
+ 523:   }
+ 524: 
+ 525:   window.addEventListener("DOMContentLoaded", boot);
+ 526: })();
+
+
+============================================================
+TOOL: failure-days-lost
+============================================================
+Title: Failure Days Lost
+Tier: pro
+Meta description: Estimate retention loss when a recording system is down or storage recovery takes time.
+Flags: {
+  "scriptJs": true,
+  "pipeline": false,
+  "flowNote": false,
+  "continueButton": false,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Total Retention (days)
+- Outage / Recording Gap (hours)
+- Restore Time (hours)
+- Overwrite Speed Risk Normal Fast (high motion / high bitrate) Slow (low motion / low bitrate)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- lockedCard
+- toolCard
+- retentionDays
+- gapHours
+- restoreHours
+- overwrite
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  84:   function clearAnalysisBlock() {
+  85:     if (
+  86:       window.ScopedLabsAnalyzer &&
+  87:       typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+  88:     ) {
+  89:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+  90:     } else if (els.analysisCopy) {
+  91:       els.analysisCopy.style.display = "none";
+  92:       els.analysisCopy.innerHTML = "";
+  93:     }
+  94:   }
+
+--- CORE BLOCK 2 ---
+ 121:     }
+ 122:     clearAnalysisBlock();
+ 123:     clearChart();
+ 124:   }
+ 125: 
+ 126:   function invalidate() {
+ 127:     if (
+ 128:       window.ScopedLabsAnalyzer &&
+ 129:       typeof window.ScopedLabsAnalyzer.invalidate === "function"
+ 130:     ) {
+ 131:       window.ScopedLabsAnalyzer.invalidate({
+ 132:         resultsEl: els.results,
+ 133:         analysisEl: els.analysisCopy,
+ 134:         emptyMessage: "Enter values and press Calculate."
+ 135:       });
+ 136:     } else {
+ 137:       renderEmpty();
+ 138:     }
+ 139:     clearChart();
+ 140:   }
+ 141: 
+ 142:   function overwriteFactor(mode) {
+ 143:     if (mode === "fast") return 1.25;
+ 144:     if (mode === "slow") return 0.85;
+ 145:     return 1.0;
+ 146:   }
+ 147: 
+ 148:   function resolveStatus(metrics) {
+ 149:     if (
+ 150:       window.ScopedLabsAnalyzer &&
+ 151:       typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+ 152:     ) {
+ 153:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 154:         metrics,
+ 155:         healthyMax: 1.0,
+ 156:         watchMax: 1.5
+ 157:       });
+ 158: 
+ 159:       return {
+ 160:         status: resolved?.status || "HEALTHY",
+ 161:         dominantLabel: resolved?.dominant?.label || metrics[0].label
+ 162:       };
+ 163:     }
+ 164: 
+ 165:     const dominant = metrics.reduce((best, current) =>
+ 166:       Number(current.value) > Number(best.value) ? current : best
+ 167:     );
+ 168: 
+ 169:     let status = "HEALTHY";
+ 170:     if (Number(dominant.value) > 1.5) status = "RISK";
+ 171:     else if (Number(dominant.value) > 1.0) status = "WATCH";
+ 172: 
+ 173:     return {
+ 174:       status,
+ 175:       dominantLabel: dominant.label
+ 176:     };
+ 177:   }
+ 178: 
+ 179:   function buildInterpretation(status, dominantConstraint, totalLostDays, gapDays, remaining) {
+ 180:     if (status === "HEALTHY") {
+ 181:       return `The outage window reduces usable retention, but the loss remains in a manageable range. Recovery time and overwrite pressure are not yet compressing the archive window hard enough to create a major planning problem.`;
+ 182:     }
+ 183: 
+ 184:     if (status === "WATCH") {
+ 185:       if (dominantConstraint === "Downtime burden") {
+ 186:         return `The main issue is the total amount of time the system is unavailable. Even with normal overwrite behavior, enough retention time is being consumed that the event becomes operationally noticeable.`;
+ 187:       }
+ 188: 
+ 189:       if (dominantConstraint === "Overwrite pressure") {
+ 190:         return `Overwrite behavior is starting to amplify the outage. Once recording resumes, the system is effectively burning through retention fast enough that recovery impact matters more than the gap alone.`;
+ 191:       }
+ 192: 
+ 193:       return `The raw recording gap is large enough to matter. Missing footage is no longer just a small blind spot — it is becoming a material loss event when viewed across the retention window.`;
+ 194:     }
+ 195: 
+ 196:     if (dominantConstraint === "Downtime burden") {
+ 197:       return `The recovery window is long enough that retention loss becomes a real operational risk. Even if recording eventually resumes, the system has already consumed too much archive time to treat this as a minor incident.`;
+ 198:     }
+ 199: 
+ 200:     if (dominantConstraint === "Overwrite pressure") {
+ 201:       return `Fast overwrite behavior is turning the outage into a much larger retention problem. The system is effectively eating through recoverable history quickly enough that the incident can erase more archive value than the gap alone suggests.`;
+ 202:     }
+ 203: 
+ 204:     return `The direct recording gap itself is severe enough to create a meaningful loss event. At this point, the missing coverage window and the compressed retention horizon together make the failure hard to dismiss as routine.`;
+ 205:   }
+ 206: 
+ 207:   function buildGuidance(status, dominantConstraint, totalLostDays) {
+ 208:     if (status === "HEALTHY") {
+ 209:       return `Use this as a planning estimate and keep recovery workflow disciplined. Even when loss is manageable, faster failover and faster restore still improve real-world archive resilience.`;
+ 210:     }
+ 211: 
+ 212:     if (status === "WATCH") {
+ 213:       if (dominantConstraint === "Downtime burden") {
+ 214:         return `Reduce total downtime through faster failover, spare hardware, or quicker rebuild processes. The outage length is now the main reason retention value is being lost.`;
+ 215:       }
+ 216: 
+ 217:       if (dominantConstraint === "Overwrite pressure") {
+ 218:         return `Treat overwrite speed as part of the recovery plan. High-motion or high-bitrate systems may need more protective margin because resumed recording can consume archive history faster than expected.`;
+ 219:       }
+ 220: 
+ 221:       return `Tighten incident response and restoration workflow before the system scales further. The current failure profile is already large enough to affect retained evidence value.`;
+ 222:     }
+ 223: 
+ 224:     if (dominantConstraint === "Downtime burden") {
+ 225:       return `Shorten recovery time before trusting the current design. The system needs better resilience or faster service restoration to avoid losing too much usable retention during failures.`;
+ 226:     }
+ 227: 
+ 228:     if (dominantConstraint === "Overwrite pressure") {
+ 229:       return `Plan for higher recovery protection under fast-overwrite conditions. The current environment is too vulnerable to losing archive value once recording resumes after an outage.`;
+ 230:     }
+ 231: 
+ 232:     return `Treat this as a serious resilience issue. Reduce recording gaps, accelerate recovery, or increase effective retention margin so outage events do not erase so much usable history.`;
+ 233:   }
+ 234: 
+ 235:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 236:     if (els.results) {
+ 237:       els.results.innerHTML = `
+ 238:         ${summaryRows.map((row) => `
+ 239:           <div class="result-row">
+ 240:             <span class="result-label">${row.label}</span>
+ 241:             <span class="result-value">${row.value}</span>
+ 242:           </div>
+ 243:         `).join("")}
+ 244:         ${derivedRows.map((row) => `
+ 245:           <div class="result-row">
+ 246:             <span class="result-label">${row.label}</span>
+ 247:             <span class="result-value">${row.value}</span>
+ 248:           </div>
+ 249:         `).join("")}
+ 250:       `;
+ 251:     }
+ 252: 
+ 253:     if (els.analysisCopy) {
+ 254:       els.analysisCopy.style.display = "";
+ 255:       els.analysisCopy.innerHTML = `
+ 256:         <div class="results-grid">
+ 257:           <div class="result-row">
+ 258:             <span class="result-label">Status</span>
+ 259:             <span class="result-value">${status}</span>
+ 260:           </div>
+ 261:           <div class="result-row">
+ 262:             <span class="result-label">Dominant Constraint</span>
+ 263:             <span class="result-value">${dominantConstraint}</span>
+ 264:           </div>
+ 265:           <div class="result-row">
+ 266:             <span class="result-label">Engineering Interpretation</span>
+ 267:             <span class="result-value">${interpretation}</span>
+ 268:           </div>
+ 269:           <div class="result-row">
+ 270:             <span class="result-label">Actionable Guidance</span>
+ 271:             <span class="result-value">${guidance}</span>
+ 272:           </div>
+ 273:         </div>
+ 274:       `;
+ 275:     }
+ 276:   }
+ 277: 
+ 278:   function calculate() {
+ 279:     const retentionDaysRaw = safeNumber(els.retentionDays.value, NaN);
+ 280:     const gapHoursRaw = safeNumber(els.gapHours.value, NaN);
+ 281:     const restoreHoursRaw = safeNumber(els.restoreHours.value, NaN);
+ 282:     const overwrite = els.overwrite.value;
+ 283: 
+ 284:     if (
+ 285:       !Number.isFinite(retentionDaysRaw) || retentionDaysRaw <= 0 ||
+ 286:       !Number.isFinite(gapHoursRaw) || gapHoursRaw < 0 ||
+ 287:       !Number.isFinite(restoreHoursRaw) || restoreHoursRaw < 0
+ 288:     ) {
+ 289:       if (els.results) {
+ 290:         els.results.innerHTML = `<div class="muted">Enter valid values and press Calculate.</div>`;
+ 291:       }
+ 292:       clearAnalysisBlock();
+ 293:       clearChart();
+ 294:       return;
+ 295:     }
+ 296: 
+ 297:     const retentionDays = clamp(retentionDaysRaw, 0.1, 36500);
+ 298:     const gapHours = clamp(gapHoursRaw, 0, 100000);
+ 299:     const restoreHours = clamp(restoreHoursRaw, 0, 100000);
+ 300: 
+ 301:     const totalDownHours = gapHours + restoreHours;
+ 302:     const gapDays = gapHours / 24;
+ 303:     const downDays = totalDownHours / 24;
+ 304: 
+ 305:     const effRetention = retentionDays / overwriteFactor(overwrite);
+ 306:     const remaining = Math.max(0, effRetention - downDays);
+ 307:     const lossFromRetention = Math.max(0, retentionDays - remaining);
+ 308:     const totalLostDays = lossFromRetention;
+ 309: 
+ 310:     const downtimeBurden = totalLostDays / 2.5;
+ 311:     const overwritePressure = overwrite === "fast" ? 1.65 : overwrite === "slow" ? 0.75 : 1.0;
+ 312:     const directGapPressure = gapDays / 1.5;
+ 313: 
+ 314:     const metrics = [
+ 315:       {
+ 316:         label: "Downtime burden",
+ 317:         value: downtimeBurden,
+ 318:         displayValue: `${totalLostDays.toFixed(2)} days`
+ 319:       },
+ 320:       {
+ 321:         label: "Overwrite pressure",
+ 322:         value: overwritePressure,
+ 323:         displayValue: overwrite.toUpperCase()
+ 324:       },
+ 325:       {
+ 326:         label: "Direct gap pressure",
+ 327:         value: directGapPressure,
+ 328:         displayValue: `${gapDays.toFixed(2)} days`
+ 329:       }
+ 330:     ];
+ 331: 
+ 332:     const resolved = resolveStatus(metrics);
+ 333:     const status = resolved.status;
+ 334: 
+ 335:     const dominantConstraintMap = {
+ 336:       "Downtime burden": "Downtime burden",
+ 337:       "Overwrite pressure": "Overwrite pressure",
+ 338:       "Direct gap pressure": "Direct gap pressure"
+ 339:     };
+ 340: 
+ 341:     const dominantConstraint =
+ 342:       dominantConstraintMap[resolved.dominantLabel] || "Downtime burden";
+ 343: 
+ 344:     const interpretation = buildInterpretation(
+ 345:       status,
+ 346:       dominantConstraint,
+ 347:       totalLostDays,
+ 348:       gapDays,
+ 349:       remaining
+ 350:     );
+ 351: 
+ 352:     const guidance = buildGuidance(
+ 353:       status,
+ 354:       dominantConstraint,
+ 355:       totalLostDays
+ 356:     );
+ 357: 
+ 358:     const summaryRows = [
+ 359:       { label: "Retention (configured)", value: `${retentionDays.toFixed(1)} days` },
+ 360:       { label: "Downtime Window", value: `${totalDownHours.toFixed(1)} hours (${downDays.toFixed(2)} days)` },
+ 361:       { label: "Recording Gap", value: `${gapHours.toFixed(1)} hours (${gapDays.toFixed(2)} days)` },
+ 362:       { label: "Overwrite Risk", value: overwrite.toUpperCase() }
+ 363:     ];
+ 364: 
+ 365:     const derivedRows = [
+ 366:       { label: "Estimated Effective Retention", value: `${effRetention.toFixed(1)} days` },
+ 367:       { label: "Estimated Retention Remaining", value: `${remaining.toFixed(1)} days` },
+ 368:       { label: "Estimated Days Lost", value: `${totalLostDays.toFixed(2)} days` },
+ 369:       { label: "Planning Basis", value: "Outage + restore + overwrite estimate" }
+ 370:     ];
+ 371: 
+ 372:     if (
+ 373:       window.ScopedLabsAnalyzer &&
+ 374:       typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+ 375:     ) {
+ 376:       window.ScopedLabsAnalyzer.renderOutput({
+ 377:         resultsEl: els.results,
+ 378:         analysisEl: els.analysisCopy,
+ 379:         summaryRows,
+ 380:         derivedRows,
+ 381:         status,
+ 382:         interpretation,
+ 383:         dominantConstraint,
+ 384:         guidance,
+ 385:         existingChartRef: null,
+ 386:         existingWrapRef: null
+ 387:       });
+ 388:     } else {
+ 389:       renderFallback(
+ 390:         summaryRows,
+ 391:         derivedRows,
+ 392:         status,
+ 393:         dominantConstraint,
+ 394:         interpretation,
+ 395:         guidance
+ 396:       );
+ 397:     }
+ 398: 
+ 399:     clearChart();
+ 400: 
+ 401:     if (
+ 402:       window.ScopedLabsAnalyzer &&
+ 403:       typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+ 404:     ) {
+ 405:       window.ScopedLabsAnalyzer.renderAnalyzerChart({
+ 406:         mountEl: els.results,
+ 407:         existingChartRef: chartRef,
+ 408:         existingWrapRef: chartWrapRef,
+ 409:         labels: [
+ 410:           "Downtime Burden",
+ 411:           "Overwrite Pressure",
+ 412:           "Direct Gap"
+ 413:         ],
+ 414:         values: [
+ 415:           downtimeBurden,
+ 416:           overwritePressure,
+ 417:           directGapPressure
+ 418:         ],
+ 419:         displayValues: [
+ 420:           `${totalLostDays.toFixed(2)} days`,
+ 421:           overwrite.toUpperCase(),
+ 422:           `${gapDays.toFixed(2)} days`
+ 423:         ],
+ 424:         referenceValue: 1.0,
+ 425:         healthyMax: 1.0,
+ 426:         watchMax: 1.5,
+ 427:         axisTitle: "Loss Pressure",
+ 428:         referenceLabel: "Healthy Threshold",
+ 429:         healthyLabel: "Healthy",
+ 430:         watchLabel: "Watch",
+ 431:         riskLabel: "Risk",
+ 432:         chartMax: Math.max(
+ 433:           4,
+ 434:           Math.ceil(Math.max(downtimeBurden, overwritePressure, directGapPressure, 1.5) * 1.15 * 10) / 10
+ 435:         )
+ 436:       });
+ 437:     }
+ 438:   }
+ 439: 
+ 440:   function reset() {
+ 441:     els.retentionDays.value = 30;
+ 442:     els.gapHours.value = 8;
+ 443:     els.restoreHours.value = 4;
+ 444:     els.overwrite.value = "normal";
+ 445:     renderEmpty();
+ 446:   }
+ 447: 
+ 448:   function bindInvalidation() {
+ 449:     [els.retentionDays, els.gapHours, els.restoreHours, els.overwrite].forEach((el) => {
+ 450:       if (!el) return;
+ 451:       el.addEventListener("input", invalidate);
+ 452:       el.addEventListener("change", invalidate);
+ 453:     });
+ 454:   }
+ 455: 
+ 456:   function bind() {
+ 457:     bindInvalidation();
+ 458: 
+ 459:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 460:     if (els.reset) els.reset.addEventListener("click", reset);
+ 461:   }
+ 462: 
+ 463:   function boot() {
+ 464:     const unlocked = unlockCategoryPage();
+ 465:     if (!unlocked) return;
+ 466: 
+ 467:     renderEmpty();
+ 468:     bindInvalidation();
+ 469: 
+ 470:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 471:     if (els.reset) els.reset.addEventListener("click", reset);
+ 472: 
+ 473:     const year = document.querySelector("[data-year]");
+ 474:     if (year) year.textContent = new Date().getFullYear();
+ 475:   }
+ 476: 
+ 477:   window.addEventListener("DOMContentLoaded", boot);
+ 478: })();
+
+
+============================================================
+TOOL: raid-impact
+============================================================
+Title: RAID Capacity &amp; Failure Impact
+Tier: pro
+Meta description: Compute usable RAID capacity, retention fit, and survivability tradeoffs.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- RAID level
+- Drive count
+- Drive size (TB)
+- Hot spares
+- Platform overhead (%)
+- Target retention (days)
+- Imported required storage (GB)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- raidLevel
+- driveCount
+- driveSizeTb
+- hotSpares
+- overheadPct
+- targetDays
+- requiredStorageGb
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+ 124:   function clearAnalysisBlock() {
+ 125:     if (
+ 126:       window.ScopedLabsAnalyzer &&
+ 127:       typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+ 128:     ) {
+ 129:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+ 130:       return;
+ 131:     }
+ 132:     if (els.analysisCopy) {
+ 133:       els.analysisCopy.style.display = "none";
+ 134:       els.analysisCopy.innerHTML = "";
+ 135:     }
+ 136:   }
+
+--- CORE BLOCK 2 ---
+ 248:       ${parts.join(" | ")}
+ 249:       <br><br>
+ 250:       This step checks whether the selected RAID profile can actually support the required retention target once parity, mirroring, spares, and platform overhead are applied.
+ 251:     `;
+ 252:   }
+ 253: 
+ 254:   function invalidate() {
+ 255:     clearStored();
+ 256:     hideNext();
+ 257: 
+ 258:     if (
+ 259:       window.ScopedLabsAnalyzer &&
+ 260:       typeof window.ScopedLabsAnalyzer.invalidate === "function"
+ 261:     ) {
+ 262:       window.ScopedLabsAnalyzer.invalidate({
+ 263:         resultsEl: els.results,
+ 264:         analysisEl: els.analysisCopy,
+ 265:         category: CATEGORY,
+ 266:         step: STEP,
+ 267:         lane: LANE,
+ 268:         emptyMessage: "Enter values and press Calculate."
+ 269:       });
+ 270:     } else {
+ 271:       renderEmpty();
+ 272:     }
+ 273: 
+ 274:     clearChart();
+ 275:   }
+ 276: 
+ 277:   function buildInterpretation(status, dominantConstraint, fitRatio, active, level) {
+ 278:     if (status === "HEALTHY") {
+ 279:       return `The selected RAID profile remains in a workable planning range. Usable capacity, redundancy, and retention fit are aligned well enough that the array should support the intended storage target without leaning on unsafe assumptions.`;
+ 280:     }
+ 281: 
+ 282:     if (status === "WATCH") {
+ 283:       if (dominantConstraint === "Retention fit pressure") {
+ 284:         return `The main issue is capacity fit against the required retention target. The array may still be viable, but usable storage is close enough to the requirement that overhead drift or future ingest growth could erode margin quickly.`;
+ 285:       }
+ 286: 
+ 287:       if (dominantConstraint === "Failure exposure") {
+ 288:         return `The capacity math may close, but the chosen RAID level is carrying more rebuild or failure exposure than is ideal for the array size. Reliability risk is starting to matter as much as raw capacity.`;
+ 289:       }
+ 290: 
+ 291:       return `Capacity penalty from parity, mirroring, spares, and overhead is becoming meaningful. The array still works on paper, but the tradeoff between usable capacity and protection is now tight enough to deserve deliberate review.`;
+ 292:     }
+ 293: 
+ 294:     if (dominantConstraint === "Retention fit pressure") {
+ 295:       return `Usable capacity is under too much pressure relative to the imported retention target. The design may look close, but the storage margin is now tight enough that the array cannot be treated as comfortably sized.`;
+ 296:     }
+ 297: 
+ 298:     if (dominantConstraint === "Failure exposure") {
+ 299:       return `The dominant concern is survivability exposure, not just capacity. The selected RAID profile is now carrying enough rebuild or fault-tolerance risk that the storage design becomes operationally fragile under failure conditions.`;
+ 300:     }
+ 301: 
+ 302:     return `The protection overhead is consuming enough of the raw array that usable capacity efficiency becomes a major design issue. The tradeoff between resilience and retention is no longer minor.`;
+ 303:   }
+ 304: 
+ 305:   function buildGuidance(status, dominantConstraint, level, fitPass) {
+ 306:     if (status === "HEALTHY") {
+ 307:       return `Carry this array forward into survivability analysis, but keep the same overhead and ingest assumptions consistent. The current RAID choice looks workable, and the next question is how the design behaves during failure events.`;
+ 308:     }
+ 309: 
+ 310:     if (status === "WATCH") {
+ 311:       if (dominantConstraint === "Retention fit pressure") {
+ 312:         return `Increase usable capacity, reduce required retention burden, or tighten ingest assumptions before locking the design. The current fit is workable but not comfortably forgiving.`;
+ 313:       }
+ 314: 
+ 315:       if (dominantConstraint === "Failure exposure") {
+ 316:         return `Review whether the chosen RAID level provides enough failure margin for the drive count and disk size. The capacity may fit, but rebuild exposure is now influential enough to matter.`;
+ 317:       }
+ 318: 
+ 319:       return `Re-evaluate the balance between protection and usable capacity. The current design still works, but the efficiency penalty is large enough that a small change in RAID strategy could improve the outcome materially.`;
+ 320:     }
+ 321: 
+ 322:     if (dominantConstraint === "Retention fit pressure") {
+ 323:       return `Do not trust this array as comfortably sized for the imported target yet. Add capacity, reduce retention demand, or reduce ingest burden before moving forward.`;
+ 324:     }
+ 325: 
+ 326:     if (dominantConstraint === "Failure exposure") {
+ 327:       return `Choose a more resilient RAID profile or reduce rebuild exposure before deployment. The current fault-tolerance posture is too risky to treat as an afterthought.`;
+ 328:     }
+ 329: 
+ 330:     return `Rework the array design before proceeding. The current capacity efficiency penalty is high enough that the protection tradeoff should be revisited deliberately.`;
+ 331:   }
+ 332: 
+ 333:   function failureExposureScore(level, active) {
+ 334:     if (level === "0") return 2.4;
+ 335:     if (level === "1") return active >= 6 ? 1.15 : 0.95;
+ 336:     if (level === "5") return active >= 10 ? 1.95 : 1.45;
+ 337:     if (level === "6") return active >= 12 ? 1.15 : 0.85;
+ 338:     if (level === "10") return active >= 12 ? 1.05 : 0.80;
+ 339:     return 1.0;
+ 340:   }
+ 341: 
+ 342:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 343:     els.results.innerHTML = summaryRows.concat(derivedRows).map((row) => `
+ 344:       <div class="result-row">
+ 345:         <div class="k">${row.label}</div>
+ 346:         <div class="v ${row.cls || ""}">${row.value}</div>
+ 347:       </div>
+ 348:     `).join("");
+ 349: 
+ 350:     if (els.analysisCopy) {
+ 351:       els.analysisCopy.style.display = "";
+ 352:       els.analysisCopy.innerHTML = `
+ 353:         <div class="results-grid">
+ 354:           <div class="result-row">
+ 355:             <div class="k">Status</div>
+ 356:             <div class="v">${status}</div>
+ 357:           </div>
+ 358:           <div class="result-row">
+ 359:             <div class="k">Dominant Constraint</div>
+ 360:             <div class="v">${dominantConstraint}</div>
+ 361:           </div>
+ 362:           <div class="result-row">
+ 363:             <div class="k">Engineering Interpretation</div>
+ 364:             <div class="v">${interpretation}</div>
+ 365:           </div>
+ 366:           <div class="result-row">
+ 367:             <div class="k">Actionable Guidance</div>
+ 368:             <div class="v">${guidance}</div>
+ 369:           </div>
+ 370:         </div>
+ 371:       `;
+ 372:     }
+ 373:   }
+ 374: 
+ 375:   function calculate() {
+ 376:     const level = els.raidLevel.value;
+ 377:     const drives = Math.max(0, Math.floor(num(els.driveCount.value)));
+ 378:     const spares = clamp(Math.floor(num(els.hotSpares.value)), 0, Math.max(0, drives - 1));
+ 379:     const sizeTB = Math.max(0, num(els.driveSizeTb.value));
+ 380:     const overheadPct = clamp(num(els.overheadPct.value), 0, 50);
+ 381:     const targetDays = Math.max(1, Math.floor(num(els.targetDays.value)));
+ 382:     const requiredStorageGb = Math.max(0, num(els.requiredStorageGb.value));
+ 383: 
+ 384:     const active = Math.max(0, drives - spares);
+ 385: 
+ 386:     if (active < 2 || sizeTB <= 0) {
+ 387:       els.results.innerHTML = `
+ 388:         <div class="result-row">
+ 389:           <div class="k">Status</div>
+ 390:           <div class="v flag-warn">Enter a valid drive count (>= 2 active) and drive size.</div>
+ 391:         </div>
+ 392:       `;
+ 393:       clearAnalysisBlock();
+ 394:       hideNext();
+ 395:       clearStored();
+ 396:       clearChart();
+ 397:       return;
+ 398:     }
+ 399: 
+ 400:     let usableTB = 0;
+ 401:     let rule = "";
+ 402: 
+ 403:     if (level === "0") {
+ 404:       usableTB = active * sizeTB;
+ 405:       rule = "Usable = N × size";
+ 406:     } else if (level === "1") {
+ 407:       const pairs = Math.floor(active / 2);
+ 408:       usableTB = pairs * sizeTB;
+ 409:       rule = "Usable = floor(N / 2) × size";
+ 410:     } else if (level === "5") {
+ 411:       if (active < 3) {
+ 412:         els.results.innerHTML = `
+ 413:           <div class="result-row">
+ 414:             <div class="k">Status</div>
+ 415:             <div class="v flag-warn">RAID 5 requires at least 3 active drives.</div>
+ 416:           </div>
+ 417:         `;
+ 418:         clearAnalysisBlock();
+ 419:         hideNext();
+ 420:         clearStored();
+ 421:         clearChart();
+ 422:         return;
+ 423:       }
+ 424:       usableTB = (active - 1) * sizeTB;
+ 425:       rule = "Usable = (N - 1) × size";
+ 426:     } else if (level === "6") {
+ 427:       if (active < 4) {
+ 428:         els.results.innerHTML = `
+ 429:           <div class="result-row">
+ 430:             <div class="k">Status</div>
+ 431:             <div class="v flag-warn">RAID 6 requires at least 4 active drives.</div>
+ 432:           </div>
+ 433:         `;
+ 434:         clearAnalysisBlock();
+ 435:         hideNext();
+ 436:         clearStored();
+ 437:         clearChart();
+ 438:         return;
+ 439:       }
+ 440:       usableTB = (active - 2) * sizeTB;
+ 441:       rule = "Usable = (N - 2) × size";
+ 442:     } else if (level === "10") {
+ 443:       if (active < 4) {
+ 444:         els.results.innerHTML = `
+ 445:           <div class="result-row">
+ 446:             <div class="k">Status</div>
+ 447:             <div class="v flag-warn">RAID 10 requires at least 4 active drives.</div>
+ 448:           </div>
+ 449:         `;
+ 450:         clearAnalysisBlock();
+ 451:         hideNext();
+ 452:         clearStored();
+ 453:         clearChart();
+ 454:         return;
+ 455:       }
+ 456:       const pairs = Math.floor(active / 2);
+ 457:       usableTB = pairs * sizeTB;
+ 458:       rule = "Usable = floor(N / 2) × size (striped mirrors)";
+ 459:     }
+ 460: 
+ 461:     const rawTB = active * sizeTB;
+ 462:     const usableAfterOverheadTB = usableTB * (1 - overheadPct / 100);
+ 463: 
+ 464:     const rawTiB = toTiBFromTB(rawTB);
+ 465:     const usableTiB = toTiBFromTB(usableTB);
+ 466:     const usableNetTiB = toTiBFromTB(usableAfterOverheadTB);
+ 467: 
+ 468:     const penaltyPct = rawTB > 0 ? (1 - usableTB / rawTB) * 100 : 0;
+ 469:     const tol = toleranceText(level);
+ 470: 
+ 471:     const netUsableGiB = toGiBFromTB(usableAfterOverheadTB);
+ 472:     const maxGiBPerDay = targetDays > 0 ? netUsableGiB / targetDays : 0;
+ 473:     const maxGBPerDayDecimal = (maxGiBPerDay * (1024 ** 3)) / 1e9;
+ 474: 
+ 475:     let fitText = "No imported retention target.";
+ 476:     let fitCls = "";
+ 477:     let fitRatio = 0.9;
+ 478:     let fitPass = true;
+ 479: 
+ 480:     if (requiredStorageGb > 0) {
+ 481:       const netUsableGBDecimal = usableAfterOverheadTB * 1000;
+ 482:       fitRatio = requiredStorageGb / Math.max(1, netUsableGBDecimal);
+ 483: 
+ 484:       if (netUsableGBDecimal >= requiredStorageGb) {
+ 485:         fitText = `Pass — array can support imported retention target (${requiredStorageGb.toFixed(1)} GB required).`;
+ 486:         fitCls = "flag-ok";
+ 487:         fitPass = true;
+ 488:       } else {
+ 489:         fitText = `Shortfall — array is below imported retention target by ${(requiredStorageGb - netUsableGBDecimal).toFixed(1)} GB.`;
+ 490:         fitCls = "flag-warn";
+ 491:         fitPass = false;
+ 492:       }
+ 493:     }
+ 494: 
+ 495:     let riskNote = "Balanced for general workloads.";
+ 496:     let riskCls = "flag-ok";
+ 497: 
+ 498:     if (level === "0") {
+ 499:       riskNote = "High risk: any single drive failure means total data loss.";
+ 500:       riskCls = "flag-bad";
+ 501:     } else if (level === "5" && active >= 10) {
+ 502:       riskNote = "Caution: large RAID 5 arrays increase rebuild exposure, especially with bigger disks.";
+ 503:       riskCls = "flag-warn";
+ 504:     } else if (level === "6") {
+ 505:       riskNote = "Stronger rebuild safety than RAID 5 for larger arrays.";
+ 506:       riskCls = "flag-ok";
+ 507:     }
+ 508: 
+ 509:     const retentionFitPressure = requiredStorageGb > 0 ? fitRatio : Math.max(0.8, targetDays / 30);
+ 510:     const exposurePressure = failureExposureScore(level, active);
+ 511:     const efficiencyPenaltyPressure = Math.max(0.2, penaltyPct / 25);
+ 512: 
+ 513:     const metrics = [
+ 514:       {
+ 515:         label: "Retention fit pressure",
+ 516:         value: retentionFitPressure,
+ 517:         displayValue: requiredStorageGb > 0 ? `${fitRatio.toFixed(2)}x` : `${targetDays} days`
+ 518:       },
+ 519:       {
+ 520:         label: "Failure exposure",
+ 521:         value: exposurePressure,
+ 522:         displayValue: tol.t
+ 523:       },
+ 524:       {
+ 525:         label: "Efficiency penalty",
+ 526:         value: efficiencyPenaltyPressure,
+ 527:         displayValue: `${penaltyPct.toFixed(1)}%`
+ 528:       }
+ 529:     ];
+ 530: 
+ 531:     let status = "HEALTHY";
+ 532:     let dominantLabel = "Retention fit pressure";
+ 533: 
+ 534:     if (
+ 535:       window.ScopedLabsAnalyzer &&
+ 536:       typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+ 537:     ) {
+ 538:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 539:         metrics,
+ 540:         healthyMax: 1.0,
+ 541:         watchMax: 1.6
+ 542:       });
+ 543:       status = resolved?.status || "HEALTHY";
+ 544:       dominantLabel = resolved?.dominant?.label || "Retention fit pressure";
+ 545:     }
+ 546: 
+ 547:     const dominantConstraintMap = {
+ 548:       "Retention fit pressure": "Retention fit pressure",
+ 549:       "Failure exposure": "Failure exposure",
+ 550:       "Efficiency penalty": "Efficiency penalty"
+ 551:     };
+ 552: 
+ 553:     const dominantConstraint =
+ 554:       dominantConstraintMap[dominantLabel] || "Retention fit pressure";
+ 555: 
+ 556:     const interpretation = buildInterpretation(status, dominantConstraint, fitRatio, active, level);
+ 557:     const guidance = buildGuidance(status, dominantConstraint, level, fitPass);
+ 558: 
+ 559:     const summaryRows = [
+ 560:       { label: "Active drives (excluding spares)", value: String(active) },
+ 561:       { label: "Raw capacity", value: `${rawTB.toFixed(1)} TB • ${rawTiB.toFixed(2)} TiB` },
+ 562:       { label: "Usable capacity (rule)", value: `${usableTB.toFixed(1)} TB • ${usableTiB.toFixed(2)} TiB` },
+ 563:       { label: "Usable after overhead", value: `${usableAfterOverheadTB.toFixed(1)} TB • ${usableNetTiB.toFixed(2)} TiB` }
+ 564:     ];
+ 565: 
+ 566:     const derivedRows = [
+ 567:       { label: "Capacity penalty vs raw", value: `${penaltyPct.toFixed(1)}%` },
+ 568:       { label: "Fault tolerance", value: tol.t, cls: tol.cls },
+ 569:       { label: "Rule", value: rule },
+ 570:       { label: `Max daily ingest @ ${targetDays} days retention`, value: `${maxGBPerDayDecimal.toFixed(0)} GB/day` },
+ 571:       { label: "Max daily ingest (GiB/day)", value: `${maxGiBPerDay.toFixed(0)} GiB/day` },
+ 572:       { label: "Imported retention fit", value: fitText, cls: fitCls },
+ 573:       { label: "Risk note", value: riskNote, cls: riskCls }
+ 574:     ];
+ 575: 
+ 576:     if (
+ 577:       window.ScopedLabsAnalyzer &&
+ 578:       typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+ 579:     ) {
+ 580:       window.ScopedLabsAnalyzer.renderOutput({
+ 581:         resultsEl: els.results,
+ 582:         analysisEl: els.analysisCopy,
+ 583:         summaryRows,
+ 584:         derivedRows,
+ 585:         status,
+ 586:         interpretation,
+ 587:         dominantConstraint,
+ 588:         guidance,
+ 589:         existingChartRef: null,
+ 590:         existingWrapRef: null
+ 591:       });
+ 592:     } else {
+ 593:       renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance);
+ 594:     }
+ 595: 
+ 596:     clearChart();
+ 597: 
+ 598:     if (
+ 599:       window.ScopedLabsAnalyzer &&
+ 600:       typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function"
+ 601:     ) {
+ 602:       window.ScopedLabsAnalyzer.renderAnalyzerChart({
+ 603:         mountEl: els.results,
+ 604:         existingChartRef: chartRef,
+ 605:         existingWrapRef: chartWrapRef,
+ 606:         labels: ["Retention Fit", "Failure Exposure", "Efficiency Penalty"],
+ 607:         values: [retentionFitPressure, exposurePressure, efficiencyPenaltyPressure],
+ 608:         displayValues: [
+ 609:           requiredStorageGb > 0 ? `${fitRatio.toFixed(2)}x` : `${targetDays} days`,
+ 610:           tol.t,
+ 611:           `${penaltyPct.toFixed(1)}%`
+ 612:         ],
+ 613:         referenceValue: 1.0,
+ 614:         healthyMax: 1.0,
+ 615:         watchMax: 1.6,
+ 616:         axisTitle: "RAID Pressure",
+ 617:         referenceLabel: "Healthy Threshold",
+ 618:         healthyLabel: "Healthy",
+ 619:         watchLabel: "Watch",
+ 620:         riskLabel: "Risk",
+ 621:         chartMax: Math.max(
+ 622:           2.8,
+ 623:           Math.ceil(Math.max(retentionFitPressure, exposurePressure, efficiencyPenaltyPressure, 1.6) * 1.15 * 10) / 10
+ 624:         )
+ 625:       });
+ 626:     }
+ 627: 
+ 628:     const params = new URLSearchParams({
+ 629:       source: "raid",
+ 630:       raidLevel: String(level),
+ 631:       driveCount: String(drives),
+ 632:       driveSizeTb: String(sizeTB),
+ 633:       hotSpares: String(spares),
+ 634:       overheadPct: String(overheadPct),
+ 635:       targetDays: String(targetDays),
+ 636:       requiredStorageGb: String(requiredStorageGb),
+ 637:       usableTb: usableAfterOverheadTB.toFixed(2)
+ 638:     });
+ 639: 
+ 640:     if (els.continueBtn) {
+ 641:       els.continueBtn.href = NEXT_URL + "?" + params.toString();
+ 642:     }
+ 643: 
+ 644:     try {
+ 645:       const payload = {
+ 646:         category: CATEGORY,
+ 647:         step: STEP,
+ 648:         data: {
+ 649:           raidLevel: String(level),
+ 650:           activeDrives: active,
+ 651:           rawTB: Number(rawTB.toFixed(1)),
+ 652:           usableTB: Number(usableAfterOverheadTB.toFixed(2)),
+ 653:           targetDays,
+ 654:           requiredStorageGb: Number(requiredStorageGb.toFixed(1)),
+ 655:           fitPass,
+ 656:           status,
+ 657:           dominantConstraint
+ 658:         }
+ 659:       };
+ 660: 
+ 661:       sessionStorage.setItem(FLOW_KEYS.raid, JSON.stringify(payload));
+ 662:       sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+ 663:     } catch {}
+ 664: 
+ 665:     showNext();
+ 666:   }
+ 667: 
+ 668:   function reset() {
+ 669:     els.raidLevel.value = "5";
+ 670:     els.driveCount.value = "8";
+
+--- CORE BLOCK 3 ---
+ 679:     renderFlowNote();
+ 680:   }
+ 681: 
+ 682:   function bindInvalidation() {
+ 683:     [
+ 684:       els.raidLevel,
+ 685:       els.driveCount,
+ 686:       els.driveSizeTb,
+ 687:       els.hotSpares,
+ 688:       els.overheadPct,
+ 689:       els.targetDays,
+ 690:       els.requiredStorageGb
+ 691:     ].forEach((el) => {
+ 692:       if (!el) return;
+ 693:       el.addEventListener("input", invalidate);
+ 694:       el.addEventListener("change", invalidate);
+ 695:     });
+ 696:   }
+ 697: 
+ 698:   function bind() {
+ 699:     if (els.calc) els.calc.addEventListener("click", calculate);
+ 700:     if (els.reset) els.reset.addEventListener("click", reset);
+ 701: 
+ 702:     bindInvalidation();
+ 703: 
+ 704:     document.addEventListener("keydown", (e) => {
+ 705:       if (e.key === "Enter") {
+ 706:         const t = e.target;
+ 707:         if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 708:           e.preventDefault();
+ 709:           calculate();
+ 710:         }
+ 711:       }
+ 712:     });
+ 713:   }
+ 714: 
+ 715:   function boot() {
+ 716:     renderEmpty();
+ 717:     hideNext();
+ 718:     renderFlowNote();
+ 719:     bind();
+ 720: 
+ 721:     const yearEl = document.querySelector("[data-year]");
+ 722:     if (yearEl) yearEl.textContent = new Date().getFullYear();
+ 723:   }
+ 724: 
+ 725:   window.addEventListener("DOMContentLoaded", () => {
+ 726:     const unlocked = unlockCategoryPage();
+ 727:     if (!unlocked) return;
+ 728:     boot();
+ 729:   });
+ 730: })();
+ 731: 
+
+
+============================================================
+TOOL: retention-planner
+============================================================
+Title: Retention Planner
+Tier: free/unknown
+Meta description: Estimate required storage based on cameras, bitrate, and desired retention.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Camera Count
+- Average Bitrate per Camera (Mbps)
+- Hours per Day Recording
+- Desired Retention (days)
+- Storage Overhead (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- cams
+- bitrate
+- hours
+- days
+- overhead
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- continue
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  77:   function clearAnalysisBlock() {
+  78:     if (
+  79:       window.ScopedLabsAnalyzer &&
+  80:       typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+  81:     ) {
+  82:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+  83:       return;
+  84:     }
+  85:     if (els.analysisCopy) {
+  86:       els.analysisCopy.style.display = "none";
+  87:       els.analysisCopy.innerHTML = "";
+  88:     }
+  89:   }
+
+--- CORE BLOCK 2 ---
+ 181:       ${parts.join(" | ")}
+ 182:       <br><br>
+ 183:       This step converts the imported stream assumptions into a total storage target that the RAID design must actually support after protection overhead is applied.
+ 184:     `;
+ 185:   }
+ 186: 
+ 187:   function invalidate() {
+ 188:     clearStored();
+ 189:     hideNext();
+ 190: 
+ 191:     if (
+ 192:       window.ScopedLabsAnalyzer &&
+ 193:       typeof window.ScopedLabsAnalyzer.invalidate === "function"
+ 194:     ) {
+ 195:       window.ScopedLabsAnalyzer.invalidate({
+ 196:         resultsEl: els.results,
+ 197:         analysisEl: els.analysisCopy,
+ 198:         category: CATEGORY,
+ 199:         step: STEP,
+ 200:         lane: LANE,
+ 201:         emptyMessage: "Enter values and press Calculate."
+ 202:       });
+ 203:     } else {
+ 204:       renderEmpty();
+ 205:     }
+ 206: 
+ 207:     clearChart();
+ 208:   }
+ 209: 
+ 210:   function buildInterpretation(status, dominantConstraint, totalTb, days, cams) {
+ 211:     if (status === "HEALTHY") {
+ 212:       return `Required storage remains in a manageable range for the selected camera count, bitrate, and retention target. The design is not yet leaning too hard on overhead or retention burden, so the next RAID step can focus on protection tradeoffs rather than fighting an oversized storage target.`;
+ 213:     }
+ 214: 
+ 215:     if (status === "WATCH") {
+ 216:       if (dominantConstraint === "Retention burden") {
+ 217:         return `The desired retention window is starting to become the main storage driver. The plan can still work, but longer archive time is now contributing enough to demand more deliberate capacity planning.`;
+ 218:       }
+ 219: 
+ 220:       if (dominantConstraint === "Fleet scale burden") {
+ 221:         return `Camera count is now amplifying storage demand meaningfully. Per-stream assumptions may look reasonable, but the aggregate fleet size is large enough that small bitrate changes can materially shift total required storage.`;
+ 222:       }
+ 223: 
+ 224:       return `Overhead is starting to matter. The base storage math may close, but platform reserve and planning cushion are now large enough to influence the final capacity target in a non-trivial way.`;
+ 225:     }
+ 226: 
+ 227:     if (dominantConstraint === "Retention burden") {
+ 228:       return `The retention target is driving storage demand into a high-pressure range. At this point, archive duration is no longer a background preference — it is a primary capacity driver that must be justified against the rest of the design.`;
+ 229:     }
+ 230: 
+ 231:     if (dominantConstraint === "Fleet scale burden") {
+ 232:       return `The camera fleet itself is now the main reason storage demand is high. Even moderate per-camera rates are being multiplied into a large total requirement across the deployment.`;
+ 233:     }
+ 234: 
+ 235:     return `The planning overhead is consuming enough additional capacity that the final storage requirement becomes materially heavier than the base ingest math alone would suggest.`;
+ 236:   }
+ 237: 
+ 238:   function buildGuidance(status, dominantConstraint) {
+ 239:     if (status === "HEALTHY") {
+ 240:       return `Carry this storage requirement forward into RAID planning. The next step is deciding how much of the raw array must be reserved for protection while still preserving the required retention target.`;
+ 241:     }
+ 242: 
+ 243:     if (status === "WATCH") {
+ 244:       if (dominantConstraint === "Retention burden") {
+ 245:         return `Review whether the full retention target is operationally necessary, or whether the design should add capacity before locking it in. The archive window is now one of the main reasons the storage plan is getting heavier.`;
+ 246:       }
+ 247: 
+ 248:       if (dominantConstraint === "Fleet scale burden") {
+ 249:         return `Validate the estimate at full deployment scale. Camera count is high enough that any future bitrate drift or camera additions could change the storage plan noticeably.`;
+ 250:       }
+ 251: 
+ 252:       return `Keep using a conservative overhead model in the next step. The current requirement is still workable, but the margin contribution is now large enough that sloppy assumptions would understate true capacity needs.`;
+ 253:     }
+ 254: 
+ 255:     if (dominantConstraint === "Retention burden") {
+ 256:       return `Reduce retention demand or increase planned capacity before moving forward if the design is already tight. The required archive window is currently the main reason storage demand is becoming difficult to manage.`;
+ 257:     }
+ 258: 
+ 259:     if (dominantConstraint === "Fleet scale burden") {
+ 260:       return `Treat the deployment as a large aggregate storage problem, not a per-camera estimate repeated many times. Fleet size is now a first-order design factor.`;
+ 261:     }
+ 262: 
+ 263:     return `Use the higher storage requirement deliberately in RAID sizing. The overhead component is no longer minor enough to ignore in protection planning.`;
+ 264:   }
+ 265: 
+ 266:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 267:     els.results.innerHTML = summaryRows.concat(derivedRows).map((row) => `
+ 268:       <div class="result-row">
+ 269:         <span class="result-label">${row.label}</span>
+ 270:         <span class="result-value">${row.value}</span>
+ 271:       </div>
+ 272:     `).join("");
+ 273: 
+ 274:     if (els.analysisCopy) {
+ 275:       els.analysisCopy.style.display = "";
+ 276:       els.analysisCopy.innerHTML = `
+ 277:         <div class="results-grid">
+ 278:           <div class="result-row">
+ 279:             <span class="result-label">Status</span>
+ 280:             <span class="result-value">${status}</span>
+ 281:           </div>
+ 282:           <div class="result-row">
+ 283:             <span class="result-label">Dominant Constraint</span>
+ 284:             <span class="result-value">${dominantConstraint}</span>
+ 285:           </div>
+ 286:           <div class="result-row">
+ 287:             <span class="result-label">Engineering Interpretation</span>
+ 288:             <span class="result-value">${interpretation}</span>
+ 289:           </div>
+ 290:           <div class="result-row">
+ 291:             <span class="result-label">Actionable Guidance</span>
+ 292:             <span class="result-value">${guidance}</span>
+ 293:           </div>
+ 294:         </div>
+ 295:       `;
+ 296:     }
+ 297:   }
+ 298: 
+ 299:   function calc() {
+ 300:     const cams = Math.max(1, safeNumber(els.cams.value, 0));
+ 301:     const bitrate = Math.max(0, safeNumber(els.bitrate.value, 0));
+ 302:     const hours = Math.max(0, safeNumber(els.hours.value, 0));
+ 303:     const days = Math.max(1, safeNumber(els.days.value, 0));
+ 304:     const overheadPct = Math.max(0, safeNumber(els.overhead.value, 0));
+ 305: 
+ 306:     if (bitrate <= 0) {
+ 307:       els.results.innerHTML = `<div class="result-row"><span class="result-label">Error</span><span class="result-value">Enter bitrate &gt; 0 Mbps</span></div>`;
+ 308:       clearAnalysisBlock();
+ 309:       hideNext();
+ 310:       clearStored();
+ 311:       clearChart();
+ 312:       return;
+ 313:     }
+ 314: 
+ 315:     const perCamGB = gbFromMbps(bitrate, hours * days);
+ 316:     const baseTotal = perCamGB * cams;
+ 317:     const overhead = baseTotal * (overheadPct / 100);
+ 318:     const finalTotal = baseTotal + overhead;
+ 319:     const finalTB = finalTotal / 1000;
+ 320:     const perDayGB = gbFromMbps(bitrate, hours) * cams;
+ 321: 
+ 322:     const retentionBurden = days / 30;
+ 323:     const fleetScaleBurden = cams / 16;
+ 324:     const overheadPressure = 1 + (overheadPct / 25);
+ 325: 
+ 326:     const metrics = [
+ 327:       {
+ 328:         label: "Retention burden",
+ 329:         value: retentionBurden,
+ 330:         displayValue: `${days} days`
+ 331:       },
+ 332:       {
+ 333:         label: "Fleet scale burden",
+ 334:         value: fleetScaleBurden,
+ 335:         displayValue: `${cams} cams`
+ 336:       },
+ 337:       {
+ 338:         label: "Overhead pressure",
+ 339:         value: overheadPressure,
+ 340:         displayValue: `${overheadPct.toFixed(0)}%`
+ 341:       }
+ 342:     ];
+ 343: 
+ 344:     let status = "HEALTHY";
+ 345:     let dominantLabel = "Retention burden";
+ 346: 
+ 347:     if (
+ 348:       window.ScopedLabsAnalyzer &&
+ 349:       typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+ 350:     ) {
+ 351:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 352:         metrics,
+ 353:         healthyMax: 1.0,
+ 354:         watchMax: 1.5
+ 355:       });
+ 356:       status = resolved?.status || "HEALTHY";
+ 357:       dominantLabel = resolved?.dominant?.label || "Retention burden";
+ 358:     }
+ 359: 
+ 360:     const dominantConstraintMap = {
+ 361:       "Retention burden": "Retention burden",
+ 362:       "Fleet scale burden": "Fleet scale burden",
+ 363:       "Overhead pressure": "Overhead pressure"
+ 364:     };
+ 365: 
+ 366:     const dominantConstraint =
+ 367:       dominantConstraintMap[dominantLabel] || "Retention burden";
+ 368: 
+ 369:     const interpretation = buildInterpretation(status, dominantConstraint, finalTB, days, cams);
+ 370:     const guidance = buildGuidance(status, dominantConstraint);
+ 371: 
+ 372:     const summaryRows = [
+ 373:       { label: "Cameras", value: String(cams) },
+ 374:       { label: "Bitrate per Camera", value: `${bitrate.toFixed(2)} Mbps` },
+ 375:       { label: "Retention", value: `${days} days` },
+ 376:       { label: "Daily Storage Requirement", value: `${perDayGB.toFixed(1)} GB/day` }
+ 377:     ];
+ 378: 
+ 379:     const derivedRows = [
+ 380:       { label: "Storage (Base)", value: `${baseTotal.toFixed(1)} GB` },
+ 381:       { label: "Overhead Added", value: `${overhead.toFixed(1)} GB` },
+ 382:       { label: "Total Storage Required", value: `${finalTotal.toFixed(1)} GB` },
+ 383:       { label: "Equivalent", value: `${finalTB.toFixed(2)} TB` }
+ 384:     ];
+ 385: 
+ 386:     if (
+ 387:       window.ScopedLabsAnalyzer &&
+ 388:       typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+ 389:     ) {
+ 390:       window.ScopedLabsAnalyzer.renderOutput({
+ 391:         resultsEl: els.results,
+ 392:         analysisEl: els.analysisCopy,
+ 393:         summaryRows,
+ 394:         derivedRows,
+ 395:         status,
+ 396:         interpretation,
+ 397:         dominantConstraint,
+ 398:         guidance,
+ 399:         existingChartRef: null,
+ 400:         existingWrapRef: null
+ 401:       });
+ 402:     } else {
+ 403:       renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance);
+ 404:     }
+ 405: 
+ 406:     const params = new URLSearchParams({
+ 407:       source: "retention",
+ 408:       cams: String(cams),
+ 409:       bitrate: String(bitrate),
+ 410:       hours: String(hours),
+ 411:       days: String(days),
+ 412:       overhead: String(overheadPct),
+ 413:       storage_total_gb: finalTotal.toFixed(1)
+ 414:     });
+ 415: 
+ 416:     if (els.continueBtn) {
+ 417:       els.continueBtn.href = NEXT_URL + "?" + params.toString();
+ 418:     }
+ 419: 
+ 420:     try {
+ 421:       const payload = {
+ 422:         category: CATEGORY,
+ 423:         step: STEP,
+ 424:         data: {
+ 425:           cams,
+ 426:           bitrateMbps: Number(bitrate.toFixed(2)),
+ 427:           hoursPerDay: Number(hours.toFixed(1)),
+ 428:           retentionDays: Number(days.toFixed(0)),
+ 429:           overheadPct: Number(overheadPct.toFixed(0)),
+ 430:           storageGb: Number(finalTotal.toFixed(1)),
+ 431:           storageTb: Number(finalTB.toFixed(2)),
+ 432:           status,
+ 433:           dominantConstraint
+ 434:         }
+ 435:       };
+ 436: 
+ 437:       sessionStorage.setItem(FLOW_KEYS.retention, JSON.stringify(payload));
+ 438:       sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+ 439:     } catch {}
+ 440: 
+ 441:     showNext();
+ 442:   }
+ 443: 
+ 444:   function reset() {
+ 445:     els.cams.value = 16;
+ 446:     els.bitrate.value = 4;
+ 447:     els.hours.value = 24;
+ 448:     els.days.value = 30;
+ 449:     els.overhead.value = 10;
+ 450:     renderEmpty();
+ 451:     hideNext();
+ 452:     importParams();
+ 453:   }
+ 454: 
+ 455:   function bindInvalidation() {
+ 456:     [els.cams, els.bitrate, els.hours, els.days, els.overhead].forEach((el) => {
+ 457:       if (el) {
+ 458:         el.addEventListener("input", invalidate);
+ 459:         el.addEventListener("change", invalidate);
+ 460:       }
+ 461:     });
+ 462:   }
+ 463: 
+ 464:   function bind() {
+ 465:     if (els.calc) els.calc.addEventListener("click", calc);
+ 466:     if (els.reset) els.reset.addEventListener("click", reset);
+ 467: 
+ 468:     bindInvalidation();
+ 469: 
+ 470:     document.addEventListener("keydown", (e) => {
+ 471:       if (e.key === "Enter") {
+ 472:         const t = e.target;
+ 473:         if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 474:           e.preventDefault();
+ 475:           calc();
+ 476:         }
+ 477:       }
+ 478:     });
+ 479:   }
+ 480: 
+ 481:   function boot() {
+ 482:     renderEmpty();
+ 483:     hideNext();
+ 484:     importParams();
+ 485:     bind();
+ 486: 
+ 487:     const year = document.querySelector("[data-year]");
+ 488:     if (year) year.textContent = new Date().getFullYear();
+ 489:   }
+ 490: 
+ 491:   window.addEventListener("DOMContentLoaded", boot);
+ 492: })();
+ 493: 
+
+
+============================================================
+TOOL: retention-survivability
+============================================================
+Title: Retention Survivability Estimator
+Tier: pro
+Meta description: Estimate how storage failures, degraded capacity, recording load, and recovery time affect video retention survivability.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Baseline retention (days)
+- Usable capacity loss (%)
+- Retention goal (days)
+- Degraded write penalty (%)
+- Degraded period (days)
+- Recommended headroom (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- robots
+- pipeline
+- flow-note
+- lockedCard
+- toolCard
+- baselineRetention
+- capacityLossPct
+- targetRetention
+- stressWritePct
+- degradedDays
+- reserveHeadroomPct
+- calc
+- reset
+- results
+- analysis-copy
+- next-step-row
+- continue
+- completion-wrap
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+   1: (() => {
+   2:   const CATEGORY = "video-storage";
+   3:   const STEP = "survivability";
+   4:   const LANE = "v1";
+   5:   const PREVIOUS_STEP = "raid";
+   6: 
+   7:   const FLOW_KEYS = {
+   8:     bitrate: "scopedlabs:pipeline:video-storage:bitrate",
+   9:     storage: "scopedlabs:pipeline:video-storage:storage",
+  10:     retention: "scopedlabs:pipeline:video-storage:retention",
+  11:     raid: "scopedlabs:pipeline:video-storage:raid",
+  12:     survivability: "scopedlabs:pipeline:video-storage:survivability"
+  13:   };
+  14: 
+  15:   const $ = (id) => document.getElementById(id);
+  16: 
+  17:   const els = {
+  18:     baselineRetention: $("baselineRetention"),
+  19:     capacityLossPct: $("capacityLossPct"),
+  20:     targetRetention: $("targetRetention"),
+  21:     stressWritePct: $("stressWritePct"),
+  22:     degradedDays: $("degradedDays"),
+  23:     reserveHeadroomPct: $("reserveHeadroomPct"),
+  24:     calc: $("calc"),
+  25:     reset: $("reset"),
+  26:     results: $("results"),
+  27:     analysisCopy: $("analysisCopy") || $("analysis-copy"),
+  28:     flowNote: $("flow-note"),
+  29:     completionWrap: $("completion-wrap"),
+  30:     continueWrap: $("next-step-row"),
+  31:     continueBtn: $("continue"),
+  32:     lockedCard: $("lockedCard"),
+  33:     toolCard: $("toolCard")
+  34:   };
+  35: 
+  36:   let chartRef = { current: null };
+  37:   let chartWrapRef = { current: null };
+  38: 
+  39:   function hasStoredAuth() {
+  40:     try {
+  41:       const k = Object.keys(localStorage).find((x) => x.startsWith("sb-"));
+  42:       if (!k) return false;
+  43:       const raw = JSON.parse(localStorage.getItem(k));
+  44:       return !!(
+  45:         raw?.access_token ||
+  46:         raw?.currentSession?.access_token ||
+  47:         (Array.isArray(raw) ? raw[0]?.access_token : null)
+  48:       );
+  49:     } catch {
+  50:       return false;
+  51:     }
+  52:   }
+  53: 
+  54:   function getUnlockedCategories() {
+  55:     try {
+  56:       const raw = localStorage.getItem("sl_unlocked_categories");
+  57:       if (!raw) return [];
+  58:       return raw.split(",").map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+  59:     } catch {
+  60:       return [];
+  61:     }
+  62:   }
+  63: 
+  64:   function unlockCategoryPage() {
+  65:     const category = String(document.body?.dataset?.category || "").trim().toLowerCase();
+  66:     const signedIn = hasStoredAuth();
+  67:     const unlocked = getUnlockedCategories().includes(category);
+  68: 
+  69:     if (signedIn && unlocked) {
+  70:       if (els.lockedCard) els.lockedCard.style.display = "none";
+  71:       if (els.toolCard) els.toolCard.style.display = "";
+  72:       return true;
+  73:     }
+
+--- CORE BLOCK 2 ---
+ 104:   function clearAnalysisBlock() {
+ 105:     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function") {
+ 106:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+ 107:       return;
+ 108:     }
+ 109:     if (els.analysisCopy) {
+ 110:       els.analysisCopy.style.display = "none";
+ 111:       els.analysisCopy.innerHTML = "";
+ 112:     }
+ 113:   }
+
+--- CORE BLOCK 3 ---
+ 160:         analysisEl: els.analysisCopy,
+ 161:         category: CATEGORY,
+ 162:         step: STEP,
+ 163:         lane: LANE,
+ 164:         emptyMessage: "Enter values and press Calculate."
+ 165:       });
+ 166:     } else {
+ 167:       renderEmpty();
+ 168:     }
+ 169:     clearChart();
+ 170:     hideCompletion();
+ 171:     hideContinue();
+ 172:   }
+ 173: 
+ 174:   function importFromRaid() {
+ 175:     const q = new URLSearchParams(window.location.search);
+ 176:     if (q.get("source") !== "raid") return;
+ 177: 
+ 178:     const importedTargetDays = Number(q.get("targetDays"));
+ 179:     const requiredStorageGb = Number(q.get("requiredStorageGb"));
+ 180:     const usableTb = Number(q.get("usableTb"));
+ 181: 
+ 182:     if (Number.isFinite(importedTargetDays) && importedTargetDays > 0) {
+ 183:       els.baselineRetention.value = String(importedTargetDays);
+ 184:       els.targetRetention.value = String(importedTargetDays);
+ 185:     }
+ 186: 
+ 187:     if (Number.isFinite(requiredStorageGb) && requiredStorageGb > 0 && Number.isFinite(usableTb) && usableTb > 0) {
+ 188:       const usableGb = usableTb * 1000;
+ 189:       const lossPct = Math.max(0, (1 - (usableGb / requiredStorageGb)) * 100);
+ 190:       els.capacityLossPct.value = round(lossPct, 1);
+ 191:     }
+ 192: 
+ 193:     if (els.flowNote) {
+ 194:       els.flowNote.hidden = false;
+ 195:       els.flowNote.innerHTML = `
+ 196:         <strong>Final Step — Using RAID Impact results:</strong><br>
+ 197:         Target: ${Number.isFinite(importedTargetDays) && importedTargetDays > 0 ? `${importedTargetDays} days` : "—"} |
+ 198:         Required Storage: ${Number.isFinite(requiredStorageGb) && requiredStorageGb > 0 ? `${(requiredStorageGb / 1000).toFixed(2)} TB` : "—"} |
+ 199:         Net Usable Array: ${Number.isFinite(usableTb) && usableTb > 0 ? `${usableTb.toFixed(2)} TB` : "—"}
+ 200:         <br><br>
+ 201:         This final step checks how degraded capacity, rebuild stress, and reserve loss compress the promised retention window under failure conditions.
+ 202:       `;
+ 203:     }
+ 204:   }
+ 205: 
+ 206:   function buildInterpretation(status, dominantConstraint) {
+ 207:     if (status === "HEALTHY") {
+ 208:       return "Degraded capacity reduces effective retention, but the design still remains in a controlled range. The storage plan retains enough margin that temporary degradation does not immediately collapse the retention promise.";
+ 209:     }
+ 210:     if (status === "WATCH") {
+ 211:       if (dominantConstraint === "Goal fit pressure") {
+ 212:         return "The main concern is how close degraded retention is to the actual target. The design may still work, but it is operating near a retention cliff where modest additional stress could cause it to miss the promise.";
+ 213:       }
+ 214:       if (dominantConstraint === "Capacity loss pressure") {
+ 215:         return "Usable capacity loss is now large enough that degradation meaningfully compresses retention. The system can still survive, but reserve margin is being consumed faster than is comfortable.";
+ 216:       }
+ 217:       return "Write-stress during degradation is starting to matter. Rebuild or verification load is now amplifying the retention hit enough that degraded-state performance deserves explicit attention.";
+ 218:     }
+ 219:     if (dominantConstraint === "Goal fit pressure") {
+ 220:       return "Effective retention falls too close to — or below — the required goal once the degraded condition is applied. The design is now too dependent on ideal recovery timing to be considered comfortable.";
+ 221:     }
+ 222:     if (dominantConstraint === "Capacity loss pressure") {
+ 223:       return "Capacity loss during degradation is severe enough to become the primary survivability issue. Even if the healthy-state design looks acceptable, the degraded-state retention window is now too compressed to ignore.";
+ 224:     }
+ 225:     return "Degraded write stress is materially shrinking effective retention. The array may recover eventually, but the combination of capacity loss and rebuild penalty is now strong enough to threaten the retention promise during the event itself.";
+ 226:   }
+ 227: 
+ 228:   function buildGuidance(status, dominantConstraint) {
+ 229:     if (status === "HEALTHY") {
+ 230:       return "The pipeline closes in a workable state. Keep reserve margin disciplined and recovery time short so degraded conditions remain inside the modelled survivability envelope.";
+ 231:     }
+ 232:     if (status === "WATCH") {
+ 233:       if (dominantConstraint === "Goal fit pressure") {
+ 234:         return "Increase baseline retention margin or reduce degraded-state exposure before the design grows further. The current retention promise is being carried too close to the edge under failure conditions.";
+ 235:       }
+ 236:       if (dominantConstraint === "Capacity loss pressure") {
+ 237:         return "Reduce degraded capacity loss or increase healthy-state headroom. The storage plan is still viable, but failure-state shrinkage is now consuming a meaningful amount of retention margin.";
+ 238:       }
+ 239:       return "Account for degraded write penalties more deliberately in planning. Recovery behavior is now important enough that it should not be treated as background noise.";
+ 240:     }
+ 241:     if (dominantConstraint === "Goal fit pressure") {
+ 242:       return "Do not trust the current retention promise under degraded conditions without more headroom. Increase baseline retention or reduce loss assumptions before deployment.";
+ 243:     }
+ 244:     if (dominantConstraint === "Capacity loss pressure") {
+ 245:       return "Reduce degradation severity or increase healthy-state capacity before relying on this design. The storage system is losing too much usable retention when it enters a degraded state.";
+ 246:     }
+ 247:     return "Shorten degraded duration, reduce write-stress, or add retention headroom. The current design is too sensitive to failure-state conditions to treat survivability as acceptable.";
+ 248:   }
+ 249: 
+ 250:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 251:     els.results.innerHTML = summaryRows.concat(derivedRows).map((row) => `
+ 252:       <div class="result-row">
+ 253:         <span class="result-label">${row.label}</span>
+ 254:         <span class="result-value">${row.value}</span>
+ 255:       </div>
+ 256:     `).join("");
+ 257: 
+ 258:     if (els.analysisCopy) {
+ 259:       els.analysisCopy.style.display = "";
+ 260:       els.analysisCopy.innerHTML = `
+ 261:         <div class="results-grid">
+ 262:           <div class="result-row">
+ 263:             <span class="result-label">Status</span>
+ 264:             <span class="result-value">${status}</span>
+ 265:           </div>
+ 266:           <div class="result-row">
+ 267:             <span class="result-label">Dominant Constraint</span>
+ 268:             <span class="result-value">${dominantConstraint}</span>
+ 269:           </div>
+ 270:           <div class="result-row">
+ 271:             <span class="result-label">Engineering Interpretation</span>
+ 272:             <span class="result-value">${interpretation}</span>
+ 273:           </div>
+ 274:           <div class="result-row">
+ 275:             <span class="result-label">Actionable Guidance</span>
+ 276:             <span class="result-value">${guidance}</span>
+ 277:           </div>
+ 278:         </div>
+ 279:       `;
+ 280:     }
+ 281:   }
+ 282: 
+ 283:   function compute() {
+ 284:     const baselineDays = Math.max(0.1, safeNumber(els.baselineRetention.value, 30));
+ 285:     const lossPct = clamp(safeNumber(els.capacityLossPct.value, 0), 0, 95);
+ 286:     const targetDays = Math.max(0.1, safeNumber(els.targetRetention.value, baselineDays));
+ 287:     const stressPct = clamp(safeNumber(els.stressWritePct.value, 0), 0, 200);
+ 288:     const degradedDays = clamp(safeNumber(els.degradedDays.value, 0), 0, 365);
+ 289:     const headroomPct = clamp(safeNumber(els.reserveHeadroomPct.value, 0), 0, 200);
+ 290: 
+ 291:     const capMult = 1 - (lossPct / 100);
+ 292:     const writeMult = 1 + (stressPct / 100);
+ 293: 
+ 294:     const effectiveDays = baselineDays * capMult / writeMult;
+ 295:     const daysLost = Math.max(0, baselineDays - effectiveDays);
+ 296: 
+ 297:     const strictRequiredBaseline = targetDays * writeMult / Math.max(0.001, capMult);
+ 298:     const headroomBaseline = targetDays * (1 + headroomPct / 100);
+ 299: 
+ 300:     const burnRate = (baselineDays / Math.max(0.001, effectiveDays)) - 1;
+ 301:     const degradedImpact = Math.max(0, burnRate * degradedDays);
+ 302: 
+ 303:     const meets = effectiveDays >= targetDays;
+ 304:     const marginRatio = effectiveDays / targetDays;
+ 305: 
+ 306:     const goalFitPressure = targetDays / effectiveDays;
+ 307:     const capacityLossPressure = lossPct / 12;
+ 308:     const degradedStressPressure = (stressPct / 10) + (degradedDays / 5);
+ 309: 
+ 310:     const metrics = [
+ 311:       {
+ 312:         label: "Goal fit pressure",
+ 313:         value: goalFitPressure,
+ 314:         displayValue: `${effectiveDays.toFixed(2)} days`
+ 315:       },
+ 316:       {
+ 317:         label: "Capacity loss pressure",
+ 318:         value: capacityLossPressure,
+ 319:         displayValue: `${lossPct.toFixed(1)}%`
+ 320:       },
+ 321:       {
+ 322:         label: "Degraded stress pressure",
+ 323:         value: degradedStressPressure,
+ 324:         displayValue: `${stressPct.toFixed(1)}% / ${degradedDays.toFixed(1)}d`
+ 325:       }
+ 326:     ];
+ 327: 
+ 328:     let status = "HEALTHY";
+ 329:     let dominantLabel = "Goal fit pressure";
+ 330: 
+ 331:     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.resolveStatus === "function") {
+ 332:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 333:         metrics,
+ 334:         healthyMax: 1.0,
+ 335:         watchMax: 1.5
+ 336:       });
+ 337:       status = resolved?.status || "HEALTHY";
+ 338:       dominantLabel = resolved?.dominant?.label || "Goal fit pressure";
+ 339:     }
+ 340: 
+ 341:     const dominantConstraint = dominantLabel || "Goal fit pressure";
+ 342:     const risk =
+ 343:       !meets ? "FAIL (below goal)" :
+ 344:       marginRatio < 1.1 || lossPct >= 20 || stressPct >= 15 ? "WARNING (fragile margin)" :
+ 345:       "OK";
+ 346: 
+ 347:     const summaryRows = [
+ 348:       { label: "Baseline retention", value: fmtDays(baselineDays) },
+ 349:       { label: "Effective retention (degraded)", value: fmtDays(effectiveDays) },
+ 350:       { label: "Days lost (effective)", value: fmtDays(daysLost) },
+ 351:       { label: "Meets retention goal?", value: meets ? "YES" : "NO" }
+ 352:     ];
+ 353: 
+ 354:     const derivedRows = [
+ 355:       { label: "Recommended baseline (strict)", value: fmtDays(strictRequiredBaseline) },
+ 356:       { label: "Recommended baseline (headroom target)", value: fmtDays(headroomBaseline) },
+ 357:       { label: "Headroom margin required", value: fmtDays(Math.max(0, strictRequiredBaseline - baselineDays)) },
+ 358:       { label: "Degraded period impact", value: degradedDays > 0 ? `${fmtDays(degradedImpact)} equivalent retention burned` : "—" },
+ 359:       { label: "Risk flag", value: risk }
+ 360:     ];
+ 361: 
+ 362:     const interpretation = buildInterpretation(status, dominantConstraint);
+ 363:     const guidance = buildGuidance(status, dominantConstraint);
+ 364: 
+ 365:     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderOutput === "function") {
+ 366:       window.ScopedLabsAnalyzer.renderOutput({
+ 367:         resultsEl: els.results,
+ 368:         analysisEl: els.analysisCopy,
+ 369:         summaryRows,
+ 370:         derivedRows,
+ 371:         status,
+ 372:         interpretation,
+ 373:         dominantConstraint,
+ 374:         guidance,
+ 375:         existingChartRef: null,
+ 376:         existingWrapRef: null
+ 377:       });
+ 378:     } else {
+ 379:       renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance);
+ 380:     }
+ 381: 
+ 382:     clearChart();
+ 383: 
+ 384:     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.renderAnalyzerChart === "function") {
+ 385:       window.ScopedLabsAnalyzer.renderAnalyzerChart({
+ 386:         mountEl: els.results,
+ 387:         existingChartRef: chartRef,
+ 388:         existingWrapRef: chartWrapRef,
+ 389:         labels: ["Goal Fit", "Capacity Loss", "Degraded Stress"],
+ 390:         values: [goalFitPressure, capacityLossPressure, degradedStressPressure],
+ 391:         displayValues: [
+ 392:           `${effectiveDays.toFixed(2)} days`,
+ 393:           `${lossPct.toFixed(1)}%`,
+ 394:           `${stressPct.toFixed(1)}% / ${degradedDays.toFixed(1)}d`
+ 395:         ],
+ 396:         referenceValue: 1.0,
+ 397:         healthyMax: 1.0,
+ 398:         watchMax: 1.5,
+ 399:         axisTitle: "Survivability Pressure",
+ 400:         referenceLabel: "Healthy Threshold",
+ 401:         healthyLabel: "Healthy",
+ 402:         watchLabel: "Watch",
+ 403:         riskLabel: "Risk",
+ 404:         chartMax: Math.max(
+ 405:           3,
+ 406:           Math.ceil(Math.max(goalFitPressure, capacityLossPressure, degradedStressPressure, 1.5) * 1.15 * 10) / 10
+ 407:         )
+ 408:       });
+ 409:     }
+ 410: 
+ 411:     if (window.ScopedLabsAnalyzer && typeof window.ScopedLabsAnalyzer.writeFlow === "function") {
+ 412:       window.ScopedLabsAnalyzer.writeFlow(FLOW_KEYS[STEP], {
+ 413:         category: CATEGORY,
+ 414:         step: STEP,
+ 415:         data: {
+ 416:           baselineDays,
+ 417:           effectiveDays,
+ 418:           daysLost,
+ 419:           targetDays,
+ 420:           lossPct,
+ 421:           stressPct,
+ 422:           degradedDays,
+ 423:           headroomPct,
+ 424:           risk,
+ 425:           status
+ 426:         }
+ 427:       });
+ 428:     }
+ 429: 
+ 430:     showContinue();
+ 431:     showCompletion();
+ 432:   }
+ 433: 
+ 434:   function reset() {
+ 435:     els.baselineRetention.value = "30";
+ 436:     els.capacityLossPct.value = "12";
+ 437:     els.targetRetention.value = "30";
+ 438:     els.stressWritePct.value = "8";
+ 439:     els.degradedDays.value = "2";
+ 440:     els.reserveHeadroomPct.value = "15";
+ 441:     renderEmpty();
+ 442:     importFromRaid();
+ 443:   }
+ 444: 
+ 445:   function bindInvalidation() {
+ 446:     ["baselineRetention", "capacityLossPct", "targetRetention", "stressWritePct", "degradedDays", "reserveHeadroomPct"].forEach((id) => {
+ 447:       const el = $(id);
+ 448:       if (el) {
+ 449:         el.addEventListener("input", invalidate);
+ 450:         el.addEventListener("change", invalidate);
+ 451:       }
+ 452:     });
+ 453:   }
+ 454: 
+ 455:   function bind() {
+ 456:     if (els.calc) els.calc.addEventListener("click", compute);
+ 457:     if (els.reset) els.reset.addEventListener("click", reset);
+ 458: 
+ 459:     bindInvalidation();
+ 460: 
+ 461:     document.addEventListener("keydown", (e) => {
+ 462:       if (e.key === "Enter") {
+ 463:         const t = e.target;
+ 464:         if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 465:           e.preventDefault();
+ 466:           compute();
+ 467:         }
+ 468:       }
+ 469:     });
+ 470:   }
+ 471: 
+ 472:   function boot() {
+ 473:     renderEmpty();
+ 474:     hideCompletion();
+ 475:     hideContinue();
+ 476:     importFromRaid();
+ 477:     bind();
+ 478: 
+ 479:     const yearEl = document.querySelector("[data-year]");
+ 480:     if (yearEl) yearEl.textContent = new Date().getFullYear();
+ 481:   }
+ 482: 
+ 483:   window.addEventListener("DOMContentLoaded", () => {
+ 484:     const unlocked = unlockCategoryPage();
+ 485:     if (!unlocked) return;
+ 486:     boot();
+ 487:   });
+ 488: })();
+ 489: 
+
+
+============================================================
+TOOL: storage-calculator
+============================================================
+Title: Storage Calculator
+Tier: free/unknown
+Meta description: Estimate per-camera daily storage, total daily load, and retained storage from bitrate and recording behavior.
+Flags: {
+  "scriptJs": true,
+  "pipeline": true,
+  "flowNote": true,
+  "continueButton": true,
+  "exportCard": true,
+  "helpJs": true,
+  "analyzer": true
+}
+
+Input labels:
+- Camera count
+- Bitrate per camera (Mbps)
+- Recording mode
+- Motion activity (%)
+- Retention (days)
+- Overhead reserve (%)
+- Report Title
+- Project Name
+- Client Name
+- Prepared By
+- Custom Notes
+
+Important IDs/names:
+- viewport
+- description
+- pipeline
+- flow-note
+- cams
+- bitrate
+- mode
+- motionField
+- motionPct
+- retention
+- overhead
+- calc
+- reset
+- results
+- analysis-copy
+- reportTitle
+- projectName
+- clientName
+- preparedBy
+- customNotes
+- exportReport
+- saveSnapshot
+- exportStatus
+- next-step-row
+- continue
+- helpModal
+- helpTitle
+- helpBody
+
+Focused core logic:
+--- CORE BLOCK 1 ---
+  90:   function clearAnalysisBlock() {
+  91:     if (
+  92:       window.ScopedLabsAnalyzer &&
+  93:       typeof window.ScopedLabsAnalyzer.clearAnalysisBlock === "function"
+  94:     ) {
+  95:       window.ScopedLabsAnalyzer.clearAnalysisBlock(els.analysisCopy);
+  96:       return;
+  97:     }
+  98:     if (els.analysisCopy) {
+  99:       els.analysisCopy.style.display = "none";
+ 100:       els.analysisCopy.innerHTML = "";
+ 101:     }
+ 102:   }
+
+--- CORE BLOCK 2 ---
+ 154:             { label: "Imported bitrate", value: `${bitrate} Mbps` }
+ 155:           ]
+ 156:         });
+ 157:       } else if (els.flowNote) {
+ 158:         els.flowNote.hidden = false;
+ 159:         els.flowNote.textContent = "Imported from Bitrate Estimator. Review values and click Calculate.";
+ 160:       }
+ 161:       return;
+ 162:     }
+ 163: 
+ 164:     if (!fromFlow || !els.flowNote) {
+ 165:       if (els.flowNote) {
+ 166:         els.flowNote.hidden = true;
+ 167:         els.flowNote.innerHTML = "";
+ 168:       }
+ 169:       return;
+ 170:     }
+ 171: 
+ 172:     const data = fromFlow.data || {};
+ 173:     const importedBitrate = Number(data.bitrateMbps ?? data.bitrateMbpsPerCam ?? 0);
+ 174: 
+ 175:     if (importedBitrate > 0) {
+ 176:       els.bitrate.value = importedBitrate.toFixed(2);
+ 177:     }
+ 178: 
+ 179:     els.flowNote.hidden = false;
+ 180:     els.flowNote.innerHTML = `
+ 181:       <strong>Step 2 — Using Bitrate Estimator results:</strong><br>
+ 182:       Imported bitrate: ${importedBitrate > 0 ? `${importedBitrate.toFixed(2)} Mbps` : "—"}
+ 183:       <br><br>
+ 184:       This step converts the stream assumption into daily and retained storage requirements so the next retention and RAID steps use a concrete capacity target.
+ 185:     `;
+ 186:   }
+ 187: 
+ 188:   function invalidate() {
+ 189:     clearStored();
+ 190:     hideNextStep();
+ 191: 
+ 192:     if (
+ 193:       window.ScopedLabsAnalyzer &&
+ 194:       typeof window.ScopedLabsAnalyzer.invalidate === "function"
+ 195:     ) {
+ 196:       window.ScopedLabsAnalyzer.invalidate({
+ 197:         resultsEl: els.results,
+ 198:         analysisEl: els.analysisCopy,
+ 199:         category: CATEGORY,
+ 200:         step: STEP,
+ 201:         lane: LANE,
+ 202:         emptyMessage: "Enter values and press Calculate."
+ 203:       });
+ 204:     } else {
+ 205:       renderEmpty();
+ 206:     }
+ 207:   }
+ 208: 
+ 209:   function buildInterpretation(status, dominantConstraint, totalRetentionGiB, retentionDays, cams) {
+ 210:     if (status === "HEALTHY") {
+ 211:       return `Storage demand remains in a manageable range for the current stream assumptions. The design is not yet leaning too hard on retention duration, fleet scale, or overhead reserve, so the next step can focus on policy and protection rather than fighting an oversized target.`;
+ 212:     }
+ 213: 
+ 214:     if (status === "WATCH") {
+ 215:       if (dominantConstraint === "Retention burden") {
+ 216:         return `The desired retention window is starting to become the main storage driver. The plan can still work, but longer archive time is now contributing enough to require more deliberate sizing discipline.`;
+ 217:       }
+ 218: 
+ 219:       if (dominantConstraint === "Fleet scale burden") {
+ 220:         return `Camera count is amplifying storage demand meaningfully. Per-stream assumptions may look reasonable, but the aggregate fleet size is large enough that small bitrate changes can materially shift total required storage.`;
+ 221:       }
+ 222: 
+ 223:       return `Overhead reserve is starting to matter more. The base storage math may close, but conservative planning margin is now contributing enough to change the final capacity target in a noticeable way.`;
+ 224:     }
+ 225: 
+ 226:     if (dominantConstraint === "Retention burden") {
+ 227:       return `The retention target is driving storage demand into a high-pressure range. Archive duration is no longer a background preference — it is now a primary capacity driver that should be justified against the broader design.`;
+ 228:     }
+ 229: 
+ 230:     if (dominantConstraint === "Fleet scale burden") {
+ 231:       return `The camera fleet itself is now the main reason storage demand is high. Even moderate per-camera rates are being multiplied into a large total requirement across the deployment.`;
+ 232:     }
+ 233: 
+ 234:     return `Planning overhead is consuming enough additional capacity that the final storage requirement becomes materially heavier than the base ingest math alone would suggest.`;
+ 235:   }
+ 236: 
+ 237:   function buildGuidance(status, dominantConstraint) {
+ 238:     if (status === "HEALTHY") {
+ 239:       return `Carry this storage requirement forward into Retention Planner. The next step is validating how the storage target maps to the retention promise and whether the design still holds with realistic margin.`;
+ 240:     }
+ 241: 
+ 242:     if (status === "WATCH") {
+ 243:       if (dominantConstraint === "Retention burden") {
+ 244:         return `Review whether the full retention target is operationally necessary, or whether the design should add capacity before locking it in. The archive window is now one of the main reasons the storage plan is getting heavier.`;
+ 245:       }
+ 246: 
+ 247:       if (dominantConstraint === "Fleet scale burden") {
+ 248:         return `Validate the estimate at full deployment scale. Camera count is high enough that any future bitrate drift or camera additions could change the storage plan noticeably.`;
+ 249:       }
+ 250: 
+ 251:       return `Keep using a conservative overhead model in the next step. The current requirement is still workable, but the reserve component is now large enough that weak assumptions would understate true capacity needs.`;
+ 252:     }
+ 253: 
+ 254:     if (dominantConstraint === "Retention burden") {
+ 255:       return `Reduce retention demand or increase planned capacity before moving forward if the design is already tight. The required archive window is currently the main reason storage demand is becoming difficult to manage.`;
+ 256:     }
+ 257: 
+ 258:     if (dominantConstraint === "Fleet scale burden") {
+ 259:       return `Treat the deployment as a large aggregate storage problem, not a per-camera estimate repeated many times. Fleet size is now a first-order design factor.`;
+ 260:     }
+ 261: 
+ 262:     return `Use the higher storage requirement deliberately in retention planning. The overhead component is no longer minor enough to ignore in the downstream design.`;
+ 263:   }
+ 264: 
+ 265:   function renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance) {
+ 266:     if (els.results) {
+ 267:       els.results.innerHTML = summaryRows.concat(derivedRows).map((row) => `
+ 268:         <div class="result-row">
+ 269:           <span class="result-label">${row.label}</span>
+ 270:           <span class="result-value">${row.value}</span>
+ 271:         </div>
+ 272:       `).join("");
+ 273:     }
+ 274: 
+ 275:     if (els.analysisCopy) {
+ 276:       els.analysisCopy.style.display = "";
+ 277:       els.analysisCopy.innerHTML = `
+ 278:         <div class="results-grid">
+ 279:           <div class="result-row">
+ 280:             <span class="result-label">Status</span>
+ 281:             <span class="result-value">${status}</span>
+ 282:           </div>
+ 283:           <div class="result-row">
+ 284:             <span class="result-label">Dominant Constraint</span>
+ 285:             <span class="result-value">${dominantConstraint}</span>
+ 286:           </div>
+ 287:           <div class="result-row">
+ 288:             <span class="result-label">Engineering Interpretation</span>
+ 289:             <span class="result-value">${interpretation}</span>
+ 290:           </div>
+ 291:           <div class="result-row">
+ 292:             <span class="result-label">Actionable Guidance</span>
+ 293:             <span class="result-value">${guidance}</span>
+ 294:           </div>
+ 295:         </div>
+ 296:       `;
+ 297:     }
+ 298:   }
+ 299: 
+ 300:   function calc() {
+ 301:     const cams = Math.max(0, Math.floor(safeNumber(els.cams.value, 0)));
+ 302:     const bitrate = Math.max(0, safeNumber(els.bitrate.value, 0));
+ 303:     const mode = els.mode.value;
+ 304:     const motionPct = clamp(safeNumber(els.motionPct.value, 25), 0, 100);
+ 305:     const retentionDays = Math.max(0, Math.floor(safeNumber(els.retention.value, 0)));
+ 306:     const overheadPct = clamp(safeNumber(els.overhead.value, 15), 0, 60);
+ 307: 
+ 308:     if (cams <= 0) {
+ 309:       if (els.results) {
+ 310:         els.results.innerHTML = `<div class="result-row"><span class="result-label">Error</span><span class="result-value">Enter a camera count above 0.</span></div>`;
+ 311:       }
+ 312:       clearAnalysisBlock();
+ 313:       hideNextStep();
+ 314:       clearStored();
+ 315:       return;
+ 316:     }
+ 317: 
+ 318:     if (bitrate <= 0) {
+ 319:       if (els.results) {
+ 320:         els.results.innerHTML = `<div class="result-row"><span class="result-label">Error</span><span class="result-value">Enter a bitrate above 0 Mbps.</span></div>`;
+ 321:       }
+ 322:       clearAnalysisBlock();
+ 323:       hideNextStep();
+ 324:       clearStored();
+ 325:       return;
+ 326:     }
+ 327: 
+ 328:     const duty = mode === "motion" ? (motionPct / 100) : 1;
+ 329:     const overheadMult = 1 + (overheadPct / 100);
+ 330: 
+ 331:     const perCamDayGiB = bitrate * MbitPerSec_to_GiBperDay * duty * overheadMult;
+ 332:     const totalDayGiB = perCamDayGiB * cams;
+ 333:     const totalRetentionGiB = totalDayGiB * retentionDays;
+ 334: 
+ 335:     const statusText =
+ 336:       mode === "motion" && motionPct === 0
+ 337:         ? "Motion mode selected with 0% activity (result will be 0)."
+ 338:         : retentionDays === 0
+ 339:           ? "Retention is 0 days (no storage required beyond daily use)."
+ 340:           : overheadPct >= 30
+ 341:             ? "Calculated with high overhead reserve — conservative plan."
+ 342:             : "Calculated.";
+ 343: 
+ 344:     const retentionBurden = retentionDays / 30;
+ 345:     const fleetScaleBurden = cams / 16;
+ 346:     const overheadPressure = 1 + (overheadPct / 25);
+ 347: 
+ 348:     const metrics = [
+ 349:       {
+ 350:         label: "Retention burden",
+ 351:         value: retentionBurden,
+ 352:         displayValue: `${retentionDays} days`
+ 353:       },
+ 354:       {
+ 355:         label: "Fleet scale burden",
+ 356:         value: fleetScaleBurden,
+ 357:         displayValue: `${cams} cams`
+ 358:       },
+ 359:       {
+ 360:         label: "Overhead pressure",
+ 361:         value: overheadPressure,
+ 362:         displayValue: `${overheadPct.toFixed(0)}%`
+ 363:       }
+ 364:     ];
+ 365: 
+ 366:     let status = "HEALTHY";
+ 367:     let dominantLabel = "Retention burden";
+ 368: 
+ 369:     if (
+ 370:       window.ScopedLabsAnalyzer &&
+ 371:       typeof window.ScopedLabsAnalyzer.resolveStatus === "function"
+ 372:     ) {
+ 373:       const resolved = window.ScopedLabsAnalyzer.resolveStatus({
+ 374:         metrics,
+ 375:         healthyMax: 1.0,
+ 376:         watchMax: 1.5
+ 377:       });
+ 378:       status = resolved?.status || "HEALTHY";
+ 379:       dominantLabel = resolved?.dominant?.label || "Retention burden";
+ 380:     }
+ 381: 
+ 382:     const dominantConstraintMap = {
+ 383:       "Retention burden": "Retention burden",
+ 384:       "Fleet scale burden": "Fleet scale burden",
+ 385:       "Overhead pressure": "Overhead pressure"
+ 386:     };
+ 387: 
+ 388:     const dominantConstraint =
+ 389:       dominantConstraintMap[dominantLabel] || "Retention burden";
+ 390: 
+ 391:     const summaryRows = [
+ 392:       { label: "Cameras", value: String(cams) },
+ 393:       { label: "Bitrate per Camera", value: `${bitrate.toFixed(2)} Mbps` },
+ 394:       { label: "Retention", value: `${retentionDays} days` },
+ 395:       { label: "Daily Storage Requirement", value: `${totalDayGiB.toFixed(2)} GiB/day` }
+ 396:     ];
+ 397: 
+ 398:     const derivedRows = [
+ 399:       { label: "Per-camera storage per day", value: `${fmtGiB(perCamDayGiB)} / day` },
+ 400:       { label: "Total storage per day", value: `${fmtGiB(totalDayGiB)} / day` },
+ 401:       { label: "Total retention storage", value: `${fmtGiB(totalRetentionGiB)} (${retentionDays} days)` },
+ 402:       { label: "Planner note", value: statusText }
+ 403:     ];
+ 404: 
+ 405:     const interpretation = buildInterpretation(
+ 406:       status,
+ 407:       dominantConstraint,
+ 408:       totalRetentionGiB,
+ 409:       retentionDays,
+ 410:       cams
+ 411:     );
+ 412: 
+ 413:     const guidance = buildGuidance(
+ 414:       status,
+ 415:       dominantConstraint
+ 416:     );
+ 417: 
+ 418:     if (
+ 419:       window.ScopedLabsAnalyzer &&
+ 420:       typeof window.ScopedLabsAnalyzer.renderOutput === "function"
+ 421:     ) {
+ 422:       window.ScopedLabsAnalyzer.renderOutput({
+ 423:         resultsEl: els.results,
+ 424:         analysisEl: els.analysisCopy,
+ 425:         summaryRows,
+ 426:         derivedRows,
+ 427:         status,
+ 428:         interpretation,
+ 429:         dominantConstraint,
+ 430:         guidance
+ 431:       });
+ 432:     } else {
+ 433:       renderFallback(summaryRows, derivedRows, status, dominantConstraint, interpretation, guidance);
+ 434:     }
+ 435: 
+ 436:     const params = new URLSearchParams({
+ 437:       source: "storage",
+ 438:       cams: String(cams),
+ 439:       bitrate: String(bitrate),
+ 440:       mode: String(mode),
+ 441:       motionPct: String(motionPct),
+ 442:       days: String(retentionDays),
+ 443:       storage_per_day: totalDayGiB.toFixed(2),
+ 444:       total_storage: totalRetentionGiB.toFixed(2),
+ 445:       unit: "gib"
+ 446:     });
+ 447: 
+ 448:     if (els.continueBtn) {
+ 449:       els.continueBtn.href = NEXT_URL + "?" + params.toString();
+ 450:     }
+ 451: 
+ 452:     try {
+ 453:       const payload = {
+ 454:         category: CATEGORY,
+ 455:         step: STEP,
+ 456:         data: {
+ 457:           cams,
+ 458:           bitrateMbps: Number(bitrate.toFixed(2)),
+ 459:           mode,
+ 460:           motionPct: Number(motionPct.toFixed(0)),
+ 461:           retentionDays,
+ 462:           overheadPct: Number(overheadPct.toFixed(0)),
+ 463:           perCamDayGiB: Number(perCamDayGiB.toFixed(2)),
+ 464:           totalDayGiB: Number(totalDayGiB.toFixed(2)),
+ 465:           totalRetentionGiB: Number(totalRetentionGiB.toFixed(2)),
+ 466:           status,
+ 467:           dominantConstraint
+ 468:         }
+ 469:       };
+ 470: 
+ 471:       sessionStorage.setItem(FLOW_KEYS.storage, JSON.stringify(payload));
+ 472:       sessionStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(payload));
+ 473:     } catch {}
+ 474: 
+ 475:     showNextStep();
+ 476:   }
+ 477: 
+ 478:   function reset() {
+ 479:     els.cams.value = "1";
+ 480:     els.bitrate.value = "4";
+ 481:     els.mode.value = "continuous";
+ 482:     els.motionPct.value = "25";
+ 483:     els.retention.value = "30";
+ 484:     els.overhead.value = "15";
+ 485: 
+ 486:     syncMotion();
+ 487:     renderEmpty();
+ 488:     hideNextStep();
+ 489:     importFromBitrate();
+ 490:   }
+ 491: 
+ 492:   function bind() {
+ 493:     els.mode.addEventListener("change", () => {
+ 494:       syncMotion();
+ 495:       invalidate();
+ 496:     });
+ 497: 
+ 498:     if (els.calc) els.calc.addEventListener("click", calc);
+ 499:     if (els.reset) els.reset.addEventListener("click", reset);
+ 500: 
+ 501:     [els.cams, els.bitrate, els.motionPct, els.retention, els.overhead].forEach((el) => {
+ 502:       if (el) el.addEventListener("input", invalidate);
+ 503:     });
+ 504: 
+ 505:     document.addEventListener("keydown", (e) => {
+ 506:       if (e.key === "Enter") {
+ 507:         const t = e.target;
+ 508:         if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+ 509:           e.preventDefault();
+ 510:           calc();
+ 511:         }
+ 512:       }
+ 513:     });
+ 514:   }
+ 515: 
+ 516:   function boot() {
+ 517:     const year = document.querySelector("[data-year]");
+ 518:     if (year) year.textContent = new Date().getFullYear();
+ 519:     bind();
+ 520:     reset();
+ 521:   }
+ 522: 
+ 523:   window.addEventListener("DOMContentLoaded", boot);
+ 524: })();
+ 525: 
