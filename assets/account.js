@@ -58,7 +58,6 @@
       .toLowerCase();
   }
 
-
   function escapeHtml(value) {
     return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")
@@ -354,7 +353,6 @@
     }
   }
 
-
   function renderEntitlementsList(cats) {
     if (!els.entitlements) return;
 
@@ -365,14 +363,12 @@
       return;
     }
 
-    // Pretty label
     const pretty = (slug) =>
       slug
         .split("-")
         .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
         .join(" ");
 
-    // Render as inline chips (no CSS dependency—just spans)
     els.entitlements.innerHTML = "";
     const wrap = document.createElement("div");
     wrap.style.display = "flex";
@@ -382,7 +378,7 @@
 
     list.forEach((slug) => {
       const chip = document.createElement("span");
-      chip.className = "pill"; // uses your existing pill styling
+      chip.className = "pill";
       chip.textContent = pretty(slug);
       wrap.appendChild(chip);
     });
@@ -391,13 +387,6 @@
   }
 
   async function fetchEntitlements(session) {
-    // Expected backend: GET /api/entitlements
-    // Auth: Authorization: Bearer <supabase access_token>
-    // Acceptable response shapes:
-    // - { categories: ["network","power"] }
-    // - { entitlements: [{category:"network"}] }
-    // - { data: { categories: [...] } }
-    // - ["network","power"]
     if (!els.entitlements) return;
 
     setText(els.entitlements, "Loading…");
@@ -486,15 +475,17 @@
     if (window.__SL_ACCOUNT_BOUND) return;
     window.__SL_ACCOUNT_BOUND = true;
 
-    // Cosmetic hint when sending link (auth.js does the actual signInWithOtp)
+    // Auth.js owns the actual magic-link request and status messaging.
+    // This only handles the empty-email helper text on the Account page.
     if (els.sendLink && els.email && els.emailHint) {
       els.sendLink.addEventListener("click", () => {
         const email = (els.email.value || "").trim();
+
         if (!email) {
           els.emailHint.textContent = "Enter your email above.";
           return;
         }
-        els.emailHint.textContent = `Sending magic link to ${email}…`;
+
         setStatus("");
       });
     }
@@ -542,7 +533,6 @@
       });
     }
 
-    // Keep UI in sync with auth changes
     const client = sb();
     if (client) {
       ready().then(() => {
@@ -568,14 +558,12 @@
     await refresh();
   }
 
-  // Normal load
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
 
-  // BFCache restore: refresh only (no re-bind)
   window.addEventListener("pageshow", () => {
     refresh();
   });
