@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Network Growth Simulator *ScopedLabs</title>
+  <title>Network Growth Simulator | ScopedLabs</title>
   <meta
     name="description"
     content="Project future bandwidth demand, required uplink capacity, and upgrade timing using growth, peak, and headroom assumptions."
@@ -163,7 +163,7 @@
         </div>
       </section>
 
-<section id="toolCard" class="card tool-card">
+<section id="toolCard" class="card tool-card" style="display:none;">
         <h2>Inputs</h2>
 
         <div class="form-grid">
@@ -223,7 +223,33 @@
           <button id="reset" class="btn" type="button">Reset</button>
         </div>
       
-<section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+
+
+</section>
+
+      <section class="card tool-card">
+        <h2>Results</h2>
+        <div id="results" class="results-grid">
+          <div class="muted">Enter values and press Simulate.</div>
+        </div>
+        <div id="analysis-copy" style="display:none;"></div>
+
+        <p class="mini-note">
+          Model: base demand compounds monthly, peak factor is applied to demand, overhead is added, and the result is checked against your selected utilization target and uplink size.
+        </p>
+      </section>
+
+    
+
+
+      <section class="card tool-card">
+        <h2>Projection Table</h2>
+        <div id="tableWrap" class="results">
+          <div class="muted">Simulation output will appear here.</div>
+        </div>
+      </section>
+
+      <section class="card tool-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
         </div>
@@ -267,30 +293,10 @@
 
         <div id="exportStatus" class="export-status"></div>
       </section>
-</section>
-
-      <section class="card tool-card">
-        <h2>Results</h2>
-        <div id="results" class="results-grid">
-          <div class="muted">Enter values and press Simulate.</div>
-        </div>
-        <div id="analysis-copy" style="display:none;"></div>
-
-        <p class="mini-note">
-          Model: base demand compounds monthly, peak factor is applied to demand, overhead is added, and the result is checked against your selected utilization target and uplink size.
-        </p>
-      </section>
-
-      <section class="card tool-card">
-        <h2>Projection Table</h2>
-        <div id="tableWrap" class="results">
-          <div class="muted">Simulation output will appear here.</div>
-        </div>
-      </section>
     </div>
   
       <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
+        <div class="muted">&copy; <span data-year></span> ScopedLabs</div>
               <div class="footer-links">
       <a href="/tools/">Tools</a>
       <a href="/upgrade/">Upgrade</a>
@@ -321,7 +327,7 @@
 
   <script src="/assets/export.js?v=shared-export-005"></script>
 
-  <script src="./script.js?v=network-export-001"></script>
+  <script src="./script.js?v=network-growth-gate-001"></script>
   <script defer src="/assets/help.js?v=help-012"></script>
 </body>
 </html>
