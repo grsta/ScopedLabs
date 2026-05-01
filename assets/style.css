@@ -2543,3 +2543,16 @@ html {
   }
 }
 
+/* Hide legacy inline help hint buttons now that KB/guide cards exist */
+.label-row .hint,
+.field .hint,
+label .hint,
+button.hint {
+  display: none !important;
+}
+
+/* Remove leftover spacing where hint buttons used to sit */
+.label-row {
+  gap: 0 !important;
+}
+
