@@ -6,6 +6,7 @@
     siteTagline: "Engineering · Analysis · Tools",
     logoUrl: "https://scopedlabs.com/assets/favicon/favicon-32x32.png?v=1",
     resultSelector: "#results",
+    extraSectionSelector: "[data-export-section]",
     inputContainerSelector: "#toolCard .form-grid",
     exportStatusSelector: "#exportStatus",
     exportButtonSelector: "#exportReport",
@@ -681,6 +682,120 @@
   }
 }
 
+
+  function readExtraTable(table) {
+    if (!table) return null;
+
+    const headerCells = Array.from(
+      table.querySelectorAll("thead tr:first-child th, thead tr:first-child td")
+    ).map((cell) => String(cell.textContent || "").replace(/\s+/g, " ").trim());
+
+    let bodyRows = Array.from(table.querySelectorAll("tbody tr")).map((row) => {
+      return Array.from(row.children).map((cell) => {
+        return String(cell.textContent || "").replace(/\s+/g, " ").trim();
+      });
+    });
+
+    if (!bodyRows.length) {
+      const allRows = Array.from(table.querySelectorAll("tr")).map((row) => {
+        return Array.from(row.children).map((cell) => {
+          return String(cell.textContent || "").replace(/\s+/g, " ").trim();
+        });
+      });
+
+      bodyRows = headerCells.length ? allRows.slice(1) : allRows;
+    }
+
+    const rows = bodyRows.filter((row) => row.some(Boolean));
+
+    if (!rows.length) return null;
+
+    return {
+      headers: headerCells.filter(Boolean),
+      rows
+    };
+  }
+
+  function getExtraExportSections() {
+    const selector = state.options.extraSectionSelector || "[data-export-section]";
+    const nodes = Array.from(document.querySelectorAll(selector));
+    const sections = [];
+
+    for (const node of nodes) {
+      const style = window.getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+
+      if (style.display === "none" || style.visibility === "hidden" || rect.width === 0) {
+        continue;
+      }
+
+      const title =
+        node.dataset?.exportTitle ||
+        node.getAttribute("aria-label") ||
+        node.querySelector("h2, h3, h4")?.textContent?.trim() ||
+        "Additional Output";
+
+      const tables = Array.from(node.querySelectorAll("table"))
+        .map(readExtraTable)
+        .filter(Boolean);
+
+      const textNodes = Array.from(
+        node.querySelectorAll("[data-export-text], .export-text")
+      )
+        .map((el) => String(el.textContent || "").replace(/\s+/g, " ").trim())
+        .filter(Boolean);
+
+      const text = textNodes.join("\n\n");
+
+      if (!tables.length && !text) continue;
+
+      sections.push({
+        title,
+        tables,
+        text
+      });
+    }
+
+    return sections;
+  }
+
+  function renderExtraExportSections(sections = []) {
+    return sections.map((section) => {
+      const textBlock = section.text
+        ? `<div class="body-copy">${escapeHtml(section.text).replace(/\n/g, "<br>")}</div>`
+        : "";
+
+      const tableBlocks = (section.tables || []).map((table) => {
+        const headers = (table.headers || []).length
+          ? table.headers
+          : ((table.rows || [])[0] || []).map((_, index) => `Column ${index + 1}`);
+
+        const headerHtml = headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("");
+
+        const rowHtml = (table.rows || []).map((row) => `
+          <tr>
+            ${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}
+          </tr>
+        `).join("");
+
+        return `
+          <table>
+            <thead><tr>${headerHtml}</tr></thead>
+            <tbody>${rowHtml}</tbody>
+          </table>
+        `;
+      }).join("");
+
+      return `
+        <section class="section">
+          <h2>${escapeHtml(section.title)}</h2>
+          ${textBlock}
+          ${tableBlocks}
+        </section>
+      `;
+    }).join("");
+  }
+
   function buildPayload() {
     const outputs = getResultRows();
 
@@ -702,6 +817,7 @@ if (!interpretation && interpretationSection?.body) {
 }
 
 const chartImage = captureVisibleChart();
+const extraSections = getExtraExportSections();
 
     return {
       reportId: makeReportId(state.options.reportPrefix),
@@ -986,6 +1102,8 @@ const chartImage = captureVisibleChart();
         </section>
       `
       : "";
+
+    const extraSectionsBlock = renderExtraExportSections(payload.extraSections || []);
 
     const interpretationBlock = payload.interpretation
       ? `
