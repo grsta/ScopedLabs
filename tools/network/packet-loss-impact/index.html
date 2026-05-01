@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Packet Loss Impact *ScopedLabs</title>
+  <title>Packet Loss Impact | ScopedLabs</title>
   <meta
     name="description"
     content="Estimate delivered throughput, retransmission pressure, and user-experience risk at a given packet loss rate."
@@ -45,6 +45,49 @@
         grid-template-columns: 1fr;
       }
     }
+  
+    /* Packet Loss Impact result-row safety styling */
+    #results.results {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    #results .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 12px 14px;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    #results .result-label {
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.94rem;
+      line-height: 1.35;
+    }
+
+    #results .result-value {
+      color: rgba(255, 255, 255, 0.96);
+      font-weight: 750;
+      text-align: right;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 640px) {
+      #results .result-row {
+        display: grid;
+        gap: 6px;
+      }
+
+      #results .result-value {
+        text-align: left;
+      }
+    }
+
   </style>
 </head>
 
@@ -120,7 +163,7 @@
         </div>
       </section>
 
-<section id="toolCard" class="card tool-card">
+<section id="toolCard" class="card tool-card" style="display:none;">
       <h2>Inputs</h2>
 
       <div class="form-grid">
@@ -162,7 +205,19 @@
         <button id="reset" class="btn" type="button">Reset</button>
       </div>
     
-<section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+
+
+</section>
+
+    <section class="card tool-card">
+      <h2>Results</h2>
+      <div id="results" class="results">
+        <div class="muted">Enter values and press Calculate.</div>
+      </div>
+      <div id="analysis-copy" style="display:none;"></div>
+    </section>
+
+    <section class="card tool-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
         </div>
@@ -206,18 +261,9 @@
 
         <div id="exportStatus" class="export-status"></div>
       </section>
-</section>
-
-    <section class="card tool-card">
-      <h2>Results</h2>
-      <div id="results" class="results">
-        <div class="muted">Enter values and press Calculate.</div>
-      </div>
-      <div id="analysis-copy" style="display:none;"></div>
-    </section>
   
       <footer class="site-footer">
-        <div class="muted">© <span data-year></span> ScopedLabs</div>
+        <div class="muted">&copy; <span data-year></span> ScopedLabs</div>
               <div class="footer-links">
       <a href="/tools/">Tools</a>
       <a href="/upgrade/">Upgrade</a>
@@ -248,7 +294,7 @@
 
   <script src="/assets/export.js?v=shared-export-005"></script>
 
-  <script src="./script.js?v=network-export-001"></script>
+  <script src="./script.js?v=network-packet-loss-layout-001"></script>
   <script defer src="/assets/help.js?v=help-012"></script>
 </body>
 </html>

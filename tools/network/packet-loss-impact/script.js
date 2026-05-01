@@ -379,3 +379,16 @@ function unlockCategoryPage() {
   if (toolCard) toolCard.style.display = "none";
   return false;
 }
+
+
+function runLegacyProGate() {
+  if (typeof unlockCategoryPage === "function") {
+    unlockCategoryPage();
+  }
+}
+
+window.addEventListener("DOMContentLoaded", runLegacyProGate);
+window.addEventListener("load", runLegacyProGate);
+window.addEventListener("pageshow", runLegacyProGate);
+setTimeout(runLegacyProGate, 300);
+setTimeout(runLegacyProGate, 900);
