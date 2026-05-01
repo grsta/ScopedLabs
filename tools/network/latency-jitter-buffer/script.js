@@ -310,3 +310,14 @@ function unlockCategoryPage() {
   if (toolCard) toolCard.style.display = "none";
   return false;
 }
+
+function runLegacyProGate() {
+  unlockCategoryPage();
+}
+
+window.addEventListener("DOMContentLoaded", runLegacyProGate);
+window.addEventListener("load", runLegacyProGate);
+window.addEventListener("pageshow", runLegacyProGate);
+setTimeout(runLegacyProGate, 300);
+setTimeout(runLegacyProGate, 900);
+
