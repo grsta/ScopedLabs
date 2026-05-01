@@ -2496,3 +2496,50 @@ html {
 
 /* SCOPEDLABS STICKY HEADER - END */
 
+/* ScopedLabs global result-row safety normalization */
+.results .result-row,
+.results-grid .result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(120, 255, 120, 0.14);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.results .result-label,
+.results-grid .result-label {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.94rem;
+  line-height: 1.35;
+}
+
+.results .result-value,
+.results-grid .result-value {
+  color: rgba(255, 255, 255, 0.96);
+  font-weight: 750;
+  text-align: right;
+  line-height: 1.35;
+}
+
+.results,
+.results-grid {
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .results .result-row,
+  .results-grid .result-row {
+    display: grid;
+    gap: 6px;
+  }
+
+  .results .result-value,
+  .results-grid .result-value {
+    text-align: left;
+  }
+}
+
