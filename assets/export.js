@@ -830,6 +830,7 @@ const extraSections = getExtraExportSections();
       summary: getSummaryFromOutputs(outputs),
       interpretation,
       analysisSections,
+      extraSections,
       inputs,
       outputs,
       assumptions: state.options.assumptions,
@@ -1395,6 +1396,7 @@ const extraSections = getExtraExportSections();
         </div>
       </section>
 
+      ${extraSectionsBlock}
       ${interpretationBlock}
       ${additionalAnalysisBlock}
       ${chartBlock}
@@ -1599,7 +1601,8 @@ const extraSections = getExtraExportSections();
     saveSnapshot,
     saveSnapshotLocal,
     getResultRows,
-    getInputRows
+    getInputRows,
+    getExtraExportSections
   };
 
   window.addEventListener("DOMContentLoaded", () => {
