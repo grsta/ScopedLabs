@@ -1,7 +1,0 @@
-push command
-
-git add -A
-git commit -m "Removed the selected category pill on upgrade html"
-git push origin main
-
-

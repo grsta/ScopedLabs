@@ -1,5 +1,0 @@
-open cmd, then:
-cd /d E:\ScopedLabs
-python -m http.server 8080
-then in browser type:
-http://localhost:8080/
