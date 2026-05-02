@@ -2,153 +2,276 @@
   "title": "Door Cable Length Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how cable distance affects voltage drop, lock power, reader reliability, and door hardware behavior.",
-  "updated": "2026-04-26",
+  "updated": "2026-05-02",
+  "summary": "Use this guide to estimate realistic access-control door cable quantities using straight-line distance, routing factor, service slack, door count, and separate cable-run strategy.",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether a door circuit length is reasonable for the planned hardware and power arrangement."
-      ],
-      "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch design pressure before it becomes field trouble."
+        "Door Cable Length Estimator converts a simple straight-line distance into a more realistic field cable quantity.",
+        "It accounts for routing path inefficiency, service slack, number of doors, and whether each door uses a single combined cable or multiple separate cable paths.",
+        "This tool is for planning cable quantity, pathway impact, and install difficulty. It is not a voltage-drop calculator or conductor-sizing tool."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
-      "body": [
-        "Use it when planning reader wiring, lock power, REX devices, door contacts, long hallway pulls, or remote door hardware."
-      ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system cleanup or validation.",
-        "Explaining tradeoffs to a client, stakeholder, or internal team."
-      ]
-    },
-    {
-      "title": "Input descriptions",
-      "type": "glossary",
-      "body": [
-        "These descriptions explain what each input represents in practical access-control terms."
+        "Before creating cable takeoffs for access-control doors.",
+        "When comparing single combined cable runs versus multiple dedicated device cables.",
+        "When estimating rough-in material before final field routing is known.",
+        "When long hallway pulls, conduit routing, ceiling obstacles, or remote panels may add cable length.",
+        "When a door count increase may turn a simple material estimate into a pathway or labor issue.",
+        "When documenting why estimated cable quantity is higher than straight-line drawing distance suggests."
       ],
-      "items": [
+      "links": [
         {
-          "label": "Cable Length",
-          "description": "The estimated wire distance from the power/control source to the door device.",
-          "examples": [
-            "Panel to door",
-            "Power supply to lock",
-            "Reader homerun"
-          ],
-          "whyItMatters": "Longer cable increases voltage drop and troubleshooting risk.",
-          "commonMistake": "Measuring straight-line distance instead of actual cable path."
+          "label": "Lock Power Budget guide",
+          "kbKey": "access-control/lock-power-budget",
+          "note": "Use this related guide when cable planning also depends on lock current, power supply sizing, or simultaneous unlock behavior."
         },
         {
-          "label": "Wire Gauge",
-          "description": "The conductor size used for the circuit.",
-          "examples": [
-            "18 AWG",
-            "16 AWG",
-            "14 AWG",
-            "22 AWG"
-          ],
-          "whyItMatters": "Larger wire can reduce voltage drop over distance.",
-          "commonMistake": "Using small wire for high-current lock loads."
-        },
-        {
-          "label": "Device Current",
-          "description": "How much current the connected device draws.",
-          "examples": [
-            "Reader current",
-            "Maglock current",
-            "Strike current"
-          ],
-          "whyItMatters": "Higher current increases voltage drop over the same cable length.",
-          "commonMistake": "Sizing wire without checking actual device current."
-        },
-        {
-          "label": "Voltage",
-          "description": "The operating voltage of the circuit.",
-          "examples": [
-            "12 VDC",
-            "24 VDC"
-          ],
-          "whyItMatters": "Lower-voltage circuits are more sensitive to voltage drop.",
-          "commonMistake": "Assuming 12 VDC and 24 VDC behave the same over long runs."
-        },
-        {
-          "label": "Power Source",
-          "description": "Where the circuit receives power.",
-          "examples": [
-            "Access panel",
-            "Central power supply",
-            "Local door power supply"
-          ],
-          "whyItMatters": "Power location affects run length and serviceability.",
-          "commonMistake": "Powering everything from one distant source when local power would be cleaner."
-        },
-        {
-          "label": "Hardware Type",
-          "description": "The kind of door device being powered or monitored.",
-          "examples": [
-            "Reader",
-            "Electric strike",
-            "Maglock",
-            "REX",
-            "Door contact"
-          ],
-          "whyItMatters": "Different devices have different tolerance and current needs.",
-          "commonMistake": "Treating low-current sensors and lock hardware the same."
+          "label": "Door Count Planner guide",
+          "kbKey": "access-control/door-count-planner",
+          "note": "Use this related guide when total controlled-door quantity drives cable takeoff scope."
         }
       ]
     },
     {
-      "title": "How to read the results",
+      "id": "input-descriptions",
+      "title": "Input descriptions",
+      "type": "glossary",
       "body": [
-        "Healthy means cable distance is likely manageable. Watch means voltage drop or device reliability should be checked. Risk means the run may need different wire, local power, or a design change."
+        "These headings match the visible input labels on the calculator so the guide can be read directly against the form."
       ],
-      "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      "items": [
+        {
+          "id": "straight-line-distance-ft",
+          "label": "Straight-Line Distance (ft)",
+          "description": "The approximate direct distance from the source location to the door before routing adjustments are added. This is the starting point, not the final installed cable length.",
+          "examples": [
+            "Panel closet to door as measured from a plan view.",
+            "Power supply location to controlled opening.",
+            "Nearest riser or telecom room to the door location."
+          ],
+          "whyItMatters": "Straight-line distance is usually shorter than the real cable path. The tool uses it as the baseline before adding routing factor and service slack.",
+          "commonMistake": "Using straight-line drawing distance as the final cable quantity without accounting for walls, ceiling paths, conduit, risers, door loops, or routing detours."
+        },
+        {
+          "id": "routing-factor",
+          "label": "Routing Factor",
+          "description": "A multiplier that converts straight-line distance into a more realistic routed distance. It accounts for pathway inefficiency such as open ceiling routing, conduit paths, obstacles, risers, and indirect routes.",
+          "examples": [
+            "Light: open ceiling or clean pathway with limited detours.",
+            "Normal: mixed field routing with typical walls, turns, and pathway offsets.",
+            "Heavy: conduit routing, obstacles, difficult paths, or long indirect routes."
+          ],
+          "whyItMatters": "Routing factor is often what separates a clean estimate from a field miss. A route that looks short on a drawing may require much more cable once actual pathway conditions are considered.",
+          "commonMistake": "Leaving the routing factor too low because the drawing looks simple, even when the install path requires conduit, wall fishing, ceiling offsets, or indirect routing."
+        },
+        {
+          "id": "service-slack-ft",
+          "label": "Service Slack (ft)",
+          "description": "Extra cable added at each door for termination, dressing, future service, hardware replacement, and practical installer handling.",
+          "examples": [
+            "Slack at the door frame or junction box.",
+            "Slack at the panel, power supply, or controller end.",
+            "Extra length for service loops or hardware movement."
+          ],
+          "whyItMatters": "Too little slack makes termination and service harder. Too much unmanaged slack can create messy pathways and wasted material.",
+          "commonMistake": "Forgetting that every door needs practical termination and service length, not just the exact routed distance."
+        },
+        {
+          "id": "door-count",
+          "label": "Door Count",
+          "description": "The number of controlled doors using the same distance and routing assumptions. The tool multiplies the per-door estimate by this count.",
+          "examples": [
+            "8 similar doors on one floor.",
+            "A group of office doors served from the same panel room.",
+            "A set of perimeter doors with similar routing assumptions."
+          ],
+          "whyItMatters": "Small per-door estimate errors become large material errors when multiplied across many doors.",
+          "commonMistake": "Using one average distance for all doors even when some doors are much farther away or require a different pathway."
+        },
+        {
+          "id": "separate-runs",
+          "label": "Separate Runs?",
+          "description": "Whether each door is treated as one combined cable path or multiple separate cable paths for devices such as reader, door position switch, REX, and lock power.",
+          "examples": [
+            "Single: one combined composite-style cable or bundled path per door.",
+            "Multiple: separate cable paths for reader, DPS, REX, lock, or other door hardware."
+          ],
+          "whyItMatters": "Multiple separate runs can multiply cable quantity quickly and may also increase pathway fill, labeling, termination time, and troubleshooting effort.",
+          "commonMistake": "Estimating one cable per door when the actual specification requires separate reader, lock, REX, and door contact cables."
+        },
+        {
+          "id": "number-of-separate-cables-if-multiple",
+          "label": "Number of Separate Cables (if multiple)",
+          "description": "The number of individual cable paths used per door when Separate Runs is set to Multiple.",
+          "examples": [
+            "2 cables: reader plus lock circuit.",
+            "3 cables: reader, lock, and door contact.",
+            "4 cables: reader, lock, REX, and DPS."
+          ],
+          "whyItMatters": "This value directly multiplies the per-door cable estimate in multiple-run mode. It can turn a manageable estimate into a major material and pathway load.",
+          "commonMistake": "Leaving this number at a default without matching the actual door hardware specification.",
+          "links": [
+            {
+              "label": "Reader Type Selector guide",
+              "kbKey": "access-control/reader-type-selector",
+              "note": "Use this related guide when reader selection affects cable type, interface, or wiring expectations."
+            },
+            {
+              "label": "Lock Power Budget guide",
+              "kbKey": "access-control/lock-power-budget",
+              "note": "Use this related guide when lock wiring and power assumptions affect separate cable planning."
+            }
+          ]
+        }
       ]
     },
     {
+      "id": "how-to-interpret-results",
+      "title": "How to interpret results",
+      "body": [
+        "The results show how the straight-line estimate grows after routing factor, slack, separate runs, and door count are applied.",
+        "The most important output is not only total cable footage. Install difficulty and engineering insight explain whether the estimate is still a clean field pull or whether routing, pathway, and labor risk are becoming significant."
+      ],
+      "bullets": [
+        "Routed Distance: straight-line distance after the routing factor is applied.",
+        "Routing Loss: the added percentage caused by routing inefficiency.",
+        "Estimated Run: the routed distance plus service slack for a single cable.",
+        "Estimated Total per Door: the per-door total after separate cable paths are considered.",
+        "Estimated Total Cable: total cable quantity across all doors.",
+        "Cable Density: how much the final per-door cable quantity grows relative to straight-line distance.",
+        "Install Difficulty: LOW, MODERATE, or HIGH planning pressure.",
+        "Design Guidance: practical next step based on estimated difficulty."
+      ]
+    },
+    {
+      "id": "healthy-watch-risk",
+      "title": "Healthy / Watch / Risk interpretation",
+      "body": [
+        "The status reflects installation planning pressure, not whether the cable can technically be installed.",
+        "A high cable quantity may still be possible, but it increases labor, pathway congestion, labeling needs, service risk, and chance of field changes."
+      ],
+      "bullets": [
+        "HEALTHY: routing and cable quantity appear straightforward.",
+        "WATCH: routing is workable, but pathway efficiency, labeling, and slack discipline matter.",
+        "RISK: consider moving control hardware closer, splitting door groups, adding local power, or revisiting pathway strategy."
+      ]
+    },
+    {
+      "id": "routing-factor-notes",
+      "title": "Routing factor notes",
+      "body": [
+        "Routing factor is the practical correction between drawing distance and real cable path.",
+        "A light routing factor may fit open ceilings or clean tray paths. A heavy routing factor fits conduit, obstacles, walls, offsets, risers, or difficult access routes.",
+        "When in doubt, use the factor that matches field reality, not the prettiest drawing path."
+      ],
+      "bullets": [
+        "Open ceiling is usually easier than conduit-heavy routing.",
+        "Vertical risers and cross-building routes often need more margin.",
+        "Existing buildings usually need more routing allowance than new construction.",
+        "Security doors often need careful service loops and protected routing near the opening."
+      ]
+    },
+    {
+      "id": "single-vs-multiple-runs",
+      "title": "Single vs multiple runs",
+      "body": [
+        "Single-run mode is useful when a composite cable or combined pathway is being estimated as one cable quantity per door.",
+        "Multiple-run mode is useful when the design requires separate cable paths for reader, lock, door contact, REX, or other hardware.",
+        "Multiple-run estimates can grow quickly. That does not mean they are wrong, but it does mean pathway fill, labeling, termination labor, and serviceability should be reviewed."
+      ],
+      "bullets": [
+        "Use Single when one combined cable assembly or single pathway estimate is appropriate.",
+        "Use Multiple when separate devices require separate cable counts.",
+        "Match the number of separate cables to the actual door hardware schedule.",
+        "Do not use Single just to make the estimate look cleaner."
+      ],
+      "links": [
+        {
+          "label": "Reader Type Selector guide",
+          "kbKey": "access-control/reader-type-selector",
+          "note": "Use this related guide when reader interface or technology changes cable expectations."
+        }
+      ]
+    },
+    {
+      "id": "field-takeoff-workflow",
+      "title": "Field takeoff workflow",
+      "bullets": [
+        "Group doors with similar routing assumptions instead of averaging the entire building into one number.",
+        "Measure or estimate straight-line distance for each door group.",
+        "Choose a routing factor that reflects actual pathway difficulty.",
+        "Add service slack per door, not just once for the whole project.",
+        "Select Single or Multiple runs based on the actual cable specification.",
+        "Multiply by the number of doors in that group.",
+        "Review high-difficulty groups separately before final material ordering.",
+        "Document assumptions so the estimate can be checked against field routing later."
+      ],
+      "links": [
+        {
+          "label": "Door Count Planner guide",
+          "kbKey": "access-control/door-count-planner",
+          "note": "Use this related guide when controlled-door quantity needs to be scoped before detailed cable takeoff."
+        }
+      ]
+    },
+    {
+      "id": "red-flags",
+      "title": "Red flags",
+      "bullets": [
+        "Straight-line distance is used as final cable length.",
+        "All doors use the same average distance even though routing varies heavily.",
+        "Separate device cables are required but the estimate assumes one combined cable.",
+        "Routing factor is set low for conduit-heavy or existing-building work.",
+        "Service slack is omitted or only added once for the whole project.",
+        "Long runs are all home-run to one distant location when a closer controller or power supply may reduce field risk.",
+        "Cable quantity is estimated without checking pathway fill, tray space, sleeves, risers, or conduit capacity."
+      ]
+    },
+    {
+      "id": "documentation-checklist",
+      "title": "Documentation checklist",
+      "bullets": [
+        "Straight-Line Distance (ft) assumption.",
+        "Routing Factor selected and why.",
+        "Service Slack (ft) per door.",
+        "Door Count included in this estimate.",
+        "Separate Runs? selection.",
+        "Number of Separate Cables (if multiple).",
+        "Estimated Total per Door.",
+        "Estimated Total Cable.",
+        "Install Difficulty and Design Guidance.",
+        "Known pathway assumptions, risers, conduit routes, or field constraints.",
+        "Any door groups that need separate estimates."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
-      "body": [
-        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
-      ],
       "bullets": [
-        "Designing only for the initial install instead of the system lifecycle.",
-        "Ignoring exceptions, expansion, or administrative workload.",
-        "Assuming manufacturer capacity limits are the same as practical design limits.",
-        "Failing to document assumptions before the system is built."
+        "Measuring straight-line distance instead of actual pathway distance.",
+        "Forgetting slack at the door and panel ends.",
+        "Using one average distance for doors that should be grouped separately.",
+        "Ignoring separate reader, lock, REX, and door-contact cables.",
+        "Underestimating routing factor in existing buildings.",
+        "Ignoring pathway congestion until cable pulling starts.",
+        "Treating the estimate as final without field verification."
       ]
     },
     {
-      "title": "Planning assumptions",
-      "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
-      ],
+      "id": "assumptions-and-limits",
+      "title": "Assumptions and limits",
       "bullets": [
-        "Manufacturer limits still matter.",
-        "Local code and life-safety requirements still apply.",
-        "Site conditions may change the final design.",
-        "A simpler design is usually easier to support, audit, and explain."
-      ]
-    },
-    {
-      "title": "Professional responsibility",
-      "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
-      ],
-      "bullets": [
-        "Validate against the actual product and platform being installed.",
-        "Confirm owner requirements and operating procedures.",
-        "Document assumptions before implementation."
+        "Cable estimates are derived from straight-line distance adjusted by routing factor, plus service slack.",
+        "Multi-run mode multiplies the per-door cable quantity by the configured number of separate cable paths.",
+        "This tool estimates cable quantity and installation planning pressure, not voltage drop or conductor size.",
+        "Final quantities should be verified against actual routing, pathway conditions, service loops, spare capacity, installation standards, and the project cable schedule.",
+        "Outputs are planning aids and do not replace installer takeoff, manufacturer requirements, code review, or field verification."
       ]
     }
   ]
