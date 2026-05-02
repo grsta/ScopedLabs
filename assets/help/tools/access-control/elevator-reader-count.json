@@ -2,152 +2,292 @@
   "title": "Elevator Reader Count Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand elevator access planning, cab readers, floor relays, schedules, and integration complexity.",
-  "updated": "2026-04-26",
+  "updated": "2026-05-02",
+  "summary": "Use this guide to estimate elevator authentication points, lobby-reader impact, destination-control complexity, and coordination pressure before elevator access hardware and integration decisions are locked in.",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate elevator access-control complexity based on cab count, floor count, reader count, and floor-selection control requirements."
-      ],
-      "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch design pressure before it becomes field trouble."
+        "Elevator Reader Count estimates how many reader/authentication points may be needed for an elevator access-control design.",
+        "The tool considers elevator cars, elevator banks, secured floors, destination control system presence, and reader placement strategy.",
+        "It is a planning tool for reader count, integration magnitude, and coordination pressure. It is not a controller-specific elevator interface calculator or a substitute for elevator contractor coordination."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
-      "body": [
-        "Use it when planning elevator readers, destination dispatch coordination, floor lockout, tenant separation, or restricted-floor access."
-      ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system cleanup or validation.",
-        "Explaining tradeoffs to a client, stakeholder, or internal team."
-      ]
-    },
-    {
-      "title": "Input descriptions",
-      "type": "glossary",
-      "body": [
-        "These descriptions explain what each input represents in practical access-control terms."
+        "When planning elevator access control before hardware is ordered.",
+        "When deciding between in-car readers, lobby readers, or both.",
+        "When a destination control system may change where authentication should happen.",
+        "When secured floors, tenant floors, parking levels, or restricted floors need controlled access.",
+        "When elevator access must be coordinated with access-control panels, elevator controls, fire/life-safety behavior, and owner operating policy.",
+        "When documenting why elevator reader count is more than simply one reader per elevator cab."
       ],
-      "items": [
+      "links": [
         {
-          "label": "Elevator Cabs",
-          "description": "The number of elevator cars being controlled.",
-          "examples": [
-            "One cab",
-            "Bank of elevators",
-            "Service elevator"
-          ],
-          "whyItMatters": "More cabs increase reader and relay coordination.",
-          "commonMistake": "Only counting floors and forgetting multiple cabs."
+          "label": "Reader Type Selector guide",
+          "kbKey": "access-control/reader-type-selector",
+          "note": "Use this related guide when elevator authentication depends on reader technology, credential type, or interface selection."
         },
         {
-          "label": "Controlled Floors",
-          "description": "Floors that require access restriction or unlock control.",
-          "examples": [
-            "Tenant floors",
-            "Penthouse",
-            "Garage levels",
-            "Mechanical floors"
-          ],
-          "whyItMatters": "More controlled floors usually require more relays or integration points.",
-          "commonMistake": "Assuming every floor needs individual control when zones may be simpler."
-        },
-        {
-          "label": "Readers",
-          "description": "Credential readers used in or near the elevator cab.",
-          "examples": [
-            "Cab reader",
-            "Lobby reader",
-            "Turnstile-to-elevator reader"
-          ],
-          "whyItMatters": "Reader placement affects user flow and security behavior.",
-          "commonMistake": "Placing readers without confirming elevator operating sequence."
-        },
-        {
-          "label": "Relay Outputs",
-          "description": "Outputs used to enable floor buttons or elevator inputs.",
-          "examples": [
-            "Floor relays",
-            "Common enable relay",
-            "Group control"
-          ],
-          "whyItMatters": "Relay count can grow quickly with floors and cabs.",
-          "commonMistake": "Underestimating relay hardware and cabinet space."
-        },
-        {
-          "label": "Schedules",
-          "description": "Time rules for floor access.",
-          "examples": [
-            "Business hours",
-            "After-hours floor access",
-            "Tenant schedules"
-          ],
-          "whyItMatters": "Schedules can complicate troubleshooting and user expectations.",
-          "commonMistake": "Using too many unique floor schedules."
-        },
-        {
-          "label": "Vendor Coordination",
-          "description": "Coordination needed with elevator controls or destination dispatch.",
-          "examples": [
-            "Dry contacts",
-            "Interface board",
-            "Destination dispatch API"
-          ],
-          "whyItMatters": "Elevators often require vendor-specific integration details.",
-          "commonMistake": "Assuming access control can be added without elevator contractor involvement."
+          "label": "Door Count Planner guide",
+          "kbKey": "access-control/door-count-planner",
+          "note": "Use this related guide when elevator access is part of a broader controlled-opening and reader-count scope."
         }
       ]
     },
     {
-      "title": "How to read the results",
+      "id": "input-descriptions",
+      "title": "Input descriptions",
+      "type": "glossary",
       "body": [
-        "Healthy means the elevator access model is likely straightforward. Watch means relay count, schedules, or integration should be reviewed. Risk means the elevator scope may need deeper coordination with the elevator vendor and access-control manufacturer."
+        "These headings match the visible input labels on the calculator so the guide can be read directly against the form."
       ],
-      "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      "items": [
+        {
+          "id": "elevator-cars",
+          "label": "Elevator Cars",
+          "description": "The number of elevator cars included in the access-control design. This is the car count that may need in-car readers, reader coordination, or elevator-interface planning.",
+          "examples": [
+            "One service elevator.",
+            "A bank of four passenger elevators.",
+            "Separate passenger and freight elevator cars.",
+            "Multiple elevator cars serving tenant or restricted floors."
+          ],
+          "whyItMatters": "Elevator car count directly affects in-car reader quantity when the reader placement strategy includes readers inside each car.",
+          "commonMistake": "Counting only secured floors and forgetting that multiple elevator cars may each require hardware, wiring, programming, and coordination."
+        },
+        {
+          "id": "elevator-banks-groups",
+          "label": "Elevator Banks (groups)",
+          "description": "The number of elevator groups or banks that operate together. A bank may share lobby controls, destination kiosks, floor-selection logic, or access-control behavior.",
+          "examples": [
+            "One lobby bank serving all floors.",
+            "Separate low-rise and high-rise banks.",
+            "Passenger elevator bank plus service elevator group.",
+            "Garage elevator bank separate from main tower elevators."
+          ],
+          "whyItMatters": "Bank count affects lobby-reader planning, destination-control adders, coordination points, and how elevator access is grouped operationally.",
+          "commonMistake": "Treating all elevators as one group when different banks serve different floors, tenants, lobbies, or operating sequences."
+        },
+        {
+          "id": "secured-floors",
+          "label": "Secured Floors",
+          "description": "The number of floors or levels requiring controlled elevator access. These may be tenant floors, parking levels, restricted floors, mechanical areas, or sensitive spaces.",
+          "examples": [
+            "Tenant-only office floors.",
+            "Garage levels requiring credential access.",
+            "Penthouse or executive floor.",
+            "Mechanical floors.",
+            "Restricted lab or data center level."
+          ],
+          "whyItMatters": "Secured floor count increases planning complexity because floor permissions, elevator behavior, schedules, overrides, and access levels must all remain understandable.",
+          "commonMistake": "Assuming every floor needs separate control when grouped floor access or simpler tenant blocks may be easier to support.",
+          "links": [
+            {
+              "label": "Access Level Sizing guide",
+              "kbKey": "access-control/access-level-sizing",
+              "note": "Use this related guide when secured floors create role, area, schedule, or permission-structure complexity."
+            }
+          ]
+        },
+        {
+          "id": "destination-control-system",
+          "label": "Destination Control System?",
+          "description": "Whether the elevator system uses destination control, kiosks, or dispatch logic where users select a destination before entering the elevator car.",
+          "examples": [
+            "No: traditional elevator buttons inside the car.",
+            "Yes: users authenticate or select a floor at a lobby kiosk or destination dispatch station.",
+            "Yes: access control must coordinate with elevator dispatch behavior instead of only in-car button enablement."
+          ],
+          "whyItMatters": "Destination control changes the best place to authenticate users. In some designs, lobby or kiosk authentication may make more sense than in-car readers.",
+          "commonMistake": "Adding in-car readers automatically even though the destination-control workflow already expects authentication at the lobby or kiosk point.",
+          "links": [
+            {
+              "label": "Reader Type Selector guide",
+              "kbKey": "access-control/reader-type-selector",
+              "note": "Use this related guide when DCS workflow changes reader placement, reader type, or credential interaction."
+            }
+          ]
+        },
+        {
+          "id": "reader-placement",
+          "label": "Reader Placement",
+          "description": "Where the elevator authentication point is located. The tool compares readers inside each car, readers in the lobby per bank, or both lobby and car readers.",
+          "examples": [
+            "Inside each car: reader installed in every elevator car.",
+            "In lobby: reader or authentication point placed near the elevator bank or destination kiosk.",
+            "Both: lobby and car authentication are both included."
+          ],
+          "whyItMatters": "Reader placement drives hardware count, user flow, wiring difficulty, elevator contractor coordination, and daily user experience.",
+          "commonMistake": "Choosing reader placement based only on hardware count instead of matching where users actually make access decisions.",
+          "links": [
+            {
+              "label": "Door Cable Length guide",
+              "kbKey": "access-control/door-cable-length",
+              "note": "Use this related guide when reader placement affects cabling, routing, or field installation scope."
+            },
+            {
+              "label": "Reader Type Selector guide",
+              "kbKey": "access-control/reader-type-selector",
+              "note": "Use this related guide when placement needs to be matched with reader technology and credential behavior."
+            }
+          ]
+        }
       ]
     },
     {
+      "id": "how-to-interpret-results",
+      "title": "How to interpret results",
+      "body": [
+        "The results estimate reader quantity and elevator-access planning pressure. They do not describe the exact elevator relay board, DCS API, or controller integration method.",
+        "The most important output is not just total reader count. Planning complexity and system status explain whether the elevator scope is simple, coordination-sensitive, or likely to require deeper vendor review."
+      ],
+      "bullets": [
+        "Cars: elevator cars included in the design.",
+        "Banks: elevator groups included in the design.",
+        "Secured Floors: floor count requiring controlled access.",
+        "Destination Control: whether DCS/kiosk behavior is part of the design.",
+        "Placement: selected reader placement strategy.",
+        "Car Readers: estimated readers inside elevator cars.",
+        "Lobby Readers: estimated readers at lobby/bank authentication points.",
+        "DCS Adders: extra planning allowance when DCS coordination is present.",
+        "Estimated Total Readers: total reader/authentication-point estimate.",
+        "Planning Complexity: combined pressure from readers, floors, banks, DCS, and placement strategy.",
+        "System Status: HEALTHY, WATCH, or RISK based on complexity pressure."
+      ]
+    },
+    {
+      "id": "healthy-watch-risk",
+      "title": "Healthy / Watch / Risk interpretation",
+      "body": [
+        "The status describes planning and coordination pressure, not whether the elevator system can technically support the design.",
+        "Elevator access can become complicated quickly because it sits between access control, elevator controls, user flow, life-safety behavior, override requirements, and vendor-specific integration."
+      ],
+      "bullets": [
+        "HEALTHY: reader count and integration posture appear straightforward.",
+        "WATCH: design is workable, but reader placement, DCS behavior, and emergency override sequences need review.",
+        "RISK: coordinate early with elevator contractor and access-control manufacturer before procurement or final design."
+      ]
+    },
+    {
+      "id": "car-vs-lobby-readers",
+      "title": "Car readers vs lobby readers",
+      "body": [
+        "In-car readers authenticate users after they enter the elevator car. Lobby readers or kiosks authenticate users before they enter the cab or before the destination is assigned.",
+        "Traditional button-control designs often use in-car readers or relay enablement. Destination-control designs often shift the decision point to the lobby or kiosk workflow.",
+        "The best answer depends on how users select floors, how tenants are separated, how visitors are handled, and how the elevator vendor expects access-control integration to work."
+      ],
+      "bullets": [
+        "Use in-car readers when authentication belongs inside each car.",
+        "Use lobby readers when authentication belongs at the bank, turnstile, or destination-selection point.",
+        "Use both only when the security model and operating procedure justify the added complexity.",
+        "Avoid duplicating authentication points just because both are possible."
+      ],
+      "links": [
+        {
+          "label": "Reader Type Selector guide",
+          "kbKey": "access-control/reader-type-selector",
+          "note": "Use this related guide when deciding what reader technology fits the elevator placement strategy."
+        }
+      ]
+    },
+    {
+      "id": "destination-control-notes",
+      "title": "Destination control notes",
+      "body": [
+        "Destination control systems change the elevator workflow. Instead of pressing a floor button inside the cab, users may select their destination at a kiosk or lobby station before entering the assigned car.",
+        "That means access-control authentication may need to happen before the dispatch decision, not after the user is already inside the elevator."
+      ],
+      "bullets": [
+        "Confirm whether access control integrates through dry contacts, interface boards, destination dispatch software, or vendor-specific methods.",
+        "Confirm where users authenticate relative to destination selection.",
+        "Confirm emergency, fire-service, visitor, guard, and override behavior.",
+        "Confirm whether secured floors are individually controlled or grouped.",
+        "Do not assume a DCS elevator behaves like a traditional relay-controlled elevator."
+      ]
+    },
+    {
+      "id": "integration-workflow",
+      "title": "Integration workflow",
+      "bullets": [
+        "Start with elevator cars and banks so hardware scope is clear.",
+        "Identify secured floors and whether floor access is individual or grouped.",
+        "Determine whether the elevator uses traditional buttons or DCS/kiosk dispatch.",
+        "Choose reader placement based on the actual user authentication point.",
+        "Coordinate early with the elevator contractor and access-control manufacturer.",
+        "Confirm fire/life-safety, emergency override, service mode, and manual operation behavior.",
+        "Document the final reader placement and integration assumptions before procurement."
+      ],
+      "links": [
+        {
+          "label": "Access Level Sizing guide",
+          "kbKey": "access-control/access-level-sizing",
+          "note": "Use this related guide when secured floors require tenant groups, schedules, or permission structure."
+        },
+        {
+          "label": "Panel Capacity guide",
+          "kbKey": "access-control/panel-capacity",
+          "note": "Use this related guide when reader count and elevator integration points need to be checked against controller capacity."
+        }
+      ]
+    },
+    {
+      "id": "red-flags",
+      "title": "Red flags",
+      "bullets": [
+        "Destination control is present, but reader placement is treated like a traditional elevator.",
+        "In-car readers are added to every cab without confirming the elevator operating sequence.",
+        "Secured floors are counted, but floor grouping and tenant permissions are not defined.",
+        "Emergency override and fire-service behavior are not documented.",
+        "Elevator contractor involvement is assumed to be unnecessary.",
+        "Lobby authentication is selected without considering queueing, visitor flow, or turnstile coordination.",
+        "Both lobby and car readers are selected without a clear reason.",
+        "Reader count is estimated without checking controller capacity, cabling, cabinet space, or interface method."
+      ]
+    },
+    {
+      "id": "documentation-checklist",
+      "title": "Documentation checklist",
+      "bullets": [
+        "Elevator Cars included in scope.",
+        "Elevator Banks (groups) and what each bank serves.",
+        "Secured Floors and whether they are individual or grouped.",
+        "Destination Control System? selection and actual elevator workflow.",
+        "Reader Placement decision and reason.",
+        "Estimated Total Readers.",
+        "Car Readers, Lobby Readers, and DCS Adders.",
+        "Planning Complexity and System Status.",
+        "Elevator contractor coordination assumptions.",
+        "Access-control platform/interface assumptions.",
+        "Fire/life-safety, emergency override, and visitor handling notes."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
-      "body": [
-        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
-      ],
       "bullets": [
-        "Designing only for the initial install instead of the system lifecycle.",
-        "Ignoring exceptions, expansion, or administrative workload.",
-        "Assuming manufacturer capacity limits are the same as practical design limits.",
-        "Failing to document assumptions before the system is built."
+        "Counting floors but forgetting multiple cars or banks.",
+        "Assuming every secured floor needs individual relay-style control.",
+        "Adding readers inside cars when authentication belongs at the lobby or DCS kiosk.",
+        "Treating elevator access like normal door access.",
+        "Waiting too long to involve the elevator contractor.",
+        "Ignoring emergency override, fire-service behavior, or manual operation modes.",
+        "Using both lobby and car readers because it sounds stronger, even when it creates user friction and integration complexity.",
+        "Forgetting that elevator access may also affect access levels, schedules, visitor workflow, and tenant separation."
       ]
     },
     {
-      "title": "Planning assumptions",
-      "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
-      ],
+      "id": "assumptions-and-limits",
+      "title": "Assumptions and limits",
       "bullets": [
-        "Manufacturer limits still matter.",
-        "Local code and life-safety requirements still apply.",
-        "Site conditions may change the final design.",
-        "A simpler design is usually easier to support, audit, and explain."
-      ]
-    },
-    {
-      "title": "Professional responsibility",
-      "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
-      ],
-      "bullets": [
-        "Validate against the actual product and platform being installed.",
-        "Confirm owner requirements and operating procedures.",
-        "Document assumptions before implementation."
+        "Reader count is estimated from cars, banks, secured floors, DCS presence, and placement strategy.",
+        "This tool estimates hardware and integration magnitude, not a controller-specific elevator interface design.",
+        "DCS behavior, floor control, relays, kiosks, and elevator interface methods vary by manufacturer and project.",
+        "Elevator access design should be validated with the elevator contractor, access-control platform, fire/life-safety requirements, emergency override behavior, and owner operating policy.",
+        "Outputs are planning aids and do not replace formal engineering review, elevator contractor coordination, manufacturer documentation, code review, or site-specific validation."
       ]
     }
   ]
