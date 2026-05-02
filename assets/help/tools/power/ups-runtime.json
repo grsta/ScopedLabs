@@ -2,152 +2,212 @@
   "title": "UPS Runtime Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how load, battery capacity, efficiency, and runtime targets affect UPS planning.",
-  "updated": "2026-04-26",
+  "summary": "Understand how load, UPS rating, power factor, battery energy, inverter efficiency, and battery derating affect estimated runtime.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates UPS runtime based on the connected load and battery/runtime assumptions."
+        "This tool estimates UPS runtime from the connected load and available battery energy after efficiency and battery-health adjustments."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch power or runtime issues before installation."
+        "Use it to catch power/runtime pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning backup power for network closets, servers, security equipment, cameras, access-control panels, or communication gear."
+        "Use it when comparing UPS sizing, estimating outage hold-up time, or checking whether projected load still fits the desired runtime target."
       ],
       "bullets": [
-        "Early power design planning.",
-        "Backup runtime review.",
-        "Expansion or load-growth evaluation.",
-        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+        "Early power and runtime planning.",
+        "Expansion or refresh review.",
+        "Existing-system cleanup or validation.",
+        "Explaining assumptions to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical power and runtime planning terms."
+        "These descriptions explain what each visible input represents in practical power and runtime planning terms."
       ],
       "items": [
         {
-          "label": "Connected Load",
-          "description": "The equipment load supported by the UPS.",
+          "label": "Estimated load (Watts)",
+          "description": "The load the UPS must support during an outage.",
           "examples": [
-            "Switches",
-            "Servers",
-            "Access panels",
-            "Cameras",
-            "NVR"
+            "250 W network closet",
+            "800 W rack load",
+            "Projected load from growth planning"
           ],
-          "whyItMatters": "Load is the main driver of runtime.",
-          "commonMistake": "Using equipment nameplate ratings instead of realistic operating load."
+          "whyItMatters": "Runtime falls quickly as load increases.",
+          "commonMistake": "Using today\u2019s light load instead of the projected or critical load.",
+          "links": [
+            {
+              "label": "Use projected load from growth planning",
+              "kbKey": "power/load-growth",
+              "anchor": "Planning Headroom (%)",
+              "note": "Projected loads should be carried into runtime checks."
+            }
+          ]
         },
         {
-          "label": "UPS Capacity",
-          "description": "The rated watt or VA capacity of the UPS.",
+          "label": "UPS rating (VA)",
+          "description": "The apparent-power rating of the UPS.",
           "examples": [
-            "1000 VA",
             "1500 VA",
-            "3000 W"
+            "3000 VA",
+            "5 kVA UPS"
           ],
-          "whyItMatters": "UPS capacity determines whether the load can be supported safely.",
-          "commonMistake": "Looking only at VA and ignoring watt rating."
+          "whyItMatters": "The UPS must be large enough for both VA and watt limits.",
+          "commonMistake": "Assuming VA rating alone guarantees runtime or load support.",
+          "links": [
+            {
+              "label": "Check VA / watts relationship",
+              "kbKey": "power/va-watts-amps",
+              "anchor": "Volt-Amps (VA)",
+              "note": "VA and watts need to be understood together."
+            }
+          ]
         },
         {
-          "label": "Battery Capacity",
-          "description": "The usable energy available from the UPS batteries.",
+          "label": "Power factor (0.50\u20131.00)",
+          "description": "The assumed relationship between watts and VA for the supported load.",
           "examples": [
-            "Internal battery",
-            "External battery pack",
-            "Runtime module"
+            "0.90 modern IT load",
+            "0.80 conservative planning",
+            "1.00 ideal load"
           ],
-          "whyItMatters": "Battery capacity determines how long the load can run.",
-          "commonMistake": "Assuming all battery energy is usable."
+          "whyItMatters": "Power factor affects whether the UPS rating can support the real load.",
+          "commonMistake": "Leaving power factor unrealistic just to make the design look better."
         },
         {
-          "label": "Efficiency",
-          "description": "Losses from inverter conversion and UPS operation.",
+          "label": "Battery capacity (Wh)",
+          "description": "The usable or nameplate battery energy available to support the load.",
           "examples": [
-            "85%",
-            "90%",
-            "95%"
+            "300 Wh internal battery",
+            "1200 Wh external pack",
+            "Battery cabinet energy"
           ],
-          "whyItMatters": "Efficiency reduces usable runtime.",
-          "commonMistake": "Ignoring losses and calculating from ideal battery capacity."
+          "whyItMatters": "Battery energy is the fuel tank for runtime.",
+          "commonMistake": "Using amp-hours without converting to watt-hours correctly.",
+          "links": [
+            {
+              "label": "Size battery energy directly",
+              "kbKey": "power/battery-bank-sizer",
+              "anchor": "Runtime (Hours)",
+              "note": "Battery bank sizing can estimate required energy from a runtime target."
+            }
+          ]
         },
         {
-          "label": "Runtime Target",
-          "description": "The desired backup duration.",
+          "label": "Inverter efficiency (%)",
+          "description": "The percentage of battery energy that becomes usable AC output.",
           "examples": [
-            "10 minutes",
-            "30 minutes",
-            "2 hours"
+            "85% small UPS",
+            "90% online UPS",
+            "Conservative 80% estimate"
           ],
-          "whyItMatters": "The target defines whether the UPS meets the requirement.",
-          "commonMistake": "Choosing a UPS without defining the required runtime."
+          "whyItMatters": "Efficiency losses reduce usable runtime and create heat.",
+          "commonMistake": "Assuming every watt-hour in the battery reaches the load.",
+          "links": [
+            {
+              "label": "Review inverter conversion loss",
+              "kbKey": "power/inverter-efficiency",
+              "anchor": "Efficiency (%)"
+            }
+          ]
         },
         {
-          "label": "Battery Age",
-          "description": "Battery condition or expected degradation.",
+          "label": "Battery health / derate (%)",
+          "description": "The remaining usable battery capacity after age, condition, temperature, and conservative derating.",
           "examples": [
-            "New batteries",
-            "Aged batteries",
-            "End-of-life batteries"
+            "80% usable after age",
+            "70% conservative field derate",
+            "100% new battery assumption"
           ],
-          "whyItMatters": "Aged batteries can reduce runtime significantly.",
-          "commonMistake": "Expecting old batteries to perform like new ones."
+          "whyItMatters": "Older or cold batteries may deliver less runtime than expected.",
+          "commonMistake": "Using new-battery capacity for aging systems without derating.",
+          "links": [
+            {
+              "label": "Test worst-case runtime assumptions",
+              "kbKey": "power/worst-case-runtime",
+              "anchor": "Battery Health Derate (% loss)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "How this connects to the design flow",
+      "body": [
+        "Power and runtime tools are strongest when the results are carried forward instead of treated as one-off calculations. Use related Knowledge Base references when one value depends on another planning assumption."
+      ],
+      "bullets": [
+        "Start with clear load math before runtime sizing.",
+        "Carry projected or worst-case loads into UPS and battery planning.",
+        "Review degraded or redundant scenarios before treating runtime as final."
+      ],
+      "links": [
+        {
+          "label": "Size a battery bank for target runtime",
+          "kbKey": "power/battery-bank-sizer",
+          "anchor": "Load (Watts)"
+        },
+        {
+          "label": "Run worst-case runtime check",
+          "kbKey": "power/worst-case-runtime",
+          "anchor": "Runtime Floor Target (minutes)"
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means runtime appears aligned with the target. Watch means load or battery assumptions should be reviewed. Risk means runtime may be too short for the intended outage coverage."
+        "The runtime result is a planning estimate. Treat Watch or Risk as a sign to reduce load, add battery capacity, improve efficiency assumptions, or validate against manufacturer runtime curves."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
-        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable for planning purposes.",
+        "Watch: the design may still work, but margin, growth, or failure behavior deserves review.",
+        "Risk: add capacity, reduce load, increase runtime reserve, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+        "Most power/runtime planning problems come from sizing one value in isolation while ignoring load growth, conversion losses, battery derating, redundancy behavior, and real operating margin."
       ],
       "bullets": [
-        "Sizing from best-case runtime.",
-        "Ignoring power factor, efficiency, battery age, or reserve margin.",
-        "Leaving non-critical loads on backup power.",
+        "Sizing only for day-one load instead of projected or peak load.",
+        "Treating advertised capacity as fully usable runtime capacity.",
+        "Ignoring inverter efficiency, battery health, temperature, and reserve margin.",
+        "Forgetting that redundant capacity may not be normal usable capacity.",
         "Failing to document assumptions before the system is built."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer runtime charts, electrical design review, code compliance review, battery documentation, or site-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer ratings still matter.",
-        "Battery condition and temperature can change runtime.",
-        "Real loads should be measured when possible.",
-        "A design with reserve is usually easier to support and explain."
+        "Vendor runtime curves and battery specifications still matter.",
+        "Actual power factor, load behavior, and environmental conditions can change results.",
+        "Battery age, temperature, maintenance, and discharge limits affect usable energy.",
+        "A design with documented headroom is easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical/code compliance review, manufacturer validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment, batteries, and electrical conditions.",
-        "Confirm owner requirements and outage expectations.",
+        "Validate against the actual UPS, inverter, battery, load, and electrical system being deployed.",
+        "Confirm stakeholder expectations for runtime, failover, maintenance, and growth.",
         "Document assumptions before implementation."
       ]
     }

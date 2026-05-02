@@ -2,150 +2,192 @@
   "title": "Battery Bank Sizer Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand battery voltage, amp-hours, load demand, inverter losses, depth of discharge, and runtime.",
-  "updated": "2026-04-26",
+  "summary": "Understand how load, runtime target, system voltage, depth of discharge, and efficiency affect required battery bank capacity.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates battery bank size for a required load and runtime target."
+        "This tool estimates the battery bank capacity needed to support a load for a target runtime after discharge and conversion losses are considered."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch power or runtime issues before installation."
+        "Use it to catch power/runtime pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning backup battery systems, DC power, inverter-backed loads, remote equipment, or extended runtime systems."
+        "Use it when planning external battery packs, DC battery banks, inverter-backed loads, or longer runtime requirements than a small UPS can provide."
       ],
       "bullets": [
-        "Early power design planning.",
-        "Backup runtime review.",
-        "Expansion or load-growth evaluation.",
-        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+        "Early power and runtime planning.",
+        "Expansion or refresh review.",
+        "Existing-system cleanup or validation.",
+        "Explaining assumptions to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical power and runtime planning terms."
+        "These descriptions explain what each visible input represents in practical power and runtime planning terms."
       ],
       "items": [
         {
-          "label": "Load Watts",
-          "description": "The real power draw supported by the battery bank.",
+          "label": "Load (Watts)",
+          "description": "The continuous load the battery bank must support.",
           "examples": [
-            "Network load",
-            "Security load",
-            "Remote equipment"
+            "300 W network cabinet",
+            "1200 W inverter load",
+            "Projected power load"
           ],
-          "whyItMatters": "Load watts directly drive battery energy requirement.",
-          "commonMistake": "Using idle load instead of expected operating load."
+          "whyItMatters": "Required battery capacity scales directly with load.",
+          "commonMistake": "Sizing the bank around idle load instead of outage load.",
+          "links": [
+            {
+              "label": "Use projected or converted load",
+              "kbKey": "power/load-growth",
+              "anchor": "Current Load (kW)",
+              "note": "Battery sizing should use the load you expect to support."
+            }
+          ]
         },
         {
-          "label": "Runtime Target",
-          "description": "How long the battery bank should support the load.",
+          "label": "Runtime (Hours)",
+          "description": "The target amount of time the battery bank must sustain the load.",
           "examples": [
-            "1 hour",
-            "4 hours",
-            "24 hours"
+            "2 hours",
+            "8 hours",
+            "24-hour backup goal"
           ],
-          "whyItMatters": "Runtime target determines required energy storage.",
-          "commonMistake": "Choosing batteries before defining runtime."
+          "whyItMatters": "Longer runtime requires proportionally more energy storage.",
+          "commonMistake": "Choosing a runtime target without checking battery size and cost.",
+          "links": [
+            {
+              "label": "Compare against UPS runtime estimate",
+              "kbKey": "power/ups-runtime",
+              "anchor": "Battery capacity (Wh)"
+            }
+          ]
         },
         {
-          "label": "System Voltage",
-          "description": "The DC voltage of the battery bank or inverter system.",
+          "label": "System Voltage (V)",
+          "description": "The DC voltage of the battery bank or inverter input.",
           "examples": [
-            "12 VDC",
-            "24 VDC",
-            "48 VDC"
+            "12 V",
+            "24 V",
+            "48 V"
           ],
-          "whyItMatters": "System voltage affects current and battery configuration.",
-          "commonMistake": "Mixing battery voltage assumptions with inverter requirements."
+          "whyItMatters": "Voltage affects required amp-hours and conductor/current planning.",
+          "commonMistake": "Mixing up DC battery voltage with AC output voltage.",
+          "links": [
+            {
+              "label": "Review battery voltage sizing",
+              "kbKey": "power/battery-sizing",
+              "anchor": "System Voltage (V)"
+            }
+          ]
         },
         {
-          "label": "Inverter Efficiency",
-          "description": "Losses from converting battery DC power to AC output.",
+          "label": "Depth of Discharge (%)",
+          "description": "The portion of battery capacity allowed to be used.",
           "examples": [
-            "85%",
-            "90%",
-            "95%"
+            "50% for conservative lead-acid",
+            "80% usable limit",
+            "Manufacturer recommended DOD"
           ],
-          "whyItMatters": "Efficiency reduces usable runtime.",
-          "commonMistake": "Assuming batteries deliver all stored energy to the load."
+          "whyItMatters": "Limiting discharge protects battery life and keeps reserve capacity.",
+          "commonMistake": "Assuming the entire nameplate battery capacity is safely usable."
         },
         {
-          "label": "Depth of Discharge",
-          "description": "How much of the battery capacity is allowed to be used.",
+          "label": "Efficiency (%)",
+          "description": "The conversion efficiency from battery energy to usable load energy.",
           "examples": [
-            "50%",
-            "80%",
-            "Lithium usable range"
+            "85% inverter efficiency",
+            "90% efficient power path",
+            "Conservative loss allowance"
           ],
-          "whyItMatters": "Depth of discharge affects battery life and usable energy.",
-          "commonMistake": "Draining batteries too deeply for the chemistry."
+          "whyItMatters": "Efficiency losses increase required battery capacity.",
+          "commonMistake": "Forgetting that inverter and wiring losses consume energy.",
+          "links": [
+            {
+              "label": "Review inverter efficiency loss",
+              "kbKey": "power/inverter-efficiency",
+              "anchor": "Efficiency (%)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "How this connects to the design flow",
+      "body": [
+        "Power and runtime tools are strongest when the results are carried forward instead of treated as one-off calculations. Use related Knowledge Base references when one value depends on another planning assumption."
+      ],
+      "bullets": [
+        "Start with clear load math before runtime sizing.",
+        "Carry projected or worst-case loads into UPS and battery planning.",
+        "Review degraded or redundant scenarios before treating runtime as final."
+      ],
+      "links": [
+        {
+          "label": "Estimate runtime from available battery energy",
+          "kbKey": "power/ups-runtime",
+          "anchor": "Battery capacity (Wh)"
         },
         {
-          "label": "Reserve Margin",
-          "description": "Extra capacity reserved for aging, temperature, and uncertainty.",
-          "examples": [
-            "20%",
-            "30%",
-            "Cold-weather reserve"
-          ],
-          "whyItMatters": "Reserve improves reliability and battery life.",
-          "commonMistake": "Sizing to the exact calculated minimum."
+          "label": "Check worst-case runtime margin",
+          "kbKey": "power/worst-case-runtime",
+          "anchor": "Usable Battery Energy (Wh)"
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the battery bank appears appropriately sized. Watch means efficiency, depth of discharge, or growth should be reviewed. Risk means the bank may be undersized or too aggressive for battery health."
+        "The result shows the required battery capacity for the entered target. If the required size looks high, reduce load, reduce runtime target, improve efficiency, or use a higher-voltage architecture where appropriate."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
-        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable for planning purposes.",
+        "Watch: the design may still work, but margin, growth, or failure behavior deserves review.",
+        "Risk: add capacity, reduce load, increase runtime reserve, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+        "Most power/runtime planning problems come from sizing one value in isolation while ignoring load growth, conversion losses, battery derating, redundancy behavior, and real operating margin."
       ],
       "bullets": [
-        "Sizing from best-case runtime.",
-        "Ignoring power factor, efficiency, battery age, or reserve margin.",
-        "Leaving non-critical loads on backup power.",
+        "Sizing only for day-one load instead of projected or peak load.",
+        "Treating advertised capacity as fully usable runtime capacity.",
+        "Ignoring inverter efficiency, battery health, temperature, and reserve margin.",
+        "Forgetting that redundant capacity may not be normal usable capacity.",
         "Failing to document assumptions before the system is built."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer runtime charts, electrical design review, code compliance review, battery documentation, or site-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer ratings still matter.",
-        "Battery condition and temperature can change runtime.",
-        "Real loads should be measured when possible.",
-        "A design with reserve is usually easier to support and explain."
+        "Vendor runtime curves and battery specifications still matter.",
+        "Actual power factor, load behavior, and environmental conditions can change results.",
+        "Battery age, temperature, maintenance, and discharge limits affect usable energy.",
+        "A design with documented headroom is easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical/code compliance review, manufacturer validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment, batteries, and electrical conditions.",
-        "Confirm owner requirements and outage expectations.",
+        "Validate against the actual UPS, inverter, battery, load, and electrical system being deployed.",
+        "Confirm stakeholder expectations for runtime, failover, maintenance, and growth.",
         "Document assumptions before implementation."
       ]
     }

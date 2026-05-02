@@ -2,150 +2,168 @@
   "title": "Load Growth Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how future equipment growth affects power load, UPS sizing, circuit planning, and runtime margin.",
-  "updated": "2026-04-26",
+  "summary": "Understand how current load, annual growth, time horizon, and planning headroom affect future power requirements.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool projects how a power load may increase over time so the design is not sized only for day-one equipment."
+        "This tool projects how a power load may grow over time and adds planning headroom so the design is not sized only for day-one conditions."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch power or runtime issues before installation."
+        "Use it to catch power/runtime pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning UPS systems, rack power, security equipment, network closets, power supplies, or phased expansions."
+        "Use it when planning UPS capacity, battery runtime, branch loading, rack power, or future expansion where load is expected to increase."
       ],
       "bullets": [
-        "Early power design planning.",
-        "Backup runtime review.",
-        "Expansion or load-growth evaluation.",
-        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+        "Early power and runtime planning.",
+        "Expansion or refresh review.",
+        "Existing-system cleanup or validation.",
+        "Explaining assumptions to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical power and runtime planning terms."
+        "These descriptions explain what each visible input represents in practical power and runtime planning terms."
       ],
       "items": [
         {
-          "label": "Current Load",
-          "description": "The power load currently connected or planned for day one.",
+          "label": "Current Load (kW)",
+          "description": "The current measured or estimated load before future growth is applied.",
           "examples": [
-            "300 W",
-            "750 W",
-            "1.5 kW"
+            "0.8 kW rack load",
+            "2.5 kW equipment closet",
+            "Existing UPS output load"
           ],
-          "whyItMatters": "Current load is the baseline for all growth projection.",
-          "commonMistake": "Starting with a rough guess instead of a real equipment estimate."
+          "whyItMatters": "This is the baseline that all future projections build from.",
+          "commonMistake": "Starting with a rough guess instead of a measured or normalized load.",
+          "links": [
+            {
+              "label": "Normalize watts / VA / amps first",
+              "kbKey": "power/va-watts-amps",
+              "anchor": "Watts (W)",
+              "note": "Convert mixed equipment ratings before projecting growth."
+            }
+          ]
         },
         {
-          "label": "Growth Rate",
-          "description": "How quickly the load is expected to increase.",
+          "label": "Annual Growth (%)",
+          "description": "The expected percentage increase in load each year.",
           "examples": [
-            "10% per year",
-            "New cameras",
-            "Additional switches"
+            "5% annual growth",
+            "10% expansion allowance",
+            "Conservative 15% growth scenario"
           ],
-          "whyItMatters": "Growth rate determines how quickly capacity is consumed.",
-          "commonMistake": "Assuming the load will stay flat."
+          "whyItMatters": "Growth rate determines how quickly the system can outgrow the original design.",
+          "commonMistake": "Using zero growth because the first phase looks acceptable."
         },
         {
-          "label": "Planning Window",
-          "description": "How far into the future the design should remain useful.",
+          "label": "Time Horizon (Years)",
+          "description": "The number of years the design should support before another major review.",
           "examples": [
-            "1 year",
-            "3 years",
-            "5 years"
+            "3-year planning window",
+            "5-year equipment lifecycle",
+            "Phased expansion timeline"
           ],
-          "whyItMatters": "Longer windows usually need more conservative spare capacity.",
-          "commonMistake": "Planning only for installation day."
+          "whyItMatters": "Longer horizons require more future capacity.",
+          "commonMistake": "Sizing only for installation day and ignoring lifecycle needs."
         },
         {
-          "label": "Available Capacity",
-          "description": "The usable power capacity of the UPS, circuit, inverter, or supply.",
+          "label": "Planning Headroom (%)",
+          "description": "Extra capacity reserved above the projected load.",
           "examples": [
-            "UPS watts",
-            "Circuit capacity",
-            "Power supply capacity"
+            "20% spare capacity",
+            "30% design margin",
+            "Reserve for unknown additions"
           ],
-          "whyItMatters": "Capacity sets the limit the projected load must stay under.",
-          "commonMistake": "Using nameplate capacity without derating or margin."
+          "whyItMatters": "Headroom protects against estimation error, load spikes, and unplanned equipment.",
+          "commonMistake": "Treating projected load as the exact capacity target.",
+          "links": [
+            {
+              "label": "Carry projected load into UPS runtime",
+              "kbKey": "power/ups-runtime",
+              "anchor": "Estimated load (Watts)",
+              "note": "UPS runtime should use the load you expect to support, not only today\u2019s load."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "How this connects to the design flow",
+      "body": [
+        "Power and runtime tools are strongest when the results are carried forward instead of treated as one-off calculations. Use related Knowledge Base references when one value depends on another planning assumption."
+      ],
+      "bullets": [
+        "Start with clear load math before runtime sizing.",
+        "Carry projected or worst-case loads into UPS and battery planning.",
+        "Review degraded or redundant scenarios before treating runtime as final."
+      ],
+      "links": [
+        {
+          "label": "Use projected load in UPS runtime",
+          "kbKey": "power/ups-runtime",
+          "anchor": "Estimated load (Watts)"
         },
         {
-          "label": "Headroom Target",
-          "description": "Spare capacity reserved after growth.",
-          "examples": [
-            "20%",
-            "30%",
-            "Future expansion margin"
-          ],
-          "whyItMatters": "Headroom protects against load changes and uncertainty.",
-          "commonMistake": "Using all available capacity and leaving no reserve."
-        },
-        {
-          "label": "Expansion Events",
-          "description": "Known future additions that may increase load.",
-          "examples": [
-            "Phase 2 cameras",
-            "Additional rack",
-            "New access panels"
-          ],
-          "whyItMatters": "Known additions may matter more than percentage growth.",
-          "commonMistake": "Ignoring planned expansions because they are not installed yet."
+          "label": "Stress-test projected load",
+          "kbKey": "power/worst-case-runtime",
+          "anchor": "Load (Watts)"
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means projected growth fits inside the available capacity. Watch means growth margin should be reviewed. Risk means the power design may become undersized during the planning window."
+        "Healthy results indicate projected load and headroom are still manageable. Watch or Risk means the future load may exceed the power, UPS, or runtime envelope unless capacity is added or assumptions are revised."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
-        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable for planning purposes.",
+        "Watch: the design may still work, but margin, growth, or failure behavior deserves review.",
+        "Risk: add capacity, reduce load, increase runtime reserve, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+        "Most power/runtime planning problems come from sizing one value in isolation while ignoring load growth, conversion losses, battery derating, redundancy behavior, and real operating margin."
       ],
       "bullets": [
-        "Sizing from best-case runtime.",
-        "Ignoring power factor, efficiency, battery age, or reserve margin.",
-        "Leaving non-critical loads on backup power.",
+        "Sizing only for day-one load instead of projected or peak load.",
+        "Treating advertised capacity as fully usable runtime capacity.",
+        "Ignoring inverter efficiency, battery health, temperature, and reserve margin.",
+        "Forgetting that redundant capacity may not be normal usable capacity.",
         "Failing to document assumptions before the system is built."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer runtime charts, electrical design review, code compliance review, battery documentation, or site-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer ratings still matter.",
-        "Battery condition and temperature can change runtime.",
-        "Real loads should be measured when possible.",
-        "A design with reserve is usually easier to support and explain."
+        "Vendor runtime curves and battery specifications still matter.",
+        "Actual power factor, load behavior, and environmental conditions can change results.",
+        "Battery age, temperature, maintenance, and discharge limits affect usable energy.",
+        "A design with documented headroom is easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical/code compliance review, manufacturer validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment, batteries, and electrical conditions.",
-        "Confirm owner requirements and outage expectations.",
+        "Validate against the actual UPS, inverter, battery, load, and electrical system being deployed.",
+        "Confirm stakeholder expectations for runtime, failover, maintenance, and growth.",
         "Document assumptions before implementation."
       ]
     }

@@ -2,150 +2,162 @@
   "title": "Inverter Efficiency Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand inverter losses, DC input demand, AC output load, heat, and battery impact.",
-  "updated": "2026-04-26",
+  "summary": "Understand AC load, inverter efficiency, DC input demand, conversion loss, and battery-side current.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates how inverter efficiency affects input power, battery demand, and wasted heat."
+        "This tool estimates how much DC power and current an inverter must draw to support a given AC load after efficiency losses."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch power or runtime issues before installation."
+        "Use it to catch power/runtime pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning battery-backed AC loads, off-grid systems, mobile systems, remote sites, or any design where DC energy is converted to AC."
+        "Use it when planning inverter-backed equipment, battery systems, DC cabling, heat contribution, or runtime assumptions."
       ],
       "bullets": [
-        "Early power design planning.",
-        "Backup runtime review.",
-        "Expansion or load-growth evaluation.",
-        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+        "Early power and runtime planning.",
+        "Expansion or refresh review.",
+        "Existing-system cleanup or validation.",
+        "Explaining assumptions to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical power and runtime planning terms."
+        "These descriptions explain what each visible input represents in practical power and runtime planning terms."
       ],
       "items": [
         {
-          "label": "AC Load",
-          "description": "The real power required by the connected AC equipment.",
+          "label": "AC Load (W)",
+          "description": "The AC output load the inverter must support.",
           "examples": [
-            "100 W",
-            "500 W",
-            "1500 W"
+            "120 W equipment load",
+            "500 W inverter output",
+            "Rack support load"
           ],
-          "whyItMatters": "AC load determines how much useful output the inverter must provide.",
-          "commonMistake": "Sizing from inverter rating instead of actual load."
+          "whyItMatters": "The AC load determines the minimum output power before losses.",
+          "commonMistake": "Forgetting that the battery must supply more than the AC load due to losses.",
+          "links": [
+            {
+              "label": "Normalize load units first",
+              "kbKey": "power/va-watts-amps",
+              "anchor": "Watts (W)"
+            }
+          ]
         },
         {
-          "label": "Inverter Efficiency",
-          "description": "The percentage of DC input energy converted into AC output.",
+          "label": "Efficiency (%)",
+          "description": "The inverter conversion efficiency.",
           "examples": [
-            "85%",
-            "90%",
-            "95%"
+            "85% small inverter",
+            "90% quality inverter",
+            "Conservative 80% planning"
           ],
           "whyItMatters": "Lower efficiency increases battery draw and heat.",
-          "commonMistake": "Assuming inverter conversion is lossless."
+          "commonMistake": "Assuming 100% efficiency for runtime planning.",
+          "links": [
+            {
+              "label": "Carry efficiency into UPS runtime",
+              "kbKey": "power/ups-runtime",
+              "anchor": "Inverter efficiency (%)"
+            }
+          ]
         },
         {
-          "label": "DC Voltage",
-          "description": "The battery or DC system voltage feeding the inverter.",
+          "label": "DC Voltage (V)",
+          "description": "The battery or DC input voltage feeding the inverter.",
           "examples": [
-            "12 VDC",
-            "24 VDC",
-            "48 VDC"
+            "12 V DC",
+            "24 V DC",
+            "48 V DC"
           ],
-          "whyItMatters": "Voltage affects DC current draw and cable sizing.",
-          "commonMistake": "Using low voltage for large loads without checking current."
+          "whyItMatters": "Lower voltage means higher current for the same power.",
+          "commonMistake": "Sizing wiring or current protection without checking DC-side amps.",
+          "links": [
+            {
+              "label": "Use voltage in battery sizing",
+              "kbKey": "power/battery-sizing",
+              "anchor": "System Voltage (V)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "How this connects to the design flow",
+      "body": [
+        "Power and runtime tools are strongest when the results are carried forward instead of treated as one-off calculations. Use related Knowledge Base references when one value depends on another planning assumption."
+      ],
+      "bullets": [
+        "Start with clear load math before runtime sizing.",
+        "Carry projected or worst-case loads into UPS and battery planning.",
+        "Review degraded or redundant scenarios before treating runtime as final."
+      ],
+      "links": [
+        {
+          "label": "Use efficiency in battery-bank sizing",
+          "kbKey": "power/battery-bank-sizer",
+          "anchor": "Efficiency (%)"
         },
         {
-          "label": "Runtime Target",
-          "description": "How long the inverter-backed load should run.",
-          "examples": [
-            "1 hour",
-            "4 hours",
-            "Overnight"
-          ],
-          "whyItMatters": "Runtime determines battery energy demand.",
-          "commonMistake": "Choosing an inverter without checking battery impact."
-        },
-        {
-          "label": "Surge Load",
-          "description": "Temporary startup or peak load.",
-          "examples": [
-            "Motor startup",
-            "Compressor surge",
-            "Power supply inrush"
-          ],
-          "whyItMatters": "Surge load may exceed continuous load and affect inverter selection.",
-          "commonMistake": "Sizing only for steady-state watts."
-        },
-        {
-          "label": "Heat / Losses",
-          "description": "Power wasted as heat during conversion.",
-          "examples": [
-            "Inverter heat",
-            "Cabinet heat",
-            "Ventilation need"
-          ],
-          "whyItMatters": "Losses affect thermal planning and battery runtime.",
-          "commonMistake": "Ignoring heat from conversion losses."
+          "label": "Stress-test worst-case runtime",
+          "kbKey": "power/worst-case-runtime",
+          "anchor": "Inverter Efficiency (%)"
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means losses appear manageable. Watch means efficiency and heat should be reviewed. Risk means inverter losses may significantly reduce runtime or increase battery size."
+        "The result should be read as battery-side demand, not just AC load. Higher DC current or high losses may require a higher-voltage design, better inverter, or larger battery reserve."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
-        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable for planning purposes.",
+        "Watch: the design may still work, but margin, growth, or failure behavior deserves review.",
+        "Risk: add capacity, reduce load, increase runtime reserve, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+        "Most power/runtime planning problems come from sizing one value in isolation while ignoring load growth, conversion losses, battery derating, redundancy behavior, and real operating margin."
       ],
       "bullets": [
-        "Sizing from best-case runtime.",
-        "Ignoring power factor, efficiency, battery age, or reserve margin.",
-        "Leaving non-critical loads on backup power.",
+        "Sizing only for day-one load instead of projected or peak load.",
+        "Treating advertised capacity as fully usable runtime capacity.",
+        "Ignoring inverter efficiency, battery health, temperature, and reserve margin.",
+        "Forgetting that redundant capacity may not be normal usable capacity.",
         "Failing to document assumptions before the system is built."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer runtime charts, electrical design review, code compliance review, battery documentation, or site-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer ratings still matter.",
-        "Battery condition and temperature can change runtime.",
-        "Real loads should be measured when possible.",
-        "A design with reserve is usually easier to support and explain."
+        "Vendor runtime curves and battery specifications still matter.",
+        "Actual power factor, load behavior, and environmental conditions can change results.",
+        "Battery age, temperature, maintenance, and discharge limits affect usable energy.",
+        "A design with documented headroom is easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical/code compliance review, manufacturer validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment, batteries, and electrical conditions.",
-        "Confirm owner requirements and outage expectations.",
+        "Validate against the actual UPS, inverter, battery, load, and electrical system being deployed.",
+        "Confirm stakeholder expectations for runtime, failover, maintenance, and growth.",
         "Document assumptions before implementation."
       ]
     }

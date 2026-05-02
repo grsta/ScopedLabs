@@ -2,152 +2,188 @@
   "title": "Redundancy Impact Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how redundant power paths, UPS systems, supplies, and load sharing affect resilience.",
-  "updated": "2026-04-26",
+  "summary": "Understand how UPS reliability, repair time, maintenance windows, failover penalty, and redundancy architecture affect availability.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate how redundancy changes power availability, failure exposure, and remaining capacity after a component fails."
+        "This tool estimates redundancy behavior and availability pressure from failure and maintenance assumptions instead of only looking at capacity."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch power or runtime issues before installation."
+        "Use it to catch power/runtime pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning dual power supplies, A/B UPS feeds, redundant power supplies, parallel equipment, or critical infrastructure power paths."
+        "Use it when comparing single UPS, N+1, or dual independent designs and documenting whether redundancy meaningfully improves service continuity."
       ],
       "bullets": [
-        "Early power design planning.",
-        "Backup runtime review.",
-        "Expansion or load-growth evaluation.",
-        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+        "Early power and runtime planning.",
+        "Expansion or refresh review.",
+        "Existing-system cleanup or validation.",
+        "Explaining assumptions to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical power and runtime planning terms."
+        "These descriptions explain what each visible input represents in practical power and runtime planning terms."
       ],
       "items": [
         {
-          "label": "Normal Capacity",
-          "description": "Total power capacity available during normal operation.",
+          "label": "UPS MTBF (hours)",
+          "description": "The mean time between UPS failures used for the reliability estimate.",
           "examples": [
-            "A/B UPS capacity",
-            "Dual PSU capacity",
-            "Parallel supply capacity"
+            "200,000 hours",
+            "Vendor reliability estimate",
+            "Conservative planning value"
           ],
-          "whyItMatters": "Normal capacity can look safe until a failure removes part of it.",
-          "commonMistake": "Counting redundant capacity as if it is all usable at once."
+          "whyItMatters": "MTBF influences expected failure frequency.",
+          "commonMistake": "Treating MTBF as a guarantee that failure will not occur."
         },
         {
-          "label": "Critical Load",
-          "description": "Load that must remain powered during a failure.",
+          "label": "Repair Time per Failure (hours)",
+          "description": "The expected duration to restore service after a failure.",
           "examples": [
-            "Network core",
-            "Servers",
-            "Access-control panels",
-            "Security systems"
+            "4 hours",
+            "Next-business-day repair",
+            "Parts replacement window"
           ],
-          "whyItMatters": "Critical load must fit inside remaining capacity.",
-          "commonMistake": "Including non-critical equipment in the critical path."
+          "whyItMatters": "Long repair time increases downtime exposure.",
+          "commonMistake": "Using ideal repair time without considering access, parts, or vendor response."
         },
         {
-          "label": "Redundancy Type",
-          "description": "The power resilience method being used.",
+          "label": "Maintenance Events / Year",
+          "description": "The number of planned maintenance events expected each year.",
           "examples": [
+            "2 inspections per year",
+            "Quarterly maintenance",
+            "Battery service events"
+          ],
+          "whyItMatters": "Maintenance can create planned exposure even without failures.",
+          "commonMistake": "Ignoring scheduled maintenance when claiming high availability."
+        },
+        {
+          "label": "Maintenance Duration (hours)",
+          "description": "The expected duration of each planned maintenance event.",
+          "examples": [
+            "1 hour",
+            "4-hour maintenance window",
+            "Extended battery replacement"
+          ],
+          "whyItMatters": "Longer maintenance windows reduce available operating time.",
+          "commonMistake": "Assuming maintenance has no availability impact."
+        },
+        {
+          "label": "Failover Efficiency Penalty (%)",
+          "description": "The efficiency or capacity penalty applied when the system is operating in failover mode.",
+          "examples": [
+            "3% penalty",
+            "5% loss during transfer",
+            "Conservative derate"
+          ],
+          "whyItMatters": "Failover may reduce usable margin or increase load stress.",
+          "commonMistake": "Assuming redundant operation has no penalty.",
+          "links": [
+            {
+              "label": "Stress-test runtime after penalties",
+              "kbKey": "power/worst-case-runtime",
+              "anchor": "Load Spike Multiplier (x)"
+            }
+          ]
+        },
+        {
+          "label": "Redundancy Architecture",
+          "description": "The redundancy model being evaluated.",
+          "examples": [
+            "Single UPS",
             "N+1",
-            "A/B feed",
-            "Dual power supply",
-            "Parallel UPS"
+            "Dual Independent"
           ],
-          "whyItMatters": "Different redundancy types behave differently during failure.",
-          "commonMistake": "Assuming all redundancy designs provide the same protection."
+          "whyItMatters": "Architecture determines how failures and maintenance affect service continuity.",
+          "commonMistake": "Calling a design redundant when it still has a shared single point of failure.",
+          "links": [
+            {
+              "label": "Model runtime loss in degraded state",
+              "kbKey": "power/failure-runtime-loss",
+              "anchor": "Failure Load (W)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "How this connects to the design flow",
+      "body": [
+        "Power and runtime tools are strongest when the results are carried forward instead of treated as one-off calculations. Use related Knowledge Base references when one value depends on another planning assumption."
+      ],
+      "bullets": [
+        "Start with clear load math before runtime sizing.",
+        "Carry projected or worst-case loads into UPS and battery planning.",
+        "Review degraded or redundant scenarios before treating runtime as final."
+      ],
+      "links": [
+        {
+          "label": "Check degraded runtime impact",
+          "kbKey": "power/failure-runtime-loss",
+          "anchor": "Baseline Load (W)"
         },
         {
-          "label": "Failed Capacity",
-          "description": "Capacity lost when one component or path fails.",
-          "examples": [
-            "One UPS failed",
-            "One PSU failed",
-            "One circuit failed"
-          ],
-          "whyItMatters": "Failed capacity determines degraded-state operation.",
-          "commonMistake": "Only checking normal operation."
-        },
-        {
-          "label": "Load Sharing",
-          "description": "How load is split between redundant sources.",
-          "examples": [
-            "Balanced A/B",
-            "Active/passive",
-            "Shared load"
-          ],
-          "whyItMatters": "Load sharing affects what happens when one side fails.",
-          "commonMistake": "Assuming automatic failover will not change load on the remaining path."
-        },
-        {
-          "label": "Degraded Headroom",
-          "description": "Spare capacity left after failure.",
-          "examples": [
-            "10%",
-            "20%",
-            "Emergency margin"
-          ],
-          "whyItMatters": "Headroom keeps the remaining path from running at the edge.",
-          "commonMistake": "Designing failover with zero spare capacity."
+          "label": "Compare alternate architectures",
+          "kbKey": "power/scenario-comparator",
+          "anchor": "Scenario A"
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means redundancy appears to preserve enough capacity after failure. Watch means degraded-state margin should be reviewed. Risk means a single failure may overload the remaining power path."
+        "Healthy means redundancy assumptions appear reasonable. Watch means repair, maintenance, or failover behavior needs review. Risk means the redundancy model may not provide the expected continuity."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
-        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable for planning purposes.",
+        "Watch: the design may still work, but margin, growth, or failure behavior deserves review.",
+        "Risk: add capacity, reduce load, increase runtime reserve, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+        "Most power/runtime planning problems come from sizing one value in isolation while ignoring load growth, conversion losses, battery derating, redundancy behavior, and real operating margin."
       ],
       "bullets": [
-        "Sizing from best-case runtime.",
-        "Ignoring power factor, efficiency, battery age, or reserve margin.",
-        "Leaving non-critical loads on backup power.",
+        "Sizing only for day-one load instead of projected or peak load.",
+        "Treating advertised capacity as fully usable runtime capacity.",
+        "Ignoring inverter efficiency, battery health, temperature, and reserve margin.",
+        "Forgetting that redundant capacity may not be normal usable capacity.",
         "Failing to document assumptions before the system is built."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer runtime charts, electrical design review, code compliance review, battery documentation, or site-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer ratings still matter.",
-        "Battery condition and temperature can change runtime.",
-        "Real loads should be measured when possible.",
-        "A design with reserve is usually easier to support and explain."
+        "Vendor runtime curves and battery specifications still matter.",
+        "Actual power factor, load behavior, and environmental conditions can change results.",
+        "Battery age, temperature, maintenance, and discharge limits affect usable energy.",
+        "A design with documented headroom is easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical/code compliance review, manufacturer validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment, batteries, and electrical conditions.",
-        "Confirm owner requirements and outage expectations.",
+        "Validate against the actual UPS, inverter, battery, load, and electrical system being deployed.",
+        "Confirm stakeholder expectations for runtime, failover, maintenance, and growth.",
         "Document assumptions before implementation."
       ]
     }

@@ -2,150 +2,217 @@
   "title": "Power Scenario Comparator Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Compare two power/runtime scenarios to understand tradeoffs in load, capacity, runtime, and margin.",
-  "updated": "2026-04-26",
+  "summary": "Compare two power/runtime scenarios using load, battery capacity, efficiency, reserve, and derating assumptions.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool compares design scenarios so changes in load, capacity, efficiency, or battery assumptions are easier to evaluate."
+        "This tool compares Scenario A and Scenario B so tradeoffs between load, capacity, efficiency, and reserve can be documented clearly."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch power or runtime issues before installation."
+        "Use it to catch power/runtime pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when comparing UPS sizes, battery banks, load-shedding plans, inverter options, or alternate backup power designs."
+        "Use it when choosing between UPS sizes, battery packs, runtime targets, redundancy approaches, or conservative versus optimistic assumptions."
       ],
       "bullets": [
-        "Early power design planning.",
-        "Backup runtime review.",
-        "Expansion or load-growth evaluation.",
-        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+        "Early power and runtime planning.",
+        "Expansion or refresh review.",
+        "Existing-system cleanup or validation.",
+        "Explaining assumptions to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical power and runtime planning terms."
+        "These descriptions explain what each visible input represents in practical power and runtime planning terms."
       ],
       "items": [
         {
-          "label": "Scenario A",
-          "description": "The first design option or baseline condition.",
+          "label": "Scenario A \u2014 Load (Watts)",
+          "description": "The load used for the first scenario.",
           "examples": [
-            "Current UPS",
-            "Existing battery bank",
-            "Original design"
+            "Current load",
+            "Lower-cost option",
+            "Existing design"
           ],
-          "whyItMatters": "A baseline makes tradeoffs visible.",
-          "commonMistake": "Comparing options without a consistent baseline."
+          "whyItMatters": "Scenario A is the baseline comparison case.",
+          "commonMistake": "Comparing scenarios that use different load assumptions without documenting why."
         },
         {
-          "label": "Scenario B",
-          "description": "The alternate design option or proposed change.",
+          "label": "Scenario A \u2014 Battery Capacity (Wh)",
+          "description": "The battery energy assigned to the first scenario.",
           "examples": [
-            "Larger UPS",
-            "Reduced load",
-            "Added batteries"
+            "Existing UPS battery",
+            "Smaller battery pack",
+            "Baseline capacity"
           ],
-          "whyItMatters": "The alternate scenario shows whether the change improves the design.",
-          "commonMistake": "Changing multiple assumptions without documenting them."
+          "whyItMatters": "Battery capacity drives the first runtime estimate.",
+          "commonMistake": "Using nameplate capacity without reserve or derate."
         },
         {
-          "label": "Load Difference",
-          "description": "How connected load differs between scenarios.",
+          "label": "Scenario A \u2014 Efficiency (%)",
+          "description": "The conversion efficiency used for the first scenario.",
           "examples": [
-            "Load shed",
-            "More equipment",
-            "Critical-only load"
+            "90% efficient path",
+            "Existing inverter estimate",
+            "Conservative efficiency"
           ],
-          "whyItMatters": "Load changes can affect runtime more than capacity changes.",
-          "commonMistake": "Comparing runtime without checking load."
+          "whyItMatters": "Efficiency changes usable runtime even when load and battery capacity match.",
+          "commonMistake": "Comparing one scenario with realistic losses against another with ideal losses."
         },
         {
-          "label": "Capacity Difference",
-          "description": "How UPS, inverter, or battery capacity differs.",
+          "label": "Scenario A \u2014 Reserve / Derate (%)",
+          "description": "The reserve or derate applied to the first scenario.",
           "examples": [
-            "More battery Ah",
-            "Higher UPS rating",
-            "Different inverter"
+            "20% reserve",
+            "Battery age derate",
+            "Conservative field factor"
           ],
-          "whyItMatters": "Capacity changes may improve runtime or margin.",
-          "commonMistake": "Assuming bigger equipment always solves the problem."
+          "whyItMatters": "Reserve protects against aging, temperature, and uncertainty.",
+          "commonMistake": "Leaving reserve at zero to make a scenario look better."
         },
         {
-          "label": "Efficiency Difference",
-          "description": "Losses or conversion efficiency in each scenario.",
+          "label": "Scenario B \u2014 Load (Watts)",
+          "description": "The load used for the second scenario.",
           "examples": [
-            "90% inverter",
-            "95% UPS",
-            "Older equipment"
+            "Projected load",
+            "Larger design option",
+            "Alternate redundancy case"
           ],
-          "whyItMatters": "Efficiency can change real usable runtime.",
-          "commonMistake": "Ignoring efficiency when comparing systems."
+          "whyItMatters": "Scenario B should represent the design you want to compare against Scenario A.",
+          "commonMistake": "Changing the load and battery capacity together without explaining the design difference.",
+          "links": [
+            {
+              "label": "Use projected load assumptions",
+              "kbKey": "power/load-growth",
+              "anchor": "Planning Headroom (%)"
+            }
+          ]
         },
         {
-          "label": "Target Requirement",
-          "description": "The runtime or capacity goal both scenarios should meet.",
+          "label": "Scenario B \u2014 Battery Capacity (Wh)",
+          "description": "The battery energy assigned to the second scenario.",
           "examples": [
-            "30 minutes",
-            "2 hours",
-            "Critical load only"
+            "Larger external battery",
+            "Upgraded UPS option",
+            "Alternate battery cabinet"
           ],
-          "whyItMatters": "The target defines which scenario is acceptable.",
-          "commonMistake": "Comparing options without a pass/fail requirement."
+          "whyItMatters": "This shows whether extra energy meaningfully improves runtime.",
+          "commonMistake": "Assuming more battery always solves the problem without checking load and losses.",
+          "links": [
+            {
+              "label": "Estimate battery capacity needs",
+              "kbKey": "power/battery-bank-sizer",
+              "anchor": "Runtime (Hours)"
+            }
+          ]
+        },
+        {
+          "label": "Scenario B \u2014 Efficiency (%)",
+          "description": "The conversion efficiency used for the second scenario.",
+          "examples": [
+            "92% upgraded inverter",
+            "Different UPS topology",
+            "Conservative option"
+          ],
+          "whyItMatters": "Efficiency helps compare different power-path designs fairly.",
+          "commonMistake": "Ignoring efficiency differences between options.",
+          "links": [
+            {
+              "label": "Review inverter efficiency assumptions",
+              "kbKey": "power/inverter-efficiency",
+              "anchor": "Efficiency (%)"
+            }
+          ]
+        },
+        {
+          "label": "Scenario B \u2014 Reserve / Derate (%)",
+          "description": "The reserve or derate applied to the second scenario.",
+          "examples": [
+            "20% reserve",
+            "30% conservative derate",
+            "Battery-health allowance"
+          ],
+          "whyItMatters": "Reserve determines how much of the apparent advantage remains usable.",
+          "commonMistake": "Comparing one scenario with reserve against another without reserve."
+        }
+      ]
+    },
+    {
+      "title": "How this connects to the design flow",
+      "body": [
+        "Power and runtime tools are strongest when the results are carried forward instead of treated as one-off calculations. Use related Knowledge Base references when one value depends on another planning assumption."
+      ],
+      "bullets": [
+        "Start with clear load math before runtime sizing.",
+        "Carry projected or worst-case loads into UPS and battery planning.",
+        "Review degraded or redundant scenarios before treating runtime as final."
+      ],
+      "links": [
+        {
+          "label": "Compare against normal UPS runtime",
+          "kbKey": "power/ups-runtime",
+          "anchor": "Estimated load (Watts)"
+        },
+        {
+          "label": "Compare degraded-state losses",
+          "kbKey": "power/failure-runtime-loss",
+          "anchor": "Failure Load (W)"
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the better scenario has clear margin. Watch means tradeoffs should be reviewed. Risk means one scenario may fall short of the target or rely on weak assumptions."
+        "The result should be read as a tradeoff comparison, not a universal winner. The better scenario depends on runtime target, load growth, reserve, cost, redundancy, and operational requirements."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
-        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable for planning purposes.",
+        "Watch: the design may still work, but margin, growth, or failure behavior deserves review.",
+        "Risk: add capacity, reduce load, increase runtime reserve, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+        "Most power/runtime planning problems come from sizing one value in isolation while ignoring load growth, conversion losses, battery derating, redundancy behavior, and real operating margin."
       ],
       "bullets": [
-        "Sizing from best-case runtime.",
-        "Ignoring power factor, efficiency, battery age, or reserve margin.",
-        "Leaving non-critical loads on backup power.",
+        "Sizing only for day-one load instead of projected or peak load.",
+        "Treating advertised capacity as fully usable runtime capacity.",
+        "Ignoring inverter efficiency, battery health, temperature, and reserve margin.",
+        "Forgetting that redundant capacity may not be normal usable capacity.",
         "Failing to document assumptions before the system is built."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer runtime charts, electrical design review, code compliance review, battery documentation, or site-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer ratings still matter.",
-        "Battery condition and temperature can change runtime.",
-        "Real loads should be measured when possible.",
-        "A design with reserve is usually easier to support and explain."
+        "Vendor runtime curves and battery specifications still matter.",
+        "Actual power factor, load behavior, and environmental conditions can change results.",
+        "Battery age, temperature, maintenance, and discharge limits affect usable energy.",
+        "A design with documented headroom is easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical/code compliance review, manufacturer validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment, batteries, and electrical conditions.",
-        "Confirm owner requirements and outage expectations.",
+        "Validate against the actual UPS, inverter, battery, load, and electrical system being deployed.",
+        "Confirm stakeholder expectations for runtime, failover, maintenance, and growth.",
         "Document assumptions before implementation."
       ]
     }

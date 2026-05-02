@@ -2,153 +2,168 @@
   "title": "VA / Watts / Amps Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand the relationship between apparent power, real power, current draw, voltage, and power factor.",
-  "updated": "2026-04-26",
+  "summary": "Understand voltage, real power, apparent power, current draw, and power factor before sizing power paths or UPS capacity.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool converts between VA, watts, amps, voltage, and power factor so power loads can be compared consistently."
+        "This tool converts between watts, volt-amps, and amps so the same load can be expressed in the terms needed for UPS, circuit, and runtime planning."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch power or runtime issues before installation."
+        "Use it to catch power/runtime pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when sizing UPS systems, power supplies, circuits, inverters, rack loads, or any equipment where electrical load values are provided in different units."
+        "Use it when a device rating is provided in VA, watts, or amps and you need to normalize that value before using it in downstream power calculations."
       ],
       "bullets": [
-        "Early power design planning.",
-        "Backup runtime review.",
-        "Expansion or load-growth evaluation.",
-        "Explaining power tradeoffs to a client, stakeholder, or internal team."
+        "Early power and runtime planning.",
+        "Expansion or refresh review.",
+        "Existing-system cleanup or validation.",
+        "Explaining assumptions to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical power and runtime planning terms."
+        "These descriptions explain what each visible input represents in practical power and runtime planning terms."
       ],
       "items": [
         {
-          "label": "Voltage",
-          "description": "The electrical voltage used by the load or circuit.",
+          "label": "Voltage (V)",
+          "description": "The nominal electrical voltage used for the conversion.",
           "examples": [
-            "120 VAC",
-            "208 VAC",
-            "240 VAC",
-            "24 VDC"
+            "120 V branch circuit",
+            "208 V equipment feed",
+            "24 V DC control load"
           ],
-          "whyItMatters": "Voltage determines how much current is required for a given power load.",
-          "commonMistake": "Mixing AC and DC assumptions or using the wrong system voltage."
+          "whyItMatters": "Voltage determines how much current is required for a given power level.",
+          "commonMistake": "Using the wrong voltage and carrying that mistake into circuit or UPS sizing."
         },
         {
-          "label": "Watts",
-          "description": "Real power consumed by the equipment.",
+          "label": "Power Factor (0.5 - 1.0)",
+          "description": "The ratio between real power in watts and apparent power in volt-amps.",
           "examples": [
-            "Server load",
-            "Camera power",
-            "UPS load",
-            "Power supply output"
+            "0.90 for many modern power supplies",
+            "0.80 for conservative UPS planning",
+            "1.00 for ideal resistive loads"
           ],
-          "whyItMatters": "Watts represent usable real power and heat-producing load.",
-          "commonMistake": "Treating watts and VA as identical when power factor matters."
+          "whyItMatters": "Power factor explains why VA and watts are not always the same number.",
+          "commonMistake": "Assuming watts and VA are identical for every load.",
+          "links": [
+            {
+              "label": "Use converted load in growth planning",
+              "kbKey": "power/load-growth",
+              "anchor": "Current Load (kW)",
+              "note": "Projected loads should start from a consistent power basis."
+            }
+          ]
         },
         {
-          "label": "VA",
-          "description": "Apparent power, which combines real power and power factor effects.",
+          "label": "Watts (W)",
+          "description": "The real power consumed by the load.",
           "examples": [
-            "UPS rating",
-            "Transformer rating",
-            "Apparent load"
+            "Server draw in watts",
+            "Network switch draw",
+            "Camera power supply output"
           ],
-          "whyItMatters": "VA is commonly used for UPS and electrical equipment capacity.",
-          "commonMistake": "Sizing a UPS only from watts without checking VA rating."
+          "whyItMatters": "Watts are the most common input for runtime, heat, and energy calculations.",
+          "commonMistake": "Using nameplate watts as if it always equals measured operating load."
         },
         {
-          "label": "Amps",
-          "description": "Electrical current drawn by the load.",
+          "label": "Volt-Amps (VA)",
+          "description": "The apparent power used by UPS and some power equipment ratings.",
           "examples": [
-            "Circuit current",
-            "Power supply draw",
-            "Rack current"
+            "1500 VA UPS",
+            "3000 VA power conditioner",
+            "Device nameplate VA"
           ],
-          "whyItMatters": "Current affects breaker, wiring, and power supply sizing.",
-          "commonMistake": "Ignoring current draw after calculating watts."
+          "whyItMatters": "VA matters because UPS systems are often limited by both watts and VA.",
+          "commonMistake": "Checking only the watt rating and ignoring the VA limit.",
+          "links": [
+            {
+              "label": "Carry VA assumptions into UPS runtime",
+              "kbKey": "power/ups-runtime",
+              "anchor": "UPS rating (VA)",
+              "note": "UPS runtime depends on both load and UPS rating assumptions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "How this connects to the design flow",
+      "body": [
+        "Power and runtime tools are strongest when the results are carried forward instead of treated as one-off calculations. Use related Knowledge Base references when one value depends on another planning assumption."
+      ],
+      "bullets": [
+        "Start with clear load math before runtime sizing.",
+        "Carry projected or worst-case loads into UPS and battery planning.",
+        "Review degraded or redundant scenarios before treating runtime as final."
+      ],
+      "links": [
+        {
+          "label": "Project normalized load forward",
+          "kbKey": "power/load-growth",
+          "anchor": "Current Load (kW)"
         },
         {
-          "label": "Power Factor",
-          "description": "The ratio between real power and apparent power.",
-          "examples": [
-            "0.8 PF",
-            "0.9 PF",
-            "1.0 PF"
-          ],
-          "whyItMatters": "Lower power factor increases VA for the same watt load.",
-          "commonMistake": "Assuming every load has perfect power factor."
-        },
-        {
-          "label": "Load Type",
-          "description": "The kind of equipment being powered.",
-          "examples": [
-            "IT equipment",
-            "Motor load",
-            "Lighting",
-            "Power supply"
-          ],
-          "whyItMatters": "Different loads may have different power factor and startup behavior.",
-          "commonMistake": "Using one generic conversion for every load type."
+          "label": "Use load in UPS runtime sizing",
+          "kbKey": "power/ups-runtime",
+          "anchor": "Estimated load (Watts)"
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the converted values appear reasonable for the entered assumptions. Watch or risk conditions usually mean current draw, power factor, or available capacity should be reviewed before design decisions are made."
+        "The result should be read as a normalized load view. Use the converted watts, VA, or amps value that matches the next planning step rather than mixing units across tools."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but power, runtime, or reserve assumptions deserve review.",
-        "Risk: reduce load, add capacity, improve efficiency, or validate the design more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable for planning purposes.",
+        "Watch: the design may still work, but margin, growth, or failure behavior deserves review.",
+        "Risk: add capacity, reduce load, increase runtime reserve, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most power planning problems come from trusting nameplate ratings, ignoring losses, or designing for normal load instead of outage behavior."
+        "Most power/runtime planning problems come from sizing one value in isolation while ignoring load growth, conversion losses, battery derating, redundancy behavior, and real operating margin."
       ],
       "bullets": [
-        "Sizing from best-case runtime.",
-        "Ignoring power factor, efficiency, battery age, or reserve margin.",
-        "Leaving non-critical loads on backup power.",
+        "Sizing only for day-one load instead of projected or peak load.",
+        "Treating advertised capacity as fully usable runtime capacity.",
+        "Ignoring inverter efficiency, battery health, temperature, and reserve margin.",
+        "Forgetting that redundant capacity may not be normal usable capacity.",
         "Failing to document assumptions before the system is built."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, electrical code requirements, battery manufacturer guidance, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer runtime charts, electrical design review, code compliance review, battery documentation, or site-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer ratings still matter.",
-        "Battery condition and temperature can change runtime.",
-        "Real loads should be measured when possible.",
-        "A design with reserve is usually easier to support and explain."
+        "Vendor runtime curves and battery specifications still matter.",
+        "Actual power factor, load behavior, and environmental conditions can change results.",
+        "Battery age, temperature, maintenance, and discharge limits affect usable energy.",
+        "A design with documented headroom is easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, electrical/code compliance review, manufacturer validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment, batteries, and electrical conditions.",
-        "Confirm owner requirements and outage expectations.",
+        "Validate against the actual UPS, inverter, battery, load, and electrical system being deployed.",
+        "Confirm stakeholder expectations for runtime, failover, maintenance, and growth.",
         "Document assumptions before implementation."
       ]
     }
