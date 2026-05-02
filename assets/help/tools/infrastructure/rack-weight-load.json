@@ -2,151 +2,125 @@
   "title": "Rack Weight Load Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand rack weight, floor loading, cabinet ratings, batteries, and equipment concentration.",
-  "updated": "2026-04-26",
+  "summary": "Understand loaded rack weight, device count, average equipment weight, rated rack capacity, and reserve margin.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether rack equipment weight is reasonable for the rack, floor, and room conditions."
+        "This tool estimates total rack load and compares it against the rack rated capacity."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning heavy servers, UPS systems, batteries, dense storage, or racks placed on raised floors or older structures."
+        "Use it when planning loaded racks, consolidating hardware, adding servers or UPS units, reviewing rack capacity, or preparing for structural checks."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the Rack Weight Load tool and explain how each value affects rack capacity."
       ],
       "items": [
         {
-          "label": "Rack Weight Rating",
-          "description": "The maximum weight the rack or cabinet is rated to support.",
+          "label": "Number of Devices",
+          "description": "The count of devices or equipment items placed in the rack.",
           "examples": [
-            "1000 lb",
-            "1500 lb",
-            "Static load rating"
+            "20 switches",
+            "12 servers",
+            "Mixed devices in one cabinet"
           ],
-          "whyItMatters": "Rack rating determines whether the cabinet itself can safely hold the equipment.",
-          "commonMistake": "Using a rack without checking static load rating."
+          "whyItMatters": "More devices usually increase total rack weight and cable/service complexity.",
+          "commonMistake": "Counting only major equipment and forgetting shelves, UPS units, rails, patching, and accessories."
         },
         {
-          "label": "Equipment Weight",
-          "description": "The combined weight of mounted gear.",
+          "label": "Average Device Weight (lbs)",
+          "description": "The average weight of each device in pounds.",
           "examples": [
-            "Servers",
-            "Switches",
-            "Storage arrays",
-            "UPS"
+            "15 lb switch",
+            "35 lb server",
+            "Estimated average for mixed gear"
           ],
-          "whyItMatters": "Dense equipment can create major point loads.",
-          "commonMistake": "Estimating equipment weight instead of checking datasheets."
+          "whyItMatters": "Average weight drives the total load estimate when exact device-by-device weights are not available.",
+          "commonMistake": "Using a low average when a few heavy devices dominate the total.",
+          "links": [
+            {
+              "label": "Check floor loading from rack weight",
+              "kbKey": "infrastructure/floor-load-rating",
+              "anchor": "Rack Weight (lbs)",
+              "note": "Use when total rack weight needs to be compared against floor rating."
+            }
+          ]
         },
         {
-          "label": "Battery / UPS Weight",
-          "description": "Weight from UPS units or battery packs.",
+          "label": "Rack Rated Capacity (lbs)",
+          "description": "The maximum weight the rack or cabinet is rated to hold.",
           "examples": [
-            "Rack UPS",
-            "External battery module",
-            "Battery cabinet"
+            "800 lb cabinet",
+            "1200 lb rack",
+            "Manufacturer rack rating"
           ],
-          "whyItMatters": "Batteries are often the heaviest rack components.",
-          "commonMistake": "Adding batteries without checking rack/floor impact."
-        },
-        {
-          "label": "Floor Rating",
-          "description": "The floor or room load capacity.",
-          "examples": [
-            "Concrete slab",
-            "Raised floor",
-            "Office floor"
-          ],
-          "whyItMatters": "Floor rating can be the limiting factor even when the rack is rated higher.",
-          "commonMistake": "Assuming any room can support dense equipment."
-        },
-        {
-          "label": "Weight Distribution",
-          "description": "How weight is positioned in the rack.",
-          "examples": [
-            "Bottom-heavy UPS",
-            "Top-mounted equipment",
-            "Balanced layout"
-          ],
-          "whyItMatters": "Poor distribution can make the rack unstable or hard to service.",
-          "commonMistake": "Mounting heavy gear too high."
-        },
-        {
-          "label": "Growth Allowance",
-          "description": "Future added equipment weight.",
-          "examples": [
-            "Additional servers",
-            "Future UPS",
-            "Storage expansion"
-          ],
-          "whyItMatters": "Weight often increases as systems grow.",
-          "commonMistake": "Designing around current equipment only."
+          "whyItMatters": "Rack capacity determines whether the cabinet itself is still within its support limit.",
+          "commonMistake": "Assuming the floor limit is the only limit and ignoring the rack manufacturer rating."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the weight appears manageable. Watch means cabinet/floor ratings should be reviewed. Risk means the design may exceed practical or structural limits."
+        "Healthy means rack weight is comfortably inside capacity. Watch means the load is approaching a support limit. Risk means the rack may be overloaded or should be reviewed before more equipment is added."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Healthy: total rack weight is within the rated capacity with margin.",
+        "Watch: verify actual equipment weights and accessory loads.",
+        "Risk: reduce load, redistribute equipment, or use a higher-capacity rack."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }

@@ -2,150 +2,135 @@
   "title": "Generator Runtime Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand load, fuel capacity, consumption rate, reserve margin, and outage planning.",
-  "updated": "2026-04-26",
+  "summary": "Understand fuel capacity, consumption rate, load factor, reserve fuel, and practical backup runtime.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate generator runtime based on load and fuel assumptions."
+        "This tool estimates generator runtime after load factor and reserve fuel are applied to the available fuel capacity."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning backup power, estimating outage coverage, sizing fuel reserves, or documenting runtime expectations."
+        "Use it when planning backup power endurance, fuel storage, maintenance windows, outage scenarios, or recovery expectations for infrastructure support."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the Generator Runtime tool and explain how each value affects backup endurance."
       ],
       "items": [
         {
-          "label": "Connected Load",
-          "description": "The electrical load supported by the generator.",
+          "label": "Fuel Capacity (gal)",
+          "description": "The usable amount of fuel available to the generator in gallons.",
           "examples": [
-            "Critical systems",
-            "IT load",
-            "Security load",
-            "HVAC support"
+            "50 gallons",
+            "Diesel tank capacity",
+            "Usable propane equivalent"
           ],
-          "whyItMatters": "Load determines fuel burn and runtime.",
-          "commonMistake": "Using nameplate load instead of realistic operating load."
+          "whyItMatters": "Fuel capacity defines the starting endurance limit before reserve is held back.",
+          "commonMistake": "Using tank size as if every gallon is practically usable."
         },
         {
-          "label": "Generator Capacity",
-          "description": "The generator output rating.",
+          "label": "Consumption Rate (gal/hr)",
+          "description": "The fuel burn rate at the generator operating condition being modeled.",
           "examples": [
-            "10 kW",
-            "50 kW",
-            "250 kW"
+            "2.5 gal/hr",
+            "Manufacturer fuel curve value",
+            "Observed burn rate"
           ],
-          "whyItMatters": "Capacity affects whether the generator can support the load with margin.",
-          "commonMistake": "Running too close to generator rating."
+          "whyItMatters": "Consumption rate determines how quickly the fuel supply is depleted.",
+          "commonMistake": "Using a best-case fuel rate instead of the expected loaded condition."
         },
         {
-          "label": "Fuel Capacity",
-          "description": "The amount of usable fuel available.",
+          "label": "Load Factor",
+          "description": "The portion of rated load or operating demand applied to the generator.",
           "examples": [
-            "Diesel tank",
-            "Propane tank",
-            "Natural gas supply"
+            "0.5 for half load",
+            "0.75 for heavy load",
+            "1.0 for full load"
           ],
-          "whyItMatters": "Fuel capacity limits runtime for stored-fuel systems.",
-          "commonMistake": "Counting total tank size instead of usable fuel."
+          "whyItMatters": "Generator fuel burn and endurance depend heavily on load.",
+          "commonMistake": "Modeling runtime at light load when the real outage load is much higher.",
+          "links": [
+            {
+              "label": "Review UPS room support",
+              "kbKey": "infrastructure/ups-room-sizing",
+              "anchor": "UPS Cabinets"
+            }
+          ]
         },
         {
-          "label": "Fuel Burn Rate",
-          "description": "Fuel consumed at the expected load level.",
-          "examples": [
-            "Gallons per hour",
-            "Percent-load curve"
-          ],
-          "whyItMatters": "Burn rate changes with load.",
-          "commonMistake": "Using full-load burn rate for all cases or ignoring load variation."
-        },
-        {
-          "label": "Reserve Margin",
-          "description": "Fuel or runtime held back as a safety margin.",
+          "label": "Reserve Fuel (%)",
+          "description": "The percentage of fuel intentionally held back instead of counted as usable runtime.",
           "examples": [
             "10% reserve",
-            "Emergency reserve",
-            "Refuel buffer"
+            "20% reserve",
+            "Operational safety margin"
           ],
-          "whyItMatters": "Reserve protects against longer outages or refuel delays.",
-          "commonMistake": "Planning to run fuel completely empty."
-        },
-        {
-          "label": "Target Runtime",
-          "description": "The outage duration the generator should cover.",
-          "examples": [
-            "4 hours",
-            "24 hours",
-            "72 hours"
-          ],
-          "whyItMatters": "Target runtime determines whether fuel capacity is enough.",
-          "commonMistake": "Setting runtime expectations without checking fuel logistics."
+          "whyItMatters": "Reserve protects against measurement error, refueling delays, and unexpected load changes.",
+          "commonMistake": "Reporting maximum theoretical runtime with no fuel reserve."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means runtime appears aligned with the target. Watch means load or reserve assumptions should be reviewed. Risk means the generator may not cover the required outage duration."
+        "Healthy means the runtime appears to meet the entered endurance expectation with reserve. Watch means load or reserve assumptions should be reviewed. Risk means the generator may not support the desired outage duration."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Healthy: runtime has practical operating margin.",
+        "Watch: verify fuel curve, load, refueling plan, and reserve policy.",
+        "Risk: increase fuel capacity, reduce load, revise endurance expectations, or validate generator design."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }

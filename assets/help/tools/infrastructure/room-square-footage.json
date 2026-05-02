@@ -2,151 +2,141 @@
   "title": "Room Square Footage Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how room size affects equipment layout, clearance, service access, and future growth.",
-  "updated": "2026-04-26",
+  "summary": "Understand equipment footprint, aisle multiplier, growth reserve, and why usable room area is larger than the hardware footprint.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether a room has enough usable space for equipment, service clearances, access paths, and expansion."
+        "This tool estimates the planning area needed for equipment, access paths, and future expansion so the room is not sized only around the devices themselves."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning equipment rooms, IDF/MDF rooms, security closets, server rooms, or any infrastructure space where layout matters."
+        "Use it when planning equipment rooms, network closets, security head-end rooms, small server rooms, or any space where racks, wall fields, UPS gear, or support equipment need serviceable floor area."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the Room Square Footage Planner and explain how each value affects the required room area."
       ],
       "items": [
         {
-          "label": "Room Length",
-          "description": "The usable length of the room after accounting for walls, obstructions, and access paths.",
+          "label": "Equipment Footprint (sq ft)",
+          "description": "The physical floor area occupied by racks, cabinets, wall fields, battery cabinets, support equipment, or other fixed infrastructure before clearance and growth are added.",
           "examples": [
-            "12 ft",
-            "18 ft",
-            "25 ft"
+            "24 sq ft of rack footprint",
+            "One cabinet plus wall-mounted panels",
+            "Existing equipment footprint from a site survey"
           ],
-          "whyItMatters": "Length affects rack placement, aisle access, and equipment layout.",
-          "commonMistake": "Using architectural room size without subtracting unusable areas."
+          "whyItMatters": "This is the base area the room must support before aisles, service clearance, and future expansion are considered.",
+          "commonMistake": "Using only the equipment footprint as the final room size.",
+          "links": [
+            {
+              "label": "Compare with UPS Room Sizing",
+              "kbKey": "infrastructure/ups-room-sizing",
+              "anchor": "Area per Cabinet (sq ft)",
+              "note": "Use when UPS or battery cabinets are part of the support-space plan."
+            }
+          ]
         },
         {
-          "label": "Room Width",
-          "description": "The usable width available for equipment and movement.",
+          "label": "Clearance / Aisle Factor (×)",
+          "description": "A multiplier that accounts for access aisles, service clearance, working space, door swing, and maneuvering room around the equipment.",
           "examples": [
-            "8 ft",
-            "10 ft",
-            "14 ft"
+            "1.5x for compact rooms",
+            "2.0x for easier service access",
+            "Higher factor for crowded equipment rooms"
           ],
-          "whyItMatters": "Width controls aisle clearance and whether equipment can be serviced safely.",
-          "commonMistake": "Forgetting door swing, wall-mounted equipment, or panels."
+          "whyItMatters": "The same equipment footprint can require very different room sizes depending on the access standard and service expectations.",
+          "commonMistake": "Treating clearance as leftover space instead of a planned requirement.",
+          "links": [
+            {
+              "label": "See equipment spacing logic",
+              "kbKey": "infrastructure/equipment-spacing",
+              "anchor": "Cold Aisle (in)",
+              "note": "Useful when aisle widths and rack rows are being modeled directly."
+            }
+          ]
         },
         {
-          "label": "Rack Count",
-          "description": "The number of racks or cabinets planned for the room.",
+          "label": "Growth Reserve (%)",
+          "description": "Extra room area reserved for future racks, equipment, support gear, or project expansion after the current footprint and clearance are calculated.",
           "examples": [
-            "1 rack",
-            "2 racks",
-            "4 cabinets"
+            "10% spare room",
+            "25% growth reserve",
+            "Phase 2 equipment allowance"
           ],
-          "whyItMatters": "Rack count drives footprint, clearance, cable routing, and cooling pressure.",
-          "commonMistake": "Counting only rack footprint and ignoring service clearance."
-        },
-        {
-          "label": "Clearance Requirement",
-          "description": "Space reserved around equipment for access and maintenance.",
-          "examples": [
-            "Front clearance",
-            "Rear clearance",
-            "Side access"
-          ],
-          "whyItMatters": "Clearance affects safety, serviceability, and code/manufacturer requirements.",
-          "commonMistake": "Pushing equipment against walls to make it fit on paper."
-        },
-        {
-          "label": "Growth Allowance",
-          "description": "Extra space reserved for future racks, panels, batteries, or cable paths.",
-          "examples": [
-            "Future rack",
-            "Wall field expansion",
-            "Battery cabinet"
-          ],
-          "whyItMatters": "Infrastructure rooms usually grow over time.",
-          "commonMistake": "Designing the room around day-one equipment only."
-        },
-        {
-          "label": "Obstructions",
-          "description": "Items that reduce usable space.",
-          "examples": [
-            "Columns",
-            "Door swings",
-            "Electrical panels",
-            "Existing conduit"
-          ],
-          "whyItMatters": "Obstructions can make a room unusable even if square footage looks adequate.",
-          "commonMistake": "Treating total square footage as fully usable."
+          "whyItMatters": "Growth reserve keeps a day-one room from becoming full as soon as the next expansion starts.",
+          "commonMistake": "Leaving no room for future cabinets, cabling, batteries, or service equipment.",
+          "links": [
+            {
+              "label": "Check rack unit reserve",
+              "kbKey": "infrastructure/rack-ru-planner",
+              "anchor": "Growth Reserve (%)",
+              "note": "Use when the growth concern is rack-space capacity rather than floor area."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the room size appears practical. Watch means clearances or growth should be reviewed. Risk means the space may become difficult to install, service, or expand."
+        "Healthy means the room area has practical reserve. Watch means clearance or growth assumptions are getting tight. Risk means the room may be undersized for the equipment and service access expected."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Healthy: the area plan leaves usable operating margin.",
+        "Watch: verify aisles, working clearances, growth, and equipment layout before committing.",
+        "Risk: increase room size, reduce equipment footprint, or validate the design with a detailed layout."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }

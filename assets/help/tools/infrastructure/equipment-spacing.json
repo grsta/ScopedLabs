@@ -2,150 +2,175 @@
   "title": "Equipment Spacing Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand clearance, access, ventilation, wall space, serviceability, and maintenance zones.",
-  "updated": "2026-04-26",
+  "summary": "Understand rack rows, rack dimensions, hot/cold aisle spacing, end clearance, and serviceable room layout.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate whether equipment placement leaves enough practical room for installation and service."
+        "This tool estimates the physical area required for rack rows and access clearances based on rack quantity, rack dimensions, aisle depth, and end clearance."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when placing panels, racks, power supplies, wall cabinets, controllers, batteries, or other infrastructure equipment."
+        "Use it when laying out equipment rooms, small data rooms, network closets, security head-end spaces, rack rows, or any area where access and airflow matter."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the Equipment Spacing Planner and explain how each value affects the physical layout."
       ],
       "items": [
         {
-          "label": "Equipment Width",
-          "description": "The physical width of the device or cabinet.",
+          "label": "Rack Rows",
+          "description": "The number of rack rows included in the layout.",
           "examples": [
-            "Panel width",
-            "Rack width",
-            "Cabinet width"
+            "1 row against a wall",
+            "2 opposing rows",
+            "Multiple equipment rows"
           ],
-          "whyItMatters": "Width affects wall or floor space and side clearance.",
-          "commonMistake": "Checking device size but ignoring working clearance."
+          "whyItMatters": "More rows increase the layout footprint and change aisle planning.",
+          "commonMistake": "Counting rack positions without considering row-to-row spacing.",
+          "links": [
+            {
+              "label": "Start with room area",
+              "kbKey": "infrastructure/room-square-footage",
+              "anchor": "Equipment Footprint (sq ft)"
+            }
+          ]
         },
         {
-          "label": "Equipment Depth",
-          "description": "How far the equipment projects into the room or space.",
+          "label": "Racks per Row",
+          "description": "The number of racks or cabinets placed in each row.",
           "examples": [
-            "Wall cabinet depth",
-            "Rack depth",
-            "Battery cabinet depth"
+            "3 racks in one row",
+            "6-rack row",
+            "Mixed rack lineup"
           ],
-          "whyItMatters": "Depth affects aisle clearance and door swing.",
-          "commonMistake": "Forgetting open-door or service position depth."
+          "whyItMatters": "Rack count drives total row width and can affect aisle, service, and cable pathway requirements.",
+          "commonMistake": "Planning rack count without checking usable room width.",
+          "links": [
+            {
+              "label": "Check rack RU capacity",
+              "kbKey": "infrastructure/rack-ru-planner",
+              "anchor": "Rack Total RU"
+            }
+          ]
         },
         {
-          "label": "Front Clearance",
-          "description": "Working room required in front of the equipment.",
+          "label": "Rack Width (in)",
+          "description": "The width of each rack or cabinet in inches.",
           "examples": [
-            "Service access",
-            "Door swing",
-            "Code clearance"
+            "24 inch cabinet",
+            "600 mm equivalent",
+            "Wider specialty cabinet"
           ],
-          "whyItMatters": "Front clearance is critical for safe service and maintenance.",
-          "commonMistake": "Mounting equipment where doors cannot fully open."
+          "whyItMatters": "Rack width determines row length and clearance needs.",
+          "commonMistake": "Assuming all cabinets are the same width without checking actual model dimensions."
         },
         {
-          "label": "Side Clearance",
-          "description": "Space needed beside equipment.",
+          "label": "Rack Depth (in)",
+          "description": "The front-to-back depth of each rack or cabinet in inches.",
           "examples": [
-            "Ventilation gap",
-            "Cable access",
-            "Adjacent panel spacing"
+            "36 inch rack",
+            "42 inch cabinet",
+            "Deep server cabinet"
           ],
-          "whyItMatters": "Side clearance affects cabling, airflow, and serviceability.",
-          "commonMistake": "Stacking equipment too tightly."
+          "whyItMatters": "Rack depth affects hot/cold aisle spacing and total room depth.",
+          "commonMistake": "Using equipment depth but forgetting rack frame, rear cabling, and door clearance."
         },
         {
-          "label": "Heat / Ventilation",
-          "description": "Airflow or heat clearance required around equipment.",
+          "label": "Cold Aisle (in)",
+          "description": "The planned front-side working or intake aisle clearance.",
           "examples": [
-            "Power supply heat",
-            "UPS heat",
-            "Controller ventilation"
+            "36 inches",
+            "42 inches",
+            "Larger service aisle"
           ],
-          "whyItMatters": "Poor spacing can create heat problems.",
-          "commonMistake": "Treating low-voltage equipment as if heat never matters."
+          "whyItMatters": "Cold aisle clearance affects service access, airflow behavior, and safe work space.",
+          "commonMistake": "Shrinking the front aisle until equipment doors or technicians do not have enough room."
         },
         {
-          "label": "Access Path",
-          "description": "Room needed to reach and work around the equipment.",
+          "label": "Hot Aisle (in)",
+          "description": "The planned rear-side service or exhaust aisle clearance.",
           "examples": [
-            "Technician access",
-            "Panel approach",
-            "Maintenance path"
+            "30 inches",
+            "36 inches",
+            "Rear service aisle"
           ],
-          "whyItMatters": "A layout that fits physically may still be hard to service.",
-          "commonMistake": "Designing only from a wall elevation without considering movement."
+          "whyItMatters": "Rear clearance affects cable access, exhaust airflow, and maintenance work.",
+          "commonMistake": "Forgetting rear access because the front of the rack looks reachable."
+        },
+        {
+          "label": "End Clearance (in)",
+          "description": "Clearance at the end of rack rows for access, turning, doors, or equipment movement.",
+          "examples": [
+            "24 inches",
+            "36 inches",
+            "Space near room door"
+          ],
+          "whyItMatters": "End clearance prevents a layout from becoming physically difficult to access or service.",
+          "commonMistake": "Using every inch of room width and leaving no end access."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means spacing appears workable. Watch means access or ventilation should be reviewed. Risk means the layout may be difficult to install, service, or maintain."
+        "Healthy means the layout has practical service space. Watch means aisle or end clearance assumptions should be checked. Risk means the layout may be too tight for safe access, airflow, or maintenance."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Healthy: the rack layout has usable aisle and service margin.",
+        "Watch: confirm door swing, equipment depth, cable access, and service procedures.",
+        "Risk: reduce rack count, increase room size, or revise the layout before installation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }

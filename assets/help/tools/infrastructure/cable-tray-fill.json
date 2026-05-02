@@ -2,151 +2,146 @@
   "title": "Cable Tray Fill Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand tray capacity, cable quantity, pathway headroom, bend space, and future expansion.",
-  "updated": "2026-04-26",
+  "summary": "Understand tray width, tray depth, cable diameter, cable count, allowed fill, and growth margin.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether a cable tray has enough practical capacity for planned cabling and future growth."
+        "This tool estimates cable tray fill percentage and compares it against the entered maximum fill limit."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning cable pathways, tray sizing, camera/security cabling, network cabling, or infrastructure expansions."
+        "Use it when planning open cable pathways, reviewing tray crowding, preparing for expansion, or documenting whether a tray has usable remaining capacity."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the Cable Tray Fill Calculator and explain how each value affects tray capacity."
       ],
       "items": [
         {
-          "label": "Tray Width",
-          "description": "The usable internal width of the cable tray.",
+          "label": "Tray Width (inches)",
+          "description": "The inside usable width of the cable tray in inches.",
           "examples": [
-            "6 in",
-            "12 in",
-            "18 in"
+            "12 inch tray",
+            "18 inch tray",
+            "Usable measured width"
           ],
-          "whyItMatters": "Width affects how many cables can be placed without overcrowding.",
-          "commonMistake": "Using outside tray dimensions instead of usable space."
+          "whyItMatters": "Tray width is one part of the available cross-sectional area.",
+          "commonMistake": "Using outside tray dimensions instead of usable interior space."
         },
         {
-          "label": "Tray Depth",
-          "description": "The usable depth available for cable fill.",
+          "label": "Tray Depth (inches)",
+          "description": "The usable tray depth in inches.",
           "examples": [
-            "2 in",
-            "4 in",
-            "6 in"
+            "2 inch tray depth",
+            "4 inch tray depth",
+            "Usable fill depth"
           ],
-          "whyItMatters": "Depth affects cable stacking and accessibility.",
-          "commonMistake": "Treating full physical depth as practical fill depth."
+          "whyItMatters": "Tray depth determines how much cable area can be accommodated before the tray becomes crowded.",
+          "commonMistake": "Assuming the entire tray depth should be filled without considering access, airflow, separation, or standards."
         },
         {
-          "label": "Cable Count",
-          "description": "The number of cables planned for the tray.",
+          "label": "Cable Diameter (inches)",
+          "description": "The outside diameter of each cable in inches.",
           "examples": [
-            "Network drops",
-            "Camera runs",
-            "Access-control cabling"
+            "0.23 inch cable",
+            "0.30 inch cable",
+            "Large backbone cable"
           ],
-          "whyItMatters": "Cable count drives fill and serviceability.",
-          "commonMistake": "Counting only current pulls and ignoring future cables."
+          "whyItMatters": "Cable diameter determines how much area each cable contributes to tray fill.",
+          "commonMistake": "Using a cable category name instead of the actual manufacturer outside diameter.",
+          "links": [
+            {
+              "label": "Compare conduit fill",
+              "kbKey": "infrastructure/conduit-fill",
+              "anchor": "Cable Outer Diameter (in)"
+            }
+          ]
         },
         {
-          "label": "Cable Diameter",
-          "description": "The average size of each cable.",
+          "label": "Number of Cables",
+          "description": "The total number of cables planned in the tray.",
           "examples": [
-            "Cat6",
-            "Fiber",
-            "Composite cable",
-            "Power/control cable"
+            "50 cables",
+            "Existing plus new cables",
+            "Future growth bundle"
           ],
-          "whyItMatters": "Larger cables consume tray space faster.",
-          "commonMistake": "Using one generic size for mixed cable types."
+          "whyItMatters": "Cable count drives total occupied tray area and future pathway pressure.",
+          "commonMistake": "Counting only new cables and forgetting existing cabling."
         },
         {
-          "label": "Fill Target",
-          "description": "The intended maximum tray fill percentage.",
+          "label": "Max Fill Allowed (%)",
+          "description": "The maximum tray fill percentage used as the design limit.",
           "examples": [
-            "40%",
-            "50%",
-            "60%"
+            "40% max fill",
+            "50% project standard",
+            "Internal planning limit"
           ],
-          "whyItMatters": "Lower fill targets improve serviceability and future growth.",
-          "commonMistake": "Filling trays to the point where adding cables later is painful."
-        },
-        {
-          "label": "Growth Allowance",
-          "description": "Extra tray space reserved for future cables.",
-          "examples": [
-            "Future cameras",
-            "New drops",
-            "Tenant expansion"
-          ],
-          "whyItMatters": "Cable pathways usually need expansion room.",
-          "commonMistake": "Installing a tray that only fits the initial cable count."
+          "whyItMatters": "This threshold determines whether the tray still has acceptable margin.",
+          "commonMistake": "Treating max fill as a target instead of a limit."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the tray has reasonable spare capacity. Watch means fill and routing should be reviewed. Risk means the tray may become difficult to install, maintain, or expand."
+        "Pass means the tray fill is inside the entered limit. Pass / Watch or Pass / Tight means it fits but reserve is shrinking. Exceeds Limit means the tray is over the entered fill target."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Pass: tray fill is within the entered planning limit.",
+        "Pass / Watch or Pass / Tight: review future cable growth and routing discipline.",
+        "Exceeds Limit: increase tray size, split cable routes, or reduce cable count."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }

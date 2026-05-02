@@ -2,152 +2,132 @@
   "title": "Rack RU Planner Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand rack unit usage, spare capacity, patching, airflow, and expansion planning.",
-  "updated": "2026-04-26",
+  "summary": "Understand rack unit capacity, used rack space, growth reserve, and how quickly a rack can run out of usable RU.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether a rack has enough rack-unit space for planned equipment, patch panels, cable management, and future growth."
+        "This tool estimates how much rack unit space remains after current equipment and growth reserve are accounted for."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it before ordering racks, adding equipment, consolidating gear, or planning an IDF/MDF layout."
+        "Use it when planning rack layouts, cabinet expansion, server or network upgrades, security head-end racks, or cleanup of an existing rack."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the Rack RU Planner and explain how each value affects rack-space capacity."
       ],
       "items": [
         {
-          "label": "Rack Size",
-          "description": "The total rack units available in the rack or cabinet.",
+          "label": "Rack Total RU",
+          "description": "The total usable rack unit height available in the rack or cabinet.",
           "examples": [
-            "24U",
-            "42U",
-            "45U"
+            "24 RU wall cabinet",
+            "42 RU rack",
+            "48 RU cabinet"
           ],
-          "whyItMatters": "Rack size sets the physical limit for mounted equipment.",
-          "commonMistake": "Assuming every rack unit can be used."
+          "whyItMatters": "This is the total vertical capacity available before installed equipment, blanking panels, shelves, and future reserve are considered.",
+          "commonMistake": "Assuming the full rack height is always usable for equipment.",
+          "links": [
+            {
+              "label": "Relate rack count to room size",
+              "kbKey": "infrastructure/room-square-footage",
+              "anchor": "Equipment Footprint (sq ft)"
+            }
+          ]
         },
         {
-          "label": "Equipment RU",
-          "description": "Rack units consumed by active equipment.",
+          "label": "Used RU",
+          "description": "The rack units already consumed or planned for equipment.",
           "examples": [
-            "Switches",
-            "Servers",
-            "UPS",
-            "NVR",
-            "Patch panels"
+            "Switches, patch panels, servers",
+            "NVR plus UPS shelf",
+            "Existing installed equipment"
           ],
-          "whyItMatters": "Equipment RU drives rack density and service access.",
-          "commonMistake": "Forgetting rails, blank panels, or non-standard equipment depth."
+          "whyItMatters": "Used RU determines how much immediate rack space remains.",
+          "commonMistake": "Forgetting shelves, cable managers, blanking panels, or future patching hardware."
         },
         {
-          "label": "Patch Panels",
-          "description": "Rack units used for copper, fiber, or structured cabling termination.",
+          "label": "Growth Reserve (%)",
+          "description": "The percentage of total rack space intentionally kept free for future expansion and service flexibility.",
           "examples": [
-            "Copper patch panel",
-            "Fiber tray",
-            "Security terminations"
+            "10% reserve",
+            "20% reserve",
+            "Reserved RU for future switches"
           ],
-          "whyItMatters": "Patching can consume significant rack space in network/security rooms.",
-          "commonMistake": "Only counting active electronics."
-        },
-        {
-          "label": "Cable Management",
-          "description": "Rack space reserved for horizontal or vertical cable organization.",
-          "examples": [
-            "1U managers",
-            "Brush panels",
-            "Lacing bars"
-          ],
-          "whyItMatters": "Good cable management improves serviceability and airflow.",
-          "commonMistake": "Skipping cable management to squeeze in more equipment."
-        },
-        {
-          "label": "Blanking / Airflow",
-          "description": "Space or panels reserved to control airflow and keep the rack clean.",
-          "examples": [
-            "Blank panels",
-            "Airflow spacing",
-            "Thermal separation"
-          ],
-          "whyItMatters": "Airflow planning reduces heat issues and messy layouts.",
-          "commonMistake": "Packing equipment with no airflow consideration."
-        },
-        {
-          "label": "Spare RU",
-          "description": "Unused rack units reserved for future growth.",
-          "examples": [
-            "10% spare",
-            "20% spare",
-            "Future switch"
-          ],
-          "whyItMatters": "Spare RU prevents immediate rack replacement during small expansions.",
-          "commonMistake": "Filling the rack to 100% on day one."
+          "whyItMatters": "Reserve prevents the rack from becoming unusable after small additions.",
+          "commonMistake": "Filling a rack to the edge and leaving no room for growth, airflow, cable management, or rework.",
+          "links": [
+            {
+              "label": "Check equipment spacing next",
+              "kbKey": "infrastructure/equipment-spacing",
+              "anchor": "Racks per Row",
+              "note": "Use when rack quantity starts affecting room layout and aisle requirements."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the rack has practical spare space. Watch means layout and growth should be reviewed. Risk means the rack may be too full to service or expand."
+        "Healthy means the rack still has practical RU capacity after reserve. Watch means the rack is getting tight. Risk means the rack plan may be out of vertical space or too close to full for reliable expansion."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Healthy: the rack has usable free RU and reserve.",
+        "Watch: review future equipment, cable management, shelves, and blanking panels.",
+        "Risk: add rack capacity, reduce equipment, or split the load across additional cabinets."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }

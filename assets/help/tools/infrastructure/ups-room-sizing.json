@@ -2,150 +2,143 @@
   "title": "UPS Room Sizing Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand UPS footprint, battery space, service clearance, ventilation, heat, and expansion planning.",
-  "updated": "2026-04-26",
+  "summary": "Understand UPS cabinet count, battery cabinet count, cabinet footprint, clearance multiplier, and support-room area.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether a room or area has enough space and support capacity for UPS equipment and batteries."
+        "This tool estimates the planning area needed for UPS and battery cabinets after cabinet count, footprint, and clearance factor are included."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning UPS rooms, battery cabinets, power closets, backup power areas, or infrastructure support spaces."
+        "Use it when planning UPS rooms, battery spaces, electrical rooms, equipment closets, or support areas where service clearance and cabinet footprint matter."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the UPS Room Sizing tool and explain how each value affects support-space requirements."
       ],
       "items": [
         {
-          "label": "UPS Footprint",
-          "description": "The physical floor space used by the UPS equipment.",
+          "label": "UPS Cabinets",
+          "description": "The number of UPS cabinets included in the room or support area.",
           "examples": [
-            "Tower UPS",
-            "Rack UPS",
-            "Floor-standing UPS"
+            "1 UPS cabinet",
+            "2 parallel UPS units",
+            "Multiple UPS frames"
           ],
-          "whyItMatters": "Footprint affects placement and service access.",
-          "commonMistake": "Only checking electrical capacity and ignoring space."
+          "whyItMatters": "UPS cabinet count drives base footprint and service clearance needs.",
+          "commonMistake": "Counting the UPS load but forgetting the physical cabinet footprint.",
+          "links": [
+            {
+              "label": "Compare room footprint planning",
+              "kbKey": "infrastructure/room-square-footage",
+              "anchor": "Equipment Footprint (sq ft)"
+            }
+          ]
         },
         {
-          "label": "Battery Footprint",
-          "description": "Space used by internal or external battery systems.",
+          "label": "Battery Cabinets",
+          "description": "The number of battery cabinets or battery strings requiring floor space.",
           "examples": [
-            "Battery cabinet",
-            "External battery pack",
-            "Battery rack"
+            "1 battery cabinet",
+            "2 battery cabinets",
+            "Future battery expansion"
           ],
-          "whyItMatters": "Batteries can consume more space and weight than expected.",
-          "commonMistake": "Adding runtime without planning battery space."
+          "whyItMatters": "Battery cabinets often consume as much or more planning space than the UPS cabinet.",
+          "commonMistake": "Leaving no space for additional battery cabinets or replacement access."
         },
         {
-          "label": "Service Clearance",
-          "description": "Working space needed for maintenance and replacement.",
+          "label": "Area per Cabinet (sq ft)",
+          "description": "The estimated floor area for each UPS or battery cabinet before clearance factor is applied.",
           "examples": [
-            "Front clearance",
-            "Rear access",
-            "Side access"
+            "6 sq ft per cabinet",
+            "Manufacturer footprint",
+            "Cabinet footprint from submittals"
           ],
-          "whyItMatters": "UPS and batteries need service room.",
-          "commonMistake": "Placing UPS equipment where batteries cannot be safely replaced."
+          "whyItMatters": "The cabinet area is the base footprint for the room sizing estimate.",
+          "commonMistake": "Using approximate area when the selected UPS model has specific footprint and clearance requirements."
         },
         {
-          "label": "Heat Output",
-          "description": "Heat generated by UPS losses and battery systems.",
+          "label": "Clearance Factor",
+          "description": "A multiplier that accounts for service access, code working clearance, ventilation, door swing, and maintenance space around cabinets.",
           "examples": [
-            "UPS efficiency loss",
-            "Battery heat",
-            "Charger heat"
+            "1.5x for compact support room",
+            "2.0x for serviceable layout",
+            "Higher factor for battery access"
           ],
-          "whyItMatters": "Heat affects ventilation and room temperature.",
-          "commonMistake": "Assuming backup power equipment produces no heat."
-        },
-        {
-          "label": "Ventilation / Cooling",
-          "description": "Room cooling or airflow available for UPS equipment.",
-          "examples": [
-            "Closet ventilation",
-            "Dedicated cooling",
-            "Shared HVAC"
-          ],
-          "whyItMatters": "Poor cooling can reduce equipment and battery life.",
-          "commonMistake": "Installing UPS equipment in a hot closet."
-        },
-        {
-          "label": "Growth Allowance",
-          "description": "Future UPS, battery, or load expansion.",
-          "examples": [
-            "More runtime",
-            "More load",
-            "Future battery cabinet"
-          ],
-          "whyItMatters": "Backup power needs often grow after installation.",
-          "commonMistake": "Designing a UPS area with no spare space."
+          "whyItMatters": "UPS and battery systems require usable working space, not just enough room to physically fit the cabinets.",
+          "commonMistake": "Treating clearance as optional because the cabinets fit on paper.",
+          "links": [
+            {
+              "label": "Check runtime assumptions",
+              "kbKey": "infrastructure/generator-runtime",
+              "anchor": "Load Factor",
+              "note": "Useful when UPS space is part of a broader backup-power plan."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the UPS room appears practical. Watch means clearance, heat, or growth should be reviewed. Risk means the room may be too constrained for safe service or expansion."
+        "Healthy means the UPS support space appears workable. Watch means clearance or expansion should be reviewed. Risk means the room may be too tight for safe service or future battery needs."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Healthy: cabinet footprint and clearance have usable margin.",
+        "Watch: verify manufacturer clearances, battery access, ventilation, and code working space.",
+        "Risk: increase room area, reduce equipment, or revise the support-room layout."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }

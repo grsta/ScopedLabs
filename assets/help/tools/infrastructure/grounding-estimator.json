@@ -2,153 +2,135 @@
   "title": "Grounding Estimator Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand grounding path planning, bonding, equipment protection, noise reduction, and installation assumptions.",
-  "updated": "2026-04-26",
+  "summary": "Understand circuit amperage, conductor material, target ground resistance, and why grounding assumptions deserve validation.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps think through grounding and bonding considerations for infrastructure equipment."
+        "This tool provides a planning-level grounding sanity check based on amperage, conductor material, and target resistance."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning racks, panels, equipment rooms, cable pathways, surge protection, or metallic infrastructure."
+        "Use it when documenting early grounding assumptions, reviewing support infrastructure, preparing questions for an electrician or engineer, or checking whether a target seems aggressive enough to need closer review."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the Grounding Estimator and explain how each value affects grounding review pressure."
       ],
       "items": [
         {
-          "label": "Equipment Type",
-          "description": "The kind of infrastructure equipment being grounded or bonded.",
+          "label": "Circuit Amperage (A)",
+          "description": "The amperage associated with the circuit or equipment being considered.",
           "examples": [
-            "Rack",
-            "Cabinet",
-            "Cable tray",
-            "Panel",
-            "Surge device"
+            "20A circuit",
+            "60A feeder",
+            "Panel or equipment load"
           ],
-          "whyItMatters": "Different equipment has different grounding needs.",
-          "commonMistake": "Assuming every device grounds the same way."
+          "whyItMatters": "Higher amperage can increase the importance of proper bonding, grounding, conductor sizing, and verification.",
+          "commonMistake": "Treating grounding as a generic checkbox regardless of circuit size."
         },
         {
-          "label": "Bonding Path",
-          "description": "The physical path from equipment to the grounding system.",
+          "label": "Conductor Material",
+          "description": "The selected conductor material used for the grounding or bonding assumption.",
           "examples": [
-            "Ground bar",
-            "Building steel",
-            "Electrical ground",
-            "Rack bonding conductor"
+            "Copper",
+            "Aluminum"
           ],
-          "whyItMatters": "A clear bonding path is critical for safety and performance.",
-          "commonMistake": "Relying on incidental contact as a grounding path."
+          "whyItMatters": "Material affects conductivity and how the design should be checked against installation requirements.",
+          "commonMistake": "Substituting materials without verifying code, lug ratings, corrosion concerns, and manufacturer requirements."
         },
         {
-          "label": "Conductor Length",
-          "description": "The distance between equipment and grounding point.",
+          "label": "Target Ground Resistance (Ω)",
+          "description": "The target resistance value used as the planning goal for the grounding system.",
           "examples": [
-            "Short bond",
-            "Long pathway",
-            "Remote room"
+            "25 Ω target",
+            "5 Ω target",
+            "Project-specific target"
           ],
-          "whyItMatters": "Longer paths may increase impedance or installation complexity.",
-          "commonMistake": "Routing grounding conductors casually after layout is done."
-        },
-        {
-          "label": "Environment",
-          "description": "The condition of the installation area.",
-          "examples": [
-            "Indoor room",
-            "Industrial area",
-            "Outdoor cabinet"
-          ],
-          "whyItMatters": "Environment affects corrosion, bonding, and protection requirements.",
-          "commonMistake": "Using indoor assumptions outdoors."
-        },
-        {
-          "label": "Surge Exposure",
-          "description": "Likelihood of transient or lightning-related energy.",
-          "examples": [
-            "Outdoor cable",
-            "Inter-building link",
-            "Rooftop equipment"
-          ],
-          "whyItMatters": "Higher exposure may require stronger bonding and surge planning.",
-          "commonMistake": "Ignoring surge path and grounding coordination."
-        },
-        {
-          "label": "Review Requirement",
-          "description": "Whether the condition requires formal electrical review.",
-          "examples": [
-            "Standard closet",
-            "Critical site",
-            "Code-sensitive area"
-          ],
-          "whyItMatters": "Grounding decisions may require qualified electrical design.",
-          "commonMistake": "Treating grounding as a low-voltage-only detail."
+          "whyItMatters": "Lower resistance targets can be harder to achieve and may require specialized grounding design or field testing.",
+          "commonMistake": "Assuming a target resistance is met without testing or site-specific validation.",
+          "links": [
+            {
+              "label": "Relate to power planning",
+              "kbKey": "power/va-watts-amps",
+              "anchor": "Current / Amps",
+              "note": "Use when grounding assumptions are part of a broader electrical load review."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the grounding plan appears straightforward. Watch means bonding path or site conditions should be reviewed. Risk means qualified electrical review may be needed."
+        "Healthy means the entered assumptions appear manageable for planning. Watch means the target or amperage deserves review. Risk means the grounding assumption may be too aggressive or too important to treat as a rough estimate."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Healthy: the assumptions are reasonable as an early planning note.",
+        "Watch: verify installation requirements, material choice, and measurement plan.",
+        "Risk: involve qualified electrical review and field validation before relying on the result."
+      ]
+    },
+    {
+      "title": "Grounding validation note",
+      "body": [
+        "Grounding is highly site-specific. Soil conditions, electrode layout, bonding method, corrosion, equipment instructions, and local code requirements can matter more than any simple calculator input."
+      ],
+      "bullets": [
+        "Use the result as a prompt for review, not as a final grounding design.",
+        "Field measurement and qualified electrical review are the deciding factors.",
+        "Document the target and the source of the requirement."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }

@@ -2,150 +2,135 @@
   "title": "Conduit Fill Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand conduit size, cable diameter, fill percentage, pull difficulty, and future capacity.",
-  "updated": "2026-04-26",
+  "summary": "Understand conduit inner diameter, cable outside diameter, cable count, allowed fill, and pathway margin.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether conduit has enough practical fill capacity for planned cables."
+        "This tool estimates conduit fill percentage based on conduit size, cable diameter, cable count, and the allowed fill limit."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning conduit pathways, cable pulls, security wiring, network drops, access-control cabling, or future expansion routes."
+        "Use it when planning cable pathways, checking conduit capacity, reviewing expansions, or validating that a pathway is not already too crowded."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the Conduit Fill Calculator and explain how each value affects pathway capacity."
       ],
       "items": [
         {
-          "label": "Conduit Size",
-          "description": "The trade size or internal diameter of the conduit.",
+          "label": "Conduit Inner Diameter (in)",
+          "description": "The usable inside diameter of the conduit in inches.",
           "examples": [
-            "3/4 in",
-            "1 in",
-            "2 in"
+            "0.75 inch conduit ID",
+            "1 inch conduit ID",
+            "Actual inner diameter from conduit type"
           ],
-          "whyItMatters": "Conduit size limits how many cables can fit and how difficult the pull becomes.",
-          "commonMistake": "Using nominal conduit size without checking usable internal area."
+          "whyItMatters": "The inner diameter determines the available cross-sectional area for cable fill.",
+          "commonMistake": "Using trade size as if it were the exact inner diameter."
         },
         {
-          "label": "Cable Count",
-          "description": "The number of cables planned in the conduit.",
+          "label": "Cable Outer Diameter (in)",
+          "description": "The outside diameter of each cable in inches.",
           "examples": [
-            "1 cable",
+            "0.20 inch cable",
+            "0.30 inch cable",
+            "Manufacturer cable OD"
+          ],
+          "whyItMatters": "Cable diameter determines how much pathway area each cable consumes.",
+          "commonMistake": "Using wire gauge or cable type without checking actual outside diameter."
+        },
+        {
+          "label": "Number of Cables",
+          "description": "The count of cables planned inside the conduit.",
+          "examples": [
             "4 cables",
-            "12 cables"
+            "12 cables",
+            "Current count plus future pulls"
           ],
-          "whyItMatters": "More cables increase fill and pull friction.",
-          "commonMistake": "Adding extra cables without recalculating fill."
+          "whyItMatters": "Cable count multiplies the fill area and affects pull difficulty.",
+          "commonMistake": "Counting only day-one cables and ignoring future additions.",
+          "links": [
+            {
+              "label": "Compare tray fill method",
+              "kbKey": "infrastructure/cable-tray-fill",
+              "anchor": "Number of Cables"
+            }
+          ]
         },
         {
-          "label": "Cable Diameter",
-          "description": "The approximate outside diameter of the cable.",
+          "label": "Allowed Fill (%)",
+          "description": "The maximum fill percentage allowed for the planning scenario.",
           "examples": [
-            "Cat6",
-            "Fiber",
-            "Composite cable"
+            "40% fill",
+            "50% planning limit",
+            "Project standard limit"
           ],
-          "whyItMatters": "Cable diameter strongly affects fill percentage.",
-          "commonMistake": "Using small cable assumptions for larger composite cables."
-        },
-        {
-          "label": "Fill Limit",
-          "description": "The target maximum fill percentage.",
-          "examples": [
-            "40%",
-            "50%",
-            "Code/design limit"
-          ],
-          "whyItMatters": "Fill limits protect pullability and compliance.",
-          "commonMistake": "Treating physical fit as acceptable design."
-        },
-        {
-          "label": "Bend Count",
-          "description": "The number of bends in the conduit path.",
-          "examples": [
-            "One bend",
-            "Multiple bends",
-            "Long run with offsets"
-          ],
-          "whyItMatters": "Bends make cable pulls harder even at acceptable fill.",
-          "commonMistake": "Ignoring route difficulty and only checking fill math."
-        },
-        {
-          "label": "Future Spare",
-          "description": "Extra capacity reserved for later cable additions.",
-          "examples": [
-            "One spare cable",
-            "Future drops",
-            "Expansion path"
-          ],
-          "whyItMatters": "Spare conduit capacity avoids future rework.",
-          "commonMistake": "Filling a conduit completely during the first pull."
+          "whyItMatters": "Allowed fill is the threshold used to judge whether the conduit remains acceptable.",
+          "commonMistake": "Using a high fill limit without considering pull tension, bends, future cabling, or local requirements."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means conduit fill appears manageable. Watch means pull difficulty or future growth should be reviewed. Risk means the conduit may be overfilled or hard to pull."
+        "Pass means the calculated fill is within the entered limit. Pass / Watch or Pass / Tight means the pathway still fits but has reduced margin. Exceeds Limit means the conduit is over the entered fill threshold."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Pass: fill is within the entered planning limit.",
+        "Pass / Watch or Pass / Tight: verify future growth, pull conditions, and bend count.",
+        "Exceeds Limit: increase conduit size, reduce cable count, or split the pathway."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }

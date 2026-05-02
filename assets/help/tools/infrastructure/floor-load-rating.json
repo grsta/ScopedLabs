@@ -2,152 +2,135 @@
   "title": "Floor Load Rating Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand equipment weight, floor capacity, point loads, rack placement, and structural risk.",
-  "updated": "2026-04-26",
+  "summary": "Understand rack footprint, loaded rack weight, floor rating, and pounds-per-square-foot pressure.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether equipment weight is reasonable for the floor or room where it will be installed."
+        "This tool estimates the floor loading created by a rack footprint and compares it against a floor rating."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch infrastructure constraints before field work begins."
+        "Use it as a planning and sanity-check aid before the layout, rack, pathway, or support-room decision gets locked in.",
+        "Use it to document the assumptions behind a physical infrastructure decision.",
+        "Use it to catch design pressure before it becomes field trouble or rework."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when placing racks, UPS systems, batteries, storage arrays, cabinets, or dense infrastructure equipment."
+        "Use it when placing heavy racks, battery cabinets, UPS cabinets, storage arrays, or dense equipment in rooms where floor loading could become a structural concern."
       ],
       "bullets": [
         "Early design planning.",
         "Expansion review.",
-        "Existing-site validation.",
-        "Explaining physical infrastructure tradeoffs to a client, stakeholder, or internal team."
+        "Existing-system cleanup or validation.",
+        "Explaining tradeoffs to a client, stakeholder, installer, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical infrastructure planning terms."
+        "These descriptions match the visible inputs on the Floor Load Rating tool and explain how each value affects load pressure."
       ],
       "items": [
         {
-          "label": "Equipment Weight",
-          "description": "The total weight of the equipment being placed.",
+          "label": "Rack Weight (lbs)",
+          "description": "The loaded weight of the rack, cabinet, or equipment footprint being evaluated.",
           "examples": [
-            "Rack load",
-            "UPS weight",
-            "Battery cabinet",
-            "Storage array"
+            "900 lb rack",
+            "Battery cabinet weight",
+            "Loaded storage cabinet"
           ],
-          "whyItMatters": "Weight drives floor loading and safety concerns.",
-          "commonMistake": "Using rough guesses instead of datasheet weights."
+          "whyItMatters": "Weight is the main driver of structural load.",
+          "commonMistake": "Using empty rack weight instead of fully loaded operating weight.",
+          "links": [
+            {
+              "label": "Estimate loaded rack weight",
+              "kbKey": "infrastructure/rack-weight-load",
+              "anchor": "Rack Rated Capacity (lbs)"
+            }
+          ]
         },
         {
-          "label": "Footprint Area",
-          "description": "The area over which the equipment weight is distributed.",
+          "label": "Rack Width (in)",
+          "description": "The width of the rack or cabinet footprint in inches.",
           "examples": [
-            "Rack footprint",
-            "Cabinet base",
-            "Battery footprint"
+            "24 inch rack",
+            "30 inch cabinet",
+            "Wider battery cabinet"
           ],
-          "whyItMatters": "Smaller footprints create higher point loads.",
-          "commonMistake": "Only checking total room load and ignoring concentrated weight."
+          "whyItMatters": "Footprint width affects how weight is distributed across the floor.",
+          "commonMistake": "Using nominal rack size without checking actual base dimensions."
         },
         {
-          "label": "Floor Rating",
-          "description": "The rated capacity of the floor or platform.",
+          "label": "Rack Depth (in)",
+          "description": "The depth of the rack or cabinet footprint in inches.",
           "examples": [
-            "Office floor",
-            "Concrete slab",
-            "Raised floor"
+            "36 inch rack",
+            "42 inch cabinet",
+            "Deep storage cabinet"
           ],
-          "whyItMatters": "Floor rating determines whether the space can safely support the load.",
-          "commonMistake": "Assuming all floors can support infrastructure equipment."
+          "whyItMatters": "Footprint depth affects pounds per square foot and how concentrated the load is.",
+          "commonMistake": "Ignoring casters, plinths, feet, or cabinet base details that change load distribution."
         },
         {
-          "label": "Load Distribution",
-          "description": "How weight is spread across feet, casters, rails, or base pads.",
+          "label": "Floor Rating (psf)",
+          "description": "The allowable floor load rating in pounds per square foot.",
           "examples": [
-            "Casters",
-            "Leveling feet",
-            "Base frame"
+            "Office floor rating",
+            "Raised floor rating",
+            "Structural design limit"
           ],
-          "whyItMatters": "Distribution affects point pressure.",
-          "commonMistake": "Leaving heavy racks on small casters without review."
-        },
-        {
-          "label": "Room Type",
-          "description": "The type of space where equipment will sit.",
-          "examples": [
-            "IDF closet",
-            "Office room",
-            "Data room",
-            "Raised floor"
-          ],
-          "whyItMatters": "Room type affects available ratings and practical placement.",
-          "commonMistake": "Treating an office closet like a data center room."
-        },
-        {
-          "label": "Growth Weight",
-          "description": "Expected future weight additions.",
-          "examples": [
-            "More servers",
-            "More batteries",
-            "Additional racks"
-          ],
-          "whyItMatters": "Future equipment can push a safe layout into a risky one.",
-          "commonMistake": "Checking only the first install phase."
+          "whyItMatters": "The rating is the comparison point for whether the load appears acceptable.",
+          "commonMistake": "Guessing a floor rating instead of confirming it from building documentation or qualified review."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the floor load appears reasonable. Watch means ratings or placement should be reviewed. Risk means structural review may be needed before installation."
+        "Healthy means the rack footprint appears inside the entered floor rating. Watch means the load is getting close enough to deserve review. Risk means the rack may exceed the entered rating."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add space, capacity, clearance, or validation before implementation."
+        "Healthy: load pressure is within the entered rating with margin.",
+        "Watch: verify actual weights, footprint, and floor rating.",
+        "Risk: redistribute load, reduce weight, increase footprint, or obtain structural review."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most infrastructure planning problems come from checking whether equipment fits physically while ignoring service access, growth, pathway space, cooling, weight, or real installation conditions."
+        "Infrastructure planning problems usually come from treating the room, rack, pathway, power support, and service space as separate decisions. In the field, those limits stack together."
       ],
       "bullets": [
-        "Sizing only for the initial install.",
-        "Ignoring service clearance and future access.",
-        "Using theoretical capacity as if it were practical capacity.",
-        "Failing to document assumptions before construction or installation begins."
+        "Sizing only the equipment and forgetting clearance, access, maintenance, and growth.",
+        "Using nominal dimensions without adding real cable, airflow, door swing, service, and replacement space.",
+        "Assuming a rack, floor, conduit, tray, UPS room, or generator can be pushed to the edge without operational side effects.",
+        "Failing to document assumptions before the layout becomes hard or expensive to change."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, code requirements, structural review, electrical review, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer installation documents, structural review, electrical design, local code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Manufacturer and code requirements still matter.",
-        "Site conditions may change the final design.",
-        "Clearance, service access, and future growth should be planned early.",
-        "A design with margin is usually easier to install, support, and expand."
+        "Manufacturer limits and installation instructions still matter.",
+        "Local code, AHJ direction, and site standards may change the final requirement.",
+        "Existing rooms, pathways, and support infrastructure can create limits that simple math does not show.",
+        "A design with reserve space and documented assumptions is usually easier to install, support, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, code compliance review, field measurement, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual equipment and site conditions.",
-        "Confirm owner requirements and operating procedures.",
+        "Validate against the actual room, rack, pathway, equipment, and site conditions.",
+        "Confirm stakeholder expectations, service access, installation constraints, and operating requirements.",
         "Document assumptions before implementation."
       ]
     }
