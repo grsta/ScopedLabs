@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>PoE Budget Calculator Guide • ScopedLabs</title>
+  <meta name="description" content="Learn how to estimate PoE switch power budget, device load, growth margin, and practical planning headroom for cameras, access points, phones, and access-control devices." />
+  <link rel="canonical" href="https://scopedlabs.com/guides/poe-budget-calculator/" />
+
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="ScopedLabs" />
+  <meta property="og:title" content="PoE Budget Calculator Guide • ScopedLabs" />
+  <meta property="og:description" content="Estimate PoE switch budget, connected device load, growth margin, and practical design headroom before equipment decisions are locked in." />
+  <meta property="og:url" content="https://scopedlabs.com/guides/poe-budget-calculator/" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="PoE Budget Calculator Guide • ScopedLabs" />
+  <meta name="twitter:description" content="Estimate PoE switch budget, connected device load, growth margin, and practical design headroom." />
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+  <script src="/assets/app.js?v=0314" defer></script>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab" href="/tools/">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero hero--tight">
+      <div class="crumbs">
+        <a href="/">Home</a>
+        <span class="sep">/</span>
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/network/">Network &amp; Throughput</a>
+        <span class="sep">/</span>
+        <span>PoE Budget Guide</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 12px;">
+        <span class="pill">Planning Guide</span>
+      </div>
+
+      <h1 class="h1">PoE Budget Calculator Guide</h1>
+      <p class="subhead">
+        Estimate switch PoE capacity, connected device load, growth margin, and practical headroom before cameras,
+        access points, phones, or access-control devices are added to a network closet.
+      </p>
+
+      <div class="btn-row">
+        <a class="btn btn-primary" href="/tools/network/poe-budget/">Open PoE Budget Calculator</a>
+        <a class="btn btn-ghost" href="/tools/network/">Browse Network Tools</a>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card">
+        <h2 class="card-title">What is a PoE budget?</h2>
+        <p class="card-desc">
+          A PoE budget is the total amount of power a network switch can deliver to connected Power over Ethernet
+          devices. It is different from the number of switch ports. A switch may have enough physical ports but still
+          run out of available PoE wattage.
+        </p>
+
+        <p class="muted">
+          This matters for cameras, wireless access points, VoIP phones, intercoms, access-control devices, sensors,
+          and other equipment that receives power from the switch instead of a separate power supply.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card">
+        <h2 class="card-title">Why PoE planning goes wrong</h2>
+        <p class="card-desc">
+          PoE designs usually get into trouble when the plan counts ports but does not account for real power draw,
+          startup behavior, device class, future growth, or reserve margin.
+        </p>
+
+        <ul class="tool-list">
+          <li>Using average device draw instead of worst-case or rated draw.</li>
+          <li>Assuming every port can provide full PoE at the same time.</li>
+          <li>Ignoring future cameras, access points, readers, or intercoms.</li>
+          <li>Forgetting that higher-power devices can consume budget quickly.</li>
+          <li>Leaving no spare capacity for device replacement or expansion.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card">
+        <h2 class="card-title">How to estimate PoE budget</h2>
+        <p class="card-desc">
+          A practical PoE estimate starts with connected device count, per-device wattage, and the usable power budget
+          of the switch. Then a reserve margin should be added so the switch is not designed to operate at the edge of
+          its power limit.
+        </p>
+
+        <div class="stack" style="margin-top: 14px;">
+          <div class="result-row">
+            <div class="k">Device load</div>
+            <div class="v">device count × watts per device</div>
+          </div>
+          <div class="result-row">
+            <div class="k">Planned load with growth</div>
+            <div class="v">current load + future devices</div>
+          </div>
+          <div class="result-row">
+            <div class="k">Design pressure</div>
+            <div class="v">planned load ÷ available PoE budget</div>
+          </div>
+        </div>
+
+        <p class="muted" style="margin-top: 14px;">
+          The ScopedLabs PoE Budget Calculator helps turn those assumptions into a quick planning result with
+          utilization and headroom guidance.
+        </p>
+
+        <div class="btn-row">
+          <a class="btn btn-primary" href="/tools/network/poe-budget/">Use the PoE Budget Calculator</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card">
+        <h2 class="card-title">What inputs matter most?</h2>
+
+        <ul class="tool-list">
+          <li><strong>Switch PoE Budget:</strong> The total usable wattage available for powered devices.</li>
+          <li><strong>Device Count:</strong> The number of connected PoE devices planned for the switch.</li>
+          <li><strong>Watts per Device:</strong> The expected or rated draw for each powered endpoint.</li>
+          <li><strong>Growth Allowance:</strong> Additional capacity reserved for future devices.</li>
+          <li><strong>Headroom Target:</strong> Spare margin so the switch is not run too close to its limit.</li>
+        </ul>
+
+        <p class="muted">
+          Device nameplate values, manufacturer specifications, and deployment conditions still matter. A planning
+          calculator helps identify pressure, but final design should be checked against the actual hardware being used.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card">
+        <h2 class="card-title">Common PoE design mistakes</h2>
+
+        <ul class="tool-list">
+          <li>Planning a 24-port switch as if all 24 ports can deliver the maximum PoE class simultaneously.</li>
+          <li>Adding high-power PTZ cameras, Wi-Fi access points, or intercoms without recalculating the total load.</li>
+          <li>Ignoring startup or peak draw when devices first power up.</li>
+          <li>Using a switch with enough ports but not enough power supply capacity.</li>
+          <li>Leaving no margin for later device additions.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card">
+        <h2 class="card-title">When to use the calculator</h2>
+        <p class="card-desc">
+          Use the PoE Budget Calculator when planning new switches, expanding network closets, adding cameras,
+          deploying wireless access points, or checking whether an existing switch has enough remaining power margin.
+        </p>
+
+        <div class="btn-row">
+          <a class="btn btn-primary" href="/tools/network/poe-budget/">Open PoE Budget Calculator</a>
+          <a class="btn btn-ghost" href="/tools/network/">See Network &amp; Throughput Tools</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card">
+        <div class="pill-row">
+          <span class="pill">Planning-aid disclaimer</span>
+        </div>
+
+        <p class="muted" style="margin-bottom: 0;">
+          ScopedLabs tools are planning aids only. They do not replace formal engineering review, manufacturer
+          validation, code compliance review, site-specific design responsibility, or professional judgment. Outputs
+          should be checked against project requirements, field conditions, applicable codes, and manufacturer
+          documentation before use in real deployments.
+        </p>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
