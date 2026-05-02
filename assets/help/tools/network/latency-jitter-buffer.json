@@ -51,7 +51,7 @@
           "commonMistake": "Using a clean-period reading instead of a busy-period or peak-path reading.",
           "links": [
             {
-              "label": "Put buffer delay into the full latency budget",
+              "label": "Add buffer delay to latency budget",
               "kbKey": "network/latency",
               "anchor": "jitter-buffer-reserve",
               "note": "Use this after sizing buffer so the added delay is included in the full path."
