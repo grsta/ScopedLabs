@@ -1,153 +1,342 @@
 {
-  "title": "Panel Capacity Guide",
+  "title": "Panel Capacity Planner Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand controller capacity, reader count, inputs, outputs, expansion modules, and spare room.",
-  "updated": "2026-04-26",
+  "updated": "2026-05-02",
+  "summary": "Use this guide to understand controller capacity, expansion-board pressure, reader and I/O demand, spare capacity targets, and when panel architecture should be split before the system becomes too dense.",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate whether a panel/controller layout has enough capacity for the planned access-control hardware."
-      ],
-      "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch design pressure before it becomes field trouble."
+        "Panel Capacity Planner estimates how many panels and expansion modules are required for an access-control design based on door quantity, reader behavior, I/O demand, base panel capacity, expansion capacity, and spare growth margin.",
+        "The tool translates a conceptual access-control scope into deployable panel architecture pressure: panels required, expansion modules, total capacity, spare door capacity, readers, inputs, outputs, system load, and expansion pressure.",
+        "This is a planning tool for controller architecture and growth margin. It does not replace manufacturer controller limits, licensing rules, cabinet-space checks, wiring topology, or platform-specific validation."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
-      "body": [
-        "Use it when selecting controllers, adding doors to existing panels, or checking whether a panel layout is too close to its limit."
-      ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system cleanup or validation.",
-        "Explaining tradeoffs to a client, stakeholder, or internal team."
-      ]
-    },
-    {
-      "title": "Input descriptions",
-      "type": "glossary",
-      "body": [
-        "These descriptions explain what each input represents in practical access-control terms."
+        "After controlled-door scope and lock power assumptions are known.",
+        "Before choosing controller count, cabinet locations, expansion boards, or panel grouping.",
+        "When adding doors to an existing access-control system.",
+        "When checking whether a panel layout is already too close to its practical growth limit.",
+        "When dual-reader doors, elevator readers, anti-passback, or heavy I/O requirements may change controller demand.",
+        "When documenting why the system needs more panels instead of filling every controller to the edge."
       ],
-      "items": [
+      "links": [
         {
-          "label": "Panel Type",
-          "description": "The controller or panel class being used.",
-          "examples": [
-            "2-door panel",
-            "4-door panel",
-            "8-door controller"
-          ],
-          "whyItMatters": "Panel type defines the baseline capacity.",
-          "commonMistake": "Assuming every controller expands the same way."
+          "label": "Door Count Planner guide",
+          "kbKey": "access-control/door-count-planner",
+          "note": "Use this related guide when panel capacity depends on estimated controlled-door and reader scope."
         },
         {
-          "label": "Reader Count",
-          "description": "The number of readers connected to the panel.",
-          "examples": [
-            "Entry readers",
-            "Exit readers",
-            "Elevator readers"
-          ],
-          "whyItMatters": "Reader count is often a hard controller limit.",
-          "commonMistake": "Counting doors instead of actual readers."
-        },
-        {
-          "label": "Inputs",
-          "description": "Monitoring points wired to the panel.",
-          "examples": [
-            "Door contact",
-            "REX",
-            "Tamper",
-            "Aux input"
-          ],
-          "whyItMatters": "Inputs can consume expansion capacity quickly.",
-          "commonMistake": "Ignoring auxiliary inputs until installation."
-        },
-        {
-          "label": "Outputs",
-          "description": "Controlled relays or outputs used by locks and accessories.",
-          "examples": [
-            "Lock relay",
-            "Alarm relay",
-            "Aux output"
-          ],
-          "whyItMatters": "Output demand affects module selection.",
-          "commonMistake": "Forgetting outputs for alarms, shunts, or elevator controls."
-        },
-        {
-          "label": "Expansion Modules",
-          "description": "Additional boards used to increase capacity.",
-          "examples": [
-            "Input module",
-            "Output module",
-            "Reader module"
-          ],
-          "whyItMatters": "Modules add capacity but also cost, space, and wiring complexity.",
-          "commonMistake": "Assuming expansion is always available in the cabinet."
-        },
-        {
-          "label": "Spare Capacity",
-          "description": "Unused capacity reserved for future doors or changes.",
-          "examples": [
-            "One spare reader",
-            "Two spare inputs",
-            "Future module space"
-          ],
-          "whyItMatters": "Spare capacity prevents immediate redesign during small expansions.",
-          "commonMistake": "Designing with zero spare capacity."
+          "label": "Lock Power Budget guide",
+          "kbKey": "access-control/lock-power-budget",
+          "note": "Use this related guide when controller planning should be coordinated with power-supply grouping and lock-load assumptions."
         }
       ]
     },
     {
-      "title": "How to read the results",
+      "id": "input-descriptions",
+      "title": "Input descriptions",
+      "type": "glossary",
       "body": [
-        "Healthy means the panel layout has room to operate and grow. Watch means expansion capacity should be reviewed. Risk means the design may be overloaded or difficult to expand."
+        "These headings match the visible input labels on the calculator so the guide can be read directly against the form."
       ],
-      "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      "items": [
+        {
+          "id": "doors",
+          "label": "Doors",
+          "description": "The number of controlled doors or openings included in the panel-capacity estimate. This should represent the group of doors being assigned to the controller architecture being evaluated.",
+          "examples": [
+            "24 controlled office and perimeter doors.",
+            "A floor-level door group served from one cabinet area.",
+            "A building phase being planned as one controller segment."
+          ],
+          "whyItMatters": "Door quantity drives panel count, expansion-board use, reader demand, I/O demand, cabinet space, licensing pressure, and future expansion room.",
+          "commonMistake": "Using the obvious door count without checking whether elevator access, gates, turnstiles, future phases, or high-security openings should also be included.",
+          "links": [
+            {
+              "label": "Door Count Planner guide",
+              "kbKey": "access-control/door-count-planner",
+              "note": "Use this related guide when the controlled-door count needs to be scoped before controller sizing."
+            }
+          ]
+        },
+        {
+          "id": "readers-per-door",
+          "label": "Readers per Door",
+          "description": "The number of readers expected per controlled door. One reader is common for entry-only control. Two readers may be needed for IN/OUT control, anti-passback, turnstiles, controlled egress, or higher-security workflows.",
+          "examples": [
+            "1 reader per door for entry-only control.",
+            "2 readers per door for IN/OUT or dual-sided control.",
+            "More complex conditions may require separate grouping rather than one average."
+          ],
+          "whyItMatters": "Reader demand is often a hard controller or module limit. More readers per door can increase controller count even when physical door count stays the same.",
+          "commonMistake": "Counting doors instead of reader interfaces, especially when anti-passback, elevator control, or both-sided control is involved.",
+          "links": [
+            {
+              "label": "Reader Type Selector guide",
+              "kbKey": "access-control/reader-type-selector",
+              "note": "Use this related guide when reader quantity also depends on reader technology, interface, or credential strategy."
+            },
+            {
+              "label": "Anti-Passback Zones guide",
+              "kbKey": "access-control/anti-passback-zones",
+              "note": "Use this related guide when IN/OUT readers or both-sided control are driven by anti-passback behavior."
+            }
+          ]
+        },
+        {
+          "id": "inputs-per-door",
+          "label": "Inputs per Door",
+          "description": "The number of input points expected per door. Inputs commonly include door position switch, request-to-exit, tamper, auxiliary monitor, interlock status, or local device supervision.",
+          "examples": [
+            "2 inputs per door: DPS plus REX.",
+            "3 inputs per door: DPS, REX, and tamper.",
+            "More inputs for interlocks, specialty doors, gates, or monitored hardware."
+          ],
+          "whyItMatters": "Input demand can consume expansion capacity quickly, especially on systems with monitored egress, auxiliary alarms, or high-security door behavior.",
+          "commonMistake": "Sizing panels only by doors and readers while forgetting the monitoring points each door actually needs."
+        },
+        {
+          "id": "outputs-per-door",
+          "label": "Outputs per Door",
+          "description": "The number of controlled outputs or relay points expected per door. Outputs can include lock relays, auxiliary relays, shunts, alarm outputs, elevator enables, or special control points.",
+          "examples": [
+            "1 output per door for a basic lock relay.",
+            "2 outputs where lock and auxiliary relay behavior are separate.",
+            "Additional outputs for shunts, interlocks, gates, or specialty sequences."
+          ],
+          "whyItMatters": "Output demand affects controller and expansion module selection. A door may be simple from a reader standpoint but heavy from a relay/output standpoint.",
+          "commonMistake": "Assuming every door only needs one output even when the hardware sequence requires more."
+        },
+        {
+          "id": "base-doors",
+          "label": "Base Doors",
+          "description": "The number of doors supported by the base panel before expansion modules are added. This represents the starting controller capacity for each panel.",
+          "examples": [
+            "2-door base controller.",
+            "4-door base controller.",
+            "8-door controller architecture."
+          ],
+          "whyItMatters": "Base capacity determines how much each controller can support before expansion modules are needed. It strongly affects panel count and expansion pressure.",
+          "commonMistake": "Assuming the base controller can be filled to its exact limit without considering expansion space, wiring density, future growth, or practical serviceability."
+        },
+        {
+          "id": "expansion-doors",
+          "label": "Expansion Doors",
+          "description": "The number of additional doors supported by each expansion module. This is used with Max Expansions to estimate the full possible capacity per panel.",
+          "examples": [
+            "2 doors per expansion module.",
+            "4 doors per expansion module.",
+            "Expansion module capacity based on the selected controller family."
+          ],
+          "whyItMatters": "Expansion size determines how quickly a base panel can scale and how many boards are needed before another controller group becomes cleaner.",
+          "commonMistake": "Assuming expansion boards are always available, fit in the same enclosure, and behave the same across controller platforms."
+        },
+        {
+          "id": "max-expansions",
+          "label": "Max Expansions",
+          "description": "The maximum number of expansion modules allowed per panel in the planning model. This should reflect the actual controller platform, cabinet space, power, wiring, and licensing assumptions.",
+          "examples": [
+            "4 expansion boards per panel group.",
+            "8 expansion boards allowed by the controller family.",
+            "Lower limit used intentionally to preserve serviceability."
+          ],
+          "whyItMatters": "Max Expansions defines the upper capacity ceiling for each panel group. A high value may be technically possible but not always desirable in a clean architecture.",
+          "commonMistake": "Using the manufacturer maximum as the design target instead of reserving cabinet space, wiring room, service access, and future growth margin."
+        },
+        {
+          "id": "spare-percent",
+          "label": "Spare %",
+          "description": "The spare door-capacity margin added above the current door count. This reserves room for future doors, phased work, tenant changes, owner revisions, and small scope additions.",
+          "examples": [
+            "10% spare for a stable small system.",
+            "20% spare for normal growth allowance.",
+            "30% or more for phased projects or uncertain future scope."
+          ],
+          "whyItMatters": "Spare capacity prevents a new system from being full on day one. Without margin, small future changes can force additional controllers, cabinets, licensing, or rewiring.",
+          "commonMistake": "Designing to exactly today’s door count even though future doors are expected."
+        }
       ]
     },
     {
+      "id": "how-to-interpret-results",
+      "title": "How to interpret results",
+      "body": [
+        "The results describe controller architecture pressure. They show how many panels and expansion modules are needed to support the selected door count and spare-capacity target.",
+        "System Load and Expansion Pressure are the most important health indicators. A design can technically fit, but still be too dense to maintain, expand, or troubleshoot cleanly."
+      ],
+      "bullets": [
+        "Panels Required: estimated number of panel groups needed.",
+        "Expansion Modules: estimated expansion modules needed across the panel architecture.",
+        "Panel Door Capacity: total supported door capacity after base and expansion capacity are included.",
+        "Target Doors with Spare: current doors plus the configured spare margin.",
+        "Spare Door Capacity: remaining door capacity after current doors are placed.",
+        "Total Readers: estimated reader interfaces required.",
+        "Total Inputs: estimated input points required.",
+        "Total Outputs: estimated output or relay points required.",
+        "System Load: how much of the planned panel capacity is consumed.",
+        "Expansion Pressure: how heavily the expansion path is being used.",
+        "Status: HEALTHY, WATCH, or RISK based on capacity pressure."
+      ]
+    },
+    {
+      "id": "healthy-watch-risk",
+      "title": "Healthy / Watch / Risk interpretation",
+      "body": [
+        "The status describes practical capacity pressure, not whether the platform can technically support the configuration.",
+        "A HEALTHY result means the controller layout has reasonable room to operate and grow. WATCH means the design is serviceable but expansion planning matters. RISK means the layout is too dense or too close to the edge for comfortable deployment."
+      ],
+      "bullets": [
+        "HEALTHY: architecture has usable room for growth and normal field changes.",
+        "WATCH: leave physical space, pathway capacity, licensing room, and cabinet capacity for future additions.",
+        "RISK: add controller capacity, split the system into additional panel groups, or reduce density before deployment."
+      ]
+    },
+    {
+      "id": "panel-density-explained",
+      "title": "Panel density explained",
+      "body": [
+        "Panel density is the difference between what a controller can technically support and what is practical to build, label, troubleshoot, expand, and maintain.",
+        "A highly dense panel may look efficient on paper, but it can create crowded cabinets, difficult service work, limited growth room, harder troubleshooting, and expensive future changes."
+      ],
+      "bullets": [
+        "Technical maximum is not always a good design target.",
+        "Dense panels increase wiring, labeling, and service complexity.",
+        "Distributed panels can reduce cable distance but add coordination points.",
+        "Centralized panels can simplify management but increase cable pathways and cabinet density.",
+        "The best design usually balances capacity, serviceability, cable routing, power grouping, and future expansion."
+      ]
+    },
+    {
+      "id": "reader-input-output-planning",
+      "title": "Reader, input, and output planning",
+      "body": [
+        "Door count alone is not enough to size a panel architecture. Reader count, input count, and output count can each become the limiting factor depending on the selected platform.",
+        "A door with one reader, one lock output, and two monitor inputs is much different from a door with IN/OUT readers, auxiliary relays, tamper monitoring, interlocks, or elevator control points."
+      ],
+      "bullets": [
+        "Reader quantity affects reader-module or interface capacity.",
+        "Inputs affect monitor-point and expansion-board requirements.",
+        "Outputs affect relay capacity and special sequence support.",
+        "Elevator, gate, turnstile, and high-security doors may need separate modeling instead of a single average.",
+        "Review each limiting resource, not just door capacity."
+      ],
+      "links": [
+        {
+          "label": "Elevator Reader Count guide",
+          "kbKey": "access-control/elevator-reader-count",
+          "note": "Use this related guide when elevator authentication points affect reader or controller demand."
+        },
+        {
+          "label": "Door Cable Length guide",
+          "kbKey": "access-control/door-cable-length",
+          "note": "Use this related guide when panel placement affects cable quantity, routing, or field installation effort."
+        }
+      ]
+    },
+    {
+      "id": "expansion-strategy",
+      "title": "Expansion strategy",
+      "body": [
+        "Expansion modules are useful, but they should not become the entire design strategy.",
+        "A design that depends heavily on expansions may still work, but it should be checked for cabinet space, power, licensing, wiring density, spare terminals, service access, and future phase requirements."
+      ],
+      "bullets": [
+        "Use expansions intentionally, not automatically.",
+        "Consider adding another panel group before expansion paths are fully consumed.",
+        "Reserve space for future boards and wiring.",
+        "Check whether expansion modules require additional power, licensing, addressing, or enclosure space.",
+        "Document why the design uses expansion capacity instead of another panel."
+      ]
+    },
+    {
+      "id": "planning-workflow",
+      "title": "Planning workflow",
+      "bullets": [
+        "Start with the controlled door count.",
+        "Set Readers per Door based on actual reader behavior, not just door count.",
+        "Set Inputs per Door and Outputs per Door from the intended door hardware sequence.",
+        "Enter the real base panel capacity for the selected controller family.",
+        "Enter the expansion-door capacity and maximum expansions supported by the platform.",
+        "Add a realistic Spare % based on expected growth and phase planning.",
+        "Review System Load and Expansion Pressure before finalizing cabinet architecture.",
+        "Carry the result forward into access-level sizing so administrative complexity is reviewed after hardware capacity is understood."
+      ],
+      "links": [
+        {
+          "label": "Access Level Sizing guide",
+          "kbKey": "access-control/access-level-sizing",
+          "note": "Use this related guide after panel capacity is estimated to check whether the final access structure stays administratively manageable."
+        },
+        {
+          "label": "Lock Power Budget guide",
+          "kbKey": "access-control/lock-power-budget",
+          "note": "Use this related guide when panel architecture should be coordinated with power-supply grouping."
+        }
+      ]
+    },
+    {
+      "id": "red-flags",
+      "title": "Red flags",
+      "bullets": [
+        "System Load is high before future growth is included.",
+        "Expansion Pressure is high on a new deployment.",
+        "Readers per Door is averaged even though some doors need IN/OUT readers.",
+        "Inputs or outputs are ignored because the panel is only being checked by door count.",
+        "The controller is filled to its maximum capacity with no spare room.",
+        "Known future doors are excluded from the spare-capacity target.",
+        "Cabinet space, power, wiring density, licensing, and field serviceability are not checked together.",
+        "The design assumes every controller family expands the same way."
+      ]
+    },
+    {
+      "id": "documentation-checklist",
+      "title": "Documentation checklist",
+      "bullets": [
+        "Doors included in this panel-capacity group.",
+        "Readers per Door assumption.",
+        "Inputs per Door assumption.",
+        "Outputs per Door assumption.",
+        "Base Doors supported by the selected controller.",
+        "Expansion Doors supported per module.",
+        "Max Expansions allowed per panel.",
+        "Spare % target.",
+        "Panels Required.",
+        "Expansion Modules.",
+        "Panel Door Capacity.",
+        "Target Doors with Spare.",
+        "System Load and Expansion Pressure.",
+        "Platform, licensing, cabinet, and wiring assumptions that must be verified."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
-      "body": [
-        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
-      ],
       "bullets": [
-        "Designing only for the initial install instead of the system lifecycle.",
-        "Ignoring exceptions, expansion, or administrative workload.",
-        "Assuming manufacturer capacity limits are the same as practical design limits.",
-        "Failing to document assumptions before the system is built."
+        "Sizing by door count only and ignoring readers, inputs, and outputs.",
+        "Counting one reader per door when IN/OUT control is required.",
+        "Using manufacturer maximum expansion as the normal design target.",
+        "Leaving no room for future phases or tenant changes.",
+        "Ignoring cabinet space, wiring density, power grouping, and licensing.",
+        "Assuming expansion modules can always be added later without rework.",
+        "Combining unrelated door groups into one panel architecture because it looks efficient on paper.",
+        "Forgetting elevator readers, gates, turnstiles, and specialty openings."
       ]
     },
     {
-      "title": "Planning assumptions",
-      "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
-      ],
+      "id": "assumptions-and-limits",
+      "title": "Assumptions and limits",
       "bullets": [
-        "Manufacturer limits still matter.",
-        "Local code and life-safety requirements still apply.",
-        "Site conditions may change the final design.",
-        "A simpler design is usually easier to support, audit, and explain."
-      ]
-    },
-    {
-      "title": "Professional responsibility",
-      "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
-      ],
-      "bullets": [
-        "Validate against the actual product and platform being installed.",
-        "Confirm owner requirements and operating procedures.",
-        "Document assumptions before implementation."
+        "Panel requirement is based on target doors including spare capacity, then compared against base and expansion door capacity.",
+        "Reader totals, input totals, and output totals are planning references and should be validated against the selected controller platform.",
+        "The tool does not verify manufacturer-specific reader limits, I/O limits, addressing rules, firmware constraints, licensing, cabinet space, network topology, or power architecture.",
+        "Final architecture should be verified against manufacturer capacity, licensing, I/O limits, expansion rules, wiring topology, power grouping, cabinet layout, and owner growth expectations.",
+        "Outputs are planning aids and do not replace formal engineering review, manufacturer validation, platform-specific design review, code review, or site-specific field validation."
       ]
     }
   ]
