@@ -2,153 +2,305 @@
   "title": "Door Count Planner Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how door counts affect panels, modules, power, licensing, expansion, and installation scope.",
-  "updated": "2026-04-26",
+  "updated": "2026-05-02",
+  "summary": "Use this guide to estimate controlled door count, reader count, segmentation pressure, and access-control planning complexity before controller sizing, cabling, power, and licensing decisions are locked in.",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps translate door count into planning pressure across controllers, inputs, outputs, readers, power, and future expansion."
-      ],
-      "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch design pressure before it becomes field trouble."
+        "Door Count Planner estimates how many controlled doors and readers may be required based on perimeter entrances, interior segmentation, high-security areas, compliance posture, and whether both sides of a door are controlled.",
+        "The tool is meant for early access-control scoping. It helps turn a rough building/security concept into a more realistic controlled-opening count before panel capacity, cable length, lock power, and access-level planning are finalized.",
+        "It does not replace a door-by-door hardware schedule. It helps identify planning pressure before the final takeoff is built."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
-      "body": [
-        "Use it during early access-control scoping, takeoffs, phased expansions, or when comparing controller architecture options."
-      ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system cleanup or validation.",
-        "Explaining tradeoffs to a client, stakeholder, or internal team."
-      ]
-    },
-    {
-      "title": "Input descriptions",
-      "type": "glossary",
-      "body": [
-        "These descriptions explain what each input represents in practical access-control terms."
+        "During early access-control scoping before a full door schedule exists.",
+        "Before controller, panel, or expansion-module planning.",
+        "Before cable takeoff and field routing estimates.",
+        "When deciding whether interior segmentation should stay light or become more strict.",
+        "When high-security spaces may add more controlled openings than the perimeter alone suggests.",
+        "When comparing single-reader doors against IN/OUT or dual-reader designs.",
+        "When documenting why the controlled-door count is higher than the obvious exterior-door count."
       ],
-      "items": [
+      "links": [
         {
-          "label": "Door Count",
-          "description": "The number of controlled openings in the project.",
-          "examples": [
-            "Single doors",
-            "Double doors",
-            "Gates",
-            "Turnstiles"
-          ],
-          "whyItMatters": "Door count drives panels, licensing, power, and labor.",
-          "commonMistake": "Counting only readers and forgetting controlled openings."
+          "label": "Door Cable Length guide",
+          "kbKey": "access-control/door-cable-length",
+          "note": "Use this related guide after door quantity is scoped and cable takeoff/routing pressure needs to be estimated."
         },
         {
-          "label": "Readers Per Door",
-          "description": "How many readers are used on each opening.",
-          "examples": [
-            "Entry only",
-            "Entry and exit",
-            "Turnstile readers"
-          ],
-          "whyItMatters": "More readers increase wiring, modules, and licensing impact.",
-          "commonMistake": "Assuming every door is one reader."
-        },
-        {
-          "label": "Inputs",
-          "description": "Monitoring points tied to the door.",
-          "examples": [
-            "Door contact",
-            "REX",
-            "Aux input",
-            "Tamper"
-          ],
-          "whyItMatters": "Inputs affect controller/module capacity.",
-          "commonMistake": "Forgetting door contacts or REX devices in the count."
-        },
-        {
-          "label": "Outputs",
-          "description": "Controlled outputs used by the door.",
-          "examples": [
-            "Lock relay",
-            "Aux relay",
-            "Alarm output"
-          ],
-          "whyItMatters": "Outputs affect board selection and expansion modules.",
-          "commonMistake": "Assuming every door only needs one output."
-        },
-        {
-          "label": "Panel Capacity",
-          "description": "How many doors a controller or panel can support.",
-          "examples": [
-            "2-door panel",
-            "4-door panel",
-            "8-door controller"
-          ],
-          "whyItMatters": "Capacity determines how many panels are needed.",
-          "commonMistake": "Filling panels to the limit with no spare capacity."
-        },
-        {
-          "label": "Future Growth",
-          "description": "Expected additional doors after the initial install.",
-          "examples": [
-            "Phase 2 expansion",
-            "Tenant buildout",
-            "New wing"
-          ],
-          "whyItMatters": "Growth affects whether spare capacity should be designed in.",
-          "commonMistake": "Designing only for today and forcing replacement later."
+          "label": "Panel Capacity guide",
+          "kbKey": "access-control/panel-capacity",
+          "note": "Use this related guide when estimated door and reader count need to be checked against controller capacity."
         }
       ]
     },
     {
-      "title": "How to read the results",
+      "id": "input-descriptions",
+      "title": "Input descriptions",
+      "type": "glossary",
       "body": [
-        "Healthy means the door count is likely manageable in the selected structure. Watch means expansion and panel grouping should be reviewed. Risk means the design may need more panels, power segmentation, or a phased architecture."
+        "These headings match the visible input labels on the calculator so the guide can be read directly against the form."
       ],
-      "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      "items": [
+        {
+          "id": "perimeter-entrances",
+          "label": "Perimeter Entrances",
+          "description": "The number of exterior, perimeter, or primary entry openings that are expected to be controlled by the access-control system.",
+          "examples": [
+            "Main lobby entrance.",
+            "Employee entrance.",
+            "Rear service entrance.",
+            "Parking gate.",
+            "Exterior delivery door."
+          ],
+          "whyItMatters": "Perimeter entrances are usually the baseline controlled-door count. Under-counting them can cause panel, power, cabling, and licensing estimates to be too small from the start.",
+          "commonMistake": "Counting only the obvious main entrances and forgetting service doors, employee entrances, gates, tenant entrances, or doors that become controlled in a later phase.",
+          "links": [
+            {
+              "label": "Fail-Safe / Fail-Secure guide",
+              "kbKey": "access-control/fail-safe-fail-secure",
+              "note": "Use this related guide when perimeter doors require different power-loss behavior or egress treatment."
+            }
+          ]
+        },
+        {
+          "id": "interior-zones-departments",
+          "label": "Interior Zones / Departments",
+          "description": "The number of interior areas, departments, or security zones that may require controlled access beyond the perimeter.",
+          "examples": [
+            "Office suite.",
+            "Warehouse.",
+            "IT room.",
+            "HR area.",
+            "Medication storage.",
+            "Restricted lab."
+          ],
+          "whyItMatters": "Interior segmentation can quickly increase controlled-door count. More zones usually means more readers, more access levels, more wiring, and more administrative overhead.",
+          "commonMistake": "Assuming access control stops at the perimeter when the real security design needs department, tenant, storage, or critical-room separation.",
+          "links": [
+            {
+              "label": "Access Level Sizing guide",
+              "kbKey": "access-control/access-level-sizing",
+              "note": "Use this related guide when interior segmentation may create role, area, schedule, or permission complexity."
+            }
+          ]
+        },
+        {
+          "id": "high-security-areas",
+          "label": "High-Security Areas",
+          "description": "The number of spaces that require stronger access control than normal interior areas because of asset value, sensitivity, compliance pressure, or operational risk.",
+          "examples": [
+            "Server room.",
+            "Cash room.",
+            "Pharmacy storage.",
+            "Evidence room.",
+            "Executive records area.",
+            "Critical infrastructure space."
+          ],
+          "whyItMatters": "High-security areas often add extra controlled doors, stronger reader requirements, tighter audit expectations, or additional IN/OUT control.",
+          "commonMistake": "Treating high-security rooms like normal office doors and failing to account for extra readers, stricter access rules, or better documentation."
+        },
+        {
+          "id": "compliance-level",
+          "label": "Compliance Level",
+          "description": "The design posture used to estimate how aggressively doors should be controlled. Basic assumes perimeter plus a few controlled areas. Moderate adds more segmentation. Strict assumes least-privilege style control.",
+          "examples": [
+            "Basic: perimeter control and limited interior control.",
+            "Moderate: more segmented departments or security zones.",
+            "Strict: least-privilege posture with more controlled openings and tighter separation."
+          ],
+          "whyItMatters": "Compliance level changes how many interior and high-security doors are likely to become controlled. A stricter posture usually increases door count, reader count, panel count, cable quantity, and access-level complexity.",
+          "commonMistake": "Selecting Basic because it keeps the estimate smaller, even when the owner, security policy, audit posture, or compliance environment requires stronger segmentation.",
+          "links": [
+            {
+              "label": "Access Level Sizing guide",
+              "kbKey": "access-control/access-level-sizing",
+              "note": "Use this related guide when stricter compliance posture may create permission sprawl or administrative load."
+            }
+          ]
+        },
+        {
+          "id": "control-both-sides",
+          "label": "Control Both Sides?",
+          "description": "Whether the design uses a single reader/side or controls both directions with IN/OUT or dual-reader behavior.",
+          "examples": [
+            "No: one reader controls entry only.",
+            "Yes: both sides are controlled with IN/OUT readers, dual readers, or direction-aware access points.",
+            "Common use cases include anti-passback, secure labs, turnstiles, parking gates, and controlled circulation points."
+          ],
+          "whyItMatters": "Controlling both sides can double reader count and increase cabling, licensing, panel inputs, commissioning time, and user-flow complexity.",
+          "commonMistake": "Estimating one reader per door when the design actually requires both entry and exit control.",
+          "links": [
+            {
+              "label": "Anti-Passback Zones guide",
+              "kbKey": "access-control/anti-passback-zones",
+              "note": "Use this related guide when both-side control is driven by anti-passback, IN/OUT tracking, or direction-aware enforcement."
+            },
+            {
+              "label": "Reader Type Selector guide",
+              "kbKey": "access-control/reader-type-selector",
+              "note": "Use this related guide when dual-reader or IN/OUT behavior affects reader technology and interface decisions."
+            }
+          ]
+        }
       ]
     },
     {
+      "id": "how-to-interpret-results",
+      "title": "How to interpret results",
+      "body": [
+        "The results estimate access-control scope and planning pressure. They do not replace a final door schedule, but they help catch whether the project is trending toward a small, moderate, or complex access-control system.",
+        "Reader count is separated from controlled-door count because dual-sided control can significantly increase hardware, wiring, licensing, and commissioning effort without changing the physical number of doors."
+      ],
+      "bullets": [
+        "Perimeter Doors: perimeter entrances carried directly into the controlled-door estimate.",
+        "Interior Zone Doors: estimated controlled openings driven by interior segmentation and compliance posture.",
+        "High-Security Additions: extra controlled-door pressure from sensitive or high-value areas.",
+        "Total Controlled Doors: estimated controlled-door count for planning.",
+        "Estimated Reader Count: reader quantity after accounting for single-sided or both-sided control.",
+        "Complexity Index: overall planning pressure from door count, zones, high-security areas, and both-side control.",
+        "System Status: HEALTHY, WATCH, or RISK based on complexity pressure.",
+        "Design Guidance: practical next step before panel/cable/power planning."
+      ]
+    },
+    {
+      "id": "healthy-watch-risk",
+      "title": "Healthy / Watch / Risk interpretation",
+      "body": [
+        "The status describes project scope and complexity pressure, not whether a platform can technically support the doors.",
+        "A system may be technically possible but still difficult to install, wire, power, administer, audit, or expand if the controlled-door count grows without structure."
+      ],
+      "bullets": [
+        "HEALTHY: controlled-door scope appears clean and scalable.",
+        "WATCH: system complexity is rising; controller placement, wiring paths, and segmentation should be planned carefully.",
+        "RISK: high door count or segmentation may require phased deployment, distributed controllers, stronger documentation, and tighter project controls."
+      ]
+    },
+    {
+      "id": "controlled-door-vs-reader-count",
+      "title": "Controlled door count vs reader count",
+      "body": [
+        "Controlled-door count and reader count are related, but they are not the same thing.",
+        "A single controlled door may have one reader, two readers, a keypad, a mobile reader, a gate reader, or a direction-aware pair. The door count tells you how many openings are controlled. Reader count tells you how much reader hardware, wiring, interface capacity, and licensing pressure may exist."
+      ],
+      "bullets": [
+        "One controlled door can require more than one reader.",
+        "IN/OUT control can double reader count.",
+        "Anti-passback and controlled egress often increase reader requirements.",
+        "Reader count affects panel interface planning, cabling, and licensing."
+      ],
+      "links": [
+        {
+          "label": "Reader Type Selector guide",
+          "kbKey": "access-control/reader-type-selector",
+          "note": "Use this related guide when reader count needs to be tied to reader technology and interface selection."
+        }
+      ]
+    },
+    {
+      "id": "segmentation-planning",
+      "title": "Segmentation planning",
+      "body": [
+        "Interior segmentation is one of the easiest ways for a project to grow beyond the original estimate.",
+        "A building may start with perimeter control, then add departments, secure rooms, storage cages, IT rooms, tenant areas, compliance zones, and audit-sensitive spaces. Each segmentation decision can add doors, readers, cable, panels, and access rules."
+      ],
+      "bullets": [
+        "Segment only where there is a real security or operational reason.",
+        "Avoid turning every department into a controlled zone by default.",
+        "Separate high-security spaces intentionally and document why.",
+        "Review whether compliance posture requires stronger separation.",
+        "Carry segmentation assumptions into access-level design."
+      ],
+      "links": [
+        {
+          "label": "Access Level Sizing guide",
+          "kbKey": "access-control/access-level-sizing",
+          "note": "Use this related guide when segmentation increases roles, areas, schedules, or permission structure."
+        }
+      ]
+    },
+    {
+      "id": "planning-workflow",
+      "title": "Planning workflow",
+      "bullets": [
+        "Start with the perimeter entrances that truly require access control.",
+        "Add interior zones or departments that need controlled separation.",
+        "Add high-security areas that require stronger control or additional openings.",
+        "Choose the compliance posture honestly based on owner, audit, or security expectations.",
+        "Decide whether any doors need IN/OUT or dual-reader behavior.",
+        "Use the estimated door and reader counts to plan panel capacity.",
+        "Use the estimated door count to plan cable quantity and routing groups.",
+        "Use segmentation assumptions to plan access levels and schedules."
+      ],
+      "links": [
+        {
+          "label": "Panel Capacity guide",
+          "kbKey": "access-control/panel-capacity",
+          "note": "Use this related guide after controlled-door and reader counts are estimated."
+        },
+        {
+          "label": "Door Cable Length guide",
+          "kbKey": "access-control/door-cable-length",
+          "note": "Use this related guide once door groups need cable quantity and routing estimates."
+        }
+      ]
+    },
+    {
+      "id": "red-flags",
+      "title": "Red flags",
+      "bullets": [
+        "Only perimeter doors are counted, but the project also has controlled interior areas.",
+        "High-security areas are included in the building but not reflected in the door count.",
+        "Both-side control is needed, but the estimate assumes one reader per door.",
+        "Compliance posture is strict, but the design still uses a basic perimeter-only assumption.",
+        "Door count is estimated without checking controller capacity, power, cable routing, or licensing.",
+        "All doors are treated the same even though some need stronger reader, lock, or egress behavior.",
+        "Future phases are known but not included in the planning count."
+      ]
+    },
+    {
+      "id": "documentation-checklist",
+      "title": "Documentation checklist",
+      "bullets": [
+        "Perimeter Entrances included in the estimate.",
+        "Interior Zones / Departments included in the estimate.",
+        "High-Security Areas included in the estimate.",
+        "Compliance Level selected and why.",
+        "Control Both Sides? decision and where it applies.",
+        "Total Controlled Doors.",
+        "Estimated Reader Count.",
+        "Complexity Index and System Status.",
+        "Door groups or phases that need separate planning.",
+        "Assumptions that should carry into panel capacity, cable routing, lock power, and access-level design."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
-      "body": [
-        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
-      ],
       "bullets": [
-        "Designing only for the initial install instead of the system lifecycle.",
-        "Ignoring exceptions, expansion, or administrative workload.",
-        "Assuming manufacturer capacity limits are the same as practical design limits.",
-        "Failing to document assumptions before the system is built."
+        "Counting only readers instead of controlled openings.",
+        "Counting only exterior doors and forgetting interior secure areas.",
+        "Forgetting that IN/OUT control can double reader count.",
+        "Treating high-security rooms like normal interior office doors.",
+        "Using a basic compliance posture when the owner expects least privilege.",
+        "Ignoring future phases until controller and cabling decisions are already locked.",
+        "Using one building-wide assumption instead of grouping doors by area, floor, or security function."
       ]
     },
     {
-      "title": "Planning assumptions",
-      "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
-      ],
+      "id": "assumptions-and-limits",
+      "title": "Assumptions and limits",
       "bullets": [
-        "Manufacturer limits still matter.",
-        "Local code and life-safety requirements still apply.",
-        "Site conditions may change the final design.",
-        "A simpler design is usually easier to support, audit, and explain."
-      ]
-    },
-    {
-      "title": "Professional responsibility",
-      "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
-      ],
-      "bullets": [
-        "Validate against the actual product and platform being installed.",
-        "Confirm owner requirements and operating procedures.",
-        "Document assumptions before implementation."
+        "Controlled door count is estimated from perimeter demand, interior segmentation, high-security additions, and compliance posture.",
+        "Reader count is adjusted separately based on whether both sides are controlled.",
+        "This tool estimates planning scope and complexity pressure, not a final door hardware schedule.",
+        "Final door counts should be verified against actual openings, egress requirements, owner security policy, platform licensing, field conditions, and project phasing.",
+        "Outputs are planning aids and do not replace formal engineering review, code compliance review, manufacturer validation, or final project takeoff."
       ]
     }
   ]
