@@ -7,7 +7,7 @@
     logoUrl: "https://scopedlabs.com/assets/favicon/favicon-32x32.png?v=1",
     resultSelector: "#results",
     extraSectionSelector: "[data-export-section]",
-    inputContainerSelector: "#toolCard .form-grid",
+    inputContainerSelector: ".tool-card .form-grid, #toolCard .form-grid, main .form-grid",
     exportStatusSelector: "#exportStatus",
     exportButtonSelector: "#exportReport",
     snapshotButtonSelector: "#saveSnapshot",
