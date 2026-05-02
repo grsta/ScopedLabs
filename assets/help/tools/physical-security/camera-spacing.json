@@ -2,152 +2,145 @@
   "title": "Camera Spacing Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand spacing between cameras, coverage overlap, blind spots, and detail consistency.",
-  "updated": "2026-04-26",
+  "summary": "Understand how perimeter length, target distance, horizontal field of view, and overlap target affect camera count and spacing.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate practical spacing between cameras so coverage remains continuous and useful."
+        "This tool estimates how far cameras can be spaced along a perimeter or linear coverage path while preserving the desired overlap between views."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch camera design problems before installation."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it for corridors, fence lines, parking rows, warehouse aisles, perimeters, or any layout where cameras repeat along a path."
+        "Use it when laying out cameras along walls, fences, corridors, parking rows, or other repeated coverage runs."
       ],
       "bullets": [
-        "Early camera layout planning.",
-        "Expansion or retrofit review.",
-        "Existing-site validation.",
-        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Camera placement review.",
+        "Expansion or retrofit validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical physical security planning terms."
       ],
       "items": [
         {
-          "label": "Camera Spacing",
-          "description": "The distance between adjacent cameras.",
+          "label": "Perimeter Length (ft)",
+          "description": "The total linear distance that needs repeated camera coverage.",
           "examples": [
-            "25 ft",
-            "50 ft",
-            "100 ft"
+            "100 ft fence line",
+            "250 ft building side",
+            "Parking row length"
           ],
-          "whyItMatters": "Spacing controls overlap and blind spot risk.",
-          "commonMistake": "Spacing cameras evenly without checking view width."
+          "whyItMatters": "The total run length determines how many camera intervals are needed once usable spacing is known.",
+          "commonMistake": "Counting only the straight section and forgetting returns, corners, gates, or coverage transitions."
         },
         {
-          "label": "Field of View",
-          "description": "How wide each camera sees at the target distance.",
+          "label": "Distance to Target Plane (ft)",
+          "description": "The distance from the camera mounting line to the target plane being covered.",
           "examples": [
-            "Wide angle",
-            "Medium view",
-            "Narrow corridor view"
+            "Camera line to fence",
+            "Wall to walkway",
+            "Pole line to vehicle row"
           ],
-          "whyItMatters": "FOV determines how much coverage each camera contributes.",
-          "commonMistake": "Assuming every camera covers the same width."
+          "whyItMatters": "Target distance determines how wide each view becomes at the coverage plane.",
+          "commonMistake": "Using camera-to-camera distance instead of camera-to-target distance."
         },
         {
-          "label": "Target Distance",
-          "description": "The distance from camera to the area being monitored.",
+          "label": "Horizontal FOV (deg)",
+          "description": "The side-to-side lens angle used for each camera.",
           "examples": [
-            "Aisle width",
-            "Fence distance",
-            "Parking lane"
+            "60 degrees",
+            "90 degrees",
+            "Wide overview"
           ],
-          "whyItMatters": "Distance affects scene width and image detail.",
-          "commonMistake": "Ignoring camera-to-target distance when setting spacing."
+          "whyItMatters": "Wider FOV increases coverage width but lowers detail and can add distortion near the edges.",
+          "commonMistake": "Spacing cameras farther apart because the lens is wide without checking detail.",
+          "links": [
+            {
+              "label": "Verify detail for the chosen spacing",
+              "kbKey": "physical-security/pixel-density",
+              "anchor": "Horizontal FOV (deg)",
+              "note": "Spacing may cover the line while still failing the detail requirement."
+            }
+          ]
         },
         {
-          "label": "Overlap Target",
-          "description": "How much camera views should overlap.",
+          "label": "Overlap Target (%)",
+          "description": "The desired amount of view overlap between neighboring cameras.",
           "examples": [
-            "10%",
-            "20%",
-            "Cross coverage"
+            "10% overlap",
+            "20% overlap",
+            "High-overlap critical path"
           ],
-          "whyItMatters": "Overlap helps prevent gaps and supports handoff between cameras.",
-          "commonMistake": "Leaving no overlap because coverage looks close on a drawing."
-        },
-        {
-          "label": "Mounting Height",
-          "description": "How high the camera is installed.",
-          "examples": [
-            "8 ft",
-            "12 ft",
-            "20 ft"
-          ],
-          "whyItMatters": "Height affects angle, detail, and obstruction risk.",
-          "commonMistake": "Mounting too high and losing useful detail."
-        },
-        {
-          "label": "Scene Priority",
-          "description": "What the cameras are expected to capture.",
-          "examples": [
-            "General awareness",
-            "Activity tracking",
-            "Face detail",
-            "Vehicle movement"
-          ],
-          "whyItMatters": "The priority determines whether spacing can be wide or must be tight.",
-          "commonMistake": "Using awareness spacing for identification needs."
+          "whyItMatters": "Overlap helps absorb aiming variation, distortion, blind seams, and real-world mounting tolerance.",
+          "commonMistake": "Designing camera edges to touch exactly with no practical overlap.",
+          "links": [
+            {
+              "label": "Check remaining blind areas",
+              "kbKey": "physical-security/blind-spot-check",
+              "anchor": "Overlap Target (%)",
+              "note": "Blind Spot Check helps review whether overlapping views still leave uncovered zones."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means spacing appears reasonable. Watch means overlap or detail should be checked. Risk means cameras may be spaced too far apart for reliable coverage."
+        "Healthy means the spacing appears practical for the entered perimeter and overlap target. Watch means detail, corners, or target distance should be reviewed. Risk means the proposed layout may require more cameras, narrower spacing, or a different lens strategy."
       ],
       "bullets": [
-        "Healthy: the design appears aligned with the entered assumptions.",
-        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
-        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+        "Spacing output is a layout estimate, not a substitute for a site drawing.",
+        "Corners, obstructions, and mounting height can reduce usable spacing.",
+        "Use higher overlap where missed coverage is unacceptable."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+        "Most physical security planning problems come from treating camera coverage, recognition detail, mounting position, and lighting as separate decisions. In the field, those choices interact: a wider view lowers pixel density, a higher mount changes target geometry, and poor lighting can erase detail that looked acceptable on paper."
       ],
       "bullets": [
-        "Using one wide camera where a dedicated detail view is needed.",
-        "Ignoring target distance, angle, lighting, and obstructions.",
-        "Expecting overview cameras to perform identification tasks.",
-        "Failing to document the design goal for each camera."
+        "Sizing a camera view only by how wide the scene looks, without checking target detail.",
+        "Using clean daytime assumptions for a scene that must also work at night, in glare, or under motion.",
+        "Ignoring overlap, obstructions, mounting limits, and the actual target plane.",
+        "Treating calculated values as final design approval instead of documented planning assumptions."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+        "These guides explain the planning logic behind the tool. They do not replace manufacturer documentation, site survey, camera testing, client acceptance criteria, code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Camera specs still need to be validated against the actual model.",
-        "Lighting and mounting conditions can change real image quality.",
-        "A good design usually separates overview views from detail views.",
-        "Field testing remains important for critical camera views."
+        "Validate against the actual camera model, lens, sensor, encoder settings, and mounting location.",
+        "Confirm lighting, reflections, obstructions, weather, and target movement before relying on a design.",
+        "Use calculated outputs as design evidence and review notes, not as a substitute for field validation.",
+        "Leave practical margin when the scene is important, difficult, or expected to change."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, on-site testing, legal review, privacy review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual camera, lens, lighting, and mounting location.",
-        "Confirm owner expectations and security objectives.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Review the design with the owner, integrator, manufacturer, and applicable authority when required.",
+        "Test representative views before treating a camera placement as final."
       ]
     }
   ]

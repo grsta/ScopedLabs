@@ -2,150 +2,156 @@
   "title": "Face Recognition Range Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how distance, pixel density, angle, lighting, and camera placement affect face detail.",
-  "updated": "2026-04-26",
+  "summary": "Understand how resolution, field of view, face width, target pixels, and distance affect whether a face has enough image detail.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate whether a camera view is likely to support usable face recognition or face review at a target distance."
+        "This tool estimates whether the camera view provides enough pixels across a face at the entered distance and target requirement."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch camera design problems before installation."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning entrances, lobbies, counters, gates, turnstiles, or any scene where face detail matters."
+        "Use it when a camera needs facial detail rather than simple detection or overview coverage."
       ],
       "bullets": [
-        "Early camera layout planning.",
-        "Expansion or retrofit review.",
-        "Existing-site validation.",
-        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Camera placement review.",
+        "Expansion or retrofit validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical physical security planning terms."
       ],
       "items": [
         {
-          "label": "Target Distance",
-          "description": "The distance from camera to the person's face.",
+          "label": "Horizontal Resolution (px)",
+          "description": "The number of horizontal pixels in the camera image.",
           "examples": [
-            "5 ft",
-            "15 ft",
-            "30 ft"
+            "1920 px",
+            "2560 px",
+            "3840 px"
           ],
-          "whyItMatters": "Distance affects pixel density and face size in the image.",
-          "commonMistake": "Expecting face detail from an overview camera far away."
+          "whyItMatters": "Resolution provides the pixel budget available across the full view.",
+          "commonMistake": "Assuming high resolution guarantees usable face detail without checking view width."
         },
         {
-          "label": "Face Width / Target Size",
-          "description": "The approximate size of the face in the scene.",
+          "label": "Horizontal FOV (deg)",
+          "description": "The horizontal lens angle used by the camera.",
           "examples": [
-            "Human face",
-            "Head-and-shoulders view"
+            "45 degrees",
+            "70 degrees",
+            "90 degrees"
           ],
-          "whyItMatters": "Face size determines how many pixels are available for detail.",
-          "commonMistake": "Evaluating the whole person instead of the face."
+          "whyItMatters": "A wider FOV spreads face detail across fewer pixels; a narrower FOV concentrates more pixels on the target.",
+          "commonMistake": "Using a wide overview angle for a recognition task.",
+          "links": [
+            {
+              "label": "Check general pixel density too",
+              "kbKey": "physical-security/pixel-density",
+              "anchor": "Horizontal FOV (deg)",
+              "note": "Pixel Density helps compare face detail against the overall scene detail."
+            }
+          ]
         },
         {
-          "label": "Camera Resolution",
-          "description": "The resolution of the camera image.",
+          "label": "Target Pixels per Face (px)",
+          "description": "The desired number of pixels across the face target.",
           "examples": [
-            "1080p",
-            "4 MP",
-            "8 MP"
+            "Low-detail face review",
+            "Higher-detail identification support",
+            "Client-defined target"
           ],
-          "whyItMatters": "Resolution helps only if the view is framed tightly enough.",
-          "commonMistake": "Assuming high megapixels always equals face recognition."
+          "whyItMatters": "This is the detail threshold the tool compares against calculated face pixels.",
+          "commonMistake": "Choosing a target value without matching the actual operational requirement."
         },
         {
-          "label": "Scene Width",
-          "description": "How much horizontal area the camera is covering.",
+          "label": "Face Width (ft)",
+          "description": "The assumed real-world face width used in the calculation.",
           "examples": [
-            "Doorway",
-            "Lobby",
-            "Wide hall"
+            "Approximate adult face width",
+            "Conservative target size",
+            "Project standard value"
           ],
-          "whyItMatters": "Wider views reduce pixels on each face.",
-          "commonMistake": "Using a wide lobby camera for face recognition."
+          "whyItMatters": "Face width converts scene pixel density into pixels across the face.",
+          "commonMistake": "Using body width, doorway width, or scene width instead of face width."
         },
         {
-          "label": "Viewing Angle",
-          "description": "The angle between camera and face.",
+          "label": "Distance (ft)",
+          "description": "The distance from the camera to the face target.",
           "examples": [
-            "Straight-on",
-            "Side angle",
-            "Steep downward angle"
+            "Door at 15 ft",
+            "Reception area at 25 ft",
+            "Gate at 45 ft"
           ],
-          "whyItMatters": "Face recognition works best with more frontal views.",
-          "commonMistake": "Mounting too high and capturing hats or tops of heads."
-        },
-        {
-          "label": "Lighting Quality",
-          "description": "Light level and contrast on the face.",
-          "examples": [
-            "Backlit doorway",
-            "Even lobby lighting",
-            "Low light"
-          ],
-          "whyItMatters": "Poor lighting can ruin face detail even with enough pixels.",
-          "commonMistake": "Checking pixel density while ignoring backlight and shadows."
+          "whyItMatters": "Detail drops as distance increases unless the lens narrows or resolution increases.",
+          "commonMistake": "Testing near the camera and assuming the same result works farther away.",
+          "links": [
+            {
+              "label": "Check mounting angle at the same target",
+              "kbKey": "physical-security/mounting-height",
+              "anchor": "Target Distance (ft)",
+              "note": "Mounting Height helps confirm whether the face angle is usable, not just pixel count."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means face detail appears likely to be usable. Watch means lighting, angle, or distance should be reviewed. Risk means the camera may not provide reliable face detail."
+        "Healthy means the entered view likely provides enough face pixels for the stated target. Watch means angle, lighting, compression, and real camera performance should be reviewed. Risk means the camera is likely too wide, too far, or too low-detail for the intended face task."
       ],
       "bullets": [
-        "Healthy: the design appears aligned with the entered assumptions.",
-        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
-        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+        "Face detail needs both pixel count and a useful viewing angle.",
+        "Lighting, motion blur, compression, and camera processing can reduce real usable detail.",
+        "Validate with field images before relying on the result for recognition or evidence expectations."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+        "Most physical security planning problems come from treating camera coverage, recognition detail, mounting position, and lighting as separate decisions. In the field, those choices interact: a wider view lowers pixel density, a higher mount changes target geometry, and poor lighting can erase detail that looked acceptable on paper."
       ],
       "bullets": [
-        "Using one wide camera where a dedicated detail view is needed.",
-        "Ignoring target distance, angle, lighting, and obstructions.",
-        "Expecting overview cameras to perform identification tasks.",
-        "Failing to document the design goal for each camera."
+        "Sizing a camera view only by how wide the scene looks, without checking target detail.",
+        "Using clean daytime assumptions for a scene that must also work at night, in glare, or under motion.",
+        "Ignoring overlap, obstructions, mounting limits, and the actual target plane.",
+        "Treating calculated values as final design approval instead of documented planning assumptions."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+        "These guides explain the planning logic behind the tool. They do not replace manufacturer documentation, site survey, camera testing, client acceptance criteria, code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Camera specs still need to be validated against the actual model.",
-        "Lighting and mounting conditions can change real image quality.",
-        "A good design usually separates overview views from detail views.",
-        "Field testing remains important for critical camera views."
+        "Validate against the actual camera model, lens, sensor, encoder settings, and mounting location.",
+        "Confirm lighting, reflections, obstructions, weather, and target movement before relying on a design.",
+        "Use calculated outputs as design evidence and review notes, not as a substitute for field validation.",
+        "Leave practical margin when the scene is important, difficult, or expected to change."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, on-site testing, legal review, privacy review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual camera, lens, lighting, and mounting location.",
-        "Confirm owner expectations and security objectives.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Review the design with the owner, integrator, manufacturer, and applicable authority when required.",
+        "Test representative views before treating a camera placement as final."
       ]
     }
   ]

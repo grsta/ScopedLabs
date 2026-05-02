@@ -2,155 +2,134 @@
   "title": "Lens Selection Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how focal length, distance, coverage width, and detail goals affect lens choice.",
-  "updated": "2026-04-26",
+  "summary": "Understand how target distance, target width, and sensor width translate into an approximate lens requirement.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps choose a practical lens range based on the scene width and target distance."
+        "This tool estimates a practical focal-length direction for capturing a desired target width at a known distance with a given sensor width."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch camera design problems before installation."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it before selecting fixed or varifocal cameras, planning camera placement, or deciding whether one camera can cover a scene with enough detail."
+        "Use it when choosing between wide, normal, or narrower lens options before validating the final camera/lens combination against manufacturer tools or field testing."
       ],
       "bullets": [
-        "Early camera layout planning.",
-        "Expansion or retrofit review.",
-        "Existing-site validation.",
-        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Camera placement review.",
+        "Expansion or retrofit validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical physical security planning terms."
       ],
       "items": [
         {
-          "label": "Target Distance",
-          "description": "The distance from the camera to the primary subject or area.",
+          "label": "Distance to Target (ft)",
+          "description": "The distance from the camera to the target plane that should fill the desired view width.",
           "examples": [
-            "Entrance door",
-            "Gate",
-            "Cash counter",
-            "Vehicle lane"
+            "Entrance at 25 ft",
+            "Gate at 50 ft",
+            "Lane at 80 ft"
           ],
-          "whyItMatters": "Distance strongly affects lens choice.",
-          "commonMistake": "Choosing lens size before measuring distance."
+          "whyItMatters": "Distance is the main driver for lens selection. Farther targets usually require a narrower lens to maintain detail.",
+          "commonMistake": "Selecting a lens based on room size instead of the actual target distance."
         },
         {
-          "label": "Desired Scene Width",
-          "description": "How much horizontal area should be visible at the target distance.",
+          "label": "Target Width (ft)",
+          "description": "The width of the scene or object you want across the camera image at the target plane.",
           "examples": [
-            "Single door",
-            "Lobby width",
-            "Drive lane",
-            "Parking row"
+            "6 ft doorway",
+            "12 ft vehicle lane",
+            "30 ft scene width"
           ],
-          "whyItMatters": "Scene width determines whether the lens needs to be wide or narrow.",
-          "commonMistake": "Trying to capture too much width and still expect fine detail."
+          "whyItMatters": "Target width defines how tight or wide the view should be. Smaller target widths usually require more zoom/narrower focal length.",
+          "commonMistake": "Using a very wide target width and still expecting close-up detail.",
+          "links": [
+            {
+              "label": "Confirm target detail after lens selection",
+              "kbKey": "physical-security/pixel-density",
+              "anchor": "Target Width (ft)",
+              "note": "Pixel Density verifies whether the selected view has enough detail."
+            }
+          ]
         },
         {
-          "label": "Sensor Size",
-          "description": "The camera sensor format.",
+          "label": "Sensor Width (mm)",
+          "description": "The physical width of the camera sensor used in the lens calculation.",
           "examples": [
-            "1/2.8 inch",
-            "1/1.8 inch",
-            "1/3 inch"
+            "Common sensor width from datasheet",
+            "1/2.8-inch camera equivalent",
+            "Manufacturer sensor spec"
           ],
-          "whyItMatters": "Sensor size changes the view produced by a given lens.",
-          "commonMistake": "Using generic lens charts without matching the sensor."
-        },
-        {
-          "label": "Detail Requirement",
-          "description": "The detail level required from the image.",
-          "examples": [
-            "Awareness",
-            "Recognition",
-            "Identification",
-            "License plate"
-          ],
-          "whyItMatters": "Higher detail usually requires a narrower field of view.",
-          "commonMistake": "Using a wide overview camera for identification."
-        },
-        {
-          "label": "Lens Type",
-          "description": "Whether the camera uses a fixed, varifocal, or motorized zoom lens.",
-          "examples": [
-            "Fixed lens",
-            "Varifocal",
-            "Motorized zoom"
-          ],
-          "whyItMatters": "Lens type affects installation flexibility and tuning.",
-          "commonMistake": "Selecting a fixed lens before the scene is fully known."
-        },
-        {
-          "label": "Mounting Constraint",
-          "description": "Limits on where the camera can be installed.",
-          "examples": [
-            "Existing pole",
-            "Ceiling corner",
-            "Wall box",
-            "Low mounting point"
-          ],
-          "whyItMatters": "Mount location may force a different lens choice.",
-          "commonMistake": "Choosing the lens without considering where the camera can actually go."
+          "whyItMatters": "Sensor width affects focal-length math. The same lens behaves differently on different sensor sizes.",
+          "commonMistake": "Guessing sensor size or using marketing sensor format without checking the datasheet.",
+          "links": [
+            {
+              "label": "Compare resulting view width",
+              "kbKey": "physical-security/field-of-view",
+              "anchor": "Horizontal FOV (deg)",
+              "note": "Field of View helps sanity-check the resulting coverage angle and width."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the lens range likely fits the coverage goal. Watch means the view/detail tradeoff should be reviewed. Risk means the lens may be too wide or too narrow for the job."
+        "Healthy means the lens direction appears reasonable for the target distance and width. Watch means the result should be checked against available lenses, sensor specs, and detail goals. Risk means the desired view may require a different camera placement, lens range, or more than one camera."
       ],
       "bullets": [
-        "Healthy: the design appears aligned with the entered assumptions.",
-        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
-        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+        "Lens selection is an approximation until matched to a real camera/lens datasheet.",
+        "A tighter lens improves detail but reduces context and coverage width.",
+        "Always validate both view width and pixel density before finalizing the camera."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+        "Most physical security planning problems come from treating camera coverage, recognition detail, mounting position, and lighting as separate decisions. In the field, those choices interact: a wider view lowers pixel density, a higher mount changes target geometry, and poor lighting can erase detail that looked acceptable on paper."
       ],
       "bullets": [
-        "Using one wide camera where a dedicated detail view is needed.",
-        "Ignoring target distance, angle, lighting, and obstructions.",
-        "Expecting overview cameras to perform identification tasks.",
-        "Failing to document the design goal for each camera."
+        "Sizing a camera view only by how wide the scene looks, without checking target detail.",
+        "Using clean daytime assumptions for a scene that must also work at night, in glare, or under motion.",
+        "Ignoring overlap, obstructions, mounting limits, and the actual target plane.",
+        "Treating calculated values as final design approval instead of documented planning assumptions."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+        "These guides explain the planning logic behind the tool. They do not replace manufacturer documentation, site survey, camera testing, client acceptance criteria, code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Camera specs still need to be validated against the actual model.",
-        "Lighting and mounting conditions can change real image quality.",
-        "A good design usually separates overview views from detail views.",
-        "Field testing remains important for critical camera views."
+        "Validate against the actual camera model, lens, sensor, encoder settings, and mounting location.",
+        "Confirm lighting, reflections, obstructions, weather, and target movement before relying on a design.",
+        "Use calculated outputs as design evidence and review notes, not as a substitute for field validation.",
+        "Leave practical margin when the scene is important, difficult, or expected to change."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, on-site testing, legal review, privacy review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual camera, lens, lighting, and mounting location.",
-        "Confirm owner expectations and security objectives.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Review the design with the owner, integrator, manufacturer, and applicable authority when required.",
+        "Test representative views before treating a camera placement as final."
       ]
     }
   ]

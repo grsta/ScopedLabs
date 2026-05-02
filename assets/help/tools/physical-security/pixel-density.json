@@ -2,154 +2,157 @@
   "title": "Pixel Density Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand pixels per foot, target detail, camera resolution, scene width, and image usefulness.",
-  "updated": "2026-04-26",
+  "summary": "Understand pixels-per-foot, camera resolution, field of view, target width, and whether a view has enough detail for the task.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether a camera view has enough pixel density for the intended surveillance task."
+        "This tool estimates target pixel density and compares it to the detail goal so you can see whether the camera view is wide, detailed, or overloaded."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch camera design problems before installation."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when checking whether a camera can support detection, observation, recognition, identification, or forensic review."
+        "Use it after rough field-of-view planning when you need to know whether the scene has enough image detail for detection, observation, recognition, or identification-style review."
       ],
       "bullets": [
-        "Early camera layout planning.",
-        "Expansion or retrofit review.",
-        "Existing-site validation.",
-        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Camera placement review.",
+        "Expansion or retrofit validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical physical security planning terms."
       ],
       "items": [
         {
-          "label": "Camera Resolution",
-          "description": "The total image resolution produced by the camera.",
+          "label": "Horizontal Resolution (px)",
+          "description": "The number of horizontal pixels available in the camera image.",
           "examples": [
-            "1080p",
-            "4 MP",
-            "8 MP",
-            "12 MP"
+            "1920 px for 1080p",
+            "2560 px",
+            "3840 px for 4K"
           ],
-          "whyItMatters": "Resolution affects how many pixels are available across the scene.",
-          "commonMistake": "Buying higher resolution without checking lens and scene width."
+          "whyItMatters": "More horizontal pixels can improve detail, but only if the lens and scene width place those pixels on the target.",
+          "commonMistake": "Assuming 4K always solves detail problems without checking the actual scene width."
         },
         {
-          "label": "Scene Width",
-          "description": "The width of the area captured in the image.",
+          "label": "Horizontal FOV (deg)",
+          "description": "The horizontal viewing angle used by the camera/lens.",
           "examples": [
-            "Doorway",
-            "Drive lane",
-            "Parking lot",
-            "Lobby"
+            "60 degrees",
+            "90 degrees",
+            "Telephoto view"
           ],
-          "whyItMatters": "Wider scenes spread pixels over more area and reduce detail.",
-          "commonMistake": "Covering a huge scene with one camera and expecting identification."
+          "whyItMatters": "FOV determines how widely the camera spreads its available pixels. Wider FOV usually lowers pixels per foot.",
+          "commonMistake": "Leaving a camera in a wide overview shot while expecting recognition-quality detail.",
+          "links": [
+            {
+              "label": "Use FOV width as the upstream geometry",
+              "kbKey": "physical-security/field-of-view",
+              "anchor": "Horizontal FOV (deg)",
+              "note": "Field of View helps confirm the coverage width that pixel density depends on."
+            }
+          ]
         },
         {
-          "label": "Target Width",
-          "description": "The physical width of the object or person being evaluated.",
+          "label": "Distance (ft)",
+          "description": "The distance from the camera to the target plane where detail is required.",
           "examples": [
-            "Face width",
-            "Vehicle width",
-            "Doorway width"
+            "Entrance at 20 ft",
+            "Vehicle lane at 45 ft",
+            "Fence at 80 ft"
           ],
-          "whyItMatters": "Target size affects how many pixels land on the subject.",
-          "commonMistake": "Using scene-level coverage instead of target-level detail."
+          "whyItMatters": "Pixel density falls as the target plane gets farther away for the same camera angle and resolution.",
+          "commonMistake": "Testing close to the camera and assuming the same detail will hold at the far side of the scene."
         },
         {
-          "label": "Detail Goal",
-          "description": "The surveillance task the image must support.",
+          "label": "Target Pixel Density (PPF)",
+          "description": "The desired pixels-per-foot threshold for the target or task.",
           "examples": [
-            "Detect",
-            "Observe",
-            "Recognize",
-            "Identify"
+            "General observation",
+            "Higher detail review",
+            "Recognition-focused view"
           ],
-          "whyItMatters": "Different goals require different pixel density.",
-          "commonMistake": "Saying the camera covers the area without defining the goal."
+          "whyItMatters": "The target threshold defines what success means. A camera can cover the area but still fail the detail goal.",
+          "commonMistake": "Using an arbitrary PPF number without matching it to the actual operational requirement."
         },
         {
-          "label": "Lens / Zoom",
-          "description": "How tightly the camera view is framed.",
+          "label": "Target Width (ft)",
+          "description": "The real-world width of the object or zone used for detail evaluation.",
           "examples": [
-            "Wide lens",
-            "Varifocal",
-            "Telephoto"
+            "Person width",
+            "Door opening",
+            "Vehicle lane",
+            "Plate capture zone"
           ],
-          "whyItMatters": "A tighter view usually increases pixel density at the target.",
-          "commonMistake": "Using wide lenses where detail is required."
-        },
-        {
-          "label": "Target Distance",
-          "description": "The distance from camera to subject.",
-          "examples": [
-            "10 ft",
-            "40 ft",
-            "100 ft"
-          ],
-          "whyItMatters": "Longer distance usually reduces useful detail unless the view is narrowed.",
-          "commonMistake": "Ignoring distance when judging image quality."
+          "whyItMatters": "Target width helps translate image pixels into practical detail on the object that matters.",
+          "commonMistake": "Using total scene width when the actual target is much smaller.",
+          "links": [
+            {
+              "label": "Check plate-specific detail separately",
+              "kbKey": "physical-security/license-plate-range",
+              "anchor": "Pixels per Plate Target",
+              "note": "Use the plate range tool when the target is a license plate rather than a general scene."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means pixel density appears aligned with the goal. Watch means detail may be marginal. Risk means the image may not support the intended use."
+        "Healthy means the calculated detail appears to meet the target with usable margin. Watch means the view may work but should be validated against the real camera, compression, lighting, and mounting. Risk means the scene is likely too wide, too far, or too low-resolution for the intended detail."
       ],
       "bullets": [
-        "Healthy: the design appears aligned with the entered assumptions.",
-        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
-        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+        "Pixel density is a detail check, not a complete camera design by itself.",
+        "A higher PPF value usually requires a narrower view, higher resolution, closer placement, or multiple cameras.",
+        "Always validate detail with actual image samples when recognition or evidence quality matters."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+        "Most physical security planning problems come from treating camera coverage, recognition detail, mounting position, and lighting as separate decisions. In the field, those choices interact: a wider view lowers pixel density, a higher mount changes target geometry, and poor lighting can erase detail that looked acceptable on paper."
       ],
       "bullets": [
-        "Using one wide camera where a dedicated detail view is needed.",
-        "Ignoring target distance, angle, lighting, and obstructions.",
-        "Expecting overview cameras to perform identification tasks.",
-        "Failing to document the design goal for each camera."
+        "Sizing a camera view only by how wide the scene looks, without checking target detail.",
+        "Using clean daytime assumptions for a scene that must also work at night, in glare, or under motion.",
+        "Ignoring overlap, obstructions, mounting limits, and the actual target plane.",
+        "Treating calculated values as final design approval instead of documented planning assumptions."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+        "These guides explain the planning logic behind the tool. They do not replace manufacturer documentation, site survey, camera testing, client acceptance criteria, code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Camera specs still need to be validated against the actual model.",
-        "Lighting and mounting conditions can change real image quality.",
-        "A good design usually separates overview views from detail views.",
-        "Field testing remains important for critical camera views."
+        "Validate against the actual camera model, lens, sensor, encoder settings, and mounting location.",
+        "Confirm lighting, reflections, obstructions, weather, and target movement before relying on a design.",
+        "Use calculated outputs as design evidence and review notes, not as a substitute for field validation.",
+        "Leave practical margin when the scene is important, difficult, or expected to change."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, on-site testing, legal review, privacy review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual camera, lens, lighting, and mounting location.",
-        "Confirm owner expectations and security objectives.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Review the design with the owner, integrator, manufacturer, and applicable authority when required.",
+        "Test representative views before treating a camera placement as final."
       ]
     }
   ]

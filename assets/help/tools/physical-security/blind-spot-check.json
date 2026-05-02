@@ -2,154 +2,167 @@
   "title": "Blind Spot Check Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand coverage gaps, obstructions, camera overlap, scene geometry, and missed activity risk.",
-  "updated": "2026-04-26",
+  "summary": "Understand how area size, camera field of view, target distance, camera count, and overlap affect uncovered coverage zones.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps identify whether a camera layout may leave uncovered or weakly covered areas."
+        "This tool estimates whether a planned camera group leaves meaningful uncovered area after view width and overlap assumptions are applied."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch camera design problems before installation."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when reviewing camera layouts, adding cameras, checking perimeter coverage, or validating whether a scene is covered from enough angles."
+        "Use it when checking a camera layout for missed zones, especially after initial field-of-view, spacing, or coverage-area planning."
       ],
       "bullets": [
-        "Early camera layout planning.",
-        "Expansion or retrofit review.",
-        "Existing-site validation.",
-        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Camera placement review.",
+        "Expansion or retrofit validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical physical security planning terms."
       ],
       "items": [
         {
-          "label": "Coverage Area",
-          "description": "The physical area the cameras are expected to monitor.",
+          "label": "Area Width (ft)",
+          "description": "The width of the area being checked for coverage gaps.",
           "examples": [
-            "Lobby",
-            "Parking lot",
-            "Warehouse aisle",
-            "Fence line"
+            "Lobby width",
+            "Parking zone width",
+            "Fence line segment"
           ],
-          "whyItMatters": "Coverage area defines what must be visible.",
-          "commonMistake": "Checking camera count without defining the target area."
+          "whyItMatters": "Area width defines the horizontal coverage requirement the camera group must satisfy.",
+          "commonMistake": "Checking only the obvious center area and missing side edges or transition zones."
         },
         {
-          "label": "Camera Views",
-          "description": "The number and direction of camera views covering the area.",
+          "label": "Area Depth (ft)",
+          "description": "The depth of the area being checked for coverage gaps.",
           "examples": [
-            "Single view",
-            "Cross view",
-            "Overlapping views"
+            "Room depth",
+            "Drive aisle depth",
+            "Lot depth"
           ],
-          "whyItMatters": "Multiple views can reduce blind spot risk.",
-          "commonMistake": "Assuming one camera angle sees everything."
+          "whyItMatters": "Depth completes the area being evaluated for blind spots.",
+          "commonMistake": "Ignoring depth where objects, people, or vehicles can move outside the main view."
         },
         {
-          "label": "Obstructions",
-          "description": "Objects that block or reduce visibility.",
+          "label": "Camera Horizontal FOV (deg)",
+          "description": "The side-to-side view angle used by the cameras in the blind spot check.",
           "examples": [
-            "Columns",
-            "Shelving",
-            "Vehicles",
-            "Landscaping"
+            "70 degrees",
+            "90 degrees",
+            "Wide overview"
           ],
-          "whyItMatters": "Obstructions can create blind spots even inside the field of view.",
-          "commonMistake": "Designing from a clean drawing without real-world obstacles."
+          "whyItMatters": "Horizontal FOV controls the estimated coverage width of each camera at the target distance.",
+          "commonMistake": "Using a wide angle to erase blind spots without checking detail loss.",
+          "links": [
+            {
+              "label": "Verify the view geometry first",
+              "kbKey": "physical-security/field-of-view",
+              "anchor": "Horizontal FOV (deg)",
+              "note": "Field of View confirms the coverage width behind the blind spot estimate."
+            }
+          ]
         },
         {
-          "label": "Overlap",
-          "description": "Shared coverage between cameras.",
+          "label": "Mounting Distance to Target Zone (ft)",
+          "description": "The distance from the camera mounting position to the main target zone being covered.",
           "examples": [
-            "No overlap",
-            "Edge overlap",
-            "Cross coverage"
+            "Wall to coverage zone",
+            "Pole to parking row",
+            "Corner to doorway zone"
           ],
-          "whyItMatters": "Overlap helps maintain visibility if one view is blocked.",
-          "commonMistake": "Placing camera views edge-to-edge."
+          "whyItMatters": "Distance determines how wide each camera view becomes at the target zone.",
+          "commonMistake": "Using the camera-to-ground distance instead of the camera-to-target-zone distance."
         },
         {
-          "label": "Target Priority",
-          "description": "Areas or activities that matter most.",
+          "label": "Number of Cameras",
+          "description": "The number of camera views included in the coverage estimate.",
           "examples": [
-            "Entrances",
-            "Cash handling",
-            "Vehicle lanes",
-            "Restricted doors"
+            "2 cameras",
+            "4 cameras",
+            "Multi-camera zone"
           ],
-          "whyItMatters": "Priority determines which blind spots matter most.",
-          "commonMistake": "Treating all areas as equal."
+          "whyItMatters": "Camera count affects total coverage and overlap opportunities.",
+          "commonMistake": "Counting cameras that do not actually point at the same target zone or have blocked views."
         },
         {
-          "label": "Mounting Angle",
-          "description": "The camera angle relative to the scene.",
+          "label": "Overlap Target (%)",
+          "description": "The desired overlap between camera views.",
           "examples": [
-            "Corner view",
-            "Straight-on",
-            "High angle"
+            "10% overlap",
+            "20% overlap",
+            "High-overlap critical area"
           ],
-          "whyItMatters": "Angle affects whether objects or people hide behind each other.",
-          "commonMistake": "Ignoring perspective and only looking at field-of-view lines."
+          "whyItMatters": "Overlap reduces seam risk and helps absorb aiming variation or field conditions.",
+          "commonMistake": "Treating edge-to-edge calculated coverage as if it has no gaps.",
+          "links": [
+            {
+              "label": "Review repeated spacing strategy",
+              "kbKey": "physical-security/camera-spacing",
+              "anchor": "Overlap Target (%)",
+              "note": "Camera Spacing helps turn overlap goals into placement spacing."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means blind spot risk appears low. Watch means obstructions or overlap should be reviewed. Risk means the design may miss activity in important areas."
+        "Healthy means the entered layout appears to have manageable uncovered area. Watch means overlap, mounting, or obstruction assumptions should be reviewed. Risk means the design may leave unacceptable blind spots or require more cameras, repositioning, or narrower spacing."
       ],
       "bullets": [
-        "Healthy: the design appears aligned with the entered assumptions.",
-        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
-        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+        "Blind spot checks are strongest when based on a site plan or measured target zones.",
+        "Obstructions, corners, glare, mounting height, and door swings can create blind spots that simple geometry misses.",
+        "Use this as a layout review step after estimating FOV, spacing, and coverage area."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+        "Most physical security planning problems come from treating camera coverage, recognition detail, mounting position, and lighting as separate decisions. In the field, those choices interact: a wider view lowers pixel density, a higher mount changes target geometry, and poor lighting can erase detail that looked acceptable on paper."
       ],
       "bullets": [
-        "Using one wide camera where a dedicated detail view is needed.",
-        "Ignoring target distance, angle, lighting, and obstructions.",
-        "Expecting overview cameras to perform identification tasks.",
-        "Failing to document the design goal for each camera."
+        "Sizing a camera view only by how wide the scene looks, without checking target detail.",
+        "Using clean daytime assumptions for a scene that must also work at night, in glare, or under motion.",
+        "Ignoring overlap, obstructions, mounting limits, and the actual target plane.",
+        "Treating calculated values as final design approval instead of documented planning assumptions."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+        "These guides explain the planning logic behind the tool. They do not replace manufacturer documentation, site survey, camera testing, client acceptance criteria, code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Camera specs still need to be validated against the actual model.",
-        "Lighting and mounting conditions can change real image quality.",
-        "A good design usually separates overview views from detail views.",
-        "Field testing remains important for critical camera views."
+        "Validate against the actual camera model, lens, sensor, encoder settings, and mounting location.",
+        "Confirm lighting, reflections, obstructions, weather, and target movement before relying on a design.",
+        "Use calculated outputs as design evidence and review notes, not as a substitute for field validation.",
+        "Leave practical margin when the scene is important, difficult, or expected to change."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, on-site testing, legal review, privacy review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual camera, lens, lighting, and mounting location.",
-        "Confirm owner expectations and security objectives.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Review the design with the owner, integrator, manufacturer, and applicable authority when required.",
+        "Test representative views before treating a camera placement as final."
       ]
     }
   ]

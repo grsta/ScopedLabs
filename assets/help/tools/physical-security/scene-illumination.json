@@ -2,152 +2,148 @@
   "title": "Scene Illumination Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand lighting level, contrast, IR, shadows, glare, and camera low-light performance.",
-  "updated": "2026-04-26",
+  "summary": "Understand how area size, target footcandles, utilization, and light loss affect estimated lighting demand for a camera scene.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate whether a scene has enough usable light for the camera task."
+        "This tool estimates the lighting required to reach a target illumination level across a physical area after utilization and light-loss factors are considered."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch camera design problems before installation."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning night views, exterior cameras, entrances, parking lots, warehouses, low-light rooms, or IR-assisted cameras."
+        "Use it when reviewing whether a camera scene is likely to have enough usable light for the desired image quality, especially at night or in poorly lit areas."
       ],
       "bullets": [
-        "Early camera layout planning.",
-        "Expansion or retrofit review.",
-        "Existing-site validation.",
-        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Camera placement review.",
+        "Expansion or retrofit validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical physical security planning terms."
       ],
       "items": [
         {
-          "label": "Light Level",
-          "description": "The amount of visible light available in the scene.",
+          "label": "Area Width (ft)",
+          "description": "The width of the scene area that needs illumination.",
           "examples": [
-            "Bright office",
-            "Dim hallway",
-            "Parking lot at night"
+            "Doorway zone",
+            "Parking bay width",
+            "Fence section"
           ],
-          "whyItMatters": "Light level affects noise, blur, and detail.",
-          "commonMistake": "Trusting minimum lux specs without real scene testing."
+          "whyItMatters": "Width is one side of the area calculation used to estimate total lighting demand.",
+          "commonMistake": "Lighting the visible camera frame instead of the actual target area that needs detail."
         },
         {
-          "label": "Camera Low-Light Rating",
-          "description": "The camera's stated ability to operate in low light.",
+          "label": "Area Depth (ft)",
+          "description": "The depth or length of the scene area that needs illumination.",
           "examples": [
-            "Color low light",
-            "B/W low light",
-            "Starlight camera"
+            "Walkway depth",
+            "Parking row depth",
+            "Loading area depth"
           ],
-          "whyItMatters": "Low-light specs vary widely and may not reflect usable detail.",
-          "commonMistake": "Assuming the image is useful just because the camera can see something."
+          "whyItMatters": "Depth combines with width to determine how much area must receive useful light.",
+          "commonMistake": "Forgetting far-side areas where the camera still needs detail."
         },
         {
-          "label": "IR Coverage",
-          "description": "Infrared illumination available to the scene.",
+          "label": "Target Footcandles (fc)",
+          "description": "The desired illumination level across the target scene.",
           "examples": [
-            "Built-in IR",
-            "External IR",
-            "No IR"
+            "Low-light support",
+            "General exterior visibility",
+            "Higher-detail target zone"
           ],
-          "whyItMatters": "IR can help at night but may create glare or uneven lighting.",
-          "commonMistake": "Expecting built-in IR to cover a large outdoor area."
+          "whyItMatters": "The target footcandle level defines the lighting goal for the area.",
+          "commonMistake": "Choosing a light level without considering the camera\u2019s low-light performance and detail goal."
         },
         {
-          "label": "Backlight / Glare",
-          "description": "Bright light behind or toward the camera.",
+          "label": "Utilization Factor (%)",
+          "description": "The percentage of emitted light expected to reach and benefit the target area.",
           "examples": [
-            "Doorway glare",
-            "Headlights",
-            "Sunrise/sunset"
+            "60% utilization",
+            "Directional fixture",
+            "Poor fixture placement"
           ],
-          "whyItMatters": "Backlight can wash out faces or plates.",
-          "commonMistake": "Ignoring contrast and only checking overall brightness."
+          "whyItMatters": "Utilization accounts for fixture aim, spill, mounting, and how efficiently light reaches the scene.",
+          "commonMistake": "Assuming every lumen produced by a fixture lands on the target area."
         },
         {
-          "label": "Motion",
-          "description": "How much movement occurs in the scene.",
+          "label": "Light Loss Factor (%)",
+          "description": "The percentage of lighting effectiveness retained after dirt, aging, lens loss, and maintenance conditions.",
           "examples": [
-            "Walking",
-            "Vehicles",
-            "Fast movement"
+            "80% retained",
+            "Dirty lens reserve",
+            "Aging fixtures"
           ],
-          "whyItMatters": "Low light may force slower shutter speeds and motion blur.",
-          "commonMistake": "Judging a still image while ignoring moving subjects."
-        },
-        {
-          "label": "Detail Goal",
-          "description": "What the camera needs to show clearly.",
-          "examples": [
-            "Overview",
-            "Face detail",
-            "Plate detail",
-            "Activity detection"
-          ],
-          "whyItMatters": "Higher detail requires better lighting and contrast.",
-          "commonMistake": "Using the same lighting expectation for every task."
+          "whyItMatters": "Light loss prevents the design from relying on brand-new, clean, perfect fixture output forever.",
+          "commonMistake": "Sizing lighting with no reserve for fixture aging, dirt, or maintenance.",
+          "links": [
+            {
+              "label": "Check whether detail target still fits",
+              "kbKey": "physical-security/face-recognition-range",
+              "anchor": "Distance (ft)",
+              "note": "Good lighting supports recognition detail, but pixel count and angle still matter."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means lighting appears practical. Watch means contrast or low-light performance should be reviewed. Risk means the camera may produce poor detail or unusable images."
+        "Healthy means the lighting estimate appears practical for the target area. Watch means fixture layout, camera low-light behavior, or light-loss assumptions should be reviewed. Risk means the scene may be underlit for the intended camera task."
       ],
       "bullets": [
-        "Healthy: the design appears aligned with the entered assumptions.",
-        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
-        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+        "Illumination math is only part of camera image quality.",
+        "Glare, backlight, shadows, IR behavior, and camera settings can change real performance.",
+        "Validate night views and motion performance before relying on the lighting plan."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+        "Most physical security planning problems come from treating camera coverage, recognition detail, mounting position, and lighting as separate decisions. In the field, those choices interact: a wider view lowers pixel density, a higher mount changes target geometry, and poor lighting can erase detail that looked acceptable on paper."
       ],
       "bullets": [
-        "Using one wide camera where a dedicated detail view is needed.",
-        "Ignoring target distance, angle, lighting, and obstructions.",
-        "Expecting overview cameras to perform identification tasks.",
-        "Failing to document the design goal for each camera."
+        "Sizing a camera view only by how wide the scene looks, without checking target detail.",
+        "Using clean daytime assumptions for a scene that must also work at night, in glare, or under motion.",
+        "Ignoring overlap, obstructions, mounting limits, and the actual target plane.",
+        "Treating calculated values as final design approval instead of documented planning assumptions."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+        "These guides explain the planning logic behind the tool. They do not replace manufacturer documentation, site survey, camera testing, client acceptance criteria, code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Camera specs still need to be validated against the actual model.",
-        "Lighting and mounting conditions can change real image quality.",
-        "A good design usually separates overview views from detail views.",
-        "Field testing remains important for critical camera views."
+        "Validate against the actual camera model, lens, sensor, encoder settings, and mounting location.",
+        "Confirm lighting, reflections, obstructions, weather, and target movement before relying on a design.",
+        "Use calculated outputs as design evidence and review notes, not as a substitute for field validation.",
+        "Leave practical margin when the scene is important, difficult, or expected to change."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, on-site testing, legal review, privacy review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual camera, lens, lighting, and mounting location.",
-        "Confirm owner expectations and security objectives.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Review the design with the owner, integrator, manufacturer, and applicable authority when required.",
+        "Test representative views before treating a camera placement as final."
       ]
     }
   ]

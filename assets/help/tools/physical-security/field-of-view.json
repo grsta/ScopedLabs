@@ -2,155 +2,153 @@
   "title": "Field of View Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how sensor size, focal length, distance, and scene width affect camera coverage.",
-  "updated": "2026-04-26",
+  "summary": "Understand how target distance, horizontal view angle, scene width, and mounting height affect what a camera can actually see.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate the visible scene width or camera field of view for a planned lens and mounting position."
+        "This tool estimates the practical horizontal coverage width at a given target distance and compares that view against the scene width you need to cover."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch camera design problems before installation."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when selecting lenses, checking camera placement, comparing wide-angle versus narrow views, or validating whether a camera can cover the intended area."
+        "Use it when deciding whether a proposed camera angle can cover a target area before you move into pixel density, lens selection, or camera spacing."
       ],
       "bullets": [
-        "Early camera layout planning.",
-        "Expansion or retrofit review.",
-        "Existing-site validation.",
-        "Explaining coverage and detail tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Camera placement review.",
+        "Expansion or retrofit validation.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical physical security and camera planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical physical security planning terms."
       ],
       "items": [
         {
-          "label": "Sensor Size",
-          "description": "The imaging sensor format used by the camera.",
+          "label": "Target Distance (ft)",
+          "description": "The horizontal planning distance from the camera to the target plane or area being evaluated.",
           "examples": [
-            "1/2.8 inch",
-            "1/1.8 inch",
-            "1/3 inch"
+            "Doorway at 25 ft",
+            "Fence line at 60 ft",
+            "Parking lot target zone"
           ],
-          "whyItMatters": "Sensor size changes the angle of view produced by the same lens.",
-          "commonMistake": "Choosing a lens without checking the camera sensor format."
+          "whyItMatters": "Distance is the base geometry for coverage width. The same angle covers more width as distance increases, but detail drops as the scene gets wider.",
+          "commonMistake": "Using the farthest visible point instead of the actual target plane that must be identifiable.",
+          "links": [
+            {
+              "label": "Check detail after view width",
+              "kbKey": "physical-security/pixel-density",
+              "anchor": "Horizontal FOV (deg)",
+              "note": "Use Pixel Density after FOV to verify that the wider view still provides enough detail."
+            }
+          ]
         },
         {
-          "label": "Focal Length",
-          "description": "The lens focal length that controls how wide or narrow the view is.",
+          "label": "Horizontal FOV (deg)",
+          "description": "The horizontal viewing angle of the camera/lens combination.",
           "examples": [
-            "2.8 mm",
-            "4 mm",
-            "8 mm",
-            "12 mm"
+            "70 degree view",
+            "90 degree wide angle",
+            "Narrow telephoto view"
           ],
-          "whyItMatters": "Shorter focal lengths are wider; longer focal lengths are narrower with more reach.",
-          "commonMistake": "Using a wide lens for everything and losing detail."
+          "whyItMatters": "A wider angle covers more scene but spreads pixels over more width. A narrower angle captures less scene but improves detail at the target.",
+          "commonMistake": "Choosing the widest possible view and assuming it also provides recognition-quality detail.",
+          "links": [
+            {
+              "label": "Compare lens choice to view angle",
+              "kbKey": "physical-security/lens-selection",
+              "anchor": "Target Width (ft)",
+              "note": "Lens choice determines whether the desired view width is realistic for the target distance."
+            }
+          ]
         },
         {
-          "label": "Distance",
-          "description": "The distance from the camera to the target area.",
+          "label": "Scene Width to Cover (ft)",
+          "description": "The width of the area you want the camera to cover at the target plane.",
           "examples": [
-            "10 ft",
-            "40 ft",
-            "100 ft"
+            "12 ft doorway zone",
+            "40 ft lobby width",
+            "80 ft parking row"
           ],
-          "whyItMatters": "Distance determines how much area the camera sees and how much detail remains.",
-          "commonMistake": "Measuring the wrong distance or ignoring camera angle."
+          "whyItMatters": "Comparing required scene width to calculated view width shows whether one camera can cover the area or whether the scene needs a different lens/position.",
+          "commonMistake": "Measuring the whole room instead of the specific target zone that needs usable coverage."
         },
         {
-          "label": "Scene Width",
-          "description": "The horizontal area you want the camera to cover.",
+          "label": "Mount Height (ft)",
+          "description": "The installed camera height above the floor or grade.",
           "examples": [
-            "Doorway",
-            "Parking lane",
-            "Lobby",
-            "Fence line"
+            "9 ft indoor mount",
+            "12 ft exterior wall mount",
+            "18 ft pole mount"
           ],
-          "whyItMatters": "Scene width tells you whether the lens view fits the target.",
-          "commonMistake": "Covering too much area with one camera."
-        },
-        {
-          "label": "Mounting Position",
-          "description": "Where the camera is installed relative to the scene.",
-          "examples": [
-            "Wall mount",
-            "Corner mount",
-            "Pole mount",
-            "Ceiling mount"
-          ],
-          "whyItMatters": "Mount position affects usable view and obstructions.",
-          "commonMistake": "Assuming the camera view is perfect from any location."
-        },
-        {
-          "label": "Detail Goal",
-          "description": "The level of detail needed in the image.",
-          "examples": [
-            "General awareness",
-            "Identification",
-            "License plate",
-            "Face detail"
-          ],
-          "whyItMatters": "Wider views usually reduce detail at the target.",
-          "commonMistake": "Designing coverage without defining the detail requirement."
+          "whyItMatters": "Mount height affects viewing angle, occlusion, facial view, and practical target geometry even when the horizontal FOV looks acceptable.",
+          "commonMistake": "Mounting too high for tamper resistance and then losing useful detail on faces or plates.",
+          "links": [
+            {
+              "label": "Review height tradeoffs",
+              "kbKey": "physical-security/mounting-height",
+              "anchor": "Mount Height (ft)",
+              "note": "Mounting Height helps evaluate whether the install height supports the intended target view."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the field of view appears aligned with the coverage goal. Watch means the view may be too wide or too narrow. Risk means the camera may miss the target area or sacrifice too much detail."
+        "Healthy means the entered field of view appears to cover the scene with practical margin. Watch means the view may fit but should be checked for detail, height, or overlap. Risk means the proposed view is likely too narrow or too wide for the planning goal."
       ],
       "bullets": [
-        "Healthy: the design appears aligned with the entered assumptions.",
-        "Watch: the design may still work, but placement, lens choice, or detail should be reviewed.",
-        "Risk: adjust camera position, lens choice, lighting, spacing, or coverage expectations before implementation."
+        "Coverage width tells you whether the scene physically fits in view.",
+        "Scene margin tells you whether the view has practical tolerance for aiming and field conditions.",
+        "A good FOV result should still be followed by pixel density and mounting review when detail matters."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most camera planning problems come from confusing visible coverage with useful detail. A camera may see an area without capturing enough detail for the intended task."
+        "Most physical security planning problems come from treating camera coverage, recognition detail, mounting position, and lighting as separate decisions. In the field, those choices interact: a wider view lowers pixel density, a higher mount changes target geometry, and poor lighting can erase detail that looked acceptable on paper."
       ],
       "bullets": [
-        "Using one wide camera where a dedicated detail view is needed.",
-        "Ignoring target distance, angle, lighting, and obstructions.",
-        "Expecting overview cameras to perform identification tasks.",
-        "Failing to document the design goal for each camera."
+        "Sizing a camera view only by how wide the scene looks, without checking target detail.",
+        "Using clean daytime assumptions for a scene that must also work at night, in glare, or under motion.",
+        "Ignoring overlap, obstructions, mounting limits, and the actual target plane.",
+        "Treating calculated values as final design approval instead of documented planning assumptions."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, site testing, lighting review, privacy requirements, or project-specific design judgment."
+        "These guides explain the planning logic behind the tool. They do not replace manufacturer documentation, site survey, camera testing, client acceptance criteria, code requirements, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Camera specs still need to be validated against the actual model.",
-        "Lighting and mounting conditions can change real image quality.",
-        "A good design usually separates overview views from detail views.",
-        "Field testing remains important for critical camera views."
+        "Validate against the actual camera model, lens, sensor, encoder settings, and mounting location.",
+        "Confirm lighting, reflections, obstructions, weather, and target movement before relying on a design.",
+        "Use calculated outputs as design evidence and review notes, not as a substitute for field validation.",
+        "Leave practical margin when the scene is important, difficult, or expected to change."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific testing, code/privacy review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, on-site testing, legal review, privacy review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual camera, lens, lighting, and mounting location.",
-        "Confirm owner expectations and security objectives.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Review the design with the owner, integrator, manufacturer, and applicable authority when required.",
+        "Test representative views before treating a camera placement as final."
       ]
     }
   ]
