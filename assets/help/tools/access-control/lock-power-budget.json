@@ -2,150 +2,317 @@
   "title": "Lock Power Budget Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand lock current, power supply sizing, inrush, duty cycle, and spare capacity.",
-  "updated": "2026-04-26",
+  "updated": "2026-05-02",
+  "summary": "Use this guide to understand lock current, simultaneous unlock demand, voltage selection, supply headroom, and why lock power should be checked before panel capacity and final field layout decisions.",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether the planned power supply can support the connected locks and related door hardware."
-      ],
-      "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch design pressure before it becomes field trouble."
+        "Lock Power Budget estimates the supply capacity required to support powered locking hardware during realistic simultaneous unlock events.",
+        "The tool uses lock type, voltage, current per lock, number of locks, simultaneous unlock count, and headroom percentage to estimate peak load, required supply amperage, wattage, utilization, and risk.",
+        "This is a planning tool for power budget pressure. It does not replace manufacturer surge-current data, listed hardware requirements, voltage-drop analysis, fire/life-safety review, or final electrical design."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
-      "body": [
-        "Use it when sizing access-control power supplies, adding doors to an existing supply, or comparing 12 VDC and 24 VDC hardware loads."
-      ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system cleanup or validation.",
-        "Explaining tradeoffs to a client, stakeholder, or internal team."
-      ]
-    },
-    {
-      "title": "Input descriptions",
-      "type": "glossary",
-      "body": [
-        "These descriptions explain what each input represents in practical access-control terms."
+        "Before selecting or reusing an access-control power supply.",
+        "Before adding more locks to an existing supply.",
+        "When deciding whether a group of doors should share one supply or be split across multiple supplies.",
+        "When simultaneous unlock, fire alarm release, scheduled unlock, or global release events could create a peak-load condition.",
+        "When comparing 12 VDC and 24 VDC lock hardware.",
+        "Before moving into panel capacity and final access-control architecture."
       ],
-      "items": [
+      "links": [
         {
-          "label": "Lock Count",
-          "description": "The number of powered locking devices connected to the supply.",
-          "examples": [
-            "Electric strikes",
-            "Maglocks",
-            "Electrified locks"
-          ],
-          "whyItMatters": "More locks increase total current draw.",
-          "commonMistake": "Counting doors but not the number of powered lock devices."
+          "label": "Fail-Safe / Fail-Secure guide",
+          "kbKey": "access-control/fail-safe-fail-secure",
+          "note": "Use this related guide when lock power behavior depends on whether the opening releases or stays secured during power loss."
         },
         {
-          "label": "Current Per Lock",
-          "description": "The current each lock draws during operation.",
-          "examples": [
-            "250 mA",
-            "500 mA",
-            "1 A"
-          ],
-          "whyItMatters": "Current draw drives power supply size and voltage-drop concerns.",
-          "commonMistake": "Using catalog averages instead of actual model current."
-        },
-        {
-          "label": "Voltage",
-          "description": "The operating voltage of the lock circuit.",
-          "examples": [
-            "12 VDC",
-            "24 VDC"
-          ],
-          "whyItMatters": "Voltage affects current, power, and cable behavior.",
-          "commonMistake": "Mixing voltages on the same design without clear separation."
-        },
-        {
-          "label": "Duty Cycle",
-          "description": "How long the device stays energized.",
-          "examples": [
-            "Momentary strike",
-            "Continuous maglock",
-            "Scheduled unlock"
-          ],
-          "whyItMatters": "Continuous loads create more heat and battery demand.",
-          "commonMistake": "Treating a maglock like a momentary strike."
-        },
-        {
-          "label": "Simultaneous Activation",
-          "description": "How many locks may draw power at the same time.",
-          "examples": [
-            "Single door release",
-            "Fire alarm release",
-            "Global unlock"
-          ],
-          "whyItMatters": "Worst-case activation can exceed normal operating load.",
-          "commonMistake": "Sizing only for average usage."
-        },
-        {
-          "label": "Headroom",
-          "description": "Spare capacity reserved for reliability and future changes.",
-          "examples": [
-            "20% spare",
-            "30% spare",
-            "Future doors"
-          ],
-          "whyItMatters": "Headroom reduces nuisance issues and supports expansion.",
-          "commonMistake": "Filling the supply to its rated maximum."
+          "label": "Reader Type Selector guide",
+          "kbKey": "access-control/reader-type-selector",
+          "note": "Use this related guide when the upstream reader/interface decision affects door hardware and power planning."
         }
       ]
     },
     {
-      "title": "How to read the results",
+      "id": "input-descriptions",
+      "title": "Input descriptions",
+      "type": "glossary",
       "body": [
-        "Healthy means the supply has reasonable capacity. Watch means current draw or spare headroom should be reviewed. Risk means the supply may be undersized or vulnerable during simultaneous activation."
+        "These headings match the visible input labels on the calculator so the guide can be read directly against the form."
       ],
-      "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      "items": [
+        {
+          "id": "lock-type",
+          "label": "Lock Type",
+          "description": "The general powered locking hardware category being budgeted. Different lock types can have very different current behavior, duty cycle, release behavior, and life-safety implications.",
+          "examples": [
+            "Electric Strike",
+            "Maglock",
+            "Electric Mortise",
+            "Electric Bolt"
+          ],
+          "whyItMatters": "Lock type affects whether power is usually applied to lock, unlock, hold, or release. It also affects whether simultaneous events are normal, rare, or tied to emergency behavior.",
+          "commonMistake": "Treating every powered lock like the same load because the door count is the same.",
+          "links": [
+            {
+              "label": "Fail-Safe / Fail-Secure guide",
+              "kbKey": "access-control/fail-safe-fail-secure",
+              "note": "Use this related guide when the selected lock type is tied to fail-safe or fail-secure behavior."
+            }
+          ]
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "description": "The operating voltage of the lock circuit used for the power calculation. The tool supports 12 VDC and 24 VDC planning values.",
+          "examples": [
+            "12 VDC lock power supply.",
+            "24 VDC access-control power supply.",
+            "Separate supplies for different voltage hardware."
+          ],
+          "whyItMatters": "Voltage changes the wattage calculation and affects field wiring behavior. Mixed-voltage designs must be clearly separated and documented.",
+          "commonMistake": "Mixing 12 VDC and 24 VDC devices in one planning assumption without documenting separate supplies or circuits.",
+          "links": [
+            {
+              "label": "Door Cable Length guide",
+              "kbKey": "access-control/door-cable-length",
+              "note": "Use this related guide when voltage choice and lock current need to be considered alongside cable routing and run length."
+            }
+          ]
+        },
+        {
+          "id": "current-per-lock-a",
+          "label": "Current per Lock (A)",
+          "description": "The current draw for one lock device in amps. Use the actual model’s documented current draw whenever possible, and pay attention to whether the value is surge, pull-in, holding, or steady-state current.",
+          "examples": [
+            "0.35 A electric strike.",
+            "0.50 A maglock.",
+            "0.75 A electrified hardware load.",
+            "Higher inrush or pull-in current listed separately by manufacturer."
+          ],
+          "whyItMatters": "Current per lock is the base multiplier for the entire budget. A small error here becomes a larger error when multiplied across simultaneous unlocks.",
+          "commonMistake": "Using a generic catalog average instead of the actual lock model’s current draw."
+        },
+        {
+          "id": "number-of-locks",
+          "label": "Number of Locks",
+          "description": "The total powered locks included in this budget group. This should represent the locks connected to the supply or supply segment being evaluated.",
+          "examples": [
+            "8 locks on one access-control power supply.",
+            "A group of perimeter locks served from one cabinet.",
+            "A floor-level supply feeding several controlled openings."
+          ],
+          "whyItMatters": "Number of locks defines the installed load group and limits the maximum possible simultaneous unlock count.",
+          "commonMistake": "Counting doors instead of actual powered locking devices. One opening can have more than one powered device."
+        },
+        {
+          "id": "simultaneous-unlocks",
+          "label": "Simultaneous Unlocks",
+          "description": "The number of locks expected to draw unlock/release power at the same time during a realistic peak event.",
+          "examples": [
+            "Two doors released by normal traffic at the same time.",
+            "Several perimeter doors released during a scheduled unlock.",
+            "Fire alarm release or global unlock scenario.",
+            "Group unlock during shift change or emergency procedure."
+          ],
+          "whyItMatters": "Power supplies usually fail under peak events, not average use. Simultaneous unlock count is the key difference between a comfortable supply and a tight one.",
+          "commonMistake": "Sizing only for one door at a time when fire release, scheduled unlocks, or operational behavior can energize multiple locks together.",
+          "links": [
+            {
+              "label": "Anti-Passback Zones guide",
+              "kbKey": "access-control/anti-passback-zones",
+              "note": "Use this related guide when simultaneous unlock or release behavior depends on controlled movement, APB state, or emergency user flow."
+            }
+          ]
+        },
+        {
+          "id": "headroom-percent",
+          "label": "Headroom (%)",
+          "description": "The spare capacity added above the calculated peak load. Headroom gives the supply margin for field conditions, aging, expansion, cable losses, nuisance behavior, and uncertainty in device current.",
+          "examples": [
+            "20% spare capacity for a clean small design.",
+            "25% planning margin for normal access-control lock groups.",
+            "30% or more where future expansion, long runs, or uncertain lock current exists."
+          ],
+          "whyItMatters": "A supply sized exactly to the peak load has no margin. Headroom is what keeps a design from becoming fragile when real field conditions differ from the estimate.",
+          "commonMistake": "Filling a power supply to its rated maximum and assuming nameplate capacity equals reliable field capacity."
+        }
       ]
     },
     {
+      "id": "how-to-interpret-results",
+      "title": "How to interpret results",
+      "body": [
+        "The outputs show the peak lock demand and the supply capacity needed after headroom is added.",
+        "The status is based on utilization pressure. A lower utilization percentage means the supply has more reserve. A higher utilization percentage means the design is closer to a tight or risky power condition."
+      ],
+      "bullets": [
+        "Peak Load: simultaneous unlock count multiplied by current per lock.",
+        "Required Supply: peak load plus the configured headroom percentage.",
+        "Power: required supply converted into watts using selected voltage.",
+        "Utilization: peak load compared against the required supply after headroom.",
+        "System Status: HEALTHY, WATCH, or RISK based on power margin.",
+        "Design Guidance: practical power-supply recommendation based on margin.",
+        "Engineering Insight: real-world interpretation of how stable or fragile the lock power design is likely to be."
+      ]
+    },
+    {
+      "id": "healthy-watch-risk",
+      "title": "Healthy / Watch / Risk interpretation",
+      "body": [
+        "The status describes power-supply margin, not code compliance or manufacturer approval.",
+        "A HEALTHY result means the configured headroom leaves good reserve. WATCH means the design is serviceable but tight. RISK means the peak event load is pushing the assumed supply budget too hard."
+      ],
+      "bullets": [
+        "HEALTHY: supply sizing should tolerate normal unlock bursts with reasonable field margin.",
+        "WATCH: review cable loss, surge current, future expansion, and actual supply rating before finalizing.",
+        "RISK: increase supply capacity, reduce simultaneous load, split lock groups, or redesign the power strategy."
+      ]
+    },
+    {
+      "id": "simultaneous-unlock-planning",
+      "title": "Simultaneous unlock planning",
+      "body": [
+        "Average traffic is rarely the worst electrical case. The important question is how many locks can draw power at the same time.",
+        "Simultaneous unlocks may come from normal user traffic, fire alarm release, scheduled unlocks, lockdown/release procedures, or a door group being controlled together."
+      ],
+      "bullets": [
+        "Use realistic peak events, not just normal single-door use.",
+        "Review whether fire alarm or emergency release energizes or de-energizes the lock group.",
+        "Check scheduled unlocks and group unlock behavior.",
+        "Do not assume simultaneous unlocks equal all installed locks unless the operating sequence actually does that.",
+        "Document the event used for the calculation."
+      ],
+      "links": [
+        {
+          "label": "Fail-Safe / Fail-Secure guide",
+          "kbKey": "access-control/fail-safe-fail-secure",
+          "note": "Use this related guide when power-loss or fire-release behavior changes the peak-load assumption."
+        }
+      ]
+    },
+    {
+      "id": "headroom-and-margin",
+      "title": "Headroom and margin",
+      "body": [
+        "Headroom is the reserve between expected peak load and the supply capacity you plan around.",
+        "Good headroom helps absorb real-world differences such as cable voltage drop, device tolerance, higher inrush current, future locks, supply aging, temperature, and troubleshooting uncertainty."
+      ],
+      "bullets": [
+        "More headroom usually means a more stable design.",
+        "Low headroom may work on paper but become fragile in the field.",
+        "Headroom is not a substitute for manufacturer surge or inrush requirements.",
+        "Future expansion should be included before supplies and enclosures are finalized."
+      ]
+    },
+    {
+      "id": "voltage-and-cabling-notes",
+      "title": "Voltage and cabling notes",
+      "body": [
+        "This tool calculates supply demand, not voltage drop. Long cable runs, small conductors, high current, and low voltage can still create field problems even when the supply amperage looks acceptable.",
+        "Voltage-drop review is especially important on long lock circuits, 12 VDC designs, high-current locks, and remote power-supply locations."
+      ],
+      "bullets": [
+        "Verify conductor size and cable length separately.",
+        "Check the actual voltage at the lock under load where needed.",
+        "Consider local power or distributed supplies for long runs.",
+        "Keep mixed-voltage systems clearly separated and documented."
+      ],
+      "links": [
+        {
+          "label": "Door Cable Length guide",
+          "kbKey": "access-control/door-cable-length",
+          "note": "Use this related guide when power design also depends on cable routing, distance, and field takeoff assumptions."
+        }
+      ]
+    },
+    {
+      "id": "planning-workflow",
+      "title": "Planning workflow",
+      "bullets": [
+        "Identify the lock type and fail behavior first.",
+        "Confirm whether the lock is 12 VDC or 24 VDC.",
+        "Use actual manufacturer current draw for the selected lock model.",
+        "Count the powered lock devices in the supply group.",
+        "Define the realistic simultaneous unlock event.",
+        "Add headroom for stability, field margin, and future changes.",
+        "Review WATCH or RISK results before moving into panel capacity planning.",
+        "Document the power assumption with the door hardware and access-control design."
+      ],
+      "links": [
+        {
+          "label": "Panel Capacity guide",
+          "kbKey": "access-control/panel-capacity",
+          "note": "Use this related guide after the lock power budget is documented and controller/panel sizing becomes the next design step."
+        },
+        {
+          "label": "Door Count Planner guide",
+          "kbKey": "access-control/door-count-planner",
+          "note": "Use this related guide when the lock count should be tied back to controlled-door scope."
+        }
+      ]
+    },
+    {
+      "id": "red-flags",
+      "title": "Red flags",
+      "bullets": [
+        "Supply is sized exactly to calculated peak load with little or no margin.",
+        "Manufacturer surge, pull-in, or inrush current is unknown.",
+        "Fire alarm release or scheduled unlock behavior has not been checked.",
+        "Long cable runs are ignored even though current draw is high.",
+        "All locks are placed on one supply because it is simpler, not because it is resilient.",
+        "Maglocks or continuous-duty loads are treated like momentary strikes.",
+        "Future doors are expected but not included in the power design.",
+        "Power supply rating, battery backup, fire interface, and lock listing are not verified together."
+      ]
+    },
+    {
+      "id": "documentation-checklist",
+      "title": "Documentation checklist",
+      "bullets": [
+        "Lock Type.",
+        "Voltage.",
+        "Current per Lock (A), including source of the value.",
+        "Number of Locks in the supply group.",
+        "Simultaneous Unlocks event used for the calculation.",
+        "Headroom (%) assumption.",
+        "Peak Load.",
+        "Required Supply.",
+        "Power.",
+        "Utilization and System Status.",
+        "Fire alarm, emergency release, scheduled unlock, or global unlock assumptions.",
+        "Voltage drop or long-run items that need separate review.",
+        "Whether the design should use one supply, multiple supplies, or distributed power."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
-      "body": [
-        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
-      ],
       "bullets": [
-        "Designing only for the initial install instead of the system lifecycle.",
-        "Ignoring exceptions, expansion, or administrative workload.",
-        "Assuming manufacturer capacity limits are the same as practical design limits.",
-        "Failing to document assumptions before the system is built."
+        "Counting doors instead of powered lock devices.",
+        "Using current values from a similar lock instead of the actual model.",
+        "Ignoring inrush, pull-in, or surge behavior.",
+        "Sizing for average use instead of peak simultaneous unlock events.",
+        "Assuming a supply can be loaded to 100% continuously without field issues.",
+        "Forgetting fire alarm release, scheduled unlocks, and emergency procedures.",
+        "Ignoring voltage drop because the amperage calculation looks acceptable.",
+        "Mixing 12 VDC and 24 VDC devices without clear separation."
       ]
     },
     {
-      "title": "Planning assumptions",
-      "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
-      ],
+      "id": "assumptions-and-limits",
+      "title": "Assumptions and limits",
       "bullets": [
-        "Manufacturer limits still matter.",
-        "Local code and life-safety requirements still apply.",
-        "Site conditions may change the final design.",
-        "A simpler design is usually easier to support, audit, and explain."
-      ]
-    },
-    {
-      "title": "Professional responsibility",
-      "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
-      ],
-      "bullets": [
-        "Validate against the actual product and platform being installed.",
-        "Confirm owner requirements and operating procedures.",
-        "Document assumptions before implementation."
+        "Peak unlock demand is based on simultaneous unlock events, not all installed locks unless configured that way.",
+        "Required supply includes the configured design headroom percentage.",
+        "The calculation assumes the entered current per lock is appropriate for the selected lock and event condition.",
+        "This tool does not perform voltage-drop analysis, battery-runtime sizing, fire alarm interface design, or manufacturer-specific surge-current validation.",
+        "Final power design should be checked against manufacturer documentation, listed hardware requirements, supply rating, battery requirements, wiring distance, voltage drop, fire/life-safety behavior, and site operating policy."
       ]
     }
   ]
