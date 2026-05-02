@@ -2,152 +2,164 @@
   "title": "Network Congestion Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand utilization, queueing, packet loss, jitter, and shared-link pressure.",
-  "updated": "2026-04-26",
+  "summary": "Understand current traffic, peak traffic, link capacity, and target utilization before network pressure becomes a performance bottleneck.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate whether a network path is likely congested or approaching congestion."
+        "This tool estimates network congestion risk by comparing current and peak traffic against the usable link capacity and utilization target."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch performance constraints before they become user-facing problems."
+        "Use it to catch performance pressure before it becomes production trouble."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when users report slowness, voice/video glitches, delayed transfers, backup interference, or overloaded uplinks."
+        "Use it when API traffic, storage traffic, backup traffic, video traffic, or application flows may be limited by the network path."
       ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system troubleshooting.",
+        "Early performance planning.",
+        "Expansion or load-growth review.",
+        "Existing-system troubleshooting or validation.",
         "Explaining performance tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical performance planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical performance planning terms."
       ],
       "items": [
         {
-          "label": "Link Utilization",
-          "description": "How much of the link capacity is being used.",
+          "id": "current-traffic-mbps",
+          "label": "Current Traffic (Mbps)",
+          "description": "The normal or current network traffic level on the path being evaluated.",
           "examples": [
-            "50%",
+            "600 Mbps",
+            "current service traffic",
+            "measured interface average"
+          ],
+          "whyItMatters": "Current traffic sets the baseline before peak demand or growth is considered.",
+          "commonMistake": "Using a quiet-period average instead of busy-hour traffic.",
+          "links": [
+            {
+              "label": "Compare network pressure with bottlenecks",
+              "kbKey": "performance/bottleneck-analyzer",
+              "anchor": "network-utilization",
+              "note": "Network pressure should be compared with CPU, memory, and disk pressure."
+            }
+          ]
+        },
+        {
+          "id": "peak-traffic-mbps",
+          "label": "Peak Traffic (Mbps)",
+          "description": "The highest expected traffic level during bursts, busy periods, backup windows, or failover.",
+          "examples": [
+            "900 Mbps",
+            "peak replication",
+            "burst traffic"
+          ],
+          "whyItMatters": "Peak traffic is where congestion, drops, retransmits, and latency usually appear first.",
+          "commonMistake": "Sizing only for normal traffic and ignoring burst windows.",
+          "links": [
+            {
+              "label": "See cache impact on backend traffic",
+              "kbKey": "performance/cache-hit-ratio",
+              "anchor": "requests-second",
+              "note": "Caching can reduce how much traffic reaches backend paths."
+            }
+          ]
+        },
+        {
+          "id": "link-capacity-mbps",
+          "label": "Link Capacity (Mbps)",
+          "description": "The usable bandwidth of the network link or path.",
+          "examples": [
+            "1000 Mbps",
+            "10 Gbps",
+            "WAN capacity"
+          ],
+          "whyItMatters": "Capacity is the denominator for congestion pressure. Practical throughput is often lower than the label speed.",
+          "commonMistake": "Treating port speed as guaranteed sustained application throughput."
+        },
+        {
+          "id": "target-utilization",
+          "label": "Target Utilization (%)",
+          "description": "The maximum link utilization you want to allow during normal operation.",
+          "examples": [
+            "70%",
             "75%",
-            "95%"
+            "80%"
           ],
-          "whyItMatters": "High utilization can create queueing and delay.",
-          "commonMistake": "Assuming a link is fine until it hits 100%."
-        },
-        {
-          "label": "Traffic Mix",
-          "description": "Types of traffic sharing the link.",
-          "examples": [
-            "Voice",
-            "Video",
-            "Backups",
-            "User data"
-          ],
-          "whyItMatters": "Mixed traffic can cause sensitive services to suffer.",
-          "commonMistake": "Letting backups compete with real-time traffic."
-        },
-        {
-          "label": "Burst Traffic",
-          "description": "Short periods of high traffic.",
-          "examples": [
-            "Shift change",
-            "Backup start",
-            "Camera export"
-          ],
-          "whyItMatters": "Bursts can cause temporary congestion even if averages look fine.",
-          "commonMistake": "Only checking five-minute averages."
-        },
-        {
-          "label": "Queueing",
-          "description": "Traffic waiting to be transmitted.",
-          "examples": [
-            "Switch queue",
-            "WAN queue",
-            "Firewall buffer"
-          ],
-          "whyItMatters": "Queues increase latency and jitter.",
-          "commonMistake": "Ignoring buffers because no packets are dropping yet."
-        },
-        {
-          "label": "Packet Loss",
-          "description": "Packets discarded due to congestion or errors.",
-          "examples": [
-            "0.1%",
-            "1%",
-            "3%"
-          ],
-          "whyItMatters": "Loss can severely affect TCP and real-time traffic.",
-          "commonMistake": "Treating small loss as harmless."
-        },
-        {
-          "label": "QoS / Priority",
-          "description": "Traffic prioritization rules.",
-          "examples": [
-            "Voice priority",
-            "Camera VLAN",
-            "Backup lower priority"
-          ],
-          "whyItMatters": "Priority can protect critical services during congestion.",
-          "commonMistake": "Adding QoS without fixing under-capacity."
+          "whyItMatters": "Target utilization protects latency and reduces congestion risk during bursts.",
+          "commonMistake": "Running links near 100% and expecting latency-sensitive traffic to remain stable.",
+          "links": [
+            {
+              "label": "Relate utilization target to headroom",
+              "kbKey": "performance/headroom-target",
+              "anchor": "desired-headroom",
+              "note": "Network utilization limits are another form of performance headroom."
+            }
+          ]
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means the path appears to have margin. Watch means traffic timing or utilization should be reviewed. Risk means congestion is likely affecting performance."
+        "Healthy means traffic remains below the target utilization with margin. Watch means bursts or growth may create congestion. Risk means peak traffic is likely too close to link capacity for predictable performance."
       ],
       "bullets": [
-        "Healthy: the system appears to have enough margin based on the entered assumptions.",
-        "Watch: the system may still work, but the assumptions deserve review.",
-        "Risk: reduce load, add capacity, tune the system, or validate more carefully before implementation."
+        "Healthy: the entered assumptions leave practical operating margin.",
+        "Watch: the design may still work, but the assumption deserves review before relying on it.",
+        "Risk: reduce demand, increase capacity, change the architecture, or validate the design more carefully before implementation."
       ]
     },
     {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most performance planning problems come from trusting averages, ignoring peaks, or optimizing the wrong resource."
+        "Most performance planning mistakes come from looking at one symptom in isolation instead of tracing how latency, throughput, queues, concurrency, and resource pressure interact."
       ],
       "bullets": [
-        "Using average values while ignoring peak or percentile behavior.",
-        "Fixing the easiest resource instead of the actual bottleneck.",
-        "Ignoring queueing, latency, and user impact.",
-        "Failing to document assumptions before the system is built or tuned."
+        "Sizing for average behavior while ignoring peak periods, bursts, retries, and background work.",
+        "Tuning one layer without checking whether the bottleneck simply moves to another resource.",
+        "Treating theoretical maximums as safe sustained production capacity.",
+        "Failing to document the assumptions behind latency targets, utilization limits, and growth margin."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace load testing, monitoring, vendor guidance, application profiling, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace application testing, manufacturer documentation, platform-specific limits, monitoring data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Performance depends on workload behavior, not just hardware capacity.",
-        "Peak periods and tail latency matter.",
-        "A design with headroom is usually easier to operate and troubleshoot.",
-        "Real-world validation is still required for critical systems."
+        "Measurements from the real platform are better than guesses whenever they are available.",
+        "Application behavior, storage design, network path, cache behavior, and workload mix can change the result.",
+        "Healthy results still need monitoring and validation after deployment.",
+        "A design with documented headroom is usually easier to support, explain, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, application testing, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, production testing, vendor validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual workload and platform.",
-        "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual hardware, software, platform, and network path being deployed.",
+        "Confirm stakeholder expectations, operating requirements, and SLA language.",
+        "Document assumptions before implementation and revisit them as traffic or workload behavior changes."
       ]
     }
   ]

@@ -2,152 +2,172 @@
   "title": "CPU Utilization Impact Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how CPU utilization affects response time, queueing, headroom, and stability.",
-  "updated": "2026-04-26",
+  "summary": "Understand how current CPU pressure, target CPU pressure, baseline latency, and headroom affect response-time risk.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate whether CPU utilization is likely to affect system responsiveness or create performance risk."
+        "This tool estimates how response time and operating risk change as CPU utilization moves closer to the limit."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch performance constraints before they become user-facing problems."
+        "Use it to catch performance pressure before it becomes production trouble."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when reviewing server load, VM sizing, analytics workloads, application performance, or systems operating near CPU limits."
+        "Use it when CPU is suspected of causing latency, saturation, scheduler contention, or poor performance under concurrency."
       ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system troubleshooting.",
+        "Early performance planning.",
+        "Expansion or load-growth review.",
+        "Existing-system troubleshooting or validation.",
         "Explaining performance tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical performance planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical performance planning terms."
       ],
       "items": [
         {
-          "label": "Average CPU",
-          "description": "Typical CPU utilization during normal operation.",
+          "id": "current-cpu-utilization",
+          "label": "Current CPU Utilization (%)",
+          "description": "The current CPU load at the existing operating point.",
           "examples": [
-            "35%",
-            "55%",
-            "70%"
+            "65%",
+            "measured host CPU",
+            "application CPU average"
           ],
-          "whyItMatters": "Average load shows baseline pressure.",
-          "commonMistake": "Assuming average CPU tells the whole story."
+          "whyItMatters": "Current CPU utilization shows how close the system already is to a sensitive operating range.",
+          "commonMistake": "Looking only at average CPU and missing short peaks or noisy-neighbor pressure.",
+          "links": [
+            {
+              "label": "Use bottleneck analysis for CPU pressure",
+              "kbKey": "performance/bottleneck-analyzer",
+              "anchor": "cpu-utilization",
+              "note": "CPU pressure should be compared against other resource limits."
+            }
+          ]
         },
         {
-          "label": "Peak CPU",
-          "description": "Highest CPU utilization during busy periods.",
+          "id": "target-cpu-utilization",
+          "label": "Target CPU Utilization (%)",
+          "description": "The CPU utilization expected after growth, added concurrency, or higher throughput.",
           "examples": [
-            "80%",
-            "95%",
-            "Sustained peak"
+            "75%",
+            "85%",
+            "projected peak CPU"
           ],
-          "whyItMatters": "Peak CPU determines user-visible slowdowns.",
-          "commonMistake": "Ignoring spikes because averages look fine."
+          "whyItMatters": "Target CPU utilization shows whether the planned operating point leaves enough margin for spikes.",
+          "commonMistake": "Treating 90%+ CPU as acceptable steady-state because it still leaves a small unused percentage.",
+          "links": [
+            {
+              "label": "See how concurrency affects CPU",
+              "kbKey": "performance/concurrency-scaling",
+              "anchor": "workers-target",
+              "note": "Concurrency increases often push CPU utilization upward."
+            }
+          ]
         },
         {
-          "label": "Core Count",
-          "description": "The available CPU cores or vCPU allocation.",
+          "id": "baseline-latency-ms",
+          "label": "Baseline Latency (ms)",
+          "description": "The response time before CPU pressure is modeled into the estimate.",
           "examples": [
-            "4 cores",
-            "8 vCPU",
-            "16 cores"
+            "25 ms",
+            "current app latency",
+            "known service time"
           ],
-          "whyItMatters": "Core count affects parallel processing capacity.",
-          "commonMistake": "Treating all vCPU as guaranteed physical capacity."
+          "whyItMatters": "Baseline latency determines how much additional CPU-driven delay the system can tolerate.",
+          "commonMistake": "Using an optimistic baseline that excludes database, disk, network, or queue wait.",
+          "links": [
+            {
+              "label": "Tie latency back to SLA",
+              "kbKey": "performance/response-time-sla",
+              "anchor": "current-avg-latency-ms",
+              "note": "CPU impact matters most when it threatens a latency target."
+            }
+          ]
         },
         {
-          "label": "Workload Type",
-          "description": "The kind of work consuming CPU.",
-          "examples": [
-            "Database",
-            "Web app",
-            "Video analytics",
-            "Compression"
-          ],
-          "whyItMatters": "Different workloads respond differently to CPU pressure.",
-          "commonMistake": "Using the same threshold for every workload."
-        },
-        {
-          "label": "Queueing Sensitivity",
-          "description": "How quickly work backs up when CPU is busy.",
-          "examples": [
-            "Interactive users",
-            "Batch jobs",
-            "Real-time processing"
-          ],
-          "whyItMatters": "Sensitive workloads need more CPU headroom.",
-          "commonMistake": "Letting interactive workloads run near saturation."
-        },
-        {
-          "label": "Headroom",
-          "description": "CPU capacity reserved for bursts and growth.",
+          "id": "headroom-target",
+          "label": "Headroom Target (%)",
+          "description": "The desired unused CPU margin to reserve for bursts, background tasks, and growth.",
           "examples": [
             "20%",
-            "30%",
-            "Peak reserve"
+            "25%",
+            "30% spare"
           ],
-          "whyItMatters": "Headroom reduces slowdowns during unexpected load.",
-          "commonMistake": "Calling 95% CPU efficient when users need responsiveness."
+          "whyItMatters": "Headroom target defines how much CPU should remain unused during normal operation.",
+          "commonMistake": "Calling a system healthy just because it has not reached 100% CPU yet.",
+          "links": [
+            {
+              "label": "Plan the headroom policy",
+              "kbKey": "performance/headroom-target",
+              "anchor": "desired-headroom",
+              "note": "Use this when the CPU limit should be converted into safe capacity."
+            }
+          ]
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means CPU load appears to have margin. Watch means utilization should be monitored. Risk means high CPU may cause queueing, slow response, or unstable peak behavior."
+        "Healthy means CPU still has practical operating margin. Watch means latency may become sensitive to bursts or background work. Risk means CPU pressure is high enough that response time, queues, and stability may degrade quickly."
       ],
       "bullets": [
-        "Healthy: the system appears to have enough margin based on the entered assumptions.",
-        "Watch: the system may still work, but the assumptions deserve review.",
-        "Risk: reduce load, add capacity, tune the system, or validate more carefully before implementation."
+        "Healthy: the entered assumptions leave practical operating margin.",
+        "Watch: the design may still work, but the assumption deserves review before relying on it.",
+        "Risk: reduce demand, increase capacity, change the architecture, or validate the design more carefully before implementation."
       ]
     },
     {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most performance planning problems come from trusting averages, ignoring peaks, or optimizing the wrong resource."
+        "Most performance planning mistakes come from looking at one symptom in isolation instead of tracing how latency, throughput, queues, concurrency, and resource pressure interact."
       ],
       "bullets": [
-        "Using average values while ignoring peak or percentile behavior.",
-        "Fixing the easiest resource instead of the actual bottleneck.",
-        "Ignoring queueing, latency, and user impact.",
-        "Failing to document assumptions before the system is built or tuned."
+        "Sizing for average behavior while ignoring peak periods, bursts, retries, and background work.",
+        "Tuning one layer without checking whether the bottleneck simply moves to another resource.",
+        "Treating theoretical maximums as safe sustained production capacity.",
+        "Failing to document the assumptions behind latency targets, utilization limits, and growth margin."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace load testing, monitoring, vendor guidance, application profiling, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace application testing, manufacturer documentation, platform-specific limits, monitoring data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Performance depends on workload behavior, not just hardware capacity.",
-        "Peak periods and tail latency matter.",
-        "A design with headroom is usually easier to operate and troubleshoot.",
-        "Real-world validation is still required for critical systems."
+        "Measurements from the real platform are better than guesses whenever they are available.",
+        "Application behavior, storage design, network path, cache behavior, and workload mix can change the result.",
+        "Healthy results still need monitoring and validation after deployment.",
+        "A design with documented headroom is usually easier to support, explain, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, application testing, manufacturer validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, production testing, vendor validation, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual workload and platform.",
-        "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual hardware, software, platform, and network path being deployed.",
+        "Confirm stakeholder expectations, operating requirements, and SLA language.",
+        "Document assumptions before implementation and revisit them as traffic or workload behavior changes."
       ]
     }
   ]
