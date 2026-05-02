@@ -2,154 +2,269 @@
   "title": "Reader Type Selector Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how reader choice affects credential compatibility, security level, user experience, and future migration.",
-  "updated": "2026-04-26",
+  "updated": "2026-05-02",
+  "summary": "Use this guide to choose reader technology based on security level, credential preference, environment, throughput, and panel interface before the design moves into lock power and panel planning.",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps compare reader choices based on credential type, environment, security expectations, and upgrade path."
-      ],
-      "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch design pressure before it becomes field trouble."
+        "Reader Type Selector helps choose a practical reader direction after the door’s fail-state behavior has already been reviewed.",
+        "The tool compares security expectations, credential preference, environmental exposure, user flow, and panel interface to produce a planning recommendation.",
+        "It is not a vendor compatibility matrix. It is a design sanity check that helps prevent reader selection from being made in isolation from credentials, wiring, environment, and long-term migration needs."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
-      "body": [
-        "Use it before selecting readers for new installs, expansions, migrations, or sites moving away from legacy proximity credentials."
-      ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system cleanup or validation.",
-        "Explaining tradeoffs to a client, stakeholder, or internal team."
-      ]
-    },
-    {
-      "title": "Input descriptions",
-      "type": "glossary",
-      "body": [
-        "These descriptions explain what each input represents in practical access-control terms."
+        "After deciding fail-safe, fail-secure, or conditional behavior for the opening.",
+        "Before ordering readers for a new install, expansion, or migration.",
+        "When deciding whether legacy Wiegand readers are still acceptable.",
+        "When comparing card/fob, mobile, keypad, or multi-factor reader strategies.",
+        "When a door needs outdoor, harsh-environment, high-throughput, or hands-free behavior.",
+        "When documenting why one opening needs a stronger reader than another."
       ],
-      "items": [
+      "links": [
         {
-          "label": "Credential Type",
-          "description": "The credential technology users will present to the reader.",
-          "examples": [
-            "Proximity card",
-            "Smart card",
-            "Mobile credential",
-            "PIN"
-          ],
-          "whyItMatters": "Credential type determines reader compatibility and security level.",
-          "commonMistake": "Buying readers before standardizing credentials."
-        },
-        {
-          "label": "Security Level",
-          "description": "The level of resistance needed against cloning or misuse.",
-          "examples": [
-            "Basic office",
-            "Restricted area",
-            "High-security room"
-          ],
-          "whyItMatters": "Higher-security areas may justify encrypted smart credentials.",
-          "commonMistake": "Using legacy proximity credentials everywhere by default."
-        },
-        {
-          "label": "Environment",
-          "description": "The physical condition where the reader will be installed.",
-          "examples": [
-            "Indoor office",
-            "Outdoor gate",
-            "Parking entry",
-            "Industrial area"
-          ],
-          "whyItMatters": "Outdoor or harsh environments may require different reader ratings.",
-          "commonMistake": "Using indoor readers outdoors without checking ratings."
-        },
-        {
-          "label": "User Experience",
-          "description": "How users interact with the reader.",
-          "examples": [
-            "Card tap",
-            "Mobile unlock",
-            "Hands-free",
-            "PIN entry"
-          ],
-          "whyItMatters": "Reader type affects speed, convenience, and support calls.",
-          "commonMistake": "Choosing security features that users will bypass or misuse."
-        },
-        {
-          "label": "Compatibility",
-          "description": "Whether the reader works with the existing panel and credentials.",
-          "examples": [
-            "Wiegand",
-            "OSDP",
-            "Existing badge population"
-          ],
-          "whyItMatters": "Compatibility affects wiring, encryption, and migration options.",
-          "commonMistake": "Assuming a new reader works with old cards and old panels."
-        },
-        {
-          "label": "Migration Path",
-          "description": "How the site may move from old credentials to newer ones.",
-          "examples": [
-            "Dual-tech readers",
-            "Phased card replacement",
-            "Mobile-ready readers"
-          ],
-          "whyItMatters": "Migration planning prevents forced rip-and-replace later.",
-          "commonMistake": "Buying single-tech readers that block future upgrades."
+          "label": "Fail-Safe / Fail-Secure guide",
+          "kbKey": "access-control/fail-safe-fail-secure",
+          "note": "Use this related guide when reader choice depends on how the opening should behave during power loss."
         }
       ]
     },
     {
-      "title": "How to read the results",
+      "id": "input-descriptions",
+      "title": "Input descriptions",
+      "type": "glossary",
       "body": [
-        "Healthy means the reader type is likely aligned with the application. Watch means compatibility or future migration should be reviewed. Risk means the reader selection may create security, usability, or upgrade problems."
+        "These headings match the visible input labels on the calculator so the guide can be read directly against the form."
       ],
-      "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      "items": [
+        {
+          "id": "security-level",
+          "label": "Security Level",
+          "description": "The required assurance level for the opening. This reflects how much credential integrity, reader supervision, encryption, and authentication strength matter for the door.",
+          "examples": [
+            "Low: general interior office or low-risk controlled area.",
+            "Medium: normal business access where encrypted credentials are preferred.",
+            "High: critical spaces, sensitive areas, exterior doors, IT rooms, or locations where cloning or credential misuse would be a serious concern."
+          ],
+          "whyItMatters": "Higher security pressure should push the design toward stronger credentials, supervised communication, and possibly multi-factor authentication.",
+          "commonMistake": "Using the same basic reader everywhere because it is simple to stock, even when some openings have very different risk profiles.",
+          "links": [
+            {
+              "label": "Credential Format Helper guide",
+              "kbKey": "access-control/credential-format",
+              "note": "Use this related guide when security level also depends on credential format, bit length, numbering space, or migration pressure."
+            }
+          ]
+        },
+        {
+          "id": "credential-preference",
+          "label": "Credential Preference",
+          "description": "The preferred way users authenticate at the reader. This can be a physical card/fob, mobile credential, keypad/PIN, or multi-factor approach.",
+          "examples": [
+            "Card / Fob: common physical credential workflow.",
+            "Mobile: phone-based credential experience.",
+            "PIN / keypad: code entry, often used where cards are not ideal or as a secondary factor.",
+            "Multi-factor: more than one authentication method for higher-assurance checkpoints."
+          ],
+          "whyItMatters": "Credential preference affects reader hardware, user training, enrollment process, support calls, and future migration flexibility.",
+          "commonMistake": "Choosing a credential style based only on user convenience without checking reader compatibility, security policy, and lifecycle support.",
+          "links": [
+            {
+              "label": "Credential Format Helper guide",
+              "kbKey": "access-control/credential-format",
+              "note": "Use this related guide when card/fob decisions depend on format capacity, numbering headroom, or migration planning."
+            }
+          ]
+        },
+        {
+          "id": "environment",
+          "label": "Environment",
+          "description": "The physical conditions where the reader will be installed. Indoor, outdoor, and harsh locations create different durability and rating requirements.",
+          "examples": [
+            "Indoor: conditioned office, corridor, lobby, or controlled interior space.",
+            "Outdoor: exterior wall, gate, parking entrance, or weather-exposed location.",
+            "Harsh: industrial, dusty, wet, corrosive, impact-prone, or temperature-stressed location."
+          ],
+          "whyItMatters": "Reader survivability depends on enclosure rating, temperature range, UV/weather exposure, vandal resistance, mounting method, and maintenance access.",
+          "commonMistake": "Installing an indoor-rated reader outside or in a harsh environment because it works during bench testing."
+        },
+        {
+          "id": "throughput",
+          "label": "Throughput",
+          "description": "How quickly users need to move through the opening. This affects whether a standard wall reader is acceptable or whether faster, mobile, hands-free, or long-range behavior is needed.",
+          "examples": [
+            "Standard: normal user flow with card tap or mobile presentation.",
+            "High Throughput: busy doors, shift changes, lobbies, turnstiles, or high-volume employee entrances.",
+            "Hands-free: vehicle gates, accessibility-driven use cases, or locations where stopping to present a card is undesirable."
+          ],
+          "whyItMatters": "Reader choice can create bottlenecks. A secure reader that slows down a high-volume entrance may cause tailgating, user frustration, or bypass behavior.",
+          "commonMistake": "Optimizing only for security strength and ignoring how users actually move through the opening during peak periods."
+        },
+        {
+          "id": "panel-interface",
+          "label": "Panel Interface",
+          "description": "The communication method between the reader and the access-control panel. The tool compares legacy Wiegand against OSDP-style supervised communication.",
+          "examples": [
+            "Wiegand: common legacy signaling, simple and widely supported, but not encrypted or supervised in the same way.",
+            "OSDP: stronger modern option when supported by both reader and panel, with better supervision and security features."
+          ],
+          "whyItMatters": "Panel interface affects wiring, supervision, encryption, tamper visibility, migration options, and whether the reader selection locks the project into weaker legacy behavior.",
+          "commonMistake": "Defaulting to Wiegand on new deployments even when the panel and reader can support OSDP.",
+          "links": [
+            {
+              "label": "Lock Power Budget guide",
+              "kbKey": "access-control/lock-power-budget",
+              "note": "Use this related guide when reader/interface planning also affects power supply layout, lock current, or future door hardware wiring."
+            }
+          ]
+        }
       ]
     },
     {
+      "id": "how-to-interpret-results",
+      "title": "How to interpret results",
+      "body": [
+        "The recommendation is a reader planning direction. It should be validated against the actual access-control platform, supported credentials, reader model, panel interface, and site policy.",
+        "The result combines the selected security level, credential preference, environment, throughput, and panel interface into a practical recommendation for reader type, interface direction, environmental rating, and user-flow behavior."
+      ],
+      "bullets": [
+        "Reader Type: the recommended reader family or authentication style.",
+        "Interface: whether the selected interface is acceptable or should be reconsidered.",
+        "Security: the expected credential/security posture.",
+        "Environment: whether indoor, outdoor, or harsher-rated hardware should be considered.",
+        "Throughput: whether user flow should influence reader style.",
+        "Actionable Guidance: the practical next step before locking the design."
+      ]
+    },
+    {
+      "id": "healthy-watch-risk",
+      "title": "Healthy / Watch / Risk interpretation",
+      "body": [
+        "This tool uses status to show whether the reader direction is reasonably aligned with the entered assumptions.",
+        "A HEALTHY result means the selected choices are generally consistent. A WATCH result means security level, interface, or credential choice deserves review before the design moves forward."
+      ],
+      "bullets": [
+        "HEALTHY: reader choice and assumptions are reasonably aligned.",
+        "WATCH: review the interface, credential type, or security level before ordering hardware.",
+        "A high-security opening with Wiegand or non-MFA assumptions should be treated carefully, even if the hardware appears compatible."
+      ]
+    },
+    {
+      "id": "reader-selection-workflow",
+      "title": "Reader selection workflow",
+      "bullets": [
+        "Start from the fail-state decision so the reader choice matches the actual door behavior.",
+        "Set the security level based on risk, not convenience.",
+        "Choose credential preference based on site policy, user workflow, and support model.",
+        "Check environment before assuming a standard indoor reader will survive.",
+        "Check throughput so the reader does not create a bottleneck or encourage bypass behavior.",
+        "Prefer stronger supervised interfaces such as OSDP when supported by the panel and reader.",
+        "Document the assumption before moving into lock power and panel capacity planning."
+      ],
+      "links": [
+        {
+          "label": "Fail-Safe / Fail-Secure guide",
+          "kbKey": "access-control/fail-safe-fail-secure",
+          "note": "Use this related guide when the reader decision depends on the opening’s fail behavior."
+        },
+        {
+          "label": "Lock Power Budget guide",
+          "kbKey": "access-control/lock-power-budget",
+          "note": "Use this related guide when reader and lock choices need to be carried into power supply planning."
+        }
+      ]
+    },
+    {
+      "id": "osdp-vs-wiegand",
+      "title": "OSDP vs Wiegand planning notes",
+      "body": [
+        "Wiegand is widely deployed and may be necessary for legacy systems, but it is a weaker default for new work when stronger supervised communication is available.",
+        "OSDP is usually the stronger planning direction when both reader and panel support it, especially for higher-security openings or new deployments.",
+        "The decision should still be verified against controller support, reader addressing, wiring topology, cable distance, firmware compatibility, and the site’s standard."
+      ],
+      "bullets": [
+        "Use Wiegand carefully when legacy support is required.",
+        "Prefer OSDP where secure supervision and modern reader management matter.",
+        "Do not assume an OSDP-capable reader solves every compatibility issue by itself.",
+        "Document the interface choice because it affects wiring, troubleshooting, and future migration."
+      ]
+    },
+    {
+      "id": "migration-notes",
+      "title": "Migration notes",
+      "body": [
+        "Reader selection can either make a future credential migration easier or lock the site deeper into a legacy path.",
+        "Dual-technology readers, mobile-ready readers, and OSDP-capable readers can help create a cleaner upgrade path, but only when the platform and credential strategy are planned together."
+      ],
+      "bullets": [
+        "Confirm whether existing cards must keep working during the transition.",
+        "Check whether the new reader supports both old and new credential types.",
+        "Plan whether mobile credentials will be enabled now or reserved for later.",
+        "Avoid buying single-purpose readers if the site is likely to migrate soon.",
+        "Coordinate reader replacement with credential format and enrollment process."
+      ],
+      "links": [
+        {
+          "label": "Credential Format Helper guide",
+          "kbKey": "access-control/credential-format",
+          "note": "Use this related guide when reader migration is tied to credential format, numbering capacity, or badge-population growth."
+        }
+      ]
+    },
+    {
+      "id": "red-flags",
+      "title": "Red flags",
+      "bullets": [
+        "High security level is paired with Wiegand by default.",
+        "The site wants mobile credentials but has not confirmed platform licensing, app support, or reader compatibility.",
+        "Outdoor or harsh readers are selected using indoor hardware assumptions.",
+        "A busy entrance is assigned a slow or inconvenient authentication workflow.",
+        "A high-security door relies on single-factor card-only behavior without review.",
+        "Reader technology is chosen before credential format and panel interface are confirmed.",
+        "The project assumes old badges, new badges, and mobile credentials will all work without a migration plan."
+      ]
+    },
+    {
+      "id": "documentation-checklist",
+      "title": "Documentation checklist",
+      "bullets": [
+        "Security Level and reason for that classification.",
+        "Credential Preference and supported credential types.",
+        "Environment rating assumptions.",
+        "Throughput requirement and peak-use condition.",
+        "Panel Interface decision: Wiegand or OSDP.",
+        "Reader type recommendation.",
+        "Compatibility assumptions for panel, reader, firmware, credential, and software.",
+        "Migration plan if replacing legacy readers or credentials.",
+        "Any exceptions where one door needs a different reader standard than the rest."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
-      "body": [
-        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
-      ],
       "bullets": [
-        "Designing only for the initial install instead of the system lifecycle.",
-        "Ignoring exceptions, expansion, or administrative workload.",
-        "Assuming manufacturer capacity limits are the same as practical design limits.",
-        "Failing to document assumptions before the system is built."
+        "Buying readers before credential strategy is standardized.",
+        "Using legacy proximity credentials everywhere because they are familiar.",
+        "Treating Wiegand as the default on new systems without reviewing OSDP support.",
+        "Ignoring environmental ratings until readers fail outdoors.",
+        "Choosing multi-factor or mobile readers without planning enrollment and user support.",
+        "Optimizing only for security while ignoring throughput and user behavior.",
+        "Assuming a reader works with every panel, credential, and software version just because the form factor looks right."
       ]
     },
     {
-      "title": "Planning assumptions",
-      "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
-      ],
+      "id": "assumptions-and-limits",
+      "title": "Assumptions and limits",
       "bullets": [
-        "Manufacturer limits still matter.",
-        "Local code and life-safety requirements still apply.",
-        "Site conditions may change the final design.",
-        "A simpler design is usually easier to support, audit, and explain."
-      ]
-    },
-    {
-      "title": "Professional responsibility",
-      "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
-      ],
-      "bullets": [
-        "Validate against the actual product and platform being installed.",
-        "Confirm owner requirements and operating procedures.",
-        "Document assumptions before implementation."
+        "This tool is a planning selector, not a vendor-specific compatibility matrix.",
+        "Reader recommendations must be verified against the selected access-control platform.",
+        "Interface recommendations assume the panel and reader support the selected signaling method.",
+        "Outdoor and harsh-environment recommendations should be verified against manufacturer environmental ratings.",
+        "Credential and authentication choices should be aligned with site security policy, user workflow, lifecycle support, and manufacturer documentation."
       ]
     }
   ]
