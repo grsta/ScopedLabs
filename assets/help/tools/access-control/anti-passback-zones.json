@@ -2,153 +2,285 @@
   "title": "Anti-Passback Zones Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how anti-passback zones affect entry/exit logic, user flow, and operational risk.",
-  "updated": "2026-04-26",
+  "updated": "2026-05-02",
+  "summary": "Use this guide to understand anti-passback zone structure, enforcement pressure, reader-pair assumptions, user lockout risk, and why APB should be kept as simple as operations can realistically support.",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate whether anti-passback rules are likely to work cleanly based on zone count, reader placement, traffic flow, and exception handling."
-      ],
-      "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch design pressure before it becomes field trouble."
+        "Anti-Passback Zones estimates how complex an APB design may become based on perimeter doors, interior controlled areas, floor count, zone strategy, and enforcement type.",
+        "The tool helps decide whether APB should remain perimeter-focused, expand into key interior checkpoints, or be segmented more aggressively across floors and areas.",
+        "It is a planning tool for APB structure and operational pressure. It is not a controller-specific rule engine or a replacement for platform testing."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
-      "body": [
-        "Use it when planning turnstiles, secure areas, parking access, controlled entry/exit paths, or facilities where credential sharing is a concern."
-      ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system cleanup or validation.",
-        "Explaining tradeoffs to a client, stakeholder, or internal team."
-      ]
-    },
-    {
-      "title": "Input descriptions",
-      "type": "glossary",
-      "body": [
-        "These descriptions explain what each input represents in practical access-control terms."
+        "When deciding whether anti-passback should be used at all.",
+        "When planning perimeter APB, parking access, turnstiles, labs, data centers, or controlled secure areas.",
+        "When credential sharing, tailgating, or repeated unauthorized passback is a concern.",
+        "When deciding whether hard APB is worth the lockout and support burden.",
+        "When an access-control design is adding interior zones and needs a sanity check before enforcement gets too complicated.",
+        "When documenting why APB enforcement should stay simple instead of being applied everywhere."
       ],
-      "items": [
+      "links": [
         {
-          "label": "Zones",
-          "description": "Controlled areas where the system tracks whether a credential is inside or outside.",
-          "examples": [
-            "Main building",
-            "Parking area",
-            "Secure lab",
-            "Data center"
-          ],
-          "whyItMatters": "More zones increase tracking complexity and the chance of state errors.",
-          "commonMistake": "Creating more zones than operations can realistically manage."
+          "label": "Reader Type Selector guide",
+          "kbKey": "access-control/reader-type-selector",
+          "note": "Use this related guide when APB effectiveness depends on reader placement, reader interface, or credential presentation behavior."
         },
         {
-          "label": "Entry Readers",
-          "description": "Readers that move a credential into a controlled zone.",
-          "examples": [
-            "Main entry reader",
-            "Turnstile reader",
-            "Parking gate reader"
-          ],
-          "whyItMatters": "Entry readers define where anti-passback state begins.",
-          "commonMistake": "Using entry readers without a clear exit path."
-        },
-        {
-          "label": "Exit Readers",
-          "description": "Readers that move a credential out of a controlled zone.",
-          "examples": [
-            "Exit turnstile",
-            "Parking exit gate",
-            "Secure area exit"
-          ],
-          "whyItMatters": "Exit readers are required for clean state tracking.",
-          "commonMistake": "Leaving exits uncontrolled while enforcing strict anti-passback."
-        },
-        {
-          "label": "Traffic Volume",
-          "description": "How many people or credentials move through the zone during normal operation.",
-          "examples": [
-            "Low office traffic",
-            "Shift change",
-            "Event rush"
-          ],
-          "whyItMatters": "High traffic increases the chance of tailgating, missed reads, and support issues.",
-          "commonMistake": "Designing for normal traffic but ignoring shift-change peaks."
-        },
-        {
-          "label": "Reset Policy",
-          "description": "How the system handles users who become stuck in the wrong anti-passback state.",
-          "examples": [
-            "Manual reset",
-            "Timed reset",
-            "Daily reset"
-          ],
-          "whyItMatters": "Reset policy affects support load and user frustration.",
-          "commonMistake": "Using strict anti-passback without a practical reset process."
-        },
-        {
-          "label": "Exceptions",
-          "description": "Users or conditions that bypass normal anti-passback rules.",
-          "examples": [
-            "Security staff",
-            "Emergency access",
-            "Visitors",
-            "Contractors"
-          ],
-          "whyItMatters": "Too many exceptions weaken the control and complicate audits.",
-          "commonMistake": "Creating broad exceptions instead of limited operational overrides."
+          "label": "Access Level Sizing guide",
+          "kbKey": "access-control/access-level-sizing",
+          "note": "Use this related guide when APB zones may increase permission and administration complexity."
         }
       ]
     },
     {
-      "title": "How to read the results",
+      "id": "input-descriptions",
+      "title": "Input descriptions",
+      "type": "glossary",
       "body": [
-        "Healthy means the zone model is likely understandable and enforceable. Watch means user flow and exception handling need review. Risk means the design may create lockouts, support calls, or unreliable enforcement."
+        "These headings match the visible input labels on the calculator so the guide can be read directly against the form."
       ],
-      "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+      "items": [
+        {
+          "id": "entrances-perimeter-doors",
+          "label": "Entrances / Perimeter Doors",
+          "description": "The number of perimeter or entry/exit openings that may participate in anti-passback logic. These are the doors, gates, or controlled points where users enter or leave the tracked area.",
+          "examples": [
+            "Main entrance and exit turnstiles.",
+            "Employee entrance doors.",
+            "Parking entry and exit gates.",
+            "Exterior lobby doors tied to APB state."
+          ],
+          "whyItMatters": "APB depends on reliable transitions. More perimeter doors usually means more reader pairs, more ways to miss a read, and more chances for users to become stuck in the wrong APB state.",
+          "commonMistake": "Counting only the main entrance while forgetting side doors, service entrances, parking paths, or alternate exits that users actually use."
+        },
+        {
+          "id": "interior-controlled-areas",
+          "label": "Interior Controlled Areas",
+          "description": "The number of interior spaces that may be treated as separate APB zones or checkpoints beyond the perimeter.",
+          "examples": [
+            "Secure lab.",
+            "Data center.",
+            "Warehouse cage.",
+            "Pharmacy storage.",
+            "Cash room.",
+            "Restricted office suite."
+          ],
+          "whyItMatters": "Interior segmentation can improve control, but it also increases zone state complexity, user friction, exception handling, and administrative burden.",
+          "commonMistake": "Turning every controlled room into its own APB zone when only a few areas actually need that level of enforcement.",
+          "links": [
+            {
+              "label": "Access Level Sizing guide",
+              "kbKey": "access-control/access-level-sizing",
+              "note": "Use this related guide when interior segmentation also increases access roles, areas, schedules, or permission complexity."
+            }
+          ]
+        },
+        {
+          "id": "floors-levels",
+          "label": "Floors / Levels",
+          "description": "The number of building levels involved in the APB model. Multi-floor APB can add complexity because users may move between floors through elevators, stairs, lobbies, and shared paths.",
+          "examples": [
+            "Single-floor office.",
+            "Two-floor tenant space.",
+            "Multi-level parking garage.",
+            "Tower with controlled elevator and stair movement."
+          ],
+          "whyItMatters": "Floor-based APB can become difficult if vertical circulation is not clearly tracked. Missed reads, emergency egress, stair usage, and elevator behavior can all break clean APB state.",
+          "commonMistake": "Adding floor segmentation without verifying all legitimate paths between floors are covered by the reader design."
+        },
+        {
+          "id": "zone-strategy",
+          "label": "Zone Strategy",
+          "description": "The overall APB design approach. Minimal keeps APB mostly at the perimeter, Balanced adds key interior checkpoints, and Strict creates more detailed segmentation by floor and interior area.",
+          "examples": [
+            "Minimal: perimeter-only APB for general in/out tracking.",
+            "Balanced: perimeter APB plus a few high-value interior areas.",
+            "Strict: per-floor and interior segmentation with tighter enforcement."
+          ],
+          "whyItMatters": "Zone strategy is the main design choice that determines whether APB remains manageable or becomes operationally heavy.",
+          "commonMistake": "Choosing Strict because it sounds more secure without confirming that users, guards, administrators, and the platform can support the resulting lockout behavior."
+        },
+        {
+          "id": "apb-type",
+          "label": "APB Type",
+          "description": "The enforcement behavior used when the system detects an anti-passback violation. Soft APB logs or alerts. Hard APB denies access when the credential state is invalid.",
+          "examples": [
+            "Soft: log the violation for review but allow access.",
+            "Hard: deny access until the credential state is corrected.",
+            "Selective hard: hard APB only at specific high-value transitions."
+          ],
+          "whyItMatters": "Hard APB can improve enforcement but creates real user lockout risk if reads are missed, tailgating occurs, exits are uncontrolled, or resets are not handled quickly.",
+          "commonMistake": "Turning on hard APB globally without a reset policy, guard procedure, exception process, or user-support plan."
+        }
       ]
     },
     {
+      "id": "how-to-interpret-results",
+      "title": "How to interpret results",
+      "body": [
+        "The results describe APB structure and operational pressure, not whether a specific access-control panel can technically support the rules.",
+        "A design with more zones and more paired entrances can be valid, but it must be supported by reliable reader placement, clear circulation paths, exception handling, and operator training."
+      ],
+      "bullets": [
+        "Recommended Zones: the estimated number of APB zones implied by the selected strategy.",
+        "Perimeter Zones: the baseline in/out structure for perimeter-focused APB.",
+        "Interior Zones: additional controlled spaces included in APB logic.",
+        "Floor Segments: floor-based APB segmentation added by the strategy.",
+        "Suggested Paired Entrances: estimated IN/OUT reader transitions needed for clean state tracking.",
+        "APB Complexity Index: planning pressure created by zone count, reader pairs, floors, interior areas, and enforcement type.",
+        "Operational Risk: the support and lockout risk implied by the design.",
+        "Recommended Enforcement Mode: whether the selected APB type appears reasonable or should be softened/narrowed."
+      ]
+    },
+    {
+      "id": "healthy-watch-risk",
+      "title": "Healthy / Watch / Risk interpretation",
+      "body": [
+        "The status is driven by operational risk. It reflects how likely the APB structure is to create support burden, nuisance lockouts, or unreliable enforcement.",
+        "A low-risk APB design is usually simple, perimeter-focused, and easy to explain. A high-risk APB design is usually enforcement-heavy, zone-heavy, and sensitive to missed reads or inconsistent movement paths."
+      ],
+      "bullets": [
+        "HEALTHY: APB is likely manageable if reader placement and procedures are clean.",
+        "WATCH: APB may work, but user flow, reset policy, and exception handling need review.",
+        "RISK: hard enforcement or strict segmentation may create lockouts, support calls, or unreliable operation unless the site has strong procedures."
+      ]
+    },
+    {
+      "id": "soft-vs-hard-apb",
+      "title": "Soft vs hard APB",
+      "body": [
+        "Soft APB is usually safer operationally because violations can be logged or alerted without immediately denying access. It can be a good first step when a site wants visibility into passback behavior without creating daily lockout problems.",
+        "Hard APB denies access when the system believes a credential is in the wrong state. It can be useful for higher-security environments, but only when entry and exit reads are reliable, reset procedures are clear, and users cannot easily bypass the intended paths.",
+        "The stricter the APB type, the more important the operating procedure becomes."
+      ],
+      "bullets": [
+        "Use soft APB when visibility and reporting are more important than denial.",
+        "Use hard APB only where the security value justifies the lockout/support burden.",
+        "Consider selective hard APB for high-value areas instead of hard APB everywhere.",
+        "Always define who can reset APB state and under what conditions."
+      ]
+    },
+    {
+      "id": "zone-strategy-workflow",
+      "title": "Zone strategy workflow",
+      "bullets": [
+        "Start with the perimeter. Decide whether basic in/out tracking is enough.",
+        "Identify only the interior areas where APB meaningfully improves security.",
+        "Review how users move between floors, stairs, elevators, parking, and shared lobbies.",
+        "Decide whether APB should be soft, hard, or selective hard.",
+        "Check whether every legitimate path has a reliable state transition.",
+        "Define reset and exception procedures before enabling hard enforcement.",
+        "Document the APB scope so operators know what the system is supposed to enforce."
+      ],
+      "links": [
+        {
+          "label": "Reader Type Selector guide",
+          "kbKey": "access-control/reader-type-selector",
+          "note": "Use this related guide when APB depends on reliable reader technology, credential behavior, and interface selection."
+        },
+        {
+          "label": "Door Count Planner guide",
+          "kbKey": "access-control/door-count-planner",
+          "note": "Use this related guide when APB scope depends on how many controlled openings are actually in the design."
+        }
+      ]
+    },
+    {
+      "id": "reader-placement-notes",
+      "title": "Reader placement notes",
+      "body": [
+        "Anti-passback only works when the system can reliably understand direction of travel. That usually means entry and exit transitions must be paired or otherwise clearly modeled.",
+        "If users can leave through uncontrolled exits, tailgate through turnstiles, use emergency paths, or move between areas without a reader transition, APB state can become wrong even when the system is configured correctly."
+      ],
+      "bullets": [
+        "Pair entry and exit transitions where hard APB is expected.",
+        "Avoid hard APB where users can regularly bypass exit readers.",
+        "Review emergency egress paths before enforcing lockout behavior.",
+        "Consider guard desks, reception workflows, and visitor paths.",
+        "Test the actual user path, not just the diagram."
+      ],
+      "links": [
+        {
+          "label": "Fail-Safe / Fail-Secure guide",
+          "kbKey": "access-control/fail-safe-fail-secure",
+          "note": "Use this related guide when APB enforcement could interact with egress, fire release, or door behavior during abnormal conditions."
+        }
+      ]
+    },
+    {
+      "id": "reset-and-exception-policy",
+      "title": "Reset and exception policy",
+      "body": [
+        "Every APB design needs a plan for credentials that end up in the wrong state. Missed reads, tailgating, escorting, emergency exits, network issues, and user mistakes can all create APB violations.",
+        "A reset policy defines who can correct the state, how quickly it can be corrected, and whether the event should be reviewed."
+      ],
+      "bullets": [
+        "Define who can reset APB state.",
+        "Decide whether resets require guard approval, supervisor approval, or audit notes.",
+        "Decide whether temporary exceptions expire automatically.",
+        "Keep exception groups narrow so APB does not become meaningless.",
+        "Train operators before enabling hard APB."
+      ]
+    },
+    {
+      "id": "red-flags",
+      "title": "Red flags",
+      "bullets": [
+        "Hard APB is selected before reader placement is reviewed.",
+        "Users can exit through doors that do not update APB state.",
+        "Emergency egress paths are not considered in the APB design.",
+        "Strict segmentation is selected because it sounds secure, not because operations can support it.",
+        "No one owns APB resets after hours.",
+        "Visitors, contractors, guards, and emergency users are handled with broad permanent exceptions.",
+        "The APB design requires perfect user behavior to work.",
+        "The site has high tailgating risk but no physical turnstile or supervised entry control."
+      ]
+    },
+    {
+      "id": "documentation-checklist",
+      "title": "Documentation checklist",
+      "bullets": [
+        "Entrances / Perimeter Doors included in APB scope.",
+        "Interior Controlled Areas included in APB scope.",
+        "Floors / Levels and vertical circulation assumptions.",
+        "Zone Strategy and why it was selected.",
+        "APB Type and where it applies.",
+        "Reader-pair assumptions for IN/OUT transitions.",
+        "Expected user flow and peak traffic condition.",
+        "Reset policy and who can perform resets.",
+        "Exception policy and expiration rules.",
+        "Emergency egress and fire/life-safety coordination notes.",
+        "Known paths where APB state may not be reliable."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
-      "body": [
-        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
-      ],
       "bullets": [
-        "Designing only for the initial install instead of the system lifecycle.",
-        "Ignoring exceptions, expansion, or administrative workload.",
-        "Assuming manufacturer capacity limits are the same as practical design limits.",
-        "Failing to document assumptions before the system is built."
+        "Enforcing hard APB without exit readers.",
+        "Creating more zones than operators can understand or support.",
+        "Using APB to compensate for weak physical control, tailgating, or poor reader placement.",
+        "Forgetting visitors, contractors, guard tours, deliveries, and emergency users.",
+        "Allowing broad permanent exceptions that weaken the purpose of APB.",
+        "Failing to test real movement paths before enabling enforcement.",
+        "Treating APB as only a software setting instead of a full operations procedure."
       ]
     },
     {
-      "title": "Planning assumptions",
-      "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
-      ],
+      "id": "assumptions-and-limits",
+      "title": "Assumptions and limits",
       "bullets": [
-        "Manufacturer limits still matter.",
-        "Local code and life-safety requirements still apply.",
-        "Site conditions may change the final design.",
-        "A simpler design is usually easier to support, audit, and explain."
-      ]
-    },
-    {
-      "title": "Professional responsibility",
-      "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
-      ],
-      "bullets": [
-        "Validate against the actual product and platform being installed.",
-        "Confirm owner requirements and operating procedures.",
-        "Document assumptions before implementation."
+        "Recommended zones are derived from perimeter count, interior segmentation, floor count, strategy, and APB enforcement type.",
+        "This tool models planning pressure and operational risk, not a specific controller’s APB feature set.",
+        "Outputs do not replace controller-specific configuration testing.",
+        "APB behavior should be validated against the selected access-control platform, reader placement, door hardware, emergency egress, and operational exception policy.",
+        "Final enforcement decisions should be reviewed against site policy, user flow, security objectives, and life-safety requirements."
       ]
     }
   ]
