@@ -2,7 +2,7 @@
   "use strict";
 
   var HELP_INDEX_URL = "/assets/help/index.json";
-  var VERSION_PLACEHOLDER = "help-013";
+  var VERSION_PLACEHOLDER = "help-021";
   var helpIndexCache = null;
 
   function escapeHtml(value) {
@@ -199,15 +199,34 @@
 
   function relatedBodyHtml(help, anchor) {
     var fragment = findHelpFragment(help, anchor);
+    var sections = Array.isArray(help.sections) ? help.sections : [];
+
+    function fullGuideHtml() {
+      if (!sections.length) return "";
+
+      return "<div class=\"sl-help-sublist\" style=\"margin-top:12px;\">" +
+        sections.map(function (section) {
+          return sectionHtml(section);
+        }).join("") +
+      "</div>";
+    }
 
     if (!fragment) {
-      return "<p>" + escapeHtml(help.summary || "Open the related guide for more context on this concept.") + "</p>";
+      return "<p>" + escapeHtml(help.summary || "Open the related guide for more context on this concept.") + "</p>" +
+        fullGuideHtml();
     }
 
     return paragraphHtml(fragment.body) +
       bulletHtml(fragment.bullets) +
       (fragment.whyItMatters ? "<p><strong>Why it matters:</strong> " + escapeHtml(fragment.whyItMatters) + "</p>" : "") +
-      (fragment.commonMistake ? "<p><strong>Common mistake:</strong> " + escapeHtml(fragment.commonMistake) + "</p>" : "");
+      (fragment.commonMistake ? "<p><strong>Common mistake:</strong> " + escapeHtml(fragment.commonMistake) + "</p>" : "") +
+      "<details class=\"sl-help-subitem\" style=\"margin-top:12px;\" open>" +
+        "<summary>Open full related guide</summary>" +
+        "<div class=\"sl-help-body\">" +
+          "<p>" + escapeHtml(help.summary || "Related Knowledge Base guide.") + "</p>" +
+          fullGuideHtml() +
+        "</div>" +
+      "</details>";
   }
 
   function renderRelatedPanel(card, title, bodyHtml) {
