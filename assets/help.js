@@ -2,7 +2,7 @@
   "use strict";
 
   var HELP_INDEX_URL = "/assets/help/index.json";
-  var VERSION_PLACEHOLDER = "help-025";
+  var VERSION_PLACEHOLDER = "help-026";
   var helpIndexCache = null;
 
   function escapeHtml(value) {
@@ -82,8 +82,10 @@
       ".sl-help-related-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:8px;}" +
       ".sl-help-related-title{margin:0;font-size:1rem;}" +
       ".sl-help-related-close{appearance:none;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);border-radius:999px;padding:5px 9px;cursor:pointer;}" +
+      ".sl-help-related-close:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.90);}" +
       ".sl-help-related-body{color:rgba(255,255,255,.70);line-height:1.55;}" +
       ".sl-help-related-body p{margin:8px 0;}" +
+      ".sl-help-related-note{margin:10px 0 0;color:rgba(255,255,255,.58);font-size:.9rem;line-height:1.45;}" +
       "@media(max-width:760px){.sl-help-head{flex-direction:column}.sl-help-toggle{width:100%;}.sl-help-related-head{flex-direction:column;}}";
 
     document.head.appendChild(style);
@@ -103,7 +105,9 @@
       : "";
   }
 
-  function linksHtml(links) {
+  function linksHtml(links, options) {
+    options = options || {};
+    if (options.suppressLinks) return "";
     if (!Array.isArray(links) || !links.length) return "";
 
     return "<div class=\"sl-help-links\" aria-label=\"Related Knowledge Base references\">" +
@@ -120,7 +124,8 @@
     "</div>";
   }
 
-  function glossaryItemHtml(item) {
+  function glossaryItemHtml(item, options) {
+    options = options || {};
     var id = "kb-" + slugify(item.id || item.label || "input");
 
     return "<details class=\"sl-help-subitem\" id=\"" + escapeHtml(id) + "\">" +
@@ -130,16 +135,18 @@
         (item.examples && item.examples.length ? "<div class=\"sl-help-meta\"><strong>Examples:</strong>" + bulletHtml(item.examples) + "</div>" : "") +
         (item.whyItMatters ? "<p class=\"sl-help-meta\"><strong>Why it matters:</strong> " + escapeHtml(item.whyItMatters) + "</p>" : "") +
         (item.commonMistake ? "<p class=\"sl-help-meta\"><strong>Common mistake:</strong> " + escapeHtml(item.commonMistake) + "</p>" : "") +
-        linksHtml(item.links) +
+        linksHtml(item.links, options) +
       "</div>" +
     "</details>";
   }
 
-  function sectionHtml(section) {
+  function sectionHtml(section, options) {
+    options = options || {};
+
     var id = "kb-" + slugify(section.id || section.title || "section");
     var bodyHtml = paragraphHtml(section.body);
     var bulletList = bulletHtml(section.bullets);
-    var sectionLinks = linksHtml(section.links);
+    var sectionLinks = linksHtml(section.links, options);
 
     if (section.type === "glossary") {
       var items = Array.isArray(section.items) ? section.items : [];
@@ -147,7 +154,9 @@
         "<summary>" + escapeHtml(section.title || "Input descriptions") + "</summary>" +
         "<div class=\"sl-help-body\">" +
           bodyHtml +
-          "<div class=\"sl-help-sublist\">" + items.map(glossaryItemHtml).join("") + "</div>" +
+          "<div class=\"sl-help-sublist\">" + items.map(function (item) {
+            return glossaryItemHtml(item, options);
+          }).join("") + "</div>" +
           sectionLinks +
         "</div>" +
       "</details>";
@@ -197,23 +206,27 @@
     return null;
   }
 
+  function fullRelatedGuideHtml(help) {
+    var sections = Array.isArray(help.sections) ? help.sections : [];
+    if (!sections.length) return "";
+
+    return "<div class=\"sl-help-sublist\" style=\"margin-top:12px;\">" +
+      sections.map(function (section) {
+        return sectionHtml(section, { suppressLinks: true });
+      }).join("") +
+    "</div>";
+  }
+
   function relatedBodyHtml(help, anchor) {
     var fragment = findHelpFragment(help, anchor);
-    var sections = Array.isArray(help.sections) ? help.sections : [];
-
-    function fullGuideHtml() {
-      if (!sections.length) return "";
-
-      return "<div class=\"sl-help-sublist\" style=\"margin-top:12px;\">" +
-        sections.map(function (section) {
-          return sectionHtml(section);
-        }).join("") +
-      "</div>";
-    }
+    var guideHtml = fullRelatedGuideHtml(help);
+    var oneLevelNote =
+      "<p class=\"sl-help-related-note\">Related guides open one level deep so the current tool guide stays easy to return to. Use Back to current guide when finished.</p>";
 
     if (!fragment) {
       return "<p>" + escapeHtml(help.summary || "Open the related guide for more context on this concept.") + "</p>" +
-        fullGuideHtml();
+        guideHtml +
+        oneLevelNote;
     }
 
     return paragraphHtml(fragment.body) +
@@ -224,9 +237,17 @@
         "<summary>Open full related guide</summary>" +
         "<div class=\"sl-help-body\">" +
           "<p>" + escapeHtml(help.summary || "Related Knowledge Base guide.") + "</p>" +
-          fullGuideHtml() +
+          guideHtml +
         "</div>" +
-      "</details>";
+      "</details>" +
+      oneLevelNote;
+  }
+
+  function scrollToMainGuide(card) {
+    var list = card.querySelector(".sl-help-list") || card;
+    if (list && typeof list.scrollIntoView === "function") {
+      list.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }
 
   function renderRelatedPanel(card, title, bodyHtml) {
@@ -243,7 +264,7 @@
     existing.innerHTML =
       "<div class=\"sl-help-related-head\">" +
         "<h3 class=\"sl-help-related-title\">" + escapeHtml(title || "Related Knowledge Base") + "</h3>" +
-        "<button type=\"button\" class=\"sl-help-related-close\" data-sl-help-related-close>Close</button>" +
+        "<button type=\"button\" class=\"sl-help-related-close\" data-sl-help-related-close>Back to current guide</button>" +
       "</div>" +
       "<div class=\"sl-help-related-body\">" + bodyHtml + "</div>";
 
@@ -278,6 +299,7 @@
 
     var sections = Array.isArray(help.sections) ? help.sections : [];
     var openByDefault = help.defaultOpen === true;
+    var contentId = "scopedlabs-help-content";
 
     card.innerHTML =
       "<div class=\"pill-row\">" +
@@ -288,10 +310,12 @@
           "<h2 class=\"sl-help-title\">" + escapeHtml(help.title || "Tool Guide") + "</h2>" +
           "<p class=\"sl-help-summary\">" + escapeHtml(help.summary || "") + "</p>" +
         "</div>" +
-        "<button class=\"btn btn-ghost sl-help-toggle\" type=\"button\" data-sl-help-toggle>" + (openByDefault ? "Close guide" : "Open guide") + "</button>" +
+        "<button class=\"btn btn-ghost sl-help-toggle\" type=\"button\" data-sl-help-toggle aria-controls=\"" + contentId + "\" aria-expanded=\"" + (openByDefault ? "true" : "false") + "\">" + (openByDefault ? "Close guide" : "Open guide") + "</button>" +
       "</div>" +
-      "<div class=\"sl-help-content\" data-sl-help-content" + (openByDefault ? "" : " hidden") + ">" +
-        "<div class=\"sl-help-list\">" + sections.map(sectionHtml).join("") + "</div>" +
+      "<div id=\"" + contentId + "\" class=\"sl-help-content\" data-sl-help-content" + (openByDefault ? "" : " hidden") + ">" +
+        "<div class=\"sl-help-list\">" + sections.map(function (section) {
+          return sectionHtml(section);
+        }).join("") + "</div>" +
       "</div>";
 
     var toggle = card.querySelector("[data-sl-help-toggle]");
@@ -302,9 +326,11 @@
       if (isHidden) {
         content.removeAttribute("hidden");
         toggle.textContent = "Close guide";
+        toggle.setAttribute("aria-expanded", "true");
       } else {
         content.setAttribute("hidden", "");
         toggle.textContent = "Open guide";
+        toggle.setAttribute("aria-expanded", "false");
       }
     });
 
@@ -313,6 +339,7 @@
       if (closeBtn && card.contains(closeBtn)) {
         var related = card.querySelector("[data-sl-help-related]");
         if (related) related.remove();
+        scrollToMainGuide(card);
         return;
       }
 
@@ -321,10 +348,15 @@
 
       event.preventDefault();
 
+      if (refBtn.closest("[data-sl-help-related]")) {
+        return;
+      }
+
       var isHidden = content.hasAttribute("hidden");
       if (isHidden) {
         content.removeAttribute("hidden");
         toggle.textContent = "Close guide";
+        toggle.setAttribute("aria-expanded", "true");
       }
 
       openHelpReference(
