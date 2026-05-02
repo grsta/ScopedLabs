@@ -2,7 +2,7 @@
   "use strict";
 
   var HELP_INDEX_URL = "/assets/help/index.json";
-  var VERSION_PLACEHOLDER = "help-021";
+  var VERSION_PLACEHOLDER = "help-025";
   var helpIndexCache = null;
 
   function escapeHtml(value) {
