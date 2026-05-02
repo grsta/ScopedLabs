@@ -2,13 +2,14 @@
   "title": "GPU VRAM Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand GPU memory demand, model size, batch size, resolution, analytics load, and safe margin.",
-  "updated": "2026-04-26",
+  "summary": "Understand whether GPU acceleration is required, and if so, how model size, batch size, per-sample VRAM, concurrent jobs, and overhead affect memory capacity.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether a GPU has enough VRAM for the intended workload."
+        "This tool estimates whether the GPU workload requires acceleration and whether available VRAM is likely to fit the modeled job profile."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
@@ -17,9 +18,10 @@
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it for AI inference, video analytics, machine learning experiments, rendering workloads, or GPU-accelerated compute tasks."
+        "Use it for AI inference, video analytics, machine learning experiments, rendering workloads, GPU-assisted processing, or any compute task where memory on the GPU may be the first limit."
       ],
       "bullets": [
         "Early design planning.",
@@ -29,124 +31,170 @@
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+        "These descriptions match the visible GPU VRAM Estimator inputs and explain how each value affects acceleration and memory pressure."
       ],
       "items": [
         {
-          "label": "Model / Workload Size",
-          "description": "The memory footprint of the GPU workload.",
+          "id": "GPU Required?",
+          "label": "GPU Required?",
+          "description": "Whether the workload actually needs GPU acceleration or can remain CPU-only for the planned design.",
           "examples": [
-            "AI model",
-            "Video analytics model",
-            "Rendering scene"
+            "No GPU required",
+            "GPU recommended",
+            "GPU required by application"
           ],
-          "whyItMatters": "Larger models consume more VRAM before live data is processed.",
-          "commonMistake": "Only checking GPU compute power and ignoring memory."
+          "whyItMatters": "Not every compute workload benefits from a GPU. This input keeps the design from adding complexity when acceleration is not part of the requirement.",
+          "commonMistake": "Adding GPU hardware because it sounds powerful without confirming the workload needs it.",
+          "links": [
+            {
+              "label": "Compare CPU baseline first",
+              "kbKey": "compute/cpu-sizing",
+              "anchor": "Workload Type"
+            }
+          ]
         },
         {
+          "id": "Model Size (GB)",
+          "label": "Model Size (GB)",
+          "description": "The base GPU memory footprint of the model, scene, analytics pipeline, or accelerated workload.",
+          "examples": [
+            "2 GB model",
+            "8 GB model",
+            "Large inference model"
+          ],
+          "whyItMatters": "The model consumes VRAM before live samples, streams, or batches are added.",
+          "commonMistake": "Only checking GPU compute performance and ignoring memory footprint."
+        },
+        {
+          "id": "Batch Size",
           "label": "Batch Size",
-          "description": "How many items are processed at once.",
+          "description": "The number of samples processed together in one job or execution batch.",
           "examples": [
-            "Single frame",
-            "Batch of images",
-            "Multiple streams"
+            "Batch size 1",
+            "Batch size 8",
+            "Higher batch for throughput"
           ],
-          "whyItMatters": "Larger batches usually increase VRAM demand.",
-          "commonMistake": "Increasing batch size without checking memory headroom."
+          "whyItMatters": "Batch size can raise VRAM demand quickly even when the model itself fits.",
+          "commonMistake": "Increasing batch size to improve throughput without checking memory headroom."
         },
         {
-          "label": "Resolution",
-          "description": "The input size or visual resolution being processed.",
+          "id": "VRAM per Sample (MB)",
+          "label": "VRAM per Sample (MB)",
+          "description": "The additional GPU memory consumed by each sample, frame, image, stream, or unit of work in the batch.",
           "examples": [
-            "1080p",
-            "4K",
-            "High-resolution images"
+            "128 MB per sample",
+            "512 MB per frame",
+            "Per-stream buffer estimate"
           ],
-          "whyItMatters": "Higher resolution increases memory use.",
-          "commonMistake": "Testing at low resolution and deploying at high resolution."
+          "whyItMatters": "This value multiplies with batch size and concurrent jobs, so it can dominate total VRAM demand.",
+          "commonMistake": "Testing with a tiny sample and deploying with larger real inputs."
         },
         {
-          "label": "Stream Count",
-          "description": "How many simultaneous video or data streams use the GPU.",
+          "id": "Concurrent Jobs",
+          "label": "Concurrent Jobs",
+          "description": "The number of GPU jobs, streams, processes, or workloads active at the same time.",
           "examples": [
-            "1 stream",
-            "8 streams",
-            "16 streams"
+            "1 inference job",
+            "4 concurrent streams",
+            "Multiple analytics workers"
           ],
-          "whyItMatters": "More streams can multiply VRAM requirements.",
-          "commonMistake": "Sizing for one stream and scaling without recalculating."
+          "whyItMatters": "Concurrent jobs can multiply VRAM demand and make a single-GPU design unstable.",
+          "commonMistake": "Sizing for one job and then running many in production.",
+          "links": [
+            {
+              "label": "Compare CPU concurrency",
+              "kbKey": "compute/cpu-sizing",
+              "anchor": "Concurrent Workers / Threads"
+            }
+          ]
         },
         {
-          "label": "VRAM Capacity",
-          "description": "The total GPU memory available.",
+          "id": "Overhead (%)",
+          "label": "Overhead (%)",
+          "description": "Extra VRAM reserved for drivers, framework overhead, buffers, precision changes, workspace memory, and growth.",
           "examples": [
-            "8 GB",
-            "12 GB",
-            "24 GB"
+            "10% overhead",
+            "20% framework reserve",
+            "Higher reserve for experimental workloads"
           ],
-          "whyItMatters": "VRAM capacity determines whether the workload can fit.",
-          "commonMistake": "Assuming faster GPU means enough memory."
-        },
-        {
-          "label": "Headroom",
-          "description": "VRAM reserved for overhead, drivers, buffers, and growth.",
-          "examples": [
-            "10% spare",
-            "20% spare",
-            "Future models"
-          ],
-          "whyItMatters": "Headroom reduces failure risk during bursts or model changes.",
-          "commonMistake": "Running VRAM at the edge of capacity."
+          "whyItMatters": "GPU workloads often need memory beyond the obvious model and batch math.",
+          "commonMistake": "Running VRAM at the edge and then failing when the framework allocates extra workspace.",
+          "links": [
+            {
+              "label": "See power and thermal impact",
+              "kbKey": "compute/power-thermal",
+              "anchor": "Watts per Node"
+            }
+          ]
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means VRAM appears adequate. Watch means workload settings or growth should be reviewed. Risk means the job may fail, spill, or require a smaller model/batch/resolution."
+        "Healthy means the modeled GPU memory requirement appears manageable. Watch means batch, concurrency, or overhead should be reviewed. Risk means the job may fail, spill, downscale, or require a different GPU/profile."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+        "If GPU Required? is set to No, the tool should not force a GPU design.",
+        "VRAM pressure is not the same as GPU compute pressure.",
+        "Batch and concurrency assumptions must match the real deployment pattern."
       ]
     },
     {
+      "id": "compute-flow-context",
+      "title": "How this fits in the Compute flow",
+      "body": [
+        "GPU VRAM belongs later in the Compute flow because acceleration should not be considered until the base CPU, RAM, storage, and density profile is understood."
+      ],
+      "bullets": [
+        "Use GPU sizing only when the workload actually benefits from acceleration.",
+        "Carry GPU decisions into Power / Thermal planning.",
+        "Do not choose a GPU by core count alone; memory capacity can be the ceiling."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+        "Most compute planning problems come from trusting one comfortable number while ignoring the rest of the platform. CPU, RAM, storage, network, power, cooling, protection timing, and growth all interact."
       ],
       "bullets": [
         "Sizing only for average load instead of peak behavior.",
-        "Ignoring headroom, background tasks, maintenance, and growth.",
-        "Trusting theoretical maximums as if they are sustained real-world capacity.",
-        "Failing to document assumptions before the system is built."
+        "Ignoring headroom, background tasks, maintenance windows, and growth.",
+        "Treating theoretical maximums as sustained real-world capacity.",
+        "Forgetting that one weak resource can make the rest of the system feel undersized.",
+        "Failing to document assumptions before hardware, licensing, or architecture decisions are locked in."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, benchmark testing, or project-specific engineering judgment."
       ],
       "bullets": [
         "Vendor specifications still matter.",
         "Application behavior may change the final requirement.",
-        "Site conditions and operating procedures may affect the design.",
-        "A design with headroom is usually easier to support and grow."
+        "Site conditions, operating procedures, and maintenance expectations may affect the design.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, compliance review, or project-specific design responsibility."
       ],
       "bullets": [
         "Validate against the actual hardware, platform, and software being deployed.",
         "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Use the results as decision support, not as a final authority."
       ]
     }
   ]

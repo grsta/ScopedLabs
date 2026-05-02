@@ -2,13 +2,14 @@
   "title": "Storage IOPS Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand random storage operations, read/write mix, latency pressure, and workload suitability.",
-  "updated": "2026-04-26",
+  "summary": "Understand transaction demand, read/write operations, RAID write penalty, and headroom before storage performance becomes the compute bottleneck.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether a storage design can support the required input/output operations per second for the workload."
+        "This tool estimates the random input/output operations per second required by a workload after read activity, write activity, RAID penalty, and reserve are considered."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
@@ -17,9 +18,10 @@
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when sizing storage for databases, virtual machines, logging, application workloads, analytics systems, or any random-I/O-heavy workload."
+        "Use it when sizing storage for databases, virtual machines, logging, application workloads, analytics systems, or any random-I/O-heavy compute environment."
       ],
       "bullets": [
         "Early design planning.",
@@ -29,124 +31,152 @@
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+        "These descriptions match the visible Storage IOPS Estimator inputs and explain how each value affects random storage pressure."
       ],
       "items": [
         {
-          "label": "Read IOPS",
-          "description": "The number of read operations expected per second.",
+          "id": "Transactions per Second",
+          "label": "Transactions per Second",
+          "description": "The number of workload transactions, requests, events, or operations expected each second.",
           "examples": [
-            "Database reads",
-            "VM boot reads",
-            "Application queries"
+            "250 TPS",
+            "1,000 application requests/sec",
+            "Logging events per second"
           ],
-          "whyItMatters": "Read demand affects storage responsiveness and cache dependency.",
-          "commonMistake": "Assuming reads are free because cache may help."
+          "whyItMatters": "Transactions are the activity driver that creates read and write operations.",
+          "commonMistake": "Estimating storage only by capacity while ignoring how frequently the workload touches disk."
         },
         {
-          "label": "Write IOPS",
-          "description": "The number of write operations expected per second.",
+          "id": "Reads per Transaction",
+          "label": "Reads per Transaction",
+          "description": "The average number of storage read operations created by each transaction.",
           "examples": [
-            "Logs",
-            "Database writes",
-            "VM disk writes"
+            "1 read per transaction",
+            "4 reads per query",
+            "Metadata reads plus data reads"
           ],
-          "whyItMatters": "Write demand is often more expensive than reads, especially with redundancy.",
-          "commonMistake": "Underestimating writes because they look small in capacity terms."
+          "whyItMatters": "Read operations contribute to total IOPS and can still create latency even if cache helps some requests.",
+          "commonMistake": "Assuming reads do not matter because the system may cache part of the workload."
         },
         {
-          "label": "Read / Write Mix",
-          "description": "The balance between reads and writes.",
+          "id": "Writes per Transaction",
+          "label": "Writes per Transaction",
+          "description": "The average number of storage write operations created by each transaction.",
           "examples": [
-            "80/20 read-heavy",
-            "50/50 mixed",
-            "Write-heavy logging"
+            "1 write per transaction",
+            "Multiple log writes",
+            "Database update plus journal write"
           ],
-          "whyItMatters": "Different storage systems handle read-heavy and write-heavy workloads differently.",
-          "commonMistake": "Using a generic IOPS number without checking the mix."
+          "whyItMatters": "Writes are often more expensive than reads, especially with redundancy or parity.",
+          "commonMistake": "Underestimating writes because the capacity written per transaction appears small."
         },
         {
-          "label": "Block Size",
-          "description": "The size of each storage operation.",
+          "id": "RAID Write Penalty",
+          "label": "RAID Write Penalty",
+          "description": "The multiplier applied to write operations because of the selected redundancy method or storage behavior.",
           "examples": [
-            "4 KB",
-            "8 KB",
-            "64 KB"
+            "1 for mirrors/low penalty",
+            "4 for RAID 5 style penalty",
+            "6 for RAID 6 style penalty"
           ],
-          "whyItMatters": "Block size changes the throughput created by a given IOPS level.",
-          "commonMistake": "Comparing IOPS numbers without matching block size."
+          "whyItMatters": "Write penalty can make a write-heavy workload demand far more backend IOPS than the raw transaction count suggests.",
+          "commonMistake": "Using front-end write count as if it equals backend disk work.",
+          "links": [
+            {
+              "label": "Compare rebuild and RAID behavior",
+              "kbKey": "compute/raid-rebuild-time",
+              "anchor": "RAID Type"
+            }
+          ]
         },
         {
-          "label": "Latency Target",
-          "description": "The acceptable response time for storage operations.",
-          "examples": [
-            "Low latency",
-            "Moderate latency",
-            "Batch tolerant"
-          ],
-          "whyItMatters": "High IOPS with poor latency can still feel slow.",
-          "commonMistake": "Only checking IOPS and ignoring latency."
-        },
-        {
-          "label": "Headroom",
-          "description": "Extra IOPS capacity reserved above expected demand.",
+          "id": "Headroom (%)",
+          "label": "Headroom (%)",
+          "description": "Extra IOPS reserve above the calculated workload requirement.",
           "examples": [
             "20% spare",
-            "30% spare",
-            "Peak bursts"
+            "30% burst reserve",
+            "Higher reserve for production workloads"
           ],
-          "whyItMatters": "Headroom protects the design during bursts and background maintenance.",
-          "commonMistake": "Running storage at its advertised maximum."
+          "whyItMatters": "Headroom protects the design during bursts, maintenance, compaction, rebuilds, and measurement error.",
+          "commonMistake": "Running storage at its advertised maximum with no practical reserve.",
+          "links": [
+            {
+              "label": "Check throughput counterpart",
+              "kbKey": "compute/storage-throughput",
+              "anchor": "IOPS",
+              "note": "High IOPS can also create high MB/s demand depending on I/O size."
+            }
+          ]
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means the IOPS plan has reasonable margin. Watch means workload assumptions deserve review. Risk means the storage layer may become a bottleneck."
+        "Healthy means the IOPS plan has reasonable margin. Watch means workload assumptions deserve review. Risk means storage can become the first practical bottleneck even when CPU and RAM look acceptable."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+        "Estimated Required IOPS includes read load, write penalty, and headroom.",
+        "Write penalty stress helps show whether writes are dominating the design.",
+        "IOPS pressure and throughput pressure should both be checked before choosing storage."
       ]
     },
     {
+      "id": "compute-flow-context",
+      "title": "How this fits in the Compute flow",
+      "body": [
+        "Storage IOPS follows RAM Sizing because memory pressure can increase disk pressure through paging, cache misses, and background activity."
+      ],
+      "bullets": [
+        "Use RAM results as context, not as a replacement for storage math.",
+        "Continue into Storage Throughput when random IOPS demand appears reasonable.",
+        "A storage design can pass IOPS and still fail on sequential throughput or transfer-window needs."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+        "Most compute planning problems come from trusting one comfortable number while ignoring the rest of the platform. CPU, RAM, storage, network, power, cooling, protection timing, and growth all interact."
       ],
       "bullets": [
         "Sizing only for average load instead of peak behavior.",
-        "Ignoring headroom, background tasks, maintenance, and growth.",
-        "Trusting theoretical maximums as if they are sustained real-world capacity.",
-        "Failing to document assumptions before the system is built."
+        "Ignoring headroom, background tasks, maintenance windows, and growth.",
+        "Treating theoretical maximums as sustained real-world capacity.",
+        "Forgetting that one weak resource can make the rest of the system feel undersized.",
+        "Failing to document assumptions before hardware, licensing, or architecture decisions are locked in."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, benchmark testing, or project-specific engineering judgment."
       ],
       "bullets": [
         "Vendor specifications still matter.",
         "Application behavior may change the final requirement.",
-        "Site conditions and operating procedures may affect the design.",
-        "A design with headroom is usually easier to support and grow."
+        "Site conditions, operating procedures, and maintenance expectations may affect the design.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, compliance review, or project-specific design responsibility."
       ],
       "bullets": [
         "Validate against the actual hardware, platform, and software being deployed.",
         "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Use the results as decision support, not as a final authority."
       ]
     }
   ]

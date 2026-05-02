@@ -2,13 +2,14 @@
   "title": "RAM Sizing Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand memory demand, operating-system overhead, workload cache, concurrency, and safe headroom.",
-  "updated": "2026-04-26",
+  "summary": "Understand workload type, process or VM concurrency, per-process memory demand, operating-system overhead, cache reserve, and practical memory headroom.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether a memory allocation is likely to support the workload without excessive paging, cache pressure, or instability."
+        "This tool estimates whether the memory allocation can support the workload without excessive paging, cache starvation, or unstable operating margin."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
@@ -17,6 +18,7 @@
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
         "Use it when sizing servers, virtual machines, database hosts, application workloads, analytics systems, or multi-service compute nodes."
@@ -29,126 +31,161 @@
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+        "These descriptions match the visible RAM Sizing Estimator inputs and explain how each value affects memory pressure."
       ],
       "items": [
         {
-          "label": "Base Memory",
-          "description": "The starting memory needed by the operating system and core application.",
+          "id": "Workload Type",
+          "label": "Workload Type",
+          "description": "The broad workload profile that influences memory behavior and reserve expectations.",
           "examples": [
-            "OS overhead",
-            "Application baseline",
-            "Service stack"
+            "General application",
+            "Database",
+            "Virtualization host",
+            "Analytics workload",
+            "Cache-heavy service"
           ],
-          "whyItMatters": "The system needs memory before user load or data processing is considered.",
-          "commonMistake": "Forgetting OS and background service overhead."
+          "whyItMatters": "Workload type changes how much memory should be reserved for cache, buffers, and active service behavior.",
+          "commonMistake": "Using the same RAM estimate for every workload just because the CPU requirement looked similar.",
+          "links": [
+            {
+              "label": "Compare CPU workload profile",
+              "kbKey": "compute/cpu-sizing",
+              "anchor": "Workload Type"
+            }
+          ]
         },
         {
-          "label": "Workload Memory",
-          "description": "Memory consumed by the primary workload.",
+          "id": "Concurrent Processes / VMs",
+          "label": "Concurrent Processes / VMs",
+          "description": "The number of processes, VMs, services, jobs, or active workload instances expected to run at the same time.",
           "examples": [
-            "Database buffer",
-            "Application heap",
-            "Analytics model",
-            "Cache"
+            "12 processes",
+            "8 VMs",
+            "30 active workers",
+            "Multiple service containers"
           ],
-          "whyItMatters": "Workload memory often grows with users, data, or service count.",
-          "commonMistake": "Only sizing the installed software minimum."
+          "whyItMatters": "Concurrency multiplies per-process memory demand and can turn a small application footprint into a large host requirement.",
+          "commonMistake": "Sizing memory for a single process or VM and forgetting the full active count.",
+          "links": [
+            {
+              "label": "Compare CPU concurrency",
+              "kbKey": "compute/cpu-sizing",
+              "anchor": "Concurrent Workers / Threads"
+            }
+          ]
         },
         {
-          "label": "Concurrency",
-          "description": "How many users, sessions, tasks, or workloads may run at the same time.",
+          "id": "Avg RAM per Process (GB)",
+          "label": "Avg RAM per Process (GB)",
+          "description": "The average memory consumed by each process, VM, workload instance, or service unit.",
           "examples": [
-            "Active users",
-            "VMs",
-            "Jobs",
-            "Streams"
+            "2 GB per VM",
+            "0.5 GB per worker",
+            "8 GB per database instance"
           ],
-          "whyItMatters": "More concurrency usually means more memory pressure.",
-          "commonMistake": "Sizing for idle or test conditions."
+          "whyItMatters": "This is the core per-unit memory value that gets multiplied by concurrency.",
+          "commonMistake": "Using idle memory instead of realistic loaded memory."
         },
         {
-          "label": "Cache / Buffer",
-          "description": "Memory reserved for caching data, buffering activity, or improving performance.",
+          "id": "OS / Base Overhead (GB)",
+          "label": "OS / Base Overhead (GB)",
+          "description": "Memory reserved for the operating system, hypervisor, management services, agents, file cache, or baseline platform overhead.",
           "examples": [
-            "Database cache",
-            "File cache",
-            "Queue buffer"
+            "4 GB OS overhead",
+            "8 GB host services",
+            "Hypervisor reserve"
           ],
-          "whyItMatters": "Cache can reduce disk pressure and improve response time.",
-          "commonMistake": "Treating cache as optional when the workload depends on it."
+          "whyItMatters": "The platform needs memory before the application workload receives anything.",
+          "commonMistake": "Forgetting OS, hypervisor, antivirus, monitoring, and background service overhead."
         },
         {
-          "label": "Headroom",
-          "description": "Extra memory reserved above calculated demand.",
+          "id": "Cache / Headroom (%)",
+          "label": "Cache / Headroom (%)",
+          "description": "Extra memory reserved above calculated demand for cache, buffers, spikes, leaks, and growth.",
           "examples": [
-            "20% spare",
-            "30% spare",
-            "Future growth"
+            "15% spare",
+            "25% headroom",
+            "More reserve for databases or virtualization"
           ],
-          "whyItMatters": "Headroom protects against spikes, leaks, and future expansion.",
-          "commonMistake": "Running memory too close to the limit."
-        },
-        {
-          "label": "Growth Allowance",
-          "description": "Expected future increase in memory demand.",
-          "examples": [
-            "More users",
-            "More data",
-            "Additional services"
-          ],
-          "whyItMatters": "Memory upgrades may be harder later if the platform or host is constrained.",
-          "commonMistake": "Ignoring near-term expansion."
+          "whyItMatters": "Headroom keeps the workload from running at the edge and can reduce disk pressure caused by paging or cache misses.",
+          "commonMistake": "Treating unused RAM as waste instead of stability margin.",
+          "links": [
+            {
+              "label": "See storage pressure from memory limits",
+              "kbKey": "compute/storage-iops",
+              "anchor": "Headroom (%)"
+            }
+          ]
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means memory has reasonable headroom. Watch means the allocation may work but should be reviewed. Risk means the workload may page, stall, or become unreliable under load."
+        "Healthy means memory has practical reserve. Watch means the allocation may work but deserves review. Risk means the workload may page, stall, reduce cache efficiency, or become unreliable under load."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+        "Recommended RAM is rounded for practical planning.",
+        "Reserve ratio matters because small spare capacity disappears quickly during bursts.",
+        "If memory is tight, storage I/O may become worse because paging and cache misses increase."
       ]
     },
     {
+      "id": "compute-flow-context",
+      "title": "How this fits in the Compute flow",
+      "body": [
+        "RAM Sizing follows CPU Sizing because memory pressure can invalidate an otherwise reasonable CPU plan."
+      ],
+      "bullets": [
+        "Keep workload and concurrency assumptions aligned with CPU Sizing.",
+        "Use the resulting memory profile before estimating storage IOPS.",
+        "Avoid moving deeper into the flow if CPU and RAM assumptions conflict."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+        "Most compute planning problems come from trusting one comfortable number while ignoring the rest of the platform. CPU, RAM, storage, network, power, cooling, protection timing, and growth all interact."
       ],
       "bullets": [
         "Sizing only for average load instead of peak behavior.",
-        "Ignoring headroom, background tasks, maintenance, and growth.",
-        "Trusting theoretical maximums as if they are sustained real-world capacity.",
-        "Failing to document assumptions before the system is built."
+        "Ignoring headroom, background tasks, maintenance windows, and growth.",
+        "Treating theoretical maximums as sustained real-world capacity.",
+        "Forgetting that one weak resource can make the rest of the system feel undersized.",
+        "Failing to document assumptions before hardware, licensing, or architecture decisions are locked in."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, benchmark testing, or project-specific engineering judgment."
       ],
       "bullets": [
         "Vendor specifications still matter.",
         "Application behavior may change the final requirement.",
-        "Site conditions and operating procedures may affect the design.",
-        "A design with headroom is usually easier to support and grow."
+        "Site conditions, operating procedures, and maintenance expectations may affect the design.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, compliance review, or project-specific design responsibility."
       ],
       "bullets": [
         "Validate against the actual hardware, platform, and software being deployed.",
         "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Use the results as decision support, not as a final authority."
       ]
     }
   ]

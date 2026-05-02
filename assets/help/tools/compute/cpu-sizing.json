@@ -2,13 +2,14 @@
   "title": "CPU Sizing Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand CPU demand, workload pressure, concurrency, headroom, and growth before selecting compute resources.",
-  "updated": "2026-04-26",
+  "summary": "Understand workload type, worker concurrency, per-worker CPU pressure, burst behavior, utilization target, and SMT assumptions before selecting compute resources.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether a CPU allocation is likely to handle the expected workload without running too close to saturation."
+        "This tool estimates whether the CPU allocation has enough practical core capacity and operating margin for the workload profile you enter."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
@@ -17,9 +18,10 @@
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when sizing servers, virtual machines, application hosts, analytics nodes, or any system where processor headroom affects reliability."
+        "Use it when sizing servers, virtual machines, application hosts, analytics nodes, batch workers, or any system where processor headroom affects response time and stability."
       ],
       "bullets": [
         "Early design planning.",
@@ -29,15 +31,17 @@
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+        "These descriptions match the visible CPU Sizing Estimator inputs and explain how each value affects compute pressure."
       ],
       "items": [
         {
+          "id": "Workload Type",
           "label": "Workload Type",
-          "description": "The general kind of workload the CPU will support.",
+          "description": "The broad workload profile the CPU will support. The tool uses this to adjust how aggressively the entered worker load should be treated.",
           "examples": [
             "General application",
             "Database",
@@ -45,113 +49,157 @@
             "Virtualization host",
             "Batch processing"
           ],
-          "whyItMatters": "Different workloads stress CPU differently. A database, analytics engine, and basic app server may all need different headroom.",
-          "commonMistake": "Using one generic CPU rule for every workload."
+          "whyItMatters": "Different workloads consume CPU differently. A light web service, database, analytics process, and VM host can all behave very differently at the same apparent worker count.",
+          "commonMistake": "Using one generic CPU rule for every workload type.",
+          "links": [
+            {
+              "label": "Compare memory behavior",
+              "kbKey": "compute/ram-sizing",
+              "anchor": "Workload Type",
+              "note": "Memory planning should use the same workload story, not a separate assumption."
+            }
+          ]
         },
         {
-          "label": "CPU Cores",
-          "description": "The number of processor cores allocated or available to the workload.",
+          "id": "Concurrent Workers / Threads",
+          "label": "Concurrent Workers / Threads",
+          "description": "The number of workers, threads, tasks, users, or sessions that may be active at the same time.",
           "examples": [
-            "4 cores",
-            "8 cores",
-            "16 cores",
-            "Virtual CPUs"
+            "8 application workers",
+            "24 analytics threads",
+            "50 active sessions",
+            "Parallel batch jobs"
           ],
-          "whyItMatters": "Core count affects how much parallel work the system can handle.",
-          "commonMistake": "Counting vCPU the same as physical cores without considering host contention."
+          "whyItMatters": "Concurrency turns a small per-worker load into a larger system-level CPU requirement.",
+          "commonMistake": "Sizing around one worker or an average user while ignoring busy-period concurrency.",
+          "links": [
+            {
+              "label": "Compare RAM concurrency",
+              "kbKey": "compute/ram-sizing",
+              "anchor": "Concurrent Processes / VMs"
+            }
+          ]
         },
         {
-          "label": "Concurrency",
-          "description": "How many users, sessions, jobs, or services may be active at the same time.",
+          "id": "Avg CPU per Worker (%)",
+          "label": "Avg CPU per Worker (%)",
+          "description": "The estimated average CPU demand created by each active worker or thread.",
           "examples": [
-            "Active users",
-            "Simultaneous jobs",
-            "Camera analytics streams",
-            "VM workload bursts"
+            "5% per worker",
+            "12% per analytics thread",
+            "Small background service load"
           ],
-          "whyItMatters": "Concurrency often drives peak CPU pressure more than average load.",
-          "commonMistake": "Sizing for average use and ignoring busy periods."
+          "whyItMatters": "This value is multiplied by concurrency, so a small error can become large when many workers are active.",
+          "commonMistake": "Entering a best-case lab number instead of a practical sustained estimate."
         },
         {
-          "label": "Utilization Target",
-          "description": "The intended maximum steady-state CPU utilization.",
+          "id": "Peak Factor (burst)",
+          "label": "Peak Factor (burst)",
+          "description": "A multiplier for busy periods, spikes, reporting jobs, shift changes, or other non-average behavior.",
           "examples": [
-            "60%",
-            "70%",
-            "80%"
+            "1.2 for mild bursts",
+            "1.5 for normal peaks",
+            "2.0+ for heavy bursts"
           ],
-          "whyItMatters": "Lower targets leave more headroom for spikes, background tasks, and growth.",
-          "commonMistake": "Designing around 95–100% utilization and calling it efficient."
+          "whyItMatters": "Peak factor helps avoid designing only for calm steady-state operation.",
+          "commonMistake": "Leaving peak factor near 1.0 when the workload has known bursts."
         },
         {
-          "label": "Peak Load",
-          "description": "The highest expected workload during busy periods.",
+          "id": "Target Max CPU Utilization (%)",
+          "label": "Target Max CPU Utilization (%)",
+          "description": "The maximum steady-state utilization you want the design to stay under.",
           "examples": [
-            "Morning login rush",
-            "Report generation",
-            "Shift change",
-            "Maintenance window"
+            "60% for conservative headroom",
+            "70% for balanced sizing",
+            "80% for tighter capacity use"
           ],
-          "whyItMatters": "Peak load is where undersized CPUs become obvious.",
-          "commonMistake": "Sizing only for normal load."
+          "whyItMatters": "Lower targets leave more room for bursts, background tasks, and future growth.",
+          "commonMistake": "Calling a CPU design efficient because it runs close to 100% all the time.",
+          "links": [
+            {
+              "label": "See density impact",
+              "kbKey": "compute/vm-density",
+              "anchor": "CPU Oversubscription",
+              "note": "Tight CPU targets become more important when many VMs share the same host."
+            }
+          ]
         },
         {
-          "label": "Growth Allowance",
-          "description": "Extra capacity reserved for future workload increases.",
+          "id": "Hyperthreading / SMT",
+          "label": "Hyperthreading / SMT",
+          "description": "Whether logical threads are being treated as available execution capacity.",
           "examples": [
-            "10% growth",
-            "25% growth",
-            "Phase 2 expansion"
+            "SMT on",
+            "Hyperthreading enabled",
+            "Physical-core-only planning"
           ],
-          "whyItMatters": "Growth allowance prevents the design from becoming obsolete immediately.",
-          "commonMistake": "Building for day-one load with no reserve."
+          "whyItMatters": "SMT can improve throughput, but logical threads are not the same as full physical cores under every workload.",
+          "commonMistake": "Counting logical threads as if each one were an independent physical core."
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means the CPU plan has reasonable operating margin. Watch means utilization, concurrency, or growth should be reviewed. Risk means the workload may experience slowdowns, queuing, or poor peak performance."
+        "Healthy means the CPU plan has reasonable operating margin. Watch means the workload may still run, but burst behavior, thread count, or target utilization should be reviewed. Risk means the design may queue, slow down, or require more CPU capacity before it is reliable."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+        "Recommended cores are a planning estimate, not a hardware guarantee.",
+        "Dominant constraint points to the first pressure area to review.",
+        "A healthy score still depends on realistic concurrency and burst assumptions."
       ]
     },
     {
+      "id": "compute-flow-context",
+      "title": "How this fits in the Compute flow",
+      "body": [
+        "CPU Sizing is the first Compute flow step because it sets the processor baseline that later RAM, storage, density, GPU, power, rebuild, and backup decisions build on."
+      ],
+      "bullets": [
+        "Start here when the compute workload shape is still unknown.",
+        "Use the same workload story in RAM Sizing next.",
+        "Do not treat CPU sizing as final until memory and storage pressure are checked."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+        "Most compute planning problems come from trusting one comfortable number while ignoring the rest of the platform. CPU, RAM, storage, network, power, cooling, protection timing, and growth all interact."
       ],
       "bullets": [
         "Sizing only for average load instead of peak behavior.",
-        "Ignoring headroom, background tasks, maintenance, and growth.",
-        "Trusting theoretical maximums as if they are sustained real-world capacity.",
-        "Failing to document assumptions before the system is built."
+        "Ignoring headroom, background tasks, maintenance windows, and growth.",
+        "Treating theoretical maximums as sustained real-world capacity.",
+        "Forgetting that one weak resource can make the rest of the system feel undersized.",
+        "Failing to document assumptions before hardware, licensing, or architecture decisions are locked in."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, benchmark testing, or project-specific engineering judgment."
       ],
       "bullets": [
         "Vendor specifications still matter.",
         "Application behavior may change the final requirement.",
-        "Site conditions and operating procedures may affect the design.",
-        "A design with headroom is usually easier to support and grow."
+        "Site conditions, operating procedures, and maintenance expectations may affect the design.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, compliance review, or project-specific design responsibility."
       ],
       "bullets": [
         "Validate against the actual hardware, platform, and software being deployed.",
         "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Use the results as decision support, not as a final authority."
       ]
     }
   ]

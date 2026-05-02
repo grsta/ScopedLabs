@@ -2,13 +2,14 @@
   "title": "VM Density Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how CPU, RAM, storage, and workload behavior affect virtual machine capacity.",
-  "updated": "2026-04-26",
+  "summary": "Understand host cores, host memory, reserved capacity, per-VM CPU/RAM allocations, oversubscription, overcommit, and spare capacity before consolidating workloads.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether a virtualization host can support the planned number of VMs with practical headroom."
+        "This tool estimates whether a virtualization host can support the planned VM profile with practical CPU and RAM headroom."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
@@ -17,9 +18,10 @@
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when planning virtualization hosts, small clusters, lab environments, server consolidation, or workload expansion."
+        "Use it when planning virtualization hosts, small clusters, lab environments, server consolidation, workload expansion, or host refresh decisions."
       ],
       "bullets": [
         "Early design planning.",
@@ -29,126 +31,194 @@
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+        "These descriptions match the visible VM Density Estimator inputs and explain how each value affects consolidation pressure."
       ],
       "items": [
         {
-          "label": "VM Count",
-          "description": "The number of virtual machines planned for the host or cluster.",
+          "id": "Host CPU Cores",
+          "label": "Host CPU Cores",
+          "description": "The physical CPU core capacity available on the host.",
           "examples": [
-            "5 VMs",
-            "20 VMs",
-            "Mixed workload set"
+            "16 cores",
+            "32 cores",
+            "Dual-socket host"
           ],
-          "whyItMatters": "VM count drives management, resource, and failure-domain pressure.",
-          "commonMistake": "Counting VMs without considering what each VM does."
+          "whyItMatters": "Core capacity limits how much CPU work the host can schedule without contention.",
+          "commonMistake": "Counting logical threads or marketing specs without checking usable physical-core capacity.",
+          "links": [
+            {
+              "label": "Review CPU baseline",
+              "kbKey": "compute/cpu-sizing",
+              "anchor": "CPU Cores"
+            }
+          ]
         },
         {
-          "label": "vCPU Per VM",
-          "description": "The number of virtual CPUs assigned to each VM.",
+          "id": "Host RAM (GB)",
+          "label": "Host RAM (GB)",
+          "description": "The installed memory available on the host before reserves and VM allocations are considered.",
           "examples": [
-            "2 vCPU",
-            "4 vCPU",
-            "8 vCPU"
+            "64 GB",
+            "128 GB",
+            "512 GB"
           ],
-          "whyItMatters": "Over-allocating vCPU can create scheduler contention.",
+          "whyItMatters": "RAM is often the first hard density ceiling because VMs need committed memory to stay stable.",
+          "commonMistake": "Assuming CPU is the only density limiter.",
+          "links": [
+            {
+              "label": "Review RAM baseline",
+              "kbKey": "compute/ram-sizing",
+              "anchor": "Avg RAM per Process (GB)"
+            }
+          ]
+        },
+        {
+          "id": "Reserved (GB)",
+          "label": "Reserved (GB)",
+          "description": "Memory held back for the host OS, hypervisor, management services, and operational safety.",
+          "examples": [
+            "8 GB reserve",
+            "16 GB hypervisor reserve",
+            "Management overhead"
+          ],
+          "whyItMatters": "Reserved memory prevents the host itself from competing with the guest workloads.",
+          "commonMistake": "Packing VMs into memory that the host still needs for stable operation."
+        },
+        {
+          "id": "VM vCPU",
+          "label": "VM vCPU",
+          "description": "The number of virtual CPUs assigned to each VM in the modeled workload profile.",
+          "examples": [
+            "2 vCPU per VM",
+            "4 vCPU per VM",
+            "Mixed VM template average"
+          ],
+          "whyItMatters": "Per-VM vCPU allocation drives scheduler pressure and affects how many VMs can fit comfortably.",
           "commonMistake": "Giving every VM more vCPU than it actually needs."
         },
         {
-          "label": "RAM Per VM",
-          "description": "The memory allocated to each VM.",
+          "id": "VM RAM (GB)",
+          "label": "VM RAM (GB)",
+          "description": "The amount of RAM assigned to each modeled VM.",
           "examples": [
-            "4 GB",
-            "8 GB",
-            "16 GB"
+            "4 GB per VM",
+            "8 GB per VM",
+            "16 GB per VM"
           ],
-          "whyItMatters": "RAM is often the practical density limit.",
-          "commonMistake": "Overcommitting memory without understanding paging risk."
+          "whyItMatters": "VM RAM allocation often controls the final density limit more than CPU allocation.",
+          "commonMistake": "Using a template value that is too large or too small for the real workload."
         },
         {
-          "label": "Storage I/O",
-          "description": "The storage activity generated by the VM set.",
+          "id": "CPU Oversubscription",
+          "label": "CPU Oversubscription",
+          "description": "The allowed ratio of assigned vCPU to physical CPU capacity.",
           "examples": [
-            "Low I/O",
-            "Database VM",
-            "Logging VM",
-            "File server"
+            "2:1 conservative",
+            "4:1 moderate",
+            "Higher ratios for very light workloads"
           ],
-          "whyItMatters": "VMs can compete heavily for storage performance.",
-          "commonMistake": "Only checking CPU and RAM."
+          "whyItMatters": "Oversubscription can improve consolidation but raises contention risk when workloads are active together.",
+          "commonMistake": "Assuming high oversubscription is safe without understanding workload peaks.",
+          "links": [
+            {
+              "label": "Compare CPU utilization target",
+              "kbKey": "compute/cpu-sizing",
+              "anchor": "Target Max CPU Utilization (%)"
+            }
+          ]
         },
         {
-          "label": "Host Headroom",
-          "description": "Resources reserved for bursts, maintenance, and failover.",
+          "id": "RAM Overcommit",
+          "label": "RAM Overcommit",
+          "description": "Whether assigned VM memory is allowed to exceed physical memory assumptions.",
           "examples": [
-            "20% spare",
-            "N+1 reserve",
-            "Maintenance mode"
+            "No overcommit",
+            "Light overcommit",
+            "Aggressive lab overcommit"
           ],
-          "whyItMatters": "Headroom keeps the environment stable under abnormal conditions.",
-          "commonMistake": "Packing the host to maximum capacity."
+          "whyItMatters": "Memory overcommit can raise density, but it can also create paging and instability when workloads grow.",
+          "commonMistake": "Treating RAM overcommit as free capacity."
         },
         {
-          "label": "Workload Mix",
-          "description": "The combination of light and heavy VMs.",
+          "id": "Spare (%)",
+          "label": "Spare (%)",
+          "description": "The percentage of host capacity reserved for bursts, maintenance, failover, and growth.",
           "examples": [
-            "Domain controller",
-            "Database",
-            "Application server",
-            "Analytics VM"
+            "15% spare",
+            "25% spare",
+            "N+1 style reserve"
           ],
-          "whyItMatters": "A few heavy VMs can dominate resource usage.",
-          "commonMistake": "Averaging all VMs as if they behave the same."
+          "whyItMatters": "Spare capacity keeps the host from running at the edge and supports operational events.",
+          "commonMistake": "Filling the host because the calculator says one more VM technically fits."
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means VM density appears reasonable. Watch means resource contention should be reviewed. Risk means the host may become overloaded or difficult to support."
+        "Healthy means VM density appears reasonable. Watch means CPU, RAM, overcommit, or spare assumptions should be reviewed. Risk means the host may become overloaded, difficult to maintain, or unable to tolerate bursts or failover."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+        "The limiting side may be CPU or RAM, not necessarily both.",
+        "Oversubscription and overcommit are policy decisions, not guarantees.",
+        "Spare capacity is part of the design, not leftover waste."
       ]
     },
     {
+      "id": "compute-flow-context",
+      "title": "How this fits in the Compute flow",
+      "body": [
+        "VM Density uses the CPU, RAM, and storage context built earlier in the Compute flow to test whether the platform can actually consolidate workloads safely."
+      ],
+      "bullets": [
+        "Do not use VM count alone as a density measure.",
+        "Keep CPU and RAM assumptions consistent with prior steps.",
+        "Use density results before considering GPU acceleration or power/thermal impact."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+        "Most compute planning problems come from trusting one comfortable number while ignoring the rest of the platform. CPU, RAM, storage, network, power, cooling, protection timing, and growth all interact."
       ],
       "bullets": [
         "Sizing only for average load instead of peak behavior.",
-        "Ignoring headroom, background tasks, maintenance, and growth.",
-        "Trusting theoretical maximums as if they are sustained real-world capacity.",
-        "Failing to document assumptions before the system is built."
+        "Ignoring headroom, background tasks, maintenance windows, and growth.",
+        "Treating theoretical maximums as sustained real-world capacity.",
+        "Forgetting that one weak resource can make the rest of the system feel undersized.",
+        "Failing to document assumptions before hardware, licensing, or architecture decisions are locked in."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, benchmark testing, or project-specific engineering judgment."
       ],
       "bullets": [
         "Vendor specifications still matter.",
         "Application behavior may change the final requirement.",
-        "Site conditions and operating procedures may affect the design.",
-        "A design with headroom is usually easier to support and grow."
+        "Site conditions, operating procedures, and maintenance expectations may affect the design.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, compliance review, or project-specific design responsibility."
       ],
       "bullets": [
         "Validate against the actual hardware, platform, and software being deployed.",
         "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Use the results as decision support, not as a final authority."
       ]
     }
   ]

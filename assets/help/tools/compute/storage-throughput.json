@@ -2,13 +2,14 @@
   "title": "Storage Throughput Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand sustained MB/s demand, sequential workload pressure, storage path limits, and transfer windows.",
-  "updated": "2026-04-26",
+  "summary": "Understand how IOPS, average I/O size, read/write mix, and overhead convert random activity into sustained MB/s demand.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether a storage system can move enough data per second for the expected workload."
+        "This tool estimates storage throughput demand from operation count, I/O size, read percentage, write percentage, and overhead."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
@@ -17,9 +18,10 @@
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it for backups, archives, video workloads, file transfers, analytics reads, large data imports, or sequential storage activity."
+        "Use it when a workload has enough I/O volume that MB/s, storage path bandwidth, controller limits, or transfer behavior may become the limiter."
       ],
       "bullets": [
         "Early design planning.",
@@ -29,127 +31,151 @@
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+        "These descriptions match the visible Storage Throughput Estimator inputs and explain how each value affects sustained throughput pressure."
       ],
       "items": [
         {
-          "label": "Data Volume",
-          "description": "The amount of data that must be moved or processed.",
+          "id": "IOPS",
+          "label": "IOPS",
+          "description": "The number of storage operations per second to convert into throughput demand.",
           "examples": [
-            "500 GB",
-            "2 TB",
-            "Daily archive",
-            "Backup set"
+            "500 IOPS",
+            "5,000 IOPS",
+            "Carried from Storage IOPS"
           ],
-          "whyItMatters": "Data volume drives the required transfer rate when time is limited.",
-          "commonMistake": "Sizing storage capacity but ignoring how fast data must move."
+          "whyItMatters": "IOPS becomes MB/s once each operation has a size. High IOPS with larger blocks can create substantial bandwidth demand.",
+          "commonMistake": "Checking IOPS alone and forgetting the storage path also has a throughput limit.",
+          "links": [
+            {
+              "label": "Review IOPS assumptions",
+              "kbKey": "compute/storage-iops",
+              "anchor": "Transactions per Second"
+            }
+          ]
         },
         {
-          "label": "Transfer Window",
-          "description": "The time available to complete the transfer.",
+          "id": "Avg I/O Size (KB)",
+          "label": "Avg I/O Size (KB)",
+          "description": "The average size of each storage operation in kilobytes.",
           "examples": [
-            "Overnight backup",
-            "One-hour export",
-            "Maintenance window"
+            "4 KB random workload",
+            "16 KB database I/O",
+            "64 KB larger block activity"
           ],
-          "whyItMatters": "Short windows require higher sustained throughput.",
-          "commonMistake": "Assuming a transfer can run forever."
+          "whyItMatters": "Larger I/O sizes turn the same IOPS count into more MB/s.",
+          "commonMistake": "Comparing IOPS numbers without matching block size."
         },
         {
-          "label": "Read Throughput",
-          "description": "The sustained rate data can be read from storage.",
+          "id": "Read %",
+          "label": "Read %",
+          "description": "The percentage of operations that are reads.",
           "examples": [
-            "Sequential read",
-            "Archive read",
-            "Backup source"
+            "80% read-heavy",
+            "50% balanced",
+            "Analytics read burst"
           ],
-          "whyItMatters": "Read limits can bottleneck even if the destination is fast.",
-          "commonMistake": "Only checking write speed."
+          "whyItMatters": "Read-heavy and write-heavy workloads may stress different parts of the storage stack.",
+          "commonMistake": "Treating all throughput as identical regardless of direction."
         },
         {
-          "label": "Write Throughput",
-          "description": "The sustained rate data can be written to storage.",
+          "id": "Write %",
+          "label": "Write %",
+          "description": "The percentage of operations that are writes.",
           "examples": [
-            "Backup target",
-            "Archive volume",
-            "Import destination"
+            "20% writes",
+            "50% mixed workload",
+            "Write-heavy logging"
           ],
-          "whyItMatters": "Write speed affects whether the destination can keep up.",
-          "commonMistake": "Trusting peak write specs instead of sustained behavior."
+          "whyItMatters": "Write throughput can be constrained by parity, cache, media endurance, or sync behavior.",
+          "commonMistake": "Trusting peak write specs instead of sustained write behavior."
         },
         {
-          "label": "Network Path",
-          "description": "The network link involved in moving the data.",
+          "id": "Overhead (%)",
+          "label": "Overhead (%)",
+          "description": "Additional throughput load from protocol overhead, filesystem behavior, encryption, parity, metadata, or inefficiency.",
           "examples": [
-            "1 GbE",
-            "10 GbE",
-            "NAS link",
-            "WAN path"
+            "10% protocol overhead",
+            "20% encryption/parity overhead",
+            "Higher overhead for layered storage"
           ],
-          "whyItMatters": "Network throughput may become the real bottleneck.",
-          "commonMistake": "Sizing disks without checking the network path."
-        },
-        {
-          "label": "Overhead",
-          "description": "Extra load from protocol, filesystem, encryption, compression, or parity behavior.",
-          "examples": [
-            "SMB overhead",
-            "Encryption",
-            "RAID parity",
-            "Compression"
-          ],
-          "whyItMatters": "Overhead reduces usable throughput.",
-          "commonMistake": "Assuming theoretical speed equals real transfer speed."
+          "whyItMatters": "Overhead reduces the usable throughput available to the actual workload.",
+          "commonMistake": "Assuming theoretical storage or network speed equals usable application throughput.",
+          "links": [
+            {
+              "label": "Compare network path behavior",
+              "kbKey": "compute/nic-bonding",
+              "anchor": "Utilization Target (%)"
+            }
+          ]
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means the storage path has reasonable throughput margin. Watch means transfer windows or bottlenecks should be reviewed. Risk means the storage path may not complete work in the required time."
+        "Healthy means the throughput estimate appears manageable. Watch means block size, overhead, or storage path capacity should be reviewed. Risk means the storage path may not sustain the required MB/s even if IOPS looked acceptable."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+        "Final throughput is the practical MB/s estimate after overhead.",
+        "Read/write split helps identify direction-specific pressure.",
+        "Throughput and IOPS should be evaluated together before sizing storage hardware."
       ]
     },
     {
+      "id": "compute-flow-context",
+      "title": "How this fits in the Compute flow",
+      "body": [
+        "Storage Throughput follows Storage IOPS because the same I/O profile can create a very different bandwidth requirement depending on operation size and overhead."
+      ],
+      "bullets": [
+        "Use IOPS as the upstream demand driver when available.",
+        "Carry the storage performance story into VM Density and backup planning.",
+        "Do not assume passing IOPS means the storage path is complete."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+        "Most compute planning problems come from trusting one comfortable number while ignoring the rest of the platform. CPU, RAM, storage, network, power, cooling, protection timing, and growth all interact."
       ],
       "bullets": [
         "Sizing only for average load instead of peak behavior.",
-        "Ignoring headroom, background tasks, maintenance, and growth.",
-        "Trusting theoretical maximums as if they are sustained real-world capacity.",
-        "Failing to document assumptions before the system is built."
+        "Ignoring headroom, background tasks, maintenance windows, and growth.",
+        "Treating theoretical maximums as sustained real-world capacity.",
+        "Forgetting that one weak resource can make the rest of the system feel undersized.",
+        "Failing to document assumptions before hardware, licensing, or architecture decisions are locked in."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, benchmark testing, or project-specific engineering judgment."
       ],
       "bullets": [
         "Vendor specifications still matter.",
         "Application behavior may change the final requirement.",
-        "Site conditions and operating procedures may affect the design.",
-        "A design with headroom is usually easier to support and grow."
+        "Site conditions, operating procedures, and maintenance expectations may affect the design.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, compliance review, or project-specific design responsibility."
       ],
       "bullets": [
         "Validate against the actual hardware, platform, and software being deployed.",
         "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Use the results as decision support, not as a final authority."
       ]
     }
   ]

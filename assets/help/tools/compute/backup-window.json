@@ -2,13 +2,14 @@
   "title": "Backup Window Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand whether backup volume, throughput, and overhead fit inside the available backup window.",
-  "updated": "2026-04-26",
+  "summary": "Understand dataset size, change rate, backup type, effective throughput, compression/deduplication, overhead, and whether protection timing fits the available operating window.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether the required backup can complete in the time available."
+        "This tool estimates whether backup work can complete in a practical time window after data change, throughput, savings, and overhead are considered."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
@@ -17,9 +18,10 @@
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when planning backup jobs, archive copies, offsite replication, maintenance windows, or recovery documentation."
+        "Use it when planning backup jobs, archive copies, offsite replication, recovery documentation, maintenance windows, or protection schedules for compute platforms."
       ],
       "bullets": [
         "Early design planning.",
@@ -29,124 +31,161 @@
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+        "These descriptions match the visible Backup Window Estimator inputs and explain how each value affects protection timing."
       ],
       "items": [
         {
-          "label": "Backup Size",
-          "description": "The amount of data that must be backed up.",
+          "id": "Total Dataset Size (TB)",
+          "label": "Total Dataset Size (TB)",
+          "description": "The total source data footprint protected by the backup plan.",
           "examples": [
-            "500 GB",
-            "2 TB",
-            "Daily change set"
+            "2 TB dataset",
+            "12 TB server set",
+            "Full VM datastore"
           ],
-          "whyItMatters": "Backup size drives required throughput.",
-          "commonMistake": "Sizing only for today's data and ignoring growth."
+          "whyItMatters": "Dataset size defines the upper bound of what may need to be protected, especially for full backups.",
+          "commonMistake": "Sizing only around today's data and ignoring near-term growth."
         },
         {
-          "label": "Backup Window",
-          "description": "The time available for the backup job to complete.",
+          "id": "Daily Change Rate (%)",
+          "label": "Daily Change Rate (%)",
+          "description": "The percentage of the dataset expected to change during the backup interval.",
           "examples": [
-            "4 hours",
-            "Overnight",
-            "Weekend window"
+            "2% daily change",
+            "10% active dataset",
+            "High-change database workload"
           ],
-          "whyItMatters": "Shorter windows require higher sustained throughput.",
-          "commonMistake": "Assuming backups can run into production hours."
+          "whyItMatters": "Change rate controls incremental/differential backup size and can matter more than total capacity for recurring jobs.",
+          "commonMistake": "Assuming daily backups only move a tiny amount without checking real change behavior."
         },
         {
-          "label": "Throughput",
-          "description": "The real sustained transfer rate of the backup path.",
+          "id": "Backup Type",
+          "label": "Backup Type",
+          "description": "The backup method being modeled, such as full, incremental, or differential behavior.",
           "examples": [
-            "NAS speed",
-            "WAN speed",
-            "Disk-to-disk speed"
+            "Full backup",
+            "Incremental backup",
+            "Differential-style protection"
           ],
-          "whyItMatters": "Real throughput is often lower than link speed.",
-          "commonMistake": "Using theoretical network speed as backup speed."
+          "whyItMatters": "Backup type determines how much data should be moved for each cycle.",
+          "commonMistake": "Comparing backup products without matching the same job type."
         },
         {
-          "label": "Compression / Deduplication",
-          "description": "Reduction methods that may lower transferred data but add processing overhead.",
+          "id": "Effective Throughput (MB/s)",
+          "label": "Effective Throughput (MB/s)",
+          "description": "The real sustained backup speed after source, target, network, protocol, and job behavior are considered.",
           "examples": [
-            "Compression",
-            "Deduplication",
-            "Incremental backup"
+            "150 MB/s to NAS",
+            "600 MB/s disk-to-disk",
+            "WAN-limited throughput"
           ],
-          "whyItMatters": "These can help, but may also consume CPU or time.",
-          "commonMistake": "Assuming dedupe always saves the same amount."
+          "whyItMatters": "Effective throughput determines whether the job finishes inside the window.",
+          "commonMistake": "Using link speed or disk peak speed as if it were real backup throughput.",
+          "links": [
+            {
+              "label": "Compare throughput math",
+              "kbKey": "compute/storage-throughput",
+              "anchor": "Overhead (%)"
+            },
+            {
+              "label": "Check network aggregation assumptions",
+              "kbKey": "compute/nic-bonding",
+              "anchor": "Link Speed (Gbps)"
+            }
+          ]
         },
         {
-          "label": "Overhead",
-          "description": "Extra time from scanning, verification, encryption, snapshots, or job startup.",
+          "id": "Compression / Dedup (%)",
+          "label": "Compression / Dedup (%)",
+          "description": "The expected reduction in data transferred or stored because of compression or deduplication.",
           "examples": [
-            "Verification",
-            "Encryption",
-            "Snapshot prep"
+            "20% savings",
+            "50% deduplication",
+            "No useful reduction"
           ],
-          "whyItMatters": "Overhead can make a backup miss its window even if transfer math looks good.",
-          "commonMistake": "Ignoring non-transfer time."
+          "whyItMatters": "Savings can help the window, but they may vary widely by data type and backup method.",
+          "commonMistake": "Assuming deduplication always saves the same amount on every dataset."
         },
         {
-          "label": "Growth",
-          "description": "Expected future increase in backup size.",
+          "id": "Overhead (%)",
+          "label": "Overhead (%)",
+          "description": "Extra time or data impact from scanning, encryption, verification, snapshots, metadata, job startup, or operational inefficiency.",
           "examples": [
-            "More data",
-            "More servers",
-            "Longer retention"
+            "10% overhead",
+            "Verification enabled",
+            "Encryption and snapshot prep"
           ],
-          "whyItMatters": "Backup windows can fail later as data grows.",
-          "commonMistake": "Sizing only for the first backup cycle."
+          "whyItMatters": "Overhead can cause a backup to miss its window even when raw transfer math looks acceptable.",
+          "commonMistake": "Ignoring all non-transfer work in the backup process."
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means the backup should fit comfortably. Watch means throughput or job schedule should be reviewed. Risk means the backup may overrun the window."
+        "Healthy means the backup should fit with reasonable margin. Watch means throughput, data growth, or job schedule should be reviewed. Risk means the backup may overrun the intended window or collide with recovery expectations."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+        "Effective backup duration depends on real throughput, not theoretical speed.",
+        "Compression and deduplication help only when the dataset actually supports them.",
+        "A backup window should be compared against operations, maintenance, and recovery expectations."
       ]
     },
     {
+      "id": "compute-flow-context",
+      "title": "How this fits in the Compute flow",
+      "body": [
+        "Backup Window is the final resilience check in the Compute flow because it tests whether the platform can be protected after sizing, performance, density, power, and recovery exposure are understood."
+      ],
+      "bullets": [
+        "Use rebuild exposure from RAID Rebuild Time as recovery context.",
+        "Use storage and network throughput assumptions carefully.",
+        "A compute design is incomplete if it cannot be backed up in the required operating window."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+        "Most compute planning problems come from trusting one comfortable number while ignoring the rest of the platform. CPU, RAM, storage, network, power, cooling, protection timing, and growth all interact."
       ],
       "bullets": [
         "Sizing only for average load instead of peak behavior.",
-        "Ignoring headroom, background tasks, maintenance, and growth.",
-        "Trusting theoretical maximums as if they are sustained real-world capacity.",
-        "Failing to document assumptions before the system is built."
+        "Ignoring headroom, background tasks, maintenance windows, and growth.",
+        "Treating theoretical maximums as sustained real-world capacity.",
+        "Forgetting that one weak resource can make the rest of the system feel undersized.",
+        "Failing to document assumptions before hardware, licensing, or architecture decisions are locked in."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, benchmark testing, or project-specific engineering judgment."
       ],
       "bullets": [
         "Vendor specifications still matter.",
         "Application behavior may change the final requirement.",
-        "Site conditions and operating procedures may affect the design.",
-        "A design with headroom is usually easier to support and grow."
+        "Site conditions, operating procedures, and maintenance expectations may affect the design.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, compliance review, or project-specific design responsibility."
       ],
       "bullets": [
         "Validate against the actual hardware, platform, and software being deployed.",
         "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Use the results as decision support, not as a final authority."
       ]
     }
   ]

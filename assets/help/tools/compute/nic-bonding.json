@@ -2,13 +2,14 @@
   "title": "NIC Bonding Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand link aggregation, failover behavior, throughput expectations, and network-path redundancy.",
-  "updated": "2026-04-26",
+  "summary": "Understand link count, link speed, bonding mode, hash policy, flow count, utilization target, aggregate throughput, per-flow limits, and redundancy expectations.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate whether a NIC bonding or teaming design matches the desired throughput and resiliency goal."
+        "This tool evaluates whether a NIC bonding or teaming design matches the expected throughput and resiliency behavior."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
@@ -17,9 +18,10 @@
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when planning server network ports, virtualization hosts, NAS links, backup networks, or redundant uplinks."
+        "Use it when planning server network ports, virtualization hosts, NAS links, backup networks, storage paths, redundant uplinks, or multi-NIC compute designs."
       ],
       "bullets": [
         "Early design planning.",
@@ -29,125 +31,164 @@
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical compute and infrastructure planning terms."
+        "These descriptions match the visible NIC Bonding Planner inputs and explain how each value affects throughput and failover behavior."
       ],
       "items": [
         {
-          "label": "NIC Count",
-          "description": "The number of network interfaces in the bond/team.",
+          "id": "Number of Links",
+          "label": "Number of Links",
+          "description": "The number of physical network links included in the bond or team.",
           "examples": [
-            "2 NICs",
-            "4 NICs",
+            "2 links",
+            "4 links",
             "Dual-port adapter"
           ],
-          "whyItMatters": "More NICs can add redundancy or aggregate capacity depending on mode.",
-          "commonMistake": "Assuming two NICs always doubles single-flow speed."
+          "whyItMatters": "More links can add aggregate capacity, redundancy, or both depending on bonding mode.",
+          "commonMistake": "Assuming two links automatically doubles every transfer."
         },
         {
-          "label": "Link Speed",
-          "description": "The speed of each physical link.",
+          "id": "Link Speed (Gbps)",
+          "label": "Link Speed (Gbps)",
+          "description": "The speed of each physical network link.",
           "examples": [
-            "1 GbE",
-            "10 GbE",
-            "25 GbE"
+            "1 Gbps",
+            "10 Gbps",
+            "25 Gbps"
           ],
-          "whyItMatters": "Per-link speed limits individual traffic flows in many bonding modes.",
-          "commonMistake": "Expecting one connection to use every link at once."
+          "whyItMatters": "Per-link speed often limits single-flow traffic even when aggregate capacity is higher.",
+          "commonMistake": "Expecting one connection to use every link at once.",
+          "links": [
+            {
+              "label": "Compare backup throughput needs",
+              "kbKey": "compute/backup-window",
+              "anchor": "Effective Throughput (MB/s)"
+            }
+          ]
         },
         {
-          "label": "Bond Mode",
-          "description": "The teaming method used.",
+          "id": "Bonding Mode",
+          "label": "Bonding Mode",
+          "description": "The teaming method used to combine or protect links.",
           "examples": [
             "Active-backup",
             "LACP",
-            "Static aggregation"
+            "XOR/static",
+            "Round-robin"
           ],
-          "whyItMatters": "Mode determines failover and load-sharing behavior.",
-          "commonMistake": "Configuring LACP on the server without matching switch support."
+          "whyItMatters": "Mode determines failover behavior, load distribution, switch requirements, and compatibility risk.",
+          "commonMistake": "Configuring a server mode that the switch side does not actually support."
         },
         {
-          "label": "Traffic Type",
-          "description": "The kind of traffic crossing the bond.",
+          "id": "Hash Policy (if LACP/XOR)",
+          "label": "Hash Policy (if LACP/XOR)",
+          "description": "The traffic fields used to distribute flows across links when hash-based bonding is used.",
           "examples": [
-            "VM traffic",
-            "Backup traffic",
-            "Storage traffic",
-            "Management"
+            "Layer 2",
+            "Layer 3+4",
+            "Source/destination hashing"
           ],
-          "whyItMatters": "Traffic pattern affects whether load balancing helps.",
-          "commonMistake": "Designing for aggregate throughput when traffic is mostly one large flow."
+          "whyItMatters": "Hash policy affects whether traffic spreads across links or piles onto one path.",
+          "commonMistake": "Assuming LACP balances perfectly without checking traffic diversity."
         },
         {
-          "label": "Switch Support",
-          "description": "Whether the upstream switch supports the selected mode.",
+          "id": "Number of Concurrent Flows",
+          "label": "Number of Concurrent Flows",
+          "description": "The number of independent traffic flows available for the bond to distribute.",
           "examples": [
-            "LACP capable",
-            "Separate switches",
-            "Stacked switches"
+            "1 large backup stream",
+            "Many VM flows",
+            "Multiple client sessions"
           ],
-          "whyItMatters": "Switch behavior determines whether the bond works reliably.",
-          "commonMistake": "Connecting bonded links to unrelated switches without supported design."
+          "whyItMatters": "Many bonding modes improve aggregate throughput only when there are multiple flows to distribute.",
+          "commonMistake": "Testing with many flows and then expecting one large production flow to behave the same."
         },
         {
-          "label": "Failover Goal",
-          "description": "What should happen when a link or switch path fails.",
+          "id": "Utilization Target (%)",
+          "label": "Utilization Target (%)",
+          "description": "The intended usable percentage of theoretical aggregate link capacity.",
           "examples": [
-            "Link failover",
-            "Switch redundancy",
-            "Maintenance tolerance"
+            "60% conservative",
+            "75% balanced",
+            "85% tight"
           ],
-          "whyItMatters": "Redundancy goals may require active-backup or MLAG-style designs.",
-          "commonMistake": "Confusing throughput aggregation with true path redundancy."
+          "whyItMatters": "Lower targets leave room for overhead, imbalance, failover, and burst behavior.",
+          "commonMistake": "Counting 100% of aggregate link speed as reliable usable capacity.",
+          "links": [
+            {
+              "label": "Compare storage throughput pressure",
+              "kbKey": "compute/storage-throughput",
+              "anchor": "Overhead (%)"
+            }
+          ]
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means the bond design is likely aligned with the goal. Watch means mode, switch support, or traffic distribution should be reviewed. Risk means the design may not provide the expected throughput or failover behavior."
+        "Healthy means the bonding design likely aligns with the throughput and redundancy goal. Watch means mode, hash policy, flow count, or utilization should be reviewed. Risk means the design may create false expectations around aggregate speed or failover behavior."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: add capacity, simplify the design, or validate the design more carefully before implementation."
+        "Aggregate capacity does not guarantee single-flow capacity.",
+        "LACP and hashing depend heavily on traffic diversity.",
+        "Redundancy and throughput are related but not the same design goal."
       ]
     },
     {
+      "id": "compute-flow-context",
+      "title": "How this fits in the Compute flow",
+      "body": [
+        "NIC Bonding supports the Compute flow where storage, backup, virtualization, and host traffic may all depend on realistic network-path behavior."
+      ],
+      "bullets": [
+        "Use this guide when backup or storage throughput depends on server network links.",
+        "Do not treat link aggregation as a cure for every bottleneck.",
+        "Use fewer faster links or a different topology when single-flow limits dominate."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most compute planning problems come from sizing one resource in isolation while ignoring the way CPU, memory, storage, network, power, and growth interact."
+        "Most compute planning problems come from trusting one comfortable number while ignoring the rest of the platform. CPU, RAM, storage, network, power, cooling, protection timing, and growth all interact."
       ],
       "bullets": [
         "Sizing only for average load instead of peak behavior.",
-        "Ignoring headroom, background tasks, maintenance, and growth.",
-        "Trusting theoretical maximums as if they are sustained real-world capacity.",
-        "Failing to document assumptions before the system is built."
+        "Ignoring headroom, background tasks, maintenance windows, and growth.",
+        "Treating theoretical maximums as sustained real-world capacity.",
+        "Forgetting that one weak resource can make the rest of the system feel undersized.",
+        "Failing to document assumptions before hardware, licensing, or architecture decisions are locked in."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, application requirements, benchmark testing, or project-specific engineering judgment."
       ],
       "bullets": [
         "Vendor specifications still matter.",
         "Application behavior may change the final requirement.",
-        "Site conditions and operating procedures may affect the design.",
-        "A design with headroom is usually easier to support and grow."
+        "Site conditions, operating procedures, and maintenance expectations may affect the design.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, application testing, compliance review, or project-specific design responsibility."
       ],
       "bullets": [
         "Validate against the actual hardware, platform, and software being deployed.",
         "Confirm stakeholder expectations and operating requirements.",
-        "Document assumptions before implementation."
+        "Document assumptions before implementation.",
+        "Use the results as decision support, not as a final authority."
       ]
     }
   ]
