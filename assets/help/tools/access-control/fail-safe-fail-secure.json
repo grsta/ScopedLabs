@@ -2,152 +2,222 @@
   "title": "Fail-Safe / Fail-Secure Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand lock behavior during power loss and how that affects life safety, security, and operations.",
-  "updated": "2026-04-26",
+  "updated": "2026-05-02",
+  "summary": "Use this guide to understand door behavior during power loss, how life safety and security pressure compete, and why the fail state should be decided before reader type, lock power, and panel planning.",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps compare fail-safe and fail-secure behavior for a controlled opening based on the door type, security need, egress requirements, and power-loss expectations."
-      ],
-      "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch design pressure before it becomes field trouble."
+        "Fail-Safe / Fail-Secure helps decide how a controlled opening should behave when power is lost or abnormal conditions occur.",
+        "The tool weighs door function, life-safety priority, power reliability, fire alarm integration, and threat level to produce a planning recommendation: FAIL-SAFE, FAIL-SECURE, or CONDITIONAL.",
+        "This is intentionally the first step in the Access Control design flow because the fail-state decision influences lock hardware, reader strategy, power design, panel planning, and the final access structure."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
-      "body": [
-        "Use it when selecting electric strikes, maglocks, electrified levers, gate locks, or any opening where power-loss behavior matters."
-      ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-system cleanup or validation.",
-        "Explaining tradeoffs to a client, stakeholder, or internal team."
+        "Before choosing an electric strike, maglock, electrified lever, electrified exit device, gate lock, or other controlled-locking hardware.",
+        "When reviewing doors where power loss, fire alarm release, emergency egress, or perimeter security could conflict.",
+        "Before moving into reader type, lock power, panel capacity, or access-level planning.",
+        "When documenting why one door should release on power loss while another should remain secured.",
+        "When a door condition is not obvious and needs to be escalated for AHJ, code, owner, or operations review."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical access-control terms."
+        "These headings match the visible input labels on the calculator so the guide can be read directly against the form."
       ],
       "items": [
         {
-          "label": "Opening Type",
-          "description": "The type of door, gate, or controlled opening.",
+          "id": "door-type",
+          "label": "Door Type",
+          "description": "The functional role of the controlled opening. This is not just the physical door style; it describes what the opening protects and how people are expected to use it.",
           "examples": [
-            "Office door",
-            "Exterior door",
-            "Stairwell",
-            "Gate",
-            "Server room"
+            "Interior: office, storage, or general controlled interior opening.",
+            "Perimeter / Exterior: exterior access point or boundary door.",
+            "Stairwell / Exit: exit path or egress-sensitive opening.",
+            "IT / Critical: server room, equipment room, or high-value secured area."
           ],
-          "whyItMatters": "Different openings have different safety and security expectations.",
-          "commonMistake": "Using the same lock behavior everywhere."
+          "whyItMatters": "Door function strongly affects whether power loss should prioritize release behavior, security retention, or a conditional/code-driven decision.",
+          "commonMistake": "Treating all doors the same because they use similar readers or locks. Door function often matters more than hardware preference.",
+          "links": [
+            {
+              "label": "Reader Type Selector guide",
+              "kbKey": "access-control/reader-type-selector",
+              "note": "Use this related guide after fail-state behavior is clear and reader strategy becomes the next design decision."
+            }
+          ]
         },
         {
-          "label": "Fail-Safe",
-          "description": "A lock behavior where loss of power unlocks the opening.",
+          "id": "life-safety-priority",
+          "label": "Life Safety Priority",
+          "description": "How strongly the opening must prioritize safe egress, emergency release behavior, and occupant movement during abnormal conditions.",
           "examples": [
-            "Maglock release",
-            "Free egress on power loss"
+            "High: exit paths, stairwells, fire/life-safety-sensitive areas, or doors where trapped egress would be unacceptable.",
+            "Medium: controlled interior openings where egress matters but the door is not the primary exit logic.",
+            "Low: areas where security retention is usually more important than automatic release."
           ],
-          "whyItMatters": "Often supports emergency release needs but may reduce security during outages.",
-          "commonMistake": "Using fail-safe where the area must remain secured during power loss."
+          "whyItMatters": "Life-safety requirements can override convenience and security preferences. A high life-safety priority pushes the recommendation toward release behavior or a formal code-driven review.",
+          "commonMistake": "Assuming access-control security goals can override egress requirements."
         },
         {
-          "label": "Fail-Secure",
-          "description": "A lock behavior where loss of power keeps the opening locked from the controlled side.",
+          "id": "power-reliability",
+          "label": "Power Reliability",
+          "description": "How dependable the power source is for the opening and how often the site expects outages, brownouts, or abnormal power behavior.",
           "examples": [
-            "Electric strike secure on outage",
-            "Storeroom function"
+            "Frequent Issues: unstable site power, known outage history, or unreliable local power supplies.",
+            "Normal: typical building power with no special outage expectation.",
+            "UPS / Generator: backed by standby power or a more resilient power path."
           ],
-          "whyItMatters": "Often preserves security but must still satisfy egress requirements.",
-          "commonMistake": "Using fail-secure without confirming legal egress."
+          "whyItMatters": "Power reliability affects how often the lock may be forced into its fail state. A fail state that looks acceptable on paper can become operationally painful if outages are common.",
+          "commonMistake": "Choosing hardware based only on normal operation and ignoring what happens during real outages or battery failures.",
+          "links": [
+            {
+              "label": "Lock Power Budget guide",
+              "kbKey": "access-control/lock-power-budget",
+              "note": "Use this related guide when power reliability or lock behavior depends on supply sizing, current draw, and unlock events."
+            }
+          ]
         },
         {
-          "label": "Egress Requirement",
-          "description": "The requirement for people to exit safely.",
+          "id": "fire-alarm-integration",
+          "label": "Fire Alarm Integration",
+          "description": "Whether the opening is expected to interact with the fire alarm or emergency release system. This affects whether locks must release, remain secured with compliant egress, or follow a dedicated life-safety sequence.",
           "examples": [
-            "Free egress",
-            "Fire alarm release",
-            "Emergency exit"
+            "Yes: the door release, lock power, or access-control behavior is tied to alarm or emergency logic.",
+            "No: the opening has no planned fire-alarm interaction through the access-control design."
           ],
-          "whyItMatters": "Life safety requirements override convenience and many security preferences.",
-          "commonMistake": "Assuming access control rules can override egress requirements."
+          "whyItMatters": "Fire alarm integration can change acceptable lock behavior and may require coordination with fire alarm, life-safety, door hardware, and AHJ requirements.",
+          "commonMistake": "Marking fire integration as a simple yes/no field without confirming the exact required sequence."
         },
         {
-          "label": "Power Backup",
-          "description": "Battery or UPS support for the locking circuit.",
+          "id": "threat-level",
+          "label": "Threat Level",
+          "description": "The security pressure on the opening. Higher threat levels mean the consequence of unlocking or releasing during abnormal conditions is more serious.",
           "examples": [
-            "Local power supply battery",
-            "UPS-backed panel",
-            "No backup"
+            "Low: low-risk interior office or general-use opening.",
+            "Medium: controlled area with moderate asset or occupancy concern.",
+            "High: perimeter, IT, critical infrastructure, cash handling, inventory, or high-value area."
           ],
-          "whyItMatters": "Backup power changes how long normal lock behavior can continue.",
-          "commonMistake": "Ignoring outage duration and battery maintenance."
-        },
-        {
-          "label": "Security Priority",
-          "description": "How important it is for the opening to remain secure during abnormal conditions.",
-          "examples": [
-            "Public lobby",
-            "Inventory room",
-            "Data room",
-            "Exterior perimeter"
-          ],
-          "whyItMatters": "High-security areas may require different hardware or backup strategy.",
-          "commonMistake": "Choosing hardware based only on normal daily operation."
+          "whyItMatters": "Threat level pushes the design toward retaining security during power loss, but it still must be balanced against safe egress and code requirements.",
+          "commonMistake": "Letting threat level drive the decision without proving that egress remains compliant and practical."
         }
       ]
     },
     {
-      "title": "How to read the results",
+      "id": "how-to-interpret-results",
+      "title": "How to interpret results",
       "body": [
-        "Healthy means the behavior aligns with the likely operational need. Watch means confirm life-safety and site requirements. Risk means the lock behavior may conflict with egress, security, or emergency expectations."
+        "The recommendation is a planning direction, not a final code approval. It summarizes which pressure is stronger based on the entered assumptions.",
+        "FAIL-SAFE means the design leans toward release behavior on power loss. FAIL-SECURE means the design leans toward staying secured from the controlled side during power loss. CONDITIONAL means the inputs are balanced enough that the final answer should be driven by code review, AHJ direction, owner requirements, and the actual door hardware sequence."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: simplify the design, add capacity, or validate the design more carefully before implementation."
+        "Recommendation: the planning direction for power-loss behavior.",
+        "Confidence: how strongly the inputs point in one direction.",
+        "Why: the high-level reason the tool selected that direction.",
+        "Primary Risk: the main tradeoff to document before moving forward.",
+        "Score: the internal planning score used to show direction and strength."
       ]
     },
     {
+      "id": "healthy-watch-risk",
+      "title": "Healthy / Watch / Risk interpretation",
+      "body": [
+        "This tool uses status to describe decision confidence, not whether a door is legally compliant.",
+        "HEALTHY means the entered assumptions point clearly toward a planning recommendation. WATCH means the result is conditional, low-confidence, or sensitive enough that design review is needed before hardware selection."
+      ],
+      "bullets": [
+        "HEALTHY: the fail-state direction is reasonably clear from the entered assumptions.",
+        "WATCH: do not finalize hardware yet; confirm egress, code treatment, fire sequence, and operating procedure.",
+        "RISK should be treated as a design escalation if a future version or field review identifies a direct life-safety or security conflict."
+      ]
+    },
+    {
+      "id": "fail-safe-vs-fail-secure",
+      "title": "Fail-safe vs fail-secure in plain terms",
+      "body": [
+        "Fail-safe generally means the lock releases when power is lost. It often supports emergency release or free movement, but it may reduce security during outages.",
+        "Fail-secure generally means the lock remains secured from the controlled side when power is lost. It can preserve security, but safe egress must still be maintained through proper hardware and code-compliant door function.",
+        "The important point is not the label alone. The real design question is: what happens to people, assets, and operations when power, alarm state, or emergency conditions change?"
+      ]
+    },
+    {
+      "id": "real-world-planning-workflow",
+      "title": "Real-world planning workflow",
+      "bullets": [
+        "Identify the door function first: interior, perimeter, stairwell/exit, or critical area.",
+        "Decide whether safe egress or security retention is the dominant concern.",
+        "Confirm whether fire alarm or emergency release behavior applies.",
+        "Review power reliability and whether battery, UPS, or generator support changes the expected behavior.",
+        "Document the fail-state assumption before choosing reader type or lock hardware.",
+        "Carry the decision forward into lock power, panel planning, and access-level structure."
+      ],
+      "links": [
+        {
+          "label": "Reader Type Selector guide",
+          "kbKey": "access-control/reader-type-selector",
+          "note": "Use this related guide after the fail-state decision is documented and reader strategy becomes the next design question."
+        },
+        {
+          "label": "Lock Power Budget guide",
+          "kbKey": "access-control/lock-power-budget",
+          "note": "Use this related guide when the fail-state decision affects lock current, power supplies, backup power, or simultaneous unlock behavior."
+        }
+      ]
+    },
+    {
+      "id": "red-flags",
+      "title": "Red flags",
+      "bullets": [
+        "A stairwell or exit opening is being treated as a simple security door.",
+        "A perimeter or critical door is set to release during outage without documented acceptance of the exposure.",
+        "Fire alarm integration is selected but no one has defined the actual release sequence.",
+        "The lock type was chosen before fail-state behavior was reviewed.",
+        "The design relies on backup power but no battery duration, maintenance plan, or supply capacity has been checked.",
+        "The owner’s operating expectation conflicts with egress, AHJ, or hardware requirements."
+      ]
+    },
+    {
+      "id": "documentation-checklist",
+      "title": "Documentation checklist",
+      "bullets": [
+        "Door Type and actual opening function.",
+        "Life Safety Priority and reason for that priority.",
+        "Power Reliability assumption.",
+        "Fire Alarm Integration expectation and release sequence.",
+        "Threat Level and asset/security concern.",
+        "Recommended fail-state behavior.",
+        "Primary risk and mitigation.",
+        "Whether AHJ, code consultant, owner, or hardware supplier review is required.",
+        "How the decision affects reader type, lock power, and panel planning."
+      ]
+    },
+    {
+      "id": "common-mistakes",
       "title": "Common mistakes",
-      "body": [
-        "Most access-control design problems come from underestimating how hardware, users, schedules, exceptions, and maintenance effort interact over time."
-      ],
       "bullets": [
-        "Designing only for the initial install instead of the system lifecycle.",
-        "Ignoring exceptions, expansion, or administrative workload.",
-        "Assuming manufacturer capacity limits are the same as practical design limits.",
-        "Failing to document assumptions before the system is built."
+        "Using the same lock behavior everywhere because it is easier to standardize.",
+        "Choosing a maglock, strike, or electrified hardware before deciding the required fail state.",
+        "Assuming fail-secure means people cannot exit. Safe egress still depends on the full door hardware design.",
+        "Assuming fail-safe is automatically safer in every context.",
+        "Ignoring fire alarm interface requirements until late in the install.",
+        "Failing to document why a high-security door releases or why a life-safety-sensitive door remains secured."
       ]
     },
     {
-      "title": "Planning assumptions",
-      "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, platform-specific limits, code review, or project-specific engineering judgment."
-      ],
+      "id": "assumptions-and-limits",
+      "title": "Assumptions and limits",
       "bullets": [
-        "Manufacturer limits still matter.",
-        "Local code and life-safety requirements still apply.",
-        "Site conditions may change the final design.",
-        "A simpler design is usually easier to support, audit, and explain."
-      ]
-    },
-    {
-      "title": "Professional responsibility",
-      "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific design responsibility."
-      ],
-      "bullets": [
-        "Validate against the actual product and platform being installed.",
-        "Confirm owner requirements and operating procedures.",
-        "Document assumptions before implementation."
+        "This tool is a planning aid for early door behavior review.",
+        "It does not replace code compliance review, AHJ direction, manufacturer documentation, or site-specific engineering judgment.",
+        "Life safety, egress rules, fire alarm requirements, occupancy type, and adopted codes can override the calculator output.",
+        "Fail-secure behavior must still preserve safe egress through compliant hardware and door function.",
+        "Final hardware selection should be validated against the lock type, door hardware set, fire alarm interface, power supply design, and site operating policy."
       ]
     }
   ]
