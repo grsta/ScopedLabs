@@ -1,153 +1,213 @@
 {
-  "title": "Latency Estimator Guide",
+  "title": "Latency Budget Calculator Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand delay, distance, hops, processing overhead, and application responsiveness.",
-  "updated": "2026-04-26",
+  "summary": "Understand source delay, switching/routing delay, uplink delay, WAN/VPN transport, decode/processing, render time, buffer reserve, and target budget.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether network latency is likely to affect a workload or user experience."
+        "This tool adds the major latency contributors in an end-to-end path and compares the total against a target latency budget."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch network constraints before they become field trouble."
+        "Use it to catch network pressure before it becomes field trouble."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when planning WAN links, remote sites, cloud services, video systems, voice, access-control integrations, or interactive applications."
+        "Use it for live video, remote viewing, monitoring, control paths, VPN transport, WAN-connected systems, or any workflow where delay affects usability."
       ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-network validation.",
-        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+        "Early network design planning.",
+        "Expansion, migration, or upgrade review.",
+        "Existing-system troubleshooting or validation.",
+        "Explaining network tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical network planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical network planning terms."
       ],
       "items": [
         {
-          "label": "Distance",
-          "description": "The physical or network distance between endpoints.",
+          "id": "source-encode-latency",
+          "label": "Source / encode latency",
+          "description": "Delay added before traffic fully enters the network path, usually from source processing, capture, encoding, or device buffering.",
           "examples": [
-            "Local LAN",
-            "Branch to data center",
-            "Cloud region"
+            "80 ms encoder delay",
+            "camera processing",
+            "source-side application delay"
           ],
-          "whyItMatters": "Longer distance usually adds propagation delay.",
-          "commonMistake": "Assuming bandwidth fixes latency."
+          "whyItMatters": "Source latency can dominate the total path before the network even contributes much delay.",
+          "commonMistake": "Blaming the network while ignoring encoder or source-device delay."
         },
         {
-          "label": "Hop Count",
-          "description": "The number of network devices or routed segments in the path.",
+          "id": "switching-routing",
+          "label": "Switching / routing",
+          "description": "Delay introduced by forwarding, routing, queueing, inspection, or internal network hops.",
           "examples": [
-            "Switch hops",
-            "WAN routers",
-            "Firewall path"
+            "5 ms LAN routing",
+            "firewall inspection",
+            "queueing delay"
           ],
-          "whyItMatters": "More hops may add processing and queueing delay.",
-          "commonMistake": "Ignoring the path between endpoints."
+          "whyItMatters": "Small per-hop delays can add up across switching, routing, and security boundaries.",
+          "commonMistake": "Assuming LAN devices add zero delay under load."
         },
         {
-          "label": "Processing Delay",
-          "description": "Delay added by firewalls, VPNs, inspection, or application gateways.",
+          "id": "uplink-aggregation",
+          "label": "Uplink / aggregation",
+          "description": "Delay added when traffic crosses uplinks, shared aggregation paths, or congestion-prone boundaries.",
           "examples": [
-            "Firewall inspection",
-            "VPN encryption",
-            "Proxy path"
+            "10 ms aggregation delay",
+            "uplink queueing",
+            "shared closet uplink"
           ],
-          "whyItMatters": "Security and tunnel services can add latency.",
-          "commonMistake": "Testing without the real security path enabled."
+          "whyItMatters": "Aggregation delay often appears when a shared link is near utilization pressure.",
+          "commonMistake": "Checking average latency without looking at the busy uplink stage.",
+          "links": [
+            {
+              "label": "Check oversubscription pressure",
+              "kbKey": "network/oversubscription",
+              "anchor": "access-uplink-capacity-mbps",
+              "note": "Use this when latency is likely caused by shared-link pressure."
+            }
+          ]
         },
         {
-          "label": "Queueing",
-          "description": "Delay caused by congestion or overloaded links.",
+          "id": "wan-vpn-transport",
+          "label": "WAN / VPN transport",
+          "description": "Delay introduced by WAN, internet, VPN, tunnel, carrier, or long-haul transport.",
           "examples": [
-            "Busy uplink",
-            "WAN saturation",
-            "Backup traffic"
+            "40 ms WAN",
+            "site-to-site VPN",
+            "cloud transport path"
           ],
-          "whyItMatters": "Queueing can make latency unstable.",
-          "commonMistake": "Looking only at average latency."
+          "whyItMatters": "WAN and VPN delay can dominate end-to-end responsiveness even when the LAN is healthy.",
+          "commonMistake": "Using LAN expectations for remote or tunneled traffic.",
+          "links": [
+            {
+              "label": "Account for VPN overhead",
+              "kbKey": "network/vpn-overhead",
+              "anchor": "encryption-type",
+              "note": "Use this when the latency path includes a tunnel."
+            }
+          ]
         },
         {
-          "label": "Latency Target",
-          "description": "The acceptable delay for the workload.",
+          "id": "decode-processing",
+          "label": "Decode / processing",
+          "description": "Delay added after transport from decode, server-side processing, client-side processing, or application handling.",
           "examples": [
-            "Voice",
-            "Remote desktop",
-            "Video",
-            "Database app"
+            "60 ms decode",
+            "analytics processing",
+            "client-side handling"
           ],
-          "whyItMatters": "Different workloads tolerate different latency.",
-          "commonMistake": "Using one target for every application."
+          "whyItMatters": "Processing delay can be as important as network delay for video and interactive workflows.",
+          "commonMistake": "Only measuring transport latency and ignoring application stages."
         },
         {
-          "label": "Jitter Sensitivity",
-          "description": "How much variation in delay the workload can tolerate.",
+          "id": "client-render",
+          "label": "Client render",
+          "description": "Final delay from the endpoint, display, browser, video client, or application rendering stage.",
           "examples": [
-            "Voice",
-            "Video call",
-            "Control traffic"
+            "30 ms display render",
+            "thin client delay",
+            "browser UI delay"
           ],
-          "whyItMatters": "Unstable latency can be worse than slightly higher stable latency.",
-          "commonMistake": "Only checking a single ping result."
+          "whyItMatters": "A path can meet network targets but still feel slow if the client render stage is high.",
+          "commonMistake": "Stopping latency analysis at the network handoff."
+        },
+        {
+          "id": "jitter-buffer-reserve",
+          "label": "Jitter buffer / reserve",
+          "description": "Extra delay intentionally added to absorb jitter, smooth playback, or protect against variable transport delay.",
+          "examples": [
+            "20 ms buffer",
+            "50 ms reserve",
+            "playback smoothing"
+          ],
+          "whyItMatters": "Buffers improve stability but increase total delay, so they must be counted in the latency budget.",
+          "commonMistake": "Adding buffer for stability and forgetting it consumes response-time margin.",
+          "links": [
+            {
+              "label": "Size the jitter buffer directly",
+              "kbKey": "network/latency-jitter-buffer",
+              "anchor": "average-jitter-ms",
+              "note": "Use this when jitter protection is the main reason for added delay."
+            }
+          ]
+        },
+        {
+          "id": "target-latency-budget-ms",
+          "label": "Target latency budget (ms)",
+          "description": "The maximum acceptable end-to-end latency for the use case.",
+          "examples": [
+            "250 ms live view",
+            "500 ms monitoring target",
+            "100 ms control path"
+          ],
+          "whyItMatters": "This is the planning boundary that determines whether the total path is acceptable.",
+          "commonMistake": "Setting a target after the design is already built instead of before tradeoffs are made."
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means latency is likely acceptable. Watch means application sensitivity should be reviewed. Risk means delay may noticeably affect performance or reliability."
+        "Healthy means total modeled latency stays below the target with room to spare. Watch means one or more stages deserve review. Risk means the path may feel delayed or fail the intended response-time goal."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+        "Healthy: the entered assumptions leave practical operating margin.",
+        "Watch: the design may still work, but the assumption deserves review before relying on it.",
+        "Risk: reduce demand, increase capacity, change the topology, or validate the design more carefully before implementation."
       ]
     },
     {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+        "Most network planning mistakes come from checking one layer or one average value while ignoring peaks, overhead, path behavior, failure conditions, and growth."
       ],
       "bullets": [
-        "Sizing from theoretical maximums instead of usable throughput.",
-        "Ignoring protocol overhead, VPN overhead, or retransmission.",
-        "Sizing for average traffic and forgetting peak windows.",
-        "Failing to document assumptions before the network is built."
+        "Planning from theoretical line rate instead of usable sustained throughput.",
+        "Sizing for calm-period average traffic while ignoring peaks, bursts, retransmits, and maintenance activity.",
+        "Treating one network layer in isolation even though access, aggregation, WAN, VPN, and endpoint behavior interact.",
+        "Forgetting to document assumptions before the design becomes hardware, cabling, or service-provider work."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, firewall/router/switch limits, service-provider terms, cabling validation, monitoring data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real throughput is usually lower than rated link speed.",
-        "Traffic mix and timing matter.",
-        "Latency, loss, and jitter can be as important as bandwidth.",
-        "A design with headroom is usually easier to support and expand."
+        "Real measurements from the installed network are better than estimates whenever they are available.",
+        "Protocol overhead, encapsulation, device behavior, cabling, switching, routing, and WAN conditions can change the result.",
+        "Healthy results still need validation against the actual switch, firewall, router, ISP, tunnel, or endpoint platform being used.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, vendor validation, production testing, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual network equipment and services being deployed.",
-        "Confirm stakeholder expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual hardware, firmware, service-provider limits, and network architecture being deployed.",
+        "Confirm stakeholder expectations for performance, outage behavior, security, and operational recovery.",
+        "Document assumptions before implementation and revisit them as traffic or topology changes."
       ]
     }
   ]

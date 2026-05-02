@@ -2,152 +2,217 @@
   "title": "Bandwidth Planner Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand bandwidth demand, stream count, overhead, headroom, and uplink sizing.",
-  "updated": "2026-04-26",
+  "summary": "Understand active device demand, per-stream bandwidth, peak factor, protocol overhead, other traffic, uplink capacity, and utilization target.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether a network link has enough capacity for the expected traffic load with practical overhead and headroom."
+        "This tool estimates aggregate network demand from active streams or devices, adds peak and overhead assumptions, and compares the result against the current uplink capacity."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch network constraints before they become field trouble."
+        "Use it to catch network pressure before it becomes field trouble."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when planning uplinks, camera networks, branch connections, server links, or any system where traffic load may exceed available bandwidth."
+        "Use it when planning camera traffic, endpoint groups, branch uplinks, network closets, aggregation links, or any design where total traffic demand needs to be checked before the uplink becomes the limiter."
       ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-network validation.",
-        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+        "Early network design planning.",
+        "Expansion, migration, or upgrade review.",
+        "Existing-system troubleshooting or validation.",
+        "Explaining network tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical network planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical network planning terms."
       ],
       "items": [
         {
-          "label": "Traffic Source",
-          "description": "The system or workload creating network traffic.",
-          "examples": [
-            "Camera streams",
-            "Server traffic",
-            "Backup traffic",
-            "Client devices"
-          ],
-          "whyItMatters": "Different sources create different traffic patterns and peaks.",
-          "commonMistake": "Treating all traffic as smooth and predictable."
-        },
-        {
-          "label": "Per-Device Bandwidth",
-          "description": "The estimated bandwidth used by each device or stream.",
-          "examples": [
-            "4 Mbps camera",
-            "20 Mbps backup job",
-            "User session traffic"
-          ],
-          "whyItMatters": "Small per-device errors can multiply across many endpoints.",
-          "commonMistake": "Using best-case bandwidth instead of realistic sustained usage."
-        },
-        {
-          "label": "Device Count",
-          "description": "The number of devices, streams, or users sharing the link.",
+          "id": "active-streams-devices",
+          "label": "Active streams / devices",
+          "description": "The number of concurrent devices, users, cameras, streams, or traffic sources included in the estimate.",
           "examples": [
             "16 cameras",
-            "40 clients",
-            "8 servers"
+            "48 active clients",
+            "12 simultaneous streams"
           ],
-          "whyItMatters": "Device count multiplies total traffic demand.",
-          "commonMistake": "Counting devices but not simultaneous active traffic."
+          "whyItMatters": "This is the multiplier for the traffic model. More active sources increase both average demand and peak demand.",
+          "commonMistake": "Counting installed devices instead of the number expected to be active at the same time.",
+          "links": [
+            {
+              "label": "Check oversubscription from this load",
+              "kbKey": "network/oversubscription",
+              "anchor": "core-wan-expected-peak-demand-mbps",
+              "note": "Use this when the bandwidth estimate feeds an access, aggregation, or WAN capacity check."
+            }
+          ]
         },
         {
-          "label": "Overhead",
-          "description": "Extra bandwidth consumed by protocol, encryption, retransmission, or encapsulation.",
+          "id": "average-mbps-per-stream-device",
+          "label": "Average Mbps per stream / device",
+          "description": "The typical sustained bandwidth consumed by each active stream or device.",
           "examples": [
-            "TCP/IP overhead",
-            "VPN overhead",
-            "Storage protocol overhead"
+            "4 Mbps per camera",
+            "8 Mbps per stream",
+            "2 Mbps per active endpoint"
           ],
-          "whyItMatters": "Overhead reduces usable link capacity.",
-          "commonMistake": "Assuming payload bandwidth equals link bandwidth."
+          "whyItMatters": "The per-device value controls the base traffic load before peak factor and overhead are added.",
+          "commonMistake": "Using a best-case codec or idle value instead of a realistic active value."
         },
         {
-          "label": "Headroom",
-          "description": "Capacity reserved above expected load.",
+          "id": "peak-factor",
+          "label": "Peak factor",
+          "description": "A multiplier that converts average demand into a more realistic peak-planning load.",
           "examples": [
-            "20% spare",
-            "30% spare",
-            "Burst margin"
+            "1.3 normal peak",
+            "1.5 busy periods",
+            "2.0 bursty traffic"
           ],
-          "whyItMatters": "Headroom protects the network during bursts and growth.",
-          "commonMistake": "Running a link at 95–100% utilization."
+          "whyItMatters": "Networks are usually stressed by peaks, not averages. Peak factor keeps the design from being sized too tightly.",
+          "commonMistake": "Leaving peak factor at 1.0 when traffic has obvious busy periods.",
+          "links": [
+            {
+              "label": "Project peak growth over time",
+              "kbKey": "network/growth-simulator",
+              "anchor": "peak-factor",
+              "note": "Use this when the peak multiplier also needs to be projected into future months."
+            }
+          ]
         },
         {
-          "label": "Link Capacity",
-          "description": "The rated speed of the network connection.",
+          "id": "protocol-overhead",
+          "label": "Protocol overhead (%)",
+          "description": "A percentage allowance for headers, framing, transport overhead, retransmits, management traffic, and similar non-payload traffic.",
+          "examples": [
+            "10% overhead",
+            "15% overhead",
+            "Higher allowance for tunneling"
+          ],
+          "whyItMatters": "Overhead reduces the usable portion of the uplink for the actual application payload.",
+          "commonMistake": "Assuming payload Mbps and link Mbps are the same thing.",
+          "links": [
+            {
+              "label": "Account for VPN overhead",
+              "kbKey": "network/vpn-overhead",
+              "anchor": "baseline-throughput-mbps",
+              "note": "Use this when tunnels or encryption are part of the path."
+            }
+          ]
+        },
+        {
+          "id": "other-traffic-allowance-mbps",
+          "label": "Other traffic allowance (Mbps)",
+          "description": "Extra bandwidth reserved for traffic not modeled by the stream/device count.",
+          "examples": [
+            "Management traffic",
+            "user browsing",
+            "backups",
+            "miscellaneous services"
+          ],
+          "whyItMatters": "Unmodeled traffic still consumes the same uplink and can push an otherwise clean design into congestion.",
+          "commonMistake": "Modeling only the headline workload and forgetting everything else on the link."
+        },
+        {
+          "id": "current-uplink-capacity-mbps",
+          "label": "Current uplink capacity (Mbps)",
+          "description": "The usable bandwidth of the uplink being checked against the modeled demand.",
           "examples": [
             "100 Mbps",
-            "1 Gbps",
-            "10 Gbps"
+            "1000 Mbps",
+            "10000 Mbps"
           ],
-          "whyItMatters": "Link capacity is the ceiling everything must fit under.",
-          "commonMistake": "Trusting nominal speed without accounting for usable throughput."
+          "whyItMatters": "This is the capacity boundary for the planner. A high demand result is only useful when compared with the actual link being used.",
+          "commonMistake": "Entering switch port speed when the real bottleneck is a smaller ISP, firewall, or upstream path.",
+          "links": [
+            {
+              "label": "Compare access and WAN layers",
+              "kbKey": "network/oversubscription",
+              "anchor": "access-uplink-capacity-mbps",
+              "note": "Use this when the same load crosses multiple network layers."
+            }
+          ]
+        },
+        {
+          "id": "target-max-utilization",
+          "label": "Target max utilization (%)",
+          "description": "The preferred upper operating band for the uplink after demand, peaks, overhead, and other traffic are included.",
+          "examples": [
+            "65% target",
+            "70% target",
+            "80% target"
+          ],
+          "whyItMatters": "A lower target leaves more space for bursts, retransmits, failover, and growth.",
+          "commonMistake": "Treating 100% line rate as a safe operating target.",
+          "links": [
+            {
+              "label": "Simulate when utilization runs out",
+              "kbKey": "network/growth-simulator",
+              "anchor": "target-utilization",
+              "note": "Use this when you need to know how long the link stays inside the target band."
+            }
+          ]
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means the link has reasonable margin. Watch means overhead, growth, or peak traffic should be reviewed. Risk means the link may saturate or degrade service."
+        "Healthy means modeled peak demand is comfortably below the target utilization band. Watch means the uplink may work but has limited reserve. Risk means traffic demand is likely too close to, or above, practical uplink capacity."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+        "Healthy: the entered assumptions leave practical operating margin.",
+        "Watch: the design may still work, but the assumption deserves review before relying on it.",
+        "Risk: reduce demand, increase capacity, change the topology, or validate the design more carefully before implementation."
       ]
     },
     {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+        "Most network planning mistakes come from checking one layer or one average value while ignoring peaks, overhead, path behavior, failure conditions, and growth."
       ],
       "bullets": [
-        "Sizing from theoretical maximums instead of usable throughput.",
-        "Ignoring protocol overhead, VPN overhead, or retransmission.",
-        "Sizing for average traffic and forgetting peak windows.",
-        "Failing to document assumptions before the network is built."
+        "Planning from theoretical line rate instead of usable sustained throughput.",
+        "Sizing for calm-period average traffic while ignoring peaks, bursts, retransmits, and maintenance activity.",
+        "Treating one network layer in isolation even though access, aggregation, WAN, VPN, and endpoint behavior interact.",
+        "Forgetting to document assumptions before the design becomes hardware, cabling, or service-provider work."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, firewall/router/switch limits, service-provider terms, cabling validation, monitoring data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real throughput is usually lower than rated link speed.",
-        "Traffic mix and timing matter.",
-        "Latency, loss, and jitter can be as important as bandwidth.",
-        "A design with headroom is usually easier to support and expand."
+        "Real measurements from the installed network are better than estimates whenever they are available.",
+        "Protocol overhead, encapsulation, device behavior, cabling, switching, routing, and WAN conditions can change the result.",
+        "Healthy results still need validation against the actual switch, firewall, router, ISP, tunnel, or endpoint platform being used.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, vendor validation, production testing, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual network equipment and services being deployed.",
-        "Confirm stakeholder expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual hardware, firmware, service-provider limits, and network architecture being deployed.",
+        "Confirm stakeholder expectations for performance, outage behavior, security, and operational recovery.",
+        "Document assumptions before implementation and revisit them as traffic or topology changes."
       ]
     }
   ]

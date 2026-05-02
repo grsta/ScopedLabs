@@ -2,151 +2,200 @@
   "title": "Network Growth Simulator Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how device growth, traffic growth, and headroom affect future network capacity.",
-  "updated": "2026-04-26",
+  "summary": "Understand current demand, monthly growth, projection length, peak factor, overhead, target utilization, and uplink size before an upgrade is needed.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates how network demand may change over time as devices, users, streams, or workloads increase."
+        "This tool projects bandwidth demand over time and estimates when the modeled load may exceed the target utilization policy for a selected uplink size."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch network constraints before they become field trouble."
+        "Use it to catch network pressure before it becomes field trouble."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when planning expansions, multi-phase projects, branch growth, camera additions, wireless growth, or future uplink needs."
+        "Use it for expansion planning, budget timing, WAN or uplink upgrades, branch growth, camera growth, and any network design expected to carry more traffic later."
       ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-network validation.",
-        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+        "Early network design planning.",
+        "Expansion, migration, or upgrade review.",
+        "Existing-system troubleshooting or validation.",
+        "Explaining network tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical network planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical network planning terms."
       ],
       "items": [
         {
-          "label": "Current Load",
-          "description": "The current network usage or bandwidth demand.",
+          "id": "current-demand-mbps",
+          "label": "Current Demand (Mbps)",
+          "description": "The current or starting traffic demand before monthly growth is applied.",
           "examples": [
-            "200 Mbps",
-            "40 cameras",
-            "Current uplink load"
+            "250 Mbps current peak",
+            "camera traffic today",
+            "branch WAN load"
           ],
-          "whyItMatters": "Current load sets the starting point for the projection.",
-          "commonMistake": "Starting with a guess instead of measured or planned load."
+          "whyItMatters": "This is the baseline that all future demand is projected from.",
+          "commonMistake": "Starting from a calm average when the upgrade question depends on busy-period traffic.",
+          "links": [
+            {
+              "label": "Estimate current demand from devices",
+              "kbKey": "network/bandwidth",
+              "anchor": "active-streams-devices",
+              "note": "Use this when the starting demand needs to be built from endpoint counts."
+            }
+          ]
         },
         {
-          "label": "Growth Rate",
-          "description": "How quickly traffic or device count is expected to increase.",
+          "id": "monthly-growth",
+          "label": "Monthly Growth (%)",
+          "description": "The expected month-over-month increase in demand.",
           "examples": [
-            "10% per year",
-            "20 new devices",
-            "Phase 2 expansion"
+            "2% monthly",
+            "5% monthly",
+            "growth from new users or cameras"
           ],
-          "whyItMatters": "Growth rate determines when capacity becomes tight.",
-          "commonMistake": "Assuming growth will stay flat."
+          "whyItMatters": "Small monthly growth rates compound over time and can shorten the usable life of an uplink.",
+          "commonMistake": "Treating growth as a one-time bump instead of a repeating trend."
         },
         {
-          "label": "Planning Window",
-          "description": "The time period being projected.",
+          "id": "months-to-project",
+          "label": "Months to Project",
+          "description": "The number of months included in the growth forecast.",
           "examples": [
-            "1 year",
-            "3 years",
-            "5 years"
+            "12 months",
+            "24 months",
+            "36 months"
           ],
-          "whyItMatters": "Longer windows need more conservative margin.",
-          "commonMistake": "Planning only for the install date."
+          "whyItMatters": "The projection window determines whether the tool is checking near-term fit or longer-term upgrade timing.",
+          "commonMistake": "Using too short a window for infrastructure that is hard to replace later."
         },
         {
-          "label": "Capacity Limit",
-          "description": "The network capacity the design must stay under.",
+          "id": "peak-factor",
+          "label": "Peak Factor",
+          "description": "A multiplier applied to projected demand to represent busy periods, bursts, or worst-case operating bands.",
           "examples": [
-            "1 Gbps uplink",
-            "Switch backplane",
-            "WAN circuit"
+            "1.15 mild peak",
+            "1.30 normal peak",
+            "1.50 aggressive peak"
           ],
-          "whyItMatters": "Capacity limit determines the failure point.",
-          "commonMistake": "Only checking one segment of the path."
+          "whyItMatters": "Peak factor keeps the future model from being based only on smooth average growth.",
+          "commonMistake": "Projecting average demand and then being surprised by peak congestion.",
+          "links": [
+            {
+              "label": "Understand peak factor in base bandwidth planning",
+              "kbKey": "network/bandwidth",
+              "anchor": "peak-factor",
+              "note": "Use this when the peak multiplier should match the original bandwidth estimate."
+            }
+          ]
         },
         {
-          "label": "Headroom Target",
-          "description": "The spare capacity you want to preserve.",
+          "id": "overhead",
+          "label": "Overhead (%)",
+          "description": "A percentage allowance for protocol overhead, management traffic, retransmits, and other non-payload load.",
           "examples": [
-            "20%",
-            "30%",
-            "40%"
+            "10% overhead",
+            "15% overhead",
+            "higher with tunnels"
           ],
-          "whyItMatters": "Headroom keeps the network stable during bursts and changes.",
-          "commonMistake": "Planning to consume the entire link."
+          "whyItMatters": "Overhead reduces the useful portion of the uplink as demand grows.",
+          "commonMistake": "Assuming all projected Mbps are clean application payload."
         },
         {
-          "label": "Upgrade Threshold",
-          "description": "The point where an upgrade should be considered.",
+          "id": "target-utilization",
+          "label": "Target Utilization (%)",
+          "description": "The maximum utilization you want the uplink to reach before upgrade pressure is flagged.",
           "examples": [
-            "70% utilization",
-            "80% utilization",
-            "Headroom below target"
+            "65% target",
+            "70% target",
+            "80% target"
           ],
-          "whyItMatters": "A threshold helps avoid reactive upgrades.",
-          "commonMistake": "Waiting until users notice the bottleneck."
+          "whyItMatters": "This converts raw link size into a practical planning threshold.",
+          "commonMistake": "Waiting until a link hits 100% before planning the next capacity step.",
+          "links": [
+            {
+              "label": "Compare target against layer oversubscription",
+              "kbKey": "network/oversubscription",
+              "anchor": "target-peak-utilization",
+              "note": "Use this when the same utilization policy applies across access or aggregation."
+            }
+          ]
+        },
+        {
+          "id": "uplink-size-gbps",
+          "label": "Uplink Size (Gbps)",
+          "description": "The nominal uplink size being tested against projected demand.",
+          "examples": [
+            "1 Gbps",
+            "10 Gbps",
+            "25 Gbps"
+          ],
+          "whyItMatters": "The selected link size determines when projected demand crosses the operating threshold.",
+          "commonMistake": "Choosing an upgrade size without checking how long it will last."
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means expected growth fits inside the available capacity. Watch means upgrade timing should be reviewed. Risk means capacity may be exhausted before the planning window ends."
+        "Healthy means the selected uplink should remain inside the target utilization through the projection. Watch means the design approaches the limit during the planning window. Risk means the uplink may need upgrade before the end of the projection."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+        "Healthy: the entered assumptions leave practical operating margin.",
+        "Watch: the design may still work, but the assumption deserves review before relying on it.",
+        "Risk: reduce demand, increase capacity, change the topology, or validate the design more carefully before implementation."
       ]
     },
     {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+        "Most network planning mistakes come from checking one layer or one average value while ignoring peaks, overhead, path behavior, failure conditions, and growth."
       ],
       "bullets": [
-        "Sizing from theoretical maximums instead of usable throughput.",
-        "Ignoring protocol overhead, VPN overhead, or retransmission.",
-        "Sizing for average traffic and forgetting peak windows.",
-        "Failing to document assumptions before the network is built."
+        "Planning from theoretical line rate instead of usable sustained throughput.",
+        "Sizing for calm-period average traffic while ignoring peaks, bursts, retransmits, and maintenance activity.",
+        "Treating one network layer in isolation even though access, aggregation, WAN, VPN, and endpoint behavior interact.",
+        "Forgetting to document assumptions before the design becomes hardware, cabling, or service-provider work."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, firewall/router/switch limits, service-provider terms, cabling validation, monitoring data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real throughput is usually lower than rated link speed.",
-        "Traffic mix and timing matter.",
-        "Latency, loss, and jitter can be as important as bandwidth.",
-        "A design with headroom is usually easier to support and expand."
+        "Real measurements from the installed network are better than estimates whenever they are available.",
+        "Protocol overhead, encapsulation, device behavior, cabling, switching, routing, and WAN conditions can change the result.",
+        "Healthy results still need validation against the actual switch, firewall, router, ISP, tunnel, or endpoint platform being used.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, vendor validation, production testing, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual network equipment and services being deployed.",
-        "Confirm stakeholder expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual hardware, firmware, service-provider limits, and network architecture being deployed.",
+        "Confirm stakeholder expectations for performance, outage behavior, security, and operational recovery.",
+        "Document assumptions before implementation and revisit them as traffic or topology changes."
       ]
     }
   ]

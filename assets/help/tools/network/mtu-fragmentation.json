@@ -1,154 +1,167 @@
 {
-  "title": "MTU Fragmentation Guide",
+  "title": "MTU & Fragmentation Helper Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand packet size, encapsulation overhead, fragmentation risk, and tunnel compatibility.",
-  "updated": "2026-04-26",
+  "summary": "Understand MTU size, IP version, transport choice, encapsulation overhead, and test payload fit before fragmentation creates hidden performance issues.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps evaluate whether packets may exceed the usable MTU after overhead from tunnels, VPNs, VLANs, or other encapsulation."
+        "This tool checks whether a test payload fits inside the effective packet size after IP, transport, and extra overhead are considered."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch network constraints before they become field trouble."
+        "Use it to catch network pressure before it becomes field trouble."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when planning VPNs, tunnels, WAN paths, storage links, or systems where packet fragmentation can hurt performance."
+        "Use it for VPNs, overlays, tunnels, WAN paths, cloud interconnects, security appliances, or any path where encapsulation can quietly reduce usable payload size."
       ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-network validation.",
-        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+        "Early network design planning.",
+        "Expansion, migration, or upgrade review.",
+        "Existing-system troubleshooting or validation.",
+        "Explaining network tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical network planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical network planning terms."
       ],
       "items": [
         {
-          "label": "Base MTU",
-          "description": "The maximum transmission unit on the physical or logical path.",
+          "id": "mtu-bytes",
+          "label": "MTU (bytes)",
+          "description": "The maximum transmission unit for the path or interface being checked.",
           "examples": [
             "1500 bytes",
-            "9000 bytes jumbo frame",
-            "WAN provider MTU"
+            "1400 bytes",
+            "jumbo frame value"
           ],
-          "whyItMatters": "Base MTU determines the maximum packet size before overhead.",
-          "commonMistake": "Assuming every segment supports the same MTU."
+          "whyItMatters": "MTU defines the outer packet size limit before overhead and payload are compared.",
+          "commonMistake": "Assuming every path supports standard 1500-byte packets end to end."
         },
         {
-          "label": "Payload Size",
-          "description": "The actual data carried inside the packet.",
+          "id": "ip-version",
+          "label": "IP Version",
+          "description": "Whether the packet calculation uses IPv4 or IPv6 header assumptions.",
           "examples": [
-            "Application payload",
-            "Storage payload",
-            "Tunnel payload"
+            "IPv4",
+            "IPv6"
           ],
-          "whyItMatters": "Payload plus headers must fit inside the usable MTU.",
-          "commonMistake": "Only checking payload size and forgetting headers."
+          "whyItMatters": "IP version changes header overhead and can affect effective payload size.",
+          "commonMistake": "Ignoring IPv6 overhead when the actual path uses IPv6."
         },
         {
-          "label": "Encapsulation",
-          "description": "Extra wrapping added by tunnels or network services.",
+          "id": "transport",
+          "label": "Transport",
+          "description": "The transport protocol being modeled.",
           "examples": [
-            "VPN",
-            "GRE",
-            "VXLAN",
-            "PPPoE"
+            "TCP",
+            "UDP"
           ],
-          "whyItMatters": "Encapsulation reduces available payload space.",
-          "commonMistake": "Adding a tunnel without lowering packet size."
+          "whyItMatters": "Transport choice changes header overhead and fragmentation behavior.",
+          "commonMistake": "Using UDP assumptions for TCP traffic or vice versa.",
+          "links": [
+            {
+              "label": "Relate transport choice to packet-loss behavior",
+              "kbKey": "network/packet-loss-impact",
+              "anchor": "protocol",
+              "note": "Use this when protocol behavior changes how loss affects the application."
+            }
+          ]
         },
         {
-          "label": "Header Overhead",
-          "description": "Bytes added by protocols and network layers.",
+          "id": "extra-overhead-bytes",
+          "label": "Extra Overhead (bytes)",
+          "description": "Additional overhead from VPN, VLAN, GRE, IPsec, VXLAN, PPPoE, security inspection, or other encapsulation.",
           "examples": [
-            "IP header",
-            "TCP header",
-            "Encryption header"
+            "50 bytes VPN",
+            "74 bytes IPsec",
+            "overlay overhead"
           ],
-          "whyItMatters": "Header overhead can push packets over the MTU.",
-          "commonMistake": "Ignoring stacked headers."
+          "whyItMatters": "Extra overhead reduces the payload that can fit without fragmentation.",
+          "commonMistake": "Forgetting tunnel overhead and blaming the application when packets fragment.",
+          "links": [
+            {
+              "label": "Estimate VPN goodput and tunnel loss",
+              "kbKey": "network/vpn-overhead",
+              "anchor": "encryption-type",
+              "note": "Use this when the overhead comes from VPN or encryption."
+            }
+          ]
         },
         {
-          "label": "Path MTU",
-          "description": "The smallest MTU across the full path.",
+          "id": "test-payload-bytes",
+          "label": "Test Payload (bytes)",
+          "description": "The payload size you want to verify against the effective MTU.",
           "examples": [
-            "ISP path",
-            "WAN tunnel",
-            "Cloud link"
+            "1200 bytes",
+            "1400 bytes",
+            "application packet size"
           ],
-          "whyItMatters": "The smallest segment controls the real limit.",
-          "commonMistake": "Testing only the local LAN."
-        },
-        {
-          "label": "Fragmentation Tolerance",
-          "description": "How sensitive the workload is to fragmentation or drops.",
-          "examples": [
-            "Voice",
-            "VPN",
-            "Storage replication",
-            "General web"
-          ],
-          "whyItMatters": "Some workloads perform poorly when fragmentation happens.",
-          "commonMistake": "Assuming fragmentation is harmless."
+          "whyItMatters": "The payload test shows whether the planned traffic fits inside the path after headers and overhead.",
+          "commonMistake": "Testing only the interface MTU and not the actual application payload size."
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means packet size likely fits the path. Watch means overhead should be reviewed. Risk means fragmentation or dropped packets may occur."
+        "Healthy means the payload appears to fit the effective path size. Watch means overhead or payload size deserves review. Risk means fragmentation or packet drops may occur unless the payload, MTU, or tunnel design changes."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+        "Healthy: the entered assumptions leave practical operating margin.",
+        "Watch: the design may still work, but the assumption deserves review before relying on it.",
+        "Risk: reduce demand, increase capacity, change the topology, or validate the design more carefully before implementation."
       ]
     },
     {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+        "Most network planning mistakes come from checking one layer or one average value while ignoring peaks, overhead, path behavior, failure conditions, and growth."
       ],
       "bullets": [
-        "Sizing from theoretical maximums instead of usable throughput.",
-        "Ignoring protocol overhead, VPN overhead, or retransmission.",
-        "Sizing for average traffic and forgetting peak windows.",
-        "Failing to document assumptions before the network is built."
+        "Planning from theoretical line rate instead of usable sustained throughput.",
+        "Sizing for calm-period average traffic while ignoring peaks, bursts, retransmits, and maintenance activity.",
+        "Treating one network layer in isolation even though access, aggregation, WAN, VPN, and endpoint behavior interact.",
+        "Forgetting to document assumptions before the design becomes hardware, cabling, or service-provider work."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, firewall/router/switch limits, service-provider terms, cabling validation, monitoring data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real throughput is usually lower than rated link speed.",
-        "Traffic mix and timing matter.",
-        "Latency, loss, and jitter can be as important as bandwidth.",
-        "A design with headroom is usually easier to support and expand."
+        "Real measurements from the installed network are better than estimates whenever they are available.",
+        "Protocol overhead, encapsulation, device behavior, cabling, switching, routing, and WAN conditions can change the result.",
+        "Healthy results still need validation against the actual switch, firewall, router, ISP, tunnel, or endpoint platform being used.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, vendor validation, production testing, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual network equipment and services being deployed.",
-        "Confirm stakeholder expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual hardware, firmware, service-provider limits, and network architecture being deployed.",
+        "Confirm stakeholder expectations for performance, outage behavior, security, and operational recovery.",
+        "Document assumptions before implementation and revisit them as traffic or topology changes."
       ]
     }
   ]

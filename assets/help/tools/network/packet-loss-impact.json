@@ -2,152 +2,167 @@
   "title": "Packet Loss Impact Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how packet loss affects throughput, real-time traffic, retransmissions, and user experience.",
-  "updated": "2026-04-26",
+  "summary": "Understand baseline throughput, loss percentage, RTT, traffic type, and protocol behavior before small loss turns into large user impact.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool helps estimate whether packet loss is likely to create noticeable performance or reliability issues."
+        "This tool estimates how packet loss and round-trip time affect real throughput and experience for different traffic types and protocols."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch network constraints before they become field trouble."
+        "Use it to catch network pressure before it becomes field trouble."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when troubleshooting WAN links, wireless bridges, VPNs, voice/video traffic, storage replication, or unstable network paths."
+        "Use it when diagnosing poor voice, video, VPN, WAN, application, or data-transfer performance where the link speed looks acceptable but the experience is degraded."
       ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-network validation.",
-        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+        "Early network design planning.",
+        "Expansion, migration, or upgrade review.",
+        "Existing-system troubleshooting or validation.",
+        "Explaining network tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical network planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical network planning terms."
       ],
       "items": [
         {
-          "label": "Packet Loss Rate",
-          "description": "The percentage of packets that fail to arrive correctly.",
+          "id": "baseline-throughput-mbps",
+          "label": "Baseline Throughput (Mbps)",
+          "description": "The expected throughput before loss impact is applied.",
           "examples": [
-            "0.1%",
-            "1%",
-            "3%"
+            "100 Mbps baseline",
+            "500 Mbps clean transfer",
+            "current path throughput"
           ],
-          "whyItMatters": "Small loss rates can still hurt sensitive workloads.",
-          "commonMistake": "Treating 1% loss as harmless for every application."
+          "whyItMatters": "This is the clean-path reference used to estimate how much performance is lost.",
+          "commonMistake": "Using ISP line rate instead of measured or realistic baseline throughput."
         },
         {
+          "id": "packet-loss",
+          "label": "Packet Loss (%)",
+          "description": "The percentage of packets expected or measured as lost on the path.",
+          "examples": [
+            "0.1% loss",
+            "1% loss",
+            "3% loss"
+          ],
+          "whyItMatters": "Even small packet loss can hurt real-time traffic and heavily reduce TCP throughput on high-latency paths.",
+          "commonMistake": "Treating 1% loss as harmless for every traffic type.",
+          "links": [
+            {
+              "label": "Pair loss symptoms with jitter buffer sizing",
+              "kbKey": "network/latency-jitter-buffer",
+              "anchor": "average-jitter-ms",
+              "note": "Use this when loss appears with jitter or real-time stream instability."
+            }
+          ]
+        },
+        {
+          "id": "rtt-ms",
+          "label": "RTT (ms)",
+          "description": "Round-trip time for the path in milliseconds.",
+          "examples": [
+            "20 ms LAN/WAN",
+            "80 ms internet path",
+            "150 ms long-haul"
+          ],
+          "whyItMatters": "RTT determines how quickly retransmissions and congestion control can recover from loss.",
+          "commonMistake": "Looking at loss without considering the latency of the path."
+        },
+        {
+          "id": "traffic-type",
           "label": "Traffic Type",
-          "description": "The workload affected by packet loss.",
+          "description": "The application style being evaluated, such as voice, video, or general data.",
           "examples": [
-            "Voice",
-            "Video",
-            "TCP data",
-            "Storage replication"
+            "Voice / VoIP",
+            "Video / Streaming",
+            "General Data"
           ],
-          "whyItMatters": "Different traffic reacts differently to loss.",
-          "commonMistake": "Using one loss threshold for every workload."
+          "whyItMatters": "Different traffic types experience loss differently; a file copy and a call do not fail the same way.",
+          "commonMistake": "Using one generic loss threshold for all applications."
         },
         {
-          "label": "Latency",
-          "description": "Delay across the path where loss occurs.",
+          "id": "protocol",
+          "label": "Protocol",
+          "description": "The transport behavior used by the traffic, typically UDP-like real-time behavior or TCP retransmission behavior.",
           "examples": [
-            "LAN",
-            "WAN",
-            "Cloud path"
+            "UDP real-time",
+            "TCP retransmits"
           ],
-          "whyItMatters": "Loss combined with latency can severely reduce throughput.",
-          "commonMistake": "Checking loss without considering round-trip time."
-        },
-        {
-          "label": "Retransmission Behavior",
-          "description": "Whether the protocol retransmits lost data.",
-          "examples": [
-            "TCP",
-            "UDP",
-            "Real-time media"
-          ],
-          "whyItMatters": "Retransmission can recover data but may slow performance.",
-          "commonMistake": "Assuming lost real-time packets can always be recovered."
-        },
-        {
-          "label": "Link Utilization",
-          "description": "How busy the link is when loss occurs.",
-          "examples": [
-            "Idle",
-            "Busy",
-            "Saturated"
-          ],
-          "whyItMatters": "Loss during congestion often indicates a capacity or queueing issue.",
-          "commonMistake": "Testing loss only when the link is quiet."
-        },
-        {
-          "label": "Impact Tolerance",
-          "description": "How much degradation the workload can tolerate.",
-          "examples": [
-            "Critical control",
-            "Voice",
-            "Bulk transfer"
-          ],
-          "whyItMatters": "Critical or real-time workloads need lower loss.",
-          "commonMistake": "Accepting loss because basic browsing still works."
+          "whyItMatters": "Protocol determines whether loss creates quality drops, retransmissions, reduced throughput, or delay.",
+          "commonMistake": "Assuming UDP and TCP react to loss the same way.",
+          "links": [
+            {
+              "label": "Check packet fit before blaming loss",
+              "kbKey": "network/mtu-fragmentation",
+              "anchor": "transport",
+              "note": "Use this when fragmentation may be causing drops or retransmits."
+            }
+          ]
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means loss is likely low enough for the workload. Watch means path quality should be reviewed. Risk means the workload may suffer degraded performance or instability."
+        "Healthy means loss impact appears manageable for the selected traffic. Watch means experience may degrade or require validation. Risk means loss and RTT are likely to cause visible quality or throughput problems."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+        "Healthy: the entered assumptions leave practical operating margin.",
+        "Watch: the design may still work, but the assumption deserves review before relying on it.",
+        "Risk: reduce demand, increase capacity, change the topology, or validate the design more carefully before implementation."
       ]
     },
     {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+        "Most network planning mistakes come from checking one layer or one average value while ignoring peaks, overhead, path behavior, failure conditions, and growth."
       ],
       "bullets": [
-        "Sizing from theoretical maximums instead of usable throughput.",
-        "Ignoring protocol overhead, VPN overhead, or retransmission.",
-        "Sizing for average traffic and forgetting peak windows.",
-        "Failing to document assumptions before the network is built."
+        "Planning from theoretical line rate instead of usable sustained throughput.",
+        "Sizing for calm-period average traffic while ignoring peaks, bursts, retransmits, and maintenance activity.",
+        "Treating one network layer in isolation even though access, aggregation, WAN, VPN, and endpoint behavior interact.",
+        "Forgetting to document assumptions before the design becomes hardware, cabling, or service-provider work."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, firewall/router/switch limits, service-provider terms, cabling validation, monitoring data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real throughput is usually lower than rated link speed.",
-        "Traffic mix and timing matter.",
-        "Latency, loss, and jitter can be as important as bandwidth.",
-        "A design with headroom is usually easier to support and expand."
+        "Real measurements from the installed network are better than estimates whenever they are available.",
+        "Protocol overhead, encapsulation, device behavior, cabling, switching, routing, and WAN conditions can change the result.",
+        "Healthy results still need validation against the actual switch, firewall, router, ISP, tunnel, or endpoint platform being used.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, vendor validation, production testing, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual network equipment and services being deployed.",
-        "Confirm stakeholder expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual hardware, firmware, service-provider limits, and network architecture being deployed.",
+        "Confirm stakeholder expectations for performance, outage behavior, security, and operational recovery.",
+        "Document assumptions before implementation and revisit them as traffic or topology changes."
       ]
     }
   ]

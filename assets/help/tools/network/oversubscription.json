@@ -2,153 +2,212 @@
   "title": "Oversubscription Estimator Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand access-to-uplink ratios, shared capacity, peak load, and congestion risk.",
-  "updated": "2026-04-26",
+  "summary": "Understand access demand, aggregation demand, transport capacity, overhead reserve, and target peak utilization across network layers.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether downstream device capacity is too high for the uplink or shared network path."
+        "This tool compares downstream demand against upstream capacity at the access, aggregation, and core/WAN layers so oversubscription pressure can be identified before users feel congestion."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch network constraints before they become field trouble."
+        "Use it to catch network pressure before it becomes field trouble."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when planning switches, uplinks, access layers, camera networks, wireless backhaul, or shared infrastructure."
+        "Use it when designing switch uplinks, aggregation paths, WAN handoffs, or any shared network layer where many downstream ports or devices feed a smaller upstream link."
       ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-network validation.",
-        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+        "Early network design planning.",
+        "Expansion, migration, or upgrade review.",
+        "Existing-system troubleshooting or validation.",
+        "Explaining network tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical network planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical network planning terms."
       ],
       "items": [
         {
-          "label": "Access Capacity",
-          "description": "The total downstream port or device capacity feeding into the uplink.",
+          "id": "edge-downstream-demand-mbps",
+          "label": "Edge / downstream demand (Mbps)",
+          "description": "The total traffic demand feeding into the access-layer uplink.",
           "examples": [
-            "24 x 1G ports",
-            "Camera switch",
-            "AP switch"
+            "2400 Mbps access demand",
+            "camera closet peak",
+            "branch downstream load"
           ],
-          "whyItMatters": "Access capacity can exceed uplink capacity by a large amount.",
-          "commonMistake": "Assuming users will never use the ports heavily."
+          "whyItMatters": "This shows how much demand the access layer is trying to push upstream.",
+          "commonMistake": "Using theoretical port sum when the goal is realistic peak traffic.",
+          "links": [
+            {
+              "label": "Build this from endpoint demand",
+              "kbKey": "network/bandwidth",
+              "anchor": "active-streams-devices",
+              "note": "Use Bandwidth Planner when endpoint count and per-device Mbps need to be modeled first."
+            }
+          ]
         },
         {
-          "label": "Uplink Capacity",
-          "description": "The shared link capacity leaving the switch or segment.",
+          "id": "access-uplink-capacity-mbps",
+          "label": "Access uplink capacity (Mbps)",
+          "description": "The usable upstream capacity leaving the access layer.",
           "examples": [
-            "1 Gbps",
-            "10 Gbps",
-            "LAG uplink"
+            "1000 Mbps uplink",
+            "2x1G LACP",
+            "10G access uplink"
           ],
-          "whyItMatters": "Uplink capacity is the bottleneck shared by downstream devices.",
-          "commonMistake": "Counting multiple uplinks without understanding traffic distribution."
+          "whyItMatters": "This is the first shared boundary where downstream demand may exceed available capacity.",
+          "commonMistake": "Assuming every downstream access port can run at full rate without checking the uplink."
         },
         {
-          "label": "Active Load",
-          "description": "The expected traffic actually used at the same time.",
+          "id": "aggregation-downstream-demand-mbps",
+          "label": "Aggregation downstream demand (Mbps)",
+          "description": "The total traffic demand entering the aggregation layer from downstream switches, closets, or segments.",
           "examples": [
-            "Average load",
-            "Peak load",
-            "Burst traffic"
+            "8000 Mbps aggregate demand",
+            "multiple closets",
+            "floor distribution"
           ],
-          "whyItMatters": "Oversubscription only matters when devices are active concurrently.",
-          "commonMistake": "Using total port speed as if every port is fully active."
+          "whyItMatters": "Aggregation demand can reveal bottlenecks that are hidden when each access switch is checked alone.",
+          "commonMistake": "Adding access switches without summing their realistic peak contribution."
         },
         {
-          "label": "Traffic Mix",
-          "description": "The kind of traffic sharing the uplink.",
+          "id": "aggregation-upstream-capacity-mbps",
+          "label": "Aggregation upstream capacity (Mbps)",
+          "description": "The usable uplink capacity leaving aggregation toward the core or transport boundary.",
           "examples": [
-            "Video",
-            "User data",
-            "Backups",
-            "Storage"
+            "2000 Mbps uplink",
+            "10G core link",
+            "stack uplinks"
           ],
-          "whyItMatters": "Some traffic is steady, some is bursty, and some is latency-sensitive.",
-          "commonMistake": "Mixing heavy workloads without priority or separation."
+          "whyItMatters": "This defines whether aggregation has enough upstream room for the load it collects.",
+          "commonMistake": "Counting redundant links as if all of them are usable normal capacity."
         },
         {
-          "label": "Peak Window",
-          "description": "When the highest simultaneous usage occurs.",
+          "id": "core-wan-expected-peak-demand-mbps",
+          "label": "Core / WAN expected peak demand (Mbps)",
+          "description": "The expected peak traffic crossing the core, WAN, or transport boundary.",
           "examples": [
-            "Shift change",
-            "Backup window",
-            "Camera export",
-            "Morning login"
+            "1200 Mbps WAN demand",
+            "site-to-site peak",
+            "internet edge load"
           ],
-          "whyItMatters": "Peak windows reveal oversubscription problems.",
-          "commonMistake": "Sizing from quiet-period utilization."
+          "whyItMatters": "This value connects local network design to the larger transport bottleneck.",
+          "commonMistake": "Checking LAN switching without validating the smaller WAN or firewall path.",
+          "links": [
+            {
+              "label": "Project future demand",
+              "kbKey": "network/growth-simulator",
+              "anchor": "current-demand-mbps",
+              "note": "Use Growth Simulator when the transport boundary may become the next upgrade point."
+            }
+          ]
         },
         {
-          "label": "Headroom",
-          "description": "Spare uplink capacity reserved above expected load.",
+          "id": "wan-core-transport-capacity-mbps",
+          "label": "WAN / core transport capacity (Mbps)",
+          "description": "The usable bandwidth available at the core or WAN boundary.",
           "examples": [
-            "20%",
-            "30%",
-            "Burst margin"
+            "1000 Mbps WAN",
+            "500 Mbps ISP link",
+            "10G core transport"
           ],
-          "whyItMatters": "Headroom protects against congestion and unexpected traffic.",
-          "commonMistake": "Treating uplink saturation as acceptable."
+          "whyItMatters": "This is often the real limiter after local switching appears healthy.",
+          "commonMistake": "Using LAN speed as the capacity value when traffic actually exits through a smaller WAN path.",
+          "links": [
+            {
+              "label": "Assess outage impact if this path fails",
+              "kbKey": "network/uplink-failure-impact",
+              "anchor": "failover-available",
+              "note": "Use this when transport capacity also affects resiliency."
+            }
+          ]
+        },
+        {
+          "id": "overhead-reserve",
+          "label": "Overhead reserve (%)",
+          "description": "A percentage allowance for protocol overhead, management traffic, retransmits, monitoring, and unmodeled variance.",
+          "examples": [
+            "10% reserve",
+            "15% reserve",
+            "higher for tunnels or noisy links"
+          ],
+          "whyItMatters": "Overhead reserve prevents the estimate from treating all link capacity as clean payload capacity.",
+          "commonMistake": "Leaving no reserve because the calculated demand barely fits."
+        },
+        {
+          "id": "target-peak-utilization",
+          "label": "Target peak utilization (%)",
+          "description": "The maximum peak utilization you want a layer to reach before it is considered pressured.",
+          "examples": [
+            "65% target",
+            "70% target",
+            "80% ceiling"
+          ],
+          "whyItMatters": "This turns raw capacity into an operating policy with real headroom.",
+          "commonMistake": "Treating 95–100% utilization as acceptable for shared uplinks."
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means the oversubscription ratio is likely reasonable. Watch means peak load and traffic mix should be reviewed. Risk means uplinks may congest during busy periods."
+        "Healthy means the modeled layers stay inside the target utilization policy. Watch means one layer is close enough to review. Risk means a layer is likely oversubscribed under realistic peak demand."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+        "Healthy: the entered assumptions leave practical operating margin.",
+        "Watch: the design may still work, but the assumption deserves review before relying on it.",
+        "Risk: reduce demand, increase capacity, change the topology, or validate the design more carefully before implementation."
       ]
     },
     {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+        "Most network planning mistakes come from checking one layer or one average value while ignoring peaks, overhead, path behavior, failure conditions, and growth."
       ],
       "bullets": [
-        "Sizing from theoretical maximums instead of usable throughput.",
-        "Ignoring protocol overhead, VPN overhead, or retransmission.",
-        "Sizing for average traffic and forgetting peak windows.",
-        "Failing to document assumptions before the network is built."
+        "Planning from theoretical line rate instead of usable sustained throughput.",
+        "Sizing for calm-period average traffic while ignoring peaks, bursts, retransmits, and maintenance activity.",
+        "Treating one network layer in isolation even though access, aggregation, WAN, VPN, and endpoint behavior interact.",
+        "Forgetting to document assumptions before the design becomes hardware, cabling, or service-provider work."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, firewall/router/switch limits, service-provider terms, cabling validation, monitoring data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real throughput is usually lower than rated link speed.",
-        "Traffic mix and timing matter.",
-        "Latency, loss, and jitter can be as important as bandwidth.",
-        "A design with headroom is usually easier to support and expand."
+        "Real measurements from the installed network are better than estimates whenever they are available.",
+        "Protocol overhead, encapsulation, device behavior, cabling, switching, routing, and WAN conditions can change the result.",
+        "Healthy results still need validation against the actual switch, firewall, router, ISP, tunnel, or endpoint platform being used.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, vendor validation, production testing, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual network equipment and services being deployed.",
-        "Confirm stakeholder expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual hardware, firmware, service-provider limits, and network architecture being deployed.",
+        "Confirm stakeholder expectations for performance, outage behavior, security, and operational recovery.",
+        "Document assumptions before implementation and revisit them as traffic or topology changes."
       ]
     }
   ]

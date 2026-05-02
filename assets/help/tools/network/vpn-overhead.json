@@ -1,154 +1,156 @@
 {
-  "title": "VPN Overhead Guide",
+  "title": "VPN Overhead Estimator Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand encryption overhead, tunnel MTU, usable throughput, and VPN performance limits.",
-  "updated": "2026-04-26",
+  "summary": "Understand baseline throughput, encryption type, tunnel mode, and hardware offload before VPN overhead reduces usable goodput.",
+  "updated": "2026-05-02",
   "sections": [
     {
+      "id": "what-this-tool-does",
       "title": "What this tool does",
       "body": [
-        "This tool estimates how much capacity may be lost to VPN encapsulation, encryption, and tunnel behavior."
+        "This tool estimates how VPN encryption, tunnel behavior, and hardware offload affect usable throughput and fragmentation pressure."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch network constraints before they become field trouble."
+        "Use it to catch network pressure before it becomes field trouble."
       ]
     },
     {
+      "id": "when-to-use-it",
       "title": "When to use it",
       "body": [
-        "Use it when planning site-to-site VPNs, remote access, cloud tunnels, encrypted WAN paths, or tunneled application traffic."
+        "Use it when comparing VPN designs, sizing remote-site tunnels, checking firewall throughput, or explaining why encrypted traffic may perform below raw link speed."
       ],
       "bullets": [
-        "Early design planning.",
-        "Expansion review.",
-        "Existing-network validation.",
-        "Explaining capacity, latency, or reliability tradeoffs to a client, stakeholder, or internal team."
+        "Early network design planning.",
+        "Expansion, migration, or upgrade review.",
+        "Existing-system troubleshooting or validation.",
+        "Explaining network tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
+      "id": "input-descriptions",
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical network planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical network planning terms."
       ],
       "items": [
         {
-          "label": "Raw Link Speed",
-          "description": "The nominal speed of the internet, WAN, or transport link.",
+          "id": "baseline-throughput-mbps",
+          "label": "Baseline Throughput (Mbps)",
+          "description": "The clean-path throughput before VPN overhead is applied.",
           "examples": [
-            "100 Mbps",
-            "500 Mbps",
-            "1 Gbps"
+            "100 Mbps internet path",
+            "500 Mbps firewall link",
+            "measured baseline"
           ],
-          "whyItMatters": "Raw speed is not the same as usable VPN throughput.",
-          "commonMistake": "Expecting encrypted traffic to use full link speed."
+          "whyItMatters": "This gives the tool a starting point before encryption and tunnel penalties are subtracted.",
+          "commonMistake": "Using ISP line rate when firewall or endpoint processing is the real baseline."
         },
         {
-          "label": "Encryption Overhead",
-          "description": "Processing and protocol overhead added by VPN encryption.",
+          "id": "encryption-type",
+          "label": "Encryption Type",
+          "description": "The VPN or encryption family being modeled.",
           "examples": [
             "IPsec",
-            "SSL VPN",
-            "WireGuard",
-            "OpenVPN"
+            "OpenVPN",
+            "WireGuard"
           ],
-          "whyItMatters": "Overhead reduces usable payload capacity.",
-          "commonMistake": "Ignoring CPU and encryption cost."
+          "whyItMatters": "Encryption choice affects overhead, CPU load, encapsulation, and usable goodput.",
+          "commonMistake": "Choosing a tunnel type by name without checking platform support and acceleration.",
+          "links": [
+            {
+              "label": "Check MTU effect from tunnel overhead",
+              "kbKey": "network/mtu-fragmentation",
+              "anchor": "extra-overhead-bytes",
+              "note": "Use this when tunnel encapsulation may reduce usable packet size."
+            }
+          ]
         },
         {
-          "label": "Tunnel MTU",
-          "description": "The usable MTU inside the VPN tunnel.",
+          "id": "tunnel-mode",
+          "label": "Tunnel Mode",
+          "description": "Whether the tunnel behavior is modeled with UDP-like or TCP-like transport assumptions.",
           "examples": [
-            "1400 bytes",
-            "1436 bytes",
-            "Reduced MTU"
+            "UDP tunnel",
+            "TCP tunnel"
           ],
-          "whyItMatters": "Tunnel MTU affects fragmentation and payload size.",
-          "commonMistake": "Keeping default 1500 MTU through every tunnel."
+          "whyItMatters": "Tunnel mode affects retransmission behavior and how loss or congestion can compound.",
+          "commonMistake": "Running TCP over TCP and being surprised by poor recovery under loss.",
+          "links": [
+            {
+              "label": "Model loss behavior by protocol",
+              "kbKey": "network/packet-loss-impact",
+              "anchor": "protocol",
+              "note": "Use this when tunnel mode interacts with loss or high RTT."
+            }
+          ]
         },
         {
-          "label": "Traffic Type",
-          "description": "The workload carried by the VPN.",
+          "id": "hardware-offload",
+          "label": "Hardware Offload?",
+          "description": "Whether the platform can accelerate encryption or tunnel processing in hardware.",
           "examples": [
-            "Remote desktop",
-            "File transfer",
-            "VoIP",
-            "Camera stream"
+            "Yes",
+            "No",
+            "firewall crypto acceleration"
           ],
-          "whyItMatters": "Some workloads are more sensitive to delay and overhead.",
-          "commonMistake": "Treating all VPN traffic as generic data."
-        },
-        {
-          "label": "Endpoint Capacity",
-          "description": "The VPN device or firewall processing capability.",
-          "examples": [
-            "Firewall VPN throughput",
-            "Cloud gateway",
-            "Small router"
-          ],
-          "whyItMatters": "VPN performance may be limited by endpoint CPU.",
-          "commonMistake": "Sizing by ISP speed while ignoring firewall limits."
-        },
-        {
-          "label": "Headroom",
-          "description": "Spare VPN capacity above expected load.",
-          "examples": [
-            "20%",
-            "30%",
-            "Burst margin"
-          ],
-          "whyItMatters": "Headroom reduces congestion and retransmission under load.",
-          "commonMistake": "Running encrypted tunnels at their maximum tested rate."
+          "whyItMatters": "Offload can preserve throughput by reducing CPU-bound encryption limits.",
+          "commonMistake": "Assuming the device can encrypt at line rate without checking offload support."
         }
       ]
     },
     {
+      "id": "how-to-read-the-results",
       "title": "How to read the results",
       "body": [
-        "Healthy means VPN overhead appears manageable. Watch means MTU and throughput should be reviewed. Risk means the VPN may reduce usable capacity or cause fragmentation/performance issues."
+        "Healthy means usable throughput appears manageable for the selected tunnel assumptions. Watch means overhead, CPU, or MTU should be reviewed. Risk means the VPN path may significantly reduce goodput or cause fragmentation pressure."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but the assumptions deserve review.",
-        "Risk: increase capacity, reduce load, simplify the path, or validate more carefully before implementation."
+        "Healthy: the entered assumptions leave practical operating margin.",
+        "Watch: the design may still work, but the assumption deserves review before relying on it.",
+        "Risk: reduce demand, increase capacity, change the topology, or validate the design more carefully before implementation."
       ]
     },
     {
+      "id": "common-mistakes",
       "title": "Common mistakes",
       "body": [
-        "Most network planning problems come from checking raw link speed while ignoring overhead, concurrency, peak traffic, latency, failover, and growth."
+        "Most network planning mistakes come from checking one layer or one average value while ignoring peaks, overhead, path behavior, failure conditions, and growth."
       ],
       "bullets": [
-        "Sizing from theoretical maximums instead of usable throughput.",
-        "Ignoring protocol overhead, VPN overhead, or retransmission.",
-        "Sizing for average traffic and forgetting peak windows.",
-        "Failing to document assumptions before the network is built."
+        "Planning from theoretical line rate instead of usable sustained throughput.",
+        "Sizing for calm-period average traffic while ignoring peaks, bursts, retransmits, and maintenance activity.",
+        "Treating one network layer in isolation even though access, aggregation, WAN, VPN, and endpoint behavior interact.",
+        "Forgetting to document assumptions before the design becomes hardware, cabling, or service-provider work."
       ]
     },
     {
+      "id": "planning-assumptions",
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, carrier/service-provider limits, application testing, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, firewall/router/switch limits, service-provider terms, cabling validation, monitoring data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real throughput is usually lower than rated link speed.",
-        "Traffic mix and timing matter.",
-        "Latency, loss, and jitter can be as important as bandwidth.",
-        "A design with headroom is usually easier to support and expand."
+        "Real measurements from the installed network are better than estimates whenever they are available.",
+        "Protocol overhead, encapsulation, device behavior, cabling, switching, routing, and WAN conditions can change the result.",
+        "Healthy results still need validation against the actual switch, firewall, router, ISP, tunnel, or endpoint platform being used.",
+        "A design with documented headroom is usually easier to support, troubleshoot, and grow."
       ]
     },
     {
+      "id": "professional-responsibility",
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, service-provider validation, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, vendor validation, production testing, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against the actual network equipment and services being deployed.",
-        "Confirm stakeholder expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual hardware, firmware, service-provider limits, and network architecture being deployed.",
+        "Confirm stakeholder expectations for performance, outage behavior, security, and operational recovery.",
+        "Document assumptions before implementation and revisit them as traffic or topology changes."
       ]
     }
   ]
