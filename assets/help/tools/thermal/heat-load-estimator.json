@@ -2,152 +2,137 @@
   "title": "Heat Load Estimator Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how equipment watts, PoE load, UPS losses, and conversion losses become room heat.",
-  "updated": "2026-04-26",
+  "summary": "Understand how device wattage, quantity, utilization, and safety margin become total thermal load.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates the total heat load created by equipment so cooling and airflow can be planned correctly."
+        "This tool estimates total heat load from equipment count, power draw, expected utilization, and planning margin."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch thermal issues before equipment overheats."
+        "Use it as a planning and sanity-check aid before committing to equipment, racks, fans, or cooling assumptions.",
+        "Use it to document the load, margin, and environmental assumptions behind the design.",
+        "Use it to catch thermal pressure before it becomes a field reliability problem."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning racks, closets, server rooms, security equipment, network rooms, or any space with powered electronics."
+        "Use it before airflow, room cooling, rack density, or exhaust-temperature calculations when the total heat load has not yet been established."
       ],
       "bullets": [
-        "Early thermal planning.",
-        "Equipment-room or rack review.",
-        "Expansion or heat-load evaluation.",
-        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-room or cabinet validation.",
+        "Explaining cooling and heat-removal tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical thermal planning terms."
       ],
       "items": [
         {
-          "label": "Equipment Watts",
-          "description": "The electrical power consumed by active equipment.",
+          "label": "Device Power (Watts each)",
+          "description": "The expected electrical draw of one device or one repeated equipment type.",
           "examples": [
-            "Switches",
-            "Servers",
-            "Recorders",
-            "Panels"
+            "45 W camera switch",
+            "350 W server",
+            "800 W appliance"
           ],
-          "whyItMatters": "Consumed power becomes heat in the room.",
-          "commonMistake": "Counting only major equipment and ignoring smaller devices."
+          "whyItMatters": "Per-device watts are the starting point for total heat load.",
+          "commonMistake": "Using a minimum idle value when the design should reflect loaded or sustained operation."
         },
         {
-          "label": "PoE Load",
-          "description": "Power delivered to PoE devices from switches or injectors.",
+          "label": "Quantity",
+          "description": "The number of devices included in the heat-load estimate.",
           "examples": [
-            "Cameras",
-            "Access points",
-            "Intercoms"
+            "8 devices",
+            "24 switches",
+            "4 servers"
           ],
-          "whyItMatters": "PoE power often becomes heat split between switch losses and remote devices.",
-          "commonMistake": "Ignoring PoE load when sizing closet cooling."
+          "whyItMatters": "Quantity scales the device load into the total equipment load.",
+          "commonMistake": "Forgetting support equipment such as switches, power supplies, storage, or small appliances."
         },
         {
-          "label": "UPS / PSU Losses",
-          "description": "Heat created by inefficient power conversion.",
+          "label": "Utilization (%)",
+          "description": "The expected percentage of device power used during normal or design-case operation.",
           "examples": [
-            "UPS losses",
-            "Power supply losses",
-            "Inverter losses"
+            "50% typical",
+            "80% loaded",
+            "100% worst case"
           ],
-          "whyItMatters": "Losses add heat beyond useful device load.",
-          "commonMistake": "Assuming conversion is 100% efficient."
+          "whyItMatters": "Utilization prevents the estimate from blindly using either idle or full nameplate when a more realistic design case is known.",
+          "commonMistake": "Using low normal utilization when the cooling system must survive peak or summer operation."
         },
         {
-          "label": "Duty Cycle",
-          "description": "How often equipment runs at load.",
+          "label": "Safety Margin (%)",
+          "description": "Extra heat load added for growth, uncertainty, measurement error, or future expansion.",
           "examples": [
-            "24/7",
-            "Peak hours",
-            "Scheduled load"
+            "10% margin",
+            "20% growth",
+            "30% conservative"
           ],
-          "whyItMatters": "Continuous operation creates sustained thermal load.",
-          "commonMistake": "Using idle values for always-on systems."
-        },
-        {
-          "label": "Cooling Capacity",
-          "description": "Available cooling for the room or enclosure.",
-          "examples": [
-            "HVAC",
-            "Mini-split",
-            "Exhaust fan"
-          ],
-          "whyItMatters": "Cooling must exceed heat load with margin.",
-          "commonMistake": "Assuming building HVAC will handle the closet automatically."
-        },
-        {
-          "label": "Growth Allowance",
-          "description": "Future heat load from added equipment.",
-          "examples": [
-            "New switches",
-            "More cameras",
-            "Additional UPS"
-          ],
-          "whyItMatters": "Heat load usually increases as systems expand.",
-          "commonMistake": "Sizing cooling for the initial install only."
+          "whyItMatters": "Margin protects the cooling plan from small changes that would otherwise consume all spare capacity.",
+          "commonMistake": "Treating the first calculated total as the final cooling requirement with no reserve.",
+          "links": [
+            {
+              "label": "Compare total heat against room cooling",
+              "kbKey": "thermal/room-cooling-capacity",
+              "anchor": "Total Heat Load (Watts)",
+              "note": "Use this after estimating heat load to evaluate cooling margin."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means heat load appears manageable for the space. Watch means cooling or airflow should be reviewed. Risk means the room may overheat or exceed cooling capacity."
+        "Healthy means the calculated heat load and margin look manageable for downstream planning. Watch or Risk does not mean the watts are wrong; it means the resulting load should be carried into airflow and cooling checks before the design is trusted."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
-        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable with reasonable thermal margin.",
+        "Watch: the design may still work, but airflow, load, restriction, or cooling margin should be reviewed.",
+        "Risk: reduce heat load, improve airflow/cooling, add margin, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+        "Thermal planning mistakes usually happen when heat load, airflow, and cooling capacity are sized separately instead of as one operating envelope."
       ],
       "bullets": [
-        "Ignoring UPS, PSU, PoE, or conversion heat.",
-        "Using fan free-air ratings without considering restrictions.",
-        "Cooling the room generally instead of managing intake and exhaust paths.",
-        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+        "Treating nameplate power, measured load, airflow, and cooling capacity as interchangeable values.",
+        "Ignoring restriction, recirculation, altitude, inlet temperature, and future equipment growth.",
+        "Using ideal fan or cooling ratings as if they are guaranteed sustained field performance.",
+        "Forgetting that nearly all electrical load eventually becomes heat that must be removed."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, mechanical design review, HVAC validation, commissioning data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Equipment heat should be based on real load when possible.",
-        "Cooling capacity should be validated under actual site conditions.",
-        "Airflow requires both supply and exhaust paths.",
-        "A design with thermal margin is easier to support and expand."
+        "Vendor specifications and site measurements still matter.",
+        "Actual airflow depends on restriction, path geometry, filter condition, fan curves, and cabinet leakage.",
+        "Cooling designs should be verified against the actual equipment, rack layout, and room conditions.",
+        "A design with margin is usually easier to support during summer conditions, maintenance, and expansion."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific thermal testing, code compliance review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment ratings and site conditions.",
-        "Confirm temperature limits and owner expectations.",
-        "Document assumptions before implementation."
+        "Validate against the actual equipment, room, rack, cabinet, and cooling system being deployed.",
+        "Confirm stakeholder expectations, operating limits, and maintenance requirements.",
+        "Document assumptions before implementation so thermal decisions can be reviewed later."
       ]
     }
   ]

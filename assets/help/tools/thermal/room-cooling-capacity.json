@@ -2,152 +2,123 @@
   "title": "Room Cooling Capacity Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand room heat load, HVAC capacity, safety margin, ambient conditions, and future growth.",
-  "updated": "2026-04-26",
+  "summary": "Understand whether room cooling capacity has enough margin for the entered thermal load.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether a room's cooling capacity can remove the expected equipment heat load."
+        "This tool compares total heat load against cooling capacity with a safety margin so room-level cooling pressure can be reviewed."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch thermal issues before equipment overheats."
+        "Use it as a planning and sanity-check aid before committing to equipment, racks, fans, or cooling assumptions.",
+        "Use it to document the load, margin, and environmental assumptions behind the design.",
+        "Use it to catch thermal pressure before it becomes a field reliability problem."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning equipment rooms, server closets, MDF/IDF spaces, security rooms, or any room with continuous electronic load."
+        "Use it when checking equipment closets, small data rooms, rack rooms, or any space where the HVAC/cooling system must support IT or security equipment heat."
       ],
       "bullets": [
-        "Early thermal planning.",
-        "Equipment-room or rack review.",
-        "Expansion or heat-load evaluation.",
-        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-room or cabinet validation.",
+        "Explaining cooling and heat-removal tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical thermal planning terms."
       ],
       "items": [
         {
-          "label": "Room Heat Load",
-          "description": "Total heat produced inside the room.",
+          "label": "Total Heat Load (Watts)",
+          "description": "The combined heat-producing load for the room or space being evaluated.",
           "examples": [
-            "Rack load",
-            "UPS heat",
-            "PoE switches",
-            "Servers"
+            "1,500 W closet",
+            "6,000 W room",
+            "Combined rack load"
           ],
-          "whyItMatters": "Heat load determines required cooling.",
-          "commonMistake": "Only checking room size and ignoring equipment watts."
+          "whyItMatters": "Room cooling must remove the total heat load, not just the largest single device.",
+          "commonMistake": "Forgetting network gear, UPS losses, storage, or future equipment when totaling heat.",
+          "links": [
+            {
+              "label": "Estimate total heat load first",
+              "kbKey": "thermal/heat-load-estimator",
+              "anchor": "Safety Margin (%)",
+              "note": "Use this when total heat load still needs to be calculated."
+            }
+          ]
         },
         {
-          "label": "Cooling Capacity",
-          "description": "The amount of heat the cooling system can remove.",
+          "label": "Safety Margin (%)",
+          "description": "Extra cooling margin reserved above the calculated heat load.",
           "examples": [
-            "BTU/hr",
-            "Tons of cooling",
-            "Mini-split capacity"
+            "10% margin",
+            "20% margin",
+            "Future expansion reserve"
           ],
-          "whyItMatters": "Cooling capacity must exceed heat load with margin.",
-          "commonMistake": "Using nominal HVAC capacity without checking actual room service."
-        },
-        {
-          "label": "Ambient Conditions",
-          "description": "The temperature conditions around or supplying the room.",
-          "examples": [
-            "Conditioned office",
-            "Warm closet",
-            "Exterior wall room"
-          ],
-          "whyItMatters": "Warm ambient conditions reduce margin.",
-          "commonMistake": "Assuming the room stays at office temperature."
-        },
-        {
-          "label": "Ventilation",
-          "description": "Air exchange with the surrounding space.",
-          "examples": [
-            "Return air",
-            "Exhaust fan",
-            "Door grille"
-          ],
-          "whyItMatters": "Ventilation affects how heat leaves the room.",
-          "commonMistake": "Closing equipment in a room with no air path."
-        },
-        {
-          "label": "Cooling Margin",
-          "description": "Extra capacity reserved above calculated load.",
-          "examples": [
-            "20%",
-            "30%",
-            "Growth reserve"
-          ],
-          "whyItMatters": "Margin protects against hot days, dirty filters, and added equipment.",
-          "commonMistake": "Sizing cooling exactly to current load."
-        },
-        {
-          "label": "Future Load",
-          "description": "Expected future equipment heat.",
-          "examples": [
-            "More racks",
-            "More switches",
-            "Battery expansion"
-          ],
-          "whyItMatters": "Future load can exceed cooling quickly.",
-          "commonMistake": "Designing cooling for today's load only."
+          "whyItMatters": "Margin helps protect the room from growth, high ambient conditions, dirty filters, or reduced cooling performance.",
+          "commonMistake": "Sizing cooling exactly to today's calculated load with no reserve.",
+          "links": [
+            {
+              "label": "Translate watts to BTU/hr or tons",
+              "kbKey": "thermal/btu-converter",
+              "anchor": "Watts (W)",
+              "note": "Use this when cooling capacity needs to be discussed in HVAC units."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means cooling capacity appears adequate. Watch means heat load or margin should be reviewed. Risk means the room may overheat or require dedicated cooling."
+        "Healthy means the room cooling comparison has reasonable margin. Watch means cooling capacity, airflow delivery, or growth assumptions should be reviewed. Risk means the room may overheat unless load is reduced or cooling capacity/delivery is improved."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
-        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable with reasonable thermal margin.",
+        "Watch: the design may still work, but airflow, load, restriction, or cooling margin should be reviewed.",
+        "Risk: reduce heat load, improve airflow/cooling, add margin, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+        "Thermal planning mistakes usually happen when heat load, airflow, and cooling capacity are sized separately instead of as one operating envelope."
       ],
       "bullets": [
-        "Ignoring UPS, PSU, PoE, or conversion heat.",
-        "Using fan free-air ratings without considering restrictions.",
-        "Cooling the room generally instead of managing intake and exhaust paths.",
-        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+        "Treating nameplate power, measured load, airflow, and cooling capacity as interchangeable values.",
+        "Ignoring restriction, recirculation, altitude, inlet temperature, and future equipment growth.",
+        "Using ideal fan or cooling ratings as if they are guaranteed sustained field performance.",
+        "Forgetting that nearly all electrical load eventually becomes heat that must be removed."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, mechanical design review, HVAC validation, commissioning data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Equipment heat should be based on real load when possible.",
-        "Cooling capacity should be validated under actual site conditions.",
-        "Airflow requires both supply and exhaust paths.",
-        "A design with thermal margin is easier to support and expand."
+        "Vendor specifications and site measurements still matter.",
+        "Actual airflow depends on restriction, path geometry, filter condition, fan curves, and cabinet leakage.",
+        "Cooling designs should be verified against the actual equipment, rack layout, and room conditions.",
+        "A design with margin is usually easier to support during summer conditions, maintenance, and expansion."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific thermal testing, code compliance review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment ratings and site conditions.",
-        "Confirm temperature limits and owner expectations.",
-        "Document assumptions before implementation."
+        "Validate against the actual equipment, room, rack, cabinet, and cooling system being deployed.",
+        "Confirm stakeholder expectations, operating limits, and maintenance requirements.",
+        "Document assumptions before implementation so thermal decisions can be reviewed later."
       ]
     }
   ]

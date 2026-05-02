@@ -2,153 +2,145 @@
   "title": "Exhaust Temperature Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how intake temperature, heat load, airflow, and equipment exhaust affect thermal risk.",
-  "updated": "2026-04-26",
+  "summary": "Understand how inlet air, heat load, airflow, and air-density correction affect expected exhaust temperature.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates exhaust air temperature based on heat added to the airflow path."
+        "This tool estimates exhaust temperature by adding calculated temperature rise to the inlet air condition."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch thermal issues before equipment overheats."
+        "Use it as a planning and sanity-check aid before committing to equipment, racks, fans, or cooling assumptions.",
+        "Use it to document the load, margin, and environmental assumptions behind the design.",
+        "Use it to catch thermal pressure before it becomes a field reliability problem."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning rack exhaust, cabinet fans, closet ventilation, ducted equipment, or airflow paths where hot exhaust may recirculate."
+        "Use it when checking rack exhaust, cabinet discharge, closet return air, or whether hot exhaust may create recirculation or comfort issues."
       ],
       "bullets": [
-        "Early thermal planning.",
-        "Equipment-room or rack review.",
-        "Expansion or heat-load evaluation.",
-        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-room or cabinet validation.",
+        "Explaining cooling and heat-removal tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical thermal planning terms."
       ],
       "items": [
         {
-          "label": "Intake Temperature",
-          "description": "The air temperature entering the equipment or cabinet.",
+          "label": "Inlet Temperature (°F)",
+          "description": "The temperature of the air entering the equipment, rack, cabinet, or airflow path.",
           "examples": [
-            "72°F",
-            "80°F",
-            "Warm closet air"
+            "72 °F room air",
+            "78 °F closet air",
+            "Warm intake condition"
           ],
-          "whyItMatters": "Warmer intake air creates warmer exhaust air.",
-          "commonMistake": "Only checking room thermostat temperature instead of intake temperature."
+          "whyItMatters": "Exhaust temperature starts from inlet temperature, so a warm inlet leaves less margin.",
+          "commonMistake": "Only checking exhaust rise and ignoring that the inlet air may already be too warm."
         },
         {
-          "label": "Heat Load",
-          "description": "The heat added by equipment in the airflow path.",
+          "label": "Heat Load (Watts)",
+          "description": "The heat-producing electrical load being cooled by the airflow path.",
           "examples": [
-            "Rack load",
-            "Switch heat",
-            "Server heat",
-            "UPS losses"
+            "1,000 W cabinet",
+            "4 kW rack",
+            "Server heat load"
           ],
-          "whyItMatters": "More heat raises exhaust temperature.",
-          "commonMistake": "Ignoring PoE or power-conversion heat."
+          "whyItMatters": "More heat raises exhaust temperature unless airflow increases.",
+          "commonMistake": "Using nameplate or a partial load value without documenting the assumption.",
+          "links": [
+            {
+              "label": "Calculate heat from device quantity",
+              "kbKey": "thermal/heat-load-estimator",
+              "anchor": "Utilization (%)",
+              "note": "Use this when load depends on quantity and utilization."
+            }
+          ]
         },
         {
-          "label": "Airflow",
-          "description": "The air volume passing through the equipment or enclosure.",
+          "label": "Airflow (CFM)",
+          "description": "The airflow available to carry heat away from the equipment or enclosure.",
           "examples": [
-            "Fan CFM",
-            "Rack airflow",
-            "Cabinet exhaust"
+            "200 CFM",
+            "Rack fan airflow",
+            "Measured exhaust CFM"
           ],
-          "whyItMatters": "More airflow reduces the temperature rise across the equipment.",
-          "commonMistake": "Using free-air fan CFM instead of actual installed airflow."
+          "whyItMatters": "More airflow reduces temperature rise and lowers exhaust temperature.",
+          "commonMistake": "Using fan free-air CFM instead of installed airflow after restriction.",
+          "links": [
+            {
+              "label": "Check fan count and derating",
+              "kbKey": "thermal/fan-cfm-sizing",
+              "anchor": "Derate for Restriction (%)",
+              "note": "Use this when fan airflow is affected by restriction or redundancy."
+            }
+          ]
         },
         {
-          "label": "Exhaust Path",
-          "description": "Where hot air is discharged.",
+          "label": "Air Density Factor",
+          "description": "A correction factor for site conditions that affect heat carried per unit of airflow.",
           "examples": [
-            "Into room",
-            "Ceiling plenum",
-            "Ducted outside",
-            "Hot aisle"
+            "1.0 standard",
+            "0.95 conservative",
+            "0.90 hot/elevated/restricted"
           ],
-          "whyItMatters": "Poor exhaust paths can recirculate heat.",
-          "commonMistake": "Dumping exhaust back into the intake area."
-        },
-        {
-          "label": "Recirculation Risk",
-          "description": "Chance that hot exhaust is pulled back into equipment intake.",
-          "examples": [
-            "Open rack",
-            "Closed cabinet",
-            "Poor aisle separation"
-          ],
-          "whyItMatters": "Recirculation can make equipment run hotter than calculations suggest.",
-          "commonMistake": "Assuming exhaust air leaves the area cleanly."
-        },
-        {
-          "label": "Temperature Limit",
-          "description": "The maximum acceptable exhaust or room temperature.",
-          "examples": [
-            "Equipment rating",
-            "Room limit",
-            "Design threshold"
-          ],
-          "whyItMatters": "Temperature limit defines whether the exhaust condition is acceptable.",
-          "commonMistake": "Ignoring downstream effects of hot exhaust."
+          "whyItMatters": "Lower effective air density increases the expected temperature rise.",
+          "commonMistake": "Leaving the factor ideal when evaluating hot, restricted, or high-elevation conditions."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means exhaust temperature appears controlled. Watch means airflow or recirculation should be reviewed. Risk means exhaust air may become hot enough to stress equipment or heat the surrounding space."
+        "Healthy means exhaust temperature appears manageable. Watch means recirculation, comfort, return-air temperature, or cooling path assumptions should be reviewed. Risk means the exhaust path could overheat nearby equipment or overwhelm the room cooling strategy."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
-        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable with reasonable thermal margin.",
+        "Watch: the design may still work, but airflow, load, restriction, or cooling margin should be reviewed.",
+        "Risk: reduce heat load, improve airflow/cooling, add margin, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+        "Thermal planning mistakes usually happen when heat load, airflow, and cooling capacity are sized separately instead of as one operating envelope."
       ],
       "bullets": [
-        "Ignoring UPS, PSU, PoE, or conversion heat.",
-        "Using fan free-air ratings without considering restrictions.",
-        "Cooling the room generally instead of managing intake and exhaust paths.",
-        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+        "Treating nameplate power, measured load, airflow, and cooling capacity as interchangeable values.",
+        "Ignoring restriction, recirculation, altitude, inlet temperature, and future equipment growth.",
+        "Using ideal fan or cooling ratings as if they are guaranteed sustained field performance.",
+        "Forgetting that nearly all electrical load eventually becomes heat that must be removed."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, mechanical design review, HVAC validation, commissioning data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Equipment heat should be based on real load when possible.",
-        "Cooling capacity should be validated under actual site conditions.",
-        "Airflow requires both supply and exhaust paths.",
-        "A design with thermal margin is easier to support and expand."
+        "Vendor specifications and site measurements still matter.",
+        "Actual airflow depends on restriction, path geometry, filter condition, fan curves, and cabinet leakage.",
+        "Cooling designs should be verified against the actual equipment, rack layout, and room conditions.",
+        "A design with margin is usually easier to support during summer conditions, maintenance, and expansion."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific thermal testing, code compliance review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment ratings and site conditions.",
-        "Confirm temperature limits and owner expectations.",
-        "Document assumptions before implementation."
+        "Validate against the actual equipment, room, rack, cabinet, and cooling system being deployed.",
+        "Confirm stakeholder expectations, operating limits, and maintenance requirements.",
+        "Document assumptions before implementation so thermal decisions can be reviewed later."
       ]
     }
   ]

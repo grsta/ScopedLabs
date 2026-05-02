@@ -1,152 +1,116 @@
 {
-  "title": "PSU Efficiency Heat Guide",
+  "title": "PSU Efficiency Heat Loss Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how power supply efficiency creates heat loss and affects cooling demand.",
-  "updated": "2026-04-26",
+  "summary": "Understand how power-supply efficiency turns input power losses into additional heat.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates how much heat is created by power supply inefficiency."
+        "This tool estimates how much heat is created by power-supply inefficiency at a given output load."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch thermal issues before equipment overheats."
+        "Use it as a planning and sanity-check aid before committing to equipment, racks, fans, or cooling assumptions.",
+        "Use it to document the load, margin, and environmental assumptions behind the design.",
+        "Use it to catch thermal pressure before it becomes a field reliability problem."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when evaluating server power supplies, UPS losses, DC supplies, PoE power supplies, inverters, or any conversion stage that creates heat."
+        "Use it when comparing PSU efficiency, estimating rack heat contribution, or documenting why inefficient conversion increases cooling demand."
       ],
       "bullets": [
-        "Early thermal planning.",
-        "Equipment-room or rack review.",
-        "Expansion or heat-load evaluation.",
-        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-room or cabinet validation.",
+        "Explaining cooling and heat-removal tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical thermal planning terms."
       ],
       "items": [
         {
-          "label": "Output Load",
-          "description": "Useful power delivered to the equipment.",
+          "label": "Output Load (Watts)",
+          "description": "The useful power being delivered by the power supply to the connected equipment.",
           "examples": [
-            "Server load",
-            "DC load",
-            "PoE output"
+            "300 W output",
+            "1,200 W server load",
+            "Rack device load"
           ],
-          "whyItMatters": "Output load determines how hard the power supply works.",
-          "commonMistake": "Sizing from PSU rating instead of actual load."
+          "whyItMatters": "Output load determines how much input power the PSU must draw after efficiency losses.",
+          "commonMistake": "Confusing output load with wall/input power.",
+          "links": [
+            {
+              "label": "Roll heat loss into total room load",
+              "kbKey": "thermal/heat-load-estimator",
+              "anchor": "Device Power (Watts each)",
+              "note": "Use this when PSU losses need to be included with device heat."
+            }
+          ]
         },
         {
-          "label": "Efficiency",
-          "description": "The percentage of input power converted to useful output.",
+          "label": "PSU Efficiency (%)",
+          "description": "The percentage of input power converted into useful output power instead of heat loss.",
           "examples": [
-            "80%",
-            "90%",
-            "94%"
+            "80% efficient",
+            "90% efficient",
+            "94% efficient"
           ],
-          "whyItMatters": "Lower efficiency means more heat is wasted.",
-          "commonMistake": "Assuming all input power becomes useful output."
-        },
-        {
-          "label": "Input Power",
-          "description": "Power drawn from the electrical source.",
-          "examples": [
-            "AC input",
-            "UPS input",
-            "DC input"
-          ],
-          "whyItMatters": "Input power includes useful output plus losses.",
-          "commonMistake": "Ignoring input draw when planning power and heat."
-        },
-        {
-          "label": "Heat Loss",
-          "description": "Power wasted as heat during conversion.",
-          "examples": [
-            "PSU heat",
-            "UPS heat",
-            "Inverter heat"
-          ],
-          "whyItMatters": "Heat loss adds to room cooling demand.",
-          "commonMistake": "Only cooling the equipment load and not conversion losses."
-        },
-        {
-          "label": "Load Level",
-          "description": "How heavily the PSU is loaded compared to its rating.",
-          "examples": [
-            "Light load",
-            "50% load",
-            "High load"
-          ],
-          "whyItMatters": "Efficiency changes with load level.",
-          "commonMistake": "Assuming efficiency is constant at all loads."
-        },
-        {
-          "label": "Cooling Impact",
-          "description": "How conversion heat affects the space.",
-          "examples": [
-            "Rack heat",
-            "Closet heat",
-            "Cabinet heat"
-          ],
-          "whyItMatters": "Even small losses add up across many devices.",
-          "commonMistake": "Ignoring many small power supplies."
+          "whyItMatters": "Lower efficiency means more input power is wasted as heat.",
+          "commonMistake": "Assuming all PSUs produce the same heat at the same output load."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means conversion losses appear manageable. Watch means losses and cooling should be reviewed. Risk means inefficient conversion may create significant heat or reduce runtime."
+        "Healthy means efficiency loss is relatively modest for the load. Watch or Risk means conversion loss may be meaningful enough to include in rack, room, or cooling-capacity planning."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
-        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable with reasonable thermal margin.",
+        "Watch: the design may still work, but airflow, load, restriction, or cooling margin should be reviewed.",
+        "Risk: reduce heat load, improve airflow/cooling, add margin, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+        "Thermal planning mistakes usually happen when heat load, airflow, and cooling capacity are sized separately instead of as one operating envelope."
       ],
       "bullets": [
-        "Ignoring UPS, PSU, PoE, or conversion heat.",
-        "Using fan free-air ratings without considering restrictions.",
-        "Cooling the room generally instead of managing intake and exhaust paths.",
-        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+        "Treating nameplate power, measured load, airflow, and cooling capacity as interchangeable values.",
+        "Ignoring restriction, recirculation, altitude, inlet temperature, and future equipment growth.",
+        "Using ideal fan or cooling ratings as if they are guaranteed sustained field performance.",
+        "Forgetting that nearly all electrical load eventually becomes heat that must be removed."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, mechanical design review, HVAC validation, commissioning data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Equipment heat should be based on real load when possible.",
-        "Cooling capacity should be validated under actual site conditions.",
-        "Airflow requires both supply and exhaust paths.",
-        "A design with thermal margin is easier to support and expand."
+        "Vendor specifications and site measurements still matter.",
+        "Actual airflow depends on restriction, path geometry, filter condition, fan curves, and cabinet leakage.",
+        "Cooling designs should be verified against the actual equipment, rack layout, and room conditions.",
+        "A design with margin is usually easier to support during summer conditions, maintenance, and expansion."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific thermal testing, code compliance review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment ratings and site conditions.",
-        "Confirm temperature limits and owner expectations.",
-        "Document assumptions before implementation."
+        "Validate against the actual equipment, room, rack, cabinet, and cooling system being deployed.",
+        "Confirm stakeholder expectations, operating limits, and maintenance requirements.",
+        "Document assumptions before implementation so thermal decisions can be reviewed later."
       ]
     }
   ]

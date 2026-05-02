@@ -2,152 +2,115 @@
   "title": "Rack Thermal Density Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand rack heat density, watts per rack, airflow demand, cooling limits, and expansion risk.",
-  "updated": "2026-04-26",
+  "summary": "Understand how rack kW and rack height translate into thermal density and cooling pressure.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates whether a rack's heat density is practical for the cooling environment."
+        "This tool estimates rack thermal density so dense equipment layouts can be reviewed before cooling becomes the limiting factor."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch thermal issues before equipment overheats."
+        "Use it as a planning and sanity-check aid before committing to equipment, racks, fans, or cooling assumptions.",
+        "Use it to document the load, margin, and environmental assumptions behind the design.",
+        "Use it to catch thermal pressure before it becomes a field reliability problem."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning rack loads, server rooms, network closets, UPS cabinets, NVR racks, or high-density equipment layouts."
+        "Use it when planning rack population, comparing rack loads, reviewing expansion, or deciding whether a rack needs better airflow management or dedicated cooling."
       ],
       "bullets": [
-        "Early thermal planning.",
-        "Equipment-room or rack review.",
-        "Expansion or heat-load evaluation.",
-        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-room or cabinet validation.",
+        "Explaining cooling and heat-removal tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical thermal planning terms."
       ],
       "items": [
         {
-          "label": "Rack Load",
-          "description": "Total electrical load installed in the rack.",
+          "label": "Rack Load (kW)",
+          "description": "The total electrical load in the rack expressed in kilowatts.",
           "examples": [
-            "1 kW",
-            "3 kW",
-            "8 kW"
+            "1.5 kW rack",
+            "5 kW rack",
+            "High-density GPU rack"
           ],
-          "whyItMatters": "Rack load becomes rack heat output.",
-          "commonMistake": "Counting rack units without checking power draw."
+          "whyItMatters": "Rack load is the main driver of heat density and cooling demand.",
+          "commonMistake": "Filling rack units without checking how much kW the rack will produce.",
+          "links": [
+            {
+              "label": "Estimate rack heat from devices",
+              "kbKey": "thermal/heat-load-estimator",
+              "anchor": "Quantity",
+              "note": "Use this when rack load has not been totaled yet."
+            }
+          ]
         },
         {
-          "label": "Rack Size",
-          "description": "The physical rack or cabinet size.",
+          "label": "Rack Height (RU)",
+          "description": "The usable rack height included in the density calculation.",
           "examples": [
-            "24U",
-            "42U",
-            "Wall cabinet"
+            "24 RU wall rack",
+            "42 RU rack",
+            "48 RU cabinet"
           ],
-          "whyItMatters": "Rack size affects density and airflow path.",
-          "commonMistake": "Assuming a small cabinet can cool like a full rack."
-        },
-        {
-          "label": "Cooling Method",
-          "description": "How heat is removed from the rack.",
-          "examples": [
-            "Room HVAC",
-            "Rear-door fan",
-            "Cabinet fan",
-            "Hot/cold aisle"
-          ],
-          "whyItMatters": "Cooling method determines how much density is practical.",
-          "commonMistake": "Putting high-density equipment in a passive cabinet."
-        },
-        {
-          "label": "Airflow Path",
-          "description": "How air moves through the rack.",
-          "examples": [
-            "Front-to-back",
-            "Bottom-to-top",
-            "Side airflow"
-          ],
-          "whyItMatters": "Poor airflow paths trap heat.",
-          "commonMistake": "Blocking intake or exhaust with cable clutter."
-        },
-        {
-          "label": "Blanking / Sealing",
-          "description": "Controls that prevent hot air recirculation.",
-          "examples": [
-            "Blanking panels",
-            "Brush strips",
-            "Sealed cabinet"
-          ],
-          "whyItMatters": "Sealing improves cooling effectiveness.",
-          "commonMistake": "Leaving open rack gaps that let hot air loop back."
-        },
-        {
-          "label": "Growth Load",
-          "description": "Future heat added to the rack.",
-          "examples": [
-            "More switches",
-            "Additional servers",
-            "More PoE"
-          ],
-          "whyItMatters": "Rack thermal density often grows over time.",
-          "commonMistake": "Filling the rack thermally on day one."
+          "whyItMatters": "Rack height changes how concentrated the load is across the rack footprint.",
+          "commonMistake": "Comparing rack load without considering whether the load is concentrated in a small RU space."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means rack density appears manageable. Watch means airflow or cooling capacity should be reviewed. Risk means the rack may exceed practical cooling limits."
+        "Healthy means rack density appears manageable. Watch means rack airflow, blanking, placement, or cooling delivery should be reviewed. Risk means the rack may need load spreading, better containment, dedicated cooling, or a lower equipment density."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
-        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable with reasonable thermal margin.",
+        "Watch: the design may still work, but airflow, load, restriction, or cooling margin should be reviewed.",
+        "Risk: reduce heat load, improve airflow/cooling, add margin, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+        "Thermal planning mistakes usually happen when heat load, airflow, and cooling capacity are sized separately instead of as one operating envelope."
       ],
       "bullets": [
-        "Ignoring UPS, PSU, PoE, or conversion heat.",
-        "Using fan free-air ratings without considering restrictions.",
-        "Cooling the room generally instead of managing intake and exhaust paths.",
-        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+        "Treating nameplate power, measured load, airflow, and cooling capacity as interchangeable values.",
+        "Ignoring restriction, recirculation, altitude, inlet temperature, and future equipment growth.",
+        "Using ideal fan or cooling ratings as if they are guaranteed sustained field performance.",
+        "Forgetting that nearly all electrical load eventually becomes heat that must be removed."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, mechanical design review, HVAC validation, commissioning data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Equipment heat should be based on real load when possible.",
-        "Cooling capacity should be validated under actual site conditions.",
-        "Airflow requires both supply and exhaust paths.",
-        "A design with thermal margin is easier to support and expand."
+        "Vendor specifications and site measurements still matter.",
+        "Actual airflow depends on restriction, path geometry, filter condition, fan curves, and cabinet leakage.",
+        "Cooling designs should be verified against the actual equipment, rack layout, and room conditions.",
+        "A design with margin is usually easier to support during summer conditions, maintenance, and expansion."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific thermal testing, code compliance review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment ratings and site conditions.",
-        "Confirm temperature limits and owner expectations.",
-        "Document assumptions before implementation."
+        "Validate against the actual equipment, room, rack, cabinet, and cooling system being deployed.",
+        "Confirm stakeholder expectations, operating limits, and maintenance requirements.",
+        "Document assumptions before implementation so thermal decisions can be reviewed later."
       ]
     }
   ]

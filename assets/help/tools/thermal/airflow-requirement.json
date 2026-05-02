@@ -2,154 +2,134 @@
   "title": "Airflow Requirement Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how heat load, temperature rise, airflow, and cooling margin affect equipment-room ventilation.",
-  "updated": "2026-04-26",
+  "summary": "Understand how heat load, allowed temperature rise, and air-density correction affect required cooling airflow.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool estimates the airflow needed to remove heat from equipment or a room based on thermal load and acceptable temperature rise."
+        "This tool estimates the airflow needed to remove a known heat load while staying within an allowed temperature rise."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch thermal issues before equipment overheats."
+        "Use it as a planning and sanity-check aid before committing to equipment, racks, fans, or cooling assumptions.",
+        "Use it to document the load, margin, and environmental assumptions behind the design.",
+        "Use it to catch thermal pressure before it becomes a field reliability problem."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when planning closets, racks, cabinets, equipment rooms, exhaust paths, or cooling support for electronics."
+        "Use it when sizing cabinet fans, room ventilation, rack airflow, closet exhaust, or any cooling path where heat must be carried away by moving air."
       ],
       "bullets": [
-        "Early thermal planning.",
-        "Equipment-room or rack review.",
-        "Expansion or heat-load evaluation.",
-        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-room or cabinet validation.",
+        "Explaining cooling and heat-removal tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical thermal planning terms."
       ],
       "items": [
         {
-          "label": "Heat Load",
-          "description": "The amount of heat produced by equipment in the space.",
+          "label": "Heat Load (Watts)",
+          "description": "The amount of electrical load that becomes heat and must be removed from the space or enclosure.",
           "examples": [
-            "Network switches",
-            "Servers",
-            "UPS",
-            "NVR",
-            "Power supplies"
+            "500 W equipment load",
+            "2,000 W rack load",
+            "Measured UPS output load"
           ],
-          "whyItMatters": "Almost all electrical load becomes heat that must be removed.",
-          "commonMistake": "Sizing airflow from room size instead of actual equipment heat."
+          "whyItMatters": "Higher heat load requires more airflow for the same allowed temperature rise.",
+          "commonMistake": "Using only one device rating when the fan or room must cool the full combined load.",
+          "links": [
+            {
+              "label": "Estimate heat load from device watts",
+              "kbKey": "thermal/heat-load-estimator",
+              "anchor": "Device Power (Watts each)",
+              "note": "Use this when the heat load has not been totaled yet."
+            }
+          ]
         },
         {
-          "label": "Allowed Temperature Rise",
-          "description": "How much warmer the exhaust or room air can become above intake/ambient temperature.",
+          "label": "Allowed ΔT (°F)",
+          "description": "The maximum temperature rise allowed between intake/supply air and exhaust/return air.",
           "examples": [
-            "5°F rise",
-            "10°F rise",
-            "15°F rise"
+            "10 °F rise",
+            "15 °F rise",
+            "20 °F rise"
           ],
-          "whyItMatters": "A smaller allowed rise requires more airflow.",
-          "commonMistake": "Allowing too much temperature rise and stressing equipment."
+          "whyItMatters": "A lower allowed rise requires more airflow; a higher allowed rise may increase equipment inlet or exhaust temperature risk.",
+          "commonMistake": "Picking an allowed rise that looks convenient instead of one that matches equipment and room limits.",
+          "links": [
+            {
+              "label": "Check what airflow causes as ambient rise",
+              "kbKey": "thermal/ambient-rise",
+              "anchor": "Available Airflow (CFM)",
+              "note": "Use this when airflow is known and you need to estimate rise instead."
+            }
+          ]
         },
         {
-          "label": "Airflow",
-          "description": "The volume of air moved through the space.",
+          "label": "Air Density Factor",
+          "description": "A correction factor for how effectively air carries heat under the assumed site conditions.",
           "examples": [
-            "CFM",
-            "Exhaust fan airflow",
-            "Cabinet fan airflow"
+            "1.0 normal conditions",
+            "0.95 warm or elevated site",
+            "0.90 conservative planning"
           ],
-          "whyItMatters": "Airflow determines how quickly heat is removed.",
-          "commonMistake": "Using fan nameplate CFM without accounting for restrictions."
-        },
-        {
-          "label": "Ambient Temperature",
-          "description": "The air temperature entering the room or equipment.",
-          "examples": [
-            "Office ambient",
-            "Closet ambient",
-            "Outdoor intake"
-          ],
-          "whyItMatters": "Higher intake temperature leaves less thermal margin.",
-          "commonMistake": "Assuming room air stays cool under load."
-        },
-        {
-          "label": "Vent Path",
-          "description": "The path air takes into and out of the space.",
-          "examples": [
-            "Door grille",
-            "Ceiling exhaust",
-            "Ducted fan",
-            "Open closet"
-          ],
-          "whyItMatters": "Restricted paths reduce effective airflow.",
-          "commonMistake": "Adding a fan without providing intake air."
-        },
-        {
-          "label": "Thermal Margin",
-          "description": "Extra cooling capacity reserved for uncertainty or future growth.",
-          "examples": [
-            "20% spare",
-            "30% spare",
-            "Future equipment"
-          ],
-          "whyItMatters": "Margin protects against dust, aging fans, and load growth.",
-          "commonMistake": "Sizing exactly to the calculated minimum."
+          "whyItMatters": "Less dense or less effective air needs more volume flow to remove the same heat.",
+          "commonMistake": "Leaving the factor at ideal conditions for hot rooms, restricted paths, or higher elevations."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means airflow appears aligned with the heat load. Watch means temperature rise or margin should be reviewed. Risk means heat may accumulate faster than the space can remove it."
+        "Healthy means required airflow is reasonable for the entered heat load and temperature-rise target. Watch or Risk means airflow demand may be difficult to deliver through the actual room, rack, cabinet, filter, or fan path."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
-        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable with reasonable thermal margin.",
+        "Watch: the design may still work, but airflow, load, restriction, or cooling margin should be reviewed.",
+        "Risk: reduce heat load, improve airflow/cooling, add margin, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+        "Thermal planning mistakes usually happen when heat load, airflow, and cooling capacity are sized separately instead of as one operating envelope."
       ],
       "bullets": [
-        "Ignoring UPS, PSU, PoE, or conversion heat.",
-        "Using fan free-air ratings without considering restrictions.",
-        "Cooling the room generally instead of managing intake and exhaust paths.",
-        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+        "Treating nameplate power, measured load, airflow, and cooling capacity as interchangeable values.",
+        "Ignoring restriction, recirculation, altitude, inlet temperature, and future equipment growth.",
+        "Using ideal fan or cooling ratings as if they are guaranteed sustained field performance.",
+        "Forgetting that nearly all electrical load eventually becomes heat that must be removed."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, mechanical design review, HVAC validation, commissioning data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Equipment heat should be based on real load when possible.",
-        "Cooling capacity should be validated under actual site conditions.",
-        "Airflow requires both supply and exhaust paths.",
-        "A design with thermal margin is easier to support and expand."
+        "Vendor specifications and site measurements still matter.",
+        "Actual airflow depends on restriction, path geometry, filter condition, fan curves, and cabinet leakage.",
+        "Cooling designs should be verified against the actual equipment, rack layout, and room conditions.",
+        "A design with margin is usually easier to support during summer conditions, maintenance, and expansion."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific thermal testing, code compliance review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment ratings and site conditions.",
-        "Confirm temperature limits and owner expectations.",
-        "Document assumptions before implementation."
+        "Validate against the actual equipment, room, rack, cabinet, and cooling system being deployed.",
+        "Confirm stakeholder expectations, operating limits, and maintenance requirements.",
+        "Document assumptions before implementation so thermal decisions can be reviewed later."
       ]
     }
   ]

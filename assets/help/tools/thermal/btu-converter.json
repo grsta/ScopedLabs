@@ -2,153 +2,145 @@
   "title": "BTU Converter Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how watts, BTU/hr, heat load, and cooling capacity relate to each other.",
-  "updated": "2026-04-26",
+  "summary": "Understand how watts, BTU/hr, and cooling tons relate when converting electrical heat load into cooling capacity language.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This tool converts electrical power and heat output into BTU/hr so equipment load can be compared to cooling capacity."
+        "This tool converts between common heat and cooling units so electrical load can be compared with HVAC or cooling capacity."
       ],
       "bullets": [
-        "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch thermal issues before equipment overheats."
+        "Use it as a planning and sanity-check aid before committing to equipment, racks, fans, or cooling assumptions.",
+        "Use it to document the load, margin, and environmental assumptions behind the design.",
+        "Use it to catch thermal pressure before it becomes a field reliability problem."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it when translating equipment wattage into cooling demand, sizing room cooling, reviewing UPS/server heat, or explaining thermal load."
+        "Use it when equipment loads are given in watts but cooling capacity is discussed in BTU/hr or tons, or when you need a quick unit translation for documentation."
       ],
       "bullets": [
-        "Early thermal planning.",
-        "Equipment-room or rack review.",
-        "Expansion or heat-load evaluation.",
-        "Explaining cooling and airflow tradeoffs to a client, stakeholder, or internal team."
+        "Early design planning.",
+        "Expansion review.",
+        "Existing-room or cabinet validation.",
+        "Explaining cooling and heat-removal tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical thermal and cooling planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical thermal planning terms."
       ],
       "items": [
         {
-          "label": "Watts",
-          "description": "Electrical power consumed by the equipment.",
+          "label": "Watts (W)",
+          "description": "Electrical power or heat load expressed in watts.",
           "examples": [
             "500 W",
-            "1500 W",
-            "Rack load"
+            "2,500 W",
+            "Rack load in watts"
           ],
-          "whyItMatters": "Most consumed electrical power becomes heat.",
-          "commonMistake": "Forgetting that IT and low-voltage equipment still produce heat."
+          "whyItMatters": "Most IT and low-voltage equipment loads begin as watts, and nearly all of that load becomes heat.",
+          "commonMistake": "Treating watts as only an electrical value and forgetting it becomes cooling load.",
+          "links": [
+            {
+              "label": "Build watts from device count",
+              "kbKey": "thermal/heat-load-estimator",
+              "anchor": "Device Power (Watts each)",
+              "note": "Use this if the total wattage has not been calculated yet."
+            }
+          ]
         },
         {
           "label": "BTU/hr",
-          "description": "Heat output or cooling capacity expressed in British Thermal Units per hour.",
+          "description": "Cooling or heat-transfer rate expressed as British thermal units per hour.",
           "examples": [
-            "5000 BTU/hr",
-            "12000 BTU/hr",
-            "Room AC rating"
+            "1,706 BTU/hr",
+            "12,000 BTU/hr",
+            "HVAC capacity rating"
           ],
-          "whyItMatters": "BTU/hr is commonly used for cooling equipment capacity.",
-          "commonMistake": "Comparing watts to BTU/hr without converting."
+          "whyItMatters": "BTU/hr is commonly used for HVAC and room-cooling discussions.",
+          "commonMistake": "Comparing BTU/hr directly to watts without converting units first.",
+          "links": [
+            {
+              "label": "Compare heat load to room cooling",
+              "kbKey": "thermal/room-cooling-capacity",
+              "anchor": "Total Heat Load (Watts)",
+              "note": "Use this after conversion when checking room cooling margin."
+            }
+          ]
         },
         {
-          "label": "Equipment Load",
-          "description": "The devices contributing to the heat total.",
+          "label": "Tons (cooling)",
+          "description": "Cooling capacity expressed in refrigeration tons, where one ton is approximately 12,000 BTU/hr.",
           "examples": [
-            "Switches",
-            "Servers",
-            "NVR",
-            "UPS",
-            "PoE load"
+            "0.5 ton",
+            "1 ton",
+            "3 tons cooling"
           ],
-          "whyItMatters": "The total load determines the required cooling.",
-          "commonMistake": "Only counting the largest device and missing support equipment."
+          "whyItMatters": "Tons provide a quick HVAC-scale view of the heat load.",
+          "commonMistake": "Assuming nominal cooling tons equal usable cooling at the equipment intake."
         },
         {
-          "label": "Cooling Capacity",
-          "description": "The amount of heat the cooling system can remove.",
+          "label": "Edit Mode",
+          "description": "Which value you want to enter directly while the other units are calculated from it.",
           "examples": [
-            "Mini-split",
-            "Room AC",
-            "Building HVAC"
+            "Enter watts",
+            "Enter BTU/hr",
+            "Enter tons"
           ],
-          "whyItMatters": "Cooling capacity must exceed heat load with margin.",
-          "commonMistake": "Using nominal cooling capacity without considering room conditions."
-        },
-        {
-          "label": "Efficiency Loss",
-          "description": "Power lost as heat during conversion or operation.",
-          "examples": [
-            "UPS losses",
-            "PSU losses",
-            "Inverter losses"
-          ],
-          "whyItMatters": "Losses add heat even if they are not useful load.",
-          "commonMistake": "Ignoring conversion heat."
-        },
-        {
-          "label": "Safety Margin",
-          "description": "Extra cooling capacity reserved above calculated heat load.",
-          "examples": [
-            "20% spare",
-            "30% spare",
-            "Growth reserve"
-          ],
-          "whyItMatters": "Margin helps handle warm days, dust, and future load.",
-          "commonMistake": "Sizing cooling exactly to the conversion result."
+          "whyItMatters": "Changing the edit mode makes the converter work from the value you know instead of forcing manual back-calculation.",
+          "commonMistake": "Editing the wrong field and thinking the conversion math changed."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the converted heat load is easy to compare with cooling capacity. Watch or risk conditions depend on whether the available cooling can remove the converted load with margin."
+        "Read the results as equivalent unit values, not as a full cooling design. The converted values help translate between electrical, heat, and HVAC language, but they do not prove airflow delivery or cooling effectiveness."
       ],
       "bullets": [
-        "Healthy: the design appears manageable based on the entered assumptions.",
-        "Watch: the design may still work, but heat load, airflow, or cooling assumptions deserve review.",
-        "Risk: add airflow, reduce heat load, improve cooling, or validate more carefully before implementation."
+        "Healthy: the entered assumptions appear manageable with reasonable thermal margin.",
+        "Watch: the design may still work, but airflow, load, restriction, or cooling margin should be reviewed.",
+        "Risk: reduce heat load, improve airflow/cooling, add margin, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most thermal problems come from underestimating heat load, assuming air moves freely, or treating room comfort cooling as equipment cooling."
+        "Thermal planning mistakes usually happen when heat load, airflow, and cooling capacity are sized separately instead of as one operating envelope."
       ],
       "bullets": [
-        "Ignoring UPS, PSU, PoE, or conversion heat.",
-        "Using fan free-air ratings without considering restrictions.",
-        "Cooling the room generally instead of managing intake and exhaust paths.",
-        "Failing to leave margin for dust, aging fans, warm ambient conditions, and future load."
+        "Treating nameplate power, measured load, airflow, and cooling capacity as interchangeable values.",
+        "Ignoring restriction, recirculation, altitude, inlet temperature, and future equipment growth.",
+        "Using ideal fan or cooling ratings as if they are guaranteed sustained field performance.",
+        "Forgetting that nearly all electrical load eventually becomes heat that must be removed."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, HVAC design, code requirements, or project-specific engineering judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, mechanical design review, HVAC validation, commissioning data, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Equipment heat should be based on real load when possible.",
-        "Cooling capacity should be validated under actual site conditions.",
-        "Airflow requires both supply and exhaust paths.",
-        "A design with thermal margin is easier to support and expand."
+        "Vendor specifications and site measurements still matter.",
+        "Actual airflow depends on restriction, path geometry, filter condition, fan curves, and cabinet leakage.",
+        "Cooling designs should be verified against the actual equipment, rack layout, and room conditions.",
+        "A design with margin is usually easier to support during summer conditions, maintenance, and expansion."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, HVAC review, manufacturer validation, code compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, site-specific thermal testing, code compliance review, or project-specific design responsibility."
       ],
       "bullets": [
-        "Validate against actual equipment ratings and site conditions.",
-        "Confirm temperature limits and owner expectations.",
-        "Document assumptions before implementation."
+        "Validate against the actual equipment, room, rack, cabinet, and cooling system being deployed.",
+        "Confirm stakeholder expectations, operating limits, and maintenance requirements.",
+        "Document assumptions before implementation so thermal decisions can be reviewed later."
       ]
     }
   ]
