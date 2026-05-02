@@ -71,6 +71,13 @@
       cursor:pointer;
     }
 
+    
+    body .page > .site-footer {
+      width: min(calc(100% - 32px), var(--checkout-max));
+      max-width: var(--checkout-max);
+      margin: 32px auto 0;
+    }
+
     @media (max-width: 900px){
       .sl-checkout-grid{
         grid-template-columns:1fr;
