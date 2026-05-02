@@ -2,151 +2,177 @@
   "title": "Wireless Link Budget Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand transmit power, antenna gain, path loss, receiver sensitivity, and fade margin.",
-  "updated": "2026-04-26",
+  "summary": "Understand frequency, distance, transmit power, antenna gain, extra losses, receiver sensitivity, and wireless fade margin.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind Wireless Link Budget. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+        "This tool estimates whether a wireless link has enough signal margin after distance, frequency, antenna gain, other losses, and receiver sensitivity are considered."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch wireless design issues before deployment."
+        "Use it to document wireless design assumptions before implementation.",
+        "Use it to catch RF, capacity, or margin pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+        "Use it when planning outdoor links, building-to-building links, directional antennas, or any RF path where distance and path loss matter."
       ],
       "bullets": [
         "Early wireless design planning.",
-        "Expansion or AP placement review.",
-        "Existing-site validation.",
-        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+        "Expansion review or refresh planning.",
+        "Existing-system cleanup, validation, or troubleshooting support.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
-      "type": "glossary",
       "body": [
         "These descriptions explain what each input represents in practical wireless planning terms."
       ],
+      "type": "glossary",
       "items": [
         {
-          "label": "Transmit Power",
-          "description": "Power output from the wireless transmitter.",
-          "examples": [
-            "15 dBm",
-            "20 dBm",
-            "30 dBm"
-          ],
-          "whyItMatters": "Transmit power contributes to received signal strength.",
-          "commonMistake": "Using maximum legal power without checking the full link."
-        },
-        {
-          "label": "Antenna Gain",
-          "description": "Signal gain from directional or higher-gain antennas.",
-          "examples": [
-            "3 dBi",
-            "9 dBi",
-            "24 dBi"
-          ],
-          "whyItMatters": "Gain improves signal in the antenna direction.",
-          "commonMistake": "Adding high gain without considering alignment and beamwidth."
-        },
-        {
-          "label": "Path Distance",
-          "description": "Distance between transmitter and receiver.",
-          "examples": [
-            "100 ft",
-            "1 mile",
-            "5 miles"
-          ],
-          "whyItMatters": "Longer distance increases path loss.",
-          "commonMistake": "Ignoring distance or assuming short-range behavior over long links."
-        },
-        {
-          "label": "Frequency",
-          "description": "Wireless frequency used by the link.",
+          "label": "Frequency (GHz)",
+          "description": "The operating frequency of the wireless link.",
           "examples": [
             "2.4 GHz",
             "5 GHz",
             "6 GHz"
           ],
-          "whyItMatters": "Higher frequencies usually experience more path loss.",
-          "commonMistake": "Comparing links without matching frequency."
+          "whyItMatters": "Frequency changes path loss and affects how much margin remains over distance.",
+          "commonMistake": "Comparing links at different frequencies without recalculating path loss."
         },
         {
-          "label": "Receiver Sensitivity",
-          "description": "The minimum signal level the receiver needs for the target data rate.",
+          "label": "Distance (ft)",
+          "description": "The path distance between transmitter and receiver.",
           "examples": [
-            "-65 dBm",
+            "300 ft",
+            "1000 ft",
+            "Building-to-building span"
+          ],
+          "whyItMatters": "Distance is a major driver of free-space path loss.",
+          "commonMistake": "Using map distance without considering real path, mounting, or line of sight.",
+          "links": [
+            {
+              "label": "Plan PtP distance and SNR together",
+              "kbKey": "wireless/ptp-wireless-link",
+              "anchor": "distance-ft"
+            }
+          ]
+        },
+        {
+          "label": "TX Power (dBm)",
+          "description": "The transmitter output power before antenna gain and losses are applied.",
+          "examples": [
+            "15 dBm",
+            "20 dBm",
+            "Regulatory-limited output"
+          ],
+          "whyItMatters": "TX power helps determine received signal, but legal limits and antenna gain still matter.",
+          "commonMistake": "Turning up transmit power without checking EIRP or client/link balance."
+        },
+        {
+          "label": "TX Antenna Gain (dBi)",
+          "description": "The gain of the transmitting antenna in the intended direction.",
+          "examples": [
+            "Omni antenna",
+            "Patch antenna",
+            "Directional dish"
+          ],
+          "whyItMatters": "Antenna gain focuses energy and improves the link in the aimed direction.",
+          "commonMistake": "Adding gain without accounting for aiming, beamwidth, or regulatory EIRP."
+        },
+        {
+          "label": "RX Antenna Gain (dBi)",
+          "description": "The gain of the receiving antenna in the direction of the transmitter.",
+          "examples": [
+            "Integrated antenna",
+            "Panel antenna",
+            "Dish antenna"
+          ],
+          "whyItMatters": "Receive gain improves link margin when antennas are aligned and installed correctly.",
+          "commonMistake": "Assuming antenna gain helps if the antenna pattern is misaligned."
+        },
+        {
+          "label": "Other Losses (dB)",
+          "description": "Additional losses from cables, connectors, obstruction, foliage, weather, or installation conditions.",
+          "examples": [
+            "Cable loss",
+            "Connector loss",
+            "Foliage",
+            "Mounting loss"
+          ],
+          "whyItMatters": "Small extra losses can consume fade margin quickly.",
+          "commonMistake": "Ignoring cable and connector loss in the final link budget."
+        },
+        {
+          "label": "Receiver Sensitivity (dBm)",
+          "description": "The minimum signal level the receiver needs for the target modulation or data rate.",
+          "examples": [
+            "-82 dBm",
             "-75 dBm",
-            "-85 dBm"
+            "Required sensitivity for target MCS"
           ],
-          "whyItMatters": "Sensitivity determines whether the receiver can decode the signal.",
-          "commonMistake": "Using a sensitivity value for a low data rate while expecting high throughput."
-        },
-        {
-          "label": "Fade Margin",
-          "description": "Extra signal margin reserved for weather, interference, alignment error, or changing conditions.",
-          "examples": [
-            "10 dB",
-            "20 dB",
-            "30 dB"
-          ],
-          "whyItMatters": "Fade margin makes the link reliable instead of barely functional.",
-          "commonMistake": "Designing a link with no reserve."
+          "whyItMatters": "Receiver sensitivity sets the threshold for whether the link has enough signal to operate reliably.",
+          "commonMistake": "Using the most sensitive low-rate number while expecting high throughput.",
+          "links": [
+            {
+              "label": "Compare received signal to noise margin",
+              "kbKey": "wireless/noise-floor-margin",
+              "anchor": "signal-rssi-dbm"
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+        "Healthy means the link appears to have practical margin. Watch means antenna, distance, loss, or sensitivity assumptions should be reviewed. Risk means the link may be unreliable or unable to support the expected rate."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
-        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but RF conditions, client behavior, or operating margin should be reviewed.",
+        "Risk: add capacity, reduce assumptions, improve placement, or validate with a survey before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+        "Wireless planning problems usually come from treating Wi-Fi like a fixed cable instead of a shared RF environment affected by airtime, interference, device capability, channel reuse, and roaming behavior."
       ],
       "bullets": [
-        "Using advertised PHY rate as real throughput.",
-        "Adding APs without managing channel overlap.",
-        "Designing only for signal strength while ignoring airtime and client density.",
-        "Using transmit power as the answer to every coverage issue."
+        "Sizing only for coverage and ignoring capacity.",
+        "Using ideal vendor rates as if they are sustained usable throughput.",
+        "Ignoring noise floor, channel overlap, client mix, and airtime contention.",
+        "Failing to document assumptions before AP count, channel plan, or antenna placement is finalized."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace a wireless survey, manufacturer documentation, controller validation, spectrum analysis, or project-specific RF engineering judgment."
       ],
       "bullets": [
-        "Real wireless performance depends on clients, walls, interference, and AP placement.",
-        "Airtime matters as much as bandwidth.",
-        "Roaming behavior depends heavily on client devices.",
-        "Critical wireless designs should be validated onsite."
+        "Vendor specifications and controller guidance still matter.",
+        "Client device capability can be the limiting factor even when AP hardware is strong.",
+        "Walls, mounting height, interference, antenna pattern, and channel reuse can change the final result.",
+        "A wireless design with margin is usually easier to support, tune, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal wireless design review, site survey validation, manufacturer guidance, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual APs, antennas, client devices, and site conditions.",
-        "Confirm owner expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual AP model, antenna pattern, client mix, controller settings, and site survey results.",
+        "Confirm stakeholder expectations for coverage, speed, roaming, and reliability.",
+        "Document assumptions before implementation or final AP placement."
       ]
     }
   ]

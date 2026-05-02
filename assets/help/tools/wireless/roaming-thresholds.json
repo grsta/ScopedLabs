@@ -2,153 +2,150 @@
   "title": "Roaming Thresholds Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand when clients should leave one AP for another and how signal, overlap, and sticky clients affect roaming.",
-  "updated": "2026-04-26",
+  "summary": "Understand minimum service RSSI, preferred RSSI, target SNR, and band preference for cleaner client roaming behavior.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind Roaming Thresholds. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+        "This tool helps plan practical roaming thresholds so clients have enough signal and SNR before they move between APs or bands."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch wireless design issues before deployment."
+        "Use it to document wireless design assumptions before implementation.",
+        "Use it to catch RF, capacity, or margin pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+        "Use it when tuning voice/data roaming, validating coverage overlap, planning AP cell edges, or setting expectations for client behavior across APs."
       ],
       "bullets": [
         "Early wireless design planning.",
-        "Expansion or AP placement review.",
-        "Existing-site validation.",
-        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+        "Expansion review or refresh planning.",
+        "Existing-system cleanup, validation, or troubleshooting support.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
-      "type": "glossary",
       "body": [
         "These descriptions explain what each input represents in practical wireless planning terms."
       ],
+      "type": "glossary",
       "items": [
         {
-          "label": "Minimum RSSI",
-          "description": "The lowest signal level allowed before a client should roam or be discouraged.",
+          "label": "Minimum Service RSSI (dBm)",
+          "description": "The weakest signal level where a client is still expected to maintain usable service.",
+          "examples": [
+            "-70 dBm",
+            "-72 dBm",
+            "Lower-priority data coverage"
+          ],
+          "whyItMatters": "This defines the lower edge of acceptable service before roaming or performance problems appear.",
+          "commonMistake": "Allowing clients to remain connected at very weak signal levels.",
+          "links": [
+            {
+              "label": "Relate minimum RSSI to coverage radius",
+              "kbKey": "wireless/coverage-radius",
+              "anchor": "minimum-target-rssi-dbm"
+            }
+          ]
+        },
+        {
+          "label": "Preferred RSSI (dBm)",
+          "description": "The stronger signal level where clients are expected to perform and roam more cleanly.",
           "examples": [
             "-67 dBm",
-            "-70 dBm",
-            "-75 dBm"
+            "-65 dBm",
+            "Voice/data target"
           ],
-          "whyItMatters": "Minimum RSSI helps avoid weak sticky connections.",
-          "commonMistake": "Setting thresholds too aggressive and causing drops."
+          "whyItMatters": "Preferred RSSI helps define overlap and client experience, not just whether the client can connect.",
+          "commonMistake": "Only designing to the minimum instead of a comfortable operating signal."
         },
         {
-          "label": "AP Overlap",
-          "description": "Signal overlap between neighboring APs.",
+          "label": "Target SNR (dB)",
+          "description": "The minimum signal-to-noise ratio expected for reliable client operation.",
           "examples": [
-            "10%",
-            "20%",
-            "30%"
+            "20 dB",
+            "25 dB",
+            "30 dB"
           ],
-          "whyItMatters": "Good overlap gives clients somewhere to roam.",
-          "commonMistake": "Creating coverage islands with no usable overlap."
+          "whyItMatters": "Good roaming needs usable signal above noise, not just raw RSSI.",
+          "commonMistake": "Ignoring noisy channels when RSSI looks acceptable.",
+          "links": [
+            {
+              "label": "Check SNR against noise floor",
+              "kbKey": "wireless/noise-floor-margin",
+              "anchor": "target-snr-db"
+            }
+          ]
         },
         {
-          "label": "Client Type",
-          "description": "The devices roaming through the area.",
+          "label": "Band Preference",
+          "description": "The preferred band strategy for client operation or steering.",
           "examples": [
-            "phones",
-            "laptops",
-            "scanners",
-            "voice handsets"
+            "Prefer 5 GHz",
+            "Prefer 6 GHz",
+            "Allow 2.4 GHz fallback"
           ],
-          "whyItMatters": "Different clients roam differently.",
-          "commonMistake": "Assuming every client follows controller steering perfectly."
-        },
-        {
-          "label": "Application Sensitivity",
-          "description": "How sensitive the workload is to roaming delay.",
-          "examples": [
-            "voice",
-            "video call",
-            "scanner session",
-            "web browsing"
-          ],
-          "whyItMatters": "Real-time applications need cleaner roaming.",
-          "commonMistake": "Using casual browsing thresholds for voice devices."
-        },
-        {
-          "label": "Band Steering",
-          "description": "Policies that encourage clients toward preferred bands.",
-          "examples": [
-            "5 GHz preferred",
-            "6 GHz preferred",
-            "2.4 GHz fallback"
-          ],
-          "whyItMatters": "Band steering affects roaming and client behavior.",
-          "commonMistake": "Forcing clients to bands they cannot use reliably."
-        },
-        {
-          "label": "Transmit Power Balance",
-          "description": "How AP power levels compare across neighboring cells.",
-          "examples": [
-            "balanced",
-            "one AP too strong",
-            "low-power design"
-          ],
-          "whyItMatters": "Poor power balance causes sticky clients.",
-          "commonMistake": "Turning one AP up so high clients refuse to roam."
+          "whyItMatters": "Band preference affects range, capacity, channel reuse, and client behavior.",
+          "commonMistake": "Forcing a band preference without enough coverage or client support.",
+          "links": [
+            {
+              "label": "Check band/channel tradeoffs",
+              "kbKey": "wireless/channel-overlap",
+              "anchor": "band"
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+        "Healthy means roaming thresholds appear practical. Watch means overlap, noise, or band strategy should be reviewed. Risk means clients may stick, roam late, or experience unstable handoffs."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
-        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but RF conditions, client behavior, or operating margin should be reviewed.",
+        "Risk: add capacity, reduce assumptions, improve placement, or validate with a survey before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+        "Wireless planning problems usually come from treating Wi-Fi like a fixed cable instead of a shared RF environment affected by airtime, interference, device capability, channel reuse, and roaming behavior."
       ],
       "bullets": [
-        "Using advertised PHY rate as real throughput.",
-        "Adding APs without managing channel overlap.",
-        "Designing only for signal strength while ignoring airtime and client density.",
-        "Using transmit power as the answer to every coverage issue."
+        "Sizing only for coverage and ignoring capacity.",
+        "Using ideal vendor rates as if they are sustained usable throughput.",
+        "Ignoring noise floor, channel overlap, client mix, and airtime contention.",
+        "Failing to document assumptions before AP count, channel plan, or antenna placement is finalized."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace a wireless survey, manufacturer documentation, controller validation, spectrum analysis, or project-specific RF engineering judgment."
       ],
       "bullets": [
-        "Real wireless performance depends on clients, walls, interference, and AP placement.",
-        "Airtime matters as much as bandwidth.",
-        "Roaming behavior depends heavily on client devices.",
-        "Critical wireless designs should be validated onsite."
+        "Vendor specifications and controller guidance still matter.",
+        "Client device capability can be the limiting factor even when AP hardware is strong.",
+        "Walls, mounting height, interference, antenna pattern, and channel reuse can change the final result.",
+        "A wireless design with margin is usually easier to support, tune, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal wireless design review, site survey validation, manufacturer guidance, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual APs, antennas, client devices, and site conditions.",
-        "Confirm owner expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual AP model, antenna pattern, client mix, controller settings, and site survey results.",
+        "Confirm stakeholder expectations for coverage, speed, roaming, and reliability.",
+        "Document assumptions before implementation or final AP placement."
       ]
     }
   ]

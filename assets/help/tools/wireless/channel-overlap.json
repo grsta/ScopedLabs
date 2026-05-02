@@ -2,152 +2,143 @@
   "title": "Channel Overlap Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how overlapping channels, co-channel contention, adjacent interference, and channel width affect Wi-Fi performance.",
-  "updated": "2026-04-26",
+  "summary": "Understand band selection, channel width, AP count, and non-overlapping channel pressure before committing to a channel plan.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind Channel Overlap. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+        "This tool checks whether the number of APs in an area fits within the available non-overlapping channel plan or creates channel reuse pressure."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch wireless design issues before deployment."
+        "Use it to document wireless design assumptions before implementation.",
+        "Use it to catch RF, capacity, or margin pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+        "Use it when planning AP placement, dense environments, channel width choices, or troubleshooting co-channel and adjacent-channel contention."
       ],
       "bullets": [
         "Early wireless design planning.",
-        "Expansion or AP placement review.",
-        "Existing-site validation.",
-        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+        "Expansion review or refresh planning.",
+        "Existing-system cleanup, validation, or troubleshooting support.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
-      "type": "glossary",
       "body": [
         "These descriptions explain what each input represents in practical wireless planning terms."
       ],
+      "type": "glossary",
       "items": [
         {
-          "label": "Channel",
-          "description": "The Wi-Fi channel used by an access point or radio.",
+          "label": "Band",
+          "description": "The wireless band being evaluated.",
           "examples": [
-            "Channel 1",
-            "Channel 6",
-            "Channel 11",
-            "DFS channel"
+            "2.4 GHz",
+            "5 GHz",
+            "6 GHz"
           ],
-          "whyItMatters": "Channel choice affects interference and reuse.",
-          "commonMistake": "Placing nearby APs on overlapping channels."
+          "whyItMatters": "Each band has different channel availability, propagation behavior, and interference exposure.",
+          "commonMistake": "Treating every band as if it has the same number of usable channels.",
+          "links": [
+            {
+              "label": "Compare band behavior in coverage planning",
+              "kbKey": "wireless/coverage-radius",
+              "anchor": "band"
+            }
+          ]
         },
         {
-          "label": "Channel Width",
-          "description": "The configured width of the wireless channel.",
+          "label": "Channel Width (MHz)",
+          "description": "The RF channel width assigned to AP radios in the area.",
           "examples": [
             "20 MHz",
             "40 MHz",
             "80 MHz"
           ],
-          "whyItMatters": "Wider channels consume more spectrum and increase overlap risk.",
-          "commonMistake": "Using 80 MHz channels in a dense environment."
+          "whyItMatters": "Wider channels can increase peak throughput but reduce the number of clean channel choices.",
+          "commonMistake": "Using wide channels everywhere and creating avoidable overlap.",
+          "links": [
+            {
+              "label": "Account for channel width in throughput",
+              "kbKey": "wireless/throughput-estimator",
+              "anchor": "channel-width-mhz"
+            }
+          ]
         },
         {
-          "label": "AP Count",
-          "description": "The number of nearby AP radios using or hearing the same spectrum.",
+          "label": "AP Count in Area",
+          "description": "The number of APs that need channels within the same RF area or reuse zone.",
           "examples": [
             "3 APs",
-            "10 APs",
-            "neighboring APs"
+            "8 APs",
+            "Dense office area"
           ],
-          "whyItMatters": "More APs increase contention and coordination difficulty.",
-          "commonMistake": "Adding APs without checking channel reuse."
+          "whyItMatters": "More APs increase reuse pressure when the channel pool is limited.",
+          "commonMistake": "Counting building-wide APs instead of the APs that can hear each other."
         },
         {
-          "label": "Co-Channel Interference",
-          "description": "Contention from APs or clients sharing the same channel.",
+          "label": "Available Non-Overlapping Channels",
+          "description": "The number of channels that can be used without direct overlap at the selected band and width.",
           "examples": [
-            "same-channel APs",
-            "dense office",
-            "multi-floor overlap"
+            "3 channels",
+            "8 channels",
+            "More with 6 GHz"
           ],
-          "whyItMatters": "Same-channel devices must take turns using airtime.",
-          "commonMistake": "Assuming same-channel overlap is harmless."
-        },
-        {
-          "label": "Adjacent-Channel Interference",
-          "description": "Interference from partially overlapping channels.",
-          "examples": [
-            "2.4 GHz overlap",
-            "bad channel plan",
-            "wide channels"
-          ],
-          "whyItMatters": "Adjacent overlap can be worse because devices may not coordinate cleanly.",
-          "commonMistake": "Using non-standard 2.4 GHz channels."
-        },
-        {
-          "label": "Transmit Power",
-          "description": "Radio power level from APs or clients.",
-          "examples": [
-            "low",
-            "medium",
-            "high"
-          ],
-          "whyItMatters": "Too much power increases overlap and sticky clients.",
-          "commonMistake": "Turning power up to solve every coverage problem."
+          "whyItMatters": "This sets the clean channel pool before reuse and contention are introduced.",
+          "commonMistake": "Assuming every listed regulatory channel is clean, allowed, and available in the actual environment."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+        "Healthy means channel reuse pressure appears manageable. Watch means AP count or channel width should be reviewed. Risk means the area may suffer from channel overlap, contention, or unstable throughput."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
-        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but RF conditions, client behavior, or operating margin should be reviewed.",
+        "Risk: add capacity, reduce assumptions, improve placement, or validate with a survey before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+        "Wireless planning problems usually come from treating Wi-Fi like a fixed cable instead of a shared RF environment affected by airtime, interference, device capability, channel reuse, and roaming behavior."
       ],
       "bullets": [
-        "Using advertised PHY rate as real throughput.",
-        "Adding APs without managing channel overlap.",
-        "Designing only for signal strength while ignoring airtime and client density.",
-        "Using transmit power as the answer to every coverage issue."
+        "Sizing only for coverage and ignoring capacity.",
+        "Using ideal vendor rates as if they are sustained usable throughput.",
+        "Ignoring noise floor, channel overlap, client mix, and airtime contention.",
+        "Failing to document assumptions before AP count, channel plan, or antenna placement is finalized."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace a wireless survey, manufacturer documentation, controller validation, spectrum analysis, or project-specific RF engineering judgment."
       ],
       "bullets": [
-        "Real wireless performance depends on clients, walls, interference, and AP placement.",
-        "Airtime matters as much as bandwidth.",
-        "Roaming behavior depends heavily on client devices.",
-        "Critical wireless designs should be validated onsite."
+        "Vendor specifications and controller guidance still matter.",
+        "Client device capability can be the limiting factor even when AP hardware is strong.",
+        "Walls, mounting height, interference, antenna pattern, and channel reuse can change the final result.",
+        "A wireless design with margin is usually easier to support, tune, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal wireless design review, site survey validation, manufacturer guidance, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual APs, antennas, client devices, and site conditions.",
-        "Confirm owner expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual AP model, antenna pattern, client mix, controller settings, and site survey results.",
+        "Confirm stakeholder expectations for coverage, speed, roaming, and reliability.",
+        "Document assumptions before implementation or final AP placement."
       ]
     }
   ]

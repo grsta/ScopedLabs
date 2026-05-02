@@ -1,153 +1,188 @@
 {
-  "title": "Point-to-Point Wireless Link Guide",
+  "title": "PtP Wireless Link Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand link distance, antenna gain, line of sight, frequency, fade margin, and throughput planning.",
-  "updated": "2026-04-26",
+  "summary": "Understand distance, frequency, antenna gain, extra losses, noise floor, and SNR margin for point-to-point wireless links.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind Point-to-Point Wireless Link. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+        "This tool estimates whether a point-to-point wireless link has enough received signal and SNR margin for a reliable path."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch wireless design issues before deployment."
+        "Use it to document wireless design assumptions before implementation.",
+        "Use it to catch RF, capacity, or margin pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+        "Use it when planning building-to-building wireless, directional bridge links, temporary wireless backhaul, or long-distance RF paths."
       ],
       "bullets": [
         "Early wireless design planning.",
-        "Expansion or AP placement review.",
-        "Existing-site validation.",
-        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+        "Expansion review or refresh planning.",
+        "Existing-system cleanup, validation, or troubleshooting support.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
-      "type": "glossary",
       "body": [
         "These descriptions explain what each input represents in practical wireless planning terms."
       ],
+      "type": "glossary",
       "items": [
         {
-          "label": "Link Distance",
-          "description": "Distance between the two wireless endpoints.",
+          "label": "Distance (ft)",
+          "description": "The physical path distance between the two link endpoints.",
           "examples": [
             "500 ft",
-            "1 mile",
-            "5 miles"
+            "2500 ft",
+            "Campus building link"
           ],
-          "whyItMatters": "Distance drives path loss and reliability requirements.",
-          "commonMistake": "Estimating distance without mapping the real path."
+          "whyItMatters": "Distance drives path loss and affects the required antenna/power margin.",
+          "commonMistake": "Using rough walking distance instead of the actual RF path.",
+          "links": [
+            {
+              "label": "Compare distance in link budget",
+              "kbKey": "wireless/link-budget",
+              "anchor": "distance-ft"
+            }
+          ]
         },
         {
-          "label": "Line of Sight",
-          "description": "Whether the link path is visually and RF clear.",
+          "label": "Frequency (GHz)",
+          "description": "The operating frequency of the point-to-point link.",
           "examples": [
-            "clear LOS",
-            "partial obstruction",
-            "trees/buildings"
-          ],
-          "whyItMatters": "Point-to-point links depend heavily on clear path conditions.",
-          "commonMistake": "Assuming near line-of-sight is good enough."
-        },
-        {
-          "label": "Antenna Gain",
-          "description": "Directional gain of each endpoint antenna.",
-          "examples": [
-            "13 dBi",
-            "19 dBi",
-            "30 dBi"
-          ],
-          "whyItMatters": "Higher gain can improve received signal but narrows alignment tolerance.",
-          "commonMistake": "Using high gain without proper alignment."
-        },
-        {
-          "label": "Frequency",
-          "description": "The band used by the link.",
-          "examples": [
-            "2.4 GHz",
             "5 GHz",
             "6 GHz",
             "60 GHz"
           ],
-          "whyItMatters": "Frequency affects path loss, interference, and weather sensitivity.",
-          "commonMistake": "Choosing frequency only by advertised speed."
+          "whyItMatters": "Frequency affects path loss, interference exposure, antenna choice, and availability.",
+          "commonMistake": "Changing bands without recalculating path loss and margin."
         },
         {
-          "label": "Throughput Target",
-          "description": "The usable data rate required across the link.",
+          "label": "TX Power (dBm)",
+          "description": "The transmitter output power at the sending endpoint.",
           "examples": [
-            "50 Mbps",
-            "300 Mbps",
-            "1 Gbps"
+            "15 dBm",
+            "20 dBm",
+            "Lower for regulatory limits"
           ],
-          "whyItMatters": "Throughput target determines signal and hardware requirements.",
-          "commonMistake": "Using PHY rate as real throughput."
+          "whyItMatters": "Transmit power contributes to received signal but must be evaluated with antenna gain and legal EIRP.",
+          "commonMistake": "Trying to fix a bad path only by increasing transmit power."
         },
         {
-          "label": "Fade Margin",
-          "description": "Reserve signal margin for weather, alignment, foliage, and interference.",
+          "label": "TX Antenna Gain (dBi)",
+          "description": "The gain of the transmitting antenna toward the far endpoint.",
           "examples": [
-            "10 dB",
+            "Panel antenna",
+            "Dish antenna",
+            "Integrated directional radio"
+          ],
+          "whyItMatters": "Directional gain improves link margin when alignment is correct.",
+          "commonMistake": "Forgetting that high-gain antennas require accurate alignment."
+        },
+        {
+          "label": "RX Antenna Gain (dBi)",
+          "description": "The gain of the receiving antenna toward the transmitter.",
+          "examples": [
+            "Panel antenna",
+            "Dish antenna",
+            "Integrated directional radio"
+          ],
+          "whyItMatters": "Receive gain improves the signal collected at the far end of the link.",
+          "commonMistake": "Assuming gain helps if mounting or aiming is poor."
+        },
+        {
+          "label": "Other Losses (dB)",
+          "description": "Additional loss from cables, connectors, obstruction, foliage, rain fade, misalignment, or installation conditions.",
+          "examples": [
+            "2 dB cable loss",
+            "Foliage loss",
+            "Weather margin"
+          ],
+          "whyItMatters": "Losses reduce the final received signal and can erase fade margin.",
+          "commonMistake": "Leaving losses at zero for real outdoor installations."
+        },
+        {
+          "label": "Noise Floor (dBm)",
+          "description": "The background RF noise level at the receiver.",
+          "examples": [
+            "-95 dBm quiet",
+            "-85 dBm busy",
+            "-75 dBm noisy"
+          ],
+          "whyItMatters": "Noise floor determines how much SNR remains after received signal is calculated.",
+          "commonMistake": "Checking signal level but not the channel noise.",
+          "links": [
+            {
+              "label": "Check noise-floor margin",
+              "kbKey": "wireless/noise-floor-margin",
+              "anchor": "noise-floor-dbm"
+            }
+          ]
+        },
+        {
+          "label": "Target SNR (dB)",
+          "description": "The SNR needed for the intended reliability or modulation rate.",
+          "examples": [
             "20 dB",
+            "25 dB",
             "30 dB"
           ],
-          "whyItMatters": "Fade margin separates reliable links from fragile links.",
-          "commonMistake": "Designing the link to barely connect."
+          "whyItMatters": "Target SNR sets the margin requirement for the final link result.",
+          "commonMistake": "Expecting high throughput from a link with barely enough SNR."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+        "Healthy means the point-to-point link appears to have useful margin. Watch means path, antennas, or noise assumptions should be reviewed. Risk means the link may need better alignment, cleaner spectrum, stronger antennas, shorter path, or a different band."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
-        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but RF conditions, client behavior, or operating margin should be reviewed.",
+        "Risk: add capacity, reduce assumptions, improve placement, or validate with a survey before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+        "Wireless planning problems usually come from treating Wi-Fi like a fixed cable instead of a shared RF environment affected by airtime, interference, device capability, channel reuse, and roaming behavior."
       ],
       "bullets": [
-        "Using advertised PHY rate as real throughput.",
-        "Adding APs without managing channel overlap.",
-        "Designing only for signal strength while ignoring airtime and client density.",
-        "Using transmit power as the answer to every coverage issue."
+        "Sizing only for coverage and ignoring capacity.",
+        "Using ideal vendor rates as if they are sustained usable throughput.",
+        "Ignoring noise floor, channel overlap, client mix, and airtime contention.",
+        "Failing to document assumptions before AP count, channel plan, or antenna placement is finalized."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace a wireless survey, manufacturer documentation, controller validation, spectrum analysis, or project-specific RF engineering judgment."
       ],
       "bullets": [
-        "Real wireless performance depends on clients, walls, interference, and AP placement.",
-        "Airtime matters as much as bandwidth.",
-        "Roaming behavior depends heavily on client devices.",
-        "Critical wireless designs should be validated onsite."
+        "Vendor specifications and controller guidance still matter.",
+        "Client device capability can be the limiting factor even when AP hardware is strong.",
+        "Walls, mounting height, interference, antenna pattern, and channel reuse can change the final result.",
+        "A wireless design with margin is usually easier to support, tune, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal wireless design review, site survey validation, manufacturer guidance, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual APs, antennas, client devices, and site conditions.",
-        "Confirm owner expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual AP model, antenna pattern, client mix, controller settings, and site survey results.",
+        "Confirm stakeholder expectations for coverage, speed, roaming, and reliability.",
+        "Document assumptions before implementation or final AP placement."
       ]
     }
   ]

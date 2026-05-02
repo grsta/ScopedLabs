@@ -1,152 +1,151 @@
 {
-  "title": "Wireless Throughput Estimator Guide",
+  "title": "Wireless Throughput Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand real Wi-Fi throughput after PHY rate, airtime, signal quality, clients, and overhead are considered.",
-  "updated": "2026-04-26",
+  "summary": "Understand SNR, channel width, shared clients, utilization factor, and realistic wireless throughput expectations.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind Wireless Throughput Estimator. It helps turn wireless signal, airtime, throughput, interference, and capacity assumptions into practical design guidance."
+        "This tool estimates practical wireless throughput from signal quality, channel width, client sharing, and usable airtime assumptions."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
-        "Use it to document assumptions before implementation.",
-        "Use it to catch wireless design issues before deployment."
+        "Use it to document wireless design assumptions before implementation.",
+        "Use it to catch RF, capacity, or margin pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during wireless planning, AP layout review, capacity checks, point-to-point link planning, roaming evaluation, or troubleshooting of coverage and throughput assumptions."
+        "Use it when estimating realistic Wi-Fi performance, explaining why PHY rate is not usable throughput, or validating capacity assumptions before AP count is finalized."
       ],
       "bullets": [
         "Early wireless design planning.",
-        "Expansion or AP placement review.",
-        "Existing-site validation.",
-        "Explaining wireless tradeoffs to a client, stakeholder, or internal team."
+        "Expansion review or refresh planning.",
+        "Existing-system cleanup, validation, or troubleshooting support.",
+        "Explaining tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
-      "type": "glossary",
       "body": [
         "These descriptions explain what each input represents in practical wireless planning terms."
       ],
+      "type": "glossary",
       "items": [
         {
-          "label": "PHY Rate",
-          "description": "The negotiated wireless link rate before overhead.",
+          "label": "SNR (dB)",
+          "description": "The signal-to-noise ratio available for the wireless connection.",
           "examples": [
-            "286 Mbps",
-            "866 Mbps",
-            "1200 Mbps"
+            "18 dB",
+            "25 dB",
+            "35 dB"
           ],
-          "whyItMatters": "PHY rate is not the same as usable throughput.",
-          "commonMistake": "Quoting PHY rate as real application speed."
+          "whyItMatters": "SNR strongly affects modulation rate, retries, and throughput stability.",
+          "commonMistake": "Using channel width or AP generation as the only throughput input.",
+          "links": [
+            {
+              "label": "Calculate SNR from signal and noise",
+              "kbKey": "wireless/noise-floor-margin",
+              "anchor": "target-snr-db"
+            }
+          ]
         },
         {
-          "label": "Signal Quality",
-          "description": "The strength and stability of the wireless connection.",
-          "examples": [
-            "strong",
-            "moderate",
-            "weak"
-          ],
-          "whyItMatters": "Poor signal lowers modulation and increases retries.",
-          "commonMistake": "Only checking that the device is connected."
-        },
-        {
-          "label": "Client Count",
-          "description": "Number of clients sharing airtime.",
-          "examples": [
-            "5 clients",
-            "30 clients",
-            "100 clients"
-          ],
-          "whyItMatters": "More clients reduce per-client throughput.",
-          "commonMistake": "Testing with one client and expecting the same result with many."
-        },
-        {
-          "label": "Channel Width",
-          "description": "Configured channel width.",
+          "label": "Channel Width (MHz)",
+          "description": "The RF channel width used for the wireless connection.",
           "examples": [
             "20 MHz",
             "40 MHz",
             "80 MHz"
           ],
-          "whyItMatters": "Wider channels can increase peak speed but reduce reuse.",
-          "commonMistake": "Using wide channels in crowded areas."
+          "whyItMatters": "Wider channels may raise peak throughput but can increase overlap and reduce channel reuse.",
+          "commonMistake": "Using wide channels in crowded areas without checking overlap.",
+          "links": [
+            {
+              "label": "Check channel width against overlap",
+              "kbKey": "wireless/channel-overlap",
+              "anchor": "channel-width-mhz"
+            }
+          ]
         },
         {
-          "label": "Protocol Overhead",
-          "description": "MAC, encryption, management, contention, and retransmission overhead.",
+          "label": "Clients Sharing AP",
+          "description": "The number of clients competing for the AP\u2019s airtime.",
           "examples": [
-            "Wi-Fi overhead",
-            "encryption",
-            "retries"
+            "5 clients",
+            "25 clients",
+            "High-density room"
           ],
-          "whyItMatters": "Overhead reduces usable throughput below link rate.",
-          "commonMistake": "Ignoring overhead and contention."
+          "whyItMatters": "Wireless throughput is shared, so more active clients reduce per-client experience.",
+          "commonMistake": "Dividing by associated clients without considering which clients are active.",
+          "links": [
+            {
+              "label": "Plan shared AP capacity",
+              "kbKey": "wireless/ap-capacity",
+              "anchor": "total-clients"
+            }
+          ]
         },
         {
-          "label": "Airtime Utilization",
-          "description": "How busy the channel is.",
+          "label": "Utilization Factor (%)",
+          "description": "The percentage of theoretical throughput expected to be usable after airtime, overhead, retries, and real-world conditions.",
           "examples": [
-            "low",
-            "moderate",
-            "high"
+            "50%",
+            "65%",
+            "80% in clean conditions"
           ],
-          "whyItMatters": "Busy airtime limits throughput and raises latency.",
-          "commonMistake": "Adding bandwidth demand without checking airtime."
+          "whyItMatters": "This converts ideal link behavior into a more realistic usable throughput estimate.",
+          "commonMistake": "Assuming ideal PHY rates translate directly into application throughput."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the wireless design appears manageable based on the entered assumptions. Watch means capacity, coverage, airtime, interference, or roaming assumptions deserve review. Risk means the design may need more APs, better channel planning, cleaner RF conditions, or validation before implementation."
+        "Healthy means throughput assumptions appear practical. Watch means SNR, channel width, or client sharing should be reviewed. Risk means actual user throughput may fall short unless RF conditions or capacity are improved."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review RF, airtime, or capacity assumptions before relying on them.",
-        "Risk: adjust coverage, channel plan, AP count, power, or link design before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but RF conditions, client behavior, or operating margin should be reviewed.",
+        "Risk: add capacity, reduce assumptions, improve placement, or validate with a survey before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most wireless design problems come from treating Wi-Fi like wired networking. Wireless capacity is shared airtime, affected by signal quality, interference, client behavior, and channel planning."
+        "Wireless planning problems usually come from treating Wi-Fi like a fixed cable instead of a shared RF environment affected by airtime, interference, device capability, channel reuse, and roaming behavior."
       ],
       "bullets": [
-        "Using advertised PHY rate as real throughput.",
-        "Adding APs without managing channel overlap.",
-        "Designing only for signal strength while ignoring airtime and client density.",
-        "Using transmit power as the answer to every coverage issue."
+        "Sizing only for coverage and ignoring capacity.",
+        "Using ideal vendor rates as if they are sustained usable throughput.",
+        "Ignoring noise floor, channel overlap, client mix, and airtime contention.",
+        "Failing to document assumptions before AP count, channel plan, or antenna placement is finalized."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace a site survey, spectrum analysis, manufacturer validation, or project-specific wireless design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace a wireless survey, manufacturer documentation, controller validation, spectrum analysis, or project-specific RF engineering judgment."
       ],
       "bullets": [
-        "Real wireless performance depends on clients, walls, interference, and AP placement.",
-        "Airtime matters as much as bandwidth.",
-        "Roaming behavior depends heavily on client devices.",
-        "Critical wireless designs should be validated onsite."
+        "Vendor specifications and controller guidance still matter.",
+        "Client device capability can be the limiting factor even when AP hardware is strong.",
+        "Walls, mounting height, interference, antenna pattern, and channel reuse can change the final result.",
+        "A wireless design with margin is usually easier to support, tune, and expand."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, RF survey work, code/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal wireless design review, site survey validation, manufacturer guidance, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual APs, antennas, client devices, and site conditions.",
-        "Confirm owner expectations and application requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual AP model, antenna pattern, client mix, controller settings, and site survey results.",
+        "Confirm stakeholder expectations for coverage, speed, roaming, and reliability.",
+        "Document assumptions before implementation or final AP placement."
       ]
     }
   ]
