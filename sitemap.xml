@@ -2,31 +2,31 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://scopedlabs.com/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/about/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/changelog/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/contact/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/disclaimer/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/access-control/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/access-control/credential-format/</loc>
@@ -42,7 +42,7 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/compute/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/compute/cpu-sizing/</loc>
@@ -58,7 +58,7 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/infrastructure/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/infrastructure/conduit-fill/</loc>
@@ -74,7 +74,7 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/network/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/network/bandwidth/</loc>
@@ -90,7 +90,7 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/performance/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/performance/cache-hit-ratio/</loc>
@@ -106,7 +106,7 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/physical-security/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/physical-security/field-of-view/</loc>
@@ -122,7 +122,7 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/power/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/power/battery-sizing/</loc>
@@ -138,7 +138,7 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/thermal/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/thermal/airflow-requirement/</loc>
@@ -154,7 +154,7 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/video-storage/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/video-storage/bitrate-estimator/</loc>
@@ -170,7 +170,7 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/wireless/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
   <url>
     <loc>https://scopedlabs.com/tools/wireless/channel-overlap/</loc>
@@ -186,6 +186,6 @@
   </url>
   <url>
     <loc>https://scopedlabs.com/upgrade/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-05-01</lastmod>
   </url>
 </urlset>
