@@ -2,150 +2,145 @@
   "title": "Failure Days Lost Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how outages, recorder failures, repair delay, and affected cameras reduce retained footage.",
-  "updated": "2026-04-26",
+  "summary": "Understand how recording gaps, restore time, total retention, and overwrite risk translate into lost or unrecoverable footage.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind Failure Days Lost. It helps turn video, storage, bitrate, retention, and failure assumptions into practical design guidance."
+        "This tool estimates how much effective retention is consumed or lost during an outage, recording gap, restore delay, or overwrite-risk scenario."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch storage or video-quality issues before deployment."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during video system planning, recorder/storage review, expansion planning, retention validation, or when explaining bitrate, storage, quality, and survivability tradeoffs."
+        "Use it when explaining the practical effect of failures on retained footage and recovery expectations."
       ],
       "bullets": [
-        "Early video system planning.",
-        "Storage or retention review.",
-        "Recorder or VMS upgrade planning.",
-        "Explaining assumptions to a client, stakeholder, or internal team."
+        "Early video-storage design planning.",
+        "Expansion review or recorder replacement.",
+        "Existing-system cleanup, validation, or troubleshooting.",
+        "Explaining storage, retention, and quality tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical video and storage planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical video-storage planning terms."
       ],
       "items": [
         {
-          "label": "Failure Duration",
-          "description": "How long recording or storage is degraded.",
+          "label": "Total Retention (days)",
+          "description": "The normal amount of footage retained before the failure or outage.",
+          "examples": [
+            "14 days",
+            "30 days",
+            "60 days"
+          ],
+          "whyItMatters": "Total retention defines the buffer available before footage is overwritten or lost.",
+          "commonMistake": "Thinking a long retention target protects everything without considering outage and recovery timing.",
+          "links": [
+            {
+              "label": "Plan the normal retention buffer",
+              "kbKey": "video-storage/retention-planner",
+              "anchor": "Desired Retention (days)",
+              "note": "Use this when total retention has not been sized yet."
+            }
+          ]
+        },
+        {
+          "label": "Outage / Recording Gap (hours)",
+          "description": "How long the system stops recording or loses usable footage.",
           "examples": [
             "2 hours",
-            "1 day",
-            "several days"
+            "12 hours",
+            "36 hours"
           ],
-          "whyItMatters": "Longer failures increase missing footage.",
-          "commonMistake": "Assuming failures are repaired immediately."
+          "whyItMatters": "The recording gap is direct lost coverage time.",
+          "commonMistake": "Reporting only restore time while ignoring the actual period with no recording."
         },
         {
-          "label": "Affected Cameras",
-          "description": "Cameras impacted by the failure.",
+          "label": "Restore Time (hours)",
+          "description": "How long it takes to restore, rebuild, or return the system to stable operation.",
           "examples": [
-            "single camera",
-            "recorder group",
-            "all cameras"
+            "4 hours",
+            "24 hours",
+            "72 hours"
           ],
-          "whyItMatters": "More affected cameras increase coverage loss.",
-          "commonMistake": "Only checking system status instead of camera impact."
+          "whyItMatters": "Restore time can extend exposure even after the first failure event.",
+          "commonMistake": "Assuming repair is immediate when parts, access, or rebuild time may delay recovery."
         },
         {
-          "label": "Recording Rate",
-          "description": "How much video would normally be recorded.",
+          "label": "Overwrite Speed Risk",
+          "description": "How aggressively new recording may overwrite retained footage during or after the incident.",
           "examples": [
-            "continuous",
-            "motion",
-            "high activity"
+            "Low",
+            "Medium",
+            "High"
           ],
-          "whyItMatters": "Higher recording rate means more footage is lost.",
-          "commonMistake": "Ignoring when the failure happens."
-        },
-        {
-          "label": "Retention Buffer",
-          "description": "Extra retained video above the minimum.",
-          "examples": [
-            "5 days spare",
-            "10% reserve"
-          ],
-          "whyItMatters": "Buffer can absorb some failure impact.",
-          "commonMistake": "Running retention exactly at the requirement."
-        },
-        {
-          "label": "Recovery Method",
-          "description": "How the system returns to normal.",
-          "examples": [
-            "drive replacement",
-            "recorder repair",
-            "network restore"
-          ],
-          "whyItMatters": "Recovery process affects total loss.",
-          "commonMistake": "Having no recovery plan."
-        },
-        {
-          "label": "Evidence Criticality",
-          "description": "How important the affected footage is.",
-          "examples": [
-            "entrance",
-            "cash handling",
-            "perimeter"
-          ],
-          "whyItMatters": "Loss matters more in critical views.",
-          "commonMistake": "Treating all cameras as equal."
+          "whyItMatters": "Overwrite risk determines whether old footage remains available long enough to review or export.",
+          "commonMistake": "Waiting to export evidence until after the overwrite window has already consumed it.",
+          "links": [
+            {
+              "label": "Check survivability under failure",
+              "kbKey": "video-storage/retention-survivability",
+              "anchor": "Degraded period (days)",
+              "note": "Use this when failure-state behavior affects retention."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the design appears manageable based on the entered assumptions. Watch means bitrate, storage, retention, quality, or failure assumptions deserve review. Risk means the design may need more storage, lower load, adjusted retention, or validation before implementation."
+        "Healthy means the modeled failure consumes a manageable portion of retention. Watch means recovery timing or overwrite risk should be reviewed. Risk means the outage and recovery profile may materially reduce usable retained footage."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review the sizing assumptions before relying on them.",
-        "Risk: adjust storage, bitrate, retention, or failure planning before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, reduce demand, adjust policy, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most video storage problems come from using optimistic bitrate assumptions, ignoring overhead, or reducing bitrate until footage is no longer useful."
+        "Most video-storage planning problems come from treating bitrate, storage, retention, RAID, and failure behavior as separate decisions even though they shape the same final retention promise."
       ],
       "bullets": [
-        "Using default bitrate values without scene validation.",
-        "Planning from raw storage instead of usable storage.",
-        "Ignoring RAID, filesystem, recorder, and reserve overhead.",
-        "Reducing bitrate or compression without reviewing image quality."
+        "Sizing storage from one average bitrate without checking peak, motion, codec, and retention behavior.",
+        "Treating nominal capacity as usable capacity after RAID, filesystem, spare, and operational reserves.",
+        "Ignoring growth, camera additions, quality changes, and retention policy changes after day one.",
+        "Failing to document assumptions before the recorder, storage tier, or archive policy is selected."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, recorder/VMS validation, legal retention requirements, or project-specific design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, VMS platform limits, camera-specific behavior, storage vendor guidance, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real bitrate depends on scene, codec, motion, and camera settings.",
-        "Usable storage is lower than raw drive capacity.",
-        "Retention should include margin for overhead and growth.",
-        "Image quality should be validated on real scenes when possible."
+        "Camera bitrate can vary significantly with scene motion, lighting, compression settings, and codec behavior.",
+        "Usable storage should account for redundancy, reserved space, filesystem overhead, and operational margin.",
+        "Retention targets should be validated against stakeholder expectations, evidence needs, and system operation.",
+        "A design with documented headroom is usually easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, legal/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal design review, manufacturer validation, field testing, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual cameras, recorder/VMS, and storage hardware.",
-        "Confirm owner expectations and retention requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual VMS, recorder, camera model, codec profile, storage platform, and network path being deployed.",
+        "Confirm stakeholder expectations for retention, archive access, failure behavior, and acceptable image quality.",
+        "Document assumptions before implementation so future changes can be evaluated against the original design intent."
       ]
     }
   ]

@@ -2,153 +2,179 @@
   "title": "Bitrate Estimator Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how resolution, frame rate, codec, motion, and compression affect camera bitrate.",
-  "updated": "2026-04-26",
+  "summary": "Understand how resolution, frame rate, codec, scene complexity, and quality target shape camera bitrate before storage sizing.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind Bitrate Estimator. It helps turn video, storage, bitrate, retention, and failure assumptions into practical design guidance."
+        "This tool estimates a practical per-camera bitrate from image size, frame rate, codec, scene behavior, and quality expectations."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch storage or video-quality issues before deployment."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during video system planning, recorder/storage review, expansion planning, retention validation, or when explaining bitrate, storage, quality, and survivability tradeoffs."
+        "Use it before storage and retention planning when camera settings are not locked yet or when a design needs a defensible bitrate assumption."
       ],
       "bullets": [
-        "Early video system planning.",
-        "Storage or retention review.",
-        "Recorder or VMS upgrade planning.",
-        "Explaining assumptions to a client, stakeholder, or internal team."
+        "Early video-storage design planning.",
+        "Expansion review or recorder replacement.",
+        "Existing-system cleanup, validation, or troubleshooting.",
+        "Explaining storage, retention, and quality tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical video and storage planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical video-storage planning terms."
       ],
       "items": [
         {
           "label": "Resolution",
-          "description": "The camera image size.",
+          "description": "The selected image size or video resolution used for the stream estimate.",
           "examples": [
             "1080p",
-            "4 MP",
-            "8 MP"
+            "4MP",
+            "4K",
+            "Custom resolution"
           ],
-          "whyItMatters": "Higher resolution usually increases bitrate and storage.",
-          "commonMistake": "Choosing high resolution without checking storage impact."
+          "whyItMatters": "Resolution is one of the strongest bitrate drivers because larger frames carry more visual information.",
+          "commonMistake": "Using a camera maximum resolution because it sounds better without checking whether storage and network capacity can support it.",
+          "links": [
+            {
+              "label": "Carry bitrate into storage sizing",
+              "kbKey": "video-storage/storage-calculator",
+              "anchor": "Bitrate per camera (Mbps)",
+              "note": "Use the estimated bitrate as the downstream storage input."
+            }
+          ]
         },
         {
-          "label": "Frame Rate",
-          "description": "Frames recorded per second.",
+          "label": "Custom Width (px)",
+          "description": "The horizontal pixel count used when Custom resolution is selected.",
           "examples": [
-            "5 FPS",
-            "10 FPS",
-            "15 FPS",
-            "30 FPS"
+            "1920 px",
+            "2560 px",
+            "3840 px"
           ],
-          "whyItMatters": "Higher FPS increases bandwidth and storage.",
-          "commonMistake": "Using 30 FPS everywhere by default."
+          "whyItMatters": "Width combines with height to determine the total pixel load per frame.",
+          "commonMistake": "Entering custom dimensions that do not match the actual stream profile or camera setting."
+        },
+        {
+          "label": "Custom Height (px)",
+          "description": "The vertical pixel count used when Custom resolution is selected.",
+          "examples": [
+            "1080 px",
+            "1440 px",
+            "2160 px"
+          ],
+          "whyItMatters": "Height completes the custom pixel count and affects the bitrate estimate directly.",
+          "commonMistake": "Mixing width from one stream profile with height from another stream profile."
+        },
+        {
+          "label": "Frame Rate (fps)",
+          "description": "The number of frames captured or encoded each second.",
+          "examples": [
+            "10 fps",
+            "15 fps",
+            "30 fps"
+          ],
+          "whyItMatters": "Higher frame rates usually increase bitrate and storage demand because more frames are encoded every second.",
+          "commonMistake": "Leaving frame rate at a high default even when the scene does not require it."
         },
         {
           "label": "Codec",
-          "description": "The compression format used by the stream.",
+          "description": "The compression codec assumed for the stream.",
           "examples": [
             "H.264",
             "H.265",
-            "H.265+"
+            "MJPEG"
           ],
-          "whyItMatters": "Codec choice changes bitrate and compatibility.",
-          "commonMistake": "Comparing cameras without matching codec settings."
+          "whyItMatters": "Codec choice can materially change storage demand at the same resolution and frame rate.",
+          "commonMistake": "Assuming two codecs produce the same file size or that newer codecs always behave perfectly on every VMS/client path.",
+          "links": [
+            {
+              "label": "Compare codec savings",
+              "kbKey": "video-storage/codec-efficiency",
+              "anchor": "Target Codec",
+              "note": "Use this when evaluating a codec migration."
+            }
+          ]
         },
         {
-          "label": "Scene Activity",
-          "description": "How much motion or visual change exists.",
+          "label": "Scene Complexity",
+          "description": "How difficult the scene is to compress based on motion, detail, lighting noise, and visual change.",
           "examples": [
-            "static hall",
-            "busy lobby",
-            "trees/water"
+            "Low-motion hallway",
+            "Busy lobby",
+            "Parking lot with trees and headlights"
           ],
-          "whyItMatters": "Busy scenes need more bitrate.",
-          "commonMistake": "Using low-motion assumptions for busy scenes."
+          "whyItMatters": "Complex scenes can push bitrate higher than clean lab assumptions.",
+          "commonMistake": "Sizing from a calm test scene when the real scene has motion, weather, lighting changes, or visual noise."
         },
         {
-          "label": "Compression Level",
-          "description": "How aggressively video is compressed.",
+          "label": "Quality Target",
+          "description": "The desired balance between compression and retained image quality.",
           "examples": [
-            "low",
-            "medium",
-            "high"
+            "Storage saver",
+            "Balanced",
+            "High quality"
           ],
-          "whyItMatters": "Compression saves storage but can reduce detail.",
-          "commonMistake": "Over-compressing and losing forensic value."
-        },
-        {
-          "label": "Stream Purpose",
-          "description": "What the stream is used for.",
-          "examples": [
-            "live view",
-            "recording",
-            "analytics",
-            "archive"
-          ],
-          "whyItMatters": "Different uses may need different quality settings.",
-          "commonMistake": "Using one profile for every purpose."
+          "whyItMatters": "Higher quality settings preserve more detail but generally increase bitrate and storage demand.",
+          "commonMistake": "Lowering quality only to save storage without checking whether the footage still meets the viewing or evidence need."
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the design appears manageable based on the entered assumptions. Watch means bitrate, storage, retention, quality, or failure assumptions deserve review. Risk means the design may need more storage, lower load, adjusted retention, or validation before implementation."
+        "Healthy means the stream assumption is reasonable for downstream planning. Watch means bitrate pressure should be reviewed. Risk means resolution, frame rate, codec, scene complexity, or quality target may create a heavy storage/network burden."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review the sizing assumptions before relying on them.",
-        "Risk: adjust storage, bitrate, retention, or failure planning before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, reduce demand, adjust policy, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most video storage problems come from using optimistic bitrate assumptions, ignoring overhead, or reducing bitrate until footage is no longer useful."
+        "Most video-storage planning problems come from treating bitrate, storage, retention, RAID, and failure behavior as separate decisions even though they shape the same final retention promise."
       ],
       "bullets": [
-        "Using default bitrate values without scene validation.",
-        "Planning from raw storage instead of usable storage.",
-        "Ignoring RAID, filesystem, recorder, and reserve overhead.",
-        "Reducing bitrate or compression without reviewing image quality."
+        "Sizing storage from one average bitrate without checking peak, motion, codec, and retention behavior.",
+        "Treating nominal capacity as usable capacity after RAID, filesystem, spare, and operational reserves.",
+        "Ignoring growth, camera additions, quality changes, and retention policy changes after day one.",
+        "Failing to document assumptions before the recorder, storage tier, or archive policy is selected."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, recorder/VMS validation, legal retention requirements, or project-specific design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, VMS platform limits, camera-specific behavior, storage vendor guidance, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real bitrate depends on scene, codec, motion, and camera settings.",
-        "Usable storage is lower than raw drive capacity.",
-        "Retention should include margin for overhead and growth.",
-        "Image quality should be validated on real scenes when possible."
+        "Camera bitrate can vary significantly with scene motion, lighting, compression settings, and codec behavior.",
+        "Usable storage should account for redundancy, reserved space, filesystem overhead, and operational margin.",
+        "Retention targets should be validated against stakeholder expectations, evidence needs, and system operation.",
+        "A design with documented headroom is usually easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, legal/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal design review, manufacturer validation, field testing, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual cameras, recorder/VMS, and storage hardware.",
-        "Confirm owner expectations and retention requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual VMS, recorder, camera model, codec profile, storage platform, and network path being deployed.",
+        "Confirm stakeholder expectations for retention, archive access, failure behavior, and acceptable image quality.",
+        "Document assumptions before implementation so future changes can be evaluated against the original design intent."
       ]
     }
   ]

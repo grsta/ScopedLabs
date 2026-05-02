@@ -2,151 +2,175 @@
   "title": "Advanced Storage Planner Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand multi-camera storage planning with bitrate variation, RAID overhead, reserve capacity, and growth margin.",
-  "updated": "2026-04-26",
+  "summary": "Understand average and peak retention pressure for multi-camera systems with duty cycle, bitrate, usable capacity, and peak behavior.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind Advanced Storage Planner. It helps turn video, storage, bitrate, retention, and failure assumptions into practical design guidance."
+        "This tool estimates average-state and peak-state retention using camera count, bitrate, recording duty, storage capacity, and peak multiplier assumptions."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch storage or video-quality issues before deployment."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during video system planning, recorder/storage review, expansion planning, retention validation, or when explaining bitrate, storage, quality, and survivability tradeoffs."
+        "Use it when the basic storage number is not enough and the design needs to compare normal operation against heavier scene or peak ingest behavior."
       ],
       "bullets": [
-        "Early video system planning.",
-        "Storage or retention review.",
-        "Recorder or VMS upgrade planning.",
-        "Explaining assumptions to a client, stakeholder, or internal team."
+        "Early video-storage design planning.",
+        "Expansion review or recorder replacement.",
+        "Existing-system cleanup, validation, or troubleshooting.",
+        "Explaining storage, retention, and quality tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical video and storage planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical video-storage planning terms."
       ],
       "items": [
         {
-          "label": "Camera Groups",
-          "description": "Sets of cameras with similar recording behavior.",
+          "label": "Camera count",
+          "description": "The number of cameras included in the advanced storage scenario.",
           "examples": [
-            "Indoor cameras",
-            "Parking cameras",
-            "High-resolution cameras"
+            "24 cameras",
+            "64 cameras",
+            "Future full deployment"
           ],
-          "whyItMatters": "Grouping prevents one unrealistic average from driving the whole storage estimate.",
-          "commonMistake": "Averaging every camera into one generic bitrate."
+          "whyItMatters": "Camera count scales both average and peak ingest.",
+          "commonMistake": "Testing storage margin on a partial camera count and applying it to the full site."
         },
         {
-          "label": "Group Bitrate",
-          "description": "Average bitrate for a group of cameras.",
+          "label": "Average bitrate per camera (Mbps)",
+          "description": "The typical bitrate expected for each camera during normal operation.",
           "examples": [
-            "2 Mbps",
-            "4 Mbps",
-            "8 Mbps"
+            "3 Mbps",
+            "5 Mbps",
+            "Average measured bitrate"
           ],
-          "whyItMatters": "Bitrate is the main storage driver.",
-          "commonMistake": "Using camera defaults without validating scene activity."
+          "whyItMatters": "Average bitrate establishes the baseline storage load.",
+          "commonMistake": "Using a quiet test bitrate when the real site spends much of the day at higher complexity.",
+          "links": [
+            {
+              "label": "Estimate baseline bitrate",
+              "kbKey": "video-storage/bitrate-estimator",
+              "anchor": "Scene Complexity",
+              "note": "Use this if bitrate assumptions are still being built."
+            }
+          ]
         },
         {
-          "label": "Retention Target",
-          "description": "How long video should be stored.",
+          "label": "Motion / recording duty (%)",
+          "description": "The percentage of time video is recorded or effectively stored.",
+          "examples": [
+            "40% duty",
+            "75% duty",
+            "Continuous as 100%"
+          ],
+          "whyItMatters": "Duty cycle controls how much of each day contributes to storage use.",
+          "commonMistake": "Assuming motion-based recording is always low duty regardless of the scene."
+        },
+        {
+          "label": "Peak multiplier (x)",
+          "description": "The multiplier applied to represent heavier-than-average ingest behavior.",
+          "examples": [
+            "1.3x peak",
+            "1.8x peak",
+            "Storm/night/motion-heavy period"
+          ],
+          "whyItMatters": "Peak multiplier shows how storage margin behaves when bitrate or activity rises.",
+          "commonMistake": "Only planning average-state retention and ignoring real-world peaks."
+        },
+        {
+          "label": "Usable storage (TB)",
+          "description": "The capacity actually available for retained footage after overhead and redundancy.",
+          "examples": [
+            "50 TB usable",
+            "120 TB usable",
+            "Post-RAID usable capacity"
+          ],
+          "whyItMatters": "Usable storage determines how many days can be retained under average and peak conditions.",
+          "commonMistake": "Entering raw disk capacity instead of usable capacity after RAID and reserves.",
+          "links": [
+            {
+              "label": "Validate usable RAID capacity",
+              "kbKey": "video-storage/raid-impact",
+              "anchor": "Platform overhead (%)",
+              "note": "Use this when usable storage depends on RAID layout."
+            }
+          ]
+        },
+        {
+          "label": "Target retention (days)",
+          "description": "The retention goal used to judge whether the design has enough margin.",
           "examples": [
             "30 days",
-            "60 days",
-            "180 days"
+            "45 days",
+            "90 days"
           ],
-          "whyItMatters": "Retention target determines required storage capacity.",
-          "commonMistake": "Promising retention before checking usable capacity."
-        },
-        {
-          "label": "RAID / Overhead",
-          "description": "Storage lost to RAID, formatting, VMS reserves, and filesystem overhead.",
-          "examples": [
-            "RAID 6",
-            "filesystem reserve",
-            "recorder overhead"
-          ],
-          "whyItMatters": "Overhead reduces usable video storage.",
-          "commonMistake": "Using raw drive size as final usable capacity."
-        },
-        {
-          "label": "Growth Allowance",
-          "description": "Extra storage reserved for future cameras or higher bitrate.",
-          "examples": [
-            "10%",
-            "25%",
-            "Phase 2"
-          ],
-          "whyItMatters": "Growth keeps the design from being maxed out on day one.",
-          "commonMistake": "Sizing only for the initial camera count."
-        },
-        {
-          "label": "Recording Behavior",
-          "description": "How cameras record over time.",
-          "examples": [
-            "24/7",
-            "motion",
-            "business hours"
-          ],
-          "whyItMatters": "Recording behavior changes daily storage consumption.",
-          "commonMistake": "Assuming motion savings without validating the scene."
+          "whyItMatters": "Target retention is the benchmark for average and peak retention pressure.",
+          "commonMistake": "Accepting average retention while peak retention falls below the required goal.",
+          "links": [
+            {
+              "label": "Review retention target",
+              "kbKey": "video-storage/retention-planner",
+              "anchor": "Desired Retention (days)",
+              "note": "Use this to check the retention policy behind the target."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the design appears manageable based on the entered assumptions. Watch means bitrate, storage, retention, quality, or failure assumptions deserve review. Risk means the design may need more storage, lower load, adjusted retention, or validation before implementation."
+        "Healthy means average and peak retention remain above the target. Watch means peak or average pressure is close enough to review. Risk means the storage plan may fail the retention target under realistic load."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review the sizing assumptions before relying on them.",
-        "Risk: adjust storage, bitrate, retention, or failure planning before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, reduce demand, adjust policy, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most video storage problems come from using optimistic bitrate assumptions, ignoring overhead, or reducing bitrate until footage is no longer useful."
+        "Most video-storage planning problems come from treating bitrate, storage, retention, RAID, and failure behavior as separate decisions even though they shape the same final retention promise."
       ],
       "bullets": [
-        "Using default bitrate values without scene validation.",
-        "Planning from raw storage instead of usable storage.",
-        "Ignoring RAID, filesystem, recorder, and reserve overhead.",
-        "Reducing bitrate or compression without reviewing image quality."
+        "Sizing storage from one average bitrate without checking peak, motion, codec, and retention behavior.",
+        "Treating nominal capacity as usable capacity after RAID, filesystem, spare, and operational reserves.",
+        "Ignoring growth, camera additions, quality changes, and retention policy changes after day one.",
+        "Failing to document assumptions before the recorder, storage tier, or archive policy is selected."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, recorder/VMS validation, legal retention requirements, or project-specific design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, VMS platform limits, camera-specific behavior, storage vendor guidance, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real bitrate depends on scene, codec, motion, and camera settings.",
-        "Usable storage is lower than raw drive capacity.",
-        "Retention should include margin for overhead and growth.",
-        "Image quality should be validated on real scenes when possible."
+        "Camera bitrate can vary significantly with scene motion, lighting, compression settings, and codec behavior.",
+        "Usable storage should account for redundancy, reserved space, filesystem overhead, and operational margin.",
+        "Retention targets should be validated against stakeholder expectations, evidence needs, and system operation.",
+        "A design with documented headroom is usually easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, legal/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal design review, manufacturer validation, field testing, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual cameras, recorder/VMS, and storage hardware.",
-        "Confirm owner expectations and retention requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual VMS, recorder, camera model, codec profile, storage platform, and network path being deployed.",
+        "Confirm stakeholder expectations for retention, archive access, failure behavior, and acceptable image quality.",
+        "Document assumptions before implementation so future changes can be evaluated against the original design intent."
       ]
     }
   ]

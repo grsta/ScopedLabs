@@ -1,151 +1,179 @@
 {
-  "title": "RAID Impact Guide",
+  "title": "RAID Capacity & Failure Impact Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how RAID level affects usable capacity, fault tolerance, rebuild exposure, and retention.",
-  "updated": "2026-04-26",
+  "summary": "Understand how RAID level, drive count, hot spares, overhead, and imported storage demand affect usable capacity and retention margin.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind RAID Impact. It helps turn video, storage, bitrate, retention, and failure assumptions into practical design guidance."
+        "This tool estimates usable RAID capacity, retention support, and failure-state exposure from the selected storage layout."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch storage or video-quality issues before deployment."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during video system planning, recorder/storage review, expansion planning, retention validation, or when explaining bitrate, storage, quality, and survivability tradeoffs."
+        "Use it after sizing storage demand so the design can be checked against redundancy, overhead, spare strategy, and usable capacity."
       ],
       "bullets": [
-        "Early video system planning.",
-        "Storage or retention review.",
-        "Recorder or VMS upgrade planning.",
-        "Explaining assumptions to a client, stakeholder, or internal team."
+        "Early video-storage design planning.",
+        "Expansion review or recorder replacement.",
+        "Existing-system cleanup, validation, or troubleshooting.",
+        "Explaining storage, retention, and quality tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical video and storage planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical video-storage planning terms."
       ],
       "items": [
         {
-          "label": "Drive Count",
-          "description": "Number of drives in the storage set.",
-          "examples": [
-            "4 drives",
-            "8 drives",
-            "12 drives"
-          ],
-          "whyItMatters": "Drive count affects usable capacity and fault tolerance.",
-          "commonMistake": "Only checking total raw capacity."
-        },
-        {
-          "label": "Drive Size",
-          "description": "Capacity of each drive.",
-          "examples": [
-            "8 TB",
-            "12 TB",
-            "20 TB"
-          ],
-          "whyItMatters": "Large drives increase capacity but may lengthen rebuild exposure.",
-          "commonMistake": "Ignoring rebuild time with large drives."
-        },
-        {
-          "label": "RAID Level",
-          "description": "The redundancy layout.",
+          "label": "RAID level",
+          "description": "The redundancy layout used for the storage set.",
           "examples": [
             "RAID 5",
             "RAID 6",
             "RAID 10"
           ],
-          "whyItMatters": "RAID level controls usable capacity and failure tolerance.",
-          "commonMistake": "Choosing RAID only by usable capacity."
+          "whyItMatters": "RAID level changes usable capacity, fault tolerance, and failure behavior.",
+          "commonMistake": "Choosing RAID only by capacity without considering rebuild exposure or failure tolerance."
         },
         {
-          "label": "Hot Spare",
-          "description": "A reserved drive for automatic rebuild.",
+          "label": "Drive count",
+          "description": "The number of drives in the RAID group or storage set.",
           "examples": [
-            "none",
-            "one spare",
-            "global spare"
+            "4 drives",
+            "8 drives",
+            "12 drives"
           ],
-          "whyItMatters": "Hot spares can reduce time before rebuild begins.",
-          "commonMistake": "Counting a spare as usable capacity."
+          "whyItMatters": "Drive count affects raw capacity, usable capacity, and sometimes performance/rebuild exposure.",
+          "commonMistake": "Adding drives without reviewing whether the RAID level is still appropriate."
         },
         {
-          "label": "Usable Capacity",
-          "description": "Storage available after RAID overhead.",
+          "label": "Drive size (TB)",
+          "description": "The capacity of each drive in the set.",
           "examples": [
-            "post-RAID TB",
-            "recorder usable"
+            "8 TB",
+            "12 TB",
+            "20 TB"
           ],
-          "whyItMatters": "Usable capacity determines retention.",
-          "commonMistake": "Confusing raw and usable capacity."
+          "whyItMatters": "Drive size affects total usable storage and potential rebuild duration.",
+          "commonMistake": "Using larger disks only for capacity while ignoring recovery time and degraded-state exposure."
         },
         {
-          "label": "Failure Tolerance",
-          "description": "How many drive failures can be survived.",
+          "label": "Hot spares",
+          "description": "The number of drives reserved as automatic replacements instead of usable data drives.",
           "examples": [
-            "single drive",
-            "dual drive",
-            "mirror loss"
+            "0 hot spares",
+            "1 hot spare",
+            "2 hot spares"
           ],
-          "whyItMatters": "Failure tolerance matters during degraded operation.",
-          "commonMistake": "Ignoring degraded-state risk."
+          "whyItMatters": "Hot spares reduce usable capacity but can reduce time before rebuild begins.",
+          "commonMistake": "Counting hot spares as if they were usable storage."
+        },
+        {
+          "label": "Platform overhead (%)",
+          "description": "Capacity reserved or lost to filesystem behavior, VMS reserve, snapshots, metadata, and operational margin.",
+          "examples": [
+            "10% overhead",
+            "15% reserve",
+            "Vendor/platform reserve"
+          ],
+          "whyItMatters": "Platform overhead reduces the storage available for footage.",
+          "commonMistake": "Reporting raw RAID capacity instead of usable capacity after platform overhead.",
+          "links": [
+            {
+              "label": "Use the same reserve model in storage sizing",
+              "kbKey": "video-storage/storage-calculator",
+              "anchor": "Overhead reserve (%)",
+              "note": "Keep storage and RAID reserve assumptions aligned."
+            }
+          ]
+        },
+        {
+          "label": "Target retention (days)",
+          "description": "The retention goal the RAID capacity should support.",
+          "examples": [
+            "30 days",
+            "60 days",
+            "90 days"
+          ],
+          "whyItMatters": "Target retention lets usable capacity be compared against the design promise.",
+          "commonMistake": "Assuming a storage array is large enough without comparing it to the retention target."
+        },
+        {
+          "label": "Imported required storage (GB)",
+          "description": "The required capacity carried from an upstream storage or retention calculation.",
+          "examples": [
+            "Storage Calculator output",
+            "Retention Planner output",
+            "Required capacity in GB"
+          ],
+          "whyItMatters": "Imported demand gives the RAID tool a real capacity target instead of only showing raw usable capacity.",
+          "commonMistake": "Checking RAID capacity without comparing it to the actual video-storage requirement.",
+          "links": [
+            {
+              "label": "Size required storage first",
+              "kbKey": "video-storage/storage-calculator",
+              "anchor": "Bitrate per camera (Mbps)",
+              "note": "Use this when no upstream required-storage value is available."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the design appears manageable based on the entered assumptions. Watch means bitrate, storage, retention, quality, or failure assumptions deserve review. Risk means the design may need more storage, lower load, adjusted retention, or validation before implementation."
+        "Healthy means usable capacity and retention margin appear acceptable. Watch means overhead, spare strategy, or failure exposure should be reviewed. Risk means the RAID layout may not support the required storage or retention promise reliably."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review the sizing assumptions before relying on them.",
-        "Risk: adjust storage, bitrate, retention, or failure planning before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, reduce demand, adjust policy, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most video storage problems come from using optimistic bitrate assumptions, ignoring overhead, or reducing bitrate until footage is no longer useful."
+        "Most video-storage planning problems come from treating bitrate, storage, retention, RAID, and failure behavior as separate decisions even though they shape the same final retention promise."
       ],
       "bullets": [
-        "Using default bitrate values without scene validation.",
-        "Planning from raw storage instead of usable storage.",
-        "Ignoring RAID, filesystem, recorder, and reserve overhead.",
-        "Reducing bitrate or compression without reviewing image quality."
+        "Sizing storage from one average bitrate without checking peak, motion, codec, and retention behavior.",
+        "Treating nominal capacity as usable capacity after RAID, filesystem, spare, and operational reserves.",
+        "Ignoring growth, camera additions, quality changes, and retention policy changes after day one.",
+        "Failing to document assumptions before the recorder, storage tier, or archive policy is selected."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, recorder/VMS validation, legal retention requirements, or project-specific design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, VMS platform limits, camera-specific behavior, storage vendor guidance, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real bitrate depends on scene, codec, motion, and camera settings.",
-        "Usable storage is lower than raw drive capacity.",
-        "Retention should include margin for overhead and growth.",
-        "Image quality should be validated on real scenes when possible."
+        "Camera bitrate can vary significantly with scene motion, lighting, compression settings, and codec behavior.",
+        "Usable storage should account for redundancy, reserved space, filesystem overhead, and operational margin.",
+        "Retention targets should be validated against stakeholder expectations, evidence needs, and system operation.",
+        "A design with documented headroom is usually easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, legal/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal design review, manufacturer validation, field testing, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual cameras, recorder/VMS, and storage hardware.",
-        "Confirm owner expectations and retention requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual VMS, recorder, camera model, codec profile, storage platform, and network path being deployed.",
+        "Confirm stakeholder expectations for retention, archive access, failure behavior, and acceptable image quality.",
+        "Document assumptions before implementation so future changes can be evaluated against the original design intent."
       ]
     }
   ]

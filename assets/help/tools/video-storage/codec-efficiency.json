@@ -1,154 +1,168 @@
 {
-  "title": "Codec Efficiency Guide",
+  "title": "Codec Efficiency Comparator Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how codec choice affects bitrate savings, compatibility, and image quality.",
-  "updated": "2026-04-26",
+  "summary": "Understand how changing codecs can affect bitrate, retained storage, camera count, and retention storage demand.",
+  "updated": "2026-05-02",
   "sections": [
     {
       "title": "What this tool does",
       "body": [
-        "This guide explains the planning logic behind Codec Efficiency. It helps turn video, storage, bitrate, retention, and failure assumptions into practical design guidance."
+        "This tool compares a baseline codec against a target codec and estimates the storage effect over camera count and retention time."
       ],
       "bullets": [
         "Use it as a planning and sanity-check aid.",
         "Use it to document assumptions before implementation.",
-        "Use it to catch storage or video-quality issues before deployment."
+        "Use it to catch design pressure before it becomes field trouble."
       ]
     },
     {
       "title": "When to use it",
       "body": [
-        "Use it during video system planning, recorder/storage review, expansion planning, retention validation, or when explaining bitrate, storage, quality, and survivability tradeoffs."
+        "Use it when evaluating whether a codec migration meaningfully reduces storage or whether compatibility and quality tradeoffs need review."
       ],
       "bullets": [
-        "Early video system planning.",
-        "Storage or retention review.",
-        "Recorder or VMS upgrade planning.",
-        "Explaining assumptions to a client, stakeholder, or internal team."
+        "Early video-storage design planning.",
+        "Expansion review or recorder replacement.",
+        "Existing-system cleanup, validation, or troubleshooting.",
+        "Explaining storage, retention, and quality tradeoffs to a client, stakeholder, or internal team."
       ]
     },
     {
       "title": "Input descriptions",
       "type": "glossary",
       "body": [
-        "These descriptions explain what each input represents in practical video and storage planning terms."
+        "These descriptions match the visible inputs on this tool and explain what each value represents in practical video-storage planning terms."
       ],
       "items": [
         {
+          "label": "Baseline Bitrate (Mbps)",
+          "description": "The current or starting bitrate before codec changes.",
+          "examples": [
+            "4 Mbps current stream",
+            "8 Mbps H.264 baseline",
+            "Measured bitrate"
+          ],
+          "whyItMatters": "Baseline bitrate sets the storage demand before savings are applied.",
+          "commonMistake": "Using a theoretical bitrate instead of a real or defensible baseline.",
+          "links": [
+            {
+              "label": "Estimate baseline bitrate",
+              "kbKey": "video-storage/bitrate-estimator",
+              "anchor": "Codec",
+              "note": "Use this when the current bitrate assumption is uncertain."
+            }
+          ]
+        },
+        {
           "label": "Current Codec",
-          "description": "The baseline codec.",
+          "description": "The codec currently used by the stream.",
           "examples": [
             "H.264",
-            "MJPEG",
-            "older H.265"
+            "H.265",
+            "MJPEG"
           ],
-          "whyItMatters": "Baseline determines the starting bitrate.",
-          "commonMistake": "Comparing savings without matching scene quality."
+          "whyItMatters": "Current codec establishes the comparison point.",
+          "commonMistake": "Assuming the current codec is obvious without checking the actual camera/VMS stream profile."
         },
         {
-          "label": "New Codec",
-          "description": "The codec being considered.",
+          "label": "Target Codec",
+          "description": "The codec being considered for migration or comparison.",
           "examples": [
             "H.265",
-            "H.265+",
-            "smart codec"
+            "H.264",
+            "AV1-style target"
           ],
-          "whyItMatters": "New codecs may reduce bitrate but require support.",
-          "commonMistake": "Assuming every recorder or client supports the newer codec."
+          "whyItMatters": "Target codec determines the expected efficiency change.",
+          "commonMistake": "Counting codec savings without confirming VMS/client/hardware compatibility."
         },
         {
-          "label": "Scene Complexity",
-          "description": "How hard the scene is to compress.",
+          "label": "Hours per Day",
+          "description": "The number of hours per day the stream is recorded.",
           "examples": [
-            "static",
-            "busy",
-            "trees",
-            "parking lot"
+            "12 hours",
+            "24 hours",
+            "Motion-equivalent hours"
           ],
-          "whyItMatters": "Busy scenes reduce codec savings.",
-          "commonMistake": "Expecting maximum savings in high-motion scenes."
+          "whyItMatters": "Recording hours translate bitrate savings into daily storage savings.",
+          "commonMistake": "Assuming codec savings matter equally for rarely recorded and continuously recorded streams."
         },
         {
-          "label": "Quality Target",
-          "description": "Desired image quality after compression.",
+          "label": "Days of Retention",
+          "description": "The retention period used to convert daily savings into retained storage impact.",
           "examples": [
-            "high",
-            "balanced",
-            "storage saving"
+            "14 days",
+            "30 days",
+            "90 days"
           ],
-          "whyItMatters": "Higher quality reduces savings.",
-          "commonMistake": "Saving bitrate at the expense of detail."
+          "whyItMatters": "Longer retention makes codec efficiency changes more valuable.",
+          "commonMistake": "Evaluating codec savings for one day only when the system stores weeks or months."
         },
         {
-          "label": "Compatibility",
-          "description": "Whether the full system supports the codec.",
+          "label": "Camera Count",
+          "description": "The number of cameras affected by the codec change.",
           "examples": [
-            "recorder",
-            "browser",
-            "mobile app",
-            "analytics"
+            "8 cameras",
+            "40 cameras",
+            "Full camera fleet"
           ],
-          "whyItMatters": "Unsupported codec choices can break workflows.",
-          "commonMistake": "Turning on a codec that breaks playback."
-        },
-        {
-          "label": "Savings Estimate",
-          "description": "Expected bitrate or storage reduction.",
-          "examples": [
-            "20%",
-            "40%",
-            "50%"
-          ],
-          "whyItMatters": "Savings should be treated as an estimate.",
-          "commonMistake": "Using marketing savings as guaranteed results."
+          "whyItMatters": "Camera count scales savings or increases across the system.",
+          "commonMistake": "Testing codec impact on one camera and not multiplying it across the fleet.",
+          "links": [
+            {
+              "label": "Turn savings into storage impact",
+              "kbKey": "video-storage/storage-calculator",
+              "anchor": "Bitrate per camera (Mbps)",
+              "note": "Use this to see how the new bitrate changes storage sizing."
+            }
+          ]
         }
       ]
     },
     {
       "title": "How to read the results",
       "body": [
-        "Healthy means the design appears manageable based on the entered assumptions. Watch means bitrate, storage, retention, quality, or failure assumptions deserve review. Risk means the design may need more storage, lower load, adjusted retention, or validation before implementation."
+        "Healthy means the target codec offers useful efficiency without obvious pressure. Watch means savings, quality, or compatibility should be reviewed. Risk means the codec choice may create quality, compatibility, or storage assumptions that need validation."
       ],
       "bullets": [
-        "Healthy: assumptions appear workable.",
-        "Watch: review the sizing assumptions before relying on them.",
-        "Risk: adjust storage, bitrate, retention, or failure planning before deployment."
+        "Healthy: the design appears manageable based on the entered assumptions.",
+        "Watch: the design may still work, but the assumptions deserve review.",
+        "Risk: add capacity, reduce demand, adjust policy, or validate the design more carefully before implementation."
       ]
     },
     {
       "title": "Common mistakes",
       "body": [
-        "Most video storage problems come from using optimistic bitrate assumptions, ignoring overhead, or reducing bitrate until footage is no longer useful."
+        "Most video-storage planning problems come from treating bitrate, storage, retention, RAID, and failure behavior as separate decisions even though they shape the same final retention promise."
       ],
       "bullets": [
-        "Using default bitrate values without scene validation.",
-        "Planning from raw storage instead of usable storage.",
-        "Ignoring RAID, filesystem, recorder, and reserve overhead.",
-        "Reducing bitrate or compression without reviewing image quality."
+        "Sizing storage from one average bitrate without checking peak, motion, codec, and retention behavior.",
+        "Treating nominal capacity as usable capacity after RAID, filesystem, spare, and operational reserves.",
+        "Ignoring growth, camera additions, quality changes, and retention policy changes after day one.",
+        "Failing to document assumptions before the recorder, storage tier, or archive policy is selected."
       ]
     },
     {
       "title": "Planning assumptions",
       "body": [
-        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, recorder/VMS validation, legal retention requirements, or project-specific design judgment."
+        "This guide explains the planning logic behind the tool. It does not replace manufacturer documentation, VMS platform limits, camera-specific behavior, storage vendor guidance, or project-specific engineering judgment."
       ],
       "bullets": [
-        "Real bitrate depends on scene, codec, motion, and camera settings.",
-        "Usable storage is lower than raw drive capacity.",
-        "Retention should include margin for overhead and growth.",
-        "Image quality should be validated on real scenes when possible."
+        "Camera bitrate can vary significantly with scene motion, lighting, compression settings, and codec behavior.",
+        "Usable storage should account for redundancy, reserved space, filesystem overhead, and operational margin.",
+        "Retention targets should be validated against stakeholder expectations, evidence needs, and system operation.",
+        "A design with documented headroom is usually easier to support, expand, and troubleshoot."
       ]
     },
     {
       "title": "Professional responsibility",
       "body": [
-        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal engineering review, manufacturer validation, legal/compliance review, or project-specific design responsibility."
+        "ScopedLabs tools are planning aids. They help surface assumptions and risk, but they do not replace formal design review, manufacturer validation, field testing, or project-specific responsibility."
       ],
       "bullets": [
-        "Validate against actual cameras, recorder/VMS, and storage hardware.",
-        "Confirm owner expectations and retention requirements.",
-        "Document assumptions before implementation."
+        "Validate against the actual VMS, recorder, camera model, codec profile, storage platform, and network path being deployed.",
+        "Confirm stakeholder expectations for retention, archive access, failure behavior, and acceptable image quality.",
+        "Document assumptions before implementation so future changes can be evaluated against the original design intent."
       ]
     }
   ]
