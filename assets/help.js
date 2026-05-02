@@ -2,6 +2,8 @@
   "use strict";
 
   var HELP_INDEX_URL = "/assets/help/index.json";
+  var VERSION_PLACEHOLDER = "help-013";
+  var helpIndexCache = null;
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -10,6 +12,14 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+  function slugify(value) {
+    return String(value == null ? "" : value)
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "topic";
   }
 
   function getToolPath() {
@@ -29,6 +39,12 @@
     var response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error("Help file not found: " + url);
     return response.json();
+  }
+
+  async function getHelpIndex() {
+    if (helpIndexCache) return helpIndexCache;
+    helpIndexCache = await fetchJson(HELP_INDEX_URL + "?v=" + encodeURIComponent(VERSION_PLACEHOLDER));
+    return helpIndexCache;
   }
 
   function injectHelpStyles() {
@@ -58,7 +74,17 @@
       ".sl-help-subitem{background:rgba(255,255,255,.025);}" +
       ".sl-help-meta{margin-top:10px;color:rgba(255,255,255,.64);}" +
       ".sl-help-meta strong{color:rgba(245,255,248,.92);}" +
-      "@media(max-width:760px){.sl-help-head{flex-direction:column}.sl-help-toggle{width:100%;}}";
+      ".sl-help-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}" +
+      ".sl-help-link{appearance:none;border:1px solid rgba(120,255,120,.24);background:rgba(120,255,120,.08);color:rgba(235,255,238,.92);border-radius:999px;padding:7px 10px;font:inherit;font-weight:800;font-size:.88rem;cursor:pointer;}" +
+      ".sl-help-link:hover{background:rgba(120,255,120,.14);border-color:rgba(120,255,120,.36);}" +
+      ".sl-help-link-note{display:block;width:100%;margin-top:-2px;color:rgba(255,255,255,.58);font-size:.88rem;}" +
+      ".sl-help-related{margin-top:14px;border:1px solid rgba(120,255,120,.18);border-radius:16px;background:rgba(0,0,0,.22);padding:14px;}" +
+      ".sl-help-related-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:8px;}" +
+      ".sl-help-related-title{margin:0;font-size:1rem;}" +
+      ".sl-help-related-close{appearance:none;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);border-radius:999px;padding:5px 9px;cursor:pointer;}" +
+      ".sl-help-related-body{color:rgba(255,255,255,.70);line-height:1.55;}" +
+      ".sl-help-related-body p{margin:8px 0;}" +
+      "@media(max-width:760px){.sl-help-head{flex-direction:column}.sl-help-toggle{width:100%;}.sl-help-related-head{flex-direction:column;}}";
 
     document.head.appendChild(style);
   }
@@ -77,37 +103,153 @@
       : "";
   }
 
+  function linksHtml(links) {
+    if (!Array.isArray(links) || !links.length) return "";
+
+    return "<div class=\"sl-help-links\" aria-label=\"Related Knowledge Base references\">" +
+      links.map(function (link) {
+        var label = escapeHtml(link.label || "Related guide");
+        var kbKey = escapeHtml(link.kbKey || link.ref || "");
+        var anchor = escapeHtml(link.anchor || "");
+        var note = link.note ? "<span class=\"sl-help-link-note\">" + escapeHtml(link.note) + "</span>" : "";
+
+        if (!kbKey) return "";
+
+        return "<button type=\"button\" class=\"sl-help-link\" data-sl-help-ref=\"" + kbKey + "\" data-sl-help-anchor=\"" + anchor + "\">" + label + "</button>" + note;
+      }).join("") +
+    "</div>";
+  }
+
   function glossaryItemHtml(item) {
-    return "<details class=\"sl-help-subitem\">" +
+    var id = "kb-" + slugify(item.id || item.label || "input");
+
+    return "<details class=\"sl-help-subitem\" id=\"" + escapeHtml(id) + "\">" +
       "<summary>" + escapeHtml(item.label || "Input") + "</summary>" +
       "<div class=\"sl-help-body\">" +
         "<p>" + escapeHtml(item.description || "") + "</p>" +
         (item.examples && item.examples.length ? "<div class=\"sl-help-meta\"><strong>Examples:</strong>" + bulletHtml(item.examples) + "</div>" : "") +
         (item.whyItMatters ? "<p class=\"sl-help-meta\"><strong>Why it matters:</strong> " + escapeHtml(item.whyItMatters) + "</p>" : "") +
         (item.commonMistake ? "<p class=\"sl-help-meta\"><strong>Common mistake:</strong> " + escapeHtml(item.commonMistake) + "</p>" : "") +
+        linksHtml(item.links) +
       "</div>" +
     "</details>";
   }
 
   function sectionHtml(section) {
+    var id = "kb-" + slugify(section.id || section.title || "section");
     var bodyHtml = paragraphHtml(section.body);
     var bulletList = bulletHtml(section.bullets);
+    var sectionLinks = linksHtml(section.links);
 
     if (section.type === "glossary") {
       var items = Array.isArray(section.items) ? section.items : [];
-      return "<details class=\"sl-help-item\">" +
+      return "<details class=\"sl-help-item\" id=\"" + escapeHtml(id) + "\">" +
         "<summary>" + escapeHtml(section.title || "Input descriptions") + "</summary>" +
         "<div class=\"sl-help-body\">" +
           bodyHtml +
           "<div class=\"sl-help-sublist\">" + items.map(glossaryItemHtml).join("") + "</div>" +
+          sectionLinks +
         "</div>" +
       "</details>";
     }
 
-    return "<details class=\"sl-help-item\">" +
+    return "<details class=\"sl-help-item\" id=\"" + escapeHtml(id) + "\">" +
       "<summary>" + escapeHtml(section.title || "Help topic") + "</summary>" +
-      "<div class=\"sl-help-body\">" + bodyHtml + bulletList + "</div>" +
+      "<div class=\"sl-help-body\">" + bodyHtml + bulletList + sectionLinks + "</div>" +
     "</details>";
+  }
+
+  function findHelpFragment(help, anchor) {
+    if (!anchor) return null;
+
+    var wanted = slugify(anchor);
+    var sections = Array.isArray(help.sections) ? help.sections : [];
+
+    for (var i = 0; i < sections.length; i += 1) {
+      var section = sections[i];
+      var sectionId = slugify(section.id || section.title || "");
+
+      if (sectionId === wanted) {
+        return {
+          title: section.title || help.title || "Related guide",
+          body: section.body || [],
+          bullets: section.bullets || []
+        };
+      }
+
+      var items = Array.isArray(section.items) ? section.items : [];
+      for (var j = 0; j < items.length; j += 1) {
+        var item = items[j];
+        var itemId = slugify(item.id || item.label || "");
+
+        if (itemId === wanted) {
+          return {
+            title: item.label || section.title || help.title || "Related guide",
+            body: [item.description || ""].filter(Boolean),
+            bullets: item.examples || [],
+            whyItMatters: item.whyItMatters || "",
+            commonMistake: item.commonMistake || ""
+          };
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function relatedBodyHtml(help, anchor) {
+    var fragment = findHelpFragment(help, anchor);
+
+    if (!fragment) {
+      return "<p>" + escapeHtml(help.summary || "Open the related guide for more context on this concept.") + "</p>";
+    }
+
+    return paragraphHtml(fragment.body) +
+      bulletHtml(fragment.bullets) +
+      (fragment.whyItMatters ? "<p><strong>Why it matters:</strong> " + escapeHtml(fragment.whyItMatters) + "</p>" : "") +
+      (fragment.commonMistake ? "<p><strong>Common mistake:</strong> " + escapeHtml(fragment.commonMistake) + "</p>" : "");
+  }
+
+  function renderRelatedPanel(card, title, bodyHtml) {
+    var existing = card.querySelector("[data-sl-help-related]");
+    if (!existing) {
+      existing = document.createElement("div");
+      existing.className = "sl-help-related";
+      existing.setAttribute("data-sl-help-related", "");
+      var content = card.querySelector("[data-sl-help-content]");
+      if (content) content.appendChild(existing);
+      else card.appendChild(existing);
+    }
+
+    existing.innerHTML =
+      "<div class=\"sl-help-related-head\">" +
+        "<h3 class=\"sl-help-related-title\">" + escapeHtml(title || "Related Knowledge Base") + "</h3>" +
+        "<button type=\"button\" class=\"sl-help-related-close\" data-sl-help-related-close>Close</button>" +
+      "</div>" +
+      "<div class=\"sl-help-related-body\">" + bodyHtml + "</div>";
+
+    existing.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  async function openHelpReference(card, kbKey, anchor) {
+    try {
+      if (!kbKey) return;
+
+      renderRelatedPanel(card, "Loading related guide…", "<p>Loading Knowledge Base reference.</p>");
+
+      var index = await getHelpIndex();
+      var helpFile = index.toolHelp && index.toolHelp[kbKey];
+
+      if (!helpFile) {
+        renderRelatedPanel(card, "Related guide unavailable", "<p>No Knowledge Base entry is registered for " + escapeHtml(kbKey) + ".</p>");
+        return;
+      }
+
+      var help = await fetchJson("/assets/help/" + helpFile + "?v=" + encodeURIComponent(index.version || VERSION_PLACEHOLDER));
+      renderRelatedPanel(card, help.title || "Related Knowledge Base", relatedBodyHtml(help, anchor));
+    } catch (error) {
+      renderRelatedPanel(card, "Related guide unavailable", "<p>" + escapeHtml(error.message || "Unable to load related Knowledge Base content.") + "</p>");
+    }
   }
 
   function createHelpCard(help) {
@@ -147,6 +289,32 @@
       }
     });
 
+    card.addEventListener("click", function (event) {
+      var closeBtn = event.target.closest("[data-sl-help-related-close]");
+      if (closeBtn && card.contains(closeBtn)) {
+        var related = card.querySelector("[data-sl-help-related]");
+        if (related) related.remove();
+        return;
+      }
+
+      var refBtn = event.target.closest("[data-sl-help-ref]");
+      if (!refBtn || !card.contains(refBtn)) return;
+
+      event.preventDefault();
+
+      var isHidden = content.hasAttribute("hidden");
+      if (isHidden) {
+        content.removeAttribute("hidden");
+        toggle.textContent = "Close guide";
+      }
+
+      openHelpReference(
+        card,
+        refBtn.getAttribute("data-sl-help-ref"),
+        refBtn.getAttribute("data-sl-help-anchor")
+      );
+    });
+
     return card;
   }
 
@@ -175,7 +343,7 @@
     if (!toolPath) return;
 
     try {
-      var index = await fetchJson(HELP_INDEX_URL + "?v=" + VERSION_PLACEHOLDER);
+      var index = await getHelpIndex();
       var helpFile = index.toolHelp && index.toolHelp[toolPath.key];
       if (!helpFile) return;
 
@@ -187,8 +355,6 @@
       console.warn("[ScopedLabs Help]", error.message);
     }
   }
-
-  var VERSION_PLACEHOLDER = "help-012";
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initHelp);
