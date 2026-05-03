@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Power &amp; Runtime Planning Guide | ScopedLabs</title>
+  <meta name="description" content="Plan electrical load, UPS runtime, battery sizing, power margin, and load growth with a practical power and runtime workflow before selecting backup power equipment.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/power-runtime-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Power &amp; Runtime Planning Guide | ScopedLabs">
+  <meta property="og:description" content="A practical workflow for planning electrical load, UPS runtime, battery sizing, power margin, and future growth.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/power-runtime-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Power &amp; Runtime Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="Plan load, runtime, battery sizing, and power margin before selecting backup power equipment.">
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0319"></script>
+  <script defer src="/assets/app.js?v=0319"></script>
+</head>
+
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/power/">Power &amp; Runtime</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Power &amp; Runtime Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for estimating electrical load, UPS runtime, battery sizing, power margin,
+        and future growth before selecting backup power equipment.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/power/">Open Power Tools</a>
+        <a class="btn btn-ghost" href="/tools/power/va-watts-amps/">Start with VA / Watts / Amps</a>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="guide-overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning workflow</span>
+      </div>
+      <h2 class="h2" id="guide-overview-title">What power and runtime planning means</h2>
+      <p class="muted">
+        Power planning is not just picking a UPS size from a nameplate. A practical estimate starts with the connected load,
+        converts that load into compatible electrical units, adds realistic growth margin, then checks whether the backup system
+        can support the required runtime without operating too close to its limits.
+      </p>
+      <p class="muted">
+        ScopedLabs treats power and runtime planning as a sequence: estimate the load, normalize the units, account for growth,
+        review runtime, and document the assumptions. That makes the result easier to explain, compare, and revisit later.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="units-title">
+      <h2 class="h2" id="units-title">Why watts, VA, amps, and power factor all matter</h2>
+      <p class="muted">
+        Power equipment is often described with different units. A device might list watts, a UPS might be rated in VA,
+        and a branch circuit might be limited by amps. Power factor connects real power and apparent power, so ignoring it can
+        make an estimate look cleaner than the actual electrical load.
+      </p>
+      <p class="muted">
+        Use the <a href="/tools/power/va-watts-amps/">VA / Watts / Amps Calculator</a> when you need to normalize load information before moving into runtime, battery, or branch planning.
+        If inverter losses are part of the design, the <a href="/tools/power/inverter-efficiency/">Inverter Efficiency Calculator</a> helps separate usable output from conversion overhead.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="workflow-title">
+      <h2 class="h2" id="workflow-title">A practical planning sequence</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">1. Estimate the connected load</div>
+            <p class="muted">
+              List the equipment that must stay online, estimate its operating draw, and convert the load into consistent units.
+              This becomes the baseline for the rest of the power plan.
+            </p>
+          </div>
+          <span class="tag">Load baseline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">2. Add growth and operating margin</div>
+            <p class="muted">
+              Plan for near-term additions, replacement hardware, and reasonable spare capacity instead of sizing only for today.
+              <a href="/tools/power/load-growth/">Load Growth Planner</a> is the right next step when you need to explain future headroom.
+            </p>
+          </div>
+          <span class="tag">Headroom</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">3. Estimate UPS runtime</div>
+            <p class="muted">
+              Runtime depends on load, battery capacity, efficiency, and how aggressively the system is being used.
+              <a href="/tools/power/ups-runtime/">UPS Runtime Calculator</a> should be treated as a planning estimate, not a manufacturer runtime guarantee.
+            </p>
+          </div>
+          <span class="tag">Runtime</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">4. Review battery sizing</div>
+            <p class="muted">
+              Battery sizing should consider target runtime, usable capacity, efficiency, aging, and whether the system has enough
+              reserve for real-world conditions. Use the <a href="/tools/power/battery-sizing/">Battery Sizing Calculator</a> to check battery assumptions.
+            </p>
+          </div>
+          <span class="tag">Battery reserve</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">5. Check branch and loading assumptions</div>
+            <p class="muted">
+              A runtime estimate is only useful if the connected electrical path can support the load.
+              Branch Planning Calculator helps keep branch planning separate from battery/runtime assumptions when that calculator is available.
+            </p>
+          </div>
+          <span class="tag">Electrical path</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Using nameplate load as the final answer</div>
+            <p class="muted">
+              Nameplate values can be useful as a boundary, but planning should distinguish estimated operating load from worst-case label values.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Forgetting future load growth</div>
+            <p class="muted">
+              A UPS that barely fits today may become a problem after one equipment refresh, added switch, larger NVR, or extra compute node.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Treating runtime as a fixed number</div>
+            <p class="muted">
+              Runtime changes as the load changes. A small load increase can have an outsized effect when the battery system is already near its useful limit.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Mixing units without checking power factor</div>
+            <p class="muted">
+              Watts, VA, and amps are related, but they are not interchangeable without voltage and power factor assumptions.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tools-title">
+      <div class="tool-feature-top">
+        <span class="pill">ScopedLabs tools</span>
+      </div>
+      <h2 class="h2" id="tools-title">When to use the Power &amp; Runtime tools</h2>
+      <p class="muted">
+        Use the <a href="/tools/power/">Power &amp; Runtime category</a> when you need a documented planning path instead of a single isolated calculator.
+        Start with load conversion, then move into growth, runtime, battery, and branch assumptions as the project becomes clearer.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/power/">Open Power &amp; Runtime</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
+      </div>
+    </section>
+
+    <section class="note" aria-label="Planning disclaimer">
+      <p class="muted">
+        ScopedLabs tools and guides are planning aids. They do not replace manufacturer runtime charts, electrical code review,
+        project-specific engineering, or qualified professional validation for a final installation.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
