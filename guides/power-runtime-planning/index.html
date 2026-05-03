@@ -91,6 +91,7 @@
     </section>
 
 
+
     <section class="card" aria-labelledby="step-load-title">
       <h2 class="h2" id="step-load-title">Step 1 — Collect device load data</h2>
 
@@ -133,7 +134,7 @@
             </p>
             <p class="muted">
               The goal is not to design the electrical system. The goal is to create a defensible equipment-load baseline
-              that can be carried into runtime, battery, and reserve planning.
+              that can be carried into runtime, battery, reserve, and scenario planning.
             </p>
           </div>
         </div>
@@ -348,6 +349,7 @@
 
 
 
+
     <section class="card" aria-labelledby="step-review-title">
       <h2 class="h2" id="step-review-title">Step 6 — Stress-test the runtime plan before equipment selection</h2>
 
@@ -357,8 +359,8 @@
             <div class="row-title">What it is</div>
             <p class="muted">
               Final runtime review means checking the load, growth margin, runtime estimate, battery reserve, redundancy assumptions,
-              degraded conditions, and alternate scenarios as one planning package. It is not electrical design; it is a practical review
-              of whether the backup-power assumptions still hold together.
+              degraded conditions, and alternate scenarios as one planning package. This is not electrical design. It is a practical review
+              of whether the backup-power assumptions still hold together before equipment is selected or documented.
             </p>
           </div>
         </div>
@@ -368,7 +370,7 @@
             <div class="row-title">When it matters</div>
             <p class="muted">
               This matters after the main guided flow is complete. Once the baseline load, projected growth, UPS runtime, and battery bank
-              assumptions are known, the supporting tools can help answer “what if” questions before equipment is selected or documented.
+              assumptions are known, the supporting tools can help answer “what if” questions before the plan is treated as final.
             </p>
           </div>
         </div>
@@ -379,7 +381,7 @@
             <p class="muted">
               A single runtime estimate can look clean while hiding weak assumptions. Runtime may change if a battery string fails,
               redundancy reduces usable capacity, batteries age, conditions are pessimistic, or the project team compares multiple
-              design options. Stress-testing the plan makes those assumptions easier to defend.
+              design options. Stress-testing the plan makes those assumptions easier to explain and defend.
             </p>
           </div>
         </div>
@@ -460,6 +462,7 @@
 
 
 
+
     <section class="tool-feature" aria-labelledby="tool-map-title">
       <div class="tool-feature-top">
         <span class="pill">Tool map</span>
@@ -477,7 +480,7 @@
             <div class="row-title">Core guided design flow</div>
             <p class="muted">
               Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
-              This sequence builds from the load baseline into growth margin, runtime impact, and battery reserve.
+              This sequence builds from the device load baseline into growth margin, runtime impact, and battery reserve.
             </p>
           </div>
           <span class="tag">Pipeline</span>
@@ -487,7 +490,7 @@
           <div>
             <div class="row-title"><a href="/tools/power/va-watts-amps/">VA / Watts / Amps</a></div>
             <p class="muted">
-              Use this first when equipment ratings are mixed between watts, VA, amps, voltage, or power factor. This creates the load baseline that every later runtime and battery estimate depends on.
+              Use this first when equipment ratings are mixed between watts, VA, amps, voltage, current draw, or power factor. This creates the load baseline that every later runtime and battery estimate depends on.
             </p>
           </div>
           <span class="tag">Step 1</span>
