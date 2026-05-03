@@ -442,46 +442,99 @@
       </div>
     </section>
 
+
     <section class="tool-feature" aria-labelledby="tool-map-title">
       <div class="tool-feature-top">
         <span class="pill">Tool map</span>
       </div>
       <h2 class="h2" id="tool-map-title">Where the Power &amp; Runtime tools fit</h2>
       <p class="muted">
-        The guide explains the workflow. The tool pages handle the calculator-specific inputs, outputs, Knowledge Base content,
-        export reports, and saved snapshots. Use the category page as the active starting point when you want to move through the tools.
+        Use this section as the plain-English map of the Power &amp; Runtime planning path. The guided flow covers the core
+        sequence for load, growth, runtime, and battery planning. Supporting checks help validate related assumptions when the project needs them,
+        but they are not required guided-flow steps.
       </p>
 
       <div class="stack">
-
         <div class="row">
           <div>
-            <div class="row-title"><a href="/tools/power/va-watts-amps/">Start Guided Flow</a></div>
+            <div class="row-title">Core guided design flow</div>
             <p class="muted">
-              Use this tool where its inputs match the planning step you are validating. The guide explains the workflow,
-              while the tool page handles the calculator-specific inputs, results, Knowledge Base notes, and export behavior.
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from the load baseline into growth margin, runtime impact, and battery reserve.
             </p>
           </div>
+          <span class="tag">Pipeline</span>
         </div>
 
         <div class="row">
           <div>
-            <div class="row-title"><a href="/tools/power/battery-sizing/">Battery Sizing Estimate basic battery requirements to hit a target runtime with </a></div>
+            <div class="row-title"><a href="/tools/power/va-watts-amps/">VA / Watts / Amps</a></div>
             <p class="muted">
-              Use this tool where its inputs match the planning step you are validating. The guide explains the workflow,
-              while the tool page handles the calculator-specific inputs, results, Knowledge Base notes, and export behavior.
+              Use this first when equipment ratings are mixed between watts, VA, amps, voltage, or power factor. This creates the load baseline that every later runtime and battery estimate depends on.
             </p>
           </div>
+          <span class="tag">Step 1</span>
         </div>
 
         <div class="row">
           <div>
-            <div class="row-title"><a href="/tools/power/inverter-efficiency/">Inverter Efficiency Estimate conversion losses and input power needs so runtime </a></div>
+            <div class="row-title"><a href="/tools/power/load-growth/">Load Growth</a></div>
             <p class="muted">
-              Use this tool where its inputs match the planning step you are validating. The guide explains the workflow,
-              while the tool page handles the calculator-specific inputs, results, Knowledge Base notes, and export behavior.
+              Use this after the starting load is known. Growth margin keeps the power plan from being sized only for day-one conditions and shows how future equipment can affect runtime and capacity.
             </p>
           </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/ups-runtime/">UPS Runtime</a></div>
+            <p class="muted">
+              Use this after the load and growth assumptions are understood. Runtime should be treated as a planning estimate that still needs to be compared against manufacturer runtime data before purchase.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/battery-bank-sizer/">Battery Bank Sizer</a></div>
+            <p class="muted">
+              Use this after the runtime target is known. Battery sizing helps document whether the expected reserve, usable capacity, efficiency, and aging assumptions can support the plan.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Supporting power checks</div>
+            <p class="muted">
+              These tools support the power plan when the project has extra assumptions to validate. They are useful checks,
+              but they should not be presented as required steps in the main guided design flow.
+            </p>
+          </div>
+          <span class="tag">As needed</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/inverter-efficiency/">Inverter Efficiency</a></div>
+            <p class="muted">
+              Use this when the power path includes conversion losses. It helps separate input draw from usable output so runtime and battery assumptions are not accidentally too optimistic.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/">Branch Planning</a></div>
+            <p class="muted">
+              Use this when the electrical path, circuit loading, or branch assumptions need a separate check. It belongs near the end of planning, after the major load and runtime assumptions are understood.
+            </p>
+          </div>
+          <span class="tag">Support</span>
         </div>
       </div>
     </section>
