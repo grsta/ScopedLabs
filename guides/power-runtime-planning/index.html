@@ -81,7 +81,7 @@
       <p class="muted">
         Power and runtime planning should be handled as a sequence, not as a single isolated calculator result.
         The connected load affects the required UPS size. The UPS load affects runtime. Runtime affects battery sizing.
-        Growth margin affects all of those decisions. Branch and loading assumptions determine whether the final plan is realistic.
+        Growth margin affects all of those decisions. runtime and reserve assumptions determine whether the final plan is realistic.
       </p>
       <p class="muted">
         This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
@@ -110,7 +110,7 @@
             <div class="row-title">When it matters</div>
             <p class="muted">
               This matters at the very beginning of the workflow. If the starting load is wrong, the runtime estimate, battery sizing,
-              inverter check, and branch planning assumptions will all inherit that error. The load estimate should happen before
+              inverter check, and runtime planning assumptions will all inherit that error. The load estimate should happen before
               choosing a UPS model or deciding whether an existing circuit or backup system has enough room.
             </p>
           </div>
@@ -334,17 +334,19 @@
       </div>
     </section>
 
-    <section class="card" aria-labelledby="step-branch-title">
-      <h2 class="h2" id="step-branch-title">Step 6 — Check branch and loading assumptions</h2>
+
+
+    <section class="card" aria-labelledby="step-review-title">
+      <h2 class="h2" id="step-review-title">Step 6 — Stress-test the runtime plan before equipment selection</h2>
 
       <div class="stack">
         <div class="row">
           <div>
             <div class="row-title">What it is</div>
             <p class="muted">
-              Branch and loading assumptions describe whether the electrical path can support the planned equipment load. This includes
-              circuit capacity, expected utilization, connected equipment, and whether the load is being grouped in a way that makes sense
-              for the installation.
+              Final runtime review means checking the load, growth margin, runtime estimate, battery reserve, redundancy assumptions,
+              degraded conditions, and alternate scenarios as one planning package. It is not electrical design; it is a practical review
+              of whether the backup-power assumptions still hold together.
             </p>
           </div>
         </div>
@@ -353,9 +355,8 @@
           <div>
             <div class="row-title">When it matters</div>
             <p class="muted">
-              This matters near the end of the planning workflow, after the load, margin, runtime, and battery assumptions are known.
-              It is also important whenever a rack, closet, or equipment area is being expanded and the existing power path may already
-              be close to its limit.
+              This matters after the main guided flow is complete. Once the baseline load, projected growth, UPS runtime, and battery bank
+              assumptions are known, the supporting tools can help answer “what if” questions before equipment is selected or documented.
             </p>
           </div>
         </div>
@@ -364,8 +365,9 @@
           <div>
             <div class="row-title">Why it matters</div>
             <p class="muted">
-              Runtime planning does not help if the electrical path is overloaded, poorly grouped, or based on assumptions that do not match
-              the installation. This step helps separate backup-time questions from power-delivery questions so the plan is easier to review.
+              A single runtime estimate can look clean while hiding weak assumptions. Runtime may change if a battery string fails,
+              redundancy reduces usable capacity, batteries age, conditions are pessimistic, or the project team compares multiple
+              design options. Stress-testing the plan makes those assumptions easier to defend.
             </p>
           </div>
         </div>
@@ -374,8 +376,10 @@
           <div>
             <div class="row-title">Where it fits</div>
             <p class="muted">
-              Use Branch Planning after the major load assumptions are known. This step is where the plan should be checked against the
-              real electrical path and reviewed by qualified personnel when required.
+              Use this as the final planning-review layer after the core guided flow. Supporting tools such as
+              <a href="/tools/power/failure-runtime-loss/">Failure Runtime Loss</a>, <a href="/tools/power/redundancy-impact/">Redundancy Impact</a>,
+              <a href="/tools/power/scenario-comparator/">Scenario Comparator</a>, and <a href="/tools/power/worst-case-runtime/">Worst-Case Runtime</a>
+              help document what happens when the assumptions are not ideal.
             </p>
           </div>
         </div>
@@ -391,7 +395,7 @@
       </p>
       <p class="muted">
         The cleaner planning path is to list the connected load, normalize watts and VA, add a realistic growth margin, estimate runtime,
-        then check battery and branch assumptions. That sequence makes it easier to explain why a certain UPS size or battery reserve
+        then check battery and runtime assumptions. That sequence makes it easier to explain why a certain UPS size or battery reserve
         is reasonable instead of relying on a single calculator result.
       </p>
     </section>
@@ -443,14 +447,15 @@
     </section>
 
 
+
     <section class="tool-feature" aria-labelledby="tool-map-title">
       <div class="tool-feature-top">
         <span class="pill">Tool map</span>
       </div>
       <h2 class="h2" id="tool-map-title">Where the Power &amp; Runtime tools fit</h2>
       <p class="muted">
-        Use this section as the plain-English map of the Power &amp; Runtime planning path. The guided flow covers the core
-        sequence for load, growth, runtime, and battery planning. Supporting checks help validate related assumptions when the project needs them,
+        Use this section as the plain-English map of the Power &amp; Runtime planning path. The guided flow covers the core sequence
+        for load conversion, projected growth, runtime impact, and battery bank sizing. Supporting tools help validate related assumptions,
         but they are not required guided-flow steps.
       </p>
 
@@ -500,7 +505,7 @@
           <div>
             <div class="row-title"><a href="/tools/power/battery-bank-sizer/">Battery Bank Sizer</a></div>
             <p class="muted">
-              Use this after the runtime target is known. Battery sizing helps document whether the expected reserve, usable capacity, efficiency, and aging assumptions can support the plan.
+              Use this after the runtime target is known. Battery bank sizing helps document whether reserve, usable capacity, efficiency, and derating assumptions can support the plan.
             </p>
           </div>
           <span class="tag">Step 4</span>
@@ -508,13 +513,23 @@
 
         <div class="row">
           <div>
-            <div class="row-title">Supporting power checks</div>
+            <div class="row-title">Supporting power and runtime checks</div>
             <p class="muted">
               These tools support the power plan when the project has extra assumptions to validate. They are useful checks,
               but they should not be presented as required steps in the main guided design flow.
             </p>
           </div>
           <span class="tag">As needed</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/battery-sizing/">Battery Sizing</a></div>
+            <p class="muted">
+              Use this as a simpler battery estimate when you need an early sizing check before moving into the fuller guided-flow battery bank planning step.
+            </p>
+          </div>
+          <span class="tag">Support</span>
         </div>
 
         <div class="row">
@@ -529,9 +544,39 @@
 
         <div class="row">
           <div>
-            <div class="row-title"><a href="/tools/power/">Branch Planning</a></div>
+            <div class="row-title"><a href="/tools/power/failure-runtime-loss/">Failure Runtime Loss</a></div>
             <p class="muted">
-              Use this when the electrical path, circuit loading, or branch assumptions need a separate check. It belongs near the end of planning, after the major load and runtime assumptions are understood.
+              Use this when a battery, module, or string failure could reduce available runtime. It helps show how fragile the plan becomes under a degraded condition.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/redundancy-impact/">Redundancy Impact</a></div>
+            <p class="muted">
+              Use this when redundancy choices change usable runtime or effective capacity. It helps compare resilience assumptions without pretending redundancy is free capacity.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/scenario-comparator/">Scenario Comparator</a></div>
+            <p class="muted">
+              Use this when multiple load, growth, runtime, or efficiency assumptions need to be compared side by side before locking the design direction.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/worst-case-runtime/">Worst-Case Runtime</a></div>
+            <p class="muted">
+              Use this when the plan needs a pessimistic check based on degraded, aged, or otherwise less-than-ideal conditions instead of best-case assumptions.
             </p>
           </div>
           <span class="tag">Support</span>
@@ -546,7 +591,7 @@
       <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
       <p class="muted">
         After the major assumptions are calculated, review the results as a planning package: starting load, unit conversions,
-        growth margin, runtime target, battery reserve, and branch/loading assumptions. Export reports and saved snapshots are most useful
+        growth margin, runtime target, battery reserve, and runtime and reserve assumptions. Export reports and saved snapshots are most useful
         when the inputs are clear enough for someone else to understand later.
       </p>
       <div class="actions">
