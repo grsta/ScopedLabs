@@ -90,17 +90,24 @@
       </p>
     </section>
 
+
     <section class="card" aria-labelledby="step-load-title">
-      <h2 class="h2" id="step-load-title">Step 1 — Start with the connected load</h2>
+      <h2 class="h2" id="step-load-title">Step 1 — Collect device load data</h2>
 
       <div class="stack">
         <div class="row">
           <div>
             <div class="row-title">What it is</div>
             <p class="muted">
-              Connected load is the equipment that must be powered or backed up. In a real system, that might include network switches,
-              cameras, access control panels, servers, storage, workstations, modems, routers, radios, monitors, or other supporting devices.
-              The load may be listed in watts, VA, amps, voltage, or sometimes only as a manufacturer power supply rating.
+              This step is where you build the equipment list for anything that needs backup power. For each device,
+              collect the power information that is available: watts, VA, amps, voltage, current draw, power supply rating,
+              PoE budget, or manufacturer-listed operating draw. The data will not always be listed in the same format,
+              so the first job is to gather it clearly before converting it into a usable planning load.
+            </p>
+            <p class="muted">
+              For ScopedLabs-style planning, this usually means network, security, and IT equipment such as switches,
+              PoE switches, routers, firewalls, NVRs, recording servers, access control panels, wireless radios,
+              access points, small servers, storage devices, modems, ONTs, and other rack or closet equipment that must stay online.
             </p>
           </div>
         </div>
@@ -109,9 +116,9 @@
           <div>
             <div class="row-title">When it matters</div>
             <p class="muted">
-              This matters at the very beginning of the workflow. If the starting load is wrong, the runtime estimate, battery sizing,
-              inverter check, and runtime planning assumptions will all inherit that error. The load estimate should happen before
-              choosing a UPS model or deciding whether an existing circuit or backup system has enough room.
+              This should happen before runtime, battery sizing, load growth, redundancy review, or scenario comparison.
+              Every later calculation depends on the starting load estimate. If the equipment list is incomplete,
+              the rest of the workflow can look more accurate than it really is.
             </p>
           </div>
         </div>
@@ -120,9 +127,13 @@
           <div>
             <div class="row-title">Why it matters</div>
             <p class="muted">
-              Undercounting load makes runtime look better than it really is. Overcounting load may lead to oversized equipment,
-              extra cost, or unnecessary complexity. Nameplate ratings are useful as boundaries, but they may not represent normal
-              operating draw. The planning goal is to establish a reasonable baseline and clearly document the assumption used.
+              Missing a device can make runtime look better than reality. Mixing watts, VA, amps, and power supply ratings
+              without normalizing them can also distort the plan. A PoE switch, recorder, storage expansion, network appliance,
+              or added radio may not look like much by itself, but together those loads can change the backup-power requirement.
+            </p>
+            <p class="muted">
+              The goal is not to design the electrical system. The goal is to create a defensible equipment-load baseline
+              that can be carried into runtime, battery, and reserve planning.
             </p>
           </div>
         </div>
@@ -131,8 +142,9 @@
           <div>
             <div class="row-title">Where it fits</div>
             <p class="muted">
-              Start here, then carry the normalized load forward into growth, runtime, and battery planning. Use <a href="/tools/power/va-watts-amps/">Start Guided Flow</a>
-              when the equipment list mixes watts, VA, voltage, current, or power factor assumptions.
+              This is the first step in the Power &amp; Runtime guided flow. Use <a href="/tools/power/va-watts-amps/">VA / Watts / Amps</a>
+              to convert mixed device ratings into a baseline load, then carry that baseline into Load Growth, UPS Runtime,
+              and Battery Bank Sizer.
             </p>
           </div>
         </div>
