@@ -65,154 +65,439 @@
     <section class="page-head">
       <h1 class="h1">Power &amp; Runtime Planning Guide</h1>
       <p class="subhead">
-        A practical workflow for estimating UPS runtime, backup power needs, electrical load,
-        battery sizing, power margin, and future growth before selecting equipment.
+        A practical workflow for estimating UPS runtime, backup power needs, electrical load, battery sizing,
+        power margin, and future growth before selecting equipment.
       </p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="/tools/power/">Open Power &amp; Runtime</a>
       </div>
     </section>
 
-    <section class="tool-feature" aria-labelledby="guide-overview-title">
+    <section class="tool-feature" aria-labelledby="overview-title">
       <div class="tool-feature-top">
-        <span class="pill">Planning workflow</span>
+        <span class="pill">Planning guide</span>
       </div>
-      <h2 class="h2" id="guide-overview-title">What power and runtime planning means</h2>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the power design flow</h2>
       <p class="muted">
-        Power planning is not just picking a UPS size from a nameplate. A practical estimate starts with the connected load,
-        converts that load into compatible electrical units, adds realistic growth margin, then checks whether the backup system
-        can support the required runtime without operating too close to its limits.
+        Power and runtime planning should be handled as a sequence, not as a single isolated calculator result.
+        The connected load affects the required UPS size. The UPS load affects runtime. Runtime affects battery sizing.
+        Growth margin affects all of those decisions. Branch and loading assumptions determine whether the final plan is realistic.
       </p>
       <p class="muted">
-        ScopedLabs treats power and runtime planning as a sequence: estimate the load, normalize the units, account for growth,
-        review runtime, and document the assumptions. That makes the result easier to explain, compare, and revisit later.
-      </p>
-    </section>
-
-    <section class="card" aria-labelledby="units-title">
-      <h2 class="h2" id="units-title">Why watts, VA, amps, and power factor all matter</h2>
-      <p class="muted">
-        Power equipment is often described with different units. A device might list watts, a UPS might be rated in VA,
-        and a branch circuit might be limited by amps. Power factor connects real power and apparent power, so ignoring it can
-        make an estimate look cleaner than the actual electrical load.
-      </p>
-      <p class="muted">
-        Use the <a href="/tools/power/va-watts-amps/">VA / Watts / Amps Calculator</a> when you need to normalize load information before moving into runtime, battery, or branch planning.
-        If inverter losses are part of the design, the <a href="/tools/power/inverter-efficiency/">Inverter Efficiency Calculator</a> helps separate usable output from conversion overhead.
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Power &amp; Runtime workflow. The goal is to help you build a defensible planning estimate before comparing
+        equipment, documenting assumptions, or reviewing manufacturer data.
       </p>
     </section>
 
-    <section class="card" aria-labelledby="workflow-title">
-      <h2 class="h2" id="workflow-title">A practical planning sequence</h2>
+    <section class="card" aria-labelledby="step-load-title">
+      <h2 class="h2" id="step-load-title">Step 1 — Start with the connected load</h2>
 
       <div class="stack">
         <div class="row">
           <div>
-            <div class="row-title">1. Estimate the connected load</div>
+            <div class="row-title">What it is</div>
             <p class="muted">
-              List the equipment that must stay online, estimate its operating draw, and convert the load into consistent units.
-              This becomes the baseline for the rest of the power plan.
+              Connected load is the equipment that must be powered or backed up. In a real system, that might include network switches,
+              cameras, access control panels, servers, storage, workstations, modems, routers, radios, monitors, or other supporting devices.
+              The load may be listed in watts, VA, amps, voltage, or sometimes only as a manufacturer power supply rating.
             </p>
           </div>
-          <span class="tag">Load baseline</span>
         </div>
 
         <div class="row">
           <div>
-            <div class="row-title">2. Add growth and operating margin</div>
+            <div class="row-title">When it matters</div>
             <p class="muted">
-              Plan for near-term additions, replacement hardware, and reasonable spare capacity instead of sizing only for today.
-              <a href="/tools/power/load-growth/">Load Growth Planner</a> is the right next step when you need to explain future headroom.
+              This matters at the very beginning of the workflow. If the starting load is wrong, the runtime estimate, battery sizing,
+              inverter check, and branch planning assumptions will all inherit that error. The load estimate should happen before
+              choosing a UPS model or deciding whether an existing circuit or backup system has enough room.
             </p>
           </div>
-          <span class="tag">Headroom</span>
         </div>
 
         <div class="row">
           <div>
-            <div class="row-title">3. Estimate UPS runtime</div>
+            <div class="row-title">Why it matters</div>
             <p class="muted">
-              Runtime depends on load, battery capacity, efficiency, and how aggressively the system is being used.
-              <a href="/tools/power/ups-runtime/">UPS Runtime Calculator</a> should be treated as a planning estimate, not a manufacturer runtime guarantee.
+              Undercounting load makes runtime look better than it really is. Overcounting load may lead to oversized equipment,
+              extra cost, or unnecessary complexity. Nameplate ratings are useful as boundaries, but they may not represent normal
+              operating draw. The planning goal is to establish a reasonable baseline and clearly document the assumption used.
             </p>
           </div>
-          <span class="tag">Runtime</span>
         </div>
 
         <div class="row">
           <div>
-            <div class="row-title">4. Review battery sizing</div>
+            <div class="row-title">Where it fits</div>
             <p class="muted">
-              Battery sizing should consider target runtime, usable capacity, efficiency, aging, and whether the system has enough
-              reserve for real-world conditions. Use the <a href="/tools/power/battery-sizing/">Battery Sizing Calculator</a> to check battery assumptions.
+              Start here, then carry the normalized load forward into growth, runtime, and battery planning. Use <a href="/tools/power/va-watts-amps/">Start Guided Flow</a>
+              when the equipment list mixes watts, VA, voltage, current, or power factor assumptions.
             </p>
           </div>
-          <span class="tag">Battery reserve</span>
-        </div>
-
-        <div class="row">
-          <div>
-            <div class="row-title">5. Check branch and loading assumptions</div>
-            <p class="muted">
-              A runtime estimate is only useful if the connected electrical path can support the load.
-              Branch Planning Calculator helps keep branch planning separate from battery/runtime assumptions when that calculator is available.
-            </p>
-          </div>
-          <span class="tag">Electrical path</span>
         </div>
       </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-units-title">
+      <h2 class="h2" id="step-units-title">Step 2 — Convert watts, VA, amps, and power factor correctly</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Watts describe real power. VA describes apparent power. Amps describe current at a given voltage. Power factor connects
+              real power and apparent power. These values are related, but they are not interchangeable without knowing the voltage
+              and the assumptions behind the load.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This step matters whenever the equipment list uses mixed units or when a UPS, inverter, power supply, or branch circuit
+              is rated differently than the load you are estimating. It is common to see one device listed in watts, another in amps,
+              and a UPS rating expressed in VA.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A runtime plan can look valid while still being based on incompatible units. For example, treating watts and VA as equal
+              without considering power factor can hide apparent load. Using amps without voltage can also distort the estimate.
+              Normalizing the units makes the rest of the workflow easier to explain and review.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/power/va-watts-amps/">Start Guided Flow</a> after collecting the equipment list and before runtime planning. If conversion losses are part of the
+              system, use <a href="/tools/power/inverter-efficiency/">Inverter Efficiency Estimate conversion losses and input power needs so runtime </a> to keep usable output separate from input draw and efficiency losses.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-growth-title">
+      <h2 class="h2" id="step-growth-title">Step 3 — Add growth margin before sizing equipment</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Growth margin is the extra capacity reserved for future devices, equipment refreshes, added cameras, larger switches,
+              storage expansion, or higher operating loads. It is not the same as guessing high; it is a documented planning allowance
+              that keeps the system from being sized only for day one.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              Growth matters when the system is likely to expand or when replacing equipment later would be expensive or disruptive.
+              It is especially important for racks, network closets, surveillance systems, access control panels, small server rooms,
+              and remote sites where adding backup capacity later may require new equipment or downtime.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A UPS that supports the current load may fall short after one equipment upgrade. As load increases, runtime usually drops.
+              That means a design that looks acceptable today can become weak after adding devices. Growth planning helps show whether
+              the system has room or whether it is already too close to the edge.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Add growth after the starting load is normalized and before runtime and battery sizing are finalized. Use <a href="/tools/power/load-growth/">Load Growth</a>
+              when you need to show how future load changes affect the planning baseline.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-runtime-title">
+      <h2 class="h2" id="step-runtime-title">Step 4 — Estimate UPS runtime realistically</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              UPS runtime is the estimated time a backup system can support the connected load during an outage. It depends on load,
+              battery capacity, inverter efficiency, battery condition, temperature, age, reserve margin, and the discharge behavior
+              of the equipment being used.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              Runtime matters once you know what equipment must remain online and how long it needs to operate. Short runtime may be
+              enough for graceful shutdown or brief utility interruptions. Longer runtime may be needed for security systems, network
+              continuity, recording systems, remote equipment, or sites that must bridge generator startup time.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Runtime is not a fixed property of the UPS. A small increase in load can reduce runtime sharply, especially when the
+              system is already near its useful range. Planning runtime before checking load growth can lead to overly optimistic
+              expectations. Manufacturer runtime charts still matter for final selection, but early runtime estimates can catch bad assumptions.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Runtime planning comes after load conversion and growth margin. Use <a href="/tools/power/battery-sizing/">Battery Sizing Estimate basic battery requirements to hit a target runtime with </a> when you have a connected-load estimate
+              and a target outage duration. Treat the result as a planning estimate that should be compared against manufacturer data before purchase.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-battery-title">
+      <h2 class="h2" id="step-battery-title">Step 5 — Review battery sizing and reserve</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Battery sizing estimates how much stored energy is needed to support the load for a target runtime. It considers usable
+              battery capacity, system voltage, efficiency, discharge limits, reserve margin, and the fact that batteries age over time.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              Battery sizing becomes important when runtime is a design requirement instead of a nice-to-have estimate. It matters for
+              extended runtime systems, larger UPS deployments, inverter-backed loads, remote equipment, and any system where battery
+              replacement cost or reserve capacity needs to be documented.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A battery system that works on paper can still be weak if the usable capacity, reserve margin, aging, or efficiency assumptions
+              are unrealistic. Batteries also do not stay new forever. Planning with no reserve can make the system fragile as soon as
+              conditions change or the battery ages.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Battery sizing comes after the load and runtime target are understood. Use <a href="/tools/power/battery-sizing/">Battery Sizing Estimate basic battery requirements to hit a target runtime with </a> to review whether the battery
+              assumptions support the target runtime with reasonable reserve.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-branch-title">
+      <h2 class="h2" id="step-branch-title">Step 6 — Check branch and loading assumptions</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Branch and loading assumptions describe whether the electrical path can support the planned equipment load. This includes
+              circuit capacity, expected utilization, connected equipment, and whether the load is being grouped in a way that makes sense
+              for the installation.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters near the end of the planning workflow, after the load, margin, runtime, and battery assumptions are known.
+              It is also important whenever a rack, closet, or equipment area is being expanded and the existing power path may already
+              be close to its limit.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Runtime planning does not help if the electrical path is overloaded, poorly grouped, or based on assumptions that do not match
+              the installation. This step helps separate backup-time questions from power-delivery questions so the plan is easier to review.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use Branch Planning after the major load assumptions are known. This step is where the plan should be checked against the
+              real electrical path and reviewed by qualified personnel when required.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: small rack or equipment closet</h2>
+      <p class="muted">
+        A small rack may start with a router, firewall, PoE switch, camera recorder, storage, and a few supporting devices. At first,
+        the power requirement may look simple. But if the site later adds cameras, a larger switch, extra storage, or a second network
+        appliance, the load and runtime can change quickly.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to list the connected load, normalize watts and VA, add a realistic growth margin, estimate runtime,
+        then check battery and branch assumptions. That sequence makes it easier to explain why a certain UPS size or battery reserve
+        is reasonable instead of relying on a single calculator result.
+      </p>
     </section>
 
     <section class="card" aria-labelledby="mistakes-title">
-      <h2 class="h2" id="mistakes-title">Common planning mistakes</h2>
+      <h2 class="h2" id="mistakes-title">Common power planning mistakes</h2>
 
       <div class="stack">
         <div class="row">
           <div>
-            <div class="row-title">Using nameplate load as the final answer</div>
+            <div class="row-title">Sizing only for the current load</div>
             <p class="muted">
-              Nameplate values can be useful as a boundary, but planning should distinguish estimated operating load from worst-case label values.
+              This usually happens when the estimate is based on today’s equipment list without considering additions or refreshes.
+              It matters because runtime falls as load grows. Catch it during the growth-margin step before the runtime estimate is treated as final.
             </p>
           </div>
         </div>
 
         <div class="row">
           <div>
-            <div class="row-title">Forgetting future load growth</div>
+            <div class="row-title">Mixing watts and VA without power factor</div>
             <p class="muted">
-              A UPS that barely fits today may become a problem after one equipment refresh, added switch, larger NVR, or extra compute node.
+              This happens when equipment ratings, UPS ratings, and circuit assumptions use different units. It matters because the plan
+              may look consistent while hiding apparent load. Catch it during the unit conversion step.
             </p>
           </div>
         </div>
 
         <div class="row">
           <div>
-            <div class="row-title">Treating runtime as a fixed number</div>
+            <div class="row-title">Treating runtime as guaranteed</div>
             <p class="muted">
-              Runtime changes as the load changes. A small load increase can have an outsized effect when the battery system is already near its useful limit.
+              This happens when a planning estimate is treated like a manufacturer-certified result. It matters because batteries, load,
+              temperature, age, and discharge behavior can change the outcome. Catch it by comparing estimates to manufacturer runtime data.
             </p>
           </div>
         </div>
 
         <div class="row">
           <div>
-            <div class="row-title">Mixing units without checking power factor</div>
+            <div class="row-title">Ignoring battery aging and reserve</div>
             <p class="muted">
-              Watts, VA, and amps are related, but they are not interchangeable without voltage and power factor assumptions.
+              This happens when the battery plan assumes perfect new-battery behavior forever. It matters because real systems degrade.
+              Catch it during battery sizing by keeping reserve and replacement planning visible.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="tool-feature" aria-labelledby="tools-title">
+    <section class="tool-feature" aria-labelledby="tool-map-title">
       <div class="tool-feature-top">
-        <span class="pill">ScopedLabs tools</span>
+        <span class="pill">Tool map</span>
       </div>
-      <h2 class="h2" id="tools-title">When to use the Power &amp; Runtime tools</h2>
+      <h2 class="h2" id="tool-map-title">Where the Power &amp; Runtime tools fit</h2>
       <p class="muted">
-        Use the <a href="/tools/power/">Power &amp; Runtime category</a> when you need a documented planning path instead of a single isolated calculator.
-        Start with load conversion, then move into growth, runtime, battery, and branch assumptions as the project becomes clearer.
+        The guide explains the workflow. The tool pages handle the calculator-specific inputs, outputs, Knowledge Base content,
+        export reports, and saved snapshots. Use the category page as the active starting point when you want to move through the tools.
+      </p>
+
+      <div class="stack">
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/va-watts-amps/">Start Guided Flow</a></div>
+            <p class="muted">
+              Use this tool where its inputs match the planning step you are validating. The guide explains the workflow,
+              while the tool page handles the calculator-specific inputs, results, Knowledge Base notes, and export behavior.
+            </p>
+          </div>
+          <a class="btn btn-ghost" href="/tools/power/va-watts-amps/">Open tool</a>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/battery-sizing/">Battery Sizing Estimate basic battery requirements to hit a target runtime with </a></div>
+            <p class="muted">
+              Use this tool where its inputs match the planning step you are validating. The guide explains the workflow,
+              while the tool page handles the calculator-specific inputs, results, Knowledge Base notes, and export behavior.
+            </p>
+          </div>
+          <a class="btn btn-ghost" href="/tools/power/battery-sizing/">Open tool</a>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/power/inverter-efficiency/">Inverter Efficiency Estimate conversion losses and input power needs so runtime </a></div>
+            <p class="muted">
+              Use this tool where its inputs match the planning step you are validating. The guide explains the workflow,
+              while the tool page handles the calculator-specific inputs, results, Knowledge Base notes, and export behavior.
+            </p>
+          </div>
+          <a class="btn btn-ghost" href="/tools/power/inverter-efficiency/">Open tool</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: starting load, unit conversions,
+        growth margin, runtime target, battery reserve, and branch/loading assumptions. Export reports and saved snapshots are most useful
+        when the inputs are clear enough for someone else to understand later.
       </p>
       <div class="actions">
         <a class="btn btn-primary" href="/tools/power/">Open Power &amp; Runtime</a>
@@ -223,7 +508,7 @@
     <section class="note" aria-label="Planning disclaimer">
       <p class="muted">
         ScopedLabs tools and guides are planning aids. They do not replace manufacturer runtime charts, electrical code review,
-        project-specific engineering, or qualified professional validation for a final installation.
+        project-specific engineering, qualified professional validation, or authority-having-jurisdiction requirements for a final installation.
       </p>
     </section>
 
