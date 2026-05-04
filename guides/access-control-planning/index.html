@@ -4,49 +4,56 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Access Control Planning Guide | ScopedLabs</title>
-  <meta name="description" content="A practical Access Control planning guide for fail-safe and fail-secure behavior, reader selection, lock power, panel capacity, access levels, and documentation workflows.">
+  <meta name="description" content="Plan access control systems with a practical workflow for fail-safe and fail-secure behavior, reader selection, lock power, panel capacity, access levels, and supporting design checks.">
   <link rel="canonical" href="https://scopedlabs.com/guides/access-control-planning/">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="ScopedLabs">
   <meta property="og:title" content="Access Control Planning Guide | ScopedLabs">
-  <meta property="og:description" content="Plan access control systems with a practical linear workflow for door behavior, readers, lock power, panel capacity, and access level structure.">
+  <meta property="og:description" content="A practical workflow for planning access control doors, readers, lock power, panel capacity, access levels, and supporting assumptions.">
   <meta property="og:url" content="https://scopedlabs.com/guides/access-control-planning/">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Access Control Planning Guide | ScopedLabs">
-  <meta name="twitter:description" content="A practical Access Control planning guide for fail states, reader selection, lock power, panel capacity, and access level structure.">
+  <meta name="twitter:description" content="Plan access control doors, readers, lock power, panel capacity, and access level structure before final design review.">
+
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0319"></script>
+  <script defer src="/assets/app.js?v=0319"></script>
 </head>
 
-<body>
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/" aria-label="ScopedLabs Home">
-      <span class="brand-dot" aria-hidden="true"></span>
-      <span class="brand-icon-wrap" aria-hidden="true">
-        <img
-          class="brand-icon"
-          src="/assets/favicon/favicon-32x32.png?v=1"
-          alt=""
-          width="32"
-          height="32"
-        />
-      </span>
-      <span class="brand-name">ScopedLabs</span>
-    </a>
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
 
-    <nav class="nav site-nav nav-tabs" aria-label="Primary">
-      <a class="nav-tab" href="/">Home</a>
-      <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
-      <a class="nav-tab" href="/about/">About</a>
-      <a class="nav-tab" href="/contact/">Contact</a>
-      <a class="nav-tab" href="/account/">Account</a>
-    </nav>
-  </div>
-</header>
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
 
-<main class="container guide-page">
-
-  <section class="page-head">
+  <main class="container">
     <div class="crumbs">
       <a href="/tools/">Tools</a>
       <span class="sep">/</span>
@@ -55,310 +62,597 @@
       <span>Planning Guide</span>
     </div>
 
-    <h1 class="h1">Access Control Planning Guide</h1>
-    <p class="subhead">
-      A practical way to think through door behavior, reader selection, lock power, panel capacity,
-      and access level structure before the design turns into field rework.
-    </p>
-
-    <div class="actions">
-      <a class="btn btn-primary" href="/tools/access-control/fail-safe-fail-secure/">Start the Access Control Flow</a>
-      <a class="btn btn-ghost" href="/tools/access-control/">View Access Control Tools</a>
-    </div>
-  </section>
-
-  <section class="card guide-hero-card">
-    <div class="pill pill--pro">Category Guide</div>
-    <h2 class="h2">Use the tools as a linear planning workflow.</h2>
-    <p class="muted">
-      Access control planning usually starts with how each opening should behave, then moves into reader choice,
-      lock power, controller capacity, and access level structure. ScopedLabs keeps that process practical by
-      turning each step into a focused calculator or planning aid.
-    </p>
-    <p class="muted">
-      These tools are planning aids only. They help organize assumptions and expose design pressure early,
-      but they do not replace code review, AHJ direction, manufacturer documentation, or final engineering review.
-    </p>
-  </section>
-
-  <section class="card guide-section">
-    <h2 class="h2">The Access Control flow</h2>
-    <p class="muted">
-      The public Access Control design flow is a straight step-by-step lane:
-    </p>
-
-    <div class="pipeline-preview" aria-label="Access control guide flow preview">
-      <span class="pipeline-preview-label">ACCESS CONTROL FLOW</span>
-      <div class="pipeline-preview-steps">
-        <a class="pipeline-preview-step is-active" href="/tools/access-control/fail-safe-fail-secure/">Fail-Safe / Fail-Secure</a>
-        <span class="pipeline-preview-sep">→</span>
-        <a class="pipeline-preview-step" href="/tools/access-control/reader-type-selector/">Reader Type</a>
-        <span class="pipeline-preview-sep">→</span>
-        <a class="pipeline-preview-step is-pro" href="/tools/access-control/lock-power-budget/">Lock Power</a>
-        <span class="pipeline-preview-sep">→</span>
-        <a class="pipeline-preview-step is-pro" href="/tools/access-control/panel-capacity/">Panel Capacity</a>
-        <span class="pipeline-preview-sep">→</span>
-        <a class="pipeline-preview-step is-pro" href="/tools/access-control/access-level-sizing/">Access Levels</a>
+    <section class="page-head">
+      <h1 class="h1">Access Control Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for planning door behavior, reader selection, lock power, panel capacity,
+        access level structure, and supporting access control assumptions before final design review.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/access-control/">Open Access Control</a>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="grid guide-grid">
-    <article class="card">
-      <h2 class="h2">1. Decide fail-state behavior first</h2>
+    <section class="tool-feature" aria-labelledby="overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning guide</span>
+      </div>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the access control design flow</h2>
       <p class="muted">
-        Start with whether the opening should unlock or stay locked during power loss. This decision affects lock
-        type, fire-life-safety coordination, battery planning, and how the opening behaves during an outage.
+        Access control planning should be handled as a sequence, not as a pile of separate door and hardware choices.
+        Door fail-state behavior affects lock selection. Reader choice affects credential compatibility and user flow.
+        Lock power affects supply sizing and outage behavior. Panel capacity affects expansion room. Access level structure
+        affects how maintainable the system will be after installation.
+      </p>
+      <p class="muted">
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Access Control workflow. The goal is to help you build a defensible planning estimate before documenting
+        assumptions, comparing equipment, or reviewing manufacturer and code requirements.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="step-fail-state-title">
+      <h2 class="h2" id="step-fail-state-title">Step 1 — Decide fail-safe and fail-secure behavior</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Fail-safe and fail-secure describe what an opening does when power is lost. A fail-safe opening unlocks
+              when power is removed. A fail-secure opening stays locked when power is removed. This decision affects
+              lock type, egress behavior, emergency coordination, battery backup, and how the door behaves during outages.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This should happen before reader selection, lock power budgeting, panel sizing, or access level planning.
+              If the fail-state decision changes later, the hardware, power, and operational assumptions may need to change with it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A door can look correct from a security standpoint while still creating safety, egress, or outage problems.
+              Choosing the wrong fail behavior can also make the power design look better than reality. A fail-safe lock,
+              for example, may require different backup-power assumptions than a fail-secure opening.
+            </p>
+            <p class="muted">
+              The goal is not to replace code review or AHJ direction. The goal is to make the door behavior assumption
+              visible before the rest of the access control design is built around it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              This is the first step in the Access Control guided flow. Use
+              <a href="/tools/access-control/fail-safe-fail-secure/">Fail-Safe / Fail-Secure</a>
+              to document the intended outage behavior before moving into reader type, lock power, panel capacity,
+              and access level structure.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-reader-title">
+      <h2 class="h2" id="step-reader-title">Step 2 — Select the reader and credential approach</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Reader selection is where you decide what kind of user interaction and credential method the opening needs.
+              That may include keypad, card, mobile credential, biometric, multi-technology reader, outdoor-rated reader,
+              or another reader type depending on the environment and security expectation.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This step matters once the door behavior is understood and before the controller, credential format,
+              and access level structure are finalized. Reader type can influence wiring, compatibility, user throughput,
+              security level, and long-term credential management.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A reader that technically works may still be a poor fit for the site. Outdoor conditions, traffic volume,
+              user expectations, credential policy, and controller support all affect whether the reader choice is practical.
+              A mismatch here can create usability problems or force changes later in the design.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/access-control/reader-type-selector/">Reader Type Selector</a>
+              after fail-state behavior is documented. If credential details are still unclear, use
+              <a href="/tools/access-control/credential-format/">Credential Format</a>
+              as a supporting check before treating the reader decision as final.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-power-title">
+      <h2 class="h2" id="step-power-title">Step 3 — Estimate lock power before sizing supplies</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Lock power planning estimates how much current the controlled openings need under normal and active conditions.
+              It includes lock current, number of locks, simultaneous unlock behavior, supply capacity, voltage assumptions,
+              and practical headroom.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters before choosing or documenting power supplies, battery backup, lock groups, or panel outputs.
+              It is especially important when several locks may energize at the same time or when the design depends on
+              backup power to preserve expected behavior during an outage.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Lock power can be underestimated when each door is considered by itself. The system may be fine at one opening
+              but weak when several doors unlock, latch, or release together. Headroom also matters because power supplies,
+              cable runs, and real-world operating conditions rarely behave like perfect spreadsheet values.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/access-control/lock-power-budget/">Lock Power Budget</a>
+              after the fail behavior and reader approach are known. If long cable runs are part of the design, use
+              <a href="/tools/access-control/door-cable-length/">Door Cable Length</a>
+              as a supporting check so distance and voltage-drop pressure are not ignored.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-panel-title">
+      <h2 class="h2" id="step-panel-title">Step 4 — Check panel capacity and expansion room</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Panel capacity planning checks whether the access control hardware has enough room for the controlled openings,
+              readers, inputs, outputs, expansion modules, and future growth. It is not just a door count; it is a capacity
+              and expansion review.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the door and reader assumptions are known and before the layout is treated as ready.
+              It is especially important when the project may add doors later, when spare capacity is required, or when
+              multiple panels and expansion boards are being compared.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A system can meet the current door count and still be boxed in. Lack of spare capacity can force panel changes,
+              awkward expansion, or field rework. Inputs, outputs, readers, relays, supervised points, and future openings
+              all need to be visible before capacity is considered comfortable.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/access-control/panel-capacity/">Panel Capacity</a>
+              after the main opening and reader assumptions are known. Use
+              <a href="/tools/access-control/door-count-planner/">Door Count Planner</a>
+              as a supporting check when the door list itself still needs to be organized.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-access-level-title">
+      <h2 class="h2" id="step-access-level-title">Step 5 — Keep access level structure manageable</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Access level planning organizes who can enter which doors and when. It may include roles, groups, schedules,
+              exceptions, departments, vendors, tenants, restricted spaces, and administrative rules. The goal is not only
+              security; it is a structure that can be maintained accurately.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the door count, reader approach, and panel capacity are understood. It becomes more important
+              as the number of doors, user groups, schedules, and exceptions increases. Small systems can tolerate simple rules;
+              larger systems can become difficult to administer if the structure is not planned.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Access levels can grow messy fast. Too many one-off exceptions make the system harder to audit. Too few groups can
+              make access too broad. A clear structure reduces administrative mistakes and makes it easier to explain why users
+              have access to specific openings.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/access-control/access-level-sizing/">Access Level Sizing</a>
+              after the physical design assumptions are mostly understood. This turns the access control plan from a hardware
+              layout into an operating model that someone can actually manage.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-supporting-title">
+      <h2 class="h2" id="step-supporting-title">Step 6 — Validate supporting access control constraints</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Supporting validation means checking the assumptions that may not be part of the core guided flow but can still
+              affect the final design. That includes cable length, credential format, elevator readers, anti-passback zones,
+              and the overall door list.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the main access control flow is understood or whenever one of these constraints is central
+              to the project. A standard office door may not need every supporting check, but an elevator, parking entry,
+              sensitive area, long run, or anti-passback requirement should not be treated casually.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A clean door-and-reader plan can still fail in the details. Cable distance can affect reliability. Credential
+              format can affect compatibility. Elevator control can multiply reader counts. Anti-passback can add operational
+              complexity. These supporting checks help catch those issues before the plan is locked.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use this as the final planning-review layer after the core guided flow. Supporting tools such as
+              <a href="/tools/access-control/door-cable-length/">Door Cable Length</a>,
+              <a href="/tools/access-control/credential-format/">Credential Format</a>,
+              <a href="/tools/access-control/elevator-reader-count/">Elevator Reader Count</a>, and
+              <a href="/tools/access-control/anti-passback-zones/">Anti-Passback Zones</a>
+              help document the details that can change the design.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: small office or multi-door tenant space</h2>
+      <p class="muted">
+        A small access control project may start with a front entry, a staff door, an IT room, and a storage area.
+        At first, the system may look like a simple door count. But the design changes quickly when the front entry
+        needs different fail behavior, the IT room needs tighter access rules, and future doors may be added later.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to decide fail-safe and fail-secure behavior first, select reader types, estimate
+        lock power, check panel capacity, then size the access level structure. Supporting checks like cable length,
+        credential format, elevator readers, and anti-passback can then be reviewed where they apply.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common access control planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Choosing hardware before deciding fail behavior</div>
+            <p class="muted">
+              This usually happens when a lock is selected before outage behavior, egress, or emergency coordination is clear.
+              It matters because fail-safe and fail-secure assumptions affect hardware, power, and final review.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Treating reader type as only a preference</div>
+            <p class="muted">
+              Reader type affects credential compatibility, user experience, environment, controller support, and security level.
+              A reader that looks convenient may not be the best fit for the opening or operating model.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Underestimating lock power and headroom</div>
+            <p class="muted">
+              This happens when lock current is considered one opening at a time instead of as a system. It matters because
+              simultaneous activity, backup behavior, and supply headroom can expose weak power assumptions.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Filling the panel with no expansion room</div>
+            <p class="muted">
+              A panel plan that barely fits today can become expensive later. Spare capacity, future doors, extra inputs,
+              outputs, and expansion modules should be visible before the design is treated as comfortable.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Making access levels too complex to maintain</div>
+            <p class="muted">
+              Too many exceptions and one-off groups can make the system hard to audit. Access level planning should keep
+              the structure clear enough for future administrators to understand and maintain.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tool-map-title">
+      <div class="tool-feature-top">
+        <span class="pill">Tool map</span>
+      </div>
+      <h2 class="h2" id="tool-map-title">Where the Access Control tools fit</h2>
+      <p class="muted">
+        Use this section as the plain-English map of the Access Control planning path. The guided flow covers the core sequence
+        for fail behavior, reader type, lock power, panel capacity, and access level structure. Supporting tools help validate
+        related assumptions, but they are not required guided-flow steps.
+      </p>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Core guided design flow</div>
+            <p class="muted">
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from door behavior into reader choice, power pressure, panel room, and access administration.
+            </p>
+          </div>
+          <span class="tag">Pipeline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/fail-safe-fail-secure/">Fail-Safe / Fail-Secure</a></div>
+            <p class="muted">
+              Use this first to document how each opening should behave when power is lost. This decision affects lock type,
+              emergency behavior, outage assumptions, and downstream power planning.
+            </p>
+          </div>
+          <span class="tag">Step 1</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/reader-type-selector/">Reader Type Selector</a></div>
+            <p class="muted">
+              Use this after fail behavior is understood. Reader selection should account for credential method, environment,
+              traffic volume, security level, and controller compatibility.
+            </p>
+          </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/lock-power-budget/">Lock Power Budget</a></div>
+            <p class="muted">
+              Use this after the opening and reader assumptions are known. Lock power planning helps show whether supply capacity,
+              simultaneous operation, and headroom are reasonable.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/panel-capacity/">Panel Capacity</a></div>
+            <p class="muted">
+              Use this once the door and reader count are known. Panel capacity planning helps document current needs, spare room,
+              expansion pressure, and controller limits.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/access-level-sizing/">Access Level Sizing</a></div>
+            <p class="muted">
+              Use this after the physical design is mostly understood. It helps keep roles, groups, schedules, exceptions,
+              and administrative complexity visible.
+            </p>
+          </div>
+          <span class="tag">Step 5</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Supporting access control checks</div>
+            <p class="muted">
+              These tools support the access control plan when the project has extra assumptions to validate. They are useful checks,
+              but they should not be presented as required steps in the main guided design flow.
+            </p>
+          </div>
+          <span class="tag">As needed</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/door-count-planner/">Door Count Planner</a></div>
+            <p class="muted">
+              Use this when the opening list still needs to be organized before panel capacity, reader count, or access level structure
+              can be reviewed cleanly.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/door-cable-length/">Door Cable Length</a></div>
+            <p class="muted">
+              Use this when long cable runs may affect voltage, reliability, installation planning, or the assumptions behind lock
+              and reader behavior.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/credential-format/">Credential Format</a></div>
+            <p class="muted">
+              Use this when credential compatibility, card technology, facility code, bit format, or reader support may affect
+              the reader and access control platform decision.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/elevator-reader-count/">Elevator Reader Count</a></div>
+            <p class="muted">
+              Use this when elevator control is part of the project. Elevator access can change reader counts, controller planning,
+              relay needs, and access level complexity.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/access-control/anti-passback-zones/">Anti-Passback Zones</a></div>
+            <p class="muted">
+              Use this when the design needs to control entry and exit sequence behavior. Anti-passback can add operational complexity
+              and should be planned before access rules are considered final.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: fail behavior, reader type,
+        lock power, panel capacity, expansion room, access level structure, and supporting constraints. Export reports and
+        saved snapshots are most useful when the inputs are clear enough for someone else to understand later.
       </p>
       <div class="actions">
-        <a class="btn btn-ghost" href="/tools/access-control/fail-safe-fail-secure/">Open Fail-Safe / Fail-Secure</a>
+        <a class="btn btn-primary" href="/tools/access-control/">Open Access Control</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
       </div>
-    </article>
+    </section>
 
-    <article class="card">
-      <h2 class="h2">2. Select the reader approach</h2>
+    <section class="note" aria-label="Planning disclaimer">
       <p class="muted">
-        Reader choices are shaped by security level, environment, throughput, credential preference, and the
-        controller interface. A reader that works on paper can still create usability or compatibility issues later.
+        ScopedLabs tools and guides are planning aids. They do not replace code review, life-safety review, manufacturer documentation,
+        project-specific engineering, qualified professional validation, or authority-having-jurisdiction requirements for a final installation.
       </p>
-      <div class="actions">
-        <a class="btn btn-ghost" href="/tools/access-control/reader-type-selector/">Open Reader Type Selector</a>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
       </div>
-    </article>
-
-    <article class="card">
-      <h2 class="h2">3. Check lock power pressure</h2>
-      <p class="muted">
-        Lock power planning should account for simultaneous unlock events, supply capacity, voltage behavior,
-        and practical headroom. This is where undersized power supplies and unstable circuits often show up.
-      </p>
-      <div class="actions">
-        <a class="btn btn-ghost" href="/tools/access-control/lock-power-budget/">Open Lock Power Budget</a>
-      </div>
-    </article>
-
-    <article class="card">
-      <h2 class="h2">4. Size panel and expansion capacity</h2>
-      <p class="muted">
-        Panel capacity is more than counting doors. Spare inputs, outputs, expansion modules, future growth, and
-        controller limits all influence whether the system has enough room to grow cleanly.
-      </p>
-      <div class="actions">
-        <a class="btn btn-ghost" href="/tools/access-control/panel-capacity/">Open Panel Capacity</a>
-      </div>
-    </article>
-
-    <article class="card">
-      <h2 class="h2">5. Keep access levels manageable</h2>
-      <p class="muted">
-        Access level structure can become hard to administer if roles, schedules, exceptions, and door groups grow
-        without a plan. The goal is not just security; it is a structure people can maintain accurately.
-      </p>
-      <div class="actions">
-        <a class="btn btn-ghost" href="/tools/access-control/access-level-sizing/">Open Access Level Sizing</a>
-      </div>
-    </article>
-
-    <article class="card">
-      <h2 class="h2">6. Use supporting calculators when needed</h2>
-      <p class="muted">
-        Door count, credential format, anti-passback, elevator readers, and cable length checks can support the
-        main design when those constraints matter to the project. Use them to validate assumptions before the final plan.
-      </p>
-      <div class="actions">
-        <a class="btn btn-ghost" href="/tools/access-control/">View all Access Control tools</a>
-      </div>
-    </article>
-  </section>
-
-  <section class="card guide-section">
-    <h2 class="h2">What to document before calling the design “done”</h2>
-    <div class="guide-checklist">
-      <div class="result-row">
-        <strong>Door behavior:</strong>
-        <span>Which openings are fail-safe, fail-secure, or require special coordination.</span>
-      </div>
-      <div class="result-row">
-        <strong>Reader assumptions:</strong>
-        <span>Reader type, interface, credential preference, environment, and expected traffic.</span>
-      </div>
-      <div class="result-row">
-        <strong>Power assumptions:</strong>
-        <span>Lock current, simultaneous unlock count, supply headroom, and backup expectations.</span>
-      </div>
-      <div class="result-row">
-        <strong>Panel capacity:</strong>
-        <span>Controlled openings, spare capacity, expansion needs, and growth margin.</span>
-      </div>
-      <div class="result-row">
-        <strong>Access structure:</strong>
-        <span>Roles, schedules, access groups, exceptions, and administrative complexity.</span>
-      </div>
-    </div>
-  </section>
-
-  <section class="card guide-section">
-    <h2 class="h2">Where ScopedLabs helps</h2>
-    <p class="muted">
-      Each Access Control tool produces a focused planning result that can be reviewed, exported, or saved as a
-      snapshot when the category is unlocked. That makes it easier to keep the design assumptions visible instead
-      of burying them in scattered notes or spreadsheet tabs.
-    </p>
-    <div class="actions">
-      <a class="btn btn-primary" href="/tools/access-control/">Open Access Control tools</a>
-      <a class="btn btn-ghost" href="/upgrade/?category=access-control">Unlock Access Control Pro</a>
-    </div>
-  </section>
-
-  <footer class="site-footer">
-    <div class="muted">© <span data-year></span> ScopedLabs</div>
-    <div class="footer-links">
-      <a href="/tools/">Tools</a>
-      <a href="/upgrade/">Upgrade</a>
-      <a href="/about/">About</a>
-      <a href="/contact/">Contact</a>
-      <a href="/changelog/">Changelog</a>
-      <a href="/privacy/">Privacy</a>
-      <a href="/terms/">Terms</a>
-      <a href="/disclaimer/">Disclaimer</a>
-    </div>
-  </footer>
-</main>
-
-<style>
-  .guide-page .card {
-    margin-bottom: 18px;
-  }
-
-  .guide-hero-card {
-    border-color: rgba(120,255,120,0.18);
-  }
-
-  .guide-hero-card .pill {
-    margin-bottom: 10px;
-  }
-
-  .guide-section {
-    margin-top: 18px;
-  }
-
-  .guide-grid {
-    align-items: stretch;
-  }
-
-  .guide-grid .card {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .guide-grid .actions {
-    margin-top: auto;
-  }
-
-  .guide-checklist {
-    display: grid;
-    gap: 10px;
-    margin-top: 12px;
-  }
-
-  .result-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 14px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.025);
-  }
-
-  .result-row span {
-    color: rgba(168,183,174,0.95);
-    text-align: right;
-  }
-
-  .pipeline-preview {
-    margin-top: 10px;
-    padding: 12px 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(120,255,120,0.14);
-    background:
-      linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.04),
-      0 12px 30px rgba(0,0,0,0.18);
-  }
-
-  .pipeline-preview-label {
-    display: block;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(220,255,220,0.78);
-    margin-bottom: 9px;
-  }
-
-  .pipeline-preview-steps {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.98rem;
-    line-height: 1.4;
-  }
-
-  .pipeline-preview-step {
-    color: rgba(220,235,225,0.72);
-    font-weight: 600;
-  }
-
-  .pipeline-preview-step:hover {
-    color: rgba(255,255,255,0.96);
-  }
-
-  .pipeline-preview-step.is-active {
-    color: rgba(255,255,255,0.96);
-    position: relative;
-    padding-left: 15px;
-  }
-
-  .pipeline-preview-step.is-active::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 50%;
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: #57ff7a;
-    transform: translateY(-50%);
-    box-shadow: 0 0 12px rgba(87,255,122,0.55);
-  }
-
-  .pipeline-preview-step.is-pro {
-    color: rgba(210,220,214,0.82);
-  }
-
-  .pipeline-preview-sep {
-    color: rgba(180,205,190,0.42);
-    font-weight: 700;
-  }
-
-  @media (max-width: 720px) {
-    .result-row {
-      flex-direction: column;
-    }
-
-    .result-row span {
-      text-align: left;
-    }
-  }
-</style>
-
-<script>
-  document.querySelectorAll("[data-year]").forEach((el) => {
-    el.textContent = new Date().getFullYear();
-  });
-</script>
+    </footer>
+  </main>
 </body>
 </html>
