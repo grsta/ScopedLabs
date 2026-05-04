@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Access Control Planning Guide | ScopedLabs</title>
+  <meta name="description" content="A practical Access Control planning guide for fail-safe and fail-secure behavior, reader selection, lock power, panel capacity, access levels, and documentation workflows.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/access-control-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Access Control Planning Guide | ScopedLabs">
+  <meta property="og:description" content="Plan access control systems with a practical linear workflow for door behavior, readers, lock power, panel capacity, and access level structure.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/access-control-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Access Control Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="A practical Access Control planning guide for fail states, reader selection, lock power, panel capacity, and access level structure.">
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+</head>
+
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="ScopedLabs Home">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <span class="brand-icon-wrap" aria-hidden="true">
+        <img
+          class="brand-icon"
+          src="/assets/favicon/favicon-32x32.png?v=1"
+          alt=""
+          width="32"
+          height="32"
+        />
+      </span>
+      <span class="brand-name">ScopedLabs</span>
+    </a>
+
+    <nav class="nav site-nav nav-tabs" aria-label="Primary">
+      <a class="nav-tab" href="/">Home</a>
+      <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+      <a class="nav-tab" href="/about/">About</a>
+      <a class="nav-tab" href="/contact/">Contact</a>
+      <a class="nav-tab" href="/account/">Account</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container guide-page">
+
+  <section class="page-head">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/access-control/">Access Control</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <h1 class="h1">Access Control Planning Guide</h1>
+    <p class="subhead">
+      A practical way to think through door behavior, reader selection, lock power, panel capacity,
+      and access level structure before the design turns into field rework.
+    </p>
+
+    <div class="actions">
+      <a class="btn btn-primary" href="/tools/access-control/fail-safe-fail-secure/">Start the Access Control Flow</a>
+      <a class="btn btn-ghost" href="/tools/access-control/">View Access Control Tools</a>
+    </div>
+  </section>
+
+  <section class="card guide-hero-card">
+    <div class="pill pill--pro">Category Guide</div>
+    <h2 class="h2">Use the tools as a linear planning workflow.</h2>
+    <p class="muted">
+      Access control planning usually starts with how each opening should behave, then moves into reader choice,
+      lock power, controller capacity, and access level structure. ScopedLabs keeps that process practical by
+      turning each step into a focused calculator or planning aid.
+    </p>
+    <p class="muted">
+      These tools are planning aids only. They help organize assumptions and expose design pressure early,
+      but they do not replace code review, AHJ direction, manufacturer documentation, or final engineering review.
+    </p>
+  </section>
+
+  <section class="card guide-section">
+    <h2 class="h2">The Access Control flow</h2>
+    <p class="muted">
+      The public Access Control design flow is a straight step-by-step lane:
+    </p>
+
+    <div class="pipeline-preview" aria-label="Access control guide flow preview">
+      <span class="pipeline-preview-label">ACCESS CONTROL FLOW</span>
+      <div class="pipeline-preview-steps">
+        <a class="pipeline-preview-step is-active" href="/tools/access-control/fail-safe-fail-secure/">Fail-Safe / Fail-Secure</a>
+        <span class="pipeline-preview-sep">→</span>
+        <a class="pipeline-preview-step" href="/tools/access-control/reader-type-selector/">Reader Type</a>
+        <span class="pipeline-preview-sep">→</span>
+        <a class="pipeline-preview-step is-pro" href="/tools/access-control/lock-power-budget/">Lock Power</a>
+        <span class="pipeline-preview-sep">→</span>
+        <a class="pipeline-preview-step is-pro" href="/tools/access-control/panel-capacity/">Panel Capacity</a>
+        <span class="pipeline-preview-sep">→</span>
+        <a class="pipeline-preview-step is-pro" href="/tools/access-control/access-level-sizing/">Access Levels</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid guide-grid">
+    <article class="card">
+      <h2 class="h2">1. Decide fail-state behavior first</h2>
+      <p class="muted">
+        Start with whether the opening should unlock or stay locked during power loss. This decision affects lock
+        type, fire-life-safety coordination, battery planning, and how the opening behaves during an outage.
+      </p>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/tools/access-control/fail-safe-fail-secure/">Open Fail-Safe / Fail-Secure</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 class="h2">2. Select the reader approach</h2>
+      <p class="muted">
+        Reader choices are shaped by security level, environment, throughput, credential preference, and the
+        controller interface. A reader that works on paper can still create usability or compatibility issues later.
+      </p>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/tools/access-control/reader-type-selector/">Open Reader Type Selector</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 class="h2">3. Check lock power pressure</h2>
+      <p class="muted">
+        Lock power planning should account for simultaneous unlock events, supply capacity, voltage behavior,
+        and practical headroom. This is where undersized power supplies and unstable circuits often show up.
+      </p>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/tools/access-control/lock-power-budget/">Open Lock Power Budget</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 class="h2">4. Size panel and expansion capacity</h2>
+      <p class="muted">
+        Panel capacity is more than counting doors. Spare inputs, outputs, expansion modules, future growth, and
+        controller limits all influence whether the system has enough room to grow cleanly.
+      </p>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/tools/access-control/panel-capacity/">Open Panel Capacity</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 class="h2">5. Keep access levels manageable</h2>
+      <p class="muted">
+        Access level structure can become hard to administer if roles, schedules, exceptions, and door groups grow
+        without a plan. The goal is not just security; it is a structure people can maintain accurately.
+      </p>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/tools/access-control/access-level-sizing/">Open Access Level Sizing</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 class="h2">6. Use supporting calculators when needed</h2>
+      <p class="muted">
+        Door count, credential format, anti-passback, elevator readers, and cable length checks can support the
+        main design when those constraints matter to the project. Use them to validate assumptions before the final plan.
+      </p>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/tools/access-control/">View all Access Control tools</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="card guide-section">
+    <h2 class="h2">What to document before calling the design “done”</h2>
+    <div class="guide-checklist">
+      <div class="result-row">
+        <strong>Door behavior:</strong>
+        <span>Which openings are fail-safe, fail-secure, or require special coordination.</span>
+      </div>
+      <div class="result-row">
+        <strong>Reader assumptions:</strong>
+        <span>Reader type, interface, credential preference, environment, and expected traffic.</span>
+      </div>
+      <div class="result-row">
+        <strong>Power assumptions:</strong>
+        <span>Lock current, simultaneous unlock count, supply headroom, and backup expectations.</span>
+      </div>
+      <div class="result-row">
+        <strong>Panel capacity:</strong>
+        <span>Controlled openings, spare capacity, expansion needs, and growth margin.</span>
+      </div>
+      <div class="result-row">
+        <strong>Access structure:</strong>
+        <span>Roles, schedules, access groups, exceptions, and administrative complexity.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card guide-section">
+    <h2 class="h2">Where ScopedLabs helps</h2>
+    <p class="muted">
+      Each Access Control tool produces a focused planning result that can be reviewed, exported, or saved as a
+      snapshot when the category is unlocked. That makes it easier to keep the design assumptions visible instead
+      of burying them in scattered notes or spreadsheet tabs.
+    </p>
+    <div class="actions">
+      <a class="btn btn-primary" href="/tools/access-control/">Open Access Control tools</a>
+      <a class="btn btn-ghost" href="/upgrade/?category=access-control">Unlock Access Control Pro</a>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="muted">© <span data-year></span> ScopedLabs</div>
+    <div class="footer-links">
+      <a href="/tools/">Tools</a>
+      <a href="/upgrade/">Upgrade</a>
+      <a href="/about/">About</a>
+      <a href="/contact/">Contact</a>
+      <a href="/changelog/">Changelog</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+      <a href="/disclaimer/">Disclaimer</a>
+    </div>
+  </footer>
+</main>
+
+<style>
+  .guide-page .card {
+    margin-bottom: 18px;
+  }
+
+  .guide-hero-card {
+    border-color: rgba(120,255,120,0.18);
+  }
+
+  .guide-hero-card .pill {
+    margin-bottom: 10px;
+  }
+
+  .guide-section {
+    margin-top: 18px;
+  }
+
+  .guide-grid {
+    align-items: stretch;
+  }
+
+  .guide-grid .card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .guide-grid .actions {
+    margin-top: auto;
+  }
+
+  .guide-checklist {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.025);
+  }
+
+  .result-row span {
+    color: rgba(168,183,174,0.95);
+    text-align: right;
+  }
+
+  .pipeline-preview {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(120,255,120,0.14);
+    background:
+      linear-gradient(90deg, rgba(18,40,20,0.92) 0%, rgba(10,20,16,0.96) 40%, rgba(8,12,12,0.98) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      0 12px 30px rgba(0,0,0,0.18);
+  }
+
+  .pipeline-preview-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(220,255,220,0.78);
+    margin-bottom: 9px;
+  }
+
+  .pipeline-preview-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.98rem;
+    line-height: 1.4;
+  }
+
+  .pipeline-preview-step {
+    color: rgba(220,235,225,0.72);
+    font-weight: 600;
+  }
+
+  .pipeline-preview-step:hover {
+    color: rgba(255,255,255,0.96);
+  }
+
+  .pipeline-preview-step.is-active {
+    color: rgba(255,255,255,0.96);
+    position: relative;
+    padding-left: 15px;
+  }
+
+  .pipeline-preview-step.is-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #57ff7a;
+    transform: translateY(-50%);
+    box-shadow: 0 0 12px rgba(87,255,122,0.55);
+  }
+
+  .pipeline-preview-step.is-pro {
+    color: rgba(210,220,214,0.82);
+  }
+
+  .pipeline-preview-sep {
+    color: rgba(180,205,190,0.42);
+    font-weight: 700;
+  }
+
+  @media (max-width: 720px) {
+    .result-row {
+      flex-direction: column;
+    }
+
+    .result-row span {
+      text-align: left;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll("[data-year]").forEach((el) => {
+    el.textContent = new Date().getFullYear();
+  });
+</script>
+</body>
+</html>
