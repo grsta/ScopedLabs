@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Compute Planning Guide | ScopedLabs</title>
+  <meta name="description" content="Plan compute platforms with a practical workflow for CPU sizing, RAM sizing, storage IOPS, throughput, VM density, GPU VRAM, power, thermal load, RAID rebuild exposure, and backup windows.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/compute-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Compute Planning Guide | ScopedLabs">
+  <meta property="og:description" content="A practical workflow for planning compute platforms, workload sizing, storage performance, VM density, power, thermal load, RAID exposure, and backup timing.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/compute-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Compute Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="Plan CPU, RAM, storage performance, VM density, power, thermal load, RAID rebuild exposure, and backup windows before selecting compute hardware.">
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=compute-cat-0385"></script>
+  <script defer src="/assets/app.js?v=compute-cat-0385"></script>
+</head>
+
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/compute/">Compute</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Compute Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for estimating CPU, memory, storage performance, VM density, acceleration,
+        power, thermal load, RAID rebuild exposure, and backup timing before selecting compute hardware.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/compute/">Open Compute</a>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning guide</span>
+      </div>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the compute design flow</h2>
+      <p class="muted">
+        Compute planning should be handled as a sequence, not as a single server-sizing guess. CPU affects workload headroom.
+        RAM affects consolidation limits. Storage IOPS and throughput affect responsiveness. VM density affects how far a platform
+        can be consolidated. GPU, power, thermal, RAID, and backup assumptions can all become the real limiter after the basic
+        hardware looks acceptable.
+      </p>
+      <p class="muted">
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Compute workflow. The goal is to help you build a defensible planning estimate before comparing hardware,
+        documenting assumptions, or reviewing vendor-specific platform limits.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="step-cpu-title">
+      <h2 class="h2" id="step-cpu-title">Step 1 — Establish the CPU baseline</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              CPU sizing estimates how much processing capacity the workload needs before memory, storage, virtualization,
+              or infrastructure limits are considered. It looks at workload count, per-workload demand, utilization targets,
+              reserve margin, and whether the platform has enough headroom for normal operation.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This should happen before RAM sizing, VM density planning, GPU review, storage performance checks, or power
+              and thermal review. If the CPU baseline is weak, later sizing steps can look precise while still being built
+              on an overloaded platform assumption.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              CPU pressure can show up as slow response, unstable consolidation, high utilization, or poor burst behavior.
+              Oversizing can waste budget, but undersizing creates a platform that has no room for growth, failover, or workload spikes.
+            </p>
+            <p class="muted">
+              The goal is not to replace vendor sizing data. The goal is to create a clear workload baseline that can be carried
+              into memory, storage, density, and infrastructure planning.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              This is the first step in the Compute guided flow. Use
+              <a href="/tools/compute/cpu-sizing/">CPU Sizing Estimator</a>
+              to establish the compute baseline before moving into RAM, storage performance, VM density, and platform-level checks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-ram-title">
+      <h2 class="h2" id="step-ram-title">Step 2 — Size memory before consolidation decisions</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              RAM sizing estimates the installed memory needed to support workloads, operating overhead, reserve policy,
+              and virtualization overhead. It helps separate theoretical compute capacity from a platform that can actually
+              hold the working set in memory.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after CPU demand is understood and before VM density is treated as realistic. A host can appear
+              strong on processor capacity while still being memory-bound once workloads, buffers, hypervisor overhead,
+              and reserve targets are included.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Memory pressure can reduce consolidation density, increase paging, and make an otherwise reasonable platform unstable.
+              Planning RAM early keeps the design from assuming every CPU core can be filled with workloads that the memory system
+              cannot support comfortably.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/compute/ram-sizing/">RAM Sizing Estimator</a>
+              after CPU sizing. The result should be reviewed before VM density, storage pressure, and backup timing are considered final.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-iops-title">
+      <h2 class="h2" id="step-iops-title">Step 3 — Check storage IOPS pressure</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Storage IOPS planning estimates whether the platform can handle the random read and write operations required by
+              the workload. It is especially important for virtualization, databases, recording systems, small-file activity,
+              and mixed workloads that do not behave like simple sequential transfers.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after CPU and RAM are understood and before storage hardware, VM density, or backup assumptions are locked.
+              A platform can have enough processor and memory headroom while still feeling slow because random storage demand is saturated.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              IOPS bottlenecks often appear as inconsistent performance rather than a clean failure. Average utilization may look acceptable
+              while latency, queueing, or write-heavy activity makes the system unstable under real workload pressure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/compute/storage-iops/">Storage IOPS Estimator</a>
+              after CPU and RAM sizing. This creates the storage performance baseline that should be reviewed before throughput,
+              VM density, RAID rebuild exposure, or backup windows are treated as comfortable.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-throughput-title">
+      <h2 class="h2" id="step-throughput-title">Step 4 — Validate storage throughput</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Storage throughput estimates how much sequential transfer capacity the platform needs. It is different from IOPS.
+              A workload may be acceptable on random operations but still limited by large reads, large writes, backup streams,
+              video movement, replication, or bulk data transfers.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after IOPS pressure is reviewed and before storage design is considered complete. It is especially important
+              when the platform moves large files, handles backup traffic, performs replication, or supports workloads with sustained
+              transfer requirements.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              IOPS and throughput are related, but they are not the same limit. Ignoring throughput can create a design that looks
+              good for small random activity but struggles during large transfers, backup windows, restore operations, or data migration.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/compute/storage-throughput/">Storage Throughput Estimator</a>
+              after IOPS sizing. This helps show whether sequential performance becomes the next limiter before VM density,
+              RAID rebuild exposure, or backup timing are reviewed.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-density-title">
+      <h2 class="h2" id="step-density-title">Step 5 — Estimate realistic VM density</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              VM density estimates how many workloads a host or platform can support after CPU, RAM, and storage pressure are considered together.
+              It is a consolidation review, not just a count of virtual machines or servers.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after CPU, memory, IOPS, and throughput have been reviewed. VM density should not be finalized from one resource alone.
+              A design can be CPU-light, memory-heavy, storage-bound, or limited by the operational reserve required for failover and maintenance.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Overstated density is one of the easiest ways to make a compute platform look cheaper than it really is.
+              Realistic density keeps reserve, noisy-neighbor effects, storage pressure, and growth room visible before the hardware count is locked.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/compute/vm-density/">VM Density Estimator</a>
+              after the main CPU, RAM, and storage assumptions are known. The result should be reviewed before power, thermal,
+              RAID, and backup assumptions are treated as final.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-gpu-title">
+      <h2 class="h2" id="step-gpu-title">Step 6 — Review GPU and VRAM needs where acceleration matters</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              GPU and VRAM planning estimates whether the workload needs acceleration and whether the available memory on the accelerator
+              is enough for the model, rendering, analytics, encoding, or compute task. Not every platform needs GPU capacity, but when it does,
+              the accelerator can become the defining resource.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters when workloads depend on graphics, AI inference, video analytics, transcoding, rendering, simulation,
+              or other acceleration-heavy tasks. It should be reviewed before assuming a CPU-only platform is sufficient or before
+              treating GPU count as the only accelerator constraint.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              GPU compute capacity and VRAM capacity are not the same thing. A workload can have enough raw accelerator performance
+              but still fail or slow down if memory is too tight. This check keeps acceleration assumptions visible instead of hiding
+              them inside a generic server count.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/compute/gpu-vram/">GPU VRAM Estimator</a>
+              after the base CPU, RAM, storage, and density assumptions are understood. Treat it as part of the compute review when
+              acceleration is relevant to the platform.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-power-title">
+      <h2 class="h2" id="step-power-title">Step 7 — Check power and thermal load</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Power and thermal planning estimates rack draw, circuit loading, and cooling pressure created by the compute platform.
+              It connects the hardware sizing result to the room, rack, UPS, power distribution, and cooling environment that must support it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters once the compute platform starts to look realistic. A server configuration can be acceptable on CPU,
+              memory, and storage but still exceed rack power, circuit capacity, cooling capacity, or practical thermal limits.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Infrastructure limits can stop a compute design even when the hardware itself is correctly sized. Power and cooling
+              pressure should be checked before the platform is treated as deployable, especially in closets, small rooms, edge sites,
+              and dense racks.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/compute/power-thermal/">Power &amp; Thermal</a>
+              after workload and density assumptions are known. The result can also inform Power &amp; Runtime and Thermal planning
+              if the compute platform becomes part of a larger infrastructure review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-raid-title">
+      <h2 class="h2" id="step-raid-title">Step 8 — Review RAID rebuild exposure</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              RAID rebuild planning estimates how long storage remains in a degraded or vulnerable state after a disk failure.
+              It considers capacity, rebuild rate, array behavior, workload pressure, and the operational risk of extended exposure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after storage capacity and performance assumptions are known. Larger disks and busy arrays can create
+              long rebuild windows, which may increase the time the platform is exposed to additional failure or reduced performance.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              RAID is not the same as backup, and a rebuild is not risk-free. Long rebuild windows can create operational stress,
+              performance impact, and higher exposure during the degraded state. The rebuild estimate keeps that risk visible.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/compute/raid-rebuild-time/">RAID Rebuild Time</a>
+              after storage and density assumptions are understood. This helps document degraded-state exposure before backup and
+              recovery timing are treated as complete.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-backup-title">
+      <h2 class="h2" id="step-backup-title">Step 9 — Check the backup window</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Backup window planning estimates whether the amount of data, backup rate, network path, storage path, and available time
+              can support the protection schedule. It connects the compute platform to recovery planning and operational timing.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the platform sizing, storage behavior, and RAID exposure are understood. It is especially important
+              when backup traffic competes with production workload, when the window is short, or when restore and protection expectations
+              must be documented clearly.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A compute design is incomplete if it cannot be protected in the available time. Backup timing can expose limits in storage,
+              network, retention policy, data growth, or operational schedule. Checking the backup window keeps protection assumptions
+              attached to the platform plan.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/compute/backup-window/">Backup Window Estimator</a>
+              as the final planning-review step in the Compute guided flow. The result helps document whether the platform can be
+              protected within the expected operational window.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: small virtualization host or edge server</h2>
+      <p class="muted">
+        A small compute platform may start with a few virtual machines, a security recorder, a database, a file service, and a management
+        workload. At first, the server may look simple to size. But the design changes quickly when memory reserve, storage IOPS,
+        backup traffic, RAID rebuild exposure, and cooling limits are reviewed together.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to estimate CPU first, size RAM next, check IOPS and throughput, estimate realistic VM density,
+        then review acceleration, power, thermal load, RAID rebuild exposure, and backup timing. That sequence makes it easier to explain
+        why a platform is reasonable instead of relying on a single hardware guess.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common compute planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Sizing only from CPU count</div>
+            <p class="muted">
+              This happens when the processor looks strong enough but memory, storage, power, cooling, and backup timing are not reviewed.
+              It matters because the real platform limit may show up somewhere other than CPU.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Treating RAM as an afterthought</div>
+            <p class="muted">
+              Memory pressure can reduce VM density and make a platform unstable even when CPU utilization looks acceptable.
+              RAM sizing should be reviewed before consolidation assumptions are trusted.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Confusing IOPS and throughput</div>
+            <p class="muted">
+              Random operations and sequential transfer demand stress storage differently. A platform can pass one storage check
+              and still fail the other during backups, migrations, restores, or sustained data movement.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Ignoring infrastructure limits</div>
+            <p class="muted">
+              A compute configuration may be valid on paper but not fit the rack, circuit, UPS, or cooling environment.
+              Power and thermal checks keep the platform connected to the space that must support it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Forgetting degraded-state and backup timing</div>
+            <p class="muted">
+              RAID rebuild exposure and backup windows are part of the operating reality of the platform. They should be reviewed
+              before the design is treated as reliable or maintainable.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tool-map-title">
+      <div class="tool-feature-top">
+        <span class="pill">Tool map</span>
+      </div>
+      <h2 class="h2" id="tool-map-title">Where the Compute tools fit</h2>
+      <p class="muted">
+        Use this section as the plain-English map of the Compute planning path. The guided flow covers the core sequence
+        for CPU, RAM, storage performance, VM density, GPU review, power, thermal, RAID, and backup timing. Supporting tools
+        help validate related assumptions, but they are not required guided-flow steps.
+      </p>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Core guided design flow</div>
+            <p class="muted">
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from workload sizing into storage behavior, consolidation, infrastructure pressure,
+              degraded-state exposure, and backup timing.
+            </p>
+          </div>
+          <span class="tag">Pipeline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/cpu-sizing/">CPU Sizing Estimator</a></div>
+            <p class="muted">
+              Use this first to establish the compute baseline and identify CPU pressure before memory, storage, and density planning.
+            </p>
+          </div>
+          <span class="tag">Step 1</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/ram-sizing/">RAM Sizing Estimator</a></div>
+            <p class="muted">
+              Use this after CPU sizing to estimate installed memory needs from workload density, reserve policy, and operating overhead.
+            </p>
+          </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/storage-iops/">Storage IOPS Estimator</a></div>
+            <p class="muted">
+              Use this after CPU and RAM sizing to check whether random storage demand becomes the next scaling limiter.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/storage-throughput/">Storage Throughput Estimator</a></div>
+            <p class="muted">
+              Use this after IOPS review to validate whether sequential transfer demand becomes the next limiter.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/vm-density/">VM Density Estimator</a></div>
+            <p class="muted">
+              Use this once CPU, RAM, and storage pressure are understood so consolidation assumptions stay realistic.
+            </p>
+          </div>
+          <span class="tag">Step 5</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/gpu-vram/">GPU VRAM Estimator</a></div>
+            <p class="muted">
+              Use this when acceleration, analytics, rendering, AI, or video workloads may make GPU memory a platform constraint.
+            </p>
+          </div>
+          <span class="tag">Step 6</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/power-thermal/">Power &amp; Thermal</a></div>
+            <p class="muted">
+              Use this after the platform shape is known to estimate rack draw, circuit loading, and cooling demand.
+            </p>
+          </div>
+          <span class="tag">Step 7</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/raid-rebuild-time/">RAID Rebuild Time</a></div>
+            <p class="muted">
+              Use this after storage assumptions are understood to document degraded-state exposure after a disk failure.
+            </p>
+          </div>
+          <span class="tag">Step 8</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/backup-window/">Backup Window Estimator</a></div>
+            <p class="muted">
+              Use this as the final Compute planning-review step to check whether protection timing fits the operating window.
+            </p>
+          </div>
+          <span class="tag">Step 9</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Supporting compute checks</div>
+            <p class="muted">
+              These tools support the compute plan when the project has extra assumptions to validate. They are useful checks,
+              but they should not be presented as required steps in the main guided design flow.
+            </p>
+          </div>
+          <span class="tag">As needed</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/compute/nic-bonding/">NIC Bonding Planner</a></div>
+            <p class="muted">
+              Use this when aggregate bandwidth, redundancy, single-flow limits, or bonded network paths affect the compute platform.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: CPU baseline, RAM reserve,
+        IOPS, throughput, VM density, GPU pressure, power draw, thermal load, RAID exposure, and backup timing. Export reports
+        and saved snapshots are most useful when the inputs are clear enough for someone else to understand later.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/compute/">Open Compute</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
+      </div>
+    </section>
+
+    <section class="note" aria-label="Planning disclaimer">
+      <p class="muted">
+        ScopedLabs tools and guides are planning aids. They do not replace vendor sizing guidance, manufacturer documentation,
+        platform-specific engineering, qualified professional validation, or project-specific performance testing for a final deployment.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
