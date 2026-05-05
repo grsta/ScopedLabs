@@ -2556,3 +2556,29 @@ button.hint {
   gap: 0 !important;
 }
 
+/* ScopedLabs fixed header override — nav-tabs-020 */
+:root {
+  --sl-fixed-header-offset: 82px;
+}
+
+html {
+  scroll-padding-top: var(--sl-fixed-header-offset);
+}
+
+body {
+  padding-top: var(--sl-fixed-header-offset);
+}
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --sl-fixed-header-offset: 104px;
+  }
+}
