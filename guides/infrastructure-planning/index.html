@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Infrastructure Planning Guide | ScopedLabs</title>
+  <meta name="description" content="Plan infrastructure requirements with a practical workflow for room footprint, rack space, equipment spacing, rack weight, floor load, UPS room sizing, generator runtime, and support-layer constraints.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/infrastructure-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Infrastructure Planning Guide | ScopedLabs">
+  <meta property="og:description" content="A practical workflow for planning infrastructure space, racks, equipment clearance, structural load, UPS room sizing, backup endurance, and support-layer assumptions.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/infrastructure-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Infrastructure Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="Plan room footprint, rack space, equipment spacing, rack weight, floor load, UPS room sizing, and generator runtime before infrastructure constraints become field problems.">
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=infra-cat-0386"></script>
+  <script defer src="/assets/app.js?v=infra-cat-0386"></script>
+</head>
+
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/infrastructure/">Infrastructure</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Infrastructure Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for estimating room footprint, rack space, equipment clearance, rack weight,
+        floor loading, UPS room needs, generator runtime, and support-layer constraints before install.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/infrastructure/">Open Infrastructure</a>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning guide</span>
+      </div>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the infrastructure design flow</h2>
+      <p class="muted">
+        Infrastructure planning should be handled as a sequence, not as isolated room, rack, and pathway checks.
+        Room footprint affects rack layout. Rack unit demand affects equipment placement. Equipment spacing affects
+        serviceability and airflow. Rack weight affects floor loading. UPS room sizing and generator runtime affect
+        whether the support environment can actually sustain the design.
+      </p>
+      <p class="muted">
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Infrastructure workflow. The goal is to help you build a defensible planning estimate before documenting
+        assumptions, comparing equipment, or reviewing project-specific building and engineering requirements.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="step-room-title">
+      <h2 class="h2" id="step-room-title">Step 1 — Estimate room square footage</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Room square footage planning estimates the footprint needed for racks, aisles, clearance zones,
+              support equipment, and future working space. It turns the equipment plan into a physical room requirement
+              instead of assuming the room will somehow fit the design later.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This should happen before rack layout, equipment spacing, floor loading, UPS room sizing, or generator runtime
+              assumptions are treated as final. If the room footprint is too tight, every later infrastructure decision becomes harder.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A design can look fine as an equipment list and still fail as a room layout. Poor space planning can create
+              serviceability problems, airflow issues, blocked access, unsafe clearances, and expensive field changes.
+            </p>
+            <p class="muted">
+              The goal is not to replace architectural or code review. The goal is to make the space assumption visible
+              before racks and support systems are planned around it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              This is the first step in the Infrastructure guided flow. Use
+              <a href="/tools/infrastructure/room-square-footage/">Room Square Footage</a>
+              to establish the physical room baseline before moving into rack planning, spacing, loading, UPS room sizing,
+              and backup endurance.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-rack-ru-title">
+      <h2 class="h2" id="step-rack-ru-title">Step 2 — Plan rack RU demand and reserve</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Rack RU planning estimates how much vertical rack space the equipment consumes and how much spare capacity
+              remains for patching, power distribution, cable management, airflow gaps, and future growth.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the room footprint is understood and before equipment spacing, rack weight, and floor load
+              are considered comfortable. RU count affects both the rack layout and the support space around it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A rack that fits the equipment with no reserve can still be a poor design. Cable managers, patch panels,
+              blanking panels, power strips, shelves, airflow needs, and future devices all compete for space. RU pressure
+              can also force extra racks, which changes room footprint and floor loading.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/infrastructure/rack-ru-planner/">Rack RU Planner</a>
+              after the room baseline is known. The result should be reviewed before equipment spacing, rack weight,
+              and support-system sizing are treated as final.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-spacing-title">
+      <h2 class="h2" id="step-spacing-title">Step 3 — Check equipment spacing and service clearance</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Equipment spacing planning checks whether the layout leaves enough front, rear, side, and maintenance clearance
+              for installation, service, airflow, cabling, and safe access. It connects the rack plan to real working conditions.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after room and rack needs are understood and before the design is considered installable.
+              Tight rooms, dense racks, wall-mounted equipment, battery cabinets, and support equipment can all reduce usable clearance.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Poor spacing is often discovered too late. Equipment may technically fit while still being hard to service,
+              difficult to cool, unsafe to access, or awkward to cable. Clearances protect both maintainability and future changes.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/infrastructure/equipment-spacing/">Equipment Spacing</a>
+              after rack RU needs are understood. Treat the result as a practical layout check before rack weight,
+              floor load, UPS room, and generator assumptions are finalized.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-weight-title">
+      <h2 class="h2" id="step-weight-title">Step 4 — Estimate rack weight load</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Rack weight planning estimates the loaded weight of racks, equipment, batteries, shelves, cable management,
+              and support hardware. It helps show whether the equipment plan creates a structural concern before the rack is placed.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the rack contents and spacing assumptions are known. Dense servers, UPS systems, battery cabinets,
+              storage shelves, and large power equipment can push weight higher than expected.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Weight problems can be expensive because they tie the technology plan to the building. A rack can fit in a room and still
+              deserve closer structural review if point load, total load, or support surface assumptions are weak.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/infrastructure/rack-weight-load/">Rack Weight Load</a>
+              after rack contents are known and before floor load rating is reviewed. This creates the load baseline for the structural check.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-floor-title">
+      <h2 class="h2" id="step-floor-title">Step 5 — Review floor load rating pressure</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Floor load planning compares rack and equipment weight against the floor area or point-load assumptions that support it.
+              It helps flag when rack density starts moving from a layout question into a structural-review question.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters once rack weight is estimated and before the design is treated as safe to place. It is especially important
+              for elevated floors, older buildings, concentrated battery loads, dense storage, and small rooms with heavy rack clusters.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A heavy rack is not only a technology issue. It may require structural review, distribution changes, different placement,
+              or a lighter equipment strategy. Floor load review keeps that risk visible before installation.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/infrastructure/floor-load-rating/">Floor Load Rating</a>
+              after rack weight is known. Treat the result as a planning flag that may require qualified structural review before final placement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-ups-room-title">
+      <h2 class="h2" id="step-ups-room-title">Step 6 — Plan UPS room footprint and access</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              UPS room sizing estimates the space needed for UPS equipment, battery cabinets, access clearance, ventilation,
+              maintenance paths, and support space. It connects backup power equipment to the room that must safely house it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the rack, room, and load assumptions are understood. It is especially important when batteries,
+              maintenance clearance, ventilation, or replacement access could change the real footprint of the backup-power plan.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              UPS and battery equipment can consume more room than the technology plan suggests. Without access and service clearance,
+              a backup-power design can become hard to maintain, hard to replace, or unsuitable for the space.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/infrastructure/ups-room-sizing/">UPS Room Sizing</a>
+              after room, rack, and load assumptions are known. This helps document whether support equipment has enough physical space.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-generator-title">
+      <h2 class="h2" id="step-generator-title">Step 7 — Estimate generator runtime assumptions</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Generator runtime planning estimates how long backup generation can support the infrastructure load based on fuel,
+              load level, reserve assumptions, and operating expectations. It helps show whether backup endurance is realistic.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the room, rack, UPS, and load assumptions are understood. It is useful when the design depends
+              on extended outages, remote operation, fuel planning, or bridging utility interruptions beyond short UPS runtime.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A generator can create a false sense of security if runtime, load, fuel, reserve, and operating assumptions are not visible.
+              Generator endurance should be documented as part of the infrastructure plan, not guessed after equipment is selected.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/infrastructure/generator-runtime/">Generator Runtime</a>
+              as the final Infrastructure planning-review step. It helps document whether backup endurance supports the physical design.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: small equipment room or network closet</h2>
+      <p class="muted">
+        A small infrastructure project may start with one rack, a UPS, patching, switching, storage, and a few support devices.
+        At first, the room may look large enough. But the design can change quickly when rack RU reserve, service clearance,
+        rack weight, floor loading, UPS footprint, and backup runtime are reviewed together.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to estimate room square footage first, plan rack RU demand, check equipment spacing,
+        estimate rack weight, review floor loading, size the UPS room footprint, then check generator runtime assumptions.
+        That sequence makes it easier to explain why the infrastructure plan is reasonable instead of relying on a rough room guess.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common infrastructure planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Assuming the room will fit the equipment</div>
+            <p class="muted">
+              This happens when the equipment list is built before clearances, aisles, support gear, and future working space are reviewed.
+              It matters because the room can become the first constraint.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Filling the rack with no reserve</div>
+            <p class="muted">
+              Rack space is often consumed by patching, cable management, shelves, power distribution, airflow accessories, and future devices.
+              A rack that barely fits today can become difficult to maintain later.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Ignoring service clearance</div>
+            <p class="muted">
+              Equipment may technically fit while still being hard to access, cable, cool, or replace. Clearance planning protects the design
+              from becoming a field-service problem.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Treating rack weight as a detail</div>
+            <p class="muted">
+              Dense racks, UPS equipment, batteries, and storage can create structural concerns. Weight and floor loading should be reviewed
+              before placement is treated as safe or final.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Forgetting backup support space</div>
+            <p class="muted">
+              UPS systems, batteries, maintenance clearance, ventilation, replacement access, and generator endurance all require planning.
+              Backup power is not only an electrical capacity question; it is also a space and support question.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tool-map-title">
+      <div class="tool-feature-top">
+        <span class="pill">Tool map</span>
+      </div>
+      <h2 class="h2" id="tool-map-title">Where the Infrastructure tools fit</h2>
+      <p class="muted">
+        Use this section as the plain-English map of the Infrastructure planning path. The guided flow covers the core sequence
+        for room footprint, rack space, equipment spacing, rack weight, floor load, UPS room sizing, and generator runtime.
+        Supporting tools help validate related assumptions, but they are not required guided-flow steps.
+      </p>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Core guided design flow</div>
+            <p class="muted">
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from physical space into rack planning, serviceability, structural pressure, support rooms,
+              and backup endurance.
+            </p>
+          </div>
+          <span class="tag">Pipeline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/room-square-footage/">Room Square Footage</a></div>
+            <p class="muted">
+              Use this first to estimate the room footprint needed for racks, aisles, clearance, and support equipment.
+            </p>
+          </div>
+          <span class="tag">Step 1</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/rack-ru-planner/">Rack RU Planner</a></div>
+            <p class="muted">
+              Use this after the room baseline to estimate rack unit demand and reserve margin.
+            </p>
+          </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/equipment-spacing/">Equipment Spacing</a></div>
+            <p class="muted">
+              Use this after rack needs are understood to check front, rear, side, and maintenance clearance.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/rack-weight-load/">Rack Weight Load</a></div>
+            <p class="muted">
+              Use this once rack contents are known to estimate loaded rack weight and structural pressure.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/floor-load-rating/">Floor Load Rating</a></div>
+            <p class="muted">
+              Use this after rack weight is known to flag when placement or density deserves closer structural review.
+            </p>
+          </div>
+          <span class="tag">Step 5</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/ups-room-sizing/">UPS Room Sizing</a></div>
+            <p class="muted">
+              Use this after the physical and load assumptions are known to plan UPS, battery, access, and maintenance space.
+            </p>
+          </div>
+          <span class="tag">Step 6</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/generator-runtime/">Generator Runtime</a></div>
+            <p class="muted">
+              Use this as the final Infrastructure planning-review step to estimate backup endurance from load and fuel assumptions.
+            </p>
+          </div>
+          <span class="tag">Step 7</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Supporting infrastructure checks</div>
+            <p class="muted">
+              These tools support the infrastructure plan when the project has extra assumptions to validate. They are useful checks,
+              but they should not be presented as required steps in the main guided design flow.
+            </p>
+          </div>
+          <span class="tag">As needed</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/cable-tray-fill/">Cable Tray Fill</a></div>
+            <p class="muted">
+              Use this when tray capacity, cable growth, and spacing discipline could become the hidden pathway constraint.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/conduit-fill/">Conduit Fill</a></div>
+            <p class="muted">
+              Use this when conduit size, cable count, and fill assumptions need an early sanity check before pathways are locked.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/infrastructure/grounding-estimator/">Grounding Estimator</a></div>
+            <p class="muted">
+              Use this when grounding assumptions need to be documented as part of the support-layer review.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: room footprint, rack units,
+        spacing, rack weight, floor loading, UPS room requirements, generator runtime, and supporting pathway or grounding constraints.
+        Export reports and saved snapshots are most useful when the inputs are clear enough for someone else to understand later.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/infrastructure/">Open Infrastructure</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
+      </div>
+    </section>
+
+    <section class="note" aria-label="Planning disclaimer">
+      <p class="muted">
+        ScopedLabs tools and guides are planning aids. They do not replace building-code review, structural engineering,
+        electrical engineering, manufacturer documentation, qualified professional validation, or authority-having-jurisdiction
+        requirements for a final installation.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
