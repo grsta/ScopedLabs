@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Physical Security Planning Guide | ScopedLabs</title>
+  <meta name="description" content="Plan physical security camera coverage with a practical workflow for scene illumination, mounting height, field of view, coverage area, camera spacing, blind spots, pixel density, lens selection, face recognition range, and license plate capture.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/physical-security-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Physical Security Planning Guide | ScopedLabs">
+  <meta property="og:description" content="A practical workflow for planning camera lighting, mounting, field of view, coverage, spacing, pixel density, lens selection, recognition range, and plate capture.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/physical-security-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Physical Security Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="Plan camera coverage, lighting, mounting, blind spots, pixel density, lenses, face recognition, and license plate capture before installation.">
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuYWkiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3MDU4NjA2MSwiZXhwIjoyMDg2MTYyMDYxfQ.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0384"></script>
+  <script defer src="/assets/app.js?v=0384"></script>
+</head>
+
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/physical-security/">Physical Security</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Physical Security Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for planning camera lighting, mounting, field of view, coverage, spacing,
+        blind spots, pixel density, lens strategy, face recognition range, and license plate capture.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/physical-security/">Open Physical Security</a>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning guide</span>
+      </div>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the physical security design flow</h2>
+      <p class="muted">
+        Physical security planning should be handled as an optical sequence, not as a simple camera count. Lighting affects
+        what the camera can see. Mounting height affects angle and detail. Field of view affects coverage width. Coverage and spacing
+        affect blind spots. Pixel density and lens selection affect whether the scene supports recognition or identification-level detail.
+      </p>
+      <p class="muted">
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Physical Security workflow. The goal is to help you build a defensible camera planning estimate before
+        documenting assumptions, selecting equipment, or treating the coverage plan as ready for installation.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="step-illumination-title">
+      <h2 class="h2" id="step-illumination-title">Step 1 — Check scene illumination first</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Scene illumination planning estimates whether the area has enough usable light for the camera task. It helps separate a camera placement problem from a lighting problem before lens, field of view, pixel density, or recognition range are reviewed.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This should happen before mounting height, field of view, coverage, spacing, blind-spot review, or recognition-range planning. If the scene is too dark, uneven, backlit, or glare-heavy, later optical estimates may look better than the real result.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A camera cannot recover detail that the scene never provides clearly. Poor light can weaken face detail, plate capture, motion clarity, color accuracy, and analytics reliability. Lighting should be visible as a design assumption, not discovered after installation.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              This is the first step in the Physical Security guided flow. Use <a href="/tools/physical-security/scene-illumination/">Scene Illumination</a> to establish scene readiness before moving into mounting geometry, coverage, spacing, pixel density, lens selection, and recognition range.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-mounting-title">
+      <h2 class="h2" id="step-mounting-title">Step 2 — Set mounting height and camera angle</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Mounting height planning estimates whether the camera position supports the intended viewing angle, detail level, tamper exposure, and practical installation constraints. It connects the scene target to the physical camera location.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the scene lighting is understood and before field of view or coverage width are treated as final. A camera can have the right lens on paper but still fail because the mount height creates a poor angle.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Mounting too high can reduce facial detail and make subjects look downward from a steep angle. Mounting too low can create tamper risk, obstruction issues, or poor coverage. Height and angle shape the usefulness of every later camera calculation.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/physical-security/mounting-height/">Mounting Height</a> after scene readiness is reviewed. The result should guide field-of-view, coverage, spacing, and pixel-density assumptions.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-fov-title">
+      <h2 class="h2" id="step-fov-title">Step 3 — Estimate field of view</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Field of view planning estimates how much horizontal scene width a camera can see at a given distance. It connects lens behavior and placement distance to the area that will actually appear in the image.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after mounting height and scene geometry are known. It should happen before coverage area, camera spacing, blind-spot checks, or pixel density are finalized.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A wide view can cover more area but reduce detail. A narrow view can improve detail but miss surrounding context. Field of view is one of the main tradeoffs between coverage and identification-level performance.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/physical-security/field-of-view/">Field of View</a> after mounting assumptions are known. The result becomes the width baseline for coverage area, spacing, and pixel-density review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-coverage-title">
+      <h2 class="h2" id="step-coverage-title">Step 4 — Calculate usable coverage area</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Coverage area planning estimates the physical footprint a camera can cover after field of view, vertical view, distance, and overlap assumptions are considered. It turns a view angle into a practical coverage zone.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after field of view is known and before camera spacing or blind-spot risk are reviewed. It is especially important when multiple cameras need to cover a corridor, perimeter, room, parking area, or approach zone.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Raw coverage can be misleading if overlap, edge quality, obstructions, or usable detail are ignored. A camera may technically see an area while still failing to provide the coverage quality needed for the security goal.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/physical-security/camera-coverage-area/">Camera Coverage Area</a> after field of view is estimated. This creates the footprint baseline for camera spacing and blind-spot review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-spacing-title">
+      <h2 class="h2" id="step-spacing-title">Step 5 — Plan camera spacing</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Camera spacing planning estimates how far cameras can be placed apart while preserving useful coverage and overlap. It connects single-camera coverage to multi-camera layout decisions.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after coverage area is understood and before blind-spot risk is treated as acceptable. It is useful for corridors, fence lines, parking rows, building exteriors, open areas, and any design with repeated camera coverage.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Spacing cameras from raw maximum coverage can leave weak edges, gaps, or poor overlap. Practical spacing should account for usable detail, camera angle, overlap reserve, and the fact that the edges of a scene may not be as useful as the center.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/physical-security/camera-spacing/">Camera Spacing</a> after coverage area is known. The result helps frame blind-spot checks and pixel-density expectations.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-blind-spot-title">
+      <h2 class="h2" id="step-blind-spot-title">Step 6 — Check blind-spot risk</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Blind-spot planning checks whether camera placement, approach angles, overlap assumptions, obstructions, or spacing decisions leave areas that are not adequately covered. It tests the layout against real movement paths.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after camera spacing is estimated and before pixel density or lens selection are treated as final. A view can look complete on a plan while still leaving weak approach paths or hidden zones.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Blind spots are often discovered only after an incident or walkthrough. Checking them during planning makes the design more defensible and helps avoid solving coverage problems by guessing where to add another camera.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/physical-security/blind-spot-check/">Blind Spot Check</a> after spacing is reviewed. The result should inform whether the camera layout needs adjustment before pixel-density and lens decisions are finalized.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-pixel-density-title">
+      <h2 class="h2" id="step-pixel-density-title">Step 7 — Validate pixel density</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Pixel density planning estimates pixels per foot or pixels per meter at the target area. It helps show whether the camera view supports detection, observation, recognition, or identification-level detail.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after coverage and blind-spot assumptions are understood. A camera can cover an area but still lack enough detail for the task, especially at distance or with a wide field of view.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Pixel density is where coverage quality becomes measurable. Without it, a camera plan can accidentally optimize for seeing everything while identifying nothing. It is also a key input for lens and recognition-range decisions.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/physical-security/pixel-density/">Pixel Density</a> after layout coverage is reviewed. The result helps determine whether lens selection or camera placement needs to change.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-lens-title">
+      <h2 class="h2" id="step-lens-title">Step 8 — Select the lens strategy</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Lens selection planning estimates what focal strategy best supports the target distance, scene width, and detail requirement. It turns the coverage and pixel-density goals into an optical choice.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after pixel density is understood and before recognition or plate-capture range is treated as realistic. Lens selection affects field width, detail, depth, and how much of the scene is useful for the target task.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A lens that is too wide may cover the scene but weaken detail. A lens that is too narrow may capture detail but miss context or create coverage gaps. Lens choice is the bridge between layout intent and image usefulness.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/physical-security/lens-selection/">Lens Selection</a> after pixel density is reviewed. The result should support face recognition and license plate range checks when those outcomes matter.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-face-title">
+      <h2 class="h2" id="step-face-title">Step 9 — Estimate face recognition range</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Face recognition range planning estimates whether the camera, lens, resolution, distance, and scene assumptions can support useful facial detail. It focuses on whether the design can capture enough information for the intended recognition task.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters when the project expects face-level detail at an entry, lobby, corridor, gate, counter, or approach point. It should be reviewed after lens and pixel-density assumptions are known.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A camera may provide general awareness without supporting face recognition. Distance, angle, lighting, lens choice, motion, and pixel density all affect whether the result is useful. This check keeps recognition expectations realistic.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/physical-security/face-recognition-range/">Face Recognition Range</a> near the end of the Physical Security guided flow when facial detail is one of the design goals.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-plate-title">
+      <h2 class="h2" id="step-plate-title">Step 10 — Estimate license plate capture range</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              License plate range planning estimates whether the camera, lens, distance, plate size, scene angle, lighting, and detail assumptions can support plate capture. It focuses on a specific capture task rather than general scene coverage.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters for gates, drive lanes, parking entries, perimeter points, and vehicle identification zones. It should be reviewed after scene illumination, lens strategy, pixel density, and camera placement are understood.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Plate capture is sensitive to angle, light, motion, glare, shutter behavior, lens choice, and distance. A general-purpose surveillance view may not support reliable plate detail. Treating it as a final check keeps the requirement visible.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/physical-security/license-plate-range/">License Plate Range</a> as the final Physical Security planning-review step when plate capture is part of the design intent.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: entry, corridor, or parking approach</h2>
+      <p class="muted">
+        A camera plan may start with a simple goal: cover the door, corridor, gate, or parking approach. At first, it can look
+        like one camera will do the job. But the design changes quickly when lighting, mounting angle, field width, coverage area,
+        overlap, blind spots, pixel density, lens choice, and recognition range are reviewed together.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to check illumination first, set the mounting height, estimate field of view and coverage area,
+        plan spacing, check blind spots, validate pixel density, choose the lens strategy, then review face or plate capture range
+        where those outcomes matter.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common physical security planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Counting cameras instead of defining the capture goal</div>
+            <p class="muted">
+              A camera count does not tell you whether the scene supports detection, observation, recognition, identification, or plate capture. The target outcome should guide the optical plan.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Ignoring lighting until after installation</div>
+            <p class="muted">
+              Poor lighting can weaken every downstream result. Scene illumination should be checked before assuming field of view, pixel density, or recognition range will hold up.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Using a wide view when detail is required</div>
+            <p class="muted">
+              Wide coverage can reduce pixel density. A camera may see the whole area while failing to capture enough detail for the actual security task.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Forgetting overlap and blind spots</div>
+            <p class="muted">
+              Coverage diagrams can look clean while approach paths, edges, obstructions, or camera angles leave weak zones. Blind-spot review should happen before the layout is treated as complete.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Treating face or plate capture as generic surveillance</div>
+            <p class="muted">
+              Face recognition and license plate capture have specific distance, angle, lens, light, and pixel-density requirements. They should be validated as final design outcomes, not assumed from general coverage.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tool-map-title">
+      <div class="tool-feature-top">
+        <span class="pill">Tool map</span>
+      </div>
+      <h2 class="h2" id="tool-map-title">Where the Physical Security tools fit</h2>
+      <p class="muted">
+        Use this section as the plain-English map of the Physical Security planning path. In this category, the active tools form
+        one core guided flow from scene readiness through camera geometry, coverage, detail validation, lens strategy, and final capture range.
+      </p>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Core guided design flow</div>
+            <p class="muted">
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from scene conditions into camera geometry, useful coverage, optical detail, and capture outcomes.
+            </p>
+          </div>
+          <span class="tag">Pipeline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/scene-illumination/">Scene Illumination</a></div>
+            <p class="muted">
+              Use this first to check whether the scene has enough usable light before camera geometry is trusted.
+            </p>
+          </div>
+          <span class="tag">Step 1</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/mounting-height/">Mounting Height</a></div>
+            <p class="muted">
+              Use this after lighting review to set a practical camera height and viewing angle.
+            </p>
+          </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/field-of-view/">Field of View</a></div>
+            <p class="muted">
+              Use this after mounting assumptions to estimate how much scene width the camera can see.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/camera-coverage-area/">Camera Coverage Area</a></div>
+            <p class="muted">
+              Use this after field of view to estimate usable footprint and overlap assumptions.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/camera-spacing/">Camera Spacing</a></div>
+            <p class="muted">
+              Use this after coverage area to plan practical camera-to-camera spacing.
+            </p>
+          </div>
+          <span class="tag">Step 5</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/blind-spot-check/">Blind Spot Check</a></div>
+            <p class="muted">
+              Use this after spacing review to identify weak approach paths and coverage gaps.
+            </p>
+          </div>
+          <span class="tag">Step 6</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/pixel-density/">Pixel Density</a></div>
+            <p class="muted">
+              Use this after layout review to validate whether the scene supports the required detail level.
+            </p>
+          </div>
+          <span class="tag">Step 7</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/lens-selection/">Lens Selection</a></div>
+            <p class="muted">
+              Use this after pixel density review to choose a focal strategy for the target distance and scene width.
+            </p>
+          </div>
+          <span class="tag">Step 8</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/face-recognition-range/">Face Recognition Range</a></div>
+            <p class="muted">
+              Use this near the end when facial detail is a design requirement.
+            </p>
+          </div>
+          <span class="tag">Step 9</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/physical-security/license-plate-range/">License Plate Range</a></div>
+            <p class="muted">
+              Use this last when plate capture is part of the design intent.
+            </p>
+          </div>
+          <span class="tag">Step 10</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: illumination, mounting height,
+        field of view, coverage area, spacing, blind-spot risk, pixel density, lens strategy, face recognition range, and plate capture.
+        Export reports and saved snapshots are most useful when the inputs are clear enough for someone else to understand later.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/physical-security/">Open Physical Security</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
+      </div>
+    </section>
+
+    <section class="note" aria-label="Planning disclaimer">
+      <p class="muted">
+        ScopedLabs tools and guides are planning aids. They do not replace manufacturer documentation, formal security design,
+        lighting review, site survey, qualified professional validation, legal/privacy review, or project-specific performance testing.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
