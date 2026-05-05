@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wireless Planning Guide | ScopedLabs</title>
+  <meta name="description" content="Plan wireless systems with a practical workflow for coverage radius, channel overlap, noise floor margin, client density, AP capacity, link budget, mesh backhaul, point-to-point links, roaming thresholds, and throughput expectations.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/wireless-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Wireless Planning Guide | ScopedLabs">
+  <meta property="og:description" content="A practical workflow for planning wireless coverage, overlap, RF margin, density, AP capacity, link budget, backhaul, PtP links, roaming, and throughput.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/wireless-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Wireless Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="Plan wireless coverage, overlap, RF margin, density, AP capacity, link budget, backhaul, PtP links, roaming, and throughput before deployment.">
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=wireless-cat-0424"></script>
+  <script defer src="/assets/app.js?v=wireless-cat-0424"></script>
+</head>
+
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/wireless/">Wireless</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Wireless Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for estimating coverage radius, channel overlap, noise floor margin,
+        client density, AP capacity, link budget, mesh backhaul, point-to-point links, roaming thresholds,
+        and practical throughput expectations.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/wireless/">Open Wireless</a>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning guide</span>
+      </div>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the wireless design flow</h2>
+      <p class="muted">
+        Wireless planning should be handled as a sequence, not as a simple AP count. Coverage radius defines the rough cell.
+        Channel overlap and noise margin define RF quality. Client density and AP capacity define load pressure. Link budget,
+        mesh backhaul, point-to-point links, and roaming thresholds determine whether the design behaves well after deployment.
+      </p>
+      <p class="muted">
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Wireless workflow. The goal is to help you build a defensible planning estimate before documenting assumptions,
+        placing APs, validating links, or treating a wireless design as ready for users.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="step-coverage-title">
+      <h2 class="h2" id="step-coverage-title">Step 1 — Estimate wireless coverage radius</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Coverage radius planning estimates the usable wireless cell size from band, environment, AP power, target edge signal, and practical RF loss. It creates the first layout baseline before overlap, density, capacity, and roaming behavior are reviewed.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This should happen before channel overlap, noise margin, client density, AP capacity, link budget, mesh backhaul, point-to-point links, or roaming thresholds are treated as final. If the cell-size assumption is wrong, the rest of the wireless plan can drift quickly.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Wireless coverage is not just a circle on a floor plan. Walls, materials, band choice, AP placement, client capability, interference, and target edge signal all affect how far a cell is actually useful. A clear coverage baseline keeps the design from starting with optimistic range assumptions.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              This is the first step in the Wireless guided flow. Use <a href="/tools/wireless/coverage-radius/">Coverage Radius</a> to establish the cell-size baseline before moving into overlap, RF margin, density, capacity, link, backhaul, and roaming checks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-overlap-title">
+      <h2 class="h2" id="step-overlap-title">Step 2 — Review channel overlap</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Channel overlap planning checks whether nearby APs or cells are likely to interfere with each other based on channel reuse, band behavior, spacing, and layout assumptions. It connects coverage planning to RF coordination.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after coverage radius is estimated and before capacity or roaming assumptions are considered comfortable. It is especially important in dense AP layouts, multi-floor buildings, apartments, schools, offices, warehouses, and areas with many neighboring networks.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              More APs do not automatically mean better wireless. Poor channel planning can create co-channel or adjacent-channel pressure, reducing airtime efficiency and making the network feel unstable even when signal levels look strong.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/wireless/channel-overlap/">Channel Overlap Checker</a> after coverage radius planning. The result helps frame RF margin, client density, and capacity assumptions.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-noise-title">
+      <h2 class="h2" id="step-noise-title">Step 3 — Check noise floor margin</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Noise floor margin planning estimates how much usable signal remains above background RF noise. It helps show whether the planned signal level has enough separation to support stable communication.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after coverage and overlap are reviewed. It is especially important in noisy RF environments, dense buildings, industrial spaces, warehouses, campuses, or sites with many neighboring APs and wireless devices.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Signal strength by itself is not enough. A client can show a decent RSSI and still perform poorly if the noise floor is high. Margin between signal and noise is what protects modulation, throughput, retries, and stability.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/wireless/noise-floor-margin/">Noise Floor Margin</a> after overlap review. This helps keep RF quality visible before density and capacity assumptions are treated as safe.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-density-title">
+      <h2 class="h2" id="step-density-title">Step 4 — Estimate client density</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Client density planning estimates how many wireless clients are expected in the coverage area and how that load is distributed across APs. It connects physical coverage to real user and device demand.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after RF margin is reviewed and before AP capacity is treated as realistic. It is especially important for offices, classrooms, meeting rooms, auditoriums, lobbies, warehouses, public spaces, and high-device environments.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A wireless cell can have strong signal and still be overloaded by too many clients. Density affects airtime, roaming behavior, throughput per client, and how quickly the AP becomes the bottleneck.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/wireless/client-density/">Client Density Planner</a> after RF margin review. The result becomes the demand baseline for AP capacity and throughput checks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-ap-capacity-title">
+      <h2 class="h2" id="step-ap-capacity-title">Step 5 — Check AP capacity</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              AP capacity planning estimates whether the access point can support the expected clients, airtime demand, throughput requirement, and practical overhead. It turns client count into a capacity and user-experience check.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after client density is known and before link budget, mesh, or roaming assumptions are considered stable. An AP may cover the area but still struggle under real client load.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Wireless capacity is shared. Every client, retransmission, lower data rate, and airtime-heavy device affects the experience of other clients. AP capacity review keeps the design from relying only on coverage maps.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/wireless/ap-capacity/">AP Capacity Planner</a> after client density planning. If total throughput is a major concern, use <a href="/tools/wireless/throughput-estimator/">Wireless Throughput Estimator</a> as a supporting check.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-link-budget-title">
+      <h2 class="h2" id="step-link-budget-title">Step 6 — Validate wireless link budget</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Wireless link budget planning estimates whether transmit power, antenna gain, path loss, receiver sensitivity, fade margin, and distance support a reliable link. It checks whether the RF path has enough margin to hold up.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after AP capacity and RF assumptions are known. It is especially important for outdoor links, long indoor paths, warehouse coverage, point-to-point shots, mesh designs, and any link expected to work near the edge of coverage.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A link can look possible while still lacking enough fade margin for weather, obstruction, interference, mounting changes, or client limitations. Link budget review keeps the RF path from being treated as guaranteed.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/wireless/link-budget/">Wireless Link Budget</a> after capacity review. The result helps frame mesh backhaul and point-to-point link planning.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-mesh-title">
+      <h2 class="h2" id="step-mesh-title">Step 7 — Review mesh backhaul</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Mesh backhaul planning estimates how wireless backhaul affects usable throughput, latency, hop count, and reliability. It checks whether mesh convenience creates hidden capacity or stability costs.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after link budget is understood and before mesh is treated as equivalent to wired uplink. It is especially important when APs depend on wireless backhaul for production traffic or when multiple hops are involved.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Mesh links can reduce available throughput, add latency, and increase dependency on RF conditions. A mesh design may solve cabling constraints while creating performance constraints if backhaul is not reviewed.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/wireless/mesh-backhaul/">Mesh Backhaul Estimator</a> after link budget review. The result helps show whether wireless backhaul supports the design before point-to-point and roaming assumptions are finalized.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-ptp-title">
+      <h2 class="h2" id="step-ptp-title">Step 8 — Check point-to-point wireless links</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Point-to-point wireless planning estimates whether a dedicated wireless bridge can support the distance, throughput, margin, and availability expectations for a specific path. It focuses on a link as infrastructure, not just coverage.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after link budget and backhaul assumptions are reviewed. It is especially important for building-to-building links, remote gates, cameras, yards, warehouses, temporary sites, and locations where trenching or cabling is difficult.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A point-to-point link can become a critical path. Distance, line of sight, Fresnel clearance, mounting stability, interference, weather, and throughput requirements all affect whether the link is dependable.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/wireless/ptp-wireless-link/">PtP Wireless Link Planner</a> after mesh and link budget review. The result helps validate dedicated wireless transport before final roaming and client behavior checks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-roaming-title">
+      <h2 class="h2" id="step-roaming-title">Step 9 — Set roaming thresholds</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Roaming threshold planning estimates when clients should transition between APs based on signal, overlap, density, and expected behavior. It connects the RF design to how mobile devices actually move through the space.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters at the end of the wireless workflow, after coverage, overlap, RF margin, density, capacity, and link behavior are understood. It is especially important for voice, scanners, tablets, mobile workers, warehouses, healthcare, and roaming-sensitive devices.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Good coverage does not guarantee good roaming. Clients can stick too long, roam too early, flap between APs, or drop sessions if thresholds and overlap are poorly matched to the environment. Roaming review keeps mobility behavior visible.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/wireless/roaming-thresholds/">Roaming Thresholds Planner</a> as the final Wireless planning-review step. The result helps document whether the RF plan supports real client movement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-supporting-title">
+      <h2 class="h2" id="step-supporting-title">Step 10 — Validate supporting throughput assumptions</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Supporting throughput validation estimates the practical throughput users or devices may experience after RF conditions, client mix, channel width, protocol overhead, airtime sharing, and interference are considered.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters whenever expected application demand, client experience, or aggregate wireless capacity is central to the project. It can be used alongside AP capacity and density checks when throughput is a key success measure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Advertised wireless rates rarely equal usable throughput. Real throughput depends on RF quality, client capability, airtime, retries, channel conditions, and shared-medium behavior. A supporting throughput check keeps expectations realistic.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/wireless/throughput-estimator/">Wireless Throughput Estimator</a> as a supporting check after density and AP capacity review, especially when bandwidth expectations must be documented.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: office, warehouse, or campus wireless area</h2>
+      <p class="muted">
+        A wireless project may start with a simple question: how many APs are needed? The answer depends on coverage radius,
+        wall loss, channel overlap, noise floor, client density, AP capacity, throughput demand, backhaul, point-to-point links,
+        and roaming behavior.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to estimate coverage radius first, check overlap and RF margin, estimate client density,
+        review AP capacity, validate link budget, check mesh or point-to-point links where needed, and finish by reviewing roaming
+        thresholds. Throughput can be used as a supporting check when application demand needs to be documented.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common wireless planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Counting APs before defining the coverage target</div>
+            <p class="muted">
+              AP count alone does not explain signal target, cell size, wall loss, client density, or roaming behavior. Coverage radius should be established before layout assumptions harden.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Ignoring channel overlap</div>
+            <p class="muted">
+              Adding APs without checking channel reuse can increase contention and reduce airtime efficiency. More signal does not always mean better wireless performance.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Looking at RSSI without checking noise margin</div>
+            <p class="muted">
+              Signal strength is only useful relative to the noise floor. Weak signal-to-noise margin can create retries, low data rates, and unstable client behavior.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Planning coverage without density and capacity</div>
+            <p class="muted">
+              A cell can cover an area and still fail under real client load. Density, airtime, and AP capacity should be reviewed before the design is treated as user-ready.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Treating mesh and PtP links like wired uplinks</div>
+            <p class="muted">
+              Wireless transport depends on RF path, margin, interference, hop count, weather, and throughput overhead. Backhaul and point-to-point assumptions should be validated separately.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Leaving roaming behavior until after deployment</div>
+            <p class="muted">
+              Clients may stick, roam late, roam early, or drop sessions if overlap and thresholds are not aligned. Roaming should be reviewed before the design is considered complete.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tool-map-title">
+      <div class="tool-feature-top">
+        <span class="pill">Tool map</span>
+      </div>
+      <h2 class="h2" id="tool-map-title">Where the Wireless tools fit</h2>
+      <p class="muted">
+        Use this section as the plain-English map of the Wireless planning path. The guided flow covers the core
+        sequence for coverage, overlap, RF margin, density, AP capacity, link validation, backhaul, point-to-point links,
+        and roaming thresholds. Supporting tools help validate related assumptions, but they are not required guided-flow steps.
+      </p>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Core guided design flow</div>
+            <p class="muted">
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from rough coverage into RF quality, user load, transport behavior, and roaming performance.
+            </p>
+          </div>
+          <span class="tag">Pipeline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/coverage-radius/">Coverage Radius</a></div>
+            <p class="muted">
+              Use this first to estimate wireless cell size from band, environment, AP power, and target edge signal.
+            </p>
+          </div>
+          <span class="tag">Step 1</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/channel-overlap/">Channel Overlap Checker</a></div>
+            <p class="muted">
+              Use this after coverage radius to review channel reuse and overlap pressure.
+            </p>
+          </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/noise-floor-margin/">Noise Floor Margin</a></div>
+            <p class="muted">
+              Use this after overlap review to check whether signal has enough margin above RF noise.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/client-density/">Client Density Planner</a></div>
+            <p class="muted">
+              Use this after RF margin review to estimate user and device load per area or AP.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/ap-capacity/">AP Capacity Planner</a></div>
+            <p class="muted">
+              Use this after client density planning to check shared AP capacity and airtime pressure.
+            </p>
+          </div>
+          <span class="tag">Step 5</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/link-budget/">Wireless Link Budget</a></div>
+            <p class="muted">
+              Use this after capacity review to validate RF path margin and distance assumptions.
+            </p>
+          </div>
+          <span class="tag">Step 6</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/mesh-backhaul/">Mesh Backhaul Estimator</a></div>
+            <p class="muted">
+              Use this after link budget review to check wireless backhaul hop and throughput tradeoffs.
+            </p>
+          </div>
+          <span class="tag">Step 7</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/ptp-wireless-link/">PtP Wireless Link Planner</a></div>
+            <p class="muted">
+              Use this after mesh and link budget review to validate dedicated wireless bridge assumptions.
+            </p>
+          </div>
+          <span class="tag">Step 8</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/roaming-thresholds/">Roaming Thresholds Planner</a></div>
+            <p class="muted">
+              Use this last to review client transition behavior between APs.
+            </p>
+          </div>
+          <span class="tag">Step 9</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Supporting wireless checks</div>
+            <p class="muted">
+              These tools support the wireless plan when the project has extra assumptions to validate. They are useful checks,
+              but they should not be presented as required steps in the main guided design flow.
+            </p>
+          </div>
+          <span class="tag">As needed</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/wireless/throughput-estimator/">Wireless Throughput Estimator</a></div>
+            <p class="muted">
+              Use this when practical user or application throughput needs a separate supporting check.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: coverage radius, channel overlap,
+        noise floor margin, client density, AP capacity, link budget, mesh backhaul, point-to-point link assumptions, roaming thresholds,
+        and practical throughput expectations. Export reports and saved snapshots are most useful when the inputs are clear enough
+        for someone else to understand later.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/wireless/">Open Wireless</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
+      </div>
+    </section>
+
+    <section class="note" aria-label="Planning disclaimer">
+      <p class="muted">
+        ScopedLabs tools and guides are planning aids. They do not replace wireless site surveys, spectrum analysis,
+        manufacturer documentation, platform-specific design guidance, qualified professional validation, or field performance testing.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
