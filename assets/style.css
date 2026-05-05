@@ -2556,29 +2556,32 @@ button.hint {
   gap: 0 !important;
 }
 
-/* ScopedLabs fixed header override — nav-tabs-020 */
+
+/* ScopedLabs fixed header override — nav-tabs-021 */
 :root {
-  --sl-fixed-header-offset: 82px;
+  --sl-fixed-header-height: 96px;
 }
 
 html {
-  scroll-padding-top: var(--sl-fixed-header-offset);
+  scroll-padding-top: calc(var(--sl-fixed-header-height) + 18px);
 }
 
 body {
-  padding-top: var(--sl-fixed-header-offset);
+  padding-top: var(--sl-fixed-header-height);
 }
 
 .site-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
+  position: fixed !important;
+  top: 0 !important;
+  inset-inline: 0 !important;
+  z-index: 9999 !important;
+  width: 100% !important;
+  transform: none !important;
 }
 
 @media (max-width: 720px) {
   :root {
-    --sl-fixed-header-offset: 104px;
+    --sl-fixed-header-height: 118px;
   }
 }
+
