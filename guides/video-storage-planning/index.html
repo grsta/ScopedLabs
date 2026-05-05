@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Video &amp; Storage Planning Guide | ScopedLabs</title>
+  <meta name="description" content="Plan video storage with a practical workflow for bitrate, storage capacity, retention, RAID impact, retention survivability, codec efficiency, compression impact, archive cost, and failure exposure.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/video-storage-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Video &amp; Storage Planning Guide | ScopedLabs">
+  <meta property="og:description" content="A practical workflow for planning video bitrate, storage capacity, retention, RAID impact, survivability, codecs, compression, archive cost, and failure exposure.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/video-storage-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Video &amp; Storage Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="Plan video bitrate, storage capacity, retention, RAID impact, survivability, codecs, compression, archive cost, and failure exposure before selecting storage.">
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0421"></script>
+  <script defer src="/assets/app.js?v=0421"></script>
+</head>
+
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/video-storage/">Video &amp; Storage</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Video &amp; Storage Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for estimating video bitrate, usable storage, retention, RAID impact,
+        survivability, codec effects, compression tradeoffs, archive cost, and failure exposure.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/video-storage/">Open Video &amp; Storage</a>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning guide</span>
+      </div>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the video storage design flow</h2>
+      <p class="muted">
+        Video storage planning should be handled as a sequence, not as a single drive-size estimate. Bitrate defines the data rate.
+        Storage capacity turns that data rate into usable space. Retention turns capacity into days of video. RAID changes usable
+        storage and degraded-state risk. Survivability shows whether the retention target still holds when conditions are not ideal.
+      </p>
+      <p class="muted">
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Video &amp; Storage workflow. The goal is to help you build a defensible planning estimate before selecting
+        storage, documenting assumptions, or treating a retention target as guaranteed.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="step-bitrate-title">
+      <h2 class="h2" id="step-bitrate-title">Step 1 — Estimate camera bitrate first</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Bitrate planning estimates how much data each video stream produces based on camera count, resolution, frame rate, compression, scene complexity, and stream behavior. It creates the traffic and storage baseline for the rest of the workflow.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This should happen before storage, retention, RAID, archive, or survivability assumptions are treated as final. If the bitrate baseline is wrong, every downstream storage and retention estimate can look more accurate than it really is.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Video systems are sensitive to small bitrate assumptions. A modest per-camera change can become a large storage or network change once multiplied across many cameras and many days of retention.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              This is the first step in the Video &amp; Storage guided flow. Use <a href="/tools/video-storage/bitrate-estimator/">Bitrate Estimator</a> to establish the stream baseline before moving into storage capacity, retention, RAID impact, and survivability review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-storage-title">
+      <h2 class="h2" id="step-storage-title">Step 2 — Calculate storage capacity from the bitrate baseline</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Storage planning estimates how much capacity the video system needs after bitrate, camera count, recording hours, retention target, overhead, and usable-capacity assumptions are considered.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after bitrate is estimated and before retention or RAID assumptions are finalized. Storage capacity should be built from the recording workload, not guessed from drive count alone.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A system can appear to have enough raw drive capacity while still falling short after overhead, usable capacity, retention target, or recording behavior are included. Storage math keeps the real usable requirement visible.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/video-storage/storage-calculator/">Camera Storage Calculator</a> after bitrate planning. The result becomes the capacity baseline for retention and RAID review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-retention-title">
+      <h2 class="h2" id="step-retention-title">Step 3 — Validate the retention target</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Retention planning estimates how many days of video can be stored based on bitrate, usable storage, recording schedule, overhead, and reserve. It turns capacity into a practical days-of-video expectation.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after storage capacity is known and before the design is treated as meeting the project requirement. Retention is often the real goal users care about, even when the conversation starts with drive size.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A storage system that looks large enough may still miss the required retention period if bitrate, recording schedule, RAID overhead, or growth assumptions are optimistic. Retention review keeps the promise visible.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/video-storage/retention-planner/">Retention Planner</a> after storage capacity is estimated. The result should be reviewed before RAID impact and survivability assumptions are treated as safe.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-raid-title">
+      <h2 class="h2" id="step-raid-title">Step 4 — Review RAID impact on usable storage and risk</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              RAID impact planning estimates how drive protection choices affect usable capacity, fault tolerance, rebuild exposure, and retained video. It connects storage protection to the retention target instead of treating RAID as free safety.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after storage and retention are known. It is especially important when the project depends on fault tolerance, large drives, long retention periods, or high recording load during degraded operation.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              RAID can protect against certain drive failures, but it also reduces usable capacity and can create rebuild exposure. A plan that meets retention before RAID may fall short after protection overhead is included.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/video-storage/raid-impact/">RAID Impact</a> after retention review. The result helps show whether the protected design still supports the storage and retention target.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-survivability-title">
+      <h2 class="h2" id="step-survivability-title">Step 5 — Check retention survivability</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Retention survivability planning estimates what happens to the video-retention target when the storage system is degraded, partially failed, or operating with less usable capacity than expected.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after RAID impact is understood and before the storage design is treated as complete. It is especially useful when the system must continue recording during failures or when lost days of video create operational risk.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A storage plan can meet the target under normal conditions but fail during degraded operation. Survivability review keeps the difference between normal capacity and failure-condition retention visible.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/video-storage/retention-survivability/">Retention Survivability</a> as the final core step in the Video &amp; Storage guided flow. Supporting checks can then validate codec, compression, archive cost, and failure-day assumptions where needed.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-supporting-title">
+      <h2 class="h2" id="step-supporting-title">Step 6 — Validate supporting video storage assumptions</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Supporting validation means checking related assumptions that may not be part of the core guided flow but can still affect the final storage plan. That includes codec efficiency, compression impact, archive cost, advanced storage planning, and failure-days exposure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the main bitrate, storage, retention, RAID, and survivability path is understood or whenever one of these constraints is central to the project.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Video storage designs often change when compression settings, codec choices, archive strategy, or failure assumptions are reviewed. Supporting checks help catch those changes before the capacity plan is treated as final.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use this as the final planning-review layer after the core guided flow. Supporting tools such as <a href="/tools/video-storage/codec-efficiency/">Codec Efficiency</a>, <a href="/tools/video-storage/compression-impact/">Compression Impact</a>, <a href="/tools/video-storage/archive-cost/">Archive Cost</a>, <a href="/tools/video-storage/advanced-storage-planner/">Advanced Storage Planner</a>, and <a href="/tools/video-storage/failure-days-lost/">Failure Days Lost</a> help document the details that can change the design.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: camera system with retained recording</h2>
+      <p class="muted">
+        A camera system may start with a simple question: how many days of video can it store? The answer depends on bitrate,
+        camera count, recording schedule, usable storage, RAID overhead, codec behavior, compression settings, archive strategy,
+        and what happens during degraded conditions.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to estimate bitrate first, calculate storage capacity, validate retention, review RAID impact,
+        then check survivability. Supporting checks like codec efficiency, compression impact, archive cost, advanced storage planning,
+        and failure-days exposure can then be reviewed where they apply.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common video storage planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Starting with drive size instead of bitrate</div>
+            <p class="muted">
+              Raw drive capacity does not tell you whether the video workload fits. Bitrate, recording schedule, camera count, and overhead define the real storage requirement.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Treating advertised storage as usable retention</div>
+            <p class="muted">
+              Formatted capacity, RAID overhead, reserve margin, filesystem overhead, and operational headroom can reduce the storage actually available for retained video.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Ignoring codec and compression assumptions</div>
+            <p class="muted">
+              Codec choice and compression settings can change storage needs significantly. Those assumptions should be visible instead of buried in a default camera setting.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Assuming RAID protects the retention target automatically</div>
+            <p class="muted">
+              RAID changes usable capacity and degraded-state behavior. It may improve fault tolerance while still reducing retention or increasing rebuild exposure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Forgetting degraded or failure conditions</div>
+            <p class="muted">
+              A design that meets retention under normal conditions may lose days during failure, rebuild, or reduced-capacity operation. Survivability should be checked before the plan is considered complete.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tool-map-title">
+      <div class="tool-feature-top">
+        <span class="pill">Tool map</span>
+      </div>
+      <h2 class="h2" id="tool-map-title">Where the Video &amp; Storage tools fit</h2>
+      <p class="muted">
+        Use this section as the plain-English map of the Video &amp; Storage planning path. The guided flow covers the core
+        sequence for bitrate, storage capacity, retention, RAID impact, and retention survivability. Supporting tools help validate
+        related assumptions, but they are not required guided-flow steps.
+      </p>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Core guided design flow</div>
+            <p class="muted">
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from video data rate into capacity, days of retention, protection overhead, and degraded-state survivability.
+            </p>
+          </div>
+          <span class="tag">Pipeline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/bitrate-estimator/">Bitrate Estimator</a></div>
+            <p class="muted">
+              Use this first to estimate the stream bitrate baseline that drives storage and retention math.
+            </p>
+          </div>
+          <span class="tag">Step 1</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/storage-calculator/">Camera Storage Calculator</a></div>
+            <p class="muted">
+              Use this after bitrate planning to estimate required usable storage capacity.
+            </p>
+          </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/retention-planner/">Retention Planner</a></div>
+            <p class="muted">
+              Use this after storage capacity review to validate days of retained video.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/raid-impact/">RAID Impact</a></div>
+            <p class="muted">
+              Use this after retention review to see how protection overhead changes usable capacity and risk.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/retention-survivability/">Retention Survivability</a></div>
+            <p class="muted">
+              Use this after RAID impact to check whether retention survives degraded conditions.
+            </p>
+          </div>
+          <span class="tag">Step 5</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Supporting video storage checks</div>
+            <p class="muted">
+              These tools support the video storage plan when the project has extra assumptions to validate. They are useful checks,
+              but they should not be presented as required steps in the main guided design flow.
+            </p>
+          </div>
+          <span class="tag">As needed</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/advanced-storage-planner/">Advanced Storage Planner</a></div>
+            <p class="muted">
+              Use this when the storage plan needs a more detailed capacity and overhead review.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/archive-cost/">Archive Cost</a></div>
+            <p class="muted">
+              Use this when long-term storage or archive strategy affects cost and design direction.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/codec-efficiency/">Codec Efficiency</a></div>
+            <p class="muted">
+              Use this when codec choice may significantly change bitrate, storage, or retention assumptions.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/compression-impact/">Compression Impact</a></div>
+            <p class="muted">
+              Use this when compression settings may trade image quality against storage savings.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/video-storage/failure-days-lost/">Failure Days Lost</a></div>
+            <p class="muted">
+              Use this when a failure scenario may reduce available retained video or create operational exposure.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: bitrate, camera count,
+        recording schedule, usable storage, retention target, RAID impact, survivability, codec behavior, compression settings,
+        archive strategy, and failure exposure. Export reports and saved snapshots are most useful when the inputs are clear enough
+        for someone else to understand later.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/video-storage/">Open Video &amp; Storage</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
+      </div>
+    </section>
+
+    <section class="note" aria-label="Planning disclaimer">
+      <p class="muted">
+        ScopedLabs tools and guides are planning aids. They do not replace manufacturer documentation, storage vendor guidance,
+        project-specific engineering, qualified professional validation, formal retention policy, compliance review, or field performance testing.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
