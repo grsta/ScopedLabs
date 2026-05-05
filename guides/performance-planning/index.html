@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Performance Planning Guide | ScopedLabs</title>
+  <meta name="description" content="Plan system performance with a practical workflow for response time SLA, latency, throughput, queue depth, concurrency, CPU impact, disk saturation, network congestion, cache efficiency, bottleneck isolation, and headroom.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/performance-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Performance Planning Guide | ScopedLabs">
+  <meta property="og:description" content="A practical workflow for planning response time, throughput, queueing, concurrency, resource pressure, bottlenecks, and headroom.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/performance-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Performance Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="Plan response time SLA, throughput tradeoffs, queues, concurrency, CPU, disk, network, cache, bottlenecks, and headroom before performance issues become outages.">
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0317"></script>
+  <script defer src="/assets/app.js?v=0317"></script>
+</head>
+
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/performance/">Performance</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Performance Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for estimating response targets, throughput tradeoffs, queues, concurrency,
+        CPU, disk, network, cache efficiency, bottlenecks, and headroom before performance issues become outages.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/performance/">Open Performance</a>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning guide</span>
+      </div>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the performance design flow</h2>
+      <p class="muted">
+        Performance planning should be handled as a sequence, not as a single utilization check. Response targets define the goal.
+        Throughput and latency show the tradeoff. Queue depth and concurrency reveal pressure. CPU, disk, network, and cache behavior
+        show where work is being delayed. Bottleneck isolation and headroom turn those signals into a supportable plan.
+      </p>
+      <p class="muted">
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Performance workflow. The goal is to help you build a defensible planning estimate before tuning a system,
+        adding capacity, documenting assumptions, or treating a platform as production-ready.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="step-sla-title">
+      <h2 class="h2" id="step-sla-title">Step 1 — Define the response time target</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Response time SLA planning defines the acceptable response target before performance pressure is analyzed. It turns a vague goal like “fast enough” into a measurable target that can be compared against load, queueing, CPU, storage, network, cache, and bottleneck behavior.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This should happen before throughput tradeoffs, queue depth, concurrency, CPU impact, or bottleneck analysis. Without a target, the rest of the performance review has no clear pass/fail reference.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A system can look healthy by utilization alone while still missing the user-facing response target. Defining the SLA early keeps the workflow focused on the outcome people actually experience, not only the resource charts behind it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              This is the first step in the Performance guided flow. Use <a href="/tools/performance/response-time-sla/">Response Time SLA</a> to establish the target before moving into throughput, queueing, concurrency, and resource-pressure checks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-latency-throughput-title">
+      <h2 class="h2" id="step-latency-throughput-title">Step 2 — Compare latency and throughput tradeoffs</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Latency versus throughput planning compares how response time changes as work volume increases. It helps show whether the system can move more work without making each request too slow.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the response target is known and before queueing or concurrency assumptions are treated as safe. It is especially useful when a system can process high volume but starts feeling slow under load.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              More throughput is not always better if latency rises past the acceptable target. This step helps expose the point where additional work starts trading away responsiveness.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/performance/latency-vs-throughput/">Latency vs Throughput</a> after the SLA target is defined. The result becomes the performance tradeoff baseline for queue depth and concurrency review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-queue-title">
+      <h2 class="h2" id="step-queue-title">Step 3 — Review queue depth pressure</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Queue depth planning estimates how much work is waiting for service. It helps show whether requests, jobs, disk operations, threads, or transactions are stacking up faster than the system can clear them.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after latency and throughput are understood. Queues often explain why response time degrades even when a single resource metric does not look fully saturated.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Queue growth can turn a manageable slowdown into a collapse. Once waiting work accumulates, response time can rise quickly and recovery can lag behind the original demand spike.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/performance/queue-depth/">Queue Depth</a> after latency and throughput tradeoffs are reviewed. This helps identify whether waiting work is becoming the next performance risk.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-concurrency-title">
+      <h2 class="h2" id="step-concurrency-title">Step 4 — Estimate concurrency scaling</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Concurrency scaling estimates how many users, sessions, jobs, workers, or parallel operations the system can support before contention increases. It connects demand growth to resource pressure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after queue pressure is visible and before CPU, disk, network, and cache behavior are treated as isolated problems. Concurrency often changes how every downstream resource behaves.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A system can handle one request well but struggle when many requests overlap. Concurrency planning keeps shared resources, locking, thread pools, connection limits, and contention from being ignored.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/performance/concurrency-scaling/">Concurrency Scaling</a> after queue depth review. The result helps frame CPU, disk, network, and cache pressure under realistic parallel load.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-cpu-title">
+      <h2 class="h2" id="step-cpu-title">Step 5 — Check CPU utilization impact</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              CPU utilization impact planning estimates how processor load affects response, headroom, and stability. It helps separate normal useful work from a processor path that is too close to saturation.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after concurrency is understood and before bottleneck analysis is treated as complete. CPU pressure can be the main limiter, but it can also be a symptom of inefficient workload behavior elsewhere.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              High CPU utilization reduces burst headroom and can make latency worse under peak load. Low CPU utilization does not always mean the system is healthy either, especially if queues, disk, network, or locks are limiting progress.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/performance/cpu-utilization-impact/">CPU Utilization Impact</a> after concurrency scaling. The result should be reviewed alongside disk, network, cache, and bottleneck findings.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-disk-title">
+      <h2 class="h2" id="step-disk-title">Step 6 — Check disk saturation</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Disk saturation planning estimates whether storage operations are becoming a limiter. It may include read/write pressure, queueing, latency, IOPS pressure, throughput pressure, and workload sensitivity to storage delay.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after CPU impact is reviewed and before network or cache assumptions are treated as final. Storage can become the hidden cause of slow response even when CPU and memory appear acceptable.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Storage saturation can create inconsistent performance, long wait times, and cascading queue growth. It is often felt as “the system is slow” before it appears as a simple failure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/performance/disk-saturation/">Disk Saturation</a> after CPU pressure is reviewed. This helps show whether storage is becoming the resource that limits the performance target.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-network-title">
+      <h2 class="h2" id="step-network-title">Step 7 — Review network congestion</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Network congestion planning estimates whether traffic pressure, shared links, packet delay, or path limits are affecting performance. It connects application behavior to the network path that carries it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after CPU and disk pressure are reviewed. It is especially important for distributed systems, remote users, backup traffic, storage traffic, API traffic, video, voice, and systems that depend on multiple network hops.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A workload can have enough compute and storage capacity but still miss its response target if the network path is congested or unstable. Congestion can also amplify latency, retries, and queueing elsewhere.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/performance/network-congestion/">Network Congestion</a> after disk saturation review. This helps identify whether the performance problem is shifting from local resources to path behavior.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-cache-title">
+      <h2 class="h2" id="step-cache-title">Step 8 — Check cache efficiency</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Cache efficiency planning estimates how often requests are served from cache instead of slower backing resources. It helps show whether caching is reducing load or hiding a weak underlying path.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after CPU, disk, and network pressure are understood. Cache behavior can dramatically change apparent performance, especially for repeated reads, content delivery, database-backed workloads, and hot data sets.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A strong cache hit ratio can reduce pressure across the system. A weak or unstable cache can push more work back onto CPU, disk, network, and database paths. Cache efficiency should be visible before bottleneck isolation is finalized.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/performance/cache-hit-ratio/">Cache Hit Ratio</a> after the major resource-pressure checks. The result helps explain whether caching is helping the performance target or leaving the system exposed.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-bottleneck-title">
+      <h2 class="h2" id="step-bottleneck-title">Step 9 — Isolate the dominant bottleneck</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Bottleneck analysis compares resource pressure across the system to identify which limit is most likely controlling performance. It turns separate signals into a clearer explanation of what should be addressed first.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after response target, throughput, queueing, concurrency, CPU, disk, network, and cache behavior are reviewed. Bottleneck analysis works best when the upstream evidence is already organized.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Fixing the wrong resource can waste time and money. The dominant bottleneck is the constraint most likely to improve the result if addressed. This step helps avoid treating every metric as equally important.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/performance/bottleneck-analyzer/">Bottleneck Analyzer</a> near the end of the Performance guided flow. The result should guide what gets tuned, expanded, or investigated first.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-headroom-title">
+      <h2 class="h2" id="step-headroom-title">Step 10 — Set the final headroom target</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Headroom planning estimates how much reserve capacity remains after the system meets its response, throughput, and resource-pressure targets. It helps define whether the system is merely working or comfortably supportable.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters at the end of the performance review, after the dominant pressure points are understood. Headroom is important for growth, bursts, maintenance, failover, noisy-neighbor behavior, and unexpected load.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A design with no headroom may pass a test but fail in production. Reserve margin gives the platform room to absorb peaks, recover from degraded conditions, and grow without immediately returning to a bottleneck state.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/performance/headroom-target/">Headroom Target</a> as the final Performance planning-review step. This turns the performance analysis into a supportable capacity target instead of a one-time measurement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: application or service under peak load</h2>
+      <p class="muted">
+        A service may look healthy during normal use but slow down during peak traffic, reporting jobs, backup activity,
+        batch processing, or user bursts. At first, the issue may look like “the server is slow.” But the actual pressure
+        may come from queues, concurrency, CPU, storage, network, cache misses, or a single dominant bottleneck.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to define the response target first, compare latency and throughput, review queue depth,
+        estimate concurrency pressure, then check CPU, disk, network, cache behavior, bottlenecks, and final headroom. That sequence
+        makes it easier to explain why a system is stable, risky, or ready for more capacity.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common performance planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Checking utilization without defining the target</div>
+            <p class="muted">
+              This happens when CPU, disk, or network numbers are reviewed before the response time goal is clear. It matters because resource charts are only useful when tied to the outcome the system must deliver.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Treating throughput and latency as the same problem</div>
+            <p class="muted">
+              A system may process more work while each request becomes slower. Throughput and latency should be reviewed together so volume does not hide poor responsiveness.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Ignoring queue growth</div>
+            <p class="muted">
+              Queues can make performance collapse after demand has already exceeded service capacity. Queue depth should be reviewed before slow response is blamed on only one resource.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Assuming CPU is always the bottleneck</div>
+            <p class="muted">
+              CPU may be the limiter, but storage, network, cache behavior, locks, or concurrency limits can control the result instead. Bottleneck isolation should compare signals before tuning begins.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Leaving no headroom</div>
+            <p class="muted">
+              A system with no reserve can pass a narrow test and still fail under growth, bursts, maintenance, or degraded conditions. Headroom keeps performance planning realistic after the first successful result.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tool-map-title">
+      <div class="tool-feature-top">
+        <span class="pill">Tool map</span>
+      </div>
+      <h2 class="h2" id="tool-map-title">Where the Performance tools fit</h2>
+      <p class="muted">
+        Use this section as the plain-English map of the Performance planning path. In this category, the active tools form
+        one core guided flow from response target definition through bottleneck isolation and final headroom review.
+      </p>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Core guided design flow</div>
+            <p class="muted">
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from target definition into load behavior, resource pressure, bottleneck isolation, and reserve margin.
+            </p>
+          </div>
+          <span class="tag">Pipeline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/response-time-sla/">Response Time SLA</a></div>
+            <p class="muted">
+              Use this first to define the response target that the rest of the performance plan must support.
+            </p>
+          </div>
+          <span class="tag">Step 1</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/latency-vs-throughput/">Latency vs Throughput</a></div>
+            <p class="muted">
+              Use this after the SLA target to compare how responsiveness changes as work volume increases.
+            </p>
+          </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/queue-depth/">Queue Depth</a></div>
+            <p class="muted">
+              Use this after throughput review to check whether waiting work is becoming a performance risk.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/concurrency-scaling/">Concurrency Scaling</a></div>
+            <p class="muted">
+              Use this after queue review to estimate how parallel demand changes resource pressure.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/cpu-utilization-impact/">CPU Utilization Impact</a></div>
+            <p class="muted">
+              Use this after concurrency review to check whether processor pressure is affecting the target.
+            </p>
+          </div>
+          <span class="tag">Step 5</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/disk-saturation/">Disk Saturation</a></div>
+            <p class="muted">
+              Use this after CPU review to check whether storage wait, IOPS, or throughput pressure is limiting performance.
+            </p>
+          </div>
+          <span class="tag">Step 6</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/network-congestion/">Network Congestion</a></div>
+            <p class="muted">
+              Use this after disk review to check whether traffic pressure or path behavior is affecting performance.
+            </p>
+          </div>
+          <span class="tag">Step 7</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/cache-hit-ratio/">Cache Hit Ratio</a></div>
+            <p class="muted">
+              Use this after major pressure checks to see whether caching is reducing or exposing system load.
+            </p>
+          </div>
+          <span class="tag">Step 8</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/bottleneck-analyzer/">Bottleneck Analyzer</a></div>
+            <p class="muted">
+              Use this near the end to identify the dominant constraint across the performance signals.
+            </p>
+          </div>
+          <span class="tag">Step 9</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/performance/headroom-target/">Headroom Target</a></div>
+            <p class="muted">
+              Use this last to define practical reserve margin after the performance risks are understood.
+            </p>
+          </div>
+          <span class="tag">Step 10</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: response target, latency,
+        throughput, queue depth, concurrency, CPU pressure, disk saturation, network congestion, cache efficiency,
+        bottleneck priority, and headroom. Export reports and saved snapshots are most useful when the inputs are clear
+        enough for someone else to understand later.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/performance/">Open Performance</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
+      </div>
+    </section>
+
+    <section class="note" aria-label="Planning disclaimer">
+      <p class="muted">
+        ScopedLabs tools and guides are planning aids. They do not replace production monitoring, load testing,
+        vendor guidance, platform-specific engineering, qualified professional validation, or project-specific performance testing.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
