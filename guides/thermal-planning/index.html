@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Thermal Planning Guide | ScopedLabs</title>
+  <meta name="description" content="Plan equipment thermal conditions with a practical workflow for heat load, PSU efficiency loss, BTU conversion, rack density, airflow, fan CFM, hot/cold aisle behavior, ambient rise, exhaust temperature, and room cooling capacity.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/thermal-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Thermal Planning Guide | ScopedLabs">
+  <meta property="og:description" content="A practical workflow for planning heat load, airflow, rack density, ambient rise, exhaust temperature, and cooling capacity.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/thermal-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Thermal Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="Plan heat load, PSU loss, BTU conversion, rack density, airflow, fan CFM, aisle behavior, ambient rise, exhaust temperature, and cooling capacity.">
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=0382"></script>
+  <script defer src="/assets/app.js?v=0382"></script>
+</head>
+
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/thermal/">Thermal</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Thermal Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for estimating heat load, PSU losses, BTU conversion, rack density, airflow,
+        fan CFM, aisle behavior, ambient rise, exhaust temperature, and final cooling capacity.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/thermal/">Open Thermal</a>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning guide</span>
+      </div>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the thermal design flow</h2>
+      <p class="muted">
+        Thermal planning should be handled as a sequence, not as a single cooling guess. Heat load defines the starting point.
+        PSU losses add real waste heat. BTU conversion aligns power and cooling math. Rack density shows concentration.
+        Airflow, fan CFM, aisle behavior, ambient rise, exhaust temperature, and final cooling capacity determine whether the
+        heat can actually be removed.
+      </p>
+      <p class="muted">
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Thermal workflow. The goal is to help you build a defensible planning estimate before documenting assumptions,
+        selecting equipment, or treating a rack, closet, enclosure, or room as thermally supportable.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="step-heat-title">
+      <h2 class="h2" id="step-heat-title">Step 1 — Estimate the heat load</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Heat load planning estimates how much heat the equipment produces from its electrical power draw. It turns watts into a thermal baseline so airflow, rack density, ambient rise, exhaust temperature, and room cooling can be reviewed from the same starting point.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This should happen before airflow, fan sizing, aisle strategy, ambient rise, exhaust temperature, or cooling capacity are treated as final. If the heat load is wrong, every downstream thermal estimate can look more precise than it really is.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Thermal problems often start with an underestimated load. Equipment power becomes heat, and that heat has to be moved away from the rack, closet, enclosure, or room. A clear load baseline prevents the rest of the design from being built on a guess.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              This is the first step in the Thermal guided flow. Use <a href="/tools/thermal/heat-load-estimator/">Heat Load Estimator</a> to establish the thermal baseline before moving into PSU heat loss, BTU conversion, rack density, airflow, and cooling checks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-psu-title">
+      <h2 class="h2" id="step-psu-title">Step 2 — Account for PSU efficiency heat</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              PSU efficiency heat planning estimates the extra waste heat created by power conversion losses. It helps separate useful equipment output from the heat added by inefficient conversion.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the base heat load is known and before rack density or airflow assumptions are locked. It is especially important when power supplies are heavily loaded, inefficient, redundant, or concentrated in a dense rack or enclosure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Ignoring conversion loss can make the thermal load look cleaner than reality. Even a small efficiency loss becomes meaningful when multiplied across servers, switches, storage, UPS equipment, or dense electronics.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/thermal/psu-efficiency-heat/">PSU Efficiency Heat</a> after the base load is estimated. The result helps keep the real heat load visible before BTU, rack density, and airflow planning.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-btu-title">
+      <h2 class="h2" id="step-btu-title">Step 3 — Convert watts and BTU/hr consistently</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              BTU conversion translates between electrical power and cooling load. It keeps watts, BTU/hr, and cooling capacity aligned so the thermal plan can be compared against room cooling and equipment specifications.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters once heat-producing equipment is estimated and before cooling capacity is discussed. Cooling equipment, facility planning, and thermal reports often use BTU/hr while equipment lists often start in watts.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Mixing units can hide thermal pressure. A rack may be described in watts while the room cooling is described in BTU/hr or tons. Converting consistently keeps the planning language clear for review.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/thermal/btu-converter/">BTU Converter</a> after heat load and PSU heat loss are known. This keeps power and cooling assumptions aligned before density and airflow review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-density-title">
+      <h2 class="h2" id="step-density-title">Step 4 — Check rack thermal density</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Rack thermal density planning estimates how much heat is concentrated in each rack or enclosure. It connects total heat load to the physical space where that heat must be removed.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the thermal load is known and before airflow or aisle strategy are treated as comfortable. Dense racks, storage shelves, GPU systems, PoE switches, and compact closets can all create localized thermal pressure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A room can have enough total cooling capacity and still have hot racks if heat is concentrated poorly. Rack density makes localized thermal risk visible before airflow assumptions collapse in the field.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/thermal/rack-thermal-density/">Rack Thermal Density</a> after BTU conversion. The result helps frame airflow, fan CFM, aisle strategy, and ambient-rise checks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-airflow-title">
+      <h2 class="h2" id="step-airflow-title">Step 5 — Estimate required airflow</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Airflow planning estimates how much air movement is needed to remove the calculated heat load while staying within an acceptable temperature rise. It connects thermal load to air movement.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after rack density and heat load are known. It should happen before fan sizing, hot/cold aisle planning, ambient rise, exhaust temperature, or final room cooling capacity are reviewed.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Cooling capacity alone is not enough if air does not reach the equipment or remove heat effectively. Airflow is where thermal math becomes a practical movement problem inside racks, rooms, closets, and enclosures.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/thermal/airflow-requirement/">Airflow Requirement</a> after heat and density assumptions are known. The result becomes the baseline for fan sizing and aisle strategy.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-fan-title">
+      <h2 class="h2" id="step-fan-title">Step 6 — Size fan CFM with margin</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Fan CFM planning estimates how much fan airflow is needed after heat load, airflow requirement, resistance, and margin are considered. It helps avoid relying only on nominal fan labels.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after airflow requirement is calculated and before enclosure or room airflow assumptions are treated as stable. It is especially useful for cabinets, closets, small rooms, and enclosed equipment areas.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Fans rarely deliver ideal airflow once filters, grilles, doors, cable blockage, pressure, and layout restrictions are included. Sizing with margin keeps the design from depending on perfect airflow conditions.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/thermal/fan-cfm-sizing/">Fan CFM Sizing</a> after airflow requirement. This helps document whether the air-moving hardware can support the thermal load with practical margin.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-aisle-title">
+      <h2 class="h2" id="step-aisle-title">Step 7 — Review hot/cold aisle behavior</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Hot/cold aisle planning reviews whether supply air and exhaust air are separated well enough to prevent recirculation. It connects rack layout, airflow direction, and containment assumptions.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after airflow and fan needs are understood. It is especially important in rack rows, dense rooms, closets with poor separation, and any layout where hot exhaust can feed back into equipment intakes.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Mixing hot and cold air can make cooling capacity look worse than it is and raise intake temperatures even when fans are moving air. Aisle strategy helps protect intake air quality and keeps rack temperatures from feeding back into each other.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/thermal/hot-cold-aisle/">Hot / Cold Aisle</a> after fan and airflow assumptions are known. The result helps frame ambient rise and exhaust temperature review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-ambient-title">
+      <h2 class="h2" id="step-ambient-title">Step 8 — Estimate ambient rise</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Ambient rise planning estimates how much the local intake or room temperature climbs as heat is added and airflow removes it. It connects load, airflow, and temperature behavior into one practical check.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after airflow and aisle assumptions are understood. It is especially important in closets, enclosed racks, edge rooms, small equipment spaces, and locations without strong dedicated cooling.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Equipment intake temperature is what the hardware experiences. If local ambient rise is too high, the design may run hot even when the building temperature looks acceptable elsewhere.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/thermal/ambient-rise/">Ambient Rise</a> after airflow and aisle planning. The result helps show whether the environment stays within a reasonable operating range.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-exhaust-title">
+      <h2 class="h2" id="step-exhaust-title">Step 9 — Check exhaust temperature</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Exhaust temperature planning estimates how hot discharge air becomes after equipment adds heat to the airflow stream. It helps show whether thermal rejection is creating a risky operating condition.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after ambient rise is reviewed and before final cooling capacity is treated as comfortable. Exhaust temperature is especially useful when hot air may recirculate, enter another rack, or remain trapped in a closet or enclosure.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Hot exhaust is not just a byproduct. If it is not removed or separated, it can raise intake temperatures and create a feedback loop. Checking exhaust temperature keeps heat rejection visible as part of the design.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/thermal/exhaust-temperature/">Exhaust Temperature</a> after ambient rise. The result helps prepare the final room cooling capacity review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-cooling-title">
+      <h2 class="h2" id="step-cooling-title">Step 10 — Validate room cooling capacity</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Room cooling capacity planning estimates whether the available cooling system can remove the total heat load with practical reserve. It connects the equipment plan to the cooling capacity that must support it.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters at the end of the thermal workflow, after heat load, density, airflow, aisle behavior, ambient rise, and exhaust temperature are understood. It is the final check before the thermal plan is treated as supportable.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A design can pass local airflow checks and still exceed room cooling capacity. Final cooling review keeps the full thermal package visible: load, airflow, distribution, reserve, and the ability to reject heat continuously.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/thermal/room-cooling-capacity/">Room Cooling Capacity</a> as the final Thermal planning-review step. The result helps document whether the room or enclosure can support the equipment load with reasonable margin.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: rack, closet, or small equipment room</h2>
+      <p class="muted">
+        A rack or closet may start with switches, servers, storage, UPS equipment, and support electronics. At first, the
+        thermal plan may look simple because the equipment fits physically. But the design can change quickly when heat load,
+        PSU loss, rack density, airflow, fan CFM, hot-air recirculation, ambient rise, exhaust temperature, and final room cooling
+        are reviewed together.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to estimate heat load first, account for conversion losses, convert watts to BTU/hr,
+        check rack density, size airflow, review fans and aisle behavior, then validate ambient rise, exhaust temperature,
+        and cooling capacity. That sequence makes it easier to explain why the thermal plan is reasonable instead of relying
+        on a rough cooling guess.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common thermal planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Sizing cooling from a rough equipment count</div>
+            <p class="muted">
+              Equipment count does not tell you total heat load, density, airflow demand, or exhaust behavior. Thermal planning should start from watts and heat output, not only device quantity.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Ignoring PSU conversion losses</div>
+            <p class="muted">
+              Power conversion losses become heat. If those losses are not included, the design may underestimate the actual thermal load.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Assuming room cooling solves rack hot spots</div>
+            <p class="muted">
+              A room can have enough total cooling and still have localized hot racks if airflow, density, or recirculation are weak.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Using nominal fan ratings without margin</div>
+            <p class="muted">
+              Fan labels often do not reflect real airflow after filters, grilles, doors, cable blockage, and pressure restrictions. Practical margin matters.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Checking cooling capacity without airflow path</div>
+            <p class="muted">
+              Cooling capacity cannot help if air does not reach the equipment and hot exhaust does not leave cleanly. Load, airflow, aisle behavior, and room capacity should be reviewed together.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tool-map-title">
+      <div class="tool-feature-top">
+        <span class="pill">Tool map</span>
+      </div>
+      <h2 class="h2" id="tool-map-title">Where the Thermal tools fit</h2>
+      <p class="muted">
+        Use this section as the plain-English map of the Thermal planning path. In this category, the active tools form
+        one core guided flow from heat-load baseline through airflow, rack behavior, temperature rise, and final cooling capacity.
+      </p>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Core guided design flow</div>
+            <p class="muted">
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from heat generation into airflow, temperature behavior, and cooling reserve.
+            </p>
+          </div>
+          <span class="tag">Pipeline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/heat-load-estimator/">Heat Load Estimator</a></div>
+            <p class="muted">
+              Use this first to estimate total heat output from equipment power draw.
+            </p>
+          </div>
+          <span class="tag">Step 1</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/psu-efficiency-heat/">PSU Efficiency Heat</a></div>
+            <p class="muted">
+              Use this after the base heat load to include waste heat from power-conversion losses.
+            </p>
+          </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/btu-converter/">BTU Converter</a></div>
+            <p class="muted">
+              Use this after heat load review to keep watts and BTU/hr aligned.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/rack-thermal-density/">Rack Thermal Density</a></div>
+            <p class="muted">
+              Use this after BTU conversion to check how concentrated the heat is in each rack.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/airflow-requirement/">Airflow Requirement</a></div>
+            <p class="muted">
+              Use this after heat and density checks to estimate required airflow.
+            </p>
+          </div>
+          <span class="tag">Step 5</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/fan-cfm-sizing/">Fan CFM Sizing</a></div>
+            <p class="muted">
+              Use this after airflow requirement to size air movement with practical margin.
+            </p>
+          </div>
+          <span class="tag">Step 6</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/hot-cold-aisle/">Hot / Cold Aisle</a></div>
+            <p class="muted">
+              Use this after fan sizing to review air separation and recirculation risk.
+            </p>
+          </div>
+          <span class="tag">Step 7</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/ambient-rise/">Ambient Rise</a></div>
+            <p class="muted">
+              Use this after aisle review to estimate local intake or room temperature rise.
+            </p>
+          </div>
+          <span class="tag">Step 8</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/exhaust-temperature/">Exhaust Temperature</a></div>
+            <p class="muted">
+              Use this after ambient rise to check thermal rejection and exhaust-air pressure.
+            </p>
+          </div>
+          <span class="tag">Step 9</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/thermal/room-cooling-capacity/">Room Cooling Capacity</a></div>
+            <p class="muted">
+              Use this last to validate final cooling capacity and reserve.
+            </p>
+          </div>
+          <span class="tag">Step 10</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: heat load, PSU loss, BTU/hr,
+        rack density, airflow requirement, fan CFM, aisle behavior, ambient rise, exhaust temperature, and cooling capacity.
+        Export reports and saved snapshots are most useful when the inputs are clear enough for someone else to understand later.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/thermal/">Open Thermal</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
+      </div>
+    </section>
+
+    <section class="note" aria-label="Planning disclaimer">
+      <p class="muted">
+        ScopedLabs tools and guides are planning aids. They do not replace HVAC engineering, manufacturer documentation,
+        equipment thermal specifications, qualified professional validation, site survey, or project-specific thermal testing.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
