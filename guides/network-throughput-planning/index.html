@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Network &amp; Throughput Planning Guide | ScopedLabs</title>
+  <meta name="description" content="Plan network and throughput requirements with a practical workflow for PoE budget, bandwidth, oversubscription, latency, MTU, VPN overhead, packet loss, jitter, and uplink failure impact.">
+  <link rel="canonical" href="https://scopedlabs.com/guides/network-throughput-planning/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="ScopedLabs">
+  <meta property="og:title" content="Network &amp; Throughput Planning Guide | ScopedLabs">
+  <meta property="og:description" content="A practical workflow for planning PoE budget, bandwidth demand, uplink oversubscription, latency, and supporting network constraints.">
+  <meta property="og:url" content="https://scopedlabs.com/guides/network-throughput-planning/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Network &amp; Throughput Planning Guide | ScopedLabs">
+  <meta name="twitter:description" content="Plan PoE budget, bandwidth demand, oversubscription, latency, MTU, VPN overhead, packet loss, jitter, and uplink failure assumptions before install.">
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-019" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=network-0384"></script>
+  <script defer src="/assets/app.js?v=network-0384"></script>
+</head>
+
+<body class="page-tools">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img
+            class="brand-icon"
+            src="/assets/favicon/favicon-32x32.png?v=1"
+            alt=""
+            width="32"
+            height="32"
+          />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="crumbs">
+      <a href="/tools/">Tools</a>
+      <span class="sep">/</span>
+      <a href="/tools/network/">Network &amp; Throughput</a>
+      <span class="sep">/</span>
+      <span>Planning Guide</span>
+    </div>
+
+    <section class="page-head">
+      <h1 class="h1">Network &amp; Throughput Planning Guide</h1>
+      <p class="subhead">
+        A practical workflow for estimating PoE load, bandwidth demand, uplink oversubscription,
+        latency pressure, and supporting network constraints before the install.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/tools/network/">Open Network &amp; Throughput</a>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="overview-title">
+      <div class="tool-feature-top">
+        <span class="pill">Planning guide</span>
+      </div>
+      <h2 class="h2" id="overview-title">Use the guide as the written version of the network design flow</h2>
+      <p class="muted">
+        Network planning should be handled as a sequence, not as a collection of isolated switch and uplink guesses.
+        PoE load affects switch selection and power margin. Bandwidth demand affects uplink sizing. Oversubscription
+        affects how much peak traffic the design can tolerate. Latency affects whether the network still feels stable
+        once traffic is flowing through the real path.
+      </p>
+      <p class="muted">
+        This guide explains what each step means, when it matters, why it affects the next step, and where it fits in the
+        ScopedLabs Network &amp; Throughput workflow. The goal is to help you build a defensible planning estimate before
+        documenting assumptions, comparing hardware, or troubleshooting field performance later.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="step-poe-title">
+      <h2 class="h2" id="step-poe-title">Step 1 — Establish the PoE budget</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              PoE budget planning estimates how much switch power is consumed by cameras, access points, phones,
+              readers, radios, controllers, and other powered endpoints. It compares expected draw against available
+              switch budget and keeps reserve margin visible.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This should happen before bandwidth, oversubscription, latency, or uplink planning is treated as final.
+              If the switch cannot power the endpoint mix comfortably, the rest of the network design may be built around
+              hardware that cannot support the real device load.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              PoE problems often show up after devices are added, replaced, or enabled at higher power classes.
+              A switch may have enough ports but not enough power. Reserve margin matters because endpoint draw,
+              startup behavior, seasonal loads, and future additions can erode the budget quickly.
+            </p>
+            <p class="muted">
+              The goal is not to replace manufacturer data. The goal is to make the switch-power assumption visible
+              before endpoint counts and uplink sizing make the plan look more complete than it really is.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              This is the first step in the Network &amp; Throughput guided flow. Use
+              <a href="/tools/network/poe-budget/">PoE Budget &amp; Switch Margin Analyzer</a>
+              to establish the powered-device baseline before moving into bandwidth, oversubscription, and latency validation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-bandwidth-title">
+      <h2 class="h2" id="step-bandwidth-title">Step 2 — Estimate bandwidth demand</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Bandwidth planning estimates total throughput from devices, streams, applications, or traffic classes.
+              It helps translate endpoint count and per-device demand into an uplink or backbone requirement that can be reviewed.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after the device list and PoE assumptions are known. It is especially important when cameras,
+              wireless access points, storage traffic, remote links, or high-throughput endpoints share the same uplink path.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A network can have enough ports and still be short on throughput. Bandwidth pressure may not be obvious until
+              peak periods, motion-heavy video, backup transfers, wireless aggregation, or multiple traffic types overlap.
+              A clean bandwidth estimate gives the oversubscription step something real to test.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/network/bandwidth/">Bandwidth Planner</a>
+              after PoE and endpoint assumptions are known. The result becomes the traffic baseline for uplink oversubscription
+              and latency review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-oversubscription-title">
+      <h2 class="h2" id="step-oversubscription-title">Step 3 — Stress-test uplink oversubscription</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Oversubscription planning compares potential downstream traffic demand against the uplink capacity available to carry it.
+              It shows how much the design depends on traffic not peaking at the same time.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after bandwidth demand is estimated and before the uplink design is treated as comfortable.
+              It is especially important for camera networks, access-layer switches, wireless aggregation, edge closets,
+              and any design where many devices share fewer uplinks.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              Oversubscription is not automatically bad, but unmanaged oversubscription can create congestion during peak use.
+              The problem is not only average traffic. It is what happens during worst-case bitrate, motion, backup,
+              patching, failover, or high-user-density periods.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/network/oversubscription/">Uplink Oversubscription Estimator</a>
+              after the bandwidth baseline is known. The result should be reviewed before latency, packet loss, and failover
+              assumptions are treated as acceptable.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step-latency-title">
+      <h2 class="h2" id="step-latency-title">Step 4 — Validate latency pressure</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">What it is</div>
+            <p class="muted">
+              Latency planning estimates end-to-end delay across the network path. It may include switching, routing,
+              firewall processing, wireless hops, WAN distance, VPN overhead, buffering, congestion, and application sensitivity.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">When it matters</div>
+            <p class="muted">
+              This matters after PoE, bandwidth, and oversubscription assumptions are understood. It is especially important
+              for voice, video, remote access, control systems, real-time monitoring, wireless backhaul, and any workflow where
+              responsiveness matters.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Why it matters</div>
+            <p class="muted">
+              A network can have enough bandwidth and still feel bad if delay is too high or unstable. Latency makes the design
+              more realistic because it accounts for the path traffic takes, not just the amount of traffic the pipe can carry.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Where it fits</div>
+            <p class="muted">
+              Use <a href="/tools/network/latency/">Latency Budget Calculator</a>
+              as the final core step in the Network &amp; Throughput guided flow. If jitter, loss, VPN, MTU, or failover behavior
+              are important to the project, review the supporting tools before treating the network plan as complete.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="example-title">
+      <h2 class="h2" id="example-title">Example workflow: camera and access network closet</h2>
+      <p class="muted">
+        A network closet may start with PoE cameras, access points, access control devices, a recorder or server, and one or more uplinks.
+        At first, the switch may look large enough because it has enough ports. But the design can change quickly when PoE draw,
+        stream bandwidth, uplink oversubscription, and latency-sensitive traffic are reviewed together.
+      </p>
+      <p class="muted">
+        The cleaner planning path is to estimate PoE budget first, calculate bandwidth demand, stress-test the uplink ratio,
+        then validate latency pressure. Supporting checks like MTU, VPN overhead, packet loss, jitter, growth, and uplink failure
+        can then be reviewed where they apply.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="mistakes-title">
+      <h2 class="h2" id="mistakes-title">Common network planning mistakes</h2>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Counting ports but not PoE budget</div>
+            <p class="muted">
+              This happens when a switch has enough physical ports but not enough power budget for the endpoint mix.
+              It matters because PoE limits can appear before port count becomes the constraint.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Sizing uplinks from average traffic only</div>
+            <p class="muted">
+              Average throughput can hide peak periods, motion-heavy video, backup transfers, wireless bursts, and failover events.
+              Oversubscription should be reviewed against realistic peak behavior, not only normal operating averages.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Treating bandwidth as the only performance metric</div>
+            <p class="muted">
+              A link can have enough capacity and still perform poorly if latency, jitter, loss, buffering, or path behavior is weak.
+              Throughput and responsiveness should be reviewed together.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Forgetting tunnel and MTU overhead</div>
+            <p class="muted">
+              VPNs, tunnels, encapsulation, and encryption can reduce usable throughput or create fragmentation risk.
+              These details should be checked before assuming the full raw link rate is available to the application.
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Ignoring failure behavior</div>
+            <p class="muted">
+              The network may look stable under normal conditions but behave differently when an uplink drops, traffic reroutes,
+              or redundancy becomes degraded. Failure impact should be reviewed when continuity matters.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="tool-map-title">
+      <div class="tool-feature-top">
+        <span class="pill">Tool map</span>
+      </div>
+      <h2 class="h2" id="tool-map-title">Where the Network &amp; Throughput tools fit</h2>
+      <p class="muted">
+        Use this section as the plain-English map of the Network &amp; Throughput planning path. The guided flow covers the core
+        sequence for PoE budget, bandwidth demand, uplink oversubscription, and latency validation. Supporting tools help validate
+        related assumptions, but they are not required guided-flow steps.
+      </p>
+
+      <div class="stack">
+        <div class="row">
+          <div>
+            <div class="row-title">Core guided design flow</div>
+            <p class="muted">
+              Start here when you want the tools to work as a connected workflow instead of separate one-off calculators.
+              This sequence builds from powered-device load into throughput, uplink stress, and path delay.
+            </p>
+          </div>
+          <span class="tag">Pipeline</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/poe-budget/">PoE Budget &amp; Switch Margin Analyzer</a></div>
+            <p class="muted">
+              Use this first to estimate powered-device draw and switch power margin before bandwidth and uplink planning.
+            </p>
+          </div>
+          <span class="tag">Step 1</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/bandwidth/">Bandwidth Planner</a></div>
+            <p class="muted">
+              Use this after endpoint assumptions are known to estimate total throughput and uplink demand.
+            </p>
+          </div>
+          <span class="tag">Step 2</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/oversubscription/">Uplink Oversubscription Estimator</a></div>
+            <p class="muted">
+              Use this after bandwidth planning to stress-test whether shared uplinks have enough practical headroom.
+            </p>
+          </div>
+          <span class="tag">Step 3</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/latency/">Latency Budget Calculator</a></div>
+            <p class="muted">
+              Use this after throughput and oversubscription are reviewed to estimate end-to-end delay pressure.
+            </p>
+          </div>
+          <span class="tag">Step 4</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title">Supporting network checks</div>
+            <p class="muted">
+              These tools support the network plan when the project has extra assumptions to validate. They are useful checks,
+              but they should not be presented as required steps in the main guided design flow.
+            </p>
+          </div>
+          <span class="tag">As needed</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/growth-simulator/">Growth Simulator</a></div>
+            <p class="muted">
+              Use this when staged additions or future endpoint growth may erode PoE, bandwidth, or uplink headroom over time.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/mtu-fragmentation/">MTU &amp; Fragmentation Helper</a></div>
+            <p class="muted">
+              Use this when payload size, encapsulation, tunnels, or fragmentation risk could affect usable traffic.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/vpn-overhead/">VPN Overhead Estimator</a></div>
+            <p class="muted">
+              Use this when VPN or tunnel overhead may reduce usable throughput or change MTU assumptions.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/latency-jitter-buffer/">Latency &amp; Jitter Buffer Planner</a></div>
+            <p class="muted">
+              Use this when jitter tolerance, buffering, delay, or smooth playback trade-offs matter.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/packet-loss-impact/">Packet Loss Impact Model</a></div>
+            <p class="muted">
+              Use this when retries, buffering, drops, or quality degradation need to be reviewed.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="row-title"><a href="/tools/network/uplink-failure-impact/">Uplink Failure Impact</a></div>
+            <p class="muted">
+              Use this when failover behavior or degraded uplink capacity could affect service continuity.
+            </p>
+          </div>
+          <span class="tag">Support</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-feature" aria-labelledby="next-title">
+      <div class="tool-feature-top">
+        <span class="pill">Next step</span>
+      </div>
+      <h2 class="h2" id="next-title">Use the category workflow, then document the assumptions</h2>
+      <p class="muted">
+        After the major assumptions are calculated, review the results as a planning package: PoE draw, switch margin,
+        bandwidth demand, uplink oversubscription, latency pressure, and supporting constraints such as MTU, VPN overhead,
+        packet loss, jitter, growth, and failure behavior. Export reports and saved snapshots are most useful when the inputs
+        are clear enough for someone else to understand later.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/tools/network/">Open Network &amp; Throughput</a>
+        <a class="btn btn-ghost" href="/tools/">Browse all tools</a>
+      </div>
+    </section>
+
+    <section class="note" aria-label="Planning disclaimer">
+      <p class="muted">
+        ScopedLabs tools and guides are planning aids. They do not replace manufacturer documentation, network engineering,
+        qualified professional validation, project-specific performance testing, security review, or final deployment validation.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <div class="muted">© <span data-year></span> ScopedLabs</div>
+      <div class="footer-links">
+        <a href="/tools/">Tools</a>
+        <a href="/upgrade/">Upgrade</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
