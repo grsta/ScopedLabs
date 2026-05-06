@@ -24,7 +24,7 @@
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script defer src="/assets/auth.js?v=0314"></script>
-  <script defer src="/assets/account.js?v=acct-504"></script>
+  <script defer src="/assets/account.js?v=acct-505"></script>
 
   <style data-scopedlabs-account-snapshots>
     .sl-snapshots-list {
@@ -113,6 +113,73 @@
       display: inline-block;
     }
 
+
+    .sl-account-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 1rem;
+    }
+
+    .sl-account-mini-card {
+      border: 1px solid rgba(112, 255, 145, 0.16);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(0, 0, 0, 0.14);
+    }
+
+    .sl-account-mini-card strong {
+      display: block;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .sl-unlock-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .sl-unlock-card {
+      border: 1px solid rgba(112, 255, 145, 0.18);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(0, 0, 0, 0.15);
+      text-decoration: none;
+      color: inherit;
+      display: grid;
+      gap: 8px;
+      transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+    }
+
+    .sl-unlock-card:hover,
+    .sl-unlock-card:focus {
+      border-color: rgba(112, 255, 145, 0.34);
+      background: rgba(112, 255, 145, 0.06);
+      transform: translateY(-1px);
+      outline: none;
+    }
+
+    .sl-unlock-card-title {
+      color: #fff;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .sl-unlock-card-desc {
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 860px) {
+      .sl-account-summary-grid,
+      .sl-unlock-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 860px) {
       .sl-snapshot-grid {
         grid-template-columns: 1fr;
@@ -152,8 +219,23 @@
   <main class="container spacer-xl">
     <section class="card tool-card">
       <span class="pill">Account</span>
-      <h1 style="margin-top:.6rem;">Your unlocks</h1>
+      <h1 style="margin-top:.6rem;">Your ScopedLabs account</h1>
       <p class="muted" id="sl-whoami">Not signed in</p>
+
+      <div class="sl-account-summary-grid" aria-label="Account overview">
+        <div class="sl-account-mini-card">
+          <strong>Category access</strong>
+          <p class="muted" style="margin:0;">Review your unlocked Pro categories and jump back into the tools you own.</p>
+        </div>
+        <div class="sl-account-mini-card">
+          <strong>Saved reports</strong>
+          <p class="muted" style="margin:0;">Reopen snapshots saved from export cards so prior planning work stays available.</p>
+        </div>
+        <div class="sl-account-mini-card">
+          <strong>Planning workflow</strong>
+          <p class="muted" style="margin:0;">Use tools, guides, exports, and snapshots together as a lightweight planning workspace.</p>
+        </div>
+      </div>
 
       <div class="spacer-md"></div>
 
@@ -178,8 +260,13 @@
       </div>
 
       <div id="sl-checkout-card" class="card" style="background:rgba(0,0,0,.16); display:none;">
-        <h3 style="margin-top:0;">Unlocked categories</h3>
-        <p class="muted" id="sl-entitlements">Loading…</p>
+        <span class="pill">Pro access</span>
+        <h2 style="margin:.65rem 0 .35rem;">Unlocked categories</h2>
+        <p class="muted" style="margin-top:0;">
+          Each unlocked category includes its current and future Pro tools for that category.
+        </p>
+
+        <div id="sl-entitlements" class="muted">Loading…</div>
 
         <div class="actions" style="margin-top: .85rem;">
           <a class="btn btn-primary" href="/upgrade/">Unlock another category</a>

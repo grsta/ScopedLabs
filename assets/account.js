@@ -356,12 +356,66 @@
   function renderEntitlementsList(cats) {
     if (!els.entitlements) return;
 
-    const list = (cats || []).map(normalizeCat).filter(Boolean);
+    const list = Array.from(new Set((cats || []).map(normalizeCat).filter(Boolean)));
 
     if (!list.length) {
-      els.entitlements.textContent = "No unlocks yet. Go to Upgrade to purchase a category.";
+      els.entitlements.innerHTML =
+        '<p class="muted" style="margin:.75rem 0 0;">No unlocks yet. Go to Upgrade to purchase a category.</p>';
       return;
     }
+
+    const categoryMeta = {
+      "access-control": {
+        title: "Access Control",
+        href: "/tools/access-control/",
+        desc: "Doors, readers, lock power, panels, and access-level planning."
+      },
+      compute: {
+        title: "Compute",
+        href: "/tools/compute/",
+        desc: "CPU, RAM, IOPS, throughput, VM density, GPU, power, and backup windows."
+      },
+      infrastructure: {
+        title: "Infrastructure",
+        href: "/tools/infrastructure/",
+        desc: "Rack space, floor load, conduit, cable tray, room sizing, and support infrastructure."
+      },
+      network: {
+        title: "Network & Throughput",
+        href: "/tools/network/",
+        desc: "PoE, bandwidth, oversubscription, latency, packet loss, MTU, VPN, and growth planning."
+      },
+      performance: {
+        title: "Performance",
+        href: "/tools/performance/",
+        desc: "Headroom, response time, bottlenecks, queues, concurrency, and saturation risk."
+      },
+      "physical-security": {
+        title: "Physical Security",
+        href: "/tools/physical-security/",
+        desc: "Camera coverage, mounting, pixel density, lens selection, blind spots, and capture range."
+      },
+      power: {
+        title: "Power & Runtime",
+        href: "/tools/power/",
+        desc: "UPS runtime, battery sizing, load growth, redundancy, and worst-case runtime checks."
+      },
+      thermal: {
+        title: "Thermal",
+        href: "/tools/thermal/",
+        desc: "Heat load, airflow, fan CFM, ambient rise, exhaust temperature, and cooling capacity."
+      },
+      "video-storage": {
+        title: "Video & Storage",
+        href: "/tools/video-storage/",
+        desc: "Bitrate, storage, retention, RAID impact, survivability, codec, and archive planning."
+      },
+      wireless: {
+        title: "Wireless",
+        href: "/tools/wireless/",
+        desc: "Coverage, overlap, noise margin, density, AP capacity, link budget, mesh, and roaming."
+      }
+    };
 
     const pretty = (slug) =>
       slug
@@ -370,17 +424,37 @@
         .join(" ");
 
     els.entitlements.innerHTML = "";
+
     const wrap = document.createElement("div");
-    wrap.style.display = "flex";
-    wrap.style.flexWrap = "wrap";
-    wrap.style.gap = "8px";
-    wrap.style.marginTop = "8px";
+    wrap.className = "sl-unlock-grid";
 
     list.forEach((slug) => {
-      const chip = document.createElement("span");
-      chip.className = "pill";
-      chip.textContent = pretty(slug);
-      wrap.appendChild(chip);
+      const meta = categoryMeta[slug] || {
+        title: pretty(slug),
+        href: "/tools/",
+        desc: "Unlocked Pro category access."
+      };
+
+      const card = document.createElement("a");
+      card.className = "sl-unlock-card";
+      card.href = meta.href;
+
+      const pill = document.createElement("span");
+      pill.className = "pill";
+      pill.textContent = "Pro active";
+
+      const title = document.createElement("div");
+      title.className = "sl-unlock-card-title";
+      title.textContent = meta.title;
+
+      const desc = document.createElement("div");
+      desc.className = "sl-unlock-card-desc";
+      desc.textContent = meta.desc;
+
+      card.appendChild(pill);
+      card.appendChild(title);
+      card.appendChild(desc);
+      wrap.appendChild(card);
     });
 
     els.entitlements.appendChild(wrap);
