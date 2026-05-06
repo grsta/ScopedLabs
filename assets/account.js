@@ -29,6 +29,11 @@
     entitlements: document.getElementById("sl-entitlements"),
     signout: document.getElementById("sl-signout"),
     status: document.getElementById("sl-status"),
+    snapshotsCard: document.getElementById("sl-snapshots-card"),
+    refreshSnapshots: document.getElementById("sl-refresh-snapshots"),
+    snapshotsStatus: document.getElementById("sl-snapshots-status"),
+    snapshotsList: document.getElementById("sl-snapshots-list"),
+    snapshotDetail: document.getElementById("sl-snapshot-detail"),
   };
 
   const sb = () => (window.SL_AUTH && window.SL_AUTH.sb ? window.SL_AUTH.sb : null);
@@ -561,6 +566,19 @@
         }
 
         setStatus("");
+      });
+    }
+
+    if (els.refreshSnapshots && !window.__SL_SNAPSHOT_REFRESH_BOUND) {
+      window.__SL_SNAPSHOT_REFRESH_BOUND = true;
+
+      els.refreshSnapshots.addEventListener("click", async () => {
+        if (!currentSession) {
+          snapshotStatusText("Sign in to view saved snapshots.");
+          return;
+        }
+
+        await fetchSnapshots(currentSession);
       });
     }
 
