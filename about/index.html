@@ -15,7 +15,7 @@
   <meta name="twitter:title" content="About • ScopedLabs">
   <meta name="twitter:description" content="Learn how ScopedLabs turns practical engineering calculations into guided planning tools for infrastructure, security, power, network, and system design.">
 
-  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-021" />
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-022" />
   <script src="/assets/app.js?v=0314" defer></script>
 </head>
 
@@ -38,7 +38,18 @@
 
       <nav class="nav site-nav nav-tabs" aria-label="Primary">
         <a class="nav-tab" href="/">Home</a>
-        <a class="nav-tab" href="/tools/">Tools</a>
+
+        <details class="nav-dropdown">
+          <summary class="nav-tab nav-dropdown-toggle">
+            Tools
+            <span class="nav-caret" aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu" aria-label="Tools submenu">
+            <a class="nav-dropdown-item" href="/tools/">All Tools</a>
+            <a class="nav-dropdown-item" href="/guides/">Planning Guides</a>
+          </div>
+        </details>
+
         <a class="nav-tab is-active" href="/about/" aria-current="page">About</a>
         <a class="nav-tab" href="/contact/">Contact</a>
         <a class="nav-tab" href="/account/">Account</a>

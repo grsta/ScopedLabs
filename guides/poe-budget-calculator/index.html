@@ -18,7 +18,7 @@
   <meta name="twitter:title" content="PoE Budget Calculator Guide • ScopedLabs" />
   <meta name="twitter:description" content="Estimate PoE switch budget, connected device load, growth margin, and practical design headroom." />
 
-  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-021" />
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-022" />
   <script src="/assets/app.js?v=0314" defer></script>
 </head>
 
@@ -41,7 +41,18 @@
 
       <nav class="nav site-nav nav-tabs" aria-label="Primary">
         <a class="nav-tab" href="/">Home</a>
-        <a class="nav-tab" href="/tools/">Tools</a>
+
+        <details class="nav-dropdown is-active">
+          <summary class="nav-tab nav-dropdown-toggle is-active" aria-current="page">
+            Tools
+            <span class="nav-caret" aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu" aria-label="Tools submenu">
+            <a class="nav-dropdown-item" href="/tools/">All Tools</a>
+            <a class="nav-dropdown-item" href="/guides/">Planning Guides</a>
+          </div>
+        </details>
+
         <a class="nav-tab" href="/about/">About</a>
         <a class="nav-tab" href="/contact/">Contact</a>
         <a class="nav-tab" href="/account/">Account</a>

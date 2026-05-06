@@ -15,7 +15,7 @@
   <meta name="twitter:title" content="Wireless Planning Guide | ScopedLabs">
   <meta name="twitter:description" content="Plan wireless coverage, overlap, RF margin, density, AP capacity, link budget, backhaul, PtP links, roaming, and throughput before deployment.">
 
-  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-021" />
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-022" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -45,7 +45,18 @@
 
       <nav class="nav site-nav nav-tabs" aria-label="Primary">
         <a class="nav-tab" href="/">Home</a>
-        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+
+        <details class="nav-dropdown is-active">
+          <summary class="nav-tab nav-dropdown-toggle is-active" aria-current="page">
+            Tools
+            <span class="nav-caret" aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu" aria-label="Tools submenu">
+            <a class="nav-dropdown-item" href="/tools/">All Tools</a>
+            <a class="nav-dropdown-item" href="/guides/">Planning Guides</a>
+          </div>
+        </details>
+
         <a class="nav-tab" href="/about/">About</a>
         <a class="nav-tab" href="/contact/">Contact</a>
         <a class="nav-tab" href="/account/">Account</a>

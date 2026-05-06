@@ -15,7 +15,7 @@
   <meta name="twitter:title" content="Privacy Policy • ScopedLabs">
   <meta name="twitter:description" content="ScopedLabs Privacy Policy covering account sign-in, payments, support, saved snapshots, browser storage, and service providers.">
 
-  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-021" />
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-022" />
   <script src="/assets/app.js?v=0314" defer></script>
 </head>
 
@@ -37,11 +37,22 @@
       </a>
 
       <nav class="nav site-nav nav-tabs" aria-label="Primary">
-        <a class="nav-tab"" href="/">Home</a>
-        <a class="nav-tab"" href="/tools/">Tools</a>
-        <a class="nav-tab"" href="/about/">About</a>
-        <a class="nav-tab"" href="/contact/">Contact</a>
-        <a class="nav-tab"" href="/account/">Account</a>
+        <a class="nav-tab" href="/">Home</a>
+
+        <details class="nav-dropdown">
+          <summary class="nav-tab nav-dropdown-toggle">
+            Tools
+            <span class="nav-caret" aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu" aria-label="Tools submenu">
+            <a class="nav-dropdown-item" href="/tools/">All Tools</a>
+            <a class="nav-dropdown-item" href="/guides/">Planning Guides</a>
+          </div>
+        </details>
+
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
       </nav>
     </div>
   </header>

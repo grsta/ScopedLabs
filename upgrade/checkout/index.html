@@ -7,7 +7,7 @@
   <meta name="description" content="ScopedLabs checkout page for completing category-based Pro access through the secure upgrade flow." />
   <meta name="robots" content="noindex,follow" />
 
-  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-021">
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-022">
   <link rel="icon" href="/assets/favicon.ico" />
 
   <style>
@@ -115,7 +115,18 @@
 
                                           <nav class="nav site-nav nav-tabs" aria-label="Primary">
         <a class="nav-tab" href="/">Home</a>
-        <a class="nav-tab" href="/tools/">Tools</a>
+
+        <details class="nav-dropdown">
+          <summary class="nav-tab nav-dropdown-toggle">
+            Tools
+            <span class="nav-caret" aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu" aria-label="Tools submenu">
+            <a class="nav-dropdown-item" href="/tools/">All Tools</a>
+            <a class="nav-dropdown-item" href="/guides/">Planning Guides</a>
+          </div>
+        </details>
+
         <a class="nav-tab" href="/about/">About</a>
         <a class="nav-tab" href="/contact/">Contact</a>
         <a class="nav-tab" href="/account/">Account</a>
