@@ -2665,3 +2665,43 @@ body {
   }
 }
 
+
+/* ScopedLabs dropdown tab repair — nav-tabs-023 */
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-dropdown > summary.nav-tab,
+.nav-dropdown > summary.nav-dropdown-toggle.nav-tab {
+  list-style: none;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  vertical-align: top;
+}
+
+.nav-dropdown > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-dropdown > summary::marker {
+  content: "";
+}
+
+.nav-dropdown.is-active > summary.nav-tab,
+.nav-dropdown.is-active > summary.nav-dropdown-toggle.nav-tab,
+.nav-dropdown[open] > summary.nav-tab,
+.nav-dropdown[open] > summary.nav-dropdown-toggle.nav-tab {
+  color: rgba(255,255,255,0.98);
+}
+
+.nav-dropdown-menu {
+  top: calc(100% + 8px);
+}
+
