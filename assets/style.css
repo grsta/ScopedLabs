@@ -2586,26 +2586,24 @@ body {
 }
 
 
-/* ScopedLabs tools dropdown nav — nav-tabs-022 */
+/* ScopedLabs tools dropdown nav — nav-tabs-024 */
 .nav-dropdown {
   position: relative;
   display: inline-flex;
   align-items: stretch;
-}
-
-.nav-dropdown > summary {
-  list-style: none;
-  cursor: pointer;
-  user-select: none;
-}
-
-.nav-dropdown > summary::-webkit-details-marker {
-  display: none;
+  margin: 0;
+  padding: 0;
 }
 
 .nav-dropdown-toggle {
+  border: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 
@@ -2627,13 +2625,14 @@ body {
   box-shadow:
     0 18px 40px rgba(0,0,0,0.42),
     inset 0 1px 0 rgba(255,255,255,0.05);
-  display: grid;
+  display: none;
   gap: 4px;
   z-index: 10020;
 }
 
-.nav-dropdown:not([open]) .nav-dropdown-menu {
-  display: none;
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu {
+  display: grid;
 }
 
 .nav-dropdown-item {
@@ -2663,45 +2662,5 @@ body {
     left: 0;
     min-width: 180px;
   }
-}
-
-
-/* ScopedLabs dropdown tab repair — nav-tabs-023 */
-.nav-dropdown {
-  position: relative;
-  display: inline-block;
-  vertical-align: top;
-  margin: 0;
-  padding: 0;
-}
-
-.nav-dropdown > summary.nav-tab,
-.nav-dropdown > summary.nav-dropdown-toggle.nav-tab {
-  list-style: none;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin: 0;
-  vertical-align: top;
-}
-
-.nav-dropdown > summary::-webkit-details-marker {
-  display: none;
-}
-
-.nav-dropdown > summary::marker {
-  content: "";
-}
-
-.nav-dropdown.is-active > summary.nav-tab,
-.nav-dropdown.is-active > summary.nav-dropdown-toggle.nav-tab,
-.nav-dropdown[open] > summary.nav-tab,
-.nav-dropdown[open] > summary.nav-dropdown-toggle.nav-tab {
-  color: rgba(255,255,255,0.98);
-}
-
-.nav-dropdown-menu {
-  top: calc(100% + 8px);
 }
 
