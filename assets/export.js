@@ -1211,7 +1211,7 @@ const extraSections = getExtraExportSections();
       `
       : "";
 
-      const additionalAnalysisBlock = (payload.analysisSections || [])
+      const additionalAnalysisBlock = payload.reportProfile === "planning-v1" ? "" : (payload.analysisSections || [])
   .filter((section) => {
     return normalizeSlug(section.title) !== normalizeSlug("Engineering Interpretation");
   })
