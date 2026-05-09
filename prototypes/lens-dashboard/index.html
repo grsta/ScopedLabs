@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lens Dashboard Prototype ? ScopedLabs</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-025" />
+
+  <style>
+    :root {
+      --sl-bg: #020806;
+      --sl-panel: rgba(8, 18, 15, 0.94);
+      --sl-panel-2: rgba(11, 24, 19, 0.78);
+      --sl-line: rgba(255, 255, 255, 0.09);
+      --sl-line-soft: rgba(255, 255, 255, 0.055);
+      --sl-text: rgba(255,255,255,.88);
+      --sl-muted: rgba(255,255,255,.58);
+      --sl-green: #75ff9a;
+      --sl-yellow: #ffd34f;
+      --sl-red: #ff5d55;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 20% 5%, rgba(73, 255, 124, 0.12), transparent 28%),
+        radial-gradient(circle at 80% 8%, rgba(255, 83, 73, 0.08), transparent 24%),
+        linear-gradient(180deg, #020806, #010403);
+    }
+
+    .prototype-shell {
+      width: min(1120px, calc(100vw - 36px));
+      margin: 42px auto 80px;
+    }
+
+    .prototype-note {
+      border: 1px solid rgba(117, 255, 154, 0.18);
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      color: rgba(255,255,255,.68);
+      line-height: 1.5;
+    }
+
+    .report {
+      border: 1px solid rgba(117, 255, 154, 0.18);
+      border-radius: 18px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(91, 255, 147, 0.08), transparent 34%),
+        linear-gradient(180deg, rgba(5, 14, 11, 0.98), rgba(2, 7, 5, 0.99));
+      box-shadow:
+        0 28px 80px rgba(0,0,0,.44),
+        inset 0 1px 0 rgba(255,255,255,.055);
+      color: var(--sl-text);
+    }
+
+    .report-header {
+      display: grid;
+      grid-template-columns: 170px minmax(0, 1fr) 420px 110px;
+      border-bottom: 1px solid var(--sl-line);
+      background: rgba(255,255,255,.025);
+    }
+
+    .brand-block,
+    .title-block,
+    .meta-block,
+    .badge-block {
+      padding: 14px 16px;
+      border-right: 1px solid var(--sl-line-soft);
+      min-width: 0;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-weight: 950;
+    }
+
+    .brand-mark {
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      color: #061209;
+      background: linear-gradient(135deg, #8cff9f, #3fc96d);
+      font-weight: 950;
+      font-size: .76rem;
+    }
+
+    .kicker {
+      color: var(--sl-green);
+      font-size: .66rem;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .title-block h2 {
+      margin: 5px 0 0;
+      color: #fff;
+      font-size: 1.05rem;
+      line-height: 1.2;
+      font-weight: 950;
+    }
+
+    .meta-block {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .meta .label {
+      color: rgba(255,255,255,.44);
+      font-size: .62rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .meta .value {
+      margin-top: 4px;
+      color: rgba(255,255,255,.84);
+      font-size: .74rem;
+      line-height: 1.2;
+      font-weight: 850;
+    }
+
+    .badge-block {
+      display: grid;
+      place-items: center;
+      border-right: 0;
+    }
+
+    .pro-badge {
+      border: 1px solid rgba(255, 218, 88, .34);
+      border-radius: 11px;
+      padding: 8px 10px;
+      color: #ffe37c;
+      background: rgba(255, 218, 88, .07);
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr) 300px;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .panel {
+      border: 1px solid var(--sl-line);
+      border-radius: 13px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+    }
+
+    .rail,
+    .main,
+    .guidance,
+    .bottom-card {
+      padding: 13px;
+    }
+
+    .status-pill {
+      display: inline-grid;
+      place-items: center;
+      min-width: 96px;
+      margin: 8px 0 11px;
+      border: 1px solid rgba(255, 93, 85, .42);
+      border-radius: 9px;
+      padding: 8px 12px;
+      color: #ff9c95;
+      background: rgba(255, 93, 85, .13);
+      font-size: .74rem;
+      font-weight: 950;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .copy {
+      color: rgba(255,255,255,.70);
+      font-size: .8rem;
+      line-height: 1.52;
+      margin: 0;
+    }
+
+    .rail-section {
+      border-top: 1px solid var(--sl-line-soft);
+      margin-top: 12px;
+      padding-top: 12px;
+    }
+
+    .rail-value.red {
+      color: #ff8f87;
+      font-size: 1.02rem;
+      font-weight: 950;
+      margin-top: 5px;
+    }
+
+    .rail-value.green {
+      color: #90ffad;
+      font-size: .82rem;
+      line-height: 1.35;
+      font-weight: 900;
+      margin-top: 5px;
+    }
+
+    .rail-value {
+      color: rgba(255,255,255,.82);
+      font-size: .76rem;
+      line-height: 1.42;
+      margin-top: 5px;
+      font-weight: 800;
+    }
+
+    .section-map {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .section-pill {
+      border: 1px solid rgba(117,255,154,.16);
+      border-radius: 8px;
+      background: rgba(255,255,255,.028);
+      color: rgba(255,255,255,.76);
+      padding: 7px 8px;
+      font-size: .72rem;
+      font-weight: 850;
+      line-height: 1.2;
+    }
+
+    .main-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .main-title {
+      margin: 3px 0 0;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 950;
+    }
+
+    .pressure-text {
+      color: var(--sl-green);
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .gauge-wrap {
+      border: 1px solid rgba(255,255,255,.065);
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 50% 83%, rgba(255,255,255,.045), transparent 35%),
+        linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.10));
+      overflow: hidden;
+      padding: 6px 8px 0;
+    }
+
+    .gauge-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-height: 235px;
+    }
+
+    .zone-bg {
+      fill: none;
+      stroke-width: 48;
+      stroke-linecap: round;
+      opacity: .30;
+    }
+
+    .zone {
+      fill: none;
+      stroke-width: 30;
+      stroke-linecap: butt;
+    }
+
+    .zone.healthy {
+      stroke: url(#healthyGrad);
+      stroke-linecap: round;
+    }
+
+    .zone.watch {
+      stroke: url(#watchGrad);
+    }
+
+    .zone.risk {
+      stroke: url(#riskGrad);
+      stroke-linecap: round;
+    }
+
+    .inner-arc {
+      fill: none;
+      stroke: rgba(255,255,255,.13);
+      stroke-width: 1;
+      stroke-dasharray: 4 7;
+    }
+
+    .needle {
+      stroke: rgba(255,255,255,.88);
+      stroke-width: 5;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 6px rgba(255,255,255,.28));
+    }
+
+    .needle-tip {
+      fill: var(--sl-red);
+      stroke: #fff;
+      stroke-width: 2;
+    }
+
+    .needle-hub {
+      fill: rgba(255,255,255,.94);
+    }
+
+    .needle-core {
+      fill: rgba(3,10,7,.95);
+    }
+
+    .gauge-label {
+      fill: rgba(255,255,255,.80);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .07em;
+    }
+
+    .gauge-sub {
+      fill: rgba(255,255,255,.62);
+      font-size: 9px;
+      font-weight: 850;
+    }
+
+    .reading rect {
+      fill: rgba(3,8,7,.90);
+      stroke: rgba(255, 93, 85, .68);
+      stroke-width: 1;
+    }
+
+    .reading .value {
+      fill: #fff;
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .reading .label {
+      fill: rgba(255,255,255,.58);
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .08em;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 9px;
+    }
+
+    .metric {
+      border: 1px solid rgba(255,255,255,.075);
+      border-radius: 10px;
+      background: rgba(255,255,255,.028);
+      padding: 10px;
+      min-height: 62px;
+    }
+
+    .metric .label {
+      color: rgba(255,255,255,.50);
+      font-size: .62rem;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .metric .value {
+      color: rgba(255,255,255,.93);
+      font-size: .84rem;
+      font-weight: 950;
+      line-height: 1.2;
+      margin-top: 6px;
+    }
+
+    .interpretation {
+      margin-top: 9px;
+      padding: 11px;
+      border: 1px solid rgba(255,255,255,.075);
+      border-radius: 11px;
+      background: rgba(0,0,0,.12);
+    }
+
+    .interpretation h3,
+    .guidance h3,
+    .bottom-card h3 {
+      margin: 0 0 7px;
+      color: #fff;
+      font-size: .82rem;
+      font-weight: 950;
+    }
+
+    .guide-section {
+      padding: 12px 0;
+      border-top: 1px solid var(--sl-line-soft);
+    }
+
+    .guide-section:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .guide-section.why h3 {
+      color: #ff8f87;
+    }
+
+    .guide-section.drivers h3 {
+      color: #ffd56e;
+    }
+
+    .guide-section.actions h3,
+    .guide-section.target h3 {
+      color: #90ffad;
+    }
+
+    ul.clean-list {
+      margin: 0;
+      padding-left: 17px;
+      color: rgba(255,255,255,.72);
+      font-size: .76rem;
+      line-height: 1.52;
+    }
+
+    ul.clean-list li + li {
+      margin-top: 4px;
+    }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 10px;
+      padding: 0 10px 10px;
+    }
+
+    .bottom-card {
+      min-height: 112px;
+    }
+
+    .flow-table {
+      display: grid;
+      gap: 5px;
+      font-size: .72rem;
+    }
+
+    .flow-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,.055);
+      padding-bottom: 4px;
+    }
+
+    .flow-row span {
+      color: rgba(255,255,255,.52);
+    }
+
+    .flow-row strong {
+      color: rgba(255,255,255,.86);
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .footer-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-top: 1px solid var(--sl-line);
+      background: rgba(255,255,255,.020);
+    }
+
+    .foot {
+      padding: 11px 13px;
+      border-right: 1px solid var(--sl-line-soft);
+    }
+
+    .foot:last-child {
+      border-right: 0;
+    }
+
+    .foot .label {
+      color: rgba(255,255,255,.46);
+      font-size: .62rem;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .foot .value {
+      color: rgba(255,255,255,.82);
+      font-size: .73rem;
+      line-height: 1.35;
+      margin-top: 4px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 1100px) {
+      .report-header {
+        grid-template-columns: 160px minmax(0, 1fr);
+      }
+
+      .meta-block {
+        grid-column: 1 / -1;
+        border-top: 1px solid var(--sl-line-soft);
+        border-right: 0;
+      }
+
+      .badge-block {
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        padding: 0;
+      }
+
+      .report-grid {
+        grid-template-columns: 210px minmax(0,1fr);
+      }
+
+      .guidance {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 0 20px;
+      }
+
+      .guide-section:nth-child(2) {
+        padding-top: 0;
+        border-top: 0;
+      }
+
+      .bottom-grid,
+      .footer-strip {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .report-header,
+      .report-grid,
+      .guidance,
+      .bottom-grid,
+      .footer-strip,
+      .meta-block,
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .badge-block {
+        position: static;
+        place-items: start;
+        border-top: 1px solid var(--sl-line-soft);
+      }
+
+      .brand-block,
+      .title-block,
+      .meta-block,
+      .badge-block,
+      .foot {
+        border-right: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img class="brand-icon" src="/assets/favicon/favicon-32x32.png?v=1" alt="" width="32" height="32" />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/">Tools</a>
+        <a class="nav-tab" href="/guides/">Guides</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="prototype-shell">
+      <div class="prototype-note">
+        Hidden prototype page. This is mock-data only and is not linked from the public navigation or sitemap.
+      </div>
+
+      <section class="report">
+        <div class="report-header">
+          <div class="brand-block">
+            <span class="brand-mark">S</span>
+            <span>ScopedLabs</span>
+          </div>
+
+          <div class="title-block">
+            <div class="kicker">Lens Selection Helper</div>
+            <h2>Lens selection is under high planning pressure.</h2>
+          </div>
+
+          <div class="meta-block">
+            <div class="meta">
+              <div class="label">Report ID</div>
+              <div class="value">SL-PS-LS-001</div>
+            </div>
+            <div class="meta">
+              <div class="label">Date</div>
+              <div class="value">May 9, 2026</div>
+            </div>
+            <div class="meta">
+              <div class="label">Project</div>
+              <div class="value">Planning Review</div>
+            </div>
+          </div>
+
+          <div class="badge-block">
+            <span class="pro-badge">Pro Report</span>
+          </div>
+        </div>
+
+        <div class="report-grid">
+          <aside class="panel rail">
+            <div class="kicker">Status Summary</div>
+            <div class="status-pill">Risk</div>
+            <p class="copy">
+              The current combination of distance, target width, sensor width, and upstream detail requirement is increasing lens pressure and reducing layout flexibility.
+            </p>
+
+            <div class="rail-section">
+              <div class="kicker">Key Result</div>
+              <div class="rail-value red">25.6 mm</div>
+            </div>
+
+            <div class="rail-section">
+              <div class="kicker">Healthy Target</div>
+              <div class="rail-value green">
+                Bring lens-selection pressure back into the preferred planning band while preserving the required scene detail objective.
+              </div>
+            </div>
+
+            <div class="rail-section">
+              <div class="kicker">Primary Driver</div>
+              <div class="rail-value">Focal Demand</div>
+            </div>
+
+            <div class="rail-section">
+              <div class="kicker">Report Sections</div>
+              <div class="section-map">
+                <div class="section-pill">1. Why this status?</div>
+                <div class="section-pill">2. Likely drivers</div>
+                <div class="section-pill">3. Possible planning actions</div>
+                <div class="section-pill">4. Follow-up checks</div>
+                <div class="section-pill">5. Input assumptions</div>
+              </div>
+            </div>
+          </aside>
+
+          <section class="panel main">
+            <div class="main-head">
+              <div>
+                <div class="kicker">Results Overview</div>
+                <h3 class="main-title">Lens Selection Pressure</h3>
+              </div>
+              <div class="pressure-text">75 / 100 Pressure</div>
+            </div>
+
+            <div class="gauge-wrap">
+              <svg class="gauge-svg" viewBox="0 0 640 278" role="img" aria-label="Lens selection pressure gauge">
+                <defs>
+                  <linearGradient id="healthyGrad" x1="0" x2="1">
+                    <stop offset="0" stop-color="#4bd85d" />
+                    <stop offset="1" stop-color="#8cff4e" />
+                  </linearGradient>
+                  <linearGradient id="watchGrad" x1="0" x2="1">
+                    <stop offset="0" stop-color="#d4af31" />
+                    <stop offset="1" stop-color="#ffd24d" />
+                  </linearGradient>
+                  <linearGradient id="riskGrad" x1="0" x2="1">
+                    <stop offset="0" stop-color="#d7403b" />
+                    <stop offset="1" stop-color="#ff5b50" />
+                  </linearGradient>
+                </defs>
+
+                <path class="zone-bg" d="M 88 236 A 232 232 0 0 1 552 236" stroke="rgba(255,255,255,.08)" />
+                <path class="zone healthy" d="M 104 228 A 216 216 0 0 1 233 68" />
+                <path class="zone watch" d="M 233 68 A 216 216 0 0 1 392 68" />
+                <path class="zone risk" d="M 392 68 A 216 216 0 0 1 536 228" />
+
+                <path class="inner-arc" d="M 152 218 A 168 168 0 0 1 488 218" />
+
+                <line class="needle" x1="320" y1="236" x2="438" y2="112" />
+                <circle class="needle-tip" cx="438" cy="112" r="7" />
+                <circle class="needle-hub" cx="320" cy="236" r="10" />
+                <circle class="needle-core" cx="320" cy="236" r="4" />
+
+                <text class="gauge-label" x="148" y="166" text-anchor="middle">HEALTHY</text>
+                <text class="gauge-label" x="320" y="104" text-anchor="middle">WATCH</text>
+                <text class="gauge-label" x="492" y="166" text-anchor="middle">RISK</text>
+
+                <text class="gauge-sub" x="148" y="184" text-anchor="middle">0?8 mm</text>
+                <text class="gauge-sub" x="320" y="122" text-anchor="middle">8?18 mm</text>
+                <text class="gauge-sub" x="492" y="184" text-anchor="middle">&gt;18 mm</text>
+
+                <g class="reading">
+                  <rect x="456" y="74" width="132" height="62" rx="10" />
+                  <text class="value" x="476" y="103">25.6 mm</text>
+                  <text class="label" x="476" y="124">CURRENT READING</text>
+                </g>
+              </svg>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="label">Adjusted Focal Length</div>
+                <div class="value">25.6 mm</div>
+              </div>
+              <div class="metric">
+                <div class="label">Lens Class</div>
+                <div class="value">Long Range (12mm+)</div>
+              </div>
+              <div class="metric">
+                <div class="label">Detail Requirement</div>
+                <div class="value">No prior PPF</div>
+              </div>
+              <div class="metric">
+                <div class="label">Status</div>
+                <div class="value">Risk</div>
+              </div>
+            </div>
+
+            <div class="interpretation">
+              <h3>Engineering Interpretation</h3>
+              <p class="copy">
+                At 80 ft with a target width of 20 ft and a 6.40 mm sensor, the raw geometry calls for a long-range focal length. This narrows field of view and reduces layout flexibility.
+              </p>
+            </div>
+          </section>
+
+          <aside class="panel guidance">
+            <div class="guide-section why">
+              <div class="kicker">Corrective Guidance / Path to Healthy</div>
+              <h3>Why this status</h3>
+              <p class="copy">
+                The current combination of distance, target width, sensor width, and upstream detail requirement is increasing lens pressure.
+              </p>
+            </div>
+
+            <div class="guide-section drivers">
+              <h3>Likely drivers</h3>
+              <ul class="clean-list">
+                <li>Long-range focal demand is driven by distance-to-target and target-width relationship.</li>
+                <li>The design is asking one camera/lens combination to hold a tight field of view.</li>
+              </ul>
+            </div>
+
+            <div class="guide-section actions">
+              <h3>Possible planning actions</h3>
+              <ul class="clean-list">
+                <li>Move the camera closer to the target area.</li>
+                <li>Increase acceptable target width if the use case allows it.</li>
+                <li>Split the view across more than one camera.</li>
+              </ul>
+            </div>
+
+            <div class="guide-section target">
+              <h3>Healthy Target</h3>
+              <p class="copy">
+                Bring lens-selection pressure back into the preferred planning band while preserving required scene detail.
+              </p>
+            </div>
+          </aside>
+        </div>
+
+        <div class="bottom-grid">
+          <div class="panel bottom-card">
+            <h3>Follow-up Checks</h3>
+            <ul class="clean-list">
+              <li>Validate focal length against manufacturer FOV chart.</li>
+              <li>Confirm mounting location and alignment tolerance.</li>
+              <li>Verify sensor format compatibility.</li>
+            </ul>
+          </div>
+
+          <div class="panel bottom-card">
+            <h3>Revision Triggers</h3>
+            <ul class="clean-list">
+              <li>Camera mounting location changes.</li>
+              <li>Target width or scene objective changes.</li>
+              <li>Sensor or lens family changes.</li>
+            </ul>
+          </div>
+
+          <div class="panel bottom-card">
+            <h3>Flow Summary Data</h3>
+            <div class="flow-table">
+              <div class="flow-row"><span>Adjusted focal length</span><strong>25.6 mm</strong></div>
+              <div class="flow-row"><span>Base focal length</span><strong>25.6 mm</strong></div>
+              <div class="flow-row"><span>Lens class</span><strong>Long Range</strong></div>
+              <div class="flow-row"><span>Distance</span><strong>80 ft</strong></div>
+            </div>
+          </div>
+
+          <div class="panel bottom-card">
+            <h3>Report Notes</h3>
+            <p class="copy">
+              This is a planning and decision-support report. Final design should be validated with site conditions and manufacturer data.
+            </p>
+          </div>
+        </div>
+
+        <div class="footer-strip">
+          <div class="foot">
+            <div class="label">Tool</div>
+            <div class="value">Lens Selection Helper</div>
+          </div>
+          <div class="foot">
+            <div class="label">Category</div>
+            <div class="value">Physical Security</div>
+          </div>
+          <div class="foot">
+            <div class="label">Pipeline</div>
+            <div class="value">Design & Layout</div>
+          </div>
+          <div class="foot">
+            <div class="label">Next Step</div>
+            <div class="value">Face Recognition Range</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
