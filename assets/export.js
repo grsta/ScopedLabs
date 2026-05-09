@@ -1115,17 +1115,9 @@ const extraSections = getExtraExportSections();
       `
       : "";
 
-      const additionalAnalysisBlock = (payload.analysisSections || [])
-  .filter((section) => {
-    return normalizeSlug(section.title) !== normalizeSlug("Engineering Interpretation");
-  })
-  .map((section) => `
-    <section class="section">
-      <h2>${escapeHtml(section.title)}</h2>
-      <div class="body-copy">${escapeHtml(section.body)}</div>
-    </section>
-  `)
-  .join("");
+      // Suppressed until section-level export parsing is rebuilt safely.
+      // Engineering Interpretation remains the primary narrative section.
+      const additionalAnalysisBlock = "";
 
     const statusClass = String(payload.status || "").toLowerCase();
 
