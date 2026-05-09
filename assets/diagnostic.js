@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const STYLE_ID = "scopedlabs-diagnostic-v3-styles";
+  const STYLE_ID = "scopedlabs-diagnostic-v2-styles";
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -25,283 +25,358 @@
     return "HEALTHY";
   }
 
-  function statusClass(value) {
-    return normalizeStatus(value).toLowerCase();
-  }
-
   function injectStyles() {
     if (document.getElementById(STYLE_ID)) return;
 
     const style = document.createElement("style");
     style.id = STYLE_ID;
-    style.textContent = [
-      ".slx-report {",
-      "  margin-top: 18px;",
-      "  border: 1px solid rgba(112,255,157,.18);",
-      "  border-radius: 24px;",
-      "  overflow: hidden;",
-      "  background:",
-      "    radial-gradient(circle at 20% 0%, rgba(73,255,137,.16), transparent 32%),",
-      "    radial-gradient(circle at 92% 0%, rgba(255,79,67,.11), transparent 28%),",
-      "    linear-gradient(180deg, rgba(7,20,15,.99), rgba(3,10,8,.99));",
-      "  box-shadow: 0 28px 80px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05);",
-      "}",
-      ".slx-header {",
-      "  display: grid;",
-      "  grid-template-columns: minmax(0,1fr) auto;",
-      "  gap: 16px;",
-      "  align-items: start;",
-      "  padding: 18px 20px;",
-      "  border-bottom: 1px solid rgba(255,255,255,.08);",
-      "  background: rgba(0,0,0,.22);",
-      "}",
-      ".slx-brandline {",
-      "  color: rgba(145,255,179,.86);",
-      "  font-size: .72rem;",
-      "  font-weight: 950;",
-      "  letter-spacing: .14em;",
-      "  text-transform: uppercase;",
-      "}",
-      ".slx-title {",
-      "  margin: 6px 0 0;",
-      "  color: rgba(255,255,255,.98);",
-      "  font-size: 1.28rem;",
-      "  line-height: 1.15;",
-      "  letter-spacing: .01em;",
-      "}",
-      ".slx-summary {",
-      "  margin: 9px 0 0;",
-      "  max-width: 880px;",
-      "  color: rgba(255,255,255,.70);",
-      "  line-height: 1.55;",
-      "}",
-      ".slx-status {",
-      "  border-radius: 999px;",
-      "  padding: 10px 15px;",
-      "  font-size: .78rem;",
-      "  font-weight: 950;",
-      "  letter-spacing: .11em;",
-      "  text-transform: uppercase;",
-      "  border: 1px solid rgba(255,255,255,.15);",
-      "  white-space: nowrap;",
-      "}",
-      ".slx-status.healthy { color:#95ffba; background:rgba(52,255,139,.13); border-color:rgba(52,255,139,.34); }",
-      ".slx-status.watch { color:#ffd56e; background:rgba(255,197,70,.13); border-color:rgba(255,197,70,.34); }",
-      ".slx-status.risk { color:#ff9a92; background:rgba(255,82,70,.14); border-color:rgba(255,82,70,.40); }",
-      ".slx-body {",
-      "  display: grid;",
-      "  grid-template-columns: 210px minmax(0,1fr) 300px;",
-      "  gap: 14px;",
-      "  padding: 16px;",
-      "}",
-      ".slx-panel {",
-      "  border: 1px solid rgba(255,255,255,.10);",
-      "  border-radius: 18px;",
-      "  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.028));",
-      "  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);",
-      "}",
-      ".slx-rail { padding: 15px; }",
-      ".slx-section-label {",
-      "  color: rgba(145,255,179,.82);",
-      "  font-size: .70rem;",
-      "  font-weight: 950;",
-      "  letter-spacing: .11em;",
-      "  text-transform: uppercase;",
-      "}",
-      ".slx-big-status {",
-      "  margin-top: 10px;",
-      "  border-radius: 16px;",
-      "  padding: 13px 14px;",
-      "  font-size: 1.12rem;",
-      "  font-weight: 950;",
-      "  letter-spacing: .08em;",
-      "  text-align: center;",
-      "  text-transform: uppercase;",
-      "}",
-      ".slx-big-status.healthy { color:#061009; background:linear-gradient(90deg,#75ff9f,#34e977); }",
-      ".slx-big-status.watch { color:#171103; background:linear-gradient(90deg,#ffe08a,#ffbd43); }",
-      ".slx-big-status.risk { color:#fff; background:linear-gradient(90deg,#e8423b,#a82325); }",
-      ".slx-rail-note {",
-      "  margin: 13px 0 0;",
-      "  color: rgba(255,255,255,.68);",
-      "  font-size: .86rem;",
-      "  line-height: 1.5;",
-      "}",
-      ".slx-rail-divider { height:1px; background:rgba(255,255,255,.09); margin:14px 0; }",
-      ".slx-key-mini { margin-top: 10px; }",
-      ".slx-key-mini .k { color:rgba(255,255,255,.56); font-size:.72rem; margin-bottom:4px; }",
-      ".slx-key-mini .v { color:#fff; font-weight:950; line-height:1.25; }",
-      ".slx-gauge-panel { padding: 16px; min-height: 370px; }",
-      ".slx-gauge-top {",
-      "  display: grid;",
-      "  grid-template-columns: minmax(0,1fr) auto;",
-      "  gap: 12px;",
-      "  align-items: start;",
-      "}",
-      ".slx-gauge-name { color:rgba(255,255,255,.70); font-weight:900; }",
-      ".slx-reading-pill {",
-      "  border: 1px solid rgba(255,255,255,.13);",
-      "  border-radius: 14px;",
-      "  padding: 10px 13px;",
-      "  background: rgba(0,0,0,.24);",
-      "  text-align: right;",
-      "}",
-      ".slx-reading-pill .v { color:#fff; font-size:1.45rem; font-weight:950; line-height:1; }",
-      ".slx-reading-pill .k { color:rgba(255,255,255,.58); font-size:.72rem; margin-top:5px; text-transform:uppercase; letter-spacing:.08em; }",
-      ".slx-arc-zone {",
-      "  position: relative;",
-      "  margin: 18px auto 10px;",
-      "  width: min(100%, 590px);",
-      "  height: 255px;",
-      "}",
-      ".slx-arc {",
-      "  position: absolute;",
-      "  left: 5%;",
-      "  right: 5%;",
-      "  bottom: 18px;",
-      "  height: 220px;",
-      "  border-radius: 260px 260px 0 0;",
-      "  background: conic-gradient(from 240deg at 50% 100%, rgba(74,240,113,.95) 0deg, rgba(74,240,113,.95) 60deg, rgba(255,206,72,.96) 60deg, rgba(255,206,72,.96) 145deg, rgba(255,83,73,.96) 145deg, rgba(255,83,73,.96) 240deg, transparent 240deg, transparent 360deg);",
-      "  box-shadow: 0 0 32px rgba(83,255,143,.10), inset 0 0 0 1px rgba(255,255,255,.13);",
-      "}",
-      ".slx-arc::after {",
-      "  content: '';",
-      "  position: absolute;",
-      "  left: 12%;",
-      "  right: 12%;",
-      "  bottom: -1px;",
-      "  height: 160px;",
-      "  border-radius: 220px 220px 0 0;",
-      "  background: linear-gradient(180deg, rgba(4,13,10,1), rgba(3,10,8,1));",
-      "  box-shadow: inset 0 1px 0 rgba(255,255,255,.07);",
-      "}",
-      ".slx-needle-wrap {",
-      "  position: absolute;",
-      "  left: 50%;",
-      "  bottom: 22px;",
-      "  width: 0;",
-      "  height: 0;",
-      "  transform: rotate(var(--slx-angle));",
-      "  transform-origin: bottom center;",
-      "  z-index: 5;",
-      "}",
-      ".slx-needle {",
-      "  position: absolute;",
-      "  left: -4px;",
-      "  bottom: 0;",
-      "  width: 8px;",
-      "  height: 145px;",
-      "  border-radius: 999px;",
-      "  background: linear-gradient(180deg, #fff, rgba(255,255,255,.70));",
-      "  box-shadow: 0 0 18px rgba(255,255,255,.45);",
-      "}",
-      ".slx-hub {",
-      "  position: absolute;",
-      "  left: 50%;",
-      "  bottom: 9px;",
-      "  width: 46px;",
-      "  height: 46px;",
-      "  transform: translateX(-50%);",
-      "  border-radius: 50%;",
-      "  border: 2px solid rgba(255,255,255,.26);",
-      "  background: radial-gradient(circle, #fff 0 13%, #1b2f24 15% 100%);",
-      "  z-index: 6;",
-      "}",
-      ".slx-arc-labels {",
-      "  position: absolute;",
-      "  left: 7%;",
-      "  right: 7%;",
-      "  bottom: 44px;",
-      "  display: grid;",
-      "  grid-template-columns: repeat(3, 1fr);",
-      "  z-index: 7;",
-      "  font-size: .78rem;",
-      "  font-weight: 950;",
-      "  letter-spacing: .08em;",
-      "  text-transform: uppercase;",
-      "}",
-      ".slx-arc-labels span:nth-child(1) { color:#a8ffbf; text-align:left; }",
-      ".slx-arc-labels span:nth-child(2) { color:#ffd56e; text-align:center; }",
-      ".slx-arc-labels span:nth-child(3) { color:#ff9b92; text-align:right; }",
-      ".slx-center-readout {",
-      "  position:absolute;",
-      "  left:50%;",
-      "  bottom:54px;",
-      "  transform:translateX(-50%);",
-      "  z-index:8;",
-      "  text-align:center;",
-      "}",
-      ".slx-center-readout .v { color:#fff; font-size:2.1rem; font-weight:950; line-height:1; }",
-      ".slx-center-readout .k { color:rgba(255,255,255,.62); font-size:.72rem; margin-top:6px; letter-spacing:.08em; text-transform:uppercase; }",
-      ".slx-metrics {",
-      "  display:grid;",
-      "  grid-template-columns: repeat(3, minmax(0,1fr));",
-      "  gap:10px;",
-      "}",
-      ".slx-metric {",
-      "  border:1px solid rgba(255,255,255,.09);",
-      "  border-radius:15px;",
-      "  background:rgba(0,0,0,.22);",
-      "  padding:12px;",
-      "  min-height:74px;",
-      "}",
-      ".slx-metric .k { color:rgba(255,255,255,.56); font-size:.74rem; margin-bottom:6px; }",
-      ".slx-metric .v { color:#fff; font-weight:950; line-height:1.25; }",
-      ".slx-guidance { padding: 15px; }",
-      ".slx-driver-title { margin:8px 0 8px; color:#fff; font-size:1.03rem; line-height:1.25; }",
-      ".slx-driver-copy { margin:0; color:rgba(255,255,255,.72); line-height:1.58; }",
-      ".slx-chip-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:15px; }",
-      ".slx-chip {",
-      "  border:1px solid rgba(120,255,157,.22);",
-      "  border-radius:999px;",
-      "  background:rgba(255,255,255,.06);",
-      "  color:rgba(255,255,255,.90);",
-      "  padding:8px 11px;",
-      "  font-size:.80rem;",
-      "  font-weight:950;",
-      "  cursor:pointer;",
-      "}",
-      ".slx-chip:hover, .slx-chip.is-active { background:rgba(72,255,141,.16); border-color:rgba(72,255,141,.45); color:#fff; }",
-      ".slx-detail { margin: 0 16px 16px; padding: 15px; }",
-      ".slx-detail[hidden] { display:none !important; }",
-      ".slx-detail h4 { margin:0 0 9px; color:#fff; font-size:1rem; }",
-      ".slx-detail p { margin:0; color:rgba(255,255,255,.74); line-height:1.65; }",
-      ".slx-detail ul { margin:0; padding-left:19px; color:rgba(255,255,255,.74); line-height:1.75; }",
-      ".slx-detail li + li { margin-top:3px; }",
-      ".slx-footer {",
-      "  display:grid;",
-      "  grid-template-columns: repeat(3, minmax(0,1fr));",
-      "  gap:10px;",
-      "  padding: 0 16px 16px;",
-      "}",
-      ".slx-foot {",
-      "  border:1px solid rgba(255,255,255,.08);",
-      "  border-radius:14px;",
-      "  background:rgba(255,255,255,.035);",
-      "  padding:11px;",
-      "}",
-      ".slx-foot .k { color:rgba(145,255,179,.78); font-size:.70rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:5px; }",
-      ".slx-foot .v { color:rgba(255,255,255,.74); font-size:.85rem; line-height:1.45; }",
-      "@media (max-width: 1050px) {",
-      "  .slx-body { grid-template-columns: 1fr; }",
-      "  .slx-footer { grid-template-columns:1fr; }",
-      "  .slx-arc-zone { height: 220px; }",
-      "  .slx-needle { height: 118px; }",
-      "}",
-      "@media (max-width: 720px) {",
-      "  .slx-header { grid-template-columns:1fr; }",
-      "  .slx-metrics { grid-template-columns:1fr; }",
-      "  .slx-reading-pill { text-align:left; }",
-      "}"
-    ].join("\n");
+    style.textContent = `
+      .sl-diagnostic-card {
+        margin-top: 16px;
+        border: 1px solid rgba(97, 255, 144, 0.18);
+        border-radius: 22px;
+        background:
+          radial-gradient(circle at 15% 0%, rgba(83, 255, 143, 0.13), transparent 34%),
+          radial-gradient(circle at 88% 8%, rgba(255, 70, 60, 0.10), transparent 28%),
+          linear-gradient(180deg, rgba(7, 20, 15, 0.98), rgba(2, 9, 7, 0.99));
+        box-shadow:
+          0 24px 70px rgba(0, 0, 0, 0.34),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        padding: 18px;
+        overflow: hidden;
+      }
+
+      .sl-diagnostic-top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: start;
+        margin-bottom: 16px;
+      }
+
+      .sl-kicker {
+        color: rgba(145, 255, 179, 0.84);
+        font-size: 0.74rem;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .sl-diagnostic-title {
+        margin: 5px 0 0;
+        color: rgba(255, 255, 255, 0.96);
+        font-size: 1.22rem;
+        line-height: 1.15;
+      }
+
+      .sl-diagnostic-summary {
+        margin: 10px 0 0;
+        color: rgba(255, 255, 255, 0.70);
+        line-height: 1.55;
+        max-width: 880px;
+      }
+
+      .sl-status-pill {
+        border-radius: 999px;
+        padding: 9px 14px;
+        font-size: 0.78rem;
+        font-weight: 950;
+        letter-spacing: 0.10em;
+        text-transform: uppercase;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        white-space: nowrap;
+      }
+
+      .sl-status-pill.healthy {
+        color: #95ffba;
+        background: rgba(52, 255, 139, 0.13);
+        border-color: rgba(52, 255, 139, 0.34);
+      }
+
+      .sl-status-pill.watch {
+        color: #ffd56e;
+        background: rgba(255, 197, 70, 0.13);
+        border-color: rgba(255, 197, 70, 0.34);
+      }
+
+      .sl-status-pill.risk {
+        color: #ff9a92;
+        background: rgba(255, 82, 70, 0.14);
+        border-color: rgba(255, 82, 70, 0.40);
+      }
+
+      .sl-diagnostic-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.88fr);
+        gap: 14px;
+      }
+
+      .sl-panel {
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 18px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.028));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+      }
+
+      .sl-gauge-panel {
+        padding: 16px;
+      }
+
+      .sl-gauge-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: end;
+        margin-bottom: 13px;
+      }
+
+      .sl-gauge-name {
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 0.82rem;
+        font-weight: 850;
+        letter-spacing: 0.03em;
+      }
+
+      .sl-gauge-reading {
+        color: #ffffff;
+        font-size: 1.85rem;
+        font-weight: 950;
+        line-height: 1;
+        margin-top: 3px;
+      }
+
+      .sl-gauge-marker-label {
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-align: right;
+      }
+
+      .sl-gauge-track-wrap {
+        position: relative;
+        padding: 18px 0 10px;
+      }
+
+      .sl-gauge-track {
+        position: relative;
+        height: 20px;
+        border-radius: 999px;
+        background:
+          linear-gradient(90deg,
+            rgba(61, 244, 126, 0.95) 0%,
+            rgba(61, 244, 126, 0.95) 25%,
+            rgba(255, 204, 73, 0.94) 25%,
+            rgba(255, 204, 73, 0.94) 60%,
+            rgba(255, 81, 69, 0.96) 60%,
+            rgba(255, 81, 69, 0.96) 100%);
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+          0 0 26px rgba(75, 255, 140, 0.08);
+      }
+
+      .sl-gauge-track::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0));
+        pointer-events: none;
+      }
+
+      .sl-gauge-marker {
+        position: absolute;
+        top: 50%;
+        width: 14px;
+        height: 36px;
+        border-radius: 999px;
+        background: #ffffff;
+        border: 3px solid #92ffb7;
+        box-shadow:
+          0 0 0 4px rgba(146, 255, 183, 0.12),
+          0 0 30px rgba(146, 255, 183, 0.82);
+        transform: translate(-50%, -50%);
+        z-index: 2;
+      }
+
+      .sl-gauge-scale {
+        display: grid;
+        grid-template-columns: 25fr 35fr 40fr;
+        gap: 8px;
+        margin-top: 10px;
+        font-size: 0.74rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .sl-gauge-scale span:nth-child(1) { color: #96ffb8; }
+      .sl-gauge-scale span:nth-child(2) { color: #ffd56e; text-align: center; }
+      .sl-gauge-scale span:nth-child(3) { color: #ff9b92; text-align: right; }
+
+      .sl-metric-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .sl-metric {
+        min-height: 72px;
+        border: 1px solid rgba(255, 255, 255, 0.095);
+        border-radius: 15px;
+        background: rgba(0, 0, 0, 0.20);
+        padding: 12px;
+      }
+
+      .sl-metric-label {
+        color: rgba(255, 255, 255, 0.58);
+        font-size: 0.76rem;
+        line-height: 1.3;
+        margin-bottom: 6px;
+      }
+
+      .sl-metric-value {
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 950;
+        line-height: 1.2;
+      }
+
+      .sl-driver-panel {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sl-driver-title {
+        margin: 6px 0 8px;
+        color: #ffffff;
+        font-size: 1.02rem;
+        line-height: 1.25;
+      }
+
+      .sl-driver-copy {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.72);
+        line-height: 1.58;
+      }
+
+      .sl-chip-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .sl-chip {
+        border: 1px solid rgba(120, 255, 157, 0.20);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.90);
+        padding: 8px 11px;
+        font-size: 0.82rem;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .sl-chip:hover,
+      .sl-chip.is-active {
+        background: rgba(72, 255, 141, 0.16);
+        border-color: rgba(72, 255, 141, 0.44);
+        color: #ffffff;
+      }
+
+      .sl-detail-panel {
+        margin-top: 14px;
+        padding: 15px;
+      }
+
+      .sl-detail-panel[hidden] {
+        display: none !important;
+      }
+
+      .sl-detail-panel h4 {
+        margin: 0 0 9px;
+        color: #ffffff;
+        font-size: 1rem;
+      }
+
+      .sl-detail-panel p {
+        margin: 0;
+        color: rgba(255,255,255,.74);
+        line-height: 1.65;
+      }
+
+      .sl-detail-panel ul {
+        margin: 0;
+        padding-left: 19px;
+        color: rgba(255,255,255,.74);
+        line-height: 1.75;
+      }
+
+      .sl-detail-panel li + li {
+        margin-top: 3px;
+      }
+
+      .sl-report-foot {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .sl-foot-tile {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background: rgba(255,255,255,.035);
+        padding: 11px;
+      }
+
+      .sl-foot-tile .k {
+        color: rgba(145, 255, 179, 0.78);
+        font-size: .72rem;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+      }
+
+      .sl-foot-tile .v {
+        color: rgba(255,255,255,.74);
+        font-size: .86rem;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 940px) {
+        .sl-diagnostic-top,
+        .sl-diagnostic-grid,
+        .sl-report-foot {
+          grid-template-columns: 1fr;
+        }
+
+        .sl-metric-row {
+          grid-template-columns: 1fr;
+        }
+
+        .sl-gauge-marker-label {
+          text-align: left;
+        }
+      }
+    `;
 
     document.head.appendChild(style);
   }
 
-  function renderList(items) {
+  function renderList(items = []) {
     const list = Array.isArray(items) ? items.filter(Boolean) : [];
     if (!list.length) return "<p>No detail available.</p>";
-    return "<ul>" + list.map((item) => "<li>" + escapeHtml(item) + "</li>").join("") + "</ul>";
+
+    return (
+      "<ul>" +
+      list.map((item) => "<li>" + escapeHtml(item) + "</li>").join("") +
+      "</ul>"
+    );
   }
 
   function renderDetailBody(section) {
@@ -310,118 +385,130 @@
     return "<p>" + escapeHtml(section.body || "") + "</p>";
   }
 
-  function renderMetricCards(items) {
-    const list = Array.isArray(items) ? items.filter(Boolean).slice(0, 3) : [];
-    return list.map((item) => {
-      return [
-        "<div class=\"slx-metric\">",
-        "  <div class=\"k\">" + escapeHtml(item.label) + "</div>",
-        "  <div class=\"v\">" + escapeHtml(item.value) + "</div>",
-        "</div>"
-      ].join("");
-    }).join("");
-  }
-
-  function render(options) {
+  function render(options = {}) {
     injectStyles();
 
-    const settings = options || {};
     const target =
-      typeof settings.target === "string"
-        ? document.querySelector(settings.target)
-        : settings.target || document.querySelector("#diagnostic-panel");
+      typeof options.target === "string"
+        ? document.querySelector(options.target)
+        : options.target || document.querySelector("#diagnostic-panel");
 
     if (!target) return null;
 
-    const status = normalizeStatus(settings.status);
-    const className = statusClass(status);
+    const status = normalizeStatus(options.status);
+    const statusClass = status.toLowerCase();
 
-    const gauge = settings.gauge || {};
+    const gauge = options.gauge || {};
     const gaugeMax = Number(gauge.max || 100);
     const score = clamp(gauge.score ?? gauge.value ?? 0, 0, gaugeMax);
-    const pct = clamp((score / gaugeMax) * 100, 0, 100);
-    const angle = -62 + (pct * 1.24);
+    const markerPct = clamp((score / gaugeMax) * 100, 0, 100);
 
-    const keyMetrics = Array.isArray(settings.keyMetrics) ? settings.keyMetrics.filter(Boolean) : [];
-    const sections = Array.isArray(settings.sections) ? settings.sections.filter(Boolean) : [];
+    const keyMetrics = Array.isArray(options.keyMetrics)
+      ? options.keyMetrics.filter(Boolean)
+      : [];
 
-    const firstMetric = keyMetrics[0] || { label: "Current Reading", value: gauge.displayValue || String(score) };
-    const secondMetric = keyMetrics[1] || { label: "Planning Context", value: "Gauge position captured" };
-    const thirdMetric = keyMetrics[2] || { label: "Status", value: status };
+    const sections = Array.isArray(options.sections)
+      ? options.sections.filter(Boolean)
+      : [];
+
+    const firstMetric = keyMetrics[0]?.value || gauge.displayValue || String(score);
+    const secondMetric = keyMetrics[1]?.value || "Planning range";
+    const thirdMetric = keyMetrics[2]?.value || status;
 
     target.hidden = false;
-    target.innerHTML = [
-      "<div class=\"slx-report\">",
-      "  <div class=\"slx-header\">",
-      "    <div>",
-      "      <div class=\"slx-brandline\">Diagnostic Planning Report</div>",
-      "      <h3 class=\"slx-title\">" + escapeHtml(settings.title || "Planning Diagnostic") + "</h3>",
-      "      <p class=\"slx-summary\">" + escapeHtml(settings.summary || "") + "</p>",
-      "    </div>",
-      "    <div class=\"slx-status " + className + "\">" + escapeHtml(status) + "</div>",
-      "  </div>",
-      "",
-      "  <div class=\"slx-body\">",
-      "    <aside class=\"slx-panel slx-rail\">",
-      "      <div class=\"slx-section-label\">Status Summary</div>",
-      "      <div class=\"slx-big-status " + className + "\">" + escapeHtml(status) + "</div>",
-      "      <p class=\"slx-rail-note\">" + escapeHtml(settings.summary || "Diagnostic status generated from the current planning inputs.") + "</p>",
-      "      <div class=\"slx-rail-divider\"></div>",
-      "      <div class=\"slx-key-mini\"><div class=\"k\">" + escapeHtml(firstMetric.label) + "</div><div class=\"v\">" + escapeHtml(firstMetric.value) + "</div></div>",
-      "      <div class=\"slx-key-mini\"><div class=\"k\">" + escapeHtml(secondMetric.label) + "</div><div class=\"v\">" + escapeHtml(secondMetric.value) + "</div></div>",
-      "      <div class=\"slx-key-mini\"><div class=\"k\">" + escapeHtml(thirdMetric.label) + "</div><div class=\"v\">" + escapeHtml(thirdMetric.value) + "</div></div>",
-      "    </aside>",
-      "",
-      "    <main class=\"slx-panel slx-gauge-panel\">",
-      "      <div class=\"slx-gauge-top\">",
-      "        <div>",
-      "          <div class=\"slx-section-label\">Results Overview</div>",
-      "          <div class=\"slx-gauge-name\">" + escapeHtml(gauge.label || "Diagnostic Pressure") + "</div>",
-      "        </div>",
-      "        <div class=\"slx-reading-pill\"><div class=\"v\">" + escapeHtml(gauge.displayValue || String(score)) + "</div><div class=\"k\">" + escapeHtml(gauge.markerLabel || "Current Reading") + "</div></div>",
-      "      </div>",
-      "      <div class=\"slx-arc-zone\" style=\"--slx-angle:" + angle.toFixed(2) + "deg\">",
-      "        <div class=\"slx-arc\"></div>",
-      "        <div class=\"slx-needle-wrap\"><div class=\"slx-needle\"></div></div>",
-      "        <div class=\"slx-hub\"></div>",
-      "        <div class=\"slx-center-readout\"><div class=\"v\">" + escapeHtml(gauge.displayValue || String(score)) + "</div><div class=\"k\">" + escapeHtml(gauge.markerLabel || "Current Reading") + "</div></div>",
-      "        <div class=\"slx-arc-labels\"><span>" + escapeHtml(gauge.healthyLabel || "Healthy") + "</span><span>" + escapeHtml(gauge.watchLabel || "Watch") + "</span><span>" + escapeHtml(gauge.riskLabel || "Risk") + "</span></div>",
-      "      </div>",
-      "      <div class=\"slx-metrics\">" + renderMetricCards(keyMetrics) + "</div>",
-      "    </main>",
-      "",
-      "    <aside class=\"slx-panel slx-guidance\">",
-      "      <div class=\"slx-section-label\">Corrective Guidance / Path to Healthy</div>",
-      "      <h4 class=\"slx-driver-title\">" + escapeHtml(settings.dominantDriver?.label || "Primary Constraint") + "</h4>",
-      "      <p class=\"slx-driver-copy\">" + escapeHtml(settings.dominantDriver?.summary || "") + "</p>",
-      "      <div class=\"slx-chip-grid\">" + sections.map((section, index) => {",
-      "        return \"<button class=\\\"slx-chip\\\" type=\\\"button\\\" data-diagnostic-section=\\\"\" + index + \"\\\">\" + escapeHtml(section.label) + \"</button>\";",
-      "      }).join(\"\") + \"</div>",
-      "    </aside>",
-      "  </div>",
-      "",
-      "  <div class=\"slx-panel slx-detail\" data-diagnostic-detail hidden></div>",
-      "",
-      "  <div class=\"slx-footer\">",
-      "    <div class=\"slx-foot\"><div class=\"k\">Tool Page</div><div class=\"v\">Compact diagnostic workspace with expandable detail sections.</div></div>",
-      "    <div class=\"slx-foot\"><div class=\"k\">Report Data</div><div class=\"v\">Structured data captured for future PDF reports and snapshots.</div></div>",
-      "    <div class=\"slx-foot\"><div class=\"k\">Pipeline Ready</div><div class=\"v\">Flow outputs can feed future full design-flow summaries.</div></div>",
-      "  </div>",
-      "</div>"
-    ].join("");
+    target.innerHTML = `
+      <div class="sl-diagnostic-card">
+        <div class="sl-diagnostic-top">
+          <div>
+            <div class="sl-kicker">Diagnostic Gauge</div>
+            <h3 class="sl-diagnostic-title">${escapeHtml(options.title || "Planning Diagnostic")}</h3>
+            <p class="sl-diagnostic-summary">${escapeHtml(options.summary || "")}</p>
+          </div>
+          <div class="sl-status-pill ${statusClass}">${escapeHtml(status)}</div>
+        </div>
+
+        <div class="sl-diagnostic-grid">
+          <div class="sl-panel sl-gauge-panel">
+            <div class="sl-gauge-head">
+              <div>
+                <div class="sl-gauge-name">${escapeHtml(gauge.label || "Diagnostic Pressure")}</div>
+                <div class="sl-gauge-reading">${escapeHtml(gauge.displayValue || String(score))}</div>
+              </div>
+              <div class="sl-gauge-marker-label">${escapeHtml(gauge.markerLabel || "Current Reading")}</div>
+            </div>
+
+            <div class="sl-gauge-track-wrap">
+              <div class="sl-gauge-track" role="img" aria-label="${escapeHtml(gauge.label || "Diagnostic gauge")}">
+                <div class="sl-gauge-marker" style="left:${markerPct}%"></div>
+              </div>
+
+              <div class="sl-gauge-scale" aria-hidden="true">
+                <span>${escapeHtml(gauge.healthyLabel || "Healthy")}</span>
+                <span>${escapeHtml(gauge.watchLabel || "Watch")}</span>
+                <span>${escapeHtml(gauge.riskLabel || "Risk")}</span>
+              </div>
+            </div>
+
+            <div class="sl-metric-row">
+              ${keyMetrics.slice(0, 3).map((item) => `
+                <div class="sl-metric">
+                  <div class="sl-metric-label">${escapeHtml(item.label)}</div>
+                  <div class="sl-metric-value">${escapeHtml(item.value)}</div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+
+          <div class="sl-panel sl-driver-panel">
+            <div class="sl-kicker">Dominant Driver</div>
+            <h4 class="sl-driver-title">${escapeHtml(options.dominantDriver?.label || "Primary Constraint")}</h4>
+            <p class="sl-driver-copy">${escapeHtml(options.dominantDriver?.summary || "")}</p>
+
+            <div class="sl-chip-wrap">
+              ${sections.map((section, index) => `
+                <button class="sl-chip" type="button" data-diagnostic-section="${index}">
+                  ${escapeHtml(section.label)}
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        </div>
+
+        <div class="sl-panel sl-detail-panel" data-diagnostic-detail hidden></div>
+
+        <div class="sl-report-foot">
+          <div class="sl-foot-tile">
+            <div class="k">Current Reading</div>
+            <div class="v">${escapeHtml(firstMetric)}</div>
+          </div>
+          <div class="sl-foot-tile">
+            <div class="k">Planning Context</div>
+            <div class="v">${escapeHtml(secondMetric)}</div>
+          </div>
+          <div class="sl-foot-tile">
+            <div class="k">Report Data</div>
+            <div class="v">${escapeHtml(thirdMetric)} captured for future export and pipeline summary.</div>
+          </div>
+        </div>
+      </div>
+    `;
 
     const detail = target.querySelector("[data-diagnostic-detail]");
     const chips = Array.from(target.querySelectorAll("[data-diagnostic-section]"));
 
     function openSection(index) {
       const section = sections[index];
+
       if (!section || !detail) return;
 
       chips.forEach((chip) => chip.classList.remove("is-active"));
-      if (chips[index]) chips[index].classList.add("is-active");
+      chips[index]?.classList.add("is-active");
 
       detail.hidden = false;
-      detail.innerHTML = "<h4>" + escapeHtml(section.label) + "</h4>" + renderDetailBody(section);
+      detail.innerHTML = `
+        <h4>${escapeHtml(section.label)}</h4>
+        ${renderDetailBody(section)}
+      `;
     }
 
     chips.forEach((chip) => {
@@ -430,22 +517,15 @@
       });
     });
 
-    const pathIndex = sections.findIndex((section) => /path|healthy|guidance/i.test(section.label || ""));
-    if (pathIndex >= 0) {
-      openSection(pathIndex);
-    } else if (sections.length) {
-      openSection(0);
-    }
+    if (sections.length) openSection(0);
 
-    return { openSection };
+    return {
+      openSection
+    };
   }
 
-  function clear(target) {
-    const el =
-      typeof target === "string"
-        ? document.querySelector(target)
-        : target || document.querySelector("#diagnostic-panel");
-
+  function clear(target = "#diagnostic-panel") {
+    const el = typeof target === "string" ? document.querySelector(target) : target;
     if (!el) return;
 
     el.hidden = true;
