@@ -1479,6 +1479,43 @@ const extraSections = getExtraExportSections();
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none !important}
       .report{padding:0}
+
+      /* ScopedLabs print break control */
+      .report-head,
+      .section,
+      .summary,
+      .body-copy,
+      .callout,
+      .mini-card,
+      .chart-wrap,
+      table {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .section {
+        margin-top: 18px;
+      }
+
+      h1,
+      h2,
+      h3,
+      .section-kicker {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+
+      .triad,
+      .grid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      img {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        max-width: 100%;
+      }
     }
   </style>
 </head>
