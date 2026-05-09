@@ -73,49 +73,101 @@
   }
 
   function gaugeSvg(score, max, status, reading) {
-    const pct = clamp((score / max) * 100, 0, 100);
-    const angle = Math.PI - (Math.PI * pct / 100);
+    const readingText = String(reading || "");
+    const readingNumber = Number.parseFloat(readingText.replace(/[^0-9.\-]/g, ""));
+    const useLensScale = /mm/i.test(readingText) && Number.isFinite(readingNumber);
+
+    const domainMax = useLensScale ? 40 : Number(max || 100);
+    const value = useLensScale ? readingNumber : Number(score || 0);
+    const pct = clamp((value / domainMax) * 100, 0, 100);
+
     const cx = 260;
-    const cy = 218;
-    const r = 172;
-    const mx = cx + r * Math.cos(angle);
-    const my = cy - r * Math.sin(angle);
+    const cy = 220;
+    const rOuter = 172;
+    const rInner = 146;
+
+    function point(radius, percent) {
+      const angle = Math.PI - (Math.PI * clamp(percent, 0, 100) / 100);
+      return {
+        x: cx + radius * Math.cos(angle),
+        y: cy - radius * Math.sin(angle)
+      };
+    }
+
+    function arc(radius, startPct, endPct) {
+      const start = point(radius, startPct);
+      const end = point(radius, endPct);
+      const large = Math.abs(endPct - startPct) > 50 ? 1 : 0;
+      return "M " + start.x.toFixed(2) + " " + start.y.toFixed(2) +
+        " A " + radius + " " + radius + " 0 " + large + " 1 " +
+        end.x.toFixed(2) + " " + end.y.toFixed(2);
+    }
+
+    function tick(percent, inner, outer) {
+      const a = point(inner, percent);
+      const b = point(outer, percent);
+      return '<line x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b.x.toFixed(1) + '" y2="' + b.y.toFixed(1) + '" class="sld-gauge-tick"/>';
+    }
+
+    function scalePct(v) {
+      return clamp((v / domainMax) * 100, 0, 100);
+    }
+
+    const healthyEnd = useLensScale ? scalePct(8) : 35;
+    const watchEnd = useLensScale ? scalePct(18) : 70;
+    const needle = point(132, pct);
+    const hub = point(0, 0);
     const color = status === "RISK" ? "#ff5f58" : status === "WATCH" ? "#f4c84e" : "#6cff8f";
+    const maxLabel = useLensScale ? "40 mm" : String(Math.round(domainMax));
+    const healthyLabel = useLensScale ? "0?8 mm" : "Preferred";
+    const watchLabel = useLensScale ? "8?18 mm" : "Review";
+    const riskLabel = useLensScale ? ">18 mm" : "High pressure";
 
     return [
-      '<svg class="sld-gauge" viewBox="0 0 520 270" role="img" aria-label="Diagnostic pressure gauge">',
+      '<svg class="sld-gauge" viewBox="0 0 520 270" role="img" aria-label="Lens selection pressure gauge">',
       '<defs>',
-      '<filter id="sldNeedleGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
-      '<linearGradient id="sldHealthy" x1="0" x2="1"><stop offset="0" stop-color="#66ff7d"/><stop offset="1" stop-color="#86ff54"/></linearGradient>',
-      '<linearGradient id="sldWatch" x1="0" x2="1"><stop offset="0" stop-color="#e6c23d"/><stop offset="1" stop-color="#ffcf50"/></linearGradient>',
-      '<linearGradient id="sldRisk" x1="0" x2="1"><stop offset="0" stop-color="#f9554f"/><stop offset="1" stop-color="#ff403b"/></linearGradient>',
+      '<filter id="sldNeedleGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+      '<linearGradient id="sldHealthy" x1="0" x2="1"><stop offset="0" stop-color="#49df66"/><stop offset="1" stop-color="#7eff5e"/></linearGradient>',
+      '<linearGradient id="sldWatch" x1="0" x2="1"><stop offset="0" stop-color="#cfae35"/><stop offset="1" stop-color="#ffd54e"/></linearGradient>',
+      '<linearGradient id="sldRisk" x1="0" x2="1"><stop offset="0" stop-color="#df453f"/><stop offset="1" stop-color="#ff5b51"/></linearGradient>',
       '</defs>',
 
-      '<path d="M78 204 A182 182 0 0 1 198 70" class="sld-zone-bg healthy"/>',
-      '<path d="M198 70 A182 182 0 0 1 322 70" class="sld-zone-bg watch"/>',
-      '<path d="M322 70 A182 182 0 0 1 442 204" class="sld-zone-bg risk"/>',
+      '<path d="' + arc(rOuter, 0, 100) + '" fill="none" stroke="rgba(255,255,255,.055)" stroke-width="42" stroke-linecap="round"/>',
 
-      '<path d="M88 198 A172 172 0 0 1 199 84" class="sld-zone healthy"/>',
-      '<path d="M199 84 A172 172 0 0 1 321 84" class="sld-zone watch"/>',
-      '<path d="M321 84 A172 172 0 0 1 432 198" class="sld-zone risk"/>',
+      '<path d="' + arc(rOuter, 0, healthyEnd) + '" fill="none" stroke="rgba(88,255,122,.16)" stroke-width="42" stroke-linecap="round"/>',
+      '<path d="' + arc(rOuter, healthyEnd, watchEnd) + '" fill="none" stroke="rgba(255,213,78,.14)" stroke-width="42" stroke-linecap="butt"/>',
+      '<path d="' + arc(rOuter, watchEnd, 100) + '" fill="none" stroke="rgba(255,91,81,.16)" stroke-width="42" stroke-linecap="round"/>',
 
-      '<path d="M109 190 A151 151 0 0 1 411 190" class="sld-inner-arc"/>',
+      '<path d="' + arc(rInner, 0, healthyEnd) + '" fill="none" stroke="url(#sldHealthy)" stroke-width="26" stroke-linecap="round"/>',
+      '<path d="' + arc(rInner, healthyEnd, watchEnd) + '" fill="none" stroke="url(#sldWatch)" stroke-width="26" stroke-linecap="butt"/>',
+      '<path d="' + arc(rInner, watchEnd, 100) + '" fill="none" stroke="url(#sldRisk)" stroke-width="26" stroke-linecap="round"/>',
 
-      '<line x1="' + cx + '" y1="' + cy + '" x2="' + mx.toFixed(1) + '" y2="' + my.toFixed(1) + '" class="sld-needle" filter="url(#sldNeedleGlow)"/>',
-      '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="7" fill="' + color + '" stroke="#fff" stroke-width="2"/>',
-      '<circle cx="' + cx + '" cy="' + cy + '" r="9" class="sld-needle-hub"/>',
+      '<path d="' + arc(112, 0, 100) + '" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1" stroke-dasharray="4 8"/>',
 
-      '<text x="124" y="160" text-anchor="middle" class="sld-zone-label">HEALTHY</text>',
-      '<text x="260" y="111" text-anchor="middle" class="sld-zone-label">WATCH</text>',
-      '<text x="396" y="160" text-anchor="middle" class="sld-zone-label">RISK</text>',
-      '<text x="91" y="233" text-anchor="middle" class="sld-axis-label">0</text>',
-      '<text x="260" y="82" text-anchor="middle" class="sld-axis-label">Preferred planning band</text>',
-      '<text x="429" y="233" text-anchor="middle" class="sld-axis-label">' + h(max) + '</text>',
+      tick(0, 130, 160),
+      tick(healthyEnd, 126, 165),
+      tick(watchEnd, 126, 165),
+      tick(100, 130, 160),
+
+      '<line x1="' + cx + '" y1="' + cy + '" x2="' + needle.x.toFixed(1) + '" y2="' + needle.y.toFixed(1) + '" stroke="rgba(255,255,255,.88)" stroke-width="5" stroke-linecap="round" filter="url(#sldNeedleGlow)"/>',
+      '<circle cx="' + needle.x.toFixed(1) + '" cy="' + needle.y.toFixed(1) + '" r="7" fill="' + color + '" stroke="#fff" stroke-width="2"/>',
+      '<circle cx="' + cx + '" cy="' + cy + '" r="10" fill="rgba(255,255,255,.93)"/>',
+      '<circle cx="' + cx + '" cy="' + cy + '" r="4" fill="rgba(5,12,9,.92)"/>',
+
+      '<text x="121" y="162" text-anchor="middle" class="sld-zone-label">HEALTHY</text>',
+      '<text x="260" y="100" text-anchor="middle" class="sld-zone-label">WATCH</text>',
+      '<text x="399" y="162" text-anchor="middle" class="sld-zone-label">RISK</text>',
+
+      '<text x="88" y="236" text-anchor="middle" class="sld-axis-label">0 mm</text>',
+      '<text x="176" y="120" text-anchor="middle" class="sld-axis-label">' + h(healthyLabel) + '</text>',
+      '<text x="260" y="74" text-anchor="middle" class="sld-axis-label">' + h(watchLabel) + '</text>',
+      '<text x="386" y="120" text-anchor="middle" class="sld-axis-label">' + h(riskLabel) + '</text>',
+      '<text x="432" y="236" text-anchor="middle" class="sld-axis-label">' + h(maxLabel) + '</text>',
 
       '<g class="sld-reading-box">',
-      '<rect x="358" y="62" width="124" height="58" rx="9"/>',
-      '<text x="376" y="88" class="sld-reading-value">' + h(reading) + '</text>',
-      '<text x="376" y="107" class="sld-reading-label">CURRENT READING</text>',
+      '<rect x="356" y="56" width="126" height="60" rx="10"/>',
+      '<text x="376" y="84" class="sld-reading-value">' + h(readingText || String(value)) + '</text>',
+      '<text x="376" y="105" class="sld-reading-label">CURRENT READING</text>',
       '</g>',
       '</svg>'
     ].join("");
