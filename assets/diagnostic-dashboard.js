@@ -13,7 +13,7 @@
   }
 
   function arr(value) {
-    return Array.isArray(value) - value.filter(Boolean) : [];
+    return Array.isArray(value) ? value.filter(Boolean) : [];
   }
 
   function statusOf(value) {
@@ -33,14 +33,14 @@
     if (item == null) return "";
     if (typeof item === "string" || typeof item === "number" || typeof item === "boolean") return String(item);
 
-    const label = item.label - String(item.label) : "";
-    const value = item.value != null && item.value !== "" - String(item.value) : "";
+    const label = item.label ? String(item.label) : "";
+    const value = item.value != null && item.value !== "" ? String(item.value) : "";
     const note = item.note || item.summary || item.body || "";
 
-    if (label && value && note) return label + ": " + value + " - " + note;
+    if (label && value && note) return label + ": " + value + " ? " + note;
     if (label && value) return label + ": " + value;
-    if (label && note) return label + " - " + note;
-    if (value && note) return value + " - " + note;
+    if (label && note) return label + " ? " + note;
+    if (value && note) return value + " ? " + note;
     return label || value || String(note || "");
   }
 
@@ -81,9 +81,9 @@
     const value = useLensScale ? readingNumber : Number(score || 0);
     const pct = clamp((value / domainMax) * 100, 0, 100);
 
-    const cx = 320;
-    const cy = 236;
-    const r = 190;
+    const cx = 300;
+    const cy = 214;
+    const r = 166;
 
     function point(percent, radius) {
       const angle = Math.PI - (Math.PI * clamp(percent, 0, 100) / 100);
@@ -107,55 +107,60 @@
       return clamp((v / domainMax) * 100, 0, 100);
     }
 
-    const healthyEnd = useLensScale ? scalePct(8) : 32;
-    const watchEnd = useLensScale ? scalePct(18) : 66;
-    const needleEnd = point(pct, 156);
+    function textPoint(percent, radius) {
+      return point(percent, radius);
+    }
 
-    const statusColor = status === "RISK" ? "#ff5d55" : status === "WATCH" ? "#f5c84d" : "#78ff73";
+    const healthyEnd = useLensScale ? scalePct(8) : 35;
+    const watchEnd = useLensScale ? scalePct(18) : 70;
+    const needleEnd = point(pct, 137);
+
+    const healthyText = textPoint(13, 126);
+    const watchText = textPoint((healthyEnd + watchEnd) / 2, 116);
+    const riskText = textPoint((watchEnd + 100) / 2, 126);
+
+    const zeroText = textPoint(0, 158);
+    const eightText = textPoint(healthyEnd, 151);
+    const eighteenText = textPoint(watchEnd, 151);
+    const maxText = textPoint(100, 158);
+
+    const statusColor = status === "RISK" ? "#ff5f58" : status === "WATCH" ? "#f4c84e" : "#6cff8f";
+    const bandLabel = useLensScale ? "Preferred planning band" : "Preferred band";
 
     return [
-      '<svg class="sld-gauge" viewBox="0 0 640 278" role="img" aria-label="Lens selection pressure gauge">',
+      '<svg class="sld-gauge" viewBox="0 0 600 250" role="img" aria-label="Lens selection pressure gauge">',
       '<defs>',
-      '<filter id="sldNeedleGlow" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur stdDeviation="2.2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
-      '<linearGradient id="sldHealthy" x1="0" x2="1"><stop offset="0" stop-color="#4bd85d"/><stop offset="1" stop-color="#8cff4e"/></linearGradient>',
-      '<linearGradient id="sldWatch" x1="0" x2="1"><stop offset="0" stop-color="#d4af31"/><stop offset="1" stop-color="#ffd24d"/></linearGradient>',
-      '<linearGradient id="sldRisk" x1="0" x2="1"><stop offset="0" stop-color="#d7403b"/><stop offset="1" stop-color="#ff5b50"/></linearGradient>',
+      '<filter id="sldNeedleGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+      '<linearGradient id="sldHealthy" x1="0" x2="1"><stop offset="0" stop-color="#3ac85a"/><stop offset="1" stop-color="#80ff5d"/></linearGradient>',
+      '<linearGradient id="sldWatch" x1="0" x2="1"><stop offset="0" stop-color="#c9a831"/><stop offset="1" stop-color="#ffd64e"/></linearGradient>',
+      '<linearGradient id="sldRisk" x1="0" x2="1"><stop offset="0" stop-color="#d6403b"/><stop offset="1" stop-color="#ff5a50"/></linearGradient>',
       '</defs>',
 
-      '<path class="sld-gauge-ghost" d="' + arc(0, 100, r + 2) + '"/>',
-      '<path class="sld-gauge-shadow healthy" d="' + arc(0, healthyEnd, r) + '"/>',
-      '<path class="sld-gauge-shadow watch" d="' + arc(healthyEnd, watchEnd, r) + '"/>',
-      '<path class="sld-gauge-shadow risk" d="' + arc(watchEnd, 100, r) + '"/>',
-
-      '<path class="sld-gauge-band healthy" d="' + arc(0, healthyEnd, r - 14) + '"/>',
-      '<path class="sld-gauge-band watch" d="' + arc(healthyEnd, watchEnd, r - 14) + '"/>',
-      '<path class="sld-gauge-band risk" d="' + arc(watchEnd, 100, r - 14) + '"/>',
-
-      '<path class="sld-gauge-inner" d="' + arc(0, 100, r - 58) + '"/>',
+      '<path class="sld-gauge-shell" d="' + arc(0, 100, r + 7) + '"/>',
+      '<path class="sld-gauge-band healthy" d="' + arc(0, healthyEnd, r) + '"/>',
+      '<path class="sld-gauge-band watch" d="' + arc(healthyEnd, watchEnd, r) + '"/>',
+      '<path class="sld-gauge-band risk" d="' + arc(watchEnd, 100, r) + '"/>',
+      '<path class="sld-gauge-inner" d="' + arc(0, 100, r - 34) + '"/>',
 
       '<line class="sld-needle" x1="' + cx + '" y1="' + cy + '" x2="' + needleEnd.x.toFixed(1) + '" y2="' + needleEnd.y.toFixed(1) + '" filter="url(#sldNeedleGlow)"/>',
       '<circle class="sld-needle-tip" cx="' + needleEnd.x.toFixed(1) + '" cy="' + needleEnd.y.toFixed(1) + '" r="7" fill="' + statusColor + '"/>',
       '<circle class="sld-needle-hub" cx="' + cx + '" cy="' + cy + '" r="10"/>',
       '<circle class="sld-needle-hub-core" cx="' + cx + '" cy="' + cy + '" r="4"/>',
 
-      '<text class="sld-zone-label" x="132" y="169" text-anchor="middle">HEALTHY</text>',
-      '<text class="sld-zone-label" x="320" y="101" text-anchor="middle">WATCH</text>',
-      '<text class="sld-zone-label" x="508" y="169" text-anchor="middle">RISK</text>',
+      '<text class="sld-zone-label" x="' + healthyText.x.toFixed(1) + '" y="' + healthyText.y.toFixed(1) + '" text-anchor="middle">HEALTHY</text>',
+      '<text class="sld-zone-label" x="' + watchText.x.toFixed(1) + '" y="' + watchText.y.toFixed(1) + '" text-anchor="middle">WATCH</text>',
+      '<text class="sld-zone-label" x="' + riskText.x.toFixed(1) + '" y="' + riskText.y.toFixed(1) + '" text-anchor="middle">RISK</text>',
 
-      '<text class="sld-zone-sub" x="132" y="187" text-anchor="middle">0-8 mm</text>',
-      '<text class="sld-zone-sub" x="320" y="119" text-anchor="middle">8-18 mm</text>',
-      '<text class="sld-zone-sub" x="508" y="187" text-anchor="middle">&gt;18 mm</text>',
-
-      '<text class="sld-axis-label" x="106" y="256" text-anchor="middle">0 mm</text>',
-      '<text class="sld-axis-label" x="248" y="74" text-anchor="middle">8 mm</text>',
-      '<text class="sld-axis-label" x="390" y="74" text-anchor="middle">18 mm</text>',
-      '<text class="sld-axis-label" x="534" y="256" text-anchor="middle">40 mm</text>',
-      '<text class="sld-band-label" x="320" y="54" text-anchor="middle">Preferred planning band</text>',
+      '<text class="sld-axis-label" x="' + zeroText.x.toFixed(1) + '" y="' + (zeroText.y + 10).toFixed(1) + '" text-anchor="middle">0 mm</text>',
+      '<text class="sld-axis-label" x="' + eightText.x.toFixed(1) + '" y="' + (eightText.y + 12).toFixed(1) + '" text-anchor="middle">8 mm</text>',
+      '<text class="sld-axis-label" x="' + eighteenText.x.toFixed(1) + '" y="' + (eighteenText.y + 12).toFixed(1) + '" text-anchor="middle">18 mm</text>',
+      '<text class="sld-axis-label" x="' + maxText.x.toFixed(1) + '" y="' + (maxText.y + 10).toFixed(1) + '" text-anchor="middle">40 mm</text>',
+      '<text class="sld-band-label" x="300" y="89" text-anchor="middle">' + h(bandLabel) + '</text>',
 
       '<g class="sld-reading-box">',
-      '<rect x="446" y="62" width="134" height="62" rx="10"/>',
-      '<text x="466" y="91" class="sld-reading-value">' + h(readingText || String(value)) + '</text>',
-      '<text x="466" y="112" class="sld-reading-label">CURRENT READING</text>',
+      '<rect x="394" y="54" width="132" height="60" rx="10"/>',
+      '<text x="414" y="83" class="sld-reading-value">' + h(readingText || String(value)) + '</text>',
+      '<text x="414" y="103" class="sld-reading-label">CURRENT READING</text>',
       '</g>',
       '</svg>'
     ].join("");
@@ -193,13 +198,13 @@
 
       ".sld-main{min-width:0}.sld-main-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:8px}.sld-main h4{margin:3px 0 0;color:#fff;font-size:.98rem;font-weight:950}",
       ".sld-pressure{color:#82ffa3;font-size:.67rem;font-weight:950;letter-spacing:.11em;text-transform:uppercase;white-space:nowrap}",
-      ".sld-gauge-wrap{position:relative;border-radius:13px;background:radial-gradient(circle at 50% 78%,rgba(255,255,255,.045),transparent 36%),linear-gradient(180deg,rgba(0,0,0,.20),rgba(0,0,0,.10));border:1px solid rgba(255,255,255,.065);padding:4px 8px 0;overflow:hidden}",
-      ".sld-gauge{display:block;width:100%;height:auto;min-height:230px;overflow:visible}",
-      ".sld-gauge-ghost{fill:none;stroke:rgba(255,255,255,.05);stroke-width:50;stroke-linecap:round}",
-      ".sld-gauge-shadow{fill:none;stroke-width:46;stroke-linecap:butt;opacity:.30}.sld-gauge-shadow.healthy{stroke:#72ff72;stroke-linecap:round}.sld-gauge-shadow.watch{stroke:#ffd24d}.sld-gauge-shadow.risk{stroke:#ff5b50;stroke-linecap:round}.sld-gauge-band{fill:none;stroke-width:30;stroke-linecap:butt}.sld-gauge-band.healthy{stroke:url(#sldHealthy);stroke-linecap:round}.sld-gauge-band.watch{stroke:url(#sldWatch)}.sld-gauge-band.risk{stroke:url(#sldRisk);stroke-linecap:round}",
-      ".sld-gauge-inner{fill:none;stroke:rgba(255,255,255,.13);stroke-width:1;stroke-dasharray:4 7}.sld-needle{stroke:rgba(255,255,255,.9);stroke-width:5;stroke-linecap:round}.sld-needle-tip{stroke:#fff;stroke-width:2}.sld-needle-hub{fill:rgba(255,255,255,.94)}.sld-needle-hub-core{fill:rgba(4,12,9,.92)}",
-      ".sld-zone-label{font-size:10px;fill:rgba(255,255,255,.82);font-weight:950;letter-spacing:.07em}.sld-zone-sub{font-size:9px;fill:rgba(255,255,255,.62);font-weight:850}.sld-axis-label{font-size:9px;fill:rgba(255,255,255,.58);font-weight:850}.sld-band-label{font-size:9px;fill:rgba(255,255,255,.64);font-weight:900}",
-      ".sld-reading-box rect{fill:rgba(3,8,7,.9);stroke:rgba(255,95,88,.68);stroke-width:1}.sld-reading-value{fill:#fff;font-size:18px;font-weight:950}.sld-reading-label{fill:rgba(255,255,255,.58);font-size:8px;font-weight:950;letter-spacing:.08em}",
+      ".sld-gauge-wrap{position:relative;border-radius:13px;background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.10));border:1px solid rgba(255,255,255,.065);padding:4px 8px 0;overflow:hidden}",
+      ".sld-gauge{display:block;width:100%;height:auto;min-height:210px;overflow:visible}",
+      ".sld-gauge-shell{fill:none;stroke:rgba(255,255,255,.055);stroke-width:44;stroke-linecap:round}",
+      ".sld-gauge-band{fill:none;stroke-width:28;stroke-linecap:butt}.sld-gauge-band.healthy{stroke:url(#sldHealthy);stroke-linecap:round}.sld-gauge-band.watch{stroke:url(#sldWatch)}.sld-gauge-band.risk{stroke:url(#sldRisk);stroke-linecap:round}",
+      ".sld-gauge-inner{fill:none;stroke:rgba(255,255,255,.13);stroke-width:1;stroke-dasharray:4 7}.sld-needle{stroke:rgba(255,255,255,.88);stroke-width:5;stroke-linecap:round}.sld-needle-tip{stroke:#fff;stroke-width:2}.sld-needle-hub{fill:rgba(255,255,255,.93)}.sld-needle-hub-core{fill:rgba(4,12,9,.92)}",
+      ".sld-zone-label{font-size:10px;fill:rgba(255,255,255,.78);font-weight:950;letter-spacing:.06em}.sld-axis-label{font-size:9px;fill:rgba(255,255,255,.58);font-weight:850}.sld-band-label{font-size:9px;fill:rgba(255,255,255,.62);font-weight:900}",
+      ".sld-reading-box rect{fill:rgba(3,8,7,.88);stroke:rgba(255,95,88,.66);stroke-width:1}.sld-reading-value{fill:#fff;font-size:17px;font-weight:950}.sld-reading-label{fill:rgba(255,255,255,.56);font-size:8px;font-weight:950;letter-spacing:.08em}",
 
       ".sld-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}.sld-metric{border:1px solid rgba(255,255,255,.075);border-radius:10px;background:rgba(255,255,255,.028);padding:9px;min-height:60px}.sld-metric .k{color:rgba(255,255,255,.50);font-size:.62rem;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.sld-metric .v{color:rgba(255,255,255,.92);font-size:.82rem;font-weight:950;margin-top:5px;line-height:1.2}",
       ".sld-interpret{margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.075);background:rgba(0,0,0,.12)}.sld-interpret h4,.sld-guidance h4,.sld-bottom h4{margin:0 0 7px;color:#fff;font-size:.81rem;font-weight:950}",
@@ -224,7 +229,7 @@
     injectStyles();
 
     const target = typeof options.target === "string"
-      - document.querySelector(options.target)
+      ? document.querySelector(options.target)
       : options.target || document.querySelector("#diagnostic-panel");
 
     if (!target) return null;
@@ -344,7 +349,7 @@
   }
 
   function clear(target = "#diagnostic-panel") {
-    const el = typeof target === "string" - document.querySelector(target) : target;
+    const el = typeof target === "string" ? document.querySelector(target) : target;
     if (!el) return;
     el.hidden = true;
     el.innerHTML = "";
