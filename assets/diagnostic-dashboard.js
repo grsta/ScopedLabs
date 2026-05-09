@@ -50,131 +50,97 @@
     return '<ul class="sld-list">' + shown.map((item) => '<li>' + h(item) + '</li>').join("") + '</ul>';
   }
 
+  function body(section) {
+    if (!section) return '<p class="sld-copy">No detail captured.</p>';
+    if (Array.isArray(section.items)) return list(section.items);
+    return '<p class="sld-copy">' + h(section.body || "") + '</p>';
+  }
+
   function section(label, itemsOrBody) {
     if (Array.isArray(itemsOrBody)) return { label, items: itemsOrBody };
     if (itemsOrBody && typeof itemsOrBody === "object") return itemsOrBody;
     return { label, body: String(itemsOrBody || "") };
   }
 
-  function body(sectionData) {
-    if (!sectionData) return '<p class="sld-copy">No detail captured.</p>';
-    if (Array.isArray(sectionData.items)) return list(sectionData.items);
-    return '<p class="sld-copy">' + h(sectionData.body || "") + '</p>';
-  }
-
   function flowRows(flowOutputs) {
     const entries = Object.entries(flowOutputs || {}).filter(([, value]) => value !== null && value !== undefined && value !== "");
-    if (!entries.length) return '<p class="sld-copy">No flow data captured.</p>';
+    if (!entries.length) return '<p class="sld-copy">No flow summary data captured.</p>';
 
-    return '<div class="sld-flow">' + entries.slice(0, 5).map(([key, value]) => {
+    return '<div class="sld-flow">' + entries.slice(0, 6).map(([key, value]) => {
       const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
       return '<div class="sld-flow-row"><span>' + h(label) + '</span><strong>' + h(value) + '</strong></div>';
     }).join("") + '</div>';
   }
 
-  function gaugeSvg(score, max, status, reading) {
-    const pct = clamp((score / max) * 100, 0, 100);
+  function gaugeSvg(score, status) {
+    const pct = clamp(score, 0, 100);
     const angle = Math.PI - (Math.PI * pct / 100);
-    const cx = 260;
-    const cy = 218;
-    const r = 172;
+    const cx = 250;
+    const cy = 205;
+    const r = 165;
     const mx = cx + r * Math.cos(angle);
     const my = cy - r * Math.sin(angle);
-    const color = status === "RISK" ? "#ff5f58" : status === "WATCH" ? "#f4c84e" : "#6cff8f";
+    const color = status === "RISK" ? "#ff6961" : status === "WATCH" ? "#ffd45c" : "#7dff9a";
 
     return [
-      '<svg class="sld-gauge" viewBox="0 0 520 270" role="img" aria-label="Diagnostic pressure gauge">',
-      '<defs>',
-      '<filter id="sldNeedleGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
-      '<linearGradient id="sldHealthy" x1="0" x2="1"><stop offset="0" stop-color="#66ff7d"/><stop offset="1" stop-color="#86ff54"/></linearGradient>',
-      '<linearGradient id="sldWatch" x1="0" x2="1"><stop offset="0" stop-color="#e6c23d"/><stop offset="1" stop-color="#ffcf50"/></linearGradient>',
-      '<linearGradient id="sldRisk" x1="0" x2="1"><stop offset="0" stop-color="#f9554f"/><stop offset="1" stop-color="#ff403b"/></linearGradient>',
-      '</defs>',
-
-      '<path d="M78 204 A182 182 0 0 1 198 70" class="sld-zone-bg healthy"/>',
-      '<path d="M198 70 A182 182 0 0 1 322 70" class="sld-zone-bg watch"/>',
-      '<path d="M322 70 A182 182 0 0 1 442 204" class="sld-zone-bg risk"/>',
-
-      '<path d="M88 198 A172 172 0 0 1 199 84" class="sld-zone healthy"/>',
-      '<path d="M199 84 A172 172 0 0 1 321 84" class="sld-zone watch"/>',
-      '<path d="M321 84 A172 172 0 0 1 432 198" class="sld-zone risk"/>',
-
-      '<path d="M109 190 A151 151 0 0 1 411 190" class="sld-inner-arc"/>',
-
-      '<line x1="' + cx + '" y1="' + cy + '" x2="' + mx.toFixed(1) + '" y2="' + my.toFixed(1) + '" class="sld-needle" filter="url(#sldNeedleGlow)"/>',
-      '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="7" fill="' + color + '" stroke="#fff" stroke-width="2"/>',
-      '<circle cx="' + cx + '" cy="' + cy + '" r="9" class="sld-needle-hub"/>',
-
-      '<text x="124" y="160" text-anchor="middle" class="sld-zone-label">HEALTHY</text>',
-      '<text x="260" y="111" text-anchor="middle" class="sld-zone-label">WATCH</text>',
-      '<text x="396" y="160" text-anchor="middle" class="sld-zone-label">RISK</text>',
-      '<text x="91" y="233" text-anchor="middle" class="sld-axis-label">0</text>',
-      '<text x="260" y="82" text-anchor="middle" class="sld-axis-label">Preferred planning band</text>',
-      '<text x="429" y="233" text-anchor="middle" class="sld-axis-label">' + h(max) + '</text>',
-
-      '<g class="sld-reading-box">',
-      '<rect x="358" y="62" width="124" height="58" rx="9"/>',
-      '<text x="376" y="88" class="sld-reading-value">' + h(reading) + '</text>',
-      '<text x="376" y="107" class="sld-reading-label">CURRENT READING</text>',
-      '</g>',
+      '<svg class="sld-gauge" viewBox="0 0 500 250" role="img" aria-label="Diagnostic pressure gauge">',
+      '<path d="M70 196 A180 180 0 0 1 190 64" fill="none" stroke="rgba(125,255,154,.28)" stroke-width="44" stroke-linecap="round"/>',
+      '<path d="M190 64 A180 180 0 0 1 310 64" fill="none" stroke="rgba(255,212,92,.28)" stroke-width="44" stroke-linecap="round"/>',
+      '<path d="M310 64 A180 180 0 0 1 430 196" fill="none" stroke="rgba(255,105,97,.30)" stroke-width="44" stroke-linecap="round"/>',
+      '<path d="M82 188 A168 168 0 0 1 190 77" fill="none" stroke="#75ff66" stroke-width="24" stroke-linecap="round"/>',
+      '<path d="M190 77 A168 168 0 0 1 310 77" fill="none" stroke="#ffd34a" stroke-width="24" stroke-linecap="round"/>',
+      '<path d="M310 77 A168 168 0 0 1 418 188" fill="none" stroke="#ff5148" stroke-width="24" stroke-linecap="round"/>',
+      '<line x1="' + cx + '" y1="' + cy + '" x2="' + mx.toFixed(1) + '" y2="' + my.toFixed(1) + '" stroke="rgba(255,255,255,.88)" stroke-width="5" stroke-linecap="round"/>',
+      '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="8" fill="' + color + '" stroke="#fff" stroke-width="2"/>',
+      '<circle cx="' + cx + '" cy="' + cy + '" r="8" fill="rgba(255,255,255,.92)"/>',
+      '<text x="118" y="150" text-anchor="middle" class="sld-gauge-label">HEALTHY</text>',
+      '<text x="250" y="104" text-anchor="middle" class="sld-gauge-label">WATCH</text>',
+      '<text x="382" y="150" text-anchor="middle" class="sld-gauge-label">RISK</text>',
+      '<text x="74" y="226" text-anchor="middle" class="sld-gauge-small">0</text>',
+      '<text x="250" y="72" text-anchor="middle" class="sld-gauge-small">Preferred planning band</text>',
+      '<text x="426" y="226" text-anchor="middle" class="sld-gauge-small">100</text>',
       '</svg>'
     ].join("");
   }
 
   function injectStyles() {
-    const existing = document.getElementById(STYLE_ID);
-    if (existing) existing.remove();
+    if (document.getElementById(STYLE_ID)) return;
 
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = [
-      ".sld-card{margin-top:16px;border:1px solid rgba(106,255,151,.16);border-radius:18px;background:linear-gradient(180deg,rgba(4,13,10,.99),rgba(2,7,6,.995));box-shadow:0 26px 80px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,255,255,.055);overflow:hidden;color:rgba(255,255,255,.88);font-family:inherit}",
-      ".sld-head{display:grid;grid-template-columns:150px minmax(0,1fr) 310px 110px;border-bottom:1px solid rgba(255,255,255,.085);background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.018))}",
-      ".sld-brand,.sld-title,.sld-meta,.sld-badge{min-width:0;padding:12px 14px;border-right:1px solid rgba(255,255,255,.075)}",
-      ".sld-brand{display:flex;align-items:center;gap:9px;font-weight:950;color:#fff;letter-spacing:.01em}",
-      ".sld-mark{width:18px;height:18px;border-radius:6px;display:inline-grid;place-items:center;background:linear-gradient(135deg,#7eff99,#42c96f);color:#08120b;font-weight:950;font-size:.78rem}",
-      ".sld-kicker{color:rgba(126,255,164,.86);font-size:.64rem;font-weight:950;letter-spacing:.14em;text-transform:uppercase}",
-      ".sld-title h3{margin:4px 0 0;color:#fff;font-size:1rem;line-height:1.18;font-weight:950;white-space:normal}",
+      ".sld-card{margin-top:16px;border:1px solid rgba(120,255,160,.16);border-radius:16px;background:radial-gradient(circle at 18% 0%,rgba(88,255,145,.11),transparent 34%),radial-gradient(circle at 88% 10%,rgba(255,80,70,.10),transparent 30%),linear-gradient(180deg,rgba(4,13,10,.99),rgba(1,7,5,.995));box-shadow:0 26px 80px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;color:rgba(255,255,255,.88)}",
+      ".sld-head{display:grid;grid-template-columns:minmax(160px,.55fr) minmax(0,1.45fr);border-bottom:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.026);position:relative}",
+      ".sld-brand,.sld-title,.sld-meta,.sld-badge{padding:13px 15px;border-right:1px solid rgba(255,255,255,.075)}.sld-meta{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.075);border-right:0}.sld-badge{position:absolute;right:12px;top:12px;padding:0;border-right:0}",
+      ".sld-brand{display:flex;align-items:center;gap:9px;font-weight:950;color:#fff}",
+      ".sld-mark{width:18px;height:18px;border-radius:6px;display:inline-grid;place-items:center;background:linear-gradient(135deg,#7dff9a,#42c96f);color:#101b12;font-weight:950}",
+      ".sld-kicker{color:rgba(145,255,179,.86);font-size:.66rem;font-weight:950;letter-spacing:.13em;text-transform:uppercase}",
+      ".sld-title h3{margin:4px 0 0;color:#fff;font-size:1rem;line-height:1.2}",
       ".sld-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}",
-      ".sld-meta .k{color:rgba(255,255,255,.45);font-size:.61rem;font-weight:950;letter-spacing:.09em;text-transform:uppercase}",
-      ".sld-meta .v{margin-top:3px;color:rgba(255,255,255,.84);font-size:.72rem;font-weight:850;line-height:1.15}",
-      ".sld-badge{display:grid;place-items:center;border-right:0}.sld-pro{border:1px solid rgba(255,218,88,.36);border-radius:10px;padding:7px 10px;color:#ffe07a;background:rgba(255,218,88,.075);font-size:.66rem;font-weight:950;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}",
-
-      ".sld-grid{display:grid;grid-template-columns:178px minmax(0,1fr) 278px;gap:8px;padding:8px}",
-      ".sld-panel{border:1px solid rgba(255,255,255,.085);border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,.042),rgba(255,255,255,.018));box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}",
-      ".sld-rail,.sld-main,.sld-guidance,.sld-bottom{padding:11px}",
-
-      ".sld-status{display:inline-flex;border-radius:8px;padding:7px 11px;min-width:84px;margin:8px 0 10px;justify-content:center;font-size:.71rem;font-weight:950;letter-spacing:.10em;text-transform:uppercase;border:1px solid rgba(255,255,255,.14)}",
-      ".sld-status.healthy{color:#95ffba;background:rgba(52,255,139,.12);border-color:rgba(52,255,139,.30)}.sld-status.watch{color:#ffd56e;background:rgba(255,197,70,.12);border-color:rgba(255,197,70,.30)}.sld-status.risk{color:#ff9a92;background:rgba(255,82,70,.13);border-color:rgba(255,82,70,.36)}",
-      ".sld-copy{color:rgba(255,255,255,.70);font-size:.78rem;line-height:1.5;margin:0}",
-      ".sld-block{border-top:1px solid rgba(255,255,255,.075);margin-top:11px;padding-top:11px}",
-      ".sld-big{color:#ff8f87;font-size:.98rem;font-weight:950;margin-top:5px}.sld-good{color:#89ffad;font-size:.82rem;font-weight:900;line-height:1.35;margin-top:5px}.sld-driver{color:rgba(255,255,255,.82);font-size:.76rem;line-height:1.42;margin-top:5px}",
-      ".sld-section-map{display:grid;gap:5px;margin-top:8px}.sld-section{border:1px solid rgba(120,255,157,.13);border-radius:7px;background:rgba(255,255,255,.028);color:rgba(255,255,255,.74);padding:6px 8px;font-size:.69rem;font-weight:850;cursor:pointer;text-align:left;line-height:1.2}.sld-section:hover,.sld-section.is-active{background:rgba(72,255,141,.12);border-color:rgba(72,255,141,.34);color:#fff}",
-
-      ".sld-main{min-width:0}.sld-main-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:8px}.sld-main h4{margin:3px 0 0;color:#fff;font-size:.98rem;font-weight:950}",
-      ".sld-pressure{color:#82ffa3;font-size:.67rem;font-weight:950;letter-spacing:.11em;text-transform:uppercase;white-space:nowrap}",
-      ".sld-gauge-wrap{position:relative;border-radius:13px;background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.10));border:1px solid rgba(255,255,255,.065);padding:6px 8px 0;overflow:hidden}",
-      ".sld-gauge{display:block;width:100%;height:auto;min-height:190px;overflow:visible}",
-      ".sld-zone-bg{fill:none;stroke-width:42;stroke-linecap:round}.sld-zone-bg.healthy{stroke:rgba(101,255,125,.12)}.sld-zone-bg.watch{stroke:rgba(244,200,78,.12)}.sld-zone-bg.risk{stroke:rgba(255,95,88,.13)}",
-      ".sld-zone{fill:none;stroke-width:22;stroke-linecap:round}.sld-zone.healthy{stroke:url(#sldHealthy)}.sld-zone.watch{stroke:url(#sldWatch)}.sld-zone.risk{stroke:url(#sldRisk)}",
-      ".sld-inner-arc{fill:none;stroke:rgba(255,255,255,.13);stroke-width:1;stroke-dasharray:4 7}.sld-needle{stroke:rgba(255,255,255,.86);stroke-width:5;stroke-linecap:round}.sld-needle-hub{fill:rgba(255,255,255,.92)}",
-      ".sld-zone-label{font-size:10px;fill:rgba(255,255,255,.77);font-weight:950;letter-spacing:.06em}.sld-axis-label{font-size:9px;fill:rgba(255,255,255,.55);font-weight:850}",
-      ".sld-reading-box rect{fill:rgba(3,8,7,.88);stroke:rgba(255,95,88,.66);stroke-width:1}.sld-reading-value{fill:#fff;font-size:17px;font-weight:950}.sld-reading-label{fill:rgba(255,255,255,.56);font-size:8px;font-weight:950;letter-spacing:.08em}",
-
-      ".sld-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}.sld-metric{border:1px solid rgba(255,255,255,.075);border-radius:10px;background:rgba(255,255,255,.028);padding:9px;min-height:60px}.sld-metric .k{color:rgba(255,255,255,.50);font-size:.62rem;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.sld-metric .v{color:rgba(255,255,255,.92);font-size:.82rem;font-weight:950;margin-top:5px;line-height:1.2}",
-      ".sld-interpret{margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.075);background:rgba(0,0,0,.12)}.sld-interpret h4,.sld-guidance h4,.sld-bottom h4{margin:0 0 7px;color:#fff;font-size:.81rem;font-weight:950}",
-
-      ".sld-guide-section{padding:11px 0;border-top:1px solid rgba(255,255,255,.075)}.sld-guide-section:first-child{border-top:0;padding-top:0}.sld-guide-section.why h4{color:#ff8f87}.sld-guide-section.drivers h4{color:#ffd56e}.sld-guide-section.actions h4,.sld-guide-section.target h4{color:#89ffad}",
-      ".sld-list{margin:0;padding-left:17px;color:rgba(255,255,255,.72);font-size:.75rem;line-height:1.5}.sld-list li+li{margin-top:3px}",
-
-      ".sld-bottom-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:0 8px 8px}.sld-bottom{min-height:104px}.sld-flow{display:grid;gap:4px;font-size:.71rem}.sld-flow-row{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(255,255,255,.055);padding-bottom:4px}.sld-flow-row span{color:rgba(255,255,255,.52)}.sld-flow-row strong{color:rgba(255,255,255,.86);font-weight:900;text-align:right}",
-
-      ".sld-detail{margin:0 8px 8px;padding:12px}.sld-detail[hidden]{display:none!important}.sld-detail h4{margin:0 0 8px;color:#fff;font-size:.88rem}.sld-detail p{margin:0;color:rgba(255,255,255,.74);line-height:1.58;font-size:.8rem}",
-
-      ".sld-foot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid rgba(255,255,255,.085);background:rgba(255,255,255,.020)}.sld-foot-tile{padding:10px 12px;border-right:1px solid rgba(255,255,255,.075)}.sld-foot-tile:last-child{border-right:0}.sld-foot-tile .k{color:rgba(255,255,255,.46);font-size:.62rem;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.sld-foot-tile .v{color:rgba(255,255,255,.82);font-size:.72rem;line-height:1.35;margin-top:3px;font-weight:800}",
-
-      "@media(max-width:1100px){.sld-head{grid-template-columns:150px minmax(0,1fr)}.sld-meta{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.075);border-right:0}.sld-badge{position:absolute;right:14px;top:12px;padding:0;border-right:0}.sld-grid{grid-template-columns:190px minmax(0,1fr)}.sld-guidance{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.sld-guide-section:nth-child(2){border-top:0;padding-top:0}.sld-bottom-grid,.sld-foot{grid-template-columns:repeat(2,minmax(0,1fr))}}",
-      "@media(max-width:760px){.sld-head,.sld-grid,.sld-guidance,.sld-bottom-grid,.sld-foot,.sld-meta,.sld-metrics{grid-template-columns:1fr}.sld-brand,.sld-title,.sld-meta,.sld-badge,.sld-foot-tile{border-right:0;border-bottom:1px solid rgba(255,255,255,.075)}.sld-badge{position:static;place-items:start}.sld-gauge{min-height:160px}}"
+      ".sld-meta .k{color:rgba(255,255,255,.48);font-size:.64rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}",
+      ".sld-meta .v{margin-top:3px;color:rgba(255,255,255,.86);font-size:.75rem;font-weight:800}",
+      ".sld-badge{display:grid;place-items:center;border-right:0}.sld-pro{border:1px solid rgba(255,218,88,.34);border-radius:12px;padding:8px 12px;color:#ffe07a;background:rgba(255,218,88,.08);font-size:.72rem;font-weight:950;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}",
+      ".sld-grid{display:grid;grid-template-columns:minmax(210px,.78fr) minmax(0,1.72fr);gap:10px;padding:10px}",
+      ".sld-panel{border:1px solid rgba(255,255,255,.095);border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,.048),rgba(255,255,255,.02));box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}",
+      ".sld-rail,.sld-main,.sld-guidance,.sld-bottom{padding:12px}.sld-guidance{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}",
+      ".sld-status{display:inline-flex;border-radius:9px;padding:8px 12px;min-width:92px;margin:8px 0 10px;justify-content:center;font-size:.76rem;font-weight:950;letter-spacing:.10em;text-transform:uppercase;border:1px solid rgba(255,255,255,.16)}",
+      ".sld-status.healthy{color:#95ffba;background:rgba(52,255,139,.13);border-color:rgba(52,255,139,.34)}.sld-status.watch{color:#ffd56e;background:rgba(255,197,70,.13);border-color:rgba(255,197,70,.34)}.sld-status.risk{color:#ff9a92;background:rgba(255,82,70,.14);border-color:rgba(255,82,70,.40)}",
+      ".sld-copy{color:rgba(255,255,255,.71);font-size:.8rem;line-height:1.48;margin:0}",
+      ".sld-block{border-top:1px solid rgba(255,255,255,.08);margin-top:12px;padding-top:12px}",
+      ".sld-big{color:#ff8f87;font-size:1rem;font-weight:950;margin-top:5px}.sld-good{color:#8cffad;font-size:.9rem;font-weight:950;margin-top:5px}.sld-driver{color:rgba(255,255,255,.82);font-size:.78rem;line-height:1.45;margin-top:5px}",
+      ".sld-section-map{display:grid;gap:6px;margin-top:8px}.sld-section{border:1px solid rgba(120,255,157,.14);border-radius:8px;background:rgba(255,255,255,.035);color:rgba(255,255,255,.76);padding:6px 8px;font-size:.72rem;font-weight:850;cursor:pointer;text-align:left}.sld-section:hover,.sld-section.is-active{background:rgba(72,255,141,.14);border-color:rgba(72,255,141,.38);color:#fff}",
+      ".sld-main-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:8px}.sld-main h4{margin:3px 0 0;color:#fff;font-size:1.02rem}",
+      ".sld-gauge-wrap{position:relative;margin-top:4px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.07);padding:8px 8px 0}.sld-gauge{display:block;width:100%;height:auto;min-height:190px;overflow:visible}.sld-gauge-label{font-size:11px;fill:rgba(255,255,255,.76);font-weight:850}.sld-gauge-small{font-size:10px;fill:rgba(255,255,255,.58);font-weight:800}",
+      ".sld-callout{position:absolute;right:22px;top:34px;border:1px solid rgba(255,95,88,.62);border-radius:10px;background:rgba(2,7,6,.84);padding:9px 12px;min-width:104px}.sld-callout .v{color:#fff;font-size:1.08rem;font-weight:950}.sld-callout .k{margin-top:2px;color:rgba(255,255,255,.56);font-size:.62rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}",
+      ".sld-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}.sld-metric{border:1px solid rgba(255,255,255,.085);border-radius:10px;background:rgba(255,255,255,.032);padding:10px;min-height:64px}.sld-metric .k{color:rgba(255,255,255,.52);font-size:.67rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.sld-metric .v{color:rgba(255,255,255,.92);font-size:.86rem;font-weight:950;margin-top:5px;line-height:1.2}",
+      ".sld-interpret{margin-top:10px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(0,0,0,.16)}.sld-interpret h4,.sld-guidance h4,.sld-bottom h4{margin:0 0 7px;color:#fff;font-size:.86rem}",
+      ".sld-guide-section{padding:12px 0;border-top:1px solid rgba(255,255,255,.08)}.sld-guide-section:first-child,.sld-guide-section:nth-child(2){border-top:0;padding-top:0}.sld-guide-section.why h4{color:#ff8f87}.sld-guide-section.drivers h4{color:#ffd56e}.sld-guide-section.actions h4,.sld-guide-section.target h4{color:#8cffad}",
+      ".sld-list{margin:0;padding-left:18px;color:rgba(255,255,255,.72);font-size:.78rem;line-height:1.55}.sld-list li+li{margin-top:3px}",
+      ".sld-bottom-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 10px 10px}.sld-bottom{min-height:112px}.sld-flow{display:grid;gap:5px;font-size:.75rem}.sld-flow-row{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:4px}.sld-flow-row span{color:rgba(255,255,255,.54)}.sld-flow-row strong{color:rgba(255,255,255,.86);text-align:right}",
+      ".sld-detail{margin:0 10px 10px;padding:14px}.sld-detail[hidden]{display:none!important}.sld-detail h4{margin:0 0 8px;color:#fff;font-size:.92rem}.sld-detail p{margin:0;color:rgba(255,255,255,.74);line-height:1.6;font-size:.82rem}",
+      ".sld-foot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.022)}.sld-foot-tile{padding:11px 14px;border-right:1px solid rgba(255,255,255,.08)}.sld-foot-tile:last-child{border-right:0}.sld-foot-tile .k{color:rgba(255,255,255,.48);font-size:.66rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.sld-foot-tile .v{color:rgba(255,255,255,.82);font-size:.76rem;line-height:1.35;margin-top:3px}",
+      "@media(max-width:1180px){.sld-head,.sld-grid,.sld-bottom-grid,.sld-foot,.sld-guidance{grid-template-columns:1fr}.sld-brand,.sld-title,.sld-meta,.sld-badge,.sld-foot-tile{border-right:0;border-bottom:1px solid rgba(255,255,255,.08)}.sld-badge{position:static;place-items:start}.sld-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+      "@media(max-width:720px){.sld-meta,.sld-metrics{grid-template-columns:1fr}.sld-callout{position:static;margin:8px 0 0}}"
     ].join("\n");
 
     document.head.appendChild(style);
@@ -193,10 +159,10 @@
     const status = statusOf(options.status || data.status);
     const statusClass = status.toLowerCase();
     const gauge = options.gauge || data.gauge || {};
+    const score = clamp(gauge.score ?? gauge.value ?? 0, 0, gauge.max || 100);
     const max = Number(gauge.max || 100);
-    const score = clamp(gauge.score ?? gauge.value ?? 0, 0, max);
+    const pct = clamp((score / max) * 100, 0, 100);
     const metrics = arr(options.keyMetrics || data.keyResults);
-
     const first = metrics[0] || { label: gauge.markerLabel || "Current Reading", value: gauge.displayValue || String(score) };
     const second = metrics[1] || { label: "Planning Context", value: "Planning range" };
     const third = metrics[2] || { label: "Report Data", value: status };
@@ -248,8 +214,10 @@
           '</aside>' +
 
           '<section class="sld-panel sld-main">' +
-            '<div class="sld-main-head"><div><div class="sld-kicker">Results Overview</div><h4>' + h(gauge.label || "Diagnostic Pressure") + '</h4></div><div class="sld-pressure">' + h(Math.round(score) + " / " + Math.round(max)) + ' pressure</div></div>' +
-            '<div class="sld-gauge-wrap">' + gaugeSvg(score, max, status, gauge.displayValue || first.value) + '</div>' +
+            '<div class="sld-main-head"><div><div class="sld-kicker">Results Overview</div><h4>' + h(gauge.label || "Diagnostic Pressure") + '</h4></div><div class="sld-kicker">' + h(Math.round(score) + " / " + Math.round(max)) + ' Pressure</div></div>' +
+            '<div class="sld-gauge-wrap">' + gaugeSvg(pct, status) +
+              '<div class="sld-callout"><div class="v">' + h(gauge.displayValue || first.value) + '</div><div class="k">Current Reading</div></div>' +
+            '</div>' +
             '<div class="sld-metrics">' +
               metrics.slice(0, 3).map((item) => '<div class="sld-metric"><div class="k">' + h(item.label) + '</div><div class="v">' + h(item.value) + '</div></div>').join("") +
               '<div class="sld-metric"><div class="k">Status</div><div class="v">' + h(status) + '</div></div>' +
