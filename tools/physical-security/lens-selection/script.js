@@ -434,6 +434,10 @@
       data.adjustmentMetric
     );
 
+    const status = data.status;
+    const isHealthy = status === "HEALTHY";
+    const isRisk = status === "RISK";
+
     const likelyDrivers = [];
 
     if (data.adjustedFocal >= 12) {
@@ -453,10 +457,10 @@
       likelyDrivers.push("Scene geometry, sensor width, and the upstream detail requirement are staying within a practical planning range.");
     }
 
-    const pathToHealthy = data.status === "HEALTHY"
+    const possiblePlanningActions = isHealthy
       ? [
           "Keep the current geometry and detail assumptions documented with the project.",
-          "Verify the final lens option against the manufacturer’s field-of-view chart.",
+          "Verify the final lens option against the manufacturer field-of-view chart.",
           "Re-run this check if distance, target width, sensor width, or detail requirement changes."
         ]
       : [
@@ -467,52 +471,167 @@
           "Recheck whether the upstream pixel-density/detail target matches the actual use case."
         ];
 
+    const inputAssumptions = [
+      {
+        label: "Distance to target",
+        value: fmtFt(data.dist),
+        note: "Measured or estimated distance from camera position to the target plane."
+      },
+      {
+        label: "Target width",
+        value: fmtFt(data.tw),
+        note: "Horizontal scene or subject width expected to be covered by the lens selection."
+      },
+      {
+        label: "Sensor width",
+        value: fmtMm(data.sw, 2),
+        note: "Camera sensor width used for the focal-length estimate."
+      },
+      {
+        label: "Pixel-density input",
+        value: data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF",
+        note: "Optional upstream detail target used to adjust the raw geometry result."
+      },
+      {
+        label: "Adjustment shift",
+        value: fmt(data.adjustmentPct, 1) + "%",
+        note: "How much the detail requirement shifted the lens recommendation from raw geometry."
+      }
+    ];
+
+    const keyDrivers = [
+      {
+        label: "Focal demand pressure",
+        value: fmt(data.focalPressureMetric, 0) + "/100",
+        note: "Pressure created by the adjusted focal length and practical lens-class range."
+      },
+      {
+        label: "Detail requirement pressure",
+        value: fmt(data.detailPressureMetric, 0) + "/100",
+        note: "Pressure created by the upstream pixel-density or detail target."
+      },
+      {
+        label: "Adjustment pressure",
+        value: fmt(data.adjustmentMetric, 0) + "/100",
+        note: "Pressure created by how far the adjusted focal length moved away from the raw geometry result."
+      }
+    ];
+
+    const whyThisStatus = isHealthy
+      ? "The current lens recommendation stays within the preferred planning band for this scene geometry and detail context."
+      : "The current combination of distance, target width, sensor width, and upstream detail requirement is increasing lens pressure and reducing layout flexibility.";
+
+    const statusHeadline = isHealthy
+      ? "Lens selection is inside the preferred planning band."
+      : isRisk
+        ? "Lens selection is under high planning pressure."
+        : "Lens selection is workable but should be reviewed.";
+
+    const healthyTarget = "Bring lens-selection pressure back into the preferred planning band while preserving the required scene detail objective.";
+
+    const followUpChecks = [
+      "Validate the selected focal length against the manufacturer actual field-of-view chart.",
+      "Confirm mounting location, camera angle, and alignment tolerance before final selection.",
+      "Continue to Face Recognition Range if identification detail is required.",
+      "Re-run this tool if the distance, target width, sensor size, or upstream pixel-density target changes."
+    ];
+
+    const revisionTriggers = [
+      "Camera mounting location changes.",
+      "Target width or scene objective changes.",
+      "Sensor size or lens family changes.",
+      "Upstream pixel-density requirement changes."
+    ];
+
+    const planningLimitations = [
+      "This is a planning estimate, not a manufacturer-certified lens selection.",
+      "Actual field of view depends on the selected camera model, lens family, mounting angle, and installation tolerance.",
+      "Lighting, motion, compression, image quality, and camera placement can affect usable identification detail.",
+      "Final selection should be checked against manufacturer data and project requirements."
+    ];
+
+    const whatThisSupports = [
+      "Comparing whether the current scene geometry is reasonable for one camera view.",
+      "Identifying when lens demand is being pushed by distance, scene width, sensor size, or detail target.",
+      "Carrying structured focal-length assumptions into downstream physical-security planning steps."
+    ];
+
+    const whatThisDoesNotProve = [
+      "It does not certify that a specific camera and lens combination will meet code, contract, or compliance requirements.",
+      "It does not validate lighting, image quality, compression, motion blur, or final identification performance.",
+      "It does not replace manufacturer field-of-view charts or project-specific engineering review."
+    ];
+
     return {
-      schema: "scopedlabs.diagnostic.v1",
+      schema: "scopedlabs.diagnostic.v2",
+      schemaVersion: 2,
+      rendererProfile: "diagnostic-gauge-v1",
       category: CATEGORY,
       toolSlug: STEP,
       toolLabel: "Lens Selection Helper",
-      status: data.status,
+      status,
       objective: "Estimate lens class and focal-length pressure from scene geometry and upstream detail requirements.",
       method: "Uses distance to target, target width, sensor width, and pixel-density context to estimate focal demand and classify planning pressure.",
+      resultSummary: statusHeadline,
       gauge: {
         label: "Lens Selection Pressure",
         score: pressureScore,
+        value: pressureScore,
         max: 100,
         displayValue: fmtMm(data.adjustedFocal),
         markerLabel: "Adjusted focal length",
         healthyLabel: "Healthy",
         watchLabel: "Watch",
-        riskLabel: "Risk"
+        riskLabel: "Risk",
+        targetBand: {
+          label: "Preferred planning band",
+          min: 0,
+          max: 35
+        }
       },
       keyResults: [
-        { label: "Adjusted Focal Length", value: fmtMm(data.adjustedFocal) },
-        { label: "Lens Class", value: data.lensClass },
-        { label: "Detail Requirement", value: data.ppf > 0 ? data.requirementClass : "No prior PPF" }
+        {
+          label: "Adjusted Focal Length",
+          value: fmtMm(data.adjustedFocal),
+          rawValue: Number(data.adjustedFocal.toFixed(2)),
+          unit: "mm",
+          role: "primary"
+        },
+        {
+          label: "Lens Class",
+          value: data.lensClass,
+          role: "classification"
+        },
+        {
+          label: "Detail Requirement",
+          value: data.ppf > 0 ? data.requirementClass : "No prior PPF",
+          rawValue: data.ppf > 0 ? Number(data.ppf.toFixed(2)) : null,
+          unit: data.ppf > 0 ? "PPF" : "",
+          role: "context"
+        }
       ],
+      statusSummary: {
+        headline: statusHeadline,
+        detail: whyThisStatus,
+        healthyTarget
+      },
       dominantDriver: {
         key: driver.key,
         label: driver.label,
         summary: driver.summary
       },
-      whyThisStatus: data.status === "HEALTHY"
-        ? "The current lens recommendation stays within the preferred planning band for this scene geometry and detail context."
-        : "The current combination of distance, target width, sensor width, and upstream detail requirement is increasing lens pressure and reducing layout flexibility.",
+      whyThisStatus,
       likelyDrivers,
-      possiblePlanningActions: pathToHealthy,
-      healthyTarget: "Bring lens-selection pressure back into the preferred planning band while preserving the required scene detail objective.",
-      followUpChecks: [
-        "Validate the selected focal length against the manufacturer’s actual field-of-view chart.",
-        "Confirm mounting location, camera angle, and alignment tolerance before final selection.",
-        "Continue to Face Recognition Range if identification detail is required.",
-        "Re-run this tool if the distance, target width, sensor size, or upstream pixel-density target changes."
-      ],
-      revisionTriggers: [
-        "Camera mounting location changes.",
-        "Target width or scene objective changes.",
-        "Sensor size or lens family changes.",
-        "Upstream pixel-density requirement changes."
-      ],
+      keyDrivers,
+      possiblePlanningActions,
+      healthyTarget,
+      followUpChecks,
+      revisionTriggers,
+      inputAssumptions,
+      assumptions: inputAssumptions,
+      planningLimitations,
+      whatThisSupports,
+      whatThisDoesNotProve,
       flowOutputs: {
         adjustedFocalMm: Number(data.adjustedFocal.toFixed(2)),
         baseFocalMm: Number(data.baseFocal.toFixed(2)),
@@ -521,8 +640,48 @@
         targetWidthFt: Number(data.tw.toFixed(2)),
         sensorWidthMm: Number(data.sw.toFixed(2)),
         pixelDensityPpf: Number(data.ppf.toFixed(2)),
-        adjustmentPct: Number(data.adjustmentPct.toFixed(2))
-      }
+        adjustmentPct: Number(data.adjustmentPct.toFixed(2)),
+        pressureScore: Number(pressureScore.toFixed(2)),
+        status
+      },
+      reportSections: [
+        {
+          label: "Planning Objective",
+          body: "Estimate lens class and focal-length pressure from scene geometry and upstream detail requirements."
+        },
+        {
+          label: "Method / Basis of Estimate",
+          body: "Distance to target, target width, sensor width, and optional pixel-density context are used to estimate focal demand and classify planning pressure."
+        },
+        {
+          label: "Status / Risk Summary",
+          body: whyThisStatus
+        },
+        {
+          label: "Input Assumptions",
+          items: inputAssumptions.map((item) => item.label + ": " + item.value + " - " + item.note)
+        },
+        {
+          label: "Assumption Sensitivity / Key Drivers",
+          items: keyDrivers.map((item) => item.label + ": " + item.value + " - " + item.note)
+        },
+        {
+          label: "Possible Planning Actions to Evaluate",
+          items: possiblePlanningActions
+        },
+        {
+          label: "Follow-up Checks",
+          items: followUpChecks
+        },
+        {
+          label: "Revision Triggers",
+          items: revisionTriggers
+        },
+        {
+          label: "Planning Limitations",
+          items: planningLimitations
+        }
+      ]
     };
   }
 
