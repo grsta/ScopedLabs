@@ -1155,53 +1155,6 @@ const extraSections = getExtraExportSections();
     }
   }
 
-
-  function escapeReportRegExp(value) {
-    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\  function buildReportHTML(payload) {");
-  }
-
-  function formatReportBodyCopy(text, payload) {
-    let html = escapeHtml(text || "");
-
-    const knownLabels = [
-      ...(payload?.outputs || []).map((item) => item.label),
-      ...(payload?.inputs || []).map((item) => item.label),
-      "Results",
-      "Status",
-      "Engineering Interpretation",
-      "Dominant Constraint",
-      "Actionable Guidance",
-      "Recommended Next Step",
-      "Next Step",
-      "Planning Note",
-      "Runtime Result",
-      "Estimated Runtime",
-      "Estimated Load",
-      "UPS Rating",
-      "Power Factor",
-      "Installed Battery Energy",
-      "Usable Battery Energy",
-      "Inverter Efficiency",
-      "Battery Derate",
-      "Load as % of Capacity",
-      "Usable UPS Watt Capacity"
-    ]
-      .filter(Boolean)
-      .map((label) => String(label).trim())
-      .filter(Boolean);
-
-    const uniqueLabels = Array.from(new Set(knownLabels))
-      .sort((a, b) => b.length - a.length);
-
-    for (const label of uniqueLabels) {
-      const safeLabel = escapeReportRegExp(escapeHtml(label));
-      const pattern = new RegExp("(^|\\s)(" + safeLabel + ")(?!\\s*:)", "g");
-      html = html.replace(pattern, "$1<strong>$2:</strong>");
-    }
-
-    return html;
-  }
-
   function buildReportHTML(payload) {
     const inputRows = (payload.inputs || []).map((item) => `
       <tr>
@@ -1253,7 +1206,7 @@ const extraSections = getExtraExportSections();
       ? `
         <section class="section">
           <h2>Engineering Interpretation</h2>
-          <div class="body-copy">${formatReportBodyCopy(payload.interpretation, payload)}</div>
+          <div class="body-copy">${escapeHtml(payload.interpretation)}</div>
         </section>
       `
       : "";
@@ -1265,7 +1218,7 @@ const extraSections = getExtraExportSections();
   .map((section) => `
     <section class="section">
       <h2>${escapeHtml(section.title)}</h2>
-      <div class="body-copy">${formatReportBodyCopy(section.body, payload)}</div>
+      <div class="body-copy">${escapeHtml(section.body)}</div>
     </section>
   `)
   .join("");
