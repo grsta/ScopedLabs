@@ -762,29 +762,7 @@
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance,
-      chart: {
-        labels: ["Detail Pressure", "Focal Demand", "Adjustment Shift"],
-        values: [
-          Number(data.detailPressureMetric.toFixed(1)),
-          Number(data.focalPressureMetric.toFixed(1)),
-          Number(data.adjustmentMetric.toFixed(1))
-        ],
-        displayValues: [
-          data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF",
-          fmtMm(data.adjustedFocal),
-          `${fmt(data.adjustmentPct, 1)}%`
-        ],
-        referenceValue: 25,
-        healthyMax: 25,
-        watchMax: 60,
-        axisTitle: "Lens Selection Pressure",
-        referenceLabel: "Comfort Band",
-        healthyLabel: "Healthy",
-        watchLabel: "Watch",
-        riskLabel: "Risk",
-        chartMax: 100
-      }
+      guidance: data.guidance
     });
 
     renderDiagnosticPanel(data);
