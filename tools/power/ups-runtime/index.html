@@ -318,11 +318,46 @@
             "The calculation output is intended for planning, comparison, and documentation support.",
             "Final design decisions should be verified against project requirements, manufacturer documentation, site-specific conditions, and applicable standards."
       ],
-      "disclaimer": "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
+      "disclaimer": "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation.",
+      "reportProfile": "planning-v1",
+      "planningReview": {
+        "workflow": "Power & Runtime Guided Flow",
+        "previousStep": "Load Growth",
+        "currentStep": "UPS Runtime",
+        "nextStep": "Battery Bank Sizer",
+        "criticalAssumptions": [
+          "The estimated load reflects the equipment that must remain online during an outage.",
+          "UPS VA rating and power factor are representative of usable watt capacity.",
+          "Battery Wh reflects installed energy, not guaranteed usable runtime under every condition.",
+          "Inverter efficiency and battery derate reflect realistic field conditions.",
+          "Runtime should be rechecked if load, battery condition, environment, or target outage duration changes."
+        ],
+        "supports": [
+          "Early UPS runtime planning and comparison.",
+          "Documenting the load, battery, efficiency, and derate assumptions behind the estimate.",
+          "Deciding whether the result is ready to move into battery-bank sizing."
+        ],
+        "doesNotProve": [
+          "Manufacturer-certified runtime for a specific UPS model.",
+          "Electrical code compliance or final installation suitability.",
+          "Battery health, runtime, or performance under every site condition."
+        ],
+        "followUpChecks": [
+          "Compare against manufacturer runtime charts before selection.",
+          "Run Battery Bank Sizer if the runtime target is a design requirement.",
+          "Run Worst-Case Runtime if battery aging, load spikes, or derated conditions matter."
+        ],
+        "revisitTriggers": [
+          "Equipment load changes or new devices are added.",
+          "Battery age, condition, temperature, or reserve assumptions change.",
+          "The required outage duration changes.",
+          "The selected UPS model has a different runtime curve than the planning estimate."
+        ]
+      }
 };
   </script>
 
-  <script src="/assets/export.js?v=shared-export-006"></script>
+  <script src="/assets/export.js?v=shared-export-007"></script>
 
   <script src="./script.js?v=power-export-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>

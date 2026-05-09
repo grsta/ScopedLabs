@@ -796,6 +796,99 @@
     }).join("");
   }
 
+
+  function renderPlanningList(items = []) {
+    const list = Array.isArray(items) ? items.filter(Boolean) : [];
+
+    if (!list.length) {
+      return '<p class="section-note">No items captured.</p>';
+    }
+
+    return (
+      '<ul class="report-list">' +
+      list.map((item) => '<li>' + escapeHtml(item) + '</li>').join("") +
+      '</ul>'
+    );
+  }
+
+  function buildFlowReadyData(payload) {
+    const review = payload.planningReview || {};
+
+    return {
+      schema: "scopedlabs.flow-summary.v1",
+      generatedAt: payload.generatedAt || "",
+      reportId: payload.reportId || "",
+      category: payload.category || "",
+      categorySlug: payload.categorySlug || "",
+      tool: payload.tool || "",
+      toolSlug: payload.toolSlug || "",
+      status: payload.status || "",
+      summary: payload.summary || "",
+      keyOutputs: payload.outputs || [],
+      inputs: payload.inputs || [],
+      interpretation: payload.interpretation || "",
+      chartIncluded: !!payload.chartImage,
+      workflow: review.workflow || "",
+      previousStep: review.previousStep || "",
+      currentStep: review.currentStep || "",
+      nextStep: review.nextStep || "",
+      criticalAssumptions: review.criticalAssumptions || [],
+      supports: review.supports || [],
+      doesNotProve: review.doesNotProve || [],
+      followUpChecks: review.followUpChecks || [],
+      revisitTriggers: review.revisitTriggers || []
+    };
+  }
+
+  function buildPlanningSections(payload) {
+    if (payload.reportProfile !== "planning-v1") return "";
+
+    const review = payload.planningReview || {};
+    const flowReadyData = buildFlowReadyData(payload);
+
+    const stepLine = [review.previousStep, review.currentStep, review.nextStep]
+      .filter(Boolean)
+      .join(" → ");
+
+    return (
+      '<section class="section">' +
+        '<div class="section-kicker">Assumption Review</div>' +
+        '<h2>Critical Assumptions to Verify</h2>' +
+        '<div class="callout">' +
+          '<p class="section-note">This report is only as reliable as the assumptions behind the visible result. Re-check these items before using the output for selection, documentation, or handoff.</p>' +
+          renderPlanningList(review.criticalAssumptions || []) +
+        '</div>' +
+      '</section>' +
+
+      '<section class="section">' +
+        '<div class="section-kicker">Decision Context</div>' +
+        '<h2>What This Result Supports</h2>' +
+        '<div class="triad">' +
+          '<div class="mini-card"><h3>Supports</h3>' + renderPlanningList(review.supports || []) + '</div>' +
+          '<div class="mini-card"><h3>Does Not Prove</h3>' + renderPlanningList(review.doesNotProve || []) + '</div>' +
+          '<div class="mini-card"><h3>Follow-up Checks</h3>' + renderPlanningList(review.followUpChecks || []) + '</div>' +
+        '</div>' +
+      '</section>' +
+
+      '<section class="section">' +
+        '<div class="section-kicker">Revision Context</div>' +
+        '<h2>When to Revisit This Report</h2>' +
+        '<div class="body-copy">' +
+          (stepLine ? '<p><strong>Workflow position:</strong> ' + escapeHtml(stepLine) + '</p>' : '') +
+          renderPlanningList(review.revisitTriggers || [
+            "Re-run this report if the load, environment, target runtime, battery condition, or design objective changes.",
+            "Confirm the visible inputs still match the current design before using this report for selection or documentation."
+          ]) +
+        '</div>' +
+      '</section>' +
+
+      '<script type="application/json" id="scopedlabs-flow-summary-data">' +
+        escapeHtml(JSON.stringify(flowReadyData)) +
+      '</script>'
+    );
+  }
+
+
   function buildPayload() {
     const outputs = getResultRows();
 
@@ -834,6 +927,9 @@ const extraSections = getExtraExportSections();
       inputs,
       outputs,
       assumptions: state.options.assumptions,
+      reportProfile: state.options.reportProfile || "standard",
+      planningReview: state.options.planningReview || null,
+      flowSummaryData: null,
       chartImage,
       meta
     };
@@ -1127,6 +1223,8 @@ const extraSections = getExtraExportSections();
   `)
   .join("");
 
+    const planningSectionsBlock = buildPlanningSections(payload);
+
     const statusClass = String(payload.status || "").toLowerCase();
 
     return `<!doctype html>
@@ -1303,6 +1401,48 @@ const extraSections = getExtraExportSections();
       font-weight:700;
       text-align:left;
     }
+    .section-kicker{
+      color:var(--accent);
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-size:.78rem;
+      margin-bottom:5px;
+    }
+    .section-note{
+      margin:0 0 10px;
+      color:var(--muted);
+      line-height:1.55;
+    }
+    .callout{
+      border:1px solid #cbe6d6;
+      background:#edf8f2;
+      border-radius:14px;
+      padding:16px 18px;
+      line-height:1.65;
+    }
+    .triad{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:14px;
+    }
+    .mini-card{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fbfdfc;
+      padding:14px 15px;
+      line-height:1.55;
+    }
+    .mini-card h3{
+      margin:.1rem 0 .45rem;
+      font-size:.95rem;
+    }
+    .report-list{
+      margin:0;
+      padding-left:18px;
+      line-height:1.7;
+    }
+
     .assumptions{
       margin:0;
       padding-left:18px;
@@ -1332,7 +1472,7 @@ const extraSections = getExtraExportSections();
       body{padding:14px}
       .report{padding:20px}
       .report-head{flex-direction:column}
-      .grid{grid-template-columns:1fr}
+      .grid,.triad{grid-template-columns:1fr}
     }
     @media print{
       body{background:#fff;padding:0}
@@ -1399,6 +1539,7 @@ const extraSections = getExtraExportSections();
       ${extraSectionsBlock}
       ${interpretationBlock}
       ${additionalAnalysisBlock}
+      ${planningSectionsBlock}
       ${chartBlock}
       ${notesBlock}
 
