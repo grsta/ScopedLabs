@@ -267,100 +267,120 @@
       border: 1px solid rgba(255,255,255,.065);
       border-radius: 14px;
       background:
-        radial-gradient(circle at 50% 83%, rgba(255,255,255,.045), transparent 35%),
-        linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.10));
+        radial-gradient(circle at 50% 78%, rgba(255,255,255,.045), transparent 35%),
+        linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.10));
       overflow: hidden;
-      padding: 6px 8px 0;
+      padding: 8px 10px 2px;
     }
 
     .gauge-svg {
       display: block;
       width: 100%;
       height: auto;
-      min-height: 235px;
+      min-height: 255px;
     }
 
-    .zone-bg {
+    .g-shell {
       fill: none;
-      stroke-width: 48;
-      stroke-linecap: round;
-      opacity: .30;
-    }
-
-    .zone {
-      fill: none;
-      stroke-width: 30;
-      stroke-linecap: butt;
-    }
-
-    .zone.healthy {
-      stroke: url(#healthyGrad);
+      stroke: rgba(255,255,255,.05);
+      stroke-width: 56;
       stroke-linecap: round;
     }
 
-    .zone.watch {
-      stroke: url(#watchGrad);
-    }
-
-    .zone.risk {
-      stroke: url(#riskGrad);
+    .g-shell-inner {
+      fill: none;
+      stroke: rgba(255,255,255,.035);
+      stroke-width: 18;
       stroke-linecap: round;
     }
 
-    .inner-arc {
+    .g-zone-shadow {
+      opacity: .28;
+    }
+
+    .g-zone-shadow.healthy {
+      fill: #77ff70;
+    }
+
+    .g-zone-shadow.watch {
+      fill: #ffd34f;
+    }
+
+    .g-zone-shadow.risk {
+      fill: #ff5d55;
+    }
+
+    .g-zone.healthy {
+      fill: url(#healthyGrad);
+    }
+
+    .g-zone.watch {
+      fill: url(#watchGrad);
+    }
+
+    .g-zone.risk {
+      fill: url(#riskGrad);
+    }
+
+    .g-inner-guide {
       fill: none;
-      stroke: rgba(255,255,255,.13);
+      stroke: rgba(255,255,255,.14);
       stroke-width: 1;
       stroke-dasharray: 4 7;
     }
 
-    .needle {
-      stroke: rgba(255,255,255,.88);
-      stroke-width: 5;
-      stroke-linecap: round;
-      filter: drop-shadow(0 0 6px rgba(255,255,255,.28));
-    }
-
-    .needle-tip {
-      fill: var(--sl-red);
-      stroke: #fff;
-      stroke-width: 2;
-    }
-
-    .needle-hub {
-      fill: rgba(255,255,255,.94);
-    }
-
-    .needle-core {
-      fill: rgba(3,10,7,.95);
-    }
-
-    .gauge-label {
-      fill: rgba(255,255,255,.80);
+    .g-zone-label {
+      fill: rgba(255,255,255,.82);
       font-size: 10px;
       font-weight: 950;
       letter-spacing: .07em;
     }
 
-    .gauge-sub {
+    .g-zone-sub {
       fill: rgba(255,255,255,.62);
       font-size: 9px;
       font-weight: 850;
     }
 
-    .reading rect {
+    .g-axis {
+      fill: rgba(255,255,255,.56);
+      font-size: 9px;
+      font-weight: 850;
+    }
+
+    .g-needle {
+      stroke: rgba(255,255,255,.90);
+      stroke-width: 5;
+      stroke-linecap: round;
+    }
+
+    .g-needle-tip {
+      fill: #ff5d55;
+      stroke: #fff;
+      stroke-width: 2;
+    }
+
+    .g-needle-hub {
+      fill: rgba(255,255,255,.94);
+    }
+
+    .g-needle-core {
+      fill: rgba(3,10,7,.95);
+    }
+
+    .g-reading rect {
       fill: rgba(3,8,7,.90);
       stroke: rgba(255, 93, 85, .68);
       stroke-width: 1;
     }
 
-    .reading .value {
+    .g-reading-value {
       fill: #fff;
       font-size: 18px;
       font-weight: 950;
     }
 
-    .reading .label {
+    .g-reading-label {
       fill: rgba(255,255,255,.58);
       font-size: 8px;
       font-weight: 950;
@@ -692,46 +712,73 @@
             </div>
 
             <div class="gauge-wrap">
-              <svg class="gauge-svg" viewBox="0 0 640 278" role="img" aria-label="Lens selection pressure gauge">
+              <svg class="gauge-svg" viewBox="0 0 640 300" role="img" aria-label="Lens selection pressure gauge">
                 <defs>
                   <linearGradient id="healthyGrad" x1="0" x2="1">
-                    <stop offset="0" stop-color="#4bd85d" />
-                    <stop offset="1" stop-color="#8cff4e" />
+                    <stop offset="0" stop-color="#5cff67" />
+                    <stop offset="1" stop-color="#9dff4c" />
                   </linearGradient>
                   <linearGradient id="watchGrad" x1="0" x2="1">
-                    <stop offset="0" stop-color="#d4af31" />
-                    <stop offset="1" stop-color="#ffd24d" />
+                    <stop offset="0" stop-color="#d5b63b" />
+                    <stop offset="1" stop-color="#ffd44f" />
                   </linearGradient>
                   <linearGradient id="riskGrad" x1="0" x2="1">
-                    <stop offset="0" stop-color="#d7403b" />
-                    <stop offset="1" stop-color="#ff5b50" />
+                    <stop offset="0" stop-color="#d7443e" />
+                    <stop offset="1" stop-color="#ff5d55" />
                   </linearGradient>
+                  <filter id="needleGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="2.2" result="blur"/>
+                    <feMerge>
+                      <feMergeNode in="blur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
                 </defs>
 
-                <path class="zone-bg" d="M 88 236 A 232 232 0 0 1 552 236" stroke="rgba(255,255,255,.08)" />
-                <path class="zone healthy" d="M 104 228 A 216 216 0 0 1 233 68" />
-                <path class="zone watch" d="M 233 68 A 216 216 0 0 1 392 68" />
-                <path class="zone risk" d="M 392 68 A 216 216 0 0 1 536 228" />
+                <!-- soft outer shell -->
+                <path class="g-shell" d="M 84 222 Q 172 98 320 74 Q 468 98 556 222" />
+                <path class="g-shell-inner" d="M 126 221 Q 198 130 320 111 Q 442 130 514 221" />
 
-                <path class="inner-arc" d="M 152 218 A 168 168 0 0 1 488 218" />
+                <!-- segment shadows -->
+                <path class="g-zone-shadow healthy" d="M 96 220 Q 174 113 269 90 L 291 133 Q 216 149 154 233 Z" />
+                <path class="g-zone-shadow watch" d="M 269 90 Q 320 80 371 90 L 349 133 Q 320 128 291 133 Z" />
+                <path class="g-zone-shadow risk" d="M 371 90 Q 468 111 544 220 L 486 232 Q 424 149 349 133 Z" />
 
-                <line class="needle" x1="320" y1="236" x2="438" y2="112" />
-                <circle class="needle-tip" cx="438" cy="112" r="7" />
-                <circle class="needle-hub" cx="320" cy="236" r="10" />
-                <circle class="needle-core" cx="320" cy="236" r="4" />
+                <!-- main segments -->
+                <path class="g-zone healthy" d="M 108 215 Q 180 120 271 99 L 288 132 Q 219 147 160 229 Z" />
+                <path class="g-zone watch" d="M 271 99 Q 320 90 369 99 L 352 132 Q 320 126 288 132 Z" />
+                <path class="g-zone risk" d="M 369 99 Q 460 120 532 215 L 480 229 Q 421 147 352 132 Z" />
 
-                <text class="gauge-label" x="148" y="166" text-anchor="middle">HEALTHY</text>
-                <text class="gauge-label" x="320" y="104" text-anchor="middle">WATCH</text>
-                <text class="gauge-label" x="492" y="166" text-anchor="middle">RISK</text>
+                <!-- inner dashed guide -->
+                <path class="g-inner-guide" d="M 178 214 Q 231 150 320 136 Q 409 150 462 214" />
 
-                <text class="gauge-sub" x="148" y="184" text-anchor="middle">0?8 mm</text>
-                <text class="gauge-sub" x="320" y="122" text-anchor="middle">8?18 mm</text>
-                <text class="gauge-sub" x="492" y="184" text-anchor="middle">&gt;18 mm</text>
+                <!-- labels -->
+                <text class="g-zone-label" x="190" y="154" text-anchor="middle">HEALTHY</text>
+                <text class="g-zone-sub" x="190" y="172" text-anchor="middle">0?8 mm</text>
 
-                <g class="reading">
-                  <rect x="456" y="74" width="132" height="62" rx="10" />
-                  <text class="value" x="476" y="103">25.6 mm</text>
-                  <text class="label" x="476" y="124">CURRENT READING</text>
+                <text class="g-zone-label" x="320" y="124" text-anchor="middle">WATCH</text>
+                <text class="g-zone-sub" x="320" y="142" text-anchor="middle">8?18 mm</text>
+
+                <text class="g-zone-label" x="450" y="154" text-anchor="middle">RISK</text>
+                <text class="g-zone-sub" x="450" y="172" text-anchor="middle">&gt;18 mm</text>
+
+                <!-- bottom scale -->
+                <text class="g-axis" x="132" y="245" text-anchor="middle">0 mm</text>
+                <text class="g-axis" x="244" y="214" text-anchor="middle">8 mm</text>
+                <text class="g-axis" x="376" y="214" text-anchor="middle">18 mm</text>
+                <text class="g-axis" x="509" y="245" text-anchor="middle">40 mm</text>
+
+                <!-- needle -->
+                <line class="g-needle" x1="320" y1="232" x2="438" y2="121" filter="url(#needleGlow)" />
+                <circle class="g-needle-tip" cx="438" cy="121" r="7" />
+                <circle class="g-needle-hub" cx="320" cy="232" r="10" />
+                <circle class="g-needle-core" cx="320" cy="232" r="4" />
+
+                <!-- current reading box -->
+                <g class="g-reading">
+                  <rect x="456" y="96" width="132" height="62" rx="10" />
+                  <text class="g-reading-value" x="476" y="125">25.6 mm</text>
+                  <text class="g-reading-label" x="476" y="146">CURRENT READING</text>
                 </g>
               </svg>
             </div>
