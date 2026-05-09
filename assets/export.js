@@ -1183,7 +1183,7 @@ const extraSections = getExtraExportSections();
     const notesBlock = payload.meta?.customNotes
       ? `
         <section class="section">
-          <h2>Custom Notes</h2>
+          <h2>User Notes</h2>
           <div class="body-copy">${escapeHtml(payload.meta.customNotes).replace(/\n/g, "<br>")}</div>
         </section>
       `
@@ -1192,7 +1192,7 @@ const extraSections = getExtraExportSections();
     const chartBlock = payload.chartImage
       ? `
         <section class="section">
-          <h2>Chart Snapshot</h2>
+          <h2>Visual Reference</h2>
           <div class="chart-wrap">
             <img src="${payload.chartImage}" alt="${escapeHtml(payload.tool)} chart">
           </div>
@@ -1547,7 +1547,7 @@ const extraSections = getExtraExportSections();
       </div>
 
       <section class="section">
-        <h2>Executive Summary</h2>
+        <h2>Planning Summary</h2>
         <div class="summary">
           ${escapeHtml(payload.summary || "")}
           <div class="project-details">${projectDetails}</div>
@@ -1564,7 +1564,7 @@ const extraSections = getExtraExportSections();
             </table>
           </div>
           <div>
-            <h2>Calculated Outputs</h2>
+            <h2>Key Results</h2>
             <table>
               <thead><tr><th>Output</th><th>Value</th></tr></thead>
               <tbody>${outputRows}</tbody>
@@ -1581,12 +1581,12 @@ const extraSections = getExtraExportSections();
       ${notesBlock}
 
       <section class="section">
-        <h2>Assumptions</h2>
+        <h2>Inputs and Assumptions</h2>
         <div class="body-copy"><ul class="assumptions">${assumptions}</ul></div>
       </section>
 
       <section class="section">
-        <h2>Disclaimer</h2>
+        <h2>Planning Limitations</h2>
         <div class="body-copy">${escapeHtml(state.options.disclaimer)}</div>
       </section>
 
