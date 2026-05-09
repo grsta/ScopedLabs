@@ -267,83 +267,78 @@
       border: 1px solid rgba(255,255,255,.065);
       border-radius: 14px;
       background:
-        radial-gradient(circle at 50% 78%, rgba(255,255,255,.045), transparent 35%),
-        linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.10));
+        radial-gradient(circle at 50% 82%, rgba(255,255,255,.045), transparent 35%),
+        linear-gradient(180deg, rgba(0,0,0,.23), rgba(0,0,0,.10));
       overflow: hidden;
-      padding: 8px 10px 2px;
+      padding: 4px 8px 0;
     }
 
     .gauge-svg {
       display: block;
       width: 100%;
       height: auto;
-      min-height: 255px;
+      min-height: 270px;
+      overflow: visible;
     }
 
     .g-shell {
-      fill: none;
-      stroke: rgba(255,255,255,.05);
-      stroke-width: 56;
-      stroke-linecap: round;
+      fill: rgba(255,255,255,.045);
+      opacity: .95;
     }
 
-    .g-shell-inner {
-      fill: none;
-      stroke: rgba(255,255,255,.035);
-      stroke-width: 18;
-      stroke-linecap: round;
+    .g-segment-shadow {
+      opacity: .24;
+      transform: translateY(8px);
+      transform-box: fill-box;
+      transform-origin: center;
     }
 
-    .g-zone-shadow {
-      opacity: .28;
-    }
-
-    .g-zone-shadow.healthy {
+    .g-segment-shadow.healthy {
       fill: #77ff70;
     }
 
-    .g-zone-shadow.watch {
+    .g-segment-shadow.watch {
       fill: #ffd34f;
     }
 
-    .g-zone-shadow.risk {
+    .g-segment-shadow.risk {
       fill: #ff5d55;
     }
 
-    .g-zone.healthy {
+    .g-segment {
+      stroke: rgba(255,255,255,.08);
+      stroke-width: 1;
+    }
+
+    .g-segment.healthy {
       fill: url(#healthyGrad);
     }
 
-    .g-zone.watch {
+    .g-segment.watch {
       fill: url(#watchGrad);
     }
 
-    .g-zone.risk {
+    .g-segment.risk {
       fill: url(#riskGrad);
     }
 
     .g-inner-guide {
       fill: none;
-      stroke: rgba(255,255,255,.14);
+      stroke: rgba(255,255,255,.15);
       stroke-width: 1;
-      stroke-dasharray: 4 7;
+      stroke-dasharray: 4 8;
     }
 
     .g-zone-label {
-      fill: rgba(255,255,255,.82);
+      fill: rgba(255,255,255,.84);
       font-size: 10px;
       font-weight: 950;
       letter-spacing: .07em;
     }
 
-    .g-zone-sub {
-      fill: rgba(255,255,255,.62);
-      font-size: 9px;
-      font-weight: 850;
-    }
-
+    .g-zone-sub,
     .g-axis {
-      fill: rgba(255,255,255,.56);
+      fill: rgba(255,255,255,.60);
       font-size: 9px;
       font-weight: 850;
     }
@@ -369,8 +364,8 @@
     }
 
     .g-reading rect {
-      fill: rgba(3,8,7,.90);
-      stroke: rgba(255, 93, 85, .68);
+      fill: rgba(3,8,7,.92);
+      stroke: rgba(255, 93, 85, .70);
       stroke-width: 1;
     }
 
@@ -712,21 +707,21 @@
             </div>
 
             <div class="gauge-wrap">
-              <svg class="gauge-svg" viewBox="0 0 640 300" role="img" aria-label="Lens selection pressure gauge">
+              <svg class="gauge-svg" viewBox="0 0 700 310" role="img" aria-label="Lens selection pressure gauge">
                 <defs>
                   <linearGradient id="healthyGrad" x1="0" x2="1">
-                    <stop offset="0" stop-color="#5cff67" />
-                    <stop offset="1" stop-color="#9dff4c" />
+                    <stop offset="0" stop-color="#4ee85d" />
+                    <stop offset="1" stop-color="#89ff4c" />
                   </linearGradient>
                   <linearGradient id="watchGrad" x1="0" x2="1">
-                    <stop offset="0" stop-color="#d5b63b" />
-                    <stop offset="1" stop-color="#ffd44f" />
+                    <stop offset="0" stop-color="#cda936" />
+                    <stop offset="1" stop-color="#ffd653" />
                   </linearGradient>
                   <linearGradient id="riskGrad" x1="0" x2="1">
-                    <stop offset="0" stop-color="#d7443e" />
-                    <stop offset="1" stop-color="#ff5d55" />
+                    <stop offset="0" stop-color="#c9423e" />
+                    <stop offset="1" stop-color="#ff5c54" />
                   </linearGradient>
-                  <filter id="needleGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <filter id="gNeedleGlow" x="-35%" y="-35%" width="170%" height="170%">
                     <feGaussianBlur stdDeviation="2.2" result="blur"/>
                     <feMerge>
                       <feMergeNode in="blur"/>
@@ -735,50 +730,40 @@
                   </filter>
                 </defs>
 
-                <!-- soft outer shell -->
-                <path class="g-shell" d="M 84 222 Q 172 98 320 74 Q 468 98 556 222" />
-                <path class="g-shell-inner" d="M 126 221 Q 198 130 320 111 Q 442 130 514 221" />
+                <path class="g-shell" d="M 104.0 268.0 A 246 246 0 0 1 596.0 268.0 L 498.0 268.0 A 148 148 0 0 0 202.0 268.0 Z" />
+                <path class="g-segment-shadow healthy" d="M 120.0 268.0 A 230 230 0 0 1 278.9 49.3 L 301.2 117.7 A 158 158 0 0 0 192.0 268.0 Z" />
+                <path class="g-segment-shadow watch" d="M 278.9 49.3 A 230 230 0 0 1 478.6 77.3 L 438.4 137.0 A 158 158 0 0 0 301.2 117.7 Z" />
+                <path class="g-segment-shadow risk" d="M 478.6 77.3 A 230 230 0 0 1 580.0 268.0 L 508.0 268.0 A 158 158 0 0 0 438.4 137.0 Z" />
 
-                <!-- segment shadows -->
-                <path class="g-zone-shadow healthy" d="M 96 220 Q 174 113 269 90 L 291 133 Q 216 149 154 233 Z" />
-                <path class="g-zone-shadow watch" d="M 269 90 Q 320 80 371 90 L 349 133 Q 320 128 291 133 Z" />
-                <path class="g-zone-shadow risk" d="M 371 90 Q 468 111 544 220 L 486 232 Q 424 149 349 133 Z" />
+                <path class="g-segment healthy" d="M 120.0 268.0 A 230 230 0 0 1 278.9 49.3 L 301.2 117.7 A 158 158 0 0 0 192.0 268.0 Z" />
+                <path class="g-segment watch" d="M 278.9 49.3 A 230 230 0 0 1 478.6 77.3 L 438.4 137.0 A 158 158 0 0 0 301.2 117.7 Z" />
+                <path class="g-segment risk" d="M 478.6 77.3 A 230 230 0 0 1 580.0 268.0 L 508.0 268.0 A 158 158 0 0 0 438.4 137.0 Z" />
 
-                <!-- main segments -->
-                <path class="g-zone healthy" d="M 108 215 Q 180 120 271 99 L 288 132 Q 219 147 160 229 Z" />
-                <path class="g-zone watch" d="M 271 99 Q 320 90 369 99 L 352 132 Q 320 126 288 132 Z" />
-                <path class="g-zone risk" d="M 369 99 Q 460 120 532 215 L 480 229 Q 421 147 352 132 Z" />
+                <path class="g-inner-guide" d="M 230.0 268.0 A 120 120 0 0 1 470.0 268.0" />
 
-                <!-- inner dashed guide -->
-                <path class="g-inner-guide" d="M 178 214 Q 231 150 320 136 Q 409 150 462 214" />
+                <text class="g-zone-label" x="205" y="158" text-anchor="middle">HEALTHY</text>
+                <text class="g-zone-sub" x="205" y="178" text-anchor="middle">0-8 mm</text>
 
-                <!-- labels -->
-                <text class="g-zone-label" x="190" y="154" text-anchor="middle">HEALTHY</text>
-                <text class="g-zone-sub" x="190" y="172" text-anchor="middle">0?8 mm</text>
+                <text class="g-zone-label" x="350" y="102" text-anchor="middle">WATCH</text>
+                <text class="g-zone-sub" x="350" y="122" text-anchor="middle">8-18 mm</text>
 
-                <text class="g-zone-label" x="320" y="124" text-anchor="middle">WATCH</text>
-                <text class="g-zone-sub" x="320" y="142" text-anchor="middle">8?18 mm</text>
+                <text class="g-zone-label" x="500" y="158" text-anchor="middle">RISK</text>
+                <text class="g-zone-sub" x="500" y="178" text-anchor="middle">&gt;18 mm</text>
 
-                <text class="g-zone-label" x="450" y="154" text-anchor="middle">RISK</text>
-                <text class="g-zone-sub" x="450" y="172" text-anchor="middle">&gt;18 mm</text>
+                <text class="g-axis" x="125" y="286" text-anchor="middle">0 mm</text>
+                <text class="g-axis" x="285" y="82" text-anchor="middle">8 mm</text>
+                <text class="g-axis" x="415" y="82" text-anchor="middle">18 mm</text>
+                <text class="g-axis" x="575" y="286" text-anchor="middle">40 mm</text>
 
-                <!-- bottom scale -->
-                <text class="g-axis" x="132" y="245" text-anchor="middle">0 mm</text>
-                <text class="g-axis" x="244" y="214" text-anchor="middle">8 mm</text>
-                <text class="g-axis" x="376" y="214" text-anchor="middle">18 mm</text>
-                <text class="g-axis" x="509" y="245" text-anchor="middle">40 mm</text>
+                <line class="g-needle" x1="350" y1="268" x2="413.9" y2="132.3" filter="url(#gNeedleGlow)" />
+                <circle class="g-needle-tip" cx="413.9" cy="132.3" r="7" />
+                <circle class="g-needle-hub" cx="350" cy="268" r="10" />
+                <circle class="g-needle-core" cx="350" cy="268" r="4" />
 
-                <!-- needle -->
-                <line class="g-needle" x1="320" y1="232" x2="438" y2="121" filter="url(#needleGlow)" />
-                <circle class="g-needle-tip" cx="438" cy="121" r="7" />
-                <circle class="g-needle-hub" cx="320" cy="232" r="10" />
-                <circle class="g-needle-core" cx="320" cy="232" r="4" />
-
-                <!-- current reading box -->
                 <g class="g-reading">
-                  <rect x="456" y="96" width="132" height="62" rx="10" />
-                  <text class="g-reading-value" x="476" y="125">25.6 mm</text>
-                  <text class="g-reading-label" x="476" y="146">CURRENT READING</text>
+                  <rect x="490" y="88" width="134" height="62" rx="10" />
+                  <text class="g-reading-value" x="510" y="117">25.6 mm</text>
+                  <text class="g-reading-label" x="510" y="138">CURRENT READING</text>
                 </g>
               </svg>
             </div>
