@@ -1157,18 +1157,7 @@ const extraSections = getExtraExportSections();
 
 
   function escapeReportRegExp(value) {
-    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\  function escapeReportRegExp(value) {
-    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\  function normalizeReportSectionBody(value) {
-    return String(value || "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase();
-  }
-
-  function buildReportHTML(payload) {");
-  }
-
-  function formatReportBodyCopy(text, payload) {");
+    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\  function buildReportHTML(payload) {");
   }
 
   function formatReportBodyCopy(text, payload) {
@@ -1269,21 +1258,9 @@ const extraSections = getExtraExportSections();
       `
       : "";
 
-      const seenAnalysisBodies = new Set([
-    normalizeReportSectionBody(payload.interpretation)
-  ]);
-
-  const additionalAnalysisBlock = (payload.analysisSections || [])
+      const additionalAnalysisBlock = (payload.analysisSections || [])
   .filter((section) => {
-    const titleSlug = normalizeSlug(section.title);
-    const bodyKey = normalizeReportSectionBody(section.body);
-
-    if (!bodyKey) return false;
-    if (titleSlug === normalizeSlug("Engineering Interpretation")) return false;
-    if (seenAnalysisBodies.has(bodyKey)) return false;
-
-    seenAnalysisBodies.add(bodyKey);
-    return true;
+    return normalizeSlug(section.title) !== normalizeSlug("Engineering Interpretation");
   })
   .map((section) => `
     <section class="section">
