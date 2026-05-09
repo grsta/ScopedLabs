@@ -33,6 +33,7 @@
     reset: $("reset"),
     results: $("results"),
     analysis: $("analysis-copy"),
+    diagnostic: $("diagnostic-panel"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
@@ -221,6 +222,8 @@
   function invalidate({ clearFlow = true } = {}) {
     if (clearFlow) clearDownstream();
 
+    clearDiagnosticPanel();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -385,6 +388,191 @@
     });
   }
 
+
+  function clearDiagnosticPanel() {
+    if (window.ScopedLabsDiagnostic && els.diagnostic) {
+      window.ScopedLabsDiagnostic.clear(els.diagnostic);
+    } else if (els.diagnostic) {
+      els.diagnostic.hidden = true;
+      els.diagnostic.innerHTML = "";
+    }
+
+    window.ScopedLabsDiagnosticData = null;
+    window.ScopedLabsExportData = null;
+  }
+
+  function getDiagnosticDriver(data) {
+    const metrics = [
+      {
+        key: "detailPressure",
+        label: "Detail Pressure",
+        value: data.detailPressureMetric,
+        summary: "The upstream pixel-density requirement is influencing how aggressively the lens recommendation is adjusted."
+      },
+      {
+        key: "focalDemand",
+        label: "Focal Demand",
+        value: data.focalPressureMetric,
+        summary: "Scene geometry is driving focal length demand based on distance, target width, and sensor width."
+      },
+      {
+        key: "adjustmentShift",
+        label: "Adjustment Shift",
+        value: data.adjustmentMetric,
+        summary: "The lens recommendation had to move away from the raw geometry result to stay aligned with the prior detail requirement."
+      }
+    ];
+
+    return metrics.sort((a, b) => b.value - a.value)[0];
+  }
+
+  function buildDiagnosticData(data) {
+    const driver = getDiagnosticDriver(data);
+    const pressureScore = Math.max(
+      data.detailPressureMetric,
+      data.focalPressureMetric,
+      data.adjustmentMetric
+    );
+
+    const likelyDrivers = [];
+
+    if (data.adjustedFocal >= 12) {
+      likelyDrivers.push("Long-range focal demand is being driven by the distance-to-target and target-width relationship.");
+      likelyDrivers.push("The design is asking one camera/lens combination to hold a relatively tight field of view.");
+    }
+
+    if (data.ppf > 0 && data.ppf < 40) {
+      likelyDrivers.push("The upstream pixel-density requirement is weak, so the lens recommendation tightens to recover subject detail.");
+    }
+
+    if (Math.abs(data.adjustmentPct) > 15) {
+      likelyDrivers.push("The upstream detail requirement is creating a meaningful shift away from the raw geometry solution.");
+    }
+
+    if (likelyDrivers.length === 0) {
+      likelyDrivers.push("Scene geometry, sensor width, and the upstream detail requirement are staying within a practical planning range.");
+    }
+
+    const pathToHealthy = data.status === "HEALTHY"
+      ? [
+          "Keep the current geometry and detail assumptions documented with the project.",
+          "Verify the final lens option against the manufacturer’s field-of-view chart.",
+          "Re-run this check if distance, target width, sensor width, or detail requirement changes."
+        ]
+      : [
+          "Evaluate whether the camera can be moved closer to the target area.",
+          "Evaluate whether the acceptable target or scene width can be increased without losing the operational objective.",
+          "Consider a larger sensor format or a different lens class if the selected camera family allows it.",
+          "Split the view across more than one camera if one narrow view is being asked to do too much.",
+          "Recheck whether the upstream pixel-density/detail target matches the actual use case."
+        ];
+
+    return {
+      schema: "scopedlabs.diagnostic.v1",
+      category: CATEGORY,
+      toolSlug: STEP,
+      toolLabel: "Lens Selection Helper",
+      status: data.status,
+      objective: "Estimate lens class and focal-length pressure from scene geometry and upstream detail requirements.",
+      method: "Uses distance to target, target width, sensor width, and pixel-density context to estimate focal demand and classify planning pressure.",
+      gauge: {
+        label: "Lens Selection Pressure",
+        score: pressureScore,
+        max: 100,
+        displayValue: fmtMm(data.adjustedFocal),
+        markerLabel: "Adjusted focal length",
+        healthyLabel: "Healthy",
+        watchLabel: "Watch",
+        riskLabel: "Risk"
+      },
+      keyResults: [
+        { label: "Adjusted Focal Length", value: fmtMm(data.adjustedFocal) },
+        { label: "Lens Class", value: data.lensClass },
+        { label: "Detail Requirement", value: data.ppf > 0 ? data.requirementClass : "No prior PPF" }
+      ],
+      dominantDriver: {
+        key: driver.key,
+        label: driver.label,
+        summary: driver.summary
+      },
+      whyThisStatus: data.status === "HEALTHY"
+        ? "The current lens recommendation stays within the preferred planning band for this scene geometry and detail context."
+        : "The current combination of distance, target width, sensor width, and upstream detail requirement is increasing lens pressure and reducing layout flexibility.",
+      likelyDrivers,
+      possiblePlanningActions: pathToHealthy,
+      healthyTarget: "Bring lens-selection pressure back into the preferred planning band while preserving the required scene detail objective.",
+      followUpChecks: [
+        "Validate the selected focal length against the manufacturer’s actual field-of-view chart.",
+        "Confirm mounting location, camera angle, and alignment tolerance before final selection.",
+        "Continue to Face Recognition Range if identification detail is required.",
+        "Re-run this tool if the distance, target width, sensor size, or upstream pixel-density target changes."
+      ],
+      revisionTriggers: [
+        "Camera mounting location changes.",
+        "Target width or scene objective changes.",
+        "Sensor size or lens family changes.",
+        "Upstream pixel-density requirement changes."
+      ],
+      flowOutputs: {
+        adjustedFocalMm: Number(data.adjustedFocal.toFixed(2)),
+        baseFocalMm: Number(data.baseFocal.toFixed(2)),
+        lensClass: data.lensClass,
+        distanceFt: Number(data.dist.toFixed(2)),
+        targetWidthFt: Number(data.tw.toFixed(2)),
+        sensorWidthMm: Number(data.sw.toFixed(2)),
+        pixelDensityPpf: Number(data.ppf.toFixed(2)),
+        adjustmentPct: Number(data.adjustmentPct.toFixed(2))
+      }
+    };
+  }
+
+  function renderDiagnosticPanel(data) {
+    const diagnostic = buildDiagnosticData(data);
+
+    window.ScopedLabsDiagnosticData = diagnostic;
+    window.ScopedLabsExportData = diagnostic;
+
+    if (!window.ScopedLabsDiagnostic || !els.diagnostic) return;
+
+    window.ScopedLabsDiagnostic.render({
+      target: els.diagnostic,
+      title: "Lens Selection Diagnostic",
+      status: diagnostic.status,
+      summary: diagnostic.whyThisStatus,
+      gauge: diagnostic.gauge,
+      keyMetrics: diagnostic.keyResults,
+      dominantDriver: diagnostic.dominantDriver,
+      sections: [
+        {
+          label: "Why this status?",
+          body: diagnostic.whyThisStatus
+        },
+        {
+          label: "Likely drivers",
+          items: diagnostic.likelyDrivers
+        },
+        {
+          label: "Path to healthy",
+          items: diagnostic.possiblePlanningActions
+        },
+        {
+          label: "Follow-up checks",
+          items: diagnostic.followUpChecks
+        },
+        {
+          label: "Assumptions used",
+          items: [
+            "Distance to target: " + fmtFt(data.dist),
+            "Target width: " + fmtFt(data.tw),
+            "Sensor width: " + fmtMm(data.sw, 2),
+            "Pixel-density input: " + (data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF"),
+            "Adjustment shift: " + fmt(data.adjustmentPct, 1) + "%"
+          ]
+        }
+      ]
+    });
+  }
+
   function renderError(message) {
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
@@ -439,6 +627,8 @@
         chartMax: 100
       }
     });
+
+    renderDiagnosticPanel(data);
 
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
