@@ -7,22 +7,19 @@
   <style>
     :root {
       --bg: #020807;
-      --panel: rgba(7, 22, 15, 0.86);
-      --panel-2: rgba(12, 31, 21, 0.82);
-      --line: rgba(113, 255, 154, 0.18);
-      --line-soft: rgba(255, 255, 255, 0.08);
-      --text: rgba(255, 255, 255, 0.94);
-      --muted: rgba(255, 255, 255, 0.66);
-      --dim: rgba(255, 255, 255, 0.44);
-      --green: #75ff9c;
-      --yellow: #ffd25f;
-      --red: #ff5750;
-      --red-dark: #7e161b;
+      --panel: rgba(5, 18, 12, 0.84);
+      --panel2: rgba(11, 31, 20, 0.78);
+      --line: rgba(110, 255, 152, 0.18);
+      --soft: rgba(255,255,255,.08);
+      --text: rgba(255,255,255,.94);
+      --muted: rgba(255,255,255,.66);
+      --dim: rgba(255,255,255,.44);
+      --green: #72ff9c;
+      --yellow: #ffd35d;
+      --red: #ff5650;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -30,76 +27,73 @@
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at 18% 0%, rgba(117, 255, 156, 0.14), transparent 34%),
-        radial-gradient(circle at 82% 4%, rgba(255, 87, 80, 0.12), transparent 30%),
-        linear-gradient(180deg, #07140e, #020706 74%);
-      padding: 26px;
+        radial-gradient(circle at 50% 18%, rgba(114,255,156,.16), transparent 34%),
+        radial-gradient(circle at 86% 12%, rgba(255,86,80,.12), transparent 28%),
+        linear-gradient(180deg, #07140e, #020706 75%);
+      padding: 24px;
     }
 
     .wrap {
-      max-width: 1320px;
+      max-width: 1440px;
       margin: 0 auto;
     }
 
     .note {
-      margin: 0 0 14px;
+      margin: 0 0 12px;
       color: var(--muted);
-      font-size: 0.92rem;
+      font-size: .9rem;
     }
 
-    .dashboard {
+    .shell {
       position: relative;
       overflow: hidden;
-      border: 1px solid rgba(117, 255, 156, 0.2);
-      border-radius: 28px;
+      border: 1px solid rgba(114,255,156,.22);
+      border-radius: 30px;
       background:
-        linear-gradient(rgba(117, 255, 156, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(117, 255, 156, 0.035) 1px, transparent 1px),
-        radial-gradient(circle at 50% 38%, rgba(117, 255, 156, 0.12), transparent 32%),
-        linear-gradient(180deg, rgba(7, 20, 14, 0.98), rgba(2, 8, 7, 0.99));
-      background-size: 32px 32px, 32px 32px, auto, auto;
-      box-shadow:
-        0 36px 110px rgba(0, 0, 0, 0.48),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        linear-gradient(rgba(114,255,156,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(114,255,156,.035) 1px, transparent 1px),
+        radial-gradient(circle at 50% 42%, rgba(114,255,156,.13), transparent 31%),
+        linear-gradient(180deg, rgba(6,20,14,.98), rgba(2,8,7,.99));
+      background-size: 30px 30px, 30px 30px, auto, auto;
+      box-shadow: 0 38px 110px rgba(0,0,0,.50), inset 0 1px 0 rgba(255,255,255,.055);
     }
 
-    .dashboard::before {
+    .shell::before {
       content: "";
       position: absolute;
-      inset: -120px;
+      inset: -180px;
       background:
-        radial-gradient(circle at 50% 42%, transparent 0 230px, rgba(117,255,156,.05) 231px 232px, transparent 233px 290px, rgba(117,255,156,.035) 291px 292px, transparent 293px),
-        radial-gradient(circle at 50% 42%, rgba(255,255,255,.03), transparent 34%);
+        radial-gradient(circle at 50% 44%, transparent 0 245px, rgba(114,255,156,.08) 246px 247px, transparent 248px 305px, rgba(114,255,156,.045) 306px 307px, transparent 308px),
+        radial-gradient(circle at 50% 44%, rgba(255,255,255,.035), transparent 38%);
       pointer-events: none;
     }
 
-    .topbar {
+    .top {
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: auto minmax(0,1fr) auto;
       align-items: center;
       gap: 18px;
       padding: 16px 22px;
       border-bottom: 1px solid var(--line);
-      background: rgba(0, 0, 0, 0.28);
+      background: rgba(0,0,0,.30);
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-weight: 950;
-      letter-spacing: 0.02em;
+      gap: 11px;
       font-size: 1.05rem;
+      font-weight: 950;
     }
 
-    .brand-mark {
-      width: 28px;
-      height: 28px;
+    .logo {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
       border: 2px solid var(--green);
-      border-radius: 9px;
-      box-shadow: 0 0 22px rgba(117, 255, 156, 0.34);
+      box-shadow: 0 0 24px rgba(114,255,156,.35);
     }
 
     .meta {
@@ -107,168 +101,160 @@
       justify-content: flex-end;
       gap: 28px;
       color: var(--dim);
-      font-size: 0.74rem;
+      font-size: .74rem;
     }
 
     .meta strong {
       display: block;
-      margin-top: 2px;
       color: var(--text);
-      font-size: 0.86rem;
+      font-size: .86rem;
+      margin-top: 2px;
     }
 
-    .status-pill {
-      border: 1px solid rgba(255, 87, 80, 0.52);
+    .risk-pill {
+      border: 1px solid rgba(255,86,80,.48);
       border-radius: 999px;
-      background: rgba(255, 87, 80, 0.15);
+      background: rgba(255,86,80,.15);
       color: #ffaaa4;
-      padding: 9px 16px;
-      font-size: 0.78rem;
+      padding: 9px 18px;
+      font-size: .8rem;
       font-weight: 950;
-      letter-spacing: 0.12em;
+      letter-spacing: .12em;
       text-transform: uppercase;
-      box-shadow: 0 0 24px rgba(255, 87, 80, 0.16);
+      box-shadow: 0 0 28px rgba(255,86,80,.18);
     }
 
     .hero {
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 230px;
-      gap: 22px;
+      grid-template-columns: minmax(0,1fr) 230px;
+      gap: 24px;
       align-items: start;
-      padding: 26px 28px 14px;
+      padding: 26px 30px 10px;
     }
 
     .kicker {
       color: var(--green);
-      font-size: 0.72rem;
+      font-size: .72rem;
       font-weight: 950;
-      letter-spacing: 0.16em;
+      letter-spacing: .16em;
       text-transform: uppercase;
     }
 
     h1 {
       margin: 8px 0 0;
-      font-size: clamp(1.8rem, 2.5vw, 2.75rem);
-      line-height: 1.04;
-      letter-spacing: 0.01em;
+      font-size: clamp(1.9rem, 2.8vw, 3.15rem);
+      line-height: 1.02;
     }
 
     .hero p {
-      max-width: 840px;
+      max-width: 900px;
+      margin: 12px 0 0;
       color: var(--muted);
       line-height: 1.6;
-      margin: 12px 0 0;
       font-size: 1rem;
     }
 
     .overall {
-      border: 1px solid rgba(255, 87, 80, 0.38);
-      border-radius: 20px;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255,87,80,.20), transparent 70%),
-        linear-gradient(135deg, rgba(255, 87, 80, 0.18), rgba(88, 13, 18, 0.42));
+      border: 1px solid rgba(255,86,80,.38);
+      border-radius: 21px;
+      padding: 18px;
       text-align: center;
-      padding: 18px 14px;
-      box-shadow: 0 0 34px rgba(255, 87, 80, 0.13);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,86,80,.22), transparent 70%),
+        linear-gradient(135deg, rgba(255,86,80,.18), rgba(86,12,17,.42));
+      box-shadow: 0 0 34px rgba(255,86,80,.14);
     }
 
     .overall span {
       display: block;
-      color: rgba(117, 255, 156, 0.86);
-      font-size: 0.72rem;
+      color: rgba(114,255,156,.86);
+      font-size: .72rem;
       font-weight: 950;
-      letter-spacing: 0.12em;
+      letter-spacing: .13em;
       text-transform: uppercase;
-      margin-bottom: 9px;
+      margin-bottom: 8px;
     }
 
     .overall strong {
-      display: block;
       color: #ffaaa4;
-      font-size: 1.85rem;
-      letter-spacing: 0.14em;
+      font-size: 1.9rem;
+      letter-spacing: .16em;
     }
 
-    .main-grid {
+    .instrument-layout {
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-columns: 300px minmax(0, 1.25fr) 350px;
-      gap: 16px;
+      grid-template-columns: 285px minmax(0,1fr) 335px;
+      gap: 18px;
       padding: 18px;
+      align-items: stretch;
     }
 
     .panel {
       border: 1px solid var(--line);
-      border-radius: 22px;
-      background: linear-gradient(180deg, rgba(13, 34, 23, 0.82), rgba(6, 18, 13, 0.84));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.04),
-        0 16px 40px rgba(0,0,0,.24);
+      border-radius: 23px;
+      background: linear-gradient(180deg, rgba(12,34,22,.82), rgba(4,15,11,.86));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 18px 46px rgba(0,0,0,.22);
     }
 
-    .panel-pad {
-      padding: 18px;
-    }
+    .pad { padding: 18px; }
 
     .panel-title {
       display: flex;
       align-items: center;
       gap: 10px;
       color: var(--green);
-      font-size: 0.88rem;
+      font-size: .86rem;
       font-weight: 950;
-      letter-spacing: 0.09em;
+      letter-spacing: .1em;
       text-transform: uppercase;
-      margin-bottom: 15px;
-    }
-
-    .icon {
-      display: inline-grid;
-      place-items: center;
-      width: 32px;
-      height: 32px;
-      border: 1px solid rgba(117,255,156,.28);
-      border-radius: 11px;
-      color: var(--green);
-      background: rgba(117,255,156,.07);
-      box-shadow: 0 0 18px rgba(117,255,156,.08);
-      font-weight: 950;
-    }
-
-    .status-box {
-      border: 1px solid rgba(255, 87, 80, 0.38);
-      border-radius: 16px;
-      background: linear-gradient(135deg, rgba(255, 87, 80, 0.23), rgba(79, 13, 18, 0.42));
-      padding: 15px;
       margin-bottom: 16px;
     }
 
-    .status-box span,
-    .fact span,
-    .metric span,
-    .path-card span {
-      color: var(--dim);
-      font-size: 0.76rem;
+    .icon {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 11px;
+      border: 1px solid rgba(114,255,156,.28);
+      background: rgba(114,255,156,.07);
+      color: var(--green);
+      box-shadow: 0 0 18px rgba(114,255,156,.08);
+      font-weight: 950;
     }
 
-    .status-box strong {
+    .status-block {
+      border: 1px solid rgba(255,86,80,.36);
+      border-radius: 17px;
+      padding: 15px;
+      background: linear-gradient(135deg, rgba(255,86,80,.24), rgba(75,12,17,.42));
+      margin-bottom: 16px;
+    }
+
+    .label {
+      color: var(--dim);
+      font-size: .74rem;
+      margin-bottom: 6px;
+    }
+
+    .status-block strong {
       display: block;
-      margin-top: 4px;
       color: #fff;
       font-size: 1.55rem;
-      letter-spacing: 0.13em;
+      letter-spacing: .14em;
     }
 
     .copy {
-      color: var(--muted);
-      line-height: 1.6;
       margin: 0;
+      color: var(--muted);
+      line-height: 1.62;
     }
 
-    .facts {
+    .fact-list {
       display: grid;
       gap: 10px;
       margin-top: 16px;
@@ -276,7 +262,7 @@
 
     .fact,
     .metric,
-    .path-card {
+    .action {
       border: 1px solid rgba(255,255,255,.085);
       border-radius: 15px;
       background: rgba(0,0,0,.22);
@@ -285,113 +271,122 @@
 
     .fact {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0,1fr) auto;
       gap: 10px;
       align-items: center;
     }
 
+    .fact span,
+    .metric span,
+    .action span {
+      color: var(--dim);
+      font-size: .76rem;
+    }
+
     .fact strong,
     .metric strong,
-    .path-card strong {
+    .action strong {
       color: #fff;
       font-weight: 950;
       line-height: 1.25;
     }
 
-    .dial-panel {
+    .instrument {
+      min-height: 680px;
       padding: 18px;
-      min-height: 620px;
       display: flex;
       flex-direction: column;
+      background:
+        radial-gradient(circle at 50% 43%, rgba(114,255,156,.12), transparent 34%),
+        linear-gradient(180deg, rgba(12,34,22,.78), rgba(3,13,10,.90));
     }
 
-    .dial-header {
+    .instrument-head {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 140px;
+      grid-template-columns: minmax(0,1fr) 150px;
       gap: 16px;
       align-items: start;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
-    .dial-header h2 {
+    .instrument-head h2 {
       margin: 8px 0 0;
-      font-size: 1.3rem;
+      font-size: 1.35rem;
     }
 
     .readout {
-      border: 1px solid rgba(255, 87, 80, 0.32);
-      border-radius: 16px;
-      background: rgba(255, 87, 80, 0.08);
-      padding: 13px;
+      border: 1px solid rgba(255,86,80,.32);
+      border-radius: 17px;
+      background: rgba(255,86,80,.08);
+      padding: 14px;
       text-align: center;
     }
 
     .readout span {
       color: var(--dim);
-      font-size: 0.7rem;
+      font-size: .7rem;
+      letter-spacing: .1em;
       text-transform: uppercase;
-      letter-spacing: 0.09em;
     }
 
     .readout strong {
       display: block;
       color: #fff;
-      font-size: 1.65rem;
+      font-size: 1.7rem;
       margin-top: 5px;
     }
 
     .dial-wrap {
-      position: relative;
+      flex: 1;
       display: grid;
       place-items: center;
-      flex: 1;
-      min-height: 365px;
-      margin-top: 6px;
+      min-height: 430px;
     }
 
-    .dial-svg {
-      width: min(100%, 650px);
+    .dial {
+      width: min(100%, 720px);
       height: auto;
-      display: block;
-      filter: drop-shadow(0 0 32px rgba(117,255,156,.08));
+      filter: drop-shadow(0 0 34px rgba(114,255,156,.10));
     }
 
-    .dial-value {
-      font-size: 58px;
+    .tick {
+      stroke: rgba(255,255,255,.16);
+      stroke-width: 1;
+    }
+
+    .zone-label {
+      font-size: 14px;
       font-weight: 950;
-      letter-spacing: 0.04em;
+      letter-spacing: .14em;
+      text-transform: uppercase;
     }
 
-    .dial-unit {
-      font-size: 24px;
+    .value {
+      font-size: 68px;
+      font-weight: 950;
+      letter-spacing: .04em;
+    }
+
+    .unit {
+      font-size: 25px;
       font-weight: 850;
     }
 
-    .dial-sub {
+    .sub {
       font-size: 10px;
       font-weight: 900;
-      letter-spacing: 0.17em;
+      letter-spacing: .17em;
       text-transform: uppercase;
     }
 
-    .dial-zone {
-      font-size: 14px;
-      font-weight: 950;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-
-    .band-row {
+    .band-row,
+    .metrics {
       display: grid;
       grid-template-columns: repeat(3, minmax(0,1fr));
       gap: 10px;
-      margin-top: 2px;
     }
 
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 10px;
+    .metrics {
       margin-top: 12px;
     }
 
@@ -417,7 +412,7 @@
     }
 
     .detail-card {
-      border: 1px solid rgba(117,255,156,.18);
+      border: 1px solid rgba(114,255,156,.18);
       border-radius: 15px;
       background: rgba(0,0,0,.20);
       padding: 13px;
@@ -431,51 +426,47 @@
 
     .detail-card span {
       color: var(--muted);
-      font-size: 0.86rem;
+      font-size: .86rem;
     }
 
-    .lower {
+    .bottom {
       position: relative;
       z-index: 1;
       display: grid;
       grid-template-columns: 1fr 1fr 1.15fr;
-      gap: 16px;
+      gap: 18px;
       padding: 0 18px 18px;
     }
 
-    .lower p {
+    .bottom p {
       color: var(--muted);
       line-height: 1.58;
       margin: 0;
     }
 
-    .constraint-row {
+    .constraint {
       display: grid;
-      grid-template-columns: 95px 1fr;
+      grid-template-columns: 92px 1fr;
       gap: 12px;
       margin-top: 10px;
     }
 
-    .constraint-row span {
+    .constraint span {
       color: var(--green);
     }
 
-    .path-list {
+    .action-list {
       display: grid;
       gap: 9px;
     }
 
-    .path-card {
+    .action {
       display: grid;
       grid-template-columns: 22px 1fr;
       gap: 10px;
-      align-items: start;
     }
 
-    .check {
-      color: var(--green);
-      font-weight: 950;
-    }
+    .check { color: var(--green); font-weight: 950; }
 
     .footer {
       position: relative;
@@ -487,33 +478,37 @@
       padding: 15px 18px;
       border-top: 1px solid var(--line);
       color: var(--muted);
-      font-size: 0.86rem;
+      font-size: .86rem;
       background: rgba(0,0,0,.12);
     }
 
     .next {
-      border: 1px solid rgba(117,255,156,.30);
+      border: 1px solid rgba(114,255,156,.30);
       border-radius: 999px;
       padding: 10px 15px;
       color: var(--green);
       font-weight: 900;
-      background: rgba(117,255,156,.07);
+      background: rgba(114,255,156,.07);
     }
 
-    @media (max-width: 1160px) {
-      .main-grid,
-      .lower,
+    @media (max-width: 1180px) {
+      .instrument-layout,
+      .bottom,
       .hero,
-      .topbar,
-      .dial-header,
-      .metric-grid,
-      .band-row {
+      .top,
+      .instrument-head,
+      .band-row,
+      .metrics {
         grid-template-columns: 1fr;
       }
 
       .meta {
         justify-content: flex-start;
         flex-wrap: wrap;
+      }
+
+      .instrument {
+        min-height: auto;
       }
 
       .footer {
@@ -527,12 +522,9 @@
   <div class="wrap">
     <p class="note">Standalone visual prototype only. This page is isolated from the live Lens Selection tool.</p>
 
-    <section class="dashboard">
-      <div class="topbar">
-        <div class="brand">
-          <div class="brand-mark"></div>
-          <div>ScopedLabs</div>
-        </div>
+    <section class="shell">
+      <div class="top">
+        <div class="brand"><div class="logo"></div><div>ScopedLabs</div></div>
 
         <div class="meta">
           <div>Report ID<strong>SL-2026-05-09-001</strong></div>
@@ -540,7 +532,7 @@
           <div>Category<strong>Physical Security</strong></div>
         </div>
 
-        <div class="status-pill">Risk</div>
+        <div class="risk-pill">Risk</div>
       </div>
 
       <header class="hero">
@@ -558,12 +550,12 @@
         </div>
       </header>
 
-      <div class="main-grid">
-        <aside class="panel panel-pad">
+      <div class="instrument-layout">
+        <aside class="panel pad">
           <div class="panel-title"><span class="icon">▤</span>Status Summary</div>
 
-          <div class="status-box">
-            <span>Overall Status</span>
+          <div class="status-block">
+            <div class="label">Overall Status</div>
             <strong>RISK</strong>
           </div>
 
@@ -571,7 +563,7 @@
             Focal demand is above the preferred planning band. The design may still be possible, but it should be validated before equipment selection.
           </p>
 
-          <div class="facts">
+          <div class="fact-list">
             <div class="fact"><span>Distance to Target</span><strong>90 ft</strong></div>
             <div class="fact"><span>Target Width</span><strong>12 ft</strong></div>
             <div class="fact"><span>Sensor Width</span><strong>6.4 mm</strong></div>
@@ -580,8 +572,8 @@
           </div>
         </aside>
 
-        <main class="panel dial-panel">
-          <div class="dial-header">
+        <main class="panel instrument">
+          <div class="instrument-head">
             <div>
               <div class="panel-title"><span class="icon">◉</span>Results Overview</div>
               <h2>Adjusted Focal Demand</h2>
@@ -594,9 +586,9 @@
           </div>
 
           <div class="dial-wrap">
-            <svg class="dial-svg" viewBox="0 0 660 390" role="img" aria-label="Lens selection pressure radial diagnostic gauge">
+            <svg class="dial" viewBox="0 0 760 470" role="img" aria-label="Lens selection pressure radial diagnostic gauge">
               <defs>
-                <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+                <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
                   <feGaussianBlur stdDeviation="5" result="blur"></feGaussianBlur>
                   <feMerge>
                     <feMergeNode in="blur"></feMergeNode>
@@ -604,59 +596,50 @@
                   </feMerge>
                 </filter>
 
-                <linearGradient id="arcGreen" x1="0" x2="1">
-                  <stop offset="0%" stop-color="#1ddc67"/>
-                  <stop offset="100%" stop-color="#75ff9c"/>
-                </linearGradient>
-
-                <linearGradient id="arcYellow" x1="0" x2="1">
-                  <stop offset="0%" stop-color="#9a771d"/>
-                  <stop offset="100%" stop-color="#ffd25f"/>
-                </linearGradient>
-
-                <linearGradient id="arcRed" x1="0" x2="1">
-                  <stop offset="0%" stop-color="#82191d"/>
-                  <stop offset="100%" stop-color="#ff5750"/>
-                </linearGradient>
+                <linearGradient id="g" x1="0" x2="1"><stop offset="0%" stop-color="#1ddc67"/><stop offset="100%" stop-color="#72ff9c"/></linearGradient>
+                <linearGradient id="y" x1="0" x2="1"><stop offset="0%" stop-color="#9b781e"/><stop offset="100%" stop-color="#ffd35d"/></linearGradient>
+                <linearGradient id="r" x1="0" x2="1"><stop offset="0%" stop-color="#84191d"/><stop offset="100%" stop-color="#ff5650"/></linearGradient>
               </defs>
 
-              <circle cx="330" cy="215" r="183" fill="none" stroke="rgba(117,255,156,.035)" stroke-width="1"></circle>
-              <circle cx="330" cy="215" r="151" fill="none" stroke="rgba(255,255,255,.045)" stroke-width="1"></circle>
-              <circle cx="330" cy="215" r="116" fill="none" stroke="rgba(255,255,255,.045)" stroke-width="1"></circle>
-              <circle cx="330" cy="215" r="78" fill="none" stroke="rgba(117,255,156,.055)" stroke-width="1"></circle>
+              <circle cx="380" cy="255" r="216" fill="none" stroke="rgba(114,255,156,.04)" stroke-width="1"></circle>
+              <circle cx="380" cy="255" r="178" fill="none" stroke="rgba(255,255,255,.045)" stroke-width="1"></circle>
+              <circle cx="380" cy="255" r="140" fill="none" stroke="rgba(255,255,255,.045)" stroke-width="1"></circle>
+              <circle cx="380" cy="255" r="96" fill="none" stroke="rgba(114,255,156,.05)" stroke-width="1"></circle>
 
-              <line x1="330" y1="32" x2="330" y2="360" stroke="rgba(117,255,156,.08)" stroke-width="1"></line>
-              <line x1="148" y1="215" x2="512" y2="215" stroke="rgba(117,255,156,.08)" stroke-width="1"></line>
+              <line x1="380" y1="40" x2="380" y2="440" class="tick"></line>
+              <line x1="165" y1="255" x2="595" y2="255" class="tick"></line>
+              <line x1="228" y1="102" x2="532" y2="408" class="tick"></line>
+              <line x1="532" y1="102" x2="228" y2="408" class="tick"></line>
 
-              <path d="M 138 215 A 192 192 0 0 1 238 48" fill="none" stroke="url(#arcGreen)" stroke-width="34" stroke-linecap="round" filter="url(#glow)"></path>
-              <path d="M 238 48 A 192 192 0 0 1 438 70" fill="none" stroke="url(#arcYellow)" stroke-width="34" stroke-linecap="round"></path>
-              <path d="M 438 70 A 192 192 0 0 1 522 215" fill="none" stroke="url(#arcRed)" stroke-width="34" stroke-linecap="round" filter="url(#glow)"></path>
+              <path d="M 150 255 A 230 230 0 0 1 270 54" fill="none" stroke="url(#g)" stroke-width="38" stroke-linecap="round" filter="url(#glow)"></path>
+              <path d="M 270 54 A 230 230 0 0 1 512 83" fill="none" stroke="url(#y)" stroke-width="38" stroke-linecap="round"></path>
+              <path d="M 512 83 A 230 230 0 0 1 610 255" fill="none" stroke="url(#r)" stroke-width="38" stroke-linecap="round" filter="url(#glow)"></path>
 
-              <path d="M 170 215 A 160 160 0 0 1 490 215" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1"></path>
-              <path d="M 205 215 A 125 125 0 0 1 455 215" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"></path>
+              <path d="M 185 255 A 195 195 0 0 1 575 255" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1"></path>
+              <path d="M 225 255 A 155 155 0 0 1 535 255" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"></path>
 
-              <text x="164" y="174" fill="#75ff9c" class="dial-zone">Healthy</text>
-              <text x="330" y="79" fill="#ffd25f" text-anchor="middle" class="dial-zone">Watch</text>
-              <text x="498" y="174" fill="#ff5750" text-anchor="end" class="dial-zone">Risk</text>
+              <text x="175" y="206" fill="#72ff9c" class="zone-label">Healthy</text>
+              <text x="380" y="93" fill="#ffd35d" text-anchor="middle" class="zone-label">Watch</text>
+              <text x="584" y="206" fill="#ff5650" text-anchor="end" class="zone-label">Risk</text>
 
-              <text x="178" y="240" fill="rgba(255,255,255,.76)" font-size="13" font-weight="800">0</text>
-              <text x="235" y="84" fill="rgba(255,255,255,.84)" font-size="13" font-weight="800">8 mm</text>
-              <text x="436" y="100" fill="rgba(255,255,255,.84)" font-size="13" font-weight="800">18 mm</text>
-              <text x="500" y="240" fill="rgba(255,255,255,.76)" font-size="13" font-weight="800">40+</text>
+              <text x="190" y="284" fill="rgba(255,255,255,.76)" font-size="13" font-weight="850">0</text>
+              <text x="268" y="98" fill="rgba(255,255,255,.84)" font-size="13" font-weight="850">8 mm</text>
+              <text x="512" y="116" fill="rgba(255,255,255,.84)" font-size="13" font-weight="850">18 mm</text>
+              <text x="588" y="284" fill="rgba(255,255,255,.76)" font-size="13" font-weight="850">40+</text>
 
-              <line x1="330" y1="215" x2="464" y2="156" stroke="#fff" stroke-width="7" stroke-linecap="round" filter="url(#glow)"></line>
-              <circle cx="464" cy="156" r="10" fill="#dff9ff" stroke="rgba(255,255,255,.95)" stroke-width="3"></circle>
+              <line x1="380" y1="255" x2="535" y2="187" stroke="#fff" stroke-width="8" stroke-linecap="round" filter="url(#glow)"></line>
+              <circle cx="535" cy="187" r="11" fill="#dff9ff" stroke="rgba(255,255,255,.96)" stroke-width="3"></circle>
 
-              <circle cx="330" cy="215" r="25" fill="#092016" stroke="rgba(255,255,255,.28)" stroke-width="3"></circle>
-              <circle cx="330" cy="215" r="7" fill="#fff"></circle>
+              <circle cx="380" cy="255" r="28" fill="#092016" stroke="rgba(255,255,255,.28)" stroke-width="3"></circle>
+              <circle cx="380" cy="255" r="7" fill="#fff"></circle>
 
-              <text x="330" y="180" fill="#fff" text-anchor="middle" class="dial-value">25.6</text>
-              <text x="330" y="212" fill="#fff" text-anchor="middle" class="dial-unit">mm</text>
-              <text x="330" y="244" fill="rgba(255,255,255,.62)" text-anchor="middle" class="dial-sub">Adjusted focal demand</text>
+              <text x="380" y="212" fill="#fff" text-anchor="middle" class="value">25.6</text>
+              <text x="380" y="246" fill="#fff" text-anchor="middle" class="unit">mm</text>
+              <text x="380" y="282" fill="rgba(255,255,255,.62)" text-anchor="middle" class="sub">Adjusted focal demand</text>
 
-              <rect x="262" y="266" width="136" height="54" rx="18" fill="rgba(0,0,0,.32)" stroke="rgba(255,87,80,.26)"></rect>
-              <text x="330" y="288" fill="rgba(255,255,255,.62)" text-anchor="middle" font-size="11" font-weight="850" letter-spacing="1.5">LANDING ZONE</text>
-              <text x="330" y="310" fill="#ff7770" text-anchor="middle" font-size="24" font-weight="950" letter-spacing="4">RISK</text>
+              <rect x="300" y="310" width="160" height="62" rx="20" fill="rgba(0,0,0,.34)" stroke="rgba(255,86,80,.28)"></rect>
+              <text x="380" y="335" fill="rgba(255,255,255,.62)" text-anchor="middle" font-size="11" font-weight="850" letter-spacing="1.6">LANDING ZONE</text>
+              <text x="380" y="361" fill="#ff7770" text-anchor="middle" font-size="27" font-weight="950" letter-spacing="4">RISK</text>
             </svg>
           </div>
 
@@ -666,14 +649,14 @@
             <div class="metric"><span>Risk Band</span><strong>18 mm+</strong></div>
           </div>
 
-          <div class="metric-grid">
+          <div class="metrics">
             <div class="metric"><span>Adjusted Focal Length</span><strong>25.6 mm</strong></div>
             <div class="metric"><span>Lens Class</span><strong>Long Range / Specialty</strong></div>
             <div class="metric"><span>Detail Requirement</span><strong>Recognition / ID Pressure</strong></div>
           </div>
         </main>
 
-        <aside class="panel panel-pad guidance">
+        <aside class="panel pad guidance">
           <div class="panel-title"><span class="icon">?</span>Corrective Guidance</div>
           <h2>Focal Demand</h2>
           <p class="guidance-copy">
@@ -689,28 +672,26 @@
         </aside>
       </div>
 
-      <div class="lower">
-        <section class="panel panel-pad">
+      <div class="bottom">
+        <section class="panel pad">
           <div class="panel-title"><span class="icon">⚙</span>Engineering Interpretation</div>
-          <p>
-            The system is over-magnifying relative to the required detail. This increases sensitivity to vibration, atmospheric degradation, and mounting error while reducing field of view.
-          </p>
+          <p>The system is over-magnifying relative to the required detail. This increases sensitivity to vibration, atmospheric degradation, and mounting error while reducing field of view.</p>
         </section>
 
-        <section class="panel panel-pad">
+        <section class="panel pad">
           <div class="panel-title"><span class="icon">⛓</span>Dominant Constraint</div>
-          <div class="constraint-row"><span>Primary</span><strong>Focal Length</strong></div>
-          <div class="constraint-row"><span>Secondary</span><strong>Sensor Width</strong></div>
-          <div class="constraint-row"><span>Tertiary</span><strong>Distance to Target</strong></div>
+          <div class="constraint"><span>Primary</span><strong>Focal Length</strong></div>
+          <div class="constraint"><span>Secondary</span><strong>Sensor Width</strong></div>
+          <div class="constraint"><span>Tertiary</span><strong>Distance to Target</strong></div>
         </section>
 
-        <section class="panel panel-pad">
+        <section class="panel pad">
           <div class="panel-title"><span class="icon">✓</span>Planning Actions</div>
-          <div class="path-list">
-            <div class="path-card"><div class="check">✓</div><div>Reduce focal length to ≤ 18 mm target range.</div></div>
-            <div class="path-card"><div class="check">✓</div><div>Verify sensor width or consider larger sensor.</div></div>
-            <div class="path-card"><div class="check">✓</div><div>Recalculate pressure and confirm in Watch/Healthy band.</div></div>
-            <div class="path-card"><div class="check">✓</div><div>Validate with field test or high-fidelity simulation.</div></div>
+          <div class="action-list">
+            <div class="action"><div class="check">✓</div><div>Reduce focal length to ≤ 18 mm target range.</div></div>
+            <div class="action"><div class="check">✓</div><div>Verify sensor width or consider larger sensor.</div></div>
+            <div class="action"><div class="check">✓</div><div>Recalculate pressure and confirm in Watch/Healthy band.</div></div>
+            <div class="action"><div class="check">✓</div><div>Validate with field test or high-fidelity simulation.</div></div>
           </div>
         </section>
       </div>
