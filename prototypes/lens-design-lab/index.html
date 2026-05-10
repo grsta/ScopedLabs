@@ -530,7 +530,7 @@
 
     .assumption-grid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0,1fr));
+      grid-template-columns: repeat(6, minmax(0,1fr));
       gap: 8px;
     }
 
@@ -677,7 +677,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-014-chart-spacing.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-015-detail-viability-model.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -738,6 +738,16 @@
                   <option value="1.00" selected>Recognition-level detail</option>
                   <option value="1.20">Identification-level detail</option>
                   <option value="1.35">High-detail review</option>
+                </select>
+              </div>
+
+              <div class="assumption-field">
+                <label for="customResolution">Horizontal pixels</label>
+                <select id="customResolution">
+                  <option value="1280">1280 px / 720p</option>
+                  <option value="1920" selected>1920 px / 1080p</option>
+                  <option value="2560">2560 px / 4MP</option>
+                  <option value="3840">3840 px / 4K</option>
                 </select>
               </div>
 
@@ -1012,6 +1022,13 @@
         return "Recognition-level detail";
       }
 
+      function getDetailRequirementPpf(value) {
+        if (String(value) === "0.85") return 20;
+        if (String(value) === "1.20") return 60;
+        if (String(value) === "1.35") return 80;
+        return 40;
+      }
+
       function getCustomAssumptions() {
         var coverageEl = byId("customCoverage");
         var coverageDivisor = coverageEl ? Number(coverageEl.value) : 1;
@@ -1020,21 +1037,34 @@
         var detailValue = detailEl ? detailEl.value : "1.00";
         var detailFactor = Number(detailValue);
 
+        var resolutionEl = byId("customResolution");
+        var horizontalPixels = resolutionEl ? Number(resolutionEl.value) : 1920;
+
+        var targetWidthFt = readNumber("customWidth", 20);
+        var effectiveSceneWidthFt = Math.max(0.1, targetWidthFt / Math.max(0.1, coverageDivisor));
+        var requiredPpf = getDetailRequirementPpf(detailValue);
+        var availablePpf = horizontalPixels / effectiveSceneWidthFt;
+        var detailRatio = availablePpf / requiredPpf;
+
         return {
           distanceFt: readNumber("customDistance", 56),
-          targetWidthFt: readNumber("customWidth", 20),
+          targetWidthFt: targetWidthFt,
+          effectiveSceneWidthFt: effectiveSceneWidthFt,
           sensorWidthMm: readNumber("customSensor", 6.4),
+          horizontalPixels: horizontalPixels,
           detailRequirement: getDetailRequirementLabel(detailValue),
           detailFactor: Number.isFinite(detailFactor) ? detailFactor : 1,
+          requiredPpf: requiredPpf,
+          availablePpf: availablePpf,
+          detailRatio: detailRatio,
           coverageDivisor: Number.isFinite(coverageDivisor) && coverageDivisor > 0 ? coverageDivisor : 1,
           coverageStrategy: getCoverageLabel(coverageEl ? coverageEl.value : "1")
         };
       }
 
       function calculateFocalLengthFromAssumptions(a) {
-        var width = Math.max(0.1, a.targetWidthFt);
-        var divisor = Math.max(0.1, a.coverageDivisor);
-        return (a.distanceFt * a.sensorWidthMm / width) * a.detailFactor / divisor;
+        var width = Math.max(0.1, a.effectiveSceneWidthFt || a.targetWidthFt);
+        return a.distanceFt * a.sensorWidthMm / width;
       }
 
       function syncCustomScenario() {
@@ -1042,20 +1072,24 @@
         var projected = calculateFocalLengthFromAssumptions(a);
 
         scenarios.custom.value = Number(fmt(projected, 1));
-        scenarios.custom.description = "Custom assumption set: " + a.distanceFt + " ft distance, " + a.targetWidthFt + " ft target width, " + a.sensorWidthMm + " mm sensor, " + a.detailRequirement + ", " + a.coverageStrategy + ".";
+        scenarios.custom.description = "Custom assumption set: " + a.distanceFt + " ft distance, " + a.targetWidthFt + " ft scene width, " + a.effectiveSceneWidthFt.toFixed(1) + " ft effective width, " + a.sensorWidthMm + " mm sensor, " + a.horizontalPixels + " horizontal pixels, " + a.detailRequirement + ", " + a.coverageStrategy + ".";
         scenarios.custom.assumptions = a;
+        scenarios.custom.detailRatio = a.detailRatio;
+        scenarios.custom.availablePpf = a.availablePpf;
+        scenarios.custom.requiredPpf = a.requiredPpf;
         scenarios.custom.levers = [
           "Distance to target: " + a.distanceFt + " ft.",
           "Target width / scene width: " + a.targetWidthFt + " ft.",
           "Sensor width: " + a.sensorWidthMm + " mm.",
-          "Detail requirement: " + a.detailRequirement + " (" + a.detailFactor.toFixed(2) + "x internal planning weight).",
-          "Coverage strategy: " + a.coverageStrategy + "."
+          "Detail requirement: " + a.detailRequirement + " (" + a.availablePpf.toFixed(1) + " PPF available vs " + a.requiredPpf + " PPF target).",
+          "Coverage strategy: " + a.coverageStrategy + ".",
+          "Effective scene width per camera: " + a.effectiveSceneWidthFt.toFixed(1) + " ft."
         ];
         scenarios.custom.recommendation = "Custom mode recalculates the proposed focal length from the edited planning assumptions. Carry this forward only after confirming the changed assumptions represent a realistic design option.";
 
         var formulaNote = byId("customFormulaNote");
         if (formulaNote) {
-          formulaNote.textContent = "Projected focal length = " + a.distanceFt + " ? " + a.sensorWidthMm + " ? " + a.targetWidthFt + " ? detail requirement (" + a.detailFactor.toFixed(2) + "x) ? " + a.coverageDivisor + " = " + fmt(projected, 1) + " mm.";
+          formulaNote.textContent = "Projected focal length = " + a.distanceFt + " ? " + a.sensorWidthMm + " ? " + a.effectiveSceneWidthFt.toFixed(1) + " = " + fmt(projected, 1) + " mm. Detail check = " + a.availablePpf.toFixed(1) + " PPF available vs " + a.requiredPpf + " PPF target.";
         }
       }
 
@@ -1118,7 +1152,17 @@
         }
       };
 
-      function statusFor(value) {
+      function statusFor(value, scenario) {
+        if (scenario && scenario.detailRatio !== undefined) {
+          if (scenario.detailRatio < 0.85) {
+            return { key: "risk", label: "Risk", cls: "risk", note: "Detail requirement is not supported by the selected scene width and resolution." };
+          }
+
+          if (scenario.detailRatio < 1) {
+            return { key: "watch", label: "Watch", cls: "watch", note: "Detail requirement is close to the planning threshold and needs validation." };
+          }
+        }
+
         if (value >= comfortMin && value <= comfortMax) {
           return { key: "healthy", label: "Healthy", cls: "good", note: "Inside the preferred planning band." };
         }
@@ -1134,8 +1178,15 @@
         return Number(value).toFixed(digits);
       }
 
-      function pressureIndex(value) {
-        return Math.max(0, Math.min(100, Math.round((value / 34) * 100)));
+      function pressureIndex(value, scenario) {
+        var lensPressure = Math.max(0, Math.min(100, Math.round((value / 34) * 100)));
+
+        if (scenario && scenario.detailRatio !== undefined) {
+          var detailPressure = Math.max(0, Math.min(100, Math.round((1 - Math.min(1, scenario.detailRatio)) * 90 + 25)));
+          return Math.max(lensPressure, detailPressure);
+        }
+
+        return lensPressure;
       }
 
       function byId(id) {
@@ -1164,7 +1215,7 @@
       function buildPayload() {
         syncCustomScenario();
         var scenario = scenarios[selectedScenario];
-        var status = statusFor(scenario.value);
+        var status = statusFor(scenario.value, scenario);
         var improvement = original - scenario.value;
         var proposedAssumptions = selectedScenario === "custom" ? getCustomAssumptions() : (scenario.assumptions || null);
 
@@ -1185,7 +1236,7 @@
             adjustedFocalLengthMm: Number(fmt(scenario.value, 1)),
             status: status.label.toLowerCase(),
             improvementMm: Number(fmt(improvement, 1)),
-            pressureIndex: pressureIndex(scenario.value),
+            pressureIndex: pressureIndex(scenario.value, scenario),
             note: scenario.description
           },
           carryForward: {
@@ -1202,10 +1253,10 @@
 
       function render() {
         var scenario = scenarios[selectedScenario];
-        var status = statusFor(scenario.value);
+        var status = statusFor(scenario.value, scenario);
         var improvement = original - scenario.value;
         var reductionPct = original ? Math.round((improvement / original) * 100) : 0;
-        var pressure = pressureIndex(scenario.value);
+        var pressure = pressureIndex(scenario.value, scenario);
 
         document.querySelectorAll(".scenario-btn").forEach(function (btn) {
           btn.classList.toggle("active", btn.getAttribute("data-scenario") === selectedScenario);
@@ -1240,8 +1291,13 @@
         setClassValue(byId("analyticsBand"), "lab-analytic-value", status.cls);
         byId("analyticsBandNote").textContent = status.key === "healthy" ? "Selected scenario sits inside the comfort band." : "Selected scenario still needs review.";
 
-        byId("analyticsNextCheck").textContent = selectedScenario === "split" ? "Camera count review" : "FOV validation";
-        byId("analyticsNextCheckNote").textContent = selectedScenario === "split" ? "Check camera count, cabling, and storage impact." : "Validate field of view before final design.";
+        if (selectedScenario === "custom" && scenario.detailRatio !== undefined && scenario.detailRatio < 1) {
+          byId("analyticsNextCheck").textContent = "Detail validation";
+          byId("analyticsNextCheckNote").textContent = "Available pixel density is below the selected detail requirement.";
+        } else {
+          byId("analyticsNextCheck").textContent = selectedScenario === "split" ? "Camera count review" : "FOV validation";
+          byId("analyticsNextCheckNote").textContent = selectedScenario === "split" ? "Check camera count, cabling, and storage impact." : "Validate field of view before final design.";
+        }
 
         byId("scenarioName").textContent = scenario.label;
         byId("scenarioDescription").textContent = scenario.description;
@@ -1425,7 +1481,7 @@
             render();
           });
         });
-        ["customDistance", "customWidth", "customSensor", "customDetailRequirement", "customCoverage"].forEach(function (id) {
+        ["customDistance", "customWidth", "customSensor", "customDetailRequirement", "customResolution", "customCoverage"].forEach(function (id) {
           var el = byId(id);
           if (!el) return;
 
