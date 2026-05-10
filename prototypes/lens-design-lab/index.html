@@ -677,7 +677,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-015-detail-viability-model.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-016-pressure-chart.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -886,7 +886,7 @@
                 <div class="lab-kicker">Scenario Comparison</div>
                 <h3 class="lab-section-title">Original vs proposed planning scenarios</h3>
                 <div class="lab-copy">
-                  The chart compares the original focal-length result against proposed planning adjustments. The green shaded comfort band represents the preferred 8-18 mm range.
+                  The chart compares overall planning pressure, including lens framing and detail viability. Lower pressure is better; high-detail failures can remain risky even when focal length is low.
                 </div>
               </div>
 
@@ -924,7 +924,7 @@
             </div>
 
             <div class="lab-chart-caption">
-              Baseline stays at the current result for comparison. Scenario chips and the custom result control update the proposed planning curve.
+              Baseline stays at the original planning pressure for comparison. Scenario chips and Custom assumptions update the proposed pressure curve.
             </div>
 
             <div class="lab-tradeoff-summary">
@@ -1208,6 +1208,16 @@
         ];
       }
 
+      function scenarioPressureArray() {
+        return [
+          pressureIndex(scenarios.current.value, scenarios.current),
+          pressureIndex(scenarios.closer.value, scenarios.closer),
+          pressureIndex(scenarios.wider.value, scenarios.wider),
+          pressureIndex(scenarios.split.value, scenarios.split),
+          pressureIndex(scenarios.custom.value, scenarios.custom)
+        ];
+      }
+
       function selectedIndex() {
         return ["current", "closer", "wider", "split", "custom"].indexOf(selectedScenario);
       }
@@ -1357,23 +1367,42 @@
         var canvas = byId("labComparisonChart");
         if (!canvas || !window.Chart) return;
 
-        var comfortBandPlugin = {
-          id: "comfortBandPlugin",
+        var pressureZonePlugin = {
+          id: "pressureZonePlugin",
           beforeDraw: function (chart) {
             var y = chart.scales.y;
             var area = chart.chartArea;
             if (!y || !area) return;
 
-            var top = y.getPixelForValue(comfortMax);
-            var bottom = y.getPixelForValue(comfortMin);
             var ctx = chart.ctx;
 
+            function zone(from, to, fill, stroke) {
+              var top = y.getPixelForValue(to);
+              var bottom = y.getPixelForValue(from);
+
+              ctx.save();
+              ctx.fillStyle = fill;
+              ctx.fillRect(area.left, top, area.right - area.left, bottom - top);
+
+              if (stroke) {
+                ctx.strokeStyle = stroke;
+                ctx.setLineDash([6, 6]);
+                ctx.strokeRect(area.left, top, area.right - area.left, bottom - top);
+              }
+
+              ctx.restore();
+            }
+
+            zone(0, 25, "rgba(125,255,152,0.10)", "rgba(125,255,152,0.20)");
+            zone(25, 60, "rgba(255,211,79,0.075)", "rgba(255,211,79,0.16)");
+            zone(60, 100, "rgba(255,96,88,0.075)", "rgba(255,96,88,0.16)");
+
             ctx.save();
-            ctx.fillStyle = "rgba(125,255,152,0.10)";
-            ctx.fillRect(area.left, top, area.right - area.left, bottom - top);
-            ctx.strokeStyle = "rgba(125,255,152,0.22)";
-            ctx.setLineDash([6, 6]);
-            ctx.strokeRect(area.left, top, area.right - area.left, bottom - top);
+            ctx.fillStyle = "rgba(203,213,225,.62)";
+            ctx.font = "700 10px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+            ctx.fillText("HEALTHY", area.left + 8, y.getPixelForValue(12));
+            ctx.fillText("WATCH", area.left + 8, y.getPixelForValue(42));
+            ctx.fillText("RISK", area.left + 8, y.getPixelForValue(82));
             ctx.restore();
           }
         };
@@ -1384,8 +1413,8 @@
             labels: ["Current", "Closer Camera", "Wider Target", "Split Coverage", "Custom"],
             datasets: [
               {
-                label: "Original baseline",
-                data: [original, original, original, original, original],
+                label: "Original baseline pressure",
+                data: [75, 75, 75, 75, 75],
                 borderColor: "rgba(255,96,88,1)",
                 backgroundColor: "rgba(255,96,88,.18)",
                 pointBackgroundColor: "rgba(255,96,88,1)",
@@ -1395,8 +1424,8 @@
                 tension: 0.25
               },
               {
-                label: "Proposed planning result",
-                data: scenarioDataArray(),
+                label: "Proposed planning pressure",
+                data: scenarioPressureArray(),
                 borderColor: "rgba(125,255,152,1)",
                 backgroundColor: "rgba(125,255,152,.18)",
                 pointBackgroundColor: ["rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)"],
@@ -1437,16 +1466,16 @@
               },
               y: {
                 min: 0,
-                max: 30,
+                max: 100,
                 ticks: {
                   color: "rgba(203,213,225,.76)",
-                  stepSize: 5,
+                  stepSize: 20,
                   font: { size: 10, weight: "700" },
-                  callback: function (value) { return value + " mm"; }
+                  callback: function (value) { return value + " / 100"; }
                 },
                 title: {
                   display: true,
-                  text: "Adjusted focal length",
+                  text: "Planning pressure score",
                   color: "rgba(248,250,252,.72)",
                   font: { size: 11, weight: "700" }
                 },
@@ -1454,7 +1483,7 @@
               }
             }
           },
-          plugins: [comfortBandPlugin]
+          plugins: [pressureZonePlugin]
         });
       }
 
@@ -1468,7 +1497,7 @@
         pointSizes[idx] = 8;
         pointColors[idx] = "#ffd34f";
 
-        chart.data.datasets[1].data = scenarioDataArray();
+        chart.data.datasets[1].data = scenarioPressureArray();
         chart.data.datasets[1].pointRadius = pointSizes;
         chart.data.datasets[1].pointBackgroundColor = pointColors;
         chart.update();
