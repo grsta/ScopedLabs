@@ -677,7 +677,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-017-detail-pressure-alignment.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-018-realistic-detail-thresholds.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -734,7 +734,7 @@
               <div class="assumption-field">
                 <label for="customDetailRequirement">Detail requirement</label>
                 <select id="customDetailRequirement">
-                  <option value="0.85">Overview / general scene</option>
+                  <option value="0.85">Observation / general scene</option>
                   <option value="1.00" selected>Recognition-level detail</option>
                   <option value="1.20">Identification-level detail</option>
                   <option value="1.35">High-detail review</option>
@@ -1016,17 +1016,17 @@
       }
 
       function getDetailRequirementLabel(value) {
-        if (String(value) === "0.85") return "Overview / general scene";
+        if (String(value) === "0.85") return "Observation / general scene";
         if (String(value) === "1.20") return "Identification-level detail";
         if (String(value) === "1.35") return "High-detail review";
         return "Recognition-level detail";
       }
 
       function getDetailRequirementPpf(value) {
-        if (String(value) === "0.85") return 20;
-        if (String(value) === "1.20") return 60;
-        if (String(value) === "1.35") return 80;
-        return 40;
+        if (String(value) === "0.85") return 80;
+        if (String(value) === "1.20") return 250;
+        if (String(value) === "1.35") return 300;
+        return 150;
       }
 
       function getCustomAssumptions() {
