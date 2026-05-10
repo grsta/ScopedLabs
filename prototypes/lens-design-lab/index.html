@@ -586,7 +586,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-025-fov-layout-label-fix.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-026-clean-fov-labels.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -1286,9 +1286,8 @@
           );
 
           cameraRail.push(
-            '<rect x="22" y="' + (camY - 12).toFixed(1) + '" width="76" height="24" rx="7" fill="rgba(2,6,12,.76)" stroke="rgba(125,255,152,.24)" />' +
-            '<text x="32" y="' + (camY + 4).toFixed(1) + '" fill="rgba(248,250,252,.84)" font-size="10" font-weight="900">Cam ' + (idx + 1) + '</text>' +
-            '<text x="76" y="' + (camY + 4).toFixed(1) + '" text-anchor="end" fill="rgba(203,213,225,.58)" font-size="9" font-weight="800">' + signedFt(centerPos) + '</text>'
+            '<rect x="22" y="' + (camY - 12).toFixed(1) + '" width="64" height="24" rx="7" fill="rgba(2,6,12,.76)" stroke="rgba(125,255,152,.24)" />' +
+            '<text x="54" y="' + (camY + 4).toFixed(1) + '" text-anchor="middle" fill="rgba(248,250,252,.84)" font-size="10" font-weight="900">Cam ' + (idx + 1) + '</text>'
           );
         });
 
@@ -1371,7 +1370,7 @@
 
             '<text x="22" y="' + (height - 18) + '" fill="' + coverageStroke + '" font-size="10" font-weight="900">Coverage: ' + data.coverageStatus + '</text>' +
             '<text x="132" y="' + (height - 18) + '" fill="' + detailStroke + '" font-size="10" font-weight="900">Detail: ' + data.detailStatus + '</text>' +
-            '<text x="232" y="' + (height - 18) + '" fill="rgba(226,232,240,.62)" font-size="10" font-weight="800">Left labels show recommended camera center positions across the target scene width.</text>' +
+            '<text x="232" y="' + (height - 18) + '" fill="rgba(226,232,240,.62)" font-size="10" font-weight="800">Left labels identify each camera. Position values are listed in the Camera Positions card.</text>' +
           '</svg>';
 
         stage.innerHTML = svg;
@@ -1379,7 +1378,9 @@
         setText("fovLayoutMode", data.coverageCount + " camera" + (data.coverageCount === 1 ? "" : "s"));
         setText("fovOverlap", data.coverageCount === 1 ? "None" : fmt(data.recommendedOverlapFraction * 100, 0) + "% / " + fmt(data.overlapWidthFt, 1) + " ft");
         setText("fovCenterSpacing", data.coverageCount === 1 ? "N/A" : fmt(data.centerSpacingFt, 1) + " ft");
-        setText("fovCameraPositions", data.cameraPositionsFt.map(signedFt).join(" ? "));
+        setText("fovCameraPositions", data.cameraPositionsFt.map(function (pos, i) {
+          return "Cam " + (i + 1) + " " + signedFt(pos);
+        }).join(" | "));
       }
 
       function render() {
