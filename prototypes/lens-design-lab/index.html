@@ -655,6 +655,83 @@
       }
     }
 
+  
+    .lab-design-targets {
+      margin-top: 12px;
+      border: 1px solid rgba(125,255,152,.16);
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 82% 12%, rgba(125,255,152,.07), transparent 30%),
+        rgba(2,6,12,.46);
+      padding: 16px;
+    }
+
+    .design-targets-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .design-target-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .design-target-label {
+      color: rgba(203,213,225,.64);
+      font-size: .58rem;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .design-target-value {
+      display: block;
+      margin-top: 6px;
+      color: #fff;
+      font-size: .92rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .design-target-note {
+      margin-top: 5px;
+      color: rgba(226,232,240,.58);
+      font-size: .68rem;
+      line-height: 1.32;
+    }
+
+    .design-recommendation {
+      margin-top: 10px;
+      border: 1px solid rgba(255,211,79,.18);
+      border-radius: 12px;
+      background: rgba(255,211,79,.035);
+      padding: 11px 12px;
+      color: rgba(226,232,240,.78);
+      font-size: .74rem;
+      line-height: 1.48;
+    }
+
+    .design-recommendation strong {
+      color: #ffd34f;
+    }
+
+    @media (max-width: 900px) {
+      .design-targets-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .design-targets-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 
@@ -683,7 +760,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-019-clarify-focal-vs-pressure.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-020-design-targets.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -733,7 +810,7 @@
               </div>
 
               <div class="assumption-field">
-                <label for="customSensor">Sensor width</label>
+                <label for="customSensor">Camera sensor width</label>
                 <input id="customSensor" type="number" min="1" max="20" step="0.1" value="6.4" />
               </div>
 
@@ -884,6 +961,55 @@
                 </ul>
               </div>
             </div>
+          </div>
+
+          
+          <div class="lab-design-targets">
+            <div class="lab-section-head">
+              <div>
+                <div class="lab-kicker">Design Targets / Path to Acceptable</div>
+                <h3 class="lab-section-title">What needs to change to reach a usable design?</h3>
+                <div class="lab-copy">
+                  These targets translate the selected assumptions into acceptable scene width, camera count, focal range, and resolution requirements. This explains why changing one value may not be enough to reach HEALTHY.
+                </div>
+              </div>
+
+              <div class="lab-chip">Design Targets</div>
+            </div>
+
+            <div class="design-targets-grid">
+              <div class="design-target-card">
+                <div class="design-target-label">Max Width / Camera</div>
+                <span id="targetMaxSceneWidth" class="design-target-value">?</span>
+                <div id="targetMaxSceneNote" class="design-target-note"></div>
+              </div>
+
+              <div class="design-target-card">
+                <div class="design-target-label">Suggested Cameras</div>
+                <span id="targetCameraCount" class="design-target-value">?</span>
+                <div id="targetCameraNote" class="design-target-note"></div>
+              </div>
+
+              <div class="design-target-card">
+                <div class="design-target-label">Focal After Split</div>
+                <span id="targetFocalAfterSplit" class="design-target-value">?</span>
+                <div id="targetFocalNote" class="design-target-note"></div>
+              </div>
+
+              <div class="design-target-card">
+                <div class="design-target-label">One-Camera Pixels Needed</div>
+                <span id="targetPixelsNeeded" class="design-target-value">?</span>
+                <div id="targetPixelsNote" class="design-target-note"></div>
+              </div>
+
+              <div class="design-target-card">
+                <div class="design-target-label">Distance Range</div>
+                <span id="targetDistanceRange" class="design-target-value">?</span>
+                <div id="targetDistanceNote" class="design-target-note"></div>
+              </div>
+            </div>
+
+            <div id="designTargetRecommendation" class="design-recommendation"></div>
           </div>
 
           <div class="lab-comparison">
@@ -1101,7 +1227,7 @@
 
         var formulaNote = byId("customFormulaNote");
         if (formulaNote) {
-          formulaNote.textContent = "Projected focal length = " + a.distanceFt + " ? " + a.sensorWidthMm + " ? " + a.effectiveSceneWidthFt.toFixed(1) + " = " + fmt(projected, 1) + " mm. Detail check = " + a.availablePpf.toFixed(1) + " PPF available vs " + a.requiredPpf + " PPF target.";
+          formulaNote.textContent = "Calculated focal length output = " + a.distanceFt + " ? " + a.sensorWidthMm + " ? " + a.effectiveSceneWidthFt.toFixed(1) + " = " + fmt(projected, 1) + " mm. Detail check = " + a.availablePpf.toFixed(1) + " PPF available vs " + a.requiredPpf + " PPF target.";
         }
       }
 
@@ -1288,6 +1414,98 @@
         };
       }
 
+
+      function getActiveDesignAssumptions(scenario) {
+        if (selectedScenario === "custom") return getCustomAssumptions();
+
+        if (scenario && scenario.assumptions) return scenario.assumptions;
+
+        return {
+          distanceFt: originalAssumptions.distanceFt,
+          targetWidthFt: originalAssumptions.targetWidthFt,
+          effectiveSceneWidthFt: originalAssumptions.targetWidthFt,
+          sensorWidthMm: originalAssumptions.sensorWidthMm,
+          horizontalPixels: 1920,
+          detailRequirement: "Recognition-level detail",
+          requiredPpf: 150,
+          availablePpf: 1920 / originalAssumptions.targetWidthFt,
+          coverageDivisor: 1,
+          coverageStrategy: "Single camera"
+        };
+      }
+
+      function renderDesignTargets(scenario) {
+        var a = getActiveDesignAssumptions(scenario);
+
+        var distanceFt = Math.max(0.1, Number(a.distanceFt) || 0.1);
+        var targetWidthFt = Math.max(0.1, Number(a.targetWidthFt) || 0.1);
+        var sensorWidthMm = Math.max(0.1, Number(a.sensorWidthMm) || 0.1);
+        var horizontalPixels = Math.max(1, Number(a.horizontalPixels) || 1920);
+        var requiredPpf = Math.max(1, Number(a.requiredPpf) || 150);
+
+        var effectiveSceneWidthFt = Math.max(
+          0.1,
+          Number(a.effectiveSceneWidthFt) || targetWidthFt
+        );
+
+        var availablePpf = horizontalPixels / effectiveSceneWidthFt;
+        var maxSceneWidthPerCamera = horizontalPixels / requiredPpf;
+        var suggestedCameraCount = Math.max(1, Math.ceil(targetWidthFt / maxSceneWidthPerCamera));
+        var effectiveWidthAfterSplit = targetWidthFt / suggestedCameraCount;
+        var focalAfterSplit = distanceFt * sensorWidthMm / effectiveWidthAfterSplit;
+        var oneCameraPixelsNeeded = Math.ceil(targetWidthFt * requiredPpf);
+
+        var minDistanceForPreferredBand = comfortMin * effectiveWidthAfterSplit / sensorWidthMm;
+        var maxDistanceForPreferredBand = comfortMax * effectiveWidthAfterSplit / sensorWidthMm;
+
+        var detailOk = availablePpf >= requiredPpf;
+        var focalOkAfterSplit = focalAfterSplit >= comfortMin && focalAfterSplit <= comfortMax;
+
+        byId("targetMaxSceneWidth").textContent = fmt(maxSceneWidthPerCamera, 1) + " ft";
+        byId("targetMaxSceneNote").textContent =
+          "At " + horizontalPixels + " px and " + requiredPpf + " PPF target.";
+
+        byId("targetCameraCount").textContent = suggestedCameraCount + " camera" + (suggestedCameraCount === 1 ? "" : "s");
+        byId("targetCameraNote").textContent =
+          "For a " + fmt(targetWidthFt, 1) + " ft scene at the selected detail target.";
+
+        byId("targetFocalAfterSplit").textContent = fmt(focalAfterSplit, 1) + " mm";
+        byId("targetFocalNote").textContent =
+          "Using about " + fmt(effectiveWidthAfterSplit, 1) + " ft per camera.";
+
+        byId("targetPixelsNeeded").textContent = oneCameraPixelsNeeded.toLocaleString() + " px";
+        byId("targetPixelsNote").textContent =
+          "Horizontal pixels needed if one camera covers the full scene.";
+
+        byId("targetDistanceRange").textContent =
+          fmt(minDistanceForPreferredBand, 0) + "-" + fmt(maxDistanceForPreferredBand, 0) + " ft";
+        byId("targetDistanceNote").textContent =
+          "Approximate distance range for an 8-18 mm preferred lens band after suggested split.";
+
+        var recommendation = "";
+
+        if (!detailOk) {
+          recommendation =
+            "<strong>Detail is the blocking requirement.</strong> The current view is " +
+            fmt(effectiveSceneWidthFt, 1) + " ft wide per camera, giving about " +
+            fmt(availablePpf, 1) + " PPF against a " + requiredPpf +
+            " PPF target. Changing focal length alone will not fix that. Limit each camera view to about " +
+            fmt(maxSceneWidthPerCamera, 1) + " ft, use about " + suggestedCameraCount +
+            " cameras, or increase horizontal resolution to about " +
+            oneCameraPixelsNeeded.toLocaleString() + " px if one camera must cover the full scene.";
+        } else if (!focalOkAfterSplit) {
+          recommendation =
+            "<strong>Detail is acceptable, but lens/framing still needs review.</strong> The selected detail target is supported, but the resulting focal length is outside the preferred 8-18 mm band. Review distance, sensor size, or scene width per camera.";
+        } else {
+          recommendation =
+            "<strong>This path can be made acceptable.</strong> The selected assumptions can support the detail target and land near the preferred lens band if each camera covers about " +
+            fmt(effectiveWidthAfterSplit, 1) + " ft of scene width. Validate with manufacturer FOV data before relying on it.";
+        }
+
+        byId("designTargetRecommendation").innerHTML = recommendation;
+      }
+
+
       function render() {
         var scenario = scenarios[selectedScenario];
         var status = statusFor(scenario.value, scenario);
@@ -1385,6 +1603,8 @@
         byId("driverWidthText").textContent = w + "%";
         byId("driverDetail").style.width = detail + "%";
         byId("driverDetailText").textContent = detail + "%";
+
+        renderDesignTargets(scenario);
 
         var payload = buildPayload();
 
