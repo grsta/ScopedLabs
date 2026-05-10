@@ -518,7 +518,7 @@
         radial-gradient(circle at 88% 50%, rgba(255,96,88,.06), transparent 34%),
         rgba(255,255,255,.018);
       overflow: hidden;
-      min-height: 315px;
+      min-height: 390px;
     }
 
     .fov-cone-stage svg {
@@ -586,7 +586,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-024-multi-camera-fov-layout.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-025-fov-layout-label-fix.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -1190,11 +1190,11 @@
         if (!stage) return;
 
         var width = 920;
-        var height = 350;
-        var camX = 92;
-        var targetX = 805;
-        var centerY = 170;
-        var axisY = 320;
+        var height = 390;
+        var camX = 112;
+        var targetX = 785;
+        var centerY = 180;
+        var axisY = 328;
 
         var visualWidthFt = Math.max(
           data.sceneWidthFt,
@@ -1207,12 +1207,6 @@
 
         function yFor(scenePosFt) {
           return centerY + (scenePosFt * pxPerFt);
-        }
-
-        function statusColor(status, alpha) {
-          if (status === "HEALTHY") return "rgba(125,255,152," + alpha + ")";
-          if (status === "WATCH") return "rgba(255,211,79," + alpha + ")";
-          return "rgba(255,96,88," + alpha + ")";
         }
 
         function solidStatusColor(status) {
@@ -1236,12 +1230,17 @@
           return ft * 0.3048;
         }
 
+        function labelM(ft) {
+          return fmt(m(ft), 1) + " m";
+        }
+
         var sceneTop = yFor(-data.sceneWidthFt / 2);
         var sceneBottom = yFor(data.sceneWidthFt / 2);
 
         var conePaths = [];
         var boundaryLines = [];
         var cameraMarks = [];
+        var cameraRail = [];
         var overlapShapes = [];
         var centerLines = [];
         var steps = 28;
@@ -1273,18 +1272,23 @@
           }
 
           boundaryLines.push(
-            '<line x1="' + camX + '" y1="' + camY.toFixed(1) + '" x2="' + targetX + '" y2="' + (camY - actualHalfAtTarget).toFixed(1) + '" stroke="rgba(226,232,240,.38)" stroke-width="1" />' +
-            '<line x1="' + camX + '" y1="' + camY.toFixed(1) + '" x2="' + targetX + '" y2="' + (camY + actualHalfAtTarget).toFixed(1) + '" stroke="rgba(226,232,240,.38)" stroke-width="1" />'
+            '<line x1="' + camX + '" y1="' + camY.toFixed(1) + '" x2="' + targetX + '" y2="' + (camY - actualHalfAtTarget).toFixed(1) + '" stroke="rgba(226,232,240,.32)" stroke-width="1" />' +
+            '<line x1="' + camX + '" y1="' + camY.toFixed(1) + '" x2="' + targetX + '" y2="' + (camY + actualHalfAtTarget).toFixed(1) + '" stroke="rgba(226,232,240,.32)" stroke-width="1" />'
           );
 
           centerLines.push(
-            '<line x1="' + camX + '" y1="' + camY.toFixed(1) + '" x2="' + targetX + '" y2="' + camY.toFixed(1) + '" stroke="rgba(226,232,240,.20)" stroke-dasharray="5 7" stroke-width="1" />' +
-            '<text x="' + (targetX - 92) + '" y="' + (camY - 6).toFixed(1) + '" fill="rgba(248,250,252,.68)" font-size="10" font-weight="800">Cam ' + (idx + 1) + ' center ' + signedFt(centerPos) + '</text>'
+            '<line x1="' + camX + '" y1="' + camY.toFixed(1) + '" x2="' + targetX + '" y2="' + camY.toFixed(1) + '" stroke="rgba(226,232,240,.20)" stroke-dasharray="5 7" stroke-width="1" />'
           );
 
           cameraMarks.push(
             '<circle cx="' + camX + '" cy="' + camY.toFixed(1) + '" r="10" fill="rgba(125,255,152,.13)" stroke="rgba(125,255,152,.78)" stroke-width="2" />' +
-            '<text x="' + (camX - 28) + '" y="' + (camY - 16).toFixed(1) + '" fill="rgba(248,250,252,.80)" font-size="10" font-weight="900">Cam ' + (idx + 1) + '</text>'
+            '<text x="' + (camX - 3) + '" y="' + (camY + 4).toFixed(1) + '" text-anchor="middle" fill="rgba(248,250,252,.90)" font-size="9" font-weight="950">' + (idx + 1) + '</text>'
+          );
+
+          cameraRail.push(
+            '<rect x="22" y="' + (camY - 12).toFixed(1) + '" width="76" height="24" rx="7" fill="rgba(2,6,12,.76)" stroke="rgba(125,255,152,.24)" />' +
+            '<text x="32" y="' + (camY + 4).toFixed(1) + '" fill="rgba(248,250,252,.84)" font-size="10" font-weight="900">Cam ' + (idx + 1) + '</text>' +
+            '<text x="76" y="' + (camY + 4).toFixed(1) + '" text-anchor="end" fill="rgba(203,213,225,.58)" font-size="9" font-weight="800">' + signedFt(centerPos) + '</text>'
           );
         });
 
@@ -1298,8 +1302,8 @@
 
             if (high > low) {
               overlapShapes.push(
-                '<rect x="' + (targetX + 12) + '" y="' + yFor(low).toFixed(1) + '" width="24" height="' + Math.max(3, (yFor(high) - yFor(low))).toFixed(1) + '" fill="rgba(255,211,79,.28)" stroke="rgba(255,211,79,.38)" stroke-width="1" />' +
-                '<text x="' + (targetX + 42) + '" y="' + (yFor((low + high) / 2) + 4).toFixed(1) + '" fill="#ffd34f" font-size="10" font-weight="900">Overlap ' + fmt(high - low, 1) + ' ft</text>'
+                '<rect x="' + (targetX + 14) + '" y="' + yFor(low).toFixed(1) + '" width="22" height="' + Math.max(4, (yFor(high) - yFor(low))).toFixed(1) + '" fill="rgba(255,211,79,.28)" stroke="rgba(255,211,79,.40)" stroke-width="1" />' +
+                '<text x="' + (targetX + 42) + '" y="' + (yFor((low + high) / 2) + 4).toFixed(1) + '" fill="#ffd34f" font-size="9" font-weight="900">overlap ' + fmt(high - low, 1) + ' ft</text>'
               );
             }
           }
@@ -1319,10 +1323,11 @@
 
         tickValues.forEach(function (d) {
           var x = camX + ((targetX - camX) * (d / data.distanceFt));
+
           ticks.push(
-            '<line x1="' + x.toFixed(1) + '" y1="' + (axisY - 6) + '" x2="' + x.toFixed(1) + '" y2="' + (axisY + 6) + '" stroke="rgba(226,232,240,.35)" stroke-width="1" />' +
-            '<text x="' + (x - 14).toFixed(1) + '" y="' + (axisY + 20) + '" fill="rgba(226,232,240,.68)" font-size="9" font-weight="800">' + fmt(d, 0) + ' ft</text>' +
-            '<text x="' + (x - 14).toFixed(1) + '" y="' + (axisY + 33) + '" fill="rgba(226,232,240,.42)" font-size="8" font-weight="700">' + fmt(m(d), 1) + ' m</text>'
+            '<line x1="' + x.toFixed(1) + '" y1="' + (axisY - 7) + '" x2="' + x.toFixed(1) + '" y2="' + (axisY + 7) + '" stroke="rgba(226,232,240,.35)" stroke-width="1" />' +
+            '<text x="' + x.toFixed(1) + '" y="' + (axisY + 22) + '" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="9" font-weight="800">' + fmt(d, 0) + ' ft</text>' +
+            '<text x="' + x.toFixed(1) + '" y="' + (axisY + 36) + '" text-anchor="middle" fill="rgba(226,232,240,.45)" font-size="8" font-weight="700">' + labelM(d) + '</text>'
           );
         });
 
@@ -1342,28 +1347,31 @@
             '<rect x="0" y="0" width="' + width + '" height="' + height + '" fill="rgba(2,6,12,.18)" />' +
 
             '<text x="22" y="28" fill="rgba(125,255,152,.92)" font-size="11" font-weight="950" letter-spacing="1.5">FOV / COVERAGE LAYOUT</text>' +
-            '<text x="22" y="49" fill="rgba(248,250,252,.82)" font-size="13" font-weight="900">' + data.coverageCount + ' camera' + (data.coverageCount === 1 ? '' : 's') + ' ? ' + fmt(data.lensMm, 1) + ' mm lens ? ' + fmt(data.distanceFt, 0) + ' ft distance ? ' + fmt(data.availablePpf, 1) + ' PPF</text>' +
-            '<text x="22" y="70" fill="rgba(203,213,225,.66)" font-size="11">Overlap target: ' + fmt(data.recommendedOverlapFraction * 100, 0) + '% ? per-camera required width: ' + fmt(data.requiredWidthPerCamera, 1) + ' ft ? status: ' + data.status + '</text>' +
+            '<text x="22" y="49" fill="rgba(248,250,252,.82)" font-size="13" font-weight="900">' + data.coverageCount + ' camera' + (data.coverageCount === 1 ? '' : 's') + ' ? ' + fmt(data.lensMm, 1) + ' mm lens ? ' + fmt(data.distanceFt, 0) + ' ft / ' + labelM(data.distanceFt) + ' distance ? ' + fmt(data.availablePpf, 1) + ' PPF</text>' +
+            '<text x="22" y="70" fill="rgba(203,213,225,.66)" font-size="11">Overlap target: ' + fmt(data.recommendedOverlapFraction * 100, 0) + '% ? per-camera required width: ' + fmt(data.requiredWidthPerCamera, 1) + ' ft ? total scene: ' + fmt(data.sceneWidthFt, 1) + ' ft / ' + labelM(data.sceneWidthFt) + ' ? status: ' + data.status + '</text>' +
 
+            cameraRail.join("") +
             conePaths.join("") +
             centerLines.join("") +
             boundaryLines.join("") +
             cameraMarks.join("") +
 
             '<line x1="' + targetX + '" y1="' + sceneTop.toFixed(1) + '" x2="' + targetX + '" y2="' + sceneBottom.toFixed(1) + '" stroke="' + statusStroke + '" stroke-width="3" filter="url(#fovGlow)" />' +
-            '<text x="' + (targetX - 132) + '" y="' + (sceneTop - 10).toFixed(1) + '" fill="' + statusStroke + '" font-size="11" font-weight="950">Total required scene ' + fmt(data.sceneWidthFt, 1) + ' ft</text>' +
+            '<text x="' + (targetX - 144) + '" y="' + (sceneTop - 10).toFixed(1) + '" fill="' + statusStroke + '" font-size="11" font-weight="950">Total required scene ' + fmt(data.sceneWidthFt, 1) + ' ft / ' + labelM(data.sceneWidthFt) + '</text>' +
 
-            '<line x1="' + (targetX + 52) + '" y1="' + sceneTop.toFixed(1) + '" x2="' + (targetX + 52) + '" y2="' + sceneBottom.toFixed(1) + '" stroke="rgba(226,232,240,.35)" stroke-width="1" stroke-dasharray="6 6" />' +
-            '<text x="' + (targetX + 60) + '" y="' + (sceneBottom + 14).toFixed(1) + '" fill="rgba(226,232,240,.60)" font-size="10" font-weight="800">scene width</text>' +
+            '<line x1="' + (targetX + 54) + '" y1="' + sceneTop.toFixed(1) + '" x2="' + (targetX + 54) + '" y2="' + sceneBottom.toFixed(1) + '" stroke="rgba(226,232,240,.36)" stroke-width="1" stroke-dasharray="6 6" />' +
+            '<text x="' + (targetX + 62) + '" y="' + (sceneBottom + 14).toFixed(1) + '" fill="rgba(226,232,240,.60)" font-size="10" font-weight="800">scene width</text>' +
 
             overlapShapes.join("") +
 
             '<line x1="' + camX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(226,232,240,.30)" stroke-width="1" />' +
             ticks.join("") +
 
+            '<text x="' + ((camX + targetX) / 2).toFixed(1) + '" y="' + (axisY - 18) + '" text-anchor="middle" fill="rgba(248,250,252,.74)" font-size="10" font-weight="900">Target distance: ' + fmt(data.distanceFt, 0) + ' ft / ' + labelM(data.distanceFt) + '</text>' +
+
             '<text x="22" y="' + (height - 18) + '" fill="' + coverageStroke + '" font-size="10" font-weight="900">Coverage: ' + data.coverageStatus + '</text>' +
             '<text x="132" y="' + (height - 18) + '" fill="' + detailStroke + '" font-size="10" font-weight="900">Detail: ' + data.detailStatus + '</text>' +
-            '<text x="232" y="' + (height - 18) + '" fill="rgba(226,232,240,.62)" font-size="10" font-weight="800">Camera center positions are shown across the target scene width.</text>' +
+            '<text x="232" y="' + (height - 18) + '" fill="rgba(226,232,240,.62)" font-size="10" font-weight="800">Left labels show recommended camera center positions across the target scene width.</text>' +
           '</svg>';
 
         stage.innerHTML = svg;
