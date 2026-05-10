@@ -485,6 +485,79 @@
       .gauge-card { min-height: 430px; }
     }
   </style>
+  <style id="uploaded-lens-gauge-style">
+    .uploaded-gauge-card {
+      padding: 12px;
+    }
+
+    .uploaded-gauge-card .scoped-gauge-wrap {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(34, 197, 94, 0.07), transparent 30%),
+        radial-gradient(circle at 80% 45%, rgba(239, 68, 68, 0.08), transparent 28%),
+        #05080d;
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
+      box-sizing: border-box;
+    }
+
+    .uploaded-gauge-card .scoped-gauge-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .uploaded-gauge-card .gauge-label {
+      fill: #f8fafc;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .uploaded-gauge-card .gauge-sub {
+      fill: rgba(248, 250, 252, 0.9);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+    }
+
+    .uploaded-gauge-card .gauge-tick-label {
+      fill: rgba(248, 250, 252, 0.92);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .uploaded-gauge-card .gauge-small {
+      fill: rgba(203, 213, 225, 0.9);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.6px;
+    }
+
+    .uploaded-gauge-card .gauge-reading {
+      fill: #f8fafc;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+    }
+
+    .uploaded-gauge-card .gauge-callout {
+      fill: rgba(5, 8, 13, 0.96);
+      stroke: #f43f5e;
+      stroke-width: 2;
+      filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.55));
+    }
+
+    .uploaded-gauge-card .gauge-needle {
+      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45));
+    }
+  </style>
 </head>
 
 <body>
@@ -512,8 +585,7 @@
   <main class="page">
     <div class="prototype-shell">
       <div class="prototype-note">
-        Hidden prototype page. Mock data only. Not linked in nav or sitemap. Prototype rev: lens-dashboard-v4-inline-planner.
-      </div>
+        Hidden prototype page. Mock data only. Not linked in nav or sitemap. Prototype rev: lens-dashboard-v5-uploaded-rendered-gauge.</div>
 
       <section class="report">
         <div class="topbar">
@@ -593,100 +665,125 @@
               <div class="pressure">75 / 100 Pressure</div>
             </div>
 
-            <div class="gauge-card">
-              <svg class="gauge-svg" viewBox="0 0 760 380" role="img" aria-label="Lens selection planning gauge">
-                <defs>
-                  <linearGradient id="healthyBand" x1="80" y1="250" x2="270" y2="80" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stop-color="#42d95c"/>
-                    <stop offset=".72" stop-color="#7dff64"/>
-                    <stop offset="1" stop-color="#b2ff58"/>
-                  </linearGradient>
+            <div class="gauge-card uploaded-gauge-card">
+              <div class="scoped-gauge-wrap">
+                <svg
+                  id="lensGauge"
+                  class="scoped-gauge-svg"
+                  viewBox="0 0 1000 520"
+                  role="img"
+                  aria-label="Lens selection pressure gauge"
+                >
+                  <defs>
+                    <linearGradient id="greenBand" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#3f8f12" />
+                      <stop offset="55%" stop-color="#7ddc28" />
+                      <stop offset="100%" stop-color="#a3ff3f" />
+                    </linearGradient>
 
-                  <linearGradient id="watchBand" x1="265" y1="80" x2="500" y2="80" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stop-color="#c7aa31"/>
-                    <stop offset=".55" stop-color="#ffd653"/>
-                    <stop offset="1" stop-color="#eeb23e"/>
-                  </linearGradient>
+                    <linearGradient id="amberBand" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#b77900" />
+                      <stop offset="55%" stop-color="#facc15" />
+                      <stop offset="100%" stop-color="#f59e0b" />
+                    </linearGradient>
 
-                  <linearGradient id="riskBand" x1="500" y1="80" x2="680" y2="250" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stop-color="#c9413c"/>
-                    <stop offset=".62" stop-color="#ff5d55"/>
-                    <stop offset="1" stop-color="#ff4038"/>
-                  </linearGradient>
+                    <linearGradient id="redBand" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#991b1b" />
+                      <stop offset="60%" stop-color="#ef4444" />
+                      <stop offset="100%" stop-color="#fb7185" />
+                    </linearGradient>
 
-                  <filter id="bandShadow" x="-20%" y="-20%" width="140%" height="150%">
-                    <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity=".52"/>
-                  </filter>
+                    <filter id="greenGlow">
+                      <feGaussianBlur stdDeviation="4" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
 
-                  <filter id="needleGlow" x="-40%" y="-40%" width="180%" height="180%">
-                    <feGaussianBlur stdDeviation="2.6" result="blur"/>
-                    <feMerge>
-                      <feMergeNode in="blur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                </defs>
+                    <filter id="amberGlow">
+                      <feGaussianBlur stdDeviation="4" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
 
-                <path d="M 68 292 C 158 105 278 34 380 34 C 482 34 602 105 692 292 L 604 292 C 538 157 459 104 380 104 C 301 104 222 157 156 292 Z"
-                  fill="rgba(255,255,255,.045)" />
+                    <filter id="redGlow">
+                      <feGaussianBlur stdDeviation="5" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
 
-                <path d="M 95 276 C 154 154 226 89 307 70 L 335 135 C 261 152 209 200 167 276 Z"
-                  fill="url(#healthyBand)" filter="url(#bandShadow)" stroke="rgba(255,255,255,.14)" stroke-width="1" />
+                    <linearGradient id="needleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#ffffff" />
+                      <stop offset="55%" stop-color="#e5e7eb" />
+                      <stop offset="100%" stop-color="#94a3b8" />
+                    </linearGradient>
+                  </defs>
 
-                <path d="M 307 70 C 356 58 404 58 453 70 L 425 135 C 395 128 365 128 335 135 Z"
-                  fill="url(#watchBand)" filter="url(#bandShadow)" stroke="rgba(255,255,255,.12)" stroke-width="1" />
+                  <path
+                    d=""
+                    id="baseArc"
+                    fill="none"
+                    stroke="rgba(15, 23, 42, 0.95)"
+                    stroke-width="96"
+                    stroke-linecap="round"
+                  />
 
-                <path d="M 453 70 C 534 89 606 154 665 276 L 593 276 C 551 200 499 152 425 135 Z"
-                  fill="url(#riskBand)" filter="url(#bandShadow)" stroke="rgba(255,255,255,.12)" stroke-width="1" />
+                  <path
+                    d=""
+                    id="healthyArc"
+                    fill="none"
+                    stroke="url(#greenBand)"
+                    stroke-width="82"
+                    stroke-linecap="butt"
+                    filter="url(#greenGlow)"
+                  />
 
-                <path d="M 196 278 C 248 184 304 148 380 148 C 456 148 512 184 564 278"
-                  fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="5 9" />
+                  <path
+                    d=""
+                    id="watchArc"
+                    fill="none"
+                    stroke="url(#amberBand)"
+                    stroke-width="82"
+                    stroke-linecap="butt"
+                    filter="url(#amberGlow)"
+                  />
 
-                <text class="g-label" x="218" y="170" text-anchor="middle">HEALTHY</text>
-                <text class="g-sub" x="218" y="190" text-anchor="middle">0-8 mm</text>
+                  <path
+                    d=""
+                    id="riskArc"
+                    fill="none"
+                    stroke="url(#redBand)"
+                    stroke-width="82"
+                    stroke-linecap="butt"
+                    filter="url(#redGlow)"
+                  />
 
-                <text class="g-label" x="380" y="108" text-anchor="middle">WATCH</text>
-                <text class="g-sub" x="380" y="128" text-anchor="middle">8-18 mm</text>
+                  <path
+                    d=""
+                    id="innerRim"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    stroke-width="2"
+                  />
 
-                <text class="g-label" x="542" y="170" text-anchor="middle">RISK</text>
-                <text class="g-sub" x="542" y="190" text-anchor="middle">&gt;18 mm</text>
+                  <text x="245" y="295" text-anchor="middle" class="gauge-label">HEALTHY</text>
+                  <text x="245" y="330" text-anchor="middle" class="gauge-sub">0 - 8 mm</text>
 
-                <text class="g-axis" x="112" y="313" text-anchor="middle">0 mm</text>
-                <text class="g-axis" x="300" y="84" text-anchor="middle">8 mm</text>
-                <text class="g-axis" x="460" y="84" text-anchor="middle">18 mm</text>
-                <text class="g-axis" x="648" y="313" text-anchor="middle">40 mm</text>
+                  <text x="500" y="205" text-anchor="middle" class="gauge-label">WATCH</text>
+                  <text x="500" y="240" text-anchor="middle" class="gauge-sub">8 - 18 mm</text>
 
-                <line x1="380" y1="293" x2="520" y2="125"
-                  stroke="rgba(255,255,255,.92)" stroke-width="6" stroke-linecap="round" filter="url(#needleGlow)" />
-                <circle cx="520" cy="125" r="8" fill="#ff6058" stroke="#fff" stroke-width="2" />
-                <circle cx="380" cy="293" r="12" fill="rgba(255,255,255,.95)" />
-                <circle cx="380" cy="293" r="5" fill="#06100c" />
+                  <text x="760" y="295" text-anchor="middle" class="gauge-label">RISK</text>
+                  <text x="760" y="330" text-anchor="middle" class="gauge-sub">18 - 40 mm</text>
 
-                <g>
-                  <rect x="548" y="89" width="148" height="70" rx="12"
-                    fill="rgba(3,8,7,.92)" stroke="rgba(255,96,88,.74)" />
-                  <text class="g-callout-value" x="572" y="121">25.6 mm</text>
-                  <text class="g-callout-label" x="572" y="144">CURRENT READING</text>
-                </g>
-              </svg>
-
-              <div class="gauge-chips">
-                <div class="gauge-chip">
-                  <div class="g-chip-label">Comfort Band</div>
-                  <div class="g-chip-value">8.0-18.0 mm</div>
-                </div>
-                <div class="gauge-chip">
-                  <div class="g-chip-label">Current</div>
-                  <div class="g-chip-value">25.6 mm</div>
-                </div>
-                <div class="gauge-chip">
-                  <div class="g-chip-label">Margin</div>
-                  <div class="g-chip-value">+7.6 mm</div>
-                </div>
-                <div class="gauge-chip">
-                  <div class="g-chip-label">Status</div>
-                  <div class="g-chip-value">Risk</div>
-                </div>
+                  <g id="ticks"></g>
+                  <g id="needle" class="gauge-needle"></g>
+                  <g id="callout"></g>
+                </svg>
               </div>
             </div>
 
@@ -806,5 +903,196 @@
       </section>
     </div>
   </main>
+  <script id="uploaded-lens-gauge-script">
+    function renderLensGauge({
+      value = 25.6,
+      min = 0,
+      healthyMax = 8,
+      watchMax = 18,
+      max = 40,
+      unit = "mm"
+    } = {}) {
+      const cx = 500;
+      const cy = 430;
+      const r = 360;
+
+      const startAngle = 205;
+      const endAngle = -25;
+      const totalSweep = startAngle - endAngle;
+
+      const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+      function valueToAngle(v) {
+        const pct = (clamp(v, min, max) - min) / (max - min);
+        return startAngle - pct * totalSweep;
+      }
+
+      function polarToCartesian(angleDeg, radius = r) {
+        const angleRad = (angleDeg - 90) * Math.PI / 180;
+        return {
+          x: cx + radius * Math.cos(angleRad),
+          y: cy + radius * Math.sin(angleRad)
+        };
+      }
+
+      function describeArc(start, end, radius = r) {
+        const startPoint = polarToCartesian(start, radius);
+        const endPoint = polarToCartesian(end, radius);
+        const largeArcFlag = Math.abs(start - end) <= 180 ? "0" : "1";
+
+        return [
+          "M", startPoint.x, startPoint.y,
+          "A", radius, radius, 0, largeArcFlag, 1, endPoint.x, endPoint.y
+        ].join(" ");
+      }
+
+      const minAngle = valueToAngle(min);
+      const healthyAngle = valueToAngle(healthyMax);
+      const watchAngle = valueToAngle(watchMax);
+      const maxAngle = valueToAngle(max);
+      const valueAngle = valueToAngle(value);
+
+      document.getElementById("baseArc").setAttribute("d", describeArc(startAngle, endAngle));
+      document.getElementById("healthyArc").setAttribute("d", describeArc(minAngle, healthyAngle));
+      document.getElementById("watchArc").setAttribute("d", describeArc(healthyAngle, watchAngle));
+      document.getElementById("riskArc").setAttribute("d", describeArc(watchAngle, maxAngle));
+      document.getElementById("innerRim").setAttribute("d", describeArc(startAngle, endAngle, 316));
+
+      const ticks = document.getElementById("ticks");
+      ticks.innerHTML = "";
+
+      [
+        { value: min, label: String(min) + " " + unit, dy: 54 },
+        { value: healthyMax, label: String(healthyMax) + " " + unit, dy: 50 },
+        { value: watchMax, label: String(watchMax) + " " + unit, dy: 50 },
+        { value: max, label: String(max) + " " + unit, dy: 54 }
+      ].forEach((tick) => {
+        const angle = valueToAngle(tick.value);
+        const p1 = polarToCartesian(angle, 302);
+        const p2 = polarToCartesian(angle, 338);
+        const label = polarToCartesian(angle, 386);
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", p1.x);
+        line.setAttribute("y1", p1.y);
+        line.setAttribute("x2", p2.x);
+        line.setAttribute("y2", p2.y);
+        line.setAttribute("stroke", "rgba(248,250,252,0.75)");
+        line.setAttribute("stroke-width", "2");
+        ticks.appendChild(line);
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", label.x);
+        text.setAttribute("y", label.y + tick.dy);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("class", "gauge-tick-label");
+        text.textContent = tick.label;
+        ticks.appendChild(text);
+      });
+
+      const needle = document.getElementById("needle");
+      needle.innerHTML = "";
+
+      const pivot = polarToCartesian(valueAngle, 235);
+      const tip = polarToCartesian(valueAngle, 340);
+
+      const angleRad = (valueAngle - 90) * Math.PI / 180;
+      const perp = angleRad + Math.PI / 2;
+
+      const width = 9;
+      const baseLeft = {
+        x: pivot.x + Math.cos(perp) * width,
+        y: pivot.y + Math.sin(perp) * width
+      };
+      const baseRight = {
+        x: pivot.x - Math.cos(perp) * width,
+        y: pivot.y - Math.sin(perp) * width
+      };
+
+      const needlePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      needlePath.setAttribute(
+        "d",
+        "M " + baseLeft.x + " " + baseLeft.y +
+        " L " + tip.x + " " + tip.y +
+        " L " + baseRight.x + " " + baseRight.y + " Z"
+      );
+      needlePath.setAttribute("fill", "url(#needleGrad)");
+      needlePath.setAttribute("stroke", "rgba(255,255,255,0.75)");
+      needlePath.setAttribute("stroke-width", "1");
+      needle.appendChild(needlePath);
+
+      const hubOuter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      hubOuter.setAttribute("cx", pivot.x);
+      hubOuter.setAttribute("cy", pivot.y);
+      hubOuter.setAttribute("r", "18");
+      hubOuter.setAttribute("fill", "#e5e7eb");
+      hubOuter.setAttribute("stroke", "rgba(255,255,255,0.9)");
+      hubOuter.setAttribute("stroke-width", "3");
+      needle.appendChild(hubOuter);
+
+      const hubInner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      hubInner.setAttribute("cx", pivot.x);
+      hubInner.setAttribute("cy", pivot.y);
+      hubInner.setAttribute("r", "7");
+      hubInner.setAttribute("fill", "#cbd5e1");
+      needle.appendChild(hubInner);
+
+      const callout = document.getElementById("callout");
+      callout.innerHTML = "";
+
+      const dot = polarToCartesian(valueAngle, 360);
+      const boxX = Math.min(790, dot.x + 40);
+      const boxY = Math.max(70, dot.y - 110);
+
+      const leader = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      leader.setAttribute("d", "M " + dot.x + " " + dot.y + " L " + boxX + " " + (boxY + 65));
+      leader.setAttribute("stroke", "#f43f5e");
+      leader.setAttribute("stroke-width", "2");
+      leader.setAttribute("fill", "none");
+      callout.appendChild(leader);
+
+      const marker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      marker.setAttribute("cx", dot.x);
+      marker.setAttribute("cy", dot.y);
+      marker.setAttribute("r", "13");
+      marker.setAttribute("fill", "#f8fafc");
+      marker.setAttribute("stroke", "#f43f5e");
+      marker.setAttribute("stroke-width", "7");
+      marker.setAttribute("filter", "drop-shadow(0 0 10px rgba(244,63,94,0.8))");
+      callout.appendChild(marker);
+
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", boxX);
+      rect.setAttribute("y", boxY);
+      rect.setAttribute("width", "205");
+      rect.setAttribute("height", "92");
+      rect.setAttribute("rx", "16");
+      rect.setAttribute("class", "gauge-callout");
+      callout.appendChild(rect);
+
+      const reading = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      reading.setAttribute("x", boxX + 24);
+      reading.setAttribute("y", boxY + 43);
+      reading.setAttribute("class", "gauge-reading");
+      reading.textContent = value.toFixed(1) + " " + unit;
+      callout.appendChild(reading);
+
+      const small = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      small.setAttribute("x", boxX + 24);
+      small.setAttribute("y", boxY + 72);
+      small.setAttribute("class", "gauge-small");
+      small.textContent = "CURRENT READING";
+      callout.appendChild(small);
+    }
+
+    renderLensGauge({
+      value: 25.6,
+      min: 0,
+      healthyMax: 8,
+      watchMax: 18,
+      max: 40,
+      unit: "mm"
+    });
+  </script>
 </body>
 </html>
