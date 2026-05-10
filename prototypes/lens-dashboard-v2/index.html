@@ -9,14 +9,14 @@
       --bg: #050b08;
       --panel: rgba(255,255,255,.045);
       --panel2: rgba(255,255,255,.065);
-      --line: rgba(255,255,255,.105);
+      --line: rgba(255,255,255,.11);
       --text: rgba(255,255,255,.94);
-      --muted: rgba(255,255,255,.67);
+      --muted: rgba(255,255,255,.68);
       --dim: rgba(255,255,255,.48);
-      --green: #68f59c;
-      --yellow: #ffd15d;
-      --red: #ff6256;
-      --red-soft: rgba(255,98,86,.15);
+      --green: #74ef8f;
+      --yellow: #f3c44d;
+      --red: #ff5450;
+      --red-deep: #7d151a;
     }
 
     * { box-sizing: border-box; }
@@ -24,121 +24,151 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background:
-        radial-gradient(circle at 18% 0%, rgba(104,245,156,.11), transparent 34%),
-        radial-gradient(circle at 88% 8%, rgba(255,98,86,.08), transparent 32%),
-        linear-gradient(180deg, #08160f, #020807 72%);
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 14% 0%, rgba(116,239,143,.13), transparent 34%),
+        radial-gradient(circle at 92% 10%, rgba(255,84,80,.11), transparent 32%),
+        linear-gradient(180deg, #081610, #020706 78%);
       padding: 28px;
     }
 
-    .frame {
-      max-width: 1220px;
+    .wrap {
+      max-width: 1240px;
       margin: 0 auto;
     }
 
     .note {
       margin: 0 0 14px;
       color: var(--muted);
-      font-size: .94rem;
+      font-size: .92rem;
     }
 
     .report {
-      border: 1px solid rgba(104,245,156,.16);
+      border: 1px solid rgba(116,239,143,.18);
       border-radius: 26px;
       overflow: hidden;
       background:
-        radial-gradient(circle at 12% 0%, rgba(104,245,156,.13), transparent 34%),
-        linear-gradient(180deg, rgba(7,21,15,.98), rgba(2,8,7,.99));
-      box-shadow: 0 32px 85px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.055);
+        radial-gradient(circle at 14% 0%, rgba(116,239,143,.12), transparent 34%),
+        linear-gradient(180deg, rgba(7,20,15,.98), rgba(2,8,7,.99));
+      box-shadow: 0 32px 90px rgba(0,0,0,.44), inset 0 1px 0 rgba(255,255,255,.055);
     }
 
-    .topbar {
+    .top {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr) auto;
-      gap: 16px;
       align-items: center;
-      padding: 16px 20px;
+      gap: 18px;
+      padding: 15px 20px;
       border-bottom: 1px solid var(--line);
-      background: rgba(0,0,0,.24);
+      background: rgba(0,0,0,.26);
     }
 
     .brand {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-weight: 900;
-      letter-spacing: .02em;
+      font-weight: 950;
+      font-size: 1rem;
     }
 
-    .brand-mark {
-      width: 24px;
-      height: 24px;
+    .logo {
+      width: 25px;
+      height: 25px;
       border: 2px solid var(--green);
-      border-radius: 7px;
-      box-shadow: 0 0 18px rgba(104,245,156,.22);
+      border-radius: 8px;
+      box-shadow: 0 0 18px rgba(116,239,143,.26);
     }
 
     .meta {
       display: flex;
       justify-content: flex-end;
-      gap: 18px;
-      color: var(--muted);
-      font-size: .78rem;
+      gap: 24px;
+      color: var(--dim);
+      font-size: .76rem;
     }
 
     .meta strong {
       display: block;
       color: var(--text);
-      font-size: .86rem;
+      font-size: .85rem;
       margin-top: 2px;
     }
 
     .status-pill {
-      border: 1px solid rgba(255,98,86,.42);
+      border: 1px solid rgba(255,84,80,.45);
       border-radius: 999px;
-      background: var(--red-soft);
-      color: #ffaaa3;
-      padding: 8px 13px;
+      color: #ffaaa4;
+      background: rgba(255,84,80,.14);
+      padding: 8px 14px;
       font-size: .76rem;
       font-weight: 950;
-      letter-spacing: .11em;
+      letter-spacing: .12em;
       text-transform: uppercase;
     }
 
     .hero {
-      padding: 22px 22px 16px;
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 190px;
+      gap: 20px;
+      align-items: start;
+      padding: 24px 26px 18px;
       border-bottom: 1px solid var(--line);
     }
 
     .kicker {
-      color: rgba(104,245,156,.9);
+      color: rgba(116,239,143,.92);
       font-size: .72rem;
       font-weight: 950;
-      letter-spacing: .14em;
+      letter-spacing: .15em;
       text-transform: uppercase;
     }
 
     h1 {
-      margin: 7px 0 0;
-      font-size: clamp(1.5rem, 2vw, 2.15rem);
-      line-height: 1.08;
+      margin: 8px 0 0;
+      font-size: clamp(1.6rem, 2.4vw, 2.45rem);
+      line-height: 1.05;
+      letter-spacing: .01em;
     }
 
     .hero p {
-      max-width: 920px;
-      margin: 10px 0 0;
+      max-width: 850px;
       color: var(--muted);
-      line-height: 1.58;
+      line-height: 1.6;
+      margin: 12px 0 0;
     }
 
-    .layout {
+    .overall {
+      border: 1px solid rgba(255,84,80,.32);
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255,84,80,.20), rgba(77,12,16,.42));
+      text-align: center;
+      padding: 15px 12px;
+      box-shadow: 0 0 28px rgba(255,84,80,.10);
+    }
+
+    .overall span {
+      display: block;
+      color: rgba(116,239,143,.82);
+      font-size: .72rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .overall strong {
+      display: block;
+      color: #ffaaa4;
+      font-size: 1.65rem;
+      letter-spacing: .13em;
+    }
+
+    .grid {
       display: grid;
-      grid-template-columns: 255px minmax(0, 1fr) 310px;
+      grid-template-columns: 300px minmax(0, 1fr) 330px;
       gap: 16px;
       padding: 18px;
-      align-items: stretch;
     }
 
     .panel {
@@ -148,291 +178,383 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
     }
 
-    .summary,
-    .main,
-    .guidance,
-    .detail {
-      padding: 16px;
+    .panel-pad {
+      padding: 17px;
     }
 
-    .risk-block {
-      margin-top: 12px;
-      border: 1px solid rgba(255,98,86,.34);
-      border-radius: 17px;
-      background: linear-gradient(135deg, rgba(255,98,86,.22), rgba(95,20,24,.38));
-      padding: 14px;
-    }
-
-    .small-label {
-      color: var(--dim);
-      font-size: .74rem;
-      margin-bottom: 5px;
-    }
-
-    .risk-block strong {
-      display: block;
-      color: #fff;
-      font-size: 1.35rem;
-      letter-spacing: .11em;
-    }
-
-    .summary-copy,
-    .guidance p {
-      color: var(--muted);
-      line-height: 1.58;
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(116,239,143,.9);
       font-size: .92rem;
+      font-weight: 950;
+      letter-spacing: .06em;
+      margin-bottom: 14px;
     }
 
-    .mini-list {
+    .icon {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(116,239,143,.28);
+      border-radius: 10px;
+      color: var(--green);
+      background: rgba(116,239,143,.06);
+      font-weight: 950;
+    }
+
+    .summary-copy {
+      color: var(--muted);
+      line-height: 1.62;
+      margin: 0 0 18px;
+    }
+
+    .input-list {
       display: grid;
       gap: 9px;
-      margin-top: 15px;
+      margin-top: 16px;
     }
 
-    .mini,
-    .result,
-    .foot-item,
-    .band-card,
-    .readout-card {
+    .input-row,
+    .metric,
+    .action-card {
       border: 1px solid rgba(255,255,255,.085);
       border-radius: 14px;
       background: rgba(0,0,0,.20);
-      padding: 11px;
+      padding: 11px 12px;
     }
 
-    .mini span,
-    .result span,
-    .foot-item span,
-    .readout-card span,
-    .band-card span {
-      display: block;
-      color: var(--dim);
-      font-size: .73rem;
-      margin-bottom: 5px;
-    }
-
-    .mini strong,
-    .result strong,
-    .foot-item strong,
-    .readout-card strong,
-    .band-card strong {
-      color: #fff;
-      line-height: 1.25;
-    }
-
-    .main-head {
+    .input-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 150px;
-      gap: 14px;
-      align-items: start;
+      grid-template-columns: minmax(0,1fr) auto;
+      gap: 10px;
+      align-items: center;
     }
 
-    h2 {
-      margin: 7px 0 0;
+    .input-row span,
+    .metric span,
+    .action-card span {
+      color: var(--dim);
+      font-size: .76rem;
+    }
+
+    .input-row strong,
+    .metric strong,
+    .action-card strong {
       color: #fff;
-      font-size: 1.15rem;
+      font-weight: 900;
     }
 
-    .readout-card {
-      text-align: right;
-      border-color: rgba(255,98,86,.22);
-      background: rgba(255,98,86,.07);
+    .status-box {
+      border: 1px solid rgba(255,84,80,.34);
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(255,84,80,.22), rgba(75,13,18,.40));
+      padding: 14px;
+      margin-bottom: 15px;
     }
 
-    .readout-card strong {
-      font-size: 1.45rem;
+    .status-box span {
+      color: var(--dim);
+      font-size: .76rem;
     }
 
-    .readout-card em {
+    .status-box strong {
       display: block;
       margin-top: 4px;
+      font-size: 1.5rem;
+      letter-spacing: .12em;
+    }
+
+    .meter-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 126px;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .meter-head h2 {
+      margin: 7px 0 0;
+      font-size: 1.25rem;
+    }
+
+    .readout {
+      border: 1px solid rgba(255,84,80,.28);
+      border-radius: 15px;
+      background: rgba(255,84,80,.08);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .readout span {
       color: var(--dim);
-      font-style: normal;
-      font-size: .68rem;
-      letter-spacing: .08em;
+      font-size: .70rem;
       text-transform: uppercase;
+      letter-spacing: .08em;
     }
 
-    .gauge-module {
-      margin-top: 24px;
+    .readout strong {
+      display: block;
+      color: #fff;
+      font-size: 1.5rem;
+      margin-top: 5px;
     }
 
-    .gauge-caption {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 10px;
-      color: var(--muted);
-      font-size: .86rem;
-      font-weight: 800;
+    .meter-label {
+      color: var(--text);
+      font-size: .92rem;
+      margin-bottom: 9px;
     }
 
-    .gauge-frame {
+    .meter-shell {
       position: relative;
-      padding-top: 34px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      overflow: hidden;
+      background: rgba(0,0,0,.22);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.035);
     }
 
-    .gauge {
+    .band-row {
+      display: grid;
+      grid-template-columns: 32fr 40fr 28fr;
+      min-height: 78px;
+    }
+
+    .band {
       position: relative;
-      height: 30px;
-      border-radius: 999px;
-      background:
-        linear-gradient(90deg,
-          rgba(104,245,156,.95) 0%,
-          rgba(104,245,156,.95) 25%,
-          rgba(255,209,93,.95) 25%,
-          rgba(255,209,93,.95) 60%,
-          rgba(255,98,86,.98) 60%,
-          rgba(255,98,86,.98) 100%);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 0 32px rgba(104,245,156,.08);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,.16);
+      padding: 12px;
     }
 
-    .gauge::after {
+    .band:last-child {
+      border-right: 0;
+    }
+
+    .band::after {
       content: "";
       position: absolute;
       inset: 0;
-      border-radius: inherit;
-      background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0));
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0));
       pointer-events: none;
     }
 
-    .marker-line {
-      position: absolute;
-      left: 78%;
-      top: 8px;
-      width: 2px;
-      height: 76px;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,.72);
-      box-shadow: 0 0 18px rgba(255,255,255,.35);
-      z-index: 3;
-    }
-
-    .marker-dot {
-      position: absolute;
-      left: 78%;
-      top: 46px;
-      width: 18px;
-      height: 18px;
-      transform: translate(-50%, -50%);
-      border-radius: 999px;
-      background: #fff;
-      border: 3px solid rgba(255,255,255,.9);
-      box-shadow: 0 0 0 6px rgba(255,255,255,.09), 0 0 28px rgba(255,98,86,.5);
-      z-index: 4;
-    }
-
-    .marker-tag {
-      position: absolute;
-      left: 78%;
-      top: 0;
-      transform: translateX(-50%);
-      color: #fff;
-      font-size: .82rem;
-      font-weight: 950;
-      white-space: nowrap;
-      z-index: 5;
-    }
-
-    .scale {
-      display: grid;
-      grid-template-columns: 25fr 35fr 40fr;
-      gap: 8px;
-      margin-top: 12px;
-      font-size: .72rem;
-      font-weight: 950;
-      letter-spacing: .08em;
+    .band strong {
+      display: block;
+      position: relative;
+      z-index: 1;
+      font-size: 1.06rem;
+      letter-spacing: .04em;
       text-transform: uppercase;
     }
 
-    .scale span:nth-child(1) { color: var(--green); }
-    .scale span:nth-child(2) { color: var(--yellow); text-align: center; }
-    .scale span:nth-child(3) { color: var(--red); text-align: right; }
-
-    .band-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 18px;
+    .band span {
+      display: block;
+      position: relative;
+      z-index: 1;
+      margin-top: 5px;
+      color: rgba(255,255,255,.84);
+      font-weight: 700;
     }
 
-    .band-card:nth-child(1) { border-color: rgba(104,245,156,.18); }
-    .band-card:nth-child(2) { border-color: rgba(255,209,93,.18); }
-    .band-card:nth-child(3) { border-color: rgba(255,98,86,.22); }
+    .healthy { background: linear-gradient(90deg, rgba(52,150,74,.58), rgba(74,207,105,.50)); }
+    .watch { background: linear-gradient(90deg, rgba(191,150,34,.58), rgba(226,178,54,.50)); }
+    .risk { background: linear-gradient(90deg, rgba(170,49,43,.62), rgba(236,76,68,.54)); }
 
-    .results {
+    .needle {
+      position: absolute;
+      left: 78%;
+      top: -13px;
+      width: 3px;
+      height: calc(100% + 26px);
+      transform: translateX(-50%);
+      background: #fff;
+      box-shadow: 0 0 20px rgba(255,255,255,.48), 0 0 32px rgba(255,84,80,.35);
+      z-index: 4;
+    }
+
+    .needle::before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 0 0 6px rgba(255,255,255,.08), 0 0 24px rgba(255,84,80,.45);
+    }
+
+    .needle-label {
+      position: absolute;
+      left: 78%;
+      bottom: -48px;
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,84,80,.34);
+      border-radius: 12px;
+      background: rgba(7,10,8,.96);
+      padding: 7px 14px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 950;
+      z-index: 5;
+      white-space: nowrap;
+    }
+
+    .meter-space {
+      padding-bottom: 52px;
+    }
+
+    .axis {
+      display: grid;
+      grid-template-columns: 32fr 40fr 28fr;
+      margin-top: 9px;
+      color: var(--dim);
+      font-size: .72rem;
+    }
+
+    .axis span:nth-child(2) { text-align: center; }
+    .axis span:nth-child(3) { text-align: right; }
+
+    .metric-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0,1fr));
       gap: 10px;
-      margin-top: 14px;
+      margin-top: 16px;
+    }
+
+    .metric span {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .metric strong {
+      display: block;
+      line-height: 1.25;
+      font-size: 1.02rem;
+    }
+
+    .guidance-copy {
+      color: var(--muted);
+      line-height: 1.62;
+      margin: 0 0 16px;
     }
 
     .guidance h2 {
-      margin-bottom: 8px;
+      margin: 7px 0 12px;
+      font-size: 1.3rem;
     }
 
-    .chip-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 15px;
-    }
-
-    .chip-grid button {
-      border: 1px solid rgba(104,245,156,.24);
-      border-radius: 999px;
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.9);
-      padding: 9px 12px;
-      font-size: .82rem;
-      font-weight: 850;
-      cursor: pointer;
-    }
-
-    .chip-grid button:hover,
-    .chip-grid button.is-active {
-      background: rgba(104,245,156,.15);
-      border-color: rgba(104,245,156,.48);
-      color: #fff;
-    }
-
-    .detail {
-      margin: 0 18px 18px;
-    }
-
-    .detail h3 {
-      margin: 6px 0 10px;
-      color: #fff;
-    }
-
-    .detail ul {
-      margin: 0;
-      padding-left: 20px;
-      color: var(--muted);
-      line-height: 1.75;
-    }
-
-    .detail li + li {
-      margin-top: 4px;
-    }
-
-    .footer-grid {
+    .link-list {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 10px;
+      gap: 9px;
+    }
+
+    details {
+      border: 1px solid rgba(116,239,143,.18);
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      overflow: hidden;
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 12px 13px;
+      color: #fff;
+      font-weight: 900;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details[open] summary {
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      color: var(--green);
+    }
+
+    details ul {
+      margin: 0;
+      padding: 12px 18px 14px 32px;
+      color: var(--muted);
+      line-height: 1.68;
+    }
+
+    .lower {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.1fr;
+      gap: 16px;
       padding: 0 18px 18px;
     }
 
-    @media (max-width: 1080px) {
-      .layout,
-      .footer-grid,
-      .results,
-      .band-grid {
-        grid-template-columns: 1fr;
-      }
+    .lower p {
+      color: var(--muted);
+      line-height: 1.58;
+      margin: 0;
+    }
 
-      .topbar,
-      .main-head {
+    .constraint-row {
+      display: grid;
+      grid-template-columns: 95px 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .constraint-row span {
+      color: var(--green);
+    }
+
+    .action-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .action-card {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .check {
+      color: var(--green);
+      font-weight: 950;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .next {
+      border: 1px solid rgba(116,239,143,.28);
+      border-radius: 999px;
+      padding: 9px 14px;
+      color: var(--green);
+      font-weight: 900;
+      background: rgba(116,239,143,.06);
+    }
+
+    @media (max-width: 1120px) {
+      .grid,
+      .lower,
+      .hero,
+      .top,
+      .meter-head,
+      .metric-grid {
         grid-template-columns: 1fr;
       }
 
@@ -441,30 +563,27 @@
         flex-wrap: wrap;
       }
 
-      .readout-card {
-        text-align: left;
-      }
-
-      .marker-tag {
-        display: none;
+      .footer {
+        align-items: flex-start;
+        flex-direction: column;
       }
     }
   </style>
 </head>
 <body>
-  <div class="frame">
+  <div class="wrap">
     <p class="note">Standalone visual prototype only. This page is isolated from the live Lens Selection tool.</p>
 
     <section class="report">
-      <div class="topbar">
+      <div class="top">
         <div class="brand">
-          <div class="brand-mark"></div>
+          <div class="logo"></div>
           <div>ScopedLabs</div>
         </div>
 
         <div class="meta">
-          <div>Report ID<strong>LSH-2026-0509-001</strong></div>
-          <div>Tool<strong>Lens Selection Helper</strong></div>
+          <div>Report ID<strong>SL-2026-05-09-001</strong></div>
+          <div>Tool<strong>Lens Selection Diagnostic</strong></div>
           <div>Category<strong>Physical Security</strong></div>
         </div>
 
@@ -472,176 +591,166 @@
       </div>
 
       <header class="hero">
-        <div class="kicker">Diagnostic Planning Report</div>
-        <h1>Lens Selection Pressure Review</h1>
-        <p>
-          The current camera geometry is pushing the design toward a long-range lens class.
-          This module explains why the result landed in Risk and which planning levers could move the design back toward a healthier range.
-        </p>
+        <div>
+          <div class="kicker">Diagnostic Planning Report</div>
+          <h1>Lens Selection Pressure Review</h1>
+          <p>
+            The current selection exceeds the recommended planning range for recognition / ID requirements.
+            Review focal length and system constraints to reduce pressure.
+          </p>
+        </div>
+
+        <div class="overall">
+          <span>Overall Status</span>
+          <strong>RISK</strong>
+        </div>
       </header>
 
-      <div class="layout">
-        <aside class="panel summary">
-          <div class="kicker">Status Summary</div>
+      <div class="grid">
+        <aside class="panel panel-pad">
+          <div class="panel-title"><span class="icon">▤</span>Status Summary</div>
 
-          <div class="risk-block">
-            <span class="small-label">Overall Status</span>
+          <div class="status-box">
+            <span>Overall Status</span>
             <strong>RISK</strong>
           </div>
 
           <p class="summary-copy">
-            Focal demand is above the preferred planning band. The design may still be possible,
-            but it should be validated before equipment selection.
+            The current selection exceeds the recommended pressure range for recognition / ID requirements.
+            Review focal length and system constraints to reduce pressure.
           </p>
 
-          <div class="mini-list">
-            <div class="mini"><span>Distance to Target</span><strong>90 ft</strong></div>
-            <div class="mini"><span>Target Width</span><strong>12 ft</strong></div>
-            <div class="mini"><span>Sensor Width</span><strong>6.4 mm</strong></div>
-            <div class="mini"><span>Detail Pressure</span><strong>High</strong></div>
+          <div class="input-list">
+            <div class="input-row"><span>Distance to Target</span><strong>90 ft</strong></div>
+            <div class="input-row"><span>Target Width</span><strong>12 ft</strong></div>
+            <div class="input-row"><span>Sensor Width</span><strong>6.4 mm</strong></div>
+            <div class="input-row"><span>Detail Pressure</span><strong style="color:#ff7770">High</strong></div>
           </div>
         </aside>
 
-        <main class="panel main">
-          <div class="main-head">
+        <main class="panel panel-pad">
+          <div class="meter-head">
             <div>
-              <div class="kicker">Results Overview</div>
-              <h2>Lens Selection Pressure</h2>
+              <div class="panel-title"><span class="icon">▥</span>Results Overview</div>
+              <h2>Detail Pressure (mm)</h2>
             </div>
 
-            <div class="readout-card">
-              <span>Current Reading</span>
+            <div class="readout">
+              <span>Current</span>
               <strong>25.6 mm</strong>
-              <em>Adjusted focal demand</em>
             </div>
           </div>
 
-          <div class="gauge-module">
-            <div class="gauge-caption">
-              <div>Current focal demand compared against planning bands</div>
-              <div>Risk zone</div>
+          <div class="meter-space">
+            <div class="meter-label">Current reading compared against recommended planning bands</div>
+
+            <div class="meter-shell">
+              <div class="band-row">
+                <div class="band healthy"><div><strong>Healthy</strong><span>0–8 mm</span></div></div>
+                <div class="band watch"><div><strong>Watch</strong><span>8–18 mm</span></div></div>
+                <div class="band risk"><div><strong>Risk</strong><span>18 mm+</span></div></div>
+              </div>
+              <div class="needle"></div>
+              <div class="needle-label">25.6 mm</div>
             </div>
 
-            <div class="gauge-frame">
-              <div class="marker-tag">25.6 mm</div>
-              <div class="marker-line"></div>
-              <div class="marker-dot"></div>
-              <div class="gauge"></div>
-            </div>
-
-            <div class="scale">
-              <span>Healthy</span>
-              <span>Watch</span>
-              <span>Risk</span>
-            </div>
-
-            <div class="band-grid">
-              <div class="band-card"><span>Healthy Band</span><strong>0–8 mm</strong></div>
-              <div class="band-card"><span>Watch Band</span><strong>8–18 mm</strong></div>
-              <div class="band-card"><span>Risk Band</span><strong>18 mm+</strong></div>
+            <div class="axis">
+              <span>0</span>
+              <span>8 / 18</span>
+              <span>40+</span>
             </div>
           </div>
 
-          <div class="results">
-            <div class="result"><span>Adjusted Focal Length</span><strong>25.6 mm</strong></div>
-            <div class="result"><span>Lens Class</span><strong>Long Range / Specialty</strong></div>
-            <div class="result"><span>Detail Requirement</span><strong>Recognition / ID Pressure</strong></div>
+          <div class="metric-grid">
+            <div class="metric"><span>Healthy Band</span><strong>0–8 mm</strong></div>
+            <div class="metric"><span>Watch Band</span><strong>8–18 mm</strong></div>
+            <div class="metric"><span>Risk Band</span><strong>18 mm+</strong></div>
+            <div class="metric"><span>Adjusted Focal Length</span><strong>25.6 mm</strong></div>
+            <div class="metric"><span>Lens Class</span><strong>Long Range / Specialty</strong></div>
+            <div class="metric"><span>Detail Requirement</span><strong>Recognition / ID Pressure</strong></div>
           </div>
         </main>
 
-        <aside class="panel guidance">
-          <div class="kicker">Corrective Guidance</div>
+        <aside class="panel panel-pad">
+          <div class="panel-title"><span class="icon">?</span>Corrective Guidance</div>
           <h2>Focal Demand</h2>
-          <p>
-            Distance to target and target width are creating a narrow field-of-view requirement.
-            This is the primary reason the result is landing in Risk.
+          <p class="guidance-copy">
+            Pressure is in the Risk band, indicating the selected focal length is too long for the
+            target size at this distance. Reduce focal length or increase sensor width to move into
+            the Watch or Healthy range.
           </p>
 
-          <div class="chip-grid">
-            <button class="is-active" type="button" data-detail="why">Why Risk?</button>
-            <button type="button" data-detail="drivers">Likely Drivers</button>
-            <button type="button" data-detail="healthy">Path to Healthy</button>
-            <button type="button" data-detail="checks">Follow-up Checks</button>
+          <div class="link-list">
+            <details>
+              <summary>Why Risk?</summary>
+              <ul>
+                <li>The design is asking one camera to hold a narrow field of view from a long distance.</li>
+                <li>The required focal length is above the preferred planning band.</li>
+              </ul>
+            </details>
+
+            <details>
+              <summary>Likely Drivers</summary>
+              <ul>
+                <li>Long camera-to-target distance.</li>
+                <li>Narrow target width.</li>
+                <li>Sensor width limits horizontal field of view.</li>
+              </ul>
+            </details>
+
+            <details open>
+              <summary>Path to Healthy</summary>
+              <ul>
+                <li>Reduce focal length to ≤ 18 mm target range.</li>
+                <li>Verify sensor width or consider a larger sensor.</li>
+                <li>Recalculate pressure and confirm in Watch/Healthy band.</li>
+              </ul>
+            </details>
+
+            <details>
+              <summary>Follow-up Checks</summary>
+              <ul>
+                <li>Validate with field test or high-fidelity simulation.</li>
+                <li>Confirm target visibility in the live view.</li>
+                <li>Document final lens choice.</li>
+              </ul>
+            </details>
           </div>
         </aside>
       </div>
 
-      <section class="panel detail" id="detail-panel">
-        <div class="kicker">Expanded Detail</div>
-        <h3>Why Risk?</h3>
-        <ul>
-          <li>The design is being asked to hold a tight field of view from a long standoff distance.</li>
-          <li>The focal requirement is outside the preferred planning range.</li>
-          <li>Installation tolerance, camera angle, and manufacturer lens limits matter more at this pressure level.</li>
-        </ul>
-      </section>
+      <div class="lower">
+        <section class="panel panel-pad">
+          <div class="panel-title"><span class="icon">⚙</span>Engineering Interpretation</div>
+          <p>
+            The system is over-magnifying relative to the required detail. This increases sensitivity
+            to vibration, atmospheric degradation, and mounting error while reducing field of view.
+          </p>
+        </section>
 
-      <div class="footer-grid">
-        <div class="foot-item"><span>Tool Page</span><strong>Compact diagnostic workspace with expandable detail.</strong></div>
-        <div class="foot-item"><span>Export Report</span><strong>Full explanation can expand into the PDF/report packet.</strong></div>
-        <div class="foot-item"><span>Pipeline Ready</span><strong>Structured outputs can feed future design-flow summaries.</strong></div>
+        <section class="panel panel-pad">
+          <div class="panel-title"><span class="icon">⛓</span>Dominant Constraint</div>
+          <div class="constraint-row"><span>Primary</span><strong>Focal Length</strong></div>
+          <div class="constraint-row"><span>Secondary</span><strong>Sensor Width</strong></div>
+          <div class="constraint-row"><span>Tertiary</span><strong>Distance to Target</strong></div>
+        </section>
+
+        <section class="panel panel-pad">
+          <div class="panel-title"><span class="icon">✓</span>Planning Actions</div>
+          <div class="action-list">
+            <div class="action-card"><div class="check">✓</div><div>Reduce focal length to ≤ 18 mm target range.</div></div>
+            <div class="action-card"><div class="check">✓</div><div>Verify sensor width or consider larger sensor.</div></div>
+            <div class="action-card"><div class="check">✓</div><div>Recalculate pressure and confirm in Watch/Healthy band.</div></div>
+            <div class="action-card"><div class="check">✓</div><div>Validate with field test or high-fidelity simulation.</div></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="footer">
+        <div>All values are calculated. Review assumptions and inputs before finalizing system selection.</div>
+        <div class="next">Re-plan and Re-evaluate</div>
       </div>
     </section>
   </div>
-
-  <script>
-    const detailContent = {
-      why: {
-        title: "Why Risk?",
-        items: [
-          "The design is being asked to hold a tight field of view from a long standoff distance.",
-          "The focal requirement is outside the preferred planning range.",
-          "Installation tolerance, camera angle, and manufacturer lens limits matter more at this pressure level."
-        ]
-      },
-      drivers: {
-        title: "Likely Drivers",
-        items: [
-          "Long camera-to-target distance.",
-          "Narrow target width or constrained scene objective.",
-          "Sensor width limits horizontal field of view.",
-          "Detail requirement may be too aggressive for a single camera view."
-        ]
-      },
-      healthy: {
-        title: "Path to Healthy",
-        items: [
-          "Evaluate whether the camera can move closer to the target.",
-          "Increase acceptable scene width if the operational objective allows it.",
-          "Use a larger sensor format or different camera/lens family.",
-          "Split the target area across multiple cameras instead of forcing one narrow view.",
-          "Recheck whether the detail target matches the actual use case."
-        ]
-      },
-      checks: {
-        title: "Follow-up Checks",
-        items: [
-          "Validate the selected focal length against the manufacturer field-of-view chart.",
-          "Confirm mounting height, angle, and alignment tolerance.",
-          "Verify the target width and detail requirement before equipment selection.",
-          "Re-run the estimate if distance, target width, sensor size, or detail target changes."
-        ]
-      }
-    };
-
-    const panel = document.querySelector("#detail-panel");
-    const buttons = Array.from(document.querySelectorAll("[data-detail]"));
-
-    buttons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const key = button.dataset.detail;
-        const data = detailContent[key];
-
-        buttons.forEach((item) => item.classList.remove("is-active"));
-        button.classList.add("is-active");
-
-        panel.innerHTML = `
-          <div class="kicker">Expanded Detail</div>
-          <h3>${data.title}</h3>
-          <ul>${data.items.map((item) => `<li>${item}</li>`).join("")}</ul>
-        `;
-      });
-    });
-  </script>
 </body>
 </html>
