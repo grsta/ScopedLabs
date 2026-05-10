@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lens Diagnostic Design Lab | ScopedLabs</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-025" />
+  <style>
+    .lab-shell {
+      width: min(1180px, calc(100vw - 40px));
+      margin: 40px auto 80px;
+    }
+
+    .lab-note {
+      border: 1px solid rgba(125,255,158,.16);
+      border-radius: 16px;
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.72);
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    .lab-frame {
+      border: 1px solid rgba(125,255,158,.18);
+      border-radius: 20px;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(82,255,138,.08), transparent 36%),
+        radial-gradient(circle at 90% 9%, rgba(255,96,88,.08), transparent 32%),
+        linear-gradient(180deg, rgba(5,14,11,.99), rgba(2,7,5,.995));
+      box-shadow:
+        0 34px 100px rgba(0,0,0,.48),
+        inset 0 1px 0 rgba(255,255,255,.055);
+    }
+
+    .lab-title {
+      margin: 0 0 14px;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 900;
+    }
+
+    .lab-card {
+      border: 1px solid rgba(148,163,184,.16);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 78% 14%, rgba(255,96,88,.10), transparent 30%),
+        radial-gradient(circle at 18% 8%, rgba(125,255,152,.08), transparent 34%),
+        linear-gradient(180deg, rgba(5,12,18,.98), rgba(2,7,10,.98));
+      padding: 18px;
+      color: #f8fafc;
+    }
+
+    .lab-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(148,163,184,.12);
+    }
+
+    .lab-kicker {
+      color: #7dff98;
+      font-size: .66rem;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .lab-head h2 {
+      margin: 0;
+      color: #fff;
+      font-size: 1.25rem;
+      line-height: 1.15;
+      font-weight: 950;
+    }
+
+    .lab-summary {
+      margin-top: 8px;
+      max-width: 620px;
+      color: rgba(226,232,240,.70);
+      font-size: .82rem;
+      line-height: 1.5;
+    }
+
+    .lab-status {
+      min-width: 96px;
+      text-align: center;
+      border: 1px solid rgba(255,96,88,.38);
+      border-radius: 12px;
+      background: rgba(255,96,88,.10);
+      color: #ff8f88;
+      padding: 10px 12px;
+      font-size: .76rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .lab-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .lab-result,
+    .lab-driver {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 14px;
+      background: rgba(2,6,12,.54);
+      padding: 16px;
+    }
+
+    .lab-label {
+      color: rgba(203,213,225,.68);
+      font-size: .62rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .lab-value {
+      margin-top: 9px;
+      color: #fff;
+      font-size: 2.6rem;
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -.03em;
+    }
+
+    .lab-value span {
+      color: rgba(203,213,225,.66);
+      font-size: 1.1rem;
+      letter-spacing: 0;
+    }
+
+    .lab-copy {
+      margin-top: 10px;
+      color: rgba(226,232,240,.70);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+
+    .lab-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .lab-mini {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+      padding: 10px;
+    }
+
+    .lab-mini strong {
+      display: block;
+      margin-top: 6px;
+      color: #fff;
+      font-size: .86rem;
+      font-weight: 950;
+    }
+
+    .lab-good strong { color: #7dff98; }
+    .lab-watch strong { color: #ffd34f; }
+    .lab-risk strong { color: #ff8f88; }
+
+    .lab-driver h3 {
+      margin: 0;
+      color: #fff;
+      font-size: .96rem;
+      font-weight: 950;
+    }
+
+    .lab-stack {
+      display: grid;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .lab-stack-row {
+      display: grid;
+      grid-template-columns: 126px minmax(0,1fr) 42px;
+      gap: 10px;
+      align-items: center;
+      color: rgba(226,232,240,.76);
+      font-size: .74rem;
+      font-weight: 750;
+    }
+
+    .lab-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,.13);
+      overflow: hidden;
+    }
+
+    .lab-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(125,255,152,.85), rgba(255,211,79,.85), rgba(255,96,88,.88));
+    }
+
+    .lab-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .lab-action {
+      border: 1px solid rgba(125,255,152,.14);
+      border-radius: 11px;
+      background: rgba(125,255,152,.035);
+      padding: 10px;
+      color: rgba(226,232,240,.78);
+      font-size: .73rem;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .lab-action strong {
+      display: block;
+      color: #7dff98;
+      font-size: .62rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 760px) {
+      .lab-head,
+      .lab-body,
+      .lab-mini-grid,
+      .lab-actions {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img class="brand-icon" src="/assets/favicon/favicon-32x32.png?v=1" alt="" width="32" height="32" />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/">Tools</a>
+        <a class="nav-tab" href="/guides/">Guides</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="lab-shell">
+      <div class="lab-note">
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-001.
+      </div>
+
+      <section class="lab-frame">
+        <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
+
+        <div class="lab-card">
+          <div class="lab-head">
+            <div>
+              <div class="lab-kicker">Results Overview</div>
+              <h2>Lens Selection Pressure</h2>
+              <div class="lab-summary">
+                This mockup tests a professional diagnostic module instead of a curved speedometer. It summarizes the result, the planning target, the dominant driver, and the path back toward a healthier design range.
+              </div>
+            </div>
+
+            <div class="lab-status">Risk</div>
+          </div>
+
+          <div class="lab-body">
+            <div class="lab-result">
+              <div class="lab-label">Adjusted focal length</div>
+              <div class="lab-value">25.6 <span>mm</span></div>
+              <div class="lab-copy">
+                Outside preferred planning range. Preferred planning band is 8.0?18.0 mm.
+              </div>
+
+              <div class="lab-mini-grid">
+                <div class="lab-mini lab-good">
+                  <div class="lab-label">Target Band</div>
+                  <strong>8.0?18.0 mm</strong>
+                </div>
+                <div class="lab-mini lab-watch">
+                  <div class="lab-label">Margin</div>
+                  <strong>+7.6 mm</strong>
+                </div>
+                <div class="lab-mini lab-risk">
+                  <div class="lab-label">Status</div>
+                  <strong>Risk</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="lab-driver">
+              <div class="lab-kicker">Dominant Driver</div>
+              <h3>Focal demand is limiting layout flexibility.</h3>
+              <div class="lab-copy">
+                Distance, target width, and sensor size are pushing the scene toward a long-range lens class.
+              </div>
+
+              <div class="lab-stack">
+                <div class="lab-stack-row">
+                  <span>Distance geometry</span>
+                  <div class="lab-track"><div class="lab-fill" style="width:82%"></div></div>
+                  <strong>82%</strong>
+                </div>
+                <div class="lab-stack-row">
+                  <span>Target width</span>
+                  <div class="lab-track"><div class="lab-fill" style="width:74%"></div></div>
+                  <strong>74%</strong>
+                </div>
+                <div class="lab-stack-row">
+                  <span>Detail demand</span>
+                  <div class="lab-track"><div class="lab-fill" style="width:66%"></div></div>
+                  <strong>66%</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lab-actions">
+            <div class="lab-action"><strong>Reduce demand</strong>Move the camera closer or widen the acceptable target area.</div>
+            <div class="lab-action"><strong>Change optics</strong>Evaluate a larger sensor format or different lens class.</div>
+            <div class="lab-action"><strong>Validate field</strong>Confirm field of view and detail requirement before final design.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
