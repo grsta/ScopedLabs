@@ -576,6 +576,74 @@
       }
     }
 
+  
+    .carry-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .carry-summary-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .carry-summary-label {
+      color: rgba(203,213,225,.64);
+      font-size: .58rem;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .carry-summary-value {
+      display: block;
+      margin-top: 6px;
+      color: #fff;
+      font-size: .86rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .payload-details {
+      margin-top: 10px;
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 10px;
+      background: rgba(0,0,0,.12);
+      overflow: hidden;
+    }
+
+    .payload-details summary {
+      cursor: pointer;
+      padding: 10px;
+      color: rgba(226,232,240,.72);
+      font-size: .7rem;
+      font-weight: 900;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    .payload-details[open] summary {
+      border-bottom: 1px solid rgba(148,163,184,.10);
+    }
+
+    @media (max-width: 760px) {
+      .carry-summary-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .carry-summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 
@@ -604,7 +672,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-006-custom-assumptions.
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-007-clean-carry-forward.
       </div>
 
       <section class="lab-frame">
@@ -882,7 +950,32 @@
             </div>
 
             <div id="carryStatus" class="carry-status">No prototype scenario stored yet.</div>
-            <pre id="payloadPreview" class="payload-box"></pre>
+            <div class="carry-summary-grid">
+              <div class="carry-summary-card">
+                <div class="carry-summary-label">Selected Scenario</div>
+                <span id="carryScenarioSummary" class="carry-summary-value">?</span>
+              </div>
+
+              <div class="carry-summary-card">
+                <div class="carry-summary-label">Projected Result</div>
+                <span id="carryResultSummary" class="carry-summary-value">?</span>
+              </div>
+
+              <div class="carry-summary-card">
+                <div class="carry-summary-label">Projected Status</div>
+                <span id="carryStatusSummary" class="carry-summary-value">?</span>
+              </div>
+
+              <div class="carry-summary-card">
+                <div class="carry-summary-label">Next Step</div>
+                <span id="carryNextStepSummary" class="carry-summary-value">?</span>
+              </div>
+            </div>
+
+            <details class="payload-details">
+              <summary>Show developer payload</summary>
+              <pre id="payloadPreview" class="payload-box"></pre>
+            </details>
           </div>
         </div>
       </section>
@@ -1172,6 +1265,24 @@
         byId("driverDetailText").textContent = detail + "%";
 
         var payload = buildPayload();
+
+        if (byId("carryScenarioSummary")) {
+          byId("carryScenarioSummary").textContent = payload.selectedScenarioLabel;
+        }
+
+        if (byId("carryResultSummary")) {
+          byId("carryResultSummary").textContent = payload.proposed.adjustedFocalLengthMm + " mm";
+        }
+
+        if (byId("carryStatusSummary")) {
+          byId("carryStatusSummary").textContent = payload.proposed.status;
+          byId("carryStatusSummary").className = "carry-summary-value " + payload.proposed.status;
+        }
+
+        if (byId("carryNextStepSummary")) {
+          byId("carryNextStepSummary").textContent = payload.carryForward.nextStep;
+        }
+
         byId("payloadPreview").textContent = JSON.stringify(payload, null, 2);
 
         updateChart();
