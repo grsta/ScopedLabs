@@ -676,7 +676,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-008-custom-editor-toggle.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-009-detail-requirement.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -731,8 +731,13 @@
               </div>
 
               <div class="assumption-field">
-                <label for="customDetail">Detail factor</label>
-                <input id="customDetail" type="number" min="0.5" max="2" step="0.05" value="1.00" />
+                <label for="customDetailRequirement">Detail requirement</label>
+                <select id="customDetailRequirement">
+                  <option value="0.85">Overview / general scene</option>
+                  <option value="1.00" selected>Recognition-level detail</option>
+                  <option value="1.20">Identification-level detail</option>
+                  <option value="1.35">High-detail review</option>
+                </select>
               </div>
 
               <div class="assumption-field">
@@ -1016,15 +1021,27 @@
         return "Single camera";
       }
 
+      function getDetailRequirementLabel(value) {
+        if (String(value) === "0.85") return "Overview / general scene";
+        if (String(value) === "1.20") return "Identification-level detail";
+        if (String(value) === "1.35") return "High-detail review";
+        return "Recognition-level detail";
+      }
+
       function getCustomAssumptions() {
         var coverageEl = byId("customCoverage");
         var coverageDivisor = coverageEl ? Number(coverageEl.value) : 1;
+
+        var detailEl = byId("customDetailRequirement");
+        var detailValue = detailEl ? detailEl.value : "1.00";
+        var detailFactor = Number(detailValue);
 
         return {
           distanceFt: readNumber("customDistance", 56),
           targetWidthFt: readNumber("customWidth", 20),
           sensorWidthMm: readNumber("customSensor", 6.4),
-          detailFactor: readNumber("customDetail", 1),
+          detailRequirement: getDetailRequirementLabel(detailValue),
+          detailFactor: Number.isFinite(detailFactor) ? detailFactor : 1,
           coverageDivisor: Number.isFinite(coverageDivisor) && coverageDivisor > 0 ? coverageDivisor : 1,
           coverageStrategy: getCoverageLabel(coverageEl ? coverageEl.value : "1")
         };
@@ -1041,20 +1058,20 @@
         var projected = calculateFocalLengthFromAssumptions(a);
 
         scenarios.custom.value = Number(fmt(projected, 1));
-        scenarios.custom.description = "Custom assumption set: " + a.distanceFt + " ft distance, " + a.targetWidthFt + " ft target width, " + a.sensorWidthMm + " mm sensor, " + a.detailFactor.toFixed(2) + "x detail factor, " + a.coverageStrategy + ".";
+        scenarios.custom.description = "Custom assumption set: " + a.distanceFt + " ft distance, " + a.targetWidthFt + " ft target width, " + a.sensorWidthMm + " mm sensor, " + a.detailRequirement + ", " + a.coverageStrategy + ".";
         scenarios.custom.assumptions = a;
         scenarios.custom.levers = [
           "Distance to target: " + a.distanceFt + " ft.",
           "Target width / scene width: " + a.targetWidthFt + " ft.",
           "Sensor width: " + a.sensorWidthMm + " mm.",
-          "Detail factor: " + a.detailFactor.toFixed(2) + "x.",
+          "Detail requirement: " + a.detailRequirement + " (" + a.detailFactor.toFixed(2) + "x internal planning weight).",
           "Coverage strategy: " + a.coverageStrategy + "."
         ];
         scenarios.custom.recommendation = "Custom mode recalculates the proposed focal length from the edited planning assumptions. Carry this forward only after confirming the changed assumptions represent a realistic design option.";
 
         var formulaNote = byId("customFormulaNote");
         if (formulaNote) {
-          formulaNote.textContent = "Projected focal length = " + a.distanceFt + " ? " + a.sensorWidthMm + " ? " + a.targetWidthFt + " ? " + a.detailFactor.toFixed(2) + " ? " + a.coverageDivisor + " = " + fmt(projected, 1) + " mm.";
+          formulaNote.textContent = "Projected focal length = " + a.distanceFt + " ? " + a.sensorWidthMm + " ? " + a.targetWidthFt + " ? detail requirement (" + a.detailFactor.toFixed(2) + "x) ? " + a.coverageDivisor + " = " + fmt(projected, 1) + " mm.";
         }
       }
 
@@ -1424,7 +1441,7 @@
             render();
           });
         });
-        ["customDistance", "customWidth", "customSensor", "customDetail", "customCoverage"].forEach(function (id) {
+        ["customDistance", "customWidth", "customSensor", "customDetailRequirement", "customCoverage"].forEach(function (id) {
           var el = byId(id);
           if (!el) return;
 
