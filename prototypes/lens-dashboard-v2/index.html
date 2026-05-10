@@ -1,723 +1,381 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lens Dashboard Prototype V4 | ScopedLabs</title>
-  <meta name="robots" content="noindex,nofollow" />
-  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-025" />
-
+  <meta charset="utf-8">
+  <title>Lens Diagnostic Prototype | ScopedLabs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     :root {
-      --bg: #020806;
-      --panel: rgba(5, 15, 12, 0.98);
-      --panel2: rgba(8, 19, 15, 0.92);
-      --line: rgba(255,255,255,.085);
-      --soft: rgba(255,255,255,.055);
-      --text: rgba(255,255,255,.90);
-      --muted: rgba(255,255,255,.62);
-      --green: #7dff98;
-      --yellow: #ffd44f;
-      --red: #ff6058;
+      --bg: #06100c;
+      --panel: rgba(255,255,255,.055);
+      --line: rgba(255,255,255,.11);
+      --text: rgba(255,255,255,.95);
+      --muted: rgba(255,255,255,.68);
+      --green: #69ff9b;
+      --yellow: #ffd15d;
+      --red: #ff6256;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
+      margin: 0;
+      min-height: 100vh;
       background:
-        radial-gradient(circle at 16% 0%, rgba(82,255,138,.12), transparent 28%),
-        radial-gradient(circle at 84% 10%, rgba(255,96,88,.11), transparent 26%),
-        linear-gradient(180deg, #020806, #010403);
+        radial-gradient(circle at 18% 0%, rgba(95,255,156,.14), transparent 32%),
+        radial-gradient(circle at 82% 4%, rgba(255,86,72,.12), transparent 30%),
+        linear-gradient(180deg, #081810, #020807 70%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 28px;
     }
 
-    .prototype-shell {
-      width: min(1220px, calc(100vw - 40px));
-      margin: 38px auto 80px;
+    .prototype-frame {
+      max-width: 1220px;
+      margin: 0 auto;
     }
 
     .prototype-note {
-      border: 1px solid rgba(125,255,158,.16);
-      border-radius: 16px;
-      background: rgba(0,0,0,.20);
-      color: rgba(255,255,255,.70);
-      padding: 14px 16px;
-      margin-bottom: 18px;
-      line-height: 1.45;
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.6;
     }
 
-    .report {
-      border: 1px solid rgba(125,255,158,.18);
-      border-radius: 22px;
+    .slp-shell {
+      border: 1px solid rgba(105,255,155,.18);
+      border-radius: 28px;
       overflow: hidden;
-      color: var(--text);
       background:
-        radial-gradient(circle at 18% 0%, rgba(82,255,138,.08), transparent 36%),
-        radial-gradient(circle at 90% 9%, rgba(255,96,88,.08), transparent 32%),
-        linear-gradient(180deg, rgba(5,14,11,.99), rgba(2,7,5,.995));
+        radial-gradient(circle at 16% 0%, rgba(95,255,156,.16), transparent 34%),
+        radial-gradient(circle at 88% 8%, rgba(255,98,86,.13), transparent 30%),
+        linear-gradient(180deg, rgba(6,20,14,.98), rgba(2,8,7,.99));
       box-shadow:
-        0 34px 100px rgba(0,0,0,.48),
+        0 32px 90px rgba(0,0,0,.42),
         inset 0 1px 0 rgba(255,255,255,.055);
     }
 
-    .topbar {
+    .slp-header {
       display: grid;
-      grid-template-columns: 165px minmax(0,1fr) 390px 118px;
+      grid-template-columns: minmax(0,1fr) auto;
+      gap: 18px;
+      padding: 22px 24px;
       border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015));
+      background: rgba(0,0,0,.22);
     }
 
-    .brand, .title, .meta, .badge {
-      min-width: 0;
-      padding: 14px 16px;
-      border-right: 1px solid var(--soft);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #fff;
-      font-weight: 950;
-    }
-
-    .mark {
-      width: 18px;
-      height: 18px;
-      border-radius: 6px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(135deg, #8fff9f, #3dcb70);
-      color: #06130a;
-      box-shadow: 0 0 18px rgba(125,255,158,.28);
-      font-size: .78rem;
-      font-weight: 950;
-    }
-
-    .kicker {
-      color: var(--green);
-      font-size: .66rem;
-      line-height: 1;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      font-weight: 950;
-    }
-
-    .title h1 {
-      margin: 6px 0 0;
-      font-size: 1.06rem;
-      line-height: 1.18;
-      color: #fff;
-      font-weight: 950;
-    }
-
-    .meta {
-      display: grid;
-      grid-template-columns: repeat(3,minmax(0,1fr));
-      gap: 10px;
-    }
-
-    .meta .label {
-      color: rgba(255,255,255,.42);
-      font-size: .61rem;
-      font-weight: 950;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .meta .value {
-      color: rgba(255,255,255,.84);
-      margin-top: 4px;
-      font-size: .73rem;
-      font-weight: 850;
-      line-height: 1.18;
-    }
-
-    .badge {
-      border-right: 0;
-      display: grid;
-      place-items: center;
-    }
-
-    .pro {
-      border: 1px solid rgba(255,218,88,.36);
-      border-radius: 10px;
-      color: #ffe47e;
-      background: rgba(255,218,88,.08);
-      padding: 8px 11px;
-      font-size: .68rem;
-      font-weight: 950;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 205px minmax(0, 1fr) 310px;
-      gap: 10px;
-      padding: 10px;
-    }
-
-    .panel {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
-    }
-
-    .rail, .guide, .bottom-card {
-      padding: 14px;
-    }
-
-    .status-pill {
-      display: inline-grid;
-      place-items: center;
-      min-width: 88px;
-      margin: 9px 0 12px;
-      border: 1px solid rgba(255,96,88,.42);
-      border-radius: 9px;
-      color: #ff9f98;
-      background: rgba(255,96,88,.13);
-      padding: 8px 12px;
+    .slp-kicker,
+    .slp-panel-kicker,
+    .slp-detail-kicker {
+      color: rgba(105,255,155,.86);
       font-size: .72rem;
       font-weight: 950;
-      letter-spacing: .10em;
+      letter-spacing: .14em;
       text-transform: uppercase;
     }
 
-    .copy {
-      margin: 0;
-      color: rgba(255,255,255,.70);
-      font-size: .78rem;
-      line-height: 1.52;
+    .slp-header h1 {
+      margin: 7px 0 0;
+      font-size: clamp(1.45rem, 2vw, 2.15rem);
+      line-height: 1.05;
     }
 
-    .rail-section {
-      border-top: 1px solid var(--soft);
+    .slp-header p {
+      margin: 10px 0 0;
+      max-width: 860px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .slp-status {
+      align-self: start;
+      border: 1px solid rgba(255,98,86,.42);
+      border-radius: 999px;
+      padding: 10px 16px;
+      color: #fff;
+      background: rgba(255,98,86,.16);
+      font-size: .8rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+    }
+
+    .slp-main {
+      display: grid;
+      grid-template-columns: 250px minmax(0,1fr) 310px;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .slp-panel {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.028));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .slp-summary,
+    .slp-guidance,
+    .slp-gauge-card,
+    .slp-detail {
+      padding: 17px;
+    }
+
+    .slp-risk-card {
       margin-top: 12px;
-      padding-top: 12px;
+      border-radius: 18px;
+      padding: 16px;
+      background: linear-gradient(135deg, #f0443c, #8c1f25);
+      box-shadow: 0 18px 38px rgba(240,68,60,.18);
     }
 
-    .rail-value {
-      margin-top: 6px;
-      color: rgba(255,255,255,.82);
-      font-size: .76rem;
-      line-height: 1.38;
-      font-weight: 800;
+    .slp-risk-card span,
+    .slp-mini span,
+    .slp-result span,
+    .slp-current span,
+    .slp-footer-grid span {
+      display: block;
+      color: rgba(255,255,255,.62);
+      font-size: .75rem;
+      margin-bottom: 5px;
     }
 
-    .rail-value.hot {
-      color: #ff918a;
-      font-size: 1.02rem;
+    .slp-risk-card strong {
+      font-size: 1.55rem;
+      letter-spacing: .1em;
+    }
+
+    .slp-summary p,
+    .slp-guidance p {
+      color: var(--muted);
+      line-height: 1.58;
+    }
+
+    .slp-mini-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .slp-mini,
+    .slp-result,
+    .slp-footer-grid > div {
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 15px;
+      background: rgba(0,0,0,.22);
+      padding: 12px;
+    }
+
+    .slp-mini strong,
+    .slp-result strong,
+    .slp-footer-grid strong {
+      color: #fff;
+      line-height: 1.25;
+    }
+
+    .slp-card-head {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) auto;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .slp-card-head h2,
+    .slp-guidance h2,
+    .slp-detail h3 {
+      margin: 7px 0 0;
+      color: #fff;
+    }
+
+    .slp-current {
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 15px;
+      background: rgba(0,0,0,.24);
+      padding: 12px 14px;
+      text-align: right;
+    }
+
+    .slp-current strong {
+      font-size: 1.45rem;
+    }
+
+    .slp-gauge-svg {
+      width: 100%;
+      display: block;
+      margin: 12px auto 0;
+      max-height: 330px;
+    }
+
+    .slp-arc {
+      fill: none;
+      stroke-width: 28;
+      stroke-linecap: round;
+    }
+
+    .slp-arc-healthy {
+      stroke: var(--green);
+      filter: url(#slpGlow);
+    }
+
+    .slp-arc-watch {
+      stroke: var(--yellow);
+    }
+
+    .slp-arc-risk {
+      stroke: var(--red);
+      filter: url(#slpGlow);
+    }
+
+    .slp-arc-bg {
+      fill: none;
+      stroke: rgba(255,255,255,.055);
+      stroke-width: 42;
+      stroke-linecap: round;
+    }
+
+    .slp-needle {
+      stroke: #fff;
+      stroke-width: 7;
+      stroke-linecap: round;
+      filter: url(#slpGlow);
+    }
+
+    .slp-hub {
+      fill: #10251a;
+      stroke: rgba(255,255,255,.28);
+      stroke-width: 3;
+    }
+
+    .slp-hub-dot {
+      fill: #fff;
+    }
+
+    .slp-zone {
+      fill: rgba(255,255,255,.75);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .slp-zone-healthy {
+      fill: var(--green);
+    }
+
+    .slp-zone-watch {
+      fill: var(--yellow);
+    }
+
+    .slp-zone-risk {
+      fill: var(--red);
+    }
+
+    .slp-reading {
+      fill: #fff;
+      font-size: 32px;
       font-weight: 950;
     }
 
-    .rail-value.good {
-      color: #99ffb6;
-      font-weight: 900;
-    }
-
-    .section-list {
-      display: grid;
-      gap: 6px;
-      margin-top: 9px;
-    }
-
-    .section-item {
-      border: 1px solid rgba(125,255,158,.15);
-      border-radius: 8px;
-      background: rgba(255,255,255,.025);
-      color: rgba(255,255,255,.76);
-      padding: 7px 8px;
-      font-size: .71rem;
+    .slp-reading-label {
+      fill: rgba(255,255,255,.64);
+      font-size: 11px;
       font-weight: 850;
-      line-height: 1.2;
+      letter-spacing: .08em;
+      text-transform: uppercase;
     }
 
-    .hero {
-      padding: 14px;
-      min-width: 0;
+    .slp-results {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+      margin-top: 12px;
     }
 
-    .hero-head {
+    .slp-chip-grid {
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .slp-chip-grid button {
+      border: 1px solid rgba(105,255,155,.24);
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.9);
+      padding: 9px 12px;
+      font-size: .82rem;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .slp-chip-grid button:hover,
+    .slp-chip-grid button.is-active {
+      background: rgba(105,255,155,.17);
+      border-color: rgba(105,255,155,.48);
+      color: #fff;
+    }
+
+    .slp-detail {
+      margin: 0 18px 18px;
+    }
+
+    .slp-detail h3 {
       margin-bottom: 10px;
     }
 
-    .hero-title {
-      margin: 5px 0 0;
-      color: #fff;
-      font-size: 1.05rem;
-      font-weight: 950;
-      line-height: 1.15;
+    .slp-detail p,
+    .slp-list {
+      color: var(--muted);
+      line-height: 1.72;
     }
 
-    .pressure {
-      color: var(--green);
-      font-size: .7rem;
-      font-weight: 950;
-      letter-spacing: .10em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .gauge-card {
-      position: relative;
-      min-height: 360px;
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 18px;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 50% 74%, rgba(255,255,255,.055), transparent 36%),
-        radial-gradient(circle at 50% 78%, rgba(100,255,148,.055), transparent 42%),
-        linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.10));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
-    }
-
-    .gauge-svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    .g-label {
-      fill: rgba(255,255,255,.84);
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      font-size: 11px;
-      font-weight: 950;
-      letter-spacing: 1px;
-    }
-
-    .g-sub {
-      fill: rgba(255,255,255,.62);
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      font-size: 9px;
-      font-weight: 850;
-    }
-
-    .g-axis {
-      fill: rgba(255,255,255,.56);
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      font-size: 9px;
-      font-weight: 850;
-    }
-
-    .g-callout-value {
-      fill: #fff;
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      font-size: 22px;
-      font-weight: 950;
-    }
-
-    .g-callout-label {
-      fill: rgba(255,255,255,.58);
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      font-size: 8px;
-      font-weight: 950;
-      letter-spacing: 1px;
-    }
-
-    .g-chip-label {
-      color: rgba(125,255,158,.78);
-      font-size: .56rem;
-      font-weight: 950;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .g-chip-value {
-      margin-top: 5px;
-      color: rgba(255,255,255,.92);
-      font-size: .82rem;
-      font-weight: 950;
-      line-height: 1.2;
-    }
-
-    .gauge-chips {
-      position: absolute;
-      left: 16px;
-      right: 16px;
-      bottom: 14px;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap: 9px;
-      z-index: 4;
-    }
-
-    .gauge-chip {
-      border: 1px solid rgba(255,255,255,.075);
-      border-radius: 10px;
-      background: rgba(4,10,8,.76);
-      padding: 9px 10px;
-    }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 9px;
-      margin-top: 10px;
-    }
-
-    .info-card {
-      border: 1px solid rgba(255,255,255,.075);
-      border-radius: 12px;
-      background: rgba(0,0,0,.12);
-      padding: 11px;
-    }
-
-    .info-card h3,
-    .guide h3,
-    .bottom-card h3 {
-      margin: 0 0 7px;
-      color: #fff;
-      font-size: .82rem;
-      font-weight: 950;
-    }
-
-    .info-card.hot h3 {
-      color: #ff918a;
-    }
-
-    .guide-section {
-      padding: 12px 0;
-      border-top: 1px solid var(--soft);
-    }
-
-    .guide-section:first-child {
-      border-top: 0;
-      padding-top: 0;
-    }
-
-    .guide-section.why h3 { color: #ff918a; }
-    .guide-section.drivers h3 { color: var(--yellow); }
-    .guide-section.actions h3,
-    .guide-section.target h3 { color: #99ffb6; }
-
-    .clean-list {
+    .slp-list {
       margin: 0;
-      padding-left: 17px;
-      color: rgba(255,255,255,.72);
-      font-size: .75rem;
-      line-height: 1.52;
+      padding-left: 20px;
     }
 
-    .clean-list li + li {
+    .slp-list li + li {
       margin-top: 4px;
     }
 
-    .bottom-grid {
+    .slp-footer-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
+      grid-template-columns: repeat(3, minmax(0,1fr));
       gap: 10px;
-      padding: 0 10px 10px;
+      padding: 0 18px 18px;
     }
 
-    .bottom-card {
-      min-height: 110px;
-    }
-
-    .flow-table {
-      display: grid;
-      gap: 4px;
-      font-size: .72rem;
-    }
-
-    .flow-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      border-bottom: 1px solid rgba(255,255,255,.055);
-      padding-bottom: 4px;
-    }
-
-    .flow-row span { color: rgba(255,255,255,.52); }
-    .flow-row strong { color: rgba(255,255,255,.86); font-weight: 900; text-align: right; }
-
-    .footer-strip {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      border-top: 1px solid var(--line);
-      background: rgba(255,255,255,.020);
-    }
-
-    .foot {
-      padding: 11px 13px;
-      border-right: 1px solid var(--soft);
-    }
-
-    .foot:last-child { border-right: 0; }
-
-    .foot-label {
-      color: rgba(255,255,255,.46);
-      font-size: .61rem;
-      font-weight: 950;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .foot-value {
-      color: rgba(255,255,255,.82);
-      font-size: .72rem;
-      line-height: 1.34;
-      margin-top: 4px;
-      font-weight: 800;
-    }
-
-    @media (max-width: 1100px) {
-      .topbar { grid-template-columns: 155px minmax(0,1fr); }
-      .meta { grid-column: 1 / -1; border-top: 1px solid var(--soft); border-right: 0; }
-      .badge { position: absolute; right: 18px; top: 18px; padding: 0; }
-      .layout { grid-template-columns: 220px minmax(0,1fr); }
-      .guide { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 20px; }
-      .bottom-grid, .footer-strip { grid-template-columns: repeat(2,minmax(0,1fr)); }
-    }
-
-    @media (max-width: 760px) {
-      .topbar, .layout, .guide, .info-grid, .bottom-grid, .footer-strip, .gauge-chips, .meta {
+    @media (max-width: 1060px) {
+      .slp-main,
+      .slp-footer-grid {
         grid-template-columns: 1fr;
       }
 
-      .brand, .title, .meta, .badge, .foot { border-right: 0; }
-      .badge { position: static; place-items: start; border-top: 1px solid var(--soft); }
-      .gauge-card { min-height: 430px; }
-    }
-  </style>
-  <style id="slpg-prototype-mount-style">
-    .slpg-prototype-card {
-      margin-bottom: 10px;
-    }
+      .slp-results {
+        grid-template-columns: 1fr;
+      }
 
-    .slpg-prototype-card .slpg-gauge-frame {
-      border-radius: 14px;
+      .slp-header,
+      .slp-card-head {
+        grid-template-columns: 1fr;
+      }
+
+      .slp-current {
+        text-align: left;
+      }
     }
   </style>
 </head>
-
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="/" aria-label="ScopedLabs Home">
-        <span class="brand-dot" aria-hidden="true"></span>
-        <span class="brand-icon-wrap" aria-hidden="true">
-          <img class="brand-icon" src="/assets/favicon/favicon-32x32.png?v=1" alt="" width="32" height="32" />
-        </span>
-        <span class="brand-name">ScopedLabs</span>
-      </a>
+  <div class="prototype-frame">
+    <p class="prototype-note">
+      Standalone visual prototype only. This page is isolated from the live Lens Selection tool.
+    </p>
 
-      <nav class="nav site-nav nav-tabs" aria-label="Primary">
-        <a class="nav-tab" href="/">Home</a>
-        <a class="nav-tab is-active" href="/tools/">Tools</a>
-        <a class="nav-tab" href="/guides/">Guides</a>
-        <a class="nav-tab" href="/about/">About</a>
-        <a class="nav-tab" href="/contact/">Contact</a>
-        <a class="nav-tab" href="/account/">Account</a>
-      </nav>
-    </div>
-  </header>
+    <div id="lens-gauge-prototype"></div>
+  </div>
 
-  <main class="page">
-    <div class="prototype-shell">
-      <div class="prototype-note">
-        Hidden prototype page. Mock data only. Not linked in nav or sitemap. Prototype rev: lens-dashboard-v30-diagnostic-report-module.</div>
-
-      <section class="report">
-        <div class="topbar">
-          <div class="brand">
-            <span class="mark">S</span>
-            <span>ScopedLabs</span>
-          </div>
-
-          <div class="title">
-            <div class="kicker">Lens Selection Helper</div>
-            <h1>Lens selection is under high planning pressure.</h1>
-          </div>
-
-          <div class="meta">
-            <div>
-              <div class="label">Report ID</div>
-              <div class="value">SL-PS-LS-001</div>
-            </div>
-            <div>
-              <div class="label">Date</div>
-              <div class="value">May 9, 2026</div>
-            </div>
-            <div>
-              <div class="label">Project</div>
-              <div class="value">Planning Review</div>
-            </div>
-          </div>
-
-          <div class="badge">
-            <span class="pro">Pro Report</span>
-          </div>
-        </div>
-
-        <div class="layout">
-          <aside class="panel rail">
-            <div class="kicker">Status Summary</div>
-            <div class="status-pill">Risk</div>
-            <p class="copy">
-              The current combination of distance, target width, sensor width, and detail requirement is increasing lens pressure and reducing layout flexibility.
-            </p>
-
-            <div class="rail-section">
-              <div class="kicker">Key Result</div>
-              <div class="rail-value hot">25.6 mm</div>
-            </div>
-
-            <div class="rail-section">
-              <div class="kicker">Healthy Target</div>
-              <div class="rail-value good">Bring lens-selection pressure back into the preferred planning band while preserving detail.</div>
-            </div>
-
-            <div class="rail-section">
-              <div class="kicker">Primary Driver</div>
-              <div class="rail-value">Long standoff distance with narrow target width</div>
-            </div>
-
-            <div class="rail-section">
-              <div class="kicker">Report Sections</div>
-              <div class="section-list">
-                <div class="section-item">1. Executive Summary</div>
-                <div class="section-item">2. Inputs & Assumptions</div>
-                <div class="section-item">3. Results & Gauge</div>
-                <div class="section-item">4. Interpretation</div>
-                <div class="section-item">5. Drivers & Constraints</div>
-                <div class="section-item">6. Corrective Guidance</div>
-                <div class="section-item">7. Flow Summary</div>
-              </div>
-            </div>
-          </aside>
-
-          <section class="panel hero">
-            <div class="hero-head">
-              <div>
-                <div class="kicker">Results Overview</div>
-                <h2 class="hero-title">Lens Selection Pressure</h2>
-              </div>
-              <div class="pressure">75 / 100 Pressure</div>
-            </div>
-
-                        <div class="slpg-prototype-card" id="slpgGaugeMount" data-slpg-gauge></div>
-            <div class="info-grid">
-              <div class="info-card">
-                <h3>Engineering Interpretation</h3>
-                <p class="copy">
-                  At 80 ft with a 20 ft target width and 6.40 mm sensor, the geometry drives the design into a long-range focal length class.
-                </p>
-              </div>
-
-              <div class="info-card hot">
-                <h3>Dominant Constraint</h3>
-                <p class="copy">
-                  Focal demand is the dominant limiter. This narrows field of view and reduces layout flexibility.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <aside class="panel guide">
-            <div class="guide-section why">
-              <div class="kicker">Corrective Guidance / Path to Healthy</div>
-              <h3>Why this is Risk</h3>
-              <p class="copy">
-                The required focal length is being driven upward by the distance-to-width relationship and the detail requirement.
-              </p>
-            </div>
-
-            <div class="guide-section drivers">
-              <h3>Likely Drivers</h3>
-              <ul class="clean-list">
-                <li>Long standoff distance: 80.0 ft</li>
-                <li>Narrow target width: 20.0 ft</li>
-                <li>High detail requirement</li>
-                <li>Small sensor size: 6.40 mm</li>
-              </ul>
-            </div>
-
-            <div class="guide-section actions">
-              <h3>Possible Planning Actions</h3>
-              <ul class="clean-list">
-                <li>Move the camera closer to the target area</li>
-                <li>Increase target width if the use case allows it</li>
-                <li>Use a larger sensor format</li>
-                <li>Split coverage across multiple cameras</li>
-                <li>Re-evaluate identification/detail requirement</li>
-              </ul>
-            </div>
-
-            <div class="guide-section target">
-              <h3>Healthy Target</h3>
-              <p class="copy">
-                Bring Lens Selection Pressure back into the comfort band while preserving the required objective.
-              </p>
-            </div>
-          </aside>
-        </div>
-
-        <div class="bottom-grid">
-          <div class="panel bottom-card">
-            <h3>Follow-up Checks</h3>
-            <ul class="clean-list">
-              <li>Validate final field of view on site plan</li>
-              <li>Confirm identification distance requirement</li>
-              <li>Check manufacturer lens availability</li>
-              <li>Verify sensor format compatibility</li>
-            </ul>
-          </div>
-
-          <div class="panel bottom-card">
-            <h3>Revision Triggers</h3>
-            <ul class="clean-list">
-              <li>Change in mounting distance</li>
-              <li>Change in target width / scene coverage</li>
-              <li>Change in sensor or camera model</li>
-              <li>Change in detail requirement</li>
-            </ul>
-          </div>
-
-          <div class="panel bottom-card">
-            <h3>Flow Summary Data</h3>
-            <div class="flow-table">
-              <div class="flow-row"><span>Recommended focal length</span><strong>25.6 mm</strong></div>
-              <div class="flow-row"><span>Target width</span><strong>20.0 ft</strong></div>
-              <div class="flow-row"><span>Mounting distance</span><strong>80.0 ft</strong></div>
-              <div class="flow-row"><span>Sensor size</span><strong>6.40 mm</strong></div>
-            </div>
-          </div>
-
-          <div class="panel bottom-card">
-            <h3>Report Notes</h3>
-            <p class="copy">
-              This report is a planning aid. Final design should be validated with site conditions and manufacturer data.
-            </p>
-          </div>
-        </div>
-
-        <div class="footer-strip">
-          <div class="foot">
-            <div class="foot-label">Tool</div>
-            <div class="foot-value">Lens Selection Helper</div>
-          </div>
-          <div class="foot">
-            <div class="foot-label">Category</div>
-            <div class="foot-value">Physical Security</div>
-          </div>
-          <div class="foot">
-            <div class="foot-label">Pipeline</div>
-            <div class="foot-value">Design & Layout</div>
-          </div>
-          <div class="foot">
-            <div class="foot-label">Next Step</div>
-            <div class="foot-value">Face Recognition Range</div>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
-  <script src="/assets/prototypes/lens-planner-gauge.js?v=slpg-030"></script>
+  <script src="/assets/prototypes/lens-planner-gauge.js?v=lens-prototype-001"></script>
 </body>
 </html>

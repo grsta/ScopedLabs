@@ -1,206 +1,318 @@
-
-(function () {
+(() => {
   "use strict";
 
-  const DEFAULTS = {
-    value: 25.6,
-    min: 0,
-    healthyMax: 8,
-    watchMax: 18,
-    max: 40,
-    unit: "mm",
-    title: "Lens Selection Pressure"
+  const demo = {
+    status: "RISK",
+    score: 78,
+    gaugeLabel: "Lens Selection Pressure",
+    currentReading: "25.6 mm",
+    markerLabel: "Adjusted focal demand",
+    objective:
+      "Evaluate whether the current camera geometry is forcing the lens into a narrow, high-pressure selection range.",
+    summary:
+      "The current geometry is pushing the design toward a long-range lens class. That reduces layout flexibility and increases the need to validate field-of-view, mounting angle, and detail assumptions before relying on the result.",
+    dominantDriver: {
+      label: "Focal Demand",
+      summary:
+        "Distance to target and target width are creating a narrow field-of-view requirement. This is the primary reason the design is landing in Risk."
+    },
+    keyResults: [
+      { label: "Adjusted Focal Length", value: "25.6 mm" },
+      { label: "Lens Class", value: "Long Range / Specialty" },
+      { label: "Detail Requirement", value: "Recognition / ID pressure" }
+    ],
+    readings: [
+      { label: "Distance to Target", value: "90 ft" },
+      { label: "Target Width", value: "12 ft" },
+      { label: "Sensor Width", value: "6.4 mm" },
+      { label: "Detail Pressure", value: "High" }
+    ],
+    sections: [
+      {
+        label: "Why Risk?",
+        type: "text",
+        body:
+          "The design is being asked to hold a tight field of view from a long standoff distance. That raises required focal length and leaves less tolerance for installation error, camera angle, and lens availability."
+      },
+      {
+        label: "Likely Drivers",
+        type: "list",
+        items: [
+          "Long distance between camera and target area.",
+          "Narrow target width or constrained scene objective.",
+          "Sensor size limits the horizontal field of view.",
+          "Detail requirement may be too aggressive for a single camera view."
+        ]
+      },
+      {
+        label: "Path to Healthy",
+        type: "list",
+        items: [
+          "Evaluate whether the camera can move closer to the target.",
+          "Increase acceptable scene width if the operational objective allows it.",
+          "Use a larger sensor format or different camera/lens family.",
+          "Split the target area across multiple cameras instead of forcing one narrow view.",
+          "Recheck whether the detail target matches the actual use case."
+        ]
+      },
+      {
+        label: "Follow-up Checks",
+        type: "list",
+        items: [
+          "Validate the selected focal length against the manufacturer field-of-view chart.",
+          "Confirm mounting height, angle, and alignment tolerance.",
+          "Verify the target width and detail requirement before equipment selection.",
+          "Re-run the estimate if distance, target width, sensor size, or detail target changes."
+        ]
+      }
+    ]
   };
 
-  function clamp(n, min, max) {
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function clamp(value, min, max) {
+    const n = Number(value);
     if (!Number.isFinite(n)) return min;
     return Math.max(min, Math.min(max, n));
   }
 
-  function number(v, fallback) {
-    if (typeof v === "number" && Number.isFinite(v)) return v;
-    if (typeof v === "string") {
-      const m = v.replace(/,/g, "").match(/-?\d+(\.\d+)?/);
-      if (m) return Number(m[0]);
-    }
-    return fallback;
-  }
-
-  function fmt(v, d) {
-    return Number.isFinite(v) ? v.toFixed(d) : "?";
-  }
-
-  function findMount() {
-    return document.querySelector("[data-slpg-gauge]") ||
-      document.getElementById("slpgGaugeMount") ||
-      document.getElementById("slpgGauge");
-  }
-
-  function readConfig(input) {
-    const src = input && typeof input === "object" ? input : {};
-    const cfg = Object.assign({}, DEFAULTS, src);
-
-    cfg.value = number(
-      src.value ||
-      src.currentReading ||
-      src.adjustedFocalLength ||
-      src.adjustedFocalLengthMm ||
-      src.requiredFocalLength ||
-      src.recommendedFocalLength ||
-      src.lensMm,
-      DEFAULTS.value
-    );
-
-    cfg.min = number(src.min, DEFAULTS.min);
-    cfg.healthyMax = number(src.healthyMax || src.comfortMin || src.preferredMin, DEFAULTS.healthyMax);
-    cfg.watchMax = number(src.watchMax || src.comfortMax || src.preferredMax, DEFAULTS.watchMax);
-    cfg.max = number(src.max || src.riskMax, DEFAULTS.max);
-    cfg.unit = String(src.unit || DEFAULTS.unit);
-    cfg.title = String(src.title || DEFAULTS.title);
-
-    if (cfg.max <= cfg.min) cfg.max = cfg.min + 1;
-    cfg.healthyMax = clamp(cfg.healthyMax, cfg.min, cfg.max);
-    cfg.watchMax = clamp(cfg.watchMax, cfg.healthyMax, cfg.max);
-    cfg.value = clamp(cfg.value, cfg.min, cfg.max);
-
-    return cfg;
-  }
-
-  function statusFor(value, cfg) {
-    if (value <= cfg.healthyMax) return {
-      key: "healthy",
-      label: "Healthy",
-      className: "good",
-      note: "Inside preferred design range"
+  function polarToCartesian(cx, cy, r, angleDeg) {
+    const angleRad = ((angleDeg - 90) * Math.PI) / 180;
+    return {
+      x: cx + r * Math.cos(angleRad),
+      y: cy + r * Math.sin(angleRad)
     };
+  }
 
-    if (value <= cfg.watchMax) return {
-      key: "watch",
-      label: "Watch",
-      className: "watch",
-      note: "Approaching planning limit"
-    };
+  function describeArc(cx, cy, r, startAngle, endAngle) {
+    const start = polarToCartesian(cx, cy, r, endAngle);
+    const end = polarToCartesian(cx, cy, r, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+    return [
+      "M",
+      start.x.toFixed(3),
+      start.y.toFixed(3),
+      "A",
+      r,
+      r,
+      0,
+      largeArcFlag,
+      0,
+      end.x.toFixed(3),
+      end.y.toFixed(3)
+    ].join(" ");
+  }
+
+  function scoreToAngle(score) {
+    const pct = clamp(score, 0, 100) / 100;
+    return -90 + pct * 180;
+  }
+
+  function needleEnd(cx, cy, length, score) {
+    const angle = scoreToAngle(score);
+    const rad = (angle * Math.PI) / 180;
 
     return {
-      key: "risk",
-      label: "Risk",
-      className: "risk",
-      note: "Outside preferred planning range"
+      x: cx + Math.cos(rad) * length,
+      y: cy + Math.sin(rad) * length
     };
   }
 
-  function ensureStyle() {
-    if (document.getElementById("slpgGaugeStyle")) return;
-
-    const style = document.createElement("style");
-    style.id = "slpgGaugeStyle";
-    style.textContent = [
-      '.slpg-shell{width:100%;min-width:0;color:#f8fafc}',
-      '.slpg-report{border:1px solid rgba(148,163,184,.16);border-radius:16px;background:radial-gradient(circle at 82% 8%,rgba(255,96,88,.10),transparent 28%),radial-gradient(circle at 15% 8%,rgba(125,255,152,.08),transparent 32%),linear-gradient(180deg,rgba(5,12,18,.98),rgba(2,7,10,.98));box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 20px 50px rgba(0,0,0,.28);padding:18px}',
-      '.slpg-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:15px;border-bottom:1px solid rgba(148,163,184,.12)}',
-      '.slpg-kicker{color:#7dff98;font:950 10px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px}',
-      '.slpg-title{margin:0;color:#fff;font:950 19px/1.12 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
-      '.slpg-sub{margin-top:8px;color:rgba(226,232,240,.68);font:650 12px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:560px}',
-      '.slpg-status{min-width:104px;text-align:center;border-radius:12px;padding:10px 12px;font:950 12px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.12em;text-transform:uppercase}',
-      '.slpg-status.good{color:#7dff98;border:1px solid rgba(125,255,152,.34);background:rgba(125,255,152,.08)}',
-      '.slpg-status.watch{color:#ffd34f;border:1px solid rgba(255,211,79,.34);background:rgba(255,211,79,.08)}',
-      '.slpg-status.risk{color:#ff8f88;border:1px solid rgba(255,96,88,.38);background:rgba(255,96,88,.10)}',
-      '.slpg-main{display:grid;grid-template-columns:1.02fr .98fr;gap:12px;margin-top:14px}',
-      '.slpg-result-card,.slpg-driver{border:1px solid rgba(148,163,184,.13);border-radius:14px;background:rgba(2,6,12,.54);padding:16px}',
-      '.slpg-result-label{color:rgba(203,213,225,.68);font:900 10px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.14em;text-transform:uppercase}',
-      '.slpg-result-value{margin-top:9px;color:#fff;font:950 42px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.03em}',
-      '.slpg-result-value span{color:rgba(203,213,225,.66);font-size:18px;letter-spacing:0}',
-      '.slpg-result-note,.slpg-driver p{margin-top:10px;color:rgba(226,232,240,.70);font:650 12px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
-      '.slpg-target-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}',
-      '.slpg-mini{border:1px solid rgba(148,163,184,.13);border-radius:10px;background:rgba(255,255,255,.025);padding:10px}',
-      '.slpg-mini-k{color:rgba(203,213,225,.64);font:850 9px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.13em;text-transform:uppercase}',
-      '.slpg-mini-v{margin-top:6px;color:#fff;font:950 14px/1.15 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
-      '.slpg-mini.good .slpg-mini-v{color:#7dff98}.slpg-mini.watch .slpg-mini-v{color:#ffd34f}.slpg-mini.risk .slpg-mini-v{color:#ff8f88}',
-      '.slpg-driver h4{margin:0;color:#fff;font:950 14px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
-      '.slpg-stack{margin-top:13px;display:grid;gap:8px}',
-      '.slpg-stack-row{display:grid;grid-template-columns:122px minmax(0,1fr) 42px;gap:10px;align-items:center;color:rgba(226,232,240,.76);font:750 11px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
-      '.slpg-track{height:8px;border-radius:999px;background:rgba(148,163,184,.13);overflow:hidden}',
-      '.slpg-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,rgba(125,255,152,.85),rgba(255,211,79,.85),rgba(255,96,88,.88))}',
-      '.slpg-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}',
-      '.slpg-action{border:1px solid rgba(125,255,152,.14);border-radius:11px;background:rgba(125,255,152,.035);padding:10px;color:rgba(226,232,240,.78);font:700 11px/1.35 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
-      '.slpg-action strong{display:block;color:#7dff98;font:950 10px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}',
-      '@media(max-width:760px){.slpg-head,.slpg-main,.slpg-target-row,.slpg-actions{grid-template-columns:1fr;display:grid}}'
-    ].join("\\n");
-    document.head.appendChild(style);
+  function renderList(items = []) {
+    return `
+      <ul class="slp-list">
+        ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ul>
+    `;
   }
 
-  function render(input) {
-    ensureStyle();
+  function renderDetail(section) {
+    if (!section) return "";
 
-    const mount = findMount();
-    if (!mount) return null;
+    if (section.type === "list") {
+      return renderList(section.items || []);
+    }
 
-    const cfg = readConfig(input);
-    const status = statusFor(cfg.value, cfg);
-    const margin = cfg.value - cfg.watchMax;
-    const marginText = margin > 0 ? "+" + fmt(margin, 1) + " " + cfg.unit : fmt(margin, 1) + " " + cfg.unit;
-
-    mount.innerHTML = [
-      '<div class="slpg-shell">',
-        '<section class="slpg-report">',
-          '<div class="slpg-head">',
-            '<div>',
-              '<div class="slpg-kicker">Results Overview</div>',
-              '<h3 class="slpg-title">' + cfg.title + '</h3>',
-              '<div class="slpg-sub">This module summarizes the result as a planning condition: current reading, preferred target band, dominant constraint, and the next checks needed before treating the result as design-ready.</div>',
-            '</div>',
-            '<div class="slpg-status ' + status.className + '">' + status.label + '</div>',
-          '</div>',
-
-          '<div class="slpg-main">',
-            '<div class="slpg-result-card">',
-              '<div class="slpg-result-label">Adjusted focal length</div>',
-              '<div class="slpg-result-value">' + fmt(cfg.value, 1) + ' <span>' + cfg.unit + '</span></div>',
-              '<div class="slpg-result-note">' + status.note + '. Preferred planning band is ' + fmt(cfg.healthyMax, 1) + '?' + fmt(cfg.watchMax, 1) + ' ' + cfg.unit + '.</div>',
-
-              '<div class="slpg-target-row">',
-                '<div class="slpg-mini good"><div class="slpg-mini-k">Target Band</div><div class="slpg-mini-v">' + fmt(cfg.healthyMax, 1) + '?' + fmt(cfg.watchMax, 1) + ' ' + cfg.unit + '</div></div>',
-                '<div class="slpg-mini watch"><div class="slpg-mini-k">Margin</div><div class="slpg-mini-v">' + marginText + '</div></div>',
-                '<div class="slpg-mini ' + status.className + '"><div class="slpg-mini-k">Status</div><div class="slpg-mini-v">' + status.label + '</div></div>',
-              '</div>',
-            '</div>',
-
-            '<div class="slpg-driver">',
-              '<div class="slpg-kicker">Dominant Driver</div>',
-              '<h4>Focal demand is limiting layout flexibility.</h4>',
-              '<p>The combination of distance, target width, and sensor size pushes the scene toward a long-range lens class.</p>',
-
-              '<div class="slpg-stack">',
-                '<div class="slpg-stack-row"><span>Distance geometry</span><div class="slpg-track"><div class="slpg-fill" style="width:82%"></div></div><strong>82%</strong></div>',
-                '<div class="slpg-stack-row"><span>Target width</span><div class="slpg-track"><div class="slpg-fill" style="width:74%"></div></div><strong>74%</strong></div>',
-                '<div class="slpg-stack-row"><span>Detail requirement</span><div class="slpg-track"><div class="slpg-fill" style="width:66%"></div></div><strong>66%</strong></div>',
-              '</div>',
-            '</div>',
-          '</div>',
-
-          '<div class="slpg-actions">',
-            '<div class="slpg-action"><strong>Reduce demand</strong>Move the camera closer or widen the acceptable target area.</div>',
-            '<div class="slpg-action"><strong>Change optics</strong>Evaluate a larger sensor format or different lens class.</div>',
-            '<div class="slpg-action"><strong>Validate field</strong>Confirm field of view and detail requirement before final design.</div>',
-          '</div>',
-        '</section>',
-      '</div>'
-    ].join("");
-
-    return cfg;
+    return `<p>${escapeHtml(section.body || "")}</p>`;
   }
 
-  window.renderScopedLensPlannerGauge = render;
-  window.renderScopedLensPlannerGaugeFromTool = render;
-  window.ScopedLabsLensPlannerGauge = {
-    render: render,
-    update: render,
-    refresh: function () { return render(DEFAULTS); }
-  };
+  function renderGauge(data) {
+    const cx = 180;
+    const cy = 178;
+    const r = 132;
+    const needle = needleEnd(cx, cy, 105, data.score);
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () { render(DEFAULTS); });
-  } else {
-    render(DEFAULTS);
+    return `
+      <svg class="slp-gauge-svg" viewBox="0 0 360 220" role="img" aria-label="${escapeHtml(data.gaugeLabel)}">
+        <defs>
+          <filter id="slpGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="5" result="blur"></feGaussianBlur>
+            <feMerge>
+              <feMergeNode in="blur"></feMergeNode>
+              <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+          </filter>
+        </defs>
+
+        <path class="slp-arc slp-arc-healthy" d="${describeArc(cx, cy, r, -90, -25)}"></path>
+        <path class="slp-arc slp-arc-watch" d="${describeArc(cx, cy, r, -25, 35)}"></path>
+        <path class="slp-arc slp-arc-risk" d="${describeArc(cx, cy, r, 35, 90)}"></path>
+
+        <path class="slp-arc-bg" d="${describeArc(cx, cy, r - 34, -90, 90)}"></path>
+
+        <line class="slp-needle" x1="${cx}" y1="${cy}" x2="${needle.x.toFixed(3)}" y2="${needle.y.toFixed(3)}"></line>
+        <circle class="slp-hub" cx="${cx}" cy="${cy}" r="18"></circle>
+        <circle class="slp-hub-dot" cx="${cx}" cy="${cy}" r="5"></circle>
+
+        <text class="slp-zone slp-zone-healthy" x="62" y="184">Healthy</text>
+        <text class="slp-zone slp-zone-watch" x="180" y="74" text-anchor="middle">Watch</text>
+        <text class="slp-zone slp-zone-risk" x="298" y="184" text-anchor="end">Risk</text>
+
+        <text class="slp-reading" x="180" y="142" text-anchor="middle">${escapeHtml(data.currentReading)}</text>
+        <text class="slp-reading-label" x="180" y="162" text-anchor="middle">${escapeHtml(data.markerLabel)}</text>
+      </svg>
+    `;
   }
+
+  function setActive(root, index) {
+    const buttons = Array.from(root.querySelectorAll("[data-section-index]"));
+    const panel = root.querySelector("[data-detail-panel]");
+    const section = demo.sections[index];
+
+    buttons.forEach((button) => {
+      button.classList.toggle("is-active", Number(button.dataset.sectionIndex) === index);
+    });
+
+    if (!panel || !section) return;
+
+    panel.innerHTML = `
+      <div class="slp-detail-kicker">Expanded Detail</div>
+      <h3>${escapeHtml(section.label)}</h3>
+      ${renderDetail(section)}
+    `;
+  }
+
+  function render() {
+    const root = document.querySelector("#lens-gauge-prototype");
+
+    if (!root) return;
+
+    root.innerHTML = `
+      <section class="slp-shell">
+        <div class="slp-header">
+          <div>
+            <div class="slp-kicker">ScopedLabs Diagnostic Prototype</div>
+            <h1>Lens Selection Diagnostic Report Module</h1>
+            <p>${escapeHtml(demo.objective)}</p>
+          </div>
+          <div class="slp-status slp-status-risk">${escapeHtml(demo.status)}</div>
+        </div>
+
+        <div class="slp-main">
+          <aside class="slp-panel slp-summary">
+            <div class="slp-panel-kicker">Status Summary</div>
+            <div class="slp-risk-card">
+              <span>Status</span>
+              <strong>${escapeHtml(demo.status)}</strong>
+            </div>
+            <p>${escapeHtml(demo.summary)}</p>
+
+            <div class="slp-mini-grid">
+              ${demo.readings
+                .map(
+                  (item) => `
+                    <div class="slp-mini">
+                      <span>${escapeHtml(item.label)}</span>
+                      <strong>${escapeHtml(item.value)}</strong>
+                    </div>
+                  `
+                )
+                .join("")}
+            </div>
+          </aside>
+
+          <main class="slp-panel slp-gauge-card">
+            <div class="slp-card-head">
+              <div>
+                <div class="slp-panel-kicker">Gauge Reading</div>
+                <h2>${escapeHtml(demo.gaugeLabel)}</h2>
+              </div>
+              <div class="slp-current">
+                <span>Current</span>
+                <strong>${escapeHtml(demo.currentReading)}</strong>
+              </div>
+            </div>
+
+            ${renderGauge(demo)}
+
+            <div class="slp-results">
+              ${demo.keyResults
+                .map(
+                  (item) => `
+                    <div class="slp-result">
+                      <span>${escapeHtml(item.label)}</span>
+                      <strong>${escapeHtml(item.value)}</strong>
+                    </div>
+                  `
+                )
+                .join("")}
+            </div>
+          </main>
+
+          <aside class="slp-panel slp-guidance">
+            <div class="slp-panel-kicker">Corrective Guidance</div>
+            <h2>${escapeHtml(demo.dominantDriver.label)}</h2>
+            <p>${escapeHtml(demo.dominantDriver.summary)}</p>
+
+            <div class="slp-chip-grid">
+              ${demo.sections
+                .map(
+                  (section, index) => `
+                    <button type="button" data-section-index="${index}">
+                      ${escapeHtml(section.label)}
+                    </button>
+                  `
+                )
+                .join("")}
+            </div>
+          </aside>
+        </div>
+
+        <div class="slp-panel slp-detail" data-detail-panel></div>
+
+        <div class="slp-footer-grid">
+          <div>
+            <span>Tool Page</span>
+            <strong>Compact diagnostic workspace</strong>
+          </div>
+          <div>
+            <span>Export Report</span>
+            <strong>Full explanation expands in PDF output</strong>
+          </div>
+          <div>
+            <span>Pipeline Ready</span>
+            <strong>Structured result data can feed flow summaries</strong>
+          </div>
+        </div>
+      </section>
+    `;
+
+    root.querySelectorAll("[data-section-index]").forEach((button) => {
+      button.addEventListener("click", () => {
+        setActive(root, Number(button.dataset.sectionIndex));
+      });
+    });
+
+    setActive(root, 2);
+  }
+
+  document.addEventListener("DOMContentLoaded", render);
 })();
