@@ -586,7 +586,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-026-clean-fov-labels.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-027-clean-fov-svg-separators.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -1226,6 +1226,13 @@
           return (value > 0 ? "+" : "") + fmt(value, 1) + " ft";
         }
 
+        function cleanFovSvgText(value) {
+          return String(value)
+            .replace(/\s\?\s/g, " | ")
+            .replace(/\uFFFD/g, " | ")
+            .replace(/\u00b7/g, " | ");
+        }
+
         function m(ft) {
           return ft * 0.3048;
         }
@@ -1373,7 +1380,7 @@
             '<text x="232" y="' + (height - 18) + '" fill="rgba(226,232,240,.62)" font-size="10" font-weight="800">Left labels identify each camera. Position values are listed in the Camera Positions card.</text>' +
           '</svg>';
 
-        stage.innerHTML = svg;
+        stage.innerHTML = cleanFovSvgText(svg);
 
         setText("fovLayoutMode", data.coverageCount + " camera" + (data.coverageCount === 1 ? "" : "s"));
         setText("fovOverlap", data.coverageCount === 1 ? "None" : fmt(data.recommendedOverlapFraction * 100, 0) + "% / " + fmt(data.overlapWidthFt, 1) + " ft");
