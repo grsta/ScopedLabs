@@ -17,17 +17,17 @@
     return Math.max(min, Math.min(max, n));
   }
 
-  function toNumber(v, fallback) {
+  function number(v, fallback) {
     if (typeof v === "number" && Number.isFinite(v)) return v;
     if (typeof v === "string") {
-      const m = v.replace(/,/g, "").match(/-?\\d+(\\.\\d+)?/);
+      const m = v.replace(/,/g, "").match(/-?\d+(\.\d+)?/);
       if (m) return Number(m[0]);
     }
     return fallback;
   }
 
-  function fmt(v, digits) {
-    return Number.isFinite(v) ? v.toFixed(digits) : "?";
+  function fmt(v, d) {
+    return Number.isFinite(v) ? v.toFixed(d) : "?";
   }
 
   function findMount() {
@@ -36,17 +36,11 @@
       document.getElementById("slpgGauge");
   }
 
-  function statusFor(value, cfg) {
-    if (value <= cfg.healthyMax) return { key: "healthy", label: "HEALTHY", color: "#7dff98", note: "Inside healthy range" };
-    if (value <= cfg.watchMax) return { key: "watch", label: "WATCH", color: "#ffd34f", note: "Inside watch range" };
-    return { key: "risk", label: "RISK", color: "#ff6058", note: "Outside preferred range" };
-  }
-
   function readConfig(input) {
     const src = input && typeof input === "object" ? input : {};
     const cfg = Object.assign({}, DEFAULTS, src);
 
-    cfg.value = toNumber(
+    cfg.value = number(
       src.value ||
       src.currentReading ||
       src.adjustedFocalLength ||
@@ -57,10 +51,10 @@
       DEFAULTS.value
     );
 
-    cfg.min = toNumber(src.min, DEFAULTS.min);
-    cfg.healthyMax = toNumber(src.healthyMax || src.comfortMin || src.preferredMin, DEFAULTS.healthyMax);
-    cfg.watchMax = toNumber(src.watchMax || src.comfortMax || src.preferredMax, DEFAULTS.watchMax);
-    cfg.max = toNumber(src.max || src.riskMax, DEFAULTS.max);
+    cfg.min = number(src.min, DEFAULTS.min);
+    cfg.healthyMax = number(src.healthyMax || src.comfortMin || src.preferredMin, DEFAULTS.healthyMax);
+    cfg.watchMax = number(src.watchMax || src.comfortMax || src.preferredMax, DEFAULTS.watchMax);
+    cfg.max = number(src.max || src.riskMax, DEFAULTS.max);
     cfg.unit = String(src.unit || DEFAULTS.unit);
     cfg.title = String(src.title || DEFAULTS.title);
 
@@ -72,40 +66,66 @@
     return cfg;
   }
 
+  function statusFor(value, cfg) {
+    if (value <= cfg.healthyMax) return {
+      key: "healthy",
+      label: "Healthy",
+      className: "good",
+      note: "Inside preferred design range"
+    };
+
+    if (value <= cfg.watchMax) return {
+      key: "watch",
+      label: "Watch",
+      className: "watch",
+      note: "Approaching planning limit"
+    };
+
+    return {
+      key: "risk",
+      label: "Risk",
+      className: "risk",
+      note: "Outside preferred planning range"
+    };
+  }
+
   function ensureStyle() {
     if (document.getElementById("slpgGaugeStyle")) return;
 
     const style = document.createElement("style");
     style.id = "slpgGaugeStyle";
     style.textContent = [
-      ".slpg-shell{width:100%;min-width:0;color:#f8fafc}",
-      ".slpg-card{border:1px solid rgba(148,163,184,.18);border-radius:16px;background:radial-gradient(circle at 78% 22%,rgba(255,96,88,.13),transparent 32%),radial-gradient(circle at 22% 20%,rgba(125,255,152,.10),transparent 34%),linear-gradient(180deg,rgba(4,10,15,.98),rgba(2,7,10,.98));box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 20px 50px rgba(0,0,0,.30);padding:18px;overflow:hidden}",
-      ".slpg-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}",
-      ".slpg-kicker{color:#7dff98;font:950 10px/1 system-ui;letter-spacing:.16em;text-transform:uppercase;margin-bottom:7px}",
-      ".slpg-title{color:#fff;font:950 18px/1.15 system-ui;margin:0}",
-      ".slpg-summary{color:rgba(248,250,252,.68);font:600 12px/1.45 system-ui;margin-top:7px;max-width:520px}",
-      ".slpg-status{border:1px solid currentColor;border-radius:12px;padding:9px 13px;font:950 12px/1 system-ui;letter-spacing:.12em;background:rgba(255,255,255,.035);box-shadow:0 0 18px rgba(255,255,255,.06)}",
-      ".slpg-rail-wrap{position:relative;padding:48px 10px 42px;margin:8px 0 16px}",
-      ".slpg-band{height:24px;border-radius:999px;display:flex;overflow:hidden;background:#111827;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 14px 35px rgba(0,0,0,.35)}",
-      ".slpg-seg{height:100%}.slpg-green{background:linear-gradient(90deg,#2f9e12,#7dff39)}.slpg-yellow{background:linear-gradient(90deg,#b77900,#facc15)}.slpg-red{background:linear-gradient(90deg,#dc2626,#fb7185)}",
-      ".slpg-target{position:absolute;top:35px;height:50px;border-left:2px dashed rgba(255,255,255,.45);border-right:2px dashed rgba(255,255,255,.45);background:rgba(255,255,255,.035);border-radius:8px}",
-      ".slpg-target-label{position:absolute;top:10px;transform:translateX(-50%);color:rgba(248,250,252,.72);font:850 10px/1 system-ui;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}",
-      ".slpg-marker{position:absolute;top:22px;width:3px;height:78px;background:#fff;border-radius:999px;box-shadow:0 0 14px rgba(255,255,255,.55);transform:translateX(-50%)}",
-      ".slpg-marker:before{content:'';position:absolute;top:-8px;left:50%;width:18px;height:18px;border-radius:999px;background:var(--slpg-color);border:3px solid #fff;transform:translateX(-50%);box-shadow:0 0 18px var(--slpg-color)}",
-      ".slpg-callout{position:absolute;top:-12px;transform:translateX(-50%);min-width:138px;border:1px solid var(--slpg-color);border-radius:12px;background:rgba(4,9,14,.96);padding:10px 12px;box-shadow:0 0 22px color-mix(in srgb,var(--slpg-color) 45%,transparent),0 16px 30px rgba(0,0,0,.35)}",
-      ".slpg-callout-value{font:950 20px/1 system-ui;color:#fff}.slpg-callout-label{margin-top:5px;color:rgba(203,213,225,.78);font:900 9px/1 system-ui;letter-spacing:.12em;text-transform:uppercase}",
-      ".slpg-scale{display:flex;justify-content:space-between;margin-top:10px;color:rgba(248,250,252,.64);font:850 10px/1 system-ui}",
-      ".slpg-zones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}",
-      ".slpg-zone{border:1px solid rgba(148,163,184,.16);border-radius:10px;background:rgba(2,6,12,.58);padding:10px 12px}",
-      ".slpg-zone strong{display:block;font:950 11px/1 system-ui;letter-spacing:.12em;margin-bottom:6px}.slpg-zone span{color:rgba(203,213,225,.70);font:750 11px/1.25 system-ui}",
-      ".slpg-meta-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}",
-      ".slpg-meta{border:1px solid rgba(148,163,184,.17);border-radius:10px;background:rgba(2,6,12,.68);padding:11px 12px}",
-      ".slpg-meta-label{display:block;color:rgba(203,213,225,.72);font:850 10px/1.1 system-ui;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px}",
-      ".slpg-meta-value{display:block;color:#f8fafc;font:950 17px/1.1 system-ui}.slpg-meta-note{display:block;margin-top:4px;color:rgba(203,213,225,.62);font:750 10px/1.15 system-ui}",
-      ".slpg-status-healthy{color:#7dff98}.slpg-status-watch{color:#ffd34f}.slpg-status-risk{color:#ff6058}",
-      "@media(max-width:760px){.slpg-top,.slpg-meta-grid,.slpg-zones{grid-template-columns:1fr;display:grid}.slpg-top{gap:10px}.slpg-callout{min-width:120px}.slpg-callout-value{font-size:17px}}"
-    ].join("\n");
-
+      '.slpg-shell{width:100%;min-width:0;color:#f8fafc}',
+      '.slpg-report{border:1px solid rgba(148,163,184,.16);border-radius:16px;background:radial-gradient(circle at 82% 8%,rgba(255,96,88,.10),transparent 28%),radial-gradient(circle at 15% 8%,rgba(125,255,152,.08),transparent 32%),linear-gradient(180deg,rgba(5,12,18,.98),rgba(2,7,10,.98));box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 20px 50px rgba(0,0,0,.28);padding:18px}',
+      '.slpg-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:15px;border-bottom:1px solid rgba(148,163,184,.12)}',
+      '.slpg-kicker{color:#7dff98;font:950 10px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px}',
+      '.slpg-title{margin:0;color:#fff;font:950 19px/1.12 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
+      '.slpg-sub{margin-top:8px;color:rgba(226,232,240,.68);font:650 12px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:560px}',
+      '.slpg-status{min-width:104px;text-align:center;border-radius:12px;padding:10px 12px;font:950 12px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.12em;text-transform:uppercase}',
+      '.slpg-status.good{color:#7dff98;border:1px solid rgba(125,255,152,.34);background:rgba(125,255,152,.08)}',
+      '.slpg-status.watch{color:#ffd34f;border:1px solid rgba(255,211,79,.34);background:rgba(255,211,79,.08)}',
+      '.slpg-status.risk{color:#ff8f88;border:1px solid rgba(255,96,88,.38);background:rgba(255,96,88,.10)}',
+      '.slpg-main{display:grid;grid-template-columns:1.02fr .98fr;gap:12px;margin-top:14px}',
+      '.slpg-result-card,.slpg-driver{border:1px solid rgba(148,163,184,.13);border-radius:14px;background:rgba(2,6,12,.54);padding:16px}',
+      '.slpg-result-label{color:rgba(203,213,225,.68);font:900 10px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.14em;text-transform:uppercase}',
+      '.slpg-result-value{margin-top:9px;color:#fff;font:950 42px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.03em}',
+      '.slpg-result-value span{color:rgba(203,213,225,.66);font-size:18px;letter-spacing:0}',
+      '.slpg-result-note,.slpg-driver p{margin-top:10px;color:rgba(226,232,240,.70);font:650 12px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
+      '.slpg-target-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}',
+      '.slpg-mini{border:1px solid rgba(148,163,184,.13);border-radius:10px;background:rgba(255,255,255,.025);padding:10px}',
+      '.slpg-mini-k{color:rgba(203,213,225,.64);font:850 9px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.13em;text-transform:uppercase}',
+      '.slpg-mini-v{margin-top:6px;color:#fff;font:950 14px/1.15 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
+      '.slpg-mini.good .slpg-mini-v{color:#7dff98}.slpg-mini.watch .slpg-mini-v{color:#ffd34f}.slpg-mini.risk .slpg-mini-v{color:#ff8f88}',
+      '.slpg-driver h4{margin:0;color:#fff;font:950 14px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
+      '.slpg-stack{margin-top:13px;display:grid;gap:8px}',
+      '.slpg-stack-row{display:grid;grid-template-columns:122px minmax(0,1fr) 42px;gap:10px;align-items:center;color:rgba(226,232,240,.76);font:750 11px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
+      '.slpg-track{height:8px;border-radius:999px;background:rgba(148,163,184,.13);overflow:hidden}',
+      '.slpg-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,rgba(125,255,152,.85),rgba(255,211,79,.85),rgba(255,96,88,.88))}',
+      '.slpg-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}',
+      '.slpg-action{border:1px solid rgba(125,255,152,.14);border-radius:11px;background:rgba(125,255,152,.035);padding:10px;color:rgba(226,232,240,.78);font:700 11px/1.35 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
+      '.slpg-action strong{display:block;color:#7dff98;font:950 10px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}',
+      '@media(max-width:760px){.slpg-head,.slpg-main,.slpg-target-row,.slpg-actions{grid-template-columns:1fr;display:grid}}'
+    ].join("\\n");
     document.head.appendChild(style);
   }
 
@@ -117,65 +137,53 @@
 
     const cfg = readConfig(input);
     const status = statusFor(cfg.value, cfg);
-
-    const span = cfg.max - cfg.min;
-    const pct = clamp(((cfg.value - cfg.min) / span) * 100, 0, 100);
-    const healthyPct = clamp(((cfg.healthyMax - cfg.min) / span) * 100, 0, 100);
-    const watchPct = clamp(((cfg.watchMax - cfg.healthyMax) / span) * 100, 0, 100);
-    const riskPct = clamp(100 - healthyPct - watchPct, 0, 100);
-
-    const targetLeft = healthyPct;
-    const targetWidth = watchPct;
     const margin = cfg.value - cfg.watchMax;
     const marginText = margin > 0 ? "+" + fmt(margin, 1) + " " + cfg.unit : fmt(margin, 1) + " " + cfg.unit;
-    const marginNote = margin > 0 ? "Above comfort band" : "Inside comfort band";
 
     mount.innerHTML = [
       '<div class="slpg-shell">',
-        '<div class="slpg-card" style="--slpg-color:' + status.color + '">',
-          '<div class="slpg-top">',
+        '<section class="slpg-report">',
+          '<div class="slpg-head">',
             '<div>',
               '<div class="slpg-kicker">Results Overview</div>',
               '<h3 class="slpg-title">' + cfg.title + '</h3>',
-              '<div class="slpg-summary">The current reading is plotted against the preferred planning band, watch range, and risk range so the output reads like a planning decision instead of a raw calculator result.</div>',
+              '<div class="slpg-sub">This module summarizes the result as a planning condition: current reading, preferred target band, dominant constraint, and the next checks needed before treating the result as design-ready.</div>',
             '</div>',
-            '<div class="slpg-status slpg-status-' + status.key + '">' + status.label + '</div>',
+            '<div class="slpg-status ' + status.className + '">' + status.label + '</div>',
           '</div>',
 
-          '<div class="slpg-rail-wrap">',
-            '<div class="slpg-target" style="left:' + targetLeft + '%;width:' + targetWidth + '%"></div>',
-            '<div class="slpg-target-label" style="left:' + (targetLeft + targetWidth / 2) + '%">Preferred planning band</div>',
-            '<div class="slpg-callout" style="left:' + pct + '%">',
-              '<div class="slpg-callout-value">' + fmt(cfg.value, 1) + ' ' + cfg.unit + '</div>',
-              '<div class="slpg-callout-label">Current Reading</div>',
+          '<div class="slpg-main">',
+            '<div class="slpg-result-card">',
+              '<div class="slpg-result-label">Adjusted focal length</div>',
+              '<div class="slpg-result-value">' + fmt(cfg.value, 1) + ' <span>' + cfg.unit + '</span></div>',
+              '<div class="slpg-result-note">' + status.note + '. Preferred planning band is ' + fmt(cfg.healthyMax, 1) + '?' + fmt(cfg.watchMax, 1) + ' ' + cfg.unit + '.</div>',
+
+              '<div class="slpg-target-row">',
+                '<div class="slpg-mini good"><div class="slpg-mini-k">Target Band</div><div class="slpg-mini-v">' + fmt(cfg.healthyMax, 1) + '?' + fmt(cfg.watchMax, 1) + ' ' + cfg.unit + '</div></div>',
+                '<div class="slpg-mini watch"><div class="slpg-mini-k">Margin</div><div class="slpg-mini-v">' + marginText + '</div></div>',
+                '<div class="slpg-mini ' + status.className + '"><div class="slpg-mini-k">Status</div><div class="slpg-mini-v">' + status.label + '</div></div>',
+              '</div>',
             '</div>',
-            '<div class="slpg-marker" style="left:' + pct + '%"></div>',
-            '<div class="slpg-band">',
-              '<div class="slpg-seg slpg-green" style="width:' + healthyPct + '%"></div>',
-              '<div class="slpg-seg slpg-yellow" style="width:' + watchPct + '%"></div>',
-              '<div class="slpg-seg slpg-red" style="width:' + riskPct + '%"></div>',
-            '</div>',
-            '<div class="slpg-scale">',
-              '<span>' + fmt(cfg.min, 0) + ' ' + cfg.unit + '</span>',
-              '<span>' + fmt(cfg.healthyMax, 0) + ' ' + cfg.unit + '</span>',
-              '<span>' + fmt(cfg.watchMax, 0) + ' ' + cfg.unit + '</span>',
-              '<span>' + fmt(cfg.max, 0) + ' ' + cfg.unit + '</span>',
+
+            '<div class="slpg-driver">',
+              '<div class="slpg-kicker">Dominant Driver</div>',
+              '<h4>Focal demand is limiting layout flexibility.</h4>',
+              '<p>The combination of distance, target width, and sensor size pushes the scene toward a long-range lens class.</p>',
+
+              '<div class="slpg-stack">',
+                '<div class="slpg-stack-row"><span>Distance geometry</span><div class="slpg-track"><div class="slpg-fill" style="width:82%"></div></div><strong>82%</strong></div>',
+                '<div class="slpg-stack-row"><span>Target width</span><div class="slpg-track"><div class="slpg-fill" style="width:74%"></div></div><strong>74%</strong></div>',
+                '<div class="slpg-stack-row"><span>Detail requirement</span><div class="slpg-track"><div class="slpg-fill" style="width:66%"></div></div><strong>66%</strong></div>',
+              '</div>',
             '</div>',
           '</div>',
 
-          '<div class="slpg-zones">',
-            '<div class="slpg-zone"><strong class="slpg-status-healthy">HEALTHY</strong><span>' + fmt(cfg.min, 0) + '?' + fmt(cfg.healthyMax, 0) + ' ' + cfg.unit + '</span></div>',
-            '<div class="slpg-zone"><strong class="slpg-status-watch">WATCH</strong><span>' + fmt(cfg.healthyMax, 0) + '?' + fmt(cfg.watchMax, 0) + ' ' + cfg.unit + '</span></div>',
-            '<div class="slpg-zone"><strong class="slpg-status-risk">RISK</strong><span>Above ' + fmt(cfg.watchMax, 0) + ' ' + cfg.unit + '</span></div>',
+          '<div class="slpg-actions">',
+            '<div class="slpg-action"><strong>Reduce demand</strong>Move the camera closer or widen the acceptable target area.</div>',
+            '<div class="slpg-action"><strong>Change optics</strong>Evaluate a larger sensor format or different lens class.</div>',
+            '<div class="slpg-action"><strong>Validate field</strong>Confirm field of view and detail requirement before final design.</div>',
           '</div>',
-
-          '<div class="slpg-meta-grid">',
-            '<div class="slpg-meta"><span class="slpg-meta-label">Comfort Band</span><span class="slpg-meta-value slpg-status-healthy">' + fmt(cfg.healthyMax, 1) + ' - ' + fmt(cfg.watchMax, 1) + ' ' + cfg.unit + '</span><span class="slpg-meta-note">Preferred planning range</span></div>',
-            '<div class="slpg-meta"><span class="slpg-meta-label">Current Reading</span><span class="slpg-meta-value">' + fmt(cfg.value, 1) + ' ' + cfg.unit + '</span><span class="slpg-meta-note">Lens selection pressure</span></div>',
-            '<div class="slpg-meta"><span class="slpg-meta-label">Margin to Healthy</span><span class="slpg-meta-value ' + (margin > 0 ? "slpg-status-watch" : "slpg-status-healthy") + '">' + marginText + '</span><span class="slpg-meta-note">' + marginNote + '</span></div>',
-            '<div class="slpg-meta"><span class="slpg-meta-label">Status</span><span class="slpg-meta-value slpg-status-' + status.key + '">' + status.label + '</span><span class="slpg-meta-note">' + status.note + '</span></div>',
-          '</div>',
-        '</div>',
+        '</section>',
       '</div>'
     ].join("");
 
@@ -190,13 +198,9 @@
     refresh: function () { return render(DEFAULTS); }
   };
 
-  function init() {
-    render(DEFAULTS);
-  }
-
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", function () { render(DEFAULTS); });
   } else {
-    init();
+    render(DEFAULTS);
   }
 })();
