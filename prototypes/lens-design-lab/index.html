@@ -30,9 +30,7 @@
         radial-gradient(circle at 18% 0%, rgba(82,255,138,.08), transparent 36%),
         radial-gradient(circle at 90% 9%, rgba(255,96,88,.08), transparent 32%),
         linear-gradient(180deg, rgba(5,14,11,.99), rgba(2,7,5,.995));
-      box-shadow:
-        0 34px 100px rgba(0,0,0,.48),
-        inset 0 1px 0 rgba(255,255,255,.055);
+      box-shadow: 0 34px 100px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.055);
     }
 
     .lab-title {
@@ -81,7 +79,7 @@
 
     .lab-summary {
       margin-top: 8px;
-      max-width: 620px;
+      max-width: 720px;
       color: rgba(226,232,240,.70);
       font-size: .82rem;
       line-height: 1.5;
@@ -101,6 +99,18 @@
       text-transform: uppercase;
     }
 
+    .lab-status.healthy {
+      border-color: rgba(125,255,152,.32);
+      background: rgba(125,255,152,.08);
+      color: #7dff98;
+    }
+
+    .lab-status.watch {
+      border-color: rgba(255,211,79,.32);
+      background: rgba(255,211,79,.08);
+      color: #ffd34f;
+    }
+
     .lab-body {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -109,10 +119,15 @@
     }
 
     .lab-result,
-    .lab-driver {
+    .lab-driver,
+    .lab-analytics,
+    .lab-comparison,
+    .lab-carry {
       border: 1px solid rgba(148,163,184,.13);
       border-radius: 14px;
-      background: rgba(2,6,12,.54);
+      background:
+        radial-gradient(circle at 82% 12%, rgba(255,96,88,.055), transparent 30%),
+        rgba(2,6,12,.54);
       padding: 16px;
     }
 
@@ -146,31 +161,48 @@
       line-height: 1.45;
     }
 
-    .lab-mini-grid {
+    .lab-mini-grid,
+    .lab-analytics-grid,
+    .lab-scenario-strip {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
+      grid-template-columns: repeat(4, minmax(0,1fr));
       gap: 8px;
       margin-top: 14px;
     }
 
-    .lab-mini {
+    .lab-mini,
+    .lab-analytic,
+    .lab-scenario-card {
       border: 1px solid rgba(148,163,184,.13);
       border-radius: 10px;
       background: rgba(255,255,255,.025);
       padding: 10px;
+      min-width: 0;
     }
 
-    .lab-mini strong {
+    .lab-mini strong,
+    .lab-analytic-value,
+    .lab-scenario-value {
       display: block;
       margin-top: 6px;
       color: #fff;
-      font-size: .86rem;
+      font-size: .92rem;
       font-weight: 950;
+      line-height: 1.15;
     }
 
-    .lab-good strong { color: #7dff98; }
-    .lab-watch strong { color: #ffd34f; }
-    .lab-risk strong { color: #ff8f88; }
+    .lab-note-small,
+    .lab-analytic-note,
+    .lab-scenario-note {
+      margin-top: 5px;
+      color: rgba(226,232,240,.58);
+      font-size: .68rem;
+      line-height: 1.32;
+    }
+
+    .good { color: #7dff98 !important; }
+    .watch { color: #ffd34f !important; }
+    .risk { color: #ff8f88 !important; }
 
     .lab-driver h3 {
       margin: 0;
@@ -215,7 +247,9 @@
       margin-top: 12px;
     }
 
-    .lab-action {
+    .lab-action,
+    .lab-impact-card,
+    .lab-sensitivity-card {
       border: 1px solid rgba(125,255,152,.14);
       border-radius: 11px;
       background: rgba(125,255,152,.035);
@@ -226,28 +260,26 @@
       font-weight: 700;
     }
 
-    .lab-action strong {
+    .lab-action strong,
+    .lab-impact-card h4,
+    .lab-sensitivity-card h4,
+    .lab-tradeoff-summary h4 {
       display: block;
       color: #7dff98;
       font-size: .62rem;
       font-weight: 950;
       letter-spacing: .12em;
       text-transform: uppercase;
-      margin-bottom: 6px;
+      margin: 0 0 6px;
     }
 
-
-    .lab-analytics {
+    .lab-analytics,
+    .lab-comparison,
+    .lab-carry {
       margin-top: 12px;
-      border: 1px solid rgba(148,163,184,.13);
-      border-radius: 14px;
-      background:
-        radial-gradient(circle at 82% 12%, rgba(255,96,88,.08), transparent 30%),
-        linear-gradient(180deg, rgba(2,6,12,.48), rgba(2,6,12,.28));
-      padding: 14px;
     }
 
-    .lab-analytics-head {
+    .lab-section-head {
       display: flex;
       justify-content: space-between;
       gap: 12px;
@@ -255,153 +287,14 @@
       margin-bottom: 12px;
     }
 
-    .lab-analytics-title {
+    .lab-section-title {
       margin: 0;
       color: #fff;
       font-size: .96rem;
       font-weight: 950;
     }
 
-    .lab-analytics-note {
-      margin-top: 5px;
-      color: rgba(226,232,240,.68);
-      font-size: .76rem;
-      line-height: 1.45;
-      max-width: 680px;
-    }
-
-    .lab-pressure-chip {
-      border: 1px solid rgba(255,96,88,.36);
-      border-radius: 10px;
-      background: rgba(255,96,88,.09);
-      color: #ff8f88;
-      padding: 9px 11px;
-      font-size: .68rem;
-      font-weight: 950;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .lab-analytics-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap: 8px;
-    }
-
-    .lab-analytic {
-      border: 1px solid rgba(148,163,184,.13);
-      border-radius: 10px;
-      background: rgba(255,255,255,.025);
-      padding: 10px;
-    }
-
-    .lab-analytic-label {
-      color: rgba(203,213,225,.64);
-      font-size: .58rem;
-      font-weight: 900;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-
-    .lab-analytic-value {
-      margin-top: 7px;
-      color: #fff;
-      font-size: .98rem;
-      font-weight: 950;
-      line-height: 1.15;
-    }
-
-    .lab-analytic-value.good { color: #7dff98; }
-    .lab-analytic-value.watch { color: #ffd34f; }
-    .lab-analytic-value.risk { color: #ff8f88; }
-
-    .lab-analytic-note {
-      margin-top: 5px;
-      color: rgba(226,232,240,.58);
-      font-size: .68rem;
-      line-height: 1.32;
-    }
-
-    .lab-sensitivity {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .lab-sensitivity-card {
-      border: 1px solid rgba(125,255,152,.13);
-      border-radius: 11px;
-      background: rgba(125,255,152,.028);
-      padding: 11px;
-    }
-
-    .lab-sensitivity-card h4 {
-      margin: 0 0 8px;
-      color: #7dff98;
-      font-size: .72rem;
-      font-weight: 950;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    .lab-sensitivity-card ul {
-      margin: 0;
-      padding-left: 17px;
-      color: rgba(226,232,240,.74);
-      font-size: .74rem;
-      line-height: 1.48;
-    }
-
-    .lab-sensitivity-card li + li {
-      margin-top: 4px;
-    }
-
-    @media (max-width: 760px) {
-      .lab-head,
-      .lab-body,
-      .lab-mini-grid,
-      .lab-actions {
-        grid-template-columns: 1fr;
-        display: grid;
-      }
-    }
-  
-    .lab-comparison {
-      margin-top: 12px;
-      border: 1px solid rgba(148,163,184,.13);
-      border-radius: 14px;
-      background:
-        radial-gradient(circle at 82% 12%, rgba(255,96,88,.08), transparent 30%),
-        linear-gradient(180deg, rgba(2,6,12,.48), rgba(2,6,12,.28));
-      padding: 14px;
-    }
-
-    .lab-comparison-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-      margin-bottom: 12px;
-    }
-
-    .lab-comparison-title {
-      margin: 0;
-      color: #fff;
-      font-size: .96rem;
-      font-weight: 950;
-    }
-
-    .lab-comparison-note {
-      margin-top: 5px;
-      color: rgba(226,232,240,.68);
-      font-size: .76rem;
-      line-height: 1.45;
-      max-width: 720px;
-    }
-
-    .lab-comparison-chip {
+    .lab-chip {
       border: 1px solid rgba(125,255,152,.28);
       border-radius: 10px;
       background: rgba(125,255,152,.08);
@@ -412,6 +305,112 @@
       letter-spacing: .12em;
       text-transform: uppercase;
       white-space: nowrap;
+    }
+
+    .lab-chip.risk-chip {
+      border-color: rgba(255,96,88,.36);
+      background: rgba(255,96,88,.09);
+      color: #ff8f88;
+    }
+
+    .scenario-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .scenario-btn {
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,.035);
+      color: rgba(226,232,240,.78);
+      padding: 8px 12px;
+      font-size: .72rem;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .scenario-btn.active {
+      border-color: rgba(125,255,152,.42);
+      background: rgba(125,255,152,.10);
+      color: #7dff98;
+      box-shadow: 0 0 18px rgba(125,255,152,.10);
+    }
+
+    .custom-control {
+      display: grid;
+      grid-template-columns: 170px minmax(0,1fr) 90px;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 12px;
+      background: rgba(255,255,255,.025);
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+
+    .custom-control label {
+      color: rgba(203,213,225,.70);
+      font-size: .68rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .custom-control input[type="range"] {
+      width: 100%;
+      accent-color: #7dff98;
+    }
+
+    .custom-control input[type="number"] {
+      width: 100%;
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 8px;
+      background: rgba(2,6,12,.78);
+      color: #fff;
+      padding: 8px;
+      font-weight: 850;
+    }
+
+    .lab-impact-grid,
+    .lab-sensitivity {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin: 0 0 12px;
+    }
+
+    .lab-sensitivity {
+      grid-template-columns: 1fr 1fr;
+      margin-top: 10px;
+    }
+
+    .lab-sensitivity-card ul {
+      margin: 0;
+      padding-left: 17px;
+      color: rgba(226,232,240,.74);
+      font-size: .74rem;
+      line-height: 1.48;
+    }
+
+    .lab-tradeoff-summary {
+      margin-top: 10px;
+      border: 1px solid rgba(255,211,79,.16);
+      border-radius: 12px;
+      background: radial-gradient(circle at 88% 12%, rgba(255,211,79,.08), transparent 28%), rgba(255,211,79,.026);
+      padding: 12px;
+    }
+
+    .lab-tradeoff-summary h4 {
+      color: #ffd34f;
+    }
+
+    .lab-tradeoff-summary p {
+      margin: 0;
+      color: rgba(226,232,240,.74);
+      font-size: .74rem;
+      line-height: 1.48;
     }
 
     .lab-chart-shell {
@@ -429,127 +428,69 @@
       line-height: 1.4;
     }
 
-  
-    .lab-scenario-strip {
-      display: grid;
-      grid-template-columns: 1.1fr .8fr .7fr .8fr;
+    .carry-actions {
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
-      margin: 12px 0;
+      margin: 10px 0;
     }
 
-    .lab-scenario-card {
-      border: 1px solid rgba(148,163,184,.13);
-      border-radius: 11px;
-      background: rgba(255,255,255,.025);
-      padding: 11px 12px;
-      min-width: 0;
-    }
-
-    .lab-scenario-label {
-      color: rgba(203,213,225,.64);
-      font-size: .58rem;
+    .carry-btn {
+      border: 1px solid rgba(125,255,152,.28);
+      border-radius: 10px;
+      background: rgba(125,255,152,.10);
+      color: #7dff98;
+      padding: 9px 12px;
+      font-size: .72rem;
       font-weight: 900;
-      letter-spacing: .13em;
-      text-transform: uppercase;
+      cursor: pointer;
     }
 
-    .lab-scenario-value {
-      margin-top: 7px;
-      color: #fff;
-      font-size: .95rem;
-      font-weight: 950;
-      line-height: 1.15;
-    }
-
-    .lab-scenario-note {
-      margin-top: 5px;
-      color: rgba(226,232,240,.58);
-      font-size: .68rem;
-      line-height: 1.32;
-    }
-
-    .lab-scenario-card.good .lab-scenario-value {
-      color: #7dff98;
-    }
-
-    .lab-scenario-card.watch .lab-scenario-value {
-      color: #ffd34f;
-    }
-
-    .lab-scenario-card.risk .lab-scenario-value {
-      color: #ff8f88;
-    }
-
-    .lab-impact-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 8px;
-      margin: 0 0 12px;
-    }
-
-    .lab-impact-card {
-      border: 1px solid rgba(125,255,152,.13);
-      border-radius: 11px;
-      background: rgba(125,255,152,.028);
-      padding: 11px;
-    }
-
-    .lab-impact-card h4 {
-      margin: 0 0 7px;
-      color: #7dff98;
-      font-size: .7rem;
-      font-weight: 950;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    .lab-impact-card p {
-      margin: 0;
+    .carry-status {
       color: rgba(226,232,240,.72);
       font-size: .72rem;
-      line-height: 1.42;
+      line-height: 1.4;
     }
 
-    .lab-tradeoff-summary {
+    .payload-box {
       margin-top: 10px;
-      border: 1px solid rgba(255,211,79,.16);
-      border-radius: 12px;
-      background:
-        radial-gradient(circle at 88% 12%, rgba(255,211,79,.08), transparent 28%),
-        rgba(255,211,79,.026);
-      padding: 12px;
-    }
-
-    .lab-tradeoff-summary h4 {
-      margin: 0 0 7px;
-      color: #ffd34f;
-      font-size: .72rem;
-      font-weight: 950;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    .lab-tradeoff-summary p {
-      margin: 0;
-      color: rgba(226,232,240,.74);
-      font-size: .74rem;
-      line-height: 1.48;
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 10px;
+      background: rgba(0,0,0,.18);
+      padding: 10px;
+      color: rgba(226,232,240,.72);
+      font-size: .68rem;
+      line-height: 1.45;
+      overflow: auto;
+      max-height: 190px;
+      white-space: pre-wrap;
     }
 
     @media (max-width: 900px) {
+      .lab-body,
+      .lab-mini-grid,
+      .lab-analytics-grid,
       .lab-scenario-strip,
-      .lab-impact-grid {
+      .lab-impact-grid,
+      .lab-sensitivity {
         grid-template-columns: 1fr 1fr;
       }
     }
 
     @media (max-width: 640px) {
+      .lab-head,
+      .lab-body,
+      .lab-mini-grid,
+      .lab-analytics-grid,
       .lab-scenario-strip,
-      .lab-impact-grid {
+      .lab-impact-grid,
+      .lab-sensitivity,
+      .lab-actions,
+      .custom-control {
         grid-template-columns: 1fr;
+        display: grid;
       }
     }
-
   </style>
 </head>
 
@@ -578,7 +519,8 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-004-scenario-decision-layer.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-005-interactive-scenarios.
+      </div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -589,33 +531,49 @@
               <div class="lab-kicker">Results Overview</div>
               <h2>Lens Selection Pressure</h2>
               <div class="lab-summary">
-                This mockup tests a professional diagnostic module instead of a curved speedometer. It summarizes the result, the planning target, the dominant driver, and the path back toward a healthier design range.
+                Interactive prototype: choose a planning scenario, adjust the proposed focal result, watch the analytics and chart update, then simulate carrying the chosen scenario forward to the next pipeline step.
               </div>
             </div>
 
-            <div class="lab-status">Risk</div>
+            <div id="topStatus" class="lab-status">Risk</div>
+          </div>
+
+          <div class="scenario-controls" aria-label="Scenario controls">
+            <button class="scenario-btn" data-scenario="current">Current</button>
+            <button class="scenario-btn" data-scenario="closer">Closer Camera</button>
+            <button class="scenario-btn" data-scenario="wider">Wider Target</button>
+            <button class="scenario-btn" data-scenario="split">Split Coverage</button>
+            <button class="scenario-btn" data-scenario="custom">Custom</button>
+          </div>
+
+          <div class="custom-control">
+            <label for="scenarioRange">Custom proposed result</label>
+            <input id="scenarioRange" type="range" min="6" max="30" step="0.1" value="16.5" />
+            <input id="scenarioNumber" type="number" min="6" max="30" step="0.1" value="16.5" />
           </div>
 
           <div class="lab-body">
             <div class="lab-result">
-              <div class="lab-label">Adjusted focal length</div>
-              <div class="lab-value">25.6 <span>mm</span></div>
-              <div class="lab-copy">
-                Outside preferred planning range. Preferred planning band is 8.0?18.0 mm.
-              </div>
+              <div class="lab-label">Selected scenario result</div>
+              <div class="lab-value"><span id="selectedValue">12.5</span> <span>mm</span></div>
+              <div id="selectedNote" class="lab-copy"></div>
 
               <div class="lab-mini-grid">
-                <div class="lab-mini lab-good">
+                <div class="lab-mini">
+                  <div class="lab-label">Original</div>
+                  <strong class="risk">25.6 mm</strong>
+                </div>
+                <div class="lab-mini">
                   <div class="lab-label">Target Band</div>
-                  <strong>8.0?18.0 mm</strong>
+                  <strong class="good">8.0?18.0 mm</strong>
                 </div>
-                <div class="lab-mini lab-watch">
-                  <div class="lab-label">Margin</div>
-                  <strong>+7.6 mm</strong>
+                <div class="lab-mini">
+                  <div class="lab-label">Improvement</div>
+                  <strong id="improvementMini" class="watch">-13.1 mm</strong>
                 </div>
-                <div class="lab-mini lab-risk">
-                  <div class="lab-label">Status</div>
-                  <strong>Risk</strong>
+                <div class="lab-mini">
+                  <div class="lab-label">Projected Status</div>
+                  <strong id="statusMini" class="good">Healthy</strong>
                 </div>
               </div>
             </div>
@@ -630,18 +588,18 @@
               <div class="lab-stack">
                 <div class="lab-stack-row">
                   <span>Distance geometry</span>
-                  <div class="lab-track"><div class="lab-fill" style="width:82%"></div></div>
-                  <strong>82%</strong>
+                  <div class="lab-track"><div id="driverDistance" class="lab-fill" style="width:82%"></div></div>
+                  <strong id="driverDistanceText">82%</strong>
                 </div>
                 <div class="lab-stack-row">
                   <span>Target width</span>
-                  <div class="lab-track"><div class="lab-fill" style="width:74%"></div></div>
-                  <strong>74%</strong>
+                  <div class="lab-track"><div id="driverWidth" class="lab-fill" style="width:74%"></div></div>
+                  <strong id="driverWidthText">74%</strong>
                 </div>
                 <div class="lab-stack-row">
                   <span>Detail demand</span>
-                  <div class="lab-track"><div class="lab-fill" style="width:66%"></div></div>
-                  <strong>66%</strong>
+                  <div class="lab-track"><div id="driverDetail" class="lab-fill" style="width:66%"></div></div>
+                  <strong id="driverDetailText">66%</strong>
                 </div>
               </div>
             </div>
@@ -652,59 +610,56 @@
             <div class="lab-action"><strong>Change optics</strong>Evaluate a larger sensor format or different lens class.</div>
             <div class="lab-action"><strong>Validate field</strong>Confirm field of view and detail requirement before final design.</div>
           </div>
+
           <div class="lab-analytics">
-            <div class="lab-analytics-head">
+            <div class="lab-section-head">
               <div>
                 <div class="lab-kicker">Analytics Layer</div>
-                <h3 class="lab-analytics-title">What the result means operationally</h3>
-                <div class="lab-analytics-note">
-                  These analytics translate the focal-length result into planning pressure, distance from the preferred band, and the most useful levers to evaluate before relying on the design.
+                <h3 class="lab-section-title">What the selected scenario means operationally</h3>
+                <div class="lab-copy">
+                  These analytics translate the scenario into planning pressure, distance from the preferred band, and the most useful next review.
                 </div>
               </div>
 
-              <div class="lab-pressure-chip">Pressure Index 75 / 100</div>
+              <div id="pressureChip" class="lab-chip risk-chip">Pressure Index 37 / 100</div>
             </div>
 
             <div class="lab-analytics-grid">
               <div class="lab-analytic">
-                <div class="lab-analytic-label">Current Result</div>
-                <div class="lab-analytic-value risk">25.6 mm</div>
-                <div class="lab-analytic-note">Above the preferred 8.0?18.0 mm planning band.</div>
+                <div class="lab-label">Projected Result</div>
+                <div id="analyticsProjected" class="lab-analytic-value good">12.5 mm</div>
+                <div id="analyticsProjectedNote" class="lab-analytic-note"></div>
               </div>
 
               <div class="lab-analytic">
-                <div class="lab-analytic-label">Reduction Needed</div>
-                <div class="lab-analytic-value watch">7.6 mm</div>
-                <div class="lab-analytic-note">About 29.7% lower than the current calculated focal demand.</div>
+                <div class="lab-label">Reduction From Original</div>
+                <div id="analyticsReduction" class="lab-analytic-value watch">13.1 mm</div>
+                <div id="analyticsReductionNote" class="lab-analytic-note"></div>
               </div>
 
               <div class="lab-analytic">
-                <div class="lab-analytic-label">Band Position</div>
-                <div class="lab-analytic-value risk">+42%</div>
-                <div class="lab-analytic-note">Current result is roughly 42% above the comfort-band ceiling.</div>
+                <div class="lab-label">Band Position</div>
+                <div id="analyticsBand" class="lab-analytic-value good">Inside band</div>
+                <div id="analyticsBandNote" class="lab-analytic-note"></div>
               </div>
 
               <div class="lab-analytic">
-                <div class="lab-analytic-label">Headroom to Max</div>
-                <div class="lab-analytic-value">14.4 mm</div>
-                <div class="lab-analytic-note">Remaining margin before the 40 mm planning ceiling.</div>
+                <div class="lab-label">Next Check</div>
+                <div id="analyticsNextCheck" class="lab-analytic-value">FOV validation</div>
+                <div id="analyticsNextCheckNote" class="lab-analytic-note"></div>
               </div>
             </div>
 
             <div class="lab-sensitivity">
               <div class="lab-sensitivity-card">
                 <h4>Design levers to evaluate</h4>
-                <ul>
-                  <li>Move the camera closer. Around 56 ft would bring the same 20 ft target width near 18 mm.</li>
-                  <li>Increase acceptable target width. Around 28.4 ft would bring the same 80 ft distance near 18 mm.</li>
-                  <li>Revisit whether one camera should carry the full scene objective.</li>
-                </ul>
+                <ul id="leverList"></ul>
               </div>
 
               <div class="lab-sensitivity-card">
                 <h4>Checks before relying on result</h4>
                 <ul>
-                  <li>Confirm the target width represents the actual required scene, not just a convenient estimate.</li>
+                  <li>Confirm the target width represents the actual required scene.</li>
                   <li>Validate manufacturer lens availability and field-of-view chart.</li>
                   <li>Confirm the required detail objective before locking camera placement.</li>
                 </ul>
@@ -712,62 +667,59 @@
             </div>
           </div>
 
-        </div>
-      
           <div class="lab-comparison">
-            <div class="lab-comparison-head">
+            <div class="lab-section-head">
               <div>
                 <div class="lab-kicker">Scenario Comparison</div>
-                <h3 class="lab-comparison-title">Original vs proposed planning scenarios</h3>
-                <div class="lab-comparison-note">
-                  This chart compares the original focal-length result against proposed planning adjustments. The green shaded comfort band represents the preferred 8?18 mm range.
+                <h3 class="lab-section-title">Original vs proposed planning scenarios</h3>
+                <div class="lab-copy">
+                  The chart compares the original focal-length result against proposed planning adjustments. The green shaded comfort band represents the preferred 8?18 mm range.
                 </div>
               </div>
 
-              <div class="lab-comparison-chip">Scenario Analytics</div>
+              <div class="lab-chip">Scenario Analytics</div>
             </div>
 
-            
             <div class="lab-scenario-strip">
-              <div class="lab-scenario-card good">
-                <div class="lab-scenario-label">Best Path</div>
-                <div class="lab-scenario-value">Split Coverage</div>
-                <div class="lab-scenario-note">Strongest projected improvement while preserving detail intent.</div>
+              <div class="lab-scenario-card">
+                <div class="lab-label">Selected Path</div>
+                <div id="scenarioName" class="lab-scenario-value good">Split Coverage</div>
+                <div id="scenarioDescription" class="lab-scenario-note"></div>
               </div>
 
-              <div class="lab-scenario-card good">
-                <div class="lab-scenario-label">Projected Result</div>
-                <div class="lab-scenario-value">12.5 mm</div>
-                <div class="lab-scenario-note">Moves the design inside the preferred planning band.</div>
+              <div class="lab-scenario-card">
+                <div class="lab-label">Projected Result</div>
+                <div id="scenarioProjected" class="lab-scenario-value good">12.5 mm</div>
+                <div id="scenarioProjectedNote" class="lab-scenario-note"></div>
               </div>
 
-              <div class="lab-scenario-card good">
-                <div class="lab-scenario-label">Projected Status</div>
-                <div class="lab-scenario-value">Healthy</div>
-                <div class="lab-scenario-note">Back inside the preferred range.</div>
+              <div class="lab-scenario-card">
+                <div class="lab-label">Projected Status</div>
+                <div id="scenarioStatus" class="lab-scenario-value good">Healthy</div>
+                <div id="scenarioStatusNote" class="lab-scenario-note"></div>
               </div>
 
-              <div class="lab-scenario-card watch">
-                <div class="lab-scenario-label">Improvement</div>
-                <div class="lab-scenario-value">-13.1 mm</div>
-                <div class="lab-scenario-note">About 51% reduction from the original result.</div>
+              <div class="lab-scenario-card">
+                <div class="lab-label">Improvement</div>
+                <div id="scenarioImprovement" class="lab-scenario-value watch">-13.1 mm</div>
+                <div id="scenarioImprovementNote" class="lab-scenario-note"></div>
               </div>
             </div>
 
             <div class="lab-impact-grid">
               <div class="lab-impact-card">
                 <h4>Closer Camera</h4>
-                <p>Reduces focal demand to about 18.0 mm. Good if mounting position can move without losing required scene coverage.</p>
+                <p>Reduces focal demand by changing the distance-to-target relationship.</p>
               </div>
 
               <div class="lab-impact-card">
                 <h4>Wider Target</h4>
-                <p>Also trends toward about 18.0 mm. Useful only if the broader scene still satisfies the operational objective.</p>
+                <p>Reduces focal demand only if the wider scene still satisfies the objective.</p>
               </div>
 
               <div class="lab-impact-card">
                 <h4>Split Coverage</h4>
-                <p>Best projected reduction at about 12.5 mm. Adds camera count but gives the design more optical margin.</p>
+                <p>Adds camera count but can create more optical margin and easier lens selection.</p>
               </div>
             </div>
 
@@ -776,37 +728,263 @@
             </div>
 
             <div class="lab-chart-caption">
-              Baseline stays at the current result for comparison. Proposed scenarios show how each planning action could reduce focal demand toward the preferred range.
+              Baseline stays at the current result for comparison. Scenario chips and the custom result control update the proposed planning curve.
             </div>
+
             <div class="lab-tradeoff-summary">
               <h4>Scenario Recommendation</h4>
-              <p>
-                Split coverage gives the strongest optical improvement and moves the result cleanly into the preferred planning band.
-                If camera count or infrastructure cost is constrained, closer camera placement is the next best planning lever to evaluate.
-                Before choosing either path, validate the actual field of view, required detail objective, mounting options, and manufacturer lens availability.
-              </p>
+              <p id="recommendationText"></p>
             </div>
-
           </div>
 
+          <div class="lab-carry">
+            <div class="lab-section-head">
+              <div>
+                <div class="lab-kicker">Pipeline Carry-Forward Prototype</div>
+                <h3 class="lab-section-title">Use selected scenario in the next step</h3>
+                <div class="lab-copy">
+                  This stores the selected scenario in a prototype-only sessionStorage key. The live version should use a per-step physical-security pipeline key, then optionally save the same payload to Supabase for account/project history.
+                </div>
+              </div>
+
+              <div class="lab-chip">Prototype Only</div>
+            </div>
+
+            <div class="carry-actions">
+              <button id="saveScenarioBtn" class="carry-btn" type="button">Use selected scenario in next step</button>
+              <button id="clearScenarioBtn" class="carry-btn" type="button">Clear prototype carry-forward</button>
+            </div>
+
+            <div id="carryStatus" class="carry-status">No prototype scenario stored yet.</div>
+            <pre id="payloadPreview" class="payload-box"></pre>
+          </div>
+        </div>
       </section>
     </div>
   </main>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     (function () {
-      function initComparisonChart() {
-        if (!window.Chart) return;
+      var original = 25.6;
+      var comfortMin = 8.0;
+      var comfortMax = 18.0;
+      var max = 40.0;
+      var selectedScenario = "split";
 
-        var canvas = document.getElementById("labComparisonChart");
-        if (!canvas) return;
+      var scenarios = {
+        current: {
+          label: "Current",
+          value: 25.6,
+          description: "Original calculated result with no planning adjustment.",
+          levers: [
+            "Use current design only after validating lens availability.",
+            "Expect long-range lens constraints and tighter field-of-view tolerance.",
+            "Consider this the baseline, not the recommended improvement path."
+          ],
+          recommendation: "The current result remains outside the preferred band. Treat it as a warning condition and evaluate at least one planning adjustment before carrying the design forward."
+        },
+        closer: {
+          label: "Closer Camera",
+          value: 18.0,
+          description: "Moves the camera closer to reduce focal demand.",
+          levers: [
+            "Move the camera closer to the target area if mounting options allow.",
+            "Recheck the scene width and detail objective after relocation.",
+            "Validate that the new mounting position does not create coverage gaps."
+          ],
+          recommendation: "Closer camera placement is the cleanest single-design change if the site allows it. It brings the result to the edge of the preferred band with minimal change to camera count."
+        },
+        wider: {
+          label: "Wider Target",
+          value: 18.0,
+          description: "Increases acceptable target width while preserving the use case.",
+          levers: [
+            "Increase the acceptable target width only if the operational objective still holds.",
+            "Confirm the wider scene does not reduce required identification/detail quality.",
+            "Use this path when the target definition was overly narrow."
+          ],
+          recommendation: "Wider target framing can reduce focal demand, but it should only be used when the broader scene still satisfies the required detail objective."
+        },
+        split: {
+          label: "Split Coverage",
+          value: 12.5,
+          description: "Splits the scene across more than one camera.",
+          levers: [
+            "Split the coverage area across multiple cameras.",
+            "Use the extra optical margin to preserve identification/detail requirements.",
+            "Review camera count, cabling, mounting, and storage impact."
+          ],
+          recommendation: "Split coverage gives the strongest optical improvement and moves the result cleanly into the preferred planning band. It adds camera count, but gives the design more lens-selection margin."
+        },
+        custom: {
+          label: "Custom",
+          value: 16.5,
+          description: "User-adjusted proposed focal result for scenario testing.",
+          levers: [
+            "Tune the proposed result to represent a custom planning assumption.",
+            "Use this for what-if reviews before choosing a final design path.",
+            "Carry the selected custom value forward only after validating assumptions."
+          ],
+          recommendation: "The custom scenario is useful for planning review, but the changed assumption should be documented before carrying it into the next step."
+        }
+      };
 
-        if (window.labComparisonChartInstance) {
-          window.labComparisonChartInstance.destroy();
+      function statusFor(value) {
+        if (value >= comfortMin && value <= comfortMax) {
+          return { key: "healthy", label: "Healthy", cls: "good", note: "Inside the preferred planning band." };
         }
 
-        var ctx = canvas.getContext("2d");
+        if (value < comfortMin || value <= 24) {
+          return { key: "watch", label: "Watch", cls: "watch", note: "Near or outside the preferred planning band." };
+        }
+
+        return { key: "risk", label: "Risk", cls: "risk", note: "Outside the preferred planning band." };
+      }
+
+      function fmt(value, digits) {
+        return Number(value).toFixed(digits);
+      }
+
+      function pressureIndex(value) {
+        return Math.max(0, Math.min(100, Math.round((value / 34) * 100)));
+      }
+
+      function byId(id) {
+        return document.getElementById(id);
+      }
+
+      function setClassValue(el, base, cls) {
+        if (!el) return;
+        el.className = base + " " + cls;
+      }
+
+      function scenarioDataArray() {
+        return [
+          scenarios.current.value,
+          scenarios.closer.value,
+          scenarios.wider.value,
+          scenarios.split.value,
+          scenarios.custom.value
+        ];
+      }
+
+      function selectedIndex() {
+        return ["current", "closer", "wider", "split", "custom"].indexOf(selectedScenario);
+      }
+
+      function buildPayload() {
+        var scenario = scenarios[selectedScenario];
+        var status = statusFor(scenario.value);
+        var improvement = original - scenario.value;
+
+        return {
+          schema: "scopedlabs.prototype.lens-scenario.v1",
+          category: "physical-security",
+          step: "lens-selection",
+          tool: "Lens Selection Helper",
+          selectedScenario: selectedScenario,
+          selectedScenarioLabel: scenario.label,
+          original: {
+            adjustedFocalLengthMm: original,
+            status: "risk"
+          },
+          proposed: {
+            adjustedFocalLengthMm: Number(fmt(scenario.value, 1)),
+            status: status.label.toLowerCase(),
+            improvementMm: Number(fmt(improvement, 1)),
+            pressureIndex: pressureIndex(scenario.value),
+            note: scenario.description
+          },
+          carryForward: {
+            recommendedFocalLengthMm: Number(fmt(scenario.value, 1)),
+            preferredBandMinMm: comfortMin,
+            preferredBandMaxMm: comfortMax,
+            nextStep: "Face Recognition Range",
+            source: "prototype design lab"
+          },
+          assumptionsChanged: scenario.levers,
+          savedAt: new Date().toISOString()
+        };
+      }
+
+      function render() {
+        var scenario = scenarios[selectedScenario];
+        var status = statusFor(scenario.value);
+        var improvement = original - scenario.value;
+        var reductionPct = original ? Math.round((improvement / original) * 100) : 0;
+        var pressure = pressureIndex(scenario.value);
+
+        document.querySelectorAll(".scenario-btn").forEach(function (btn) {
+          btn.classList.toggle("active", btn.getAttribute("data-scenario") === selectedScenario);
+        });
+
+        var topStatus = byId("topStatus");
+        if (topStatus) {
+          topStatus.textContent = status.label;
+          topStatus.className = "lab-status " + status.key;
+        }
+
+        byId("selectedValue").textContent = fmt(scenario.value, 1);
+        byId("selectedNote").textContent = status.note + " Original result was " + fmt(original, 1) + " mm.";
+        byId("improvementMini").textContent = improvement >= 0 ? "-" + fmt(improvement, 1) + " mm" : "+" + fmt(Math.abs(improvement), 1) + " mm";
+        byId("statusMini").textContent = status.label;
+        setClassValue(byId("statusMini"), "", status.cls);
+
+        byId("pressureChip").textContent = "Pressure Index " + pressure + " / 100";
+        byId("analyticsProjected").textContent = fmt(scenario.value, 1) + " mm";
+        setClassValue(byId("analyticsProjected"), "lab-analytic-value", status.cls);
+        byId("analyticsProjectedNote").textContent = status.note;
+
+        byId("analyticsReduction").textContent = improvement >= 0 ? fmt(improvement, 1) + " mm" : "+" + fmt(Math.abs(improvement), 1) + " mm";
+        byId("analyticsReductionNote").textContent = improvement >= 0 ? "About " + reductionPct + "% lower than the original calculated focal demand." : "Higher than the original baseline.";
+
+        byId("analyticsBand").textContent = status.key === "healthy" ? "Inside band" : (scenario.value > comfortMax ? "+" + fmt(scenario.value - comfortMax, 1) + " mm" : "Below band");
+        setClassValue(byId("analyticsBand"), "lab-analytic-value", status.cls);
+        byId("analyticsBandNote").textContent = status.key === "healthy" ? "Selected scenario sits inside the comfort band." : "Selected scenario still needs review.";
+
+        byId("analyticsNextCheck").textContent = selectedScenario === "split" ? "Camera count review" : "FOV validation";
+        byId("analyticsNextCheckNote").textContent = selectedScenario === "split" ? "Check camera count, cabling, and storage impact." : "Validate field of view before final design.";
+
+        byId("scenarioName").textContent = scenario.label;
+        byId("scenarioDescription").textContent = scenario.description;
+        byId("scenarioProjected").textContent = fmt(scenario.value, 1) + " mm";
+        setClassValue(byId("scenarioProjected"), "lab-scenario-value", status.cls);
+        byId("scenarioProjectedNote").textContent = status.note;
+        byId("scenarioStatus").textContent = status.label;
+        setClassValue(byId("scenarioStatus"), "lab-scenario-value", status.cls);
+        byId("scenarioStatusNote").textContent = status.note;
+        byId("scenarioImprovement").textContent = improvement >= 0 ? "-" + fmt(improvement, 1) + " mm" : "+" + fmt(Math.abs(improvement), 1) + " mm";
+        byId("scenarioImprovementNote").textContent = improvement >= 0 ? "About " + reductionPct + "% reduction from original." : "Scenario increases focal demand.";
+        byId("recommendationText").textContent = scenario.recommendation;
+
+        var leverList = byId("leverList");
+        if (leverList) {
+          leverList.innerHTML = scenario.levers.map(function (item) {
+            return "<li>" + item + "</li>";
+          }).join("");
+        }
+
+        var scale = Math.max(0.45, Math.min(1, scenario.value / original));
+        var d = Math.round(82 * scale);
+        var w = Math.round(74 * scale);
+        var detail = Math.round(66 * Math.max(0.65, scale));
+        byId("driverDistance").style.width = d + "%";
+        byId("driverDistanceText").textContent = d + "%";
+        byId("driverWidth").style.width = w + "%";
+        byId("driverWidthText").textContent = w + "%";
+        byId("driverDetail").style.width = detail + "%";
+        byId("driverDetailText").textContent = detail + "%";
+
+        var payload = buildPayload();
+        byId("payloadPreview").textContent = JSON.stringify(payload, null, 2);
+
+        updateChart();
+      }
+
+      function initChart() {
+        var canvas = byId("labComparisonChart");
+        if (!canvas || !window.Chart) return;
 
         var comfortBandPlugin = {
           id: "comfortBandPlugin",
@@ -815,47 +993,45 @@
             var area = chart.chartArea;
             if (!y || !area) return;
 
-            var top = y.getPixelForValue(18);
-            var bottom = y.getPixelForValue(8);
-            var ctx2 = chart.ctx;
+            var top = y.getPixelForValue(comfortMax);
+            var bottom = y.getPixelForValue(comfortMin);
+            var ctx = chart.ctx;
 
-            ctx2.save();
-            ctx2.fillStyle = "rgba(125,255,152,0.10)";
-            ctx2.fillRect(area.left, top, area.right - area.left, bottom - top);
-
-            ctx2.strokeStyle = "rgba(125,255,152,0.22)";
-            ctx2.setLineDash([6, 6]);
-            ctx2.strokeRect(area.left, top, area.right - area.left, bottom - top);
-            ctx2.restore();
+            ctx.save();
+            ctx.fillStyle = "rgba(125,255,152,0.10)";
+            ctx.fillRect(area.left, top, area.right - area.left, bottom - top);
+            ctx.strokeStyle = "rgba(125,255,152,0.22)";
+            ctx.setLineDash([6, 6]);
+            ctx.strokeRect(area.left, top, area.right - area.left, bottom - top);
+            ctx.restore();
           }
         };
 
-        window.labComparisonChartInstance = new Chart(ctx, {
+        window.labComparisonChartInstance = new Chart(canvas.getContext("2d"), {
           type: "line",
           data: {
-            labels: ["Current", "Closer Camera", "Wider Target", "Split Coverage"],
+            labels: ["Current", "Closer Camera", "Wider Target", "Split Coverage", "Custom"],
             datasets: [
               {
                 label: "Original baseline",
-                data: [25.6, 25.6, 25.6, 25.6],
+                data: [original, original, original, original, original],
                 borderColor: "rgba(255,96,88,1)",
                 backgroundColor: "rgba(255,96,88,.18)",
                 pointBackgroundColor: "rgba(255,96,88,1)",
                 pointBorderColor: "#ffffff",
-                pointRadius: 4,
-                pointHoverRadius: 5,
+                pointRadius: [4, 4, 4, 4, 4],
                 borderWidth: 3,
-                tension: 0.28
+                tension: 0.25
               },
               {
                 label: "Proposed planning result",
-                data: [25.6, 18.0, 18.0, 12.5],
+                data: scenarioDataArray(),
                 borderColor: "rgba(125,255,152,1)",
                 backgroundColor: "rgba(125,255,152,.18)",
-                pointBackgroundColor: "rgba(125,255,152,1)",
+                pointBackgroundColor: ["rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)"],
                 pointBorderColor: "#ffffff",
-                pointRadius: 4,
-                pointHoverRadius: 5,
+                pointRadius: [4, 4, 4, 4, 4],
+                pointHoverRadius: 6,
                 borderWidth: 3,
                 tension: 0.28
               }
@@ -864,20 +1040,14 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: {
-              mode: "index",
-              intersect: false
-            },
+            interaction: { mode: "index", intersect: false },
             plugins: {
               legend: {
                 labels: {
                   color: "rgba(248,250,252,.86)",
                   boxWidth: 18,
                   boxHeight: 10,
-                  font: {
-                    size: 11,
-                    weight: "700"
-                  }
+                  font: { size: 11, weight: "700" }
                 }
               },
               tooltip: {
@@ -891,16 +1061,8 @@
             },
             scales: {
               x: {
-                ticks: {
-                  color: "rgba(203,213,225,.76)",
-                  font: {
-                    size: 10,
-                    weight: "700"
-                  }
-                },
-                grid: {
-                  color: "rgba(148,163,184,.08)"
-                }
+                ticks: { color: "rgba(203,213,225,.76)", font: { size: 10, weight: "700" } },
+                grid: { color: "rgba(148,163,184,.08)" }
               },
               y: {
                 min: 0,
@@ -908,26 +1070,16 @@
                 ticks: {
                   color: "rgba(203,213,225,.76)",
                   stepSize: 5,
-                  font: {
-                    size: 10,
-                    weight: "700"
-                  },
-                  callback: function (value) {
-                    return value + " mm";
-                  }
+                  font: { size: 10, weight: "700" },
+                  callback: function (value) { return value + " mm"; }
                 },
                 title: {
                   display: true,
                   text: "Adjusted focal length",
                   color: "rgba(248,250,252,.72)",
-                  font: {
-                    size: 11,
-                    weight: "700"
-                  }
+                  font: { size: 11, weight: "700" }
                 },
-                grid: {
-                  color: "rgba(148,163,184,.10)"
-                }
+                grid: { color: "rgba(148,163,184,.10)" }
               }
             }
           },
@@ -935,13 +1087,79 @@
         });
       }
 
+      function updateChart() {
+        var chart = window.labComparisonChartInstance;
+        if (!chart) return;
+
+        var idx = selectedIndex();
+        var pointSizes = [4, 4, 4, 4, 4];
+        var pointColors = ["rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)"];
+        pointSizes[idx] = 8;
+        pointColors[idx] = "#ffd34f";
+
+        chart.data.datasets[1].data = scenarioDataArray();
+        chart.data.datasets[1].pointRadius = pointSizes;
+        chart.data.datasets[1].pointBackgroundColor = pointColors;
+        chart.update();
+      }
+
+      function bindEvents() {
+        document.querySelectorAll(".scenario-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            selectedScenario = btn.getAttribute("data-scenario");
+            render();
+          });
+        });
+
+        var range = byId("scenarioRange");
+        var number = byId("scenarioNumber");
+
+        function updateCustom(value) {
+          var v = Math.max(6, Math.min(30, Number(value) || 16.5));
+          scenarios.custom.value = v;
+          range.value = String(v);
+          number.value = String(v);
+          selectedScenario = "custom";
+          render();
+        }
+
+        range.addEventListener("input", function () { updateCustom(range.value); });
+        number.addEventListener("change", function () { updateCustom(number.value); });
+
+        byId("saveScenarioBtn").addEventListener("click", function () {
+          var payload = buildPayload();
+          sessionStorage.setItem("scopedlabs:prototype:lens-design-lab:selected-scenario", JSON.stringify(payload));
+          byId("carryStatus").textContent = "Stored prototype carry-forward scenario: " + payload.selectedScenarioLabel + " -> " + payload.proposed.adjustedFocalLengthMm + " mm.";
+        });
+
+        byId("clearScenarioBtn").addEventListener("click", function () {
+          sessionStorage.removeItem("scopedlabs:prototype:lens-design-lab:selected-scenario");
+          byId("carryStatus").textContent = "Prototype carry-forward scenario cleared.";
+        });
+      }
+
+      function init() {
+        initChart();
+        bindEvents();
+        render();
+
+        var saved = sessionStorage.getItem("scopedlabs:prototype:lens-design-lab:selected-scenario");
+        if (saved) {
+          try {
+            var parsed = JSON.parse(saved);
+            byId("carryStatus").textContent = "Prototype carry-forward currently stored: " + parsed.selectedScenarioLabel + " -> " + parsed.proposed.adjustedFocalLengthMm + " mm.";
+          } catch (err) {
+            byId("carryStatus").textContent = "Prototype carry-forward has invalid saved data.";
+          }
+        }
+      }
+
       if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initComparisonChart);
+        document.addEventListener("DOMContentLoaded", init);
       } else {
-        initComparisonChart();
+        init();
       }
     })();
   </script>
-
 </body>
 </html>
