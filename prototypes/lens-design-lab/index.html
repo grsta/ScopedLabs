@@ -491,6 +491,91 @@
         display: grid;
       }
     }
+  
+    .custom-control.assumption-editor {
+      display: block;
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 12px;
+      background: rgba(255,255,255,.025);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .assumption-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .assumption-title {
+      color: #fff;
+      font-size: .84rem;
+      font-weight: 950;
+      margin: 0;
+    }
+
+    .assumption-note {
+      margin-top: 5px;
+      color: rgba(226,232,240,.62);
+      font-size: .70rem;
+      line-height: 1.35;
+    }
+
+    .assumption-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0,1fr));
+      gap: 8px;
+    }
+
+    .assumption-field {
+      min-width: 0;
+    }
+
+    .assumption-field label {
+      display: block;
+      color: rgba(203,213,225,.70);
+      font-size: .58rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .assumption-field input,
+    .assumption-field select {
+      width: 100%;
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 8px;
+      background: rgba(2,6,12,.78);
+      color: #fff;
+      padding: 8px;
+      font-weight: 850;
+      box-sizing: border-box;
+    }
+
+    .assumption-formula {
+      margin-top: 10px;
+      color: rgba(226,232,240,.60);
+      font-size: .68rem;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 900px) {
+      .assumption-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .assumption-head,
+      .assumption-grid {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+    }
+
   </style>
 </head>
 
@@ -519,7 +604,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-005-interactive-scenarios.
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-006-custom-assumptions.
       </div>
 
       <section class="lab-frame">
@@ -531,7 +616,7 @@
               <div class="lab-kicker">Results Overview</div>
               <h2>Lens Selection Pressure</h2>
               <div class="lab-summary">
-                Interactive prototype: choose a planning scenario, adjust the proposed focal result, watch the analytics and chart update, then simulate carrying the chosen scenario forward to the next pipeline step.
+                Interactive prototype: choose a planning scenario or edit the Custom planning assumptions, watch the analytics and chart update, then simulate carrying the chosen scenario forward to the next pipeline step.
               </div>
             </div>
 
@@ -546,10 +631,51 @@
             <button class="scenario-btn" data-scenario="custom">Custom</button>
           </div>
 
-          <div class="custom-control">
-            <label for="scenarioRange">Custom proposed result</label>
-            <input id="scenarioRange" type="range" min="6" max="30" step="0.1" value="16.5" />
-            <input id="scenarioNumber" type="number" min="6" max="30" step="0.1" value="16.5" />
+                    <div class="custom-control assumption-editor">
+            <div class="assumption-head">
+              <div>
+                <h3 class="assumption-title">Custom planning assumptions</h3>
+                <div class="assumption-note">
+                  Custom mode changes the assumptions that create the result. The focal length is recalculated from the planning inputs instead of being dragged directly.
+                </div>
+              </div>
+
+              <div class="lab-chip">Custom What-If</div>
+            </div>
+
+            <div class="assumption-grid">
+              <div class="assumption-field">
+                <label for="customDistance">Distance to target</label>
+                <input id="customDistance" type="number" min="1" max="500" step="1" value="56" />
+              </div>
+
+              <div class="assumption-field">
+                <label for="customWidth">Target width</label>
+                <input id="customWidth" type="number" min="1" max="300" step="1" value="20" />
+              </div>
+
+              <div class="assumption-field">
+                <label for="customSensor">Sensor width</label>
+                <input id="customSensor" type="number" min="1" max="20" step="0.1" value="6.4" />
+              </div>
+
+              <div class="assumption-field">
+                <label for="customDetail">Detail factor</label>
+                <input id="customDetail" type="number" min="0.5" max="2" step="0.05" value="1.00" />
+              </div>
+
+              <div class="assumption-field">
+                <label for="customCoverage">Coverage strategy</label>
+                <select id="customCoverage">
+                  <option value="1">Single camera</option>
+                  <option value="1.25">Light overlap</option>
+                  <option value="1.5">Partial split</option>
+                  <option value="2">Split coverage</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="customFormulaNote" class="assumption-formula"></div>
           </div>
 
           <div class="lab-body">
@@ -771,6 +897,71 @@
       var comfortMax = 18.0;
       var max = 40.0;
       var selectedScenario = "split";
+      var originalAssumptions = {
+        distanceFt: 80,
+        targetWidthFt: 20,
+        sensorWidthMm: 6.4,
+        detailFactor: 1,
+        coverageDivisor: 1,
+        coverageStrategy: "Single camera"
+      };
+
+      function readNumber(id, fallback) {
+        var el = byId(id);
+        if (!el) return fallback;
+        var n = Number(el.value);
+        return Number.isFinite(n) ? n : fallback;
+      }
+
+      function getCoverageLabel(value) {
+        if (String(value) === "2") return "Split coverage";
+        if (String(value) === "1.5") return "Partial split";
+        if (String(value) === "1.25") return "Light overlap";
+        return "Single camera";
+      }
+
+      function getCustomAssumptions() {
+        var coverageEl = byId("customCoverage");
+        var coverageDivisor = coverageEl ? Number(coverageEl.value) : 1;
+
+        return {
+          distanceFt: readNumber("customDistance", 56),
+          targetWidthFt: readNumber("customWidth", 20),
+          sensorWidthMm: readNumber("customSensor", 6.4),
+          detailFactor: readNumber("customDetail", 1),
+          coverageDivisor: Number.isFinite(coverageDivisor) && coverageDivisor > 0 ? coverageDivisor : 1,
+          coverageStrategy: getCoverageLabel(coverageEl ? coverageEl.value : "1")
+        };
+      }
+
+      function calculateFocalLengthFromAssumptions(a) {
+        var width = Math.max(0.1, a.targetWidthFt);
+        var divisor = Math.max(0.1, a.coverageDivisor);
+        return (a.distanceFt * a.sensorWidthMm / width) * a.detailFactor / divisor;
+      }
+
+      function syncCustomScenario() {
+        var a = getCustomAssumptions();
+        var projected = calculateFocalLengthFromAssumptions(a);
+
+        scenarios.custom.value = Number(fmt(projected, 1));
+        scenarios.custom.description = "Custom assumption set: " + a.distanceFt + " ft distance, " + a.targetWidthFt + " ft target width, " + a.sensorWidthMm + " mm sensor, " + a.detailFactor.toFixed(2) + "x detail factor, " + a.coverageStrategy + ".";
+        scenarios.custom.assumptions = a;
+        scenarios.custom.levers = [
+          "Distance to target: " + a.distanceFt + " ft.",
+          "Target width / scene width: " + a.targetWidthFt + " ft.",
+          "Sensor width: " + a.sensorWidthMm + " mm.",
+          "Detail factor: " + a.detailFactor.toFixed(2) + "x.",
+          "Coverage strategy: " + a.coverageStrategy + "."
+        ];
+        scenarios.custom.recommendation = "Custom mode recalculates the proposed focal length from the edited planning assumptions. Carry this forward only after confirming the changed assumptions represent a realistic design option.";
+
+        var formulaNote = byId("customFormulaNote");
+        if (formulaNote) {
+          formulaNote.textContent = "Projected focal length = " + a.distanceFt + " ? " + a.sensorWidthMm + " ? " + a.targetWidthFt + " ? " + a.detailFactor.toFixed(2) + " ? " + a.coverageDivisor + " = " + fmt(projected, 1) + " mm.";
+        }
+      }
+
 
       var scenarios = {
         current: {
@@ -874,9 +1065,11 @@
       }
 
       function buildPayload() {
+        syncCustomScenario();
         var scenario = scenarios[selectedScenario];
         var status = statusFor(scenario.value);
         var improvement = original - scenario.value;
+        var proposedAssumptions = selectedScenario === "custom" ? getCustomAssumptions() : (scenario.assumptions || null);
 
         return {
           schema: "scopedlabs.prototype.lens-scenario.v1",
@@ -885,6 +1078,8 @@
           tool: "Lens Selection Helper",
           selectedScenario: selectedScenario,
           selectedScenarioLabel: scenario.label,
+          originalAssumptions: originalAssumptions,
+          proposedAssumptions: proposedAssumptions,
           original: {
             adjustedFocalLengthMm: original,
             status: "risk"
@@ -1110,21 +1305,20 @@
             render();
           });
         });
+        ["customDistance", "customWidth", "customSensor", "customDetail", "customCoverage"].forEach(function (id) {
+          var el = byId(id);
+          if (!el) return;
 
-        var range = byId("scenarioRange");
-        var number = byId("scenarioNumber");
+          el.addEventListener("input", function () {
+            selectedScenario = "custom";
+            render();
+          });
 
-        function updateCustom(value) {
-          var v = Math.max(6, Math.min(30, Number(value) || 16.5));
-          scenarios.custom.value = v;
-          range.value = String(v);
-          number.value = String(v);
-          selectedScenario = "custom";
-          render();
-        }
-
-        range.addEventListener("input", function () { updateCustom(range.value); });
-        number.addEventListener("change", function () { updateCustom(number.value); });
+          el.addEventListener("change", function () {
+            selectedScenario = "custom";
+            render();
+          });
+        });
 
         byId("saveScenarioBtn").addEventListener("click", function () {
           var payload = buildPayload();
