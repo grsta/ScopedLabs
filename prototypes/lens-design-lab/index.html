@@ -161,9 +161,15 @@
       line-height: 1.45;
     }
 
-    .lab-mini-grid,
-    .lab-analytics-grid,
     .lab-scenario-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .lab-mini-grid,
+    .lab-analytics-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0,1fr));
       gap: 8px;
@@ -677,7 +683,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-018-realistic-detail-thresholds.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-019-clarify-focal-vs-pressure.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -901,7 +907,7 @@
               </div>
 
               <div class="lab-scenario-card">
-                <div class="lab-label">Projected Result</div>
+                <div class="lab-label">Projected Focal Length</div>
                 <div id="scenarioProjected" class="lab-scenario-value good">12.5 mm</div>
                 <div id="scenarioProjectedNote" class="lab-scenario-note"></div>
               </div>
@@ -913,9 +919,15 @@
               </div>
 
               <div class="lab-scenario-card">
-                <div class="lab-label">Improvement</div>
-                <div id="scenarioImprovement" class="lab-scenario-value watch">-13.1 mm</div>
+                <div class="lab-label">Projected Pressure</div>
+                <div id="scenarioImprovement" class="lab-scenario-value watch">?</div>
                 <div id="scenarioImprovementNote" class="lab-scenario-note"></div>
+              </div>
+
+              <div class="lab-scenario-card">
+                <div class="lab-label">Detail Check</div>
+                <div id="scenarioDetailCheck" class="lab-scenario-value watch">?</div>
+                <div id="scenarioDetailNote" class="lab-scenario-note"></div>
               </div>
             </div>
 
@@ -1332,8 +1344,28 @@
         byId("scenarioStatus").textContent = status.label;
         setClassValue(byId("scenarioStatus"), "lab-scenario-value", status.cls);
         byId("scenarioStatusNote").textContent = status.note;
-        byId("scenarioImprovement").textContent = improvement >= 0 ? "-" + fmt(improvement, 1) + " mm" : "+" + fmt(Math.abs(improvement), 1) + " mm";
-        byId("scenarioImprovementNote").textContent = improvement >= 0 ? "About " + reductionPct + "% reduction from original." : "Scenario increases focal demand.";
+        var scenarioPressure = pressureIndex(scenario.value, scenario);
+        byId("scenarioImprovement").textContent = scenarioPressure + " / 100";
+        setClassValue(byId("scenarioImprovement"), "lab-scenario-value", status.cls);
+        byId("scenarioImprovementNote").textContent = "Chart plots planning pressure, not focal length. Lower is better.";
+
+        if (byId("scenarioDetailCheck")) {
+          if (scenario.availablePpf && scenario.requiredPpf) {
+            byId("scenarioDetailCheck").textContent = fmt(scenario.availablePpf, 1) + " / " + fmt(scenario.requiredPpf, 0) + " PPF";
+            byId("scenarioDetailNote").textContent = scenario.availablePpf >= scenario.requiredPpf
+              ? "Detail target is supported by the selected scene width and resolution."
+              : "Detail target is not supported by the selected scene width and resolution.";
+            setClassValue(
+              byId("scenarioDetailCheck"),
+              "lab-scenario-value",
+              scenario.availablePpf >= scenario.requiredPpf ? "good" : "risk"
+            );
+          } else {
+            byId("scenarioDetailCheck").textContent = "No detail check";
+            byId("scenarioDetailNote").textContent = "This scenario has no explicit pixel-density detail test.";
+            setClassValue(byId("scenarioDetailCheck"), "lab-scenario-value", "watch");
+          }
+        }
         byId("recommendationText").textContent = scenario.recommendation;
 
         var leverList = byId("leverList");
