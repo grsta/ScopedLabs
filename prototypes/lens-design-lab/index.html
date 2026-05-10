@@ -236,6 +236,128 @@
       margin-bottom: 6px;
     }
 
+
+    .lab-analytics {
+      margin-top: 12px;
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 82% 12%, rgba(255,96,88,.08), transparent 30%),
+        linear-gradient(180deg, rgba(2,6,12,.48), rgba(2,6,12,.28));
+      padding: 14px;
+    }
+
+    .lab-analytics-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .lab-analytics-title {
+      margin: 0;
+      color: #fff;
+      font-size: .96rem;
+      font-weight: 950;
+    }
+
+    .lab-analytics-note {
+      margin-top: 5px;
+      color: rgba(226,232,240,.68);
+      font-size: .76rem;
+      line-height: 1.45;
+      max-width: 680px;
+    }
+
+    .lab-pressure-chip {
+      border: 1px solid rgba(255,96,88,.36);
+      border-radius: 10px;
+      background: rgba(255,96,88,.09);
+      color: #ff8f88;
+      padding: 9px 11px;
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .lab-analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 8px;
+    }
+
+    .lab-analytic {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+      padding: 10px;
+    }
+
+    .lab-analytic-label {
+      color: rgba(203,213,225,.64);
+      font-size: .58rem;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .lab-analytic-value {
+      margin-top: 7px;
+      color: #fff;
+      font-size: .98rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .lab-analytic-value.good { color: #7dff98; }
+    .lab-analytic-value.watch { color: #ffd34f; }
+    .lab-analytic-value.risk { color: #ff8f88; }
+
+    .lab-analytic-note {
+      margin-top: 5px;
+      color: rgba(226,232,240,.58);
+      font-size: .68rem;
+      line-height: 1.32;
+    }
+
+    .lab-sensitivity {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .lab-sensitivity-card {
+      border: 1px solid rgba(125,255,152,.13);
+      border-radius: 11px;
+      background: rgba(125,255,152,.028);
+      padding: 11px;
+    }
+
+    .lab-sensitivity-card h4 {
+      margin: 0 0 8px;
+      color: #7dff98;
+      font-size: .72rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .lab-sensitivity-card ul {
+      margin: 0;
+      padding-left: 17px;
+      color: rgba(226,232,240,.74);
+      font-size: .74rem;
+      line-height: 1.48;
+    }
+
+    .lab-sensitivity-card li + li {
+      margin-top: 4px;
+    }
+
     @media (max-width: 760px) {
       .lab-head,
       .lab-body,
@@ -273,7 +395,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-001.
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-002-analytics.
       </div>
 
       <section class="lab-frame">
@@ -348,6 +470,66 @@
             <div class="lab-action"><strong>Change optics</strong>Evaluate a larger sensor format or different lens class.</div>
             <div class="lab-action"><strong>Validate field</strong>Confirm field of view and detail requirement before final design.</div>
           </div>
+          <div class="lab-analytics">
+            <div class="lab-analytics-head">
+              <div>
+                <div class="lab-kicker">Analytics Layer</div>
+                <h3 class="lab-analytics-title">What the result means operationally</h3>
+                <div class="lab-analytics-note">
+                  These analytics translate the focal-length result into planning pressure, distance from the preferred band, and the most useful levers to evaluate before relying on the design.
+                </div>
+              </div>
+
+              <div class="lab-pressure-chip">Pressure Index 75 / 100</div>
+            </div>
+
+            <div class="lab-analytics-grid">
+              <div class="lab-analytic">
+                <div class="lab-analytic-label">Current Result</div>
+                <div class="lab-analytic-value risk">25.6 mm</div>
+                <div class="lab-analytic-note">Above the preferred 8.0?18.0 mm planning band.</div>
+              </div>
+
+              <div class="lab-analytic">
+                <div class="lab-analytic-label">Reduction Needed</div>
+                <div class="lab-analytic-value watch">7.6 mm</div>
+                <div class="lab-analytic-note">About 29.7% lower than the current calculated focal demand.</div>
+              </div>
+
+              <div class="lab-analytic">
+                <div class="lab-analytic-label">Band Position</div>
+                <div class="lab-analytic-value risk">+42%</div>
+                <div class="lab-analytic-note">Current result is roughly 42% above the comfort-band ceiling.</div>
+              </div>
+
+              <div class="lab-analytic">
+                <div class="lab-analytic-label">Headroom to Max</div>
+                <div class="lab-analytic-value">14.4 mm</div>
+                <div class="lab-analytic-note">Remaining margin before the 40 mm planning ceiling.</div>
+              </div>
+            </div>
+
+            <div class="lab-sensitivity">
+              <div class="lab-sensitivity-card">
+                <h4>Design levers to evaluate</h4>
+                <ul>
+                  <li>Move the camera closer. Around 56 ft would bring the same 20 ft target width near 18 mm.</li>
+                  <li>Increase acceptable target width. Around 28.4 ft would bring the same 80 ft distance near 18 mm.</li>
+                  <li>Revisit whether one camera should carry the full scene objective.</li>
+                </ul>
+              </div>
+
+              <div class="lab-sensitivity-card">
+                <h4>Checks before relying on result</h4>
+                <ul>
+                  <li>Confirm the target width represents the actual required scene, not just a convenient estimate.</li>
+                  <li>Validate manufacturer lens availability and field-of-view chart.</li>
+                  <li>Confirm the required detail objective before locking camera placement.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
     </div>
