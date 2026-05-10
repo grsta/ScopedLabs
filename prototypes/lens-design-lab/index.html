@@ -37,18 +37,33 @@
       margin: 0 0 14px;
       color: #fff;
       font-size: 1.1rem;
-      font-weight: 900;
+      font-weight: 950;
+    }
+
+    .lab-card,
+    .lab-panel,
+    .lab-design-targets,
+    .lab-comparison,
+    .lab-carry {
+      border: 1px solid rgba(148,163,184,.14);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 78% 14%, rgba(255,96,88,.08), transparent 30%),
+        radial-gradient(circle at 18% 8%, rgba(125,255,152,.06), transparent 34%),
+        linear-gradient(180deg, rgba(5,12,18,.96), rgba(2,7,10,.98));
+      color: #f8fafc;
     }
 
     .lab-card {
-      border: 1px solid rgba(148,163,184,.16);
-      border-radius: 18px;
-      background:
-        radial-gradient(circle at 78% 14%, rgba(255,96,88,.10), transparent 30%),
-        radial-gradient(circle at 18% 8%, rgba(125,255,152,.08), transparent 34%),
-        linear-gradient(180deg, rgba(5,12,18,.98), rgba(2,7,10,.98));
       padding: 18px;
-      color: #f8fafc;
+    }
+
+    .lab-panel,
+    .lab-design-targets,
+    .lab-comparison,
+    .lab-carry {
+      padding: 16px;
+      margin-top: 12px;
     }
 
     .lab-head {
@@ -69,20 +84,29 @@
       margin-bottom: 8px;
     }
 
-    .lab-head h2 {
+    .lab-head h2,
+    .lab-section-title {
       margin: 0;
       color: #fff;
-      font-size: 1.25rem;
-      line-height: 1.15;
       font-weight: 950;
+      line-height: 1.15;
     }
 
-    .lab-summary {
+    .lab-head h2 {
+      font-size: 1.25rem;
+    }
+
+    .lab-section-title {
+      font-size: .98rem;
+    }
+
+    .lab-summary,
+    .lab-copy {
       margin-top: 8px;
-      max-width: 720px;
       color: rgba(226,232,240,.70);
       font-size: .82rem;
       line-height: 1.5;
+      max-width: 820px;
     }
 
     .lab-status {
@@ -111,222 +135,15 @@
       color: #ffd34f;
     }
 
-    .lab-body {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .lab-result,
-    .lab-driver,
-    .lab-analytics,
-    .lab-comparison,
-    .lab-carry {
-      border: 1px solid rgba(148,163,184,.13);
-      border-radius: 14px;
-      background:
-        radial-gradient(circle at 82% 12%, rgba(255,96,88,.055), transparent 30%),
-        rgba(2,6,12,.54);
-      padding: 16px;
-    }
-
-    .lab-label {
-      color: rgba(203,213,225,.68);
-      font-size: .62rem;
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-    }
-
-    .lab-value {
-      margin-top: 9px;
-      color: #fff;
-      font-size: 2.6rem;
-      line-height: 1;
-      font-weight: 950;
-      letter-spacing: -.03em;
-    }
-
-    .lab-value span {
-      color: rgba(203,213,225,.66);
-      font-size: 1.1rem;
-      letter-spacing: 0;
-    }
-
-    .lab-copy {
-      margin-top: 10px;
-      color: rgba(226,232,240,.70);
-      font-size: .78rem;
-      line-height: 1.45;
-    }
-
-    .lab-scenario-strip {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0,1fr));
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .lab-mini-grid,
-    .lab-analytics-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .lab-mini,
-    .lab-analytic,
-    .lab-scenario-card {
-      border: 1px solid rgba(148,163,184,.13);
-      border-radius: 10px;
-      background: rgba(255,255,255,.025);
-      padding: 10px;
-      min-width: 0;
-    }
-
-    .lab-mini strong,
-    .lab-analytic-value,
-    .lab-scenario-value {
-      display: block;
-      margin-top: 6px;
-      color: #fff;
-      font-size: .92rem;
-      font-weight: 950;
-      line-height: 1.15;
-    }
-
-    .lab-note-small,
-    .lab-analytic-note,
-    .lab-scenario-note {
-      margin-top: 5px;
-      color: rgba(226,232,240,.58);
-      font-size: .68rem;
-      line-height: 1.32;
-    }
-
-    .good { color: #7dff98 !important; }
-    .watch { color: #ffd34f !important; }
-    .risk { color: #ff8f88 !important; }
-
-    .lab-driver h3 {
-      margin: 0;
-      color: #fff;
-      font-size: .96rem;
-      font-weight: 950;
-    }
-
-    .lab-stack {
-      display: grid;
-      gap: 8px;
-      margin-top: 13px;
-    }
-
-    .lab-stack-row {
-      display: grid;
-      grid-template-columns: 126px minmax(0,1fr) 42px;
-      gap: 10px;
-      align-items: center;
-      color: rgba(226,232,240,.76);
-      font-size: .74rem;
-      font-weight: 750;
-    }
-
-    .lab-track {
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(148,163,184,.13);
-      overflow: hidden;
-    }
-
-    .lab-fill {
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, rgba(125,255,152,.85), rgba(255,211,79,.85), rgba(255,96,88,.88));
-    }
-
-    .lab-actions {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .lab-action,
-    .lab-impact-card,
-    .lab-sensitivity-card {
-      border: 1px solid rgba(125,255,152,.14);
-      border-radius: 11px;
-      background: rgba(125,255,152,.035);
-      padding: 10px;
-      color: rgba(226,232,240,.78);
-      font-size: .73rem;
-      line-height: 1.35;
-      font-weight: 700;
-    }
-
-    .lab-action strong,
-    .lab-impact-card h4,
-    .lab-sensitivity-card h4,
-    .lab-tradeoff-summary h4 {
-      display: block;
-      color: #7dff98;
-      font-size: .62rem;
-      font-weight: 950;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      margin: 0 0 6px;
-    }
-
-    .lab-analytics,
-    .lab-comparison,
-    .lab-carry {
-      margin-top: 12px;
-    }
-
-    .lab-section-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-      margin-bottom: 12px;
-    }
-
-    .lab-section-title {
-      margin: 0;
-      color: #fff;
-      font-size: .96rem;
-      font-weight: 950;
-    }
-
-    .lab-chip {
-      border: 1px solid rgba(125,255,152,.28);
-      border-radius: 10px;
-      background: rgba(125,255,152,.08);
-      color: #7dff98;
-      padding: 9px 11px;
-      font-size: .68rem;
-      font-weight: 950;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .lab-chip.risk-chip {
-      border-color: rgba(255,96,88,.36);
-      background: rgba(255,96,88,.09);
-      color: #ff8f88;
-    }
-
     .scenario-controls {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin: 12px 0;
+      margin: 14px 0 12px;
     }
 
-    .scenario-btn {
+    .scenario-btn,
+    .carry-btn {
       border: 1px solid rgba(148,163,184,.18);
       border-radius: 999px;
       background: rgba(255,255,255,.035);
@@ -337,169 +154,15 @@
       cursor: pointer;
     }
 
-    .scenario-btn.active {
+    .scenario-btn.active,
+    .carry-btn {
       border-color: rgba(125,255,152,.42);
       background: rgba(125,255,152,.10);
       color: #7dff98;
       box-shadow: 0 0 18px rgba(125,255,152,.10);
     }
 
-    .custom-control {
-      display: grid;
-      grid-template-columns: 170px minmax(0,1fr) 90px;
-      gap: 10px;
-      align-items: center;
-      border: 1px solid rgba(148,163,184,.13);
-      border-radius: 12px;
-      background: rgba(255,255,255,.025);
-      padding: 10px;
-      margin-bottom: 12px;
-    }
-
-    .custom-control label {
-      color: rgba(203,213,225,.70);
-      font-size: .68rem;
-      font-weight: 900;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    .custom-control input[type="range"] {
-      width: 100%;
-      accent-color: #7dff98;
-    }
-
-    .custom-control input[type="number"] {
-      width: 100%;
-      border: 1px solid rgba(148,163,184,.18);
-      border-radius: 8px;
-      background: rgba(2,6,12,.78);
-      color: #fff;
-      padding: 8px;
-      font-weight: 850;
-    }
-
-    .lab-impact-grid,
-    .lab-sensitivity {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 8px;
-      margin: 12px 0 12px;
-    }
-
-    .lab-sensitivity {
-      grid-template-columns: 1fr 1fr;
-      margin-top: 10px;
-    }
-
-    .lab-sensitivity-card ul {
-      margin: 0;
-      padding-left: 17px;
-      color: rgba(226,232,240,.74);
-      font-size: .74rem;
-      line-height: 1.48;
-    }
-
-    .lab-tradeoff-summary {
-      margin-top: 10px;
-      border: 1px solid rgba(255,211,79,.16);
-      border-radius: 12px;
-      background: radial-gradient(circle at 88% 12%, rgba(255,211,79,.08), transparent 28%), rgba(255,211,79,.026);
-      padding: 12px;
-    }
-
-    .lab-tradeoff-summary h4 {
-      color: #ffd34f;
-    }
-
-    .lab-tradeoff-summary p {
-      margin: 0;
-      color: rgba(226,232,240,.74);
-      font-size: .74rem;
-      line-height: 1.48;
-    }
-
-    .lab-chart-shell {
-      border: 1px solid rgba(148,163,184,.12);
-      border-radius: 12px;
-      background: rgba(255,255,255,.02);
-      padding: 10px;
-      height: 320px;
-      margin-top: 14px;
-    }
-
-    .lab-chart-caption {
-      margin-top: 8px;
-      color: rgba(203,213,225,.62);
-      font-size: .68rem;
-      line-height: 1.4;
-    }
-
-    .carry-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 10px 0;
-    }
-
-    .carry-btn {
-      border: 1px solid rgba(125,255,152,.28);
-      border-radius: 10px;
-      background: rgba(125,255,152,.10);
-      color: #7dff98;
-      padding: 9px 12px;
-      font-size: .72rem;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .carry-status {
-      color: rgba(226,232,240,.72);
-      font-size: .72rem;
-      line-height: 1.4;
-    }
-
-    .payload-box {
-      margin-top: 10px;
-      border: 1px solid rgba(148,163,184,.12);
-      border-radius: 10px;
-      background: rgba(0,0,0,.18);
-      padding: 10px;
-      color: rgba(226,232,240,.72);
-      font-size: .68rem;
-      line-height: 1.45;
-      overflow: auto;
-      max-height: 190px;
-      white-space: pre-wrap;
-    }
-
-    @media (max-width: 900px) {
-      .lab-body,
-      .lab-mini-grid,
-      .lab-analytics-grid,
-      .lab-scenario-strip,
-      .lab-impact-grid,
-      .lab-sensitivity {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .lab-head,
-      .lab-body,
-      .lab-mini-grid,
-      .lab-analytics-grid,
-      .lab-scenario-strip,
-      .lab-impact-grid,
-      .lab-sensitivity,
-      .lab-actions,
-      .custom-control {
-        grid-template-columns: 1fr;
-        display: grid;
-      }
-    }
-  
-    .custom-control.assumption-editor {
+    .custom-editor {
       display: none;
       border: 1px solid rgba(148,163,184,.13);
       border-radius: 12px;
@@ -508,11 +171,12 @@
       margin-bottom: 12px;
     }
 
-    .custom-control.assumption-editor.is-visible {
+    .custom-editor.is-visible {
       display: block;
     }
 
-    .assumption-head {
+    .assumption-head,
+    .lab-section-head {
       display: flex;
       justify-content: space-between;
       gap: 12px;
@@ -568,42 +232,47 @@
 
     .assumption-formula {
       margin-top: 10px;
-      color: rgba(226,232,240,.60);
-      font-size: .68rem;
-      line-height: 1.35;
+      color: rgba(226,232,240,.62);
+      font-size: .69rem;
+      line-height: 1.4;
     }
 
-    @media (max-width: 900px) {
-      .assumption-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .assumption-head,
-      .assumption-grid {
-        grid-template-columns: 1fr;
-        display: grid;
-      }
-    }
-
-  
-    .carry-summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .carry-summary-card {
-      border: 1px solid rgba(148,163,184,.13);
+    .lab-chip {
+      border: 1px solid rgba(125,255,152,.28);
       border-radius: 10px;
-      background: rgba(255,255,255,.025);
-      padding: 10px;
-      min-width: 0;
+      background: rgba(125,255,152,.08);
+      color: #7dff98;
+      padding: 9px 11px;
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
 
-    .carry-summary-label {
+    .lab-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .lab-value {
+      margin-top: 12px;
+      color: #fff;
+      font-size: 2.35rem;
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -.03em;
+    }
+
+    .lab-value span {
+      color: rgba(203,213,225,.66);
+      font-size: 1.05rem;
+      letter-spacing: 0;
+    }
+
+    .lab-label {
       color: rgba(203,213,225,.64);
       font-size: .58rem;
       font-weight: 900;
@@ -611,13 +280,160 @@
       text-transform: uppercase;
     }
 
-    .carry-summary-value {
+    .mini-grid,
+    .analytics-grid,
+    .design-targets-grid,
+    .scenario-strip,
+    .check-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .mini-grid,
+    .analytics-grid,
+    .check-grid {
+      grid-template-columns: repeat(4, minmax(0,1fr));
+    }
+
+    .design-targets-grid {
+      grid-template-columns: repeat(5, minmax(0,1fr));
+    }
+
+    .scenario-strip {
+      grid-template-columns: repeat(5, minmax(0,1fr));
+    }
+
+    .mini-card,
+    .target-card,
+    .scenario-card,
+    .check-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .mini-card strong,
+    .target-value,
+    .scenario-value,
+    .check-value {
       display: block;
       margin-top: 6px;
       color: #fff;
-      font-size: .86rem;
+      font-size: .92rem;
       font-weight: 950;
       line-height: 1.15;
+    }
+
+    .card-note {
+      margin-top: 5px;
+      color: rgba(226,232,240,.58);
+      font-size: .68rem;
+      line-height: 1.32;
+    }
+
+    .good { color: #7dff98 !important; }
+    .watch { color: #ffd34f !important; }
+    .risk { color: #ff8f88 !important; }
+
+    .driver-panel h3 {
+      margin: 0;
+      color: #fff;
+      font-size: .96rem;
+      font-weight: 950;
+    }
+
+    .driver-stack {
+      display: grid;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .driver-row {
+      display: grid;
+      grid-template-columns: 130px minmax(0,1fr) 42px;
+      gap: 10px;
+      align-items: center;
+      color: rgba(226,232,240,.76);
+      font-size: .74rem;
+      font-weight: 750;
+    }
+
+    .driver-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,.13);
+      overflow: hidden;
+    }
+
+    .driver-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(125,255,152,.85), rgba(255,211,79,.85), rgba(255,96,88,.88));
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .action-card {
+      border: 1px solid rgba(125,255,152,.14);
+      border-radius: 11px;
+      background: rgba(125,255,152,.035);
+      padding: 10px;
+      color: rgba(226,232,240,.78);
+      font-size: .73rem;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .action-card strong {
+      display: block;
+      color: #7dff98;
+      font-size: .62rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin: 0 0 6px;
+    }
+
+    .design-recommendation,
+    .scenario-recommendation {
+      margin-top: 10px;
+      border: 1px solid rgba(255,211,79,.18);
+      border-radius: 12px;
+      background: rgba(255,211,79,.035);
+      padding: 11px 12px;
+      color: rgba(226,232,240,.78);
+      font-size: .74rem;
+      line-height: 1.48;
+    }
+
+    .design-recommendation strong,
+    .scenario-recommendation strong {
+      color: #ffd34f;
+    }
+
+    .chart-shell {
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,.02);
+      padding: 10px;
+      height: 320px;
+      margin-top: 14px;
+    }
+
+    .chart-caption,
+    .carry-status {
+      margin-top: 8px;
+      color: rgba(203,213,225,.62);
+      font-size: .68rem;
+      line-height: 1.4;
     }
 
     .payload-details {
@@ -639,99 +455,50 @@
       user-select: none;
     }
 
-    .payload-details[open] summary {
-      border-bottom: 1px solid rgba(148,163,184,.10);
-    }
-
-    @media (max-width: 760px) {
-      .carry-summary-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    @media (max-width: 520px) {
-      .carry-summary-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-  
-    .lab-design-targets {
-      margin-top: 12px;
-      border: 1px solid rgba(125,255,152,.16);
-      border-radius: 14px;
-      background:
-        radial-gradient(circle at 82% 12%, rgba(125,255,152,.07), transparent 30%),
-        rgba(2,6,12,.46);
-      padding: 16px;
-    }
-
-    .design-targets-grid {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .design-target-card {
-      border: 1px solid rgba(148,163,184,.13);
-      border-radius: 10px;
-      background: rgba(255,255,255,.025);
+    .payload-box {
+      margin: 0;
+      border-top: 1px solid rgba(148,163,184,.10);
+      background: rgba(0,0,0,.18);
       padding: 10px;
-      min-width: 0;
-    }
-
-    .design-target-label {
-      color: rgba(203,213,225,.64);
-      font-size: .58rem;
-      font-weight: 900;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-
-    .design-target-value {
-      display: block;
-      margin-top: 6px;
-      color: #fff;
-      font-size: .92rem;
-      font-weight: 950;
-      line-height: 1.15;
-    }
-
-    .design-target-note {
-      margin-top: 5px;
-      color: rgba(226,232,240,.58);
+      color: rgba(226,232,240,.72);
       font-size: .68rem;
-      line-height: 1.32;
+      line-height: 1.45;
+      overflow: auto;
+      max-height: 190px;
+      white-space: pre-wrap;
     }
 
-    .design-recommendation {
-      margin-top: 10px;
-      border: 1px solid rgba(255,211,79,.18);
-      border-radius: 12px;
-      background: rgba(255,211,79,.035);
-      padding: 11px 12px;
-      color: rgba(226,232,240,.78);
-      font-size: .74rem;
-      line-height: 1.48;
-    }
-
-    .design-recommendation strong {
-      color: #ffd34f;
-    }
-
-    @media (max-width: 900px) {
-      .design-targets-grid {
+    @media (max-width: 980px) {
+      .assumption-grid,
+      .mini-grid,
+      .analytics-grid,
+      .design-targets-grid,
+      .scenario-strip,
+      .check-grid,
+      .action-grid {
         grid-template-columns: 1fr 1fr;
       }
-    }
 
-    @media (max-width: 560px) {
-      .design-targets-grid {
+      .lab-grid-2 {
         grid-template-columns: 1fr;
       }
     }
 
+    @media (max-width: 640px) {
+      .lab-head,
+      .assumption-head,
+      .lab-section-head,
+      .assumption-grid,
+      .mini-grid,
+      .analytics-grid,
+      .design-targets-grid,
+      .scenario-strip,
+      .check-grid,
+      .action-grid {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+    }
   </style>
 </head>
 
@@ -760,7 +527,8 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-020-design-targets.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-021-selected-lens-model.
+      </div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -771,7 +539,7 @@
               <div class="lab-kicker">Results Overview</div>
               <h2>Lens Selection Pressure</h2>
               <div class="lab-summary">
-                Interactive prototype: choose a planning scenario or edit the Custom planning assumptions, watch the analytics and chart update, then simulate carrying the chosen scenario forward to the next pipeline step.
+                This prototype now starts from what most users know: selected lens size, camera format, distance, scene width, resolution, and detail requirement. Sensor width is handled through camera-format presets instead of being the main user input.
               </div>
             </div>
 
@@ -779,23 +547,23 @@
           </div>
 
           <div class="scenario-controls" aria-label="Scenario controls">
-            <button class="scenario-btn" data-scenario="current">Current</button>
-            <button class="scenario-btn" data-scenario="closer">Closer Camera</button>
-            <button class="scenario-btn" data-scenario="wider">Wider Target</button>
-            <button class="scenario-btn" data-scenario="split">Split Coverage</button>
-            <button class="scenario-btn" data-scenario="custom">Custom</button>
+            <button class="scenario-btn active" data-scenario="custom">Custom Design</button>
+            <button class="scenario-btn" data-scenario="current">Original</button>
+            <button class="scenario-btn" data-scenario="split">Suggested Split</button>
+            <button class="scenario-btn" data-scenario="resolution">Higher Resolution</button>
+            <button class="scenario-btn" data-scenario="optimized">Optimized Lens</button>
           </div>
 
-                    <div class="custom-control assumption-editor">
+          <div id="customEditor" class="custom-editor is-visible">
             <div class="assumption-head">
               <div>
                 <h3 class="assumption-title">Custom planning assumptions</h3>
                 <div class="assumption-note">
-                  Custom mode changes the assumptions that create the result. The focal length is recalculated from the planning inputs instead of being dragged directly.
+                  Lens size is now an input. The module estimates what that lens frames, whether the required scene width is covered, and whether the selected detail requirement is realistic.
                 </div>
               </div>
 
-              <div class="lab-chip">Custom What-If</div>
+              <div class="lab-chip">Selected Lens Model</div>
             </div>
 
             <div class="assumption-grid">
@@ -805,22 +573,33 @@
               </div>
 
               <div class="assumption-field">
-                <label for="customWidth">Target width</label>
-                <input id="customWidth" type="number" min="1" max="300" step="1" value="20" />
+                <label for="customWidth">Required scene width</label>
+                <input id="customWidth" type="number" min="1" max="300" step="1" value="45" />
               </div>
 
               <div class="assumption-field">
-                <label for="customSensor">Camera sensor width</label>
-                <input id="customSensor" type="number" min="1" max="20" step="0.1" value="6.4" />
+                <label for="customLens">Selected lens size</label>
+                <input id="customLens" list="lensOptions" type="number" min="1" max="150" step="0.1" value="3.5" />
+                <datalist id="lensOptions">
+                  <option value="2.8"></option>
+                  <option value="4"></option>
+                  <option value="6"></option>
+                  <option value="8"></option>
+                  <option value="12"></option>
+                  <option value="18"></option>
+                  <option value="25"></option>
+                  <option value="50"></option>
+                </datalist>
               </div>
 
               <div class="assumption-field">
-                <label for="customDetailRequirement">Detail requirement</label>
-                <select id="customDetailRequirement">
-                  <option value="0.85">Observation / general scene</option>
-                  <option value="1.00" selected>Recognition-level detail</option>
-                  <option value="1.20">Identification-level detail</option>
-                  <option value="1.35">High-detail review</option>
+                <label for="customFormat">Camera format</label>
+                <select id="customFormat">
+                  <option value="4.8">1/3 in approx</option>
+                  <option value="5.57" selected>1/2.8 in common</option>
+                  <option value="6.4">1/2 in approx</option>
+                  <option value="7.68">1/1.8 in approx</option>
+                  <option value="12.8">1 in approx</option>
                 </select>
               </div>
 
@@ -831,286 +610,218 @@
                   <option value="1920" selected>1920 px / 1080p</option>
                   <option value="2560">2560 px / 4MP</option>
                   <option value="3840">3840 px / 4K</option>
+                  <option value="7680">7680 px / 8K</option>
                 </select>
               </div>
 
               <div class="assumption-field">
-                <label for="customCoverage">Coverage strategy</label>
-                <select id="customCoverage">
-                  <option value="1">Single camera</option>
-                  <option value="1.25">Light overlap</option>
-                  <option value="1.5">Partial split</option>
-                  <option value="2">Split coverage</option>
+                <label for="customDetailRequirement">Detail requirement</label>
+                <select id="customDetailRequirement">
+                  <option value="80">Observation / general</option>
+                  <option value="150" selected>Recognition-level detail</option>
+                  <option value="250">Identification-level detail</option>
+                  <option value="300">High-detail review</option>
                 </select>
               </div>
             </div>
 
-            <div id="customFormulaNote" class="assumption-formula"></div>
+            <div class="assumption-grid" style="margin-top:8px;">
+              <div class="assumption-field">
+                <label for="customCoverage">Coverage strategy</label>
+                <select id="customCoverage">
+                  <option value="1" selected>Single camera</option>
+                  <option value="2">Split coverage / 2 cameras</option>
+                  <option value="3">Split coverage / 3 cameras</option>
+                  <option value="4">Split coverage / 4 cameras</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="formulaNote" class="assumption-formula"></div>
           </div>
 
-          <div class="lab-body">
-            <div class="lab-result">
-              <div class="lab-label">Selected scenario result</div>
-              <div class="lab-value"><span id="selectedValue">12.5</span> <span>mm</span></div>
-              <div id="selectedNote" class="lab-copy"></div>
+          <div class="lab-grid-2">
+            <div class="lab-panel">
+              <div class="lab-kicker">Selected Scenario Result</div>
+              <div class="lab-value"><span id="resultLens">3.5</span> <span>mm lens</span></div>
+              <div id="resultNote" class="lab-copy"></div>
 
-              <div class="lab-mini-grid">
-                <div class="lab-mini">
-                  <div class="lab-label">Original</div>
-                  <strong class="risk">25.6 mm</strong>
+              <div class="mini-grid">
+                <div class="mini-card">
+                  <div class="lab-label">Estimated View Width</div>
+                  <strong id="framedWidth">?</strong>
+                  <div class="card-note">What the selected lens frames.</div>
                 </div>
-                <div class="lab-mini">
-                  <div class="lab-label">Target Band</div>
-                  <strong class="good">8.0-18.0 mm</strong>
+
+                <div class="mini-card">
+                  <div class="lab-label">Required Width</div>
+                  <strong id="requiredWidth">?</strong>
+                  <div class="card-note">Scene width that must be covered.</div>
                 </div>
-                <div class="lab-mini">
-                  <div class="lab-label">Improvement</div>
-                  <strong id="improvementMini" class="watch">-13.1 mm</strong>
+
+                <div class="mini-card">
+                  <div class="lab-label">Available Detail</div>
+                  <strong id="availablePpf">?</strong>
+                  <div class="card-note">Pixels per foot from framed width.</div>
                 </div>
-                <div class="lab-mini">
+
+                <div class="mini-card">
                   <div class="lab-label">Projected Status</div>
-                  <strong id="statusMini" class="good">Healthy</strong>
+                  <strong id="statusMini">?</strong>
+                  <div class="card-note">Combined framing/detail status.</div>
                 </div>
               </div>
             </div>
 
-            <div class="lab-driver">
+            <div class="lab-panel driver-panel">
               <div class="lab-kicker">Dominant Driver</div>
-              <h3>Focal demand is limiting layout flexibility.</h3>
-              <div class="lab-copy">
-                Distance, target width, and sensor size are pushing the scene toward a long-range lens class.
-              </div>
+              <h3 id="driverTitle">?</h3>
+              <div id="driverSummary" class="lab-copy"></div>
 
-              <div class="lab-stack">
-                <div class="lab-stack-row">
-                  <span>Distance geometry</span>
-                  <div class="lab-track"><div id="driverDistance" class="lab-fill" style="width:82%"></div></div>
-                  <strong id="driverDistanceText">82%</strong>
+              <div class="driver-stack">
+                <div class="driver-row">
+                  <span>Coverage fit</span>
+                  <div class="driver-track"><div id="coverageFill" class="driver-fill" style="width:50%"></div></div>
+                  <strong id="coverageScore">?</strong>
                 </div>
-                <div class="lab-stack-row">
-                  <span>Target width</span>
-                  <div class="lab-track"><div id="driverWidth" class="lab-fill" style="width:74%"></div></div>
-                  <strong id="driverWidthText">74%</strong>
+                <div class="driver-row">
+                  <span>Detail viability</span>
+                  <div class="driver-track"><div id="detailFill" class="driver-fill" style="width:50%"></div></div>
+                  <strong id="detailScore">?</strong>
                 </div>
-                <div class="lab-stack-row">
-                  <span>Detail demand</span>
-                  <div class="lab-track"><div id="driverDetail" class="lab-fill" style="width:66%"></div></div>
-                  <strong id="driverDetailText">66%</strong>
+                <div class="driver-row">
+                  <span>Lens class pressure</span>
+                  <div class="driver-track"><div id="lensFill" class="driver-fill" style="width:50%"></div></div>
+                  <strong id="lensScore">?</strong>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="lab-actions">
-            <div class="lab-action"><strong>Reduce demand</strong>Move the camera closer or widen the acceptable target area.</div>
-            <div class="lab-action"><strong>Change optics</strong>Evaluate a larger sensor format or different lens class.</div>
-            <div class="lab-action"><strong>Validate field</strong>Confirm field of view and detail requirement before final design.</div>
+          <div class="action-grid">
+            <div class="action-card"><strong>Coverage check</strong>Does the selected lens frame the required scene width?</div>
+            <div class="action-card"><strong>Detail check</strong>Does the framed view provide enough pixels per foot?</div>
+            <div class="action-card"><strong>Design path</strong>If not acceptable, calculate scene width, camera count, lens, or resolution targets.</div>
           </div>
 
-          <div class="lab-analytics">
-            <div class="lab-section-head">
-              <div>
-                <div class="lab-kicker">Analytics Layer</div>
-                <h3 class="lab-section-title">What the selected scenario means operationally</h3>
-                <div class="lab-copy">
-                  These analytics translate the scenario into planning pressure, distance from the preferred band, and the most useful next review.
-                </div>
-              </div>
-
-              <div id="pressureChip" class="lab-chip risk-chip">Pressure Index 37 / 100</div>
-            </div>
-
-            <div class="lab-analytics-grid">
-              <div class="lab-analytic">
-                <div class="lab-label">Projected Result</div>
-                <div id="analyticsProjected" class="lab-analytic-value good">12.5 mm</div>
-                <div id="analyticsProjectedNote" class="lab-analytic-note"></div>
-              </div>
-
-              <div class="lab-analytic">
-                <div class="lab-label">Reduction From Original</div>
-                <div id="analyticsReduction" class="lab-analytic-value watch">13.1 mm</div>
-                <div id="analyticsReductionNote" class="lab-analytic-note"></div>
-              </div>
-
-              <div class="lab-analytic">
-                <div class="lab-label">Band Position</div>
-                <div id="analyticsBand" class="lab-analytic-value good">Inside band</div>
-                <div id="analyticsBandNote" class="lab-analytic-note"></div>
-              </div>
-
-              <div class="lab-analytic">
-                <div class="lab-label">Next Check</div>
-                <div id="analyticsNextCheck" class="lab-analytic-value">FOV validation</div>
-                <div id="analyticsNextCheckNote" class="lab-analytic-note"></div>
-              </div>
-            </div>
-
-            <div class="lab-sensitivity">
-              <div class="lab-sensitivity-card">
-                <h4>Design levers to evaluate</h4>
-                <ul id="leverList"></ul>
-              </div>
-
-              <div class="lab-sensitivity-card">
-                <h4>Checks before relying on result</h4>
-                <ul>
-                  <li>Confirm the target width represents the actual required scene.</li>
-                  <li>Validate manufacturer lens availability and field-of-view chart.</li>
-                  <li>Confirm the required detail objective before locking camera placement.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          
           <div class="lab-design-targets">
             <div class="lab-section-head">
               <div>
                 <div class="lab-kicker">Design Targets / Path to Acceptable</div>
                 <h3 class="lab-section-title">What needs to change to reach a usable design?</h3>
                 <div class="lab-copy">
-                  These targets translate the selected assumptions into acceptable scene width, camera count, focal range, and resolution requirements. This explains why changing one value may not be enough to reach HEALTHY.
+                  This section explains whether changing lens size is enough, or whether the real blocker is scene width, camera count, resolution, or detail requirement.
                 </div>
               </div>
-
               <div class="lab-chip">Design Targets</div>
             </div>
 
             <div class="design-targets-grid">
-              <div class="design-target-card">
-                <div class="design-target-label">Max Width / Camera</div>
-                <span id="targetMaxSceneWidth" class="design-target-value">?</span>
-                <div id="targetMaxSceneNote" class="design-target-note"></div>
+              <div class="target-card">
+                <div class="lab-label">Max Width / Camera</div>
+                <span id="targetMaxWidth" class="target-value">?</span>
+                <div id="targetMaxWidthNote" class="card-note"></div>
               </div>
 
-              <div class="design-target-card">
-                <div class="design-target-label">Suggested Cameras</div>
-                <span id="targetCameraCount" class="design-target-value">?</span>
-                <div id="targetCameraNote" class="design-target-note"></div>
+              <div class="target-card">
+                <div class="lab-label">Suggested Cameras</div>
+                <span id="targetCameraCount" class="target-value">?</span>
+                <div id="targetCameraNote" class="card-note"></div>
               </div>
 
-              <div class="design-target-card">
-                <div class="design-target-label">Focal After Split</div>
-                <span id="targetFocalAfterSplit" class="design-target-value">?</span>
-                <div id="targetFocalNote" class="design-target-note"></div>
+              <div class="target-card">
+                <div class="lab-label">Lens For Target Width</div>
+                <span id="targetRequiredLens" class="target-value">?</span>
+                <div id="targetRequiredLensNote" class="card-note"></div>
               </div>
 
-              <div class="design-target-card">
-                <div class="design-target-label">One-Camera Pixels Needed</div>
-                <span id="targetPixelsNeeded" class="design-target-value">?</span>
-                <div id="targetPixelsNote" class="design-target-note"></div>
+              <div class="target-card">
+                <div class="lab-label">Pixels Needed / Camera</div>
+                <span id="targetPixelsNeeded" class="target-value">?</span>
+                <div id="targetPixelsNote" class="card-note"></div>
               </div>
 
-              <div class="design-target-card">
-                <div class="design-target-label">Distance Range</div>
-                <span id="targetDistanceRange" class="design-target-value">?</span>
-                <div id="targetDistanceNote" class="design-target-note"></div>
+              <div class="target-card">
+                <div class="lab-label">Main Blocker</div>
+                <span id="targetBlocker" class="target-value">?</span>
+                <div id="targetBlockerNote" class="card-note"></div>
               </div>
             </div>
 
-            <div id="designTargetRecommendation" class="design-recommendation"></div>
+            <div id="designRecommendation" class="design-recommendation"></div>
           </div>
 
           <div class="lab-comparison">
             <div class="lab-section-head">
               <div>
                 <div class="lab-kicker">Scenario Comparison</div>
-                <h3 class="lab-section-title">Original vs proposed planning scenarios</h3>
+                <h3 class="lab-section-title">Original vs design paths</h3>
                 <div class="lab-copy">
-                  The chart compares overall planning pressure, including lens framing and detail viability. Lower pressure is better; high-detail failures can remain risky even when focal length is low.
+                  The chart compares planning pressure. Lower is better. A low lens size can still be risky if the selected view is too wide for the detail requirement.
                 </div>
               </div>
-
               <div class="lab-chip">Scenario Analytics</div>
             </div>
 
-            <div class="lab-scenario-strip">
-              <div class="lab-scenario-card">
+            <div class="scenario-strip">
+              <div class="scenario-card">
                 <div class="lab-label">Selected Path</div>
-                <div id="scenarioName" class="lab-scenario-value good">Split Coverage</div>
-                <div id="scenarioDescription" class="lab-scenario-note"></div>
+                <span id="scenarioPath" class="scenario-value">Custom</span>
+                <div id="scenarioPathNote" class="card-note"></div>
               </div>
 
-              <div class="lab-scenario-card">
-                <div class="lab-label">Projected Focal Length</div>
-                <div id="scenarioProjected" class="lab-scenario-value good">12.5 mm</div>
-                <div id="scenarioProjectedNote" class="lab-scenario-note"></div>
+              <div class="scenario-card">
+                <div class="lab-label">Selected Lens</div>
+                <span id="scenarioLens" class="scenario-value">?</span>
+                <div id="scenarioLensNote" class="card-note"></div>
               </div>
 
-              <div class="lab-scenario-card">
-                <div class="lab-label">Projected Status</div>
-                <div id="scenarioStatus" class="lab-scenario-value good">Healthy</div>
-                <div id="scenarioStatusNote" class="lab-scenario-note"></div>
+              <div class="scenario-card">
+                <div class="lab-label">Coverage Status</div>
+                <span id="scenarioCoverage" class="scenario-value">?</span>
+                <div id="scenarioCoverageNote" class="card-note"></div>
               </div>
 
-              <div class="lab-scenario-card">
-                <div class="lab-label">Projected Pressure</div>
-                <div id="scenarioImprovement" class="lab-scenario-value watch">?</div>
-                <div id="scenarioImprovementNote" class="lab-scenario-note"></div>
+              <div class="scenario-card">
+                <div class="lab-label">Detail Status</div>
+                <span id="scenarioDetail" class="scenario-value">?</span>
+                <div id="scenarioDetailNote" class="card-note"></div>
               </div>
 
-              <div class="lab-scenario-card">
-                <div class="lab-label">Detail Check</div>
-                <div id="scenarioDetailCheck" class="lab-scenario-value watch">?</div>
-                <div id="scenarioDetailNote" class="lab-scenario-note"></div>
+              <div class="scenario-card">
+                <div class="lab-label">Pressure</div>
+                <span id="scenarioPressure" class="scenario-value">?</span>
+                <div class="card-note">Charted value.</div>
               </div>
             </div>
 
-<div class="lab-chart-shell">
-              <canvas id="labComparisonChart"></canvas>
+            <div class="chart-shell">
+              <canvas id="comparisonChart"></canvas>
             </div>
 
-            <div class="lab-chart-caption">
-              Baseline stays at the original planning pressure for comparison. Scenario chips and Custom assumptions update the proposed pressure curve.
+            <div class="chart-caption">
+              Proposed paths are recalculated from the selected design assumptions. The selected custom point should match the status cards above it.
             </div>
 
-            <div class="lab-tradeoff-summary">
-              <h4>Scenario Recommendation</h4>
-              <p id="recommendationText"></p>
-            </div>
+            <div id="scenarioRecommendation" class="scenario-recommendation"></div>
           </div>
 
           <div class="lab-carry">
             <div class="lab-section-head">
               <div>
                 <div class="lab-kicker">Pipeline Carry-Forward Prototype</div>
-                <h3 class="lab-section-title">Use selected scenario in the next step</h3>
+                <h3 class="lab-section-title">Use selected scenario in the next sanity check</h3>
                 <div class="lab-copy">
-                  This stores the selected scenario in a prototype-only sessionStorage key. The live version should use a per-step physical-security pipeline key, then optionally save the same payload to Supabase for account/project history.
+                  Prototype-only sessionStorage payload. The live version should carry the selected design proposal into the next Physical Security sanity-check step.
                 </div>
               </div>
-
               <div class="lab-chip">Prototype Only</div>
             </div>
 
-            <div class="carry-actions">
-              <button id="saveScenarioBtn" class="carry-btn" type="button">Use selected scenario in next step</button>
-              <button id="clearScenarioBtn" class="carry-btn" type="button">Clear prototype carry-forward</button>
-            </div>
+            <button id="saveScenarioBtn" class="carry-btn" type="button">Use selected scenario in next step</button>
+            <button id="clearScenarioBtn" class="carry-btn" type="button">Clear prototype carry-forward</button>
 
             <div id="carryStatus" class="carry-status">No prototype scenario stored yet.</div>
-            <div class="carry-summary-grid">
-              <div class="carry-summary-card">
-                <div class="carry-summary-label">Selected Scenario</div>
-                <span id="carryScenarioSummary" class="carry-summary-value">?</span>
-              </div>
-
-              <div class="carry-summary-card">
-                <div class="carry-summary-label">Projected Result</div>
-                <span id="carryResultSummary" class="carry-summary-value">?</span>
-              </div>
-
-              <div class="carry-summary-card">
-                <div class="carry-summary-label">Projected Status</div>
-                <span id="carryStatusSummary" class="carry-summary-value">?</span>
-              </div>
-
-              <div class="carry-summary-card">
-                <div class="carry-summary-label">Next Step</div>
-                <span id="carryNextStepSummary" class="carry-summary-value">?</span>
-              </div>
-            </div>
 
             <details class="payload-details">
               <summary>Show developer payload</summary>
@@ -1125,582 +836,363 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     (function () {
-      var original = 25.6;
-      var comfortMin = 8.0;
-      var comfortMax = 18.0;
-      var max = 40.0;
-      var selectedScenario = "split";
-      var originalAssumptions = {
+      var selectedScenario = "custom";
+      var chart = null;
+
+      var original = {
+        label: "Original",
         distanceFt: 80,
-        targetWidthFt: 20,
+        sceneWidthFt: 20,
+        lensMm: 25.6,
         sensorWidthMm: 6.4,
-        detailFactor: 1,
-        coverageDivisor: 1,
-        coverageStrategy: "Single camera"
+        horizontalPixels: 1920,
+        requiredPpf: 150,
+        coverageCount: 1
       };
 
-      function readNumber(id, fallback) {
+      function byId(id) {
+        return document.getElementById(id);
+      }
+
+      function num(id, fallback) {
         var el = byId(id);
         if (!el) return fallback;
         var n = Number(el.value);
         return Number.isFinite(n) ? n : fallback;
       }
 
-      function getCoverageLabel(value) {
-        if (String(value) === "2") return "Split coverage";
-        if (String(value) === "1.5") return "Partial split";
-        if (String(value) === "1.25") return "Light overlap";
-        return "Single camera";
+      function fmt(n, digits) {
+        return Number(n).toFixed(digits);
       }
 
-      function getDetailRequirementLabel(value) {
-        if (String(value) === "0.85") return "Observation / general scene";
-        if (String(value) === "1.20") return "Identification-level detail";
-        if (String(value) === "1.35") return "High-detail review";
-        return "Recognition-level detail";
+      function detailLabel(ppf) {
+        if (ppf >= 300) return "High-detail review";
+        if (ppf >= 250) return "Identification-level detail";
+        if (ppf >= 150) return "Recognition-level detail";
+        return "Observation / general";
       }
 
-      function getDetailRequirementPpf(value) {
-        if (String(value) === "0.85") return 80;
-        if (String(value) === "1.20") return 250;
-        if (String(value) === "1.35") return 300;
-        return 150;
+      function statusClass(status) {
+        if (status === "HEALTHY") return "good";
+        if (status === "WATCH") return "watch";
+        return "risk";
       }
 
-      function getCustomAssumptions() {
-        var coverageEl = byId("customCoverage");
-        var coverageDivisor = coverageEl ? Number(coverageEl.value) : 1;
+      function setText(id, value) {
+        var el = byId(id);
+        if (el) el.textContent = value;
+      }
 
-        var detailEl = byId("customDetailRequirement");
-        var detailValue = detailEl ? detailEl.value : "1.00";
-        var detailFactor = Number(detailValue);
+      function setValueClass(id, value, cls) {
+        var el = byId(id);
+        if (!el) return;
+        el.textContent = value;
+        el.className = el.className.replace(/\bgood\b|\bwatch\b|\brisk\b/g, "").trim() + " " + cls;
+      }
 
-        var resolutionEl = byId("customResolution");
-        var horizontalPixels = resolutionEl ? Number(resolutionEl.value) : 1920;
+      function pressureFromStatus(status) {
+        if (status === "HEALTHY") return 18;
+        if (status === "WATCH") return 52;
+        return 82;
+      }
 
-        var targetWidthFt = readNumber("customWidth", 20);
-        var effectiveSceneWidthFt = Math.max(0.1, targetWidthFt / Math.max(0.1, coverageDivisor));
-        var requiredPpf = getDetailRequirementPpf(detailValue);
-        var availablePpf = horizontalPixels / effectiveSceneWidthFt;
+      function getCustomInputs() {
+        return {
+          label: "Custom",
+          distanceFt: num("customDistance", 56),
+          sceneWidthFt: num("customWidth", 45),
+          lensMm: num("customLens", 3.5),
+          sensorWidthMm: num("customFormat", 5.57),
+          horizontalPixels: num("customResolution", 1920),
+          requiredPpf: num("customDetailRequirement", 150),
+          coverageCount: num("customCoverage", 1)
+        };
+      }
+
+      function evaluate(input) {
+        var distanceFt = Math.max(.1, input.distanceFt);
+        var sceneWidthFt = Math.max(.1, input.sceneWidthFt);
+        var lensMm = Math.max(.1, input.lensMm);
+        var sensorWidthMm = Math.max(.1, input.sensorWidthMm);
+        var horizontalPixels = Math.max(1, input.horizontalPixels);
+        var requiredPpf = Math.max(1, input.requiredPpf);
+        var coverageCount = Math.max(1, input.coverageCount);
+
+        var requiredWidthPerCamera = sceneWidthFt / coverageCount;
+        var framedWidthFt = distanceFt * sensorWidthMm / lensMm;
+        var availablePpf = horizontalPixels / framedWidthFt;
         var detailRatio = availablePpf / requiredPpf;
+        var requiredLensForTarget = distanceFt * sensorWidthMm / requiredWidthPerCamera;
+        var maxWidthPerCamera = horizontalPixels / requiredPpf;
+        var suggestedCameras = Math.max(1, Math.ceil(sceneWidthFt / maxWidthPerCamera));
+        var suggestedWidthPerCamera = sceneWidthFt / suggestedCameras;
+        var suggestedLens = distanceFt * sensorWidthMm / suggestedWidthPerCamera;
+        var pixelsNeededOneCamera = Math.ceil(sceneWidthFt * requiredPpf);
+        var pixelsNeededPerCamera = Math.ceil(requiredWidthPerCamera * requiredPpf);
+
+        var coverageRatio = framedWidthFt / requiredWidthPerCamera;
+        var coverageStatus = coverageRatio >= 1 ? "HEALTHY" : coverageRatio >= .9 ? "WATCH" : "RISK";
+        var detailStatus = detailRatio >= 1 ? "HEALTHY" : detailRatio >= .85 ? "WATCH" : "RISK";
+
+        var lensPressure = lensMm > 50 ? 95 : lensMm > 25 ? 82 : lensMm > 18 ? 68 : lensMm > 12 ? 55 : lensMm < 2.8 ? 45 : 20;
+        var coveragePressure = coverageStatus === "RISK" ? 88 : coverageStatus === "WATCH" ? 55 : 15;
+        var detailPressure = detailStatus === "RISK" ? Math.min(100, 65 + Math.round((1 - Math.min(.85, detailRatio)) / .85 * 35)) : detailStatus === "WATCH" ? 52 : 15;
+        var pressure = Math.max(lensPressure, coveragePressure, detailPressure);
+
+        var status = pressure <= 25 ? "HEALTHY" : pressure <= 60 ? "WATCH" : "RISK";
+
+        var blocker = "Balanced";
+        if (detailPressure >= coveragePressure && detailPressure >= lensPressure && detailStatus !== "HEALTHY") {
+          blocker = "Detail viability";
+        } else if (coveragePressure >= lensPressure && coverageStatus !== "HEALTHY") {
+          blocker = "Coverage fit";
+        } else if (lensPressure > 60) {
+          blocker = "Lens class";
+        }
 
         return {
-          distanceFt: readNumber("customDistance", 56),
-          targetWidthFt: targetWidthFt,
-          effectiveSceneWidthFt: effectiveSceneWidthFt,
-          sensorWidthMm: readNumber("customSensor", 6.4),
+          label: input.label || "Custom",
+          distanceFt: distanceFt,
+          sceneWidthFt: sceneWidthFt,
+          lensMm: lensMm,
+          sensorWidthMm: sensorWidthMm,
           horizontalPixels: horizontalPixels,
-          detailRequirement: getDetailRequirementLabel(detailValue),
-          detailFactor: Number.isFinite(detailFactor) ? detailFactor : 1,
           requiredPpf: requiredPpf,
+          coverageCount: coverageCount,
+          requiredWidthPerCamera: requiredWidthPerCamera,
+          framedWidthFt: framedWidthFt,
           availablePpf: availablePpf,
           detailRatio: detailRatio,
-          coverageDivisor: Number.isFinite(coverageDivisor) && coverageDivisor > 0 ? coverageDivisor : 1,
-          coverageStrategy: getCoverageLabel(coverageEl ? coverageEl.value : "1")
+          requiredLensForTarget: requiredLensForTarget,
+          maxWidthPerCamera: maxWidthPerCamera,
+          suggestedCameras: suggestedCameras,
+          suggestedWidthPerCamera: suggestedWidthPerCamera,
+          suggestedLens: suggestedLens,
+          pixelsNeededOneCamera: pixelsNeededOneCamera,
+          pixelsNeededPerCamera: pixelsNeededPerCamera,
+          coverageStatus: coverageStatus,
+          detailStatus: detailStatus,
+          lensPressure: lensPressure,
+          coveragePressure: coveragePressure,
+          detailPressure: detailPressure,
+          pressure: pressure,
+          status: status,
+          blocker: blocker
         };
       }
 
-      function calculateFocalLengthFromAssumptions(a) {
-        var width = Math.max(0.1, a.effectiveSceneWidthFt || a.targetWidthFt);
-        return a.distanceFt * a.sensorWidthMm / width;
-      }
+      function scenarioInputs() {
+        var c = getCustomInputs();
+        var custom = evaluate(c);
 
-      function syncCustomScenario() {
-        var a = getCustomAssumptions();
-        var projected = calculateFocalLengthFromAssumptions(a);
+        var splitCount = Math.max(custom.suggestedCameras, 2);
+        var split = Object.assign({}, c, {
+          label: "Suggested Split",
+          coverageCount: splitCount,
+          lensMm: custom.suggestedLens
+        });
 
-        scenarios.custom.value = Number(fmt(projected, 1));
-        scenarios.custom.description = "Custom assumption set: " + a.distanceFt + " ft distance, " + a.targetWidthFt + " ft scene width, " + a.effectiveSceneWidthFt.toFixed(1) + " ft effective width, " + a.sensorWidthMm + " mm sensor, " + a.horizontalPixels + " horizontal pixels, " + a.detailRequirement + ", " + a.coverageStrategy + ".";
-        scenarios.custom.assumptions = a;
-        scenarios.custom.detailRatio = a.detailRatio;
-        scenarios.custom.availablePpf = a.availablePpf;
-        scenarios.custom.requiredPpf = a.requiredPpf;
-        scenarios.custom.levers = [
-          "Distance to target: " + a.distanceFt + " ft.",
-          "Target width / scene width: " + a.targetWidthFt + " ft.",
-          "Sensor width: " + a.sensorWidthMm + " mm.",
-          "Detail requirement: " + a.detailRequirement + " (" + a.availablePpf.toFixed(1) + " PPF available vs " + a.requiredPpf + " PPF target).",
-          "Coverage strategy: " + a.coverageStrategy + ".",
-          "Effective scene width per camera: " + a.effectiveSceneWidthFt.toFixed(1) + " ft."
-        ];
-        scenarios.custom.recommendation = "Custom mode recalculates the proposed focal length from the edited planning assumptions. Carry this forward only after confirming the changed assumptions represent a realistic design option.";
+        var resolution = Object.assign({}, c, {
+          label: "Higher Resolution",
+          horizontalPixels: Math.max(c.horizontalPixels, custom.pixelsNeededOneCamera),
+          lensMm: custom.requiredLensForTarget
+        });
 
-        var formulaNote = byId("customFormulaNote");
-        if (formulaNote) {
-          formulaNote.textContent = "Calculated focal length output = " + a.distanceFt + " ? " + a.sensorWidthMm + " ? " + a.effectiveSceneWidthFt.toFixed(1) + " = " + fmt(projected, 1) + " mm. Detail check = " + a.availablePpf.toFixed(1) + " PPF available vs " + a.requiredPpf + " PPF target.";
-        }
-      }
+        var optimized = Object.assign({}, c, {
+          label: "Optimized Lens",
+          lensMm: custom.requiredLensForTarget
+        });
 
-
-      var scenarios = {
-        current: {
-          label: "Current",
-          value: 25.6,
-          description: "Original calculated result with no planning adjustment.",
-          levers: [
-            "Use current design only after validating lens availability.",
-            "Expect long-range lens constraints and tighter field-of-view tolerance.",
-            "Consider this the baseline, not the recommended improvement path."
-          ],
-          recommendation: "The current result remains outside the preferred band. Treat it as a warning condition and evaluate at least one planning adjustment before carrying the design forward."
-        },
-        closer: {
-          label: "Closer Camera",
-          value: 18.0,
-          description: "Moves the camera closer to reduce focal demand.",
-          levers: [
-            "Move the camera closer to the target area if mounting options allow.",
-            "Recheck the scene width and detail objective after relocation.",
-            "Validate that the new mounting position does not create coverage gaps."
-          ],
-          recommendation: "Closer camera placement is the cleanest single-design change if the site allows it. It brings the result to the edge of the preferred band with minimal change to camera count."
-        },
-        wider: {
-          label: "Wider Target",
-          value: 18.0,
-          description: "Increases acceptable target width while preserving the use case.",
-          levers: [
-            "Increase the acceptable target width only if the operational objective still holds.",
-            "Confirm the wider scene does not reduce required identification/detail quality.",
-            "Use this path when the target definition was overly narrow."
-          ],
-          recommendation: "Wider target framing can reduce focal demand, but it should only be used when the broader scene still satisfies the required detail objective."
-        },
-        split: {
-          label: "Split Coverage",
-          value: 12.5,
-          description: "Splits the scene across more than one camera.",
-          levers: [
-            "Split the coverage area across multiple cameras.",
-            "Use the extra optical margin to preserve identification/detail requirements.",
-            "Review camera count, cabling, mounting, and storage impact."
-          ],
-          recommendation: "Split coverage gives the strongest optical improvement and moves the result cleanly into the preferred planning band. It adds camera count, but gives the design more lens-selection margin."
-        },
-        custom: {
-          label: "Custom",
-          value: 16.5,
-          description: "User-adjusted proposed focal result for scenario testing.",
-          levers: [
-            "Tune the proposed result to represent a custom planning assumption.",
-            "Use this for what-if reviews before choosing a final design path.",
-            "Carry the selected custom value forward only after validating assumptions."
-          ],
-          recommendation: "The custom scenario is useful for planning review, but the changed assumption should be documented before carrying it into the next step."
-        }
-      };
-
-      function statusFor(value, scenario) {
-        if (scenario && scenario.detailRatio !== undefined) {
-          if (scenario.detailRatio < 0.85) {
-            return { key: "risk", label: "Risk", cls: "risk", note: "Detail requirement is not supported by the selected scene width and resolution." };
-          }
-
-          if (scenario.detailRatio < 1) {
-            return { key: "watch", label: "Watch", cls: "watch", note: "Detail requirement is close to the planning threshold and needs validation." };
-          }
-        }
-
-        if (value >= comfortMin && value <= comfortMax) {
-          return { key: "healthy", label: "Healthy", cls: "good", note: "Inside the preferred planning band." };
-        }
-
-        if (value < comfortMin || value <= 24) {
-          return { key: "watch", label: "Watch", cls: "watch", note: "Near or outside the preferred planning band." };
-        }
-
-        return { key: "risk", label: "Risk", cls: "risk", note: "Outside the preferred planning band." };
-      }
-
-      function fmt(value, digits) {
-        return Number(value).toFixed(digits);
-      }
-
-      function pressureIndex(value, scenario) {
-        var lensPressure = Math.max(0, Math.min(100, Math.round((value / 34) * 100)));
-
-        if (scenario && scenario.detailRatio !== undefined) {
-          var ratio = Number(scenario.detailRatio);
-
-          if (Number.isFinite(ratio)) {
-            // Match the status model:
-            // below 0.85 detail viability = RISK zone
-            // 0.85 to 1.00 = WATCH zone
-            // 1.00+ = detail is viable, so lens/framing pressure can dominate
-            if (ratio < 0.85) {
-              var riskPressure = 65 + Math.round(((0.85 - Math.max(0, ratio)) / 0.85) * 35);
-              return Math.max(lensPressure, Math.min(100, riskPressure));
-            }
-
-            if (ratio < 1) {
-              var watchPressure = 35 + Math.round(((1 - ratio) / 0.15) * 25);
-              return Math.max(lensPressure, Math.min(60, watchPressure));
-            }
-          }
-        }
-
-        return lensPressure;
-      }
-
-      function byId(id) {
-        return document.getElementById(id);
-      }
-
-      function setClassValue(el, base, cls) {
-        if (!el) return;
-        el.className = base + " " + cls;
-      }
-
-      function scenarioDataArray() {
         return [
-          scenarios.current.value,
-          scenarios.closer.value,
-          scenarios.wider.value,
-          scenarios.split.value,
-          scenarios.custom.value
+          evaluate(original),
+          evaluate(c),
+          evaluate(split),
+          evaluate(resolution),
+          evaluate(optimized)
         ];
       }
 
-      function scenarioPressureArray() {
-        return [
-          pressureIndex(scenarios.current.value, scenarios.current),
-          pressureIndex(scenarios.closer.value, scenarios.closer),
-          pressureIndex(scenarios.wider.value, scenarios.wider),
-          pressureIndex(scenarios.split.value, scenarios.split),
-          pressureIndex(scenarios.custom.value, scenarios.custom)
-        ];
+      function selectedData() {
+        var list = scenarioInputs();
+        if (selectedScenario === "current") return list[0];
+        if (selectedScenario === "split") return list[2];
+        if (selectedScenario === "resolution") return list[3];
+        if (selectedScenario === "optimized") return list[4];
+        return list[1];
       }
-
-      function selectedIndex() {
-        return ["current", "closer", "wider", "split", "custom"].indexOf(selectedScenario);
-      }
-
-      function buildPayload() {
-        syncCustomScenario();
-        var scenario = scenarios[selectedScenario];
-        var status = statusFor(scenario.value, scenario);
-        var improvement = original - scenario.value;
-        var proposedAssumptions = selectedScenario === "custom" ? getCustomAssumptions() : (scenario.assumptions || null);
-
-        return {
-          schema: "scopedlabs.prototype.lens-scenario.v1",
-          category: "physical-security",
-          step: "lens-selection",
-          tool: "Lens Selection Helper",
-          selectedScenario: selectedScenario,
-          selectedScenarioLabel: scenario.label,
-          originalAssumptions: originalAssumptions,
-          proposedAssumptions: proposedAssumptions,
-          original: {
-            adjustedFocalLengthMm: original,
-            status: "risk"
-          },
-          proposed: {
-            adjustedFocalLengthMm: Number(fmt(scenario.value, 1)),
-            status: status.label.toLowerCase(),
-            improvementMm: Number(fmt(improvement, 1)),
-            pressureIndex: pressureIndex(scenario.value, scenario),
-            note: scenario.description
-          },
-          carryForward: {
-            recommendedFocalLengthMm: Number(fmt(scenario.value, 1)),
-            preferredBandMinMm: comfortMin,
-            preferredBandMaxMm: comfortMax,
-            nextStep: "Face Recognition Range",
-            source: "prototype design lab"
-          },
-          assumptionsChanged: scenario.levers,
-          savedAt: new Date().toISOString()
-        };
-      }
-
-
-      function getActiveDesignAssumptions(scenario) {
-        if (selectedScenario === "custom") return getCustomAssumptions();
-
-        if (scenario && scenario.assumptions) return scenario.assumptions;
-
-        return {
-          distanceFt: originalAssumptions.distanceFt,
-          targetWidthFt: originalAssumptions.targetWidthFt,
-          effectiveSceneWidthFt: originalAssumptions.targetWidthFt,
-          sensorWidthMm: originalAssumptions.sensorWidthMm,
-          horizontalPixels: 1920,
-          detailRequirement: "Recognition-level detail",
-          requiredPpf: 150,
-          availablePpf: 1920 / originalAssumptions.targetWidthFt,
-          coverageDivisor: 1,
-          coverageStrategy: "Single camera"
-        };
-      }
-
-      function renderDesignTargets(scenario) {
-        var a = getActiveDesignAssumptions(scenario);
-
-        var distanceFt = Math.max(0.1, Number(a.distanceFt) || 0.1);
-        var targetWidthFt = Math.max(0.1, Number(a.targetWidthFt) || 0.1);
-        var sensorWidthMm = Math.max(0.1, Number(a.sensorWidthMm) || 0.1);
-        var horizontalPixels = Math.max(1, Number(a.horizontalPixels) || 1920);
-        var requiredPpf = Math.max(1, Number(a.requiredPpf) || 150);
-
-        var effectiveSceneWidthFt = Math.max(
-          0.1,
-          Number(a.effectiveSceneWidthFt) || targetWidthFt
-        );
-
-        var availablePpf = horizontalPixels / effectiveSceneWidthFt;
-        var maxSceneWidthPerCamera = horizontalPixels / requiredPpf;
-        var suggestedCameraCount = Math.max(1, Math.ceil(targetWidthFt / maxSceneWidthPerCamera));
-        var effectiveWidthAfterSplit = targetWidthFt / suggestedCameraCount;
-        var focalAfterSplit = distanceFt * sensorWidthMm / effectiveWidthAfterSplit;
-        var oneCameraPixelsNeeded = Math.ceil(targetWidthFt * requiredPpf);
-
-        var minDistanceForPreferredBand = comfortMin * effectiveWidthAfterSplit / sensorWidthMm;
-        var maxDistanceForPreferredBand = comfortMax * effectiveWidthAfterSplit / sensorWidthMm;
-
-        var detailOk = availablePpf >= requiredPpf;
-        var focalOkAfterSplit = focalAfterSplit >= comfortMin && focalAfterSplit <= comfortMax;
-
-        byId("targetMaxSceneWidth").textContent = fmt(maxSceneWidthPerCamera, 1) + " ft";
-        byId("targetMaxSceneNote").textContent =
-          "At " + horizontalPixels + " px and " + requiredPpf + " PPF target.";
-
-        byId("targetCameraCount").textContent = suggestedCameraCount + " camera" + (suggestedCameraCount === 1 ? "" : "s");
-        byId("targetCameraNote").textContent =
-          "For a " + fmt(targetWidthFt, 1) + " ft scene at the selected detail target.";
-
-        byId("targetFocalAfterSplit").textContent = fmt(focalAfterSplit, 1) + " mm";
-        byId("targetFocalNote").textContent =
-          "Using about " + fmt(effectiveWidthAfterSplit, 1) + " ft per camera.";
-
-        byId("targetPixelsNeeded").textContent = oneCameraPixelsNeeded.toLocaleString() + " px";
-        byId("targetPixelsNote").textContent =
-          "Horizontal pixels needed if one camera covers the full scene.";
-
-        byId("targetDistanceRange").textContent =
-          fmt(minDistanceForPreferredBand, 0) + "-" + fmt(maxDistanceForPreferredBand, 0) + " ft";
-        byId("targetDistanceNote").textContent =
-          "Approximate distance range for an 8-18 mm preferred lens band after suggested split.";
-
-        var recommendation = "";
-
-        if (!detailOk) {
-          recommendation =
-            "<strong>Detail is the blocking requirement.</strong> The current view is " +
-            fmt(effectiveSceneWidthFt, 1) + " ft wide per camera, giving about " +
-            fmt(availablePpf, 1) + " PPF against a " + requiredPpf +
-            " PPF target. Changing focal length alone will not fix that. Limit each camera view to about " +
-            fmt(maxSceneWidthPerCamera, 1) + " ft, use about " + suggestedCameraCount +
-            " cameras, or increase horizontal resolution to about " +
-            oneCameraPixelsNeeded.toLocaleString() + " px if one camera must cover the full scene.";
-        } else if (!focalOkAfterSplit) {
-          recommendation =
-            "<strong>Detail is acceptable, but lens/framing still needs review.</strong> The selected detail target is supported, but the resulting focal length is outside the preferred 8-18 mm band. Review distance, sensor size, or scene width per camera.";
-        } else {
-          recommendation =
-            "<strong>This path can be made acceptable.</strong> The selected assumptions can support the detail target and land near the preferred lens band if each camera covers about " +
-            fmt(effectiveWidthAfterSplit, 1) + " ft of scene width. Validate with manufacturer FOV data before relying on it.";
-        }
-
-        byId("designTargetRecommendation").innerHTML = recommendation;
-      }
-
 
       function render() {
-        var scenario = scenarios[selectedScenario];
-        var status = statusFor(scenario.value, scenario);
-        var improvement = original - scenario.value;
-        var reductionPct = original ? Math.round((improvement / original) * 100) : 0;
-        var pressure = pressureIndex(scenario.value, scenario);
+        var data = selectedData();
+        var custom = evaluate(getCustomInputs());
 
         document.querySelectorAll(".scenario-btn").forEach(function (btn) {
           btn.classList.toggle("active", btn.getAttribute("data-scenario") === selectedScenario);
         });
 
-        var assumptionEditor = document.querySelector(".custom-control.assumption-editor");
-        if (assumptionEditor) {
-          assumptionEditor.classList.toggle("is-visible", selectedScenario === "custom");
-        }
+        var editor = byId("customEditor");
+        if (editor) editor.classList.toggle("is-visible", selectedScenario === "custom");
 
         var topStatus = byId("topStatus");
-        if (topStatus) {
-          topStatus.textContent = status.label;
-          topStatus.className = "lab-status " + status.key;
-        }
+        topStatus.textContent = data.status;
+        topStatus.className = "lab-status " + data.status.toLowerCase();
 
-        byId("selectedValue").textContent = fmt(scenario.value, 1);
-        byId("selectedNote").textContent = status.note + " Original result was " + fmt(original, 1) + " mm.";
-        byId("improvementMini").textContent = improvement >= 0 ? "-" + fmt(improvement, 1) + " mm" : "+" + fmt(Math.abs(improvement), 1) + " mm";
-        byId("statusMini").textContent = status.label;
-        setClassValue(byId("statusMini"), "", status.cls);
+        setText("resultLens", fmt(data.lensMm, 1));
+        setText("resultNote", "Selected lens frames about " + fmt(data.framedWidthFt, 1) + " ft at " + fmt(data.distanceFt, 0) + " ft. Required width per camera is " + fmt(data.requiredWidthPerCamera, 1) + " ft.");
 
-        byId("pressureChip").textContent = "Pressure Index " + pressure + " / 100";
-        byId("analyticsProjected").textContent = fmt(scenario.value, 1) + " mm";
-        setClassValue(byId("analyticsProjected"), "lab-analytic-value", status.cls);
-        byId("analyticsProjectedNote").textContent = status.note;
+        setValueClass("framedWidth", fmt(data.framedWidthFt, 1) + " ft", statusClass(data.coverageStatus));
+        setText("requiredWidth", fmt(data.requiredWidthPerCamera, 1) + " ft");
+        setValueClass("availablePpf", fmt(data.availablePpf, 1) + " PPF", statusClass(data.detailStatus));
+        setValueClass("statusMini", data.status, statusClass(data.status));
 
-        byId("analyticsReduction").textContent = improvement >= 0 ? fmt(improvement, 1) + " mm" : "+" + fmt(Math.abs(improvement), 1) + " mm";
-        byId("analyticsReductionNote").textContent = improvement >= 0 ? "About " + reductionPct + "% lower than the original calculated focal demand." : "Higher than the original baseline.";
+        var note = "Selected lens check: " + fmt(data.distanceFt, 0) + " ft x " + fmt(data.sensorWidthMm, 2) + " mm sensor / " + fmt(data.lensMm, 1) + " mm lens = about " + fmt(data.framedWidthFt, 1) + " ft framed width. Detail check = " + fmt(data.availablePpf, 1) + " PPF available vs " + fmt(data.requiredPpf, 0) + " PPF target.";
+        setText("formulaNote", note);
 
-        byId("analyticsBand").textContent = status.key === "healthy" ? "Inside band" : (scenario.value > comfortMax ? "+" + fmt(scenario.value - comfortMax, 1) + " mm" : "Below band");
-        setClassValue(byId("analyticsBand"), "lab-analytic-value", status.cls);
-        byId("analyticsBandNote").textContent = status.key === "healthy" ? "Selected scenario sits inside the comfort band." : "Selected scenario still needs review.";
-
-        if (selectedScenario === "custom" && scenario.detailRatio !== undefined && scenario.detailRatio < 1) {
-          byId("analyticsNextCheck").textContent = "Detail validation";
-          byId("analyticsNextCheckNote").textContent = "Available pixel density is below the selected detail requirement.";
+        if (data.blocker === "Detail viability") {
+          setText("driverTitle", "Detail requirement is the dominant limiter.");
+          setText("driverSummary", "The selected lens may frame the scene, but the framed view does not provide enough pixels per foot for the selected detail objective.");
+        } else if (data.blocker === "Coverage fit") {
+          setText("driverTitle", "Selected lens does not cover the required width.");
+          setText("driverSummary", "The lens is too tight for the required scene width at the selected distance and camera format.");
+        } else if (data.blocker === "Lens class") {
+          setText("driverTitle", "Lens class is creating planning pressure.");
+          setText("driverSummary", "The selected or required focal length is outside a comfortable planning range and should be checked against real lens availability.");
         } else {
-          byId("analyticsNextCheck").textContent = selectedScenario === "split" ? "Camera count review" : "FOV validation";
-          byId("analyticsNextCheckNote").textContent = selectedScenario === "split" ? "Check camera count, cabling, and storage impact." : "Validate field of view before final design.";
+          setText("driverTitle", "Lens framing and detail are reasonably aligned.");
+          setText("driverSummary", "The selected design is within the current planning guardrails, pending manufacturer FOV validation.");
         }
 
-        byId("scenarioName").textContent = scenario.label;
-        byId("scenarioDescription").textContent = scenario.description;
-        byId("scenarioProjected").textContent = fmt(scenario.value, 1) + " mm";
-        setClassValue(byId("scenarioProjected"), "lab-scenario-value", status.cls);
-        byId("scenarioProjectedNote").textContent = status.note;
-        byId("scenarioStatus").textContent = status.label;
-        setClassValue(byId("scenarioStatus"), "lab-scenario-value", status.cls);
-        byId("scenarioStatusNote").textContent = status.note;
-        var scenarioPressure = pressureIndex(scenario.value, scenario);
-        byId("scenarioImprovement").textContent = scenarioPressure + " / 100";
-        setClassValue(byId("scenarioImprovement"), "lab-scenario-value", status.cls);
-        byId("scenarioImprovementNote").textContent = "Chart plots planning pressure, not focal length. Lower is better.";
+        setText("coverageScore", data.coveragePressure + "%");
+        setText("detailScore", data.detailPressure + "%");
+        setText("lensScore", data.lensPressure + "%");
+        byId("coverageFill").style.width = data.coveragePressure + "%";
+        byId("detailFill").style.width = data.detailPressure + "%";
+        byId("lensFill").style.width = data.lensPressure + "%";
 
-        if (byId("scenarioDetailCheck")) {
-          if (scenario.availablePpf && scenario.requiredPpf) {
-            byId("scenarioDetailCheck").textContent = fmt(scenario.availablePpf, 1) + " / " + fmt(scenario.requiredPpf, 0) + " PPF";
-            byId("scenarioDetailNote").textContent = scenario.availablePpf >= scenario.requiredPpf
-              ? "Detail target is supported by the selected scene width and resolution."
-              : "Detail target is not supported by the selected scene width and resolution.";
-            setClassValue(
-              byId("scenarioDetailCheck"),
-              "lab-scenario-value",
-              scenario.availablePpf >= scenario.requiredPpf ? "good" : "risk"
-            );
-          } else {
-            byId("scenarioDetailCheck").textContent = "No detail check";
-            byId("scenarioDetailNote").textContent = "This scenario has no explicit pixel-density detail test.";
-            setClassValue(byId("scenarioDetailCheck"), "lab-scenario-value", "watch");
+        setText("targetMaxWidth", fmt(data.maxWidthPerCamera, 1) + " ft");
+        setText("targetMaxWidthNote", "Max framed width per camera for " + fmt(data.requiredPpf, 0) + " PPF.");
+        setText("targetCameraCount", data.suggestedCameras + " camera" + (data.suggestedCameras === 1 ? "" : "s"));
+        setText("targetCameraNote", "For a " + fmt(data.sceneWidthFt, 1) + " ft scene at the selected detail target.");
+        setText("targetRequiredLens", fmt(data.requiredLensForTarget, 1) + " mm");
+        setText("targetRequiredLensNote", "Lens size needed to frame the required width per camera.");
+        setText("targetPixelsNeeded", data.pixelsNeededOneCamera.toLocaleString() + " px");
+        setText("targetPixelsNote", "Horizontal pixels needed if one camera covers the full scene.");
+        setValueClass("targetBlocker", data.blocker, data.blocker === "Balanced" ? "good" : "risk");
+        setText("targetBlockerNote", "Main condition keeping this scenario from HEALTHY.");
+
+        var designText = "";
+        if (data.detailStatus !== "HEALTHY") {
+          designText = "<strong>Changing lens size alone is not enough.</strong> The selected view provides " + fmt(data.availablePpf, 1) + " PPF, but the selected detail requirement needs " + fmt(data.requiredPpf, 0) + " PPF. Limit each camera view to about " + fmt(data.maxWidthPerCamera, 1) + " ft, use about " + data.suggestedCameras + " cameras, or increase horizontal resolution to about " + data.pixelsNeededOneCamera.toLocaleString() + " px if one camera must cover the full scene.";
+        } else if (data.coverageStatus !== "HEALTHY") {
+          designText = "<strong>The selected lens is too tight for the required scene width.</strong> It frames about " + fmt(data.framedWidthFt, 1) + " ft, but the required width per camera is " + fmt(data.requiredWidthPerCamera, 1) + " ft. Use a wider lens, increase distance, or split the scene.";
+        } else if (data.lensPressure > 60) {
+          designText = "<strong>The design may work, but the lens class is under pressure.</strong> Verify lens availability, depth of field, mounting precision, and manufacturer FOV data.";
+        } else {
+          designText = "<strong>This scenario is within the current planning guardrails.</strong> It covers the required width and meets the selected detail target. Validate field of view and image quality before relying on it.";
+        }
+        byId("designRecommendation").innerHTML = designText;
+
+        setText("scenarioPath", data.label);
+        setText("scenarioPathNote", "Scenario currently selected.");
+        setText("scenarioLens", fmt(data.lensMm, 1) + " mm");
+        setText("scenarioLensNote", "Selected or calculated lens size.");
+        setValueClass("scenarioCoverage", data.coverageStatus, statusClass(data.coverageStatus));
+        setText("scenarioCoverageNote", fmt(data.framedWidthFt, 1) + " ft framed vs " + fmt(data.requiredWidthPerCamera, 1) + " ft required.");
+        setValueClass("scenarioDetail", data.detailStatus, statusClass(data.detailStatus));
+        setText("scenarioDetailNote", fmt(data.availablePpf, 1) + " PPF available vs " + fmt(data.requiredPpf, 0) + " PPF target.");
+        setValueClass("scenarioPressure", data.pressure + " / 100", statusClass(data.status));
+
+        byId("scenarioRecommendation").innerHTML = designText;
+
+        var payload = {
+          schema: "scopedlabs.prototype.lens-design-scenario.v2",
+          category: "physical-security",
+          step: "lens-selection",
+          selectedScenario: data.label,
+          selectedLensMm: Number(data.lensMm.toFixed(2)),
+          status: data.status,
+          coverageStatus: data.coverageStatus,
+          detailStatus: data.detailStatus,
+          pressure: data.pressure,
+          assumptions: {
+            distanceFt: Number(data.distanceFt.toFixed(2)),
+            requiredSceneWidthFt: Number(data.sceneWidthFt.toFixed(2)),
+            framedWidthFt: Number(data.framedWidthFt.toFixed(2)),
+            sensorWidthMm: Number(data.sensorWidthMm.toFixed(2)),
+            horizontalPixels: data.horizontalPixels,
+            requiredPpf: data.requiredPpf,
+            availablePpf: Number(data.availablePpf.toFixed(2)),
+            coverageCount: data.coverageCount
+          },
+          designTargets: {
+            maxWidthPerCameraFt: Number(data.maxWidthPerCamera.toFixed(2)),
+            suggestedCameras: data.suggestedCameras,
+            requiredLensForTargetMm: Number(data.requiredLensForTarget.toFixed(2)),
+            pixelsNeededOneCamera: data.pixelsNeededOneCamera,
+            mainBlocker: data.blocker
           }
-        }
-        byId("recommendationText").textContent = scenario.recommendation;
-
-        var leverList = byId("leverList");
-        if (leverList) {
-          leverList.innerHTML = scenario.levers.map(function (item) {
-            return "<li>" + item + "</li>";
-          }).join("");
-        }
-
-        var scale = Math.max(0.45, Math.min(1, scenario.value / original));
-        var d = Math.round(82 * scale);
-        var w = Math.round(74 * scale);
-        var detail = Math.round(66 * Math.max(0.65, scale));
-        byId("driverDistance").style.width = d + "%";
-        byId("driverDistanceText").textContent = d + "%";
-        byId("driverWidth").style.width = w + "%";
-        byId("driverWidthText").textContent = w + "%";
-        byId("driverDetail").style.width = detail + "%";
-        byId("driverDetailText").textContent = detail + "%";
-
-        renderDesignTargets(scenario);
-
-        var payload = buildPayload();
-
-        if (byId("carryScenarioSummary")) {
-          byId("carryScenarioSummary").textContent = payload.selectedScenarioLabel;
-        }
-
-        if (byId("carryResultSummary")) {
-          byId("carryResultSummary").textContent = payload.proposed.adjustedFocalLengthMm + " mm";
-        }
-
-        if (byId("carryStatusSummary")) {
-          byId("carryStatusSummary").textContent = payload.proposed.status;
-          byId("carryStatusSummary").className = "carry-summary-value " + payload.proposed.status;
-        }
-
-        if (byId("carryNextStepSummary")) {
-          byId("carryNextStepSummary").textContent = payload.carryForward.nextStep;
-        }
+        };
 
         byId("payloadPreview").textContent = JSON.stringify(payload, null, 2);
 
         updateChart();
       }
 
+      function chartData() {
+        var list = scenarioInputs();
+        return {
+          labels: list.map(function (x) { return x.label; }),
+          values: list.map(function (x) { return x.pressure; })
+        };
+      }
+
       function initChart() {
-        var canvas = byId("labComparisonChart");
+        var canvas = byId("comparisonChart");
         if (!canvas || !window.Chart) return;
 
-        var pressureZonePlugin = {
-          id: "pressureZonePlugin",
-          beforeDraw: function (chart) {
-            var y = chart.scales.y;
-            var area = chart.chartArea;
+        var zones = {
+          id: "pressureZones",
+          beforeDraw: function (chartInstance) {
+            var y = chartInstance.scales.y;
+            var area = chartInstance.chartArea;
             if (!y || !area) return;
+            var ctx = chartInstance.ctx;
 
-            var ctx = chart.ctx;
-
-            function zone(from, to, fill, stroke) {
+            function zone(from, to, fill, label) {
               var top = y.getPixelForValue(to);
               var bottom = y.getPixelForValue(from);
-
               ctx.save();
               ctx.fillStyle = fill;
               ctx.fillRect(area.left, top, area.right - area.left, bottom - top);
-
-              if (stroke) {
-                ctx.strokeStyle = stroke;
-                ctx.setLineDash([6, 6]);
-                ctx.strokeRect(area.left, top, area.right - area.left, bottom - top);
-              }
-
+              ctx.fillStyle = "rgba(226,232,240,.58)";
+              ctx.font = "700 10px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+              ctx.fillText(label, area.left + 8, y.getPixelForValue((from + to) / 2));
               ctx.restore();
             }
 
-            zone(0, 25, "rgba(125,255,152,0.10)", "rgba(125,255,152,0.20)");
-            zone(25, 60, "rgba(255,211,79,0.075)", "rgba(255,211,79,0.16)");
-            zone(60, 100, "rgba(255,96,88,0.075)", "rgba(255,96,88,0.16)");
-
-            ctx.save();
-            ctx.fillStyle = "rgba(203,213,225,.62)";
-            ctx.font = "700 10px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
-            ctx.fillText("HEALTHY", area.left + 8, y.getPixelForValue(12));
-            ctx.fillText("WATCH", area.left + 8, y.getPixelForValue(42));
-            ctx.fillText("RISK", area.left + 8, y.getPixelForValue(82));
-            ctx.restore();
+            zone(0, 25, "rgba(125,255,152,.10)", "HEALTHY");
+            zone(25, 60, "rgba(255,211,79,.075)", "WATCH");
+            zone(60, 100, "rgba(255,96,88,.075)", "RISK");
           }
         };
 
-        window.labComparisonChartInstance = new Chart(canvas.getContext("2d"), {
+        var data = chartData();
+
+        chart = new Chart(canvas.getContext("2d"), {
           type: "line",
           data: {
-            labels: ["Current", "Closer Camera", "Wider Target", "Split Coverage", "Custom"],
+            labels: data.labels,
             datasets: [
               {
-                label: "Original baseline pressure",
-                data: [75, 75, 75, 75, 75],
-                borderColor: "rgba(255,96,88,1)",
-                backgroundColor: "rgba(255,96,88,.18)",
-                pointBackgroundColor: "rgba(255,96,88,1)",
-                pointBorderColor: "#ffffff",
-                pointRadius: [4, 4, 4, 4, 4],
-                borderWidth: 3,
-                tension: 0.25
-              },
-              {
-                label: "Proposed planning pressure",
-                data: scenarioPressureArray(),
+                label: "Planning pressure",
+                data: data.values,
                 borderColor: "rgba(125,255,152,1)",
                 backgroundColor: "rgba(125,255,152,.18)",
-                pointBackgroundColor: ["rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)"],
-                pointBorderColor: "#ffffff",
-                pointRadius: [4, 4, 4, 4, 4],
-                pointHoverRadius: 6,
+                pointBackgroundColor: "#ffd34f",
+                pointBorderColor: "#fff",
+                pointRadius: 5,
+                pointHoverRadius: 7,
                 borderWidth: 3,
-                tension: 0.28
+                tension: .28
               }
             ]
           },
@@ -1712,14 +1204,12 @@
               legend: {
                 labels: {
                   color: "rgba(248,250,252,.86)",
-                  boxWidth: 18,
-                  boxHeight: 10,
                   font: { size: 11, weight: "700" }
                 }
               },
               tooltip: {
                 backgroundColor: "rgba(5,12,18,.96)",
-                titleColor: "#ffffff",
+                titleColor: "#fff",
                 bodyColor: "rgba(248,250,252,.88)",
                 borderColor: "rgba(148,163,184,.22)",
                 borderWidth: 1,
@@ -1737,8 +1227,7 @@
                 ticks: {
                   color: "rgba(203,213,225,.76)",
                   stepSize: 20,
-                  font: { size: 10, weight: "700" },
-                  callback: function (value) { return value + " / 100"; }
+                  callback: function (v) { return v + " / 100"; }
                 },
                 title: {
                   display: true,
@@ -1750,42 +1239,41 @@
               }
             }
           },
-          plugins: [pressureZonePlugin]
+          plugins: [zones]
         });
       }
 
       function updateChart() {
-        var chart = window.labComparisonChartInstance;
         if (!chart) return;
-
-        var idx = selectedIndex();
-        var pointSizes = [4, 4, 4, 4, 4];
-        var pointColors = ["rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)", "rgba(125,255,152,1)"];
-        pointSizes[idx] = 8;
-        pointColors[idx] = "#ffd34f";
-
-        chart.data.datasets[1].data = scenarioPressureArray();
-        chart.data.datasets[1].pointRadius = pointSizes;
-        chart.data.datasets[1].pointBackgroundColor = pointColors;
+        var data = chartData();
+        chart.data.labels = data.labels;
+        chart.data.datasets[0].data = data.values;
         chart.update();
       }
 
-      function bindEvents() {
+      function bind() {
         document.querySelectorAll(".scenario-btn").forEach(function (btn) {
           btn.addEventListener("click", function () {
             selectedScenario = btn.getAttribute("data-scenario");
             render();
           });
         });
-        ["customDistance", "customWidth", "customSensor", "customDetailRequirement", "customResolution", "customCoverage"].forEach(function (id) {
+
+        [
+          "customDistance",
+          "customWidth",
+          "customLens",
+          "customFormat",
+          "customResolution",
+          "customDetailRequirement",
+          "customCoverage"
+        ].forEach(function (id) {
           var el = byId(id);
           if (!el) return;
-
           el.addEventListener("input", function () {
             selectedScenario = "custom";
             render();
           });
-
           el.addEventListener("change", function () {
             selectedScenario = "custom";
             render();
@@ -1793,9 +1281,8 @@
         });
 
         byId("saveScenarioBtn").addEventListener("click", function () {
-          var payload = buildPayload();
-          sessionStorage.setItem("scopedlabs:prototype:lens-design-lab:selected-scenario", JSON.stringify(payload));
-          byId("carryStatus").textContent = "Stored prototype carry-forward scenario: " + payload.selectedScenarioLabel + " -> " + payload.proposed.adjustedFocalLengthMm + " mm.";
+          sessionStorage.setItem("scopedlabs:prototype:lens-design-lab:selected-scenario", byId("payloadPreview").textContent);
+          byId("carryStatus").textContent = "Stored prototype carry-forward scenario.";
         });
 
         byId("clearScenarioBtn").addEventListener("click", function () {
@@ -1806,18 +1293,8 @@
 
       function init() {
         initChart();
-        bindEvents();
+        bind();
         render();
-
-        var saved = sessionStorage.getItem("scopedlabs:prototype:lens-design-lab:selected-scenario");
-        if (saved) {
-          try {
-            var parsed = JSON.parse(saved);
-            byId("carryStatus").textContent = "Prototype carry-forward currently stored: " + parsed.selectedScenarioLabel + " -> " + parsed.proposed.adjustedFocalLengthMm + " mm.";
-          } catch (err) {
-            byId("carryStatus").textContent = "Prototype carry-forward has invalid saved data.";
-          }
-        }
       }
 
       if (document.readyState === "loading") {
