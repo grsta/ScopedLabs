@@ -429,6 +429,127 @@
       line-height: 1.4;
     }
 
+  
+    .lab-scenario-strip {
+      display: grid;
+      grid-template-columns: 1.1fr .8fr .7fr .8fr;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .lab-scenario-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 11px;
+      background: rgba(255,255,255,.025);
+      padding: 11px 12px;
+      min-width: 0;
+    }
+
+    .lab-scenario-label {
+      color: rgba(203,213,225,.64);
+      font-size: .58rem;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .lab-scenario-value {
+      margin-top: 7px;
+      color: #fff;
+      font-size: .95rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .lab-scenario-note {
+      margin-top: 5px;
+      color: rgba(226,232,240,.58);
+      font-size: .68rem;
+      line-height: 1.32;
+    }
+
+    .lab-scenario-card.good .lab-scenario-value {
+      color: #7dff98;
+    }
+
+    .lab-scenario-card.watch .lab-scenario-value {
+      color: #ffd34f;
+    }
+
+    .lab-scenario-card.risk .lab-scenario-value {
+      color: #ff8f88;
+    }
+
+    .lab-impact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin: 0 0 12px;
+    }
+
+    .lab-impact-card {
+      border: 1px solid rgba(125,255,152,.13);
+      border-radius: 11px;
+      background: rgba(125,255,152,.028);
+      padding: 11px;
+    }
+
+    .lab-impact-card h4 {
+      margin: 0 0 7px;
+      color: #7dff98;
+      font-size: .7rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .lab-impact-card p {
+      margin: 0;
+      color: rgba(226,232,240,.72);
+      font-size: .72rem;
+      line-height: 1.42;
+    }
+
+    .lab-tradeoff-summary {
+      margin-top: 10px;
+      border: 1px solid rgba(255,211,79,.16);
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 88% 12%, rgba(255,211,79,.08), transparent 28%),
+        rgba(255,211,79,.026);
+      padding: 12px;
+    }
+
+    .lab-tradeoff-summary h4 {
+      margin: 0 0 7px;
+      color: #ffd34f;
+      font-size: .72rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .lab-tradeoff-summary p {
+      margin: 0;
+      color: rgba(226,232,240,.74);
+      font-size: .74rem;
+      line-height: 1.48;
+    }
+
+    @media (max-width: 900px) {
+      .lab-scenario-strip,
+      .lab-impact-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .lab-scenario-strip,
+      .lab-impact-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 
@@ -457,7 +578,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-003-comparison-chart.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-004-scenario-decision-layer.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -606,6 +727,50 @@
               <div class="lab-comparison-chip">Scenario Analytics</div>
             </div>
 
+            
+            <div class="lab-scenario-strip">
+              <div class="lab-scenario-card good">
+                <div class="lab-scenario-label">Best Path</div>
+                <div class="lab-scenario-value">Split Coverage</div>
+                <div class="lab-scenario-note">Strongest projected improvement while preserving detail intent.</div>
+              </div>
+
+              <div class="lab-scenario-card good">
+                <div class="lab-scenario-label">Projected Result</div>
+                <div class="lab-scenario-value">12.5 mm</div>
+                <div class="lab-scenario-note">Moves the design inside the preferred planning band.</div>
+              </div>
+
+              <div class="lab-scenario-card good">
+                <div class="lab-scenario-label">Projected Status</div>
+                <div class="lab-scenario-value">Healthy</div>
+                <div class="lab-scenario-note">Back inside the preferred range.</div>
+              </div>
+
+              <div class="lab-scenario-card watch">
+                <div class="lab-scenario-label">Improvement</div>
+                <div class="lab-scenario-value">-13.1 mm</div>
+                <div class="lab-scenario-note">About 51% reduction from the original result.</div>
+              </div>
+            </div>
+
+            <div class="lab-impact-grid">
+              <div class="lab-impact-card">
+                <h4>Closer Camera</h4>
+                <p>Reduces focal demand to about 18.0 mm. Good if mounting position can move without losing required scene coverage.</p>
+              </div>
+
+              <div class="lab-impact-card">
+                <h4>Wider Target</h4>
+                <p>Also trends toward about 18.0 mm. Useful only if the broader scene still satisfies the operational objective.</p>
+              </div>
+
+              <div class="lab-impact-card">
+                <h4>Split Coverage</h4>
+                <p>Best projected reduction at about 12.5 mm. Adds camera count but gives the design more optical margin.</p>
+              </div>
+            </div>
+
             <div class="lab-chart-shell">
               <canvas id="labComparisonChart"></canvas>
             </div>
@@ -613,6 +778,15 @@
             <div class="lab-chart-caption">
               Baseline stays at the current result for comparison. Proposed scenarios show how each planning action could reduce focal demand toward the preferred range.
             </div>
+            <div class="lab-tradeoff-summary">
+              <h4>Scenario Recommendation</h4>
+              <p>
+                Split coverage gives the strongest optical improvement and moves the result cleanly into the preferred planning band.
+                If camera count or infrastructure cost is constrained, closer camera placement is the next best planning lever to evaluate.
+                Before choosing either path, validate the actual field of view, required detail objective, mounting options, and manufacturer lens availability.
+              </p>
+            </div>
+
           </div>
 
       </section>
