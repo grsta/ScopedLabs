@@ -493,12 +493,16 @@
     }
   
     .custom-control.assumption-editor {
-      display: block;
+      display: none;
       border: 1px solid rgba(148,163,184,.13);
       border-radius: 12px;
       background: rgba(255,255,255,.025);
       padding: 12px;
       margin-bottom: 12px;
+    }
+
+    .custom-control.assumption-editor.is-visible {
+      display: block;
     }
 
     .assumption-head {
@@ -672,8 +676,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-007-clean-carry-forward.
-      </div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-008-custom-editor-toggle.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -1206,6 +1209,11 @@
         document.querySelectorAll(".scenario-btn").forEach(function (btn) {
           btn.classList.toggle("active", btn.getAttribute("data-scenario") === selectedScenario);
         });
+
+        var assumptionEditor = document.querySelector(".custom-control.assumption-editor");
+        if (assumptionEditor) {
+          assumptionEditor.classList.toggle("is-visible", selectedScenario === "custom");
+        }
 
         var topStatus = byId("topStatus");
         if (topStatus) {
