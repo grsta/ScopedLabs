@@ -31,7 +31,7 @@ style.textContent = `
     width: 100%;
     min-width: 0;
     border: 1px solid rgba(148, 163, 184, .18);
-    border-radius: 12px;
+    border-radius: 16px;
     background:
       radial-gradient(circle at 50% 78%, rgba(148, 163, 184, .13), transparent 38%),
       radial-gradient(circle at 30% 22%, rgba(132, 204, 22, .08), transparent 34%),
@@ -202,10 +202,10 @@ mount.innerHTML = `
         <text x="36" y="46" class="slpg-title" id="slpgGaugeTitle">Lens Selection Pressure</text>
         <text x="36" y="72" class="slpg-subtitle" id="slpgGaugeSubtitle">Current planning reading</text>
 
-        <path id="slpgBaseArc" fill="none" stroke="rgba(15,23,42,.92)" stroke-width="92" stroke-linecap="round"/>
-        <path id="slpgHealthyArc" fill="none" stroke="url(#slpgHealthyGrad)" stroke-width="78" stroke-linecap="butt" filter="url(#slpgArcGlow)"/>
-        <path id="slpgWatchArc" fill="none" stroke="url(#slpgWatchGrad)" stroke-width="78" stroke-linecap="butt" filter="url(#slpgArcGlow)"/>
-        <path id="slpgRiskArc" fill="none" stroke="url(#slpgRiskGrad)" stroke-width="78" stroke-linecap="butt" filter="url(#slpgArcGlow)"/>
+        <path id="slpgBaseArc" fill="none" stroke="rgba(15,23,42,.92)" stroke-width="88" stroke-linecap="round"/>
+        <path id="slpgHealthyArc" fill="none" stroke="url(#slpgHealthyGrad)" stroke-width="72" stroke-linecap="butt" filter="url(#slpgArcGlow)"/>
+        <path id="slpgWatchArc" fill="none" stroke="url(#slpgWatchGrad)" stroke-width="72" stroke-linecap="butt" filter="url(#slpgArcGlow)"/>
+        <path id="slpgRiskArc" fill="none" stroke="url(#slpgRiskGrad)" stroke-width="72" stroke-linecap="butt" filter="url(#slpgArcGlow)"/>
         <path id="slpgInnerRim" fill="none" stroke="rgba(248,250,252,.13)" stroke-width="2"/>
 
         <g id="slpgZoneLabels"></g>
@@ -244,7 +244,10 @@ return true;
 
 }
 
-function valueToAngle(value, cfg) {const pct = (clamp(value, cfg.min, cfg.max) - cfg.min) / (cfg.max - cfg.min);return 180 - pct * 180;}
+function valueToAngle(value, cfg) {
+    const pct = (clamp(value, cfg.min, cfg.max) - cfg.min) / (cfg.max - cfg.min);
+    return 205 - pct * 230;
+  }
 
 function polarToCartesian(angleDeg, radius, cx, cy) {const angleRad = (angleDeg * Math.PI) / 180;return {x: cx + radius * Math.cos(angleRad),y: cy - radius * Math.sin(angleRad)};}
 
@@ -511,7 +514,7 @@ const zones = [
 zones.forEach((zone) => {
   const mid = (zone.from + zone.to) / 2;
   const angle = valueToAngle(mid, cfg);
-  const point = polarToCartesian(angle, 222, cx, cy);
+  const point = polarToCartesian(angle, 205, cx, cy);
 
   const title = svgEl("text", {
     x: point.x,
@@ -546,9 +549,9 @@ const tickValues = [
 
 tickValues.forEach((tick) => {
   const angle = valueToAngle(tick.value, cfg);
-  const p1 = polarToCartesian(angle, 294, cx, cy);
-  const p2 = polarToCartesian(angle, 338, cx, cy);
-  const label = polarToCartesian(angle, 384, cx, cy);
+  const p1 = polarToCartesian(angle, 268, cx, cy);
+  const p2 = polarToCartesian(angle, 304, cx, cy);
+  const label = polarToCartesian(angle, 348, cx, cy);
 
   ticks.appendChild(svgEl("line", {
     x1: p1.x,
@@ -573,8 +576,8 @@ tickValues.forEach((tick) => {
 
 function drawNeedle(cfg, cx, cy, valueAngle, status) {const needle = $("slpgNeedle");clear(needle);if (!needle) return;
 
-const pivot = polarToCartesian(valueAngle, 185, cx, cy);
-const tip = polarToCartesian(valueAngle, 330, cx, cy);
+const pivot = polarToCartesian(valueAngle, 165, cx, cy);
+const tip = polarToCartesian(valueAngle, 300, cx, cy);
 const angleRad = (valueAngle * Math.PI) / 180;
 const perp = angleRad + Math.PI / 2;
 const width = 9;
@@ -624,9 +627,9 @@ needle.appendChild(svgEl("circle", {
 
 function drawCallout(cfg, cx, cy, valueAngle, status) {const callout = $("slpgCallout");clear(callout);if (!callout) return;
 
-const dot = polarToCartesian(valueAngle, 350, cx, cy);
+const dot = polarToCartesian(valueAngle, 320, cx, cy);
 const boxX = clamp(dot.x + 36, 610, 755);
-const boxY = clamp(dot.y - 96, 58, 318);
+const boxY = clamp(dot.y - 86, 58, 300);
 
 callout.appendChild(svgEl("path", {
   d: `M ${dot.x} ${dot.y} L ${boxX} ${boxY + 58}`,
@@ -705,8 +708,8 @@ if (!ensureGaugeShell()) return null;
 const cfg = normalizeConfig(input);
 const status = statusForValue(cfg.value, cfg);
 const cx = 500;
-const cy = 430;
-const r = 350;
+    const cy = 400;
+    const r = 320;
 
 const minAngle = valueToAngle(cfg.min, cfg);
 const healthyAngle = valueToAngle(cfg.healthyMax, cfg);
@@ -714,11 +717,11 @@ const watchAngle = valueToAngle(cfg.watchMax, cfg);
 const maxAngle = valueToAngle(cfg.max, cfg);
 const valueAngle = valueToAngle(cfg.value, cfg);
 
-$("slpgBaseArc").setAttribute("d", describeArc(180, 0, r, cx, cy));
+$("slpgBaseArc").setAttribute("d", describeArc(205, -25, r, cx, cy));
 $("slpgHealthyArc").setAttribute("d", describeArc(minAngle, healthyAngle, r, cx, cy));
 $("slpgWatchArc").setAttribute("d", describeArc(healthyAngle, watchAngle, r, cx, cy));
 $("slpgRiskArc").setAttribute("d", describeArc(watchAngle, maxAngle, r, cx, cy));
-$("slpgInnerRim").setAttribute("d", describeArc(180, 0, 306, cx, cy));
+$("slpgInnerRim").setAttribute("d", describeArc(205, -25, 280, cx, cy));
 
 drawZoneLabels(cfg, cx, cy);
 drawTicks(cfg, cx, cy);
