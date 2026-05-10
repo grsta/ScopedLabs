@@ -367,6 +367,68 @@
         display: grid;
       }
     }
+  
+    .lab-comparison {
+      margin-top: 12px;
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 82% 12%, rgba(255,96,88,.08), transparent 30%),
+        linear-gradient(180deg, rgba(2,6,12,.48), rgba(2,6,12,.28));
+      padding: 14px;
+    }
+
+    .lab-comparison-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .lab-comparison-title {
+      margin: 0;
+      color: #fff;
+      font-size: .96rem;
+      font-weight: 950;
+    }
+
+    .lab-comparison-note {
+      margin-top: 5px;
+      color: rgba(226,232,240,.68);
+      font-size: .76rem;
+      line-height: 1.45;
+      max-width: 720px;
+    }
+
+    .lab-comparison-chip {
+      border: 1px solid rgba(125,255,152,.28);
+      border-radius: 10px;
+      background: rgba(125,255,152,.08);
+      color: #7dff98;
+      padding: 9px 11px;
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .lab-chart-shell {
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,.02);
+      padding: 10px;
+      height: 320px;
+    }
+
+    .lab-chart-caption {
+      margin-top: 8px;
+      color: rgba(203,213,225,.62);
+      font-size: .68rem;
+      line-height: 1.4;
+    }
+
   </style>
 </head>
 
@@ -395,8 +457,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-002-analytics.
-      </div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-003-comparison-chart.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -531,8 +592,182 @@
           </div>
 
         </div>
+      
+          <div class="lab-comparison">
+            <div class="lab-comparison-head">
+              <div>
+                <div class="lab-kicker">Scenario Comparison</div>
+                <h3 class="lab-comparison-title">Original vs proposed planning scenarios</h3>
+                <div class="lab-comparison-note">
+                  This chart compares the original focal-length result against proposed planning adjustments. The green shaded comfort band represents the preferred 8?18 mm range.
+                </div>
+              </div>
+
+              <div class="lab-comparison-chip">Scenario Analytics</div>
+            </div>
+
+            <div class="lab-chart-shell">
+              <canvas id="labComparisonChart"></canvas>
+            </div>
+
+            <div class="lab-chart-caption">
+              Baseline stays at the current result for comparison. Proposed scenarios show how each planning action could reduce focal demand toward the preferred range.
+            </div>
+          </div>
+
       </section>
     </div>
   </main>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    (function () {
+      function initComparisonChart() {
+        if (!window.Chart) return;
+
+        var canvas = document.getElementById("labComparisonChart");
+        if (!canvas) return;
+
+        if (window.labComparisonChartInstance) {
+          window.labComparisonChartInstance.destroy();
+        }
+
+        var ctx = canvas.getContext("2d");
+
+        var comfortBandPlugin = {
+          id: "comfortBandPlugin",
+          beforeDraw: function (chart) {
+            var y = chart.scales.y;
+            var area = chart.chartArea;
+            if (!y || !area) return;
+
+            var top = y.getPixelForValue(18);
+            var bottom = y.getPixelForValue(8);
+            var ctx2 = chart.ctx;
+
+            ctx2.save();
+            ctx2.fillStyle = "rgba(125,255,152,0.10)";
+            ctx2.fillRect(area.left, top, area.right - area.left, bottom - top);
+
+            ctx2.strokeStyle = "rgba(125,255,152,0.22)";
+            ctx2.setLineDash([6, 6]);
+            ctx2.strokeRect(area.left, top, area.right - area.left, bottom - top);
+            ctx2.restore();
+          }
+        };
+
+        window.labComparisonChartInstance = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: ["Current", "Closer Camera", "Wider Target", "Split Coverage"],
+            datasets: [
+              {
+                label: "Original baseline",
+                data: [25.6, 25.6, 25.6, 25.6],
+                borderColor: "rgba(255,96,88,1)",
+                backgroundColor: "rgba(255,96,88,.18)",
+                pointBackgroundColor: "rgba(255,96,88,1)",
+                pointBorderColor: "#ffffff",
+                pointRadius: 4,
+                pointHoverRadius: 5,
+                borderWidth: 3,
+                tension: 0.28
+              },
+              {
+                label: "Proposed planning result",
+                data: [25.6, 18.0, 18.0, 12.5],
+                borderColor: "rgba(125,255,152,1)",
+                backgroundColor: "rgba(125,255,152,.18)",
+                pointBackgroundColor: "rgba(125,255,152,1)",
+                pointBorderColor: "#ffffff",
+                pointRadius: 4,
+                pointHoverRadius: 5,
+                borderWidth: 3,
+                tension: 0.28
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: "index",
+              intersect: false
+            },
+            plugins: {
+              legend: {
+                labels: {
+                  color: "rgba(248,250,252,.86)",
+                  boxWidth: 18,
+                  boxHeight: 10,
+                  font: {
+                    size: 11,
+                    weight: "700"
+                  }
+                }
+              },
+              tooltip: {
+                backgroundColor: "rgba(5,12,18,.96)",
+                titleColor: "#ffffff",
+                bodyColor: "rgba(248,250,252,.88)",
+                borderColor: "rgba(148,163,184,.22)",
+                borderWidth: 1,
+                padding: 10
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: "rgba(203,213,225,.76)",
+                  font: {
+                    size: 10,
+                    weight: "700"
+                  }
+                },
+                grid: {
+                  color: "rgba(148,163,184,.08)"
+                }
+              },
+              y: {
+                min: 0,
+                max: 30,
+                ticks: {
+                  color: "rgba(203,213,225,.76)",
+                  stepSize: 5,
+                  font: {
+                    size: 10,
+                    weight: "700"
+                  },
+                  callback: function (value) {
+                    return value + " mm";
+                  }
+                },
+                title: {
+                  display: true,
+                  text: "Adjusted focal length",
+                  color: "rgba(248,250,252,.72)",
+                  font: {
+                    size: 11,
+                    weight: "700"
+                  }
+                },
+                grid: {
+                  color: "rgba(148,163,184,.10)"
+                }
+              }
+            }
+          },
+          plugins: [comfortBandPlugin]
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initComparisonChart);
+      } else {
+        initComparisonChart();
+      }
+    })();
+  </script>
+
 </body>
 </html>
