@@ -230,6 +230,15 @@
       box-sizing: border-box;
     }
 
+    .custom-lens-custom {
+      display: none;
+      margin-top: 8px;
+    }
+
+    .custom-lens-custom.is-visible {
+      display: block;
+    }
+
     .assumption-formula {
       margin-top: 10px;
       color: rgba(226,232,240,.62);
@@ -527,8 +536,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-021-selected-lens-model.
-      </div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-022-lens-preset-dropdown.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -577,19 +585,21 @@
                 <input id="customWidth" type="number" min="1" max="300" step="1" value="45" />
               </div>
 
-              <div class="assumption-field">
-                <label for="customLens">Selected lens size</label>
-                <input id="customLens" list="lensOptions" type="number" min="1" max="150" step="0.1" value="3.5" />
-                <datalist id="lensOptions">
-                  <option value="2.8"></option>
-                  <option value="4"></option>
-                  <option value="6"></option>
-                  <option value="8"></option>
-                  <option value="12"></option>
-                  <option value="18"></option>
-                  <option value="25"></option>
-                  <option value="50"></option>
-                </datalist>
+                            <div class="assumption-field">
+                <label for="customLensPreset">Selected / available lens</label>
+                <select id="customLensPreset">
+                  <option value="2.8" selected>2.8 mm</option>
+                  <option value="3.6">3.6 mm</option>
+                  <option value="4">4 mm</option>
+                  <option value="6">6 mm</option>
+                  <option value="8">8 mm</option>
+                  <option value="12">12 mm</option>
+                  <option value="16">16 mm</option>
+                  <option value="25">25 mm</option>
+                  <option value="50">50 mm</option>
+                  <option value="custom">Custom lens size</option>
+                </select>
+                <input id="customLensCustom" class="custom-lens-custom" type="number" min="1" max="150" step="0.1" value="3.5" aria-label="Custom lens size in millimeters" />
               </div>
 
               <div class="assumption-field">
@@ -896,12 +906,24 @@
         return 82;
       }
 
+      function getSelectedLensMm() {
+        var preset = byId("customLensPreset");
+        if (!preset) return 2.8;
+
+        if (preset.value === "custom") {
+          return num("customLensCustom", 3.5);
+        }
+
+        var lens = Number(preset.value);
+        return Number.isFinite(lens) ? lens : 2.8;
+      }
+
       function getCustomInputs() {
         return {
           label: "Custom",
           distanceFt: num("customDistance", 56),
           sceneWidthFt: num("customWidth", 45),
-          lensMm: num("customLens", 3.5),
+          lensMm: getSelectedLensMm(),
           sensorWidthMm: num("customFormat", 5.57),
           horizontalPixels: num("customResolution", 1920),
           requiredPpf: num("customDetailRequirement", 150),
@@ -1031,6 +1053,12 @@
 
         var editor = byId("customEditor");
         if (editor) editor.classList.toggle("is-visible", selectedScenario === "custom");
+
+        var customLensBox = byId("customLensCustom");
+        var customLensPreset = byId("customLensPreset");
+        if (customLensBox && customLensPreset) {
+          customLensBox.classList.toggle("is-visible", customLensPreset.value === "custom");
+        }
 
         var topStatus = byId("topStatus");
         topStatus.textContent = data.status;
@@ -1262,7 +1290,8 @@
         [
           "customDistance",
           "customWidth",
-          "customLens",
+          "customLensPreset",
+          "customLensCustom",
           "customFormat",
           "customResolution",
           "customDetailRequirement",
