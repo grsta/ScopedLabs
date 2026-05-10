@@ -104,7 +104,7 @@
       ".slpg-meta-value{display:block;color:#f8fafc;font:950 17px/1.1 system-ui}.slpg-meta-note{display:block;margin-top:4px;color:rgba(203,213,225,.62);font:750 10px/1.15 system-ui}",
       ".slpg-status-healthy{color:#7dff98}.slpg-status-watch{color:#ffd34f}.slpg-status-risk{color:#ff6058}",
       "@media(max-width:760px){.slpg-top,.slpg-meta-grid,.slpg-zones{grid-template-columns:1fr;display:grid}.slpg-top{gap:10px}.slpg-callout{min-width:120px}.slpg-callout-value{font-size:17px}}"
-    ].join("\\n");
+    ].join("\n");
 
     document.head.appendChild(style);
   }
