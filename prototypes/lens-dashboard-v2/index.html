@@ -3,34 +3,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lens Dashboard Prototype V3 | ScopedLabs</title>
+  <title>Lens Dashboard Prototype V4 | ScopedLabs</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-025" />
 
   <style>
     :root {
       --bg: #020806;
-      --card: rgba(6, 15, 12, 0.98);
-      --card2: rgba(9, 20, 16, 0.92);
+      --panel: rgba(5, 15, 12, 0.98);
+      --panel2: rgba(8, 19, 15, 0.92);
       --line: rgba(255,255,255,.085);
-      --line2: rgba(255,255,255,.055);
-      --text: rgba(255,255,255,.9);
-      --muted: rgba(255,255,255,.58);
-      --green: #7dff9e;
-      --yellow: #ffd34f;
+      --soft: rgba(255,255,255,.055);
+      --text: rgba(255,255,255,.90);
+      --muted: rgba(255,255,255,.62);
+      --green: #7dff98;
+      --yellow: #ffd44f;
       --red: #ff6058;
-      --purple: #b994ff;
     }
 
     body {
       background:
-        radial-gradient(circle at 18% 4%, rgba(92,255,143,.12), transparent 28%),
-        radial-gradient(circle at 84% 14%, rgba(255,96,88,.10), transparent 25%),
+        radial-gradient(circle at 16% 0%, rgba(82,255,138,.12), transparent 28%),
+        radial-gradient(circle at 84% 10%, rgba(255,96,88,.11), transparent 26%),
         linear-gradient(180deg, #020806, #010403);
     }
 
     .prototype-shell {
-      width: min(1210px, calc(100vw - 36px));
+      width: min(1220px, calc(100vw - 40px));
       margin: 38px auto 80px;
     }
 
@@ -38,7 +37,7 @@
       border: 1px solid rgba(125,255,158,.16);
       border-radius: 16px;
       background: rgba(0,0,0,.20);
-      color: rgba(255,255,255,.68);
+      color: rgba(255,255,255,.70);
       padding: 14px 16px;
       margin-bottom: 18px;
       line-height: 1.45;
@@ -48,14 +47,14 @@
       border: 1px solid rgba(125,255,158,.18);
       border-radius: 22px;
       overflow: hidden;
+      color: var(--text);
       background:
-        radial-gradient(circle at 16% 0%, rgba(80,255,138,.08), transparent 35%),
-        radial-gradient(circle at 90% 8%, rgba(255,96,88,.08), transparent 32%),
+        radial-gradient(circle at 18% 0%, rgba(82,255,138,.08), transparent 36%),
+        radial-gradient(circle at 90% 9%, rgba(255,96,88,.08), transparent 32%),
         linear-gradient(180deg, rgba(5,14,11,.99), rgba(2,7,5,.995));
       box-shadow:
         0 34px 100px rgba(0,0,0,.48),
         inset 0 1px 0 rgba(255,255,255,.055);
-      color: var(--text);
     }
 
     .topbar {
@@ -68,7 +67,7 @@
     .brand, .title, .meta, .badge {
       min-width: 0;
       padding: 14px 16px;
-      border-right: 1px solid var(--line2);
+      border-right: 1px solid var(--soft);
     }
 
     .brand {
@@ -192,7 +191,7 @@
     }
 
     .rail-section {
-      border-top: 1px solid var(--line2);
+      border-top: 1px solid var(--soft);
       margin-top: 12px;
       padding-top: 12px;
     }
@@ -263,203 +262,65 @@
       white-space: nowrap;
     }
 
-    .gauge-stage {
+    .gauge-card {
       position: relative;
-      min-height: 330px;
-      border: 1px solid rgba(255,255,255,.065);
+      min-height: 360px;
+      border: 1px solid rgba(255,255,255,.07);
       border-radius: 18px;
       overflow: hidden;
       background:
-        radial-gradient(circle at 50% 72%, rgba(255,255,255,.055), transparent 37%),
-        radial-gradient(circle at 50% 78%, rgba(100,255,148,.06), transparent 42%),
-        linear-gradient(180deg, rgba(0,0,0,.24), rgba(0,0,0,.10));
+        radial-gradient(circle at 50% 74%, rgba(255,255,255,.055), transparent 36%),
+        radial-gradient(circle at 50% 78%, rgba(100,255,148,.055), transparent 42%),
+        linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.10));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
     }
 
-    .gauge-stage::before {
-      content: "";
+    .gauge-svg {
       position: absolute;
-      left: 50%;
-      top: 58px;
-      width: 660px;
-      height: 330px;
-      transform: translateX(-50%);
-      border-radius: 660px 660px 0 0;
-      background:
-        conic-gradient(from 270deg at 50% 100%,
-          #73ff68 0deg 58deg,
-          #ffd34f 58deg 105deg,
-          #ff5c54 105deg 180deg,
-          transparent 180deg 360deg);
-      filter: drop-shadow(0 22px 28px rgba(0,0,0,.42));
-      clip-path: inset(0 0 50% 0);
-      opacity: .96;
-    }
-
-    .gauge-stage::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 127px;
-      width: 500px;
-      height: 250px;
-      transform: translateX(-50%);
-      border-radius: 500px 500px 0 0;
-      background: #06100c;
-      box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,.055),
-        inset 0 30px 50px rgba(255,255,255,.025);
-      clip-path: inset(0 0 50% 0);
-    }
-
-    .gauge-arc-fade {
-      position: absolute;
-      left: 50%;
-      top: 44px;
-      width: 710px;
-      height: 355px;
-      transform: translateX(-50%);
-      border-radius: 710px 710px 0 0;
-      background: rgba(255,255,255,.045);
-      clip-path: inset(0 0 50% 0);
-      z-index: 0;
-    }
-
-    .needle {
-      position: absolute;
-      left: 50%;
-      top: 245px;
-      width: 166px;
-      height: 6px;
-      transform-origin: 0 50%;
-      transform: rotate(-53deg);
-      border-radius: 999px;
-      background: rgba(255,255,255,.92);
-      box-shadow:
-        0 0 9px rgba(255,255,255,.32),
-        0 0 18px rgba(255,255,255,.16);
-      z-index: 4;
-    }
-
-    .needle::after {
-      content: "";
-      position: absolute;
-      right: -7px;
-      top: 50%;
-      width: 15px;
-      height: 15px;
-      transform: translateY(-50%);
-      border-radius: 999px;
-      background: var(--red);
-      border: 2px solid #fff;
-      box-shadow: 0 0 18px rgba(255,96,88,.45);
-    }
-
-    .hub {
-      position: absolute;
-      left: 50%;
-      top: 245px;
-      width: 24px;
-      height: 24px;
-      transform: translate(-50%, -50%);
-      border-radius: 999px;
-      background: rgba(255,255,255,.95);
-      z-index: 5;
-    }
-
-    .hub::after {
-      content: "";
-      position: absolute;
-      inset: 7px;
-      border-radius: 999px;
-      background: #06100c;
-    }
-
-    .zone-label {
-      position: absolute;
-      z-index: 3;
-      font-size: .66rem;
-      font-weight: 950;
-      letter-spacing: .08em;
-      color: rgba(255,255,255,.86);
-      text-align: center;
-    }
-
-    .zone-label span {
+      inset: 0;
+      width: 100%;
+      height: 100%;
       display: block;
-      color: rgba(255,255,255,.60);
-      font-size: .56rem;
-      margin-top: 4px;
-      letter-spacing: .04em;
+    }
+
+    .g-label {
+      fill: rgba(255,255,255,.84);
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: 1px;
+    }
+
+    .g-sub {
+      fill: rgba(255,255,255,.62);
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      font-size: 9px;
       font-weight: 850;
     }
 
-    .zone-label.healthy { left: 122px; top: 150px; }
-    .zone-label.watch { left: 50%; top: 92px; transform: translateX(-50%); }
-    .zone-label.risk { right: 130px; top: 150px; }
-
-    .axis {
-      position: absolute;
-      z-index: 3;
-      color: rgba(255,255,255,.52);
-      font-size: .58rem;
+    .g-axis {
+      fill: rgba(255,255,255,.56);
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      font-size: 9px;
       font-weight: 850;
     }
 
-    .axis.zero { left: 76px; top: 278px; }
-    .axis.eight { left: 238px; top: 96px; }
-    .axis.eighteen { right: 250px; top: 96px; }
-    .axis.max { right: 82px; top: 278px; }
-
-    .reading-box {
-      position: absolute;
-      right: 62px;
-      top: 76px;
-      z-index: 6;
-      width: 142px;
-      border: 1px solid rgba(255,96,88,.70);
-      border-radius: 12px;
-      background: rgba(3,8,7,.92);
-      padding: 12px 14px;
-      box-shadow:
-        0 0 22px rgba(255,96,88,.22),
-        0 16px 28px rgba(0,0,0,.34);
-    }
-
-    .reading-box .value {
-      color: #fff;
-      font-size: 1.25rem;
+    .g-callout-value {
+      fill: #fff;
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      font-size: 22px;
       font-weight: 950;
-      line-height: 1;
     }
 
-    .reading-box .label {
-      margin-top: 6px;
-      color: rgba(255,255,255,.58);
-      font-size: .55rem;
+    .g-callout-label {
+      fill: rgba(255,255,255,.58);
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      font-size: 8px;
       font-weight: 950;
-      letter-spacing: .08em;
-      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
-    .gauge-chips {
-      position: absolute;
-      left: 18px;
-      right: 18px;
-      bottom: 16px;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap: 9px;
-      z-index: 7;
-    }
-
-    .gauge-chip {
-      border: 1px solid rgba(255,255,255,.075);
-      border-radius: 10px;
-      background: rgba(4,10,8,.74);
-      padding: 9px 10px;
-    }
-
-    .gauge-chip .label {
+    .g-chip-label {
       color: rgba(125,255,158,.78);
       font-size: .56rem;
       font-weight: 950;
@@ -467,12 +328,30 @@
       text-transform: uppercase;
     }
 
-    .gauge-chip .value {
+    .g-chip-value {
       margin-top: 5px;
       color: rgba(255,255,255,.92);
       font-size: .82rem;
       font-weight: 950;
       line-height: 1.2;
+    }
+
+    .gauge-chips {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 9px;
+      z-index: 4;
+    }
+
+    .gauge-chip {
+      border: 1px solid rgba(255,255,255,.075);
+      border-radius: 10px;
+      background: rgba(4,10,8,.76);
+      padding: 9px 10px;
     }
 
     .info-grid {
@@ -504,7 +383,7 @@
 
     .guide-section {
       padding: 12px 0;
-      border-top: 1px solid var(--line2);
+      border-top: 1px solid var(--soft);
     }
 
     .guide-section:first-child {
@@ -566,7 +445,7 @@
 
     .foot {
       padding: 11px 13px;
-      border-right: 1px solid var(--line2);
+      border-right: 1px solid var(--soft);
     }
 
     .foot:last-child { border-right: 0; }
@@ -589,7 +468,7 @@
 
     @media (max-width: 1100px) {
       .topbar { grid-template-columns: 155px minmax(0,1fr); }
-      .meta { grid-column: 1 / -1; border-top: 1px solid var(--line2); border-right: 0; }
+      .meta { grid-column: 1 / -1; border-top: 1px solid var(--soft); border-right: 0; }
       .badge { position: absolute; right: 18px; top: 18px; padding: 0; }
       .layout { grid-template-columns: 220px minmax(0,1fr); }
       .guide { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 20px; }
@@ -602,9 +481,8 @@
       }
 
       .brand, .title, .meta, .badge, .foot { border-right: 0; }
-      .badge { position: static; place-items: start; border-top: 1px solid var(--line2); }
-      .gauge-stage { min-height: 390px; }
-      .reading-box { right: 18px; top: 74px; }
+      .badge { position: static; place-items: start; border-top: 1px solid var(--soft); }
+      .gauge-card { min-height: 430px; }
     }
   </style>
 </head>
@@ -634,7 +512,7 @@
   <main class="page">
     <div class="prototype-shell">
       <div class="prototype-note">
-        Hidden prototype page. Mock data only. Not linked in nav or sitemap. Prototype rev: lens-dashboard-v3-css-premium.
+        Hidden prototype page. Mock data only. Not linked in nav or sitemap. Prototype rev: lens-dashboard-v4-inline-planner.
       </div>
 
       <section class="report">
@@ -715,42 +593,99 @@
               <div class="pressure">75 / 100 Pressure</div>
             </div>
 
-            <div class="gauge-stage">
-              <div class="gauge-arc-fade"></div>
+            <div class="gauge-card">
+              <svg class="gauge-svg" viewBox="0 0 760 380" role="img" aria-label="Lens selection planning gauge">
+                <defs>
+                  <linearGradient id="healthyBand" x1="80" y1="250" x2="270" y2="80" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#42d95c"/>
+                    <stop offset=".72" stop-color="#7dff64"/>
+                    <stop offset="1" stop-color="#b2ff58"/>
+                  </linearGradient>
 
-              <div class="zone-label healthy">HEALTHY<span>0-8 mm</span></div>
-              <div class="zone-label watch">WATCH<span>8-18 mm</span></div>
-              <div class="zone-label risk">RISK<span>&gt;18 mm</span></div>
+                  <linearGradient id="watchBand" x1="265" y1="80" x2="500" y2="80" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#c7aa31"/>
+                    <stop offset=".55" stop-color="#ffd653"/>
+                    <stop offset="1" stop-color="#eeb23e"/>
+                  </linearGradient>
 
-              <div class="axis zero">0 mm</div>
-              <div class="axis eight">8 mm</div>
-              <div class="axis eighteen">18 mm</div>
-              <div class="axis max">40 mm</div>
+                  <linearGradient id="riskBand" x1="500" y1="80" x2="680" y2="250" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#c9413c"/>
+                    <stop offset=".62" stop-color="#ff5d55"/>
+                    <stop offset="1" stop-color="#ff4038"/>
+                  </linearGradient>
 
-              <div class="needle"></div>
-              <div class="hub"></div>
+                  <filter id="bandShadow" x="-20%" y="-20%" width="140%" height="150%">
+                    <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity=".52"/>
+                  </filter>
 
-              <div class="reading-box">
-                <div class="value">25.6 mm</div>
-                <div class="label">Current Reading</div>
-              </div>
+                  <filter id="needleGlow" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="2.6" result="blur"/>
+                    <feMerge>
+                      <feMergeNode in="blur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                <path d="M 68 292 C 158 105 278 34 380 34 C 482 34 602 105 692 292 L 604 292 C 538 157 459 104 380 104 C 301 104 222 157 156 292 Z"
+                  fill="rgba(255,255,255,.045)" />
+
+                <path d="M 95 276 C 154 154 226 89 307 70 L 335 135 C 261 152 209 200 167 276 Z"
+                  fill="url(#healthyBand)" filter="url(#bandShadow)" stroke="rgba(255,255,255,.14)" stroke-width="1" />
+
+                <path d="M 307 70 C 356 58 404 58 453 70 L 425 135 C 395 128 365 128 335 135 Z"
+                  fill="url(#watchBand)" filter="url(#bandShadow)" stroke="rgba(255,255,255,.12)" stroke-width="1" />
+
+                <path d="M 453 70 C 534 89 606 154 665 276 L 593 276 C 551 200 499 152 425 135 Z"
+                  fill="url(#riskBand)" filter="url(#bandShadow)" stroke="rgba(255,255,255,.12)" stroke-width="1" />
+
+                <path d="M 196 278 C 248 184 304 148 380 148 C 456 148 512 184 564 278"
+                  fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="5 9" />
+
+                <text class="g-label" x="218" y="170" text-anchor="middle">HEALTHY</text>
+                <text class="g-sub" x="218" y="190" text-anchor="middle">0-8 mm</text>
+
+                <text class="g-label" x="380" y="108" text-anchor="middle">WATCH</text>
+                <text class="g-sub" x="380" y="128" text-anchor="middle">8-18 mm</text>
+
+                <text class="g-label" x="542" y="170" text-anchor="middle">RISK</text>
+                <text class="g-sub" x="542" y="190" text-anchor="middle">&gt;18 mm</text>
+
+                <text class="g-axis" x="112" y="313" text-anchor="middle">0 mm</text>
+                <text class="g-axis" x="300" y="84" text-anchor="middle">8 mm</text>
+                <text class="g-axis" x="460" y="84" text-anchor="middle">18 mm</text>
+                <text class="g-axis" x="648" y="313" text-anchor="middle">40 mm</text>
+
+                <line x1="380" y1="293" x2="520" y2="125"
+                  stroke="rgba(255,255,255,.92)" stroke-width="6" stroke-linecap="round" filter="url(#needleGlow)" />
+                <circle cx="520" cy="125" r="8" fill="#ff6058" stroke="#fff" stroke-width="2" />
+                <circle cx="380" cy="293" r="12" fill="rgba(255,255,255,.95)" />
+                <circle cx="380" cy="293" r="5" fill="#06100c" />
+
+                <g>
+                  <rect x="548" y="89" width="148" height="70" rx="12"
+                    fill="rgba(3,8,7,.92)" stroke="rgba(255,96,88,.74)" />
+                  <text class="g-callout-value" x="572" y="121">25.6 mm</text>
+                  <text class="g-callout-label" x="572" y="144">CURRENT READING</text>
+                </g>
+              </svg>
 
               <div class="gauge-chips">
                 <div class="gauge-chip">
-                  <div class="label">Comfort Band</div>
-                  <div class="value">8.0-18.0 mm</div>
+                  <div class="g-chip-label">Comfort Band</div>
+                  <div class="g-chip-value">8.0-18.0 mm</div>
                 </div>
                 <div class="gauge-chip">
-                  <div class="label">Current</div>
-                  <div class="value">25.6 mm</div>
+                  <div class="g-chip-label">Current</div>
+                  <div class="g-chip-value">25.6 mm</div>
                 </div>
                 <div class="gauge-chip">
-                  <div class="label">Margin</div>
-                  <div class="value">+7.6 mm</div>
+                  <div class="g-chip-label">Margin</div>
+                  <div class="g-chip-value">+7.6 mm</div>
                 </div>
                 <div class="gauge-chip">
-                  <div class="label">Status</div>
-                  <div class="value">Risk</div>
+                  <div class="g-chip-label">Status</div>
+                  <div class="g-chip-value">Risk</div>
                 </div>
               </div>
             </div>
