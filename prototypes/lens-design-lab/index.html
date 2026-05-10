@@ -586,7 +586,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-027-clean-fov-svg-separators.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-028-standard-lens-snap.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -609,7 +609,7 @@
             <button class="scenario-btn" data-scenario="current">Original</button>
             <button class="scenario-btn" data-scenario="split">Suggested Split</button>
             <button class="scenario-btn" data-scenario="resolution">Higher Resolution</button>
-            <button class="scenario-btn" data-scenario="optimized">Optimized Lens</button>
+            <button class="scenario-btn" data-scenario="optimized">Lens for Required Width</button>
           </div>
 
           <div id="customEditor" class="custom-editor is-visible">
@@ -1110,6 +1110,8 @@
 
         return {
           label: input.label || "Custom",
+          calculatedLensMm: input.calculatedLensMm || null,
+          lensNote: input.lensNote || null,
           distanceFt: distanceFt,
           sceneWidthFt: sceneWidthFt,
           lensMm: lensMm,
@@ -1144,26 +1146,85 @@
         };
       }
 
+      function standardLensSizes() {
+        return [2.8, 3.6, 4, 6, 8, 12, 16, 25, 35, 50, 75, 100];
+      }
+
+      function nearestAvailableLens(requiredLensMm) {
+        var sizes = standardLensSizes();
+        var required = Math.max(0.1, Number(requiredLensMm) || 0.1);
+        var best = sizes[0];
+        var bestDelta = Math.abs(best - required);
+
+        for (var i = 1; i < sizes.length; i++) {
+          var delta = Math.abs(sizes[i] - required);
+          if (delta < bestDelta) {
+            best = sizes[i];
+            bestDelta = delta;
+          }
+        }
+
+        return best;
+      }
+
+      function lensRecommendationNote(requiredLensMm, selectedLensMm) {
+        var required = Number(requiredLensMm) || 0;
+        var selected = Number(selectedLensMm) || 0;
+
+        if (Math.abs(selected - required) < 0.15) {
+          return "Matches the calculated lens target.";
+        }
+
+        return "Calculated lens target is " + fmt(required, 1) + " mm. Shown as " + fmt(selected, 1) + " mm planning size; verify actual manufacturer FOV.";
+      }
+
+      function overlapFractionFor(requiredPpf) {
+        if (requiredPpf >= 250) return 0.18;
+        if (requiredPpf >= 150) return 0.15;
+        return 0.10;
+      }
+
+      function requiredWidthForSplit(sceneWidthFt, count, requiredPpf) {
+        var overlap = count <= 1 ? 0 : overlapFractionFor(requiredPpf);
+        return count <= 1 ? sceneWidthFt : sceneWidthFt / (count - ((count - 1) * overlap));
+      }
+
       function scenarioInputs() {
         var c = getCustomInputs();
         var custom = evaluate(c);
 
         var splitCount = Math.min(4, Math.max(custom.suggestedCameras, 2));
+        var splitRequiredWidth = requiredWidthForSplit(custom.sceneWidthFt, splitCount, custom.requiredPpf);
+        var splitRequiredLens = custom.distanceFt * custom.sensorWidthMm / splitRequiredWidth;
+        var splitLens = nearestAvailableLens(splitRequiredLens);
+
         var split = Object.assign({}, c, {
           label: "Suggested Split",
           coverageCount: splitCount,
-          lensMm: custom.suggestedLens
+          lensMm: splitLens,
+          calculatedLensMm: splitRequiredLens,
+          lensNote: lensRecommendationNote(splitRequiredLens, splitLens)
         });
+
+        var resolutionRequiredLens = custom.requiredLensForTarget;
+        var resolutionLens = nearestAvailableLens(resolutionRequiredLens);
 
         var resolution = Object.assign({}, c, {
           label: "Higher Resolution",
           horizontalPixels: Math.max(c.horizontalPixels, custom.pixelsNeededOneCamera),
-          lensMm: custom.requiredLensForTarget
+          lensMm: resolutionLens,
+          calculatedLensMm: resolutionRequiredLens,
+          lensNote: lensRecommendationNote(resolutionRequiredLens, resolutionLens)
         });
 
+        var optimizedRequiredLens = custom.requiredLensForTarget;
+        var optimizedLens = nearestAvailableLens(optimizedRequiredLens);
+
         var optimized = Object.assign({}, c, {
-          label: "Optimized Lens",
-          lensMm: custom.requiredLensForTarget
+          label: "Lens for Required Width",
+          lensMm: optimizedLens,
+          calculatedLensMm: optimizedRequiredLens,
+          lensNote: lensRecommendationNote(optimizedRequiredLens, optimizedLens)
         });
 
         return [
@@ -1412,7 +1473,7 @@
         topStatus.className = "lab-status " + data.status.toLowerCase();
 
         setText("resultLens", fmt(data.lensMm, 1));
-        setText("resultNote", "Selected lens frames about " + fmt(data.framedWidthFt, 1) + " ft at " + fmt(data.distanceFt, 0) + " ft. Required width per camera is " + fmt(data.requiredWidthPerCamera, 1) + " ft.");
+        setText("resultNote", "Selected lens frames about " + fmt(data.framedWidthFt, 1) + " ft at " + fmt(data.distanceFt, 0) + " ft. Required width per camera is " + fmt(data.requiredWidthPerCamera, 1) + " ft." + (data.lensNote ? " " + data.lensNote : ""));
 
         setValueClass("framedWidth", fmt(data.framedWidthFt, 1) + " ft", statusClass(data.coverageStatus));
         setText("requiredWidth", fmt(data.requiredWidthPerCamera, 1) + " ft");
@@ -1450,7 +1511,7 @@
         setText("targetCameraCount", data.suggestedCameras + " camera" + (data.suggestedCameras === 1 ? "" : "s"));
         setText("targetCameraNote", "For a " + fmt(data.sceneWidthFt, 1) + " ft scene at the selected detail target.");
         setText("targetRequiredLens", fmt(data.requiredLensForTarget, 1) + " mm");
-        setText("targetRequiredLensNote", "Lens size needed to frame the required width per camera.");
+        setText("targetRequiredLensNote", "Calculated lens target before checking available planning lens sizes.");
         setText("targetPixelsNeeded", data.pixelsNeededOneCamera.toLocaleString() + " px");
         setText("targetPixelsNote", "Horizontal pixels needed if one camera covers the full scene.");
         setValueClass("targetBlocker", data.blocker, data.blocker === "Balanced" ? "good" : "risk");
@@ -1471,7 +1532,7 @@
         setText("scenarioPath", data.label);
         setText("scenarioPathNote", "Scenario currently selected.");
         setText("scenarioLens", fmt(data.lensMm, 1) + " mm");
-        setText("scenarioLensNote", "Selected or calculated lens size.");
+        setText("scenarioLensNote", data.lensNote || "Selected or available planning lens size.");
         setValueClass("scenarioCoverage", data.coverageStatus, statusClass(data.coverageStatus));
         setText("scenarioCoverageNote", fmt(data.framedWidthFt, 1) + " ft framed vs " + fmt(data.requiredWidthPerCamera, 1) + " ft required.");
         setValueClass("scenarioDetail", data.detailStatus, statusClass(data.detailStatus));
@@ -1486,6 +1547,8 @@
           step: "lens-selection",
           selectedScenario: data.label,
           selectedLensMm: Number(data.lensMm.toFixed(2)),
+          calculatedLensMm: data.calculatedLensMm ? Number(data.calculatedLensMm.toFixed(2)) : null,
+          lensRecommendationNote: data.lensNote || null,
           status: data.status,
           coverageStatus: data.coverageStatus,
           detailStatus: data.detailStatus,
