@@ -508,6 +508,56 @@
         display: grid;
       }
     }
+  
+    .fov-cone-stage {
+      margin-top: 12px;
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 12% 50%, rgba(125,255,152,.06), transparent 34%),
+        radial-gradient(circle at 88% 50%, rgba(255,96,88,.06), transparent 34%),
+        rgba(255,255,255,.018);
+      overflow: hidden;
+      min-height: 315px;
+    }
+
+    .fov-cone-stage svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .fov-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      color: rgba(226,232,240,.70);
+      font-size: .68rem;
+      line-height: 1.35;
+    }
+
+    .fov-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 999px;
+      background: rgba(255,255,255,.025);
+      padding: 6px 9px;
+    }
+
+    .fov-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .fov-dot.good { background: #7dff98; }
+    .fov-dot.watch { background: #ffd34f; }
+    .fov-dot.risk { background: #ff6159; }
+
   </style>
 </head>
 
@@ -536,7 +586,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-022-lens-preset-dropdown.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-023-fov-cone-visualization.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -705,6 +755,29 @@
                   <strong id="lensScore">?</strong>
                 </div>
               </div>
+            </div>
+          </div>
+
+          
+          <div class="lab-panel">
+            <div class="lab-section-head">
+              <div>
+                <div class="lab-kicker">FOV / Framing Visualization</div>
+                <h3 class="lab-section-title">What the selected lens sees at the entered distance</h3>
+                <div class="lab-copy">
+                  The cone uses the selected lens, camera format, and distance to estimate framed width. The required scene width is shown at the target plane so the user can see whether the selected lens covers the scene and whether detail remains viable.
+                </div>
+              </div>
+              <div class="lab-chip">Live FOV</div>
+            </div>
+
+            <div id="fovConeStage" class="fov-cone-stage"></div>
+
+            <div class="fov-legend">
+              <span><i class="fov-dot good"></i> Healthy detail density</span>
+              <span><i class="fov-dot watch"></i> Marginal detail density</span>
+              <span><i class="fov-dot risk"></i> Detail risk</span>
+              <span>Dashed line = required scene width</span>
             </div>
           </div>
 
@@ -1043,6 +1116,102 @@
         return list[1];
       }
 
+
+      function renderFovCone(data) {
+        var stage = byId("fovConeStage");
+        if (!stage) return;
+
+        var width = 920;
+        var height = 315;
+        var cx = 88;
+        var cy = 158;
+        var targetX = 830;
+        var axisY = cy;
+
+        var maxVisualWidthFt = Math.max(data.framedWidthFt, data.requiredWidthPerCamera) * 1.12;
+        var pxPerFt = 230 / Math.max(1, maxVisualWidthFt);
+
+        function halfWidthAt(t) {
+          return Math.max(2, (data.framedWidthFt * t * pxPerFt) / 2);
+        }
+
+        function bandColor(ppf) {
+          if (ppf >= data.requiredPpf) return "rgba(125,255,152,.24)";
+          if (ppf >= data.requiredPpf * 0.85) return "rgba(255,211,79,.23)";
+          return "rgba(255,96,88,.22)";
+        }
+
+        var strips = [];
+        var steps = 36;
+
+        for (var i = 1; i <= steps; i++) {
+          var t1 = (i - 1) / steps;
+          var t2 = i / steps;
+
+          var x1 = cx + (targetX - cx) * t1;
+          var x2 = cx + (targetX - cx) * t2;
+
+          var h1 = halfWidthAt(t1);
+          var h2 = halfWidthAt(t2);
+
+          var segmentWidthFt = Math.max(0.1, data.framedWidthFt * t2);
+          var ppf = data.horizontalPixels / segmentWidthFt;
+
+          strips.push(
+            '<path d="M ' + x1.toFixed(1) + ' ' + (cy - h1).toFixed(1) +
+            ' L ' + x2.toFixed(1) + ' ' + (cy - h2).toFixed(1) +
+            ' L ' + x2.toFixed(1) + ' ' + (cy + h2).toFixed(1) +
+            ' L ' + x1.toFixed(1) + ' ' + (cy + h1).toFixed(1) +
+            ' Z" fill="' + bandColor(ppf) + '" />'
+          );
+        }
+
+        var actualHalf = (data.framedWidthFt * pxPerFt) / 2;
+        var requiredHalf = (data.requiredWidthPerCamera * pxPerFt) / 2;
+
+        var requiredColor = data.coverageStatus === "HEALTHY" ? "#7dff98" : data.coverageStatus === "WATCH" ? "#ffd34f" : "#ff8f88";
+        var detailColor = data.detailStatus === "HEALTHY" ? "#7dff98" : data.detailStatus === "WATCH" ? "#ffd34f" : "#ff8f88";
+
+        var svg =
+          '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Field of view cone visualization">' +
+            '<defs>' +
+              '<filter id="fovGlow" x="-40%" y="-40%" width="180%" height="180%">' +
+                '<feGaussianBlur stdDeviation="3" result="blur"/>' +
+                '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+              '</filter>' +
+            '</defs>' +
+
+            '<rect x="0" y="0" width="' + width + '" height="' + height + '" fill="rgba(2,6,12,.20)" />' +
+
+            strips.join("") +
+
+            '<line x1="' + cx + '" y1="' + cy + '" x2="' + targetX + '" y2="' + (cy - actualHalf) + '" stroke="rgba(226,232,240,.45)" stroke-width="1.5" />' +
+            '<line x1="' + cx + '" y1="' + cy + '" x2="' + targetX + '" y2="' + (cy + actualHalf) + '" stroke="rgba(226,232,240,.45)" stroke-width="1.5" />' +
+            '<line x1="' + cx + '" y1="' + cy + '" x2="' + targetX + '" y2="' + cy + '" stroke="rgba(226,232,240,.18)" stroke-dasharray="5 7" stroke-width="1" />' +
+
+            '<circle cx="' + cx + '" cy="' + cy + '" r="12" fill="rgba(125,255,152,.14)" stroke="rgba(125,255,152,.75)" stroke-width="2" filter="url(#fovGlow)" />' +
+            '<text x="' + (cx - 26) + '" y="' + (cy - 22) + '" fill="rgba(248,250,252,.82)" font-size="11" font-weight="800">Camera</text>' +
+
+            '<line x1="' + targetX + '" y1="' + (cy - actualHalf) + '" x2="' + targetX + '" y2="' + (cy + actualHalf) + '" stroke="' + detailColor + '" stroke-width="3" />' +
+            '<text x="' + (targetX - 128) + '" y="' + (cy - actualHalf - 10) + '" fill="' + detailColor + '" font-size="11" font-weight="900">Framed width ' + fmt(data.framedWidthFt, 1) + ' ft</text>' +
+
+            '<line x1="' + (targetX + 28) + '" y1="' + (cy - requiredHalf) + '" x2="' + (targetX + 28) + '" y2="' + (cy + requiredHalf) + '" stroke="' + requiredColor + '" stroke-width="3" stroke-dasharray="7 6" />' +
+            '<text x="' + (targetX - 135) + '" y="' + (cy + requiredHalf + 22) + '" fill="' + requiredColor + '" font-size="11" font-weight="900">Required width ' + fmt(data.requiredWidthPerCamera, 1) + ' ft</text>' +
+
+            '<line x1="' + cx + '" y1="' + (height - 38) + '" x2="' + targetX + '" y2="' + (height - 38) + '" stroke="rgba(226,232,240,.30)" stroke-width="1" />' +
+            '<circle cx="' + cx + '" cy="' + (height - 38) + '" r="3" fill="rgba(226,232,240,.65)" />' +
+            '<circle cx="' + targetX + '" cy="' + (height - 38) + '" r="3" fill="rgba(226,232,240,.65)" />' +
+            '<text x="' + (cx + 295) + '" y="' + (height - 48) + '" fill="rgba(226,232,240,.70)" font-size="11" font-weight="800">Distance to target: ' + fmt(data.distanceFt, 0) + ' ft</text>' +
+
+            '<text x="22" y="28" fill="rgba(125,255,152,.92)" font-size="11" font-weight="950" letter-spacing="1.5">SELECTED LENS VIEW</text>' +
+            '<text x="22" y="49" fill="rgba(248,250,252,.82)" font-size="13" font-weight="900">' + fmt(data.lensMm, 1) + ' mm lens ? ' + fmt(data.distanceFt, 0) + ' ft distance ? ' + fmt(data.availablePpf, 1) + ' PPF</text>' +
+            '<text x="22" y="70" fill="rgba(203,213,225,.66)" font-size="11">Detail target: ' + fmt(data.requiredPpf, 0) + ' PPF ? Coverage: ' + data.coverageStatus + ' ? Detail: ' + data.detailStatus + '</text>' +
+          '</svg>';
+
+        stage.innerHTML = svg;
+      }
+
+
       function render() {
         var data = selectedData();
         var custom = evaluate(getCustomInputs());
@@ -1095,6 +1264,8 @@
         byId("coverageFill").style.width = data.coveragePressure + "%";
         byId("detailFill").style.width = data.detailPressure + "%";
         byId("lensFill").style.width = data.lensPressure + "%";
+
+        renderFovCone(data);
 
         setText("targetMaxWidth", fmt(data.maxWidthPerCamera, 1) + " ft");
         setText("targetMaxWidthNote", "Max framed width per camera for " + fmt(data.requiredPpf, 0) + " PPF.");
