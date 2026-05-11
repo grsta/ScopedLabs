@@ -399,6 +399,10 @@
 
     window.ScopedLabsDiagnosticData = null;
     window.ScopedLabsExportData = null;
+    window.ScopedLabsReportV2Data = null;
+
+    const reportV2Btn = document.getElementById("openReportV2");
+    if (reportV2Btn) reportV2Btn.disabled = true;
   }
 
   function getDiagnosticDriver(data) {
@@ -685,11 +689,72 @@
     };
   }
 
+  const REPORT_V2_STORAGE_KEY = "scopedlabs:prototype:lens-design-lab:selected-scenario";
+
+  function buildReportV2Payload(data, diagnostic) {
+    const pressureScore = diagnostic?.gauge?.score ?? Math.max(
+      data.detailPressureMetric,
+      data.focalPressureMetric,
+      data.adjustmentMetric
+    );
+
+    return {
+      schema: "scopedlabs.prototype.lens-design-scenario.v2",
+      sourceTool: "live-lens-selection",
+      savedAt: new Date().toISOString(),
+      category: CATEGORY,
+      step: STEP,
+      tool: "Lens Selection Helper",
+      selectedScenario: "Live Lens Selection",
+      selectedLensMm: Number(data.adjustedFocal.toFixed(2)),
+      calculatedLensMm: Number(data.baseFocal.toFixed(2)),
+      status: data.status,
+      coverageStatus: data.status,
+      detailStatus: data.ppf > 0 && data.ppf < 80 ? "RISK" : data.ppf > 0 ? "HEALTHY" : "WATCH",
+      pressure: Number(pressureScore.toFixed(0)),
+      assumptions: {
+        distanceFt: Number(data.dist.toFixed(2)),
+        requiredSceneWidthFt: Number(data.tw.toFixed(2)),
+        sceneWidthFt: Number(data.tw.toFixed(2)),
+        selectedLensMm: Number(data.adjustedFocal.toFixed(2)),
+        sensorWidthMm: Number(data.sw.toFixed(2)),
+        horizontalPixels: null,
+        requiredPpf: data.ppf > 0 ? Number(data.ppf.toFixed(2)) : null,
+        availablePpf: data.ppf > 0 ? Number(data.ppf.toFixed(2)) : null,
+        coverageCount: 1,
+        framedWidthFt: Number(data.tw.toFixed(2))
+      },
+      designTargets: {
+        suggestedCameras: 1,
+        recommendedOverlapPercent: 0,
+        overlapWidthFt: 0,
+        centerSpacingFt: 0,
+        cameraPositionsFt: [0],
+        maxWidthPerCameraFt: Number(data.tw.toFixed(2)),
+        requiredLensForTargetMm: Number(data.baseFocal.toFixed(2)),
+        pixelsNeededOneCamera: null,
+        mainBlocker: diagnostic?.dominantDriver?.label || data.dominantConstraint || "Review required"
+      },
+      diagnostics: diagnostic,
+      interpretation: data.interpretation,
+      guidance: data.guidance,
+      flowOutputs: diagnostic?.flowOutputs || null
+    };
+  }
+
+  function saveReportV2Payload(data, diagnostic) {
+    const payload = buildReportV2Payload(data, diagnostic);
+    localStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(payload, null, 2));
+    sessionStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(payload, null, 2));
+    return payload;
+  }
+
   function renderDiagnosticPanel(data) {
     const diagnostic = buildDiagnosticData(data);
 
     window.ScopedLabsDiagnosticData = diagnostic;
     window.ScopedLabsExportData = diagnostic;
+    window.ScopedLabsReportV2Data = saveReportV2Payload(data, diagnostic);
 
     if (!window.ScopedLabsDiagnostic || !els.diagnostic) return;
 
@@ -767,6 +832,9 @@
 
     renderDiagnosticPanel(data);
 
+    const openReportV2 = document.getElementById("openReportV2");
+    if (openReportV2) openReportV2.disabled = false;
+
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
@@ -793,6 +861,16 @@
 
     els.calc?.addEventListener("click", calc);
     els.reset?.addEventListener("click", reset);
+    const openReportV2 = document.getElementById("openReportV2");
+    if (openReportV2) {
+      openReportV2.addEventListener("click", () => {
+        if (!window.ScopedLabsReportV2Data) return;
+        localStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(window.ScopedLabsReportV2Data, null, 2));
+        sessionStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(window.ScopedLabsReportV2Data, null, 2));
+        window.open("/prototypes/lens-report-v2/?source=live-lens-selection&rev=live-shadow-001", "_blank", "noopener");
+      });
+    }
+
     els.continueBtn?.addEventListener("click", () => {
       window.location.href = NEXT_URL;
     });
