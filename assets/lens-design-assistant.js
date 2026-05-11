@@ -587,6 +587,16 @@
       });
     });
 
+    target.querySelectorAll("[data-slda-input]").forEach(input => {
+      const eventName = input.tagName === "SELECT" ? "change" : "input";
+      input.addEventListener(eventName, () => {
+        const next = readCustomFromDom(target, base);
+        target.setAttribute("data-slda-custom", JSON.stringify(next));
+        target.setAttribute("data-slda-scenario", "live");
+        render(target, rawData);
+      });
+    });
+
     const reportBtn = target.querySelector("[data-slda-open-report]");
     if (reportBtn) {
       reportBtn.addEventListener("click", () => {
