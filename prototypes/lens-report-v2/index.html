@@ -616,7 +616,7 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-010-design-lab-bridge.</div>
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-011-localstorage-bridge.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
@@ -932,7 +932,7 @@
   }
 
   function loadPayload() {
-    var saved = sessionStorage.getItem(storageKey);
+    var saved = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
 
     if (!saved) {
       return samplePayload();
