@@ -1051,7 +1051,7 @@
   function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
-      analysisEl: els.analysis,
+      analysisEl: null,
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
       summaryRows: [
