@@ -146,6 +146,175 @@
       padding: 28px 34px 36px;
     }
 
+    .report-diagnostic-snapshot {
+      border: 1px solid #d7e2dc;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(8,116,67,.12), transparent 34%),
+        radial-gradient(circle at 82% 18%, rgba(180,35,24,.10), transparent 34%),
+        linear-gradient(135deg, #f9fcfa, #eef7f1);
+      padding: 18px;
+      margin-bottom: 22px;
+      overflow: hidden;
+    }
+
+    .snapshot-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .snapshot-kicker {
+      color: #087443;
+      font-size: .66rem;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .snapshot-title {
+      margin: 0;
+      color: #10251b;
+      font-size: 1.12rem;
+      letter-spacing: -.02em;
+    }
+
+    .snapshot-copy {
+      margin: 7px 0 0;
+      color: #425248;
+      line-height: 1.45;
+      font-size: .84rem;
+      max-width: 720px;
+    }
+
+    .snapshot-status-pill {
+      border: 1px solid #f0b8b2;
+      background: #fff4f2;
+      color: #b42318;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: .72rem;
+      font-weight: 950;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .snapshot-layout {
+      display: grid;
+      grid-template-columns: 1.12fr .88fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .snapshot-visual,
+    .snapshot-metrics {
+      border: 1px solid #dfe7e2;
+      border-radius: 14px;
+      background: rgba(255,255,255,.72);
+      padding: 14px;
+    }
+
+    .mini-fov {
+      height: 176px;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 15% 50%, rgba(8,116,67,.10), transparent 34%),
+        linear-gradient(90deg, rgba(8,116,67,.10), rgba(154,103,0,.08), rgba(180,35,24,.10));
+      border: 1px solid #e2ebe6;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mini-fov svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .snapshot-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .snapshot-mini {
+      border: 1px solid #dfe7e2;
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    .snapshot-mini-label {
+      color: #66736c;
+      font-size: .58rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .snapshot-mini-value {
+      display: block;
+      margin-top: 6px;
+      color: #10251b;
+      font-size: .9rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .pressure-track {
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #b7f7cc 0 25%, #ffe6a3 25% 60%, #ffb7af 60% 100%);
+      border: 1px solid #d7e2dc;
+      position: relative;
+      margin: 12px 0 8px;
+      overflow: hidden;
+    }
+
+    .pressure-marker {
+      position: absolute;
+      top: -4px;
+      width: 4px;
+      height: 22px;
+      border-radius: 999px;
+      background: #10251b;
+      box-shadow: 0 0 0 3px rgba(16,37,27,.12);
+    }
+
+    .pressure-labels {
+      display: flex;
+      justify-content: space-between;
+      color: #66736c;
+      font-size: .66rem;
+      font-weight: 850;
+    }
+
+    .snapshot-status-table {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .snapshot-status-row {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 10px;
+      align-items: center;
+      border-top: 1px solid #e7ece8;
+      padding-top: 8px;
+      color: #34443b;
+      font-size: .82rem;
+    }
+
+    .snapshot-status-row strong {
+      color: #10251b;
+    }
+
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0,1fr));
@@ -364,7 +533,7 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-002-report-options.</div>
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-003-diagnostic-snapshot.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
@@ -528,7 +697,37 @@
         }).join("") + "</ul>";
       }
 
-      function statusClass(status) {
+      function parsePressure(value) {
+        const match = String(value || "").match(/\d+(?:\.\d+)?/);
+        if (!match) return 0;
+        return Math.max(0, Math.min(100, Number(match[0])));
+      }
+
+      function renderMiniFov() {
+        return '' +
+          '<div class="mini-fov">' +
+            '<svg viewBox="0 0 640 176" role="img" aria-label="Compact field of view report diagram">' +
+              '<defs>' +
+                '<linearGradient id="miniCone" x1="0" x2="1" y1="0" y2="0">' +
+                  '<stop offset="0%" stop-color="rgba(8,116,67,.32)" />' +
+                  '<stop offset="58%" stop-color="rgba(154,103,0,.22)" />' +
+                  '<stop offset="100%" stop-color="rgba(180,35,24,.28)" />' +
+                '</linearGradient>' +
+              '</defs>' +
+              '<rect x="0" y="0" width="640" height="176" fill="rgba(255,255,255,.18)" />' +
+              '<path d="M 54 88 L 528 36 L 528 140 Z" fill="url(#miniCone)" stroke="rgba(16,37,27,.28)" stroke-width="2" />' +
+              '<line x1="54" y1="88" x2="528" y2="88" stroke="rgba(16,37,27,.28)" stroke-dasharray="6 7" />' +
+              '<circle cx="54" cy="88" r="12" fill="#087443" opacity=".90" />' +
+              '<text x="32" y="65" fill="#10251b" font-size="12" font-weight="900">Camera</text>' +
+              '<line x1="528" y1="36" x2="528" y2="140" stroke="#b42318" stroke-width="4" />' +
+              '<text x="365" y="30" fill="#b42318" font-size="12" font-weight="950">Required scene width</text>' +
+              '<line x1="54" y1="154" x2="528" y2="154" stroke="rgba(16,37,27,.34)" />' +
+              '<text x="250" y="169" fill="#425248" font-size="12" font-weight="850">Distance / FOV planning check</text>' +
+            '</svg>' +
+          '</div>';
+      }
+
+
         const s = String(status || "").toLowerCase();
         if (s.includes("healthy")) return "status-healthy";
         if (s.includes("watch")) return "status-watch";
@@ -588,6 +787,53 @@
               '<div class="summary-note">Pressure score from the diagnostic model.</div>' +
             '</div>' +
           '</div>' +
+
+          '<section class="report-diagnostic-snapshot">' +
+            '<div class="snapshot-head">' +
+              '<div>' +
+                '<div class="snapshot-kicker">Executive Diagnostic Snapshot</div>' +
+                '<h2 class="snapshot-title">Selected scenario health and planning pressure</h2>' +
+                '<p class="snapshot-copy">This visual summary keeps the report readable while showing the core design story: the original assumptions, selected correction path, status split, and what should be carried forward for the next sanity check.</p>' +
+              '</div>' +
+              '<div class="snapshot-status-pill">' + esc(payload.status) + '</div>' +
+            '</div>' +
+
+            '<div class="snapshot-layout">' +
+              '<div class="snapshot-visual">' +
+                renderMiniFov() +
+                '<div class="snapshot-mini-grid">' +
+                  '<div class="snapshot-mini">' +
+                    '<div class="snapshot-mini-label">Selected Lens</div>' +
+                    '<span class="snapshot-mini-value">' + esc(payload.selectedScenarioData.selectedLens) + '</span>' +
+                  '</div>' +
+                  '<div class="snapshot-mini">' +
+                    '<div class="snapshot-mini-label">Camera Count</div>' +
+                    '<span class="snapshot-mini-value">' + esc(payload.selectedScenarioData.cameraCount) + '</span>' +
+                  '</div>' +
+                  '<div class="snapshot-mini">' +
+                    '<div class="snapshot-mini-label">Available Detail</div>' +
+                    '<span class="snapshot-mini-value">' + esc(payload.diagnostics.availablePpf) + '</span>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+
+              '<div class="snapshot-metrics">' +
+                '<div class="summary-label">Planning Pressure</div>' +
+                '<span class="summary-value ' + statusClass(payload.diagnostics.overallStatus) + '">' + esc(payload.diagnostics.planningPressure) + '</span>' +
+                '<div class="pressure-track">' +
+                  '<span class="pressure-marker" style="left: calc(' + parsePressure(payload.diagnostics.planningPressure) + '% - 2px);"></span>' +
+                '</div>' +
+                '<div class="pressure-labels"><span>Healthy</span><span>Watch</span><span>Risk</span></div>' +
+
+                '<div class="snapshot-status-table">' +
+                  '<div class="snapshot-status-row"><strong>Coverage status</strong><span class="' + statusClass(payload.diagnostics.coverageStatus) + '">' + esc(payload.diagnostics.coverageStatus) + '</span></div>' +
+                  '<div class="snapshot-status-row"><strong>Detail status</strong><span class="' + statusClass(payload.diagnostics.detailStatus) + '">' + esc(payload.diagnostics.detailStatus) + '</span></div>' +
+                  '<div class="snapshot-status-row"><strong>Main blocker</strong><span>' + esc(payload.diagnostics.mainBlocker) + '</span></div>' +
+                  '<div class="snapshot-status-row"><strong>Carry forward</strong><span>' + esc(payload.carryForward.cameraCount) + ' cameras, ' + esc(payload.carryForward.selectedLensMm) + ' mm lens</span></div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</section>' +
 
           '<section class="section two-col">' +
             '<div>' +
