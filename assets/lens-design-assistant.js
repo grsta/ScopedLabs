@@ -100,7 +100,7 @@
 
     return {
       key: "live",
-      label: "Live Selection",
+      label: "Custom Design",
       distanceFt,
       sceneWidthFt,
       sensorWidthMm,
