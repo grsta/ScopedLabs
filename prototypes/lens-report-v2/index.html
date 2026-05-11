@@ -616,7 +616,7 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-012-chart-title-spacing.</div>
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-013-live-lens-format-source.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
@@ -837,6 +837,9 @@
     var coverageStatus = String(raw.coverageStatus || "WATCH").toUpperCase();
     var detailStatus = String(raw.detailStatus || "WATCH").toUpperCase();
     var pressure = Number(raw.pressure || 52);
+    var sourceLabel = raw.sourceTool === "live-lens-selection"
+      ? "Saved Live Lens Selection scenario"
+      : "Saved Lens Design Lab scenario";
 
     var distanceFt = Number(a.distanceFt || 0);
     var sceneWidthFt = Number(a.requiredSceneWidthFt || a.sceneWidthFt || 0);
@@ -857,7 +860,7 @@
       : "The selected scenario should be validated against the required pixel-density/detail target.";
 
     return {
-      dataSource: "Saved Lens Design Lab scenario",
+      dataSource: sourceLabel,
       reportVersion: "diagnostic-report-v2.bridge-live-prototype",
       generatedAt: raw.savedAt || new Date().toISOString(),
       tool: "Lens Selection Helper",
@@ -869,7 +872,7 @@
         distanceToTarget: distanceFt ? one(distanceFt) + " ft / " + one(ftToM(distanceFt)) + " m" : "Not provided",
         requiredSceneWidth: sceneWidthFt ? one(sceneWidthFt) + " ft / " + one(ftToM(sceneWidthFt)) + " m" : "Not provided",
         selectedLens: selectedLens ? one(selectedLens) + " mm" : "Not provided",
-        cameraFormat: a.sensorWidthMm ? one(a.sensorWidthMm) + " mm sensor width equivalent" : "Camera-format preset",
+        cameraFormat: a.cameraFormatLabel ? a.cameraFormatLabel + " (" + one(a.sensorWidthMm) + " mm sensor width equivalent)" : (a.sensorWidthMm ? one(a.sensorWidthMm) + " mm sensor width equivalent" : "Camera-format preset"),
         horizontalPixels: a.horizontalPixels ? zero(a.horizontalPixels) + " px" : "Not provided",
         detailRequirement: requiredPpf ? zero(requiredPpf) + " PPF target" : "Not provided",
         coverageStrategy: cameraCount + " camera" + (cameraCount === 1 ? "" : "s")

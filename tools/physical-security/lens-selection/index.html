@@ -164,7 +164,7 @@
 
         <p class="muted"><strong>What this models</strong></p>
         <ul class="muted">
-          <li>Raw focal length from scene geometry and sensor width</li>
+          <li>Required lens target from scene geometry, selected lens, and camera format</li>
           <li>Adjustment pressure from the upstream pixel-density requirement</li>
           <li>Practical lens class selection before final recognition-range validation</li>
         </ul>
@@ -198,14 +198,46 @@
 
           <div class="field">
             <div class="label-row">
-              <label for="sw">Sensor Width (mm)</label>
+              <label for="selectedLens">Selected / Available Lens</label>
+            </div>
+            <select id="selectedLens">
+              <option value="2.8">2.8 mm</option>
+              <option value="3.6">3.6 mm</option>
+              <option value="4">4 mm</option>
+              <option value="6">6 mm</option>
+              <option value="8" selected>8 mm</option>
+              <option value="12">12 mm</option>
+              <option value="16">16 mm</option>
+              <option value="25">25 mm</option>
+              <option value="35">35 mm</option>
+              <option value="50">50 mm</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="cameraFormat">Camera Format</label>
+            </div>
+            <select id="cameraFormat">
+              <option value="4.8">1/3 in approx</option>
+              <option value="5.6">1/2.8 in common</option>
+              <option value="5.8">1/2.7 in common</option>
+              <option value="6.4" selected>1/2.5 in larger sensor</option>
+              <option value="7.2">1/1.8 in larger sensor</option>
+              <option value="custom">Custom sensor width</option>
+            </select>
+          </div>
+
+          <div class="field" id="customSensorField" style="display:none;">
+            <div class="label-row">
+              <label for="sw">Custom Sensor Width (mm)</label>
             </div>
             <input id="sw" type="number" min="0.1" step="0.01" value="6.4" />
           </div>
         </div>
 
         <div class="btn-row" style="margin-top: 14px;">
-          <button id="calc" class="btn btn-primary" type="button">Suggest Lens</button>
+          <button id="calc" class="btn btn-primary" type="button">Evaluate Lens</button>
           <button id="reset" class="btn" type="button">Reset</button>
         </div>
 
@@ -327,7 +359,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/diagnostic.js?v=diagnostic-002"></script>
 
-  <script src="./script.js?v=physical-security-report-v2-001"></script>
+  <script src="./script.js?v=physical-security-lens-model-002"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

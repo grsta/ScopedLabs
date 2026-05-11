@@ -28,7 +28,10 @@
   const els = {
     dist: $("dist"),
     tw: $("tw"),
+    selectedLens: $("selectedLens"),
+    cameraFormat: $("cameraFormat"),
     sw: $("sw"),
+    customSensorField: $("customSensorField"),
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
@@ -44,8 +47,30 @@
   const DEFAULTS = {
     dist: 80,
     tw: 20,
+    selectedLens: 8,
+    cameraFormat: "6.4",
     sw: 6.4
   };
+
+  function selectedOptionText(selectEl) {
+    if (!selectEl) return "";
+    const option = selectEl.options[selectEl.selectedIndex];
+    return option ? option.textContent.trim() : "";
+  }
+
+  function syncCameraFormatControl() {
+    if (!els.cameraFormat || !els.sw) return;
+
+    const isCustom = els.cameraFormat.value === "custom";
+
+    if (els.customSensorField) {
+      els.customSensorField.style.display = isCustom ? "" : "none";
+    }
+
+    if (!isCustom) {
+      els.sw.value = els.cameraFormat.value;
+    }
+  }
 
   let prev = null;
 
@@ -74,9 +99,12 @@
   }
 
   function applyDefaults() {
-    els.dist.value = String(DEFAULTS.dist);
-    els.tw.value = String(DEFAULTS.tw);
-    els.sw.value = String(DEFAULTS.sw);
+    if (els.dist) els.dist.value = String(DEFAULTS.dist);
+    if (els.tw) els.tw.value = String(DEFAULTS.tw);
+    if (els.selectedLens) els.selectedLens.value = String(DEFAULTS.selectedLens);
+    if (els.cameraFormat) els.cameraFormat.value = String(DEFAULTS.cameraFormat);
+    if (els.sw) els.sw.value = String(DEFAULTS.sw);
+    syncCameraFormatControl();
   }
 
   function hasStoredAuth() {
@@ -235,7 +263,7 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      emptyMessage: "Enter values and press Suggest Lens."
+      emptyMessage: "Enter values and press Evaluate Lens."
     });
 
     prev = null;
@@ -243,19 +271,35 @@
   }
 
   function getInputs() {
-    const dist = num(els.dist.value);
-    const tw = num(els.tw.value);
-    const sw = num(els.sw.value);
+    syncCameraFormatControl();
+
+    const dist = num(els.dist?.value);
+    const tw = num(els.tw?.value);
+    const selectedLens = num(els.selectedLens?.value);
+    const cameraFormat = els.cameraFormat ? String(els.cameraFormat.value || "") : "";
+    const sw = cameraFormat === "custom" ? num(els.sw?.value) : num(cameraFormat);
+    const cameraFormatLabel = cameraFormat === "custom"
+      ? "Custom sensor width"
+      : selectedOptionText(els.cameraFormat);
 
     if (
       !Number.isFinite(dist) || dist <= 0 ||
       !Number.isFinite(tw) || tw <= 0 ||
+      !Number.isFinite(selectedLens) || selectedLens <= 0 ||
       !Number.isFinite(sw) || sw <= 0
     ) {
-      return { ok: false, message: "Enter valid values and press Suggest Lens." };
+      return { ok: false, message: "Enter valid values and press Evaluate Lens." };
     }
 
-    return { ok: true, dist, tw, sw };
+    return {
+      ok: true,
+      dist,
+      tw,
+      sw,
+      selectedLens,
+      cameraFormat,
+      cameraFormatLabel
+    };
   }
 
   function adjustForPPF(focal) {
@@ -275,18 +319,24 @@
     if (!input.ok) return input;
 
     const baseFocal = (input.sw * input.dist) / input.tw;
-    const adjustedFocal = adjustForPPF(baseFocal);
-    const lensClass = classifyLens(adjustedFocal);
-    const interp = lensInterpretation(adjustedFocal);
+    const calculatedTargetFocal = adjustForPPF(baseFocal);
+    const selectedLens = input.selectedLens;
+    const adjustedFocal = selectedLens;
+    const lensClass = classifyLens(selectedLens);
+    const interp = lensInterpretation(selectedLens);
 
     const ppf = prev ? num(prev.ppf, 0) : 0;
     const requirementClass = classifyRequirement(ppf);
 
-    const adjustmentPct = baseFocal > 0
-      ? ((adjustedFocal - baseFocal) / baseFocal) * 100
+    const lensGapPct = calculatedTargetFocal > 0
+      ? ((selectedLens - calculatedTargetFocal) / calculatedTargetFocal) * 100
       : 0;
 
-    const widthPerMm = adjustedFocal > 0 ? input.tw / adjustedFocal : 0;
+    const fitRatio = calculatedTargetFocal > 0
+      ? selectedLens / calculatedTargetFocal
+      : 1;
+
+    const widthPerMm = selectedLens > 0 ? input.tw / selectedLens : 0;
 
     const detailPressureMetric =
       ppf > 0
@@ -294,33 +344,41 @@
         : ppf < 80 ? 60
         : ppf > 120 ? 20
         : 35
-        : 25;
+        : 45;
 
-    const focalPressureMetric =
-      adjustedFocal >= 12 ? 75
-      : adjustedFocal >= 8 ? 45
-      : adjustedFocal >= 4 ? 20
-      : 10;
+    let focalPressureMetric = 25;
+    if (fitRatio < 0.8) {
+      focalPressureMetric = 85;
+    } else if (fitRatio < 0.95) {
+      focalPressureMetric = 60;
+    } else if (fitRatio <= 1.25) {
+      focalPressureMetric = 20;
+    } else if (fitRatio <= 1.75) {
+      focalPressureMetric = 45;
+    } else {
+      focalPressureMetric = 70;
+    }
 
-    const adjustmentMetric = Math.min(Math.abs(adjustmentPct) * 1.5, 100);
+    const adjustmentMetric = Math.min(Math.abs(lensGapPct) * 1.2, 100);
+    const adjustmentPct = lensGapPct;
 
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
       compositeScore: Math.max(detailPressureMetric, focalPressureMetric, adjustmentMetric),
       metrics: [
         {
-          label: "Detail Pressure",
+          label: "Detail Context",
           value: detailPressureMetric,
           displayValue: ppf > 0 ? fmtPpf(ppf) : "No prior PPF"
         },
         {
-          label: "Focal Demand",
+          label: "Lens Fit",
           value: focalPressureMetric,
-          displayValue: fmtMm(adjustedFocal)
+          displayValue: fmtMm(selectedLens)
         },
         {
-          label: "Adjustment Shift",
+          label: "Selection Gap",
           value: adjustmentMetric,
-          displayValue: `${fmt(adjustmentPct, 1)}%`
+          displayValue: fmt(adjustmentPct, 1) + "%"
         }
       ],
       healthyMax: 25,
@@ -328,36 +386,46 @@
     });
 
     let dominantConstraint = "";
-    if (ppf > 0 && ppf < 40) {
-      dominantConstraint = "Detail pressure is the dominant limiter. The upstream pixel-density requirement is weak, so this tool is tightening focal length to recover usable subject detail.";
-    } else if (adjustedFocal >= 12) {
-      dominantConstraint = "Focal demand is the dominant limiter. The scene geometry is pushing the design toward a long-range lens class, which narrows field of view and reduces layout flexibility.";
-    } else if (Math.abs(adjustmentPct) > 15) {
-      dominantConstraint = "Adjustment shift is the dominant limiter. The lens choice has to move meaningfully away from the raw geometry solution to satisfy the prior detail requirement.";
+    if (fitRatio < 0.8) {
+      dominantConstraint = "The selected lens appears too wide for the calculated target. The camera may frame more scene than the selected detail objective can support.";
+    } else if (fitRatio > 1.75) {
+      dominantConstraint = "The selected lens is much tighter than the calculated target. It may preserve detail but can reduce scene coverage and layout flexibility.";
+    } else if (ppf <= 0) {
+      dominantConstraint = "No upstream pixel-density result was provided, so this should be treated as a planning check rather than a confirmed detail result.";
+    } else if (ppf < 80) {
+      dominantConstraint = "Detail pressure is the dominant limiter. The selected lens may need tighter framing or the scene may need to be split across more cameras.";
     } else {
-      dominantConstraint = "The lens requirement is balanced. Scene width, distance, and detail expectation are staying in a practical range for a standard lens choice.";
+      dominantConstraint = "The selected lens and calculated target are reasonably aligned for the current planning inputs.";
     }
 
-    let guidance = "Verify the final option against the manufacturer’s real FOV chart before locking the bill of materials.";
-    if (ppf > 0 && ppf < 40) {
-      guidance = "Pixel density is low, so a tighter lens is recommended to recover detail. Re-check subject framing and verify that the scene width still matches the operational requirement.";
-    } else if (ppf > 120) {
-      guidance = "Pixel density is already strong, so a slightly wider lens may still be acceptable. Validate whether broader coverage is worth the detail tradeoff.";
-    } else if (adjustedFocal >= 12) {
-      guidance = "This is a long-range optic recommendation. Check depth-of-field, mounting precision, and scene alignment before treating it as final.";
+    let guidance = "Verify the selected lens against the manufacturer?s actual FOV chart before locking the bill of materials.";
+    if (fitRatio < 0.8) {
+      guidance = "The selected lens is likely too wide for this target. Evaluate a tighter lens, shorter distance, smaller scene width, or split coverage.";
+    } else if (fitRatio > 1.75) {
+      guidance = "The selected lens is much tighter than the calculated target. Confirm the narrower view still covers the intended scene.";
+    } else if (ppf <= 0) {
+      guidance = "No prior PPF was provided. Continue through the detail validation steps before treating this lens as final.";
+    } else if (ppf < 80) {
+      guidance = "Pixel density is weak for the selected detail objective. Re-check target width, distance, selected lens, and whether the scene should be split.";
     }
 
-    const interpretation = `At ${fmtFt(input.dist)} with a target width of ${fmtFt(input.tw)} and a ${fmtMm(input.sw, 2)} sensor, the raw geometry calls for about ${fmtMm(baseFocal)}. After applying the upstream detail requirement, the adjusted recommendation becomes ${fmtMm(adjustedFocal)}, which falls into the ${lensClass} class. ${interp}`;
+    const interpretation = `At ${fmtFt(input.dist)} with a target width of ${fmtFt(input.tw)}, ${input.cameraFormatLabel || "the selected camera format"} uses about ${fmtMm(input.sw, 2)} sensor width. The calculated target lens is about ${fmtMm(calculatedTargetFocal)}. The selected / available lens is ${fmtMm(selectedLens)}, which falls into the ${lensClass} class. ${interp}`;
 
     return {
       ok: true,
       ...input,
       baseFocal,
+      calculatedTargetFocal,
       adjustedFocal,
+      selectedLens,
+      cameraFormat: input.cameraFormat,
+      cameraFormatLabel: input.cameraFormatLabel,
       lensClass,
       ppf,
       requirementClass,
       adjustmentPct,
+      lensGapPct,
+      fitRatio,
       widthPerMm,
       status: statusPack.status,
       interpretation,
@@ -421,9 +489,9 @@
       },
       {
         key: "adjustmentShift",
-        label: "Adjustment Shift",
+        label: "Selection Gap",
         value: data.adjustmentMetric,
-        summary: "The lens recommendation had to move away from the raw geometry result to stay aligned with the prior detail requirement."
+        summary: "The lens recommendation had to move away from the calculated target lens to stay aligned with the prior detail requirement."
       }
     ];
 
@@ -487,14 +555,14 @@
         note: "Horizontal scene or subject width expected to be covered by the lens selection."
       },
       {
-        label: "Sensor width",
-        value: fmtMm(data.sw, 2),
-        note: "Camera sensor width used for the focal-length estimate."
+        label: "Camera format",
+        value: data.cameraFormatLabel ? data.cameraFormatLabel + " (" + fmtMm(data.sw, 2) + ")" : fmtMm(data.sw, 2),
+        note: "Camera format preset used to supply the sensor-width value behind the lens-fit check."
       },
       {
         label: "Pixel-density input",
         value: data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF",
-        note: "Optional upstream detail target used to adjust the raw geometry result."
+        note: "Optional upstream detail target used to adjust the calculated target lens."
       },
       {
         label: "Adjustment shift",
@@ -517,7 +585,7 @@
       {
         label: "Adjustment pressure",
         value: fmt(data.adjustmentMetric, 0) + "/100",
-        note: "Pressure created by how far the adjusted focal length moved away from the raw geometry result."
+        note: "Pressure created by how far the adjusted focal length moved away from the calculated target lens."
       }
     ];
 
@@ -574,8 +642,8 @@
       toolSlug: STEP,
       toolLabel: "Lens Selection Helper",
       status,
-      objective: "Estimate lens class and focal-length pressure from scene geometry and upstream detail requirements.",
-      method: "Uses distance to target, target width, sensor width, and pixel-density context to estimate focal demand and classify planning pressure.",
+      objective: "Evaluate whether the selected lens fits the scene geometry and upstream detail requirements.",
+      method: "Uses distance to target, required scene width, selected lens, camera format, and pixel-density context to evaluate lens fit and planning pressure.",
       resultSummary: statusHeadline,
       gauge: {
         label: "Lens Selection Pressure",
@@ -595,7 +663,7 @@
       },
       keyResults: [
         {
-          label: "Adjusted Focal Length",
+          label: "Selected / Available Lens",
           value: fmtMm(data.adjustedFocal),
           rawValue: Number(data.adjustedFocal.toFixed(2)),
           unit: "mm",
@@ -651,7 +719,7 @@
       reportSections: [
         {
           label: "Planning Objective",
-          body: "Estimate lens class and focal-length pressure from scene geometry and upstream detail requirements."
+          body: "Evaluate whether the selected lens fits the scene geometry and upstream detail requirements."
         },
         {
           label: "Method / Basis of Estimate",
@@ -707,7 +775,7 @@
       tool: "Lens Selection Helper",
       selectedScenario: "Live Lens Selection",
       selectedLensMm: Number(data.adjustedFocal.toFixed(2)),
-      calculatedLensMm: Number(data.baseFocal.toFixed(2)),
+      calculatedLensMm: Number((data.calculatedTargetFocal || data.baseFocal).toFixed(2)),
       status: data.status,
       coverageStatus: data.status,
       detailStatus: data.ppf > 0 && data.ppf < 80 ? "RISK" : data.ppf > 0 ? "HEALTHY" : "WATCH",
@@ -717,6 +785,7 @@
         requiredSceneWidthFt: Number(data.tw.toFixed(2)),
         sceneWidthFt: Number(data.tw.toFixed(2)),
         selectedLensMm: Number(data.adjustedFocal.toFixed(2)),
+        cameraFormatLabel: data.cameraFormatLabel || null,
         sensorWidthMm: Number(data.sw.toFixed(2)),
         horizontalPixels: null,
         requiredPpf: data.ppf > 0 ? Number(data.ppf.toFixed(2)) : null,
@@ -731,7 +800,7 @@
         centerSpacingFt: 0,
         cameraPositionsFt: [0],
         maxWidthPerCameraFt: Number(data.tw.toFixed(2)),
-        requiredLensForTargetMm: Number(data.baseFocal.toFixed(2)),
+        requiredLensForTargetMm: Number((data.calculatedTargetFocal || data.baseFocal).toFixed(2)),
         pixelsNeededOneCamera: null,
         mainBlocker: diagnostic?.dominantDriver?.label || data.dominantConstraint || "Review required"
       },
@@ -788,7 +857,7 @@
           items: [
             "Distance to target: " + fmtFt(data.dist),
             "Target width: " + fmtFt(data.tw),
-            "Sensor width: " + fmtMm(data.sw, 2),
+            "Camera format: " + fmtMm(data.sw, 2),
             "Pixel-density input: " + (data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF"),
             "Adjustment shift: " + fmt(data.adjustmentPct, 1) + "%"
           ]
@@ -811,17 +880,17 @@
       existingChartRef: chartRef,
       existingWrapRef: chartWrapRef,
       summaryRows: [
-        { label: "Raw Focal Length", value: fmtMm(data.baseFocal) },
-        { label: "Adjusted Focal Length", value: fmtMm(data.adjustedFocal) },
-        { label: "Suggested Lens Class", value: data.lensClass },
+        { label: "Calculated Target Lens", value: fmtMm(data.baseFocal) },
+        { label: "Selected / Available Lens", value: fmtMm(data.adjustedFocal) },
+        { label: "Selected Lens Class", value: data.lensClass },
         { label: "Upstream Detail Requirement", value: data.ppf > 0 ? data.requirementClass : "No prior PPF" }
       ],
       derivedRows: [
         { label: "Distance to Target", value: fmtFt(data.dist) },
         { label: "Target Width", value: fmtFt(data.tw) },
-        { label: "Sensor Width", value: fmtMm(data.sw, 2) },
+        { label: "Camera Format", value: data.cameraFormatLabel ? data.cameraFormatLabel + " (" + fmtMm(data.sw, 2) + ")" : fmtMm(data.sw, 2) },
         { label: "Pixel Density Input", value: data.ppf > 0 ? fmtPpf(data.ppf) : "N/A" },
-        { label: "Adjustment Shift", value: `${fmt(data.adjustmentPct, 1)}%` },
+        { label: "Selection Gap", value: `${fmt(data.adjustmentPct, 1)}%` },
         { label: "Width per mm of Focal Length", value: data.widthPerMm > 0 ? `${fmt(data.widthPerMm, 2)} ft/mm` : "N/A" }
       ],
       status: data.status,
@@ -831,6 +900,13 @@
     });
 
     renderDiagnosticPanel(data);
+
+    els.selectedLens?.addEventListener("change", () => invalidate());
+    els.cameraFormat?.addEventListener("change", () => {
+      syncCameraFormatControl();
+      invalidate();
+    });
+    els.sw?.addEventListener("input", () => invalidate());
 
     const openReportV2 = document.getElementById("openReportV2");
     if (openReportV2) openReportV2.disabled = false;
