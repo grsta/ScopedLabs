@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lens Report V2 Prototype | ScopedLabs</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-025" />
+  <style>
+    .report-shell {
+      width: min(1040px, calc(100vw - 40px));
+      margin: 40px auto 80px;
+    }
+
+    .prototype-note {
+      border: 1px solid rgba(125,255,158,.16);
+      border-radius: 16px;
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.72);
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    .report-page {
+      background: #ffffff;
+      color: #17231f;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 30px 90px rgba(0,0,0,.38);
+    }
+
+    .report-cover {
+      background:
+        radial-gradient(circle at 12% 12%, rgba(25,135,84,.20), transparent 36%),
+        linear-gradient(135deg, #07110d, #10251b);
+      color: #fff;
+      padding: 34px;
+    }
+
+    .report-kicker {
+      color: #7dff98;
+      font-size: .72rem;
+      font-weight: 950;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .report-cover h1 {
+      margin: 0;
+      font-size: 2rem;
+      line-height: 1.08;
+      letter-spacing: -.03em;
+    }
+
+    .report-cover p {
+      max-width: 760px;
+      margin: 12px 0 0;
+      color: rgba(255,255,255,.74);
+      line-height: 1.55;
+    }
+
+    .report-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 16px 34px;
+      border-bottom: 1px solid #e7ece8;
+      background: #f7faf8;
+    }
+
+    .report-btn {
+      border: 1px solid #bdd9ca;
+      background: #eafff3;
+      color: #123322;
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .report-body {
+      padding: 28px 34px 36px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .summary-card {
+      border: 1px solid #dfe7e2;
+      border-radius: 12px;
+      background: #fbfdfb;
+      padding: 13px;
+    }
+
+    .summary-label {
+      color: #66736c;
+      font-size: .66rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      display: block;
+      margin-top: 8px;
+      color: #10251b;
+      font-size: 1rem;
+      font-weight: 950;
+      line-height: 1.16;
+    }
+
+    .summary-note {
+      margin-top: 6px;
+      color: #64736a;
+      font-size: .74rem;
+      line-height: 1.36;
+    }
+
+    .status-risk { color: #b42318; }
+    .status-watch { color: #9a6700; }
+    .status-healthy { color: #087443; }
+
+    .section {
+      border-top: 1px solid #dfe7e2;
+      padding-top: 20px;
+      margin-top: 22px;
+    }
+
+    .section h2 {
+      margin: 0 0 10px;
+      color: #10251b;
+      font-size: 1.08rem;
+      letter-spacing: -.01em;
+    }
+
+    .section p {
+      margin: 0 0 10px;
+      color: #34443b;
+      line-height: 1.55;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .86rem;
+      overflow: hidden;
+      border: 1px solid #dfe7e2;
+      border-radius: 12px;
+    }
+
+    .info-table th,
+    .info-table td {
+      text-align: left;
+      padding: 10px 11px;
+      border-bottom: 1px solid #e7ece8;
+      vertical-align: top;
+    }
+
+    .info-table th {
+      width: 42%;
+      color: #425248;
+      background: #f5faf6;
+      font-weight: 850;
+    }
+
+    .info-table tr:last-child th,
+    .info-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .risk-box {
+      border: 1px solid #f0b8b2;
+      border-radius: 13px;
+      background: #fff4f2;
+      padding: 13px 14px;
+      color: #5e1d16;
+      line-height: 1.5;
+    }
+
+    .check-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .check-list li {
+      border: 1px solid #dfe7e2;
+      border-radius: 10px;
+      background: #fbfdfb;
+      padding: 10px 11px;
+      color: #34443b;
+      line-height: 1.45;
+    }
+
+    .payload-preview {
+      white-space: pre-wrap;
+      background: #0b1510;
+      color: #d6f8e3;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: .74rem;
+      line-height: 1.42;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .report-footer {
+      border-top: 1px solid #dfe7e2;
+      padding: 16px 34px;
+      color: #66736c;
+      background: #f7faf8;
+      font-size: .78rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 760px) {
+      .summary-grid,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+
+      .report-cover,
+      .report-body,
+      .report-actions,
+      .report-footer {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff !important;
+      }
+
+      .site-header,
+      .prototype-note,
+      .report-actions {
+        display: none !important;
+      }
+
+      .report-shell {
+        width: 100%;
+        margin: 0;
+      }
+
+      .report-page {
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      .report-cover {
+        background: #10251b !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .section {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img class="brand-icon" src="/assets/favicon/favicon-32x32.png?v=1" alt="" width="32" height="32" />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/">Tools</a>
+        <a class="nav-tab" href="/guides/">Guides</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="report-shell">
+      <div class="prototype-note">
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-001.
+      </div>
+
+      <article class="report-page" id="report">
+        <section class="report-cover">
+          <div class="report-kicker">ScopedLabs Planning Report V2</div>
+          <h1>Lens Selection Diagnostic Report</h1>
+          <p>
+            Structured planning report generated from a Lens Selection diagnostic payload. This prototype avoids DOM scraping and renders only the intended report sections.
+          </p>
+        </section>
+
+        <div class="report-actions">
+          <button class="report-btn" type="button" onclick="window.print()">Print / Save as PDF</button>
+          <button class="report-btn" type="button" id="togglePayload">Show payload</button>
+        </div>
+
+        <section class="report-body" id="reportBody"></section>
+
+        <footer class="report-footer">
+          ScopedLabs tools are planning aids only. Final design decisions should be validated against manufacturer data, site conditions, installation tolerances, applicable codes, and project-specific requirements.
+        </footer>
+      </article>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const payload = {
+        reportVersion: "diagnostic-report-v2.001",
+        generatedAt: new Date().toISOString(),
+        tool: "Lens Selection Helper",
+        category: "Physical Security",
+        status: "RISK",
+        selectedScenario: "Suggested Split",
+        executiveSummary: "The original single-camera design does not provide enough detail density for the selected recognition-level objective. The corrected scenario uses split coverage and a standard planning lens size to reduce per-camera scene width and improve detail viability.",
+        originalAssumptions: {
+          distanceToTarget: "56 ft / 17.1 m",
+          requiredSceneWidth: "45 ft / 13.7 m",
+          selectedLens: "2.8 mm",
+          cameraFormat: "1/2.8 in common",
+          horizontalPixels: "1920 px",
+          detailRequirement: "Recognition-level detail",
+          coverageStrategy: "Single camera"
+        },
+        selectedScenarioData: {
+          selectedLens: "25 mm planning size",
+          calculatedLensTarget: "24.6 mm",
+          cameraCount: "4 cameras",
+          recommendedOverlap: "15%",
+          overlapWidth: "1.9 ft",
+          centerSpacing: "10.8 ft",
+          cameraPositions: "Cam 1 -16.2 ft | Cam 2 -5.4 ft | Cam 3 +5.4 ft | Cam 4 +16.2 ft"
+        },
+        diagnostics: {
+          coverageStatus: "HEALTHY",
+          detailStatus: "WATCH",
+          overallStatus: "WATCH",
+          mainBlocker: "Detail viability",
+          planningPressure: "52 / 100",
+          availablePpf: "151.2 PPF",
+          requiredPpf: "150 PPF"
+        },
+        designTargets: {
+          maxWidthPerCamera: "12.8 ft",
+          suggestedCameraCount: "4 cameras",
+          lensForRequiredWidth: "25 mm planning size",
+          oneCameraPixelsNeeded: "6,750 px",
+          mainBlocker: "Detail viability"
+        },
+        carryForward: {
+          nextStep: "Face Recognition Range",
+          selectedLensMm: 25,
+          calculatedLensMm: 24.6,
+          cameraCount: 4,
+          requiredWidthPerCameraFt: 12.7,
+          availablePpf: 151.2,
+          requiredPpf: 150,
+          status: "WATCH"
+        },
+        possiblePlanningActions: [
+          "Limit each camera view to approximately the maximum width-per-camera target for the selected detail requirement.",
+          "Use split coverage when one camera is being asked to cover too much scene width for the selected detail objective.",
+          "Verify the selected planning lens size against the actual manufacturer field-of-view chart.",
+          "Recalculate downstream storage, bandwidth, and power impact if camera count changes."
+        ],
+        followUpChecks: [
+          "Confirm the required scene width represents the actual operational objective.",
+          "Validate the selected lens and camera format against manufacturer data.",
+          "Confirm mounting position, target distance, and camera aim can support the proposed split layout.",
+          "Continue to the next Physical Security sanity check before treating the design as final."
+        ],
+        limitations: [
+          "This report does not certify recognition, identification, or compliance performance.",
+          "Pixel density does not account for lighting, compression, motion blur, angle, or image quality.",
+          "Manufacturer field-of-view data and site validation are still required.",
+          "The report is a planning aid and should not replace project-specific engineering or compliance review."
+        ]
+      };
+
+      function esc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+          return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+          }[ch];
+        });
+      }
+
+      function tableRows(obj) {
+        return Object.entries(obj).map(function (entry) {
+          const key = entry[0];
+          const value = entry[1];
+          const label = key
+            .replace(/([A-Z])/g, " $1")
+            .replace(/^./, function (s) { return s.toUpperCase(); });
+
+          return "<tr><th>" + esc(label) + "</th><td>" + esc(value) + "</td></tr>";
+        }).join("");
+      }
+
+      function list(items) {
+        return '<ul class="check-list">' + items.map(function (item) {
+          return "<li>" + esc(item) + "</li>";
+        }).join("") + "</ul>";
+      }
+
+      function statusClass(status) {
+        const s = String(status || "").toLowerCase();
+        if (s.includes("healthy")) return "status-healthy";
+        if (s.includes("watch")) return "status-watch";
+        return "status-risk";
+      }
+
+      function render() {
+        const body = document.getElementById("reportBody");
+
+        body.innerHTML =
+          '<div class="summary-grid">' +
+            '<div class="summary-card">' +
+              '<div class="summary-label">Overall Status</div>' +
+              '<span class="summary-value ' + statusClass(payload.status) + '">' + esc(payload.status) + '</span>' +
+              '<div class="summary-note">Combined planning condition.</div>' +
+            '</div>' +
+
+            '<div class="summary-card">' +
+              '<div class="summary-label">Selected Scenario</div>' +
+              '<span class="summary-value">' + esc(payload.selectedScenario) + '</span>' +
+              '<div class="summary-note">Scenario selected for carry-forward.</div>' +
+            '</div>' +
+
+            '<div class="summary-card">' +
+              '<div class="summary-label">Main Blocker</div>' +
+              '<span class="summary-value status-watch">' + esc(payload.diagnostics.mainBlocker) + '</span>' +
+              '<div class="summary-note">Primary reason this needs review.</div>' +
+            '</div>' +
+
+            '<div class="summary-card">' +
+              '<div class="summary-label">Planning Pressure</div>' +
+              '<span class="summary-value status-watch">' + esc(payload.diagnostics.planningPressure) + '</span>' +
+              '<div class="summary-note">Pressure score from the diagnostic model.</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<section class="section">' +
+            '<h2>Executive Summary</h2>' +
+            '<p>' + esc(payload.executiveSummary) + '</p>' +
+          '</section>' +
+
+          '<section class="section two-col">' +
+            '<div>' +
+              '<h2>Original Assumptions</h2>' +
+              '<table class="info-table">' + tableRows(payload.originalAssumptions) + '</table>' +
+            '</div>' +
+
+            '<div>' +
+              '<h2>Selected Scenario</h2>' +
+              '<table class="info-table">' + tableRows(payload.selectedScenarioData) + '</table>' +
+            '</div>' +
+          '</section>' +
+
+          '<section class="section two-col">' +
+            '<div>' +
+              '<h2>Diagnostic Status</h2>' +
+              '<table class="info-table">' + tableRows(payload.diagnostics) + '</table>' +
+            '</div>' +
+
+            '<div>' +
+              '<h2>Design Targets</h2>' +
+              '<table class="info-table">' + tableRows(payload.designTargets) + '</table>' +
+            '</div>' +
+          '</section>' +
+
+          '<section class="section">' +
+            '<h2>Interpretation</h2>' +
+            '<div class="risk-box">' +
+              '<strong>Detail viability is the controlling issue.</strong> The lens/framing plan must be checked separately from the recognition/detail requirement. A design can frame the scene and still fail the required pixels-per-foot target.' +
+            '</div>' +
+          '</section>' +
+
+          '<section class="section">' +
+            '<h2>Possible Planning Actions to Evaluate</h2>' +
+            list(payload.possiblePlanningActions) +
+          '</section>' +
+
+          '<section class="section">' +
+            '<h2>Follow-Up Checks</h2>' +
+            list(payload.followUpChecks) +
+          '</section>' +
+
+          '<section class="section">' +
+            '<h2>Carry-Forward Values</h2>' +
+            '<table class="info-table">' + tableRows(payload.carryForward) + '</table>' +
+          '</section>' +
+
+          '<section class="section">' +
+            '<h2>Planning Limitations</h2>' +
+            list(payload.limitations) +
+          '</section>' +
+
+          '<section class="section" id="payloadSection" style="display:none;">' +
+            '<h2>Structured Payload</h2>' +
+            '<pre class="payload-preview">' + esc(JSON.stringify(payload, null, 2)) + '</pre>' +
+          '</section>';
+
+        document.getElementById("togglePayload").addEventListener("click", function () {
+          const section = document.getElementById("payloadSection");
+          const hidden = section.style.display === "none";
+          section.style.display = hidden ? "block" : "none";
+          this.textContent = hidden ? "Hide payload" : "Show payload";
+        });
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>
