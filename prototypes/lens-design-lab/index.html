@@ -586,7 +586,7 @@
   <main class="page">
     <div class="lab-shell">
       <div class="lab-note">
-        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-028-standard-lens-snap.</div>
+        Hidden design lab. Mock data only. Not linked in nav or sitemap. Rev: lens-design-lab-029-report-bridge-button.</div>
 
       <section class="lab-frame">
         <h1 class="lab-title">Lens Diagnostic Design Lab</h1>
@@ -928,6 +928,7 @@
             </div>
 
             <button id="saveScenarioBtn" class="carry-btn" type="button">Use selected scenario in next step</button>
+            <button id="openReportBtn" class="carry-btn" type="button">Open Report V2</button>
             <button id="clearScenarioBtn" class="carry-btn" type="button">Clear prototype carry-forward</button>
 
             <div id="carryStatus" class="carry-status">No prototype scenario stored yet.</div>
@@ -1729,6 +1730,14 @@
           sessionStorage.setItem("scopedlabs:prototype:lens-design-lab:selected-scenario", byId("payloadPreview").textContent);
           byId("carryStatus").textContent = "Stored prototype carry-forward scenario.";
         });
+
+        var openReportBtn = byId("openReportBtn");
+        if (openReportBtn) {
+          openReportBtn.addEventListener("click", function () {
+            sessionStorage.setItem("scopedlabs:prototype:lens-design-lab:selected-scenario", byId("payloadPreview").textContent);
+            window.open("/prototypes/lens-report-v2/?source=design-lab&rev=bridge-001", "_blank", "noopener");
+          });
+        }
 
         byId("clearScenarioBtn").addEventListener("click", function () {
           sessionStorage.removeItem("scopedlabs:prototype:lens-design-lab:selected-scenario");

@@ -616,7 +616,7 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-009-restore-after-fov-detail.</div>
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-010-design-lab-bridge.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
@@ -678,79 +678,20 @@
 
   <script>
 (function () {
-  var payload = {
-    reportVersion: "diagnostic-report-v2.009",
-    generatedAt: new Date().toISOString(),
-    tool: "Lens Selection Helper",
-    category: "Physical Security",
-    status: "WATCH",
-    selectedScenario: "Suggested Split",
-    executiveSummary: "The original single-camera design does not provide enough detail density for the selected recognition-level objective. The corrected scenario uses split coverage and a standard planning lens size to reduce per-camera scene width and improve detail viability.",
-    originalAssumptions: {
-      distanceToTarget: "56 ft / 17.1 m",
-      requiredSceneWidth: "45 ft / 13.7 m",
-      selectedLens: "2.8 mm",
-      cameraFormat: "1/2.8 in common",
-      horizontalPixels: "1920 px",
-      detailRequirement: "Recognition-level detail",
-      coverageStrategy: "Single camera"
-    },
-    selectedScenarioData: {
-      selectedLens: "25 mm planning size",
-      calculatedLensTarget: "24.6 mm",
-      cameraCount: "4 cameras",
-      recommendedOverlap: "15%",
-      overlapWidth: "1.9 ft",
-      centerSpacing: "10.8 ft",
-      cameraPositions: "Cam 1 -16.2 ft | Cam 2 -5.4 ft | Cam 3 +5.4 ft | Cam 4 +16.2 ft"
-    },
-    diagnostics: {
-      coverageStatus: "HEALTHY",
-      detailStatus: "WATCH",
-      overallStatus: "WATCH",
-      mainBlocker: "Detail viability",
-      planningPressure: "52 / 100",
-      availablePpf: "151.2 PPF",
-      requiredPpf: "150 PPF"
-    },
-    designTargets: {
-      maxWidthPerCamera: "12.8 ft",
-      suggestedCameraCount: "4 cameras",
-      lensForRequiredWidth: "25 mm planning size",
-      oneCameraPixelsNeeded: "6,750 px",
-      mainBlocker: "Detail viability"
-    },
-    carryForward: {
-      nextStep: "Face Recognition Range",
-      selectedLensMm: "25 mm",
-      calculatedLensMm: "24.6 mm",
-      cameraCount: "4 cameras",
-      requiredWidthPerCameraFt: "12.7 ft",
-      availablePpf: "151.2 PPF",
-      requiredPpf: "150 PPF",
-      status: "WATCH"
-    },
-    possiblePlanningActions: [
-      "Limit each camera view to approximately the maximum width-per-camera target for the selected detail requirement.",
-      "Use split coverage when one camera is being asked to cover too much scene width for the selected detail objective.",
-      "Verify the selected planning lens size against the actual manufacturer field-of-view chart.",
-      "Recalculate downstream storage, bandwidth, and power impact if camera count changes."
-    ],
-    followUpChecks: [
-      "Confirm the required scene width represents the actual operational objective.",
-      "Validate the selected lens and camera format against manufacturer data.",
-      "Confirm mounting position, target distance, and camera aim can support the proposed split layout.",
-      "Continue to the next Physical Security sanity check before treating the design as final."
-    ],
-    limitations: [
-      "This report does not certify recognition, identification, or compliance performance.",
-      "Pixel density does not account for lighting, compression, motion blur, angle, or image quality.",
-      "Manufacturer field-of-view data and site validation are still required.",
-      "The report is a planning aid and should not replace project-specific engineering or compliance review."
-    ]
-  };
-
+  var storageKey = "scopedlabs:prototype:lens-design-lab:selected-scenario";
   var showPayload = false;
+
+  function ftToM(ft) {
+    return Number(ft || 0) * 0.3048;
+  }
+
+  function one(n) {
+    return Number(n || 0).toFixed(1);
+  }
+
+  function zero(n) {
+    return Number(n || 0).toFixed(0);
+  }
 
   function esc(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
@@ -812,6 +753,203 @@
     };
   }
 
+  function samplePayload() {
+    return {
+      dataSource: "Sample report data",
+      reportVersion: "diagnostic-report-v2.bridge-sample",
+      generatedAt: new Date().toISOString(),
+      tool: "Lens Selection Helper",
+      category: "Physical Security",
+      status: "WATCH",
+      selectedScenario: "Suggested Split",
+      executiveSummary: "The original single-camera design does not provide enough detail density for the selected recognition-level objective. The corrected scenario uses split coverage and a standard planning lens size to reduce per-camera scene width and improve detail viability.",
+      originalAssumptions: {
+        distanceToTarget: "56 ft / 17.1 m",
+        requiredSceneWidth: "45 ft / 13.7 m",
+        selectedLens: "2.8 mm",
+        cameraFormat: "1/2.8 in common",
+        horizontalPixels: "1920 px",
+        detailRequirement: "Recognition-level detail",
+        coverageStrategy: "Single camera"
+      },
+      selectedScenarioData: {
+        selectedLens: "25 mm planning size",
+        calculatedLensTarget: "24.6 mm",
+        cameraCount: "4 cameras",
+        recommendedOverlap: "15%",
+        overlapWidth: "1.9 ft",
+        centerSpacing: "10.8 ft",
+        cameraPositions: "Cam 1 -16.2 ft | Cam 2 -5.4 ft | Cam 3 +5.4 ft | Cam 4 +16.2 ft"
+      },
+      diagnostics: {
+        coverageStatus: "HEALTHY",
+        detailStatus: "WATCH",
+        overallStatus: "WATCH",
+        mainBlocker: "Detail viability",
+        planningPressure: "52 / 100",
+        availablePpf: "151.2 PPF",
+        requiredPpf: "150 PPF"
+      },
+      designTargets: {
+        maxWidthPerCamera: "12.8 ft",
+        suggestedCameraCount: "4 cameras",
+        lensForRequiredWidth: "25 mm planning size",
+        oneCameraPixelsNeeded: "6,750 px",
+        mainBlocker: "Detail viability"
+      },
+      carryForward: {
+        nextStep: "Face Recognition Range",
+        selectedLensMm: "25 mm",
+        calculatedLensMm: "24.6 mm",
+        cameraCount: "4 cameras",
+        requiredWidthPerCameraFt: "12.7 ft",
+        availablePpf: "151.2 PPF",
+        requiredPpf: "150 PPF",
+        status: "WATCH"
+      },
+      possiblePlanningActions: [
+        "Limit each camera view to approximately the maximum width-per-camera target for the selected detail requirement.",
+        "Use split coverage when one camera is being asked to cover too much scene width for the selected detail objective.",
+        "Verify the selected planning lens size against the actual manufacturer field-of-view chart.",
+        "Recalculate downstream storage, bandwidth, and power impact if camera count changes."
+      ],
+      followUpChecks: [
+        "Confirm the required scene width represents the actual operational objective.",
+        "Validate the selected lens and camera format against manufacturer data.",
+        "Confirm mounting position, target distance, and camera aim can support the proposed split layout.",
+        "Continue to the next Physical Security sanity check before treating the design as final."
+      ],
+      limitations: [
+        "This report does not certify recognition, identification, or compliance performance.",
+        "Pixel density does not account for lighting, compression, motion blur, angle, or image quality.",
+        "Manufacturer field-of-view data and site validation are still required.",
+        "The report is a planning aid and should not replace project-specific engineering or compliance review."
+      ],
+      rawSourcePayload: null
+    };
+  }
+
+  function normalizeDesignLabPayload(raw) {
+    var a = raw.assumptions || {};
+    var d = raw.designTargets || {};
+    var cameraCount = Number(a.coverageCount || d.suggestedCameras || 1);
+    var status = String(raw.status || "WATCH").toUpperCase();
+    var coverageStatus = String(raw.coverageStatus || "WATCH").toUpperCase();
+    var detailStatus = String(raw.detailStatus || "WATCH").toUpperCase();
+    var pressure = Number(raw.pressure || 52);
+
+    var distanceFt = Number(a.distanceFt || 0);
+    var sceneWidthFt = Number(a.requiredSceneWidthFt || a.sceneWidthFt || 0);
+    var selectedLens = Number(raw.selectedLensMm || 0);
+    var calculatedLens = Number(raw.calculatedLensMm || d.requiredLensForTargetMm || 0);
+    var availablePpf = Number(a.availablePpf || 0);
+    var requiredPpf = Number(a.requiredPpf || 0);
+
+    var cameraPositions = Array.isArray(d.cameraPositionsFt)
+      ? d.cameraPositionsFt.map(function (pos, index) {
+          var signed = Number(pos) >= 0 ? "+" + one(pos) : one(pos);
+          return "Cam " + (index + 1) + " " + signed + " ft";
+        }).join(" | ")
+      : "Not provided";
+
+    var detailText = availablePpf && requiredPpf
+      ? "The selected scenario provides about " + one(availablePpf) + " PPF against a " + zero(requiredPpf) + " PPF target."
+      : "The selected scenario should be validated against the required pixel-density/detail target.";
+
+    return {
+      dataSource: "Saved Lens Design Lab scenario",
+      reportVersion: "diagnostic-report-v2.bridge-live-prototype",
+      generatedAt: raw.savedAt || new Date().toISOString(),
+      tool: "Lens Selection Helper",
+      category: "Physical Security",
+      status: status,
+      selectedScenario: raw.selectedScenario || "Custom Design",
+      executiveSummary: "This report was generated from the selected Lens Design Lab scenario. The report summarizes the selected lens, coverage strategy, detail viability, design targets, and carry-forward values for the next Physical Security sanity check. " + detailText,
+      originalAssumptions: {
+        distanceToTarget: distanceFt ? one(distanceFt) + " ft / " + one(ftToM(distanceFt)) + " m" : "Not provided",
+        requiredSceneWidth: sceneWidthFt ? one(sceneWidthFt) + " ft / " + one(ftToM(sceneWidthFt)) + " m" : "Not provided",
+        selectedLens: selectedLens ? one(selectedLens) + " mm" : "Not provided",
+        cameraFormat: a.sensorWidthMm ? one(a.sensorWidthMm) + " mm sensor width equivalent" : "Camera-format preset",
+        horizontalPixels: a.horizontalPixels ? zero(a.horizontalPixels) + " px" : "Not provided",
+        detailRequirement: requiredPpf ? zero(requiredPpf) + " PPF target" : "Not provided",
+        coverageStrategy: cameraCount + " camera" + (cameraCount === 1 ? "" : "s")
+      },
+      selectedScenarioData: {
+        selectedLens: selectedLens ? one(selectedLens) + " mm planning size" : "Not provided",
+        calculatedLensTarget: calculatedLens ? one(calculatedLens) + " mm" : "Not provided",
+        cameraCount: cameraCount + " camera" + (cameraCount === 1 ? "" : "s"),
+        recommendedOverlap: d.recommendedOverlapPercent != null ? one(d.recommendedOverlapPercent) + "%" : "Not provided",
+        overlapWidth: d.overlapWidthFt != null ? one(d.overlapWidthFt) + " ft" : "Not provided",
+        centerSpacing: d.centerSpacingFt != null ? one(d.centerSpacingFt) + " ft" : "Not provided",
+        cameraPositions: cameraPositions
+      },
+      diagnostics: {
+        coverageStatus: coverageStatus,
+        detailStatus: detailStatus,
+        overallStatus: status,
+        mainBlocker: d.mainBlocker || "Review required",
+        planningPressure: pressure + " / 100",
+        availablePpf: availablePpf ? one(availablePpf) + " PPF" : "Not provided",
+        requiredPpf: requiredPpf ? zero(requiredPpf) + " PPF" : "Not provided"
+      },
+      designTargets: {
+        maxWidthPerCamera: d.maxWidthPerCameraFt != null ? one(d.maxWidthPerCameraFt) + " ft" : "Not provided",
+        suggestedCameraCount: d.suggestedCameras ? d.suggestedCameras + " camera" + (Number(d.suggestedCameras) === 1 ? "" : "s") : "Not provided",
+        lensForRequiredWidth: d.requiredLensForTargetMm != null ? one(d.requiredLensForTargetMm) + " mm calculated target" : "Not provided",
+        oneCameraPixelsNeeded: d.pixelsNeededOneCamera ? Number(d.pixelsNeededOneCamera).toLocaleString() + " px" : "Not provided",
+        mainBlocker: d.mainBlocker || "Review required"
+      },
+      carryForward: {
+        nextStep: "Face Recognition Range",
+        selectedLensMm: selectedLens ? one(selectedLens) + " mm" : "Not provided",
+        calculatedLensMm: calculatedLens ? one(calculatedLens) + " mm" : "Not provided",
+        cameraCount: cameraCount + " camera" + (cameraCount === 1 ? "" : "s"),
+        requiredWidthPerCameraFt: a.framedWidthFt ? one(a.framedWidthFt) + " ft framed width" : "Not provided",
+        availablePpf: availablePpf ? one(availablePpf) + " PPF" : "Not provided",
+        requiredPpf: requiredPpf ? zero(requiredPpf) + " PPF" : "Not provided",
+        status: status
+      },
+      possiblePlanningActions: [
+        "Verify the selected planning lens size against manufacturer field-of-view data.",
+        "Use split coverage when one camera is being asked to cover too much scene width for the selected detail objective.",
+        "Confirm that the selected camera count, overlap, and center positions can be installed at the site.",
+        "Recalculate downstream storage, bandwidth, and power impact if camera count or resolution changes."
+      ],
+      followUpChecks: [
+        "Confirm the required scene width represents the actual operational objective.",
+        "Validate target distance, mounting location, and camera aim before relying on the layout.",
+        "Continue to the next Physical Security sanity check before treating the design as final.",
+        "Document any changes to lens size, camera count, resolution, or detail requirement."
+      ],
+      limitations: [
+        "This report does not certify recognition, identification, or compliance performance.",
+        "Pixel density does not account for lighting, compression, motion blur, angle, or image quality.",
+        "Manufacturer field-of-view data and site validation are still required.",
+        "The report is a planning aid and should not replace project-specific engineering or compliance review."
+      ],
+      rawSourcePayload: raw
+    };
+  }
+
+  function loadPayload() {
+    var saved = sessionStorage.getItem(storageKey);
+
+    if (!saved) {
+      return samplePayload();
+    }
+
+    try {
+      var raw = JSON.parse(saved);
+      if (raw && raw.schema && String(raw.schema).indexOf("lens-design-scenario") !== -1) {
+        return normalizeDesignLabPayload(raw);
+      }
+    } catch (err) {
+      console.warn("Could not parse Lens Design Lab payload.", err);
+    }
+
+    return samplePayload();
+  }
+
   function renderMiniFov() {
     return '' +
       '<div class="mini-fov">' +
@@ -836,12 +974,16 @@
       '</div>';
   }
 
-  function renderScenarioComparison() {
+  function renderScenarioComparison(payload) {
+    var selectedPressure = parsePressure(payload.diagnostics.planningPressure) || 52;
+    var originalPressure = Math.max(selectedPressure + 20, 82);
+    if (originalPressure > 100) originalPressure = 100;
+
     var points = [
-      { label: "Original", pressure: 82 },
-      { label: "Split", pressure: 52 },
-      { label: "High Res", pressure: 38 },
-      { label: "Required Lens", pressure: 52 }
+      { label: "Original", pressure: originalPressure },
+      { label: "Selected", pressure: selectedPressure },
+      { label: "High Res", pressure: Math.max(25, selectedPressure - 14) },
+      { label: "Lens Check", pressure: selectedPressure }
     ];
 
     var selectedIndex = 1;
@@ -852,10 +994,9 @@
     var h = 300;
     var left = 62;
     var right = 700;
-    var top = 38;
     var bottom = 222;
     var chartW = right - left;
-    var chartH = bottom - top;
+    var chartH = bottom - 38;
 
     function x(i) {
       return left + chartW * (i / (points.length - 1));
@@ -929,17 +1070,18 @@
             '<text x="' + (left + 120) + '" y="' + (h - 12) + '" fill="#66736c" font-size="10" font-weight="800">Watch: 26-60</text>' +
             '<text x="' + (left + 240) + '" y="' + (h - 12) + '" fill="#66736c" font-size="10" font-weight="800">Risk: 61-100</text>' +
           '</svg>' +
-          '<div class="scenario-chart-note">The selected split scenario reduces planning pressure from the original design, but still remains in WATCH because follow-up validation is required.</div>' +
+          '<div class="scenario-chart-note">The selected scenario is rendered from the saved design-lab payload when available. Otherwise, this report falls back to sample data.</div>' +
           '<div class="scenario-delta-banner">' +
-            '<div class="scenario-delta-card"><span>Original pressure</span><strong>82 / 100 Risk</strong></div>' +
-            '<div class="scenario-delta-card"><span>Selected scenario</span><strong>52 / 100 Watch</strong></div>' +
-            '<div class="scenario-delta-card"><span>Improvement</span><strong>30-point reduction</strong></div>' +
+            '<div class="scenario-delta-card"><span>Original pressure</span><strong>' + originalPressure + ' / 100</strong></div>' +
+            '<div class="scenario-delta-card"><span>Selected scenario</span><strong>' + selectedPressure + ' / 100</strong></div>' +
+            '<div class="scenario-delta-card"><span>Improvement</span><strong>' + improvement + '-point reduction</strong></div>' +
           '</div>' +
         '</div>' +
       '</section>';
   }
 
   function render() {
+    var payload = loadPayload();
     var body = document.getElementById("reportBody");
     var reportMeta = readReportMeta();
     var reportPayload = Object.assign({}, payload, { reportMeta: reportMeta });
@@ -952,7 +1094,7 @@
     parts.push(
       '<div class="summary-grid">' +
         '<div class="summary-card"><div class="summary-label">Overall Status</div><span class="summary-value ' + statusClass(payload.status) + '">' + esc(payload.status) + '</span><div class="summary-note">Combined planning condition.</div></div>' +
-        '<div class="summary-card"><div class="summary-label">Selected Scenario</div><span class="summary-value">' + esc(payload.selectedScenario) + '</span><div class="summary-note">Scenario selected for carry-forward.</div></div>' +
+        '<div class="summary-card"><div class="summary-label">Data Source</div><span class="summary-value">' + esc(payload.dataSource) + '</span><div class="summary-note">Report payload source.</div></div>' +
         '<div class="summary-card"><div class="summary-label">Main Blocker</div><span class="summary-value ' + statusClass(payload.diagnostics.detailStatus) + '">' + esc(payload.diagnostics.mainBlocker) + '</span><div class="summary-note">Primary reason this needs review.</div></div>' +
         '<div class="summary-card"><div class="summary-label">Planning Pressure</div><span class="summary-value ' + statusClass(payload.diagnostics.overallStatus) + '">' + esc(payload.diagnostics.planningPressure) + '</span><div class="summary-note">Pressure score from the diagnostic model.</div></div>' +
       '</div>'
@@ -989,7 +1131,7 @@
       '</section>'
     );
 
-    parts.push(renderScenarioComparison());
+    parts.push(renderScenarioComparison(payload));
 
     parts.push(
       '<section class="section two-col">' +
@@ -1003,9 +1145,9 @@
         '<div><h2>Report Notes</h2><div class="risk-box">' + esc(reportMeta.customNotes) + '</div></div>' +
       '</section>' +
       '<section class="section"><h2>Executive Summary</h2><p>' + esc(payload.executiveSummary) + '</p></section>' +
-      '<section class="section two-col"><div><h2>Original Assumptions</h2><table class="info-table">' + tableRows(payload.originalAssumptions) + '</table></div><div><h2>Selected Scenario</h2><table class="info-table">' + tableRows(payload.selectedScenarioData) + '</table></div></section>' +
+      '<section class="section two-col"><div><h2>Original / Design-Lab Assumptions</h2><table class="info-table">' + tableRows(payload.originalAssumptions) + '</table></div><div><h2>Selected Scenario</h2><table class="info-table">' + tableRows(payload.selectedScenarioData) + '</table></div></section>' +
       '<section class="section two-col"><div><h2>Diagnostic Status</h2><table class="info-table">' + tableRows(payload.diagnostics) + '</table></div><div><h2>Design Targets</h2><table class="info-table">' + tableRows(payload.designTargets) + '</table></div></section>' +
-      '<section class="section"><h2>Interpretation</h2><div class="risk-box"><strong>Detail viability is the controlling issue.</strong> The lens/framing plan must be checked separately from the recognition/detail requirement. A design can frame the scene and still fail the required pixels-per-foot target.</div></section>' +
+      '<section class="section"><h2>Interpretation</h2><div class="risk-box"><strong>Detail and coverage should be checked separately.</strong> A design can frame the scene and still fail the required pixels-per-foot target. A design can also meet detail but still require manufacturer FOV validation before it is treated as final.</div></section>' +
       '<section class="section"><h2>Possible Planning Actions to Evaluate</h2>' + list(payload.possiblePlanningActions) + '</section>' +
       '<section class="section"><h2>Follow-Up Checks</h2>' + list(payload.followUpChecks) + '</section>' +
       '<section class="section"><h2>Carry-Forward Values</h2><table class="info-table">' + tableRows(payload.carryForward) + '</table></section>' +
