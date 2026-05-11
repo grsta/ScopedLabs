@@ -225,6 +225,40 @@
     .legacy-diagnostic-hidden {
       display: none !important;
     }
+  
+    .lens-design-assistant.full-output {
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .lens-design-assistant.full-output .lens-fov-stage {
+      height: 340px;
+    }
+
+    .lens-design-assistant.full-output .lens-design-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .lens-design-assistant.full-output .lens-design-split {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .lens-design-assistant.full-output .lens-target-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 920px) {
+      .lens-design-assistant.full-output .lens-design-split,
+      .lens-design-assistant.full-output .lens-target-strip {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -532,7 +566,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/diagnostic.js?v=diagnostic-002"></script>
 
-  <script src="./script.js?v=physical-security-design-assistant-003"></script>
+  <script src="./script.js?v=physical-security-design-assistant-004"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

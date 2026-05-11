@@ -884,20 +884,25 @@
   }
 
   function ensureDesignAssistantEl() {
-    if (els.designAssistant) return els.designAssistant;
+    let section = els.designAssistant || document.getElementById("lensDesignAssistant");
 
-    const section = document.createElement("section");
-    section.id = "lensDesignAssistant";
-    section.className = "lens-design-assistant";
-    section.hidden = true;
+    if (!section) {
+      section = document.createElement("section");
+      section.id = "lensDesignAssistant";
+      section.className = "lens-design-assistant full-output";
+      section.hidden = true;
+    }
 
-    const continueRow = els.continueWrap || document.getElementById("next-step-row");
-    if (continueRow && continueRow.parentNode) {
-      continueRow.parentNode.insertBefore(section, continueRow);
-    } else if (els.results && els.results.closest(".card")) {
-      els.results.closest(".card").insertAdjacentElement("afterend", section);
+    section.classList.add("full-output");
+
+    const resultsCard = els.results?.closest(".card");
+    if (resultsCard && resultsCard.parentNode) {
+      resultsCard.parentNode.insertBefore(section, resultsCard.nextSibling);
     } else {
-      document.querySelector("main")?.appendChild(section);
+      const continueRow = els.continueWrap || document.getElementById("next-step-row");
+      if (continueRow && continueRow.parentNode) {
+        continueRow.parentNode.insertBefore(section, continueRow);
+      }
     }
 
     els.designAssistant = section;
@@ -932,27 +937,55 @@
       ? data.cameraFormatLabel + " (" + fmtMm(data.sw, 2) + ")"
       : fmtMm(data.sw, 2);
 
+    const selectedIsWide = Number(data.fitRatio || 1) < 0.8;
+    const selectedIsTight = Number(data.fitRatio || 1) > 1.75;
+
     const strokeColor = status === "HEALTHY" ? "#7dff98" : status === "WATCH" ? "#ffd34f" : "#ff8f88";
     const coneFill = status === "HEALTHY" ? "rgba(125,255,152,.20)" : status === "WATCH" ? "rgba(255,211,79,.18)" : "rgba(255,96,88,.18)";
 
-    const noPpfNote = data.ppf > 0
+    const headline = selectedIsWide
+      ? "Selected lens appears too wide for the calculated target"
+      : selectedIsTight
+        ? "Selected lens is tighter than the calculated target"
+        : "Selected lens is close to the calculated target";
+
+    const recommendation = selectedIsWide
+      ? "Evaluate a tighter lens, shorter distance, smaller scene width, or split coverage."
+      : selectedIsTight
+        ? "Confirm the narrower view still covers the intended scene before treating the result as final."
+        : "Confirm manufacturer field-of-view data and continue downstream validation.";
+
+    const ppfNote = data.ppf > 0
       ? "Upstream detail context is available. Continue to downstream checks if recognition or identification matters."
       : "No prior PPF/detail validation is available. Treat this as a lens-fit check, not a final recognition result.";
 
     const fovSvg =
-      '<svg viewBox="0 0 760 230" role="img" aria-label="Lens design assistant FOV summary">' +
-        '<rect x="0" y="0" width="760" height="230" fill="rgba(2,6,12,.18)" />' +
-        '<text x="22" y="28" fill="rgba(125,255,152,.92)" font-size="11" font-weight="950" letter-spacing="1.5">SELECTED LENS CHECK</text>' +
-        '<text x="22" y="50" fill="rgba(248,250,252,.82)" font-size="13" font-weight="900">' + fmtMm(selectedLens) + ' selected | ' + fmtMm(targetLens) + ' calculated target | ' + fmtFt(data.dist, 0) + ' distance</text>' +
-        '<text x="22" y="70" fill="rgba(203,213,225,.66)" font-size="11">Camera format: ' + formatLabel + ' | scene width: ' + fmtFt(data.tw) + ' | detail context: ' + ppfLabel + '</text>' +
-        '<path d="M 96 128 L 622 72 L 622 184 Z" fill="' + coneFill + '" stroke="rgba(226,232,240,.38)" stroke-width="1.5" />' +
-        '<line x1="96" y1="128" x2="622" y2="128" stroke="rgba(226,232,240,.24)" stroke-dasharray="6 7" />' +
-        '<circle cx="96" cy="128" r="12" fill="rgba(125,255,152,.16)" stroke="rgba(125,255,152,.82)" stroke-width="2" />' +
-        '<text x="66" y="105" fill="rgba(248,250,252,.80)" font-size="11" font-weight="900">Camera</text>' +
-        '<line x1="622" y1="72" x2="622" y2="184" stroke="' + strokeColor + '" stroke-width="4" />' +
-        '<text x="474" y="64" fill="' + strokeColor + '" font-size="11" font-weight="950">Required scene width</text>' +
-        '<line x1="96" y1="205" x2="622" y2="205" stroke="rgba(226,232,240,.34)" stroke-width="1" />' +
-        '<text x="330" y="222" fill="rgba(226,232,240,.68)" font-size="10" font-weight="850">Distance to target: ' + fmtFt(data.dist, 0) + '</text>' +
+      '<svg viewBox="0 0 860 340" role="img" aria-label="Lens design assistant FOV summary">' +
+        '<rect x="0" y="0" width="860" height="340" fill="rgba(2,6,12,.16)" />' +
+        '<text x="30" y="34" fill="rgba(125,255,152,.95)" font-size="13" font-weight="950" letter-spacing="1.5">LIVE LENS DESIGN CHECK</text>' +
+        '<text x="30" y="62" fill="rgba(248,250,252,.86)" font-size="18" font-weight="950">' + fmtMm(selectedLens) + ' selected lens vs ' + fmtMm(targetLens) + ' calculated target</text>' +
+        '<text x="30" y="88" fill="rgba(203,213,225,.72)" font-size="13">Distance: ' + fmtFt(data.dist, 0) + ' | Scene width: ' + fmtFt(data.tw) + ' | Camera format: ' + formatLabel + ' | Detail context: ' + ppfLabel + '</text>' +
+
+        '<rect x="560" y="118" width="160" height="132" fill="rgba(255,96,88,.07)" stroke="rgba(255,96,88,.22)" />' +
+        '<text x="574" y="139" fill="' + strokeColor + '" font-size="12" font-weight="950">Required scene width</text>' +
+
+        '<path d="M 110 190 L 704 120 L 704 258 Z" fill="' + coneFill + '" stroke="rgba(226,232,240,.40)" stroke-width="2" />' +
+        '<line x1="110" y1="190" x2="704" y2="190" stroke="rgba(226,232,240,.25)" stroke-dasharray="7 8" />' +
+        '<circle cx="110" cy="190" r="14" fill="rgba(125,255,152,.16)" stroke="rgba(125,255,152,.90)" stroke-width="2.5" />' +
+        '<text x="76" y="162" fill="rgba(248,250,252,.82)" font-size="13" font-weight="950">Camera</text>' +
+
+        '<line x1="704" y1="120" x2="704" y2="258" stroke="' + strokeColor + '" stroke-width="5" />' +
+        '<line x1="110" y1="292" x2="704" y2="292" stroke="rgba(226,232,240,.36)" />' +
+        '<line x1="110" y1="286" x2="110" y2="298" stroke="rgba(226,232,240,.40)" />' +
+        '<line x1="258" y1="286" x2="258" y2="298" stroke="rgba(226,232,240,.24)" />' +
+        '<line x1="407" y1="286" x2="407" y2="298" stroke="rgba(226,232,240,.24)" />' +
+        '<line x1="555" y1="286" x2="555" y2="298" stroke="rgba(226,232,240,.24)" />' +
+        '<line x1="704" y1="286" x2="704" y2="298" stroke="rgba(226,232,240,.40)" />' +
+        '<text x="110" y="316" text-anchor="middle" fill="rgba(226,232,240,.66)" font-size="11">0 ft</text>' +
+        '<text x="258" y="316" text-anchor="middle" fill="rgba(226,232,240,.66)" font-size="11">25%</text>' +
+        '<text x="407" y="316" text-anchor="middle" fill="rgba(226,232,240,.66)" font-size="11">50%</text>' +
+        '<text x="555" y="316" text-anchor="middle" fill="rgba(226,232,240,.66)" font-size="11">75%</text>' +
+        '<text x="704" y="316" text-anchor="middle" fill="rgba(226,232,240,.80)" font-size="11" font-weight="900">' + fmtFt(data.dist, 0) + '</text>' +
       '</svg>';
 
     assistant.hidden = false;
@@ -960,29 +993,32 @@
       '<div class="lens-design-head">' +
         '<div>' +
           '<div class="lens-design-kicker">Design Assistant</div>' +
-          '<h3 class="lens-design-title">Selected lens versus calculated target</h3>' +
+          '<h3 class="lens-design-title">' + headline + '</h3>' +
           '<p class="lens-design-copy">' + (data.dominantConstraint || "Review the selected lens against the calculated target and manufacturer FOV data.") + '</p>' +
         '</div>' +
         '<div class="lens-design-status ' + statusClass + '">' + status + '</div>' +
       '</div>' +
-      '<div class="lens-design-layout">' +
+
+      '<div class="lens-target-strip">' +
+        '<div class="lens-mini-card"><div class="lens-mini-label">Selected lens</div><span class="lens-mini-value">' + fmtMm(selectedLens) + '</span></div>' +
+        '<div class="lens-mini-card"><div class="lens-mini-label">Calculated target</div><span class="lens-mini-value">' + fmtMm(targetLens) + '</span></div>' +
+        '<div class="lens-mini-card"><div class="lens-mini-label">Selection gap</div><span class="lens-mini-value">' + fmt(gap, 1) + '%</span></div>' +
+        '<div class="lens-mini-card"><div class="lens-mini-label">Detail context</div><span class="lens-mini-value">' + ppfLabel + '</span></div>' +
+      '</div>' +
+
+      '<div class="lens-design-split">' +
         '<div class="lens-fov-card">' +
           '<div class="lens-fov-stage">' + fovSvg + '</div>' +
-          '<div class="lens-mini-grid">' +
-            '<div class="lens-mini-card"><div class="lens-mini-label">Selected lens</div><span class="lens-mini-value">' + fmtMm(selectedLens) + '</span></div>' +
-            '<div class="lens-mini-card"><div class="lens-mini-label">Calculated target</div><span class="lens-mini-value">' + fmtMm(targetLens) + '</span></div>' +
-            '<div class="lens-mini-card"><div class="lens-mini-label">Selection gap</div><span class="lens-mini-value">' + fmt(gap, 1) + '%</span></div>' +
-            '<div class="lens-mini-card"><div class="lens-mini-label">Detail context</div><span class="lens-mini-value">' + ppfLabel + '</span></div>' +
-          '</div>' +
         '</div>' +
         '<div class="lens-advice-card">' +
           '<div class="lens-design-kicker">Recommended review path</div>' +
           '<h3 class="lens-design-title">What to verify next</h3>' +
-          '<p class="lens-design-copy">' + (data.guidance || "Validate the selected lens against manufacturer FOV data before final selection.") + '</p>' +
+          '<p class="lens-design-copy">' + recommendation + '</p>' +
           '<ul class="lens-action-list">' +
             '<li>Compare the selected lens against the calculated target before treating the result as final.</li>' +
-            '<li>' + noPpfNote + '</li>' +
-            '<li>Use Report V2 to document the selected lens, calculated target, assumptions, and remaining validation checks.</li>' +
+            '<li>' + ppfNote + '</li>' +
+            '<li>Verify the lens against the manufacturer field-of-view chart for the actual camera model.</li>' +
+            '<li>Use Report V2 to document selected lens, calculated target, assumptions, and remaining validation checks.</li>' +
           '</ul>' +
         '</div>' +
       '</div>';
@@ -1021,6 +1057,11 @@
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance
     });
+
+    if (els.analysis) {
+      els.analysis.innerHTML = "";
+      els.analysis.hidden = true;
+    }
 
     prepareDiagnosticData(data);
     renderLensDesignAssistant(data);
