@@ -37,6 +37,7 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     diagnostic: $("diagnostic-panel"),
+    designAssistant: $("lensDesignAssistant"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
@@ -471,6 +472,7 @@
 
     const reportV2Btn = document.getElementById("openReportV2");
     if (reportV2Btn) reportV2Btn.disabled = true;
+    clearDesignAssistant();
   }
 
   function getDiagnosticDriver(data) {
@@ -864,6 +866,121 @@
         }
       ]
     });
+  }
+
+  function designStatusClass(status) {
+    const s = String(status || "").toLowerCase();
+    if (s === "healthy") return "healthy";
+    if (s === "watch") return "watch";
+    return "risk";
+  }
+
+  function lensDesignActions(data) {
+    const actions = [];
+    const fit = Number(data.fitRatio || 1);
+    const hasPpf = Number(data.ppf || 0) > 0;
+
+    if (fit < 0.8) {
+      actions.push("Selected lens appears wider than the calculated target. Evaluate a tighter lens, shorter distance, reduced scene width, or split coverage.");
+    } else if (fit > 1.75) {
+      actions.push("Selected lens is much tighter than the calculated target. Confirm the narrower view still covers the intended scene.");
+    } else {
+      actions.push("Selected lens and calculated target are reasonably aligned. Manufacturer FOV validation is still required.");
+    }
+
+    if (!hasPpf) {
+      actions.push("No prior PPF/detail validation is available. Treat this as a lens-fit check, not a final recognition/identification result.");
+    } else if (data.ppf < 80) {
+      actions.push("Upstream detail context is weak. Recheck target width, camera distance, resolution, or split the view across more cameras.");
+    } else {
+      actions.push("Upstream detail context is present. Continue to downstream face-recognition or license-plate checks as needed.");
+    }
+
+    actions.push("Use Report V2 to document the selected lens, calculated target, assumptions, and remaining validation checks.");
+
+    return actions;
+  }
+
+  function clearDesignAssistant() {
+    if (!els.designAssistant) return;
+    els.designAssistant.hidden = true;
+    els.designAssistant.innerHTML = "";
+  }
+
+  function renderLensDesignAssistant(data) {
+    if (!els.designAssistant) return;
+
+    const status = data.status || "WATCH";
+    const statusClass = designStatusClass(status);
+    const selectedLens = data.selectedLens || data.adjustedFocal;
+    const targetLens = data.calculatedTargetFocal || data.baseFocal;
+    const gap = Number.isFinite(data.lensGapPct) ? data.lensGapPct : data.adjustmentPct;
+    const fit = Number(data.fitRatio || 1);
+    const fitPct = Number.isFinite(fit) ? fit * 100 : 100;
+    const targetWidth = data.tw;
+    const distance = data.dist;
+    const ppfLabel = data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF";
+    const formatLabel = data.cameraFormatLabel
+      ? data.cameraFormatLabel + " (" + fmtMm(data.sw, 2) + ")"
+      : fmtMm(data.sw, 2);
+
+    const coneColor = status === "HEALTHY"
+      ? "rgba(125,255,152,.22)"
+      : status === "WATCH"
+        ? "rgba(255,211,79,.20)"
+        : "rgba(255,96,88,.20)";
+
+    const strokeColor = status === "HEALTHY"
+      ? "#7dff98"
+      : status === "WATCH"
+        ? "#ffd34f"
+        : "#ff8f88";
+
+    const actions = lensDesignActions(data).map((item) => "<li>" + item + "</li>").join("");
+
+    const fovSvg =
+      '<svg viewBox="0 0 760 230" role="img" aria-label="Lens design assistant FOV summary">' +
+        '<rect x="0" y="0" width="760" height="230" fill="rgba(2,6,12,.18)" />' +
+        '<text x="22" y="28" fill="rgba(125,255,152,.92)" font-size="11" font-weight="950" letter-spacing="1.5">SELECTED LENS CHECK</text>' +
+        '<text x="22" y="50" fill="rgba(248,250,252,.82)" font-size="13" font-weight="900">' + fmtMm(selectedLens) + ' selected | ' + fmtMm(targetLens) + ' calculated target | ' + fmtFt(distance, 0) + ' distance</text>' +
+        '<text x="22" y="70" fill="rgba(203,213,225,.66)" font-size="11">Camera format: ' + formatLabel + ' | target width: ' + fmtFt(targetWidth) + ' | detail context: ' + ppfLabel + '</text>' +
+        '<path d="M 96 128 L 622 72 L 622 184 Z" fill="' + coneColor + '" stroke="rgba(226,232,240,.38)" stroke-width="1.5" />' +
+        '<line x1="96" y1="128" x2="622" y2="128" stroke="rgba(226,232,240,.24)" stroke-dasharray="6 7" />' +
+        '<circle cx="96" cy="128" r="12" fill="rgba(125,255,152,.16)" stroke="rgba(125,255,152,.82)" stroke-width="2" />' +
+        '<text x="66" y="105" fill="rgba(248,250,252,.80)" font-size="11" font-weight="900">Camera</text>' +
+        '<line x1="622" y1="72" x2="622" y2="184" stroke="' + strokeColor + '" stroke-width="4" />' +
+        '<text x="474" y="64" fill="' + strokeColor + '" font-size="11" font-weight="950">Required scene width</text>' +
+        '<line x1="96" y1="205" x2="622" y2="205" stroke="rgba(226,232,240,.34)" stroke-width="1" />' +
+        '<text x="330" y="222" fill="rgba(226,232,240,.68)" font-size="10" font-weight="850">Distance to target: ' + fmtFt(distance, 0) + '</text>' +
+      '</svg>';
+
+    els.designAssistant.hidden = false;
+    els.designAssistant.innerHTML =
+      '<div class="lens-design-head">' +
+        '<div>' +
+          '<div class="lens-design-kicker">Design Assistant</div>' +
+          '<h3 class="lens-design-title">Selected lens versus calculated target</h3>' +
+          '<p class="lens-design-copy">' + data.dominantConstraint + '</p>' +
+        '</div>' +
+        '<div class="lens-design-status ' + statusClass + '">' + status + '</div>' +
+      '</div>' +
+      '<div class="lens-design-layout">' +
+        '<div class="lens-fov-card">' +
+          '<div class="lens-fov-stage">' + fovSvg + '</div>' +
+          '<div class="lens-mini-grid">' +
+            '<div class="lens-mini-card"><div class="lens-mini-label">Selected lens</div><span class="lens-mini-value">' + fmtMm(selectedLens) + '</span></div>' +
+            '<div class="lens-mini-card"><div class="lens-mini-label">Calculated target</div><span class="lens-mini-value">' + fmtMm(targetLens) + '</span></div>' +
+            '<div class="lens-mini-card"><div class="lens-mini-label">Selection gap</div><span class="lens-mini-value">' + fmt(gap, 1) + '%</span></div>' +
+            '<div class="lens-mini-card"><div class="lens-mini-label">Detail context</div><span class="lens-mini-value">' + ppfLabel + '</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="lens-advice-card">' +
+          '<div class="lens-design-kicker">Recommended review path</div>' +
+          '<h3 class="lens-design-title">What to verify next</h3>' +
+          '<p class="lens-design-copy">' + data.guidance + '</p>' +
+          '<ul class="lens-action-list">' + actions + '</ul>' +
+        '</div>' +
+      '</div>';
   }
 
   function renderError(message) {

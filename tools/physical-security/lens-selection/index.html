@@ -54,6 +54,173 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
+  
+    .lens-design-assistant {
+      margin-top: 14px;
+      border: 1px solid rgba(125,255,158,.18);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(82,255,138,.08), transparent 36%),
+        radial-gradient(circle at 90% 9%, rgba(255,96,88,.08), transparent 32%),
+        linear-gradient(180deg, rgba(5,14,11,.96), rgba(2,7,5,.98));
+      box-shadow: 0 22px 70px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.045);
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .lens-design-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(148,163,184,.12);
+    }
+
+    .lens-design-kicker {
+      color: #7dff98;
+      font-size: .66rem;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .lens-design-title {
+      margin: 0;
+      color: #fff;
+      font-size: 1.06rem;
+      font-weight: 950;
+      line-height: 1.16;
+    }
+
+    .lens-design-copy {
+      margin: 7px 0 0;
+      color: rgba(226,232,240,.70);
+      font-size: .82rem;
+      line-height: 1.48;
+      max-width: 760px;
+    }
+
+    .lens-design-status {
+      border: 1px solid rgba(255,96,88,.34);
+      border-radius: 999px;
+      background: rgba(255,96,88,.10);
+      color: #ff8f88;
+      padding: 8px 11px;
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .lens-design-status.healthy {
+      border-color: rgba(125,255,152,.34);
+      background: rgba(125,255,152,.08);
+      color: #7dff98;
+    }
+
+    .lens-design-status.watch {
+      border-color: rgba(255,211,79,.34);
+      background: rgba(255,211,79,.08);
+      color: #ffd34f;
+    }
+
+    .lens-design-layout {
+      display: grid;
+      grid-template-columns: 1.12fr .88fr;
+      gap: 12px;
+      margin-top: 12px;
+      align-items: stretch;
+    }
+
+    .lens-fov-card,
+    .lens-advice-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 14px;
+      background: rgba(255,255,255,.025);
+      padding: 12px;
+      min-width: 0;
+    }
+
+    .lens-fov-stage {
+      height: 230px;
+      border-radius: 12px;
+      border: 1px solid rgba(148,163,184,.12);
+      background:
+        radial-gradient(circle at 12% 50%, rgba(125,255,152,.06), transparent 34%),
+        radial-gradient(circle at 88% 50%, rgba(255,96,88,.06), transparent 34%),
+        rgba(255,255,255,.018);
+      overflow: hidden;
+    }
+
+    .lens-fov-stage svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .lens-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .lens-mini-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+      padding: 9px;
+      min-width: 0;
+    }
+
+    .lens-mini-label {
+      color: rgba(203,213,225,.64);
+      font-size: .56rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .lens-mini-value {
+      display: block;
+      margin-top: 6px;
+      color: #fff;
+      font-size: .88rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .lens-action-list {
+      display: grid;
+      gap: 8px;
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .lens-action-list li {
+      border: 1px solid rgba(125,255,152,.14);
+      border-radius: 10px;
+      background: rgba(125,255,152,.035);
+      color: rgba(226,232,240,.78);
+      padding: 9px 10px;
+      font-size: .75rem;
+      line-height: 1.38;
+    }
+
+    @media (max-width: 880px) {
+      .lens-design-layout,
+      .lens-mini-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .lens-design-head {
+        display: grid;
+      }
+    }
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -242,7 +409,7 @@
         </div>
 
         <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-          <h3 class="h3" style="margin-top: 0;">Results</h3>
+          <h3 class="h3" style="margin-top: 0;">Calculation Summary</h3>
           <div id="results" class="results-grid" aria-live="polite">
             <div class="muted">Enter values and press Suggest Lens.</div>
           </div>
@@ -264,6 +431,8 @@
         <div class="btn-row" style="margin-top: 14px;">
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
         </div>
+
+        <section id="lensDesignAssistant" class="lens-design-assistant" hidden></section>
 
         <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
           <button id="continue" class="btn btn-primary" type="button">
@@ -359,7 +528,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/diagnostic.js?v=diagnostic-002"></script>
 
-  <script src="./script.js?v=physical-security-lens-model-002"></script>
+  <script src="./script.js?v=physical-security-design-assistant-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
