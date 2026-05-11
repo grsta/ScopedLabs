@@ -255,7 +255,7 @@
 
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
-      analysisEl: els.analysis,
+      analysisEl: null,
       continueWrapEl: els.continueWrap,
       continueBtnEl: els.continueBtn,
       existingChartRef: chartRef,
@@ -889,7 +889,7 @@
     if (!section) {
       section = document.createElement("section");
       section.id = "lensDesignAssistant";
-      section.className = "lens-design-assistant full-output";
+      section.className = "lens-design-assistant";
       section.hidden = true;
     }
 
@@ -932,16 +932,18 @@
     const selectedLens = data.selectedLens || data.adjustedFocal;
     const targetLens = data.calculatedTargetFocal || data.baseFocal;
     const gap = Number.isFinite(data.lensGapPct) ? data.lensGapPct : data.adjustmentPct;
+    const fit = Number(data.fitRatio || 1);
     const ppfLabel = data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF";
     const formatLabel = data.cameraFormatLabel
       ? data.cameraFormatLabel + " (" + fmtMm(data.sw, 2) + ")"
       : fmtMm(data.sw, 2);
 
-    const selectedIsWide = Number(data.fitRatio || 1) < 0.8;
-    const selectedIsTight = Number(data.fitRatio || 1) > 1.75;
+    const selectedIsWide = fit < 0.8;
+    const selectedIsTight = fit > 1.75;
 
     const strokeColor = status === "HEALTHY" ? "#7dff98" : status === "WATCH" ? "#ffd34f" : "#ff8f88";
-    const coneFill = status === "HEALTHY" ? "rgba(125,255,152,.20)" : status === "WATCH" ? "rgba(255,211,79,.18)" : "rgba(255,96,88,.18)";
+    const coneFill = status === "HEALTHY" ? "rgba(125,255,152,.22)" : status === "WATCH" ? "rgba(255,211,79,.20)" : "rgba(255,96,88,.20)";
+    const zoneFill = status === "HEALTHY" ? "rgba(125,255,152,.09)" : status === "WATCH" ? "rgba(255,211,79,.08)" : "rgba(255,96,88,.09)";
 
     const headline = selectedIsWide
       ? "Selected lens appears too wide for the calculated target"
@@ -960,32 +962,46 @@
       : "No prior PPF/detail validation is available. Treat this as a lens-fit check, not a final recognition result.";
 
     const fovSvg =
-      '<svg viewBox="0 0 860 340" role="img" aria-label="Lens design assistant FOV summary">' +
-        '<rect x="0" y="0" width="860" height="340" fill="rgba(2,6,12,.16)" />' +
-        '<text x="30" y="34" fill="rgba(125,255,152,.95)" font-size="13" font-weight="950" letter-spacing="1.5">LIVE LENS DESIGN CHECK</text>' +
-        '<text x="30" y="62" fill="rgba(248,250,252,.86)" font-size="18" font-weight="950">' + fmtMm(selectedLens) + ' selected lens vs ' + fmtMm(targetLens) + ' calculated target</text>' +
-        '<text x="30" y="88" fill="rgba(203,213,225,.72)" font-size="13">Distance: ' + fmtFt(data.dist, 0) + ' | Scene width: ' + fmtFt(data.tw) + ' | Camera format: ' + formatLabel + ' | Detail context: ' + ppfLabel + '</text>' +
+      '<svg viewBox="0 0 980 460" role="img" aria-label="Lens design assistant FOV summary">' +
+        '<defs>' +
+          '<linearGradient id="liveLensConeGradient" x1="0" x2="1" y1="0" y2="0">' +
+            '<stop offset="0%" stop-color="rgba(125,255,152,.26)" />' +
+            '<stop offset="58%" stop-color="rgba(255,211,79,.16)" />' +
+            '<stop offset="100%" stop-color="' + coneFill + '" />' +
+          '</linearGradient>' +
+        '</defs>' +
 
-        '<rect x="560" y="118" width="160" height="132" fill="rgba(255,96,88,.07)" stroke="rgba(255,96,88,.22)" />' +
-        '<text x="574" y="139" fill="' + strokeColor + '" font-size="12" font-weight="950">Required scene width</text>' +
+        '<rect x="0" y="0" width="980" height="460" fill="rgba(2,6,12,.16)" />' +
+        '<text x="34" y="42" fill="rgba(125,255,152,.95)" font-size="14" font-weight="950" letter-spacing="1.5">LIVE LENS DESIGN CHECK</text>' +
+        '<text x="34" y="76" fill="rgba(248,250,252,.90)" font-size="23" font-weight="950">' + fmtMm(selectedLens) + ' selected lens vs ' + fmtMm(targetLens) + ' calculated target</text>' +
+        '<text x="34" y="106" fill="rgba(203,213,225,.74)" font-size="14">Distance: ' + fmtFt(data.dist, 0) + ' | Scene width: ' + fmtFt(data.tw) + ' | Camera format: ' + formatLabel + ' | Detail context: ' + ppfLabel + '</text>' +
 
-        '<path d="M 110 190 L 704 120 L 704 258 Z" fill="' + coneFill + '" stroke="rgba(226,232,240,.40)" stroke-width="2" />' +
-        '<line x1="110" y1="190" x2="704" y2="190" stroke="rgba(226,232,240,.25)" stroke-dasharray="7 8" />' +
-        '<circle cx="110" cy="190" r="14" fill="rgba(125,255,152,.16)" stroke="rgba(125,255,152,.90)" stroke-width="2.5" />' +
-        '<text x="76" y="162" fill="rgba(248,250,252,.82)" font-size="13" font-weight="950">Camera</text>' +
+        '<rect x="640" y="152" width="178" height="170" fill="' + zoneFill + '" stroke="rgba(255,255,255,.10)" />' +
+        '<text x="655" y="174" fill="' + strokeColor + '" font-size="13" font-weight="950">Target plane</text>' +
 
-        '<line x1="704" y1="120" x2="704" y2="258" stroke="' + strokeColor + '" stroke-width="5" />' +
-        '<line x1="110" y1="292" x2="704" y2="292" stroke="rgba(226,232,240,.36)" />' +
-        '<line x1="110" y1="286" x2="110" y2="298" stroke="rgba(226,232,240,.40)" />' +
-        '<line x1="258" y1="286" x2="258" y2="298" stroke="rgba(226,232,240,.24)" />' +
-        '<line x1="407" y1="286" x2="407" y2="298" stroke="rgba(226,232,240,.24)" />' +
-        '<line x1="555" y1="286" x2="555" y2="298" stroke="rgba(226,232,240,.24)" />' +
-        '<line x1="704" y1="286" x2="704" y2="298" stroke="rgba(226,232,240,.40)" />' +
-        '<text x="110" y="316" text-anchor="middle" fill="rgba(226,232,240,.66)" font-size="11">0 ft</text>' +
-        '<text x="258" y="316" text-anchor="middle" fill="rgba(226,232,240,.66)" font-size="11">25%</text>' +
-        '<text x="407" y="316" text-anchor="middle" fill="rgba(226,232,240,.66)" font-size="11">50%</text>' +
-        '<text x="555" y="316" text-anchor="middle" fill="rgba(226,232,240,.66)" font-size="11">75%</text>' +
-        '<text x="704" y="316" text-anchor="middle" fill="rgba(226,232,240,.80)" font-size="11" font-weight="900">' + fmtFt(data.dist, 0) + '</text>' +
+        '<path d="M 120 252 L 790 150 L 790 330 Z" fill="url(#liveLensConeGradient)" stroke="rgba(226,232,240,.44)" stroke-width="2.25" />' +
+        '<line x1="120" y1="252" x2="790" y2="252" stroke="rgba(226,232,240,.28)" stroke-dasharray="8 9" />' +
+
+        '<circle cx="120" cy="252" r="17" fill="rgba(125,255,152,.18)" stroke="rgba(125,255,152,.95)" stroke-width="3" />' +
+        '<text x="76" y="216" fill="rgba(248,250,252,.84)" font-size="14" font-weight="950">Camera</text>' +
+
+        '<line x1="790" y1="150" x2="790" y2="330" stroke="' + strokeColor + '" stroke-width="6" />' +
+        '<text x="638" y="140" fill="' + strokeColor + '" font-size="13" font-weight="950">Required scene width</text>' +
+
+        '<line x1="120" y1="386" x2="790" y2="386" stroke="rgba(226,232,240,.38)" />' +
+        '<line x1="120" y1="378" x2="120" y2="394" stroke="rgba(226,232,240,.48)" />' +
+        '<line x1="288" y1="378" x2="288" y2="394" stroke="rgba(226,232,240,.28)" />' +
+        '<line x1="455" y1="378" x2="455" y2="394" stroke="rgba(226,232,240,.28)" />' +
+        '<line x1="623" y1="378" x2="623" y2="394" stroke="rgba(226,232,240,.28)" />' +
+        '<line x1="790" y1="378" x2="790" y2="394" stroke="rgba(226,232,240,.48)" />' +
+
+        '<text x="120" y="415" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12">0 ft</text>' +
+        '<text x="288" y="415" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12">25%</text>' +
+        '<text x="455" y="415" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12">50%</text>' +
+        '<text x="623" y="415" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12">75%</text>' +
+        '<text x="790" y="415" text-anchor="middle" fill="rgba(226,232,240,.86)" font-size="12" font-weight="950">' + fmtFt(data.dist, 0) + '</text>' +
+
+        '<text x="360" y="448" fill="rgba(226,232,240,.72)" font-size="13" font-weight="850">Distance to target and selected field-of-view planning check</text>' +
       '</svg>';
 
     assistant.hidden = false;
@@ -1006,7 +1022,7 @@
         '<div class="lens-mini-card"><div class="lens-mini-label">Detail context</div><span class="lens-mini-value">' + ppfLabel + '</span></div>' +
       '</div>' +
 
-      '<div class="lens-design-split">' +
+      '<div class="lens-design-layout">' +
         '<div class="lens-fov-card">' +
           '<div class="lens-fov-stage">' + fovSvg + '</div>' +
         '</div>' +

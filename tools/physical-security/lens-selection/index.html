@@ -287,6 +287,73 @@
       }
     }
   </style>
+  <style data-lens-design-assistant-v005>
+    #analysis-copy {
+      display: none !important;
+    }
+
+    #lensDesignAssistant.lens-design-assistant {
+      margin-top: 18px !important;
+      padding: 18px !important;
+      border-radius: 20px !important;
+      border: 1px solid rgba(125,255,158,.22) !important;
+      background:
+        radial-gradient(circle at 10% 4%, rgba(82,255,138,.10), transparent 30%),
+        radial-gradient(circle at 92% 8%, rgba(255,96,88,.10), transparent 30%),
+        linear-gradient(180deg, rgba(4,14,10,.98), rgba(1,6,4,.98)) !important;
+      box-shadow: 0 26px 80px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.055) !important;
+    }
+
+    #lensDesignAssistant .lens-design-layout,
+    #lensDesignAssistant .lens-design-split {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 14px !important;
+      margin-top: 14px !important;
+    }
+
+    #lensDesignAssistant .lens-fov-stage {
+      height: 460px !important;
+      border-radius: 16px !important;
+      background:
+        radial-gradient(circle at 10% 42%, rgba(125,255,152,.08), transparent 34%),
+        radial-gradient(circle at 92% 50%, rgba(255,96,88,.08), transparent 34%),
+        rgba(255,255,255,.022) !important;
+    }
+
+    #lensDesignAssistant .lens-target-strip,
+    #lensDesignAssistant .lens-mini-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      margin-top: 14px !important;
+    }
+
+    #lensDesignAssistant .lens-action-list {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      margin-top: 12px !important;
+    }
+
+    #lensDesignAssistant .lens-action-list li {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      #lensDesignAssistant .lens-target-strip,
+      #lensDesignAssistant .lens-mini-grid,
+      #lensDesignAssistant .lens-action-list {
+        grid-template-columns: 1fr !important;
+      }
+
+      #lensDesignAssistant .lens-fov-stage {
+        height: 330px !important;
+      }
+    }
+  </style>
 </head>
 
 <body
@@ -566,7 +633,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/diagnostic.js?v=diagnostic-002"></script>
 
-  <script src="./script.js?v=physical-security-design-assistant-004"></script>
+  <script src="./script.js?v=physical-security-design-assistant-005"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
