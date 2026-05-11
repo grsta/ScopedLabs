@@ -18,6 +18,12 @@
       .slda-status.healthy { border-color:rgba(125,255,152,.34); background:rgba(125,255,152,.08); color:#7dff98; }
       .slda-status.watch { border-color:rgba(255,211,79,.34); background:rgba(255,211,79,.08); color:#ffd34f; }
       .slda-tabs { display:flex; flex-wrap:wrap; gap:8px; }
+      .slda-custom-editor { border:1px solid rgba(148,163,184,.14); border-radius:16px; background:rgba(255,255,255,.025); padding:14px; }
+      .slda-custom-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:12px; }
+      .slda-assumption-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+      .slda-field label { display:block; color:rgba(203,213,225,.66); font-size:.58rem; font-weight:950; letter-spacing:.13em; text-transform:uppercase; margin-bottom:6px; }
+      .slda-field input, .slda-field select { width:100%; border:1px solid rgba(148,163,184,.18); border-radius:10px; background:rgba(2,6,12,.72); color:#fff; padding:9px 10px; font-weight:850; outline:none; }
+      .slda-field input:focus, .slda-field select:focus { border-color:rgba(125,255,152,.50); box-shadow:0 0 0 2px rgba(125,255,152,.10); }
       .slda-tab { border:1px solid rgba(148,163,184,.18); border-radius:999px; background:rgba(255,255,255,.035); color:rgba(226,232,240,.86); padding:8px 12px; font-weight:850; cursor:pointer; }
       .slda-tab.is-active { border-color:rgba(125,255,152,.42); color:#7dff98; background:rgba(125,255,152,.10); box-shadow:0 0 22px rgba(125,255,152,.08); }
       .slda-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -47,7 +53,7 @@
       .slda-carry { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
       .slda-carry button { border:1px solid rgba(125,255,152,.30); background:rgba(125,255,152,.10); color:#7dff98; border-radius:10px; padding:9px 12px; font-weight:900; cursor:pointer; }
       @media (max-width:920px) {
-        .slda-grid-2, .slda-mini-grid, .slda-target-grid, .slda-scenario-strip, .slda-action-grid { grid-template-columns:1fr; }
+        .slda-grid-2, .slda-mini-grid, .slda-target-grid, .slda-scenario-strip, .slda-action-grid, .slda-assumption-grid { grid-template-columns:1fr; }
         .slda-head, .slda-section-head { display:grid; }
         .slda-driver-row { grid-template-columns:1fr; }
       }
@@ -124,13 +130,26 @@
     const fitRatio = calculatedLensMm > 0 ? input.lensMm / calculatedLensMm : 1;
     const coverageRatio = framedWidthFt / Math.max(0.1, requiredWidthPerCamera);
 
+    const horizontalPixels = num(input.horizontalPixels, 0);
+    const requiredPpf = num(input.requiredPpf, 0);
+    const availablePpf = horizontalPixels > 0 && framedWidthFt > 0
+      ? horizontalPixels / framedWidthFt
+      : num(input.availablePpf, 0);
+
     const coveragePressure = coverageRatio >= 1 ? 15 : Math.min(100, Math.round((1 - coverageRatio) * 120));
-    const detailPressure = input.availablePpf > 0
-      ? input.availablePpf >= 120 ? 15 : input.availablePpf >= 80 ? 35 : input.availablePpf >= 40 ? 65 : 90
-      : 55;
+
+    const detailPressure = requiredPpf > 0 && availablePpf > 0
+      ? availablePpf >= requiredPpf ? 15
+      : availablePpf >= requiredPpf * 0.85 ? 45
+      : availablePpf >= requiredPpf * 0.55 ? 70
+      : 92
+      : availablePpf > 0
+        ? availablePpf >= 120 ? 15 : availablePpf >= 80 ? 35 : availablePpf >= 40 ? 65 : 90
+        : 55;
+
     const lensPressure = fitRatio >= 0.85 && fitRatio <= 1.45 ? 20 : fitRatio < 0.85 ? 82 : 58;
     const pressure = Math.max(coveragePressure, detailPressure, lensPressure);
-    const status = input.key === "live" ? input.sourceStatus : pressureStatus(pressure);
+    const status = input.key === "live" ? pressureStatus(pressure) : pressureStatus(pressure);
 
     let blocker = "Balanced";
     if (pressure === detailPressure) blocker = "Detail viability";
@@ -152,6 +171,9 @@
       framedWidthFt,
       calculatedLensMm,
       fitRatio,
+      horizontalPixels,
+      requiredPpf,
+      availablePpf,
       coveragePressure,
       detailPressure,
       lensPressure,
@@ -167,16 +189,143 @@
     });
   }
 
-  function scenariosFrom(base) {
-    const live = evaluate(base);
-    const splitCount = Math.min(4, Math.max(2, Math.ceil(base.sceneWidthFt / Math.max(1, live.framedWidthFt * 0.85))));
-    const splitLensTarget = (base.sensorWidthMm * base.distanceFt) / Math.max(0.1, base.sceneWidthFt / splitCount);
+  function formatLabelForSensor(sensorWidthMm) {
+    const value = String(sensorWidthMm);
+    if (value === "4.8") return "1/3 in approx";
+    if (value === "5.57") return "1/2.8 in common";
+    if (value === "6.4") return "1/2 in approx";
+    if (value === "7.68") return "1/1.8 in approx";
+    if (value === "12.8") return "1 in approx";
+    return "Custom format";
+  }
+
+  function readCustomSaved(target, base) {
+    try {
+      const saved = JSON.parse(target.getAttribute("data-slda-custom") || "{}");
+      return {
+        key: "live",
+        label: "Custom Design",
+        distanceFt: num(saved.distanceFt, base.distanceFt),
+        sceneWidthFt: num(saved.sceneWidthFt, base.sceneWidthFt),
+        sensorWidthMm: num(saved.sensorWidthMm, base.sensorWidthMm),
+        cameraFormatLabel: saved.cameraFormatLabel || formatLabelForSensor(num(saved.sensorWidthMm, base.sensorWidthMm)),
+        lensMm: num(saved.lensMm, base.lensMm),
+        calculatedLensMm: 0,
+        framedWidthFt: 0,
+        horizontalPixels: num(saved.horizontalPixels, base.horizontalPixels || 1920),
+        requiredPpf: num(saved.requiredPpf, base.requiredPpf || 150),
+        availablePpf: 0,
+        coverageCount: Math.max(1, Math.min(4, Math.round(num(saved.coverageCount, base.coverageCount || 1)))),
+        sourceStatus: "",
+        sourceGuidance: "",
+        sourceDominant: "",
+        lensClass: base.lensClass || ""
+      };
+    } catch (error) {
+      return Object.assign({}, base, {
+        key: "live",
+        label: "Custom Design",
+        calculatedLensMm: 0,
+        horizontalPixels: base.horizontalPixels || 1920,
+        requiredPpf: base.requiredPpf || 150,
+        availablePpf: 0
+      });
+    }
+  }
+
+  function readCustomFromDom(target, base) {
+    const value = name => {
+      const el = target.querySelector('[data-slda-input="' + name + '"]');
+      return el ? el.value : "";
+    };
+
+    const sensorWidthMm = num(value("sensorWidthMm"), base.sensorWidthMm);
+
+    return {
+      distanceFt: num(value("distanceFt"), base.distanceFt),
+      sceneWidthFt: num(value("sceneWidthFt"), base.sceneWidthFt),
+      lensMm: num(value("lensMm"), base.lensMm),
+      sensorWidthMm,
+      cameraFormatLabel: formatLabelForSensor(sensorWidthMm),
+      horizontalPixels: num(value("horizontalPixels"), 1920),
+      requiredPpf: num(value("requiredPpf"), 150),
+      coverageCount: Math.max(1, Math.min(4, Math.round(num(value("coverageCount"), 1))))
+    };
+  }
+
+  function optionList(values, selected, suffix) {
+    return values.map(value => {
+      const display = suffix ? value.label : value;
+      const optionValue = suffix ? value.value : value;
+      return '<option value="' + optionValue + '"' + (String(optionValue) === String(selected) ? ' selected' : '') + '>' + display + '</option>';
+    }).join("");
+  }
+
+  function renderCustomEditor(active) {
+    if (active.key !== "live") return "";
+
+    const lensValues = [2.8, 3.6, 4, 6, 8, 12, 16, 25, 35, 50];
+    const formatValues = [
+      { value: 4.8, label: "1/3 in approx" },
+      { value: 5.57, label: "1/2.8 in common" },
+      { value: 6.4, label: "1/2 in approx" },
+      { value: 7.68, label: "1/1.8 in approx" },
+      { value: 12.8, label: "1 in approx" }
+    ];
+    const resolutionValues = [
+      { value: 1280, label: "1280 px / 720p" },
+      { value: 1920, label: "1920 px / 1080p" },
+      { value: 2560, label: "2560 px / 4MP" },
+      { value: 3840, label: "3840 px / 4K" },
+      { value: 7680, label: "7680 px / 8K" }
+    ];
+    const detailValues = [
+      { value: 80, label: "Observation / general" },
+      { value: 150, label: "Recognition-level detail" },
+      { value: 250, label: "Identification-level detail" },
+      { value: 300, label: "High-detail review" }
+    ];
+    const coverageValues = [
+      { value: 1, label: "Single camera" },
+      { value: 2, label: "Split coverage / 2 cameras" },
+      { value: 3, label: "Split coverage / 3 cameras" },
+      { value: 4, label: "Split coverage / 4 cameras" }
+    ];
+
+    return '<div class="slda-custom-editor">' +
+      '<div class="slda-custom-head">' +
+        '<div>' +
+          '<div class="slda-kicker">Custom planning assumptions</div>' +
+          '<p class="slda-copy">Edit the design assumptions here to test lens size, camera format, resolution, detail target, and split coverage without leaving the assistant.</p>' +
+        '</div>' +
+        '<div class="slda-chip">Custom What-If</div>' +
+      '</div>' +
+      '<div class="slda-assumption-grid">' +
+        '<div class="slda-field"><label>Distance to target</label><input data-slda-input="distanceFt" type="number" min="1" step="1" value="' + fmt(active.distanceFt, 0) + '"></div>' +
+        '<div class="slda-field"><label>Required scene width</label><input data-slda-input="sceneWidthFt" type="number" min="1" step="1" value="' + fmt(active.sceneWidthFt, 0) + '"></div>' +
+        '<div class="slda-field"><label>Selected / available lens</label><select data-slda-input="lensMm">' + optionList(lensValues, active.lensMm) + '</select></div>' +
+        '<div class="slda-field"><label>Camera format</label><select data-slda-input="sensorWidthMm">' + optionList(formatValues, active.sensorWidthMm, true) + '</select></div>' +
+        '<div class="slda-field"><label>Horizontal pixels</label><select data-slda-input="horizontalPixels">' + optionList(resolutionValues, active.horizontalPixels || 1920, true) + '</select></div>' +
+        '<div class="slda-field"><label>Detail requirement</label><select data-slda-input="requiredPpf">' + optionList(detailValues, active.requiredPpf || 150, true) + '</select></div>' +
+        '<div class="slda-field"><label>Coverage strategy</label><select data-slda-input="coverageCount">' + optionList(coverageValues, active.coverageCount || 1, true) + '</select></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function scenariosFrom(base, customBase) {
+    const live = evaluate(Object.assign({}, customBase || base, {
+      key: "live",
+      label: "Custom Design"
+    }));
+
+    const splitCount = Math.min(4, Math.max(2, Math.ceil(live.sceneWidthFt / Math.max(1, live.framedWidthFt * 0.85))));
+    const splitLensTarget = (live.sensorWidthMm * live.distanceFt) / Math.max(0.1, live.sceneWidthFt / splitCount);
 
     return [
       live,
-      evaluate(Object.assign({}, base, { key: "split", label: "Suggested Split", coverageCount: splitCount, lensMm: nearestLens(splitLensTarget), calculatedLensMm: splitLensTarget })),
-      evaluate(Object.assign({}, base, { key: "optimized", label: "Lens for Required Width", lensMm: nearestLens(live.calculatedLensMm) })),
-      evaluate(Object.assign({}, base, { key: "tighter", label: "Tighter Lens", lensMm: nearestLens(Math.max(base.lensMm, live.calculatedLensMm)) }))
+      evaluate(Object.assign({}, live, { key: "split", label: "Suggested Split", coverageCount: splitCount, lensMm: nearestLens(splitLensTarget), calculatedLensMm: splitLensTarget })),
+      evaluate(Object.assign({}, live, { key: "optimized", label: "Lens for Required Width", lensMm: nearestLens(live.calculatedLensMm), calculatedLensMm: live.calculatedLensMm })),
+      evaluate(Object.assign({}, live, { key: "tighter", label: "Tighter Lens", lensMm: nearestLens(Math.max(live.lensMm, live.calculatedLensMm)), calculatedLensMm: live.calculatedLensMm }))
     ];
   }
 
@@ -312,6 +461,8 @@
           ${scenarios.map(s => `<button class="slda-tab ${s.key === active.key ? "is-active" : ""}" type="button" data-slda-scenario="${s.key}">${esc(s.label)}</button>`).join("")}
         </div>
 
+        ${renderCustomEditor(active)}
+
         <div class="slda-grid-2">
           <div class="slda-panel">
             <div class="slda-kicker">Selected Scenario Result</div>
@@ -421,7 +572,8 @@
     if (!target || !rawData) return;
 
     const base = baseFromLive(rawData);
-    const scenarios = scenariosFrom(base);
+    const customBase = readCustomSaved(target, base);
+    const scenarios = scenariosFrom(base, customBase);
     const selectedKey = target.getAttribute("data-slda-scenario") || "live";
     const active = scenarios.find(s => s.key === selectedKey) || scenarios[0];
 
