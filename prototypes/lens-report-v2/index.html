@@ -315,6 +315,37 @@
       color: #10251b;
     }
 
+    .scenario-delta-banner {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .scenario-delta-card {
+      border: 1px solid #dfe7e2;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    .scenario-delta-card span {
+      display: block;
+      color: #66736c;
+      font-size: .58rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .scenario-delta-card strong {
+      display: block;
+      margin-top: 5px;
+      color: #10251b;
+      font-size: .92rem;
+      line-height: 1.15;
+    }
+
     .scenario-report-chart {
       border: 1px solid #dfe7e2;
       border-radius: 16px;
@@ -585,7 +616,7 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-006-chart-label-fix.</div>
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-007-detailed-report-chart.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
@@ -813,12 +844,18 @@
       { label: "Required Lens", pressure: 52, status: "Watch" }
     ];
 
+    var selectedIndex = 1;
+    var bestIndex = 2;
+    var original = points[0].pressure;
+    var selected = points[selectedIndex].pressure;
+    var improvement = original - selected;
+
     var w = 760;
-    var h = 260;
-    var left = 58;
+    var h = 300;
+    var left = 62;
     var right = 700;
-    var top = 30;
-    var bottom = 198;
+    var top = 38;
+    var bottom = 222;
     var chartW = right - left;
     var chartH = bottom - top;
 
@@ -830,28 +867,53 @@
       return bottom - (chartH * (value / 100));
     }
 
+    function colorFor(value) {
+      if (value <= 25) return "#087443";
+      if (value <= 60) return "#9a6700";
+      return "#b42318";
+    }
+
     function zone(from, to, fill, label) {
       var yTop = y(to);
       var yBottom = y(from);
       return '<rect x="' + left + '" y="' + yTop.toFixed(1) + '" width="' + chartW + '" height="' + (yBottom - yTop).toFixed(1) + '" fill="' + fill + '" />' +
-        '<text x="' + (left + 8) + '" y="' + (y((from + to) / 2) + 4).toFixed(1) + '" fill="#425248" font-size="10" font-weight="900">' + label + '</text>';
+        '<text x="' + (left + 8) + '" y="' + (y((from + to) / 2) + 4).toFixed(1) + '" fill="#425248" font-size="10" font-weight="950">' + label + '</text>';
     }
 
     var linePath = points.map(function (p, i) {
       return (i === 0 ? "M " : "L ") + x(i).toFixed(1) + " " + y(p.pressure).toFixed(1);
     }).join(" ");
 
-    var markers = points.map(function (p, i) {
-      var color = p.pressure <= 25 ? "#087443" : p.pressure <= 60 ? "#9a6700" : "#b42318";
-      return '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.pressure).toFixed(1) + '" r="6" fill="' + color + '" stroke="#fff" stroke-width="2" />' +
-        '<text x="' + x(i).toFixed(1) + '" y="' + (bottom + 22) + '" text-anchor="middle" fill="#425248" font-size="10" font-weight="850">' + esc(p.label) + '</text>' +
-        '<text x="' + x(i).toFixed(1) + '" y="' + (y(p.pressure) - 12).toFixed(1) + '" text-anchor="middle" fill="' + color + '" font-size="11" font-weight="950">' + p.pressure + '</text>';
+    var grid = [0, 25, 60, 100].map(function (v) {
+      return '<line x1="' + left + '" y1="' + y(v).toFixed(1) + '" x2="' + right + '" y2="' + y(v).toFixed(1) + '" stroke="rgba(16,37,27,.18)" stroke-dasharray="5 5" />' +
+        '<text x="20" y="' + (y(v) + 4).toFixed(1) + '" fill="#66736c" font-size="10" font-weight="850">' + v + '</text>';
     }).join("");
 
-    var grid = [0, 25, 60, 100].map(function (v) {
-      return '<line x1="' + left + '" y1="' + y(v).toFixed(1) + '" x2="' + right + '" y2="' + y(v).toFixed(1) + '" stroke="rgba(16,37,27,.16)" stroke-dasharray="5 5" />' +
-        '<text x="18" y="' + (y(v) + 4).toFixed(1) + '" fill="#66736c" font-size="10" font-weight="800">' + v + '</text>';
+    var markers = points.map(function (p, i) {
+      var color = colorFor(p.pressure);
+      var selectedRing = i === selectedIndex
+        ? '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.pressure).toFixed(1) + '" r="12" fill="none" stroke="#10251b" stroke-width="2" opacity=".55" />'
+        : "";
+
+      var bestLabel = i === bestIndex
+        ? '<text x="' + x(i).toFixed(1) + '" y="' + (y(p.pressure) - 25).toFixed(1) + '" text-anchor="middle" fill="#087443" font-size="10" font-weight="950">Lowest pressure</text>'
+        : "";
+
+      var selectedLabel = i === selectedIndex
+        ? '<text x="' + x(i).toFixed(1) + '" y="' + (y(p.pressure) - 25).toFixed(1) + '" text-anchor="middle" fill="#10251b" font-size="10" font-weight="950">Selected</text>'
+        : "";
+
+      return selectedRing +
+        '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.pressure).toFixed(1) + '" r="6" fill="' + color + '" stroke="#fff" stroke-width="2" />' +
+        '<text x="' + x(i).toFixed(1) + '" y="' + (bottom + 23) + '" text-anchor="middle" fill="#425248" font-size="10" font-weight="850">' + esc(p.label) + '</text>' +
+        '<text x="' + x(i).toFixed(1) + '" y="' + (y(p.pressure) - 12).toFixed(1) + '" text-anchor="middle" fill="' + color + '" font-size="11" font-weight="950">' + p.pressure + '</text>' +
+        bestLabel +
+        selectedLabel;
     }).join("");
+
+    var improvementArrow =
+      '<line x1="' + x(0).toFixed(1) + '" y1="' + y(original).toFixed(1) + '" x2="' + x(selectedIndex).toFixed(1) + '" y2="' + y(selected).toFixed(1) + '" stroke="#10251b" stroke-width="1.5" stroke-dasharray="4 5" opacity=".45" />' +
+      '<text x="' + ((x(0) + x(selectedIndex)) / 2).toFixed(1) + '" y="' + (Math.min(y(original), y(selected)) - 18).toFixed(1) + '" text-anchor="middle" fill="#10251b" font-size="10" font-weight="950">-' + improvement + ' pressure points</text>';
 
     return '' +
       '<section class="section">' +
@@ -864,11 +926,21 @@
             zone(25, 60, "rgba(154,103,0,.10)", "WATCH") +
             zone(60, 100, "rgba(180,35,24,.10)", "RISK") +
             grid +
-            '<path d="' + linePath + '" fill="none" stroke="#087443" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />' +
-            markers +
             '<text x="' + left + '" y="18" fill="#10251b" font-size="12" font-weight="950">Planning Pressure by Scenario</text>' +
+            '<text x="' + right + '" y="18" text-anchor="end" fill="#66736c" font-size="10" font-weight="850">Lower is better</text>' +
+            '<path d="' + linePath + '" fill="none" stroke="#087443" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />' +
+            improvementArrow +
+            markers +
+            '<text x="' + left + '" y="' + (h - 12) + '" fill="#66736c" font-size="10" font-weight="800">Healthy: 0-25</text>' +
+            '<text x="' + (left + 120) + '" y="' + (h - 12) + '" fill="#66736c" font-size="10" font-weight="800">Watch: 26-60</text>' +
+            '<text x="' + (left + 240) + '" y="' + (h - 12) + '" fill="#66736c" font-size="10" font-weight="800">Risk: 61-100</text>' +
           '</svg>' +
-          '<div class="scenario-chart-note">Lower pressure is better. This chart is a report summary, not the full interactive design lab.</div>' +
+          '<div class="scenario-chart-note">The selected split scenario reduces planning pressure from the original design, but still remains in WATCH because follow-up validation is required.</div>' +
+          '<div class="scenario-delta-banner">' +
+            '<div class="scenario-delta-card"><span>Original pressure</span><strong>82 / 100 Risk</strong></div>' +
+            '<div class="scenario-delta-card"><span>Selected scenario</span><strong>52 / 100 Watch</strong></div>' +
+            '<div class="scenario-delta-card"><span>Improvement</span><strong>30-point reduction</strong></div>' +
+          '</div>' +
           '<div class="scenario-chart-summary">' +
             '<div class="scenario-chart-chip"><span>Original</span><strong>82 / 100 Risk</strong></div>' +
             '<div class="scenario-chart-chip"><span>Selected</span><strong>52 / 100 Watch</strong></div>' +
