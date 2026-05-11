@@ -587,13 +587,30 @@
       });
     });
 
+    function saveCustomStateOnly() {
+      const next = readCustomFromDom(target, base);
+      target.setAttribute("data-slda-custom", JSON.stringify(next));
+      target.setAttribute("data-slda-scenario", "live");
+    }
+
+    function commitCustomState() {
+      saveCustomStateOnly();
+      render(target, rawData);
+    }
+
     target.querySelectorAll("[data-slda-input]").forEach(input => {
-      const eventName = input.tagName === "SELECT" ? "change" : "input";
-      input.addEventListener(eventName, () => {
-        const next = readCustomFromDom(target, base);
-        target.setAttribute("data-slda-custom", JSON.stringify(next));
-        target.setAttribute("data-slda-scenario", "live");
-        render(target, rawData);
+      if (input.tagName === "SELECT") {
+        input.addEventListener("change", commitCustomState);
+        return;
+      }
+
+      input.addEventListener("input", saveCustomStateOnly);
+      input.addEventListener("change", commitCustomState);
+      input.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          commitCustomState();
+        }
       });
     });
 
