@@ -893,8 +893,6 @@
       section.hidden = true;
     }
 
-    section.classList.add("full-output");
-
     const resultsCard = els.results?.closest(".card");
     if (resultsCard && resultsCard.parentNode) {
       resultsCard.parentNode.insertBefore(section, resultsCard.nextSibling);
@@ -909,13 +907,6 @@
     return section;
   }
 
-  function designStatusClass(status) {
-    const s = String(status || "").toLowerCase();
-    if (s === "healthy") return "healthy";
-    if (s === "watch") return "watch";
-    return "risk";
-  }
-
   function clearDesignAssistant() {
     const assistant = ensureDesignAssistantEl();
     if (!assistant) return;
@@ -927,117 +918,13 @@
     const assistant = ensureDesignAssistantEl();
     if (!assistant || !data) return;
 
-    const status = data.status || "WATCH";
-    const statusClass = designStatusClass(status);
-    const selectedLens = data.selectedLens || data.adjustedFocal;
-    const targetLens = data.calculatedTargetFocal || data.baseFocal;
-    const gap = Number.isFinite(data.lensGapPct) ? data.lensGapPct : data.adjustmentPct;
-    const fit = Number(data.fitRatio || 1);
-    const ppfLabel = data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF";
-    const formatLabel = data.cameraFormatLabel
-      ? data.cameraFormatLabel + " (" + fmtMm(data.sw, 2) + ")"
-      : fmtMm(data.sw, 2);
-
-    const selectedIsWide = fit < 0.8;
-    const selectedIsTight = fit > 1.75;
-
-    const strokeColor = status === "HEALTHY" ? "#7dff98" : status === "WATCH" ? "#ffd34f" : "#ff8f88";
-    const coneFill = status === "HEALTHY" ? "rgba(125,255,152,.22)" : status === "WATCH" ? "rgba(255,211,79,.20)" : "rgba(255,96,88,.20)";
-    const zoneFill = status === "HEALTHY" ? "rgba(125,255,152,.09)" : status === "WATCH" ? "rgba(255,211,79,.08)" : "rgba(255,96,88,.09)";
-
-    const headline = selectedIsWide
-      ? "Selected lens appears too wide for the calculated target"
-      : selectedIsTight
-        ? "Selected lens is tighter than the calculated target"
-        : "Selected lens is close to the calculated target";
-
-    const recommendation = selectedIsWide
-      ? "Evaluate a tighter lens, shorter distance, smaller scene width, or split coverage."
-      : selectedIsTight
-        ? "Confirm the narrower view still covers the intended scene before treating the result as final."
-        : "Confirm manufacturer field-of-view data and continue downstream validation.";
-
-    const ppfNote = data.ppf > 0
-      ? "Upstream detail context is available. Continue to downstream checks if recognition or identification matters."
-      : "No prior PPF/detail validation is available. Treat this as a lens-fit check, not a final recognition result.";
-
-    const fovSvg =
-      '<svg viewBox="0 0 980 460" role="img" aria-label="Lens design assistant FOV summary">' +
-        '<defs>' +
-          '<linearGradient id="liveLensConeGradient" x1="0" x2="1" y1="0" y2="0">' +
-            '<stop offset="0%" stop-color="rgba(125,255,152,.26)" />' +
-            '<stop offset="58%" stop-color="rgba(255,211,79,.16)" />' +
-            '<stop offset="100%" stop-color="' + coneFill + '" />' +
-          '</linearGradient>' +
-        '</defs>' +
-
-        '<rect x="0" y="0" width="980" height="460" fill="rgba(2,6,12,.16)" />' +
-        '<text x="34" y="42" fill="rgba(125,255,152,.95)" font-size="14" font-weight="950" letter-spacing="1.5">LIVE LENS DESIGN CHECK</text>' +
-        '<text x="34" y="76" fill="rgba(248,250,252,.90)" font-size="23" font-weight="950">' + fmtMm(selectedLens) + ' selected lens vs ' + fmtMm(targetLens) + ' calculated target</text>' +
-        '<text x="34" y="106" fill="rgba(203,213,225,.74)" font-size="14">Distance: ' + fmtFt(data.dist, 0) + ' | Scene width: ' + fmtFt(data.tw) + ' | Camera format: ' + formatLabel + ' | Detail context: ' + ppfLabel + '</text>' +
-
-        '<rect x="640" y="152" width="178" height="170" fill="' + zoneFill + '" stroke="rgba(255,255,255,.10)" />' +
-        '<text x="655" y="174" fill="' + strokeColor + '" font-size="13" font-weight="950">Target plane</text>' +
-
-        '<path d="M 120 252 L 790 150 L 790 330 Z" fill="url(#liveLensConeGradient)" stroke="rgba(226,232,240,.44)" stroke-width="2.25" />' +
-        '<line x1="120" y1="252" x2="790" y2="252" stroke="rgba(226,232,240,.28)" stroke-dasharray="8 9" />' +
-
-        '<circle cx="120" cy="252" r="17" fill="rgba(125,255,152,.18)" stroke="rgba(125,255,152,.95)" stroke-width="3" />' +
-        '<text x="76" y="216" fill="rgba(248,250,252,.84)" font-size="14" font-weight="950">Camera</text>' +
-
-        '<line x1="790" y1="150" x2="790" y2="330" stroke="' + strokeColor + '" stroke-width="6" />' +
-        '<text x="638" y="140" fill="' + strokeColor + '" font-size="13" font-weight="950">Required scene width</text>' +
-
-        '<line x1="120" y1="386" x2="790" y2="386" stroke="rgba(226,232,240,.38)" />' +
-        '<line x1="120" y1="378" x2="120" y2="394" stroke="rgba(226,232,240,.48)" />' +
-        '<line x1="288" y1="378" x2="288" y2="394" stroke="rgba(226,232,240,.28)" />' +
-        '<line x1="455" y1="378" x2="455" y2="394" stroke="rgba(226,232,240,.28)" />' +
-        '<line x1="623" y1="378" x2="623" y2="394" stroke="rgba(226,232,240,.28)" />' +
-        '<line x1="790" y1="378" x2="790" y2="394" stroke="rgba(226,232,240,.48)" />' +
-
-        '<text x="120" y="415" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12">0 ft</text>' +
-        '<text x="288" y="415" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12">25%</text>' +
-        '<text x="455" y="415" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12">50%</text>' +
-        '<text x="623" y="415" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12">75%</text>' +
-        '<text x="790" y="415" text-anchor="middle" fill="rgba(226,232,240,.86)" font-size="12" font-weight="950">' + fmtFt(data.dist, 0) + '</text>' +
-
-        '<text x="360" y="448" fill="rgba(226,232,240,.72)" font-size="13" font-weight="850">Distance to target and selected field-of-view planning check</text>' +
-      '</svg>';
+    if (window.ScopedLabsLensDesignAssistant && typeof window.ScopedLabsLensDesignAssistant.render === "function") {
+      window.ScopedLabsLensDesignAssistant.render(assistant, data);
+      return;
+    }
 
     assistant.hidden = false;
-    assistant.innerHTML =
-      '<div class="lens-design-head">' +
-        '<div>' +
-          '<div class="lens-design-kicker">Design Assistant</div>' +
-          '<h3 class="lens-design-title">' + headline + '</h3>' +
-          '<p class="lens-design-copy">' + (data.dominantConstraint || "Review the selected lens against the calculated target and manufacturer FOV data.") + '</p>' +
-        '</div>' +
-        '<div class="lens-design-status ' + statusClass + '">' + status + '</div>' +
-      '</div>' +
-
-      '<div class="lens-target-strip">' +
-        '<div class="lens-mini-card"><div class="lens-mini-label">Selected lens</div><span class="lens-mini-value">' + fmtMm(selectedLens) + '</span></div>' +
-        '<div class="lens-mini-card"><div class="lens-mini-label">Calculated target</div><span class="lens-mini-value">' + fmtMm(targetLens) + '</span></div>' +
-        '<div class="lens-mini-card"><div class="lens-mini-label">Selection gap</div><span class="lens-mini-value">' + fmt(gap, 1) + '%</span></div>' +
-        '<div class="lens-mini-card"><div class="lens-mini-label">Detail context</div><span class="lens-mini-value">' + ppfLabel + '</span></div>' +
-      '</div>' +
-
-      '<div class="lens-design-layout">' +
-        '<div class="lens-fov-card">' +
-          '<div class="lens-fov-stage">' + fovSvg + '</div>' +
-        '</div>' +
-        '<div class="lens-advice-card">' +
-          '<div class="lens-design-kicker">Recommended review path</div>' +
-          '<h3 class="lens-design-title">What to verify next</h3>' +
-          '<p class="lens-design-copy">' + recommendation + '</p>' +
-          '<ul class="lens-action-list">' +
-            '<li>Compare the selected lens against the calculated target before treating the result as final.</li>' +
-            '<li>' + ppfNote + '</li>' +
-            '<li>Verify the lens against the manufacturer field-of-view chart for the actual camera model.</li>' +
-            '<li>Use Report V2 to document selected lens, calculated target, assumptions, and remaining validation checks.</li>' +
-          '</ul>' +
-        '</div>' +
-      '</div>';
+    assistant.innerHTML = '<div class="muted">Lens Design Assistant module did not load.</div>';
   }
 
   function renderError(message) {
