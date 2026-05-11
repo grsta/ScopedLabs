@@ -80,6 +80,68 @@
       cursor: pointer;
     }
 
+    .report-options {
+      padding: 18px 34px;
+      border-bottom: 1px solid #e7ece8;
+      background: #fbfdfb;
+    }
+
+    .report-options h2 {
+      margin: 0 0 10px;
+      color: #10251b;
+      font-size: .98rem;
+      letter-spacing: -.01em;
+    }
+
+    .report-options-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .report-option-field {
+      min-width: 0;
+    }
+
+    .report-option-field.wide {
+      grid-column: span 4;
+    }
+
+    .report-option-field label {
+      display: block;
+      margin-bottom: 6px;
+      color: #66736c;
+      font-size: .64rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .report-option-field input,
+    .report-option-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d7e2dc;
+      border-radius: 10px;
+      background: #fff;
+      color: #10251b;
+      padding: 10px 11px;
+      font: inherit;
+      font-size: .86rem;
+    }
+
+    .report-option-field textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .report-option-note {
+      margin: 8px 0 0;
+      color: #64736a;
+      font-size: .76rem;
+      line-height: 1.4;
+    }
+
     .report-body {
       padding: 28px 34px 36px;
     }
@@ -249,7 +311,8 @@
 
       .site-header,
       .prototype-note,
-      .report-actions {
+      .report-actions,
+      .report-options {
         display: none !important;
       }
 
@@ -301,13 +364,12 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-001.
-      </div>
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-002-report-options.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
           <div class="report-kicker">ScopedLabs Planning Report V2</div>
-          <h1>Lens Selection Diagnostic Report</h1>
+          <h1 id="coverReportTitle">Lens Selection Diagnostic Report</h1>
           <p>
             Structured planning report generated from a Lens Selection diagnostic payload. This prototype avoids DOM scraping and renders only the intended report sections.
           </p>
@@ -317,6 +379,41 @@
           <button class="report-btn" type="button" onclick="window.print()">Print / Save as PDF</button>
           <button class="report-btn" type="button" id="togglePayload">Show payload</button>
         </div>
+
+        <section class="report-options" aria-label="Optional report fields">
+          <h2>Optional Report Fields</h2>
+
+          <div class="report-options-grid">
+            <div class="report-option-field">
+              <label for="metaTitle">Report Title</label>
+              <input id="metaTitle" data-report-meta type="text" value="Lens Selection Diagnostic Report" />
+            </div>
+
+            <div class="report-option-field">
+              <label for="metaProject">Project Name</label>
+              <input id="metaProject" data-report-meta type="text" value="Planning Review" />
+            </div>
+
+            <div class="report-option-field">
+              <label for="metaClient">Client Name</label>
+              <input id="metaClient" data-report-meta type="text" placeholder="Optional" />
+            </div>
+
+            <div class="report-option-field">
+              <label for="metaPreparedBy">Prepared By</label>
+              <input id="metaPreparedBy" data-report-meta type="text" placeholder="Optional" />
+            </div>
+
+            <div class="report-option-field wide">
+              <label for="metaNotes">Custom Notes</label>
+              <textarea id="metaNotes" data-report-meta placeholder="Add project-specific notes, assumptions, or review comments..."></textarea>
+            </div>
+          </div>
+
+          <p class="report-option-note">
+            These fields are included in the report output and payload. They are hidden from the printed controls but rendered in the report body.
+          </p>
+        </section>
 
         <section class="report-body" id="reportBody"></section>
 
@@ -438,8 +535,32 @@
         return "status-risk";
       }
 
+      function readField(id, fallback) {
+        const el = document.getElementById(id);
+        const value = el ? String(el.value || "").trim() : "";
+        return value || fallback || "";
+      }
+
+      function readReportMeta() {
+        return {
+          reportTitle: readField("metaTitle", "Lens Selection Diagnostic Report"),
+          projectName: readField("metaProject", "Planning Review"),
+          clientName: readField("metaClient", "Not provided"),
+          preparedBy: readField("metaPreparedBy", "Not provided"),
+          preparedDate: new Date().toLocaleDateString(),
+          customNotes: readField("metaNotes", "No additional project notes provided.")
+        };
+      }
+
       function render() {
         const body = document.getElementById("reportBody");
+        const reportMeta = readReportMeta();
+        const reportPayload = Object.assign({}, payload, { reportMeta: reportMeta });
+
+        const coverTitle = document.getElementById("coverReportTitle");
+        if (coverTitle) {
+          coverTitle.textContent = reportMeta.reportTitle;
+        }
 
         body.innerHTML =
           '<div class="summary-grid">' +
@@ -467,6 +588,24 @@
               '<div class="summary-note">Pressure score from the diagnostic model.</div>' +
             '</div>' +
           '</div>' +
+
+          '<section class="section two-col">' +
+            '<div>' +
+              '<h2>Report Details</h2>' +
+              '<table class="info-table">' + tableRows({
+                reportTitle: reportMeta.reportTitle,
+                projectName: reportMeta.projectName,
+                clientName: reportMeta.clientName,
+                preparedBy: reportMeta.preparedBy,
+                preparedDate: reportMeta.preparedDate
+              }) + '</table>' +
+            '</div>' +
+
+            '<div>' +
+              '<h2>Report Notes</h2>' +
+              '<div class="risk-box">' + esc(reportMeta.customNotes) + '</div>' +
+            '</div>' +
+          '</section>' +
 
           '<section class="section">' +
             '<h2>Executive Summary</h2>' +
@@ -526,7 +665,7 @@
 
           '<section class="section" id="payloadSection" style="display:none;">' +
             '<h2>Structured Payload</h2>' +
-            '<pre class="payload-preview">' + esc(JSON.stringify(payload, null, 2)) + '</pre>' +
+            '<pre class="payload-preview">' + esc(JSON.stringify(reportPayload, null, 2)) + '</pre>' +
           '</section>';
 
         document.getElementById("togglePayload").addEventListener("click", function () {
@@ -537,6 +676,14 @@
         });
       }
 
+      function bindReportControls() {
+        document.querySelectorAll("[data-report-meta]").forEach(function (field) {
+          field.addEventListener("input", render);
+          field.addEventListener("change", render);
+        });
+      }
+
+      bindReportControls();
       render();
     })();
   </script>
