@@ -616,7 +616,7 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-008-detailed-fov-snapshot.</div>
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-009-restore-after-fov-detail.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
@@ -679,7 +679,7 @@
   <script>
 (function () {
   var payload = {
-    reportVersion: "diagnostic-report-v2.004",
+    reportVersion: "diagnostic-report-v2.009",
     generatedAt: new Date().toISOString(),
     tool: "Lens Selection Helper",
     category: "Physical Security",
@@ -815,94 +815,134 @@
   function renderMiniFov() {
     return '' +
       '<div class="mini-fov">' +
-        '<svg viewBox="0 0 700 230" role="img" aria-label="Compact field of view report diagram">' +
+        '<svg viewBox="0 0 640 176" role="img" aria-label="Compact field of view report diagram">' +
           '<defs>' +
             '<linearGradient id="miniCone" x1="0" x2="1" y1="0" y2="0">' +
-              '<stop offset="0%" stop-color="rgba(8,116,67,.30)" />' +
-              '<stop offset="56%" stop-color="rgba(154,103,0,.18)" />' +
-              '<stop offset="100%" stop-color="rgba(180,35,24,.22)" />' +
+              '<stop offset="0%" stop-color="rgba(8,116,67,.32)" />' +
+              '<stop offset="58%" stop-color="rgba(154,103,0,.22)" />' +
+              '<stop offset="100%" stop-color="rgba(180,35,24,.28)" />' +
             '</linearGradient>' +
-            '<filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">' +
-              '<feGaussianBlur stdDeviation="2" result="blur"/>' +
-              '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
-            '</filter>' +
           '</defs>' +
-
-          '<rect x="0" y="0" width="700" height="230" fill="rgba(255,255,255,.20)" />' +
-
-          '<text x="22" y="24" fill="#087443" font-size="11" font-weight="950" letter-spacing="1.3">FOV / SPLIT COVERAGE SUMMARY</text>' +
-          '<text x="22" y="43" fill="#10251b" font-size="12" font-weight="900">4 cameras | 25 mm planning lens | 56 ft / 17.1 m target distance</text>' +
-          '<text x="22" y="61" fill="#425248" font-size="10" font-weight="750">Required scene: 45 ft / 13.7 m | overlap target: 15% | available detail: 151.2 PPF</text>' +
-
-          '<rect x="448" y="77" width="120" height="98" fill="rgba(180,35,24,.07)" stroke="rgba(180,35,24,.18)" stroke-width="1" />' +
-          '<text x="456" y="91" fill="#b42318" font-size="9" font-weight="950">Target plane</text>' +
-
-          '<path d="M 82 102 L 534 74 L 534 99 Z" fill="url(#miniCone)" stroke="rgba(16,37,27,.24)" stroke-width="1.4" />' +
-          '<path d="M 82 112 L 534 92 L 534 117 Z" fill="url(#miniCone)" stroke="rgba(16,37,27,.24)" stroke-width="1.4" />' +
-          '<path d="M 82 122 L 534 110 L 534 135 Z" fill="url(#miniCone)" stroke="rgba(16,37,27,.24)" stroke-width="1.4" />' +
-          '<path d="M 82 132 L 534 128 L 534 153 Z" fill="url(#miniCone)" stroke="rgba(16,37,27,.24)" stroke-width="1.4" />' +
-
-          '<line x1="82" y1="102" x2="534" y2="87" stroke="rgba(16,37,27,.28)" stroke-dasharray="5 6" />' +
-          '<line x1="82" y1="112" x2="534" y2="105" stroke="rgba(16,37,27,.28)" stroke-dasharray="5 6" />' +
-          '<line x1="82" y1="122" x2="534" y2="123" stroke="rgba(16,37,27,.28)" stroke-dasharray="5 6" />' +
-          '<line x1="82" y1="132" x2="534" y2="141" stroke="rgba(16,37,27,.28)" stroke-dasharray="5 6" />' +
-
-          '<circle cx="82" cy="102" r="7" fill="#087443" filter="url(#softGlow)" />' +
-          '<circle cx="82" cy="112" r="7" fill="#087443" filter="url(#softGlow)" />' +
-          '<circle cx="82" cy="122" r="7" fill="#087443" filter="url(#softGlow)" />' +
-          '<circle cx="82" cy="132" r="7" fill="#087443" filter="url(#softGlow)" />' +
-
-          '<text x="24" y="106" fill="#10251b" font-size="9" font-weight="950">Cam 1</text>' +
-          '<text x="24" y="116" fill="#10251b" font-size="9" font-weight="950">Cam 2</text>' +
-          '<text x="24" y="126" fill="#10251b" font-size="9" font-weight="950">Cam 3</text>' +
-          '<text x="24" y="136" fill="#10251b" font-size="9" font-weight="950">Cam 4</text>' +
-
-          '<line x1="534" y1="74" x2="534" y2="153" stroke="#b42318" stroke-width="3" />' +
-          '<text x="420" y="70" fill="#b42318" font-size="10" font-weight="950">45 ft / 13.7 m scene width</text>' +
-
-          '<line x1="556" y1="93" x2="586" y2="93" stroke="#9a6700" stroke-width="3" />' +
-          '<line x1="556" y1="115" x2="586" y2="115" stroke="#9a6700" stroke-width="3" />' +
-          '<line x1="556" y1="137" x2="586" y2="137" stroke="#9a6700" stroke-width="3" />' +
-          '<text x="592" y="96" fill="#9a6700" font-size="9" font-weight="950">1.9 ft overlap</text>' +
-          '<text x="592" y="118" fill="#9a6700" font-size="9" font-weight="950">1.9 ft overlap</text>' +
-          '<text x="592" y="140" fill="#9a6700" font-size="9" font-weight="950">1.9 ft overlap</text>' +
-
-          '<line x1="82" y1="190" x2="534" y2="190" stroke="rgba(16,37,27,.38)" stroke-width="1" />' +
-          '<line x1="82" y1="184" x2="82" y2="196" stroke="rgba(16,37,27,.42)" />' +
-          '<line x1="195" y1="184" x2="195" y2="196" stroke="rgba(16,37,27,.28)" />' +
-          '<line x1="308" y1="184" x2="308" y2="196" stroke="rgba(16,37,27,.28)" />' +
-          '<line x1="421" y1="184" x2="421" y2="196" stroke="rgba(16,37,27,.28)" />' +
-          '<line x1="534" y1="184" x2="534" y2="196" stroke="rgba(16,37,27,.42)" />' +
-
-          '<text x="82" y="209" text-anchor="middle" fill="#425248" font-size="9" font-weight="850">0 ft</text>' +
-          '<text x="195" y="209" text-anchor="middle" fill="#425248" font-size="9" font-weight="850">14 ft</text>' +
-          '<text x="308" y="209" text-anchor="middle" fill="#425248" font-size="9" font-weight="850">28 ft</text>' +
-          '<text x="421" y="209" text-anchor="middle" fill="#425248" font-size="9" font-weight="850">42 ft</text>' +
-          '<text x="534" y="209" text-anchor="middle" fill="#425248" font-size="9" font-weight="850">56 ft</text>' +
-
-          '<text x="82" y="222" text-anchor="middle" fill="#66736c" font-size="8" font-weight="750">0 m</text>' +
-          '<text x="195" y="222" text-anchor="middle" fill="#66736c" font-size="8" font-weight="750">4.3 m</text>' +
-          '<text x="308" y="222" text-anchor="middle" fill="#66736c" font-size="8" font-weight="750">8.5 m</text>' +
-          '<text x="421" y="222" text-anchor="middle" fill="#66736c" font-size="8" font-weight="750">12.8 m</text>' +
-          '<text x="534" y="222" text-anchor="middle" fill="#66736c" font-size="8" font-weight="750">17.1 m</text>' +
-
-          '<text x="240" y="181" fill="#10251b" font-size="10" font-weight="950">Target distance: 56 ft / 17.1 m</text>' +
-
-          '<rect x="22" y="151" width="14" height="8" fill="rgba(8,116,67,.30)" stroke="rgba(8,116,67,.38)" />' +
-          '<text x="42" y="158" fill="#425248" font-size="9" font-weight="850">coverage cone</text>' +
-          '<line x1="132" y1="155" x2="158" y2="155" stroke="#9a6700" stroke-width="3" />' +
-          '<text x="164" y="158" fill="#425248" font-size="9" font-weight="850">recommended overlap</text>' +
-          '<line x1="300" y1="155" x2="326" y2="155" stroke="#b42318" stroke-width="3" />' +
-          '<text x="332" y="158" fill="#425248" font-size="9" font-weight="850">required scene plane</text>' +
+          '<rect x="0" y="0" width="640" height="176" fill="rgba(255,255,255,.18)" />' +
+          '<path d="M 54 88 L 528 36 L 528 140 Z" fill="url(#miniCone)" stroke="rgba(16,37,27,.28)" stroke-width="2" />' +
+          '<line x1="54" y1="88" x2="528" y2="88" stroke="rgba(16,37,27,.28)" stroke-dasharray="6 7" />' +
+          '<circle cx="54" cy="88" r="12" fill="#087443" opacity=".90" />' +
+          '<text x="32" y="65" fill="#10251b" font-size="12" font-weight="900">Camera</text>' +
+          '<line x1="528" y1="36" x2="528" y2="140" stroke="#9a6700" stroke-width="4" />' +
+          '<text x="365" y="30" fill="#9a6700" font-size="12" font-weight="950">Required scene width</text>' +
+          '<line x1="54" y1="154" x2="528" y2="154" stroke="rgba(16,37,27,.34)" />' +
+          '<text x="250" y="169" fill="#425248" font-size="12" font-weight="850">Distance / FOV planning check</text>' +
         '</svg>' +
       '</div>';
+  }
+
+  function renderScenarioComparison() {
+    var points = [
+      { label: "Original", pressure: 82 },
+      { label: "Split", pressure: 52 },
+      { label: "High Res", pressure: 38 },
+      { label: "Required Lens", pressure: 52 }
+    ];
+
+    var selectedIndex = 1;
+    var bestIndex = 2;
+    var improvement = points[0].pressure - points[selectedIndex].pressure;
+
+    var w = 760;
+    var h = 300;
+    var left = 62;
+    var right = 700;
+    var top = 38;
+    var bottom = 222;
+    var chartW = right - left;
+    var chartH = bottom - top;
+
+    function x(i) {
+      return left + chartW * (i / (points.length - 1));
+    }
+
+    function y(value) {
+      return bottom - chartH * (value / 100);
+    }
+
+    function colorFor(value) {
+      if (value <= 25) return "#087443";
+      if (value <= 60) return "#9a6700";
+      return "#b42318";
+    }
+
+    function zone(from, to, fill, label) {
+      var yTop = y(to);
+      var yBottom = y(from);
+      return '<rect x="' + left + '" y="' + yTop.toFixed(1) + '" width="' + chartW + '" height="' + (yBottom - yTop).toFixed(1) + '" fill="' + fill + '" />' +
+        '<text x="' + (left + 8) + '" y="' + (y((from + to) / 2) + 4).toFixed(1) + '" fill="#425248" font-size="10" font-weight="950">' + label + '</text>';
+    }
+
+    var linePath = points.map(function (p, i) {
+      return (i === 0 ? "M " : "L ") + x(i).toFixed(1) + " " + y(p.pressure).toFixed(1);
+    }).join(" ");
+
+    var grid = [0, 25, 60, 100].map(function (v) {
+      return '<line x1="' + left + '" y1="' + y(v).toFixed(1) + '" x2="' + right + '" y2="' + y(v).toFixed(1) + '" stroke="rgba(16,37,27,.18)" stroke-dasharray="5 5" />' +
+        '<text x="20" y="' + (y(v) + 4).toFixed(1) + '" fill="#66736c" font-size="10" font-weight="850">' + v + '</text>';
+    }).join("");
+
+    var markers = points.map(function (p, i) {
+      var color = colorFor(p.pressure);
+      var selectedRing = i === selectedIndex
+        ? '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.pressure).toFixed(1) + '" r="12" fill="none" stroke="#10251b" stroke-width="2" opacity=".55" />'
+        : "";
+
+      var label = "";
+      if (i === selectedIndex) {
+        label = '<text x="' + x(i).toFixed(1) + '" y="' + (y(p.pressure) - 25).toFixed(1) + '" text-anchor="middle" fill="#10251b" font-size="10" font-weight="950">Selected</text>';
+      }
+      if (i === bestIndex) {
+        label = '<text x="' + x(i).toFixed(1) + '" y="' + (y(p.pressure) - 25).toFixed(1) + '" text-anchor="middle" fill="#087443" font-size="10" font-weight="950">Lowest pressure</text>';
+      }
+
+      return selectedRing +
+        '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.pressure).toFixed(1) + '" r="6" fill="' + color + '" stroke="#fff" stroke-width="2" />' +
+        '<text x="' + x(i).toFixed(1) + '" y="' + (bottom + 23) + '" text-anchor="middle" fill="#425248" font-size="10" font-weight="850">' + esc(p.label) + '</text>' +
+        '<text x="' + x(i).toFixed(1) + '" y="' + (y(p.pressure) - 12).toFixed(1) + '" text-anchor="middle" fill="' + color + '" font-size="11" font-weight="950">' + p.pressure + '</text>' +
+        label;
+    }).join("");
+
+    return '' +
+      '<section class="section">' +
+        '<h2>Scenario Comparison</h2>' +
+        '<p>This report view keeps the comparison compact. It shows how planning pressure changes from the original design to the selected correction path and other planning alternatives.</p>' +
+        '<div class="scenario-report-chart">' +
+          '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Scenario planning pressure comparison chart">' +
+            '<rect x="0" y="0" width="' + w + '" height="' + h + '" fill="#ffffff" />' +
+            zone(0, 25, "rgba(8,116,67,.10)", "HEALTHY") +
+            zone(25, 60, "rgba(154,103,0,.10)", "WATCH") +
+            zone(60, 100, "rgba(180,35,24,.10)", "RISK") +
+            grid +
+            '<text x="' + left + '" y="18" fill="#10251b" font-size="12" font-weight="950">Planning Pressure by Scenario</text>' +
+            '<text x="' + right + '" y="18" text-anchor="end" fill="#66736c" font-size="10" font-weight="850">Lower is better</text>' +
+            '<path d="' + linePath + '" fill="none" stroke="#087443" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />' +
+            '<line x1="' + x(0).toFixed(1) + '" y1="' + y(points[0].pressure).toFixed(1) + '" x2="' + x(selectedIndex).toFixed(1) + '" y2="' + y(points[selectedIndex].pressure).toFixed(1) + '" stroke="#10251b" stroke-width="1.5" stroke-dasharray="4 5" opacity=".45" />' +
+            '<text x="' + ((x(0) + x(selectedIndex)) / 2).toFixed(1) + '" y="' + (Math.min(y(points[0].pressure), y(points[selectedIndex].pressure)) - 18).toFixed(1) + '" text-anchor="middle" fill="#10251b" font-size="10" font-weight="950">-' + improvement + ' pressure points</text>' +
+            markers +
+            '<text x="' + left + '" y="' + (h - 12) + '" fill="#66736c" font-size="10" font-weight="800">Healthy: 0-25</text>' +
+            '<text x="' + (left + 120) + '" y="' + (h - 12) + '" fill="#66736c" font-size="10" font-weight="800">Watch: 26-60</text>' +
+            '<text x="' + (left + 240) + '" y="' + (h - 12) + '" fill="#66736c" font-size="10" font-weight="800">Risk: 61-100</text>' +
+          '</svg>' +
+          '<div class="scenario-chart-note">The selected split scenario reduces planning pressure from the original design, but still remains in WATCH because follow-up validation is required.</div>' +
+          '<div class="scenario-delta-banner">' +
+            '<div class="scenario-delta-card"><span>Original pressure</span><strong>82 / 100 Risk</strong></div>' +
+            '<div class="scenario-delta-card"><span>Selected scenario</span><strong>52 / 100 Watch</strong></div>' +
+            '<div class="scenario-delta-card"><span>Improvement</span><strong>30-point reduction</strong></div>' +
+          '</div>' +
+        '</div>' +
+      '</section>';
   }
 
   function render() {
     var body = document.getElementById("reportBody");
     var reportMeta = readReportMeta();
     var reportPayload = Object.assign({}, payload, { reportMeta: reportMeta });
-
     var coverTitle = document.getElementById("coverReportTitle");
     if (coverTitle) coverTitle.textContent = reportMeta.reportTitle;
 
@@ -961,22 +1001,10 @@
           preparedDate: reportMeta.preparedDate
         }) + '</table></div>' +
         '<div><h2>Report Notes</h2><div class="risk-box">' + esc(reportMeta.customNotes) + '</div></div>' +
-      '</section>'
-    );
-
-    parts.push(
-      '<section class="section"><h2>Executive Summary</h2><p>' + esc(payload.executiveSummary) + '</p></section>' +
-      '<section class="section two-col">' +
-        '<div><h2>Original Assumptions</h2><table class="info-table">' + tableRows(payload.originalAssumptions) + '</table></div>' +
-        '<div><h2>Selected Scenario</h2><table class="info-table">' + tableRows(payload.selectedScenarioData) + '</table></div>' +
       '</section>' +
-      '<section class="section two-col">' +
-        '<div><h2>Diagnostic Status</h2><table class="info-table">' + tableRows(payload.diagnostics) + '</table></div>' +
-        '<div><h2>Design Targets</h2><table class="info-table">' + tableRows(payload.designTargets) + '</table></div>' +
-      '</section>'
-    );
-
-    parts.push(
+      '<section class="section"><h2>Executive Summary</h2><p>' + esc(payload.executiveSummary) + '</p></section>' +
+      '<section class="section two-col"><div><h2>Original Assumptions</h2><table class="info-table">' + tableRows(payload.originalAssumptions) + '</table></div><div><h2>Selected Scenario</h2><table class="info-table">' + tableRows(payload.selectedScenarioData) + '</table></div></section>' +
+      '<section class="section two-col"><div><h2>Diagnostic Status</h2><table class="info-table">' + tableRows(payload.diagnostics) + '</table></div><div><h2>Design Targets</h2><table class="info-table">' + tableRows(payload.designTargets) + '</table></div></section>' +
       '<section class="section"><h2>Interpretation</h2><div class="risk-box"><strong>Detail viability is the controlling issue.</strong> The lens/framing plan must be checked separately from the recognition/detail requirement. A design can frame the scene and still fail the required pixels-per-foot target.</div></section>' +
       '<section class="section"><h2>Possible Planning Actions to Evaluate</h2>' + list(payload.possiblePlanningActions) + '</section>' +
       '<section class="section"><h2>Follow-Up Checks</h2>' + list(payload.followUpChecks) + '</section>' +
@@ -985,9 +1013,7 @@
     );
 
     if (showPayload) {
-      parts.push(
-        '<section class="section" id="payloadSection"><h2>Structured Payload</h2><pre class="payload-preview">' + esc(JSON.stringify(reportPayload, null, 2)) + '</pre></section>'
-      );
+      parts.push('<section class="section" id="payloadSection"><h2>Structured Payload</h2><pre class="payload-preview">' + esc(JSON.stringify(reportPayload, null, 2)) + '</pre></section>');
     }
 
     body.innerHTML = parts.join("");
