@@ -820,6 +820,21 @@
     return payload;
   }
 
+  function prepareDiagnosticData(data) {
+    const diagnostic = buildDiagnosticData(data);
+
+    window.ScopedLabsDiagnosticData = diagnostic;
+    window.ScopedLabsExportData = diagnostic;
+    window.ScopedLabsReportV2Data = saveReportV2Payload(data, diagnostic);
+
+    if (els.diagnostic) {
+      els.diagnostic.hidden = true;
+      els.diagnostic.innerHTML = "";
+    }
+
+    return diagnostic;
+  }
+
   function renderDiagnosticPanel(data) {
     const diagnostic = buildDiagnosticData(data);
 
@@ -1007,7 +1022,7 @@
       guidance: data.guidance
     });
 
-    renderDiagnosticPanel(data);
+    prepareDiagnosticData(data);
     renderLensDesignAssistant(data);
 
     els.selectedLens?.addEventListener("change", () => invalidate());

@@ -221,6 +221,10 @@
         display: grid;
       }
     }
+  
+    .legacy-diagnostic-hidden {
+      display: none !important;
+    }
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -420,7 +424,7 @@
           </p>
         </div>
         <section
-          id="diagnostic-panel"
+          id="diagnostic-panel" class="legacy-diagnostic-hidden"
           class="card"
           style="margin-top: 14px; background: rgba(0,0,0,.10);"
           hidden
@@ -528,7 +532,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/diagnostic.js?v=diagnostic-002"></script>
 
-  <script src="./script.js?v=physical-security-design-assistant-002"></script>
+  <script src="./script.js?v=physical-security-design-assistant-003"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
