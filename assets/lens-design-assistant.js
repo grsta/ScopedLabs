@@ -969,7 +969,7 @@
         window.ScopedLabsReportV2Data = latestPayload;
 
         window.open(
-          "/prototypes/lens-report-v2/?source=live-lens-assistant&rev=assistant-fov-polish-020",
+          "/prototypes/lens-report-v2/?source=live-lens-assistant&rev=assistant-status-pill-021",
           "_blank",
           "noopener"
         );

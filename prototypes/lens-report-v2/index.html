@@ -203,6 +203,25 @@
       white-space: nowrap;
     }
 
+    .snapshot-status-pill.healthy {
+      border-color: #bfe8cf;
+      background: #eefaf3;
+      color: #087443;
+    }
+
+    .snapshot-status-pill.watch {
+      border-color: #f3d28b;
+      background: #fff8e5;
+      color: #9a6700;
+    }
+
+    .snapshot-status-pill.risk {
+      border-color: #f1b7b2;
+      background: #fff1f0;
+      color: #b42318;
+    }
+
+
     .snapshot-layout {
       display: grid;
       grid-template-columns: 1.12fr .88fr;
@@ -616,7 +635,7 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Report V2 preview generated from the selected Lens Design Assistant scenario. Rev: lens-report-v2-020-fov-polish.</div>
+        Report V2 preview generated from the selected Lens Design Assistant scenario. Rev: lens-report-v2-021-status-pill-polish.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
@@ -1277,7 +1296,7 @@
       '<section class="report-diagnostic-snapshot">' +
         '<div class="snapshot-head">' +
           '<div><div class="snapshot-kicker">Executive Diagnostic Snapshot</div><h2 class="snapshot-title">Selected scenario health and planning pressure</h2><p class="snapshot-copy">This visual summary keeps the report readable while showing the core design story: selected correction path, status split, planning pressure, and what should be carried forward for the next sanity check.</p></div>' +
-          '<div class="snapshot-status-pill">' + esc(payload.status) + '</div>' +
+          '<div class="snapshot-status-pill ' + statusClass(payload.status) + '">' + esc(payload.status) + '</div>' +
         '</div>' +
         '<div class="snapshot-layout">' +
           '<div class="snapshot-visual">' +
