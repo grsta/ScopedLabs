@@ -194,10 +194,14 @@
     const pressure = Math.max(coveragePressure, detailPressure, lensPressure);
     const status = metricStatusFromScore(pressure);
 
-    let blocker = "Balanced";
-    if (pressure === detailPressure) blocker = "Detail viability";
-    if (pressure === coveragePressure) blocker = "Coverage fit";
-    if (pressure === lensPressure) blocker = "Lens class";
+    let blocker = "None";
+
+    if (pressure > 25) {
+      blocker = "Balanced";
+      if (pressure === detailPressure) blocker = "Detail viability";
+      if (pressure === coveragePressure) blocker = "Coverage fit";
+      if (pressure === lensPressure) blocker = "Lens class";
+    }
 
     const overlapFraction = input.coverageCount > 1 ? 0.15 : 0;
     const overlapWidthFt = requiredWidthPerCamera * overlapFraction;
@@ -403,7 +407,7 @@
       })),
       evaluate(Object.assign({}, live, {
         key: "optimized",
-        label: "Lens for Required Width",
+        label: "Exact Width Lens",
         lensMm: nearestLens(live.calculatedLensMm),
         calculatedLensMm: live.calculatedLensMm
       })),
@@ -602,7 +606,7 @@
             <div class="slda-card"><div class="slda-label">Coverage Layout</div><strong>${active.coverageCount} camera${active.coverageCount === 1 ? "" : "s"}</strong><div class="slda-note">Single or split-camera layout.</div></div>
             <div class="slda-card"><div class="slda-label">Recommended Overlap</div><strong>${active.coverageCount === 1 ? "None" : fmt(active.recommendedOverlapFraction * 100, 0) + "% / " + ft(active.overlapWidthFt)}</strong><div class="slda-note">Overlap between adjacent views.</div></div>
             <div class="slda-card"><div class="slda-label">Center Spacing</div><strong>${active.coverageCount === 1 ? "N/A" : ft(active.centerSpacingFt)}</strong><div class="slda-note">Target-plane spacing between view centers.</div></div>
-            <div class="slda-card"><div class="slda-label">Camera Positions</div><strong>${active.cameraPositionsFt.map((pos, i) => "Cam " + (i + 1) + " " + signedFt(pos)).join(" | ")}</strong><div class="slda-note">Recommended center positions across scene width.</div></div>
+            <div class="slda-card"><div class="slda-label">Camera Positions</div><strong>${active.cameraPositionsFt.map((pos, i) => "Cam " + (i + 1) + " - " + signedFt(pos)).join(" | ")}</strong><div class="slda-note">Recommended center positions across scene width.</div></div>
           </div>
         </div>
 
@@ -624,8 +628,8 @@
           <div class="slda-target-grid">
             <div class="slda-card"><div class="slda-label">Max Width / Camera</div><strong>${ppf(active.availablePpf) === "No prior PPF" ? "Needs PPF" : ft(active.framedWidthFt)}</strong><div class="slda-note">Max framed width depends on detail target.</div></div>
             <div class="slda-card"><div class="slda-label">Suggested Cameras</div><strong>${suggestedCameras} camera${suggestedCameras === 1 ? "" : "s"}</strong><div class="slda-note">Based on selected lens framing pressure.</div></div>
-            <div class="slda-card"><div class="slda-label">Lens For Target Width</div><strong>${mm(active.calculatedLensMm)}</strong><div class="slda-note">Calculated lens target before availability check.</div></div>
-            <div class="slda-card"><div class="slda-label">Main Blocker</div><strong class="${statusClass(active.status)}">${active.blocker}</strong><div class="slda-note">Main condition keeping this scenario from healthy.</div></div>
+            <div class="slda-card"><div class="slda-label">Coverage Lens Limit</div><strong>${mm(active.calculatedLensMm)} max</strong><div class="slda-note">Selected lens covers if it is this value or wider / lower mm.</div></div>
+            <div class="slda-card"><div class="slda-label">Main Blocker</div><strong class="${statusClass(active.status)}">${active.blocker}</strong><div class="slda-note">${active.status === "HEALTHY" ? "No blocker under current planning guardrails." : "Main condition keeping this scenario from healthy."}</div></div>
           </div>
           <div class="slda-recommendation">${designText(active)}</div>
         </div>
@@ -634,8 +638,8 @@
           <div class="slda-section-head">
             <div>
               <div class="slda-kicker">Scenario Comparison</div>
-              <h3 class="slda-title">Original vs design paths</h3>
-              <p class="slda-copy">The chart compares planning pressure. Lower is better. A selected lens can still be risky when detail context is missing or the view is too wide.</p>
+              <h3 class="slda-title">Scenario pressure comparison</h3>
+              <p class="slda-copy">The chart compares planning pressure across available paths. Lower is better; healthy coverage and detail should stay near the bottom band.</p>
             </div>
             <div class="slda-chip">Scenario Analytics</div>
           </div>
