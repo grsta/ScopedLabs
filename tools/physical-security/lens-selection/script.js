@@ -995,6 +995,126 @@
     invalidate({ clearFlow: true });
   }
 
+  function safeJsonParse(value, fallback = null) {
+    if (!value) return fallback;
+
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  }
+
+  function cleanNumber(value, fallback = null) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  function hfovFromLens(sensorWidthMm, focalMm) {
+    const sensor = cleanNumber(sensorWidthMm);
+    const focal = cleanNumber(focalMm);
+
+    if (!sensor || !focal || focal <= 0) return null;
+
+    return (2 * Math.atan(sensor / (2 * focal))) * (180 / Math.PI);
+  }
+
+  function hfovFromWidth(distanceFt, framedWidthFt) {
+    const distance = cleanNumber(distanceFt);
+    const width = cleanNumber(framedWidthFt);
+
+    if (!distance || !width || distance <= 0) return null;
+
+    return (2 * Math.atan(width / (2 * distance))) * (180 / Math.PI);
+  }
+
+  function saveAssistantScenarioForPipeline() {
+    const assistantPayload = window.ScopedLabsLensDesignAssistantReportData || null;
+
+    if (!assistantPayload || !assistantPayload.flowOutputs) {
+      return false;
+    }
+
+    const existing = safeJsonParse(sessionStorage.getItem(FLOW_KEYS.lens), {}) || {};
+    const flow = assistantPayload.flowOutputs || {};
+    const assumptions = assistantPayload.assumptions || {};
+    const targets = assistantPayload.designTargets || {};
+    const diagnostics = assistantPayload.diagnostics || {};
+
+    const selectedLensMm = cleanNumber(flow.selectedLensMm, cleanNumber(assumptions.selectedLensMm));
+    const calculatedLensMm = cleanNumber(flow.calculatedLensMm, cleanNumber(assistantPayload.calculatedLensMm));
+    const distanceFt = cleanNumber(flow.distanceFt, cleanNumber(assumptions.distanceFt));
+    const targetWidthFt = cleanNumber(flow.requiredSceneWidthFt, cleanNumber(assumptions.requiredSceneWidthFt || assumptions.sceneWidthFt));
+    const framedWidthFt = cleanNumber(flow.framedWidthFt, cleanNumber(assumptions.framedWidthFt));
+    const sensorWidthMm = cleanNumber(assumptions.sensorWidthMm);
+    const availablePpf = cleanNumber(flow.availablePpf, cleanNumber(assumptions.availablePpf));
+    const requiredPpf = cleanNumber(flow.requiredPpf, cleanNumber(assumptions.requiredPpf));
+    const cameraCount = cleanNumber(flow.cameraCount, cleanNumber(assumptions.coverageCount, cleanNumber(targets.suggestedCameras, 1)));
+    const pressureScore = cleanNumber(assistantPayload.pressure, cleanNumber(diagnostics?.gauge?.score, 0));
+    const status = flow.status || assistantPayload.status || "WATCH";
+    const selectedScenario = flow.selectedScenario || assistantPayload.selectedScenario || "Custom Design";
+
+    const hfov = hfovFromLens(sensorWidthMm, selectedLensMm) || hfovFromWidth(distanceFt, framedWidthFt);
+    const lensClass = selectedLensMm ? classifyLens(selectedLensMm) : null;
+
+    const carryData = {
+      focal: selectedLensMm,
+      hfov,
+      dist: distanceFt,
+      lensClass,
+
+      assistantSelected: true,
+      selectedScenario,
+      selectedLensMm,
+      calculatedLensMm,
+      adjustedFocalMm: selectedLensMm,
+      baseFocalMm: calculatedLensMm,
+      calculatedTargetFocalMm: calculatedLensMm,
+
+      distanceFt,
+      targetWidthFt,
+      requiredSceneWidthFt: targetWidthFt,
+      framedWidthFt,
+      sensorWidthMm,
+      cameraFormatLabel: assumptions.cameraFormatLabel || null,
+
+      pixelDensityPpf: availablePpf,
+      availablePpf,
+      requiredPpf,
+
+      cameraCount,
+      coverageStatus: assistantPayload.coverageStatus || diagnostics.coverageStatus || null,
+      detailStatus: assistantPayload.detailStatus || diagnostics.detailStatus || null,
+      pressureScore,
+      status
+    };
+
+    const carryPayload = {
+      ...existing,
+      schema: "scopedlabs.pipeline.physical-security.lens-selection.v2",
+      category: CATEGORY,
+      lane: LANE,
+      step: STEP,
+      source: "lens-design-assistant-selected-scenario",
+      savedAt: new Date().toISOString(),
+      selectedScenario,
+      status,
+      summary: selectedScenario + ": " + (selectedLensMm || "selected") + " mm lens, " + (cameraCount || 1) + " camera" + (Number(cameraCount) === 1 ? "" : "s") + ", " + status + ".",
+      data: carryData,
+      flowOutputs: carryData,
+      assistantReportPayload: assistantPayload
+    };
+
+    sessionStorage.setItem(FLOW_KEYS.lens, JSON.stringify(carryPayload));
+    sessionStorage.setItem("scopedlabs:pipeline:last-result", JSON.stringify(carryPayload));
+
+    clearDownstream();
+
+    window.ScopedLabsLensPipelineCarryForward = carryPayload;
+
+    return true;
+  }
+
   function bind() {
     ["dist", "tw", "sw"].forEach((id) => {
       const el = $(id);
@@ -1019,6 +1139,7 @@
     }
 
     els.continueBtn?.addEventListener("click", () => {
+      saveAssistantScenarioForPipeline();
       window.location.href = NEXT_URL;
     });
   }
