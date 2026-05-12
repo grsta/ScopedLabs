@@ -123,33 +123,76 @@
     };
   }
 
+  function metricStatusFromScore(score) {
+    if (score <= 25) return "HEALTHY";
+    if (score <= 60) return "WATCH";
+    return "RISK";
+  }
+
   function evaluate(input) {
     const requiredWidthPerCamera = input.sceneWidthFt / Math.max(1, input.coverageCount);
-    const framedWidthFt = input.lensMm > 0 ? (input.distanceFt * input.sensorWidthMm) / input.lensMm : input.sceneWidthFt;
-    const calculatedLensMm = input.calculatedLensMm || ((input.sensorWidthMm * input.distanceFt) / Math.max(0.1, requiredWidthPerCamera));
+    const framedWidthFt = input.lensMm > 0
+      ? (input.distanceFt * input.sensorWidthMm) / input.lensMm
+      : input.sceneWidthFt;
+
+    const calculatedLensMm = input.calculatedLensMm ||
+      ((input.sensorWidthMm * input.distanceFt) / Math.max(0.1, requiredWidthPerCamera));
+
     const fitRatio = calculatedLensMm > 0 ? input.lensMm / calculatedLensMm : 1;
     const coverageRatio = framedWidthFt / Math.max(0.1, requiredWidthPerCamera);
 
     const horizontalPixels = num(input.horizontalPixels, 0);
     const requiredPpf = num(input.requiredPpf, 0);
+
     const availablePpf = horizontalPixels > 0 && framedWidthFt > 0
       ? horizontalPixels / framedWidthFt
       : num(input.availablePpf, 0);
 
-    const coveragePressure = coverageRatio >= 1 ? 15 : Math.min(100, Math.round((1 - coverageRatio) * 120));
+    const detailRatio = requiredPpf > 0 && availablePpf > 0
+      ? availablePpf / requiredPpf
+      : 0;
 
-    const detailPressure = requiredPpf > 0 && availablePpf > 0
-      ? availablePpf >= requiredPpf ? 15
-      : availablePpf >= requiredPpf * 0.85 ? 45
-      : availablePpf >= requiredPpf * 0.55 ? 70
-      : 92
-      : availablePpf > 0
-        ? availablePpf >= 120 ? 15 : availablePpf >= 80 ? 35 : availablePpf >= 40 ? 65 : 90
-        : 55;
+    let coveragePressure = 85;
+    if (coverageRatio >= 1) {
+      coveragePressure = 15;
+    } else if (coverageRatio >= 0.85) {
+      coveragePressure = 45;
+    }
 
-    const lensPressure = fitRatio >= 0.85 && fitRatio <= 1.45 ? 20 : fitRatio < 0.85 ? 82 : 58;
+    let detailPressure = 55;
+    if (requiredPpf > 0 && availablePpf > 0) {
+      if (detailRatio >= 1) {
+        detailPressure = 15;
+      } else if (detailRatio >= 0.8) {
+        detailPressure = 45;
+      } else {
+        detailPressure = 85;
+      }
+    } else if (availablePpf > 0) {
+      if (availablePpf >= 40) {
+        detailPressure = 15;
+      } else if (availablePpf >= 20) {
+        detailPressure = 45;
+      } else {
+        detailPressure = 85;
+      }
+    }
+
+    let lensPressure = 20;
+    if (fitRatio < 0.55 || fitRatio > 2.25) {
+      lensPressure = 85;
+    } else if (fitRatio < 0.75 || fitRatio > 1.60) {
+      lensPressure = 45;
+    }
+
+    // If coverage and detail are both healthy, do not let a normal wide-angle lens
+    // force an unnecessary split-camera recommendation.
+    if (coveragePressure <= 25 && detailPressure <= 25 && lensPressure > 45) {
+      lensPressure = 45;
+    }
+
     const pressure = Math.max(coveragePressure, detailPressure, lensPressure);
-    const status = input.key === "live" ? pressureStatus(pressure) : pressureStatus(pressure);
+    const status = metricStatusFromScore(pressure);
 
     let blocker = "Balanced";
     if (pressure === detailPressure) blocker = "Detail viability";
@@ -158,7 +201,10 @@
 
     const overlapFraction = input.coverageCount > 1 ? 0.15 : 0;
     const overlapWidthFt = requiredWidthPerCamera * overlapFraction;
-    const centerSpacingFt = input.coverageCount > 1 ? Math.max(0, requiredWidthPerCamera - overlapWidthFt) : 0;
+    const centerSpacingFt = input.coverageCount > 1
+      ? Math.max(0, requiredWidthPerCamera - overlapWidthFt)
+      : 0;
+
     const totalSpan = centerSpacingFt * Math.max(0, input.coverageCount - 1);
     const cameraPositionsFt = [];
 
@@ -171,16 +217,18 @@
       framedWidthFt,
       calculatedLensMm,
       fitRatio,
+      coverageRatio,
       horizontalPixels,
       requiredPpf,
       availablePpf,
+      detailRatio,
       coveragePressure,
       detailPressure,
       lensPressure,
       pressure,
       status,
-      coverageStatus: pressureStatus(coveragePressure),
-      detailStatus: pressureStatus(detailPressure),
+      coverageStatus: metricStatusFromScore(coveragePressure),
+      detailStatus: metricStatusFromScore(detailPressure),
       blocker,
       recommendedOverlapFraction: overlapFraction,
       overlapWidthFt,
@@ -213,7 +261,7 @@
         calculatedLensMm: 0,
         framedWidthFt: 0,
         horizontalPixels: num(saved.horizontalPixels, base.horizontalPixels || 1920),
-        requiredPpf: num(saved.requiredPpf, base.requiredPpf || 150),
+        requiredPpf: num(saved.requiredPpf, base.requiredPpf || 20),
         availablePpf: 0,
         coverageCount: Math.max(1, Math.min(4, Math.round(num(saved.coverageCount, base.coverageCount || 1)))),
         sourceStatus: "",
@@ -227,7 +275,7 @@
         label: "Custom Design",
         calculatedLensMm: 0,
         horizontalPixels: base.horizontalPixels || 1920,
-        requiredPpf: base.requiredPpf || 150,
+        requiredPpf: base.requiredPpf || 20,
         availablePpf: 0
       });
     }
@@ -248,7 +296,7 @@
       sensorWidthMm,
       cameraFormatLabel: formatLabelForSensor(sensorWidthMm),
       horizontalPixels: num(value("horizontalPixels"), 1920),
-      requiredPpf: num(value("requiredPpf"), 150),
+      requiredPpf: num(value("requiredPpf"), 20),
       coverageCount: Math.max(1, Math.min(4, Math.round(num(value("coverageCount"), 1))))
     };
   }
@@ -280,10 +328,10 @@
       { value: 7680, label: "7680 px / 8K" }
     ];
     const detailValues = [
-      { value: 80, label: "Observation / general" },
-      { value: 150, label: "Recognition-level detail" },
-      { value: 250, label: "Identification-level detail" },
-      { value: 300, label: "High-detail review" }
+      { value: 20, label: "Observation / general" },
+      { value: 40, label: "Recognition-level detail" },
+      { value: 80, label: "Identification-level detail" },
+      { value: 120, label: "High-detail review" }
     ];
     const coverageValues = [
       { value: 1, label: "Single camera" },
@@ -306,10 +354,33 @@
         '<div class="slda-field"><label>Selected / available lens</label><select data-slda-input="lensMm">' + optionList(lensValues, active.lensMm) + '</select></div>' +
         '<div class="slda-field"><label>Camera format</label><select data-slda-input="sensorWidthMm">' + optionList(formatValues, active.sensorWidthMm, true) + '</select></div>' +
         '<div class="slda-field"><label>Horizontal pixels</label><select data-slda-input="horizontalPixels">' + optionList(resolutionValues, active.horizontalPixels || 1920, true) + '</select></div>' +
-        '<div class="slda-field"><label>Detail requirement</label><select data-slda-input="requiredPpf">' + optionList(detailValues, active.requiredPpf || 150, true) + '</select></div>' +
+        '<div class="slda-field"><label>Detail requirement</label><select data-slda-input="requiredPpf">' + optionList(detailValues, active.requiredPpf || 20, true) + '</select></div>' +
         '<div class="slda-field"><label>Coverage strategy</label><select data-slda-input="coverageCount">' + optionList(coverageValues, active.coverageCount || 1, true) + '</select></div>' +
       '</div>' +
     '</div>';
+  }
+
+  function recommendedCameraCount(d) {
+    if (d.coverageStatus === "HEALTHY" && d.detailStatus === "HEALTHY") {
+      return 1;
+    }
+
+    let byCoverage = 1;
+    if (d.coverageStatus !== "HEALTHY") {
+      byCoverage = Math.ceil(d.sceneWidthFt / Math.max(1, d.framedWidthFt * 0.85));
+    }
+
+    let byDetail = 1;
+    if (
+      d.detailStatus !== "HEALTHY" &&
+      d.horizontalPixels > 0 &&
+      d.requiredPpf > 0
+    ) {
+      const maxWidthByDetail = d.horizontalPixels / d.requiredPpf;
+      byDetail = Math.ceil(d.sceneWidthFt / Math.max(1, maxWidthByDetail * 0.85));
+    }
+
+    return Math.max(1, Math.min(4, byCoverage, byDetail));
   }
 
   function scenariosFrom(base, customBase) {
@@ -318,14 +389,30 @@
       label: "Custom Design"
     }));
 
-    const splitCount = Math.min(4, Math.max(2, Math.ceil(live.sceneWidthFt / Math.max(1, live.framedWidthFt * 0.85))));
-    const splitLensTarget = (live.sensorWidthMm * live.distanceFt) / Math.max(0.1, live.sceneWidthFt / splitCount);
+    const splitCount = recommendedCameraCount(live);
+    const splitLensTarget = (live.sensorWidthMm * live.distanceFt) / Math.max(0.1, live.sceneWidthFt / Math.max(1, splitCount));
 
     return [
       live,
-      evaluate(Object.assign({}, live, { key: "split", label: "Suggested Split", coverageCount: splitCount, lensMm: nearestLens(splitLensTarget), calculatedLensMm: splitLensTarget })),
-      evaluate(Object.assign({}, live, { key: "optimized", label: "Lens for Required Width", lensMm: nearestLens(live.calculatedLensMm), calculatedLensMm: live.calculatedLensMm })),
-      evaluate(Object.assign({}, live, { key: "tighter", label: "Tighter Lens", lensMm: nearestLens(Math.max(live.lensMm, live.calculatedLensMm)), calculatedLensMm: live.calculatedLensMm }))
+      evaluate(Object.assign({}, live, {
+        key: "split",
+        label: splitCount > 1 ? "Suggested Split" : "Split Not Needed",
+        coverageCount: splitCount,
+        lensMm: splitCount > 1 ? nearestLens(splitLensTarget) : live.lensMm,
+        calculatedLensMm: splitCount > 1 ? splitLensTarget : live.calculatedLensMm
+      })),
+      evaluate(Object.assign({}, live, {
+        key: "optimized",
+        label: "Lens for Required Width",
+        lensMm: nearestLens(live.calculatedLensMm),
+        calculatedLensMm: live.calculatedLensMm
+      })),
+      evaluate(Object.assign({}, live, {
+        key: "tighter",
+        label: "Tighter Lens",
+        lensMm: nearestLens(Math.max(live.lensMm, live.calculatedLensMm)),
+        calculatedLensMm: live.calculatedLensMm
+      }))
     ];
   }
 
@@ -444,7 +531,7 @@
   }
 
   function buildHtml(active, scenarios) {
-    const suggestedCameras = Math.max(1, Math.min(4, Math.ceil(active.sceneWidthFt / Math.max(1, active.framedWidthFt * 0.85))));
+    const suggestedCameras = recommendedCameraCount(active);
 
     return `
       <div class="slda-shell">
@@ -471,7 +558,7 @@
             <div class="slda-mini-grid">
               <div class="slda-card"><div class="slda-label">Estimated View Width</div><strong class="${statusClass(active.coverageStatus)}">${ft(active.framedWidthFt)}</strong><div class="slda-note">What the selected lens frames.</div></div>
               <div class="slda-card"><div class="slda-label">Required Width</div><strong>${ft(active.requiredWidthPerCamera)}</strong><div class="slda-note">Scene width that must be covered.</div></div>
-              <div class="slda-card"><div class="slda-label">Available Detail</div><strong class="${statusClass(active.detailStatus)}">${ppf(active.availablePpf)}</strong><div class="slda-note">Detail context from upstream when available.</div></div>
+              <div class="slda-card"><div class="slda-label">Available Detail</div><strong class="${statusClass(active.detailStatus)}">${ppf(active.availablePpf)}${active.requiredPpf ? " / " + fmt(active.requiredPpf, 0) + " target" : ""}</strong><div class="slda-note">Estimated detail from resolution and framed width.</div></div>
               <div class="slda-card"><div class="slda-label">Projected Status</div><strong class="${statusClass(active.status)}">${active.status}</strong><div class="slda-note">Combined framing/detail status.</div></div>
             </div>
           </div>
