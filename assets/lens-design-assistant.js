@@ -450,12 +450,25 @@
     const pxPerFt = 220 / visualWidthFt;
     const yFor = pos => centerY + pos * pxPerFt;
     const statusColor = s => s === "HEALTHY" ? "#7dff98" : s === "WATCH" ? "#ffd34f" : "#ff8f88";
+    const detailTarget = num(d.requiredPpf, 0);
+
     const detailBand = stepWidth => {
-      if (!d.availablePpf) return "rgba(255,211,79,.16)";
+      if (!d.availablePpf || !detailTarget) {
+        return "rgba(255,211,79,.16)";
+      }
+
       const stepPpf = d.availablePpf * (d.framedWidthFt / Math.max(0.1, stepWidth));
-      if (stepPpf >= 120) return "rgba(125,255,152,.20)";
-      if (stepPpf >= 80) return "rgba(255,211,79,.20)";
-      return "rgba(255,96,88,.20)";
+      const detailRatio = stepPpf / Math.max(1, detailTarget);
+
+      if (detailRatio >= 1) {
+        return "rgba(125,255,152,.22)";
+      }
+
+      if (detailRatio >= 0.8) {
+        return "rgba(255,211,79,.22)";
+      }
+
+      return "rgba(255,96,88,.24)";
     };
 
     const sceneTop = yFor(-d.sceneWidthFt / 2);
