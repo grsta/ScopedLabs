@@ -96,6 +96,17 @@
     return list.reduce((best, lens) => Math.abs(lens - target) < Math.abs(best - target) ? lens : best, list[0]);
   }
 
+  function nextHigherLens(target) {
+    const list = [2.8, 3.6, 4, 6, 8, 12, 16, 25, 35, 50];
+    const value = num(target, list[0]);
+
+    for (const lens of list) {
+      if (lens > value + 0.05) return lens;
+    }
+
+    return list[list.length - 1];
+  }
+
   function baseFromLive(data) {
     const distanceFt = num(data.dist, 0);
     const sceneWidthFt = num(data.tw, 0);
@@ -396,11 +407,14 @@
     const splitCount = recommendedCameraCount(live);
     const splitLensTarget = (live.sensorWidthMm * live.distanceFt) / Math.max(0.1, live.sceneWidthFt / Math.max(1, splitCount));
 
+    const exactWidthLens = live.calculatedLensMm;
+    const tighterLens = nextHigherLens(Math.max(live.lensMm, live.calculatedLensMm));
+
     return [
       live,
       evaluate(Object.assign({}, live, {
         key: "split",
-        label: splitCount > 1 ? "Suggested Split" : "Split Not Needed",
+        label: splitCount > 1 ? "Suggested Split" : "Split Check",
         coverageCount: splitCount,
         lensMm: splitCount > 1 ? nearestLens(splitLensTarget) : live.lensMm,
         calculatedLensMm: splitCount > 1 ? splitLensTarget : live.calculatedLensMm
@@ -408,13 +422,13 @@
       evaluate(Object.assign({}, live, {
         key: "optimized",
         label: "Exact Width Lens",
-        lensMm: nearestLens(live.calculatedLensMm),
-        calculatedLensMm: live.calculatedLensMm
+        lensMm: exactWidthLens,
+        calculatedLensMm: exactWidthLens
       })),
       evaluate(Object.assign({}, live, {
         key: "tighter",
-        label: "Tighter Lens",
-        lensMm: nearestLens(Math.max(live.lensMm, live.calculatedLensMm)),
+        label: "Tighter Lens Check",
+        lensMm: tighterLens,
         calculatedLensMm: live.calculatedLensMm
       }))
     ];
@@ -527,13 +541,31 @@
     </svg>`;
   }
 
+  function chartPressure(s) {
+    const coverageExtra = s.coverageRatio >= 1
+      ? Math.max(0, Math.min(15, (s.coverageRatio - 1) * 20))
+      : 0;
+
+    const detailExtra = s.detailRatio >= 1
+      ? Math.max(0, Math.min(15, (s.detailRatio - 1) * 12))
+      : 0;
+
+    let score = s.pressure;
+
+    if (s.status === "HEALTHY") {
+      score = Math.max(5, score - Math.max(coverageExtra, detailExtra));
+    }
+
+    return Math.round(score);
+  }
+
   function renderChart(scenarios, activeKey) {
     const width = 920, height = 260, left = 70, right = 860, top = 34, bottom = 210;
     const x = i => left + (right - left) * (i / Math.max(1, scenarios.length - 1));
     const y = v => bottom - (bottom - top) * (v / 100);
     const color = s => s === "HEALTHY" ? "#7dff98" : s === "WATCH" ? "#ffd34f" : "#ff8f88";
-    const path = scenarios.map((s, i) => `${i ? "L" : "M"} ${x(i).toFixed(1)} ${y(s.pressure).toFixed(1)}`).join(" ");
-    const points = scenarios.map((s, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(s.pressure).toFixed(1)}" r="${s.key === activeKey ? 8 : 6}" fill="${color(s.status)}" stroke="#fff" stroke-width="2" /><text x="${x(i).toFixed(1)}" y="${(y(s.pressure) - 14).toFixed(1)}" text-anchor="middle" fill="${color(s.status)}" font-size="11" font-weight="950">${s.pressure}</text><text x="${x(i).toFixed(1)}" y="236" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="10" font-weight="850">${esc(s.label)}</text>`).join("");
+    const path = scenarios.map((s, i) => `${i ? "L" : "M"} ${x(i).toFixed(1)} ${y(chartPressure(s)).toFixed(1)}`).join(" ");
+    const points = scenarios.map((s, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(chartPressure(s)).toFixed(1)}" r="${s.key === activeKey ? 8 : 6}" fill="${color(s.status)}" stroke="#fff" stroke-width="2" /><text x="${x(i).toFixed(1)}" y="${(y(chartPressure(s)) - 14).toFixed(1)}" text-anchor="middle" fill="${color(s.status)}" font-size="11" font-weight="950">${chartPressure(s)}</text><text x="${x(i).toFixed(1)}" y="236" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="10" font-weight="850">${esc(s.label)}</text>`).join("");
 
     return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Scenario pressure comparison">
       <rect width="${width}" height="${height}" fill="rgba(2,6,12,.18)" />
@@ -647,7 +679,7 @@
             <div class="slda-card"><div class="slda-label">Selected Path</div><strong>${esc(active.label)}</strong><div class="slda-note">Scenario currently selected.</div></div>
             <div class="slda-card"><div class="slda-label">Selected Lens</div><strong>${mm(active.lensMm)}</strong><div class="slda-note">Selected or available planning lens size.</div></div>
             <div class="slda-card"><div class="slda-label">Coverage Status</div><strong class="${statusClass(active.coverageStatus)}">${active.coverageStatus}</strong><div class="slda-note">${ft(active.framedWidthFt)} framed vs ${ft(active.requiredWidthPerCamera)} required.</div></div>
-            <div class="slda-card"><div class="slda-label">Pressure</div><strong class="${statusClass(active.status)}">${active.pressure} / 100</strong><div class="slda-note">Charted value.</div></div>
+            <div class="slda-card"><div class="slda-label">Pressure</div><strong class="${statusClass(active.status)}">${chartPressure(active)} / 100</strong><div class="slda-note">Scenario comparison value.</div></div>
           </div>
           <div class="slda-chart">${renderChart(scenarios, active.key)}</div>
           <div class="slda-recommendation">${designText(active)}</div>
