@@ -1014,7 +1014,7 @@
         window.ScopedLabsReportV2Data = reportPayload;
         localStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(reportPayload, null, 2));
         sessionStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(reportPayload, null, 2));
-        window.open("/prototypes/lens-report-v2/?source=live-lens-selection&rev=live-shadow-001", "_blank", "noopener");
+        window.open("/prototypes/lens-report-v2/?source=live-lens-assistant&rev=assistant-notes-017", "_blank", "noopener");
       });
     }
 

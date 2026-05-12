@@ -616,7 +616,7 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-016-assistant-owned-notes.</div>
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-017-assistant-field-hydration.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
@@ -844,11 +844,11 @@
   function hydrateOptionalReportFields(payload) {
     const fields = payload && payload.reportFields ? payload.reportFields : {};
     const pairs = [
-      [["reportTitle", "report-title"], fields.reportTitle],
-      [["projectName", "project-name"], fields.projectName],
-      [["clientName", "client-name"], fields.clientName],
-      [["preparedBy", "prepared-by"], fields.preparedBy],
-      [["customNotes", "custom-notes", "reportNotes", "report-notes", "notes"], fields.customNotes]
+      [["metaTitle", "reportTitle", "report-title", "title"], fields.reportTitle],
+      [["metaProject", "projectName", "project-name", "project"], fields.projectName],
+      [["metaClient", "clientName", "client-name", "client"], fields.clientName],
+      [["metaPreparedBy", "metaPrepared", "preparedBy", "prepared-by", "author"], fields.preparedBy],
+      [["metaNotes", "customNotes", "custom-notes", "reportNotes", "report-notes", "notes"], fields.customNotes]
     ];
 
     pairs.forEach(function (pair) {
@@ -860,9 +860,7 @@
       for (var i = 0; i < ids.length; i++) {
         var el = document.getElementById(ids[i]) || document.querySelector("[name='" + ids[i] + "']");
         if (el && typeof el.value === "string") {
-          if (!el.value || el.value === "Optional" || el.value === "Planning Review") {
-            el.value = value;
-          }
+          el.value = value;
 
           el.dispatchEvent(new Event("input", { bubbles: true }));
           el.dispatchEvent(new Event("change", { bubbles: true }));
