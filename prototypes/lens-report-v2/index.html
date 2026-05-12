@@ -616,7 +616,7 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-014-assistant-scenario.</div>
+        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-015-assistant-notes.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
@@ -829,6 +829,49 @@
     };
   }
 
+  function readReportFieldsFromPayload(raw) {
+    const fields = raw.reportFields || raw.report || raw.reportMeta || {};
+
+    return {
+      reportTitle: fields.reportTitle || fields.title || "",
+      projectName: fields.projectName || fields.project || "",
+      clientName: fields.clientName || fields.client || "",
+      preparedBy: fields.preparedBy || fields.author || "",
+      customNotes: fields.customNotes || fields.notes || raw.customNotes || ""
+    };
+  }
+
+  function hydrateOptionalReportFields(payload) {
+    const fields = payload && payload.reportFields ? payload.reportFields : {};
+    const pairs = [
+      [["reportTitle", "report-title"], fields.reportTitle],
+      [["projectName", "project-name"], fields.projectName],
+      [["clientName", "client-name"], fields.clientName],
+      [["preparedBy", "prepared-by"], fields.preparedBy],
+      [["customNotes", "custom-notes", "reportNotes", "report-notes", "notes"], fields.customNotes]
+    ];
+
+    pairs.forEach(function (pair) {
+      const ids = pair[0];
+      const value = pair[1];
+
+      if (!value) return;
+
+      for (var i = 0; i < ids.length; i++) {
+        var el = document.getElementById(ids[i]) || document.querySelector("[name='" + ids[i] + "']");
+        if (el && typeof el.value === "string") {
+          if (!el.value || el.value === "Optional" || el.value === "Planning Review") {
+            el.value = value;
+          }
+
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+          break;
+        }
+      }
+    });
+  }
+
   function normalizeDesignLabPayload(raw) {
     var a = raw.assumptions || {};
     var d = raw.designTargets || {};
@@ -863,6 +906,7 @@
 
     return {
       dataSource: sourceLabel,
+      reportFields: readReportFieldsFromPayload(raw),
       reportVersion: "diagnostic-report-v2.bridge-live-prototype",
       generatedAt: raw.savedAt || new Date().toISOString(),
       tool: "Lens Selection Helper",
@@ -1087,6 +1131,7 @@
 
   function render() {
     var payload = loadPayload();
+    hydrateOptionalReportFields(payload);
     var body = document.getElementById("reportBody");
     var reportMeta = readReportMeta();
     var reportPayload = Object.assign({}, payload, { reportMeta: reportMeta });

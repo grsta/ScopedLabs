@@ -597,7 +597,66 @@
     }
   }
 
+  function firstFieldValue(selectors) {
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (el && typeof el.value === "string" && el.value.trim()) {
+        return el.value.trim();
+      }
+    }
+
+    return "";
+  }
+
+  function readAssistantReportFields() {
+    return {
+      reportTitle: firstFieldValue([
+        "#reportTitle",
+        "#report-title",
+        "[name='reportTitle']",
+        "[data-report-field='reportTitle']",
+        "[data-export-field='reportTitle']"
+      ]),
+      projectName: firstFieldValue([
+        "#projectName",
+        "#project-name",
+        "[name='projectName']",
+        "[data-report-field='projectName']",
+        "[data-export-field='projectName']"
+      ]),
+      clientName: firstFieldValue([
+        "#clientName",
+        "#client-name",
+        "[name='clientName']",
+        "[data-report-field='clientName']",
+        "[data-export-field='clientName']"
+      ]),
+      preparedBy: firstFieldValue([
+        "#preparedBy",
+        "#prepared-by",
+        "[name='preparedBy']",
+        "[data-report-field='preparedBy']",
+        "[data-export-field='preparedBy']"
+      ]),
+      customNotes: firstFieldValue([
+        "#customNotes",
+        "#custom-notes",
+        "#reportNotes",
+        "#report-notes",
+        "#notes",
+        "textarea[name='customNotes']",
+        "textarea[name='reportNotes']",
+        "textarea[name='notes']",
+        "[data-report-field='customNotes']",
+        "[data-report-field='notes']",
+        "[data-export-field='customNotes']",
+        "[data-export-field='notes']"
+      ])
+    };
+  }
+
   function assistantScenarioReportPayload(active, rawData) {
+    const reportFields = readAssistantReportFields();
     const suggestedCameras = recommendedCameraCount(active);
     const maxWidthPerCameraFt = active.horizontalPixels > 0 && active.requiredPpf > 0
       ? active.horizontalPixels / active.requiredPpf
@@ -611,6 +670,8 @@
       step: "lens-selection",
       tool: "Lens Selection Helper",
       selectedScenario: active.label || "Custom Design",
+      reportFields: reportFields,
+      customNotes: reportFields.customNotes || "",
 
       selectedLensMm: roundOrNull(active.lensMm, 2),
       calculatedLensMm: roundOrNull(active.calculatedLensMm, 2),
