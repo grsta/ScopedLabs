@@ -579,6 +579,125 @@
     </svg>`;
   }
 
+  const ASSISTANT_REPORT_STORAGE_KEY = "scopedlabs:prototype:lens-design-lab:selected-scenario";
+
+  function roundOrNull(value, digits) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return null;
+    return Number(number.toFixed(digits == null ? 2 : digits));
+  }
+
+  function saveAssistantReportPayload(payload) {
+    try {
+      const text = JSON.stringify(payload, null, 2);
+      localStorage.setItem(ASSISTANT_REPORT_STORAGE_KEY, text);
+      sessionStorage.setItem(ASSISTANT_REPORT_STORAGE_KEY, text);
+    } catch (error) {
+      // Storage can fail in private/restricted contexts. Report button will still use window data.
+    }
+  }
+
+  function assistantScenarioReportPayload(active, rawData) {
+    const suggestedCameras = recommendedCameraCount(active);
+    const maxWidthPerCameraFt = active.horizontalPixels > 0 && active.requiredPpf > 0
+      ? active.horizontalPixels / active.requiredPpf
+      : active.framedWidthFt;
+
+    const payload = {
+      schema: "scopedlabs.prototype.lens-design-scenario.v2",
+      sourceTool: "live-lens-selection-design-assistant",
+      savedAt: new Date().toISOString(),
+      category: "physical-security",
+      step: "lens-selection",
+      tool: "Lens Selection Helper",
+      selectedScenario: active.label || "Custom Design",
+
+      selectedLensMm: roundOrNull(active.lensMm, 2),
+      calculatedLensMm: roundOrNull(active.calculatedLensMm, 2),
+
+      status: active.status || "WATCH",
+      coverageStatus: active.coverageStatus || "WATCH",
+      detailStatus: active.detailStatus || "WATCH",
+      pressure: Math.round(Number(active.pressure || 0)),
+
+      assumptions: {
+        distanceFt: roundOrNull(active.distanceFt, 2),
+        requiredSceneWidthFt: roundOrNull(active.sceneWidthFt, 2),
+        sceneWidthFt: roundOrNull(active.sceneWidthFt, 2),
+        selectedLensMm: roundOrNull(active.lensMm, 2),
+        cameraFormatLabel: active.cameraFormatLabel || null,
+        sensorWidthMm: roundOrNull(active.sensorWidthMm, 2),
+        horizontalPixels: Math.round(Number(active.horizontalPixels || 0)) || null,
+        requiredPpf: roundOrNull(active.requiredPpf, 2),
+        availablePpf: roundOrNull(active.availablePpf, 2),
+        coverageCount: Math.max(1, Math.round(Number(active.coverageCount || 1))),
+        framedWidthFt: roundOrNull(active.framedWidthFt, 2),
+        coverageStrategy: active.coverageCount > 1 ? "Split coverage" : "Single camera"
+      },
+
+      designTargets: {
+        suggestedCameras: suggestedCameras,
+        recommendedOverlapPercent: roundOrNull((active.recommendedOverlapFraction || 0) * 100, 1),
+        overlapWidthFt: roundOrNull(active.overlapWidthFt, 2),
+        centerSpacingFt: roundOrNull(active.centerSpacingFt, 2),
+        cameraPositionsFt: Array.isArray(active.cameraPositionsFt)
+          ? active.cameraPositionsFt.map(value => roundOrNull(value, 2))
+          : [],
+        maxWidthPerCameraFt: roundOrNull(maxWidthPerCameraFt, 2),
+        requiredLensForTargetMm: roundOrNull(active.calculatedLensMm, 2),
+        pixelsNeededOneCamera: active.requiredPpf > 0
+          ? Math.round(active.requiredPpf * active.sceneWidthFt)
+          : null,
+        mainBlocker: active.blocker || "None"
+      },
+
+      diagnostics: {
+        gauge: {
+          score: Math.round(Number(active.pressure || 0)),
+          status: active.status || "WATCH"
+        },
+        dominantDriver: {
+          label: active.blocker || "None",
+          summary: driverSummary(active)
+        },
+        metrics: [
+          {
+            label: "Coverage fit",
+            value: Math.round(Number(active.coveragePressure || 0)),
+            status: active.coverageStatus || "WATCH"
+          },
+          {
+            label: "Detail viability",
+            value: Math.round(Number(active.detailPressure || 0)),
+            status: active.detailStatus || "WATCH"
+          },
+          {
+            label: "Lens class pressure",
+            value: Math.round(Number(active.lensPressure || 0)),
+            status: metricStatusFromScore(Number(active.lensPressure || 0))
+          }
+        ]
+      },
+
+      interpretation: driverSummary(active),
+      guidance: designText(active),
+      flowOutputs: {
+        selectedScenario: active.label || "Custom Design",
+        distanceFt: roundOrNull(active.distanceFt, 2),
+        requiredSceneWidthFt: roundOrNull(active.sceneWidthFt, 2),
+        selectedLensMm: roundOrNull(active.lensMm, 2),
+        calculatedLensMm: roundOrNull(active.calculatedLensMm, 2),
+        framedWidthFt: roundOrNull(active.framedWidthFt, 2),
+        cameraCount: Math.max(1, Math.round(Number(active.coverageCount || 1))),
+        availablePpf: roundOrNull(active.availablePpf, 2),
+        requiredPpf: roundOrNull(active.requiredPpf, 2),
+        status: active.status || "WATCH"
+      }
+    };
+
+    return payload;
+  }
+
   function buildHtml(active, scenarios) {
     const suggestedCameras = recommendedCameraCount(active);
 
@@ -712,6 +831,19 @@
     const scenarios = scenariosFrom(base, customBase);
     const selectedKey = target.getAttribute("data-slda-scenario") || "live";
     const active = scenarios.find(s => s.key === selectedKey) || scenarios[0];
+    const reportPayload = assistantScenarioReportPayload(active, rawData);
+
+    window.ScopedLabsLensDesignAssistantActiveScenario = active;
+    window.ScopedLabsLensDesignAssistantReportData = reportPayload;
+    window.ScopedLabsReportV2Data = reportPayload;
+    saveAssistantReportPayload(reportPayload);
+
+    document.dispatchEvent(new CustomEvent("scopedlabs:lens-design-assistant:selected", {
+      detail: {
+        scenario: active,
+        reportPayload
+      }
+    }));
 
     target.hidden = false;
     target.innerHTML = buildHtml(active, scenarios);
@@ -753,8 +885,16 @@
     const reportBtn = target.querySelector("[data-slda-open-report]");
     if (reportBtn) {
       reportBtn.addEventListener("click", () => {
+        saveAssistantReportPayload(reportPayload);
+        window.ScopedLabsReportV2Data = reportPayload;
+
         const liveBtn = document.getElementById("openReportV2");
-        if (liveBtn) liveBtn.click();
+        if (liveBtn) {
+          liveBtn.click();
+          return;
+        }
+
+        window.open("/prototypes/lens-report-v2/?source=live-lens-assistant&rev=assistant-scenario-001", "_blank", "noopener");
       });
     }
   }

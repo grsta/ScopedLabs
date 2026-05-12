@@ -1008,9 +1008,12 @@
     const openReportV2 = document.getElementById("openReportV2");
     if (openReportV2) {
       openReportV2.addEventListener("click", () => {
-        if (!window.ScopedLabsReportV2Data) return;
-        localStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(window.ScopedLabsReportV2Data, null, 2));
-        sessionStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(window.ScopedLabsReportV2Data, null, 2));
+        const reportPayload = window.ScopedLabsLensDesignAssistantReportData || window.ScopedLabsReportV2Data;
+        if (!reportPayload) return;
+
+        window.ScopedLabsReportV2Data = reportPayload;
+        localStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(reportPayload, null, 2));
+        sessionStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(reportPayload, null, 2));
         window.open("/prototypes/lens-report-v2/?source=live-lens-selection&rev=live-shadow-001", "_blank", "noopener");
       });
     }
