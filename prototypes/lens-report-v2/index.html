@@ -616,24 +616,24 @@
   <main class="page">
     <div class="report-shell">
       <div class="prototype-note">
-        Hidden report prototype. Mock Lens V2 payload only. Not linked in nav or sitemap. Rev: lens-report-v2-018-silent-assistant-notes.</div>
+        Report V2 preview generated from the selected Lens Design Assistant scenario. Rev: lens-report-v2-019-report-polish.</div>
 
       <article class="report-page" id="report">
         <section class="report-cover">
           <div class="report-kicker">ScopedLabs Planning Report V2</div>
           <h1 id="coverReportTitle">Lens Selection Diagnostic Report</h1>
           <p>
-            Structured planning report generated from a Lens Selection diagnostic payload. This prototype avoids DOM scraping and renders only the intended report sections.
+            Structured planning report generated from the selected Lens Design Assistant scenario. Use this view to document assumptions, selected lens path, planning pressure, and remaining validation checks.
           </p>
         </section>
 
         <div class="report-actions">
           <button class="report-btn" type="button" onclick="window.print()">Print / Save as PDF</button>
-          <button class="report-btn" type="button" id="togglePayload">Show payload</button>
+          <button class="report-btn" type="button" id="togglePayload">Show technical payload</button>
         </div>
 
         <section class="report-options" aria-label="Optional report fields">
-          <h2>Optional Report Fields</h2>
+          <h2>Report Details</h2>
 
           <div class="report-options-grid">
             <div class="report-option-field">
@@ -663,14 +663,14 @@
           </div>
 
           <p class="report-option-note">
-            These fields are included in the report output and payload. They are hidden from the printed controls but rendered in the report body.
+            These fields are included in the report body and print/PDF output.
           </p>
         </section>
 
         <section class="report-body" id="reportBody"></section>
 
         <footer class="report-footer">
-          ScopedLabs tools are planning aids only. Final design decisions should be validated against manufacturer data, site conditions, installation tolerances, applicable codes, and project-specific requirements.
+          ScopedLabs reports are planning aids only. Final design decisions should be validated against manufacturer data, site conditions, installation tolerances, applicable codes, and project-specific requirements.
         </footer>
       </article>
     </div>
