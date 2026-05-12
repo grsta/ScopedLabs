@@ -50,10 +50,14 @@
       .slda-action-card strong { display:block; color:#7dff98; margin-bottom:4px; }
       .slda-recommendation { border:1px solid rgba(255,211,79,.20); background:rgba(255,211,79,.06); border-radius:14px; padding:12px; color:rgba(226,232,240,.84); line-height:1.48; font-size:.82rem; margin-top:12px; }
       .slda-chart { border:1px solid rgba(148,163,184,.14); border-radius:14px; background:rgba(255,255,255,.022); overflow:hidden; margin-top:12px; }
+      .slda-report-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:12px 0; }
+      .slda-report-grid .slda-wide { grid-column:1 / -1; }
+      .slda-field textarea { width:100%; min-height:72px; resize:vertical; border:1px solid rgba(148,163,184,.18); border-radius:10px; background:rgba(2,6,12,.72); color:#fff; padding:9px 10px; font-weight:750; outline:none; }
+      .slda-field textarea:focus { border-color:rgba(125,255,152,.50); box-shadow:0 0 0 2px rgba(125,255,152,.10); }
       .slda-carry { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
       .slda-carry button { border:1px solid rgba(125,255,152,.30); background:rgba(125,255,152,.10); color:#7dff98; border-radius:10px; padding:9px 12px; font-weight:900; cursor:pointer; }
       @media (max-width:920px) {
-        .slda-grid-2, .slda-mini-grid, .slda-target-grid, .slda-scenario-strip, .slda-action-grid, .slda-assumption-grid { grid-template-columns:1fr; }
+        .slda-grid-2, .slda-mini-grid, .slda-target-grid, .slda-scenario-strip, .slda-action-grid, .slda-assumption-grid, .slda-report-grid { grid-template-columns:1fr; }
         .slda-head, .slda-section-head { display:grid; }
         .slda-driver-row { grid-template-columns:1fr; }
       }
@@ -597,66 +601,54 @@
     }
   }
 
-  function firstFieldValue(selectors) {
-    for (const selector of selectors) {
-      const el = document.querySelector(selector);
-      if (el && typeof el.value === "string" && el.value.trim()) {
-        return el.value.trim();
-      }
-    }
+  function savedAssistantReportFields(target) {
+    if (!target) return {};
 
-    return "";
+    try {
+      return JSON.parse(target.getAttribute("data-slda-report-fields") || "{}") || {};
+    } catch (error) {
+      return {};
+    }
   }
 
-  function readAssistantReportFields() {
+  function readAssistantReportFields(target) {
+    const saved = savedAssistantReportFields(target);
+
+    if (!target) {
+      return {
+        reportTitle: saved.reportTitle || "Lens Selection Diagnostic Report",
+        projectName: saved.projectName || "",
+        clientName: saved.clientName || "",
+        preparedBy: saved.preparedBy || "",
+        customNotes: saved.customNotes || ""
+      };
+    }
+
+    function fieldValue(name, fallback) {
+      const el = target.querySelector('[data-slda-report-input="' + name + '"]');
+      if (el && typeof el.value === "string") return el.value.trim();
+      return fallback || "";
+    }
+
     return {
-      reportTitle: firstFieldValue([
-        "#reportTitle",
-        "#report-title",
-        "[name='reportTitle']",
-        "[data-report-field='reportTitle']",
-        "[data-export-field='reportTitle']"
-      ]),
-      projectName: firstFieldValue([
-        "#projectName",
-        "#project-name",
-        "[name='projectName']",
-        "[data-report-field='projectName']",
-        "[data-export-field='projectName']"
-      ]),
-      clientName: firstFieldValue([
-        "#clientName",
-        "#client-name",
-        "[name='clientName']",
-        "[data-report-field='clientName']",
-        "[data-export-field='clientName']"
-      ]),
-      preparedBy: firstFieldValue([
-        "#preparedBy",
-        "#prepared-by",
-        "[name='preparedBy']",
-        "[data-report-field='preparedBy']",
-        "[data-export-field='preparedBy']"
-      ]),
-      customNotes: firstFieldValue([
-        "#customNotes",
-        "#custom-notes",
-        "#reportNotes",
-        "#report-notes",
-        "#notes",
-        "textarea[name='customNotes']",
-        "textarea[name='reportNotes']",
-        "textarea[name='notes']",
-        "[data-report-field='customNotes']",
-        "[data-report-field='notes']",
-        "[data-export-field='customNotes']",
-        "[data-export-field='notes']"
-      ])
+      reportTitle: fieldValue("reportTitle", saved.reportTitle || "Lens Selection Diagnostic Report"),
+      projectName: fieldValue("projectName", saved.projectName),
+      clientName: fieldValue("clientName", saved.clientName),
+      preparedBy: fieldValue("preparedBy", saved.preparedBy),
+      customNotes: fieldValue("customNotes", saved.customNotes)
     };
   }
 
-  function assistantScenarioReportPayload(active, rawData) {
-    const reportFields = readAssistantReportFields();
+  function saveAssistantReportFields(target) {
+    if (!target) return readAssistantReportFields(target);
+
+    const fields = readAssistantReportFields(target);
+    target.setAttribute("data-slda-report-fields", JSON.stringify(fields));
+    return fields;
+  }
+
+  function assistantScenarioReportPayload(active, rawData, target) {
+    const reportFields = readAssistantReportFields(target);
     const suggestedCameras = recommendedCameraCount(active);
     const maxWidthPerCameraFt = active.horizontalPixels > 0 && active.requiredPpf > 0
       ? active.horizontalPixels / active.requiredPpf
@@ -759,7 +751,7 @@
     return payload;
   }
 
-  function buildHtml(active, scenarios) {
+  function buildHtml(active, scenarios, reportFields) {
     const suggestedCameras = recommendedCameraCount(active);
 
     return `
@@ -874,6 +866,14 @@
             </div>
             <div class="slda-chip">Live Shadow Path</div>
           </div>
+          <div class="slda-report-grid">
+            <div class="slda-field"><label>Report title</label><input data-slda-report-input="reportTitle" type="text" value="${esc((reportFields && reportFields.reportTitle) || "Lens Selection Diagnostic Report")}"></div>
+            <div class="slda-field"><label>Project name</label><input data-slda-report-input="projectName" type="text" value="${esc((reportFields && reportFields.projectName) || "")}" placeholder="Optional"></div>
+            <div class="slda-field"><label>Client name</label><input data-slda-report-input="clientName" type="text" value="${esc((reportFields && reportFields.clientName) || "")}" placeholder="Optional"></div>
+            <div class="slda-field"><label>Prepared by</label><input data-slda-report-input="preparedBy" type="text" value="${esc((reportFields && reportFields.preparedBy) || "")}" placeholder="Optional"></div>
+            <div class="slda-field slda-wide"><label>Custom notes</label><textarea data-slda-report-input="customNotes" placeholder="Add project-specific notes for Report V2...">${esc((reportFields && reportFields.customNotes) || "")}</textarea></div>
+          </div>
+
           <div class="slda-carry">
             <button type="button" data-slda-open-report>Open Report V2</button>
             <span class="slda-copy">Continue uses the existing pipeline button below. Old Export Report remains available in the Documentation & Export card.</span>
@@ -892,7 +892,8 @@
     const scenarios = scenariosFrom(base, customBase);
     const selectedKey = target.getAttribute("data-slda-scenario") || "live";
     const active = scenarios.find(s => s.key === selectedKey) || scenarios[0];
-    const reportPayload = assistantScenarioReportPayload(active, rawData);
+    const reportFields = readAssistantReportFields(target);
+    const reportPayload = assistantScenarioReportPayload(active, rawData, target);
 
     window.ScopedLabsLensDesignAssistantActiveScenario = active;
     window.ScopedLabsLensDesignAssistantReportData = reportPayload;
@@ -907,7 +908,7 @@
     }));
 
     target.hidden = false;
-    target.innerHTML = buildHtml(active, scenarios);
+    target.innerHTML = buildHtml(active, scenarios, reportFields);
 
     target.querySelectorAll("[data-slda-scenario]").forEach(button => {
       button.addEventListener("click", () => {
@@ -943,11 +944,26 @@
       });
     });
 
+    target.querySelectorAll("[data-slda-report-input]").forEach(input => {
+      input.addEventListener("input", () => {
+        saveAssistantReportFields(target);
+      });
+
+      input.addEventListener("change", () => {
+        saveAssistantReportFields(target);
+      });
+    });
+
     const reportBtn = target.querySelector("[data-slda-open-report]");
     if (reportBtn) {
       reportBtn.addEventListener("click", () => {
-        saveAssistantReportPayload(reportPayload);
-        window.ScopedLabsReportV2Data = reportPayload;
+        saveAssistantReportFields(target);
+
+        const latestPayload = assistantScenarioReportPayload(active, rawData, target);
+        saveAssistantReportPayload(latestPayload);
+
+        window.ScopedLabsLensDesignAssistantReportData = latestPayload;
+        window.ScopedLabsReportV2Data = latestPayload;
 
         const liveBtn = document.getElementById("openReportV2");
         if (liveBtn) {
@@ -955,7 +971,7 @@
           return;
         }
 
-        window.open("/prototypes/lens-report-v2/?source=live-lens-assistant&rev=assistant-scenario-001", "_blank", "noopener");
+        window.open("/prototypes/lens-report-v2/?source=live-lens-assistant&rev=assistant-scenario-002", "_blank", "noopener");
       });
     }
   }
