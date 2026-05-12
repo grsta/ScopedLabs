@@ -956,7 +956,10 @@
 
     const reportBtn = target.querySelector("[data-slda-open-report]");
     if (reportBtn) {
-      reportBtn.addEventListener("click", () => {
+      reportBtn.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+
         saveAssistantReportFields(target);
 
         const latestPayload = assistantScenarioReportPayload(active, rawData, target);
@@ -965,13 +968,11 @@
         window.ScopedLabsLensDesignAssistantReportData = latestPayload;
         window.ScopedLabsReportV2Data = latestPayload;
 
-        const liveBtn = document.getElementById("openReportV2");
-        if (liveBtn) {
-          liveBtn.click();
-          return;
-        }
-
-        window.open("/prototypes/lens-report-v2/?source=live-lens-assistant&rev=assistant-scenario-002", "_blank", "noopener");
+        window.open(
+          "/prototypes/lens-report-v2/?source=live-lens-assistant&rev=assistant-direct-018",
+          "_blank",
+          "noopener"
+        );
       });
     }
   }
