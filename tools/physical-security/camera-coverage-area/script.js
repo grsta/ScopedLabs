@@ -527,12 +527,7 @@
       el.addEventListener("input", handleEdit);
       el.addEventListener("change", handleEdit);
     });
-      el.addEventListener("change", () => {
-        markFlowInputOverride(id);
-        renderFlowNote();
-        invalidate({ clearFlow: true });
-      });
-    });
+      
 
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
