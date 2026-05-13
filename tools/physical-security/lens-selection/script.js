@@ -154,10 +154,17 @@
   }
 
   function clearDownstream() {
-    try {
-      sessionStorage.removeItem(FLOW_KEYS.face);
-      sessionStorage.removeItem(FLOW_KEYS.plate);
-    } catch {}
+    [
+      FLOW_KEYS.face,
+      FLOW_KEYS.plate,
+      "scopedlabs:pipeline:last-result"
+    ].forEach((key) => {
+      try {
+        sessionStorage.removeItem(key);
+      } catch {}
+    });
+
+    window.ScopedLabsLensPipelineCarryForward = null;
   }
 
   function classifyLens(focal) {
