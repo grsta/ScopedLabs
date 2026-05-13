@@ -1,10 +1,15 @@
-const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
-﻿(() => {
+(() => {
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
     fov: "scopedlabs:pipeline:physical-security:field-of-view",
-    area: "scopedlabs:pipeline:physical-security:camera-coverage-area"
+    area: "scopedlabs:pipeline:physical-security:camera-coverage-area",
+    spacing: "scopedlabs:pipeline:physical-security:camera-spacing",
+    blind: "scopedlabs:pipeline:physical-security:blind-spot-check",
+    pixel: "scopedlabs:pipeline:physical-security:pixel-density",
+    lens: "scopedlabs:pipeline:physical-security:lens-selection",
+    face: "scopedlabs:pipeline:physical-security:face-recognition-range",
+    plate: "scopedlabs:pipeline:physical-security:license-plate-range"
   };
 
   const CATEGORY = "physical-security";
@@ -119,9 +124,22 @@ const PREVIOUS_STEP = "TODO_PREVIOUS_STEP";
   }
 
   function clearDownstream() {
-    sessionStorage.removeItem(FLOW_KEYS.mount);
-    sessionStorage.removeItem(FLOW_KEYS.fov);
-    sessionStorage.removeItem(FLOW_KEYS.area);
+    [
+      FLOW_KEYS.mount,
+      FLOW_KEYS.fov,
+      FLOW_KEYS.area,
+      FLOW_KEYS.spacing,
+      FLOW_KEYS.blind,
+      FLOW_KEYS.pixel,
+      FLOW_KEYS.lens,
+      FLOW_KEYS.face,
+      FLOW_KEYS.plate,
+      "scopedlabs:pipeline:last-result"
+    ].forEach((key) => {
+      try {
+        sessionStorage.removeItem(key);
+      } catch {}
+    });
   }
 
   function applyDefaults() {
