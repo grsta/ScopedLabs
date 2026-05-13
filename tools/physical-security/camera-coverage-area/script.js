@@ -516,11 +516,17 @@
     ["hfov", "vfov", "dist", "ov"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", () => {
+
+      const handleEdit = () => {
         markFlowInputOverride(id);
-        renderFlowNote();
         invalidate({ clearFlow: true });
-      });
+        renderFlowNote();
+        refreshManualOverrideBanner();
+      };
+
+      el.addEventListener("input", handleEdit);
+      el.addEventListener("change", handleEdit);
+    });
       el.addEventListener("change", () => {
         markFlowInputOverride(id);
         renderFlowNote();
