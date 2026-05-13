@@ -73,6 +73,103 @@
     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
+  let flowInputsImported = false;
+  const importedFlowValues = {};
+  const manualFlowOverrides = {};
+
+  function cleanOverrideNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function formatOverrideValue(field, value) {
+    const number = cleanOverrideNumber(value);
+    if (number === null) return "n/a";
+
+    if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+    if (field === "hfov") return Math.round(number) + "?";
+
+    return String(number);
+  }
+
+  function overrideLabel(field) {
+    if (field === "dist") return "Distance";
+    if (field === "hfov") return "Horizontal FOV";
+    return field;
+  }
+
+  function captureImportedFlowValue(field, value) {
+    const number = cleanOverrideNumber(value);
+    if (number === null) return;
+    if (!(field in importedFlowValues)) importedFlowValues[field] = number;
+  }
+
+  function canApplyFlowInputs() {
+    if (flowInputsImported) return false;
+    flowInputsImported = true;
+    return true;
+  }
+
+  function markFlowInputOverride(field) {
+    if (!(field in importedFlowValues)) return;
+
+    const el = els[field];
+    if (!el) return;
+
+    const current = cleanOverrideNumber(el.value);
+    const imported = cleanOverrideNumber(importedFlowValues[field]);
+
+    if (current === null || imported === null) return;
+
+    if (Math.abs(current - imported) > 0.01) {
+      manualFlowOverrides[field] = {
+        field,
+        label: overrideLabel(field),
+        imported,
+        current
+      };
+    } else {
+      delete manualFlowOverrides[field];
+    }
+  }
+
+  function resetFlowOverrideState() {
+    flowInputsImported = false;
+    Object.keys(importedFlowValues).forEach((key) => delete importedFlowValues[key]);
+    Object.keys(manualFlowOverrides).forEach((key) => delete manualFlowOverrides[key]);
+  }
+
+  function getManualOverrideMetadata(data) {
+    return Object.keys(manualFlowOverrides).map((field) => {
+      const imported = importedFlowValues[field];
+      const current = data && field in data ? data[field] : cleanOverrideNumber(els[field]?.value);
+
+      return {
+        field,
+        label: overrideLabel(field),
+        imported,
+        current,
+        importedDisplay: formatOverrideValue(field, imported),
+        currentDisplay: formatOverrideValue(field, current)
+      };
+    });
+  }
+
+  function renderManualOverrideNote() {
+    const overrides = Object.keys(manualFlowOverrides);
+
+    if (!overrides.length) return "";
+
+    const text = overrides
+      .map((field) => {
+        const item = manualFlowOverrides[field];
+        return item.label + " changed from " + formatOverrideValue(field, item.imported) + " to " + formatOverrideValue(field, item.current);
+      })
+      .join(" | ");
+
+    return '<div class="flow-override-note" role="note" aria-label="Manual override warning"><strong>Manual override active:</strong> ' + text + '. Results are valid for this local what-if branch.</div>';
+  }
+
   function applyDefaults() {
     els.res.value = String(DEFAULTS.res);
     els.hfov.value = String(DEFAULTS.hfov);
@@ -113,8 +210,13 @@
     const status = prev.status || "";
     const gap = num(prev.gap);
 
-    if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
-    if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+    captureImportedFlowValue("dist", dist);
+    captureImportedFlowValue("hfov", hfov);
+
+    if (canApplyFlowInputs()) {
+      if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
+      if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+    }
 
     const parts = [];
     if (status) parts.push(`Blind-spot result: <strong>${status}</strong>`);
@@ -126,7 +228,7 @@
       els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
         <strong>Flow Context</strong><br>
-        ${parts.join(" | ")}
+        ${parts.join(" | ")}\n        ${renderManualOverrideNote()}
       `;
     }
   }
@@ -295,6 +397,7 @@
   }
 
   function writeFlow(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.pixel, {
       category: CATEGORY,
       step: STEP,
@@ -307,7 +410,9 @@
         sceneW: data.sceneW,
         pixelsOnTarget: data.pixelsOnTarget,
         interpretation: data.interpretation,
-        guidance: data.guidance
+        guidance: data.guidance,
+        sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+        manualOverrides: manualOverrideMeta
       }
     });
   }
@@ -378,6 +483,7 @@
   }
 
   function reset() {
+    resetFlowOverrideState();
     applyDefaults();
     renderFlowNote();
     invalidate({ clearFlow: true });
@@ -387,8 +493,14 @@
     ["res", "hfov", "dist", "tppf", "tw"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", () => invalidate({ clearFlow: true }));
-      el.addEventListener("change", () => invalidate({ clearFlow: true }));
+      el.addEventListener("input", () => {
+        markFlowInputOverride(id);
+        invalidate({ clearFlow: true });
+      });
+      el.addEventListener("change", () => {
+        markFlowInputOverride(id);
+        invalidate({ clearFlow: true });
+      });
     });
 
     els.calc?.addEventListener("click", calc);
