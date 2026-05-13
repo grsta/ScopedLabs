@@ -215,19 +215,24 @@
   }
 
   function renderManualOverrideNote() {
-    const overrides = Object.keys(manualFlowOverrides);
+  const overrides = Object.keys(manualFlowOverrides);
 
-    if (!overrides.length) return "";
+  if (!overrides.length) return "";
 
-    const text = overrides
-      .map((field) => {
-        const item = manualFlowOverrides[field];
-        return item.label + " changed from " + formatOverrideValue(field, item.imported) + " to " + formatOverrideValue(field, item.current);
-      })
-      .join(" | ");
+  const text = overrides
+    .map((field) => {
+      const item = manualFlowOverrides[field];
+      return item.label + " changed from " + formatOverrideValue(field, item.imported) + " to " + formatOverrideValue(field, item.current);
+    })
+    .join(" | ");
 
-    return "<br><br><strong>Manual override active:</strong> " + text + ". Results are valid for this local what-if branch.";
-  }
+  return `
+    <div class="flow-override-note" role="note" aria-label="Manual override warning">
+      <strong>Manual override active:</strong>
+      ${text}. Results are valid for this local what-if branch.
+    </div>
+  `;
+}
 
   function applyDefaults() {
     els.w.value = String(DEFAULTS.w);
