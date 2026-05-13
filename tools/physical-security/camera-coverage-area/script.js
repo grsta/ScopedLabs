@@ -3,7 +3,13 @@
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
     fov: "scopedlabs:pipeline:physical-security:field-of-view",
-    area: "scopedlabs:pipeline:physical-security:camera-coverage-area"
+    area: "scopedlabs:pipeline:physical-security:camera-coverage-area",
+    spacing: "scopedlabs:pipeline:physical-security:camera-spacing",
+    blind: "scopedlabs:pipeline:physical-security:blind-spot-check",
+    pixel: "scopedlabs:pipeline:physical-security:pixel-density",
+    lens: "scopedlabs:pipeline:physical-security:lens-selection",
+    face: "scopedlabs:pipeline:physical-security:face-recognition-range",
+    plate: "scopedlabs:pipeline:physical-security:license-plate-range"
   };
 
   const CATEGORY = "physical-security";
@@ -136,6 +142,22 @@
     return "Very little width is being reserved for overlap. Coverage efficiency is high, but spacing tolerance between cameras will be tighter.";
   }
 
+  function clearDownstream() {
+    [
+      FLOW_KEYS.spacing,
+      FLOW_KEYS.blind,
+      FLOW_KEYS.pixel,
+      FLOW_KEYS.lens,
+      FLOW_KEYS.face,
+      FLOW_KEYS.plate,
+      "scopedlabs:pipeline:last-result"
+    ].forEach((key) => {
+      try {
+        sessionStorage.removeItem(key);
+      } catch {}
+    });
+  }
+
   function applyDefaults() {
     els.hfov.value = String(DEFAULTS.hfov);
     els.vfov.value = String(DEFAULTS.vfov);
@@ -183,6 +205,7 @@
   function invalidate({ clearFlow = true } = {}) {
     if (clearFlow) {
       sessionStorage.removeItem(FLOW_KEYS.area);
+      clearDownstream();
     }
 
     ScopedLabsAnalyzer.invalidate({
