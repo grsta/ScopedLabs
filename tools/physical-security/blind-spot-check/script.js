@@ -130,6 +130,105 @@
     });
   }
 
+  let flowInputsImported = false;
+  const importedFlowValues = {};
+  const manualFlowOverrides = {};
+
+  function cleanOverrideNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function formatOverrideValue(field, value) {
+    const number = cleanOverrideNumber(value);
+    if (number === null) return "n/a";
+
+    if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+    if (field === "hfov") return Math.round(number) + "?";
+    if (field === "cams") return Math.round(number) + " cameras";
+
+    return String(number);
+  }
+
+  function overrideLabel(field) {
+    if (field === "dist") return "Mounting distance";
+    if (field === "hfov") return "Horizontal FOV";
+    if (field === "cams") return "Camera count";
+    return field;
+  }
+
+  function captureImportedFlowValue(field, value) {
+    const number = cleanOverrideNumber(value);
+    if (number === null) return;
+    if (!(field in importedFlowValues)) importedFlowValues[field] = number;
+  }
+
+  function canApplyFlowInputs() {
+    if (flowInputsImported) return false;
+    flowInputsImported = true;
+    return true;
+  }
+
+  function markFlowInputOverride(field) {
+    if (!(field in importedFlowValues)) return;
+
+    const el = els[field];
+    if (!el) return;
+
+    const current = cleanOverrideNumber(el.value);
+    const imported = cleanOverrideNumber(importedFlowValues[field]);
+
+    if (current === null || imported === null) return;
+
+    if (Math.abs(current - imported) > 0.01) {
+      manualFlowOverrides[field] = {
+        field,
+        label: overrideLabel(field),
+        imported,
+        current
+      };
+    } else {
+      delete manualFlowOverrides[field];
+    }
+  }
+
+  function resetFlowOverrideState() {
+    flowInputsImported = false;
+    Object.keys(importedFlowValues).forEach((key) => delete importedFlowValues[key]);
+    Object.keys(manualFlowOverrides).forEach((key) => delete manualFlowOverrides[key]);
+  }
+
+  function getManualOverrideMetadata(data) {
+    return Object.keys(manualFlowOverrides).map((field) => {
+      const imported = importedFlowValues[field];
+      const current = data && field in data ? data[field] : cleanOverrideNumber(els[field]?.value);
+
+      return {
+        field,
+        label: overrideLabel(field),
+        imported,
+        current,
+        importedDisplay: formatOverrideValue(field, imported),
+        currentDisplay: formatOverrideValue(field, current)
+      };
+    });
+  }
+
+  function renderManualOverrideNote() {
+    const overrides = Object.keys(manualFlowOverrides);
+
+    if (!overrides.length) return "";
+
+    const text = overrides
+      .map((field) => {
+        const item = manualFlowOverrides[field];
+        return item.label + " changed from " + formatOverrideValue(field, item.imported) + " to " + formatOverrideValue(field, item.current);
+      })
+      .join(" | ");
+
+    return "<br><br><strong>Manual override active:</strong> " + text + ". Results are valid for this local what-if branch.";
+  }
+
   function applyDefaults() {
     els.w.value = String(DEFAULTS.w);
     els.d.value = String(DEFAULTS.d);
@@ -168,9 +267,15 @@
     const hfov = num(prev.hfov);
     const spacing = num(prev.spacing ?? prev.actualSpacing);
 
-    if (Number.isFinite(cams) && cams > 0) els.cams.value = String(Math.round(cams));
-    if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
-    if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+    captureImportedFlowValue("cams", cams);
+    captureImportedFlowValue("dist", dist);
+    captureImportedFlowValue("hfov", hfov);
+
+    if (canApplyFlowInputs()) {
+      if (Number.isFinite(cams) && cams > 0) els.cams.value = String(Math.round(cams));
+      if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
+      if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+    }
 
     const parts = [];
     if (Number.isFinite(cams)) parts.push(`Cameras: <strong>${fmt(cams, 0)}</strong>`);
@@ -189,7 +294,7 @@
       <strong>Flow Context</strong><br>
       ${parts.join(" | ")}
       <br><br>
-      This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied.
+      This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied.\n      ${renderManualOverrideNote()}
     `;
   }
 
@@ -343,6 +448,7 @@
   }
 
   function writeFlow(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.blind, {
       category: CATEGORY,
       step: STEP,
@@ -398,6 +504,8 @@
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance,
+        sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+        manualOverrides: manualOverrideMeta,
       chart: {
         labels: ["Gap Pressure", "Coverage Shortfall", "Overlap Compression"],
         values: [
@@ -433,6 +541,7 @@
   }
 
   function reset() {
+    resetFlowOverrideState();
     applyDefaults();
     renderFlowNote();
     invalidate({ clearFlow: true });
@@ -442,8 +551,14 @@
     ["w", "d", "hfov", "dist", "cams", "overlap"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", () => invalidate({ clearFlow: true }));
-      el.addEventListener("change", () => invalidate({ clearFlow: true }));
+      el.addEventListener("input", () => {
+        markFlowInputOverride(id);
+        invalidate({ clearFlow: true });
+      });
+      el.addEventListener("change", () => {
+        markFlowInputOverride(id);
+        invalidate({ clearFlow: true });
+      });
     });
 
     els.calc?.addEventListener("click", calc);
