@@ -99,6 +99,113 @@
     return Number.isFinite(value) ? `${value.toFixed(digits)}%` : "—";
   }
 
+  let flowInputsImported = false;
+  const importedFlowValues = {};
+  const manualFlowOverrides = {};
+
+  function cleanOverrideNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function formatOverrideValue(field, value) {
+    const number = cleanOverrideNumber(value);
+    if (number === null) return "n/a";
+
+    if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+
+    return String(number);
+  }
+
+  function overrideLabel(field) {
+    if (field === "dist") return "Target distance";
+    return field;
+  }
+
+  function captureImportedFlowValue(field, value) {
+    const number = cleanOverrideNumber(value);
+    if (number === null) return;
+    if (!(field in importedFlowValues)) importedFlowValues[field] = number;
+  }
+
+  function canApplyFlowInputs() {
+    if (flowInputsImported) return false;
+    flowInputsImported = true;
+    return true;
+  }
+
+  function markFlowInputOverride(field) {
+    if (!(field in importedFlowValues)) return;
+
+    const el = els[field];
+    if (!el) return;
+
+    const current = cleanOverrideNumber(el.value);
+    const imported = cleanOverrideNumber(importedFlowValues[field]);
+
+    if (current === null || imported === null) return;
+
+    if (Math.abs(current - imported) > 0.01) {
+      manualFlowOverrides[field] = {
+        field,
+        label: overrideLabel(field),
+        imported,
+        current
+      };
+    } else {
+      delete manualFlowOverrides[field];
+    }
+  }
+
+  function resetFlowOverrideState() {
+    flowInputsImported = false;
+    Object.keys(importedFlowValues).forEach((key) => delete importedFlowValues[key]);
+    Object.keys(manualFlowOverrides).forEach((key) => delete manualFlowOverrides[key]);
+  }
+
+  function getManualOverrideMetadata(data) {
+    return Object.keys(manualFlowOverrides).map((field) => {
+      const imported = importedFlowValues[field];
+      const current = data && field in data ? data[field] : cleanOverrideNumber(els[field]?.value);
+
+      return {
+        field,
+        label: overrideLabel(field),
+        imported,
+        current,
+        importedDisplay: formatOverrideValue(field, imported),
+        currentDisplay: formatOverrideValue(field, current)
+      };
+    });
+  }
+
+  function renderManualOverrideNote() {
+    const overrides = Object.keys(manualFlowOverrides);
+
+    if (!overrides.length) return "";
+
+    const text = overrides
+      .map((field) => {
+        const item = manualFlowOverrides[field];
+        return item.label + " changed from " + formatOverrideValue(field, item.imported) + " to " + formatOverrideValue(field, item.current);
+      })
+      .join(" | ");
+
+    return '<div class="flow-override-note" role="note" aria-label="Manual override warning"><strong>Manual override active:</strong> ' + text + '. Results are valid for this local what-if branch.</div>';
+  }
+
+  function renderAssistantScenarioModeCallout(assistant) {
+    if (!assistant) return;
+
+    const existing = assistant.querySelector(".assistant-scenario-note");
+    if (existing) existing.remove();
+
+    assistant.insertAdjacentHTML(
+      "afterbegin",
+      '<div class="assistant-scenario-note" role="note" aria-label="Custom design mode"><strong>Custom Design Mode:</strong> You are editing outside the carried pipeline baseline. The selected Design Assistant scenario will be treated as an assisted what-if branch for Report V2 and downstream handoff.</div>'
+    );
+  }
+
   function applyDefaults() {
     if (els.dist) els.dist.value = String(DEFAULTS.dist);
     if (els.tw) els.tw.value = String(DEFAULTS.tw);
@@ -226,8 +333,12 @@
     const ppf = num(prev.ppf);
     const level = prev.level || prev.classification || "";
 
-    if (Number.isFinite(dist) && dist > 0) {
-      els.dist.value = String(Math.round(dist));
+    captureImportedFlowValue("dist", dist);
+
+    if (canApplyFlowInputs()) {
+      if (Number.isFinite(dist) && dist > 0) {
+        els.dist.value = String(Math.round(dist));
+      }
     }
 
     const parts = [];
@@ -249,7 +360,7 @@
     els.flowNote.hidden = false;
     els.flowNote.innerHTML = `
       <strong>Flow Context</strong><br>
-      ${parts.join(" | ")}
+      ${parts.join(" | ")}\n        ${renderManualOverrideNote()}
       <br><br>
       This step converts the validated detail requirement from Pixel Density into a practical focal-length recommendation.
     `;
@@ -446,6 +557,7 @@
   }
 
   function writeFlow(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.lens, {
       category: CATEGORY,
       step: STEP,
@@ -459,7 +571,9 @@
         requirementClass: data.requirementClass,
         adjustmentPct: data.adjustmentPct,
         interpretation: data.interpretation,
-        guidance: data.guidance
+        guidance: data.guidance,
+        sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+        manualOverrides: manualOverrideMeta
       }
     });
   }
@@ -783,6 +897,8 @@
       step: STEP,
       tool: "Lens Selection Helper",
       selectedScenario: "Live Lens Selection",
+      sourceMode: "assistant-scenario",
+      scenarioMode: "live-lens-selection",
       selectedLensMm: Number(data.adjustedFocal.toFixed(2)),
       calculatedLensMm: Number((data.calculatedTargetFocal || data.baseFocal).toFixed(2)),
       status: data.status,
@@ -927,6 +1043,7 @@
 
     if (window.ScopedLabsLensDesignAssistant && typeof window.ScopedLabsLensDesignAssistant.render === "function") {
       window.ScopedLabsLensDesignAssistant.render(assistant, data);
+      renderAssistantScenarioModeCallout(assistant);
       return;
     }
 
@@ -997,6 +1114,7 @@
   }
 
   function reset() {
+    resetFlowOverrideState();
     applyDefaults();
     renderFlowNote();
     invalidate({ clearFlow: true });
@@ -1071,6 +1189,8 @@
       lensClass,
 
       assistantSelected: true,
+      sourceMode: "assistant-scenario",
+      scenarioMode: selectedScenario,
       selectedScenario,
       selectedLensMm,
       calculatedLensMm,
@@ -1103,6 +1223,8 @@
       lane: LANE,
       step: STEP,
       source: "lens-design-assistant-selected-scenario",
+      sourceMode: "assistant-scenario",
+      scenarioMode: selectedScenario,
       savedAt: new Date().toISOString(),
       selectedScenario,
       status,
@@ -1126,8 +1248,16 @@
     ["dist", "tw", "sw"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", () => invalidate({ clearFlow: true }));
-      el.addEventListener("change", () => invalidate({ clearFlow: true }));
+      el.addEventListener("input", () => {
+        markFlowInputOverride(id);
+        renderFlowNote();
+        invalidate({ clearFlow: true });
+      });
+      el.addEventListener("change", () => {
+        markFlowInputOverride(id);
+        renderFlowNote();
+        invalidate({ clearFlow: true });
+      });
     });
 
     els.calc?.addEventListener("click", calc);
