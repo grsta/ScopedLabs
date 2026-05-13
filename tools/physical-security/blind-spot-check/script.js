@@ -454,6 +454,7 @@
 
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
+
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.blind, {
       category: CATEGORY,
       step: STEP,
@@ -463,17 +464,17 @@
         hfov: data.hfov,
         dist: data.dist,
         cams: data.cams,
-        overlap: data.overlapPct / 100,
         overlapPct: data.overlapPct,
-        cov: data.coveragePerCameraFt,
-        overlapFt: data.overlapFt,
-        eff: data.effectiveCoverageFt,
-        total: data.totalCoverageFt,
-        gap: data.gapFt,
-        gapPct: data.gapPct,
-        status: data.coverageClass,
-        interp: data.interpretation,
-        guide: data.guidance
+        rawWidth: data.rawWidth,
+        usableWidth: data.usableWidth,
+        totalWidth: data.totalWidth,
+        blindWidth: data.blindWidth,
+        blindPct: data.blindPct,
+        coverageClass: data.coverageClass,
+        interpretation: data.interpretation,
+        guidance: data.guidance,
+        sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+        manualOverrides: manualOverrideMeta
       }
     });
   }
@@ -486,8 +487,7 @@
   }
 
   function renderSuccess(data) {
-    const manualOverrideMeta = getManualOverrideMetadata(data);
-    ScopedLabsAnalyzer.renderOutput({
+ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
       existingChartRef: chartRef,
@@ -510,8 +510,6 @@
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance,
-        sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
-        manualOverrides: manualOverrideMeta,
       chart: {
         labels: ["Gap Pressure", "Coverage Shortfall", "Overlap Compression"],
         values: [
