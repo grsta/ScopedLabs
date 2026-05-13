@@ -199,9 +199,14 @@
 
   function invalidate({ clearFlow = true } = {}) {
     if (clearFlow) {
-      try {
-        sessionStorage.removeItem(FLOW_KEYS.plate);
-      } catch {}
+      [
+        FLOW_KEYS.plate,
+        "scopedlabs:pipeline:last-result"
+      ].forEach((key) => {
+        try {
+          sessionStorage.removeItem(key);
+        } catch {}
+      });
     }
 
     ScopedLabsAnalyzer.invalidate({
