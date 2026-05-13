@@ -194,16 +194,70 @@
     return '<div class="flow-override-note" role="note" aria-label="Manual override warning"><strong>Manual override active:</strong> ' + text + '. Results are valid for this local what-if branch.</div>';
   }
 
-  function renderAssistantScenarioModeCallout(assistant) {
+  function clearAssistantScenarioModeCallout(assistant) {
     if (!assistant) return;
 
     const existing = assistant.querySelector(".assistant-scenario-note");
     if (existing) existing.remove();
+  }
+
+  function setAssistantScenarioSourceMetadata() {
+    window.ScopedLabsLensAssistantScenarioTouched = true;
+
+    ["ScopedLabsLensDesignAssistantReportData", "ScopedLabsReportV2Data"].forEach((key) => {
+      const payload = window[key];
+      if (!payload || typeof payload !== "object") return;
+
+      payload.sourceMode = "assistant-scenario";
+      payload.scenarioMode = payload.selectedScenario || "custom-design";
+      payload.assistantScenarioTouched = true;
+
+      if (payload.flowOutputs && typeof payload.flowOutputs === "object") {
+        payload.flowOutputs.sourceMode = "assistant-scenario";
+        payload.flowOutputs.scenarioMode = payload.scenarioMode;
+        payload.flowOutputs.assistantScenarioTouched = true;
+      }
+    });
+  }
+
+  function renderAssistantScenarioModeCallout(assistant) {
+    if (!assistant) return;
+
+    clearAssistantScenarioModeCallout(assistant);
 
     assistant.insertAdjacentHTML(
       "afterbegin",
-      '<div class="assistant-scenario-note" role="note" aria-label="Custom design mode"><strong>Custom Design Mode:</strong> You are editing outside the carried pipeline baseline. The selected Design Assistant scenario will be treated as an assisted what-if branch for Report V2 and downstream handoff.</div>'
+      '<div class="assistant-scenario-note" role="note" aria-label="Custom design mode"><strong>Custom Design Mode Active:</strong> You are editing outside the carried pipeline baseline. The selected Design Assistant scenario will be treated as an assisted what-if branch for Report V2 and downstream handoff.</div>'
     );
+  }
+
+  function bindAssistantScenarioModeActivation(assistant) {
+    if (!assistant) return;
+
+    if (window.ScopedLabsLensAssistantScenarioTouched) {
+      renderAssistantScenarioModeCallout(assistant);
+    } else {
+      clearAssistantScenarioModeCallout(assistant);
+    }
+
+    if (assistant.dataset.scenarioModeBound === "true") return;
+    assistant.dataset.scenarioModeBound = "true";
+
+    const activate = () => {
+      setAssistantScenarioSourceMetadata();
+      renderAssistantScenarioModeCallout(assistant);
+    };
+
+    assistant.addEventListener("input", activate);
+    assistant.addEventListener("change", activate);
+    assistant.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!target || !target.closest) return;
+
+      if (target.closest("button, [role='button'], [data-scenario], [data-action]")) {
+        activate();
+      }
+    });
   }
 
   function applyDefaults() {
@@ -897,8 +951,6 @@
       step: STEP,
       tool: "Lens Selection Helper",
       selectedScenario: "Live Lens Selection",
-      sourceMode: "assistant-scenario",
-      scenarioMode: "live-lens-selection",
       selectedLensMm: Number(data.adjustedFocal.toFixed(2)),
       calculatedLensMm: Number((data.calculatedTargetFocal || data.baseFocal).toFixed(2)),
       status: data.status,
@@ -1043,7 +1095,7 @@
 
     if (window.ScopedLabsLensDesignAssistant && typeof window.ScopedLabsLensDesignAssistant.render === "function") {
       window.ScopedLabsLensDesignAssistant.render(assistant, data);
-      renderAssistantScenarioModeCallout(assistant);
+      bindAssistantScenarioModeActivation(assistant);
       return;
     }
 
@@ -1114,6 +1166,7 @@
   }
 
   function reset() {
+    window.ScopedLabsLensAssistantScenarioTouched = false;
     resetFlowOverrideState();
     applyDefaults();
     renderFlowNote();
@@ -1178,6 +1231,15 @@
     const pressureScore = cleanNumber(assistantPayload.pressure, cleanNumber(diagnostics?.gauge?.score, 0));
     const status = flow.status || assistantPayload.status || "WATCH";
     const selectedScenario = flow.selectedScenario || assistantPayload.selectedScenario || "Custom Design";
+    const normalManualOverrideMeta = getManualOverrideMetadata({ dist: distanceFt });
+    const assistantScenarioTouched = window.ScopedLabsLensAssistantScenarioTouched === true || assistantPayload.assistantScenarioTouched === true;
+    const lensSourceMode = assistantScenarioTouched && normalManualOverrideMeta.length
+      ? "mixed"
+      : assistantScenarioTouched
+        ? "assistant-scenario"
+        : normalManualOverrideMeta.length
+          ? "manual-override"
+          : "pipeline";
 
     const hfov = hfovFromLens(sensorWidthMm, selectedLensMm) || hfovFromWidth(distanceFt, framedWidthFt);
     const lensClass = selectedLensMm ? classifyLens(selectedLensMm) : null;
@@ -1188,9 +1250,10 @@
       dist: distanceFt,
       lensClass,
 
-      assistantSelected: true,
-      sourceMode: "assistant-scenario",
-      scenarioMode: selectedScenario,
+      assistantSelected: assistantScenarioTouched,
+      sourceMode: lensSourceMode,
+      scenarioMode: assistantScenarioTouched ? selectedScenario : null,
+      manualOverrides: normalManualOverrideMeta,
       selectedScenario,
       selectedLensMm,
       calculatedLensMm,
@@ -1223,8 +1286,10 @@
       lane: LANE,
       step: STEP,
       source: "lens-design-assistant-selected-scenario",
-      sourceMode: "assistant-scenario",
-      scenarioMode: selectedScenario,
+      sourceMode: lensSourceMode,
+      scenarioMode: assistantScenarioTouched ? selectedScenario : null,
+      manualOverrides: normalManualOverrideMeta,
+      assistantScenarioTouched,
       savedAt: new Date().toISOString(),
       selectedScenario,
       status,
