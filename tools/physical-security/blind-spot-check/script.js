@@ -557,10 +557,12 @@ ScopedLabsAnalyzer.renderOutput({
       if (!el) return;
       el.addEventListener("input", () => {
         markFlowInputOverride(id);
+        renderFlowNote();
         invalidate({ clearFlow: true });
       });
       el.addEventListener("change", () => {
         markFlowInputOverride(id);
+        renderFlowNote();
         invalidate({ clearFlow: true });
       });
     });
