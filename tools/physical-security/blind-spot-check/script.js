@@ -486,6 +486,7 @@
   }
 
   function renderSuccess(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
