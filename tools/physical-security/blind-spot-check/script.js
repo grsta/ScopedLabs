@@ -8,7 +8,10 @@
     area: "scopedlabs:pipeline:physical-security:camera-coverage-area",
     spacing: "scopedlabs:pipeline:physical-security:camera-spacing",
     blind: "scopedlabs:pipeline:physical-security:blind-spot-check",
-    pixel: "scopedlabs:pipeline:physical-security:pixel-density"
+    pixel: "scopedlabs:pipeline:physical-security:pixel-density",
+    lens: "scopedlabs:pipeline:physical-security:lens-selection",
+    face: "scopedlabs:pipeline:physical-security:face-recognition-range",
+    plate: "scopedlabs:pipeline:physical-security:license-plate-range"
   };
 
   const CATEGORY = "physical-security";
@@ -114,9 +117,17 @@
   }
 
   function clearDownstream() {
-    try {
-      sessionStorage.removeItem(FLOW_KEYS.pixel);
-    } catch {}
+    [
+      FLOW_KEYS.pixel,
+      FLOW_KEYS.lens,
+      FLOW_KEYS.face,
+      FLOW_KEYS.plate,
+      "scopedlabs:pipeline:last-result"
+    ].forEach((key) => {
+      try {
+        sessionStorage.removeItem(key);
+      } catch {}
+    });
   }
 
   function applyDefaults() {
