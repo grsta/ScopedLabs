@@ -194,71 +194,13 @@
     return '<div class="flow-override-note" role="note" aria-label="Manual override warning"><strong>Manual override active:</strong> ' + text + '. Results are valid for this local what-if branch.</div>';
   }
 
-  function clearAssistantScenarioModeCallout(assistant) {
-    if (!assistant) return;
+  
 
-    const existing = assistant.querySelector(".assistant-scenario-note");
-    if (existing) existing.remove();
-  }
+  
 
-  function setAssistantScenarioSourceMetadata() {
-    window.ScopedLabsLensAssistantScenarioTouched = true;
+  
 
-    ["ScopedLabsLensDesignAssistantReportData", "ScopedLabsReportV2Data"].forEach((key) => {
-      const payload = window[key];
-      if (!payload || typeof payload !== "object") return;
-
-      payload.sourceMode = "assistant-scenario";
-      payload.scenarioMode = payload.selectedScenario || "custom-design";
-      payload.assistantScenarioTouched = true;
-
-      if (payload.flowOutputs && typeof payload.flowOutputs === "object") {
-        payload.flowOutputs.sourceMode = "assistant-scenario";
-        payload.flowOutputs.scenarioMode = payload.scenarioMode;
-        payload.flowOutputs.assistantScenarioTouched = true;
-      }
-    });
-  }
-
-  function renderAssistantScenarioModeCallout(assistant) {
-    if (!assistant) return;
-
-    clearAssistantScenarioModeCallout(assistant);
-
-    assistant.insertAdjacentHTML(
-      "afterbegin",
-      '<div class="assistant-scenario-note" role="note" aria-label="Custom design mode"><strong>Custom Design Mode Active:</strong> You are editing outside the carried pipeline baseline. The selected Design Assistant scenario will be treated as an assisted what-if branch for Report V2 and downstream handoff.</div>'
-    );
-  }
-
-  function bindAssistantScenarioModeActivation(assistant) {
-    if (!assistant) return;
-
-    if (window.ScopedLabsLensAssistantScenarioTouched) {
-      renderAssistantScenarioModeCallout(assistant);
-    } else {
-      clearAssistantScenarioModeCallout(assistant);
-    }
-
-    if (assistant.dataset.scenarioModeBound === "true") return;
-    assistant.dataset.scenarioModeBound = "true";
-
-    const activate = () => {
-      setAssistantScenarioSourceMetadata();
-      renderAssistantScenarioModeCallout(assistant);
-    };
-
-    assistant.addEventListener("input", activate);
-    assistant.addEventListener("change", activate);
-    assistant.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!target || !target.closest) return;
-
-      if (target.closest("button, [role='button'], [data-scenario], [data-action]")) {
-        activate();
-      }
-    });
-  }
+  
 
   function applyDefaults() {
     if (els.dist) els.dist.value = String(DEFAULTS.dist);
@@ -1087,6 +1029,98 @@
     if (!assistant) return;
     assistant.hidden = true;
     assistant.innerHTML = "";
+  }
+
+  function hasLensPipelineBaseline() {
+    try {
+      if (prev && typeof prev === "object") return true;
+
+      const raw = sessionStorage.getItem(FLOW_KEYS.pixel);
+      if (!raw) return false;
+
+      const parsed = JSON.parse(raw);
+      return !!(parsed && parsed.data);
+    } catch {
+      return false;
+    }
+  }
+
+  function clearAssistantScenarioModeCallout(assistant) {
+    if (!assistant) return;
+
+    const existing = assistant.querySelector(".assistant-scenario-note");
+    if (existing) existing.remove();
+  }
+
+  function setAssistantScenarioSourceMetadata() {
+    window.ScopedLabsLensAssistantScenarioTouched = true;
+
+    const hasBaseline = hasLensPipelineBaseline();
+    const scenarioMode = hasBaseline ? "custom-design" : "standalone-validation";
+    const scenarioContext = hasBaseline ? "pipeline-baseline" : "single-validation";
+
+    ["ScopedLabsLensDesignAssistantReportData", "ScopedLabsReportV2Data"].forEach((key) => {
+      const payload = window[key];
+      if (!payload || typeof payload !== "object") return;
+
+      payload.sourceMode = "assistant-scenario";
+      payload.scenarioMode = payload.selectedScenario || scenarioMode;
+      payload.scenarioContext = scenarioContext;
+      payload.assistantScenarioTouched = true;
+
+      if (payload.flowOutputs && typeof payload.flowOutputs === "object") {
+        payload.flowOutputs.sourceMode = "assistant-scenario";
+        payload.flowOutputs.scenarioMode = payload.scenarioMode;
+        payload.flowOutputs.scenarioContext = scenarioContext;
+        payload.flowOutputs.assistantScenarioTouched = true;
+      }
+    });
+  }
+
+  function renderAssistantScenarioModeCallout(assistant) {
+    if (!assistant) return;
+
+    clearAssistantScenarioModeCallout(assistant);
+
+    const hasBaseline = hasLensPipelineBaseline();
+
+    const copy = hasBaseline
+      ? '<strong>Custom Design Mode Active:</strong> You are editing outside the carried pipeline baseline. The selected Design Assistant scenario will be treated as an assisted what-if branch for Report V2 and downstream handoff.'
+      : '<strong>Standalone Design Mode Active:</strong> This assisted scenario was created without upstream pipeline values. Results are valid as a single validation scenario, not a full guided pipeline run.';
+
+    assistant.insertAdjacentHTML(
+      "afterbegin",
+      '<div class="assistant-scenario-note" role="note" aria-label="Design scenario mode">' + copy + '</div>'
+    );
+  }
+
+  function bindAssistantScenarioModeActivation(assistant) {
+    if (!assistant) return;
+
+    if (window.ScopedLabsLensAssistantScenarioTouched) {
+      renderAssistantScenarioModeCallout(assistant);
+    } else {
+      clearAssistantScenarioModeCallout(assistant);
+    }
+
+    if (assistant.dataset.scenarioModeBound === "true") return;
+    assistant.dataset.scenarioModeBound = "true";
+
+    const activate = () => {
+      setAssistantScenarioSourceMetadata();
+      renderAssistantScenarioModeCallout(assistant);
+    };
+
+    assistant.addEventListener("input", activate);
+    assistant.addEventListener("change", activate);
+    assistant.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!target || !target.closest) return;
+
+      if (target.closest("button, [role='button'], [data-scenario], [data-action]")) {
+        activate();
+      }
+    });
   }
 
   function renderLensDesignAssistant(data) {
