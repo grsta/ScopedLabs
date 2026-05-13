@@ -121,7 +121,14 @@
   }
 
   function clearDownstream() {
-    sessionStorage.removeItem(FLOW_KEYS.plate);
+    [
+      FLOW_KEYS.plate,
+      "scopedlabs:pipeline:last-result"
+    ].forEach((key) => {
+      try {
+        sessionStorage.removeItem(key);
+      } catch {}
+    });
   }
 
   function renderFlowNote() {
