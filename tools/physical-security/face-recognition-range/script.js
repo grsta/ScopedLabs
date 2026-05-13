@@ -126,7 +126,7 @@
     if (number === null) return "n/a";
 
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
-    if (field === "hfov") return Math.round(number) + "?";
+    if (field === "hfov") return Math.round(number) + " deg";
 
     return String(number);
   }
