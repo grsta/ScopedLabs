@@ -56,7 +56,36 @@
     </section>
 
     <section class="section">
-      <div class="card">
+      
+      <section class="card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill pill--pro">Physical Security</span>
+          <span class="pill">Pipeline Guardrails</span>
+        </div>
+
+        <h2 class="h2">Physical Security Pipeline Guardrails</h2>
+
+        <p class="muted">
+          The Physical Security guided design flow now includes assumption/source tracking across the pipeline.
+          Carried-forward values can be edited without being silently overwritten, and ScopedLabs now labels those edits
+          as local what-if branches instead of treating them as clean pipeline truth.
+        </p>
+
+        <ul class="muted">
+          <li>Added manual override detection for carried pipeline values across the Physical Security flow.</li>
+          <li>Imported values now remain editable without snapping back during input changes.</li>
+          <li>Manual override notices now appear when a carried value is changed inside a tool.</li>
+          <li>Lens Selection now distinguishes clean pipeline values, normal manual overrides, Design Assistant scenarios, and standalone validation scenarios.</li>
+          <li>Added source-tracking metadata groundwork for future final pipeline exports with Assumption Integrity / Source Summary reporting.</li>
+        </ul>
+
+        <p class="muted">
+          This upgrade improves transparency by showing when a result is based on clean pipeline assumptions,
+          a manual override, an assisted design scenario, or a standalone validation scenario.
+        </p>
+      </section>
+
+<div class="card">
         <div class="pill-row">
           <span class="pill pro">May 2026</span>
         </div>
