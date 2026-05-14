@@ -111,6 +111,252 @@
       color: #ffe38a;
     }
   </style>
+<style data-scopedlabs-camera-spacing-assistant-v003>
+    .spacing-design-assistant {
+      margin-top: 14px;
+      border: 1px solid rgba(125,255,158,.18);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(82,255,138,.08), transparent 36%),
+        radial-gradient(circle at 90% 9%, rgba(255,96,88,.08), transparent 32%),
+        linear-gradient(180deg, rgba(5,14,11,.96), rgba(2,7,5,.98));
+      box-shadow: 0 22px 70px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.045);
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .spacing-design-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(148,163,184,.12);
+    }
+
+    .spacing-design-kicker {
+      color: #7dff98;
+      font-size: .66rem;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .spacing-design-title {
+      margin: 0;
+      color: #fff;
+      font-size: 1.06rem;
+      font-weight: 950;
+      line-height: 1.16;
+    }
+
+    .spacing-design-copy {
+      margin: 7px 0 0;
+      color: rgba(226,232,240,.70);
+      font-size: .82rem;
+      line-height: 1.48;
+      max-width: 780px;
+    }
+
+    .spacing-design-status {
+      border: 1px solid rgba(255,96,88,.34);
+      border-radius: 999px;
+      background: rgba(255,96,88,.10);
+      color: #ff8f88;
+      padding: 8px 11px;
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .spacing-design-status.healthy {
+      border-color: rgba(125,255,152,.34);
+      background: rgba(125,255,152,.08);
+      color: #7dff98;
+    }
+
+    .spacing-design-status.watch {
+      border-color: rgba(255,211,79,.34);
+      background: rgba(255,211,79,.08);
+      color: #ffd34f;
+    }
+
+    .spacing-design-layout,
+    .spacing-design-split {
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
+      gap: 14px;
+      margin-top: 14px;
+      align-items: stretch;
+    }
+
+    .spacing-visual-card,
+    .spacing-advice-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 14px;
+      background: rgba(255,255,255,.025);
+      padding: 12px;
+      min-width: 0;
+    }
+
+    .spacing-section-kicker {
+      color: #7dff98;
+      font-size: .62rem;
+      font-weight: 950;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .spacing-section-title {
+      margin: 0;
+      color: #fff;
+      font-size: .96rem;
+      font-weight: 950;
+      line-height: 1.18;
+    }
+
+    .spacing-section-copy {
+      margin: 7px 0 0;
+      color: rgba(226,232,240,.70);
+      font-size: .80rem;
+      line-height: 1.48;
+    }
+
+    .spacing-visual-stage {
+      height: 260px;
+      margin-top: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(148,163,184,.12);
+      background:
+        radial-gradient(circle at 12% 50%, rgba(125,255,152,.06), transparent 34%),
+        radial-gradient(circle at 88% 50%, rgba(255,96,88,.06), transparent 34%),
+        rgba(255,255,255,.018);
+      overflow: hidden;
+    }
+
+    .spacing-visual-stage svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .spacing-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .spacing-mini-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+      padding: 9px;
+      min-width: 0;
+    }
+
+    .spacing-mini-label {
+      color: rgba(203,213,225,.64);
+      font-size: .56rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .spacing-mini-value {
+      display: block;
+      margin-top: 6px;
+      color: #fff;
+      font-size: .88rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .spacing-action-list,
+    .spacing-branch-list {
+      display: grid;
+      gap: 8px;
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .spacing-action-list li,
+    .spacing-branch-item {
+      border: 1px solid rgba(125,255,152,.14);
+      border-radius: 10px;
+      background: rgba(125,255,152,.035);
+      color: rgba(226,232,240,.78);
+      padding: 9px 10px;
+      font-size: .75rem;
+      line-height: 1.38;
+    }
+
+    .spacing-branch-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .spacing-branch-title {
+      display: block;
+      color: #fff;
+      font-weight: 950;
+      margin-bottom: 4px;
+    }
+
+    .spacing-branch-meta {
+      display: block;
+      color: rgba(226,232,240,.74);
+      font-weight: 800;
+    }
+
+    .spacing-branch-note {
+      display: block;
+      margin-top: 5px;
+      color: rgba(226,232,240,.58);
+      font-weight: 500;
+    }
+
+    .spacing-mode-note {
+      margin-top: 12px;
+      display: block;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(148,108,18,0.24), rgba(97,72,12,0.18));
+      border: 1px solid rgba(221, 183, 67, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 232, 150, 0.08);
+      color: #f2d978;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .spacing-mode-note strong {
+      color: #ffe38a;
+    }
+
+    @media (max-width: 900px) {
+      .spacing-design-layout,
+      .spacing-design-split,
+      .spacing-mini-grid,
+      .spacing-branch-item {
+        grid-template-columns: 1fr;
+      }
+
+      .spacing-design-head {
+        display: grid;
+      }
+
+      .spacing-visual-stage {
+        height: 330px;
+      }
+    }
+  </style>
 </head>
 
 <body
@@ -266,30 +512,7 @@
           </p>
         </div>
 
-        <section id="spacingDesignAssistant" class="card" style="margin-top: 14px; background: rgba(0,0,0,.14); border-color: rgba(120,255,120,0.18);" hidden>
-          <div class="pill-row">
-            <span class="pill pill--pro">Design Assistant</span>
-          </div>
-
-          <h3 class="h3" style="margin-top: 10px;">Camera Spacing Design Assistant</h3>
-          <p class="muted" style="margin-bottom: 0;">
-            Review the current camera count and spacing pressure, compare design branches, and intentionally select the spacing path that should continue into Blind Spot Check.
-          </p>
-
-          <div id="spacingAssistantModeNote" class="flow-override-note" role="note" aria-label="Design assistant mode" hidden></div>
-
-          <h4 class="h3" style="margin-top: 16px; margin-bottom: 0;">Current Layout Diagnosis</h4>
-          <div id="spacingAssistantDiagnosis" class="results-grid"></div>
-
-          <h4 class="h3" style="margin-top: 16px; margin-bottom: 0;">Design Branches</h4>
-          <p class="muted" style="margin-top: 8px; margin-bottom: 0;">
-            These branches use the same camera-spacing model as the calculator. Applying a branch updates the overlap target and recalculates the tool as an assisted scenario.
-          </p>
-          <div id="spacingAssistantBranches" class="results-grid"></div>
-
-          <h4 class="h3" style="margin-top: 16px; margin-bottom: 0;">Recommendation</h4>
-          <div id="spacingAssistantRecommendation" class="results-grid"></div>
-        </section>
+        <section id="spacingDesignAssistant" class="spacing-design-assistant" hidden></section>
 
 <div class="btn-row" style="margin-top: 14px;">
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
@@ -387,7 +610,7 @@
 
   <script src="/assets/export.js?v=shared-export-010"></script>
 
-  <script src="./script.js?v=physical-security-spacing-assistant-002"></script>
+  <script src="./script.js?v=physical-security-spacing-assistant-003"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

@@ -388,25 +388,34 @@ function escapeHtml(value) {
       : "Recommendation: continue with the current result, then use Blind Spot Check to verify coverage continuity under the real layout geometry.";
   }
 
-  function renderAssistantModeNote() {
-    if (!els.assistantModeNote) return;
+function assistantStatusClass(data) {
+    if (data.spacingClass === "Balanced Spacing") return "healthy";
+    if (data.spacingClass === "Tight Spacing") return "watch";
+    return "risk";
+  }
 
-    if (!activeAssistantScenario) {
-      els.assistantModeNote.hidden = true;
-      els.assistantModeNote.innerHTML = "";
-      return;
-    }
+  function assistantStatusLabel(data) {
+    if (data.spacingClass === "Balanced Spacing") return "Healthy";
+    if (data.spacingClass === "Tight Spacing") return "Watch";
+    return "Risk";
+  }
+
+  function assistantModeHtml() {
+    if (!activeAssistantScenario) return "";
 
     const copy = hasPipelineBaseline()
       ? "<strong>Custom Design Mode Active:</strong> " + escapeHtml(activeAssistantScenario.label) + " is being used as an assisted camera-spacing branch for downstream Blind Spot validation."
       : "<strong>Standalone Design Mode Active:</strong> This assisted scenario was created without upstream pipeline values. Results are valid as a single validation scenario, not a full guided pipeline run.";
 
-    els.assistantModeNote.hidden = false;
-    els.assistantModeNote.innerHTML = copy;
+    return '<div class="spacing-mode-note" role="note" aria-label="Design assistant mode">' + copy + '</div>';
   }
 
   function hideSpacingAssistant() {
-    if (els.assistant) els.assistant.hidden = true;
+    if (els.assistant) {
+      els.assistant.hidden = true;
+      els.assistant.innerHTML = "";
+    }
+
     if (els.assistantDiagnosis) els.assistantDiagnosis.innerHTML = "";
     if (els.assistantBranches) els.assistantBranches.innerHTML = "";
     if (els.assistantRecommendation) els.assistantRecommendation.innerHTML = "";
@@ -414,50 +423,150 @@ function escapeHtml(value) {
       els.assistantModeNote.hidden = true;
       els.assistantModeNote.innerHTML = "";
     }
+
     latestAssistantScenarios = [];
   }
 
-  function resultRow(label, value) {
-    return '<div class="result-row"><span class="result-label">' + escapeHtml(label) + '</span><span class="result-value">' + value + '</span></div>';
+  function spacingVisualSvg(data) {
+    const cameraCount = Math.min(Math.max(data.cams, 1), 10);
+    const gap = cameraCount > 1 ? 760 / (cameraCount - 1) : 0;
+    const cameras = Array.from({ length: cameraCount }, (_, index) => {
+      const x = cameraCount === 1 ? 400 : 20 + (gap * index);
+      const coneLeft = Math.max(20, x - 70);
+      const coneRight = Math.min(780, x + 70);
+
+      return [
+        '<polygon points="' + coneLeft + ',154 ' + x + ',80 ' + coneRight + ',154" fill="rgba(125,255,152,.08)" stroke="rgba(125,255,152,.22)" stroke-width="1" />',
+        '<circle cx="' + x + '" cy="78" r="10" fill="rgba(125,255,152,.22)" stroke="rgba(125,255,152,.82)" stroke-width="2" />',
+        '<line x1="' + x + '" y1="88" x2="' + x + '" y2="154" stroke="rgba(125,255,152,.18)" stroke-width="1" stroke-dasharray="5 6" />'
+      ].join("");
+    }).join("");
+
+    return '<svg viewBox="0 0 800 260" role="img" aria-label="Camera spacing visualization">' +
+      '<defs>' +
+        '<linearGradient id="spacingLine" x1="0" x2="1">' +
+          '<stop offset="0%" stop-color="rgba(125,255,152,.20)" />' +
+          '<stop offset="50%" stop-color="rgba(125,255,152,.70)" />' +
+          '<stop offset="100%" stop-color="rgba(255,211,79,.30)" />' +
+        '</linearGradient>' +
+      '</defs>' +
+      '<rect x="36" y="166" width="728" height="18" rx="9" fill="rgba(255,255,255,.045)" />' +
+      '<rect x="36" y="166" width="728" height="18" rx="9" fill="url(#spacingLine)" opacity=".75" />' +
+      cameras +
+      '<text x="40" y="214" fill="rgba(226,232,240,.72)" font-size="18" font-weight="800">Protected run: ' + escapeHtml(fmtFt(data.len)) + '</text>' +
+      '<text x="40" y="238" fill="rgba(226,232,240,.56)" font-size="15">Actual spacing: ' + escapeHtml(fmtFt(data.spacing)) + ' | Usable width: ' + escapeHtml(fmtFt(data.usableWidth)) + ' | Overlap: ' + escapeHtml(fmtPct(data.ovPct, 1)) + '</text>' +
+    '</svg>';
   }
 
-  function scenarioValueHtml(scenario) {
-    if (!scenario || !scenario.canApply) {
-      return '<span class="muted">Unavailable</span>';
+  function miniCard(label, value) {
+    return '<div class="spacing-mini-card"><span class="spacing-mini-label">' + escapeHtml(label) + '</span><span class="spacing-mini-value">' + escapeHtml(value) + '</span></div>';
+  }
+
+  function dominantDriverHtml(data) {
+    let headline = "Spacing and overlap are balanced.";
+    let copy = "The current camera-to-camera spacing is staying inside the usable footprint while preserving practical overlap reserve.";
+
+    if (data.spacingClass === "Wide Spacing") {
+      headline = "Spacing is creating continuity pressure.";
+      copy = "The actual spacing is too close to the edge of the usable footprint. Increase reserve before treating this as a clean handoff.";
+    } else if (data.spacingClass === "Tight Spacing") {
+      headline = "Camera count is carrying the design.";
+      copy = "The layout is conservative. That may be acceptable, but it can create budget, installation, and device-count pressure.";
     }
 
-    return '<span>' + escapeHtml(scenario.cams + " cameras | " + fmtFt(scenario.spacing) + " spacing | " + fmtPct(scenario.ovPct, 1) + " overlap") + '</span>' +
-      '<div class="btn-row" style="justify-content:flex-end; margin-top:8px;"><button class="btn btn-primary spacing-assistant-apply" type="button" data-spacing-scenario="' + escapeHtml(scenario.id) + '">Apply Branch</button></div>' +
-      '<div class="muted" style="margin-top:8px; font-weight:400; text-align:left;">' + escapeHtml(scenario.note) + '</div>';
+    return '<div class="spacing-section-kicker">Dominant Driver</div>' +
+      '<h4 class="spacing-section-title">' + escapeHtml(headline) + '</h4>' +
+      '<p class="spacing-section-copy">' + escapeHtml(copy) + '</p>' +
+      '<ul class="spacing-action-list">' +
+        '<li>Use Blind Spot Check before accepting final seam continuity.</li>' +
+        '<li>Recalculate upstream if the distance or HFOV assumption is not real-world accurate.</li>' +
+        '<li>Choose an assistant branch only when that branch matches the design priority.</li>' +
+      '</ul>';
+  }
+
+  function branchHtml(scenario) {
+    if (!scenario || !scenario.canApply) {
+      return '<div class="spacing-branch-item">' +
+        '<div><span class="spacing-branch-title">' + escapeHtml(scenario?.label || "Unavailable Branch") + '</span>' +
+        '<span class="spacing-branch-meta">Unavailable for current geometry</span>' +
+        '<span class="spacing-branch-note">' + escapeHtml(scenario?.note || "This branch cannot be calculated from the current inputs.") + '</span></div>' +
+        '<button class="btn" type="button" disabled>Unavailable</button>' +
+      '</div>';
+    }
+
+    return '<div class="spacing-branch-item">' +
+      '<div>' +
+        '<span class="spacing-branch-title">' + escapeHtml(scenario.label) + '</span>' +
+        '<span class="spacing-branch-meta">' + escapeHtml(scenario.cams + " cameras | " + fmtFt(scenario.spacing) + " spacing | " + fmtPct(scenario.ovPct, 1) + " overlap") + '</span>' +
+        '<span class="spacing-branch-note">' + escapeHtml(scenario.note) + '</span>' +
+      '</div>' +
+      '<button class="btn btn-primary spacing-assistant-apply" type="button" data-spacing-scenario="' + escapeHtml(scenario.id) + '">Apply Branch</button>' +
+    '</div>';
+  }
+
+  function recommendationHtml(data, scenarios) {
+    const recommendation = recommendationForAssistant(data, scenarios);
+    const source = activeAssistantScenario ? "Assistant Scenario" : (getManualOverrideMetadata(data).length ? "Manual Override" : "Clean Pipeline");
+
+    return '<div class="spacing-section-kicker">Recommendation</div>' +
+      '<h4 class="spacing-section-title">Recommended path forward</h4>' +
+      '<p class="spacing-section-copy">' + escapeHtml(recommendation) + '</p>' +
+      '<ul class="spacing-action-list">' +
+        '<li><strong>Pipeline integrity:</strong> ' + escapeHtml(source) + '</li>' +
+        '<li><strong>Next validation:</strong> Continue to Blind Spot Check with the final spacing result.</li>' +
+        '<li><strong>Correction path:</strong> If this result is risky, adjust overlap, reduce distance, widen usable FOV, or increase camera count.</li>' +
+      '</ul>';
+  }
+
+  function renderAssistantModeNote() {
+    return;
   }
 
   function renderSpacingAssistant(data) {
-    if (!els.assistant || !els.assistantDiagnosis || !els.assistantBranches || !els.assistantRecommendation) return;
+    if (!els.assistant) return;
 
     latestAssistantScenarios = buildAssistantScenarios(data);
     els.assistant.hidden = false;
 
-    els.assistantDiagnosis.innerHTML = [
-      resultRow("Current Diagnosis", escapeHtml(assistantStatusCopy(data))),
-      resultRow("Camera Count", escapeHtml(String(data.cams))),
-      resultRow("Actual Spacing", escapeHtml(fmtFt(data.spacing))),
-      resultRow("Usable Width", escapeHtml(fmtFt(data.usableWidth))),
-      resultRow("Spacing Ratio", escapeHtml(fmt(data.ratio, 2) + " | " + data.spacingClass)),
-      resultRow("Overlap Reserve", escapeHtml(fmtPct(data.ovPct, 1)))
-    ].join("");
+    const statusClass = assistantStatusClass(data);
+    const statusLabel = assistantStatusLabel(data);
 
-    els.assistantBranches.innerHTML = latestAssistantScenarios.map((scenario) => {
-      return resultRow(scenario.label, scenarioValueHtml(scenario));
-    }).join("");
+    els.assistant.innerHTML =
+      '<div class="spacing-design-head">' +
+        '<div>' +
+          '<div class="spacing-design-kicker">Design Assistant</div>' +
+          '<h3 class="spacing-design-title">Camera spacing design path</h3>' +
+          '<p class="spacing-design-copy">This module checks whether the calculated spacing is preserving continuity, creating camera-count pressure, or pushing too close to the usable footprint before Blind Spot validation.</p>' +
+        '</div>' +
+        '<div class="spacing-design-status ' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</div>' +
+      '</div>' +
+      assistantModeHtml() +
+      '<div class="spacing-design-layout">' +
+        '<div class="spacing-visual-card">' +
+          '<div class="spacing-section-kicker">Spacing Visualization</div>' +
+          '<h4 class="spacing-section-title">What the layout is doing</h4>' +
+          '<p class="spacing-section-copy">Each camera position is treated as part of the protected run. The assistant compares spacing, usable footprint, and overlap reserve before the downstream blind-spot check.</p>' +
+          '<div class="spacing-visual-stage">' + spacingVisualSvg(data) + '</div>' +
+          '<div class="spacing-mini-grid">' +
+            miniCard("Cameras", String(data.cams)) +
+            miniCard("Spacing", fmtFt(data.spacing)) +
+            miniCard("Usable Width", fmtFt(data.usableWidth)) +
+            miniCard("Overlap", fmtPct(data.ovPct, 1)) +
+          '</div>' +
+        '</div>' +
+        '<div class="spacing-advice-card">' + dominantDriverHtml(data) + '</div>' +
+      '</div>' +
+      '<div class="spacing-design-split">' +
+        '<div class="spacing-advice-card">' +
+          '<div class="spacing-section-kicker">Design Branches</div>' +
+          '<h4 class="spacing-section-title">Choose the spacing intent</h4>' +
+          '<p class="spacing-section-copy">Applying a branch updates the overlap target and recalculates this tool as an assisted scenario.</p>' +
+          '<div class="spacing-branch-list">' + latestAssistantScenarios.map(branchHtml).join("") + '</div>' +
+        '</div>' +
+        '<div class="spacing-advice-card">' + recommendationHtml(data, latestAssistantScenarios) + '</div>' +
+      '</div>';
 
-    els.assistantRecommendation.innerHTML = [
-      resultRow("Recommended Path", escapeHtml(recommendationForAssistant(data, latestAssistantScenarios))),
-      resultRow("Pipeline Integrity", escapeHtml(activeAssistantScenario ? "Assistant Scenario" : (getManualOverrideMetadata(data).length ? "Manual Override" : "Clean Pipeline")))
-    ].join("");
-
-    renderAssistantModeNote();
-
-    els.assistantBranches.querySelectorAll(".spacing-assistant-apply").forEach((button) => {
+    els.assistant.querySelectorAll(".spacing-assistant-apply").forEach((button) => {
       button.addEventListener("click", () => {
         const scenario = latestAssistantScenarios.find((item) => item.id === button.dataset.spacingScenario);
         applyAssistantScenario(scenario);
