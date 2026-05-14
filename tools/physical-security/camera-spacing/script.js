@@ -252,11 +252,13 @@ function escapeHtml(value) {
       id: activeAssistantScenario.id,
       label: activeAssistantScenario.label,
       intent: activeAssistantScenario.intent,
-      controlledField: "ov",
+      controlledFields: Object.keys(activeAssistantScenario.changes || {}),
+      changes: activeAssistantScenario.changes || {},
       overlapTargetPct: activeAssistantScenario.ovPct,
       cameraCount: activeAssistantScenario.cams,
       actualSpacingFt: activeAssistantScenario.spacing,
       usableWidthFt: activeAssistantScenario.usableWidth,
+      rawWidthFt: activeAssistantScenario.rawWidth,
       spacingRatio: activeAssistantScenario.ratio,
       spacingClass: activeAssistantScenario.spacingClass,
       scenarioContext: hasPipelineBaseline() ? "pipeline-baseline" : "single-validation",
@@ -310,45 +312,289 @@ function escapeHtml(value) {
     };
   }
 
+  function spacingSourceLabel(mode) {
+    if (mode === "manual-override") return "Manual override";
+    if (mode === "assistant-scenario") return "Assisted scenario";
+    if (mode === "mixed") return "Mixed scenario";
+    return "Clean pipeline";
+  }
+
+  function spacingProblemLabel(data) {
+    if (!data) return "Review required";
+
+    if (data.spacingClass === "Wide Spacing") return "Spacing is too wide for the usable footprint";
+    if (data.spacingClass === "Tight Spacing") return "Spacing is conservative and camera-heavy";
+    if (Number(data.ovPct) >= 25) return "Overlap reserve is compressing useful coverage width";
+
+    return "Spacing is balanced for this protected run";
+  }
+
+  function spacingRecommendedAction(data) {
+    if (!data) return "Review the spacing result before continuing.";
+
+    if (data.spacingClass === "Wide Spacing") {
+      return "Apply a correction branch that adds reserve, increases effective coverage, or moves this result toward a higher camera count before Blind Spot Check.";
+    }
+
+    if (data.spacingClass === "Tight Spacing") {
+      return "Keep the conservative layout if continuity matters, or test the efficiency branch if camera count is under pressure.";
+    }
+
+    if (Number(data.ovPct) >= 25) {
+      return "Spacing is workable, but overlap reserve is high. Use the balanced branch if the layout feels over-compressed.";
+    }
+
+    return "Keep the baseline and continue to Blind Spot Check unless the project priority changes.";
+  }
+
+  function simulateSpacingDesignValues(data, changes) {
+    const len = Number.isFinite(Number(changes?.len)) ? Number(changes.len) : Number(data.len);
+    const dist = Number.isFinite(Number(changes?.dist)) ? Number(changes.dist) : Number(data.dist);
+    const hfov = Number.isFinite(Number(changes?.hfov)) ? Number(changes.hfov) : Number(data.hfov);
+    const ovPct = Number.isFinite(Number(changes?.ovPct)) ? Number(changes.ovPct) : Number(data.ovPct);
+
+    if (
+      !Number.isFinite(len) || len <= 0 ||
+      !Number.isFinite(dist) || dist <= 0 ||
+      !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
+      !Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95
+    ) {
+      return null;
+    }
+
+    const rawWidth = 2 * Math.tan((hfov / 2) * Math.PI / 180) * dist;
+    const usableWidth = rawWidth * (1 - (ovPct / 100));
+
+    if (!Number.isFinite(rawWidth) || rawWidth <= 0 || !Number.isFinite(usableWidth) || usableWidth <= 0) {
+      return null;
+    }
+
+    const cams = Math.max(1, Math.ceil(len / usableWidth));
+    const spacing = len / cams;
+    const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
+    const spacingClass = classifySpacing(ratio);
+
+    return {
+      len,
+      dist,
+      hfov,
+      ovPct,
+      rawWidth,
+      usableWidth,
+      cams,
+      spacing,
+      ratio,
+      spacingClass
+    };
+  }
+
+  function makeSpacingDesignScenario(data, id, label, intent, changes, note, actionLabel, canApply = true) {
+    const model = simulateSpacingDesignValues(data, changes || {});
+
+    if (!model || !canApply) {
+      return {
+        id,
+        label,
+        intent,
+        note,
+        actionLabel: actionLabel || "Unavailable",
+        canApply: false,
+        changes: changes || {},
+        disabledReason: "This branch is not available for the current geometry."
+      };
+    }
+
+    return {
+      id,
+      label,
+      intent,
+      note,
+      actionLabel,
+      canApply: true,
+      changes: changes || {},
+      ...model
+    };
+  }
+
+  function spacingControlFieldsLabel(scenario) {
+    if (!scenario || !scenario.changes) return "No field changes";
+
+    const labels = [];
+
+    if (Number.isFinite(Number(scenario.changes.len))) labels.push("perimeter length");
+    if (Number.isFinite(Number(scenario.changes.dist))) labels.push("distance");
+    if (Number.isFinite(Number(scenario.changes.hfov))) labels.push("HFOV");
+    if (Number.isFinite(Number(scenario.changes.ovPct))) labels.push("overlap target");
+
+    return labels.length ? labels.join(", ") : "baseline values";
+  }
+
+  function spacingScenarioSummary(scenario) {
+    if (!scenario || !scenario.canApply) return "Unavailable for current geometry";
+
+    return [
+      Number.isFinite(scenario.cams) ? scenario.cams + " cameras" : null,
+      Number.isFinite(scenario.spacing) ? fmtFt(scenario.spacing) + " spacing" : null,
+      Number.isFinite(scenario.usableWidth) ? fmtFt(scenario.usableWidth) + " usable width" : null,
+      Number.isFinite(scenario.ovPct) ? fmtPct(scenario.ovPct, 1) + " overlap" : null
+    ].filter(Boolean).join(" | ");
+  }
+
+  function spacingApplyButtonHtml(scenario) {
+    if (!scenario || !scenario.canApply) {
+      return '<button class="btn spacing-assistant-apply" type="button" disabled>Unavailable</button>';
+    }
+
+    const label = scenario.actionLabel || ("Apply: " + spacingScenarioSummary(scenario));
+
+    return '<button class="btn btn-primary spacing-assistant-apply" type="button" data-spacing-scenario="' + escapeHtml(scenario.id) + '">' + escapeHtml(label) + '</button>';
+  }
+
+  function spacingAssistantHeroHtml(data) {
+    const mode = sourceModeForCurrentResult(getManualOverrideMetadata(data));
+    const blocker = spacingProblemLabel(data);
+
+    return '' +
+      '<div class="spacing-advice-card spacing-hero-card">' +
+        '<div class="spacing-section-kicker">Executive Diagnostic Snapshot</div>' +
+        '<h4 class="spacing-section-title">' + escapeHtml(blocker) + '</h4>' +
+        '<p class="spacing-section-copy">' + escapeHtml(spacingRecommendedAction(data)) + '</p>' +
+        '<div class="spacing-mini-grid">' +
+          miniCard("Status", assistantStatusLabel(data)) +
+          miniCard("Source", spacingSourceLabel(mode)) +
+          miniCard("Main Blocker", blocker) +
+          miniCard("Recommended Next Step", "Blind Spot Check") +
+        '</div>' +
+      '</div>';
+  }
+
+  function spacingDesignControlHtml(scenarios) {
+    return '' +
+      '<div class="spacing-advice-card">' +
+        '<div class="spacing-section-kicker">Live Design Controls</div>' +
+        '<h4 class="spacing-section-title">Apply a correction branch</h4>' +
+        '<p class="spacing-section-copy">These are design actions. Each button changes the actual tool inputs, recalculates the result, and marks the result as an assisted scenario for downstream handoff.</p>' +
+        '<div class="spacing-branch-list">' +
+          scenarios.map((scenario) => {
+            return '' +
+              '<div class="spacing-branch-item">' +
+                '<div>' +
+                  '<strong>' + escapeHtml(scenario.label || "Design Branch") + '</strong>' +
+                  '<p>' + escapeHtml(scenario.intent || "") + '</p>' +
+                  '<p><strong>Changes:</strong> ' + escapeHtml(spacingControlFieldsLabel(scenario)) + '</p>' +
+                  '<p><strong>Result:</strong> ' + escapeHtml(spacingScenarioSummary(scenario)) + '</p>' +
+                  (scenario.note ? '<p><strong>Use when:</strong> ' + escapeHtml(scenario.note) + '</p>' : '') +
+                '</div>' +
+                spacingApplyButtonHtml(scenario) +
+              '</div>';
+          }).join("") +
+        '</div>' +
+      '</div>';
+  }
+
+  function spacingPathToHealthyHtml(data) {
+    const items = [];
+
+    if (data.spacingClass === "Wide Spacing") {
+      items.push("Add one camera or tighten the spacing so actual spacing no longer outruns usable width.");
+      items.push("Widen the effective HFOV only if the wider view still preserves downstream detail requirements.");
+      items.push("Revisit Coverage Area if the imported distance or HFOV is not the true project geometry.");
+      items.push("Confirm the corrected branch in Blind Spot Check before treating it as clean.");
+    } else if (data.spacingClass === "Tight Spacing") {
+      items.push("Keep the current result when continuity is more important than camera-count efficiency.");
+      items.push("Try the efficiency branch only if the next Blind Spot Check remains healthy.");
+      items.push("Avoid relaxing overlap so far that hidden seam risk gets pushed downstream.");
+    } else {
+      items.push("Preserve the current baseline and continue to Blind Spot Check.");
+      items.push("Use the continuity branch if seam closure matters more than camera efficiency.");
+      items.push("Use the efficiency branch only if the project needs fewer cameras and Blind Spot Check still passes.");
+    }
+
+    return '' +
+      '<div class="spacing-advice-card">' +
+        '<div class="spacing-section-kicker">Path to Healthy</div>' +
+        '<h4 class="spacing-section-title">How to correct or preserve this result</h4>' +
+        '<ul class="spacing-action-list">' +
+          items.map((item) => '<li>' + escapeHtml(item) + '</li>').join("") +
+        '</ul>' +
+      '</div>';
+  }
+
+  function spacingCarryForwardHtml(data) {
+    return '' +
+      '<div class="spacing-advice-card">' +
+        '<div class="spacing-section-kicker">Carry Forward</div>' +
+        '<h4 class="spacing-section-title">What Blind Spot Check will receive</h4>' +
+        '<p class="spacing-section-copy">The next step should validate whether this spacing plan actually closes the coverage seams.</p>' +
+        '<div class="spacing-mini-grid">' +
+          miniCard("Cameras", String(data.cams)) +
+          miniCard("Actual Spacing", fmtFt(data.spacing)) +
+          miniCard("Distance", fmtFt(data.dist)) +
+          miniCard("HFOV", fmt(data.hfov, 1) + " deg") +
+        '</div>' +
+        '<div class="spacing-mini-grid">' +
+          miniCard("Overlap Target", fmtPct(data.ovPct, 1)) +
+          miniCard("Usable Width", fmtFt(data.usableWidth)) +
+          miniCard("Raw Width", fmtFt(data.rawWidth)) +
+          miniCard("Spacing Class", data.spacingClass) +
+        '</div>' +
+      '</div>';
+  }
+
   function buildAssistantScenarios(data) {
     const scenarios = [];
 
     const continuityOverlap = overlapForTarget(data, data.cams + 1, 0.82);
-    const continuityModel = continuityOverlap === null ? null : simulateSpacingBranch(data, continuityOverlap);
-    scenarios.push(makeAssistantScenario(
+    scenarios.push(makeSpacingDesignScenario(
+      data,
       "continuity-priority",
-      "Continuity Priority",
-      "Reduce blind-spot risk with tighter spacing and stronger overlap reserve.",
-      continuityModel,
-      continuityModel
-        ? "Use this when seam closure is more important than minimizing camera count. Confirm the final geometry in Blind Spot Check."
-        : "The current geometry cannot add a clean continuity branch through overlap alone. Consider reducing distance, widening HFOV, or increasing planned camera count manually.",
-      !!continuityModel
+      "Apply Correction: Add Reserve / One More Camera",
+      "Tighten the layout by increasing reserve enough to move toward one additional camera when the geometry supports it.",
+      Number.isFinite(continuityOverlap) ? { ovPct: continuityOverlap } : {},
+      Number.isFinite(continuityOverlap)
+        ? "Use when seam closure and downstream blind-spot risk matter more than camera-count efficiency."
+        : "This branch cannot be applied from overlap alone. Revisit distance, HFOV, or perimeter assumptions upstream.",
+      "Apply Correction",
+      Number.isFinite(continuityOverlap)
     ));
 
     const balancedOverlap = overlapForTarget(data, data.cams, 0.92);
-    const balancedModel = balancedOverlap === null ? simulateSpacingBranch(data, data.ovPct) : simulateSpacingBranch(data, balancedOverlap);
-    scenarios.push(makeAssistantScenario(
+    scenarios.push(makeSpacingDesignScenario(
+      data,
       "balanced-layout",
-      "Balanced Layout",
-      "Keep spacing, usable width, and overlap reserve in a practical middle range.",
-      balancedModel,
-      "Use this as the default branch when the goal is a clean handoff to Blind Spot Check without over-compressing camera spacing.",
-      Number.isFinite(balancedModel?.ovPct)
+      "Apply Branch: Balanced Layout",
+      "Keep the same camera count while moving overlap reserve toward a practical middle range.",
+      Number.isFinite(balancedOverlap) ? { ovPct: balancedOverlap } : { ovPct: data.ovPct },
+      "Use as the default correction when the goal is a clean handoff to Blind Spot Check without over-compressing spacing.",
+      "Apply Balanced Branch",
+      true
     ));
 
     const efficiencyTarget = data.cams > 1 ? data.cams - 1 : null;
     const efficiencyOverlap = efficiencyTarget ? overlapForTarget(data, efficiencyTarget, 0.98) : null;
-    const efficiencyModel = efficiencyOverlap === null ? null : simulateSpacingBranch(data, efficiencyOverlap);
-    scenarios.push(makeAssistantScenario(
+    scenarios.push(makeSpacingDesignScenario(
+      data,
       "camera-count-efficiency",
-      "Camera Count Efficiency",
+      "Try Efficiency Branch",
       "Test whether the protected run can stay viable with fewer cameras.",
-      efficiencyModel,
-      efficiencyModel
-        ? "Use only when the next Blind Spot Check still shows acceptable continuity. This branch trades reserve for camera-count efficiency."
+      Number.isFinite(efficiencyOverlap) ? { ovPct: efficiencyOverlap } : {},
+      Number.isFinite(efficiencyOverlap)
+        ? "Use only when the next Blind Spot Check still shows acceptable continuity."
         : "Dropping a camera is not viable from the current geometry without changing upstream assumptions or accepting gap risk.",
-      !!efficiencyModel
+      "Try Efficiency Branch",
+      Number.isFinite(efficiencyOverlap)
+    ));
+
+    const widerHfov = Math.min(179, data.hfov * 1.1);
+    scenarios.push(makeSpacingDesignScenario(
+      data,
+      "widen-effective-view",
+      "Recalculate: Widen Effective HFOV",
+      "Model the effect of a wider effective view to increase usable footprint before Blind Spot validation.",
+      { hfov: widerHfov },
+      "Use only when the camera/lens choice can actually support a wider view without breaking detail requirements.",
+      "Apply Wider HFOV Check",
+      widerHfov > data.hfov && widerHfov < 180
     ));
 
     return scenarios;
@@ -522,141 +768,21 @@ function assistantStatusClass(data) {
     return;
   }
 
-  function spacingProblemLabel(data) {
-    if (!data) return "Unknown";
+  
 
-    if (data.spacingClass === "Wide Spacing") return "Spacing is outrunning usable width";
-    if (data.spacingClass === "Tight Spacing") return "Spacing is conservative and camera-heavy";
-    if (Number(data.ovPct) >= 25) return "Overlap reserve is compressing usable width";
+  
 
-    return "Spacing is balanced";
-  }
+  
 
-  function spacingCorrectionSummary(data) {
-    if (!data) return "";
+  
 
-    if (data.spacingClass === "Wide Spacing") {
-      return "Use the correction branches below to tighten camera spacing, increase overlap reserve, or increase camera count before relying on downstream blind-spot validation.";
-    }
+  
 
-    if (data.spacingClass === "Tight Spacing") {
-      return "The layout is probably safe for continuity, but it may be over-built. Use the efficiency branch only if Blind Spot Check still confirms clean coverage.";
-    }
+  
 
-    if (Number(data.ovPct) >= 25) {
-      return "The spacing works, but the overlap target is starting to consume useful coverage width. Consider a balanced branch before moving downstream.";
-    }
+  
 
-    return "The current spacing is a clean baseline. Continue to Blind Spot Check, or apply a branch only if the project priority changes.";
-  }
-
-  function spacingFixCard(title, body, tone) {
-    return '' +
-      '<div class="spacing-branch-item ' + escapeHtml(tone || "") + '">' +
-        '<div>' +
-          '<strong>' + escapeHtml(title) + '</strong>' +
-          '<p>' + escapeHtml(body) + '</p>' +
-        '</div>' +
-      '</div>';
-  }
-
-  function spacingDiagnosticHtml(data) {
-    const mode = sourceModeForCurrentResult(getManualOverrideMetadata(data));
-    const blocker = spacingProblemLabel(data);
-
-    return '' +
-      '<div class="spacing-advice-card">' +
-        '<div class="spacing-section-kicker">Executive Diagnostic Snapshot</div>' +
-        '<h4 class="spacing-section-title">' + escapeHtml(blocker) + '</h4>' +
-        '<p class="spacing-section-copy">' + escapeHtml(spacingCorrectionSummary(data)) + '</p>' +
-        '<div class="spacing-mini-grid">' +
-          miniCard("Status", assistantStatusLabel(data)) +
-          miniCard("Source", mode) +
-          miniCard("Main Blocker", blocker) +
-          miniCard("Next Step", "Blind Spot Check") +
-        '</div>' +
-      '</div>';
-  }
-
-  function spacingCorrectionPathHtml(data) {
-    const cards = [];
-
-    if (data.spacingClass === "Wide Spacing") {
-      cards.push(spacingFixCard("Primary correction", "Add a camera or reduce the target spacing so actual spacing no longer exceeds usable width.", "risk"));
-      cards.push(spacingFixCard("Secondary correction", "Increase overlap reserve only if the added reserve still produces a practical camera count.", "watch"));
-      cards.push(spacingFixCard("Upstream correction", "If the geometry is unrealistic, recalculate upstream distance or HFOV before continuing.", "watch"));
-    } else if (data.spacingClass === "Tight Spacing") {
-      cards.push(spacingFixCard("Primary correction", "Keep this branch if continuity is the priority and camera count is acceptable.", "healthy"));
-      cards.push(spacingFixCard("Efficiency check", "Try the camera-count efficiency branch only if downstream Blind Spot Check remains healthy.", "watch"));
-      cards.push(spacingFixCard("Do not over-correct", "Avoid relaxing overlap so much that the next tool has to absorb hidden gap risk.", "watch"));
-    } else {
-      cards.push(spacingFixCard("Recommended path", "Carry this balanced result into Blind Spot Check and validate the final gap condition.", "healthy"));
-      cards.push(spacingFixCard("Optional correction", "Use the continuity branch if seam closure matters more than camera efficiency.", "watch"));
-      cards.push(spacingFixCard("Hold baseline", "Do not change upstream assumptions unless distance, HFOV, or perimeter length is wrong.", "healthy"));
-    }
-
-    return '' +
-      '<div class="spacing-advice-card">' +
-        '<div class="spacing-section-kicker">Correction Controls</div>' +
-        '<h4 class="spacing-section-title">How to move this result toward healthy</h4>' +
-        '<p class="spacing-section-copy">Use these controls as design actions, not just labels. Apply a branch only when it matches the project priority.</p>' +
-        '<div class="spacing-branch-list">' + cards.join("") + '</div>' +
-      '</div>';
-  }
-
-  function spacingBranchCardHtml(scenario) {
-    const disabled = !scenario || !scenario.canApply;
-    const label = scenario?.label || "Unavailable";
-    const intent = scenario?.intent || "This branch is not available for the current geometry.";
-    const note = scenario?.note || "";
-    const details = disabled
-      ? "Unavailable for current geometry"
-      : [
-          Number.isFinite(scenario.cams) ? scenario.cams + " cameras" : null,
-          Number.isFinite(scenario.spacing) ? fmtFt(scenario.spacing) + " spacing" : null,
-          Number.isFinite(scenario.ovPct) ? fmtPct(scenario.ovPct, 1) + " overlap" : null
-        ].filter(Boolean).join(" | ");
-
-    const button = disabled
-      ? '<button class="btn spacing-assistant-apply" type="button" disabled>Unavailable</button>'
-      : '<button class="btn btn-primary spacing-assistant-apply" type="button" data-spacing-scenario="' + escapeHtml(scenario.id) + '">Apply: ' + escapeHtml(details) + '</button>';
-
-    return '' +
-      '<div class="spacing-branch-item">' +
-        '<div>' +
-          '<strong>' + escapeHtml(label) + '</strong>' +
-          '<p>' + escapeHtml(intent) + '</p>' +
-          '<p><strong>Result:</strong> ' + escapeHtml(details) + '</p>' +
-          (note ? '<p><strong>Use when:</strong> ' + escapeHtml(note) + '</p>' : '') +
-        '</div>' +
-        button +
-      '</div>';
-  }
-
-  function spacingBranchesHtml(scenarios) {
-    return '' +
-      '<div class="spacing-advice-card">' +
-        '<div class="spacing-section-kicker">Assisted Correction Branches</div>' +
-        '<h4 class="spacing-section-title">Choose the branch that fixes the actual design pressure</h4>' +
-        '<p class="spacing-section-copy">Each branch updates the spacing assumption and recalculates the tool. The chosen branch is saved as an assisted scenario for downstream handoff.</p>' +
-        '<div class="spacing-branch-list">' + scenarios.map(spacingBranchCardHtml).join("") + '</div>' +
-      '</div>';
-  }
-
-  function spacingCarryForwardHtml(data) {
-    return '' +
-      '<div class="spacing-advice-card">' +
-        '<div class="spacing-section-kicker">Carry Forward</div>' +
-        '<h4 class="spacing-section-title">What Blind Spot Check will receive</h4>' +
-        '<p class="spacing-section-copy">The next tool should validate the actual coverage gap using the spacing result selected here.</p>' +
-        '<div class="spacing-mini-grid">' +
-          miniCard("Cameras", String(data.cams)) +
-          miniCard("Spacing", fmtFt(data.spacing)) +
-          miniCard("Distance", fmtFt(data.dist)) +
-          miniCard("HFOV", fmt(data.hfov, 1) + " deg") +
-        '</div>' +
-      '</div>';
-  }
+  
 
   function renderSpacingAssistant(data) {
     if (!els.assistant) return;
@@ -672,17 +798,17 @@ function assistantStatusClass(data) {
         '<div>' +
           '<div class="spacing-design-kicker">Design Assistant</div>' +
           '<h3 class="spacing-design-title">Camera spacing design assistant</h3>' +
-          '<p class="spacing-design-copy">This assistant explains whether the spacing result is healthy, what is driving risk, which correction branch to apply, and what will be carried into Blind Spot Check.</p>' +
+          '<p class="spacing-design-copy">This assistant explains the spacing status, shows what is driving risk, gives direct correction controls, and documents what Blind Spot Check will receive next.</p>' +
         '</div>' +
         '<div class="spacing-design-status ' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</div>' +
       '</div>' +
       assistantModeHtml() +
-      spacingDiagnosticHtml(data) +
+      spacingAssistantHeroHtml(data) +
       '<div class="spacing-design-layout">' +
         '<div class="spacing-visual-card">' +
           '<div class="spacing-section-kicker">Layout Visualization</div>' +
           '<h4 class="spacing-section-title">Spacing compared to usable coverage</h4>' +
-          '<p class="spacing-section-copy">The protected run below compares actual camera spacing against the usable footprint after overlap reserve is applied.</p>' +
+          '<p class="spacing-section-copy">The protected run below compares actual camera-to-camera spacing against usable coverage width after overlap reserve is applied.</p>' +
           '<div class="spacing-visual-stage">' + spacingVisualSvg(data) + '</div>' +
           '<div class="spacing-mini-grid">' +
             miniCard("Cameras", String(data.cams)) +
@@ -691,10 +817,10 @@ function assistantStatusClass(data) {
             miniCard("Overlap", fmtPct(data.ovPct, 1)) +
           '</div>' +
         '</div>' +
-        spacingCorrectionPathHtml(data) +
+        spacingDesignControlHtml(latestAssistantScenarios) +
       '</div>' +
       '<div class="spacing-design-split">' +
-        spacingBranchesHtml(latestAssistantScenarios) +
+        spacingPathToHealthyHtml(data) +
         spacingCarryForwardHtml(data) +
       '</div>' +
       '<div class="spacing-design-split">' +
@@ -711,23 +837,46 @@ function assistantStatusClass(data) {
   }
 
   function applyAssistantScenario(scenario) {
-    if (!scenario || !scenario.canApply || !Number.isFinite(scenario.ovPct)) return;
+    if (!scenario || !scenario.canApply) return;
 
     activeAssistantScenario = {
       id: scenario.id,
       label: scenario.label,
       intent: scenario.intent,
+      changes: scenario.changes || {},
+      len: scenario.len,
+      dist: scenario.dist,
+      hfov: scenario.hfov,
       ovPct: scenario.ovPct,
       cams: scenario.cams,
       spacing: scenario.spacing,
       usableWidth: scenario.usableWidth,
+      rawWidth: scenario.rawWidth,
       ratio: scenario.ratio,
       spacingClass: scenario.spacingClass,
       note: scenario.note
     };
 
-    els.ov.value = String(Number(scenario.ovPct.toFixed(1)));
-    delete manualFlowOverrides.ov;
+    if (Number.isFinite(Number(scenario.changes?.len))) {
+      els.len.value = String(Number(scenario.changes.len.toFixed ? scenario.changes.len.toFixed(1) : scenario.changes.len));
+      delete manualFlowOverrides.len;
+    }
+
+    if (Number.isFinite(Number(scenario.changes?.dist))) {
+      els.dist.value = String(Number(scenario.changes.dist.toFixed ? scenario.changes.dist.toFixed(1) : scenario.changes.dist));
+      delete manualFlowOverrides.dist;
+    }
+
+    if (Number.isFinite(Number(scenario.changes?.hfov))) {
+      els.hfov.value = String(Number(scenario.changes.hfov.toFixed ? scenario.changes.hfov.toFixed(1) : scenario.changes.hfov));
+      delete manualFlowOverrides.hfov;
+    }
+
+    if (Number.isFinite(Number(scenario.changes?.ovPct))) {
+      els.ov.value = String(Number(scenario.changes.ovPct.toFixed ? scenario.changes.ovPct.toFixed(1) : scenario.changes.ovPct));
+      delete manualFlowOverrides.ov;
+    }
+
     renderFlowNote();
     calc();
   }

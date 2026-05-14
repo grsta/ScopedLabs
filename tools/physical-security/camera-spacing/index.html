@@ -357,6 +357,65 @@
       }
     }
   </style>
+  <style data-scopedlabs-camera-spacing-assistant-v005>
+    #spacingDesignAssistant.spacing-design-assistant {
+      margin-top: 18px !important;
+      padding: 18px !important;
+      border-radius: 20px !important;
+      border: 1px solid rgba(125,255,158,.22) !important;
+      box-shadow: 0 26px 80px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.055) !important;
+    }
+
+    #spacingDesignAssistant .spacing-design-layout,
+    #spacingDesignAssistant .spacing-design-split {
+      gap: 14px !important;
+      margin-top: 14px !important;
+    }
+
+    #spacingDesignAssistant .spacing-hero-card {
+      margin-top: 14px;
+      border-color: rgba(125,255,152,.20);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(125,255,152,.075), transparent 34%),
+        rgba(255,255,255,.028);
+    }
+
+    #spacingDesignAssistant .spacing-branch-item {
+      align-items: center;
+    }
+
+    #spacingDesignAssistant .spacing-branch-item .btn {
+      white-space: nowrap;
+      justify-self: end;
+    }
+
+    #spacingDesignAssistant .spacing-action-list {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    #spacingDesignAssistant .spacing-action-list li {
+      border: 1px solid rgba(125,255,152,.14);
+      border-radius: 12px;
+      background: rgba(125,255,152,.035);
+      padding: 10px 12px;
+      color: rgba(226,232,240,.80);
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      #spacingDesignAssistant .spacing-branch-item {
+        display: grid;
+      }
+
+      #spacingDesignAssistant .spacing-branch-item .btn {
+        justify-self: start;
+      }
+    }
+  </style>
 </head>
 
 <body
@@ -610,7 +669,7 @@
 
   <script src="/assets/export.js?v=shared-export-010"></script>
 
-  <script src="./script.js?v=physical-security-spacing-assistant-004"></script>
+  <script src="./script.js?v=physical-security-spacing-assistant-005"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
