@@ -266,7 +266,32 @@
           </p>
         </div>
 
-        <div class="btn-row" style="margin-top: 14px;">
+        <section id="spacingDesignAssistant" class="card" style="margin-top: 14px; background: rgba(0,0,0,.14); border-color: rgba(120,255,120,0.18);" hidden>
+          <div class="pill-row">
+            <span class="pill pill--pro">Design Assistant</span>
+          </div>
+
+          <h3 class="h3" style="margin-top: 10px;">Camera Spacing Design Assistant</h3>
+          <p class="muted" style="margin-bottom: 0;">
+            Review the current camera count and spacing pressure, compare design branches, and intentionally select the spacing path that should continue into Blind Spot Check.
+          </p>
+
+          <div id="spacingAssistantModeNote" class="flow-override-note" role="note" aria-label="Design assistant mode" hidden></div>
+
+          <h4 class="h3" style="margin-top: 16px; margin-bottom: 0;">Current Layout Diagnosis</h4>
+          <div id="spacingAssistantDiagnosis" class="results-grid"></div>
+
+          <h4 class="h3" style="margin-top: 16px; margin-bottom: 0;">Design Branches</h4>
+          <p class="muted" style="margin-top: 8px; margin-bottom: 0;">
+            These branches use the same camera-spacing model as the calculator. Applying a branch updates the overlap target and recalculates the tool as an assisted scenario.
+          </p>
+          <div id="spacingAssistantBranches" class="results-grid"></div>
+
+          <h4 class="h3" style="margin-top: 16px; margin-bottom: 0;">Recommendation</h4>
+          <div id="spacingAssistantRecommendation" class="results-grid"></div>
+        </section>
+
+<div class="btn-row" style="margin-top: 14px;">
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
         </div>
 
@@ -362,7 +387,7 @@
 
   <script src="/assets/export.js?v=shared-export-010"></script>
 
-  <script src="./script.js?v=physical-security-spacing-pipeline-002"></script>
+  <script src="./script.js?v=physical-security-spacing-assistant-002"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

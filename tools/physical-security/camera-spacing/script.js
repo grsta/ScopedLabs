@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
@@ -31,6 +31,11 @@
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
+    assistant: $("spacingDesignAssistant"),
+    assistantModeNote: $("spacingAssistantModeNote"),
+    assistantDiagnosis: $("spacingAssistantDiagnosis"),
+    assistantBranches: $("spacingAssistantBranches"),
+    assistantRecommendation: $("spacingAssistantRecommendation"),
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard")
   };
@@ -109,6 +114,8 @@
   let flowInputsImported = false;
   const importedFlowValues = {};
   const manualFlowOverrides = {};
+  let activeAssistantScenario = null;
+  let latestAssistantScenarios = [];
 
   function cleanOverrideNumber(value) {
     const number = Number(value);
@@ -120,7 +127,7 @@
     if (number === null) return "n/a";
 
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
-    if (field === "hfov") return Math.round(number) + "?";
+    if (field === "hfov") return Math.round(number) + "°";
     if (field === "ov") return number.toFixed(1).replace(/\.0$/, "") + "%";
 
     return String(number);
@@ -203,6 +210,281 @@
       .join(" | ");
 
     return '<div class="flow-override-note" role="note" aria-label="Manual override warning"><strong>Manual override active:</strong> ' + text + '. Results are valid for this local what-if branch.</div>';
+  }
+
+function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function hasPipelineBaseline() {
+    if (Object.keys(importedFlowValues).length > 0) return true;
+
+    try {
+      const raw = sessionStorage.getItem(FLOW_KEYS.area);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      return !!(parsed && parsed.data);
+    } catch {
+      return false;
+    }
+  }
+
+  function clearAssistantScenario() {
+    activeAssistantScenario = null;
+  }
+
+  function sourceModeForCurrentResult(manualOverrideMeta) {
+    if (activeAssistantScenario && manualOverrideMeta.length) return "mixed";
+    if (activeAssistantScenario) return "assistant-scenario";
+    if (manualOverrideMeta.length) return "manual-override";
+    return "pipeline";
+  }
+
+  function assistantScenarioMetadata() {
+    if (!activeAssistantScenario) return null;
+
+    return {
+      id: activeAssistantScenario.id,
+      label: activeAssistantScenario.label,
+      intent: activeAssistantScenario.intent,
+      controlledField: "ov",
+      overlapTargetPct: activeAssistantScenario.ovPct,
+      cameraCount: activeAssistantScenario.cams,
+      actualSpacingFt: activeAssistantScenario.spacing,
+      usableWidthFt: activeAssistantScenario.usableWidth,
+      spacingRatio: activeAssistantScenario.ratio,
+      spacingClass: activeAssistantScenario.spacingClass,
+      scenarioContext: hasPipelineBaseline() ? "pipeline-baseline" : "single-validation",
+      note: activeAssistantScenario.note
+    };
+  }
+
+  function simulateSpacingBranch(data, ovPct) {
+    const overlap = Math.min(95, Math.max(0, Number(ovPct)));
+    const usableWidth = data.rawWidth * (1 - (overlap / 100));
+    const cams = Math.max(1, Math.ceil(data.len / usableWidth));
+    const spacing = data.len / cams;
+    const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
+
+    return {
+      ovPct: overlap,
+      rawWidth: data.rawWidth,
+      usableWidth,
+      cams,
+      spacing,
+      ratio,
+      spacingClass: classifySpacing(ratio)
+    };
+  }
+
+  function overlapForTarget(data, targetCount, targetRatio) {
+    if (!Number.isFinite(targetCount) || targetCount < 1) return null;
+    if (!Number.isFinite(data.rawWidth) || data.rawWidth <= 0) return null;
+
+    const spacing = data.len / targetCount;
+    const desiredUsableWidth = spacing / targetRatio;
+    const overlap = (1 - (desiredUsableWidth / data.rawWidth)) * 100;
+
+    if (!Number.isFinite(overlap) || overlap < 0 || overlap > 95) return null;
+    return overlap;
+  }
+
+  function makeAssistantScenario(id, label, intent, model, note, canApply) {
+    return {
+      id,
+      label,
+      intent,
+      ovPct: model?.ovPct,
+      cams: model?.cams,
+      spacing: model?.spacing,
+      usableWidth: model?.usableWidth,
+      ratio: model?.ratio,
+      spacingClass: model?.spacingClass,
+      note,
+      canApply: !!canApply && !!model && Number.isFinite(model.ovPct)
+    };
+  }
+
+  function buildAssistantScenarios(data) {
+    const scenarios = [];
+
+    const continuityOverlap = overlapForTarget(data, data.cams + 1, 0.82);
+    const continuityModel = continuityOverlap === null ? null : simulateSpacingBranch(data, continuityOverlap);
+    scenarios.push(makeAssistantScenario(
+      "continuity-priority",
+      "Continuity Priority",
+      "Reduce blind-spot risk with tighter spacing and stronger overlap reserve.",
+      continuityModel,
+      continuityModel
+        ? "Use this when seam closure is more important than minimizing camera count. Confirm the final geometry in Blind Spot Check."
+        : "The current geometry cannot add a clean continuity branch through overlap alone. Consider reducing distance, widening HFOV, or increasing planned camera count manually.",
+      !!continuityModel
+    ));
+
+    const balancedOverlap = overlapForTarget(data, data.cams, 0.92);
+    const balancedModel = balancedOverlap === null ? simulateSpacingBranch(data, data.ovPct) : simulateSpacingBranch(data, balancedOverlap);
+    scenarios.push(makeAssistantScenario(
+      "balanced-layout",
+      "Balanced Layout",
+      "Keep spacing, usable width, and overlap reserve in a practical middle range.",
+      balancedModel,
+      "Use this as the default branch when the goal is a clean handoff to Blind Spot Check without over-compressing camera spacing.",
+      Number.isFinite(balancedModel?.ovPct)
+    ));
+
+    const efficiencyTarget = data.cams > 1 ? data.cams - 1 : null;
+    const efficiencyOverlap = efficiencyTarget ? overlapForTarget(data, efficiencyTarget, 0.98) : null;
+    const efficiencyModel = efficiencyOverlap === null ? null : simulateSpacingBranch(data, efficiencyOverlap);
+    scenarios.push(makeAssistantScenario(
+      "camera-count-efficiency",
+      "Camera Count Efficiency",
+      "Test whether the protected run can stay viable with fewer cameras.",
+      efficiencyModel,
+      efficiencyModel
+        ? "Use only when the next Blind Spot Check still shows acceptable continuity. This branch trades reserve for camera-count efficiency."
+        : "Dropping a camera is not viable from the current geometry without changing upstream assumptions or accepting gap risk.",
+      !!efficiencyModel
+    ));
+
+    return scenarios;
+  }
+
+  function assistantStatusCopy(data) {
+    if (data.spacingClass === "Wide Spacing") {
+      return "Risk: spacing is outrunning the usable footprint. Increase continuity before downstream validation.";
+    }
+
+    if (data.spacingClass === "Tight Spacing") {
+      return "Watch: the layout is conservative. It may be safe, but camera count pressure is higher than necessary.";
+    }
+
+    return "Healthy: spacing, usable width, and reserve are working together in a practical range.";
+  }
+
+  function recommendationForAssistant(data, scenarios) {
+    const continuity = scenarios.find((item) => item.id === "continuity-priority");
+    const balanced = scenarios.find((item) => item.id === "balanced-layout");
+    const efficiency = scenarios.find((item) => item.id === "camera-count-efficiency");
+
+    if (data.spacingClass === "Wide Spacing") {
+      return continuity && continuity.canApply
+        ? "Recommendation: apply Continuity Priority before continuing. Wide spacing should not be treated as clean pipeline truth until Blind Spot Check confirms the seams."
+        : "Recommendation: do not continue as a final layout yet. Recalculate upstream with a wider usable footprint, shorter distance, or additional cameras.";
+    }
+
+    if (data.spacingClass === "Tight Spacing") {
+      return efficiency && efficiency.canApply
+        ? "Recommendation: keep the current conservative result if risk tolerance is low, or test Camera Count Efficiency if budget and device count are the dominant constraints."
+        : "Recommendation: keep the conservative branch. Efficiency pressure exists, but the current geometry does not support a clean camera-count reduction through overlap alone.";
+    }
+
+    return balanced && balanced.canApply
+      ? "Recommendation: use the Balanced Layout branch or continue with the current result. Blind Spot Check is still required before treating the layout as final."
+      : "Recommendation: continue with the current result, then use Blind Spot Check to verify coverage continuity under the real layout geometry.";
+  }
+
+  function renderAssistantModeNote() {
+    if (!els.assistantModeNote) return;
+
+    if (!activeAssistantScenario) {
+      els.assistantModeNote.hidden = true;
+      els.assistantModeNote.innerHTML = "";
+      return;
+    }
+
+    const copy = hasPipelineBaseline()
+      ? "<strong>Custom Design Mode Active:</strong> " + escapeHtml(activeAssistantScenario.label) + " is being used as an assisted camera-spacing branch for downstream Blind Spot validation."
+      : "<strong>Standalone Design Mode Active:</strong> This assisted scenario was created without upstream pipeline values. Results are valid as a single validation scenario, not a full guided pipeline run.";
+
+    els.assistantModeNote.hidden = false;
+    els.assistantModeNote.innerHTML = copy;
+  }
+
+  function hideSpacingAssistant() {
+    if (els.assistant) els.assistant.hidden = true;
+    if (els.assistantDiagnosis) els.assistantDiagnosis.innerHTML = "";
+    if (els.assistantBranches) els.assistantBranches.innerHTML = "";
+    if (els.assistantRecommendation) els.assistantRecommendation.innerHTML = "";
+    if (els.assistantModeNote) {
+      els.assistantModeNote.hidden = true;
+      els.assistantModeNote.innerHTML = "";
+    }
+    latestAssistantScenarios = [];
+  }
+
+  function resultRow(label, value) {
+    return '<div class="result-row"><span class="result-label">' + escapeHtml(label) + '</span><span class="result-value">' + value + '</span></div>';
+  }
+
+  function scenarioValueHtml(scenario) {
+    if (!scenario || !scenario.canApply) {
+      return '<span class="muted">Unavailable</span>';
+    }
+
+    return '<span>' + escapeHtml(scenario.cams + " cameras | " + fmtFt(scenario.spacing) + " spacing | " + fmtPct(scenario.ovPct, 1) + " overlap") + '</span>' +
+      '<div class="btn-row" style="justify-content:flex-end; margin-top:8px;"><button class="btn btn-primary spacing-assistant-apply" type="button" data-spacing-scenario="' + escapeHtml(scenario.id) + '">Apply Branch</button></div>' +
+      '<div class="muted" style="margin-top:8px; font-weight:400; text-align:left;">' + escapeHtml(scenario.note) + '</div>';
+  }
+
+  function renderSpacingAssistant(data) {
+    if (!els.assistant || !els.assistantDiagnosis || !els.assistantBranches || !els.assistantRecommendation) return;
+
+    latestAssistantScenarios = buildAssistantScenarios(data);
+    els.assistant.hidden = false;
+
+    els.assistantDiagnosis.innerHTML = [
+      resultRow("Current Diagnosis", escapeHtml(assistantStatusCopy(data))),
+      resultRow("Camera Count", escapeHtml(String(data.cams))),
+      resultRow("Actual Spacing", escapeHtml(fmtFt(data.spacing))),
+      resultRow("Usable Width", escapeHtml(fmtFt(data.usableWidth))),
+      resultRow("Spacing Ratio", escapeHtml(fmt(data.ratio, 2) + " | " + data.spacingClass)),
+      resultRow("Overlap Reserve", escapeHtml(fmtPct(data.ovPct, 1)))
+    ].join("");
+
+    els.assistantBranches.innerHTML = latestAssistantScenarios.map((scenario) => {
+      return resultRow(scenario.label, scenarioValueHtml(scenario));
+    }).join("");
+
+    els.assistantRecommendation.innerHTML = [
+      resultRow("Recommended Path", escapeHtml(recommendationForAssistant(data, latestAssistantScenarios))),
+      resultRow("Pipeline Integrity", escapeHtml(activeAssistantScenario ? "Assistant Scenario" : (getManualOverrideMetadata(data).length ? "Manual Override" : "Clean Pipeline")))
+    ].join("");
+
+    renderAssistantModeNote();
+
+    els.assistantBranches.querySelectorAll(".spacing-assistant-apply").forEach((button) => {
+      button.addEventListener("click", () => {
+        const scenario = latestAssistantScenarios.find((item) => item.id === button.dataset.spacingScenario);
+        applyAssistantScenario(scenario);
+      });
+    });
+  }
+
+  function applyAssistantScenario(scenario) {
+    if (!scenario || !scenario.canApply || !Number.isFinite(scenario.ovPct)) return;
+
+    activeAssistantScenario = {
+      id: scenario.id,
+      label: scenario.label,
+      intent: scenario.intent,
+      ovPct: scenario.ovPct,
+      cams: scenario.cams,
+      spacing: scenario.spacing,
+      usableWidth: scenario.usableWidth,
+      ratio: scenario.ratio,
+      spacingClass: scenario.spacingClass,
+      note: scenario.note
+    };
+
+    els.ov.value = String(Number(scenario.ovPct.toFixed(1)));
+    delete manualFlowOverrides.ov;
+    renderFlowNote();
+    calc();
   }
 
   function applyDefaults() {
@@ -289,6 +571,7 @@
       lane: LANE,
       emptyMessage: "Enter valid values and press Calculate."
     });
+    hideSpacingAssistant();
 
     renderFlowNote();
   }
@@ -407,6 +690,7 @@
 
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
+    const assistantScenarioMeta = assistantScenarioMetadata();
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.spacing, {
       category: CATEGORY,
       step: STEP,
@@ -423,7 +707,10 @@
         spacingClass: data.spacingClass,
         interpretation: data.interpretation,
         guidance: data.guidance,
-        sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+        sourceMode: sourceModeForCurrentResult(manualOverrideMeta),
+        scenarioMode: assistantScenarioMeta ? assistantScenarioMeta.label : null,
+        assistantSelected: !!assistantScenarioMeta,
+        assistantScenario: assistantScenarioMeta,
         manualOverrides: manualOverrideMeta
       }
     });
@@ -432,6 +719,7 @@
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+    hideSpacingAssistant();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -451,7 +739,9 @@
         { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
         { label: "Overlap Target", value: fmtPct(data.ovPct, 1) },
         { label: "Spacing Ratio", value: fmt(data.ratio, 2) },
-        { label: "Spacing Classification", value: data.spacingClass }
+        { label: "Spacing Classification", value: data.spacingClass },
+        { label: "Source Mode", value: sourceModeForCurrentResult(getManualOverrideMetadata(data)) },
+        ...(activeAssistantScenario ? [{ label: "Assistant Branch", value: activeAssistantScenario.label }] : [])
       ],
       status: data.status,
       interpretation: data.interpretation,
@@ -460,6 +750,7 @@
     });
 
     writeFlow(data);
+    renderSpacingAssistant(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
@@ -471,6 +762,8 @@
 
   function reset() {
     resetFlowOverrideState();
+    clearAssistantScenario();
+    hideSpacingAssistant();
     applyDefaults();
     renderFlowNote();
     invalidate({ clearFlow: true });
@@ -481,11 +774,13 @@
       const el = $(id);
       if (!el) return;
       el.addEventListener("input", () => {
+        clearAssistantScenario();
         markFlowInputOverride(id);
         renderFlowNote();
         invalidate({ clearFlow: true });
       });
       el.addEventListener("change", () => {
+        clearAssistantScenario();
         markFlowInputOverride(id);
         renderFlowNote();
         invalidate({ clearFlow: true });
