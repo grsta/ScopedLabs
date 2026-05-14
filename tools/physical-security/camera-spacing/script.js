@@ -939,6 +939,7 @@ function assistantStatusClass(data) {
 
     latestAssistantScenarios = buildAssistantScenarios(data);
     els.assistant.hidden = false;
+    els.assistant.classList.add("full-output");
 
     const statusClass = assistantStatusClass(data);
     const statusLabel = assistantStatusLabel(data);
@@ -948,36 +949,37 @@ function assistantStatusClass(data) {
         '<div>' +
           '<div class="spacing-design-kicker">Design Assistant</div>' +
           '<h3 class="spacing-design-title">Camera spacing design assistant</h3>' +
-          '<p class="spacing-design-copy">This assistant shows spacing pressure, explains why the result is healthy or not, gives guided correction branches, and lets you test your own spacing correction before Blind Spot Check.</p>' +
+          '<p class="spacing-design-copy">This assistant follows the same guided design pattern as Lens Selection: diagnose the spacing pressure, explain the correction path, apply a branch, and carry the selected result into Blind Spot Check.</p>' +
         '</div>' +
         '<div class="spacing-design-status ' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</div>' +
       '</div>' +
       assistantModeHtml() +
-      spacingAssistantHeroHtml(data) +
-      '<div class="spacing-design-layout">' +
-        '<div class="spacing-visual-card">' +
+      '<div class="spacing-design-layout spacing-primary-layout">' +
+        '<div class="spacing-visual-card spacing-primary-visual">' +
           '<div class="spacing-section-kicker">Layout Visualization</div>' +
           '<h4 class="spacing-section-title">Spacing compared to usable coverage</h4>' +
           '<p class="spacing-section-copy">The protected run below compares actual camera-to-camera spacing against usable coverage width after overlap reserve is applied.</p>' +
           '<div class="spacing-visual-stage">' + spacingVisualSvg(data) + '</div>' +
-          '<div class="spacing-mini-grid">' +
+          '<div class="spacing-target-strip">' +
             miniCard("Cameras", String(data.cams)) +
             miniCard("Actual Spacing", fmtFt(data.spacing)) +
             miniCard("Usable Width", fmtFt(data.usableWidth)) +
             miniCard("Overlap", fmtPct(data.ovPct, 1)) +
           '</div>' +
         '</div>' +
-        spacingPressureGraphHtml(data) +
       '</div>' +
-      '<div class="spacing-design-layout">' +
-        spacingDesignControlHtml(data, latestAssistantScenarios) +
+      '<div class="spacing-design-split spacing-diagnostic-split">' +
+        spacingPressureGraphHtml(data) +
         spacingPathToHealthyHtml(data) +
       '</div>' +
-      '<div class="spacing-design-split">' +
+      '<div class="spacing-design-split spacing-action-split">' +
+        spacingDesignControlHtml(data, latestAssistantScenarios) +
         spacingCarryForwardHtml(data) +
-        '<div class="spacing-advice-card">' + dominantDriverHtml(data) + '</div>' +
       '</div>' +
-      '<div class="spacing-advice-card" style="margin-top: 14px;">' + recommendationHtml(data, latestAssistantScenarios) + '</div>';
+      '<div class="spacing-design-split spacing-review-split">' +
+        '<div class="spacing-advice-card">' + dominantDriverHtml(data) + '</div>' +
+        '<div class="spacing-advice-card">' + recommendationHtml(data, latestAssistantScenarios) + '</div>' +
+      '</div>';
 
     els.assistant.querySelectorAll(".spacing-assistant-apply").forEach((button) => {
       button.addEventListener("click", () => {

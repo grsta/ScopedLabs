@@ -486,6 +486,107 @@
       }
     }
   </style>
+  <style data-scopedlabs-camera-spacing-layout-v007>
+    #spacingDesignAssistant.spacing-design-assistant.full-output {
+      margin-top: 18px !important;
+      padding: 18px !important;
+      border-radius: 20px !important;
+      border: 1px solid rgba(125,255,158,.22) !important;
+      background:
+        radial-gradient(circle at 10% 4%, rgba(82,255,138,.10), transparent 30%),
+        radial-gradient(circle at 92% 8%, rgba(255,96,88,.10), transparent 30%),
+        linear-gradient(180deg, rgba(4,14,10,.98), rgba(1,6,4,.98)) !important;
+      box-shadow: 0 26px 80px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.055) !important;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-design-layout {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 14px !important;
+      margin-top: 14px !important;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-design-split {
+      display: grid !important;
+      grid-template-columns: 1.08fr .92fr !important;
+      gap: 14px !important;
+      margin-top: 14px !important;
+      align-items: stretch;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-primary-layout {
+      grid-template-columns: 1fr !important;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-primary-visual {
+      padding: 14px !important;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-visual-stage {
+      height: 460px !important;
+      border-radius: 16px !important;
+      background:
+        radial-gradient(circle at 10% 42%, rgba(125,255,152,.08), transparent 34%),
+        radial-gradient(circle at 92% 50%, rgba(255,96,88,.08), transparent 34%),
+        rgba(255,255,255,.022) !important;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-target-strip,
+    #spacingDesignAssistant.full-output .spacing-mini-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      margin-top: 14px !important;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-action-list,
+    #spacingDesignAssistant.full-output .spacing-branch-list {
+      display: grid !important;
+      gap: 10px !important;
+      margin-top: 12px !important;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-branch-item {
+      display: grid !important;
+      grid-template-columns: 1fr auto !important;
+      gap: 12px !important;
+      align-items: center !important;
+      min-height: 64px;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-branch-item .btn {
+      white-space: nowrap;
+      justify-self: end;
+    }
+
+    #spacingDesignAssistant.full-output .spacing-control-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      margin-top: 12px !important;
+    }
+
+    @media (max-width: 900px) {
+      #spacingDesignAssistant.full-output .spacing-design-split,
+      #spacingDesignAssistant.full-output .spacing-target-strip,
+      #spacingDesignAssistant.full-output .spacing-mini-grid,
+      #spacingDesignAssistant.full-output .spacing-control-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      #spacingDesignAssistant.full-output .spacing-visual-stage {
+        height: 330px !important;
+      }
+
+      #spacingDesignAssistant.full-output .spacing-branch-item {
+        grid-template-columns: 1fr !important;
+      }
+
+      #spacingDesignAssistant.full-output .spacing-branch-item .btn {
+        justify-self: start;
+      }
+    }
+  </style>
 </head>
 
 <body
@@ -739,7 +840,7 @@
 
   <script src="/assets/export.js?v=shared-export-010"></script>
 
-  <script src="./script.js?v=physical-security-spacing-assistant-006"></script>
+  <script src="./script.js?v=physical-security-spacing-assistant-007"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
