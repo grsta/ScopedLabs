@@ -587,6 +587,268 @@
       }
     }
   </style>
+  <style data-scopedlabs-camera-spacing-lens-match-v008>
+    #spacingDesignAssistant.spacing-lens-match {
+      margin-top: 18px !important;
+      padding: 18px !important;
+      border-radius: 20px !important;
+      border: 1px solid rgba(125,255,158,.22) !important;
+      background:
+        radial-gradient(circle at 10% 4%, rgba(82,255,138,.10), transparent 30%),
+        radial-gradient(circle at 92% 8%, rgba(255,96,88,.10), transparent 30%),
+        linear-gradient(180deg, rgba(4,14,10,.98), rgba(1,6,4,.98)) !important;
+      box-shadow: 0 26px 80px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.055) !important;
+      overflow: hidden;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-design-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(148,163,184,.12);
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-design-kicker {
+      color: #7dff98;
+      font-size: .66rem;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-design-title {
+      margin: 0;
+      color: #fff;
+      font-size: 1.06rem;
+      font-weight: 950;
+      line-height: 1.16;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-design-copy {
+      margin: 7px 0 0;
+      color: rgba(226,232,240,.70);
+      font-size: .82rem;
+      line-height: 1.48;
+      max-width: 760px;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-design-status {
+      border: 1px solid rgba(255,96,88,.34);
+      border-radius: 999px;
+      background: rgba(255,96,88,.10);
+      color: #ff8f88;
+      padding: 8px 11px;
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-design-status.healthy {
+      border-color: rgba(125,255,152,.34);
+      background: rgba(125,255,152,.08);
+      color: #7dff98;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-design-status.watch {
+      border-color: rgba(255,211,79,.34);
+      background: rgba(255,211,79,.08);
+      color: #ffd34f;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-design-layout,
+    #spacingDesignAssistant.spacing-lens-match .lens-design-split {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 14px !important;
+      margin-top: 14px !important;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-fov-card,
+    #spacingDesignAssistant.spacing-lens-match .lens-advice-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 14px;
+      background: rgba(255,255,255,.025);
+      padding: 12px;
+      min-width: 0;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-fov-stage {
+      height: 460px !important;
+      border-radius: 16px !important;
+      border: 1px solid rgba(148,163,184,.12);
+      background:
+        radial-gradient(circle at 10% 42%, rgba(125,255,152,.08), transparent 34%),
+        radial-gradient(circle at 92% 50%, rgba(255,96,88,.08), transparent 34%),
+        rgba(255,255,255,.022) !important;
+      overflow: hidden;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-fov-stage svg,
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-chart-stage svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-target-strip,
+    #spacingDesignAssistant.spacing-lens-match .lens-mini-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      margin-top: 14px !important;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-mini-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+      padding: 9px;
+      min-width: 0;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-mini-label {
+      color: rgba(203,213,225,.64);
+      font-size: .56rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .lens-mini-value {
+      display: block;
+      margin-top: 6px;
+      color: #fff;
+      font-size: .88rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-note {
+      margin-top: 6px;
+      color: rgba(226,232,240,.62);
+      font-size: .68rem;
+      line-height: 1.35;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-check-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-check-grid strong {
+      color: #fff;
+      font-size: .94rem;
+      font-weight: 950;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-check-grid p {
+      margin: 7px 0 0;
+      color: rgba(226,232,240,.68);
+      font-size: .75rem;
+      line-height: 1.4;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-design-targets,
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-comparison,
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-controls,
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-custom,
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-carry {
+      margin-top: 14px;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-inner-head {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-banner {
+      margin-top: 12px;
+      border: 1px solid rgba(255,211,79,.26);
+      border-radius: 12px;
+      background: rgba(255,211,79,.07);
+      color: rgba(255,246,196,.92);
+      padding: 10px 12px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-chart-stage {
+      height: 250px;
+      margin-top: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(148,163,184,.13);
+      background: rgba(0,0,0,.18);
+      overflow: hidden;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-control-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-control-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid rgba(125,255,152,.14);
+      border-radius: 12px;
+      background: rgba(125,255,152,.035);
+      padding: 10px;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-control-row strong {
+      color: #fff;
+      font-weight: 950;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-lens-control-row p {
+      margin: 7px 0 0;
+      color: rgba(226,232,240,.72);
+      font-size: .75rem;
+      line-height: 1.4;
+    }
+
+    #spacingDesignAssistant.spacing-lens-match .spacing-control-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      margin-top: 12px !important;
+    }
+
+    @media (max-width: 900px) {
+      #spacingDesignAssistant.spacing-lens-match .lens-target-strip,
+      #spacingDesignAssistant.spacing-lens-match .lens-mini-grid,
+      #spacingDesignAssistant.spacing-lens-match .spacing-lens-check-grid,
+      #spacingDesignAssistant.spacing-lens-match .spacing-control-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      #spacingDesignAssistant.spacing-lens-match .lens-design-head {
+        display: grid;
+      }
+
+      #spacingDesignAssistant.spacing-lens-match .lens-fov-stage {
+        height: 330px !important;
+      }
+
+      #spacingDesignAssistant.spacing-lens-match .spacing-lens-control-row {
+        grid-template-columns: 1fr;
+      }
+
+      #spacingDesignAssistant.spacing-lens-match .spacing-lens-control-row .btn {
+        justify-self: start;
+      }
+    }
+  </style>
 </head>
 
 <body
@@ -840,7 +1102,7 @@
 
   <script src="/assets/export.js?v=shared-export-010"></script>
 
-  <script src="./script.js?v=physical-security-spacing-assistant-007"></script>
+  <script src="./script.js?v=physical-security-spacing-assistant-008"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
