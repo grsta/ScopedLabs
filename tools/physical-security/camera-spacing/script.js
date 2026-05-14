@@ -254,6 +254,7 @@ function escapeHtml(value) {
       intent: activeAssistantScenario.intent,
       controlledFields: Object.keys(activeAssistantScenario.changes || {}),
       changes: activeAssistantScenario.changes || {},
+      targetCameraCount: activeAssistantScenario.targetCams || activeAssistantScenario.cams,
       overlapTargetPct: activeAssistantScenario.ovPct,
       cameraCount: activeAssistantScenario.cams,
       actualSpacingFt: activeAssistantScenario.spacing,
@@ -519,47 +520,162 @@ function escapeHtml(value) {
       '</div>';
   }
 
+  function spacingOverlapForTargetCameraCount(data, targetCams, ratioTarget = 0.9) {
+    const cams = Number(targetCams);
+    const len = Number(data?.len);
+    const rawWidth = Number(data?.rawWidth);
+
+    if (!Number.isFinite(cams) || cams < 1 || !Number.isFinite(len) || len <= 0 || !Number.isFinite(rawWidth) || rawWidth <= 0) {
+      return null;
+    }
+
+    const spacing = len / cams;
+    const desiredUsableWidth = spacing / ratioTarget;
+    const ovPct = (1 - (desiredUsableWidth / rawWidth)) * 100;
+
+    if (!Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95) return null;
+
+    return ovPct;
+  }
+
+  function spacingLensCustomAssumptionsHtml(data) {
+    return '' +
+      '<div class="lens-advice-card spacing-lens-custom">' +
+        '<div class="lens-design-head spacing-lens-inner-head">' +
+          '<div>' +
+            '<div class="lens-design-kicker">Custom planning assumptions</div>' +
+            '<h4 class="lens-design-title">Edit the spacing assumptions without leaving the assistant</h4>' +
+            '<p class="lens-design-copy">Use these controls to test perimeter length, target camera count, distance, HFOV, and overlap before carrying the result into Blind Spot Check.</p>' +
+          '</div>' +
+          '<div class="lens-design-status healthy">Custom What-If</div>' +
+        '</div>' +
+        '<div class="spacing-control-grid">' +
+          '<label class="field"><span class="label">Perimeter Length</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
+          '<label class="field"><span class="label">Target Cameras</span><input data-spacing-whatif="targetCams" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.cams || 1).toFixed(0))) + '"></label>' +
+          '<label class="field"><span class="label">Distance</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">HFOV</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Overlap Target</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+        '</div>' +
+        '<p class="lens-design-copy" style="margin-top:10px;"><strong>Tip:</strong> Change Target Cameras to 2, 3, or more to test what overlap is needed for that camera count. If the required overlap is unrealistic, the assistant will show the result as a pressure/tradeoff scenario.</p>' +
+        '<div class="btn-row" style="margin-top:12px;"><button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button></div>' +
+      '</div>';
+  }
+
+  function spacingLensReadCustomInputs() {
+    if (!els.assistant) return null;
+
+    const values = {};
+    els.assistant.querySelectorAll("[data-spacing-whatif]").forEach((input) => {
+      values[input.dataset.spacingWhatif] = Number(input.value);
+    });
+
+    return values;
+  }
+
+  function spacingLensMakeCustomScenario(data, changes) {
+    const len = Number.isFinite(Number(changes?.len)) ? Number(changes.len) : Number(data.len);
+    const dist = Number.isFinite(Number(changes?.dist)) ? Number(changes.dist) : Number(data.dist);
+    const hfov = Number.isFinite(Number(changes?.hfov)) ? Number(changes.hfov) : Number(data.hfov);
+    const targetCams = Number.isFinite(Number(changes?.targetCams)) ? Math.max(1, Math.round(Number(changes.targetCams))) : Number(data.cams);
+
+    let ovPct = Number.isFinite(Number(changes?.ovPct)) ? Number(changes.ovPct) : Number(data.ovPct);
+
+    const rawWidth = 2 * Math.tan((hfov / 2) * Math.PI / 180) * dist;
+
+    if (targetCams !== Number(data.cams)) {
+      const targetOverlap = spacingOverlapForTargetCameraCount({ ...data, len, dist, hfov, rawWidth }, targetCams, 0.9);
+      if (Number.isFinite(targetOverlap)) ovPct = targetOverlap;
+    }
+
+    const usableWidth = rawWidth * (1 - (ovPct / 100));
+
+    if (!Number.isFinite(rawWidth) || !Number.isFinite(usableWidth) || usableWidth <= 0) {
+      return null;
+    }
+
+    const cams = Math.max(1, Math.ceil(len / usableWidth));
+    const spacing = len / cams;
+    const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
+
+    return {
+      id: "custom-spacing-check",
+      label: "Custom Spacing Check",
+      intent: "User-defined spacing correction using target camera count and geometry assumptions.",
+      actionLabel: "Apply Custom Spacing Check",
+      canApply: true,
+      changes: { len, dist, hfov, ovPct, targetCams },
+      targetCams,
+      len,
+      dist,
+      hfov,
+      ovPct,
+      rawWidth,
+      usableWidth,
+      cams,
+      spacing,
+      ratio,
+      spacingClass: classifySpacing(ratio),
+      note: "Use when preset branches do not match the real project constraint."
+    };
+  }
+
   function buildAssistantScenarios(data) {
     const scenarios = [];
 
-    const continuityOverlap = overlapForTarget(data, data.cams + 1, 0.82);
+    const addOneTarget = data.cams + 1;
+    const addOneOverlap = spacingOverlapForTargetCameraCount(data, addOneTarget, 0.9);
     scenarios.push(makeSpacingDesignScenario(
       data,
-      "continuity-priority",
-      "Apply Correction: Add Reserve / One More Camera",
-      "Tighten the layout by increasing reserve enough to move toward one additional camera when the geometry supports it.",
-      Number.isFinite(continuityOverlap) ? { ovPct: continuityOverlap } : {},
-      Number.isFinite(continuityOverlap)
-        ? "Use when seam closure and downstream blind-spot risk matter more than camera-count efficiency."
-        : "This branch cannot be applied from overlap alone. Revisit distance, HFOV, or perimeter assumptions upstream.",
-      "Apply Correction",
-      Number.isFinite(continuityOverlap)
+      "add-one-camera",
+      "Add 1 Camera",
+      "Test whether increasing the camera count improves continuity and reduces gap pressure before Blind Spot Check.",
+      Number.isFinite(addOneOverlap) ? { ovPct: addOneOverlap, targetCams: addOneTarget } : {},
+      Number.isFinite(addOneOverlap)
+        ? "Use when spacing is too wide, seam closure matters, or the current layout feels too close to the usable-width limit."
+        : "Adding one camera cannot be modeled from overlap alone with the current geometry. Revisit distance, HFOV, or protected length.",
+      "Apply: " + addOneTarget + " Cameras",
+      Number.isFinite(addOneOverlap)
+    ));
+
+    const addTwoTarget = data.cams + 2;
+    const addTwoOverlap = spacingOverlapForTargetCameraCount(data, addTwoTarget, 0.9);
+    scenarios.push(makeSpacingDesignScenario(
+      data,
+      "add-two-cameras",
+      "Add 2 Cameras",
+      "Test a stronger continuity branch when the design needs more seam reserve or shorter spacing intervals.",
+      Number.isFinite(addTwoOverlap) ? { ovPct: addTwoOverlap, targetCams: addTwoTarget } : {},
+      Number.isFinite(addTwoOverlap)
+        ? "Use when the current spacing is risky and one added camera still does not create enough margin."
+        : "Adding two cameras cannot be modeled from overlap alone with the current geometry.",
+      "Apply: " + addTwoTarget + " Cameras",
+      Number.isFinite(addTwoOverlap)
     ));
 
     const balancedOverlap = overlapForTarget(data, data.cams, 0.92);
     scenarios.push(makeSpacingDesignScenario(
       data,
       "balanced-layout",
-      "Apply Branch: Balanced Layout",
+      "Balanced Layout",
       "Keep the same camera count while moving overlap reserve toward a practical middle range.",
-      Number.isFinite(balancedOverlap) ? { ovPct: balancedOverlap } : { ovPct: data.ovPct },
+      Number.isFinite(balancedOverlap) ? { ovPct: balancedOverlap, targetCams: data.cams } : { ovPct: data.ovPct, targetCams: data.cams },
       "Use as the default correction when the goal is a clean handoff to Blind Spot Check without over-compressing spacing.",
-      "Apply Balanced Branch",
+      "Apply Balanced Layout",
       true
     ));
 
     const efficiencyTarget = data.cams > 1 ? data.cams - 1 : null;
-    const efficiencyOverlap = efficiencyTarget ? overlapForTarget(data, efficiencyTarget, 0.98) : null;
+    const efficiencyOverlap = efficiencyTarget ? spacingOverlapForTargetCameraCount(data, efficiencyTarget, 0.95) : null;
     scenarios.push(makeSpacingDesignScenario(
       data,
       "camera-count-efficiency",
-      "Try Efficiency Branch",
+      "Efficiency Check",
       "Test whether the protected run can stay viable with fewer cameras.",
-      Number.isFinite(efficiencyOverlap) ? { ovPct: efficiencyOverlap } : {},
+      Number.isFinite(efficiencyOverlap) ? { ovPct: efficiencyOverlap, targetCams: efficiencyTarget } : {},
       Number.isFinite(efficiencyOverlap)
-        ? "Use only when the next Blind Spot Check still shows acceptable continuity."
+        ? "Use only when reducing camera count matters and Blind Spot Check still confirms continuity."
         : "Dropping a camera is not viable from the current geometry without changing upstream assumptions or accepting gap risk.",
-      "Try Efficiency Branch",
+      efficiencyTarget ? "Apply: " + efficiencyTarget + " Cameras" : "Unavailable",
       Number.isFinite(efficiencyOverlap)
     ));
 
@@ -567,9 +683,9 @@ function escapeHtml(value) {
     scenarios.push(makeSpacingDesignScenario(
       data,
       "widen-effective-view",
-      "Recalculate: Widen Effective HFOV",
+      "Wider HFOV Check",
       "Model the effect of a wider effective view to increase usable footprint before Blind Spot validation.",
-      { hfov: widerHfov },
+      { hfov: widerHfov, targetCams: data.cams },
       "Use only when the camera/lens choice can actually support a wider view without breaking detail requirements.",
       "Apply Wider HFOV Check",
       widerHfov > data.hfov && widerHfov < 180
@@ -1182,26 +1298,7 @@ function assistantStatusClass(data) {
       '</svg>';
   }
 
-  function spacingLensCustomAssumptionsHtml(data) {
-    return '' +
-      '<div class="lens-advice-card spacing-lens-custom">' +
-        '<div class="lens-design-head spacing-lens-inner-head">' +
-          '<div>' +
-            '<div class="lens-design-kicker">Custom planning assumptions</div>' +
-            '<h4 class="lens-design-title">Edit the spacing assumptions without leaving the assistant</h4>' +
-            '<p class="lens-design-copy">Use these controls to test perimeter length, distance, HFOV, and overlap before carrying the result into Blind Spot Check.</p>' +
-          '</div>' +
-          '<div class="lens-design-status healthy">Custom What-If</div>' +
-        '</div>' +
-        '<div class="spacing-control-grid">' +
-          '<label class="field"><span class="label">Perimeter Length</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
-          '<label class="field"><span class="label">Distance</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">HFOV</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">Overlap Target</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
-        '</div>' +
-        '<div class="btn-row" style="margin-top:12px;"><button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button></div>' +
-      '</div>';
-  }
+  
 
   function spacingLensCheckCardsHtml(data) {
     const coverageCheck = data.spacingClass === "Wide Spacing"
@@ -1338,54 +1435,9 @@ function assistantStatusClass(data) {
       '</div>';
   }
 
-  function spacingLensReadCustomInputs() {
-    if (!els.assistant) return null;
+  
 
-    const values = {};
-    els.assistant.querySelectorAll("[data-spacing-whatif]").forEach((input) => {
-      values[input.dataset.spacingWhatif] = Number(input.value);
-    });
-
-    return values;
-  }
-
-  function spacingLensMakeCustomScenario(data, changes) {
-    const len = Number.isFinite(Number(changes?.len)) ? Number(changes.len) : Number(data.len);
-    const dist = Number.isFinite(Number(changes?.dist)) ? Number(changes.dist) : Number(data.dist);
-    const hfov = Number.isFinite(Number(changes?.hfov)) ? Number(changes.hfov) : Number(data.hfov);
-    const ovPct = Number.isFinite(Number(changes?.ovPct)) ? Number(changes.ovPct) : Number(data.ovPct);
-
-    const rawWidth = 2 * Math.tan((hfov / 2) * Math.PI / 180) * dist;
-    const usableWidth = rawWidth * (1 - (ovPct / 100));
-
-    if (!Number.isFinite(rawWidth) || !Number.isFinite(usableWidth) || usableWidth <= 0) {
-      return null;
-    }
-
-    const cams = Math.max(1, Math.ceil(len / usableWidth));
-    const spacing = len / cams;
-    const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
-
-    return {
-      id: "custom-spacing-check",
-      label: "Custom Spacing Check",
-      intent: "User-defined spacing correction.",
-      actionLabel: "Apply Custom Spacing Check",
-      canApply: true,
-      changes: { len, dist, hfov, ovPct },
-      len,
-      dist,
-      hfov,
-      ovPct,
-      rawWidth,
-      usableWidth,
-      cams,
-      spacing,
-      ratio,
-      spacingClass: classifySpacing(ratio),
-      note: "Use when preset branches do not match the real project constraint."
-    };
-  }
+  
 
   function spacingLensApplyCustomScenario(data) {
     const changes = spacingLensReadCustomInputs();
@@ -1474,6 +1526,7 @@ function assistantStatusClass(data) {
       label: scenario.label,
       intent: scenario.intent,
       changes,
+      targetCams: scenario.targetCams || changes.targetCams || scenario.cams,
       len: scenario.len,
       dist: scenario.dist,
       hfov: scenario.hfov,

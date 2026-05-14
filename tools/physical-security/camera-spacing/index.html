@@ -534,7 +534,7 @@
     #spacingDesignAssistant.full-output .spacing-target-strip,
     #spacingDesignAssistant.full-output .spacing-mini-grid {
       display: grid !important;
-      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
       gap: 10px !important;
       margin-top: 14px !important;
     }
@@ -698,7 +698,7 @@
     #spacingDesignAssistant.spacing-lens-match .lens-target-strip,
     #spacingDesignAssistant.spacing-lens-match .lens-mini-grid {
       display: grid !important;
-      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
       gap: 10px !important;
       margin-top: 14px !important;
     }
@@ -819,7 +819,7 @@
 
     #spacingDesignAssistant.spacing-lens-match .spacing-control-grid {
       display: grid !important;
-      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
       gap: 10px !important;
       margin-top: 12px !important;
     }
@@ -1001,7 +1001,7 @@
     #spacingDesignAssistant.spacing-lens-match .lens-target-strip,
     #spacingDesignAssistant.spacing-lens-match .lens-mini-grid {
       display: grid !important;
-      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
       gap: 10px !important;
       margin-top: 14px !important;
     }
@@ -1040,7 +1040,7 @@
 
     #spacingDesignAssistant.spacing-lens-match .spacing-control-grid {
       display: grid !important;
-      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
       gap: 10px !important;
       margin-top: 12px !important;
     }
@@ -1174,6 +1174,23 @@
 
       #spacingDesignAssistant.spacing-lens-match .spacing-lens-control-row .btn {
         justify-self: start;
+      }
+    }
+  </style>
+  <style data-scopedlabs-camera-spacing-camera-count-v010>
+    #spacingDesignAssistant.spacing-lens-match .spacing-control-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    }
+
+    @media (max-width: 1100px) {
+      #spacingDesignAssistant.spacing-lens-match .spacing-control-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+    }
+
+    @media (max-width: 700px) {
+      #spacingDesignAssistant.spacing-lens-match .spacing-control-grid {
+        grid-template-columns: 1fr !important;
       }
     }
   </style>
@@ -1430,7 +1447,7 @@
 
   <script src="/assets/export.js?v=shared-export-010"></script>
 
-  <script src="./script.js?v=physical-security-spacing-assistant-009"></script>
+  <script src="./script.js?v=physical-security-spacing-assistant-010"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
