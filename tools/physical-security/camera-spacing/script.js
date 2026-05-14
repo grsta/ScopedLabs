@@ -468,29 +468,7 @@ function escapeHtml(value) {
       '</div>';
   }
 
-  function spacingDesignControlHtml(scenarios) {
-    return '' +
-      '<div class="spacing-advice-card">' +
-        '<div class="spacing-section-kicker">Live Design Controls</div>' +
-        '<h4 class="spacing-section-title">Apply a correction branch</h4>' +
-        '<p class="spacing-section-copy">These are design actions. Each button changes the actual tool inputs, recalculates the result, and marks the result as an assisted scenario for downstream handoff.</p>' +
-        '<div class="spacing-branch-list">' +
-          scenarios.map((scenario) => {
-            return '' +
-              '<div class="spacing-branch-item">' +
-                '<div>' +
-                  '<strong>' + escapeHtml(scenario.label || "Design Branch") + '</strong>' +
-                  '<p>' + escapeHtml(scenario.intent || "") + '</p>' +
-                  '<p><strong>Changes:</strong> ' + escapeHtml(spacingControlFieldsLabel(scenario)) + '</p>' +
-                  '<p><strong>Result:</strong> ' + escapeHtml(spacingScenarioSummary(scenario)) + '</p>' +
-                  (scenario.note ? '<p><strong>Use when:</strong> ' + escapeHtml(scenario.note) + '</p>' : '') +
-                '</div>' +
-                spacingApplyButtonHtml(scenario) +
-              '</div>';
-          }).join("") +
-        '</div>' +
-      '</div>';
-  }
+  
 
   function spacingPathToHealthyHtml(data) {
     const items = [];
@@ -784,6 +762,178 @@ function assistantStatusClass(data) {
 
   
 
+  function spacingPressureMetric(data) {
+    const ratio = Number(data?.ratio);
+    const ovPct = Number(data?.ovPct);
+    const cams = Number(data?.cams);
+
+    const gapExposure = ratio > 0.92 ? Math.min((ratio - 0.92) * 220, 100) : 0;
+    const compression = ratio < 0.72 ? Math.min((0.72 - ratio) * 180, 100) : 0;
+    const overlapPressure = Number.isFinite(ovPct) ? Math.min(Math.max(ovPct, 0), 100) : 0;
+    const cameraPressure = Number.isFinite(cams) ? Math.min(Math.max((cams - 1) * 12, 0), 100) : 0;
+
+    return {
+      gapExposure,
+      compression,
+      overlapPressure,
+      cameraPressure
+    };
+  }
+
+  function spacingPressureBarHtml(label, value, display, help) {
+    const safeValue = Math.max(0, Math.min(100, Number(value) || 0));
+    const tone = safeValue <= 20 ? "healthy" : safeValue <= 35 ? "watch" : "risk";
+
+    return '' +
+      '<div class="spacing-pressure-row ' + tone + '">' +
+        '<div class="spacing-pressure-head">' +
+          '<strong>' + escapeHtml(label) + '</strong>' +
+          '<span>' + escapeHtml(display) + '</span>' +
+        '</div>' +
+        '<div class="spacing-pressure-track" aria-label="' + escapeHtml(label) + '">' +
+          '<div class="spacing-pressure-fill" style="width:' + safeValue.toFixed(0) + '%"></div>' +
+        '</div>' +
+        '<p>' + escapeHtml(help) + '</p>' +
+      '</div>';
+  }
+
+  function spacingPressureGraphHtml(data) {
+    const metric = spacingPressureMetric(data);
+
+    return '' +
+      '<div class="spacing-advice-card spacing-pressure-card">' +
+        '<div class="spacing-section-kicker">Pressure Graph</div>' +
+        '<h4 class="spacing-section-title">What is pushing this spacing result?</h4>' +
+        '<p class="spacing-section-copy">These bars show which design pressure is driving the current status. Use them to decide whether to add reserve, relax efficiency, change overlap, or revisit upstream geometry.</p>' +
+        spacingPressureBarHtml(
+          "Gap Exposure Pressure",
+          metric.gapExposure,
+          data.ratio > 0 ? fmtPct(Math.max((data.ratio - 0.92) * 100, 0), 1) : "0.0%",
+          "Higher pressure means actual spacing is getting too close to the usable footprint."
+        ) +
+        spacingPressureBarHtml(
+          "Spacing Compression",
+          metric.compression,
+          data.ratio > 0 ? fmtPct(Math.max((0.72 - data.ratio) * 100, 0), 1) : "0.0%",
+          "Higher pressure means the layout is overlap-heavy and likely camera-count intensive."
+        ) +
+        spacingPressureBarHtml(
+          "Overlap Reserve Pressure",
+          metric.overlapPressure,
+          fmtPct(data.ovPct, 1),
+          "Higher pressure means overlap reserve is reducing usable coverage width."
+        ) +
+        spacingPressureBarHtml(
+          "Camera Count Pressure",
+          metric.cameraPressure,
+          String(data.cams) + " cameras",
+          "Higher pressure means the spacing plan is becoming more camera-intensive."
+        ) +
+      '</div>';
+  }
+
+  function spacingScenarioDecisionHelp(scenario) {
+    if (!scenario || !scenario.canApply) {
+      return "This option is unavailable because the current geometry cannot support it without changing upstream assumptions.";
+    }
+
+    if (scenario.id === "continuity-priority") {
+      return "Choose this when the current layout is too close to seam/gap risk and continuity matters more than camera-count efficiency.";
+    }
+
+    if (scenario.id === "balanced-layout") {
+      return "Choose this when the layout is workable but you want a cleaner middle-ground before Blind Spot Check.";
+    }
+
+    if (scenario.id === "camera-count-efficiency") {
+      return "Choose this only when reducing camera count matters and you are willing to verify the added risk downstream.";
+    }
+
+    if (scenario.id === "widen-effective-view") {
+      return "Choose this only if the actual lens/camera choice can support a wider view without sacrificing required detail.";
+    }
+
+    return "Choose this when the branch matches the project priority better than the current baseline.";
+  }
+
+  function spacingWhatIfControlsHtml(data) {
+    return '' +
+      '<div class="spacing-advice-card spacing-control-panel">' +
+        '<div class="spacing-section-kicker">User-Controlled What-If</div>' +
+        '<h4 class="spacing-section-title">Try your own correction</h4>' +
+        '<p class="spacing-section-copy">Use these fields to test a custom correction instead of only using predefined branches. Applying this check updates the actual tool inputs and recalculates the assistant as an assisted scenario.</p>' +
+        '<div class="spacing-control-grid">' +
+          '<label class="field"><span class="label">Perimeter Length (ft)</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
+          '<label class="field"><span class="label">Distance (ft)</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">HFOV (deg)</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+        '</div>' +
+        '<div class="btn-row" style="margin-top: 12px;">' +
+          '<button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button>' +
+        '</div>' +
+        '<p class="spacing-section-copy"><strong>Correction hints:</strong> reduce distance, widen HFOV, increase overlap enough to force safer spacing, or shorten the protected run if the imported perimeter assumption is wrong.</p>' +
+      '</div>';
+  }
+
+  function readSpacingWhatIfInputs() {
+    if (!els.assistant) return null;
+
+    const values = {};
+    els.assistant.querySelectorAll("[data-spacing-whatif]").forEach((input) => {
+      values[input.dataset.spacingWhatif] = Number(input.value);
+    });
+
+    return values;
+  }
+
+  function applyCustomSpacingScenario(data) {
+    const changes = readSpacingWhatIfInputs();
+    if (!changes) return;
+
+    const scenario = makeSpacingDesignScenario(
+      data,
+      "custom-spacing-check",
+      "Custom Spacing Check",
+      "User-defined correction using the assistant what-if controls.",
+      changes,
+      "Use this when the predefined branches do not match the real project constraint.",
+      "Apply Custom Spacing Check",
+      true
+    );
+
+    applyAssistantScenario(scenario);
+  }
+
+  function spacingDesignControlHtml(data, scenarios) {
+    return '' +
+      '<div class="spacing-advice-card">' +
+        '<div class="spacing-section-kicker">Guided Correction Branches</div>' +
+        '<h4 class="spacing-section-title">Choose why you are changing the design</h4>' +
+        '<p class="spacing-section-copy">Each branch has a different design intent. Use the explanation before applying a correction so the result is traceable downstream.</p>' +
+        '<div class="spacing-branch-list">' +
+          scenarios.map((scenario) => {
+            const disabled = !scenario || !scenario.canApply;
+            const result = disabled ? "Unavailable for current geometry" : spacingScenarioSummary(scenario);
+            const button = disabled
+              ? '<button class="btn spacing-assistant-apply" type="button" disabled>Unavailable</button>'
+              : '<button class="btn btn-primary spacing-assistant-apply" type="button" data-spacing-scenario="' + escapeHtml(scenario.id) + '">' + escapeHtml(scenario.actionLabel || "Apply Branch") + '</button>';
+
+            return '' +
+              '<div class="spacing-branch-item">' +
+                '<div>' +
+                  '<strong>' + escapeHtml(scenario.label || "Design Branch") + '</strong>' +
+                  '<p>' + escapeHtml(spacingScenarioDecisionHelp(scenario)) + '</p>' +
+                  '<p><strong>What changes:</strong> ' + escapeHtml(spacingControlFieldsLabel(scenario)) + '</p>' +
+                  '<p><strong>Expected result:</strong> ' + escapeHtml(result) + '</p>' +
+                '</div>' +
+                button +
+              '</div>';
+          }).join("") +
+        '</div>' +
+      '</div>' +
+      spacingWhatIfControlsHtml(data);
+  }
+
   function renderSpacingAssistant(data) {
     if (!els.assistant) return;
 
@@ -798,7 +948,7 @@ function assistantStatusClass(data) {
         '<div>' +
           '<div class="spacing-design-kicker">Design Assistant</div>' +
           '<h3 class="spacing-design-title">Camera spacing design assistant</h3>' +
-          '<p class="spacing-design-copy">This assistant explains the spacing status, shows what is driving risk, gives direct correction controls, and documents what Blind Spot Check will receive next.</p>' +
+          '<p class="spacing-design-copy">This assistant shows spacing pressure, explains why the result is healthy or not, gives guided correction branches, and lets you test your own spacing correction before Blind Spot Check.</p>' +
         '</div>' +
         '<div class="spacing-design-status ' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</div>' +
       '</div>' +
@@ -817,16 +967,17 @@ function assistantStatusClass(data) {
             miniCard("Overlap", fmtPct(data.ovPct, 1)) +
           '</div>' +
         '</div>' +
-        spacingDesignControlHtml(latestAssistantScenarios) +
+        spacingPressureGraphHtml(data) +
       '</div>' +
-      '<div class="spacing-design-split">' +
+      '<div class="spacing-design-layout">' +
+        spacingDesignControlHtml(data, latestAssistantScenarios) +
         spacingPathToHealthyHtml(data) +
-        spacingCarryForwardHtml(data) +
       '</div>' +
       '<div class="spacing-design-split">' +
+        spacingCarryForwardHtml(data) +
         '<div class="spacing-advice-card">' + dominantDriverHtml(data) + '</div>' +
-        '<div class="spacing-advice-card">' + recommendationHtml(data, latestAssistantScenarios) + '</div>' +
-      '</div>';
+      '</div>' +
+      '<div class="spacing-advice-card" style="margin-top: 14px;">' + recommendationHtml(data, latestAssistantScenarios) + '</div>';
 
     els.assistant.querySelectorAll(".spacing-assistant-apply").forEach((button) => {
       button.addEventListener("click", () => {
@@ -834,6 +985,11 @@ function assistantStatusClass(data) {
         applyAssistantScenario(scenario);
       });
     });
+
+    const customButton = els.assistant.querySelector("#spacingApplyCustomScenario");
+    if (customButton) {
+      customButton.addEventListener("click", () => applyCustomSpacingScenario(data));
+    }
   }
 
   function applyAssistantScenario(scenario) {
