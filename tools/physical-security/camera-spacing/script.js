@@ -934,6 +934,99 @@ function assistantStatusClass(data) {
       spacingWhatIfControlsHtml(data);
   }
 
+  
+
+  function spacingLensActionList(items) {
+    return '<ul class="lens-action-list">' + items.map((item) => '<li>' + escapeHtml(item) + '</li>').join("") + '</ul>';
+  }
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  function spacingLensCustomControlHtml(data) {
+    return '' +
+      '<div class="lens-advice-card spacing-lens-custom">' +
+        '<div class="lens-design-kicker">Custom design check</div>' +
+        '<h4 class="lens-design-title">Try your own spacing correction</h4>' +
+        '<p class="lens-design-copy">Use this when the preset branches do not match the real field constraint. Applying the custom check updates the actual tool inputs.</p>' +
+        '<div class="spacing-control-grid">' +
+          '<label class="field"><span class="label">Perimeter Length (ft)</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
+          '<label class="field"><span class="label">Distance (ft)</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">HFOV (deg)</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+        '</div>' +
+        '<div class="btn-row" style="margin-top:12px;"><button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button></div>' +
+      '</div>';
+  }
+
+  
+
+  
+
+  
+
+  function spacingLensPillLabel(scenario) {
+    if (!scenario) return "Custom Design";
+
+    if (scenario.id === "continuity-priority") return "Continuity Check";
+    if (scenario.id === "balanced-layout") return "Balanced Layout";
+    if (scenario.id === "camera-count-efficiency") return "Efficiency Check";
+    if (scenario.id === "widen-effective-view") return "Wider HFOV Check";
+    if (scenario.id === "custom-spacing-check") return "Custom What-If";
+
+    return String(scenario.label || "Design Path")
+      .replace("Apply Correction: ", "")
+      .replace("Apply Branch: ", "")
+      .replace("Recalculate: ", "")
+      .replace("Try ", "");
+  }
+
+  function spacingAssistantStatusPillHtml(data) {
+    const status = String(data?.status || "WATCH").toUpperCase();
+    const cls = status === "HEALTHY" ? "healthy" : status === "RISK" ? "risk" : "watch";
+    return '<div class="lens-design-status ' + cls + '">' + escapeHtml(status) + '</div>';
+  }
+
+  function spacingLensTopPillsHtml(data, scenarios) {
+    const currentId = activeAssistantScenario?.id || "current";
+
+    const button = (id, label, active) => {
+      return '' +
+        '<button class="lens-scenario-pill' + (active ? ' active' : '') + '"' +
+        ' type="button" data-spacing-pill="' + escapeHtml(id) + '">' +
+        escapeHtml(label) +
+        '</button>';
+    };
+
+    const pills = [
+      button("current", "Custom Design", currentId === "current")
+    ];
+
+    scenarios.forEach((scenario) => {
+      if (!scenario || !scenario.canApply) return;
+      pills.push(button(scenario.id, spacingLensPillLabel(scenario), currentId === scenario.id));
+    });
+
+    return '<div class="lens-scenario-pill-row">' + pills.join("") + '</div>';
+  }
+
   function spacingLensMiniCard(label, value, note) {
     return '' +
       '<div class="lens-mini-card">' +
@@ -941,10 +1034,6 @@ function assistantStatusClass(data) {
         '<span class="lens-mini-value">' + escapeHtml(value) + '</span>' +
         (note ? '<div class="spacing-lens-note">' + escapeHtml(note) + '</div>' : '') +
       '</div>';
-  }
-
-  function spacingLensActionList(items) {
-    return '<ul class="lens-action-list">' + items.map((item) => '<li>' + escapeHtml(item) + '</li>').join("") + '</ul>';
   }
 
   function spacingLensProblemLabel(data) {
@@ -970,44 +1059,88 @@ function assistantStatusClass(data) {
     return "This scenario is within current planning guardrails. Validate the field gap condition in Blind Spot Check before relying on it.";
   }
 
-  function spacingLensPressureScore(model) {
-    if (!model) return 100;
-
-    const ratio = Number(model.ratio);
-    const ovPct = Number(model.ovPct);
-    const cams = Number(model.cams);
+  function spacingLensPressureMetrics(data) {
+    const ratio = Number(data?.ratio);
+    const ovPct = Number(data?.ovPct);
+    const cams = Number(data?.cams);
 
     const gapPressure = ratio > 0.92 ? Math.min((ratio - 0.92) * 220, 100) : 0;
     const compressionPressure = ratio < 0.72 ? Math.min((0.72 - ratio) * 180, 100) : 0;
     const overlapPressure = Number.isFinite(ovPct) ? Math.min(Math.max(ovPct, 0), 100) * 0.72 : 0;
     const cameraPressure = Number.isFinite(cams) ? Math.min(Math.max((cams - 1) * 10, 0), 100) : 0;
 
-    return Math.max(gapPressure, compressionPressure, overlapPressure, cameraPressure);
+    return {
+      gapPressure,
+      compressionPressure,
+      overlapPressure,
+      cameraPressure
+    };
   }
 
-  function spacingLensScenarioPressure(item, fallback) {
+  function spacingLensPressureScore(model) {
+    if (!model) return 100;
+    const m = spacingLensPressureMetrics(model);
+    return Math.max(m.gapPressure, m.compressionPressure, m.overlapPressure, m.cameraPressure);
+  }
+
+  function spacingLensDriverBarHtml(label, value, display) {
+    const safe = Math.max(0, Math.min(100, Number(value) || 0));
+    return '' +
+      '<div class="spacing-lens-driver-row">' +
+        '<div class="spacing-lens-driver-head">' +
+          '<strong>' + escapeHtml(label) + '</strong>' +
+          '<span>' + escapeHtml(display) + '</span>' +
+        '</div>' +
+        '<div class="spacing-lens-driver-track">' +
+          '<div class="spacing-lens-driver-fill" style="width:' + safe.toFixed(0) + '%"></div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function spacingLensDriverBarsHtml(data) {
+    const m = spacingLensPressureMetrics(data);
+
+    return '' +
+      '<div class="lens-advice-card spacing-lens-driver-card">' +
+        '<div class="lens-design-kicker">Dominant driver</div>' +
+        '<h4 class="lens-design-title">' + escapeHtml(spacingLensProblemLabel(data)) + ' is creating planning pressure.</h4>' +
+        '<p class="lens-design-copy">The bars show which spacing condition is pushing the current result toward Watch or Risk.</p>' +
+        spacingLensDriverBarHtml("Gap exposure", m.gapPressure, fmtPct(Math.max((data.ratio - 0.92) * 100, 0), 1)) +
+        spacingLensDriverBarHtml("Spacing compression", m.compressionPressure, fmtPct(Math.max((0.72 - data.ratio) * 100, 0), 1)) +
+        spacingLensDriverBarHtml("Overlap pressure", m.overlapPressure, fmtPct(data.ovPct, 1)) +
+        spacingLensDriverBarHtml("Camera count pressure", m.cameraPressure, String(data.cams) + " cameras") +
+      '</div>';
+  }
+
+  function spacingLensSelectedResultHtml(data) {
+    return '' +
+      '<div class="lens-advice-card spacing-lens-result-card">' +
+        '<div class="lens-design-kicker">Selected scenario result</div>' +
+        '<h4 class="lens-design-title">' + escapeHtml(data.cams + (data.cams === 1 ? " camera" : " cameras")) + '</h4>' +
+        '<p class="lens-design-copy">This spacing plan uses ' + escapeHtml(fmtFt(data.spacing)) + ' actual spacing against ' + escapeHtml(fmtFt(data.usableWidth)) + ' usable width.</p>' +
+        '<div class="lens-target-strip">' +
+          spacingLensMiniCard("Actual spacing", fmtFt(data.spacing), "Center spacing.") +
+          spacingLensMiniCard("Usable width", fmtFt(data.usableWidth), "After overlap.") +
+          spacingLensMiniCard("Overlap", fmtPct(data.ovPct, 1), "Current target.") +
+          spacingLensMiniCard("Status", data.status, "Combined status.") +
+        '</div>' +
+      '</div>';
+  }
+
+  function spacingLensScenarioPressure(item) {
     if (!item || !item.canApply) return 95;
-    return spacingLensPressureScore(item || fallback);
+    return spacingLensPressureScore(item);
   }
 
   function spacingLensScenarioChartSvg(data, scenarios) {
     const candidates = [
-      {
-        label: "Current",
-        score: spacingLensPressureScore(data),
-        status: data.status
-      }
+      { label: "Custom Design", score: spacingLensPressureScore(data) }
     ];
 
     scenarios.filter((scenario) => scenario && scenario.canApply).slice(0, 4).forEach((scenario) => {
       candidates.push({
-        label: scenario.label
-          .replace("Apply Correction: ", "")
-          .replace("Apply Branch: ", "")
-          .replace("Try ", "")
-          .replace("Recalculate: ", ""),
-        score: spacingLensScenarioPressure(scenario, data),
-        status: scenario.spacingClass || ""
+        label: spacingLensPillLabel(scenario),
+        score: spacingLensScenarioPressure(scenario)
       });
     });
 
@@ -1021,18 +1154,17 @@ function assistantStatusClass(data) {
     const plotH = height - top - bottom;
 
     const xStep = candidates.length > 1 ? plotW / (candidates.length - 1) : plotW;
-    const point = (item, index) => {
+    const points = candidates.map((item, index) => {
       const x = left + (xStep * index);
       const y = top + plotH - ((Math.max(0, Math.min(100, item.score)) / 100) * plotH);
       return { x, y };
-    };
+    });
 
-    const points = candidates.map(point);
     const polyline = points.map((p) => p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
 
     return '' +
       '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Planning pressure by scenario">' +
-        '<rect x="' + left + '" y="' + top + '" width="' + plotW + '" height="' + plotH + '" rx="0" fill="rgba(125,255,152,.08)"></rect>' +
+        '<rect x="' + left + '" y="' + top + '" width="' + plotW + '" height="' + plotH + '" fill="rgba(125,255,152,.08)"></rect>' +
         '<rect x="' + left + '" y="' + top + '" width="' + plotW + '" height="' + (plotH * .62).toFixed(1) + '" fill="rgba(255,211,79,.08)"></rect>' +
         '<rect x="' + left + '" y="' + top + '" width="' + plotW + '" height="' + (plotH * .34).toFixed(1) + '" fill="rgba(255,96,88,.09)"></rect>' +
         '<text x="' + (width - right) + '" y="' + (top + 12) + '" text-anchor="end" fill="rgba(226,232,240,.75)" font-size="12" font-weight="800">Lower is better</text>' +
@@ -1041,12 +1173,34 @@ function assistantStatusClass(data) {
           const item = candidates[index];
           const score = Math.round(item.score);
           const fill = score <= 25 ? "#7dff98" : score <= 60 ? "#ffd34f" : "#ff8f88";
+
           return '' +
             '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="7" fill="' + fill + '" stroke="rgba(255,255,255,.80)" stroke-width="2"></circle>' +
             '<text x="' + p.x.toFixed(1) + '" y="' + (p.y - 16).toFixed(1) + '" text-anchor="middle" fill="' + fill + '" font-size="13" font-weight="950">' + score + '</text>' +
             '<text x="' + p.x.toFixed(1) + '" y="' + (height - 20) + '" text-anchor="middle" fill="rgba(226,232,240,.82)" font-size="11" font-weight="800">' + escapeHtml(item.label.slice(0, 18)) + '</text>';
         }).join("") +
       '</svg>';
+  }
+
+  function spacingLensCustomAssumptionsHtml(data) {
+    return '' +
+      '<div class="lens-advice-card spacing-lens-custom">' +
+        '<div class="lens-design-head spacing-lens-inner-head">' +
+          '<div>' +
+            '<div class="lens-design-kicker">Custom planning assumptions</div>' +
+            '<h4 class="lens-design-title">Edit the spacing assumptions without leaving the assistant</h4>' +
+            '<p class="lens-design-copy">Use these controls to test perimeter length, distance, HFOV, and overlap before carrying the result into Blind Spot Check.</p>' +
+          '</div>' +
+          '<div class="lens-design-status healthy">Custom What-If</div>' +
+        '</div>' +
+        '<div class="spacing-control-grid">' +
+          '<label class="field"><span class="label">Perimeter Length</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
+          '<label class="field"><span class="label">Distance</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">HFOV</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Overlap Target</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+        '</div>' +
+        '<div class="btn-row" style="margin-top:12px;"><button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button></div>' +
+      '</div>';
   }
 
   function spacingLensCheckCardsHtml(data) {
@@ -1061,7 +1215,7 @@ function assistantStatusClass(data) {
         : "Practical reserve";
 
     const designPath = data.spacingClass === "Wide Spacing"
-      ? "Apply a correction before Blind Spot"
+      ? "Apply correction before Blind Spot"
       : "Continue to Blind Spot validation";
 
     return '' +
@@ -1100,7 +1254,7 @@ function assistantStatusClass(data) {
   }
 
   function spacingLensScenarioComparisonHtml(data, scenarios) {
-    const active = activeAssistantScenario ? activeAssistantScenario.label : "Current spacing plan";
+    const active = activeAssistantScenario ? activeAssistantScenario.label : "Custom Design";
     const pressure = Math.round(spacingLensPressureScore(data));
 
     return '' +
@@ -1124,26 +1278,6 @@ function assistantStatusClass(data) {
       '</div>';
   }
 
-  function spacingLensCarryForwardHtml(data) {
-    return '' +
-      '<div class="lens-advice-card spacing-lens-carry">' +
-        '<div class="lens-design-head spacing-lens-inner-head">' +
-          '<div>' +
-            '<div class="lens-design-kicker">Pipeline / report carry-forward</div>' +
-            '<h4 class="lens-design-title">Use the selected scenario in the next sanity check</h4>' +
-            '<p class="lens-design-copy">Blind Spot Check should validate the selected camera count, spacing, overlap, distance, and HFOV before the layout is treated as reliable.</p>' +
-          '</div>' +
-          '<div class="lens-design-status healthy">Live Shadow Path</div>' +
-        '</div>' +
-        '<div class="lens-target-strip">' +
-          spacingLensMiniCard("Cameras", String(data.cams), "Sent to Blind Spot Check.") +
-          spacingLensMiniCard("Spacing", fmtFt(data.spacing), "Center-to-center spacing.") +
-          spacingLensMiniCard("Distance", fmtFt(data.dist), "Target-plane distance.") +
-          spacingLensMiniCard("HFOV", fmt(data.hfov, 1) + " deg", "Horizontal field of view.") +
-        '</div>' +
-      '</div>';
-  }
-
   function spacingLensBranchControlsHtml(data, scenarios) {
     return '' +
       '<div class="lens-advice-card spacing-lens-controls">' +
@@ -1153,7 +1287,7 @@ function assistantStatusClass(data) {
             '<h4 class="lens-design-title">Choose a spacing path</h4>' +
             '<p class="lens-design-copy">Each action changes the actual spacing inputs, recalculates the tool, and marks the result as an assisted scenario for downstream handoff.</p>' +
           '</div>' +
-          '<div class="lens-design-status healthy">Design Paths</div>' +
+          '<div class="lens-design-status healthy">Correction Path</div>' +
         '</div>' +
         '<div class="spacing-lens-control-list">' +
           scenarios.map((scenario) => {
@@ -1173,7 +1307,7 @@ function assistantStatusClass(data) {
             return '' +
               '<div class="spacing-lens-control-row">' +
                 '<div>' +
-                  '<strong>' + escapeHtml(scenario.label || "Design branch") + '</strong>' +
+                  '<strong>' + escapeHtml(spacingLensPillLabel(scenario)) + '</strong>' +
                   '<p>' + escapeHtml(scenario.intent || "Review this branch against the current design priority.") + '</p>' +
                   '<p><strong>Expected result:</strong> ' + escapeHtml(result) + '</p>' +
                 '</div>' +
@@ -1181,23 +1315,26 @@ function assistantStatusClass(data) {
               '</div>';
           }).join("") +
         '</div>' +
-      '</div>' +
-      spacingLensCustomControlHtml(data);
+      '</div>';
   }
 
-  function spacingLensCustomControlHtml(data) {
+  function spacingLensCarryForwardHtml(data) {
     return '' +
-      '<div class="lens-advice-card spacing-lens-custom">' +
-        '<div class="lens-design-kicker">Custom design check</div>' +
-        '<h4 class="lens-design-title">Try your own spacing correction</h4>' +
-        '<p class="lens-design-copy">Use this when the preset branches do not match the real field constraint. Applying the custom check updates the actual tool inputs.</p>' +
-        '<div class="spacing-control-grid">' +
-          '<label class="field"><span class="label">Perimeter Length (ft)</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
-          '<label class="field"><span class="label">Distance (ft)</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">HFOV (deg)</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+      '<div class="lens-advice-card spacing-lens-carry">' +
+        '<div class="lens-design-head spacing-lens-inner-head">' +
+          '<div>' +
+            '<div class="lens-design-kicker">Pipeline / report carry-forward</div>' +
+            '<h4 class="lens-design-title">Use the selected scenario in the next sanity check</h4>' +
+            '<p class="lens-design-copy">Blind Spot Check should validate the selected camera count, spacing, overlap, distance, and HFOV before the layout is treated as reliable.</p>' +
+          '</div>' +
+          '<div class="lens-design-status healthy">Live Shadow Path</div>' +
         '</div>' +
-        '<div class="btn-row" style="margin-top:12px;"><button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button></div>' +
+        '<div class="lens-target-strip">' +
+          spacingLensMiniCard("Cameras", String(data.cams), "Sent to Blind Spot Check.") +
+          spacingLensMiniCard("Spacing", fmtFt(data.spacing), "Center-to-center spacing.") +
+          spacingLensMiniCard("Distance", fmtFt(data.dist), "Target-plane distance.") +
+          spacingLensMiniCard("HFOV", fmt(data.hfov, 1) + " deg", "Horizontal field of view.") +
+        '</div>' +
       '</div>';
   }
 
@@ -1264,29 +1401,32 @@ function assistantStatusClass(data) {
     els.assistant.hidden = false;
     els.assistant.classList.add("lens-design-assistant", "full-output", "spacing-lens-match");
 
-    const statusClass = assistantStatusClass(data);
-    const statusLabel = assistantStatusLabel(data);
-
     els.assistant.innerHTML =
       '<div class="lens-design-head">' +
         '<div>' +
-          '<div class="lens-design-kicker">Spacing / coverage visualization</div>' +
-          '<h3 class="lens-design-title">What the spacing plan does across the protected run</h3>' +
-          '<p class="lens-design-copy">This uses the same assistant layout pattern as Lens Selection. It keeps Camera Spacing inputs and outputs, but presents the result as a guided design scenario.</p>' +
+          '<div class="lens-design-kicker">Design Assistant</div>' +
+          '<h3 class="lens-design-title">Camera spacing design path</h3>' +
+          '<p class="lens-design-copy">This module checks whether the spacing plan preserves continuity, creates camera-count pressure, or needs correction before Blind Spot Check.</p>' +
         '</div>' +
-        '<div class="lens-design-status ' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</div>' +
+        spacingAssistantStatusPillHtml(data) +
       '</div>' +
+      spacingLensTopPillsHtml(data, latestAssistantScenarios) +
       assistantModeHtml() +
+      spacingLensCustomAssumptionsHtml(data) +
+      '<div class="lens-design-split">' +
+        spacingLensSelectedResultHtml(data) +
+        spacingLensDriverBarsHtml(data) +
+      '</div>' +
       '<div class="lens-design-layout">' +
         '<div class="lens-fov-card">' +
-          '<div class="lens-design-kicker">Spacing / coverage layout</div>' +
-          '<h4 class="lens-design-title">' + escapeHtml(data.cams + " cameras | " + fmtFt(data.spacing) + " spacing | " + fmtPct(data.ovPct, 1) + " overlap") + '</h4>' +
+          '<div class="lens-design-kicker">FOV / coverage layout</div>' +
+          '<h4 class="lens-design-title">' + escapeHtml(data.cams + (data.cams === 1 ? " camera" : " cameras") + " | " + fmtFt(data.spacing) + " spacing | " + fmtPct(data.ovPct, 1) + " overlap") + '</h4>' +
           '<p class="lens-design-copy">Actual spacing is compared against usable camera width after overlap reserve is applied.</p>' +
           '<div class="lens-fov-stage">' + spacingVisualSvg(data) + '</div>' +
           '<div class="lens-target-strip">' +
             spacingLensMiniCard("Coverage layout", data.cams + (data.cams === 1 ? " camera" : " cameras"), "Calculated count for protected run.") +
             spacingLensMiniCard("Actual spacing", fmtFt(data.spacing), "Camera center spacing.") +
-            spacingLensMiniCard("Usable width", fmtFt(data.usableWidth), "Width after overlap reserve.") +
+            spacingLensMiniCard("Usable width", fmtFt(data.usableWidth), "Width after overlap.") +
             spacingLensMiniCard("Overlap reserve", fmtPct(data.ovPct, 1), "Applied before spacing.") +
           '</div>' +
         '</div>' +
@@ -1296,6 +1436,20 @@ function assistantStatusClass(data) {
       spacingLensScenarioComparisonHtml(data, latestAssistantScenarios) +
       spacingLensBranchControlsHtml(data, latestAssistantScenarios) +
       spacingLensCarryForwardHtml(data);
+
+    els.assistant.querySelectorAll("[data-spacing-pill]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.spacingPill;
+        if (id === "current") {
+          activeAssistantScenario = null;
+          calc();
+          return;
+        }
+
+        const scenario = latestAssistantScenarios.find((item) => item.id === id);
+        if (scenario) applyAssistantScenario(scenario);
+      });
+    });
 
     els.assistant.querySelectorAll(".spacing-assistant-apply").forEach((button) => {
       button.addEventListener("click", () => {
@@ -1313,11 +1467,13 @@ function assistantStatusClass(data) {
   function applyAssistantScenario(scenario) {
     if (!scenario || !scenario.canApply) return;
 
+    const changes = scenario.changes || {};
+
     activeAssistantScenario = {
       id: scenario.id,
       label: scenario.label,
       intent: scenario.intent,
-      changes: scenario.changes || {},
+      changes,
       len: scenario.len,
       dist: scenario.dist,
       hfov: scenario.hfov,
@@ -1331,23 +1487,26 @@ function assistantStatusClass(data) {
       note: scenario.note
     };
 
-    if (Number.isFinite(Number(scenario.changes?.len))) {
-      els.len.value = String(Number(scenario.changes.len.toFixed ? scenario.changes.len.toFixed(1) : scenario.changes.len));
+    if (Number.isFinite(Number(changes.len))) {
+      els.len.value = String(Number(Number(changes.len).toFixed(1)));
       delete manualFlowOverrides.len;
     }
 
-    if (Number.isFinite(Number(scenario.changes?.dist))) {
-      els.dist.value = String(Number(scenario.changes.dist.toFixed ? scenario.changes.dist.toFixed(1) : scenario.changes.dist));
+    if (Number.isFinite(Number(changes.dist))) {
+      els.dist.value = String(Number(Number(changes.dist).toFixed(1)));
       delete manualFlowOverrides.dist;
     }
 
-    if (Number.isFinite(Number(scenario.changes?.hfov))) {
-      els.hfov.value = String(Number(scenario.changes.hfov.toFixed ? scenario.changes.hfov.toFixed(1) : scenario.changes.hfov));
+    if (Number.isFinite(Number(changes.hfov))) {
+      els.hfov.value = String(Number(Number(changes.hfov).toFixed(1)));
       delete manualFlowOverrides.hfov;
     }
 
-    if (Number.isFinite(Number(scenario.changes?.ovPct))) {
-      els.ov.value = String(Number(scenario.changes.ovPct.toFixed ? scenario.changes.ovPct.toFixed(1) : scenario.changes.ovPct));
+    if (Number.isFinite(Number(changes.ovPct))) {
+      els.ov.value = String(Number(Number(changes.ovPct).toFixed(1)));
+      delete manualFlowOverrides.ov;
+    } else if (Number.isFinite(Number(scenario.ovPct))) {
+      els.ov.value = String(Number(Number(scenario.ovPct).toFixed(1)));
       delete manualFlowOverrides.ov;
     }
 
