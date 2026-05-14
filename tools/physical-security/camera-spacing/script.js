@@ -522,6 +522,142 @@ function assistantStatusClass(data) {
     return;
   }
 
+  function spacingProblemLabel(data) {
+    if (!data) return "Unknown";
+
+    if (data.spacingClass === "Wide Spacing") return "Spacing is outrunning usable width";
+    if (data.spacingClass === "Tight Spacing") return "Spacing is conservative and camera-heavy";
+    if (Number(data.ovPct) >= 25) return "Overlap reserve is compressing usable width";
+
+    return "Spacing is balanced";
+  }
+
+  function spacingCorrectionSummary(data) {
+    if (!data) return "";
+
+    if (data.spacingClass === "Wide Spacing") {
+      return "Use the correction branches below to tighten camera spacing, increase overlap reserve, or increase camera count before relying on downstream blind-spot validation.";
+    }
+
+    if (data.spacingClass === "Tight Spacing") {
+      return "The layout is probably safe for continuity, but it may be over-built. Use the efficiency branch only if Blind Spot Check still confirms clean coverage.";
+    }
+
+    if (Number(data.ovPct) >= 25) {
+      return "The spacing works, but the overlap target is starting to consume useful coverage width. Consider a balanced branch before moving downstream.";
+    }
+
+    return "The current spacing is a clean baseline. Continue to Blind Spot Check, or apply a branch only if the project priority changes.";
+  }
+
+  function spacingFixCard(title, body, tone) {
+    return '' +
+      '<div class="spacing-branch-item ' + escapeHtml(tone || "") + '">' +
+        '<div>' +
+          '<strong>' + escapeHtml(title) + '</strong>' +
+          '<p>' + escapeHtml(body) + '</p>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function spacingDiagnosticHtml(data) {
+    const mode = sourceModeForCurrentResult(getManualOverrideMetadata(data));
+    const blocker = spacingProblemLabel(data);
+
+    return '' +
+      '<div class="spacing-advice-card">' +
+        '<div class="spacing-section-kicker">Executive Diagnostic Snapshot</div>' +
+        '<h4 class="spacing-section-title">' + escapeHtml(blocker) + '</h4>' +
+        '<p class="spacing-section-copy">' + escapeHtml(spacingCorrectionSummary(data)) + '</p>' +
+        '<div class="spacing-mini-grid">' +
+          miniCard("Status", assistantStatusLabel(data)) +
+          miniCard("Source", mode) +
+          miniCard("Main Blocker", blocker) +
+          miniCard("Next Step", "Blind Spot Check") +
+        '</div>' +
+      '</div>';
+  }
+
+  function spacingCorrectionPathHtml(data) {
+    const cards = [];
+
+    if (data.spacingClass === "Wide Spacing") {
+      cards.push(spacingFixCard("Primary correction", "Add a camera or reduce the target spacing so actual spacing no longer exceeds usable width.", "risk"));
+      cards.push(spacingFixCard("Secondary correction", "Increase overlap reserve only if the added reserve still produces a practical camera count.", "watch"));
+      cards.push(spacingFixCard("Upstream correction", "If the geometry is unrealistic, recalculate upstream distance or HFOV before continuing.", "watch"));
+    } else if (data.spacingClass === "Tight Spacing") {
+      cards.push(spacingFixCard("Primary correction", "Keep this branch if continuity is the priority and camera count is acceptable.", "healthy"));
+      cards.push(spacingFixCard("Efficiency check", "Try the camera-count efficiency branch only if downstream Blind Spot Check remains healthy.", "watch"));
+      cards.push(spacingFixCard("Do not over-correct", "Avoid relaxing overlap so much that the next tool has to absorb hidden gap risk.", "watch"));
+    } else {
+      cards.push(spacingFixCard("Recommended path", "Carry this balanced result into Blind Spot Check and validate the final gap condition.", "healthy"));
+      cards.push(spacingFixCard("Optional correction", "Use the continuity branch if seam closure matters more than camera efficiency.", "watch"));
+      cards.push(spacingFixCard("Hold baseline", "Do not change upstream assumptions unless distance, HFOV, or perimeter length is wrong.", "healthy"));
+    }
+
+    return '' +
+      '<div class="spacing-advice-card">' +
+        '<div class="spacing-section-kicker">Correction Controls</div>' +
+        '<h4 class="spacing-section-title">How to move this result toward healthy</h4>' +
+        '<p class="spacing-section-copy">Use these controls as design actions, not just labels. Apply a branch only when it matches the project priority.</p>' +
+        '<div class="spacing-branch-list">' + cards.join("") + '</div>' +
+      '</div>';
+  }
+
+  function spacingBranchCardHtml(scenario) {
+    const disabled = !scenario || !scenario.canApply;
+    const label = scenario?.label || "Unavailable";
+    const intent = scenario?.intent || "This branch is not available for the current geometry.";
+    const note = scenario?.note || "";
+    const details = disabled
+      ? "Unavailable for current geometry"
+      : [
+          Number.isFinite(scenario.cams) ? scenario.cams + " cameras" : null,
+          Number.isFinite(scenario.spacing) ? fmtFt(scenario.spacing) + " spacing" : null,
+          Number.isFinite(scenario.ovPct) ? fmtPct(scenario.ovPct, 1) + " overlap" : null
+        ].filter(Boolean).join(" | ");
+
+    const button = disabled
+      ? '<button class="btn spacing-assistant-apply" type="button" disabled>Unavailable</button>'
+      : '<button class="btn btn-primary spacing-assistant-apply" type="button" data-spacing-scenario="' + escapeHtml(scenario.id) + '">Apply: ' + escapeHtml(details) + '</button>';
+
+    return '' +
+      '<div class="spacing-branch-item">' +
+        '<div>' +
+          '<strong>' + escapeHtml(label) + '</strong>' +
+          '<p>' + escapeHtml(intent) + '</p>' +
+          '<p><strong>Result:</strong> ' + escapeHtml(details) + '</p>' +
+          (note ? '<p><strong>Use when:</strong> ' + escapeHtml(note) + '</p>' : '') +
+        '</div>' +
+        button +
+      '</div>';
+  }
+
+  function spacingBranchesHtml(scenarios) {
+    return '' +
+      '<div class="spacing-advice-card">' +
+        '<div class="spacing-section-kicker">Assisted Correction Branches</div>' +
+        '<h4 class="spacing-section-title">Choose the branch that fixes the actual design pressure</h4>' +
+        '<p class="spacing-section-copy">Each branch updates the spacing assumption and recalculates the tool. The chosen branch is saved as an assisted scenario for downstream handoff.</p>' +
+        '<div class="spacing-branch-list">' + scenarios.map(spacingBranchCardHtml).join("") + '</div>' +
+      '</div>';
+  }
+
+  function spacingCarryForwardHtml(data) {
+    return '' +
+      '<div class="spacing-advice-card">' +
+        '<div class="spacing-section-kicker">Carry Forward</div>' +
+        '<h4 class="spacing-section-title">What Blind Spot Check will receive</h4>' +
+        '<p class="spacing-section-copy">The next tool should validate the actual coverage gap using the spacing result selected here.</p>' +
+        '<div class="spacing-mini-grid">' +
+          miniCard("Cameras", String(data.cams)) +
+          miniCard("Spacing", fmtFt(data.spacing)) +
+          miniCard("Distance", fmtFt(data.dist)) +
+          miniCard("HFOV", fmt(data.hfov, 1) + " deg") +
+        '</div>' +
+      '</div>';
+  }
+
   function renderSpacingAssistant(data) {
     if (!els.assistant) return;
 
@@ -535,34 +671,34 @@ function assistantStatusClass(data) {
       '<div class="spacing-design-head">' +
         '<div>' +
           '<div class="spacing-design-kicker">Design Assistant</div>' +
-          '<h3 class="spacing-design-title">Camera spacing design path</h3>' +
-          '<p class="spacing-design-copy">This module checks whether the calculated spacing is preserving continuity, creating camera-count pressure, or pushing too close to the usable footprint before Blind Spot validation.</p>' +
+          '<h3 class="spacing-design-title">Camera spacing design assistant</h3>' +
+          '<p class="spacing-design-copy">This assistant explains whether the spacing result is healthy, what is driving risk, which correction branch to apply, and what will be carried into Blind Spot Check.</p>' +
         '</div>' +
         '<div class="spacing-design-status ' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</div>' +
       '</div>' +
       assistantModeHtml() +
+      spacingDiagnosticHtml(data) +
       '<div class="spacing-design-layout">' +
         '<div class="spacing-visual-card">' +
-          '<div class="spacing-section-kicker">Spacing Visualization</div>' +
-          '<h4 class="spacing-section-title">What the layout is doing</h4>' +
-          '<p class="spacing-section-copy">Each camera position is treated as part of the protected run. The assistant compares spacing, usable footprint, and overlap reserve before the downstream blind-spot check.</p>' +
+          '<div class="spacing-section-kicker">Layout Visualization</div>' +
+          '<h4 class="spacing-section-title">Spacing compared to usable coverage</h4>' +
+          '<p class="spacing-section-copy">The protected run below compares actual camera spacing against the usable footprint after overlap reserve is applied.</p>' +
           '<div class="spacing-visual-stage">' + spacingVisualSvg(data) + '</div>' +
           '<div class="spacing-mini-grid">' +
             miniCard("Cameras", String(data.cams)) +
-            miniCard("Spacing", fmtFt(data.spacing)) +
+            miniCard("Actual Spacing", fmtFt(data.spacing)) +
             miniCard("Usable Width", fmtFt(data.usableWidth)) +
             miniCard("Overlap", fmtPct(data.ovPct, 1)) +
           '</div>' +
         '</div>' +
-        '<div class="spacing-advice-card">' + dominantDriverHtml(data) + '</div>' +
+        spacingCorrectionPathHtml(data) +
       '</div>' +
       '<div class="spacing-design-split">' +
-        '<div class="spacing-advice-card">' +
-          '<div class="spacing-section-kicker">Design Branches</div>' +
-          '<h4 class="spacing-section-title">Choose the spacing intent</h4>' +
-          '<p class="spacing-section-copy">Applying a branch updates the overlap target and recalculates this tool as an assisted scenario.</p>' +
-          '<div class="spacing-branch-list">' + latestAssistantScenarios.map(branchHtml).join("") + '</div>' +
-        '</div>' +
+        spacingBranchesHtml(latestAssistantScenarios) +
+        spacingCarryForwardHtml(data) +
+      '</div>' +
+      '<div class="spacing-design-split">' +
+        '<div class="spacing-advice-card">' + dominantDriverHtml(data) + '</div>' +
         '<div class="spacing-advice-card">' + recommendationHtml(data, latestAssistantScenarios) + '</div>' +
       '</div>';
 
