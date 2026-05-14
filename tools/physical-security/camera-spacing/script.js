@@ -619,12 +619,339 @@ function escapeHtml(value) {
     };
   }
 
+    function factorySpacingOverlapForTargetCams(data, targetCams, ratioTarget = 0.9) {
+    const cams = Number(targetCams);
+    const len = Number(data?.len);
+    const rawWidth = Number(data?.rawWidth);
+
+    if (!Number.isFinite(cams) || cams < 1 || !Number.isFinite(len) || len <= 0 || !Number.isFinite(rawWidth) || rawWidth <= 0) {
+      return null;
+    }
+
+    const spacing = len / cams;
+    const desiredUsableWidth = spacing / ratioTarget;
+    const ovPct = (1 - (desiredUsableWidth / rawWidth)) * 100;
+
+    if (!Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95) return null;
+    return ovPct;
+  }
+
+  function factorySpacingScenario(data, id, label, intent, changes, note, actionLabel, canApply = true) {
+    const len = Number.isFinite(Number(changes?.len)) ? Number(changes.len) : Number(data.len);
+    const dist = Number.isFinite(Number(changes?.dist)) ? Number(changes.dist) : Number(data.dist);
+    const hfov = Number.isFinite(Number(changes?.hfov)) ? Number(changes.hfov) : Number(data.hfov);
+    const ovPct = Number.isFinite(Number(changes?.ovPct)) ? Number(changes.ovPct) : Number(data.ovPct);
+    const targetCams = Number.isFinite(Number(changes?.targetCams)) ? Math.max(1, Math.round(Number(changes.targetCams))) : null;
+
+    const rawWidth = 2 * Math.tan((hfov / 2) * Math.PI / 180) * dist;
+    const usableWidth = rawWidth * (1 - (ovPct / 100));
+
+    if (!canApply || !Number.isFinite(rawWidth) || rawWidth <= 0 || !Number.isFinite(usableWidth) || usableWidth <= 0) {
+      return {
+        id,
+        label,
+        pillLabel: label,
+        intent,
+        note,
+        actionLabel: actionLabel || "Unavailable",
+        canApply: false,
+        changes: changes || {},
+        summary: "Unavailable for current geometry"
+      };
+    }
+
+    const cams = Math.max(1, Math.ceil(len / usableWidth));
+    const spacing = len / cams;
+    const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
+    const spacingClass = classifySpacing(ratio);
+
+    return {
+      id,
+      label,
+      pillLabel: label,
+      intent,
+      note,
+      actionLabel,
+      canApply: true,
+      changes: changes || {},
+      targetCams,
+      len,
+      dist,
+      hfov,
+      ovPct,
+      rawWidth,
+      usableWidth,
+      cams,
+      spacing,
+      ratio,
+      spacingClass,
+      summary: [
+        cams + " camera" + (cams === 1 ? "" : "s"),
+        fmtFt(spacing) + " spacing",
+        fmtPct(ovPct, 1) + " overlap"
+      ].join(" | ")
+    };
+  }
+
+  function factorySpacingPressureMetrics(data) {
+    const ratio = Number(data?.ratio);
+    const ovPct = Number(data?.ovPct);
+    const cams = Number(data?.cams);
+
+    const gap = ratio > 0.92 ? Math.min((ratio - 0.92) * 220, 100) : 0;
+    const compression = ratio < 0.72 ? Math.min((0.72 - ratio) * 180, 100) : 0;
+    const overlap = Number.isFinite(ovPct) ? Math.min(Math.max(ovPct, 0), 100) * 0.72 : 0;
+    const camera = Number.isFinite(cams) ? Math.min(Math.max((cams - 1) * 10, 0), 100) : 0;
+
+    return { gap, compression, overlap, camera };
+  }
+
+  function factorySpacingPressureScore(data) {
+    const m = factorySpacingPressureMetrics(data);
+    return Math.max(m.gap, m.compression, m.overlap, m.camera);
+  }
+
+  function factorySpacingScenarioChartSvg(data, scenarios) {
+    const candidates = [{ label: "Custom Design", score: factorySpacingPressureScore(data) }];
+
+    scenarios.filter((scenario) => scenario && scenario.canApply).slice(0, 4).forEach((scenario) => {
+      candidates.push({ label: scenario.pillLabel || scenario.label, score: factorySpacingPressureScore(scenario) });
+    });
+
+    const width = 900;
+    const height = 250;
+    const left = 64;
+    const right = 36;
+    const top = 28;
+    const bottom = 52;
+    const plotW = width - left - right;
+    const plotH = height - top - bottom;
+    const xStep = candidates.length > 1 ? plotW / (candidates.length - 1) : plotW;
+
+    const points = candidates.map((item, index) => {
+      const x = left + (xStep * index);
+      const y = top + plotH - ((Math.max(0, Math.min(100, item.score)) / 100) * plotH);
+      return { x, y };
+    });
+
+    const polyline = points.map((p) => p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+
+    return '' +
+      '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Planning pressure by scenario">' +
+        '<rect x="' + left + '" y="' + top + '" width="' + plotW + '" height="' + plotH + '" fill="rgba(125,255,152,.08)"></rect>' +
+        '<rect x="' + left + '" y="' + top + '" width="' + plotW + '" height="' + (plotH * .62).toFixed(1) + '" fill="rgba(255,211,79,.08)"></rect>' +
+        '<rect x="' + left + '" y="' + top + '" width="' + plotW + '" height="' + (plotH * .34).toFixed(1) + '" fill="rgba(255,96,88,.09)"></rect>' +
+        '<text x="' + (width - right) + '" y="' + (top + 12) + '" text-anchor="end" fill="rgba(226,232,240,.75)" font-size="12" font-weight="800">Lower is better</text>' +
+        '<polyline points="' + polyline + '" fill="none" stroke="#7dff98" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>' +
+        points.map((p, index) => {
+          const item = candidates[index];
+          const score = Math.round(item.score);
+          const fill = score <= 25 ? "#7dff98" : score <= 60 ? "#ffd34f" : "#ff8f88";
+
+          return '' +
+            '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="7" fill="' + fill + '" stroke="rgba(255,255,255,.80)" stroke-width="2"></circle>' +
+            '<text x="' + p.x.toFixed(1) + '" y="' + (p.y - 16).toFixed(1) + '" text-anchor="middle" fill="' + fill + '" font-size="13" font-weight="950">' + score + '</text>' +
+            '<text x="' + p.x.toFixed(1) + '" y="' + (height - 20) + '" text-anchor="middle" fill="rgba(226,232,240,.82)" font-size="11" font-weight="800">' + escapeHtml(item.label.slice(0, 18)) + '</text>';
+        }).join("") +
+      '</svg>';
+  }
+
+  function factorySpacingProblemLabel(data) {
+    if (data.spacingClass === "Wide Spacing") return "Spacing gap risk";
+    if (data.spacingClass === "Tight Spacing") return "Camera count pressure";
+    if (Number(data.ovPct) >= 25) return "Overlap compression";
+    return "Spacing balance";
+  }
+
+  function factorySpacingRecommendation(data) {
+    if (data.spacingClass === "Wide Spacing") {
+      return "Reduce spacing pressure by adding reserve, increasing camera count, or revisiting upstream geometry before Blind Spot Check.";
+    }
+    if (data.spacingClass === "Tight Spacing") {
+      return "This is likely safe for continuity, but review whether the layout is using more cameras than the project requires.";
+    }
+    if (Number(data.ovPct) >= 25) {
+      return "The spacing works, but overlap reserve is high. Confirm the reserve is intentional before carrying it forward.";
+    }
+    return "This scenario is within current planning guardrails. Validate the field gap condition in Blind Spot Check before relying on it.";
+  }
+
+  function factorySpacingMakeCustomScenario(data, values) {
+    const len = Number.isFinite(Number(values?.len)) ? Number(values.len) : Number(data.len);
+    const dist = Number.isFinite(Number(values?.dist)) ? Number(values.dist) : Number(data.dist);
+    const hfov = Number.isFinite(Number(values?.hfov)) ? Number(values.hfov) : Number(data.hfov);
+    const targetCams = Number.isFinite(Number(values?.targetCams)) ? Math.max(1, Math.round(Number(values.targetCams))) : Number(data.cams);
+
+    let ovPct = Number.isFinite(Number(values?.ovPct)) ? Number(values.ovPct) : Number(data.ovPct);
+
+    const rawWidth = 2 * Math.tan((hfov / 2) * Math.PI / 180) * dist;
+
+    if (targetCams !== Number(data.cams)) {
+      const targetOverlap = factorySpacingOverlapForTargetCams({ ...data, len, dist, hfov, rawWidth }, targetCams, 0.9);
+      if (Number.isFinite(targetOverlap)) ovPct = targetOverlap;
+    }
+
+    return factorySpacingScenario(
+      data,
+      "custom-spacing-check",
+      "Custom What-If",
+      "User-defined spacing correction using target camera count and geometry assumptions.",
+      { len, dist, hfov, ovPct, targetCams },
+      "Use when preset branches do not match the real project constraint.",
+      "Apply Custom Spacing Check",
+      true
+    );
+  }
+
+  function factoryCameraSpacingAssistantModel(data) {
+    const scenarios = latestAssistantScenarios || [];
+    const m = factorySpacingPressureMetrics(data);
+    const pressure = Math.round(factorySpacingPressureScore(data));
+    const active = activeAssistantScenario ? activeAssistantScenario.id : "current";
+    const selectedPath = activeAssistantScenario ? activeAssistantScenario.label : "Custom Design";
+
+    const coverageCheck = data.spacingClass === "Wide Spacing"
+      ? "No - spacing is too close to the usable limit"
+      : "Yes - spacing is inside the usable range";
+
+    const reserveCheck = data.spacingClass === "Tight Spacing"
+      ? "Conservative - camera-heavy"
+      : data.ovPct >= 25
+        ? "High reserve - review efficiency"
+        : "Practical reserve";
+
+    const designPath = data.spacingClass === "Wide Spacing"
+      ? "Apply correction before Blind Spot"
+      : "Continue to Blind Spot validation";
+
+    return {
+      mount: els.assistant,
+      kicker: "Design Assistant",
+      title: "Camera spacing design path",
+      copy: "This module uses the shared Lens-style assistant shell while keeping Camera Spacing math, inputs, outputs, and downstream handoff.",
+      status: data.status,
+      currentScenarioId: active,
+      currentLabel: "Custom Design",
+      scenarios,
+      modeNoticeHtml: assistantModeHtml(),
+      custom: {
+        kicker: "Custom planning assumptions",
+        title: "Edit the spacing assumptions without leaving the assistant",
+        copy: "Use these controls to test perimeter length, target camera count, distance, HFOV, and overlap before carrying the result into Blind Spot Check.",
+        pill: "Custom What-If",
+        buttonLabel: "Apply Custom Spacing Check",
+        inputs: [
+          { key: "len", label: "Perimeter Length", value: Number(data.len || 0).toFixed(0), min: 1, step: 1 },
+          { key: "targetCams", label: "Target Cameras", value: Number(data.cams || 1).toFixed(0), min: 1, step: 1 },
+          { key: "dist", label: "Distance", value: Number(data.dist || 0).toFixed(1), min: 0.1, step: 0.1 },
+          { key: "hfov", label: "HFOV", value: Number(data.hfov || 0).toFixed(1), min: 1, max: 179, step: 0.1 },
+          { key: "ovPct", label: "Overlap Target", value: Number(data.ovPct || 0).toFixed(1), min: 0, max: 95, step: 0.1 }
+        ]
+      },
+      selectedResult: {
+        kicker: "Selected scenario result",
+        title: data.cams + " camera" + (data.cams === 1 ? "" : "s"),
+        copy: "This spacing plan uses " + fmtFt(data.spacing) + " actual spacing against " + fmtFt(data.usableWidth) + " usable width.",
+        metrics: [
+          { label: "Actual spacing", value: fmtFt(data.spacing), note: "Center spacing." },
+          { label: "Usable width", value: fmtFt(data.usableWidth), note: "After overlap." },
+          { label: "Overlap", value: fmtPct(data.ovPct, 1), note: "Current target." },
+          { label: "Status", value: data.status, note: "Combined status." }
+        ]
+      },
+      driver: {
+        kicker: "Dominant driver",
+        title: factorySpacingProblemLabel(data) + " is creating planning pressure.",
+        copy: "The bars show which spacing condition is pushing the current result toward Watch or Risk.",
+        bars: [
+          { label: "Gap exposure", value: m.gap, display: fmtPct(Math.max((data.ratio - 0.92) * 100, 0), 1) },
+          { label: "Spacing compression", value: m.compression, display: fmtPct(Math.max((0.72 - data.ratio) * 100, 0), 1) },
+          { label: "Overlap pressure", value: m.overlap, display: fmtPct(data.ovPct, 1) },
+          { label: "Camera count pressure", value: m.camera, display: String(data.cams) + " cameras" }
+        ]
+      },
+      visual: {
+        kicker: "FOV / coverage layout",
+        title: data.cams + (data.cams === 1 ? " camera" : " cameras") + " | " + fmtFt(data.spacing) + " spacing | " + fmtPct(data.ovPct, 1) + " overlap",
+        copy: "Actual spacing is compared against usable camera width after overlap reserve is applied.",
+        html: spacingVisualSvg(data),
+        metrics: [
+          { label: "Coverage layout", value: data.cams + (data.cams === 1 ? " camera" : " cameras"), note: "Calculated count for protected run." },
+          { label: "Actual spacing", value: fmtFt(data.spacing), note: "Camera center spacing." },
+          { label: "Usable width", value: fmtFt(data.usableWidth), note: "Width after overlap." },
+          { label: "Overlap reserve", value: fmtPct(data.ovPct, 1), note: "Applied before spacing." }
+        ]
+      },
+      checks: [
+        { kicker: "Coverage check", title: coverageCheck, copy: "Does spacing stay inside the effective usable footprint?" },
+        { kicker: "Reserve check", title: reserveCheck, copy: "Is the overlap target helping continuity without over-compressing layout?" },
+        { kicker: "Design path", title: designPath, copy: "Use this to decide whether to correct now or validate downstream." }
+      ],
+      targets: {
+        kicker: "Design targets / path to acceptable",
+        title: "What needs to change to reach a usable design?",
+        copy: "This section explains whether changing overlap is enough, or whether the real blocker is distance, HFOV, protected length, or camera count.",
+        pill: "Design Targets",
+        metrics: [
+          { label: "Max spacing / camera", value: fmtFt(data.usableWidth), note: "Actual spacing should stay at or below this." },
+          { label: "Suggested cameras", value: String(data.cams), note: "Based on usable width and protected run." },
+          { label: "Overlap target", value: fmtPct(data.ovPct, 1), note: "Reserve applied before spacing." },
+          { label: "Main blocker", value: factorySpacingProblemLabel(data), note: "Primary condition shaping this scenario." }
+        ],
+        banner: data.status === "HEALTHY"
+          ? "This scenario is within current planning guardrails. Validate blind spots before relying on it."
+          : "This scenario needs correction or downstream validation before it should be treated as healthy."
+      },
+      comparison: {
+        kicker: "Scenario comparison",
+        title: "Scenario pressure comparison",
+        copy: "The chart compares planning pressure across available spacing paths. Lower is better; healthy spacing and useful reserve should stay near the bottom band.",
+        pill: "Scenario Analytics",
+        metrics: [
+          { label: "Selected path", value: selectedPath, note: "Scenario currently selected." },
+          { label: "Spacing class", value: data.spacingClass, note: "Current spacing classification." },
+          { label: "Coverage status", value: data.status, note: "Status from the current model." },
+          { label: "Pressure", value: pressure + " / 100", note: "Scenario comparison value." }
+        ],
+        chartHtml: factorySpacingScenarioChartSvg(data, scenarios),
+        banner: factorySpacingRecommendation(data)
+      },
+      controls: {
+        kicker: "Correction controls",
+        title: "Choose a spacing path",
+        copy: "Each action changes the actual spacing inputs, recalculates the tool, and marks the result as an assisted scenario for downstream handoff.",
+        pill: "Correction Path"
+      },
+      carryForward: {
+        kicker: "Pipeline / report carry-forward",
+        title: "Use the selected scenario in the next sanity check",
+        copy: "Blind Spot Check should validate the selected camera count, spacing, overlap, distance, and HFOV before the layout is treated as reliable.",
+        pill: "Live Shadow Path",
+        metrics: [
+          { label: "Cameras", value: String(data.cams), note: "Sent to Blind Spot Check." },
+          { label: "Spacing", value: fmtFt(data.spacing), note: "Center-to-center spacing." },
+          { label: "Distance", value: fmtFt(data.dist), note: "Target-plane distance." },
+          { label: "HFOV", value: fmt(data.hfov, 1) + " deg", note: "Horizontal field of view." }
+        ]
+      },
+      onSelectCurrent: () => {
+        activeAssistantScenario = null;
+        calc();
+      },
+      onApplyScenario: applyAssistantScenario,
+      onApplyCustom: (values) => {
+        const scenario = factorySpacingMakeCustomScenario(data, values);
+        if (scenario) applyAssistantScenario(scenario);
+      }
+    };
+  }
+
   function buildAssistantScenarios(data) {
     const scenarios = [];
 
     const addOneTarget = data.cams + 1;
-    const addOneOverlap = spacingOverlapForTargetCameraCount(data, addOneTarget, 0.9);
-    scenarios.push(makeSpacingDesignScenario(
+    const addOneOverlap = factorySpacingOverlapForTargetCams(data, addOneTarget, 0.9);
+    scenarios.push(factorySpacingScenario(
       data,
       "add-one-camera",
       "Add 1 Camera",
@@ -638,8 +965,8 @@ function escapeHtml(value) {
     ));
 
     const addTwoTarget = data.cams + 2;
-    const addTwoOverlap = spacingOverlapForTargetCameraCount(data, addTwoTarget, 0.9);
-    scenarios.push(makeSpacingDesignScenario(
+    const addTwoOverlap = factorySpacingOverlapForTargetCams(data, addTwoTarget, 0.9);
+    scenarios.push(factorySpacingScenario(
       data,
       "add-two-cameras",
       "Add 2 Cameras",
@@ -652,8 +979,8 @@ function escapeHtml(value) {
       Number.isFinite(addTwoOverlap)
     ));
 
-    const balancedOverlap = overlapForTarget(data, data.cams, 0.92);
-    scenarios.push(makeSpacingDesignScenario(
+    const balancedOverlap = factorySpacingOverlapForTargetCams(data, data.cams, 0.88);
+    scenarios.push(factorySpacingScenario(
       data,
       "balanced-layout",
       "Balanced Layout",
@@ -665,8 +992,8 @@ function escapeHtml(value) {
     ));
 
     const efficiencyTarget = data.cams > 1 ? data.cams - 1 : null;
-    const efficiencyOverlap = efficiencyTarget ? spacingOverlapForTargetCameraCount(data, efficiencyTarget, 0.95) : null;
-    scenarios.push(makeSpacingDesignScenario(
+    const efficiencyOverlap = efficiencyTarget ? factorySpacingOverlapForTargetCams(data, efficiencyTarget, 0.95) : null;
+    scenarios.push(factorySpacingScenario(
       data,
       "camera-count-efficiency",
       "Efficiency Check",
@@ -680,9 +1007,9 @@ function escapeHtml(value) {
     ));
 
     const widerHfov = Math.min(179, data.hfov * 1.1);
-    scenarios.push(makeSpacingDesignScenario(
+    scenarios.push(factorySpacingScenario(
       data,
-      "widen-effective-view",
+      "wider-hfov-check",
       "Wider HFOV Check",
       "Model the effect of a wider effective view to increase usable footprint before Blind Spot validation.",
       { hfov: widerHfov, targetCams: data.cams },
@@ -1450,70 +1777,14 @@ function assistantStatusClass(data) {
     if (!els.assistant) return;
 
     latestAssistantScenarios = buildAssistantScenarios(data);
-    els.assistant.hidden = false;
-    els.assistant.classList.add("lens-design-assistant", "full-output", "spacing-lens-match");
 
-    els.assistant.innerHTML =
-      '<div class="lens-design-head">' +
-        '<div>' +
-          '<div class="lens-design-kicker">Design Assistant</div>' +
-          '<h3 class="lens-design-title">Camera spacing design path</h3>' +
-          '<p class="lens-design-copy">This module checks whether the spacing plan preserves continuity, creates camera-count pressure, or needs correction before Blind Spot Check.</p>' +
-        '</div>' +
-        spacingAssistantStatusPillHtml(data) +
-      '</div>' +
-      spacingLensTopPillsHtml(data, latestAssistantScenarios) +
-      assistantModeHtml() +
-      spacingLensCustomAssumptionsHtml(data) +
-      '<div class="lens-design-split">' +
-        spacingLensSelectedResultHtml(data) +
-        spacingLensDriverBarsHtml(data) +
-      '</div>' +
-      '<div class="lens-design-layout">' +
-        '<div class="lens-fov-card">' +
-          '<div class="lens-design-kicker">FOV / coverage layout</div>' +
-          '<h4 class="lens-design-title">' + escapeHtml(data.cams + (data.cams === 1 ? " camera" : " cameras") + " | " + fmtFt(data.spacing) + " spacing | " + fmtPct(data.ovPct, 1) + " overlap") + '</h4>' +
-          '<p class="lens-design-copy">Actual spacing is compared against usable camera width after overlap reserve is applied.</p>' +
-          '<div class="lens-fov-stage">' + spacingVisualSvg(data) + '</div>' +
-          '<div class="lens-target-strip">' +
-            spacingLensMiniCard("Coverage layout", data.cams + (data.cams === 1 ? " camera" : " cameras"), "Calculated count for protected run.") +
-            spacingLensMiniCard("Actual spacing", fmtFt(data.spacing), "Camera center spacing.") +
-            spacingLensMiniCard("Usable width", fmtFt(data.usableWidth), "Width after overlap.") +
-            spacingLensMiniCard("Overlap reserve", fmtPct(data.ovPct, 1), "Applied before spacing.") +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      spacingLensCheckCardsHtml(data) +
-      spacingLensDesignTargetsHtml(data) +
-      spacingLensScenarioComparisonHtml(data, latestAssistantScenarios) +
-      spacingLensBranchControlsHtml(data, latestAssistantScenarios) +
-      spacingLensCarryForwardHtml(data);
-
-    els.assistant.querySelectorAll("[data-spacing-pill]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const id = button.dataset.spacingPill;
-        if (id === "current") {
-          activeAssistantScenario = null;
-          calc();
-          return;
-        }
-
-        const scenario = latestAssistantScenarios.find((item) => item.id === id);
-        if (scenario) applyAssistantScenario(scenario);
-      });
-    });
-
-    els.assistant.querySelectorAll(".spacing-assistant-apply").forEach((button) => {
-      button.addEventListener("click", () => {
-        const scenario = latestAssistantScenarios.find((item) => item.id === button.dataset.spacingScenario);
-        applyAssistantScenario(scenario);
-      });
-    });
-
-    const customButton = els.assistant.querySelector("#spacingApplyCustomScenario");
-    if (customButton) {
-      customButton.addEventListener("click", () => spacingLensApplyCustomScenario(data));
+    if (!window.ScopedLabsDesignAssistant || typeof window.ScopedLabsDesignAssistant.render !== "function") {
+      els.assistant.hidden = false;
+      els.assistant.innerHTML = '<div class="muted">Design Assistant engine did not load.</div>';
+      return;
     }
+
+    window.ScopedLabsDesignAssistant.render(factoryCameraSpacingAssistantModel(data));
   }
 
   function applyAssistantScenario(scenario) {
