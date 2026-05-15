@@ -139,7 +139,7 @@
     if (area.mountingStatus || area.mountingTiltDeg) {
       items.push({
         label: "Mounting",
-        value: (area.mountingStatus || "Recorded") + (area.mountingTiltDeg ? " / " + Number(area.mountingTiltDeg).toFixed(1) + "? tilt" : ""),
+        value: (area.mountingStatus || "Recorded") + (area.mountingTiltDeg ? " / " + Number(area.mountingTiltDeg).toFixed(1) + " deg tilt" : ""),
         detail: area.mountingHeightFt ? "Height: " + fmtFt(area.mountingHeightFt) : "Mounting geometry result saved"
       });
     }
@@ -149,8 +149,20 @@
         label: "Field of View",
         value: (area.fovStatus || "Recorded") + (area.fovFitClass ? " / " + area.fovFitClass : ""),
         detail: area.estimatedSceneWidthFt
-          ? "Scene width: " + fmtFt(area.estimatedSceneWidthFt) + " at " + fmtDeg(area.assumedHfovDeg)
+          ? "Scene width: " + fmtFt(area.estimatedSceneWidthFt) + " at " + Number(area.assumedHfovDeg || 0).toFixed(1).replace(/\.0$/, "") + " deg"
           : "FOV geometry result saved"
+      });
+    }
+
+    if (area.coverageStatus || area.coverageEfficiencyClass) {
+      items.push({
+        label: "Coverage",
+        value: (area.coverageStatus || "Recorded") + (area.coverageEfficiencyClass ? " / " + area.coverageEfficiencyClass : ""),
+        detail: area.effectiveCoverageAreaSqFt
+          ? "Usable area: " + Math.round(area.effectiveCoverageAreaSqFt).toLocaleString() + " sq ft"
+          : area.effectiveCoverageWidthFt
+            ? "Usable width: " + fmtFt(area.effectiveCoverageWidthFt)
+            : "Coverage area result saved"
       });
     }
 

@@ -431,6 +431,37 @@
     };
   }
 
+  function updateActiveAreaFromCoverage(data) {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.updateActiveAreaResult !== "function") return;
+
+    api.updateActiveAreaResult({
+      status: "IN PROGRESS",
+      distanceToTargetPlaneFt: data.dist,
+      assumedHfovDeg: data.hfov,
+      verticalFovDeg: data.vfov,
+      overlapTargetPct: data.ovPct,
+      rawCoverageWidthFt: data.width,
+      rawCoverageHeightFt: data.height,
+      rawCoverageAreaSqFt: data.area,
+      effectiveCoverageWidthFt: data.effWidth,
+      effectiveCoverageHeightFt: data.effHeight,
+      effectiveCoverageAreaSqFt: data.effArea,
+      widthRetentionPct: data.widthRetentionPct,
+      areaRetentionPct: data.areaRetentionPct,
+      reserveLossPct: data.reserveLossPct,
+      coverageOverlapClass: data.overlapClass,
+      coverageEfficiencyClass: data.efficiencyClass,
+      coverageStatus: data.status,
+      coverageInterpretation: data.interpretation,
+      coverageDominantConstraint: data.dominantConstraint,
+      coverageGuidance: data.guidance,
+      coverageUpdatedAt: new Date().toISOString()
+    });
+  }
+
+  
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.area, {
@@ -459,6 +490,9 @@
         manualOverrides: manualOverrideMeta
       }
     });
+  
+
+    updateActiveAreaFromCoverage(data);
   }
 
   function renderError(message) {
