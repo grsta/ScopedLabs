@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
@@ -87,14 +87,20 @@
     if (number === null) return "n/a";
 
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
-    if (field === "hfov") return Math.round(number) + "?";
+    if (field === "hfov") return number.toFixed(1).replace(/\.0$/, "") + " deg";
+    if (field === "tppf") return number.toFixed(1).replace(/\.0$/, "") + " PPF";
+    if (field === "tw") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+    if (field === "res") return Math.round(number) + " px";
 
     return String(number);
   }
 
   function overrideLabel(field) {
-    if (field === "dist") return "Distance";
+    if (field === "dist") return "Distance to target plane";
     if (field === "hfov") return "Horizontal FOV";
+    if (field === "tppf") return "Target pixel density";
+    if (field === "tw") return "Target width";
+    if (field === "res") return "Horizontal resolution";
     return field;
   }
 
@@ -170,12 +176,103 @@
     return '<div class="flow-override-note" role="note" aria-label="Manual override warning"><strong>Manual override active:</strong> ' + text + '. Results are valid for this local what-if branch.</div>';
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function getActivePixelArea() {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.getActiveArea !== "function") return null;
+
+    try {
+      return api.getActiveArea();
+    } catch {
+      return null;
+    }
+  }
+
+  function targetPpfForDetailGoal(goal) {
+    const value = String(goal || "").toLowerCase();
+
+    if (value.includes("license")) return 150;
+    if (value.includes("identification")) return 120;
+    if (value.includes("recognition")) return 80;
+    if (value.includes("observation")) return 40;
+    if (value.includes("detection")) return 20;
+
+    return null;
+  }
+
+  function applyAreaPlanInputs() {
+    const area = getActivePixelArea();
+    if (!area) return false;
+
+    const dist = num(area.distanceToTargetPlaneFt);
+    const hfov = num(area.assumedHfovDeg);
+    const tppf = num(area.pixelDensityTargetPpf ?? targetPpfForDetailGoal(area.detailGoal));
+
+    if (Number.isFinite(dist) && dist > 0) {
+      captureImportedFlowValue("dist", dist);
+      els.dist.value = String(Number(dist.toFixed(1)));
+    }
+
+    if (Number.isFinite(hfov) && hfov > 0) {
+      captureImportedFlowValue("hfov", hfov);
+      els.hfov.value = String(Number(hfov.toFixed(1)));
+    }
+
+    if (Number.isFinite(tppf) && tppf > 0) {
+      captureImportedFlowValue("tppf", tppf);
+      els.tppf.value = String(Number(tppf.toFixed(1)));
+    }
+
+    return true;
+  }
+
+  function activeAreaFlowContextHtml() {
+    const area = getActivePixelArea();
+    if (!area) return "";
+
+    const tppf = num(area.pixelDensityTargetPpf ?? targetPpfForDetailGoal(area.detailGoal));
+
+    const parts = [];
+    if (area.name) parts.push("Current Area: <strong>" + escapeHtml(area.name) + "</strong>");
+    if (Number.isFinite(num(area.distanceToTargetPlaneFt))) parts.push("Distance: <strong>" + fmtFt(num(area.distanceToTargetPlaneFt)) + "</strong>");
+    if (Number.isFinite(num(area.assumedHfovDeg))) parts.push("Assumed HFOV: <strong>" + fmt(num(area.assumedHfovDeg), 1) + " deg</strong>");
+    if (area.detailGoal) parts.push("Detail goal: <strong>" + escapeHtml(area.detailGoal) + "</strong>");
+    if (Number.isFinite(tppf)) parts.push("Target PPF: <strong>" + fmtPpf(tppf) + "</strong>");
+
+    if (!parts.length) return "";
+
+    return '<strong>Area Context</strong><br>' +
+      parts.join(" | ") +
+      '<br><span class="muted">Pixel Density validates whether the active area geometry supports the selected detail goal. Editing imported values here creates a local what-if branch for this area.</span>';
+  }
+
+  function renderAreaOnlyFlowContext() {
+    const html = activeAreaFlowContextHtml();
+    if (!html || !els.flowNote) return false;
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = html + renderManualOverrideNote();
+    return true;
+  }
+
+  
+
   function applyDefaults() {
     els.res.value = String(DEFAULTS.res);
     els.hfov.value = String(DEFAULTS.hfov);
     els.dist.value = String(DEFAULTS.dist);
     els.tppf.value = String(DEFAULTS.tppf);
     els.tw.value = String(DEFAULTS.tw);
+
+    applyAreaPlanInputs();
   }
 
   function clearDownstream() {
@@ -192,45 +289,63 @@
   }
 
   function renderFlowNote() {
-    const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
-      flowKey: FLOW_KEYS.pixel,
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      title: "Flow Context",
-      intro: "This step verifies whether the blind-spot-safe layout also delivers enough subject detail at the working distance."
-    });
+    const raw = sessionStorage.getItem(FLOW_KEYS.blind);
 
-    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+    if (!raw) {
+      renderAreaOnlyFlowContext();
+      return;
+    }
 
-    const prev = flow.data || {};
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      renderAreaOnlyFlowContext();
+      return;
+    }
+
+    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
+      renderAreaOnlyFlowContext();
+      return;
+    }
+
+    const prev = parsed.data || {};
     const dist = num(prev.dist);
     const hfov = num(prev.hfov);
     const status = prev.status || "";
-    const gap = num(prev.gap);
+    const gap = num(prev.gapFt ?? prev.gap);
+    const area = getActivePixelArea();
+    const tppf = area ? num(area.pixelDensityTargetPpf ?? targetPpfForDetailGoal(area.detailGoal)) : NaN;
 
     captureImportedFlowValue("dist", dist);
     captureImportedFlowValue("hfov", hfov);
+    if (Number.isFinite(tppf) && tppf > 0) captureImportedFlowValue("tppf", tppf);
 
     if (canApplyFlowInputs()) {
-      if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
-      if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+      if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Number(dist.toFixed(1)));
+      if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Number(hfov.toFixed(1)));
+      if (Number.isFinite(tppf) && tppf > 0) els.tppf.value = String(Number(tppf.toFixed(1)));
     }
 
+    const areaContext = activeAreaFlowContextHtml();
     const parts = [];
-    if (status) parts.push(`Blind-spot result: <strong>${status}</strong>`);
-    if (Number.isFinite(dist) && dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
-    if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}°</strong>`);
-    if (Number.isFinite(gap)) parts.push(`Gap: <strong>${fmtFt(gap)}</strong>`);
+    if (status) parts.push("Blind-spot result: <strong>" + escapeHtml(status) + "</strong>");
+    if (Number.isFinite(dist) && dist > 0) parts.push("Distance: <strong>" + fmtFt(dist) + "</strong>");
+    if (Number.isFinite(hfov) && hfov > 0) parts.push("HFOV: <strong>" + fmt(hfov, 1) + " deg</strong>");
+    if (Number.isFinite(gap)) parts.push("Gap: <strong>" + fmtFt(gap) + "</strong>");
 
-    if (parts.length) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow Context</strong><br>
-        ${parts.join(" | ")}\n        ${renderManualOverrideNote()}
-      `;
+    if (!parts.length && !areaContext) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return;
     }
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML =
+      (areaContext ? areaContext + "<br><br>" : "") +
+      "<strong>Flow Context</strong><br>" +
+      parts.join(" | ") +
+      renderManualOverrideNote();
   }
 
   function invalidate({ clearFlow = true } = {}) {
@@ -396,25 +511,64 @@
     };
   }
 
+  function updateActiveAreaFromPixelDensity(data, manualOverrideMeta = []) {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.updateActiveAreaResult !== "function") return;
+
+    api.updateActiveAreaResult({
+      status: "IN PROGRESS",
+      distanceToTargetPlaneFt: data.dist,
+      assumedHfovDeg: data.hfov,
+      horizontalResolutionPx: data.res,
+      pixelDensityTargetPpf: data.tppf,
+      pixelDensityTargetWidthFt: data.tw,
+      pixelDensitySceneWidthFt: data.sceneW,
+      pixelDensityPpf: data.ppf,
+      pixelDensityDistanceForTargetFt: data.distForTppf,
+      pixelDensityPixelsOnTarget: data.pixelsOnTarget,
+      pixelDensityLevel: data.level,
+      pixelDensityStatus: data.status,
+      pixelDensityUtilizationPct: data.utilizationPct,
+      pixelDensityShortfallMetric: data.shortfallMetric,
+      pixelDensityRequirementMetric: data.requirementMetric,
+      pixelDensitySourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+      pixelDensityManualOverrides: manualOverrideMeta,
+      pixelDensityInterpretation: data.interpretation,
+      pixelDensityDominantConstraint: data.dominantConstraint,
+      pixelDensityGuidance: data.guidance,
+      pixelDensityUpdatedAt: new Date().toISOString()
+    });
+  }
+
+  
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
+
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.pixel, {
       category: CATEGORY,
       step: STEP,
       data: {
         ppf: data.ppf,
         level: data.level,
+        status: data.status,
+        res: data.res,
         dist: data.dist,
         hfov: data.hfov,
         tppf: data.tppf,
+        tw: data.tw,
         sceneW: data.sceneW,
+        distForTppf: data.distForTppf,
         pixelsOnTarget: data.pixelsOnTarget,
         interpretation: data.interpretation,
+        dominantConstraint: data.dominantConstraint,
         guidance: data.guidance,
         sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
         manualOverrides: manualOverrideMeta
       }
     });
+
+    updateActiveAreaFromPixelDensity(data, manualOverrideMeta);
   }
 
   function renderError(message) {
@@ -520,6 +674,7 @@
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
 
+    applyDefaults();
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });

@@ -190,6 +190,16 @@
       });
     }
 
+    if (area.pixelDensityStatus || area.pixelDensityLevel || area.pixelDensityPpf) {
+      items.push({
+        label: "Pixel Density",
+        value: (area.pixelDensityStatus || "Recorded") + (area.pixelDensityLevel ? " / " + area.pixelDensityLevel : ""),
+        detail: area.pixelDensityPpf
+          ? Number(area.pixelDensityPpf).toFixed(1) + " PPF" + (area.pixelDensityTargetPpf ? " target " + Number(area.pixelDensityTargetPpf).toFixed(0) + " PPF" : "")
+          : "Pixel density result saved"
+      });
+    }
+
     if (!items.length) {
       return '' +
         '<div class="area-meta" style="margin-top:10px;">' +
