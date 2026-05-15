@@ -200,6 +200,16 @@
       });
     }
 
+    if (area.lensStatus || area.selectedLensMm || area.lensClass) {
+      items.push({
+        label: "Lens",
+        value: (area.lensStatus || "Recorded") + (area.lensClass ? " / " + area.lensClass : ""),
+        detail: area.selectedLensMm
+          ? Number(area.selectedLensMm).toFixed(1).replace(/\.0$/, "") + " mm" + (area.lensDerivedHfovDeg ? " | HFOV " + Number(area.lensDerivedHfovDeg).toFixed(1).replace(/\.0$/, "") + " deg" : "") + (area.spacingRevalidationRequired ? " | spacing revalidation needed" : "")
+          : "Lens result saved"
+      });
+    }
+
     if (!items.length) {
       return '' +
         '<div class="area-meta" style="margin-top:10px;">' +

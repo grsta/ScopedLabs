@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   "use strict";
 
   const $ = (id) => document.getElementById(id);
@@ -113,12 +113,16 @@
     if (number === null) return "n/a";
 
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+    if (field === "tw") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+    if (field === "sw") return number.toFixed(2).replace(/\.00$/, "") + " mm";
 
     return String(number);
   }
 
   function overrideLabel(field) {
-    if (field === "dist") return "Target distance";
+    if (field === "dist") return "Distance to target plane";
+    if (field === "tw") return "Target width";
+    if (field === "sw") return "Sensor width";
     return field;
   }
 
@@ -209,6 +213,7 @@
     if (els.cameraFormat) els.cameraFormat.value = String(DEFAULTS.cameraFormat);
     if (els.sw) els.sw.value = String(DEFAULTS.sw);
     syncCameraFormatControl();
+    applyAreaPlanInputs();
   }
 
   function hasStoredAuth() {
@@ -298,68 +303,223 @@
     return "Highly focused view intended for long-range identification or constrained corridors.";
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function getActiveLensArea() {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.getActiveArea !== "function") return null;
+
+    try {
+      return api.getActiveArea();
+    } catch {
+      return null;
+    }
+  }
+
+  function targetWidthFromActiveArea(area) {
+    if (!area) return NaN;
+
+    const direct = num(area.pixelDensityTargetWidthFt);
+    if (Number.isFinite(direct) && direct > 0) return direct;
+
+    const protectedLength = num(area.protectedLengthFt);
+    const cameras = num(area.cameraCount || area.targetCameraCount);
+    if (Number.isFinite(protectedLength) && protectedLength > 0 && Number.isFinite(cameras) && cameras > 0) {
+      return protectedLength / cameras;
+    }
+
+    return protectedLength;
+  }
+
+  function applyAreaPlanInputs() {
+    const area = getActiveLensArea();
+    if (!area) return false;
+
+    const dist = num(area.distanceToTargetPlaneFt);
+    const tw = targetWidthFromActiveArea(area);
+
+    if (Number.isFinite(dist) && dist > 0) {
+      captureImportedFlowValue("dist", dist);
+      if (els.dist && canApplyFlowInputs()) els.dist.value = String(Number(dist.toFixed(1)));
+    }
+
+    if (Number.isFinite(tw) && tw > 0) {
+      captureImportedFlowValue("tw", tw);
+      if (els.tw && canApplyFlowInputs()) els.tw.value = String(Number(tw.toFixed(1)));
+    }
+
+    return true;
+  }
+
+  function activeAreaLensContextHtml() {
+    const area = getActiveLensArea();
+    if (!area) return "";
+
+    const tw = targetWidthFromActiveArea(area);
+    const parts = [];
+    if (area.name) parts.push("Current Area: <strong>" + escapeHtml(area.name) + "</strong>");
+    if (Number.isFinite(num(area.distanceToTargetPlaneFt))) parts.push("Distance: <strong>" + fmtFt(num(area.distanceToTargetPlaneFt)) + "</strong>");
+    if (Number.isFinite(num(area.assumedHfovDeg))) parts.push("Spacing HFOV assumption: <strong>" + fmt(num(area.assumedHfovDeg), 1) + " deg</strong>");
+    if (Number.isFinite(tw)) parts.push("Target width: <strong>" + fmtFt(tw) + "</strong>");
+    if (area.detailGoal) parts.push("Detail goal: <strong>" + escapeHtml(area.detailGoal) + "</strong>");
+
+    if (!parts.length) return "";
+
+    return '<strong>Area Context</strong><br>' +
+      parts.join(" | ") +
+      '<br><span class="muted">Lens Selection validates a real lens against this active area. If selected lens HFOV differs from the spacing HFOV assumption, this area may need spacing revalidation.</span>';
+  }
+
+  function lensFramedWidthFt(distanceFt, sensorWidthMm, focalMm) {
+    const distance = cleanNumber(distanceFt);
+    const sensor = cleanNumber(sensorWidthMm);
+    const focal = cleanNumber(focalMm);
+
+    if (!distance || !sensor || !focal) return null;
+    return (distance * sensor) / focal;
+  }
+
+  function lensRevalidationSummary(area, lensHfovDeg) {
+    const assumed = cleanNumber(area?.assumedHfovDeg);
+    const actual = cleanNumber(lensHfovDeg);
+
+    if (!assumed || !actual) {
+      return {
+        required: false,
+        deltaDeg: null,
+        note: "No prior spacing HFOV assumption was available for comparison."
+      };
+    }
+
+    const delta = actual - assumed;
+    const required = Math.abs(delta) > 5;
+
+    return {
+      required,
+      deltaDeg: delta,
+      note: required
+        ? "Selected lens HFOV differs from the spacing assumption by more than 5 degrees. Return to Camera Spacing if this lens is accepted for the area."
+        : "Selected lens HFOV is close enough to the earlier spacing assumption for planning continuity."
+    };
+  }
+
+  function updateActiveAreaFromLens(data, sourceLabel = "live-lens-selection", assistantPayload = null) {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.updateActiveAreaResult !== "function") return;
+
+    const area = getActiveLensArea();
+    const selectedLensMm = cleanNumber(data.selectedLensMm, cleanNumber(data.adjustedFocalMm, cleanNumber(data.adjustedFocal, cleanNumber(data.selectedLens))));
+    const calculatedLensMm = cleanNumber(data.calculatedLensMm, cleanNumber(data.calculatedTargetFocalMm, cleanNumber(data.calculatedTargetFocal, cleanNumber(data.baseFocal))));
+    const distanceFt = cleanNumber(data.distanceFt, cleanNumber(data.dist));
+    const targetWidthFt = cleanNumber(data.targetWidthFt, cleanNumber(data.requiredSceneWidthFt, cleanNumber(data.tw)));
+    const sensorWidthMm = cleanNumber(data.sensorWidthMm, cleanNumber(data.sw));
+    const framedWidthFt = cleanNumber(data.framedWidthFt, lensFramedWidthFt(distanceFt, sensorWidthMm, selectedLensMm));
+    const derivedHfov = cleanNumber(data.hfov, hfovFromLens(sensorWidthMm, selectedLensMm) || hfovFromWidth(distanceFt, framedWidthFt));
+    const cameraCount = cleanNumber(data.cameraCount, cleanNumber(area?.cameraCount, cleanNumber(area?.targetCameraCount)));
+    const revalidation = lensRevalidationSummary(area, derivedHfov);
+    const manualOverrideMeta = getManualOverrideMetadata({ dist: distanceFt, tw: targetWidthFt });
+    const sourceMode = data.sourceMode || (data.assistantSelected ? "assistant-scenario" : manualOverrideMeta.length ? "manual-override" : "pipeline");
+
+    api.updateActiveAreaResult({
+      status: "IN PROGRESS",
+      distanceToTargetPlaneFt: distanceFt,
+      selectedLensMm,
+      calculatedLensMm,
+      adjustedFocalMm: selectedLensMm,
+      lensClass: data.lensClass || (selectedLensMm ? classifyLens(selectedLensMm) : null),
+      lensStatus: data.status,
+      lensSourceMode: sourceMode,
+      lensSelectedScenario: data.selectedScenario || data.scenarioMode || null,
+      lensAssistantSelected: !!data.assistantSelected,
+      lensManualOverrides: manualOverrideMeta,
+      lensTargetWidthFt: targetWidthFt,
+      lensFramedWidthFt: framedWidthFt,
+      lensDerivedHfovDeg: derivedHfov,
+      lensSensorWidthMm: sensorWidthMm,
+      lensCameraFormatLabel: data.cameraFormatLabel || null,
+      lensPixelDensityPpf: cleanNumber(data.pixelDensityPpf, cleanNumber(data.availablePpf, cleanNumber(data.ppf))),
+      lensRequiredPpf: cleanNumber(data.requiredPpf, cleanNumber(data.tppf)),
+      lensCameraCount: cameraCount,
+      cameraCount: cameraCount || area?.cameraCount || null,
+      lensFitRatio: cleanNumber(data.fitRatio),
+      lensGapPct: cleanNumber(data.lensGapPct, cleanNumber(data.adjustmentPct)),
+      spacingRevalidationRequired: revalidation.required,
+      spacingRevalidationDeltaDeg: revalidation.deltaDeg,
+      spacingRevalidationNote: revalidation.note,
+      lensInterpretation: data.interpretation || null,
+      lensDominantConstraint: data.dominantConstraint || null,
+      lensGuidance: data.guidance || null,
+      lensWritebackSource: sourceLabel,
+      lensAssistantPayload: assistantPayload,
+      lensUpdatedAt: new Date().toISOString()
+    });
+  }
+
+
+
   function renderFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS.pixel);
     prev = null;
 
-    if (!raw) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
-    }
-
     let parsed = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
+    if (raw) {
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = null;
+      }
     }
 
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
+    const areaContext = activeAreaLensContextHtml();
+    const hasPixelFlow = parsed && parsed.category === CATEGORY && parsed.step === PREVIOUS_STEP;
+
+    if (hasPixelFlow) {
+      prev = parsed.data || {};
     }
 
-    prev = parsed.data || {};
-
-    const dist = num(prev.dist);
-    const ppf = num(prev.ppf);
-    const level = prev.level || prev.classification || "";
+    const area = getActiveLensArea();
+    const dist = num(hasPixelFlow ? prev.dist : area?.distanceToTargetPlaneFt);
+    const tw = num(hasPixelFlow ? (prev.tw ?? prev.targetWidthFt) : targetWidthFromActiveArea(area));
+    const ppf = num(hasPixelFlow ? prev.ppf : area?.pixelDensityPpf);
+    const level = hasPixelFlow ? (prev.level || prev.classification || "") : (area?.pixelDensityLevel || "");
 
     captureImportedFlowValue("dist", dist);
+    captureImportedFlowValue("tw", tw);
 
     if (canApplyFlowInputs()) {
-      if (Number.isFinite(dist) && dist > 0) {
-        els.dist.value = String(Math.round(dist));
-      }
+      if (Number.isFinite(dist) && dist > 0 && els.dist) els.dist.value = String(Number(dist.toFixed(1)));
+      if (Number.isFinite(tw) && tw > 0 && els.tw) els.tw.value = String(Number(tw.toFixed(1)));
     }
 
     const parts = [];
     if (level) {
-      parts.push(`Pixel Density: <strong>${level}</strong>`);
+      parts.push("Pixel Density: <strong>" + escapeHtml(level) + "</strong>");
     } else if (Number.isFinite(ppf) && ppf > 0) {
-      parts.push(`Pixel Density: <strong>${fmtPpf(ppf)}</strong>`);
+      parts.push("Pixel Density: <strong>" + fmtPpf(ppf) + "</strong>");
     }
-    if (Number.isFinite(dist) && dist > 0) {
-      parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
-    }
+    if (Number.isFinite(dist) && dist > 0) parts.push("Distance: <strong>" + fmtFt(dist) + "</strong>");
+    if (Number.isFinite(tw) && tw > 0) parts.push("Target width: <strong>" + fmtFt(tw) + "</strong>");
 
-    if (!parts.length) {
+    if (!parts.length && !areaContext) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
       return;
     }
 
     els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
-      ${parts.join(" | ")}\n        ${renderManualOverrideNote()}
-      <br><br>
-      This step converts the validated detail requirement from Pixel Density into a practical focal-length recommendation.
-    `;
+    els.flowNote.innerHTML =
+      (areaContext ? areaContext + "<br><br>" : "") +
+      (parts.length ? "<strong>Flow Context</strong><br>" + parts.join(" | ") : "") +
+      renderManualOverrideNote() +
+      "<br><br>" +
+      "This step converts the active area's validated detail requirement into a practical focal-length recommendation.";
   }
 
   function invalidate({ clearFlow = true } = {}) {
@@ -559,19 +719,35 @@
       step: STEP,
       data: {
         focal: data.adjustedFocal,
+        selectedLensMm: data.adjustedFocal,
         baseFocal: data.baseFocal,
+        calculatedLensMm: data.calculatedTargetFocal,
+        calculatedTargetFocalMm: data.calculatedTargetFocal,
         lensClass: data.lensClass,
         dist: data.dist,
+        distanceFt: data.dist,
         tw: data.tw,
+        targetWidthFt: data.tw,
+        sw: data.sw,
+        sensorWidthMm: data.sw,
+        cameraFormatLabel: data.cameraFormatLabel,
         ppf: data.ppf,
+        pixelDensityPpf: data.ppf,
         requirementClass: data.requirementClass,
         adjustmentPct: data.adjustmentPct,
+        lensGapPct: data.lensGapPct,
+        fitRatio: data.fitRatio,
+        widthPerMm: data.widthPerMm,
+        status: data.status,
         interpretation: data.interpretation,
+        dominantConstraint: data.dominantConstraint,
         guidance: data.guidance,
         sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
         manualOverrides: manualOverrideMeta
       }
     });
+
+    updateActiveAreaFromLens(data, "live-lens-selection");
   }
 
 
@@ -1340,6 +1516,8 @@
 
     window.ScopedLabsLensPipelineCarryForward = carryPayload;
 
+    updateActiveAreaFromLens(carryData, "lens-design-assistant", carryPayload);
+
     return true;
   }
 
@@ -1381,6 +1559,7 @@
   }
 
   function init() {
+    applyDefaults();
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });
