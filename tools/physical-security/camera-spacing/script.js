@@ -776,6 +776,8 @@ function escapeHtml(value) {
     return "This scenario is within current planning guardrails. Validate the field gap condition in Blind Spot Check before relying on it.";
   }
 
+    let customAssistantNotice = null;
+
   function factorySpacingMakeCustomScenario(data, values) {
     const len = Number.isFinite(Number(values?.len)) ? Number(values.len) : Number(data.len);
     const dist = Number.isFinite(Number(values?.dist)) ? Number(values.dist) : Number(data.dist);
@@ -784,23 +786,75 @@ function escapeHtml(value) {
 
     let ovPct = Number.isFinite(Number(values?.ovPct)) ? Number(values.ovPct) : Number(data.ovPct);
 
+    const disabled = (reason) => ({
+      id: "custom-spacing-check",
+      label: "Custom What-If",
+      intent: "User-defined spacing correction using target camera count and geometry assumptions.",
+      actionLabel: "Apply Custom Spacing Check",
+      canApply: false,
+      disabledReason: reason,
+      changes: { len, dist, hfov, ovPct, targetCams },
+      summary: reason,
+      note: reason
+    });
+
+    if (
+      !Number.isFinite(len) || len <= 0 ||
+      !Number.isFinite(dist) || dist <= 0 ||
+      !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
+      !Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95
+    ) {
+      return disabled("Custom spacing values are outside the valid input range.");
+    }
+
     const rawWidth = 2 * Math.tan((hfov / 2) * Math.PI / 180) * dist;
+
+    if (!Number.isFinite(rawWidth) || rawWidth <= 0) {
+      return disabled("Current distance and HFOV do not produce a usable camera width.");
+    }
+
+    const minimumCamsAtZeroOverlap = Math.max(1, Math.ceil(len / rawWidth));
+
+    if (targetCams < minimumCamsAtZeroOverlap) {
+      return disabled(
+        "Target of " + targetCams + " camera" + (targetCams === 1 ? "" : "s") +
+        " is not viable with the current protected length, distance, and HFOV. " +
+        "Even at 0.0% overlap, this geometry needs at least " +
+        minimumCamsAtZeroOverlap + " camera" + (minimumCamsAtZeroOverlap === 1 ? "" : "s") +
+        ". Increase distance, widen HFOV, shorten the protected run, or accept at least " +
+        minimumCamsAtZeroOverlap + " camera" + (minimumCamsAtZeroOverlap === 1 ? "" : "s") + "."
+      );
+    }
 
     if (targetCams !== Number(data.cams)) {
       const targetOverlap = factorySpacingOverlapForTargetCams({ ...data, len, dist, hfov, rawWidth }, targetCams, 0.9);
-      if (Number.isFinite(targetOverlap)) ovPct = targetOverlap;
+
+      if (!Number.isFinite(targetOverlap)) {
+        return disabled(
+          "Target of " + targetCams + " camera" + (targetCams === 1 ? "" : "s") +
+          " cannot be produced cleanly from overlap alone with the current geometry. " +
+          "Revise distance, HFOV, or protected length before applying this target."
+        );
+      }
+
+      ovPct = targetOverlap;
     }
 
-    return factorySpacingScenario(
+    const scenario = factorySpacingScenario(
       data,
       "custom-spacing-check",
-      "Custom What-If",
+      targetCams !== Number(data.cams) ? "Custom: " + targetCams + " Cameras" : "Custom What-If",
       "User-defined spacing correction using target camera count and geometry assumptions.",
       { len, dist, hfov, ovPct, targetCams },
       "Use when preset branches do not match the real project constraint.",
       "Apply Custom Spacing Check",
       true
     );
+
+    scenario.targetCams = targetCams;
+    scenario.requestedTargetCams = targetCams;
+
+    return scenario;
   }
 
     function factorySpacingResultSummary(model) {
@@ -905,7 +959,7 @@ function escapeHtml(value) {
       currentScenarioId: active,
       currentLabel: "Custom Design",
       scenarios,
-      modeNoticeHtml: assistantModeHtml(),
+      modeNoticeHtml: assistantModeHtml() + (customAssistantNotice ? '<div class="flow-override-note"><strong>Custom target not applied:</strong> ' + escapeHtml(customAssistantNotice) + '</div>' : ""),
       recommendation: factorySpacingPrimaryRecommendation(data, scenarios),
       custom: {
         kicker: "Custom planning assumptions",
@@ -1011,7 +1065,17 @@ function escapeHtml(value) {
       onApplyScenario: applyAssistantScenario,
       onApplyCustom: (values) => {
         const scenario = factorySpacingMakeCustomScenario(data, values);
-        if (scenario) applyAssistantScenario(scenario);
+
+        if (!scenario) return;
+
+        if (scenario.canApply === false) {
+          customAssistantNotice = scenario.disabledReason || scenario.note || "That custom target is not viable with the current geometry.";
+          renderSpacingAssistant(data);
+          return;
+        }
+
+        customAssistantNotice = null;
+        applyAssistantScenario(scenario);
       }
     };
   }
@@ -1916,6 +1980,8 @@ function assistantStatusClass(data) {
   function applyAssistantScenario(scenario) {
     if (!scenario || !scenario.canApply) return;
 
+    customAssistantNotice = null;
+
     const changes = scenario.changes || {};
 
     activeAssistantScenario = {
@@ -2034,6 +2100,7 @@ function assistantStatusClass(data) {
   function invalidate({ clearFlow = true } = {}) {
     assistantBaselineData = null;
     activeAssistantScenario = null;
+    customAssistantNotice = null;
     if (clearFlow) {
       sessionStorage.removeItem(FLOW_KEYS.spacing);
       clearDownstream();
@@ -2241,6 +2308,7 @@ function assistantStatusClass(data) {
 
   function reset() {
     assistantBaselineData = null;
+    customAssistantNotice = null;
     resetFlowOverrideState();
     clearAssistantScenario();
     hideSpacingAssistant();
