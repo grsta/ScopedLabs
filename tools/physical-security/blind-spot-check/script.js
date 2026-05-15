@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   "use strict";
 
   const FLOW_KEYS = {
@@ -143,17 +143,23 @@
     const number = cleanOverrideNumber(value);
     if (number === null) return "n/a";
 
+    if (field === "w") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+    if (field === "d") return number.toFixed(1).replace(/\.0$/, "") + " ft";
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
-    if (field === "hfov") return Math.round(number) + "?";
+    if (field === "hfov") return number.toFixed(1).replace(/\.0$/, "") + " deg";
     if (field === "cams") return Math.round(number) + " cameras";
+    if (field === "overlap") return number.toFixed(1).replace(/\.0$/, "") + "%";
 
     return String(number);
   }
 
   function overrideLabel(field) {
-    if (field === "dist") return "Mounting distance";
+    if (field === "w") return "Protected width / length";
+    if (field === "d") return "Area depth";
+    if (field === "dist") return "Distance to target plane";
     if (field === "hfov") return "Horizontal FOV";
     if (field === "cams") return "Camera count";
+    if (field === "overlap") return "Overlap target";
     return field;
   }
 
@@ -234,6 +240,91 @@
   `;
 }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function getActiveBlindSpotArea() {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.getActiveArea !== "function") return null;
+
+    try {
+      return api.getActiveArea();
+    } catch {
+      return null;
+    }
+  }
+
+  function applyAreaPlanInputs() {
+    const area = getActiveBlindSpotArea();
+    if (!area) return false;
+
+    const w = num(area.protectedLengthFt);
+    const dist = num(area.distanceToTargetPlaneFt);
+    const hfov = num(area.assumedHfovDeg);
+    const cams = num(area.cameraCount || area.targetCameraCount);
+    const overlap = num(area.overlapTargetPct);
+
+    if (Number.isFinite(w) && w > 0) {
+      captureImportedFlowValue("w", w);
+      els.w.value = String(Number(w.toFixed(1)));
+    }
+
+    if (Number.isFinite(dist) && dist > 0) {
+      captureImportedFlowValue("dist", dist);
+      els.dist.value = String(Number(dist.toFixed(1)));
+    }
+
+    if (Number.isFinite(hfov) && hfov > 0) {
+      captureImportedFlowValue("hfov", hfov);
+      els.hfov.value = String(Number(hfov.toFixed(1)));
+    }
+
+    if (Number.isFinite(cams) && cams > 0) {
+      captureImportedFlowValue("cams", cams);
+      els.cams.value = String(Math.round(cams));
+    }
+
+    if (Number.isFinite(overlap) && overlap >= 0 && overlap <= 95) {
+      captureImportedFlowValue("overlap", overlap);
+      els.overlap.value = String(Number(overlap.toFixed(1)));
+    }
+
+    return true;
+  }
+
+  function activeAreaFlowContextHtml() {
+    const area = getActiveBlindSpotArea();
+    if (!area) return "";
+
+    const parts = [];
+    if (area.name) parts.push("Current Area: <strong>" + escapeHtml(area.name) + "</strong>");
+    if (Number.isFinite(num(area.protectedLengthFt))) parts.push("Protected length: <strong>" + fmtFt(num(area.protectedLengthFt)) + "</strong>");
+    if (Number.isFinite(num(area.distanceToTargetPlaneFt))) parts.push("Distance: <strong>" + fmtFt(num(area.distanceToTargetPlaneFt)) + "</strong>");
+    if (Number.isFinite(num(area.assumedHfovDeg))) parts.push("Assumed HFOV: <strong>" + fmt(num(area.assumedHfovDeg), 1) + " deg</strong>");
+    if (Number.isFinite(num(area.cameraCount))) parts.push("Planned cameras: <strong>" + fmt(num(area.cameraCount), 0) + "</strong>");
+
+    if (!parts.length) return "";
+
+    return '<strong>Area Context</strong><br>' +
+      parts.join(" | ") +
+      '<br><span class="muted">Blind Spot Check validates the active area spacing plan. Editing imported values here creates a local what-if branch for this area.</span>';
+  }
+
+  function renderAreaOnlyFlowContext() {
+    const html = activeAreaFlowContextHtml();
+    if (!html || !els.flowNote) return false;
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = html + renderManualOverrideNote();
+    return true;
+  }
+
   function applyDefaults() {
     els.w.value = String(DEFAULTS.w);
     els.d.value = String(DEFAULTS.d);
@@ -241,13 +332,14 @@
     els.dist.value = String(DEFAULTS.dist);
     els.cams.value = String(DEFAULTS.cams);
     els.overlap.value = String(DEFAULTS.overlap);
+
+    applyAreaPlanInputs();
   }
 
   function renderFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS.spacing);
     if (!raw) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      renderAreaOnlyFlowContext();
       return;
     }
 
@@ -255,52 +347,60 @@
     try {
       parsed = JSON.parse(raw);
     } catch {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      renderAreaOnlyFlowContext();
       return;
     }
 
     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      renderAreaOnlyFlowContext();
       return;
     }
 
     const prev = parsed.data || {};
+    const w = num(prev.len ?? prev.protectedLengthFt ?? prev.w);
     const cams = num(prev.cams);
     const dist = num(prev.dist);
     const hfov = num(prev.hfov);
     const spacing = num(prev.spacing ?? prev.actualSpacing);
+    const overlap = num(prev.ovPct ?? prev.overlapTargetPct ?? prev.overlapPct);
 
+    captureImportedFlowValue("w", w);
     captureImportedFlowValue("cams", cams);
     captureImportedFlowValue("dist", dist);
     captureImportedFlowValue("hfov", hfov);
+    captureImportedFlowValue("overlap", overlap);
 
     if (canApplyFlowInputs()) {
+      if (Number.isFinite(w) && w > 0) els.w.value = String(Number(w.toFixed(1)));
       if (Number.isFinite(cams) && cams > 0) els.cams.value = String(Math.round(cams));
-      if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
-      if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+      if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Number(dist.toFixed(1)));
+      if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Number(hfov.toFixed(1)));
+      if (Number.isFinite(overlap) && overlap >= 0 && overlap <= 95) els.overlap.value = String(Number(overlap.toFixed(1)));
     }
 
+    const areaContext = activeAreaFlowContextHtml();
     const parts = [];
-    if (Number.isFinite(cams)) parts.push(`Cameras: <strong>${fmt(cams, 0)}</strong>`);
-    if (Number.isFinite(spacing)) parts.push(`Spacing: <strong>${fmtFt(spacing)}</strong>`);
-    if (Number.isFinite(dist)) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
-    if (Number.isFinite(hfov)) parts.push(`HFOV: <strong>${fmt(hfov, 0)}°</strong>`);
+    if (Number.isFinite(w)) parts.push("Protected width: <strong>" + fmtFt(w) + "</strong>");
+    if (Number.isFinite(cams)) parts.push("Cameras: <strong>" + fmt(cams, 0) + "</strong>");
+    if (Number.isFinite(spacing)) parts.push("Spacing: <strong>" + fmtFt(spacing) + "</strong>");
+    if (Number.isFinite(dist)) parts.push("Distance: <strong>" + fmtFt(dist) + "</strong>");
+    if (Number.isFinite(hfov)) parts.push("HFOV: <strong>" + fmt(hfov, 1) + " deg</strong>");
+    if (Number.isFinite(overlap)) parts.push("Overlap: <strong>" + fmtPct(overlap) + "</strong>");
 
-    if (!parts.length) {
+    if (!parts.length && !areaContext) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
       return;
     }
 
     els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
-      ${parts.join(" | ")}
-      <br><br>
-      This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied.\n      ${renderManualOverrideNote()}
-    `;
+    els.flowNote.innerHTML =
+      (areaContext ? areaContext + "<br><br>" : "") +
+      "<strong>Flow Context</strong><br>" +
+      parts.join(" | ") +
+      "<br><br>" +
+      "This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied." +
+      renderManualOverrideNote();
   }
 
   function invalidate({ clearFlow = true } = {}) {
@@ -454,6 +554,7 @@
 
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
+    const sourceMode = manualOverrideMeta.length ? "manual-override" : "pipeline";
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.blind, {
       category: CATEGORY,
@@ -465,18 +566,25 @@
         dist: data.dist,
         cams: data.cams,
         overlapPct: data.overlapPct,
-        rawWidth: data.rawWidth,
-        usableWidth: data.usableWidth,
-        totalWidth: data.totalWidth,
-        blindWidth: data.blindWidth,
-        blindPct: data.blindPct,
+        coveragePerCameraFt: data.coveragePerCameraFt,
+        overlapFt: data.overlapFt,
+        effectiveCoverageFt: data.effectiveCoverageFt,
+        totalCoverageFt: data.totalCoverageFt,
+        gapFt: data.gapFt,
+        gapPct: data.gapPct,
+        overCoverageFt: data.overCoverageFt,
+        coverageMarginPct: data.coverageMarginPct,
         coverageClass: data.coverageClass,
+        status: data.status,
         interpretation: data.interpretation,
+        dominantConstraint: data.dominantConstraint,
         guidance: data.guidance,
-        sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+        sourceMode,
         manualOverrides: manualOverrideMeta
       }
     });
+
+    updateActiveAreaFromBlindSpot(data, manualOverrideMeta);
   }
 
   function renderError(message) {
@@ -581,6 +689,7 @@ ScopedLabsAnalyzer.renderOutput({
   }
 
   function initTool() {
+    applyDefaults();
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });

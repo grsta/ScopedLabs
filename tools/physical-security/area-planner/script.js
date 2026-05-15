@@ -178,6 +178,18 @@
       });
     }
 
+    if (area.blindSpotStatus || area.blindSpotCoverageClass) {
+      items.push({
+        label: "Blind Spot",
+        value: (area.blindSpotStatus || "Recorded") + (area.blindSpotCoverageClass ? " / " + area.blindSpotCoverageClass : ""),
+        detail: Number(area.blindSpotGapFt || 0) > 0
+          ? "Gap: " + fmtFt(area.blindSpotGapFt)
+          : area.blindSpotTotalCoverageFt
+            ? "Continuous coverage: " + fmtFt(area.blindSpotTotalCoverageFt)
+            : "Blind spot result saved"
+      });
+    }
+
     if (!items.length) {
       return '' +
         '<div class="area-meta" style="margin-top:10px;">' +
