@@ -129,6 +129,7 @@
     if (!area) return "Lens result saved";
 
     const parts = [];
+    const cameraCount = Number(area.cameraCount || area.targetCameraCount || 0);
 
     if (area.selectedLensMm) {
       parts.push(Number(area.selectedLensMm).toFixed(1).replace(/\.0$/, "") + " mm");
@@ -146,7 +147,7 @@
       parts.push(Number(area.lensPixelDensityPpf || area.pixelDensityPpf).toFixed(1) + " PPF");
     }
 
-    if (area.spacingRevalidationRequired) {
+    if (cameraCount > 1 && area.spacingRevalidationRequired) {
       parts.push("spacing revalidation needed");
     }
 

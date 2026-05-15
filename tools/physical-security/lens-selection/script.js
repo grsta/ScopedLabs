@@ -389,6 +389,15 @@
   function lensRevalidationSummary(area, lensHfovDeg) {
     const assumed = cleanNumber(area?.assumedHfovDeg);
     const actual = cleanNumber(lensHfovDeg);
+    const cameraCount = cleanNumber(area?.cameraCount, cleanNumber(area?.targetCameraCount));
+
+    if (Number.isFinite(cameraCount) && cameraCount <= 1) {
+      return {
+        required: false,
+        deltaDeg: Number.isFinite(assumed) && Number.isFinite(actual) ? actual - assumed : null,
+        note: "Single-camera area: lens HFOV changes may affect coverage/detail, but camera-to-camera spacing revalidation is not required."
+      };
+    }
 
     if (!assumed || !actual) {
       return {
