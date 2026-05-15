@@ -126,15 +126,17 @@
     const number = cleanOverrideNumber(value);
     if (number === null) return "n/a";
 
+    if (field === "len") return number.toFixed(1).replace(/\.0$/, "") + " ft";
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
-    if (field === "hfov") return Math.round(number) + "°";
+    if (field === "hfov") return number.toFixed(1).replace(/\.0$/, "") + "?";
     if (field === "ov") return number.toFixed(1).replace(/\.0$/, "") + "%";
 
     return String(number);
   }
 
   function overrideLabel(field) {
-    if (field === "dist") return "Distance";
+    if (field === "len") return "Protected length";
+    if (field === "dist") return "Distance to target plane";
     if (field === "hfov") return "Horizontal FOV";
     if (field === "ov") return "Overlap target";
     return field;
@@ -2030,11 +2032,82 @@ function assistantStatusClass(data) {
     calc();
   }
 
+  function getActiveSpacingArea() {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.getActiveArea !== "function") return null;
+
+    try {
+      return api.getActiveArea();
+    } catch {
+      return null;
+    }
+  }
+
+  function applyAreaPlanInputs() {
+    const area = getActiveSpacingArea();
+    if (!area) return false;
+
+    const len = num(area.protectedLengthFt);
+    const dist = num(area.distanceToTargetPlaneFt);
+    const hfov = num(area.assumedHfovDeg);
+    const ovPct = num(area.overlapTargetPct);
+
+    if (Number.isFinite(len) && len > 0) {
+      captureImportedFlowValue("len", len);
+      els.len.value = String(Number(len.toFixed(1)));
+    }
+
+    if (Number.isFinite(dist) && dist > 0) {
+      captureImportedFlowValue("dist", dist);
+      els.dist.value = String(Number(dist.toFixed(1)));
+    }
+
+    if (Number.isFinite(hfov) && hfov > 0) {
+      captureImportedFlowValue("hfov", hfov);
+      els.hfov.value = String(Number(hfov.toFixed(1)));
+    }
+
+    if (Number.isFinite(ovPct) && ovPct >= 0 && ovPct <= 95) {
+      captureImportedFlowValue("ov", ovPct);
+      els.ov.value = String(Number(ovPct.toFixed(1)));
+    }
+
+    return true;
+  }
+
+  function activeAreaFlowContextHtml() {
+    const area = getActiveSpacingArea();
+    if (!area) return "";
+
+    const parts = [];
+    if (area.name) parts.push("Current Area: <strong>" + escapeHtml(area.name) + "</strong>");
+    if (Number.isFinite(num(area.protectedLengthFt))) parts.push("Protected length: <strong>" + fmtFt(num(area.protectedLengthFt)) + "</strong>");
+    if (Number.isFinite(num(area.distanceToTargetPlaneFt))) parts.push("Distance: <strong>" + fmtFt(num(area.distanceToTargetPlaneFt)) + "</strong>");
+    if (Number.isFinite(num(area.assumedHfovDeg))) parts.push("Assumed HFOV: <strong>" + fmt(num(area.assumedHfovDeg), 1) + "?</strong>");
+
+    if (!parts.length) return "";
+
+    return '<strong>Area Context</strong><br>' +
+      parts.join(" | ") +
+      '<br><span class="muted">Camera Spacing imports protected length from Area Planner. Editing it here creates a local what-if branch for this area.</span>';
+  }
+
+  function renderAreaOnlyFlowContext() {
+    const html = activeAreaFlowContextHtml();
+    if (!html || !els.flowNote) return false;
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = html + renderManualOverrideNote();
+    return true;
+  }
+
   function applyDefaults() {
     els.len.value = String(DEFAULTS.len);
     els.dist.value = String(DEFAULTS.dist);
     els.hfov.value = String(DEFAULTS.hfov);
     els.ov.value = String(DEFAULTS.ov);
+
+    applyAreaPlanInputs();
   }
 
   function clearDownstream() {
@@ -2053,6 +2126,7 @@ function assistantStatusClass(data) {
   }
 
   function renderFlowNote() {
+    const areaContext = activeAreaFlowContextHtml();
     const flow = ScopedLabsAnalyzer.renderFlowNote({
       flowEl: els.flowNote,
       flowKey: FLOW_KEYS.spacing,
@@ -2063,7 +2137,10 @@ function assistantStatusClass(data) {
       intro: "This step converts effective single-camera coverage into real camera-to-camera spacing along the protected perimeter."
     });
 
-    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
+    if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) {
+      renderAreaOnlyFlowContext();
+      return;
+    }
 
     const prev = flow.data || {};
     const dist = num(prev.dist);
@@ -2077,22 +2154,24 @@ function assistantStatusClass(data) {
     captureImportedFlowValue("ov", ovPct);
 
     if (canApplyFlowInputs()) {
-      if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
-      if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
-      if (Number.isFinite(ovPct) && ovPct >= 0) els.ov.value = String(Math.round(ovPct));
+      if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Number(dist.toFixed(1)));
+      if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Number(hfov.toFixed(1)));
+      if (Number.isFinite(ovPct) && ovPct >= 0) els.ov.value = String(Number(ovPct.toFixed(1)));
     }
 
     const parts = [];
     if (Number.isFinite(effWidth) && effWidth > 0) parts.push(`Effective width: <strong>${fmtFt(effWidth)}</strong>`);
     if (Number.isFinite(width) && width > 0) parts.push(`Raw width: <strong>${fmtFt(width)}</strong>`);
     if (Number.isFinite(dist) && dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
-    if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}°</strong>`);
+    if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}?</strong>`);
 
-    if (parts.length) {
+    if (parts.length || areaContext) {
       els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
+        ${areaContext ? areaContext + "<br><br>" : ""}
         <strong>Flow Context</strong><br>
-        ${parts.join(" | ")}\n        ${renderManualOverrideNote()}
+        ${parts.join(" | ")}
+        ${renderManualOverrideNote()}
       `;
     }
   }
@@ -2386,6 +2465,7 @@ function assistantStatusClass(data) {
   }
 
   function initTool() {
+    applyDefaults();
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });
