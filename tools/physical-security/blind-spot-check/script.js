@@ -571,6 +571,39 @@
     };
   }
 
+  function updateActiveAreaFromBlindSpot(data, manualOverrideMeta = []) {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.updateActiveAreaResult !== "function") return;
+
+    api.updateActiveAreaResult({
+      status: "IN PROGRESS",
+      protectedLengthFt: data.w,
+      blindSpotDepthFt: data.d,
+      distanceToTargetPlaneFt: data.dist,
+      assumedHfovDeg: data.hfov,
+      cameraCount: data.cams,
+      overlapTargetPct: data.overlapPct,
+      blindSpotCoveragePerCameraFt: data.coveragePerCameraFt,
+      blindSpotOverlapFt: data.overlapFt,
+      blindSpotEffectiveCoverageFt: data.effectiveCoverageFt,
+      blindSpotTotalCoverageFt: data.totalCoverageFt,
+      blindSpotGapFt: data.gapFt,
+      blindSpotGapPct: data.gapPct,
+      blindSpotOverCoverageFt: data.overCoverageFt,
+      blindSpotCoverageMarginPct: data.coverageMarginPct,
+      blindSpotCoverageClass: data.coverageClass,
+      blindSpotStatus: data.status,
+      blindSpotSourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+      blindSpotManualOverrides: manualOverrideMeta,
+      blindSpotInterpretation: data.interpretation,
+      blindSpotDominantConstraint: data.dominantConstraint,
+      blindSpotGuidance: data.guidance,
+      blindSpotUpdatedAt: new Date().toISOString()
+    });
+  }
+
+
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
     const sourceMode = manualOverrideMeta.length ? "manual-override" : "pipeline";
@@ -662,6 +695,8 @@ ScopedLabsAnalyzer.renderOutput({
     });
 
     writeFlow(data);
+
+    updateActiveAreaFromBlindSpot(data, getManualOverrideMetadata(data));
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
