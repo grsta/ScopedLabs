@@ -445,7 +445,10 @@
       lensSensorWidthMm: sensorWidthMm,
       lensCameraFormatLabel: data.cameraFormatLabel || null,
       lensPixelDensityPpf: cleanNumber(data.pixelDensityPpf, cleanNumber(data.availablePpf, cleanNumber(data.ppf))),
+      pixelDensityPpf: cleanNumber(data.pixelDensityPpf, cleanNumber(data.availablePpf, cleanNumber(data.ppf))),
       lensRequiredPpf: cleanNumber(data.requiredPpf, cleanNumber(data.tppf)),
+      lensHorizontalResolutionPx: cleanNumber(data.horizontalResolutionPx, cleanNumber(data.res)),
+      horizontalResolutionPx: cleanNumber(data.horizontalResolutionPx, cleanNumber(data.res)),
       lensCameraCount: cameraCount,
       cameraCount: cameraCount || area?.cameraCount || null,
       lensFitRatio: cleanNumber(data.fitRatio),
@@ -1526,7 +1529,54 @@
     return true;
   }
 
+  function updateActiveAreaFromLensAssistantEvent(event) {
+    const detail = event?.detail || {};
+    const scenario = detail.scenario || window.ScopedLabsLensDesignAssistantActiveScenario || null;
+    const payload = detail.reportPayload || window.ScopedLabsLensDesignAssistantReportData || window.ScopedLabsReportV2Data || null;
+    const flow = payload?.flowOutputs || {};
+
+    if (!scenario && !flow) return;
+
+    updateActiveAreaFromLens({
+      assistantSelected: true,
+      sourceMode: "assistant-scenario",
+      selectedScenario: flow.selectedScenario || payload?.selectedScenario || scenario?.label || "Custom Design",
+
+      selectedLensMm: flow.selectedLensMm ?? payload?.selectedLensMm ?? scenario?.lensMm,
+      calculatedLensMm: flow.calculatedLensMm ?? payload?.calculatedLensMm ?? scenario?.calculatedLensMm,
+
+      distanceFt: flow.distanceFt ?? payload?.distanceFt ?? scenario?.distanceFt,
+      targetWidthFt: flow.requiredSceneWidthFt ?? flow.sceneWidthFt ?? payload?.requiredSceneWidthFt ?? payload?.sceneWidthFt ?? scenario?.sceneWidthFt,
+      framedWidthFt: flow.framedWidthFt ?? payload?.framedWidthFt ?? scenario?.framedWidthFt,
+
+      sensorWidthMm: flow.sensorWidthMm ?? payload?.sensorWidthMm ?? scenario?.sensorWidthMm,
+      cameraFormatLabel: flow.cameraFormatLabel ?? payload?.cameraFormatLabel ?? scenario?.cameraFormatLabel,
+
+      horizontalResolutionPx: flow.horizontalPixels ?? payload?.horizontalPixels ?? scenario?.horizontalPixels,
+      pixelDensityPpf: flow.availablePpf ?? payload?.availablePpf ?? scenario?.availablePpf,
+      requiredPpf: flow.requiredPpf ?? payload?.requiredPpf ?? scenario?.requiredPpf,
+
+      cameraCount: flow.cameraCount ?? payload?.cameraCount ?? scenario?.coverageCount,
+      status: payload?.status || scenario?.status,
+      lensClass: scenario?.lensClass,
+
+      interpretation: payload?.interpretation || scenario?.interpretation,
+      dominantConstraint: payload?.dominantConstraint || scenario?.dominantConstraint,
+      guidance: payload?.guidance || scenario?.guidance
+    }, "lens-design-assistant-live", payload);
+  }
+
+  function bindLensAssistantAreaWriteback() {
+    if (window.__scopedLabsLensAssistantAreaWritebackBound) return;
+    window.__scopedLabsLensAssistantAreaWritebackBound = true;
+
+    document.addEventListener("scopedlabs:lens-design-assistant:selected", updateActiveAreaFromLensAssistantEvent);
+  }
+
+
+
   function bind() {
+    bindLensAssistantAreaWriteback();
     ["dist", "tw", "sw"].forEach((id) => {
       const el = $(id);
       if (!el) return;

@@ -125,6 +125,36 @@
     };
   }
 
+  function lensProgressDetail(area) {
+    if (!area) return "Lens result saved";
+
+    const parts = [];
+
+    if (area.selectedLensMm) {
+      parts.push(Number(area.selectedLensMm).toFixed(1).replace(/\.0$/, "") + " mm");
+    }
+
+    if (area.lensDerivedHfovDeg) {
+      parts.push("HFOV " + Number(area.lensDerivedHfovDeg).toFixed(1).replace(/\.0$/, "") + " deg");
+    }
+
+    if (area.lensHorizontalResolutionPx || area.horizontalResolutionPx) {
+      parts.push(String(Math.round(Number(area.lensHorizontalResolutionPx || area.horizontalResolutionPx))).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " px");
+    }
+
+    if (area.lensPixelDensityPpf || area.pixelDensityPpf) {
+      parts.push(Number(area.lensPixelDensityPpf || area.pixelDensityPpf).toFixed(1) + " PPF");
+    }
+
+    if (area.spacingRevalidationRequired) {
+      parts.push("spacing revalidation needed");
+    }
+
+    return parts.length ? parts.join(" | ") : "Lens result saved";
+  }
+
+
+
   function areaProgressHtml(area) {
     const items = [];
 
@@ -204,9 +234,7 @@
       items.push({
         label: "Lens",
         value: (area.lensStatus || "Recorded") + (area.lensClass ? " / " + area.lensClass : ""),
-        detail: area.selectedLensMm
-          ? Number(area.selectedLensMm).toFixed(1).replace(/\.0$/, "") + " mm" + (area.lensDerivedHfovDeg ? " | HFOV " + Number(area.lensDerivedHfovDeg).toFixed(1).replace(/\.0$/, "") + " deg" : "") + (area.spacingRevalidationRequired ? " | spacing revalidation needed" : "")
-          : "Lens result saved"
+        detail: lensProgressDetail(area)
       });
     }
 
