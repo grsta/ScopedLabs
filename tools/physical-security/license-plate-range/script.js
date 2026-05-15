@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   "use strict";
 
   const $ = (id) => document.getElementById(id);
@@ -88,12 +88,20 @@
     if (number === null) return "n/a";
 
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+    if (field === "hfov") return number.toFixed(1).replace(/\.0$/, "") + " deg";
+    if (field === "res") return Math.round(number).toLocaleString() + " px";
+    if (field === "ppp") return number.toFixed(1).replace(/\.0$/, "") + " px/plate";
+    if (field === "pw") return number.toFixed(2).replace(/\.00$/, "") + " ft";
 
     return String(number);
   }
 
   function overrideLabel(field) {
     if (field === "dist") return "Working distance";
+    if (field === "hfov") return "Horizontal FOV";
+    if (field === "res") return "Horizontal resolution";
+    if (field === "ppp") return "Target pixels per plate";
+    if (field === "pw") return "Plate width";
     return field;
   }
 
@@ -179,12 +187,122 @@
     if (note) els.flowNote.insertAdjacentHTML("beforeend", note);
   }
 
+  let plateInitialFlowImportApplied = false;
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function getActivePlateArea() {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.getActiveArea !== "function") return null;
+
+    try {
+      return api.getActiveArea();
+    } catch {
+      return null;
+    }
+  }
+
+  function targetPlatePppForGoal(goal) {
+    const value = String(goal || "").toLowerCase();
+
+    if (value.includes("license")) return 130;
+    if (value.includes("identification")) return 130;
+    if (value.includes("recognition")) return 100;
+
+    return null;
+  }
+
+  function plateImportValuesFromArea() {
+    const area = getActivePlateArea();
+
+    return {
+      area,
+      res: num(area?.lensHorizontalResolutionPx ?? area?.horizontalResolutionPx ?? DEFAULTS.res),
+      hfov: num(area?.lensDerivedHfovDeg ?? area?.assumedHfovDeg ?? DEFAULTS.hfov),
+      ppp: num(area?.licensePlateTargetPpp ?? targetPlatePppForGoal(area?.detailGoal) ?? DEFAULTS.ppp),
+      pw: num(area?.licensePlateWidthFt ?? DEFAULTS.pw),
+      dist: num(area?.distanceToTargetPlaneFt ?? area?.faceRecognitionActualDistanceFt ?? DEFAULTS.dist)
+    };
+  }
+
+  function applyAreaPlanInputs() {
+    const values = plateImportValuesFromArea();
+    if (!values.area) return false;
+
+    if (Number.isFinite(values.res) && values.res > 0) {
+      captureImportedFlowValue("res", values.res);
+      if (els.res) els.res.value = String(Math.round(values.res));
+    }
+
+    if (Number.isFinite(values.hfov) && values.hfov > 0) {
+      captureImportedFlowValue("hfov", values.hfov);
+      if (els.hfov) els.hfov.value = String(Number(values.hfov.toFixed(1)));
+    }
+
+    if (Number.isFinite(values.ppp) && values.ppp > 0) {
+      captureImportedFlowValue("ppp", values.ppp);
+      if (els.ppp) els.ppp.value = String(Number(values.ppp.toFixed(1)));
+    }
+
+    if (Number.isFinite(values.pw) && values.pw > 0) {
+      captureImportedFlowValue("pw", values.pw);
+      if (els.pw) els.pw.value = String(Number(values.pw.toFixed(2)));
+    }
+
+    if (Number.isFinite(values.dist) && values.dist > 0) {
+      captureImportedFlowValue("dist", values.dist);
+      if (els.dist) els.dist.value = String(Number(values.dist.toFixed(1)));
+    }
+
+    return true;
+  }
+
+  function activeAreaPlateContextHtml() {
+    const values = plateImportValuesFromArea();
+    const area = values.area;
+    if (!area) return "";
+
+    const parts = [];
+    if (area.name) parts.push("Current Area: <strong>" + escapeHtml(area.name) + "</strong>");
+    if (area.selectedLensMm) parts.push("Lens: <strong>" + Number(area.selectedLensMm).toFixed(1).replace(/\.0$/, "") + " mm</strong>");
+    if (Number.isFinite(values.res)) parts.push("Resolution: <strong>" + Math.round(values.res).toLocaleString() + " px</strong>");
+    if (Number.isFinite(values.hfov)) parts.push("HFOV: <strong>" + fmt(values.hfov, 1) + " deg</strong>");
+    if (Number.isFinite(values.dist)) parts.push("Working distance: <strong>" + fmtFt(values.dist) + "</strong>");
+    if (Number.isFinite(values.ppp)) parts.push("Plate target: <strong>" + fmtPx(values.ppp) + "</strong>");
+
+    if (!parts.length) return "";
+
+    return '<strong>Area Context</strong><br>' +
+      parts.join(" | ") +
+      '<br><span class="muted">License Plate validates whether the active area lens/detail path can support readable plate capture at the intended working distance. Editing imported values here creates a local what-if branch for this area.</span>';
+  }
+
+  function renderAreaOnlyFlowContext() {
+    const html = activeAreaPlateContextHtml();
+    if (!html || !els.flowNote) return false;
+
+    els.flowNote.hidden = false;
+    els.flowNote.innerHTML = html + renderManualOverrideNote();
+    return true;
+  }
+
+
+
   function applyDefaults() {
     els.res.value = String(DEFAULTS.res);
     els.hfov.value = String(DEFAULTS.hfov);
     els.ppp.value = String(DEFAULTS.ppp);
     els.pw.value = String(DEFAULTS.pw);
     els.dist.value = String(DEFAULTS.dist);
+
+    applyAreaPlanInputs();
   }
 
   function hasStoredAuth() {
@@ -241,71 +359,66 @@
 
   function renderFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS.face);
-    if (!raw) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
-    }
 
     let parsed = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
+    if (raw) {
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = null;
+      }
     }
 
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
-      return;
+    const areaContext = activeAreaPlateContextHtml();
+    const areaValues = plateImportValuesFromArea();
+    const hasFaceFlow = parsed && parsed.category === CATEGORY && parsed.step === PREVIOUS_STEP;
+    const prev = hasFaceFlow ? (parsed.data || {}) : {};
+
+    const classification = prev.classification || areaValues.area?.faceRecognitionClass || "";
+    const hfov = num(prev.hfov ?? areaValues.hfov);
+    const dist = num(prev.actualDist ?? prev.dist ?? areaValues.dist);
+    const res = num(prev.res ?? areaValues.res);
+    const ppp = num(areaValues.ppp);
+    const pw = num(areaValues.pw);
+    const deliveredFacePpf = num(prev.deliveredPpf ?? areaValues.area?.faceRecognitionDeliveredPpf);
+
+    const shouldApplyInitialImport = !plateInitialFlowImportApplied || canApplyFlowInputs();
+
+    if (shouldApplyInitialImport) {
+      if (Number.isFinite(res) && res > 0 && els.res) els.res.value = String(Math.round(res));
+      if (Number.isFinite(hfov) && hfov > 0 && els.hfov) els.hfov.value = String(Number(hfov.toFixed(1)));
+      if (Number.isFinite(ppp) && ppp > 0 && els.ppp) els.ppp.value = String(Number(ppp.toFixed(1)));
+      if (Number.isFinite(pw) && pw > 0 && els.pw) els.pw.value = String(Number(pw.toFixed(2)));
+      if (Number.isFinite(dist) && dist > 0 && els.dist) els.dist.value = String(Number(dist.toFixed(1)));
+      plateInitialFlowImportApplied = true;
     }
 
-    const prev = parsed.data || {};
-    const dist = num(prev.actualDist ?? prev.dist);
-    const classification = prev.classification || "";
-    const focal = num(prev.focal);
-    const lensClass = prev.lensClass || "";
-
+    captureImportedFlowValue("res", res);
+    captureImportedFlowValue("hfov", hfov);
+    captureImportedFlowValue("ppp", ppp);
+    captureImportedFlowValue("pw", pw);
     captureImportedFlowValue("dist", dist);
 
-    if (canApplyFlowInputs()) {
-      if (Number.isFinite(dist) && dist > 0) {
-        els.dist.value = String(Math.round(dist));
-      }
-    }
-
-    refreshManualOverrideBanner();
-
     const parts = [];
-    if (classification) {
-      parts.push(`Face Requirement: <strong>${classification}</strong>`);
-    }
-    if (Number.isFinite(dist) && dist > 0) {
-      parts.push(`Working Distance: <strong>${fmtFt(dist)}</strong>`);
-    }
-    if (lensClass) {
-      let lensText = `Lens: <strong>${lensClass}</strong>`;
-      if (Number.isFinite(focal) && focal > 0) {
-        lensText += ` (~${fmt(focal, 1)} mm)`;
-      }
-      parts.push(lensText);
-    }
+    if (classification) parts.push("face result <strong>" + escapeHtml(classification) + "</strong>");
+    if (Number.isFinite(deliveredFacePpf)) parts.push("face detail <strong>" + fmtPx(deliveredFacePpf, 1) + "</strong>");
+    if (Number.isFinite(res) && res > 0) parts.push("resolution <strong>" + Math.round(res).toLocaleString() + " px</strong>");
+    if (Number.isFinite(hfov) && hfov > 0) parts.push("HFOV <strong>" + fmt(hfov, 1) + " deg</strong>");
+    if (Number.isFinite(dist) && dist > 0) parts.push("working distance <strong>" + fmtFt(dist) + "</strong>");
+    if (Number.isFinite(ppp) && ppp > 0) parts.push("plate target <strong>" + fmtPx(ppp) + "</strong>");
 
-    if (!parts.length) {
+    if (!parts.length && !areaContext) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
       return;
     }
 
     els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
-      ${parts.join(" | ")}
-      <br><br>
-      This final step checks whether the same optical setup can also support readable license-plate capture.
-    `;
+    els.flowNote.innerHTML =
+      (areaContext ? areaContext + "<br><br>" : "") +
+      (parts.length ? "<strong>Flow Context</strong><br>Face / area results detected ? " + parts.join(", ") + "." : "") +
+      "<br><br>This final step checks whether the same active-area optic can support readable license plate capture." +
+      renderManualOverrideNote();
   }
 
   function invalidate({ clearFlow = true } = {}) {
@@ -468,8 +581,37 @@
     };
   }
 
+  function updateActiveAreaFromLicensePlate(data, manualOverrideMeta = []) {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.updateActiveAreaResult !== "function") return;
+
+    api.updateActiveAreaResult({
+      status: "IN PROGRESS",
+      licensePlateStatus: data.status,
+      licensePlateClass: data.classification,
+      licensePlateMaxDistanceFt: data.maxDist,
+      licensePlateActualDistanceFt: data.dist,
+      licensePlateRangeMarginFt: data.marginFt,
+      licensePlateUtilizationPct: data.utilizationPct,
+      licensePlateDeliveredPpp: data.deliveredPpp,
+      licensePlateTargetPpp: data.ppp,
+      licensePlateWidthFt: data.pw,
+      licensePlateHorizontalResolutionPx: data.res,
+      licensePlateHfovDeg: data.hfov,
+      licensePlateSourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+      licensePlateManualOverrides: manualOverrideMeta,
+      licensePlateInterpretation: data.interpretation,
+      licensePlateDominantConstraint: data.dominantConstraint,
+      licensePlateGuidance: data.guidance,
+      licensePlateUpdatedAt: new Date().toISOString()
+    });
+  }
+
+
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
+
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.plate, {
       category: CATEGORY,
       step: STEP,
@@ -482,12 +624,17 @@
         hfov: data.hfov,
         res: data.res,
         deliveredPpp: data.deliveredPpp,
+        maxDist: data.maxDist,
+        marginFt: data.marginFt,
+        utilizationPct: data.utilizationPct,
         interpretation: data.interpretation,
         guidance: data.guidance,
         sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
         manualOverrides: manualOverrideMeta
       }
     });
+
+    updateActiveAreaFromLicensePlate(data, manualOverrideMeta);
   }
 
   function renderError(message) {
@@ -556,6 +703,7 @@
   }
 
   function reset() {
+    plateInitialFlowImportApplied = false;
     resetFlowOverrideState();
     applyDefaults();
     renderFlowNote();
@@ -583,6 +731,8 @@
   }
 
   function init() {
+    plateInitialFlowImportApplied = false;
+    applyDefaults();
     bind();
     renderFlowNote();
     invalidate({ clearFlow: false });
