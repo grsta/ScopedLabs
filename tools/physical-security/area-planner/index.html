@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Area / Zone Planner ? ScopedLabs</title>
+  <meta name="description" content="Define physical security site areas before running coverage, spacing, lens, and detail validation tools." />
+  <meta name="robots" content="noindex,follow" />
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-025" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuYWkiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc3MDU4NjA2MSwiZXhwIjoyMDg2MTYyMDYxfQ.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=physical-security-area-planner-001"></script>
+  <script defer src="/assets/app.js?v=physical-security-area-planner-001"></script>
+
+  <style>
+    .area-ledger-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .area-card {
+      border: 1px solid rgba(148,163,184,.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,.025);
+      padding: 12px;
+    }
+
+    .area-card.is-active {
+      border-color: rgba(125,255,152,.34);
+      background: rgba(125,255,152,.045);
+    }
+
+    .area-card h3 {
+      margin: 8px 0 6px;
+    }
+
+    .area-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .area-meta div {
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 10px;
+      background: rgba(0,0,0,.12);
+      padding: 8px;
+      color: rgba(226,232,240,.82);
+      font-size: .82rem;
+    }
+
+    .area-meta strong {
+      display: block;
+      color: rgba(203,213,225,.62);
+      font-size: .62rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 860px) {
+      .area-ledger-grid,
+      .area-meta {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body
+  data-tier="pro"
+  data-category="physical-security"
+  data-tool="area-planner"
+  data-step="area-planner"
+  data-lane="v1"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-icon-wrap" aria-hidden="true">
+          <img class="brand-icon" src="/assets/favicon/favicon-32x32.png?v=1" alt="" width="32" height="32" />
+        </span>
+        <span class="brand-name">ScopedLabs</span>
+      </a>
+
+      <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/guides/">Guides</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/physical-security/">Physical Security</a>
+        <span class="sep">/</span>
+        <span>Area / Zone Planner</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
+        <span class="pill">Pipeline Setup</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Area / Zone Planner</h1>
+
+      <div id="pipeline"></div>
+
+      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
+        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
+        <h2 class="h3" style="margin-top: 0;">Define the areas before running the Physical Security flow</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          Real sites rarely use one distance, one lens, and one camera-count assumption everywhere. Use this step to define one or more areas so downstream coverage, spacing, detail, and lens results can be tied to the correct zone.
+        </p>
+      </section>
+
+      <p class="tool-best-for">
+        <strong>Best for:</strong> splitting a property into planning areas so each zone can carry its own distance, HFOV, protected length, camera count, spacing, detail target, and lens validation path.
+      </p>
+
+      <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
+        <div class="pill-row"><span class="pill pill--pro">Pro Tier</span></div>
+        <h2 class="h2">?? Locked</h2>
+        <p class="muted">This setup step is included with Pro access for Physical Security.</p>
+        <div class="actions">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+          <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Physical Security</a>
+        </div>
+      </section>
+
+      <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
+        <h2 class="card-title" style="margin-top: 0;">Active Area Setup</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Start with one area, then add more if the property has different distances, coverage geometry, lens needs, or detail objectives.
+        </p>
+
+        <div class="form-grid" style="margin-top: 14px;">
+          <div class="field">
+            <div class="label-row"><label for="areaName">Area Name</label></div>
+            <input id="areaName" type="text" value="Area 1" />
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="areaType">Area Type</label></div>
+            <select id="areaType">
+              <option>General Coverage</option>
+              <option>Parking / Open Area</option>
+              <option>Entrance / Door</option>
+              <option>Fence Line / Perimeter</option>
+              <option>Loading Dock</option>
+              <option>Hallway / Corridor</option>
+              <option>Custom Area</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="protectedLengthFt">Protected Length / Scene Width (ft)</label></div>
+            <input id="protectedLengthFt" type="number" min="1" step="1" value="100" />
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="distanceToTargetPlaneFt">Distance to Target Plane (ft)</label></div>
+            <input id="distanceToTargetPlaneFt" type="number" min="0.1" step="0.1" value="80" />
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="assumedHfovDeg">Starting HFOV Assumption (deg)</label></div>
+            <input id="assumedHfovDeg" type="number" min="1" max="179" step="0.1" value="70" />
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="detailGoal">Detail Goal</label></div>
+            <select id="detailGoal">
+              <option>Detection</option>
+              <option selected>Observation</option>
+              <option>Recognition</option>
+              <option>Identification</option>
+              <option>License Plate</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="targetCameraCount">Optional Target Camera Count</label></div>
+            <input id="targetCameraCount" type="number" min="1" step="1" placeholder="Optional" />
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="saveArea" class="btn btn-primary" type="button">Save / Update Area</button>
+          <button id="newArea" class="btn" type="button">Add Another Area</button>
+          <button id="resetAreas" class="btn" type="button">Reset Area Plan</button>
+        </div>
+
+        <div id="areaStatus" class="muted" style="margin-top: 12px;"></div>
+
+        <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.12);">
+          <div class="pill-row">
+            <span class="pill">Area Ledger</span>
+            <span id="areaCountPill" class="pill">0 areas</span>
+          </div>
+          <h3 class="h3" style="margin-top: 10px;">Planning areas</h3>
+          <p class="muted" style="margin-bottom: 0;">
+            Downstream results should be treated as area-specific. The final Physical Security report can later roll these up into a site-level camera and lens summary.
+          </p>
+          <div id="areaList" class="area-ledger-grid"></div>
+        </section>
+
+        <div id="next-step-row" class="btn-row" style="margin-top: 14px;">
+          <button id="continue" class="btn btn-primary" type="button">Continue ? Scene Illumination</button>
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="muted">? <span data-year></span> ScopedLabs</div>
+        <div class="footer-links">
+          <a href="/tools/">Tools</a>
+          <a href="/upgrade/">Upgrade</a>
+          <a href="/about/">About</a>
+          <a href="/contact/">Contact</a>
+          <a href="/changelog/">Changelog</a>
+          <a href="/privacy/">Privacy</a>
+          <a href="/terms/">Terms</a>
+          <a href="/disclaimer/">Disclaimer</a>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <script src="/assets/tool-flow.js?v=phys-area-planner-001"></script>
+  <script src="/assets/catalog.js?v=phys-area-planner-001"></script>
+  <script src="/assets/pipelines.js?v=physical-security-area-planner-001"></script>
+  <script src="/assets/pipeline-state.js?v=phys-area-planner-001"></script>
+  <script src="/assets/pipeline.js?v=phys-area-planner-001"></script>
+  <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-001"></script>
+  <script src="./script.js?v=physical-security-area-planner-001"></script>
+  <script defer src="/assets/help.js?v=help-026"></script>
+</body>
+</html>

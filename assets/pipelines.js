@@ -152,6 +152,7 @@
         label: "Physical Security",
         lanes: {
           v1: [
+            { id: "area-planner", label: "Area Planner", href: "/tools/physical-security/area-planner/" },
             { id: "scene-illumination", label: "Scene Illumination", href: "/tools/physical-security/scene-illumination/" },
             { id: "mounting-height", label: "Mounting Height", href: "/tools/physical-security/mounting-height/" },
             { id: "field-of-view", label: "Field of View", href: "/tools/physical-security/field-of-view/" },
