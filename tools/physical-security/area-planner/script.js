@@ -249,6 +249,16 @@
       });
     }
 
+    if (area.licensePlateStatus || area.licensePlateMaxDistanceFt || area.licensePlateDeliveredPpp) {
+      items.push({
+        label: "License Plate",
+        value: (area.licensePlateStatus || "Recorded") + (area.licensePlateClass ? " / " + area.licensePlateClass : ""),
+        detail: area.licensePlateMaxDistanceFt
+          ? "Max range: " + fmtFt(area.licensePlateMaxDistanceFt) + " | delivered " + Number(area.licensePlateDeliveredPpp || 0).toFixed(1) + " px/plate"
+          : "License plate result saved"
+      });
+    }
+
     if (!items.length) {
       return '' +
         '<div class="area-meta" style="margin-top:10px;">' +
