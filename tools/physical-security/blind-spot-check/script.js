@@ -155,7 +155,7 @@
 
   function overrideLabel(field) {
     if (field === "w") return "Protected width / length";
-    if (field === "d") return "Area depth";
+    if (field === "d") return "Validation zone depth";
     if (field === "dist") return "Distance to target plane";
     if (field === "hfov") return "Horizontal FOV";
     if (field === "cams") return "Camera count";
@@ -265,6 +265,12 @@
     if (!area) return false;
 
     const w = num(area.protectedLengthFt);
+    const depth = num(
+      area.blindSpotDepthFt ??
+      area.effectiveCoverageHeightFt ??
+      area.rawCoverageHeightFt ??
+      area.distanceToTargetPlaneFt
+    );
     const dist = num(area.distanceToTargetPlaneFt);
     const hfov = num(area.assumedHfovDeg);
     const cams = num(area.cameraCount || area.targetCameraCount);
@@ -273,6 +279,11 @@
     if (Number.isFinite(w) && w > 0) {
       captureImportedFlowValue("w", w);
       els.w.value = String(Number(w.toFixed(1)));
+    }
+
+    if (Number.isFinite(depth) && depth > 0) {
+      captureImportedFlowValue("d", depth);
+      els.d.value = String(Number(depth.toFixed(1)));
     }
 
     if (Number.isFinite(dist) && dist > 0) {
@@ -302,9 +313,17 @@
     const area = getActiveBlindSpotArea();
     if (!area) return "";
 
+    const validationDepth = num(
+      area.blindSpotDepthFt ??
+      area.effectiveCoverageHeightFt ??
+      area.rawCoverageHeightFt ??
+      area.distanceToTargetPlaneFt
+    );
+
     const parts = [];
     if (area.name) parts.push("Current Area: <strong>" + escapeHtml(area.name) + "</strong>");
     if (Number.isFinite(num(area.protectedLengthFt))) parts.push("Protected length: <strong>" + fmtFt(num(area.protectedLengthFt)) + "</strong>");
+    if (Number.isFinite(validationDepth)) parts.push("Validation depth: <strong>" + fmtFt(validationDepth) + "</strong>");
     if (Number.isFinite(num(area.distanceToTargetPlaneFt))) parts.push("Distance: <strong>" + fmtFt(num(area.distanceToTargetPlaneFt)) + "</strong>");
     if (Number.isFinite(num(area.assumedHfovDeg))) parts.push("Assumed HFOV: <strong>" + fmt(num(area.assumedHfovDeg), 1) + " deg</strong>");
     if (Number.isFinite(num(area.cameraCount))) parts.push("Planned cameras: <strong>" + fmt(num(area.cameraCount), 0) + "</strong>");
@@ -313,7 +332,7 @@
 
     return '<strong>Area Context</strong><br>' +
       parts.join(" | ") +
-      '<br><span class="muted">Blind Spot Check validates the active area spacing plan. Editing imported values here creates a local what-if branch for this area.</span>';
+      '<br><span class="muted">Blind Spot Check validates the active area spacing plan. Validation depth is separate from camera-to-target distance. Editing imported values here creates a local what-if branch for this area.</span>';
   }
 
   function renderAreaOnlyFlowContext() {
@@ -608,7 +627,7 @@ ScopedLabsAnalyzer.renderOutput({
       ],
       derivedRows: [
         { label: "Area Width", value: fmtFt(data.w) },
-        { label: "Area Depth", value: fmtFt(data.d) },
+        { label: "Validation Zone Depth", value: fmtFt(data.d) },
         { label: "Gap", value: data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt) },
         { label: "Overlap Target", value: fmtPct(data.overlapPct) },
         { label: "Coverage Margin", value: fmtPct(data.coverageMarginPct) },
