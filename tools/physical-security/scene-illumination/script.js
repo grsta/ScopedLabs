@@ -316,6 +316,31 @@
     };
   }
 
+  function updateActiveAreaFromScene(data) {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.updateActiveAreaResult !== "function") return;
+
+    api.updateActiveAreaResult({
+      status: "IN PROGRESS",
+      sceneWidthFt: data.w,
+      sceneDepthFt: data.d,
+      sceneAreaSqFt: data.area,
+      targetIlluminationFc: data.fc,
+      utilizationFactor: data.uf,
+      lightLossFactor: data.llf,
+      effectiveLightingFactor: data.effectiveFactor,
+      estimatedLumensRequired: data.lumens,
+      lumenDensity: data.lumenDensity,
+      lightingClass: data.lightingClass,
+      lightingStatus: data.status,
+      lightingInterpretation: data.interpretation,
+      lightingGuidance: data.guidance,
+      lightingUpdatedAt: new Date().toISOString()
+    });
+  }
+
+  
+
   function writeFlow(data) {
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.scene, {
       category: CATEGORY,
@@ -337,6 +362,9 @@
         guidance: data.guidance
       }
     });
+  
+
+    updateActiveAreaFromScene(data);
   }
 
   function renderError(message) {

@@ -125,6 +125,43 @@
     };
   }
 
+  function areaProgressHtml(area) {
+    const items = [];
+
+    if (area.lightingStatus || area.lightingClass) {
+      items.push({
+        label: "Lighting",
+        value: (area.lightingStatus || "Recorded") + (area.lightingClass ? " / " + area.lightingClass : ""),
+        detail: area.estimatedLumensRequired ? "Lumens: " + Math.round(area.estimatedLumensRequired).toLocaleString() : "Scene illumination result saved"
+      });
+    }
+
+    if (area.mountingStatus || area.mountingTiltDeg) {
+      items.push({
+        label: "Mounting",
+        value: (area.mountingStatus || "Recorded") + (area.mountingTiltDeg ? " / " + Number(area.mountingTiltDeg).toFixed(1) + "? tilt" : ""),
+        detail: area.mountingHeightFt ? "Height: " + fmtFt(area.mountingHeightFt) : "Mounting geometry result saved"
+      });
+    }
+
+    if (!items.length) {
+      return '' +
+        '<div class="area-meta" style="margin-top:10px;">' +
+          '<div><strong>Pipeline progress</strong>No tool results saved yet</div>' +
+          '<div><strong>Next result</strong>Run Scene Illumination</div>' +
+        '</div>';
+    }
+
+    return '' +
+      '<div class="area-meta" style="margin-top:10px;">' +
+        items.map((item) => {
+          return '<div><strong>' + escapeHtml(item.label) + '</strong>' + escapeHtml(item.value) + '<br><span class="muted">' + escapeHtml(item.detail) + '</span></div>';
+        }).join("") +
+      '</div>';
+  }
+
+  
+
   function render() {
     const api = state();
     if (!api) return;
@@ -155,6 +192,7 @@
             '<div><strong>Assumed HFOV</strong>' + escapeHtml(fmtDeg(area.assumedHfovDeg)) + '</div>' +
             '<div><strong>Target cameras</strong>' + escapeHtml(cameraText) + '</div>' +
           '</div>' +
+          areaProgressHtml(area) +
           '<div class="btn-row" style="margin-top:12px;">' +
             '<button class="btn btn-primary" type="button" data-use-area="' + escapeHtml(area.id) + '">Use Area</button>' +
             '<button class="btn" type="button" data-edit-area="' + escapeHtml(area.id) + '">Edit</button>' +

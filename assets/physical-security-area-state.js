@@ -34,25 +34,29 @@
   }
 
   function normalizeArea(area, index = 0) {
-    const name = String(area?.name || "Area " + (index + 1)).trim() || "Area " + (index + 1);
-    const id = String(area?.id || slugify(name) + "-" + Date.now()).trim();
+    const source = area && typeof area === "object" ? area : {};
+    const extra = { ...source };
+
+    const name = String(source?.name || "Area " + (index + 1)).trim() || "Area " + (index + 1);
+    const id = String(source?.id || slugify(name) + "-" + Date.now()).trim();
 
     return {
+      ...extra,
       id,
       name,
-      areaType: String(area?.areaType || "General Coverage").trim() || "General Coverage",
-      protectedLengthFt: cleanNumber(area?.protectedLengthFt, 100),
-      distanceToTargetPlaneFt: cleanNumber(area?.distanceToTargetPlaneFt, 80),
-      assumedHfovDeg: cleanNumber(area?.assumedHfovDeg, 70),
-      detailGoal: String(area?.detailGoal || "Observation").trim() || "Observation",
-      targetCameraCount: cleanNumber(area?.targetCameraCount, null),
-      cameraCount: cleanNumber(area?.cameraCount, null),
-      spacingFt: cleanNumber(area?.spacingFt, null),
-      selectedLensMm: cleanNumber(area?.selectedLensMm, null),
-      sourceMode: String(area?.sourceMode || "area-planner"),
-      status: String(area?.status || "PLANNING"),
-      notes: Array.isArray(area?.notes) ? area.notes : [],
-      updatedAt: area?.updatedAt || new Date().toISOString()
+      areaType: String(source?.areaType || "General Coverage").trim() || "General Coverage",
+      protectedLengthFt: cleanNumber(source?.protectedLengthFt, 100),
+      distanceToTargetPlaneFt: cleanNumber(source?.distanceToTargetPlaneFt, 80),
+      assumedHfovDeg: cleanNumber(source?.assumedHfovDeg, 70),
+      detailGoal: String(source?.detailGoal || "Observation").trim() || "Observation",
+      targetCameraCount: cleanNumber(source?.targetCameraCount, null),
+      cameraCount: cleanNumber(source?.cameraCount, null),
+      spacingFt: cleanNumber(source?.spacingFt, null),
+      selectedLensMm: cleanNumber(source?.selectedLensMm, null),
+      sourceMode: String(source?.sourceMode || "area-planner"),
+      status: String(source?.status || "PLANNING"),
+      notes: Array.isArray(source?.notes) ? source.notes : [],
+      updatedAt: source?.updatedAt || new Date().toISOString()
     };
   }
 

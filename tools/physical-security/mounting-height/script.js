@@ -293,6 +293,31 @@
     };
   }
 
+  function updateActiveAreaFromMounting(data) {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.updateActiveAreaResult !== "function") return;
+
+    api.updateActiveAreaResult({
+      status: "IN PROGRESS",
+      mountingHeightFt: data.h,
+      distanceToTargetPlaneFt: data.dist,
+      targetHeightFt: data.th,
+      verticalFovDeg: data.vfov,
+      mountingDropFt: data.drop,
+      mountingTiltDeg: data.tilt,
+      verticalCoverageSpanFt: data.span,
+      topEdgeHeightFt: data.topEdgeHeight,
+      bottomEdgeHeightFt: data.bottomEdgeHeight,
+      mountingTiltClass: data.tiltClass,
+      mountingStatus: data.status,
+      mountingInterpretation: data.interpretation,
+      mountingGuidance: data.guidance,
+      mountingUpdatedAt: new Date().toISOString()
+    });
+  }
+
+  
+
   function writeFlow(data) {
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.mount, {
       category: CATEGORY,
@@ -312,6 +337,9 @@
         guidance: data.guidance
       }
     });
+  
+
+    updateActiveAreaFromMounting(data);
   }
 
   function renderError(message) {
