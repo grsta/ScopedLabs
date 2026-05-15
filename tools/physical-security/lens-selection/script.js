@@ -464,6 +464,8 @@
 
 
 
+  let lensInitialFlowImportApplied = false;
+
   function renderFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS.pixel);
     prev = null;
@@ -490,13 +492,16 @@
     const ppf = num(hasPixelFlow ? prev.ppf : area?.pixelDensityPpf);
     const level = hasPixelFlow ? (prev.level || prev.classification || "") : (area?.pixelDensityLevel || "");
 
-    captureImportedFlowValue("dist", dist);
-    captureImportedFlowValue("tw", tw);
+    const shouldApplyInitialImport = !lensInitialFlowImportApplied;
 
-    if (canApplyFlowInputs()) {
+    if (shouldApplyInitialImport || canApplyFlowInputs()) {
       if (Number.isFinite(dist) && dist > 0 && els.dist) els.dist.value = String(Number(dist.toFixed(1)));
       if (Number.isFinite(tw) && tw > 0 && els.tw) els.tw.value = String(Number(tw.toFixed(1)));
+      lensInitialFlowImportApplied = true;
     }
+
+    captureImportedFlowValue("dist", dist);
+    captureImportedFlowValue("tw", tw);
 
     const parts = [];
     if (level) {
@@ -1559,6 +1564,7 @@
   }
 
   function init() {
+    lensInitialFlowImportApplied = false;
     applyDefaults();
     bind();
     renderFlowNote();
