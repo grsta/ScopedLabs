@@ -71,6 +71,148 @@
         grid-template-columns: 1fr;
       }
     }
+
+
+    .area-summary-card {
+      border-color: rgba(125,255,158,.18);
+      background: radial-gradient(circle at 15% 0%, rgba(125,255,152,.055), transparent 28%), rgba(0,0,0,.12);
+    }
+
+    .area-summary-rollup {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .area-summary-metric,
+    .area-summary-zone {
+      border: 1px solid rgba(148,163,184,.14);
+      border-radius: 12px;
+      background: rgba(255,255,255,.025);
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .area-summary-label {
+      display: block;
+      color: rgba(203,213,225,.62);
+      font-size: .62rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .area-summary-value {
+      display: block;
+      color: #fff;
+      font-size: 1.04rem;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .area-summary-note {
+      color: rgba(226,232,240,.66);
+      font-size: .76rem;
+      line-height: 1.42;
+      margin-top: 7px;
+    }
+
+    .area-summary-zones {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .area-summary-zone-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .area-summary-zone h4 {
+      margin: 0;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .area-summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: .82rem;
+    }
+
+    .area-summary-table th,
+    .area-summary-table td {
+      border-bottom: 1px solid rgba(148,163,184,.12);
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .area-summary-table th {
+      color: rgba(203,213,225,.68);
+      font-size: .62rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .area-summary-table td {
+      color: rgba(226,232,240,.82);
+    }
+
+    .area-summary-warn {
+      border: 1px solid rgba(255,211,79,.24);
+      background: rgba(255,211,79,.065);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: rgba(255,246,196,.92);
+      margin-top: 12px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      .area-summary-rollup {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .area-summary-rollup {
+        grid-template-columns: 1fr;
+      }
+
+      .area-summary-zone-head {
+        display: grid;
+      }
+    }
+
+    @media print {
+      body.print-area-summary .site-header,
+      body.print-area-summary .crumbs,
+      body.print-area-summary #pipeline,
+      body.print-area-summary #lockedCard,
+      body.print-area-summary #toolCard > h2,
+      body.print-area-summary #toolCard > p,
+      body.print-area-summary #toolCard > .form-grid,
+      body.print-area-summary #toolCard > .btn-row,
+      body.print-area-summary #areaStatus,
+      body.print-area-summary #areaList,
+      body.print-area-summary #next-step-row,
+      body.print-area-summary .site-footer {
+        display: none !important;
+      }
+
+      body.print-area-summary #areaSummaryCard {
+        display: block !important;
+        box-shadow: none !important;
+      }
+    }
   </style>
 </head>
 
@@ -220,6 +362,24 @@
           <div id="areaList" class="area-ledger-grid"></div>
         </section>
 
+
+
+        <section id="areaSummaryCard" class="card area-summary-card" style="margin-top: 14px;" data-export-section="Physical Security Area Summary">
+          <div class="pill-row">
+            <span class="pill pill--pro">Area Summary</span>
+            <span class="pill">Pipeline Rollup</span>
+          </div>
+          <h3 class="h3" style="margin-top: 10px;">Physical Security area summary</h3>
+          <p class="muted" style="margin-bottom: 0;">
+            This rollup summarizes each area with its camera count, geometry, lens/detail validation, status, source integrity, and next action notes. It is the first area-based report view for the Physical Security pipeline.
+          </p>
+          <div id="areaSummary"></div>
+          <div class="btn-row" style="margin-top: 14px;">
+            <button id="printAreaSummary" class="btn btn-primary" type="button">Print / Save Area Summary</button>
+            <button id="copyAreaSummaryJson" class="btn" type="button">Copy Summary Data</button>
+          </div>
+        </section>
+
         <div id="next-step-row" class="btn-row" style="margin-top: 14px;">
           <button id="continue" class="btn btn-primary" type="button">Continue ? Scene Illumination</button>
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
@@ -248,7 +408,7 @@
   <script src="/assets/pipeline-state.js?v=phys-area-planner-001"></script>
   <script src="/assets/pipeline.js?v=phys-area-planner-001"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-002"></script>
-  <script src="./script.js?v=physical-security-area-planner-012"></script>
+  <script src="./script.js?v=physical-security-area-planner-summary-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

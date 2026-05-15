@@ -20,6 +20,9 @@
     areaList: $("areaList"),
     areaStatus: $("areaStatus"),
     areaCountPill: $("areaCountPill"),
+    areaSummary: $("areaSummary"),
+    printSummary: $("printAreaSummary"),
+    copySummaryJson: $("copyAreaSummaryJson"),
     continueBtn: $("continue"),
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard")
@@ -277,6 +280,307 @@
 
   
 
+  function formatAreaWorkflowStatus(status) {
+    const value = String(status || "PLANNING").trim().toUpperCase();
+    if (value === "IN PROGRESS") return "Pipeline In Progress";
+    if (value === "PLANNING") return "Planning";
+    if (value === "COMPLETE") return "Pipeline Complete";
+    return value.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  function normalizeStatus(value) {
+    const status = String(value || "").trim().toUpperCase();
+    if (status.includes("RISK") || status.includes("FAIL") || status.includes("LOW") || status.includes("TOO")) return "RISK";
+    if (status.includes("WATCH") || status.includes("WARN") || status.includes("MARGINAL")) return "WATCH";
+    if (status.includes("HEALTHY") || status.includes("GOOD") || status.includes("OK") || status.includes("PASS")) return "HEALTHY";
+    return status || "PENDING";
+  }
+
+  function worstStatus(statuses) {
+    const normalized = (statuses || []).map(normalizeStatus).filter(Boolean);
+    if (normalized.some((status) => status === "RISK")) return "RISK";
+    if (normalized.some((status) => status === "WATCH")) return "WATCH";
+    if (normalized.some((status) => status === "HEALTHY")) return "HEALTHY";
+    return "PENDING";
+  }
+
+  function fmtNumber(value, decimals = 1) {
+    const number = num(value);
+    if (number === null) return "n/a";
+    return Number(number).toFixed(decimals).replace(/\.0+$/, "");
+  }
+
+  function fmtPpf(value) {
+    const number = num(value);
+    return number === null ? "n/a" : number.toFixed(1).replace(/\.0$/, "") + " PPF";
+  }
+
+  function fmtPixels(value) {
+    const number = num(value);
+    return number === null ? "n/a" : Math.round(number).toLocaleString() + " px";
+  }
+
+  function areaToolRows(area) {
+    return [
+      {
+        key: "lighting",
+        label: "Lighting",
+        complete: !!(area.lightingStatus || area.lightingClass),
+        status: area.lightingStatus || "Pending",
+        detail: area.estimatedLumensRequired ? "Lumens " + Math.round(area.estimatedLumensRequired).toLocaleString() : area.lightingClass || "Not recorded"
+      },
+      {
+        key: "mounting",
+        label: "Mounting",
+        complete: !!(area.mountingStatus || area.mountingTiltDeg),
+        status: area.mountingStatus || "Pending",
+        detail: area.mountingHeightFt ? "Height " + fmtFt(area.mountingHeightFt) : "Not recorded"
+      },
+      {
+        key: "fov",
+        label: "Field of View",
+        complete: !!(area.fovStatus || area.fovFitClass),
+        status: area.fovStatus || "Pending",
+        detail: area.estimatedSceneWidthFt ? "Scene width " + fmtFt(area.estimatedSceneWidthFt) : "Not recorded"
+      },
+      {
+        key: "coverage",
+        label: "Coverage",
+        complete: !!(area.coverageStatus || area.coverageEfficiencyClass),
+        status: area.coverageStatus || "Pending",
+        detail: area.effectiveCoverageAreaSqFt ? "Usable " + Math.round(area.effectiveCoverageAreaSqFt).toLocaleString() + " sq ft" : area.effectiveCoverageWidthFt ? "Usable width " + fmtFt(area.effectiveCoverageWidthFt) : "Not recorded"
+      },
+      {
+        key: "spacing",
+        label: "Spacing",
+        complete: !!(area.spacingStatus || area.spacingClass || area.cameraCount),
+        status: area.spacingStatus || "Pending",
+        detail: area.cameraCount ? area.cameraCount + " camera" + (Number(area.cameraCount) === 1 ? "" : "s") + " @ " + fmtFt(area.spacingFt) : "Not recorded"
+      },
+      {
+        key: "blind",
+        label: "Blind Spot",
+        complete: !!(area.blindSpotStatus || area.blindSpotCoverageClass),
+        status: area.blindSpotStatus || "Pending",
+        detail: Number(area.blindSpotGapFt || 0) > 0 ? "Gap " + fmtFt(area.blindSpotGapFt) : area.blindSpotTotalCoverageFt ? "Coverage " + fmtFt(area.blindSpotTotalCoverageFt) : "Not recorded"
+      },
+      {
+        key: "pixel",
+        label: "Pixel Density",
+        complete: !!(area.pixelDensityStatus || area.pixelDensityPpf),
+        status: area.pixelDensityStatus || "Pending",
+        detail: area.pixelDensityPpf ? fmtPpf(area.pixelDensityPpf) + (area.pixelDensityTargetPpf ? " target " + fmtPpf(area.pixelDensityTargetPpf) : "") : "Not recorded"
+      },
+      {
+        key: "lens",
+        label: "Lens",
+        complete: !!(area.lensStatus || area.selectedLensMm || area.lensClass),
+        status: area.lensStatus || "Pending",
+        detail: lensProgressDetail(area)
+      },
+      {
+        key: "face",
+        label: "Face Recognition",
+        complete: !!(area.faceRecognitionStatus || area.faceRecognitionMaxDistanceFt),
+        status: area.faceRecognitionStatus || "Pending",
+        detail: area.faceRecognitionMaxDistanceFt ? "Max " + fmtFt(area.faceRecognitionMaxDistanceFt) + " | " + fmtPpf(area.faceRecognitionDeliveredPpf) : "Not recorded"
+      },
+      {
+        key: "plate",
+        label: "License Plate",
+        complete: !!(area.licensePlateStatus || area.licensePlateMaxDistanceFt),
+        status: area.licensePlateStatus || "Pending",
+        detail: area.licensePlateMaxDistanceFt ? "Max " + fmtFt(area.licensePlateMaxDistanceFt) + " | " + fmtNumber(area.licensePlateDeliveredPpp, 1) + " px/plate" : "Not recorded"
+      }
+    ];
+  }
+
+  function areaSourceIntegrity(area) {
+    const manual = [];
+    const assisted = [];
+
+    if (Array.isArray(area.spacingManualOverrides) && area.spacingManualOverrides.length) manual.push("Spacing");
+    if (Array.isArray(area.blindSpotManualOverrides) && area.blindSpotManualOverrides.length) manual.push("Blind Spot");
+    if (Array.isArray(area.pixelDensityManualOverrides) && area.pixelDensityManualOverrides.length) manual.push("Pixel Density");
+    if (Array.isArray(area.lensManualOverrides) && area.lensManualOverrides.length) manual.push("Lens");
+    if (Array.isArray(area.faceRecognitionManualOverrides) && area.faceRecognitionManualOverrides.length) manual.push("Face Recognition");
+    if (Array.isArray(area.licensePlateManualOverrides) && area.licensePlateManualOverrides.length) manual.push("License Plate");
+
+    if (area.spacingAssistantSelected) assisted.push("Spacing Assistant");
+    if (area.lensAssistantSelected) assisted.push("Lens Assistant");
+
+    const hasManual = manual.length > 0;
+    const hasAssisted = assisted.length > 0;
+
+    let label = "Clean Area Pipeline";
+    if (hasManual && hasAssisted) label = "Mixed Scenario";
+    else if (hasManual) label = "Manual Override";
+    else if (hasAssisted) label = "Assisted Scenario";
+
+    const notes = [];
+    if (manual.length) notes.push("Manual changes: " + manual.join(", "));
+    if (assisted.length) notes.push("Assistant-selected values: " + assisted.join(", "));
+    if (area.spacingRevalidationRequired) notes.push("Spacing revalidation flagged by Lens Selection");
+    if (!notes.length) notes.push("No manual or assistant branch metadata recorded for this area.");
+
+    return { label, notes };
+  }
+
+  function areaNextActions(area, rows, integrity, overallStatus) {
+    const notes = [];
+    const missing = rows.filter((row) => !row.complete).map((row) => row.label);
+
+    if (area.spacingRevalidationRequired) {
+      notes.push("Return to Camera Spacing with the selected lens/HFOV, then rerun downstream validation for this area.");
+    }
+
+    if (overallStatus === "RISK") {
+      notes.push("One or more checks are in Risk. Review the Risk row first before treating this area as ready.");
+    } else if (overallStatus === "WATCH") {
+      notes.push("One or more checks are in Watch. Confirm the tradeoff is intentional or rerun the affected tool.");
+    }
+
+    if (missing.length) {
+      notes.push("Missing results: " + missing.slice(0, 4).join(", ") + (missing.length > 4 ? ", and " + (missing.length - 4) + " more" : "") + ".");
+    }
+
+    if (integrity.label === "Manual Override") {
+      notes.push("Manual override area: results are valid for this local what-if branch unless upstream values are recalculated.");
+    } else if (integrity.label === "Assisted Scenario") {
+      notes.push("Assisted scenario area: confirm the selected assistant branch before final reporting.");
+    } else if (integrity.label === "Mixed Scenario") {
+      notes.push("Mixed scenario area: both manual and assistant changes are present; review assumptions before final export.");
+    }
+
+    if (!notes.length) notes.push("Area appears ready for summary review. Final math/logic audit is still recommended before production use.");
+
+    return notes;
+  }
+
+  function areaSummaryModel(area) {
+    const rows = areaToolRows(area);
+    const completed = rows.filter((row) => row.complete).length;
+    const statuses = rows.filter((row) => row.complete).map((row) => row.status);
+    const overallStatus = worstStatus(statuses);
+    const integrity = areaSourceIntegrity(area);
+
+    return {
+      area,
+      rows,
+      completed,
+      total: rows.length,
+      completionPct: rows.length ? Math.round((completed / rows.length) * 100) : 0,
+      overallStatus,
+      integrity,
+      nextActions: areaNextActions(area, rows, integrity, overallStatus)
+    };
+  }
+
+  function physicalSecuritySummaryModel(ledger) {
+    const areas = (ledger?.areas || []).map(areaSummaryModel);
+    const totalCameras = areas.reduce((sum, item) => sum + (Number(item.area.cameraCount || item.area.targetCameraCount || 0) || 0), 0);
+    const completeAreas = areas.filter((item) => item.completionPct === 100).length;
+    const attentionAreas = areas.filter((item) => item.overallStatus === "RISK" || item.overallStatus === "WATCH" || item.area.spacingRevalidationRequired).length;
+    const integrityStates = Array.from(new Set(areas.map((item) => item.integrity.label)));
+
+    return {
+      generatedAt: new Date().toISOString(),
+      areaCount: areas.length,
+      totalCameras,
+      completeAreas,
+      attentionAreas,
+      integrityStates,
+      areas
+    };
+  }
+
+  function metricHtml(label, value, note) {
+    return '' +
+      '<div class="area-summary-metric">' +
+        '<span class="area-summary-label">' + escapeHtml(label) + '</span>' +
+        '<span class="area-summary-value">' + escapeHtml(value) + '</span>' +
+        (note ? '<div class="area-summary-note">' + escapeHtml(note) + '</div>' : '') +
+      '</div>';
+  }
+
+  function areaSummaryHtml(model) {
+    if (!model || !model.areas.length) {
+      return '<div class="area-summary-warn">No areas have been created yet. Add an area before generating the summary.</div>';
+    }
+
+    const rollup = '' +
+      '<div class="area-summary-rollup">' +
+        metricHtml("Areas", String(model.areaCount), "Defined planning zones.") +
+        metricHtml("Planned Cameras", String(model.totalCameras), "Sum of planned or target camera counts.") +
+        metricHtml("Complete Areas", model.completeAreas + " / " + model.areaCount, "Areas with all tracked tool rows recorded.") +
+        metricHtml("Needs Attention", String(model.attentionAreas), "Watch/Risk/revalidation areas.") +
+      '</div>';
+
+    const zones = model.areas.map((item) => {
+      const area = item.area;
+      const cameraText = area.cameraCount ? area.cameraCount + " planned" : (area.targetCameraCount ? area.targetCameraCount + " target" : "not set");
+      const rows = item.rows.map((row) => {
+        return '' +
+          '<tr>' +
+            '<td>' + escapeHtml(row.label) + '</td>' +
+            '<td>' + escapeHtml(row.complete ? normalizeStatus(row.status) : "PENDING") + '</td>' +
+            '<td>' + escapeHtml(row.detail || "") + '</td>' +
+          '</tr>';
+      }).join("");
+
+      return '' +
+        '<article class="area-summary-zone">' +
+          '<div class="area-summary-zone-head">' +
+            '<div>' +
+              '<span class="area-summary-label">' + escapeHtml(area.areaType || "Area") + '</span>' +
+              '<h4>' + escapeHtml(area.name || "Area") + '</h4>' +
+              '<div class="area-summary-note">Length ' + escapeHtml(fmtFt(area.protectedLengthFt)) + ' | Distance ' + escapeHtml(fmtFt(area.distanceToTargetPlaneFt)) + ' | HFOV ' + escapeHtml(fmtDeg(area.assumedHfovDeg)) + ' | Cameras ' + escapeHtml(cameraText) + '</div>' +
+            '</div>' +
+            '<div class="pill-row">' +
+              '<span class="pill">' + escapeHtml(item.overallStatus) + '</span>' +
+              '<span class="pill">' + escapeHtml(item.completionPct + "% complete") + '</span>' +
+              '<span class="pill">' + escapeHtml(item.integrity.label) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<table class="area-summary-table">' +
+            '<thead><tr><th>Check</th><th>Status</th><th>Result</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
+          '</table>' +
+          '<div class="area-summary-warn"><strong>Next action:</strong> ' + escapeHtml(item.nextActions.join(" ")) + '</div>' +
+          '<div class="area-summary-note"><strong>Source integrity:</strong> ' + escapeHtml(item.integrity.notes.join(" ")) + '</div>' +
+        '</article>';
+    }).join("");
+
+    return rollup + '<div class="area-summary-zones">' + zones + '</div>';
+  }
+
+  function renderAreaSummary(ledger) {
+    if (!els.areaSummary) return;
+    const model = physicalSecuritySummaryModel(ledger);
+    els.areaSummary.innerHTML = areaSummaryHtml(model);
+    window.ScopedLabsPhysicalSecurityAreaSummary = model;
+  }
+
+  function printAreaSummary() {
+    document.body.classList.add("print-area-summary");
+    window.print();
+    setTimeout(() => document.body.classList.remove("print-area-summary"), 250);
+  }
+
+  function copyAreaSummaryJson() {
+    const model = window.ScopedLabsPhysicalSecurityAreaSummary || physicalSecuritySummaryModel(state()?.readLedger() || { areas: [] });
+    const text = JSON.stringify(model, null, 2);
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => status("Area summary data copied."))
+        .catch(() => status("Could not copy automatically. Use browser dev tools to read window.ScopedLabsPhysicalSecurityAreaSummary."));
+      return;
+    }
+
+    status("Copy unavailable. Use window.ScopedLabsPhysicalSecurityAreaSummary in the browser console.");
+  }
+
   function render() {
     const api = state();
     if (!api) return;
@@ -286,6 +590,8 @@
     if (els.areaCountPill) {
       els.areaCountPill.textContent = ledger.areas.length + " area" + (ledger.areas.length === 1 ? "" : "s");
     }
+
+    renderAreaSummary(ledger);
 
     if (!els.areaList) return;
 
@@ -297,7 +603,7 @@
         '<article class="area-card' + activeClass + '">' +
           '<div class="pill-row">' +
             '<span class="pill">' + (area.id === ledger.activeAreaId ? 'Active Area' : 'Area') + '</span>' +
-            '<span class="pill">' + escapeHtml(area.status || 'PLANNING') + '</span>' +
+            '<span class="pill">' + escapeHtml(formatAreaWorkflowStatus(area.status)) + '</span>' +
           '</div>' +
           '<h3 class="h3">' + escapeHtml(area.name) + '</h3>' +
           '<p class="muted" style="margin-bottom:0;">' + escapeHtml(area.areaType) + ' | ' + escapeHtml(area.detailGoal) + '</p>' +
@@ -400,6 +706,8 @@
     els.newArea?.addEventListener("click", newArea);
     els.resetAreas?.addEventListener("click", resetAreas);
     els.continueBtn?.addEventListener("click", continueFlow);
+    els.printSummary?.addEventListener("click", printAreaSummary);
+    els.copySummaryJson?.addEventListener("click", copyAreaSummaryJson);
   }
 
   function init() {
