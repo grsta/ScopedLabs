@@ -2234,6 +2234,40 @@ function assistantStatusClass(data) {
     };
   }
 
+  function updateActiveAreaFromSpacing(data) {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.updateActiveAreaResult !== "function") return;
+
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const assistantScenarioMeta = assistantScenarioMetadata();
+    const sourceMode = sourceModeForCurrentResult(manualOverrideMeta);
+
+    api.updateActiveAreaResult({
+      status: "IN PROGRESS",
+      protectedLengthFt: data.len,
+      distanceToTargetPlaneFt: data.dist,
+      assumedHfovDeg: data.hfov,
+      overlapTargetPct: data.ovPct,
+      cameraCount: data.cams,
+      spacingFt: data.spacing,
+      spacingRatio: data.ratio,
+      spacingClass: data.spacingClass,
+      spacingStatus: data.status,
+      spacingRawCoverageWidthFt: data.rawWidth,
+      spacingUsableWidthFt: data.usableWidth,
+      spacingSourceMode: sourceMode,
+      spacingAssistantSelected: !!assistantScenarioMeta,
+      spacingAssistantScenario: assistantScenarioMeta,
+      spacingManualOverrides: manualOverrideMeta,
+      spacingInterpretation: data.interpretation,
+      spacingDominantConstraint: data.dominantConstraint,
+      spacingGuidance: data.guidance,
+      spacingUpdatedAt: new Date().toISOString()
+    });
+  }
+
+  
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
     const assistantScenarioMeta = assistantScenarioMetadata();
@@ -2260,6 +2294,9 @@ function assistantStatusClass(data) {
         manualOverrides: manualOverrideMeta
       }
     });
+  
+
+    updateActiveAreaFromSpacing(data);
   }
 
   function renderError(message) {

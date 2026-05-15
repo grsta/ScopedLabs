@@ -166,6 +166,18 @@
       });
     }
 
+    if (area.spacingStatus || area.spacingClass || area.cameraCount || area.spacingFt) {
+      items.push({
+        label: "Spacing",
+        value: (area.spacingStatus || "Recorded") + (area.spacingClass ? " / " + area.spacingClass : ""),
+        detail: area.cameraCount
+          ? area.cameraCount + " camera" + (Number(area.cameraCount) === 1 ? "" : "s") + " @ " + fmtFt(area.spacingFt) + " spacing"
+          : area.spacingFt
+            ? "Spacing: " + fmtFt(area.spacingFt)
+            : "Camera spacing result saved"
+      });
+    }
+
     if (!items.length) {
       return '' +
         '<div class="area-meta" style="margin-top:10px;">' +
@@ -198,7 +210,7 @@
 
     els.areaList.innerHTML = ledger.areas.map((area) => {
       const activeClass = area.id === ledger.activeAreaId ? " is-active" : "";
-      const cameraText = area.targetCameraCount ? area.targetCameraCount + " target" : "not set";
+      const cameraText = area.cameraCount ? area.cameraCount + " planned" : (area.targetCameraCount ? area.targetCameraCount + " target" : "not set");
 
       return '' +
         '<article class="area-card' + activeClass + '">' +
@@ -212,7 +224,7 @@
             '<div><strong>Protected length</strong>' + escapeHtml(fmtFt(area.protectedLengthFt)) + '</div>' +
             '<div><strong>Distance</strong>' + escapeHtml(fmtFt(area.distanceToTargetPlaneFt)) + '</div>' +
             '<div><strong>Assumed HFOV</strong>' + escapeHtml(fmtDeg(area.assumedHfovDeg)) + '</div>' +
-            '<div><strong>Target cameras</strong>' + escapeHtml(cameraText) + '</div>' +
+            '<div><strong>Cameras</strong>' + escapeHtml(cameraText) + '</div>' +
           '</div>' +
           areaProgressHtml(area) +
           '<div class="btn-row" style="margin-top:12px;">' +
