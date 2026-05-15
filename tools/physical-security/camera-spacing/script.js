@@ -1007,10 +1007,7 @@ function escapeHtml(value) {
           { label: "HFOV", value: fmt(data.hfov, 1) + " deg", note: "Horizontal field of view." }
         ]
       },
-      onSelectCurrent: () => {
-        activeAssistantScenario = null;
-        calc();
-      },
+      onSelectCurrent: () => { restoreSpacingAssistantBaseline(); },
       onApplyScenario: applyAssistantScenario,
       onApplyCustom: (values) => {
         const scenario = factorySpacingMakeCustomScenario(data, values);
@@ -1018,6 +1015,59 @@ function escapeHtml(value) {
       }
     };
   }
+
+    let assistantBaselineData = null;
+
+  function snapshotSpacingAssistantData(data) {
+    if (!data || typeof data !== "object") return null;
+
+    return {
+      ...data,
+      len: Number(data.len),
+      dist: Number(data.dist),
+      hfov: Number(data.hfov),
+      ovPct: Number(data.ovPct),
+      rawWidth: Number(data.rawWidth),
+      usableWidth: Number(data.usableWidth),
+      cams: Number(data.cams),
+      spacing: Number(data.spacing),
+      ratio: Number(data.ratio),
+      spacingClass: data.spacingClass,
+      status: data.status
+    };
+  }
+
+  function setSpacingAssistantBaseline(data) {
+    if (!assistantBaselineData || !activeAssistantScenario) {
+      assistantBaselineData = snapshotSpacingAssistantData(data);
+    }
+  }
+
+  function getSpacingAssistantScenarioBase(data) {
+    return snapshotSpacingAssistantData(assistantBaselineData || data);
+  }
+
+  function restoreSpacingAssistantBaseline() {
+    const base = getSpacingAssistantScenarioBase(null);
+
+    if (!base) {
+      activeAssistantScenario = null;
+      calc();
+      return;
+    }
+
+    activeAssistantScenario = null;
+
+    if (els.len && Number.isFinite(base.len)) els.len.value = String(Number(base.len.toFixed(1)));
+    if (els.dist && Number.isFinite(base.dist)) els.dist.value = String(Number(base.dist.toFixed(1)));
+    if (els.hfov && Number.isFinite(base.hfov)) els.hfov.value = String(Number(base.hfov.toFixed(1)));
+    if (els.ov && Number.isFinite(base.ovPct)) els.ov.value = String(Number(base.ovPct.toFixed(1)));
+
+    renderFlowNote();
+    calc();
+  }
+
+
 
   function buildAssistantScenarios(data) {
     const scenarios = [];
@@ -1849,7 +1899,10 @@ function assistantStatusClass(data) {
   function renderSpacingAssistant(data) {
     if (!els.assistant) return;
 
-    latestAssistantScenarios = buildAssistantScenarios(data);
+    setSpacingAssistantBaseline(data);
+
+    const scenarioBase = getSpacingAssistantScenarioBase(data);
+    latestAssistantScenarios = buildAssistantScenarios(scenarioBase || data);
 
     if (!window.ScopedLabsDesignAssistant || typeof window.ScopedLabsDesignAssistant.render !== "function") {
       els.assistant.hidden = false;
@@ -1979,6 +2032,8 @@ function assistantStatusClass(data) {
   }
 
   function invalidate({ clearFlow = true } = {}) {
+    assistantBaselineData = null;
+    activeAssistantScenario = null;
     if (clearFlow) {
       sessionStorage.removeItem(FLOW_KEYS.spacing);
       clearDownstream();
@@ -2185,6 +2240,7 @@ function assistantStatusClass(data) {
   }
 
   function reset() {
+    assistantBaselineData = null;
     resetFlowOverrideState();
     clearAssistantScenario();
     hideSpacingAssistant();
