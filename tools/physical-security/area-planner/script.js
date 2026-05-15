@@ -239,6 +239,16 @@
       });
     }
 
+    if (area.faceRecognitionStatus || area.faceRecognitionMaxDistanceFt || area.faceRecognitionDeliveredPpf) {
+      items.push({
+        label: "Face Recognition",
+        value: (area.faceRecognitionStatus || "Recorded") + (area.faceRecognitionClass ? " / " + area.faceRecognitionClass : ""),
+        detail: area.faceRecognitionMaxDistanceFt
+          ? "Max range: " + fmtFt(area.faceRecognitionMaxDistanceFt) + " | delivered " + Number(area.faceRecognitionDeliveredPpf || 0).toFixed(1) + " PPF"
+          : "Face recognition result saved"
+      });
+    }
+
     if (!items.length) {
       return '' +
         '<div class="area-meta" style="margin-top:10px;">' +
