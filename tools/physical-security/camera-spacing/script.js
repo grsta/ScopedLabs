@@ -803,6 +803,78 @@ function escapeHtml(value) {
     );
   }
 
+    function factorySpacingResultSummary(model) {
+    if (!model || model.canApply === false) return "Unavailable";
+
+    return [
+      Number.isFinite(model.cams) ? model.cams + " camera" + (model.cams === 1 ? "" : "s") : null,
+      Number.isFinite(model.spacing) ? fmtFt(model.spacing) + " spacing" : null,
+      Number.isFinite(model.ovPct) ? fmtPct(model.ovPct, 1) + " overlap" : null
+    ].filter(Boolean).join(" | ");
+  }
+
+  function factorySpacingBestScenario(data, scenarios) {
+    const currentPressure = factorySpacingPressureScore(data);
+    const viable = (scenarios || [])
+      .filter((scenario) => scenario && scenario.canApply)
+      .map((scenario) => ({ scenario, pressure: factorySpacingPressureScore(scenario) }))
+      .sort((a, b) => a.pressure - b.pressure);
+
+    const clearlyBetter = viable.find((item) => item.pressure < currentPressure - 1);
+    return clearlyBetter ? clearlyBetter.scenario : viable[0]?.scenario || null;
+  }
+
+  function factorySpacingPrimaryRecommendation(data, scenarios) {
+    const currentPressure = factorySpacingPressureScore(data);
+    const currentSummary = factorySpacingResultSummary(data);
+    const bestScenario = factorySpacingBestScenario(data, scenarios);
+    const bestSummary = bestScenario ? factorySpacingResultSummary(bestScenario) : currentSummary;
+
+    if (data.status === "HEALTHY" && data.spacingClass !== "Wide Spacing") {
+      return {
+        scenarioId: "current",
+        action: "Keep Current Baseline",
+        buttonLabel: "Keep Current Baseline",
+        reason: "Actual spacing is inside the usable coverage width and the overlap reserve is not forcing a correction.",
+        expectedResult: currentSummary,
+        confidence: "No correction required",
+        nextStep: "Blind Spot Check",
+        detail: "The assistant is not recommending a change because the current spacing path is already acceptable for downstream blind-spot validation."
+      };
+    }
+
+    if (bestScenario && factorySpacingPressureScore(bestScenario) < currentPressure - 1) {
+      const action = bestScenario.label || bestScenario.actionLabel || "Apply Recommended Correction";
+
+      return {
+        scenarioId: bestScenario.id,
+        action,
+        buttonLabel: bestScenario.actionLabel || action,
+        reason: data.spacingClass === "Wide Spacing"
+          ? "Actual spacing is too close to the usable coverage width. This is the best local correction the assistant can model from the current inputs."
+          : data.spacingClass === "Tight Spacing"
+            ? "The current design is conservative and camera-count pressure is higher than necessary. This correction improves balance without hiding the tradeoff."
+            : "This correction produces the lowest planning pressure among the available local spacing branches.",
+        expectedResult: bestSummary,
+        confidence: "Best local correction",
+        nextStep: "Validate in Blind Spot Check",
+        detail: "This recommendation is shown before secondary options so the user has a clear primary path instead of a list of equal guesses."
+      };
+    }
+
+    return {
+      scenarioId: null,
+      action: "Revisit Upstream Geometry",
+      reason: "None of the local spacing branches meaningfully improve this result with the current protected length, distance, HFOV, and overlap assumptions.",
+      expectedResult: "Recalculate Coverage Area or revise the protected run before using this spacing result downstream.",
+      confidence: "Upstream correction required",
+      nextStep: "Return to Coverage Area",
+      detail: "The assistant is not hiding this as a button because the current issue cannot be fixed cleanly inside Camera Spacing alone."
+    };
+  }
+
+
+
   function factoryCameraSpacingAssistantModel(data) {
     const scenarios = latestAssistantScenarios || [];
     const m = factorySpacingPressureMetrics(data);
@@ -834,6 +906,7 @@ function escapeHtml(value) {
       currentLabel: "Custom Design",
       scenarios,
       modeNoticeHtml: assistantModeHtml(),
+      recommendation: factorySpacingPrimaryRecommendation(data, scenarios),
       custom: {
         kicker: "Custom planning assumptions",
         title: "Edit the spacing assumptions without leaving the assistant",
@@ -919,7 +992,7 @@ function escapeHtml(value) {
       controls: {
         kicker: "Correction controls",
         title: "Choose a spacing path",
-        copy: "Each action changes the actual spacing inputs, recalculates the tool, and marks the result as an assisted scenario for downstream handoff.",
+        copy: "Secondary options remain available below the primary recommendation. Use them only when the project priority differs from the assistant selected path.",
         pill: "Correction Path"
       },
       carryForward: {

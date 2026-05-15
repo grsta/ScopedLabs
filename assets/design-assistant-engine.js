@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const STYLE_ID = "scopedlabs-design-assistant-engine-001";
+  const STYLE_ID = "scopedlabs-design-assistant-engine-002";
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -103,6 +103,33 @@
     }).join("");
   }
 
+    function recommendationCard(model) {
+    const rec = model.recommendation;
+    if (!rec) return "";
+
+    const action = rec.action || rec.actionLabel || "Review recommendation";
+    const reason = rec.reason || "The assistant selected this as the most appropriate next step for the current design state.";
+    const expected = rec.expectedResult || "Review the corrected result before carrying it forward.";
+    const next = rec.nextStep || "Validate the selected result in the next pipeline step.";
+    const confidence = rec.confidence || "Primary recommendation";
+    const canApply = rec.scenarioId !== null && rec.scenarioId !== undefined && rec.canApply !== false;
+
+    return "" +
+      '<div class="lens-advice-card sl-section sl-primary-recommendation">' +
+        head(rec.kicker || "Recommended correction", action, rec.summary || "The assistant selects one primary path first so the user does not have to guess between equal options.", { label: rec.pill || "Recommended", status: rec.status || "HEALTHY" }) +
+        '<div class="lens-target-strip">' +
+          miniCard({ label: "Reason", value: reason, note: "Why this is the primary path." }) +
+          miniCard({ label: "Expected result", value: expected, note: "What should change after applying it." }) +
+          miniCard({ label: "Confidence", value: confidence, note: "How the assistant classified this correction." }) +
+          miniCard({ label: "Next step", value: next, note: "Where this result should be validated." }) +
+        '</div>' +
+        (rec.detail ? '<div class="sl-banner">' + escapeHtml(rec.detail) + '</div>' : "") +
+        (canApply ? '<div class="btn-row" style="margin-top:12px;"><button class="btn btn-primary" type="button" data-sl-apply-recommendation="' + escapeHtml(rec.scenarioId) + '">' + escapeHtml(rec.buttonLabel || action) + '</button></div>' : "") +
+      '</div>';
+  }
+
+
+
   function render(model) {
     injectStyles();
 
@@ -136,6 +163,7 @@
         pills.map((pill) => "<button class=\"sl-scenario-pill" + (pill.id === currentScenarioId ? " active" : "") + "\" type=\"button\" data-sl-scenario-pill=\"" + escapeHtml(pill.id) + "\">" + escapeHtml(pill.label) + "</button>").join("") +
       "</div>" +
       (model.modeNoticeHtml || "") +
+      recommendationCard(model) +
       "<div class=\"lens-advice-card sl-section\">" +
         head(model.custom?.kicker, model.custom?.title, model.custom?.copy, { label: model.custom?.pill || "Custom What-If", status: "HEALTHY" }) +
         "<div class=\"sl-control-grid\">" +
@@ -212,6 +240,20 @@
         if (scenario) model.onApplyScenario?.(scenario);
       });
     });
+
+    const recommendationButton = mount.querySelector("[data-sl-apply-recommendation]");
+    if (recommendationButton) {
+      recommendationButton.addEventListener("click", () => {
+        const id = recommendationButton.dataset.slApplyRecommendation;
+        if (id === "current") {
+          model.onSelectCurrent?.();
+          return;
+        }
+
+        const scenario = scenarios.find((item) => item.id === id);
+        if (scenario) model.onApplyScenario?.(scenario);
+      });
+    }
 
     const customButton = mount.querySelector("[data-sl-apply-custom]");
     if (customButton) {
