@@ -144,6 +144,16 @@
       });
     }
 
+    if (area.fovStatus || area.fovFitClass) {
+      items.push({
+        label: "Field of View",
+        value: (area.fovStatus || "Recorded") + (area.fovFitClass ? " / " + area.fovFitClass : ""),
+        detail: area.estimatedSceneWidthFt
+          ? "Scene width: " + fmtFt(area.estimatedSceneWidthFt) + " at " + fmtDeg(area.assumedHfovDeg)
+          : "FOV geometry result saved"
+      });
+    }
+
     if (!items.length) {
       return '' +
         '<div class="area-meta" style="margin-top:10px;">' +
