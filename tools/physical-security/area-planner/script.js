@@ -98,31 +98,81 @@
       .replace(/'/g, "&#039;");
   }
 
+  function formNumber(value) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return null;
+    const number = Number(raw);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function setBlankAreaForm(nextName = "") {
+    editingAreaId = null;
+    els.areaName.value = "";
+    els.areaName.placeholder = nextName || "Example: Front Door";
+    els.areaType.value = "General Coverage";
+    els.protectedLengthFt.value = "";
+    els.protectedLengthFt.placeholder = "Example: 100";
+    els.distanceToTargetPlaneFt.value = "";
+    els.distanceToTargetPlaneFt.placeholder = "Example: 60";
+    els.assumedHfovDeg.value = "";
+    els.assumedHfovDeg.placeholder = "Example: 90";
+    els.detailGoal.value = "Observation";
+    els.targetCameraCount.value = "";
+    els.targetCameraCount.placeholder = "Optional";
+  }
+
+  function validateAreaForm() {
+    const missing = [];
+
+    if (!String(els.areaName.value || "").trim()) missing.push("Area Name");
+
+    const protectedLength = formNumber(els.protectedLengthFt.value);
+    const distance = formNumber(els.distanceToTargetPlaneFt.value);
+    const hfov = formNumber(els.assumedHfovDeg.value);
+    const targetCameras = formNumber(els.targetCameraCount.value);
+
+    if (!(protectedLength > 0)) missing.push("Protected Length / Scene Width");
+    if (!(distance > 0)) missing.push("Distance to Target Plane");
+    if (!(hfov > 0 && hfov < 180)) missing.push("Starting HFOV Assumption");
+    if (targetCameras !== null && targetCameras < 1) missing.push("Optional Target Camera Count must be 1 or higher");
+
+    if (missing.length) {
+      status("Add valid values for: " + missing.join(", ") + ".");
+      return false;
+    }
+
+    return true;
+  }
+
   function loadAreaToForm(area) {
-    if (!area) return;
+    if (!area) {
+      setBlankAreaForm();
+      return;
+    }
 
     editingAreaId = area.id;
-    els.areaName.value = area.name || "Area 1";
+    els.areaName.value = area.name || "";
     els.areaType.value = area.areaType || "General Coverage";
-    els.protectedLengthFt.value = String(area.protectedLengthFt ?? 100);
-    els.distanceToTargetPlaneFt.value = String(area.distanceToTargetPlaneFt ?? 80);
-    els.assumedHfovDeg.value = String(area.assumedHfovDeg ?? 70);
+    els.protectedLengthFt.value = area.protectedLengthFt ? String(area.protectedLengthFt) : "";
+    els.distanceToTargetPlaneFt.value = area.distanceToTargetPlaneFt ? String(area.distanceToTargetPlaneFt) : "";
+    els.assumedHfovDeg.value = area.assumedHfovDeg ? String(area.assumedHfovDeg) : "";
     els.detailGoal.value = area.detailGoal || "Observation";
     els.targetCameraCount.value = area.targetCameraCount ? String(area.targetCameraCount) : "";
   }
 
   function areaFromForm() {
-    const id = editingAreaId || (String(els.areaName.value || "Area").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") + "-" + Date.now());
+    const name = String(els.areaName.value || "").trim();
+    const id = editingAreaId || (name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") + "-" + Date.now());
 
     return {
       id,
-      name: els.areaName.value || "Area",
+      name,
       areaType: els.areaType.value || "General Coverage",
-      protectedLengthFt: num(els.protectedLengthFt.value, 100),
-      distanceToTargetPlaneFt: num(els.distanceToTargetPlaneFt.value, 80),
-      assumedHfovDeg: num(els.assumedHfovDeg.value, 70),
+      protectedLengthFt: formNumber(els.protectedLengthFt.value),
+      distanceToTargetPlaneFt: formNumber(els.distanceToTargetPlaneFt.value),
+      assumedHfovDeg: formNumber(els.assumedHfovDeg.value),
       detailGoal: els.detailGoal.value || "Observation",
-      targetCameraCount: num(els.targetCameraCount.value, null),
+      targetCameraCount: formNumber(els.targetCameraCount.value),
       sourceMode: "area-planner",
       status: "PLANNING"
     };
@@ -660,27 +710,23 @@
 
   function saveArea() {
     const api = state();
-    if (!api) return;
+    if (!api) return false;
+
+    if (!validateAreaForm()) return false;
 
     const area = areaFromForm();
     api.upsertArea(area);
     editingAreaId = area.id;
     status(area.name + " saved as the active planning area.");
     render();
+    return true;
   }
 
   function newArea() {
-    editingAreaId = null;
     const ledger = state()?.readLedger();
     const next = (ledger?.areas?.length || 0) + 1;
-    els.areaName.value = "Area " + next;
-    els.areaType.value = "General Coverage";
-    els.protectedLengthFt.value = "100";
-    els.distanceToTargetPlaneFt.value = "80";
-    els.assumedHfovDeg.value = "70";
-    els.detailGoal.value = "Observation";
-    els.targetCameraCount.value = "";
-    status("Enter assumptions for Area " + next + ", then save it.");
+    setBlankAreaForm("Example: Area " + next);
+    status("Enter assumptions for the new area, then save it.");
   }
 
   function resetAreas() {
@@ -691,13 +737,13 @@
     editingAreaId = null;
     const api = state();
     if (api) api.writeLedger(api.readLedger());
-    loadAreaToForm(api?.getActiveArea());
+    setBlankAreaForm("Example: Front Door");
     status("Area plan reset to a single starter area.");
     render();
   }
 
   function continueFlow() {
-    saveArea();
+    if (!saveArea()) return;
     window.location.href = NEXT_URL;
   }
 
