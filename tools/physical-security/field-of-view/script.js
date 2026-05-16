@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
@@ -61,7 +61,8 @@
   }
 
   function fmtDeg(value, digits = 1) {
-    return Number.isFinite(value) ? `${value.toFixed(digits)}°` : "—";
+    const degree = String.fromCharCode(176);
+    return Number.isFinite(value) ? value.toFixed(digits) + degree : "?";
   }
 
   function classifyFit(coverageRatio) {
@@ -122,6 +123,8 @@
 
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
     if (field === "h") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+    if (field === "scene") return number.toFixed(1).replace(/\.0$/, "") + " ft";
+    if (field === "hfov") return number.toFixed(1).replace(/\.0$/, "") + " deg";
 
     return String(number);
   }
@@ -129,6 +132,8 @@
   function overrideLabel(field) {
     if (field === "dist") return "Target distance";
     if (field === "h") return "Mount height";
+    if (field === "scene") return "Target scene width";
+    if (field === "hfov") return "Horizontal FOV";
     return field;
   }
 
@@ -204,11 +209,96 @@
     return '<div class="flow-override-note" role="note" aria-label="Manual override warning"><strong>Manual override active:</strong> ' + text + '. Results are valid for this local what-if branch.</div>';
   }
 
+  function firstFiniteFovValue(...values) {
+    for (const value of values) {
+      const number = Number(value);
+      if (Number.isFinite(number) && number > 0) return number;
+    }
+
+    return null;
+  }
+
+  function activeAreaForFieldOfView() {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.getActiveArea !== "function") return null;
+    return api.getActiveArea();
+  }
+
+  function applyFovValue(el, value) {
+    const number = Number(value);
+    if (!el || !Number.isFinite(number) || number <= 0) return false;
+    el.value = String(number);
+    return true;
+  }
+
+  function hydrateFovInputsFromActiveArea() {
+    const area = activeAreaForFieldOfView();
+    if (!area) return;
+
+    const sceneWidth = firstFiniteFovValue(
+      area.targetSceneWidthFt,
+      area.protectedLengthFt,
+      area.sceneWidthFt
+    );
+
+    const hfov = firstFiniteFovValue(
+      area.assumedHfovDeg,
+      area.horizontalFovDeg,
+      area.hfovDeg
+    );
+
+    const distance = firstFiniteFovValue(
+      area.mountingTargetDistanceFt,
+      area.distanceToTargetPlaneFt,
+      area.targetDistanceFt
+    );
+
+    const mountHeight = firstFiniteFovValue(
+      area.mountingHeightFt,
+      area.mountHeightFt
+    );
+
+    if (sceneWidth !== null) {
+      captureImportedFlowValue("scene", sceneWidth);
+      applyFovValue(els.scene, sceneWidth);
+    }
+
+    if (hfov !== null) {
+      captureImportedFlowValue("hfov", hfov);
+      applyFovValue(els.hfov, hfov);
+    }
+
+    if (distance !== null) {
+      captureImportedFlowValue("dist", distance);
+      applyFovValue(els.dist, distance);
+    }
+
+    if (mountHeight !== null) {
+      captureImportedFlowValue("h", mountHeight);
+      applyFovValue(els.h, mountHeight);
+    }
+  }
+
+  function forceFovContinueVisible() {
+    if (els.continueWrap) {
+      els.continueWrap.hidden = false;
+      els.continueWrap.removeAttribute("hidden");
+      els.continueWrap.style.display = "flex";
+      els.continueWrap.style.marginTop = "0";
+    }
+
+    if (els.continueBtn) {
+      els.continueBtn.hidden = false;
+      els.continueBtn.removeAttribute("hidden");
+    }
+  }
+
   function applyDefaults() {
-    els.dist.value = String(DEFAULTS.dist);
-    els.hfov.value = String(DEFAULTS.hfov);
-    els.scene.value = String(DEFAULTS.scene);
-    els.h.value = String(DEFAULTS.h);
+    els.dist.value = "";
+    els.hfov.value = "";
+    els.scene.value = "";
+    els.h.value = "";
+    hydrateFovInputsFromActiveArea();
   }
 
   function renderFlowNote() {
@@ -275,18 +365,27 @@
   }
 
   function getInputs() {
-    const dist = num(els.dist.value);
-    const hfov = num(els.hfov.value);
-    const scene = num(els.scene.value);
-    const h = num(els.h.value);
+    const distRaw = String(els.dist?.value || "").trim();
+    const hfovRaw = String(els.hfov?.value || "").trim();
+    const sceneRaw = String(els.scene?.value || "").trim();
+    const hRaw = String(els.h?.value || "").trim();
+
+    const dist = distRaw === "" ? NaN : num(distRaw);
+    const hfov = hfovRaw === "" ? NaN : num(hfovRaw);
+    const scene = sceneRaw === "" ? NaN : num(sceneRaw);
+    const h = hRaw === "" ? NaN : num(hRaw);
 
     if (
+      distRaw === "" ||
+      hfovRaw === "" ||
+      sceneRaw === "" ||
+      hRaw === "" ||
       !Number.isFinite(dist) || dist <= 0 ||
       !Number.isFinite(hfov) || hfov <= 0 || hfov >= 180 ||
-      !Number.isFinite(scene) || scene < 0 ||
-      !Number.isFinite(h) || h < 0
+      !Number.isFinite(scene) || scene <= 0 ||
+      !Number.isFinite(h) || h <= 0
     ) {
-      return { ok: false, message: "Enter valid values and press Calculate." };
+      return { ok: false, message: "Enter target distance, horizontal FOV, target scene width, and mount height before calculating." };
     }
 
     return { ok: true, dist, hfov, scene, h };
@@ -393,12 +492,15 @@
     const api = window.ScopedLabsPhysicalSecurityAreaState;
     if (!api || typeof api.updateActiveAreaResult !== "function") return;
 
-    api.updateActiveAreaResult({
+    const overrides = Array.isArray(data.manualOverrides) ? data.manualOverrides : [];
+    const hasOverride = (field) => overrides.some((item) => item.field === field);
+
+    const payload = {
       status: "IN PROGRESS",
-      distanceToTargetPlaneFt: data.dist,
-      assumedHfovDeg: data.hfov,
-      targetSceneWidthFt: data.scene,
-      mountingHeightFt: data.h,
+      fovTargetDistanceFt: data.dist,
+      fovAssumedHfovDeg: data.hfov,
+      fovTargetSceneWidthFt: data.scene,
+      fovMountHeightFt: data.h,
       estimatedSceneWidthFt: data.sceneWidth,
       halfWidthFt: data.halfWidth,
       coverageRatio: data.coverageRatio,
@@ -407,17 +509,29 @@
       fovLensGuidance: data.lensText,
       fovDiagonalReachFt: data.diagonalReach,
       fovWidthPerFootHeight: data.widthPerFootHeight,
+      fovSourceMode: data.sourceMode,
+      fovManualOverrides: overrides,
       fovInterpretation: data.interpretation,
       fovDominantConstraint: data.dominantConstraint,
       fovGuidance: data.guidance,
       fovUpdatedAt: new Date().toISOString()
-    });
+    };
+
+    if (!hasOverride("dist")) payload.distanceToTargetPlaneFt = data.dist;
+    if (!hasOverride("hfov")) payload.assumedHfovDeg = data.hfov;
+    if (!hasOverride("scene")) payload.targetSceneWidthFt = data.scene;
+    if (!hasOverride("h")) payload.mountingHeightFt = data.h;
+
+    api.updateActiveAreaResult(payload);
   }
 
   
 
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
+    data.sourceMode = manualOverrideMeta.length ? "manual-override" : "pipeline";
+    data.manualOverrides = manualOverrideMeta;
+
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.fov, {
       category: CATEGORY,
       step: STEP,
@@ -436,11 +550,10 @@
         widthPerFootHeight: data.widthPerFootHeight,
         interpretation: data.interpretation,
         guidance: data.guidance,
-        sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
+        sourceMode: data.sourceMode,
         manualOverrides: manualOverrideMeta
       }
     });
-  
 
     updateActiveAreaFromFov(data);
   }
@@ -476,6 +589,7 @@
 
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+    forceFovContinueVisible();
   }
 
   function calc() {
@@ -525,6 +639,7 @@
     if (year) year.textContent = new Date().getFullYear();
 
     bind();
+    hydrateFovInputsFromActiveArea();
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
