@@ -213,6 +213,132 @@
         box-shadow: none !important;
       }
     }
+
+
+    /* ScopedLabs print-safe area summary report */
+    @media print {
+      @page {
+        size: auto;
+        margin: 0.55in;
+      }
+
+      html,
+      body,
+      body.print-area-summary {
+        background: #fff !important;
+        color: #111 !important;
+        -webkit-print-color-adjust: economy !important;
+        print-color-adjust: economy !important;
+      }
+
+      body.print-area-summary *,
+      body.print-area-summary *::before,
+      body.print-area-summary *::after {
+        background-image: none !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        filter: none !important;
+        backdrop-filter: none !important;
+      }
+
+      body.print-area-summary .site-header,
+      body.print-area-summary .crumbs,
+      body.print-area-summary #pipeline,
+      body.print-area-summary #lockedCard,
+      body.print-area-summary #toolCard > h2,
+      body.print-area-summary #toolCard > p,
+      body.print-area-summary #toolCard > .form-grid,
+      body.print-area-summary #toolCard > .btn-row,
+      body.print-area-summary #areaStatus,
+      body.print-area-summary #areaList,
+      body.print-area-summary #next-step-row,
+      body.print-area-summary .site-footer,
+      body.print-area-summary #printAreaSummary,
+      body.print-area-summary #copyAreaSummaryJson {
+        display: none !important;
+      }
+
+      body.print-area-summary main,
+      body.print-area-summary .container,
+      body.print-area-summary #toolCard,
+      body.print-area-summary #areaSummaryCard {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: #fff !important;
+        color: #111 !important;
+      }
+
+      body.print-area-summary #areaSummaryCard {
+        page-break-inside: auto;
+      }
+
+      body.print-area-summary #areaSummaryCard h3,
+      body.print-area-summary #areaSummaryCard h4,
+      body.print-area-summary #areaSummaryCard p,
+      body.print-area-summary #areaSummaryCard div,
+      body.print-area-summary #areaSummaryCard span,
+      body.print-area-summary #areaSummaryCard td,
+      body.print-area-summary #areaSummaryCard th,
+      body.print-area-summary #areaSummaryCard strong {
+        color: #111 !important;
+      }
+
+      body.print-area-summary .pill-row {
+        display: none !important;
+      }
+
+      body.print-area-summary .area-summary-rollup {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+        margin: 12px 0 18px !important;
+      }
+
+      body.print-area-summary .area-summary-metric,
+      body.print-area-summary .area-summary-zone,
+      body.print-area-summary .area-summary-warn {
+        border: 1px solid #bbb !important;
+        background: #fff !important;
+        color: #111 !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      body.print-area-summary .area-summary-label {
+        color: #333 !important;
+        letter-spacing: .08em !important;
+      }
+
+      body.print-area-summary .area-summary-value {
+        color: #000 !important;
+      }
+
+      body.print-area-summary .area-summary-note,
+      body.print-area-summary .muted {
+        color: #333 !important;
+      }
+
+      body.print-area-summary .area-summary-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+
+      body.print-area-summary .area-summary-table th,
+      body.print-area-summary .area-summary-table td {
+        border-bottom: 1px solid #ccc !important;
+        color: #111 !important;
+      }
+
+      body.print-area-summary .area-summary-table th {
+        background: #f2f2f2 !important;
+        color: #111 !important;
+      }
+    }
+
   </style>
 </head>
 
