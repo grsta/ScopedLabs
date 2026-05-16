@@ -423,45 +423,6 @@
     }
 
     renderFlowNote();
-  } = {}) {
-    if (clearFlow) {
-      sessionStorage.removeItem(FLOW_KEYS.fov);
-      clearDownstream();
-    }
-
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
-      flowKey: FLOW_KEYS.fov,
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      emptyMessage: "Enter values and press Calculate."
-    });
-
-    clearFovGeometryDiagram();
-    renderFlowNote();
-  } = {}) {
-    if (clearFlow) {
-      sessionStorage.removeItem(FLOW_KEYS.fov);
-      clearDownstream();
-    }
-
-    ScopedLabsAnalyzer.invalidate({
-      resultsEl: els.results,
-      analysisEl: els.analysis,
-      continueWrapEl: els.continueWrap,
-      continueBtnEl: els.continueBtn,
-      flowKey: FLOW_KEYS.fov,
-      category: CATEGORY,
-      step: STEP,
-      lane: LANE,
-      emptyMessage: "Enter values and press Calculate."
-    });
-
-    renderFlowNote();
   }
 
   function getInputs() {
