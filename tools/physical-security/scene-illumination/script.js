@@ -687,6 +687,12 @@
 
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+
+    if (els.continueWrap) {
+      els.continueWrap.hidden = false;
+      els.continueWrap.style.display = "flex";
+      els.continueWrap.style.marginTop = "0";
+    }
   }
 
   function calc() {
