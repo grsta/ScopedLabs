@@ -396,6 +396,92 @@
     };
   }
 
+  function pressureFromEffectiveFactor(effectiveFactor) {
+    if (!Number.isFinite(effectiveFactor)) return 100;
+
+    if (effectiveFactor >= 0.55) {
+      return Math.max(0, Math.min(20, ((0.75 - effectiveFactor) / 0.20) * 20));
+    }
+
+    if (effectiveFactor >= 0.40) {
+      return 20 + ((0.55 - effectiveFactor) / 0.15) * 25;
+    }
+
+    return Math.min(100, 45 + ((0.40 - effectiveFactor) / 0.35) * 55);
+  }
+
+  function pressureFromTargetFit(input) {
+    const fc = input.fc;
+    const range = input.targetFootcandleRange;
+
+    if (!Number.isFinite(fc)) return 100;
+
+    if (!range) {
+      if (fc <= 10) return 25;
+      if (fc <= 20) return 45;
+      return 75;
+    }
+
+    if (fc >= range.low && fc <= range.high) {
+      const span = Math.max(0.1, range.high - range.low);
+      return 8 + ((fc - range.low) / span) * 10;
+    }
+
+    if (fc < range.low) {
+      return fc < range.low * 0.5 ? 55 : 35;
+    }
+
+    return fc > range.high * 1.5 ? 70 : 40;
+  }
+
+  function pressureFromOutputLoad(input, effectiveFactor, lumenDensity) {
+    const range = input.targetFootcandleRange;
+
+    if (!Number.isFinite(lumenDensity)) return 100;
+
+    if (range) {
+      const expectedHighDensity = range.high / Math.max(effectiveFactor, 0.05);
+
+      if (lumenDensity <= expectedHighDensity) {
+        return 8 + Math.min(12, (lumenDensity / Math.max(expectedHighDensity, 0.1)) * 12);
+      }
+
+      return Math.min(100, 30 + ((lumenDensity - expectedHighDensity) / Math.max(expectedHighDensity, 0.1)) * 45);
+    }
+
+    if (lumenDensity <= 8) return 20;
+    if (lumenDensity <= 15) return 40;
+    return Math.min(100, 55 + ((lumenDensity - 15) / 15) * 45);
+  }
+
+  function lightingHealthNarrative(input, effectiveFactor, lumenDensity) {
+    const notes = [];
+
+    if (input.footcandleOutsideRange) {
+      notes.push("The target footcandle value is outside the selected lighting-goal range.");
+    }
+
+    if (input.effectiveSourceMode === "manual-override") {
+      notes.push("One or more lighting factor values were manually adjusted away from the selected preset.");
+    }
+
+    if (effectiveFactor < 0.40) {
+      notes.push("The combined utilization and light-loss factor is low, so the useful maintained light is heavily reduced.");
+    } else if (effectiveFactor >= 0.55) {
+      notes.push("The combined utilization and light-loss factor is within a practical planning range.");
+    }
+
+    if (input.targetFootcandleRange && input.fc >= input.targetFootcandleRange.low && input.fc <= input.targetFootcandleRange.high) {
+      notes.push("The selected target is inside the recommended range for this lighting goal.");
+    }
+
+    if (!notes.length) {
+      notes.push("Lighting assumptions are recorded for downstream camera planning.");
+    }
+
+    return notes.join(" ");
+  }
+
   function calculateModel() {
     const input = getInputs();
     if (!input.ok) return input;
@@ -409,14 +495,14 @@
     const interpretationBase = suitability(input.fc);
     const guidance = nextStepGuidance(input.fc, lumens, area);
 
-    const factorPressureMetric = Math.min(((1 - effectiveFactor) / 0.95) * 100, 100);
-    const targetDemandMetric = input.fc >= 10 ? 65 : input.fc >= 3 ? 30 : input.fc >= 1 ? 15 : 5;
-    const outputLoadMetric = Math.min(lumenDensity * 8, 100);
+    const factorPressureMetric = pressureFromEffectiveFactor(effectiveFactor);
+    const targetDemandMetric = pressureFromTargetFit(input);
+    const outputLoadMetric = pressureFromOutputLoad(input, effectiveFactor, lumenDensity);
 
     const metrics = [
-      { label: "Planning Factor Pressure", value: factorPressureMetric, displayValue: fmtFactor(effectiveFactor) },
-      { label: "Illumination Demand", value: targetDemandMetric, displayValue: fmtFc(input.fc) },
-      { label: "Output Load", value: outputLoadMetric, displayValue: fmt(lumenDensity, 2) + " lm/sq ft" }
+      { label: "Planning Factor Fit", value: factorPressureMetric, displayValue: fmtFactor(effectiveFactor) },
+      { label: "Target Range Fit", value: targetDemandMetric, displayValue: input.targetFootcandleRange ? lightingGoalRangeText(input.targetFootcandleRange) : "Custom target" },
+      { label: "Output Load Fit", value: outputLoadMetric, displayValue: fmt(lumenDensity, 2) + " lm/sq ft" }
     ];
 
     const dominantMetric = Math.max(factorPressureMetric, targetDemandMetric, outputLoadMetric);
@@ -429,20 +515,22 @@
     });
 
     let dominantConstraint = "";
-    if (effectiveFactor < 0.45) {
-      dominantConstraint = "Planning factor pressure is the dominant limiter. The selected layout efficiency and maintenance assumptions reduce useful maintained light, so the scene demands more lumens than it first appears.";
-    } else if (input.fc >= 10) {
-      dominantConstraint = "Illumination demand is the dominant limiter. The target light level is relatively aggressive, which can drive fixture count and power requirements upward quickly.";
-    } else if (lumenDensity > 6) {
-      dominantConstraint = "Output load is the dominant limiter. Required lumens per square foot are climbing enough that fixture strategy and aiming deserve closer review.";
+    if (input.footcandleOutsideRange) {
+      dominantConstraint = "Target range fit is the dominant limiter. The selected footcandle target is outside the recommended range for the chosen lighting goal.";
+    } else if (effectiveFactor < 0.45) {
+      dominantConstraint = "Planning factor fit is the dominant limiter. The selected layout efficiency and maintenance assumptions reduce useful maintained light, so the scene demands more lumens than it first appears.";
+    } else if (outputLoadMetric > 45) {
+      dominantConstraint = "Output load fit is the dominant limiter. The lumen demand is unusually high for the selected goal and effective planning factor.";
     } else {
-      dominantConstraint = "The lighting baseline is balanced. Scene size, target illumination, layout efficiency, and maintenance assumptions are staying in a practical range for downstream camera design.";
+      dominantConstraint = "The lighting baseline is internally consistent. The target illumination, layout efficiency, and maintenance assumptions fit the selected lighting goal.";
     }
 
     const rangeText = input.targetFootcandleRange ? lightingGoalRangeText(input.targetFootcandleRange) : "custom target";
     const fcSourceNote = input.footcandleSourceMode === "manual-override" ? "The footcandle target is being treated as a manual lighting assumption." : "The footcandle target came from the selected lighting goal preset.";
     const factorSourceNote = input.effectiveSourceMode === "manual-override" ? "One or more lighting factor values are being treated as manual assumptions." : "The utilization and light loss values came from guided presets.";
-    const interpretation = "Lighting goal is " + input.lightingGoalLabel + " using " + rangeText + ". Fixture/layout efficiency is " + input.utilizationPresetLabel + " and maintenance/environment is " + input.lightLossPresetLabel + ". For an area of " + fmtSqFt(area) + " at a target of " + fmtFc(input.fc) + ", with a utilization factor of " + fmtPct(input.ufPct) + " and light-loss factor of " + fmtPct(input.llfPct) + ", the effective planning factor is " + fmtFactor(effectiveFactor) + ". The estimated lumen requirement is about " + fmtLumens(lumens) + ". Lighting condition is classified as " + lightingClass + ". " + fcSourceNote + " " + factorSourceNote + " " + interpretationBase;
+    const healthNote = lightingHealthNarrative(input, effectiveFactor, lumenDensity);
+
+    const interpretation = "Lighting goal is " + input.lightingGoalLabel + " using " + rangeText + ". Fixture/layout efficiency is " + input.utilizationPresetLabel + " and maintenance/environment is " + input.lightLossPresetLabel + ". For an area of " + fmtSqFt(area) + " at a target of " + fmtFc(input.fc) + ", with a utilization factor of " + fmtPct(input.ufPct) + " and light-loss factor of " + fmtPct(input.llfPct) + ", the effective planning factor is " + fmtFactor(effectiveFactor) + ". The estimated lumen requirement is about " + fmtLumens(lumens) + ". Lighting condition is classified as " + lightingClass + ". " + healthNote + " " + fcSourceNote + " " + factorSourceNote + " " + interpretationBase;
 
     return {
       ok: true,
@@ -574,7 +662,7 @@
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance,
       chart: {
-        labels: ["Planning Factor Pressure", "Illumination Demand", "Output Load"],
+        labels: ["Planning Factor Fit", "Target Range Fit", "Output Load Fit"],
         values: [
           Number(data.factorPressureMetric.toFixed(1)),
           Number(data.targetDemandMetric.toFixed(1)),
@@ -582,14 +670,14 @@
         ],
         displayValues: [
           fmtFactor(data.effectiveFactor),
-          fmtFc(data.fc),
+          data.targetFootcandleRange ? lightingGoalRangeText(data.targetFootcandleRange) : "Custom target",
           fmt(data.lumenDensity, 2) + " lm/sq ft"
         ],
         referenceValue: 20,
         healthyMax: 20,
         watchMax: 45,
-        axisTitle: "Lighting Planning Pressure",
-        referenceLabel: "Comfort Band",
+        axisTitle: "Lighting Assumption Fit",
+        referenceLabel: "Healthy Fit",
         healthyLabel: "Healthy",
         watchLabel: "Watch",
         riskLabel: "Risk",
