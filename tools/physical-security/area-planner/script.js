@@ -906,7 +906,7 @@
 '    </div>' +
 '    <div class="report">' +
 '      <div class="brand-row"><div class="brand-mark">S</div><div class="brand-name">ScopedLabs</div></div>' +
-'      <div class="tagline">Engineering ? Analysis ? Tools</div>' +
+'      <div class="tagline">Engineering - Analysis - Tools</div>' +
 '      <div class="report-head">' +
 '        <div>' +
 '          <h1 class="report-title">Physical Security Area Summary</h1>' +
