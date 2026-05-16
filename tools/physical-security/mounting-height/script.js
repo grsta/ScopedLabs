@@ -32,6 +32,7 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    overrideNotice: $("mountingOverrideNotice"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     toolCard: $("toolCard")
@@ -138,9 +139,13 @@
       area.targetDistanceFt
     );
 
+    importedMountingDistanceFt = targetDistance;
+
     if (targetDistance !== null && els.dist) {
       els.dist.value = String(targetDistance);
     }
+
+    renderMountingOverrideNotice();
   }
 
   function applyDefaults() {
@@ -148,6 +153,53 @@
     els.dist.value = String(DEFAULTS.dist);
     els.th.value = String(DEFAULTS.th);
     els.vfov.value = String(DEFAULTS.vfov);
+  }
+
+  function mountingDistanceOverride() {
+    if (!Number.isFinite(importedMountingDistanceFt) || importedMountingDistanceFt <= 0) return null;
+
+    const currentValue = num(els.dist?.value);
+    if (!Number.isFinite(currentValue) || currentValue <= 0) return null;
+
+    if (Math.abs(currentValue - importedMountingDistanceFt) < 0.01) return null;
+
+    return {
+      field: "targetDistanceFt",
+      label: "Target Distance",
+      source: "Area Planner Distance to Target Plane",
+      importedValue: importedMountingDistanceFt,
+      currentValue,
+      note: "Mounting Height target distance was changed locally from the active area baseline."
+    };
+  }
+
+  function renderMountingOverrideNotice() {
+    if (!els.overrideNotice) return;
+
+    const override = mountingDistanceOverride();
+
+    if (!override) {
+      els.overrideNotice.hidden = true;
+      els.overrideNotice.innerHTML = "";
+      return;
+    }
+
+    els.overrideNotice.hidden = false;
+    els.overrideNotice.innerHTML =
+      '<strong>Manual override active.</strong> Target Distance was imported from Area Planner as <strong>' +
+      fmtFt(override.importedValue) +
+      '</strong> and changed locally to <strong>' +
+      fmtFt(override.currentValue) +
+      '</strong>. This Mounting Height result is valid for this local branch, but downstream pipeline values may need revalidation.';
+  }
+
+  function mountingSourceMode() {
+    return mountingDistanceOverride() ? "manual-override" : "pipeline";
+  }
+
+  function mountingManualOverrides() {
+    const override = mountingDistanceOverride();
+    return override ? [override] : [];
   }
 
   function renderFlowNote() {
@@ -220,7 +272,16 @@
       return { ok: false, message: "Enter valid values and press Calculate." };
     }
 
-    return { ok: true, h, dist, th, vfov };
+    return {
+      ok: true,
+      h,
+      dist,
+      th,
+      vfov,
+      sourceMode: mountingSourceMode(),
+      manualOverrides: mountingManualOverrides(),
+      importedTargetDistanceFt: importedMountingDistanceFt
+    };
   }
 
   function calculateModel() {
@@ -324,10 +385,13 @@
     const api = window.ScopedLabsPhysicalSecurityAreaState;
     if (!api || typeof api.updateActiveAreaResult !== "function") return;
 
-    api.updateActiveAreaResult({
+    const payload = {
       status: "IN PROGRESS",
       mountingHeightFt: data.h,
-      distanceToTargetPlaneFt: data.dist,
+      mountingTargetDistanceFt: data.dist,
+      mountingTargetDistanceImportedFt: data.importedTargetDistanceFt,
+      mountingSourceMode: data.sourceMode,
+      mountingManualOverrides: data.manualOverrides,
       targetHeightFt: data.th,
       verticalFovDeg: data.vfov,
       mountingDropFt: data.drop,
@@ -340,7 +404,13 @@
       mountingInterpretation: data.interpretation,
       mountingGuidance: data.guidance,
       mountingUpdatedAt: new Date().toISOString()
-    });
+    };
+
+    if (data.sourceMode !== "manual-override") {
+      payload.distanceToTargetPlaneFt = data.dist;
+    }
+
+    api.updateActiveAreaResult(payload);
   }
 
   
@@ -460,6 +530,7 @@
     applyDefaults();
     hydrateMountingInputsFromActiveArea();
     renderFlowNote();
+    renderMountingOverrideNotice();
     invalidate({ clearFlow: true });
   }
 
@@ -467,8 +538,14 @@
     ["h", "dist", "th", "vfov"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", () => invalidate({ clearFlow: true }));
-      el.addEventListener("change", () => invalidate({ clearFlow: true }));
+      el.addEventListener("input", () => {
+        renderMountingOverrideNotice();
+        invalidate({ clearFlow: true });
+      });
+      el.addEventListener("change", () => {
+        renderMountingOverrideNotice();
+        invalidate({ clearFlow: true });
+      });
     });
 
     els.calc?.addEventListener("click", calc);
@@ -491,6 +568,7 @@
     bind();
     hydrateMountingInputsFromActiveArea();
     renderFlowNote();
+    renderMountingOverrideNotice();
     invalidate({ clearFlow: false });
   }
 
