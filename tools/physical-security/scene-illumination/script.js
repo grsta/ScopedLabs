@@ -29,7 +29,10 @@
     lightingGoal: $("lightingGoal"),
     lightingRange: $("lightingRange"),
     uf: $("uf"),
+    ufPreset: $("ufPreset"),
     llf: $("llf"),
+    llfPreset: $("llfPreset"),
+    factorGuidance: $("factorGuidance"),
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
@@ -47,7 +50,9 @@
     fc: 2.0,
     lightingGoal: "general",
     uf: 70,
-    llf: 80
+    ufPreset: "typical",
+    llf: 80,
+    llfPreset: "typical"
   };
 
   const LIGHTING_GOALS = {
@@ -217,14 +222,85 @@
     });
   }
 
+  const UTILIZATION_PRESETS = {
+    efficient: { id: "efficient", label: "Efficient direct coverage", value: 80, note: "Most fixture output is aimed into the useful target area with limited spill or obstruction." },
+    typical: { id: "typical", label: "Typical site lighting", value: 70, note: "A practical baseline for normal outdoor/site lighting with reasonable aiming and fixture placement." },
+    mixed: { id: "mixed", label: "Mixed / partially obstructed", value: 55, note: "Use this when layout, mounting, obstructions, or spill reduce useful light reaching the target area." },
+    poor: { id: "poor", label: "Poor distribution / spill loss", value: 40, note: "Use this for conservative planning where much of the raw output is not useful to the protected area." },
+    custom: { id: "custom", label: "Custom utilization factor", value: null, note: "Use this when fixture photometrics, layout software, or a project standard already defines the utilization factor." }
+  };
+
+  const LIGHT_LOSS_PRESETS = {
+    clean: { id: "clean", label: "Clean / regularly maintained", value: 90, note: "Fixtures are expected to stay clean and maintained, so less output is lost over time." },
+    typical: { id: "typical", label: "Typical maintained outdoor system", value: 80, note: "A practical maintained-light baseline for normal exterior environments." },
+    dirty: { id: "dirty", label: "Dirty / aging / exposed environment", value: 70, note: "Use this when dirt, aging, weather exposure, or lens degradation will reduce delivered light." },
+    harsh: { id: "harsh", label: "Harsh / low-maintenance environment", value: 60, note: "Use this for conservative planning where maintenance is limited or the environment is demanding." },
+    custom: { id: "custom", label: "Custom light loss factor", value: null, note: "Use this when a maintenance plan, standard, or lighting model already defines the light loss factor." }
+  };
+
+  function utilizationPreset(id) {
+    return UTILIZATION_PRESETS[id] || UTILIZATION_PRESETS.typical;
+  }
+
+  function lightLossPreset(id) {
+    return LIGHT_LOSS_PRESETS[id] || LIGHT_LOSS_PRESETS.typical;
+  }
+
+  function factorSourceInfo(ufPct, llfPct) {
+    const ufPreset = utilizationPreset(els.ufPreset?.value || DEFAULTS.ufPreset);
+    const llfPreset = lightLossPreset(els.llfPreset?.value || DEFAULTS.llfPreset);
+
+    const ufManual = ufPreset.id === "custom" || (Number.isFinite(ufPct) && Number.isFinite(ufPreset.value) && Math.abs(ufPct - ufPreset.value) > 0.01);
+    const llfManual = llfPreset.id === "custom" || (Number.isFinite(llfPct) && Number.isFinite(llfPreset.value) && Math.abs(llfPct - llfPreset.value) > 0.01);
+
+    return {
+      utilizationPresetId: ufPreset.id,
+      utilizationPresetLabel: ufPreset.label,
+      utilizationSourceMode: ufManual ? "manual-override" : "preset",
+      utilizationManualOverride: ufManual,
+      lightLossPresetId: llfPreset.id,
+      lightLossPresetLabel: llfPreset.label,
+      lightLossSourceMode: llfManual ? "manual-override" : "preset",
+      lightLossManualOverride: llfManual,
+      effectiveSourceMode: ufManual || llfManual ? "manual-override" : "preset"
+    };
+  }
+
+  function renderFactorGuidance() {
+    if (!els.factorGuidance) return;
+
+    const ufPreset = utilizationPreset(els.ufPreset?.value || DEFAULTS.ufPreset);
+    const llfPreset = lightLossPreset(els.llfPreset?.value || DEFAULTS.llfPreset);
+    const ufPct = num(els.uf?.value);
+    const llfPct = num(els.llf?.value);
+    const effective = Number.isFinite(ufPct) && Number.isFinite(llfPct) ? (ufPct / 100) * (llfPct / 100) : null;
+    const info = factorSourceInfo(ufPct, llfPct);
+
+    els.factorGuidance.innerHTML =
+      '<strong>Effective planning factor</strong><br>' +
+      'Utilization factor estimates how much fixture output reaches the useful area. Light loss factor accounts for dirt, aging, environment, and maintenance.' +
+      '<div class="lighting-factor-grid">' +
+        '<div class="lighting-factor-metric">Layout efficiency<br><strong>' + (Number.isFinite(ufPct) ? fmtPct(ufPct) : "n/a") + '</strong><span class="muted">' + ufPreset.label + '</span></div>' +
+        '<div class="lighting-factor-metric">Maintenance condition<br><strong>' + (Number.isFinite(llfPct) ? fmtPct(llfPct) : "n/a") + '</strong><span class="muted">' + llfPreset.label + '</span></div>' +
+        '<div class="lighting-factor-metric">Useful maintained light<br><strong>' + (effective === null ? "n/a" : fmtPct(effective * 100)) + '</strong><span class="muted">UF x LLF</span></div>' +
+      '</div>' +
+      '<div class="mini-note">' + ufPreset.note + ' ' + llfPreset.note + '</div>' +
+      (info.effectiveSourceMode === "manual-override" ? '<div class="lighting-goal-warning">One or more lighting factor values do not match the selected preset. This is allowed, but it will be treated as a manual lighting assumption.</div>' : '');
+  }
+
+  
+
   function applyDefaults() {
     if (els.lightingGoal) els.lightingGoal.value = DEFAULTS.lightingGoal;
+    if (els.ufPreset) els.ufPreset.value = DEFAULTS.ufPreset;
+    if (els.llfPreset) els.llfPreset.value = DEFAULTS.llfPreset;
     els.w.value = String(DEFAULTS.w);
     els.d.value = String(DEFAULTS.d);
     els.fc.value = String(DEFAULTS.fc);
     els.uf.value = String(DEFAULTS.uf);
     els.llf.value = String(DEFAULTS.llf);
     renderLightingGoalGuidance();
+    renderFactorGuidance();
   }
 
   function renderFlowNote() {
@@ -296,6 +372,7 @@
     const ufPct = num(els.uf.value);
     const llfPct = num(els.llf.value);
     const goalInfo = selectedLightingGoalInfo(fc);
+    const factorInfo = factorSourceInfo(ufPct, llfPct);
 
     if (!Number.isFinite(w) || w <= 0 || !Number.isFinite(d) || d <= 0 || !Number.isFinite(fc) || fc <= 0 || !Number.isFinite(ufPct) || ufPct <= 0 || ufPct > 100 || !Number.isFinite(llfPct) || llfPct <= 0 || llfPct > 100) {
       return { ok: false, message: "Enter valid values and press Estimate Lighting." };
@@ -314,7 +391,8 @@
       lightingGoalLabel: goalInfo.label,
       targetFootcandleRange: goalInfo.range,
       footcandleSourceMode: goalInfo.sourceMode,
-      footcandleOutsideRange: goalInfo.outsideRange
+      footcandleOutsideRange: goalInfo.outsideRange,
+      ...factorInfo
     };
   }
 
@@ -352,18 +430,19 @@
 
     let dominantConstraint = "";
     if (effectiveFactor < 0.45) {
-      dominantConstraint = "Planning factor pressure is the dominant limiter. Too much fixture output is being lost through utilization and light-loss assumptions, so the scene demands more lumens than it first appears.";
+      dominantConstraint = "Planning factor pressure is the dominant limiter. The selected layout efficiency and maintenance assumptions reduce useful maintained light, so the scene demands more lumens than it first appears.";
     } else if (input.fc >= 10) {
       dominantConstraint = "Illumination demand is the dominant limiter. The target light level is relatively aggressive, which can drive fixture count and power requirements upward quickly.";
     } else if (lumenDensity > 6) {
       dominantConstraint = "Output load is the dominant limiter. Required lumens per square foot are climbing enough that fixture strategy and aiming deserve closer review.";
     } else {
-      dominantConstraint = "The lighting baseline is balanced. Scene size, target illumination, and planning factors are staying in a practical range for downstream camera design.";
+      dominantConstraint = "The lighting baseline is balanced. Scene size, target illumination, layout efficiency, and maintenance assumptions are staying in a practical range for downstream camera design.";
     }
 
     const rangeText = input.targetFootcandleRange ? lightingGoalRangeText(input.targetFootcandleRange) : "custom target";
-    const sourceNote = input.footcandleSourceMode === "manual-override" ? "The footcandle target is being treated as a manual lighting assumption." : "The footcandle target came from the selected lighting goal preset.";
-    const interpretation = "Lighting goal is " + input.lightingGoalLabel + " using " + rangeText + ". For an area of " + fmtSqFt(area) + " at a target of " + fmtFc(input.fc) + ", with a utilization factor of " + fmtPct(input.ufPct) + " and light-loss factor of " + fmtPct(input.llfPct) + ", the effective planning factor is " + fmtFactor(effectiveFactor) + ". The estimated lumen requirement is about " + fmtLumens(lumens) + ". Lighting condition is classified as " + lightingClass + ". " + sourceNote + " " + interpretationBase;
+    const fcSourceNote = input.footcandleSourceMode === "manual-override" ? "The footcandle target is being treated as a manual lighting assumption." : "The footcandle target came from the selected lighting goal preset.";
+    const factorSourceNote = input.effectiveSourceMode === "manual-override" ? "One or more lighting factor values are being treated as manual assumptions." : "The utilization and light loss values came from guided presets.";
+    const interpretation = "Lighting goal is " + input.lightingGoalLabel + " using " + rangeText + ". Fixture/layout efficiency is " + input.utilizationPresetLabel + " and maintenance/environment is " + input.lightLossPresetLabel + ". For an area of " + fmtSqFt(area) + " at a target of " + fmtFc(input.fc) + ", with a utilization factor of " + fmtPct(input.ufPct) + " and light-loss factor of " + fmtPct(input.llfPct) + ", the effective planning factor is " + fmtFactor(effectiveFactor) + ". The estimated lumen requirement is about " + fmtLumens(lumens) + ". Lighting condition is classified as " + lightingClass + ". " + fcSourceNote + " " + factorSourceNote + " " + interpretationBase;
 
     return {
       ok: true,
@@ -398,6 +477,13 @@
       targetFootcandleRange: data.targetFootcandleRange,
       footcandleSourceMode: data.footcandleSourceMode,
       footcandleOutsideRange: data.footcandleOutsideRange,
+      utilizationPresetId: data.utilizationPresetId,
+      utilizationPresetLabel: data.utilizationPresetLabel,
+      utilizationSourceMode: data.utilizationSourceMode,
+      lightLossPresetId: data.lightLossPresetId,
+      lightLossPresetLabel: data.lightLossPresetLabel,
+      lightLossSourceMode: data.lightLossSourceMode,
+      effectiveLightingSourceMode: data.effectiveSourceMode,
       utilizationFactor: data.uf,
       lightLossFactor: data.llf,
       effectiveLightingFactor: data.effectiveFactor,
@@ -426,6 +512,13 @@
         targetFootcandleRange: data.targetFootcandleRange,
         footcandleSourceMode: data.footcandleSourceMode,
         footcandleOutsideRange: data.footcandleOutsideRange,
+        utilizationPresetId: data.utilizationPresetId,
+        utilizationPresetLabel: data.utilizationPresetLabel,
+        utilizationSourceMode: data.utilizationSourceMode,
+        lightLossPresetId: data.lightLossPresetId,
+        lightLossPresetLabel: data.lightLossPresetLabel,
+        lightLossSourceMode: data.lightLossSourceMode,
+        effectiveLightingSourceMode: data.effectiveSourceMode,
         uf: data.uf,
         llf: data.llf,
         ufPct: data.ufPct,
@@ -468,8 +561,11 @@
         { label: "Area Depth", value: fmtFt(data.d) },
         { label: "Recommended Range", value: data.targetFootcandleRange ? lightingGoalRangeText(data.targetFootcandleRange) : "Custom target" },
         { label: "Footcandle Source", value: data.footcandleSourceMode === "manual-override" ? "Manual assumption" : "Preset typical" },
+        { label: "Fixture / Layout Efficiency", value: data.utilizationPresetLabel },
+        { label: "Maintenance / Environment", value: data.lightLossPresetLabel },
         { label: "Utilization Factor", value: fmtPct(data.ufPct) },
         { label: "Light Loss Factor", value: fmtPct(data.llfPct) },
+        { label: "Lighting Factor Source", value: data.effectiveSourceMode === "manual-override" ? "Manual assumption" : "Guided presets" },
         { label: "Lighting Condition", value: data.lightingClass },
         { label: "Lumen Density", value: fmt(data.lumenDensity, 2) + " lm/sq ft" }
       ],
@@ -515,6 +611,7 @@
     applyDefaults();
     renderFlowNote();
     renderLightingGoalGuidance();
+    renderFactorGuidance();
     invalidate({ clearFlow: true });
   }
 
@@ -530,17 +627,41 @@
       });
     }
 
+    if (els.ufPreset) {
+      els.ufPreset.addEventListener("change", () => {
+        const preset = utilizationPreset(els.ufPreset.value);
+        if (preset.id !== "custom" && Number.isFinite(preset.value)) {
+          els.uf.value = String(preset.value);
+        }
+        renderFactorGuidance();
+        invalidate({ clearFlow: true });
+      });
+    }
+
+    if (els.llfPreset) {
+      els.llfPreset.addEventListener("change", () => {
+        const preset = lightLossPreset(els.llfPreset.value);
+        if (preset.id !== "custom" && Number.isFinite(preset.value)) {
+          els.llf.value = String(preset.value);
+        }
+        renderFactorGuidance();
+        invalidate({ clearFlow: true });
+      });
+    }
+
     ["w", "d", "fc", "uf", "llf"].forEach((id) => {
       const el = $(id);
       if (!el) return;
 
       el.addEventListener("input", () => {
         renderLightingGoalGuidance();
+        renderFactorGuidance();
         invalidate({ clearFlow: true });
       });
 
       el.addEventListener("change", () => {
         renderLightingGoalGuidance();
+        renderFactorGuidance();
         invalidate({ clearFlow: true });
       });
     });
@@ -562,6 +683,7 @@
     bind();
     renderFlowNote();
     renderLightingGoalGuidance();
+    renderFactorGuidance();
     invalidate({ clearFlow: false });
   }
 
