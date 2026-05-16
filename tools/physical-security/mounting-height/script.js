@@ -45,6 +45,8 @@
     vfov: 55
   };
 
+  let importedMountingDistanceFt = null;
+
   function num(value, fallback = NaN) {
     return ScopedLabsAnalyzer.safeNumber(value, fallback);
   }
@@ -155,6 +157,37 @@
     els.vfov.value = String(DEFAULTS.vfov);
   }
 
+  
+
+  
+
+  
+
+  
+
+  function ensureMountingOverrideNotice() {
+    let notice = document.getElementById("mountingOverrideNotice");
+    if (notice) {
+      els.overrideNotice = notice;
+      return notice;
+    }
+
+    notice = document.createElement("div");
+    notice.id = "mountingOverrideNotice";
+    notice.className = "mounting-override-notice";
+    notice.hidden = true;
+
+    const anchor = els.flowNote || document.getElementById("flow-note") || document.querySelector(".tool-card") || document.querySelector("main");
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.insertBefore(notice, anchor.nextSibling);
+    } else {
+      document.body.appendChild(notice);
+    }
+
+    els.overrideNotice = notice;
+    return notice;
+  }
+
   function mountingDistanceOverride() {
     if (!Number.isFinite(importedMountingDistanceFt) || importedMountingDistanceFt <= 0) return null;
 
@@ -174,18 +207,17 @@
   }
 
   function renderMountingOverrideNotice() {
-    if (!els.overrideNotice) return;
-
+    const notice = ensureMountingOverrideNotice();
     const override = mountingDistanceOverride();
 
     if (!override) {
-      els.overrideNotice.hidden = true;
-      els.overrideNotice.innerHTML = "";
+      notice.hidden = true;
+      notice.innerHTML = "";
       return;
     }
 
-    els.overrideNotice.hidden = false;
-    els.overrideNotice.innerHTML =
+    notice.hidden = false;
+    notice.innerHTML =
       '<strong>Manual override active.</strong> Target Distance was imported from Area Planner as <strong>' +
       fmtFt(override.importedValue) +
       '</strong> and changed locally to <strong>' +
@@ -538,10 +570,12 @@
     ["h", "dist", "th", "vfov"].forEach((id) => {
       const el = $(id);
       if (!el) return;
+
       el.addEventListener("input", () => {
         renderMountingOverrideNotice();
         invalidate({ clearFlow: true });
       });
+
       el.addEventListener("change", () => {
         renderMountingOverrideNotice();
         invalidate({ clearFlow: true });
