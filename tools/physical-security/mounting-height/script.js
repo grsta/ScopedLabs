@@ -116,6 +116,33 @@
     });
   }
 
+  function firstFiniteMountingValue(...values) {
+    for (const value of values) {
+      const number = Number(value);
+      if (Number.isFinite(number) && number > 0) return number;
+    }
+
+    return null;
+  }
+
+  function hydrateMountingInputsFromActiveArea() {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.getActiveArea !== "function") return;
+
+    const area = api.getActiveArea();
+    if (!area) return;
+
+    const targetDistance = firstFiniteMountingValue(
+      area.distanceToTargetPlaneFt,
+      area.mountingTargetDistanceFt,
+      area.targetDistanceFt
+    );
+
+    if (targetDistance !== null && els.dist) {
+      els.dist.value = String(targetDistance);
+    }
+  }
+
   function applyDefaults() {
     els.h.value = String(DEFAULTS.h);
     els.dist.value = String(DEFAULTS.dist);
@@ -431,6 +458,7 @@
 
   function reset() {
     applyDefaults();
+    hydrateMountingInputsFromActiveArea();
     renderFlowNote();
     invalidate({ clearFlow: true });
   }
@@ -461,6 +489,7 @@
     if (year) year.textContent = new Date().getFullYear();
 
     bind();
+    hydrateMountingInputsFromActiveArea();
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
