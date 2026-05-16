@@ -100,6 +100,32 @@
       color: rgba(255, 255, 255, 0.96);
     }
 
+
+
+    /* Mounting Height VFOV profile guidance */
+    .vfov-profile-card {
+      grid-column: 1 / -1;
+      border: 1px solid rgba(120, 255, 120, 0.14);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.025);
+      color: rgba(255, 255, 255, 0.72);
+      padding: 12px;
+      line-height: 1.5;
+    }
+
+    .vfov-profile-card strong {
+      color: rgba(255, 255, 255, 0.96);
+    }
+
+    .vfov-profile-warning {
+      margin-top: 10px;
+      border: 1px solid rgba(255, 211, 79, 0.30);
+      border-radius: 12px;
+      background: rgba(255, 211, 79, 0.07);
+      color: rgba(255, 246, 196, 0.95);
+      padding: 9px 10px;
+    }
+
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -227,11 +253,28 @@
             <input id="th" type="number" min="0" step="0.1" value="5.5" />
           </div>
 
+          
+          <div class="field">
+            <div class="label-row"><label for="vfovProfile">Camera Vertical View Profile</label></div>
+            <select id="vfovProfile">
+              <option value="area-hfov" selected>Estimate from active area HFOV, 16:9</option>
+              <option value="narrow">Narrow / telephoto view - 30 deg</option>
+              <option value="standard">Standard security camera view - 45 deg</option>
+              <option value="wide">Wide camera view - 60 deg</option>
+              <option value="verywide">Very wide camera view - 75 deg</option>
+              <option value="custom">Custom vertical FOV</option>
+            </select>
+          </div>
+
           <div class="field">
             <div class="label-row">
               <label for="vfov">Vertical FOV (deg)</label>
             </div>
             <input id="vfov" type="number" min="1" max="179" step="0.1" value="55" />
+          </div>
+
+          <div id="vfovGuidance" class="vfov-profile-card">
+            Choose a camera vertical view profile to estimate VFOV.
           </div>
         </div>
 
@@ -353,7 +396,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-005"></script>
 
-  <script src="./script.js?v=physical-security-mounting-override-002"></script>
+  <script src="./script.js?v=physical-security-mounting-vfov-profile-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

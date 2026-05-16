@@ -27,6 +27,8 @@
     dist: $("dist"),
     th: $("th"),
     vfov: $("vfov"),
+    vfovProfile: $("vfovProfile"),
+    vfovGuidance: $("vfovGuidance"),
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
@@ -42,7 +44,8 @@
     h: 12,
     dist: 40,
     th: 5.5,
-    vfov: 55
+    vfov: 55,
+    vfovProfile: "area-hfov"
   };
 
   let importedMountingDistanceFt = null;
@@ -150,11 +153,166 @@
     renderMountingOverrideNotice();
   }
 
+  const VFOV_PROFILES = {
+    "area-hfov": {
+      id: "area-hfov",
+      label: "Estimated from active area HFOV",
+      value: null,
+      note: "Uses the active area horizontal FOV with a 16:9 camera assumption to estimate vertical FOV."
+    },
+    narrow: {
+      id: "narrow",
+      label: "Narrow / telephoto view",
+      value: 30,
+      note: "Use when the view is tighter or lensing is expected to be more telephoto."
+    },
+    standard: {
+      id: "standard",
+      label: "Standard security camera view",
+      value: 45,
+      note: "Use as a conservative baseline when camera/lens details are not finalized yet."
+    },
+    wide: {
+      id: "wide",
+      label: "Wide camera view",
+      value: 60,
+      note: "Use when the camera is expected to cover a wider vertical scene."
+    },
+    verywide: {
+      id: "verywide",
+      label: "Very wide camera view",
+      value: 75,
+      note: "Use for very wide-angle assumptions. Final lens/FOV validation should confirm this later."
+    },
+    custom: {
+      id: "custom",
+      label: "Custom vertical FOV",
+      value: null,
+      note: "Use when the manufacturer spec, lens calculator, or final camera model already provides VFOV."
+    }
+  };
+
+  function vfovProfilePreset(id) {
+    return VFOV_PROFILES[id] || VFOV_PROFILES.standard;
+  }
+
+  function activeAreaHfovForMounting() {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.getActiveArea !== "function") return null;
+
+    const area = api.getActiveArea();
+    if (!area) return null;
+
+    return firstFiniteMountingValue(
+      area.lensDerivedHfovDeg,
+      area.assumedHfovDeg,
+      area.horizontalFovDeg,
+      area.hfovDeg
+    );
+  }
+
+  function estimateVfovFromHfov(hfovDeg) {
+    const hfov = Number(hfovDeg);
+    if (!Number.isFinite(hfov) || hfov <= 0 || hfov >= 179) return null;
+
+    const aspectHeight = 9;
+    const aspectWidth = 16;
+    return rad2deg(2 * Math.atan(Math.tan(deg2rad(hfov / 2)) * (aspectHeight / aspectWidth)));
+  }
+
+  function recommendedVfovForProfile(profileId) {
+    const preset = vfovProfilePreset(profileId);
+
+    if (preset.id === "custom") return null;
+
+    if (preset.id === "area-hfov") {
+      const activeHfov = activeAreaHfovForMounting();
+      return estimateVfovFromHfov(activeHfov) || VFOV_PROFILES.standard.value;
+    }
+
+    return preset.value;
+  }
+
+  function applyVfovProfileToInput({ force = false } = {}) {
+    if (!els.vfovProfile || !els.vfov) return;
+
+    const profileId = els.vfovProfile.value || DEFAULTS.vfovProfile;
+    const preset = vfovProfilePreset(profileId);
+
+    if (preset.id === "custom") {
+      renderVfovProfileGuidance();
+      return;
+    }
+
+    const recommended = recommendedVfovForProfile(profileId);
+    if (!Number.isFinite(recommended) || recommended <= 0) return;
+
+    if (force || !String(els.vfov.value || "").trim()) {
+      els.vfov.value = String(Number(recommended.toFixed(1)));
+    }
+
+    renderVfovProfileGuidance();
+  }
+
+  function selectedVfovProfileInfo(vfovValue) {
+    const profileId = els.vfovProfile?.value || DEFAULTS.vfovProfile;
+    const preset = vfovProfilePreset(profileId);
+    const recommended = recommendedVfovForProfile(profileId);
+    const current = Number(vfovValue);
+
+    const manual =
+      preset.id === "custom" ||
+      !Number.isFinite(recommended) ||
+      !Number.isFinite(current) ||
+      Math.abs(current - recommended) > 0.1;
+
+    return {
+      vfovProfileId: preset.id,
+      vfovProfileLabel: preset.label,
+      vfovProfileRecommendedDeg: recommended,
+      vfovSourceMode: manual ? "manual-override" : "profile",
+      vfovManualOverride: manual
+    };
+  }
+
+  function renderVfovProfileGuidance() {
+    if (!els.vfovGuidance) return;
+
+    const profileId = els.vfovProfile?.value || DEFAULTS.vfovProfile;
+    const preset = vfovProfilePreset(profileId);
+    const recommended = recommendedVfovForProfile(profileId);
+    const current = num(els.vfov?.value);
+    const activeHfov = activeAreaHfovForMounting();
+    const info = selectedVfovProfileInfo(current);
+
+    let detail = preset.note;
+
+    if (preset.id === "area-hfov") {
+      if (Number.isFinite(activeHfov)) {
+        detail += " Active area HFOV is " + fmtDeg(activeHfov) + ", estimated VFOV is " + fmtDeg(recommended) + ".";
+      } else {
+        detail += " No active area HFOV was available, so Standard security camera view is used as the fallback.";
+      }
+    } else if (Number.isFinite(recommended)) {
+      detail += " Recommended VFOV is " + fmtDeg(recommended) + ".";
+    }
+
+    els.vfovGuidance.innerHTML =
+      '<strong>' + preset.label + '</strong><br>' +
+      detail +
+      '<br><span class="muted">VFOV is an early camera-profile assumption. Final lens/FOV validation later in the pipeline may update this.</span>' +
+      (info.vfovManualOverride
+        ? '<div class="vfov-profile-warning">Current VFOV does not match the selected profile estimate. This is allowed, but it will be treated as a manual VFOV assumption.</div>'
+        : '');
+  }
+
   function applyDefaults() {
     els.h.value = String(DEFAULTS.h);
     els.dist.value = String(DEFAULTS.dist);
     els.th.value = String(DEFAULTS.th);
+    if (els.vfovProfile) els.vfovProfile.value = DEFAULTS.vfovProfile;
     els.vfov.value = String(DEFAULTS.vfov);
+    applyVfovProfileToInput({ force: true });
   }
 
   
@@ -426,6 +584,11 @@
       mountingManualOverrides: data.manualOverrides,
       targetHeightFt: data.th,
       verticalFovDeg: data.vfov,
+      verticalFovProfileId: data.vfovProfileId,
+      verticalFovProfileLabel: data.vfovProfileLabel,
+      verticalFovProfileRecommendedDeg: data.vfovProfileRecommendedDeg,
+      verticalFovSourceMode: data.vfovSourceMode,
+      verticalFovManualOverride: data.vfovManualOverride,
       mountingDropFt: data.drop,
       mountingTiltDeg: data.tilt,
       verticalCoverageSpanFt: data.span,
@@ -456,6 +619,11 @@
         dist: data.dist,
         th: data.th,
         vfov: data.vfov,
+        vfovProfileId: data.vfovProfileId,
+        vfovProfileLabel: data.vfovProfileLabel,
+        vfovProfileRecommendedDeg: data.vfovProfileRecommendedDeg,
+        vfovSourceMode: data.vfovSourceMode,
+        vfovManualOverride: data.vfovManualOverride,
         drop: data.drop,
         tilt: data.tilt,
         span: data.span,
@@ -561,12 +729,27 @@
   function reset() {
     applyDefaults();
     hydrateMountingInputsFromActiveArea();
+    applyVfovProfileToInput({ force: true });
+    renderVfovProfileGuidance();
     renderFlowNote();
     renderMountingOverrideNotice();
     invalidate({ clearFlow: true });
   }
 
   function bind() {
+    if (els.vfovProfile) {
+      els.vfovProfile.addEventListener("change", () => {
+        applyVfovProfileToInput({ force: true });
+        renderVfovProfileGuidance();
+        invalidate({ clearFlow: true });
+      });
+    }
+
+    if (els.vfov) {
+      els.vfov.addEventListener("input", renderVfovProfileGuidance);
+      els.vfov.addEventListener("change", renderVfovProfileGuidance);
+    }
+
     ["h", "dist", "th", "vfov"].forEach((id) => {
       const el = $(id);
       if (!el) return;
@@ -601,6 +784,8 @@
 
     bind();
     hydrateMountingInputsFromActiveArea();
+    applyVfovProfileToInput({ force: true });
+    renderVfovProfileGuidance();
     renderFlowNote();
     renderMountingOverrideNotice();
     invalidate({ clearFlow: false });
