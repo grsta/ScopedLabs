@@ -145,6 +145,18 @@
     @media (max-width: 760px) {
       .lighting-factor-grid { grid-template-columns: 1fr; }
     }
+
+    .scene-flow-actions {
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .scene-continue-slot {
+      align-items: center;
+      gap: 10px;
+    }
+
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -212,13 +224,13 @@
   <main class="page">
     <div class="container">
 
-      <div class="crumbs">
-        <a href="/tools/">Tools</a>
-        <span class="sep">/</span>
-        <a href="/tools/physical-security/">Physical Security</a>
-        <span class="sep">/</span>
-        <span>Scene Illumination</span>
-      </div>
+      
+        <div class="btn-row scene-flow-actions" style="margin-top: 14px;">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+          <span id="next-step-row" class="btn-row scene-continue-slot" style="margin-top: 0; display:none;">
+            <button id="continue" class="btn btn-primary" type="button">Continue &rarr; Mounting Height</button>
+          </span>
+        </div>
 
       <div class="pill-row" style="margin-top: 6px;">
         <span class="pill pill--pro">Pro Tier</span>
@@ -376,11 +388,7 @@
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
         </div>
 
-        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-          <a id="continue" class="btn btn-primary" href="/tools/physical-security/mounting-height/">
-            Continue → Mounting Height
-          </a>
-        </div>
+        
       
 <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
@@ -474,7 +482,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-005"></script>
 
-  <script src="./script.js?v=physical-security-scene-health-fit-001"></script>
+  <script src="./script.js?v=physical-security-scene-buttons-002"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
