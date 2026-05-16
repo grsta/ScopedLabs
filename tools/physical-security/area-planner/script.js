@@ -684,6 +684,45 @@
     status("Copy unavailable. Use window.ScopedLabsPhysicalSecurityAreaSummary in the browser console.");
   }
 
+  function isLegacyStarterArea(area) {
+    if (!area) return false;
+
+    const hasResults = [
+      "lightingStatus",
+      "mountingStatus",
+      "fovStatus",
+      "coverageStatus",
+      "spacingStatus",
+      "blindSpotStatus",
+      "pixelDensityStatus",
+      "lensStatus",
+      "faceRecognitionStatus",
+      "licensePlateStatus"
+    ].some((key) => area[key]);
+
+    return !hasResults &&
+      String(area.name || "") === "Area 1" &&
+      Number(area.protectedLengthFt) === 100 &&
+      Number(area.distanceToTargetPlaneFt) === 80 &&
+      Number(area.assumedHfovDeg) === 70;
+  }
+
+  function removeLegacyStarterAreaIfNeeded() {
+    const api = state();
+    if (!api) return;
+
+    const ledger = api.readLedger();
+    if (ledger.areas.length === 1 && isLegacyStarterArea(ledger.areas[0])) {
+      api.writeLedger({
+        ...ledger,
+        activeAreaId: null,
+        areas: []
+      });
+    }
+  }
+
+
+
   function render() {
     const api = state();
     if (!api) return;
@@ -697,6 +736,18 @@
     renderAreaSummary(ledger);
 
     if (!els.areaList) return;
+
+    if (!ledger.areas.length) {
+      els.areaList.innerHTML = '' +
+        '<article class="area-card">' +
+          '<div class="pill-row">' +
+            '<span class="pill">No Areas Saved</span>' +
+          '</div>' +
+          '<h3>No planning areas saved yet</h3>' +
+          '<p class="muted">Enter the first area above, then save it. ScopedLabs will not assume a default distance, HFOV, scene width, or camera count.</p>' +
+        '</article>';
+      return;
+    }
 
     els.areaList.innerHTML = ledger.areas.map((area) => {
       const activeClass = area.id === ledger.activeAreaId ? " is-active" : "";
@@ -787,11 +838,20 @@
     localStorage.removeItem("scopedlabs:pipeline:physical-security:areas");
     sessionStorage.removeItem("scopedlabs:pipeline:physical-security:active-area");
     localStorage.removeItem("scopedlabs:pipeline:physical-security:active-area");
+
     editingAreaId = null;
     const api = state();
-    if (api) api.writeLedger(api.readLedger());
-    setBlankAreaForm("Example: Front Door");
-    status("Area plan reset to a single starter area.");
+    if (api) {
+      api.writeLedger({
+        schema: "scopedlabs.physical-security.area-ledger.v1",
+        projectMode: "multi-area",
+        activeAreaId: null,
+        areas: []
+      });
+    }
+
+    clearAreaForm("Front Door");
+    status("Area plan reset. Enter the first area above, then save it.");
     render();
   }
 
@@ -816,7 +876,7 @@
     }
 
     const api = state();
-    api.writeLedger(api.readLedger());
+    removeLegacyStarterAreaIfNeeded();
     clearAreaForm("Front Door");
     bind();
     render();

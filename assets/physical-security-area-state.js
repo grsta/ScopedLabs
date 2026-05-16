@@ -45,9 +45,9 @@
       id,
       name,
       areaType: String(source?.areaType || "General Coverage").trim() || "General Coverage",
-      protectedLengthFt: cleanNumber(source?.protectedLengthFt, 100),
-      distanceToTargetPlaneFt: cleanNumber(source?.distanceToTargetPlaneFt, 80),
-      assumedHfovDeg: cleanNumber(source?.assumedHfovDeg, 70),
+      protectedLengthFt: cleanNumber(source?.protectedLengthFt, null),
+      distanceToTargetPlaneFt: cleanNumber(source?.distanceToTargetPlaneFt, null),
+      assumedHfovDeg: cleanNumber(source?.assumedHfovDeg, null),
       detailGoal: String(source?.detailGoal || "Observation").trim() || "Observation",
       targetCameraCount: cleanNumber(source?.targetCameraCount, null),
       cameraCount: cleanNumber(source?.cameraCount, null),
@@ -61,12 +61,11 @@
   }
 
   function defaultLedger() {
-    const area = normalizeArea({ name: "Area 1" }, 0);
     return {
       schema: "scopedlabs.physical-security.area-ledger.v1",
       projectMode: "multi-area",
-      activeAreaId: area.id,
-      areas: [area],
+      activeAreaId: null,
+      areas: [],
       updatedAt: new Date().toISOString()
     };
   }
@@ -75,9 +74,11 @@
     const parsed = safeJsonParse(sessionStorage.getItem(STORAGE_KEY), null) ||
       safeJsonParse(localStorage.getItem(STORAGE_KEY), null);
 
-    if (!parsed || !Array.isArray(parsed.areas) || !parsed.areas.length) return defaultLedger();
+    if (!parsed || !Array.isArray(parsed.areas)) return defaultLedger();
 
-    const areas = parsed.areas.map(normalizeArea);
+    const areas = parsed.areas.map(normalizeArea).filter((area) => area && area.id);
+    if (!areas.length) return defaultLedger();
+
     const activeAreaId = parsed.activeAreaId && areas.some((area) => area.id === parsed.activeAreaId)
       ? parsed.activeAreaId
       : areas[0].id;
@@ -91,34 +92,37 @@
     };
   }
 
-  function writeLedger(ledger) {
+  function writeLedger(ledger = {}) {
+    const areas = Array.isArray(ledger.areas)
+      ? ledger.areas.map(normalizeArea).filter((area) => area && area.id)
+      : [];
+
+    const activeAreaId = ledger.activeAreaId && areas.some((area) => area.id === ledger.activeAreaId)
+      ? ledger.activeAreaId
+      : areas[0]?.id || null;
+
     const normalized = {
       schema: "scopedlabs.physical-security.area-ledger.v1",
       projectMode: "multi-area",
-      activeAreaId: ledger.activeAreaId,
-      areas: (ledger.areas || []).map(normalizeArea),
+      activeAreaId,
+      areas,
       updatedAt: new Date().toISOString()
     };
 
-    if (!normalized.activeAreaId && normalized.areas[0]) normalized.activeAreaId = normalized.areas[0].id;
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
 
-    const text = JSON.stringify(normalized, null, 2);
-    sessionStorage.setItem(STORAGE_KEY, text);
-    localStorage.setItem(STORAGE_KEY, text);
-    sessionStorage.setItem(ACTIVE_KEY, normalized.activeAreaId || "");
-    localStorage.setItem(ACTIVE_KEY, normalized.activeAreaId || "");
+    const active = normalized.areas.find((area) => area.id === activeAreaId) || null;
 
-    const active = normalized.areas.find((area) => area.id === normalized.activeAreaId) || normalized.areas[0] || null;
     if (active) {
-      const payload = {
-        schema: "scopedlabs.pipeline.physical-security.area-planner.v1",
+      sessionStorage.setItem(ACTIVE_KEY, active.id);
+      localStorage.setItem(ACTIVE_KEY, active.id);
+
+      sessionStorage.setItem(FLOW_KEY, JSON.stringify({
         category: "physical-security",
         step: "area-planner",
-        lane: "v1",
-        sourceMode: "area-planner",
-        savedAt: new Date().toISOString(),
         data: {
-          activeAreaId: active.id,
+          areaId: active.id,
           areaName: active.name,
           areaType: active.areaType,
           protectedLengthFt: active.protectedLengthFt,
@@ -129,17 +133,19 @@
           areaCount: normalized.areas.length,
           areas: normalized.areas
         }
-      };
-      sessionStorage.setItem(FLOW_KEY, JSON.stringify(payload));
-      sessionStorage.setItem("scopedlabs:pipeline:last-result", JSON.stringify(payload));
+      }));
+    } else {
+      sessionStorage.removeItem(ACTIVE_KEY);
+      localStorage.removeItem(ACTIVE_KEY);
+      sessionStorage.removeItem(FLOW_KEY);
     }
 
-    window.dispatchEvent(new CustomEvent("scopedlabs:physical-security-area-updated", { detail: normalized }));
     return normalized;
   }
 
   function getActiveArea() {
     const ledger = readLedger();
+    if (!ledger.areas.length) return null;
     return ledger.areas.find((area) => area.id === ledger.activeAreaId) || ledger.areas[0] || null;
   }
 
@@ -214,23 +220,22 @@
   }
 
   function renderAreaBanner() {
-    const body = document.body;
-    if (!body || body.dataset.category !== "physical-security") return;
-    if (body.dataset.step === "area-planner") return;
-
     const existing = document.getElementById("physicalSecurityAreaBanner");
     if (existing) existing.remove();
 
     const ledger = readLedger();
     const area = getActiveArea();
+    if (!area) return;
+
     const container = document.createElement("div");
     container.id = "physicalSecurityAreaBanner";
     container.innerHTML = bannerHtml(area, ledger);
 
-    const pipeline = document.getElementById("pipeline");
-    const flowNote = document.getElementById("flow-note");
-    const h1 = document.querySelector("h1");
-    const anchor = pipeline || flowNote || h1;
+    const anchor =
+      document.querySelector("#flow-note") ||
+      document.querySelector("#pipeline") ||
+      document.querySelector("main .container") ||
+      document.querySelector("main");
 
     if (anchor && anchor.parentNode) {
       anchor.parentNode.insertBefore(container, anchor.nextSibling);
