@@ -290,6 +290,74 @@
 
   
 
+  function firstFiniteValue(...values) {
+    for (const value of values) {
+      const number = Number(value);
+      if (Number.isFinite(number) && number > 0) return number;
+    }
+
+    return null;
+  }
+
+  function activeAreaForSceneLighting() {
+    const api = window.ScopedLabsPhysicalSecurityAreaState;
+    if (!api || typeof api.getActiveArea !== "function") return null;
+    return api.getActiveArea();
+  }
+
+  function applySceneValue(el, value) {
+    const number = Number(value);
+    if (!el || !Number.isFinite(number) || number <= 0) return false;
+    el.value = String(number);
+    return true;
+  }
+
+  function hydrateSceneInputsFromActiveArea() {
+    const area = activeAreaForSceneLighting();
+    if (!area) return;
+
+    const width = firstFiniteValue(
+      area.protectedLengthFt,
+      area.sceneWidthFt,
+      area.coverageWidthFt,
+      area.estimatedSceneWidthFt
+    );
+
+    const depth = firstFiniteValue(
+      area.distanceToTargetPlaneFt,
+      area.sceneDepthFt,
+      area.areaDepthFt,
+      area.validationZoneDepthFt
+    );
+
+    applySceneValue(els.w, width);
+    applySceneValue(els.d, depth);
+
+    if (els.lightingGoal && area.lightingGoalId) {
+      els.lightingGoal.value = area.lightingGoalId;
+    }
+
+    if (els.fc && Number.isFinite(Number(area.targetIlluminationFc)) && Number(area.targetIlluminationFc) > 0) {
+      els.fc.value = String(area.targetIlluminationFc);
+    }
+
+    if (els.ufPreset && area.utilizationPresetId) {
+      els.ufPreset.value = area.utilizationPresetId;
+    }
+
+    if (els.llfPreset && area.lightLossPresetId) {
+      els.llfPreset.value = area.lightLossPresetId;
+    }
+
+    if (els.uf && Number.isFinite(Number(area.utilizationFactor)) && Number(area.utilizationFactor) > 0) {
+      els.uf.value = String(Math.round(Number(area.utilizationFactor) * 100));
+    }
+
+    if (els.llf && Number.isFinite(Number(area.lightLossFactor)) && Number(area.lightLossFactor) > 0) {
+      els.llf.value = String(Math.round(Number(area.lightLossFactor) * 100));
+    }
+  }
+
   function applyDefaults() {
     if (els.lightingGoal) els.lightingGoal.value = DEFAULTS.lightingGoal;
     if (els.ufPreset) els.ufPreset.value = DEFAULTS.ufPreset;
@@ -721,6 +789,7 @@
 
   function reset() {
     applyDefaults();
+    hydrateSceneInputsFromActiveArea();
     renderFlowNote();
     renderLightingGoalGuidance();
     renderFactorGuidance();
@@ -793,6 +862,7 @@
 
   function initTool() {
     bind();
+    hydrateSceneInputsFromActiveArea();
     renderFlowNote();
     renderLightingGoalGuidance();
     renderFactorGuidance();
