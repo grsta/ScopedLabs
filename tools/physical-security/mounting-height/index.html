@@ -65,6 +65,25 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
+
+    /* Mounting Height flow action alignment */
+    .mounting-flow-actions {
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .mounting-flow-actions #next-step-row {
+      align-items: center;
+      gap: 10px;
+      margin-top: 0 !important;
+    }
+
+    .mounting-flow-actions #next-step-row:not([hidden]) {
+      display: flex !important;
+    }
+
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -132,13 +151,7 @@
   <main class="page">
     <div class="container">
 
-      <div class="crumbs">
-        <a href="/tools/">Tools</a>
-        <span class="sep">/</span>
-        <a href="/tools/physical-security/">Physical Security</a>
-        <span class="sep">/</span>
-        <span>Mounting Height</span>
-      </div>
+      
 
       <div class="pill-row" style="margin-top: 6px;">
         <span class="pill pill--free">Free Tier</span>
@@ -269,15 +282,16 @@
         <div id="exportStatus" class="export-status"></div>
       </section>
 
-<div class="btn-row" style="margin-top: 14px;">
+        <div id="mountingFlowActions" class="btn-row mounting-flow-actions" style="margin-top: 14px;">
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+          <div id="next-step-row" class="btn-row mounting-continue-slot" style="margin-top: 0; display: none;">
+            <a id="continue" class="btn btn-primary" href="/tools/physical-security/field-of-view/">Continue &rarr; Field of View</a>
+          </div>
         </div>
 
-        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-          <a id="continue" class="btn btn-primary" href="/tools/physical-security/field-of-view/">
-            Continue → Field of View
-          </a>
-        </div>
+
+
+        
       </section>
 
       <footer class="site-footer">
@@ -321,7 +335,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-005"></script>
 
-  <script src="./script.js?v=physical-security-mounting-area-writeback-001"></script>
+  <script src="./script.js?v=physical-security-mounting-buttons-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

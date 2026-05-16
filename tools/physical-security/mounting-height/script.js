@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
@@ -399,6 +399,13 @@
 
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+
+    if (els.continueWrap) {
+      els.continueWrap.hidden = false;
+      els.continueWrap.removeAttribute("hidden");
+      els.continueWrap.style.display = "flex";
+      els.continueWrap.style.marginTop = "0";
+    }
   }
 
   function calc() {
