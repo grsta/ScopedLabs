@@ -210,6 +210,26 @@
     return '<div class="flow-override-note" role="note" aria-label="Manual override warning"><strong>Manual override active:</strong> ' + text + '. Results are valid for this local what-if branch.</div>';
   }
 
+  
+
+  
+
+  
+
+  
+
+  
+
+  function safeFovJsonParse(value, fallback = null) {
+    if (!value) return fallback;
+    try { return JSON.parse(value); } catch { return fallback; }
+  }
+
+  function readFovStoredJson(key) {
+    return safeFovJsonParse(sessionStorage.getItem(key), null) ||
+      safeFovJsonParse(localStorage.getItem(key), null);
+  }
+
   function firstFiniteFovValue(...values) {
     for (const value of values) {
       const number = Number(value);
@@ -221,8 +241,25 @@
 
   function activeAreaForFieldOfView() {
     const api = window.ScopedLabsPhysicalSecurityAreaState;
-    if (!api || typeof api.getActiveArea !== "function") return null;
-    return api.getActiveArea();
+
+    if (api && typeof api.getActiveArea === "function") {
+      const area = api.getActiveArea();
+      if (area) return area;
+    }
+
+    const ledger = readFovStoredJson("scopedlabs:pipeline:physical-security:areas");
+    if (ledger && Array.isArray(ledger.areas) && ledger.areas.length) {
+      return ledger.areas.find((area) => area.id === ledger.activeAreaId) || ledger.areas[0] || null;
+    }
+
+    return null;
+  }
+
+  function flowDataForFov(key) {
+    const stored = readFovStoredJson(key);
+    return stored && typeof stored === "object" && stored.data && typeof stored.data === "object"
+      ? stored.data
+      : {};
   }
 
   function applyFovValue(el, value) {
@@ -233,29 +270,39 @@
   }
 
   function hydrateFovInputsFromActiveArea() {
-    const area = activeAreaForFieldOfView();
-    if (!area) return;
+    const area = activeAreaForFieldOfView() || {};
+    const mountFlow = flowDataForFov(FLOW_KEYS.mount);
+    const areaFlow = flowDataForFov("scopedlabs:pipeline:physical-security:area-planner");
 
     const sceneWidth = firstFiniteFovValue(
+      area.fovTargetSceneWidthFt,
       area.targetSceneWidthFt,
       area.protectedLengthFt,
-      area.sceneWidthFt
+      area.sceneWidthFt,
+      areaFlow.protectedLengthFt
     );
 
     const hfov = firstFiniteFovValue(
+      area.fovAssumedHfovDeg,
       area.assumedHfovDeg,
       area.horizontalFovDeg,
-      area.hfovDeg
+      area.hfovDeg,
+      areaFlow.assumedHfovDeg
     );
 
     const distance = firstFiniteFovValue(
+      mountFlow.dist,
       area.mountingTargetDistanceFt,
+      area.fovTargetDistanceFt,
       area.distanceToTargetPlaneFt,
-      area.targetDistanceFt
+      area.targetDistanceFt,
+      areaFlow.distanceToTargetPlaneFt
     );
 
     const mountHeight = firstFiniteFovValue(
+      mountFlow.h,
       area.mountingHeightFt,
+      area.fovMountHeightFt,
       area.mountHeightFt
     );
 
@@ -280,10 +327,18 @@
     }
   }
 
+  function hideFovContinue() {
+    if (!els.continueWrap) return;
+    els.continueWrap.classList.remove("is-visible");
+    els.continueWrap.hidden = true;
+    els.continueWrap.style.display = "none";
+  }
+
   function forceFovContinueVisible() {
     if (els.continueWrap) {
       els.continueWrap.hidden = false;
       els.continueWrap.removeAttribute("hidden");
+      els.continueWrap.classList.add("is-visible");
       els.continueWrap.style.display = "flex";
       els.continueWrap.style.marginTop = "0";
     }
@@ -299,7 +354,6 @@
     els.hfov.value = "";
     els.scene.value = "";
     els.h.value = "";
-    hydrateFovInputsFromActiveArea();
   }
 
   function renderFlowNote() {
@@ -345,6 +399,31 @@
   }
 
   function invalidate({ clearFlow = true } = {}) {
+    if (clearFlow) {
+      sessionStorage.removeItem(FLOW_KEYS.fov);
+      clearDownstream();
+    }
+
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
+      flowKey: FLOW_KEYS.fov,
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
+      emptyMessage: "Enter values and press Calculate."
+    });
+
+    hideFovContinue();
+
+    if (typeof clearFovGeometryDiagram === "function") {
+      clearFovGeometryDiagram();
+    }
+
+    renderFlowNote();
+  } = {}) {
     if (clearFlow) {
       sessionStorage.removeItem(FLOW_KEYS.fov);
       clearDownstream();
@@ -699,7 +778,12 @@
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-    clearFovGeometryDiagram();
+    hideFovContinue();
+
+    if (typeof clearFovGeometryDiagram === "function") {
+      clearFovGeometryDiagram();
+    }
+
     els.results.innerHTML = '<div class="muted">' + message + '</div>';
   }
 
@@ -744,6 +828,7 @@
   function reset() {
     resetFlowOverrideState();
     applyDefaults();
+    hydrateFovInputsFromActiveArea();
     renderFlowNote();
     invalidate({ clearFlow: true });
   }
@@ -782,6 +867,7 @@
     if (year) year.textContent = new Date().getFullYear();
 
     bind();
+    applyDefaults();
     hydrateFovInputsFromActiveArea();
     renderFlowNote();
     invalidate({ clearFlow: false });
