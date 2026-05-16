@@ -631,6 +631,23 @@
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
+  function forceSceneContinueVisible() {
+    if (els.continueWrap) {
+      els.continueWrap.hidden = false;
+      els.continueWrap.removeAttribute("hidden");
+      els.continueWrap.style.display = "flex";
+      els.continueWrap.style.marginTop = "0";
+    }
+
+    if (els.continueBtn) {
+      els.continueBtn.hidden = false;
+      els.continueBtn.removeAttribute("hidden");
+      if (els.continueBtn.tagName === "A" && !els.continueBtn.getAttribute("href")) {
+        els.continueBtn.setAttribute("href", NEXT_URL);
+      }
+    }
+  }
+
   function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
@@ -687,6 +704,7 @@
 
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+    forceSceneContinueVisible();
 
     if (els.continueWrap) {
       els.continueWrap.hidden = false;

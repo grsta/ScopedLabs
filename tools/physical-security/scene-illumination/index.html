@@ -157,6 +157,24 @@
       gap: 10px;
     }
 
+
+    /* Scene Illumination flow action alignment */
+    .scene-flow-actions {
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .scene-flow-actions #next-step-row {
+      align-items: center;
+      gap: 10px;
+      margin-top: 0 !important;
+    }
+
+    .scene-flow-actions #next-step-row:not([hidden]) {
+      display: flex !important;
+    }
+
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -225,12 +243,7 @@
     <div class="container">
 
       
-        <div class="btn-row scene-flow-actions" style="margin-top: 14px;">
-          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
-          <span id="next-step-row" class="btn-row scene-continue-slot" style="margin-top: 0; display:none;">
-            <button id="continue" class="btn btn-primary" type="button">Continue &rarr; Mounting Height</button>
-          </span>
-        </div>
+        
 
       <div class="pill-row" style="margin-top: 6px;">
         <span class="pill pill--pro">Pro Tier</span>
@@ -281,10 +294,7 @@
         
       
 
-<div class="actions">
-          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Physical Security</a>
-        </div>
+
       </section>
 
       <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
@@ -390,6 +400,13 @@
 
         
       
+
+        <div id="sceneFlowActions" class="btn-row scene-flow-actions" style="margin-top: 14px;">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+          <div id="next-step-row" class="btn-row scene-continue-slot" style="margin-top: 0; display: none;">
+            <a id="continue" class="btn btn-primary" href="/tools/physical-security/mounting-height/">Continue &rarr; Mounting Height</a>
+          </div>
+        </div>
 <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
@@ -482,7 +499,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-005"></script>
 
-  <script src="./script.js?v=physical-security-scene-buttons-004"></script>
+  <script src="./script.js?v=physical-security-scene-buttons-005"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
