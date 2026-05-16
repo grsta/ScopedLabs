@@ -548,19 +548,24 @@
   }
 
   function getInputs() {
-    const h = num(els.h.value);
+    const hRaw = String(els.h?.value || "").trim();
+    const thRaw = String(els.th?.value || "").trim();
+
+    const h = hRaw === "" ? NaN : num(hRaw);
     const dist = num(els.dist.value);
-    const th = num(els.th.value);
+    const th = thRaw === "" ? NaN : num(thRaw);
     const vfov = num(els.vfov.value);
     const contextInfo = selectedMountContextInfo(h);
 
     if (
+      hRaw === "" ||
+      thRaw === "" ||
       !Number.isFinite(h) || h < 0 ||
       !Number.isFinite(dist) || dist <= 0 ||
       !Number.isFinite(th) || th < 0 ||
       !Number.isFinite(vfov) || vfov <= 0 || vfov >= 180
     ) {
-      return { ok: false, message: "Enter valid values and press Calculate." };
+      return { ok: false, message: "Enter mount height, target height, target distance, and VFOV before calculating." };
     }
 
     return {
