@@ -655,12 +655,12 @@
   function renderFovGeometryDiagram(data) {
     if (!els.fovGeometry || !data || !data.ok) return;
 
-    const cameraX = 92;
-    const targetX = 650;
-    const centerY = 175;
-    const maxSpanPx = 220;
-    const svgW = 760;
-    const svgH = 350;
+    const cameraX = 82;
+    const targetX = 560;
+    const centerY = 150;
+    const maxSpanPx = 170;
+    const svgW = 680;
+    const svgH = 290;
 
     const calculatedWidth = Math.max(Number(data.sceneWidth) || 0, 0.1);
     const requiredWidth = Math.max(Number(data.scene) || 0, 0.1);
@@ -675,7 +675,7 @@
     const requiredTopY = centerY - requiredPx / 2;
     const requiredBottomY = centerY + requiredPx / 2;
 
-    const axisY = 315;
+    const axisY = 252;
     const goodFit = data.fitClass === "Good Fit";
     const tooNarrow = data.fitClass === "Too Narrow";
     const coneStroke = goodFit ? "rgba(125,255,158,.95)" : tooNarrow ? "rgba(255,190,120,.95)" : "rgba(255,220,120,.95)";
@@ -683,8 +683,9 @@
     const requiredStroke = "rgba(255,255,255,.78)";
     const centerStroke = "rgba(255,255,255,.28)";
 
-    const widthLabelY = Math.max(26, coneTopY - 10);
-    const requiredLabelY = Math.min(svgH - 78, requiredBottomY + 18);
+    const widthLabelY = Math.max(26, coneTopY - 8);
+    const requiredLabelY = Math.min(svgH - 58, requiredBottomY + 16);
+    const requiredX = Math.min(svgW - 128, targetX + 26);
 
     const svg =
       '<svg class="fov-geometry-svg" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Field of view geometry diagram">' +
@@ -699,28 +700,28 @@
         '<polygon points="' + cameraX + ',' + centerY + ' ' + targetX + ',' + coneTopY + ' ' + targetX + ',' + coneBottomY + '" fill="' + coneFill + '" stroke="' + coneStroke + '" stroke-width="2"></polygon>' +
 
         '<line x1="' + targetX + '" y1="' + coneTopY + '" x2="' + targetX + '" y2="' + coneBottomY + '" stroke="' + coneStroke + '" stroke-width="5" stroke-linecap="round"></line>' +
-        '<line x1="' + (targetX + 34) + '" y1="' + requiredTopY + '" x2="' + (targetX + 34) + '" y2="' + requiredBottomY + '" stroke="' + requiredStroke + '" stroke-width="4" stroke-linecap="round"></line>' +
+        '<line x1="' + (targetX + 26) + '" y1="' + requiredTopY + '" x2="' + (targetX + 26) + '" y2="' + requiredBottomY + '" stroke="' + requiredStroke + '" stroke-width="4" stroke-linecap="round"></line>' +
 
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="9" fill="rgba(125,255,158,.95)"></circle>' +
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="18" fill="none" stroke="rgba(125,255,158,.26)" stroke-width="2"></circle>' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(125,255,158,.95)"></circle>' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="17" fill="none" stroke="rgba(125,255,158,.26)" stroke-width="2"></circle>' +
 
         '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(255,255,255,.52)" stroke-width="2" marker-end="url(#fovArrow)"></line>' +
-        '<line x1="' + cameraX + '" y1="' + (axisY - 8) + '" x2="' + cameraX + '" y2="' + (axisY + 8) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
-        '<line x1="' + targetX + '" y1="' + (axisY - 8) + '" x2="' + targetX + '" y2="' + (axisY + 8) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
+        '<line x1="' + cameraX + '" y1="' + (axisY - 7) + '" x2="' + cameraX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
+        '<line x1="' + targetX + '" y1="' + (axisY - 7) + '" x2="' + targetX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
 
-        '<text x="' + cameraX + '" y="' + (centerY - 28) + '" fill="rgba(255,255,255,.86)" font-size="13" font-weight="800" text-anchor="middle">Camera</text>' +
-        '<text x="' + cameraX + '" y="' + (centerY + 44) + '" fill="rgba(255,255,255,.62)" font-size="12" text-anchor="middle">Mount ' + escapeFovHtml(fmtFtShort(data.h)) + '</text>' +
+        '<text x="' + cameraX + '" y="' + (centerY - 27) + '" fill="rgba(255,255,255,.86)" font-size="12" font-weight="800" text-anchor="middle">Camera</text>' +
+        '<text x="' + cameraX + '" y="' + (centerY + 40) + '" fill="rgba(255,255,255,.62)" font-size="11" text-anchor="middle">Mount ' + escapeFovHtml(fmtFtShort(data.h)) + '</text>' +
 
-        '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 24) + '" fill="rgba(255,255,255,.72)" font-size="13" font-weight="800" text-anchor="middle">Target distance: ' + escapeFovHtml(fmtFtShort(data.dist)) + '</text>' +
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 22) + '" fill="rgba(255,255,255,.72)" font-size="12" font-weight="800" text-anchor="middle">Target distance: ' + escapeFovHtml(fmtFtShort(data.dist)) + '</text>' +
 
-        '<text x="' + (targetX - 10) + '" y="' + widthLabelY + '" fill="rgba(255,255,255,.86)" font-size="13" font-weight="800" text-anchor="end">Calculated coverage: ' + escapeFovHtml(fmtFtShort(data.sceneWidth)) + '</text>' +
-        '<text x="' + (targetX + 44) + '" y="' + requiredLabelY + '" fill="rgba(255,255,255,.78)" font-size="13" font-weight="800">Required width: ' + escapeFovHtml(fmtFtShort(data.scene)) + '</text>' +
+        '<text x="' + (targetX - 8) + '" y="' + widthLabelY + '" fill="rgba(255,255,255,.86)" font-size="12" font-weight="800" text-anchor="end">Coverage: ' + escapeFovHtml(fmtFtShort(data.sceneWidth)) + '</text>' +
+        '<text x="' + requiredX + '" y="' + requiredLabelY + '" fill="rgba(255,255,255,.78)" font-size="12" font-weight="800">Required: ' + escapeFovHtml(fmtFtShort(data.scene)) + '</text>' +
 
-        '<text x="' + ((cameraX + targetX) / 2) + '" y="42" fill="rgba(255,255,255,.70)" font-size="13" font-weight="800" text-anchor="middle">HFOV ' + escapeFovHtml(fmtDegText(data.hfov)) + '</text>' +
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="36" fill="rgba(255,255,255,.70)" font-size="12" font-weight="800" text-anchor="middle">HFOV ' + escapeFovHtml(fmtDegText(data.hfov)) + '</text>' +
 
-        '<rect x="26" y="24" width="214" height="60" rx="14" fill="rgba(0,0,0,.24)" stroke="rgba(255,255,255,.10)"></rect>' +
-        '<text x="44" y="49" fill="rgba(255,255,255,.68)" font-size="12" font-weight="800">Coverage ratio</text>' +
-        '<text x="44" y="72" fill="rgba(255,255,255,.94)" font-size="20" font-weight="900">' + escapeFovHtml(fmtRatio(data.coverageRatio)) + '</text>' +
+        '<rect x="22" y="20" width="170" height="54" rx="13" fill="rgba(0,0,0,.24)" stroke="rgba(255,255,255,.10)"></rect>' +
+        '<text x="38" y="42" fill="rgba(255,255,255,.68)" font-size="11" font-weight="800">Coverage ratio</text>' +
+        '<text x="38" y="64" fill="rgba(255,255,255,.94)" font-size="18" font-weight="900">' + escapeFovHtml(fmtRatio(data.coverageRatio)) + '</text>' +
       '</svg>';
 
     els.fovGeometry.hidden = false;
