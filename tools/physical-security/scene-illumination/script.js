@@ -323,15 +323,19 @@
       area.estimatedSceneWidthFt
     );
 
-    const depth = firstFiniteValue(
-      area.distanceToTargetPlaneFt,
+    const lightingDepth = firstFiniteValue(
       area.sceneDepthFt,
-      area.areaDepthFt,
-      area.validationZoneDepthFt
+      area.lightingAreaDepthFt
     );
 
     applySceneValue(els.w, width);
-    applySceneValue(els.d, depth);
+
+    if (lightingDepth !== null) {
+      applySceneValue(els.d, lightingDepth);
+    } else if (els.d) {
+      els.d.value = "";
+      els.d.placeholder = "Depth of lit/evaluated zone";
+    }
 
     if (els.lightingGoal && area.lightingGoalId) {
       els.lightingGoal.value = area.lightingGoalId;
@@ -626,6 +630,8 @@
       status: "IN PROGRESS",
       sceneWidthFt: data.w,
       sceneDepthFt: data.d,
+      lightingAreaWidthFt: data.w,
+      lightingAreaDepthFt: data.d,
       sceneAreaSqFt: data.area,
       targetIlluminationFc: data.fc,
       lightingGoalId: data.lightingGoalId,
@@ -662,6 +668,8 @@
       data: {
         w: data.w,
         d: data.d,
+        lightingAreaWidthFt: data.w,
+        lightingAreaDepthFt: data.d,
         fc: data.fc,
         lightingGoalId: data.lightingGoalId,
         lightingGoalLabel: data.lightingGoalLabel,
@@ -730,8 +738,8 @@
         { label: "Estimated Lumens Required", value: fmtLumens(data.lumens) }
       ],
       derivedRows: [
-        { label: "Area Width", value: fmtFt(data.w) },
-        { label: "Area Depth", value: fmtFt(data.d) },
+        { label: "Lighting Area Width", value: fmtFt(data.w) },
+        { label: "Lighting Area Depth", value: fmtFt(data.d) },
         { label: "Recommended Range", value: data.targetFootcandleRange ? lightingGoalRangeText(data.targetFootcandleRange) : "Custom target" },
         { label: "Footcandle Source", value: data.footcandleSourceMode === "manual-override" ? "Manual assumption" : "Preset typical" },
         { label: "Fixture / Layout Efficiency", value: data.utilizationPresetLabel },
