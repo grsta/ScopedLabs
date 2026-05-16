@@ -349,6 +349,20 @@
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
+  function forceMountingContinueVisible() {
+    if (els.continueWrap) {
+      els.continueWrap.hidden = false;
+      els.continueWrap.removeAttribute("hidden");
+      els.continueWrap.style.display = "flex";
+      els.continueWrap.style.marginTop = "0";
+    }
+
+    if (els.continueBtn) {
+      els.continueBtn.hidden = false;
+      els.continueBtn.removeAttribute("hidden");
+    }
+  }
+
   function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
@@ -399,6 +413,7 @@
 
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+    forceMountingContinueVisible();
 
     if (els.continueWrap) {
       els.continueWrap.hidden = false;
