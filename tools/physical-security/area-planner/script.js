@@ -665,10 +665,316 @@
     window.ScopedLabsPhysicalSecurityAreaSummary = model;
   }
 
+  function areaReportStatusClass(status) {
+    const value = normalizeStatus(status);
+    if (value === "HEALTHY") return "healthy";
+    if (value === "WATCH") return "watch";
+    if (value === "RISK") return "risk";
+    return "pending";
+  }
+
+  function areaReportGeneratedAt(value) {
+    const date = value ? new Date(value) : new Date();
+    if (Number.isNaN(date.getTime())) return new Date().toLocaleString();
+    return date.toLocaleString();
+  }
+
+  function areaReportId() {
+    const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+    return "SL-PS-AREA-" + stamp;
+  }
+
+  function areaReportRows(rows) {
+    return rows.map((row) => {
+      const status = row.complete ? normalizeStatus(row.status) : "PENDING";
+      return '' +
+        '<tr>' +
+          '<td>' + escapeHtml(row.label) + '</td>' +
+          '<td><span class="mini-status ' + areaReportStatusClass(status) + '">' + escapeHtml(status) + '</span></td>' +
+          '<td>' + escapeHtml(row.detail || "Not recorded") + '</td>' +
+        '</tr>';
+    }).join("");
+  }
+
+  function areaReportSummaryText(model, overallStatus) {
+    if (!model.areas.length) {
+      return "No Physical Security planning areas have been saved yet. Add at least one area before generating a final area summary.";
+    }
+
+    if (overallStatus === "RISK") {
+      return "The Physical Security area summary contains one or more Risk conditions. Review the affected area rows and correction notes before treating this design as ready.";
+    }
+
+    if (overallStatus === "WATCH") {
+      return "The Physical Security area summary contains one or more Watch conditions. Confirm the tradeoffs are intentional or rerun the affected checks before final use.";
+    }
+
+    if (overallStatus === "HEALTHY") {
+      return "The Physical Security area summary is currently within healthy planning guardrails for the recorded area results.";
+    }
+
+    return "The Physical Security area summary is incomplete. Run the remaining pipeline checks before treating this as a final design report.";
+  }
+
+  function buildAreaSummaryReportHtml(model) {
+    const overallStatus = worstStatus(model.areas.map((item) => item.overallStatus));
+    const statusClass = areaReportStatusClass(overallStatus);
+    const generated = areaReportGeneratedAt(model.generatedAt);
+    const reportId = areaReportId();
+
+    const areaBlocks = model.areas.map((item) => {
+      const area = item.area;
+      const cameraText = area.cameraCount
+        ? area.cameraCount + " planned"
+        : area.targetCameraCount
+          ? area.targetCameraCount + " target"
+          : "not set";
+
+      return '' +
+        '<section class="section area-section">' +
+          '<div class="area-head">' +
+            '<div>' +
+              '<h2>' + escapeHtml(area.name || "Area") + '</h2>' +
+              '<div class="area-meta-line">' +
+                escapeHtml(area.areaType || "Area") +
+                ' | Length ' + escapeHtml(fmtFt(area.protectedLengthFt)) +
+                ' | Distance ' + escapeHtml(fmtFt(area.distanceToTargetPlaneFt)) +
+                ' | HFOV ' + escapeHtml(fmtDeg(area.assumedHfovDeg)) +
+                ' | Cameras ' + escapeHtml(cameraText) +
+              '</div>' +
+            '</div>' +
+            '<div class="status-pill ' + areaReportStatusClass(item.overallStatus) + '">' + escapeHtml(item.overallStatus) + '</div>' +
+          '</div>' +
+          '<table>' +
+            '<thead><tr><th>Check</th><th>Status</th><th>Result</th></tr></thead>' +
+            '<tbody>' + areaReportRows(item.rows) + '</tbody>' +
+          '</table>' +
+          '<div class="body-copy next-action"><strong>Next action:</strong> ' + escapeHtml(item.nextActions.join(" ")) + '</div>' +
+          '<div class="body-copy source-note"><strong>Source integrity:</strong> ' + escapeHtml(item.integrity.label) + '. ' + escapeHtml(item.integrity.notes.join(" ")) + '</div>' +
+        '</section>';
+    }).join("");
+
+    const integrity = model.integrityStates && model.integrityStates.length
+      ? model.integrityStates.join(", ")
+      : "No source-integrity states recorded";
+
+    return '<!doctype html>' +
+'<html lang="en">' +
+'<head>' +
+'  <meta charset="utf-8">' +
+'  <meta name="viewport" content="width=device-width, initial-scale=1">' +
+'  <title>Physical Security Area Summary | ScopedLabs</title>' +
+'  <style>' +
+'    :root{' +
+'      --ink:#172018;' +
+'      --muted:#5c6a60;' +
+'      --line:#dfe8e1;' +
+'      --soft:#f7faf8;' +
+'      --accent:#1f7a3d;' +
+'      --accent-soft:#eaf7ef;' +
+'      --watch:#946200;' +
+'      --watch-soft:#fff7df;' +
+'      --risk:#a3362b;' +
+'      --risk-soft:#fff0ee;' +
+'    }' +
+'    *{box-sizing:border-box}' +
+'    body{' +
+'      margin:0;' +
+'      padding:32px;' +
+'      background:#eef3ef;' +
+'      color:var(--ink);' +
+'      font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;' +
+'    }' +
+'    .page{' +
+'      max-width:980px;' +
+'      margin:0 auto;' +
+'      background:#fff;' +
+'      border:1px solid var(--line);' +
+'      box-shadow:0 18px 48px rgba(22,33,26,.12);' +
+'    }' +
+'    .toolbar{' +
+'      display:flex;' +
+'      justify-content:flex-end;' +
+'      gap:10px;' +
+'      padding:16px 20px;' +
+'      border-bottom:1px solid var(--line);' +
+'      background:#fff;' +
+'      position:sticky;' +
+'      top:0;' +
+'      z-index:2;' +
+'    }' +
+'    .toolbar button{' +
+'      border:1px solid var(--line);' +
+'      background:#fff;' +
+'      color:#132018;' +
+'      border-radius:999px;' +
+'      padding:9px 14px;' +
+'      font-weight:800;' +
+'      cursor:pointer;' +
+'    }' +
+'    .report{padding:32px}' +
+'    .brand-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}' +
+'    .brand-mark{' +
+'      width:24px;' +
+'      height:24px;' +
+'      border-radius:6px;' +
+'      display:inline-grid;' +
+'      place-items:center;' +
+'      background:#0b150f;' +
+'      color:#7dff9e;' +
+'      font-weight:950;' +
+'    }' +
+'    .brand-name{font-size:1.15rem;font-weight:900;letter-spacing:.02em}' +
+'    .tagline{color:var(--muted);font-size:.95rem;margin-bottom:18px}' +
+'    .report-head{' +
+'      display:flex;' +
+'      justify-content:space-between;' +
+'      gap:18px;' +
+'      align-items:flex-start;' +
+'      border-top:1px solid var(--line);' +
+'      border-bottom:1px solid var(--line);' +
+'      padding:18px 0;' +
+'      margin-bottom:22px;' +
+'    }' +
+'    .report-title{font-size:1.7rem;line-height:1.15;margin:0 0 6px}' +
+'    .report-meta{color:var(--muted);font-size:.95rem;line-height:1.6}' +
+'    .status-pill,' +
+'    .mini-status{' +
+'      display:inline-flex;' +
+'      align-items:center;' +
+'      justify-content:center;' +
+'      border-radius:999px;' +
+'      font-weight:900;' +
+'      letter-spacing:.06em;' +
+'      text-transform:uppercase;' +
+'      border:1px solid transparent;' +
+'      white-space:nowrap;' +
+'    }' +
+'    .status-pill{padding:8px 12px;font-size:.82rem}' +
+'    .mini-status{padding:5px 8px;font-size:.72rem}' +
+'    .healthy{color:var(--accent);background:var(--accent-soft);border-color:#c9ead7}' +
+'    .watch{color:var(--watch);background:var(--watch-soft);border-color:#f2dfad}' +
+'    .risk{color:var(--risk);background:var(--risk-soft);border-color:#f3c6c1}' +
+'    .pending{color:#4b5563;background:#f3f4f6;border-color:#d1d5db}' +
+'    .section{margin-top:24px}' +
+'    .section h2{margin:0 0 10px;font-size:1rem;letter-spacing:.02em;text-transform:uppercase}' +
+'    .summary,.body-copy{' +
+'      border:1px solid var(--line);' +
+'      background:#fafcfb;' +
+'      border-radius:14px;' +
+'      padding:16px 18px;' +
+'      line-height:1.65;' +
+'    }' +
+'    .rollup-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}' +
+'    .metric{' +
+'      border:1px solid var(--line);' +
+'      background:#fafcfb;' +
+'      border-radius:14px;' +
+'      padding:14px;' +
+'    }' +
+'    .metric-label{display:block;color:var(--muted);font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}' +
+'    .metric-value{display:block;color:#111;font-size:1.25rem;font-weight:950}' +
+'    .metric-note{color:var(--muted);font-size:.85rem;margin-top:7px;line-height:1.45}' +
+'    .area-section{break-inside:avoid;page-break-inside:avoid}' +
+'    .area-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:12px}' +
+'    .area-head h2{text-transform:none;font-size:1.12rem;margin:0 0 4px}' +
+'    .area-meta-line{color:var(--muted);font-size:.92rem;line-height:1.5}' +
+'    table{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:.92rem}' +
+'    th,td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}' +
+'    th{background:#f7faf8;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}' +
+'    tr:last-child td{border-bottom:none}' +
+'    td:first-child{width:28%;color:var(--muted);font-weight:800}' +
+'    .next-action{margin-top:12px;background:#fffdf2;border-color:#eadb9a}' +
+'    .source-note{margin-top:10px}' +
+'    .foot{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;line-height:1.7}' +
+'    @media (max-width:760px){body{padding:14px}.report{padding:20px}.report-head,.area-head{flex-direction:column}.rollup-grid{grid-template-columns:1fr 1fr}}' +
+'    @media print{' +
+'      @page{margin:.55in}' +
+'      body{background:#fff;padding:0}' +
+'      .page{max-width:none;border:none;box-shadow:none}' +
+'      .toolbar{display:none !important}' +
+'      .report{padding:0}' +
+'      .area-section{break-inside:avoid;page-break-inside:avoid}' +
+'    }' +
+'  </style>' +
+'</head>' +
+'<body>' +
+'  <div class="page">' +
+'    <div class="toolbar">' +
+'      <button type="button" onclick="window.print()">Print / Save PDF</button>' +
+'      <button type="button" onclick="window.close()">Close</button>' +
+'    </div>' +
+'    <div class="report">' +
+'      <div class="brand-row"><div class="brand-mark">S</div><div class="brand-name">ScopedLabs</div></div>' +
+'      <div class="tagline">Engineering ? Analysis ? Tools</div>' +
+'      <div class="report-head">' +
+'        <div>' +
+'          <h1 class="report-title">Physical Security Area Summary</h1>' +
+'          <div class="report-meta">' +
+'            <div><strong>Category:</strong> Physical Security</div>' +
+'            <div><strong>Tool:</strong> Area / Zone Planner</div>' +
+'            <div><strong>Generated:</strong> ' + escapeHtml(generated) + '</div>' +
+'            <div><strong>Report ID:</strong> ' + escapeHtml(reportId) + '</div>' +
+'          </div>' +
+'        </div>' +
+'        <div class="status-pill ' + statusClass + '">' + escapeHtml(overallStatus) + '</div>' +
+'      </div>' +
+'      <section class="section">' +
+'        <h2>Executive Summary</h2>' +
+'        <div class="summary">' + escapeHtml(areaReportSummaryText(model, overallStatus)) + '</div>' +
+'      </section>' +
+'      <section class="section">' +
+'        <h2>Site Rollup</h2>' +
+'        <div class="rollup-grid">' +
+'          <div class="metric"><span class="metric-label">Areas</span><span class="metric-value">' + escapeHtml(String(model.areaCount)) + '</span><div class="metric-note">Defined planning zones.</div></div>' +
+'          <div class="metric"><span class="metric-label">Planned Cameras</span><span class="metric-value">' + escapeHtml(String(model.totalCameras)) + '</span><div class="metric-note">Sum of planned or target camera counts.</div></div>' +
+'          <div class="metric"><span class="metric-label">Complete Areas</span><span class="metric-value">' + escapeHtml(model.completeAreas + " / " + model.areaCount) + '</span><div class="metric-note">Areas with all tracked rows recorded.</div></div>' +
+'          <div class="metric"><span class="metric-label">Needs Attention</span><span class="metric-value">' + escapeHtml(String(model.attentionAreas)) + '</span><div class="metric-note">Watch, Risk, or revalidation areas.</div></div>' +
+'        </div>' +
+'      </section>' +
+'      <section class="section">' +
+'        <h2>Source Integrity</h2>' +
+'        <div class="body-copy">' + escapeHtml(integrity) + '</div>' +
+'      </section>' +
+       areaBlocks +
+'      <section class="section">' +
+'        <h2>Disclaimer</h2>' +
+'        <div class="body-copy">ScopedLabs tools are planning aids only and do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific professional judgment.</div>' +
+'      </section>' +
+'      <div class="foot">ScopedLabs Pro export for internal and client-facing documentation workflows.</div>' +
+'    </div>' +
+'  </div>' +
+'</body>' +
+'</html>';
+  }
+
+  function openAreaSummaryReportWindow(model) {
+    try {
+      const reportHtml = buildAreaSummaryReportHtml(model);
+      const blob = new Blob([reportHtml], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+
+      if (!win) return false;
+
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      return true;
+    } catch (err) {
+      console.error("ScopedLabs area summary report open failed:", err);
+      return false;
+    }
+  }
+
   function printAreaSummary() {
-    document.body.classList.add("print-area-summary");
-    window.print();
-    setTimeout(() => document.body.classList.remove("print-area-summary"), 250);
+    const model = window.ScopedLabsPhysicalSecurityAreaSummary || physicalSecuritySummaryModel(state()?.readLedger() || { areas: [] });
+
+    if (!model || !model.areas.length) {
+      status("Add at least one planning area before opening the area summary report.");
+      return;
+    }
+
+    const opened = openAreaSummaryReportWindow(model);
+    status(opened ? "Area summary report opened in a new tab." : "Popup blocked or area summary report could not open.");
   }
 
   function copyAreaSummaryJson() {
