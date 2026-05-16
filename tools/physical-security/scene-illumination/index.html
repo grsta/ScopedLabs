@@ -66,6 +66,50 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
+
+
+    .lighting-goal-card {
+      grid-column: 1 / -1;
+      border: 1px solid rgba(120, 255, 120, 0.16);
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.14);
+      padding: 12px;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.45;
+    }
+
+    .lighting-goal-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .lighting-goal-metric {
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px;
+    }
+
+    .lighting-goal-metric strong {
+      display: block;
+      color: #fff;
+      margin-top: 3px;
+    }
+
+    .lighting-goal-warning {
+      margin-top: 10px;
+      border: 1px solid rgba(255, 211, 79, 0.24);
+      border-radius: 12px;
+      background: rgba(255, 211, 79, 0.06);
+      color: rgba(255, 246, 196, 0.92);
+      padding: 9px 10px;
+    }
+
+    @media (max-width: 760px) {
+      .lighting-goal-grid { grid-template-columns: 1fr; }
+    }
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -217,12 +261,25 @@
             <input id="d" type="number" min="0.1" step="0.1" value="40" />
           </div>
 
+          
           <div class="field">
-            <div class="label-row">
-              <label for="fc">Target Footcandles (fc)</label>
-            </div>
+            <div class="label-row"><label for="lightingGoal">Lighting Goal / Use Case</label></div>
+            <select id="lightingGoal">
+              <option value="basic">Basic visibility / orientation</option>
+              <option value="general" selected>General surveillance</option>
+              <option value="entrance">Entrance / doorway detail</option>
+              <option value="parking">Parking / open area</option>
+              <option value="lowlight">Low-light camera support</option>
+              <option value="custom">Custom target</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label-row"><label for="fc">Target Footcandles (fc)</label></div>
             <input id="fc" type="number" min="0.1" step="0.1" value="2.0" />
           </div>
+
+          <div id="lightingRange" class="lighting-goal-card">Choose a lighting goal to see the recommended target range and lumen impact.</div>
 
           <div class="field">
             <div class="label-row">
@@ -358,7 +415,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-005"></script>
 
-  <script src="./script.js?v=physical-security-scene-area-writeback-001"></script>
+  <script src="./script.js?v=physical-security-scene-lighting-goals-002"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

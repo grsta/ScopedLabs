@@ -26,6 +26,8 @@
     w: $("w"),
     d: $("d"),
     fc: $("fc"),
+    lightingGoal: $("lightingGoal"),
+    lightingRange: $("lightingRange"),
     uf: $("uf"),
     llf: $("llf"),
     calc: $("calc"),
@@ -43,9 +45,82 @@
     w: 60,
     d: 40,
     fc: 2.0,
+    lightingGoal: "general",
     uf: 70,
     llf: 80
   };
+
+  const LIGHTING_GOALS = {
+    basic: { id: "basic", label: "Basic visibility / orientation", low: 0.2, typical: 0.5, high: 1.0, note: "Use this for simple orientation where cameras mostly need scene awareness, not strong detail." },
+    general: { id: "general", label: "General surveillance", low: 1.0, typical: 2.0, high: 3.0, note: "A practical baseline for many general surveillance scenes before geometry and detail checks are finalized." },
+    entrance: { id: "entrance", label: "Entrance / doorway detail", low: 3.0, typical: 5.0, high: 10.0, note: "Use this when facial detail, doorway transitions, or subject quality matter more than simple visibility." },
+    parking: { id: "parking", label: "Parking / open area", low: 0.5, typical: 1.0, high: 2.0, note: "A lower exterior baseline where coverage area can be large and fixture count grows quickly." },
+    lowlight: { id: "lowlight", label: "Low-light camera support", low: 0.1, typical: 0.5, high: 1.0, note: "Use this when cameras are expected to work with minimal visible light, IR support, or strong low-light sensors." },
+    custom: { id: "custom", label: "Custom target", low: null, typical: null, high: null, note: "Use this when a project specification, owner standard, or fixture plan already defines the target footcandle value." }
+  };
+
+  function lightingGoalPreset(id) {
+    return LIGHTING_GOALS[id] || LIGHTING_GOALS.general;
+  }
+
+  function lightingGoalRangeText(rangeOrPreset) {
+    if (!rangeOrPreset || rangeOrPreset.id === "custom") return "Custom target";
+    return fmtFc(rangeOrPreset.low, 1) + " - " + fmtFc(rangeOrPreset.high, 1) + " range, " + fmtFc(rangeOrPreset.typical, 1) + " typical";
+  }
+
+  function estimatedLumensForTarget(fc, w, d, ufPct, llfPct) {
+    const area = w * d;
+    const effectiveFactor = Math.max(0.05, (ufPct / 100) * (llfPct / 100));
+    return (fc * area) / effectiveFactor;
+  }
+
+  function renderLightingGoalGuidance() {
+    if (!els.lightingRange) return;
+
+    const preset = lightingGoalPreset(els.lightingGoal?.value || DEFAULTS.lightingGoal);
+    const w = num(els.w?.value);
+    const d = num(els.d?.value);
+    const ufPct = num(els.uf?.value);
+    const llfPct = num(els.llf?.value);
+    const currentFc = num(els.fc?.value);
+
+    if (preset.id === "custom") {
+      els.lightingRange.innerHTML = '<strong>Custom lighting target</strong><br>Use this when a project specification, owner standard, or fixture plan already defines the target footcandle value. The result will be treated as a manual lighting assumption.';
+      return;
+    }
+
+    const canEstimate = Number.isFinite(w) && w > 0 && Number.isFinite(d) && d > 0 && Number.isFinite(ufPct) && ufPct > 0 && Number.isFinite(llfPct) && llfPct > 0;
+    const currentOutsideRange = Number.isFinite(currentFc) && (currentFc < preset.low || currentFc > preset.high);
+
+    const rangeHtml = canEstimate
+      ? '<div class="lighting-goal-grid">' +
+          '<div class="lighting-goal-metric">Low<br><strong>' + fmtFc(preset.low, 1) + '</strong><span class="muted">' + fmtLumens(estimatedLumensForTarget(preset.low, w, d, ufPct, llfPct)) + '</span></div>' +
+          '<div class="lighting-goal-metric">Typical<br><strong>' + fmtFc(preset.typical, 1) + '</strong><span class="muted">' + fmtLumens(estimatedLumensForTarget(preset.typical, w, d, ufPct, llfPct)) + '</span></div>' +
+          '<div class="lighting-goal-metric">High<br><strong>' + fmtFc(preset.high, 1) + '</strong><span class="muted">' + fmtLumens(estimatedLumensForTarget(preset.high, w, d, ufPct, llfPct)) + '</span></div>' +
+        '</div>'
+      : '<div class="mini-note">Enter area width, depth, utilization factor, and light-loss factor to compare lumen demand across the range.</div>';
+
+    els.lightingRange.innerHTML =
+      '<strong>' + preset.label + '</strong><br>' +
+      preset.note + '<br><span class="muted">Recommended target: ' + lightingGoalRangeText(preset) + '.</span>' +
+      rangeHtml +
+      (currentOutsideRange ? '<div class="lighting-goal-warning">Current target is outside the selected goal range. This is allowed, but it should be treated as a manual lighting assumption.</div>' : '');
+  }
+
+  function selectedLightingGoalInfo(fc) {
+    const preset = lightingGoalPreset(els.lightingGoal?.value || DEFAULTS.lightingGoal);
+    const outsideRange = preset.id !== "custom" && Number.isFinite(fc) && (fc < preset.low || fc > preset.high);
+
+    return {
+      id: preset.id,
+      label: preset.label,
+      range: preset.id === "custom" ? null : { low: preset.low, typical: preset.typical, high: preset.high },
+      sourceMode: preset.id === "custom" || outsideRange ? "manual-override" : "preset",
+      outsideRange
+    };
+  }
+
+  
 
   function num(v) {
     return ScopedLabsAnalyzer.safeNumber(v, NaN);
@@ -143,11 +218,13 @@
   }
 
   function applyDefaults() {
+    if (els.lightingGoal) els.lightingGoal.value = DEFAULTS.lightingGoal;
     els.w.value = String(DEFAULTS.w);
     els.d.value = String(DEFAULTS.d);
     els.fc.value = String(DEFAULTS.fc);
     els.uf.value = String(DEFAULTS.uf);
     els.llf.value = String(DEFAULTS.llf);
+    renderLightingGoalGuidance();
   }
 
   function renderFlowNote() {
@@ -218,14 +295,9 @@
     const fc = num(els.fc.value);
     const ufPct = num(els.uf.value);
     const llfPct = num(els.llf.value);
+    const goalInfo = selectedLightingGoalInfo(fc);
 
-    if (
-      !Number.isFinite(w) || w <= 0 ||
-      !Number.isFinite(d) || d <= 0 ||
-      !Number.isFinite(fc) || fc <= 0 ||
-      !Number.isFinite(ufPct) || ufPct <= 0 || ufPct > 100 ||
-      !Number.isFinite(llfPct) || llfPct <= 0 || llfPct > 100
-    ) {
+    if (!Number.isFinite(w) || w <= 0 || !Number.isFinite(d) || d <= 0 || !Number.isFinite(fc) || fc <= 0 || !Number.isFinite(ufPct) || ufPct <= 0 || ufPct > 100 || !Number.isFinite(llfPct) || llfPct <= 0 || llfPct > 100) {
       return { ok: false, message: "Enter valid values and press Estimate Lighting." };
     }
 
@@ -237,7 +309,12 @@
       ufPct,
       llfPct,
       uf: ufPct / 100,
-      llf: llfPct / 100
+      llf: llfPct / 100,
+      lightingGoalId: goalInfo.id,
+      lightingGoalLabel: goalInfo.label,
+      targetFootcandleRange: goalInfo.range,
+      footcandleSourceMode: goalInfo.sourceMode,
+      footcandleOutsideRange: goalInfo.outsideRange
     };
   }
 
@@ -259,21 +336,9 @@
     const outputLoadMetric = Math.min(lumenDensity * 8, 100);
 
     const metrics = [
-      {
-        label: "Planning Factor Pressure",
-        value: factorPressureMetric,
-        displayValue: fmtFactor(effectiveFactor)
-      },
-      {
-        label: "Illumination Demand",
-        value: targetDemandMetric,
-        displayValue: fmtFc(input.fc)
-      },
-      {
-        label: "Output Load",
-        value: outputLoadMetric,
-        displayValue: `${fmt(lumenDensity, 2)} lm/sq ft`
-      }
+      { label: "Planning Factor Pressure", value: factorPressureMetric, displayValue: fmtFactor(effectiveFactor) },
+      { label: "Illumination Demand", value: targetDemandMetric, displayValue: fmtFc(input.fc) },
+      { label: "Output Load", value: outputLoadMetric, displayValue: fmt(lumenDensity, 2) + " lm/sq ft" }
     ];
 
     const dominantMetric = Math.max(factorPressureMetric, targetDemandMetric, outputLoadMetric);
@@ -296,7 +361,9 @@
       dominantConstraint = "The lighting baseline is balanced. Scene size, target illumination, and planning factors are staying in a practical range for downstream camera design.";
     }
 
-    const interpretation = `For an area of ${fmtSqFt(area)} at a target of ${fmtFc(input.fc)}, with a utilization factor of ${fmtPct(input.ufPct)} and light-loss factor of ${fmtPct(input.llfPct)}, the effective planning factor is ${fmtFactor(effectiveFactor)}. The estimated lumen requirement is about ${fmtLumens(lumens)}. Lighting condition is classified as ${lightingClass}. ${interpretationBase}`;
+    const rangeText = input.targetFootcandleRange ? lightingGoalRangeText(input.targetFootcandleRange) : "custom target";
+    const sourceNote = input.footcandleSourceMode === "manual-override" ? "The footcandle target is being treated as a manual lighting assumption." : "The footcandle target came from the selected lighting goal preset.";
+    const interpretation = "Lighting goal is " + input.lightingGoalLabel + " using " + rangeText + ". For an area of " + fmtSqFt(area) + " at a target of " + fmtFc(input.fc) + ", with a utilization factor of " + fmtPct(input.ufPct) + " and light-loss factor of " + fmtPct(input.llfPct) + ", the effective planning factor is " + fmtFactor(effectiveFactor) + ". The estimated lumen requirement is about " + fmtLumens(lumens) + ". Lighting condition is classified as " + lightingClass + ". " + sourceNote + " " + interpretationBase;
 
     return {
       ok: true,
@@ -326,6 +393,11 @@
       sceneDepthFt: data.d,
       sceneAreaSqFt: data.area,
       targetIlluminationFc: data.fc,
+      lightingGoalId: data.lightingGoalId,
+      lightingGoalLabel: data.lightingGoalLabel,
+      targetFootcandleRange: data.targetFootcandleRange,
+      footcandleSourceMode: data.footcandleSourceMode,
+      footcandleOutsideRange: data.footcandleOutsideRange,
       utilizationFactor: data.uf,
       lightLossFactor: data.llf,
       effectiveLightingFactor: data.effectiveFactor,
@@ -349,6 +421,11 @@
         w: data.w,
         d: data.d,
         fc: data.fc,
+        lightingGoalId: data.lightingGoalId,
+        lightingGoalLabel: data.lightingGoalLabel,
+        targetFootcandleRange: data.targetFootcandleRange,
+        footcandleSourceMode: data.footcandleSourceMode,
+        footcandleOutsideRange: data.footcandleOutsideRange,
         uf: data.uf,
         llf: data.llf,
         ufPct: data.ufPct,
@@ -362,7 +439,6 @@
         guidance: data.guidance
       }
     });
-  
 
     updateActiveAreaFromScene(data);
   }
@@ -382,6 +458,7 @@
       existingWrapRef: chartWrapRef,
       summaryRows: [
         { label: "Area", value: fmtSqFt(data.area) },
+        { label: "Lighting Goal", value: data.lightingGoalLabel },
         { label: "Target Illumination", value: fmtFc(data.fc) },
         { label: "Effective Planning Factor", value: fmtFactor(data.effectiveFactor) },
         { label: "Estimated Lumens Required", value: fmtLumens(data.lumens) }
@@ -389,10 +466,12 @@
       derivedRows: [
         { label: "Area Width", value: fmtFt(data.w) },
         { label: "Area Depth", value: fmtFt(data.d) },
+        { label: "Recommended Range", value: data.targetFootcandleRange ? lightingGoalRangeText(data.targetFootcandleRange) : "Custom target" },
+        { label: "Footcandle Source", value: data.footcandleSourceMode === "manual-override" ? "Manual assumption" : "Preset typical" },
         { label: "Utilization Factor", value: fmtPct(data.ufPct) },
         { label: "Light Loss Factor", value: fmtPct(data.llfPct) },
         { label: "Lighting Condition", value: data.lightingClass },
-        { label: "Lumen Density", value: `${fmt(data.lumenDensity, 2)} lm/sq ft` }
+        { label: "Lumen Density", value: fmt(data.lumenDensity, 2) + " lm/sq ft" }
       ],
       status: data.status,
       interpretation: data.interpretation,
@@ -408,7 +487,7 @@
         displayValues: [
           fmtFactor(data.effectiveFactor),
           fmtFc(data.fc),
-          `${fmt(data.lumenDensity, 2)} lm/sq ft`
+          fmt(data.lumenDensity, 2) + " lm/sq ft"
         ],
         referenceValue: 20,
         healthyMax: 20,
@@ -435,15 +514,35 @@
   function reset() {
     applyDefaults();
     renderFlowNote();
+    renderLightingGoalGuidance();
     invalidate({ clearFlow: true });
   }
 
   function bind() {
+    if (els.lightingGoal) {
+      els.lightingGoal.addEventListener("change", () => {
+        const preset = lightingGoalPreset(els.lightingGoal.value);
+        if (preset.id !== "custom" && Number.isFinite(preset.typical)) {
+          els.fc.value = String(preset.typical);
+        }
+        renderLightingGoalGuidance();
+        invalidate({ clearFlow: true });
+      });
+    }
+
     ["w", "d", "fc", "uf", "llf"].forEach((id) => {
       const el = $(id);
       if (!el) return;
-      el.addEventListener("input", () => invalidate({ clearFlow: true }));
-      el.addEventListener("change", () => invalidate({ clearFlow: true }));
+
+      el.addEventListener("input", () => {
+        renderLightingGoalGuidance();
+        invalidate({ clearFlow: true });
+      });
+
+      el.addEventListener("change", () => {
+        renderLightingGoalGuidance();
+        invalidate({ clearFlow: true });
+      });
     });
 
     els.calc?.addEventListener("click", calc);
@@ -462,6 +561,7 @@
   function initTool() {
     bind();
     renderFlowNote();
+    renderLightingGoalGuidance();
     invalidate({ clearFlow: false });
   }
 
