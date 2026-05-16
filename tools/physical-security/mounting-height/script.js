@@ -46,7 +46,7 @@
     h: "",
     mountContext: "residential",
     dist: 40,
-    th: 5.5,
+    th: "",
     vfov: 55,
     vfovProfile: "area-hfov"
   };
@@ -408,7 +408,7 @@
     if (els.mountContext) els.mountContext.value = DEFAULTS.mountContext;
     if (els.h) els.h.value = "";
     els.dist.value = String(DEFAULTS.dist);
-    els.th.value = String(DEFAULTS.th);
+    els.th.value = "";
     if (els.vfovProfile) els.vfovProfile.value = DEFAULTS.vfovProfile;
     els.vfov.value = String(DEFAULTS.vfov);
     applyVfovProfileToInput({ force: true });

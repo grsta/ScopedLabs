@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mounting Height Helper | ScopedLabs</title>
+  <title>Mounting Height | ScopedLabs</title>
   <meta
     name="description"
     content="Estimate tilt angle and vertical framing based on mounting height and target distance before locking field of view."
@@ -224,7 +224,7 @@
         <span class="pill pill--free">Free Tier</span>
       </div>
 
-      <h1 style="margin-top: 10px;">Mounting Height Helper</h1>
+      <h1 style="margin-top: 10px;">Mounting Height</h1>
 
       <div id="pipeline"></div>
 
@@ -291,7 +291,7 @@
             <div class="label-row">
               <label for="th">Target Height (ft)</label>
             </div>
-            <input id="th" type="number" min="0" step="0.1" value="5.5" />
+            <input id="th" type="number" min="0" step="0.1" placeholder="Enter target height" />
           </div>
 
           
@@ -357,7 +357,7 @@
         <div class="export-grid">
           <label class="field">
             <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Mounting Height Helper Assessment" />
+            <input id="reportTitle" type="text" placeholder="Mounting Height Assessment" />
           </label>
 
           <label class="field">
@@ -422,11 +422,11 @@
     window.ScopedLabsExportConfig = {
       "categoryLabel": "Physical Security",
       "categorySlug": "physical-security",
-      "toolLabel": "Mounting Height Helper",
+      "toolLabel": "Mounting Height",
       "toolSlug": "mounting-height",
       "reportPrefix": "SL-PS-MH",
       "assumptions": [
-            "This report reflects the visible Mounting Height Helper inputs and outputs at the time the export was generated.",
+            "This report reflects the visible Mounting Height inputs and outputs at the time the export was generated.",
             "The calculation output is intended for planning, comparison, and documentation support.",
             "Final design decisions should be verified against project requirements, manufacturer documentation, site-specific conditions, and applicable standards."
       ],
@@ -437,7 +437,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-005"></script>
 
-  <script src="./script.js?v=physical-security-mounting-context-001"></script>
+  <script src="./script.js?v=physical-security-mounting-title-targetheight-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
