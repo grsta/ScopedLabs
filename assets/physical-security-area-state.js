@@ -29,7 +29,7 @@
   }
 
   function fmtDeg(value) {
-    const number = cleanNumber(value);
+    const number = num(value);
     return number === null ? "n/a" : number.toFixed(1).replace(/\.0$/, "") + "?";
   }
 

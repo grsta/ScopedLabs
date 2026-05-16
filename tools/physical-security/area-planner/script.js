@@ -46,7 +46,7 @@
 
   function fmtDeg(value) {
     const number = num(value);
-    return number === null ? "n/a" : number.toFixed(1).replace(/\\.0$/, "") + "\\u00B0";
+    return number === null ? "n/a" : number.toFixed(1).replace(/\.0$/, "") + "?";
   }
 
   function hasStoredAuth() {
@@ -242,7 +242,7 @@
     }
 
     if (area.lensDerivedHfovDeg) {
-      parts.push("HFOV " + Number(area.lensDerivedHfovDeg).toFixed(1).replace(/\.0$/, "") + "\\u00B0");
+      parts.push("HFOV " + Number(area.lensDerivedHfovDeg).toFixed(1).replace(/\.0$/, "") + "?");
     }
 
     if (area.lensHorizontalResolutionPx || area.horizontalResolutionPx) {
@@ -276,7 +276,7 @@
     if (area.mountingStatus || area.mountingTiltDeg) {
       items.push({
         label: "Mounting",
-        value: (area.mountingStatus || "Recorded") + (area.mountingTiltDeg ? " / " + Number(area.mountingTiltDeg).toFixed(1) + "\\u00B0 tilt" : ""),
+        value: (area.mountingStatus || "Recorded") + (area.mountingTiltDeg ? " / " + Number(area.mountingTiltDeg).toFixed(1) + "? tilt" : ""),
         detail: area.mountingHeightFt ? "Height: " + fmtFt(area.mountingHeightFt) : "Mounting geometry result saved"
       });
     }
@@ -286,7 +286,7 @@
         label: "Field of View",
         value: (area.fovStatus || "Recorded") + (area.fovFitClass ? " / " + area.fovFitClass : ""),
         detail: area.estimatedSceneWidthFt
-          ? "Scene width: " + fmtFt(area.estimatedSceneWidthFt) + " at " + Number(area.assumedHfovDeg || 0).toFixed(1).replace(/\.0$/, "") + "\\u00B0"
+          ? "Scene width: " + fmtFt(area.estimatedSceneWidthFt) + " at " + Number(area.assumedHfovDeg || 0).toFixed(1).replace(/\.0$/, "") + "?"
           : "FOV geometry result saved"
       });
     }
