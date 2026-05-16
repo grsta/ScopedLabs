@@ -476,14 +476,21 @@
 
   function subjectAngleFitPressure(tilt) {
     if (!Number.isFinite(tilt)) return 100;
+
+    // Smooth subject-angle scoring:
+    // <4 deg = severe shallow angle
+    // 4-8 deg = risk tapering toward watch
+    // 8-12 deg = borderline/watch transition
+    // 12-35 deg = preferred working range
+    // 35-45 deg = upper workable transition
+    // >45 deg = increasingly steep
     if (tilt < 4) return 88;
-    if (tilt < 8) return 68;
-    if (tilt < 10) return 48;
-    if (tilt <= 25) return 14;
-    if (tilt <= 35) return 18;
-    if (tilt <= 45) return 32;
-    if (tilt <= 55) return 52;
-    return 76;
+    if (tilt < 8) return 68 - ((tilt - 4) / 4) * 23;
+    if (tilt < 12) return 45 - ((tilt - 8) / 4) * 31;
+    if (tilt <= 35) return 14;
+    if (tilt <= 45) return 20 + ((tilt - 35) / 10) * 25;
+    if (tilt <= 55) return 45 + ((tilt - 45) / 10) * 25;
+    return Math.min(100, 70 + ((tilt - 55) / 20) * 30);
   }
 
   function mountHeightBalancePressure(height) {
@@ -510,7 +517,8 @@
   }
 
   function subjectAngleFitText(tilt) {
-    if (tilt < 10) return "Too shallow";
+    if (tilt < 8) return "Too shallow";
+    if (tilt < 12) return "Borderline shallow";
     if (tilt <= 35) return "Good fit";
     if (tilt <= 45) return "Steep but usable";
     return "Too steep";
@@ -558,7 +566,7 @@
       {
         label: "Subject Angle Fit",
         value: subjectAngleMetric,
-        displayValue: fmtDeg(tilt) + " actual / 10-45 deg target"
+        displayValue: fmtDeg(tilt) + " actual / 12-35 deg preferred"
       },
       {
         label: "Mount Height Balance",
@@ -580,8 +588,10 @@
     });
 
     let dominantConstraint = "";
-    if (tilt < 10) {
-      dominantConstraint = "Subject angle fit is the dominant limiter. The camera is only " + fmtFt(drop) + " above the target height while viewing " + fmtFt(input.dist) + " away, creating a shallow " + fmtDeg(tilt) + " subject angle. The risk is caused by the angle being too low, not too high.";
+    if (tilt < 8) {
+      dominantConstraint = "Subject angle fit is the dominant limiter. The camera is only " + fmtFt(drop) + " above the target height while viewing " + fmtFt(input.dist) + " away, creating a very shallow " + fmtDeg(tilt) + " subject angle. The risk is caused by the angle being too low, not too high.";
+    } else if (tilt < 12) {
+      dominantConstraint = "Subject angle fit is near the lower edge. The camera is only " + fmtFt(drop) + " above the target height while viewing " + fmtFt(input.dist) + " away, creating a borderline " + fmtDeg(tilt) + " subject angle. A small height or placement change can improve the result, but this should be treated as Watch rather than a clean pass.";
     } else if (tilt >= 45) {
       dominantConstraint = "Subject angle fit is the dominant limiter. The camera is looking too steeply downward, which compresses subjects and reduces usable face detail.";
     } else if (input.h < 9 || input.h > 15) {
@@ -592,11 +602,13 @@
       dominantConstraint = "The geometry is balanced. Mount height, target distance, subject angle, and vertical framing remain in a practical range for the next field-of-view step.";
     }
 
-    const interpretation = "With a mount height of " + fmtFt(input.h) + " and a target point " + fmtFt(input.dist) + " away at " + fmtFt(input.th) + ", the suggested down-tilt is about " + fmtDeg(tilt) + ". Practical subject-angle target is roughly 10-45 deg, so this result is classified as " + subjectFitText + ". At that distance, a " + fmtDeg(input.vfov) + " vertical field of view spans about " + fmtFt(span) + " vertically, with the view landing from roughly " + fmtFt(topEdgeHeight) + " down to " + fmtFt(bottomEdgeHeight) + ". " + angleText;
+    const interpretation = "With a mount height of " + fmtFt(input.h) + " and a target point " + fmtFt(input.dist) + " away at " + fmtFt(input.th) + ", the suggested down-tilt is about " + fmtDeg(tilt) + ". Preferred subject-angle band is roughly 12-35 deg, with 8-45 deg generally workable, so this result is classified as " + subjectFitText + ". At that distance, a " + fmtDeg(input.vfov) + " vertical field of view spans about " + fmtFt(span) + " vertically, with the view landing from roughly " + fmtFt(topEdgeHeight) + " down to " + fmtFt(bottomEdgeHeight) + ". " + angleText;
 
     let guidance = "";
-    if (tilt < 10) {
+    if (tilt < 8) {
       guidance = "Increase subject angle by raising the camera, reducing target distance, choosing a closer target zone, or revisiting placement before locking the design. Then continue to Field of View once subject angle is healthier.";
+    } else if (tilt < 12) {
+      guidance = "This is a borderline shallow angle. Consider slightly raising the camera, reducing target distance, or choosing a closer target zone before treating the mounting geometry as fully healthy.";
     } else if (tilt >= 45) {
       guidance = "Reduce mount height or increase standoff distance before finalizing the view. Excessive top-down angle can make downstream detail goals harder to reach.";
     } else if (bottomEdgeHeight > 0) {
@@ -756,7 +768,7 @@
           Number(data.framingPressureMetric.toFixed(1))
         ],
         displayValues: [
-          fmtDeg(data.tilt) + " actual / 10-45 deg target",
+          fmtDeg(data.tilt) + " actual / 12-35 deg preferred",
           fmtFt(data.h) + " mount / " + data.mountFitText,
           fmtFt(data.topEdgeHeight) + " to " + fmtFt(data.bottomEdgeHeight)
         ],
