@@ -144,9 +144,62 @@
     return true;
   }
 
+  function formNumber(value) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return null;
+    const number = Number(raw);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function clearAreaForm(nextName = "Front Door") {
+    editingAreaId = null;
+
+    els.areaName.value = "";
+    els.areaName.placeholder = "Example: " + nextName;
+
+    els.areaType.value = "General Coverage";
+
+    els.protectedLengthFt.value = "";
+    els.protectedLengthFt.placeholder = "Example: 100";
+
+    els.distanceToTargetPlaneFt.value = "";
+    els.distanceToTargetPlaneFt.placeholder = "Example: 60";
+
+    els.assumedHfovDeg.value = "";
+    els.assumedHfovDeg.placeholder = "Example: 90";
+
+    els.detailGoal.value = "Observation";
+
+    els.targetCameraCount.value = "";
+    els.targetCameraCount.placeholder = "Optional";
+  }
+
+  function validateAreaForm() {
+    const missing = [];
+
+    if (!String(els.areaName.value || "").trim()) missing.push("Area Name");
+
+    const protectedLength = formNumber(els.protectedLengthFt.value);
+    const distance = formNumber(els.distanceToTargetPlaneFt.value);
+    const hfov = formNumber(els.assumedHfovDeg.value);
+    const targetCameras = formNumber(els.targetCameraCount.value);
+
+    if (!(protectedLength > 0)) missing.push("Protected Length / Scene Width");
+    if (!(distance > 0)) missing.push("Distance to Target Plane");
+    if (!(hfov > 0 && hfov < 180)) missing.push("Starting HFOV Assumption");
+    if (targetCameras !== null && targetCameras < 1) missing.push("Optional Target Camera Count must be 1 or higher");
+
+    if (missing.length) {
+      status("Add valid values for: " + missing.join(", ") + ".");
+      return false;
+    }
+
+    return true;
+  }
+
   function loadAreaToForm(area) {
     if (!area) {
-      setBlankAreaForm();
+      clearAreaForm();
       return;
     }
 
@@ -697,7 +750,7 @@
     els.areaList.querySelectorAll("[data-delete-area]").forEach((button) => {
       button.addEventListener("click", () => {
         api.removeArea(button.dataset.deleteArea);
-        loadAreaToForm(api.getActiveArea());
+        clearAreaForm("Front Door");
         status("Area removed. Active area updated.");
         render();
       });
@@ -725,7 +778,7 @@
   function newArea() {
     const ledger = state()?.readLedger();
     const next = (ledger?.areas?.length || 0) + 1;
-    setBlankAreaForm("Example: Area " + next);
+    clearAreaForm("Area " + next);
     status("Enter assumptions for the new area, then save it.");
   }
 
@@ -764,7 +817,7 @@
 
     const api = state();
     api.writeLedger(api.readLedger());
-    loadAreaToForm(api.getActiveArea());
+    clearAreaForm("Front Door");
     bind();
     render();
   }
