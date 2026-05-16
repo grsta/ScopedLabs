@@ -46,7 +46,7 @@
 
   function fmtDeg(value) {
     const number = num(value);
-    return number === null ? "n/a" : number.toFixed(1).replace(/\.0$/, "") + "?";
+    return number === null ? "n/a" : number.toFixed(1).replace(/\.0$/, "") + "&deg;";
   }
 
   function hasStoredAuth() {
