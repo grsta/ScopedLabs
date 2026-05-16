@@ -24,6 +24,8 @@
 
   const els = {
     h: $("h"),
+    mountContext: $("mountContext"),
+    mountContextGuidance: $("mountContextGuidance"),
     dist: $("dist"),
     th: $("th"),
     vfov: $("vfov"),
@@ -41,7 +43,8 @@
   };
 
   const DEFAULTS = {
-    h: 12,
+    h: "",
+    mountContext: "residential",
     dist: 40,
     th: 5.5,
     vfov: 55,
@@ -306,13 +309,110 @@
         : '');
   }
 
+  const MOUNT_CONTEXTS = {
+    residential: {
+      id: "residential",
+      label: "Residential / eave constrained",
+      preferredLow: 8,
+      preferredHigh: 10,
+      workableLow: 7,
+      workableHigh: 12,
+      note: "Residential cameras are often limited by soffit or eave height. An 8-10 ft mount can be realistic, but shallow subject angle at long distance may still require a closer target zone or secondary camera."
+    },
+    commercial: {
+      id: "commercial",
+      label: "Commercial wall / building exterior",
+      preferredLow: 10,
+      preferredHigh: 16,
+      workableLow: 8,
+      workableHigh: 20,
+      note: "Commercial walls usually allow more mounting flexibility. Higher placement can improve coverage and tamper resistance, but detail angle still needs validation."
+    },
+    pole: {
+      id: "pole",
+      label: "Pole / dedicated mount",
+      preferredLow: 12,
+      preferredHigh: 20,
+      workableLow: 10,
+      workableHigh: 25,
+      note: "Pole mounts are usually more adjustable. If detail at distance is required, pole height and camera placement should be selected together instead of accepting a fixed wall height."
+    },
+    indoor: {
+      id: "indoor",
+      label: "Indoor ceiling / corridor",
+      preferredLow: 8,
+      preferredHigh: 12,
+      workableLow: 7,
+      workableHigh: 14,
+      note: "Indoor ceiling and corridor cameras are often height constrained. Use the result to check angle and framing rather than assuming height can be changed freely."
+    },
+    custom: {
+      id: "custom",
+      label: "Custom mounting condition",
+      preferredLow: 9,
+      preferredHigh: 15,
+      workableLow: 7,
+      workableHigh: 20,
+      note: "Use this when the mounting condition is project-specific. ScopedLabs uses a general practical range unless the assistant or final design step narrows it later."
+    }
+  };
+
+  function mountContextPreset(id) {
+    return MOUNT_CONTEXTS[id] || MOUNT_CONTEXTS.residential;
+  }
+
+  function selectedMountContextInfo(height) {
+    const context = mountContextPreset(els.mountContext?.value || DEFAULTS.mountContext);
+    const h = Number(height);
+    const outsideWorkable = Number.isFinite(h) && (h < context.workableLow || h > context.workableHigh);
+    const outsidePreferred = Number.isFinite(h) && (h < context.preferredLow || h > context.preferredHigh);
+
+    return {
+      mountContextId: context.id,
+      mountContextLabel: context.label,
+      mountPreferredLowFt: context.preferredLow,
+      mountPreferredHighFt: context.preferredHigh,
+      mountWorkableLowFt: context.workableLow,
+      mountWorkableHighFt: context.workableHigh,
+      mountHeightOutsidePreferred: outsidePreferred,
+      mountHeightOutsideWorkable: outsideWorkable
+    };
+  }
+
+  function renderMountContextGuidance() {
+    if (!els.mountContextGuidance) return;
+
+    const context = mountContextPreset(els.mountContext?.value || DEFAULTS.mountContext);
+    const h = num(els.h?.value);
+    const hasHeight = Number.isFinite(h) && h >= 0;
+    const info = selectedMountContextInfo(h);
+
+    els.mountContextGuidance.innerHTML =
+      '<strong>' + context.label + '</strong><br>' +
+      context.note +
+      '<br><span class="muted">Preferred height band: ' +
+      fmtFt(context.preferredLow) +
+      ' - ' +
+      fmtFt(context.preferredHigh) +
+      '. Workable review band: ' +
+      fmtFt(context.workableLow) +
+      ' - ' +
+      fmtFt(context.workableHigh) +
+      '.</span>' +
+      (hasHeight && info.mountHeightOutsidePreferred
+        ? '<div class="mount-context-warning">Mount height is outside the preferred band for this context. That may be acceptable in the field, but subject angle and detail should be reviewed.</div>'
+        : '');
+  }
+
   function applyDefaults() {
-    els.h.value = String(DEFAULTS.h);
+    if (els.mountContext) els.mountContext.value = DEFAULTS.mountContext;
+    if (els.h) els.h.value = "";
     els.dist.value = String(DEFAULTS.dist);
     els.th.value = String(DEFAULTS.th);
     if (els.vfovProfile) els.vfovProfile.value = DEFAULTS.vfovProfile;
     els.vfov.value = String(DEFAULTS.vfov);
     applyVfovProfileToInput({ force: true });
+    renderMountContextGuidance();
   }
 
   
@@ -452,6 +552,7 @@
     const dist = num(els.dist.value);
     const th = num(els.th.value);
     const vfov = num(els.vfov.value);
+    const contextInfo = selectedMountContextInfo(h);
 
     if (
       !Number.isFinite(h) || h < 0 ||
@@ -468,6 +569,7 @@
       dist,
       th,
       vfov,
+      ...contextInfo,
       sourceMode: mountingSourceMode(),
       manualOverrides: mountingManualOverrides(),
       importedTargetDistanceFt: importedMountingDistanceFt
@@ -493,13 +595,30 @@
     return Math.min(100, 70 + ((tilt - 55) / 20) * 30);
   }
 
-  function mountHeightBalancePressure(height) {
+  function mountHeightBalancePressure(height, contextId) {
     if (!Number.isFinite(height)) return 100;
-    if (height < 7) return 62;
-    if (height < 9) return 38;
-    if (height <= 15) return 14;
-    if (height <= 18) return 34;
-    return 58;
+
+    const context = mountContextPreset(contextId);
+    const preferredLow = context.preferredLow;
+    const preferredHigh = context.preferredHigh;
+    const workableLow = context.workableLow;
+    const workableHigh = context.workableHigh;
+
+    if (height >= preferredLow && height <= preferredHigh) return 14;
+
+    if (height >= workableLow && height < preferredLow) {
+      return 22 + ((preferredLow - height) / Math.max(0.1, preferredLow - workableLow)) * 18;
+    }
+
+    if (height > preferredHigh && height <= workableHigh) {
+      return 22 + ((height - preferredHigh) / Math.max(0.1, workableHigh - preferredHigh)) * 18;
+    }
+
+    if (height < workableLow) {
+      return Math.min(100, 48 + ((workableLow - height) / Math.max(1, workableLow)) * 45);
+    }
+
+    return Math.min(100, 48 + ((height - workableHigh) / Math.max(1, workableHigh)) * 35);
   }
 
   function verticalFramingFitPressure(topEdgeHeight, bottomEdgeHeight, targetHeight) {
@@ -524,10 +643,22 @@
     return "Too steep";
   }
 
-  function mountHeightBalanceText(height) {
-    if (height < 9) return "Low / tamper watch";
-    if (height <= 15) return "Practical range";
-    return "High / detail watch";
+  function mountHeightBalanceText(height, contextId) {
+    const context = mountContextPreset(contextId);
+
+    if (!Number.isFinite(height)) return "Mount height not set";
+
+    if (height >= context.preferredLow && height <= context.preferredHigh) {
+      return "Practical for " + context.label;
+    }
+
+    if (height >= context.workableLow && height <= context.workableHigh) {
+      return "Workable but review";
+    }
+
+    if (height < context.workableLow) return "Low for " + context.label;
+
+    return "High for " + context.label;
   }
 
   function verticalFramingFitText(topEdgeHeight, bottomEdgeHeight, targetHeight) {
@@ -555,11 +686,11 @@
     const heightText = heightGuidance(input.h);
 
     const subjectAngleMetric = subjectAngleFitPressure(tilt);
-    const mountPressureMetric = mountHeightBalancePressure(input.h);
+    const mountPressureMetric = mountHeightBalancePressure(input.h, input.mountContextId);
     const framingPressureMetric = verticalFramingFitPressure(topEdgeHeight, bottomEdgeHeight, input.th);
 
     const subjectFitText = subjectAngleFitText(tilt);
-    const mountFitText = mountHeightBalanceText(input.h);
+    const mountFitText = mountHeightBalanceText(input.h, input.mountContextId);
     const framingFitText = verticalFramingFitText(topEdgeHeight, bottomEdgeHeight, input.th);
 
     const metrics = [
@@ -594,15 +725,15 @@
       dominantConstraint = "Subject angle fit is near the lower edge. The camera is only " + fmtFt(drop) + " above the target height while viewing " + fmtFt(input.dist) + " away, creating a borderline " + fmtDeg(tilt) + " subject angle. A small height or placement change can improve the result, but this should be treated as Watch rather than a clean pass.";
     } else if (tilt >= 45) {
       dominantConstraint = "Subject angle fit is the dominant limiter. The camera is looking too steeply downward, which compresses subjects and reduces usable face detail.";
-    } else if (input.h < 9 || input.h > 15) {
-      dominantConstraint = "Mount height balance is the dominant limiter. The selected height is outside the preferred working range, so tamper risk or detail quality should be reviewed.";
+    } else if (mountPressureMetric > 45) {
+      dominantConstraint = "Mount height balance is the dominant limiter. The selected height is outside the normal review band for " + input.mountContextLabel + ". This may be a real field constraint, but the design should be checked against subject angle, target distance, tamper exposure, and detail objective.";
     } else if (framingPressureMetric > 45) {
       dominantConstraint = "Vertical framing fit is the dominant limiter. The selected VFOV and tilt do not frame the target zone cleanly at this distance.";
     } else {
       dominantConstraint = "The geometry is balanced. Mount height, target distance, subject angle, and vertical framing remain in a practical range for the next field-of-view step.";
     }
 
-    const interpretation = "With a mount height of " + fmtFt(input.h) + " and a target point " + fmtFt(input.dist) + " away at " + fmtFt(input.th) + ", the suggested down-tilt is about " + fmtDeg(tilt) + ". Preferred subject-angle band is roughly 12-35 deg, with 8-45 deg generally workable, so this result is classified as " + subjectFitText + ". At that distance, a " + fmtDeg(input.vfov) + " vertical field of view spans about " + fmtFt(span) + " vertically, with the view landing from roughly " + fmtFt(topEdgeHeight) + " down to " + fmtFt(bottomEdgeHeight) + ". " + angleText;
+    const interpretation = "Mounting context is " + input.mountContextLabel + ". With a mount height of " +  + fmtFt(input.h) + " and a target point " + fmtFt(input.dist) + " away at " + fmtFt(input.th) + ", the suggested down-tilt is about " + fmtDeg(tilt) + ". Preferred subject-angle band is roughly 12-35 deg, with 8-45 deg generally workable, so this result is classified as " + subjectFitText + ". At that distance, a " + fmtDeg(input.vfov) + " vertical field of view spans about " + fmtFt(span) + " vertically, with the view landing from roughly " + fmtFt(topEdgeHeight) + " down to " + fmtFt(bottomEdgeHeight) + ". " + angleText;
 
     let guidance = "";
     if (tilt < 8) {
@@ -649,6 +780,12 @@
     const payload = {
       status: "IN PROGRESS",
       mountingHeightFt: data.h,
+      mountingContextId: data.mountContextId,
+      mountingContextLabel: data.mountContextLabel,
+      mountPreferredLowFt: data.mountPreferredLowFt,
+      mountPreferredHighFt: data.mountPreferredHighFt,
+      mountWorkableLowFt: data.mountWorkableLowFt,
+      mountWorkableHighFt: data.mountWorkableHighFt,
       mountingTargetDistanceFt: data.dist,
       mountingTargetDistanceImportedFt: data.importedTargetDistanceFt,
       mountingSourceMode: data.sourceMode,
@@ -687,6 +824,12 @@
       step: STEP,
       data: {
         h: data.h,
+        mountContextId: data.mountContextId,
+        mountContextLabel: data.mountContextLabel,
+        mountPreferredLowFt: data.mountPreferredLowFt,
+        mountPreferredHighFt: data.mountPreferredHighFt,
+        mountWorkableLowFt: data.mountWorkableLowFt,
+        mountWorkableHighFt: data.mountWorkableHighFt,
         dist: data.dist,
         th: data.th,
         vfov: data.vfov,
@@ -747,6 +890,7 @@
         { label: "Approx. Top of View @ Distance", value: fmtFt(data.topEdgeHeight) },
         { label: "Approx. Bottom of View @ Distance", value: fmtFt(data.bottomEdgeHeight) },
         { label: "Mount Height", value: fmtFt(data.h) },
+        { label: "Mounting Context", value: data.mountContextLabel },
         { label: "Mount Height Balance", value: data.mountFitText },
         { label: "Target Distance", value: fmtFt(data.dist) },
         { label: "Target Distance Source", value: data.sourceMode === "manual-override" ? "Manual override" : "Area Planner carry-over" },
@@ -807,12 +951,25 @@
     hydrateMountingInputsFromActiveArea();
     applyVfovProfileToInput({ force: true });
     renderVfovProfileGuidance();
+    renderMountContextGuidance();
     renderFlowNote();
     renderMountingOverrideNotice();
     invalidate({ clearFlow: true });
   }
 
   function bind() {
+    if (els.mountContext) {
+      els.mountContext.addEventListener("change", () => {
+        renderMountContextGuidance();
+        invalidate({ clearFlow: true });
+      });
+    }
+
+    if (els.h) {
+      els.h.addEventListener("input", renderMountContextGuidance);
+      els.h.addEventListener("change", renderMountContextGuidance);
+    }
+
     if (els.vfovProfile) {
       els.vfovProfile.addEventListener("change", () => {
         applyVfovProfileToInput({ force: true });
@@ -859,9 +1016,12 @@
     if (year) year.textContent = new Date().getFullYear();
 
     bind();
+    if (els.mountContext) els.mountContext.value = DEFAULTS.mountContext;
+    if (els.h) els.h.value = "";
     hydrateMountingInputsFromActiveArea();
     applyVfovProfileToInput({ force: true });
     renderVfovProfileGuidance();
+    renderMountContextGuidance();
     renderFlowNote();
     renderMountingOverrideNotice();
     invalidate({ clearFlow: false });
