@@ -339,6 +339,21 @@
       }
     }
 
+
+    /* Area Planner flow action alignment */
+    .area-planner-flow-actions {
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .area-planner-flow-actions #next-step-row {
+      align-items: center;
+      gap: 10px;
+      margin-top: 0 !important;
+      display: flex;
+    }
+
   </style>
 </head>
 
@@ -372,13 +387,7 @@
 
   <main class="page">
     <div class="container">
-      <div class="crumbs">
-        <a href="/tools/">Tools</a>
-        <span class="sep">/</span>
-        <a href="/tools/physical-security/">Physical Security</a>
-        <span class="sep">/</span>
-        <span>Area / Zone Planner</span>
-      </div>
+      
 
       <div class="pill-row" style="margin-top: 6px;">
         <span class="pill pill--pro">Pro Tier</span>
@@ -506,10 +515,7 @@
           </div>
         </section>
 
-        <div id="next-step-row" class="btn-row" style="margin-top: 14px;">
-          <button id="continue" class="btn btn-primary" type="button">Continue &rarr; Scene Illumination</button>
-          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
-        </div>
+        
       </section>
 
       <footer class="site-footer">
@@ -517,7 +523,13 @@
         <div class="footer-links">
           <a href="/tools/">Tools</a>
           <a href="/upgrade/">Upgrade</a>
-          <a href="/about/">About</a>
+  
+        <div id="areaPlannerFlowActions" class="btn-row area-planner-flow-actions" style="margin-top: 14px;">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+          <div id="next-step-row" class="btn-row area-planner-continue-slot" style="margin-top: 0;">
+            <button id="continue" class="btn btn-primary" type="button">Continue &rarr; Scene Illumination</button>
+          </div>
+        </div>        <a href="/about/">About</a>
           <a href="/contact/">Contact</a>
           <a href="/changelog/">Changelog</a>
           <a href="/privacy/">Privacy</a>
@@ -534,7 +546,7 @@
   <script src="/assets/pipeline-state.js?v=phys-area-planner-001"></script>
   <script src="/assets/pipeline.js?v=phys-area-planner-001"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-004"></script>
-  <script src="./script.js?v=physical-security-area-planner-report-symbols-001"></script>
+  <script src="./script.js?v=physical-security-area-planner-buttons-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
