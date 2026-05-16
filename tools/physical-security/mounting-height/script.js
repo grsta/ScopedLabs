@@ -474,9 +474,65 @@
     };
   }
 
+  function subjectAngleFitPressure(tilt) {
+    if (!Number.isFinite(tilt)) return 100;
+    if (tilt < 4) return 88;
+    if (tilt < 8) return 68;
+    if (tilt < 10) return 48;
+    if (tilt <= 25) return 14;
+    if (tilt <= 35) return 18;
+    if (tilt <= 45) return 32;
+    if (tilt <= 55) return 52;
+    return 76;
+  }
+
+  function mountHeightBalancePressure(height) {
+    if (!Number.isFinite(height)) return 100;
+    if (height < 7) return 62;
+    if (height < 9) return 38;
+    if (height <= 15) return 14;
+    if (height <= 18) return 34;
+    return 58;
+  }
+
+  function verticalFramingFitPressure(topEdgeHeight, bottomEdgeHeight, targetHeight) {
+    if (!Number.isFinite(topEdgeHeight) || !Number.isFinite(bottomEdgeHeight)) return 100;
+
+    if (bottomEdgeHeight > 0) {
+      return Math.min(100, 32 + bottomEdgeHeight * 8);
+    }
+
+    if (topEdgeHeight < targetHeight) {
+      return Math.min(100, 45 + (targetHeight - topEdgeHeight) * 10);
+    }
+
+    return 12;
+  }
+
+  function subjectAngleFitText(tilt) {
+    if (tilt < 10) return "Too shallow";
+    if (tilt <= 35) return "Good fit";
+    if (tilt <= 45) return "Steep but usable";
+    return "Too steep";
+  }
+
+  function mountHeightBalanceText(height) {
+    if (height < 9) return "Low / tamper watch";
+    if (height <= 15) return "Practical range";
+    return "High / detail watch";
+  }
+
+  function verticalFramingFitText(topEdgeHeight, bottomEdgeHeight, targetHeight) {
+    if (bottomEdgeHeight > 0) return "Lower view edge above grade";
+    if (topEdgeHeight < targetHeight) return "Target may sit above view";
+    return "Target zone framed";
+  }
+
   function calculateModel() {
     const input = getInputs();
     if (!input.ok) return input;
+
+    const vfovProfileInfo = selectedVfovProfileInfo(input.vfov);
 
     const drop = input.h - input.th;
     const tilt = rad2deg(Math.atan2(drop, input.dist));
@@ -490,30 +546,29 @@
     const angleText = angleInterpretation(tilt);
     const heightText = heightGuidance(input.h);
 
-    const subjectAngleMetric = tilt < 10 ? 85 : tilt < 25 ? 35 : tilt < 45 ? 18 : 78;
-    const mountPressureMetric = input.h < 9 ? 42 : input.h <= 15 ? 18 : 55;
-    const framingPressureMetric =
-      bottomEdgeHeight > 0
-        ? Math.min(bottomEdgeHeight * 12, 100)
-        : topEdgeHeight < input.th
-          ? Math.min((input.th - topEdgeHeight) * 10, 100)
-          : 12;
+    const subjectAngleMetric = subjectAngleFitPressure(tilt);
+    const mountPressureMetric = mountHeightBalancePressure(input.h);
+    const framingPressureMetric = verticalFramingFitPressure(topEdgeHeight, bottomEdgeHeight, input.th);
+
+    const subjectFitText = subjectAngleFitText(tilt);
+    const mountFitText = mountHeightBalanceText(input.h);
+    const framingFitText = verticalFramingFitText(topEdgeHeight, bottomEdgeHeight, input.th);
 
     const metrics = [
       {
-        label: "Subject Angle",
+        label: "Subject Angle Fit",
         value: subjectAngleMetric,
-        displayValue: fmtDeg(tilt)
+        displayValue: fmtDeg(tilt) + " actual / 10-45 deg target"
       },
       {
-        label: "Mount Height Pressure",
+        label: "Mount Height Balance",
         value: mountPressureMetric,
-        displayValue: fmtFt(input.h)
+        displayValue: fmtFt(input.h) + " mount / " + mountFitText
       },
       {
-        label: "Vertical Framing Risk",
+        label: "Vertical Framing Fit",
         value: framingPressureMetric,
-        displayValue: `${fmtFt(topEdgeHeight)} to ${fmtFt(bottomEdgeHeight)}`
+        displayValue: fmtFt(topEdgeHeight) + " to " + fmtFt(bottomEdgeHeight)
       }
     ];
 
@@ -526,26 +581,26 @@
 
     let dominantConstraint = "";
     if (tilt < 10) {
-      dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too shallow across the scene, which weakens practical face detail and identification geometry.";
+      dominantConstraint = "Subject angle fit is the dominant limiter. The camera is only " + fmtFt(drop) + " above the target height while viewing " + fmtFt(input.dist) + " away, creating a shallow " + fmtDeg(tilt) + " subject angle. The risk is caused by the angle being too low, not too high.";
     } else if (tilt >= 45) {
-      dominantConstraint = "Subject angle is the dominant limiter. The camera is looking too steeply downward, which compresses subjects and reduces usable face detail.";
-    } else if (input.h > 15) {
-      dominantConstraint = "Mount height pressure is the dominant limiter. The install point is high enough that tamper resistance improves, but usable subject geometry starts to suffer.";
-    } else if (bottomEdgeHeight > 0) {
-      dominantConstraint = "Vertical framing risk is the dominant limiter. The lower edge of view is still floating above grade at the target distance, so ground-level coverage is not fully closing.";
+      dominantConstraint = "Subject angle fit is the dominant limiter. The camera is looking too steeply downward, which compresses subjects and reduces usable face detail.";
+    } else if (input.h < 9 || input.h > 15) {
+      dominantConstraint = "Mount height balance is the dominant limiter. The selected height is outside the preferred working range, so tamper risk or detail quality should be reviewed.";
+    } else if (framingPressureMetric > 45) {
+      dominantConstraint = "Vertical framing fit is the dominant limiter. The selected VFOV and tilt do not frame the target zone cleanly at this distance.";
     } else {
-      dominantConstraint = "The geometry is balanced. Mount height, target distance, and vertical framing remain in a practical range for the next field-of-view step.";
+      dominantConstraint = "The geometry is balanced. Mount height, target distance, subject angle, and vertical framing remain in a practical range for the next field-of-view step.";
     }
 
-    const interpretation = `With a mount height of ${fmtFt(input.h)} and a target point ${fmtFt(input.dist)} away at ${fmtFt(input.th)}, the suggested down-tilt is about ${fmtDeg(tilt)}. At that distance, a ${fmtDeg(input.vfov)} vertical field of view spans about ${fmtFt(span)} vertically, with the view landing from roughly ${fmtFt(topEdgeHeight)} down to ${fmtFt(bottomEdgeHeight)}. ${angleText}`;
+    const interpretation = "With a mount height of " + fmtFt(input.h) + " and a target point " + fmtFt(input.dist) + " away at " + fmtFt(input.th) + ", the suggested down-tilt is about " + fmtDeg(tilt) + ". Practical subject-angle target is roughly 10-45 deg, so this result is classified as " + subjectFitText + ". At that distance, a " + fmtDeg(input.vfov) + " vertical field of view spans about " + fmtFt(span) + " vertically, with the view landing from roughly " + fmtFt(topEdgeHeight) + " down to " + fmtFt(bottomEdgeHeight) + ". " + angleText;
 
     let guidance = "";
     if (tilt < 10) {
-      guidance = "Lower the mount, move the target zone farther out, or tighten vertical framing before locking the design. Then continue to Field of View once subject angle is healthier.";
+      guidance = "Increase subject angle by raising the camera, reducing target distance, choosing a closer target zone, or revisiting placement before locking the design. Then continue to Field of View once subject angle is healthier.";
     } else if (tilt >= 45) {
       guidance = "Reduce mount height or increase standoff distance before finalizing the view. Excessive top-down angle can make downstream detail goals harder to reach.";
     } else if (bottomEdgeHeight > 0) {
-      guidance = "Check whether the lower edge of view needs to reach grade at the target distance. If so, revise height or angle assumptions before moving forward.";
+      guidance = "Check whether the lower edge of view needs to reach grade at the target distance. If so, revise height, tilt, or VFOV assumptions before moving forward.";
     } else {
       guidance = "Mounting geometry is workable. Continue to Field of View next to translate this setup into actual scene width coverage.";
     }
@@ -553,6 +608,7 @@
     return {
       ok: true,
       ...input,
+      ...vfovProfileInfo,
       drop,
       tilt,
       span,
@@ -561,6 +617,9 @@
       tiltClass,
       angleText,
       heightText,
+      subjectFitText,
+      mountFitText,
+      framingFitText,
       status: statusPack.status,
       interpretation,
       dominantConstraint,
@@ -669,15 +728,20 @@
       summaryRows: [
         { label: "Vertical Drop", value: fmtFt(data.drop) },
         { label: "Suggested Down-Tilt", value: fmtDeg(data.tilt) },
-        { label: "Vertical Coverage Span", value: fmtFt(data.span) },
-        { label: "Angle Quality", value: data.tiltClass }
+        { label: "Subject Angle Fit", value: data.subjectFitText },
+        { label: "Vertical Coverage Span", value: fmtFt(data.span) }
       ],
       derivedRows: [
         { label: "Approx. Top of View @ Distance", value: fmtFt(data.topEdgeHeight) },
         { label: "Approx. Bottom of View @ Distance", value: fmtFt(data.bottomEdgeHeight) },
         { label: "Mount Height", value: fmtFt(data.h) },
+        { label: "Mount Height Balance", value: data.mountFitText },
         { label: "Target Distance", value: fmtFt(data.dist) },
+        { label: "Target Distance Source", value: data.sourceMode === "manual-override" ? "Manual override" : "Area Planner carry-over" },
         { label: "Target Height", value: fmtFt(data.th) },
+        { label: "Camera Vertical View Profile", value: data.vfovProfileLabel || "Custom vertical FOV" },
+        { label: "Vertical FOV Source", value: data.vfovSourceMode === "manual-override" ? "Manual assumption" : "Guided profile" },
+        { label: "Vertical Framing Fit", value: data.framingFitText },
         { label: "Height Guidance", value: data.heightText }
       ],
       status: data.status,
@@ -685,22 +749,22 @@
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance,
       chart: {
-        labels: ["Subject Angle", "Mount Height Pressure", "Vertical Framing Risk"],
+        labels: ["Subject Angle Fit", "Mount Height Balance", "Vertical Framing Fit"],
         values: [
           Number(data.subjectAngleMetric.toFixed(1)),
           Number(data.mountPressureMetric.toFixed(1)),
           Number(data.framingPressureMetric.toFixed(1))
         ],
         displayValues: [
-          fmtDeg(data.tilt),
-          fmtFt(data.h),
-          `${fmtFt(data.topEdgeHeight)} to ${fmtFt(data.bottomEdgeHeight)}`
+          fmtDeg(data.tilt) + " actual / 10-45 deg target",
+          fmtFt(data.h) + " mount / " + data.mountFitText,
+          fmtFt(data.topEdgeHeight) + " to " + fmtFt(data.bottomEdgeHeight)
         ],
         referenceValue: 20,
         healthyMax: 20,
         watchMax: 45,
-        axisTitle: "Mounting Geometry Pressure",
-        referenceLabel: "Comfort Band",
+        axisTitle: "Mounting Assumption Fit",
+        referenceLabel: "Healthy Fit",
         healthyLabel: "Healthy",
         watchLabel: "Watch",
         riskLabel: "Risk",
