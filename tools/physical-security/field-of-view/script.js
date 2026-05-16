@@ -28,6 +28,7 @@
     reset: $("reset"),
     results: $("results"),
     analysis: $("analysis-copy"),
+    fovGeometry: $("fovGeometry"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue")
@@ -361,6 +362,26 @@
       emptyMessage: "Enter values and press Calculate."
     });
 
+    clearFovGeometryDiagram();
+    renderFlowNote();
+  } = {}) {
+    if (clearFlow) {
+      sessionStorage.removeItem(FLOW_KEYS.fov);
+      clearDownstream();
+    }
+
+    ScopedLabsAnalyzer.invalidate({
+      resultsEl: els.results,
+      analysisEl: els.analysis,
+      continueWrapEl: els.continueWrap,
+      continueBtnEl: els.continueBtn,
+      flowKey: FLOW_KEYS.fov,
+      category: CATEGORY,
+      step: STEP,
+      lane: LANE,
+      emptyMessage: "Enter values and press Calculate."
+    });
+
     renderFlowNote();
   }
 
@@ -558,10 +579,128 @@
     updateActiveAreaFromFov(data);
   }
 
+  function escapeFovHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function fmtFtShort(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "n/a";
+    return number.toFixed(1).replace(/\.0$/, "") + " ft";
+  }
+
+  function fmtDegText(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "n/a";
+    return number.toFixed(1).replace(/\.0$/, "") + " deg";
+  }
+
+  function fovStatusLabel(data) {
+    if (!data || !data.fitClass) return "Planning View";
+    if (data.fitClass === "Good Fit") return "Geometry Fit";
+    return data.fitClass;
+  }
+
+  function clearFovGeometryDiagram() {
+    if (!els.fovGeometry) return;
+    els.fovGeometry.hidden = true;
+    els.fovGeometry.innerHTML = "";
+  }
+
+  function renderFovGeometryDiagram(data) {
+    if (!els.fovGeometry || !data || !data.ok) return;
+
+    const cameraX = 92;
+    const targetX = 650;
+    const centerY = 175;
+    const maxSpanPx = 220;
+    const svgW = 760;
+    const svgH = 350;
+
+    const calculatedWidth = Math.max(Number(data.sceneWidth) || 0, 0.1);
+    const requiredWidth = Math.max(Number(data.scene) || 0, 0.1);
+    const maxWidth = Math.max(calculatedWidth, requiredWidth, 1);
+    const scale = maxSpanPx / maxWidth;
+
+    const calculatedPx = Math.max(12, calculatedWidth * scale);
+    const requiredPx = Math.max(12, requiredWidth * scale);
+
+    const coneTopY = centerY - calculatedPx / 2;
+    const coneBottomY = centerY + calculatedPx / 2;
+    const requiredTopY = centerY - requiredPx / 2;
+    const requiredBottomY = centerY + requiredPx / 2;
+
+    const axisY = 315;
+    const goodFit = data.fitClass === "Good Fit";
+    const tooNarrow = data.fitClass === "Too Narrow";
+    const coneStroke = goodFit ? "rgba(125,255,158,.95)" : tooNarrow ? "rgba(255,190,120,.95)" : "rgba(255,220,120,.95)";
+    const coneFill = goodFit ? "rgba(125,255,158,.14)" : tooNarrow ? "rgba(255,150,80,.14)" : "rgba(255,210,90,.13)";
+    const requiredStroke = "rgba(255,255,255,.78)";
+    const centerStroke = "rgba(255,255,255,.28)";
+
+    const widthLabelY = Math.max(26, coneTopY - 10);
+    const requiredLabelY = Math.min(svgH - 78, requiredBottomY + 18);
+
+    const svg =
+      '<svg class="fov-geometry-svg" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Field of view geometry diagram">' +
+        '<defs>' +
+          '<marker id="fovArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">' +
+            '<path d="M0,0 L8,4 L0,8 Z" fill="rgba(255,255,255,.62)"></path>' +
+          '</marker>' +
+        '</defs>' +
+
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="' + centerStroke + '" stroke-width="2" stroke-dasharray="5 7"></line>' +
+
+        '<polygon points="' + cameraX + ',' + centerY + ' ' + targetX + ',' + coneTopY + ' ' + targetX + ',' + coneBottomY + '" fill="' + coneFill + '" stroke="' + coneStroke + '" stroke-width="2"></polygon>' +
+
+        '<line x1="' + targetX + '" y1="' + coneTopY + '" x2="' + targetX + '" y2="' + coneBottomY + '" stroke="' + coneStroke + '" stroke-width="5" stroke-linecap="round"></line>' +
+        '<line x1="' + (targetX + 34) + '" y1="' + requiredTopY + '" x2="' + (targetX + 34) + '" y2="' + requiredBottomY + '" stroke="' + requiredStroke + '" stroke-width="4" stroke-linecap="round"></line>' +
+
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="9" fill="rgba(125,255,158,.95)"></circle>' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="18" fill="none" stroke="rgba(125,255,158,.26)" stroke-width="2"></circle>' +
+
+        '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(255,255,255,.52)" stroke-width="2" marker-end="url(#fovArrow)"></line>' +
+        '<line x1="' + cameraX + '" y1="' + (axisY - 8) + '" x2="' + cameraX + '" y2="' + (axisY + 8) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
+        '<line x1="' + targetX + '" y1="' + (axisY - 8) + '" x2="' + targetX + '" y2="' + (axisY + 8) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
+
+        '<text x="' + cameraX + '" y="' + (centerY - 28) + '" fill="rgba(255,255,255,.86)" font-size="13" font-weight="800" text-anchor="middle">Camera</text>' +
+        '<text x="' + cameraX + '" y="' + (centerY + 44) + '" fill="rgba(255,255,255,.62)" font-size="12" text-anchor="middle">Mount ' + escapeFovHtml(fmtFtShort(data.h)) + '</text>' +
+
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 24) + '" fill="rgba(255,255,255,.72)" font-size="13" font-weight="800" text-anchor="middle">Target distance: ' + escapeFovHtml(fmtFtShort(data.dist)) + '</text>' +
+
+        '<text x="' + (targetX - 10) + '" y="' + widthLabelY + '" fill="rgba(255,255,255,.86)" font-size="13" font-weight="800" text-anchor="end">Calculated coverage: ' + escapeFovHtml(fmtFtShort(data.sceneWidth)) + '</text>' +
+        '<text x="' + (targetX + 44) + '" y="' + requiredLabelY + '" fill="rgba(255,255,255,.78)" font-size="13" font-weight="800">Required width: ' + escapeFovHtml(fmtFtShort(data.scene)) + '</text>' +
+
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="42" fill="rgba(255,255,255,.70)" font-size="13" font-weight="800" text-anchor="middle">HFOV ' + escapeFovHtml(fmtDegText(data.hfov)) + '</text>' +
+
+        '<rect x="26" y="24" width="214" height="60" rx="14" fill="rgba(0,0,0,.24)" stroke="rgba(255,255,255,.10)"></rect>' +
+        '<text x="44" y="49" fill="rgba(255,255,255,.68)" font-size="12" font-weight="800">Coverage ratio</text>' +
+        '<text x="44" y="72" fill="rgba(255,255,255,.94)" font-size="20" font-weight="900">' + escapeFovHtml(fmtRatio(data.coverageRatio)) + '</text>' +
+      '</svg>';
+
+    els.fovGeometry.hidden = false;
+    els.fovGeometry.innerHTML =
+      '<div class="fov-geometry-head">' +
+        '<div>' +
+          '<p class="fov-geometry-title">Field of View Geometry</p>' +
+          '<div class="fov-geometry-subtitle">Top-view planning diagram showing the camera cone, target distance, calculated scene width, and required scene width.</div>' +
+        '</div>' +
+        '<div class="fov-geometry-pill">' + escapeFovHtml(fovStatusLabel(data)) + '</div>' +
+      '</div>' +
+      '<div class="fov-geometry-svg-wrap">' + svg + '</div>' +
+      '<div class="fov-geometry-note">Planning note: this is a simplified horizontal field-of-view diagram. Mount height is shown as context from the previous step, but horizontal width is driven by target distance and HFOV.</div>';
+  }
+
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
-    els.results.innerHTML = `<div class="muted">${message}</div>`;
+    clearFovGeometryDiagram();
+    els.results.innerHTML = '<div class="muted">' + message + '</div>';
   }
 
   function renderSuccess(data) {
@@ -577,7 +716,7 @@
       derivedRows: [
         { label: "Coverage Ratio", value: data.scene > 0 ? fmtRatio(data.coverageRatio) : "N/A" },
         { label: "Approx. Diagonal Reach", value: fmtFt(data.diagonalReach) },
-        { label: "Scene Width per Foot of Mount Height", value: data.h > 0 ? `${fmt(data.widthPerFootHeight, 2)} ft/ft` : "N/A" },
+        { label: "Scene Width per Foot of Mount Height", value: data.h > 0 ? fmt(data.widthPerFootHeight, 2) + " ft/ft" : "N/A" },
         { label: "Mount Height", value: fmtFt(data.h) },
         { label: "Lens Guidance", value: data.lensText }
       ],
@@ -587,9 +726,13 @@
       guidance: data.guidance
     });
 
+    renderFovGeometryDiagram(data);
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-    forceFovContinueVisible();
+
+    if (typeof forceFovContinueVisible === "function") {
+      forceFovContinueVisible();
+    }
   }
 
   function calc() {
