@@ -30,7 +30,8 @@
 
   function fmtDeg(value) {
     const number = num(value);
-    return number === null ? "n/a" : number.toFixed(1).replace(/\.0$/, "") + "?";
+    const degree = String.fromCharCode(176);
+    return number === null ? "n/a" : number.toFixed(1).replace(/\.0$/, "") + degree;
   }
 
   function normalizeArea(area, index = 0) {
