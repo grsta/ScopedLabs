@@ -1162,9 +1162,42 @@
     render();
   }
 
+  function areaFormHasUserInput() {
+    return [
+      els.areaName?.value,
+      els.protectedLengthFt?.value,
+      els.distanceToTargetPlaneFt?.value,
+      els.assumedHfovDeg?.value,
+      els.targetCameraCount?.value
+    ].some((value) => String(value || "").trim() !== "");
+  }
+
+  function hasSavedPlanningArea() {
+    const api = state();
+    if (!api) return false;
+
+    const ledger = api.readLedger();
+    return !!(ledger && Array.isArray(ledger.areas) && ledger.areas.length > 0 && ledger.activeAreaId);
+  }
+
   function continueFlow() {
-    if (!saveArea()) return;
-    window.location.href = NEXT_URL;
+    const api = state();
+    if (!api) return;
+
+    const shouldSaveForm = !!editingAreaId || areaFormHasUserInput();
+
+    if (shouldSaveForm) {
+      if (!saveArea()) return;
+      window.location.href = NEXT_URL;
+      return;
+    }
+
+    if (hasSavedPlanningArea()) {
+      window.location.href = NEXT_URL;
+      return;
+    }
+
+    status("Save at least one planning area before continuing.");
   }
 
   function bind() {
