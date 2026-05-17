@@ -29,7 +29,7 @@
   }
 
   function fmtDeg(value) {
-    const number = num(value);
+    const number = cleanNumber(value);
     const degree = String.fromCharCode(176);
     return number === null ? "n/a" : number.toFixed(1).replace(/\.0$/, "") + degree;
   }
