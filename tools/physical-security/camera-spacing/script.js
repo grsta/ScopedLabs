@@ -1112,7 +1112,9 @@ function escapeHtml(value) {
       controls: {
         kicker: "Correction controls",
         title: "Choose a spacing path",
-        copy: "Secondary options remain available below the primary recommendation. Use them only when the project priority differs from the assistant selected path.",
+        copy: activeAssistantScenario
+        ? "Secondary options are recalculated from the currently selected branch, so Add 1 Camera adds to the active scenario instead of stacking from the original baseline."
+        : "Secondary options remain available below the primary recommendation. Use them only when the project priority differs from the assistant selected path.",
         pill: "Correction Path"
       },
       carryForward: {
@@ -1175,6 +1177,14 @@ function escapeHtml(value) {
 
   function getSpacingAssistantScenarioBase(data) {
     return snapshotSpacingAssistantData(assistantBaselineData || data);
+  }
+
+  function getSpacingAssistantBranchBase(data) {
+    if (activeAssistantScenario && data) {
+      return snapshotSpacingAssistantData(data);
+    }
+
+    return getSpacingAssistantScenarioBase(data);
   }
 
   function restoreSpacingAssistantBaseline() {
@@ -2178,7 +2188,7 @@ function assistantStatusClass(data) {
 
     setSpacingAssistantBaseline(data);
 
-    const scenarioBase = getSpacingAssistantScenarioBase(data);
+    const scenarioBase = getSpacingAssistantBranchBase(data);
     latestAssistantScenarios = buildAssistantScenarios(scenarioBase || data);
 
     if (!window.ScopedLabsDesignAssistant || typeof window.ScopedLabsDesignAssistant.render !== "function") {
