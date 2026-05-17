@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const FLOW_KEYS = {
     scene: "scopedlabs:pipeline:physical-security:scene-illumination",
     mount: "scopedlabs:pipeline:physical-security:mounting-height",
@@ -501,6 +501,21 @@
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
+  function forceCoverageContinueVisible() {
+    if (els.continueWrap) {
+      els.continueWrap.hidden = false;
+      els.continueWrap.removeAttribute("hidden");
+      els.continueWrap.classList.add("is-visible");
+      els.continueWrap.style.display = "flex";
+      els.continueWrap.style.marginTop = "0";
+    }
+
+    if (els.continueBtn) {
+      els.continueBtn.hidden = false;
+      els.continueBtn.removeAttribute("hidden");
+    }
+  }
+
   function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
@@ -528,6 +543,7 @@
 
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+    forceCoverageContinueVisible();
   }
 
   function calc() {

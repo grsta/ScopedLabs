@@ -65,6 +65,25 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
+
+    /* Coverage Area flow action alignment */
+    .coverage-flow-actions {
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .coverage-flow-actions #next-step-row {
+      align-items: center;
+      gap: 10px;
+      margin-top: 0 !important;
+    }
+
+    .coverage-flow-actions #next-step-row.is-visible {
+      display: flex !important;
+    }
+
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -150,13 +169,7 @@
   <main class="page">
     <div class="container">
 
-      <div class="crumbs">
-        <a href="/tools/">Tools</a>
-        <span class="sep">/</span>
-        <a href="/tools/physical-security/">Physical Security</a>
-        <span class="sep">/</span>
-        <span>Camera Coverage Area</span>
-      </div>
+      
 
       <div class="pill-row" style="margin-top: 6px;">
         <span class="pill pill--pro">Pro Tier</span>
@@ -207,10 +220,7 @@
         
       
 
-<div class="actions">
-          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
-          <a class="btn btn-primary" href="/upgrade/">Unlock Pro for Physical Security</a>
-        </div>
+
       </section>
 
       <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
@@ -266,16 +276,17 @@
           </p>
         </div>
 
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
-        </div>
+        
 
-        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-          <a id="continue" class="btn btn-primary" href="/tools/physical-security/camera-spacing/">
-            Continue → Camera Spacing
-          </a>
-        </div>
+        
       
+
+        <div id="coverageFlowActions" class="btn-row coverage-flow-actions" style="margin-top: 14px;">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+          <div id="next-step-row" class="btn-row coverage-continue-slot" style="margin-top: 0; display: none;">
+            <a id="continue" class="btn btn-primary" href="/tools/physical-security/camera-spacing/">Continue &rarr; Camera Spacing</a>
+          </div>
+        </div>
 <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
         <div class="pill-row">
           <span class="pill pill--pro">Documentation & Export</span>
@@ -363,7 +374,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-005"></script>
-  <script src="./script.js?v=physical-security-coverage-area-writeback-001"></script>
+  <script src="./script.js?v=physical-security-coverage-buttons-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
