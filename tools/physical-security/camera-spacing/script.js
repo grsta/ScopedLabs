@@ -376,7 +376,7 @@ function escapeHtml(value) {
       return null;
     }
 
-    const cams = Math.max(1, Math.ceil(len / usableWidth));
+    const cams = hasExplicitTargetCams ? targetCams : Math.max(1, Math.ceil(len / usableWidth));
     const spacing = len / cams;
     const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
     const spacingClass = classifySpacing(ratio);
@@ -597,15 +597,18 @@ function escapeHtml(value) {
       if (Number.isFinite(targetOverlap)) ovPct = targetOverlap;
     }
 
+    if (targetCams <= 1) ovPct = 0;
+
     const usableWidth = rawWidth * (1 - (ovPct / 100));
 
     if (!Number.isFinite(rawWidth) || !Number.isFinite(usableWidth) || usableWidth <= 0) {
       return null;
     }
 
-    const cams = Math.max(1, Math.ceil(len / usableWidth));
+    const cams = targetCams;
     const spacing = len / cams;
     const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
+    const singleCamera = cams <= 1;
 
     return {
       id: "custom-spacing-check",
@@ -652,7 +655,8 @@ function escapeHtml(value) {
     const dist = Number.isFinite(Number(changes?.dist)) ? Number(changes.dist) : Number(data.dist);
     const hfov = Number.isFinite(Number(changes?.hfov)) ? Number(changes.hfov) : Number(data.hfov);
     let ovPct = Number.isFinite(Number(changes?.ovPct)) ? Number(changes.ovPct) : Number(data.ovPct);
-    const targetCams = Number.isFinite(Number(changes?.targetCams)) ? Math.max(1, Math.round(Number(changes.targetCams))) : null;
+    const hasExplicitTargetCams = Number.isFinite(Number(changes?.targetCams));
+    const targetCams = hasExplicitTargetCams ? Math.max(1, Math.round(Number(changes.targetCams))) : null;
 
     if (targetCams <= 1) ovPct = 0;
 
@@ -2453,11 +2457,14 @@ function assistantStatusClass(data) {
     if (!input.ok) return input;
 
     const rawWidth = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
-    const rawCoversSingleCamera = rawWidth >= input.len;
-    const appliedOverlapTargetPct = rawCoversSingleCamera ? 0 : input.ovPct;
+    const explicitTargetCams = activeAssistantScenario && Number.isFinite(Number(activeAssistantScenario.targetCams))
+      ? Math.max(1, Math.round(Number(activeAssistantScenario.targetCams)))
+      : null;
+    const rawCoversSingleCamera = !explicitTargetCams && rawWidth >= input.len;
+    const appliedOverlapTargetPct = (rawCoversSingleCamera || explicitTargetCams === 1) ? 0 : input.ovPct;
     const usableWidth = rawWidth * (1 - (appliedOverlapTargetPct / 100));
 
-    const cams = rawCoversSingleCamera ? 1 : Math.max(1, Math.ceil(input.len / usableWidth));
+    const cams = explicitTargetCams || (rawCoversSingleCamera ? 1 : Math.max(1, Math.ceil(input.len / usableWidth)));
     const spacing = input.len / cams;
     const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
 
@@ -2541,6 +2548,8 @@ function assistantStatusClass(data) {
       ratio,
       spacingClass,
       singleCamera: isSingleCamera,
+      explicitTargetCameraCount: explicitTargetCams,
+      targetCameraCount: explicitTargetCams || cams,
       requestedOverlapTargetPct: input.ovPct,
       appliedOverlapTargetPct,
       status: statusPack.status,
