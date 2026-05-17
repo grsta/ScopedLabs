@@ -655,37 +655,34 @@
   function renderFovGeometryDiagram(data) {
     if (!els.fovGeometry || !data || !data.ok) return;
 
-    const cameraX = 82;
-    const targetX = 560;
-    const centerY = 150;
-    const maxSpanPx = 170;
-    const svgW = 680;
-    const svgH = 290;
+    const cameraX = 72;
+    const targetX = 492;
+    const centerY = 122;
+    const maxSpanPx = 126;
+    const svgW = 610;
+    const svgH = 232;
 
     const calculatedWidth = Math.max(Number(data.sceneWidth) || 0, 0.1);
     const requiredWidth = Math.max(Number(data.scene) || 0, 0.1);
     const maxWidth = Math.max(calculatedWidth, requiredWidth, 1);
     const scale = maxSpanPx / maxWidth;
 
-    const calculatedPx = Math.max(12, calculatedWidth * scale);
-    const requiredPx = Math.max(12, requiredWidth * scale);
+    const calculatedPx = Math.max(10, calculatedWidth * scale);
+    const requiredPx = Math.max(10, requiredWidth * scale);
 
     const coneTopY = centerY - calculatedPx / 2;
     const coneBottomY = centerY + calculatedPx / 2;
     const requiredTopY = centerY - requiredPx / 2;
     const requiredBottomY = centerY + requiredPx / 2;
 
-    const axisY = 252;
+    const axisY = 202;
     const goodFit = data.fitClass === "Good Fit";
     const tooNarrow = data.fitClass === "Too Narrow";
     const coneStroke = goodFit ? "rgba(125,255,158,.95)" : tooNarrow ? "rgba(255,190,120,.95)" : "rgba(255,220,120,.95)";
     const coneFill = goodFit ? "rgba(125,255,158,.14)" : tooNarrow ? "rgba(255,150,80,.14)" : "rgba(255,210,90,.13)";
     const requiredStroke = "rgba(255,255,255,.78)";
     const centerStroke = "rgba(255,255,255,.28)";
-
-    const widthLabelY = Math.max(26, coneTopY - 8);
-    const requiredLabelY = Math.min(svgH - 58, requiredBottomY + 16);
-    const requiredX = Math.min(svgW - 128, targetX + 26);
+    const requiredX = targetX + 28;
 
     const svg =
       '<svg class="fov-geometry-svg" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Field of view geometry diagram">' +
@@ -700,28 +697,22 @@
         '<polygon points="' + cameraX + ',' + centerY + ' ' + targetX + ',' + coneTopY + ' ' + targetX + ',' + coneBottomY + '" fill="' + coneFill + '" stroke="' + coneStroke + '" stroke-width="2"></polygon>' +
 
         '<line x1="' + targetX + '" y1="' + coneTopY + '" x2="' + targetX + '" y2="' + coneBottomY + '" stroke="' + coneStroke + '" stroke-width="5" stroke-linecap="round"></line>' +
-        '<line x1="' + (targetX + 26) + '" y1="' + requiredTopY + '" x2="' + (targetX + 26) + '" y2="' + requiredBottomY + '" stroke="' + requiredStroke + '" stroke-width="4" stroke-linecap="round"></line>' +
+        '<line x1="' + requiredX + '" y1="' + requiredTopY + '" x2="' + requiredX + '" y2="' + requiredBottomY + '" stroke="' + requiredStroke + '" stroke-width="4" stroke-linecap="round"></line>' +
 
         '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(125,255,158,.95)"></circle>' +
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="17" fill="none" stroke="rgba(125,255,158,.26)" stroke-width="2"></circle>' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="16" fill="none" stroke="rgba(125,255,158,.26)" stroke-width="2"></circle>' +
 
         '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(255,255,255,.52)" stroke-width="2" marker-end="url(#fovArrow)"></line>' +
         '<line x1="' + cameraX + '" y1="' + (axisY - 7) + '" x2="' + cameraX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
         '<line x1="' + targetX + '" y1="' + (axisY - 7) + '" x2="' + targetX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
 
-        '<text x="' + cameraX + '" y="' + (centerY - 27) + '" fill="rgba(255,255,255,.86)" font-size="12" font-weight="800" text-anchor="middle">Camera</text>' +
-        '<text x="' + cameraX + '" y="' + (centerY + 40) + '" fill="rgba(255,255,255,.62)" font-size="11" text-anchor="middle">Mount ' + escapeFovHtml(fmtFtShort(data.h)) + '</text>' +
+        '<text x="' + cameraX + '" y="' + (centerY - 25) + '" fill="rgba(255,255,255,.86)" font-size="11" font-weight="800" text-anchor="middle">Camera</text>' +
+        '<text x="' + cameraX + '" y="' + (centerY + 36) + '" fill="rgba(255,255,255,.62)" font-size="10" text-anchor="middle">Mount ' + escapeFovHtml(fmtFtShort(data.h)) + '</text>' +
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 21) + '" fill="rgba(255,255,255,.72)" font-size="11" font-weight="800" text-anchor="middle">Target distance: ' + escapeFovHtml(fmtFtShort(data.dist)) + '</text>' +
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="27" fill="rgba(255,255,255,.70)" font-size="11" font-weight="800" text-anchor="middle">HFOV ' + escapeFovHtml(fmtDegText(data.hfov)) + '</text>' +
 
-        '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 22) + '" fill="rgba(255,255,255,.72)" font-size="12" font-weight="800" text-anchor="middle">Target distance: ' + escapeFovHtml(fmtFtShort(data.dist)) + '</text>' +
-
-        '<text x="' + (targetX - 8) + '" y="' + widthLabelY + '" fill="rgba(255,255,255,.86)" font-size="12" font-weight="800" text-anchor="end">Coverage: ' + escapeFovHtml(fmtFtShort(data.sceneWidth)) + '</text>' +
-        '<text x="' + requiredX + '" y="' + requiredLabelY + '" fill="rgba(255,255,255,.78)" font-size="12" font-weight="800">Required: ' + escapeFovHtml(fmtFtShort(data.scene)) + '</text>' +
-
-        '<text x="' + ((cameraX + targetX) / 2) + '" y="36" fill="rgba(255,255,255,.70)" font-size="12" font-weight="800" text-anchor="middle">HFOV ' + escapeFovHtml(fmtDegText(data.hfov)) + '</text>' +
-
-        '<rect x="22" y="20" width="170" height="54" rx="13" fill="rgba(0,0,0,.24)" stroke="rgba(255,255,255,.10)"></rect>' +
-        '<text x="38" y="42" fill="rgba(255,255,255,.68)" font-size="11" font-weight="800">Coverage ratio</text>' +
-        '<text x="38" y="64" fill="rgba(255,255,255,.94)" font-size="18" font-weight="900">' + escapeFovHtml(fmtRatio(data.coverageRatio)) + '</text>' +
+        '<text x="' + targetX + '" y="' + Math.max(18, coneTopY - 8) + '" fill="rgba(255,255,255,.80)" font-size="10" font-weight="800" text-anchor="middle">calculated</text>' +
+        '<text x="' + requiredX + '" y="' + Math.max(18, requiredTopY - 8) + '" fill="rgba(255,255,255,.72)" font-size="10" font-weight="800" text-anchor="middle">required</text>' +
       '</svg>';
 
     els.fovGeometry.hidden = false;
@@ -732,6 +723,12 @@
           '<div class="fov-geometry-subtitle">Top-view planning diagram showing the camera cone, target distance, calculated scene width, and required scene width.</div>' +
         '</div>' +
         '<div class="fov-geometry-pill">' + escapeFovHtml(fovStatusLabel(data)) + '</div>' +
+      '</div>' +
+      '<div class="fov-geometry-metrics">' +
+        '<div class="fov-geometry-metric">Coverage ratio<strong>' + escapeFovHtml(fmtRatio(data.coverageRatio)) + '</strong></div>' +
+        '<div class="fov-geometry-metric">Calculated coverage<strong>' + escapeFovHtml(fmtFtShort(data.sceneWidth)) + '</strong></div>' +
+        '<div class="fov-geometry-metric">Required width<strong>' + escapeFovHtml(fmtFtShort(data.scene)) + '</strong></div>' +
+        '<div class="fov-geometry-metric">Target distance<strong>' + escapeFovHtml(fmtFtShort(data.dist)) + '</strong></div>' +
       '</div>' +
       '<div class="fov-geometry-svg-wrap">' + svg + '</div>' +
       '<div class="fov-geometry-note">Planning note: this is a simplified horizontal field-of-view diagram. Mount height is shown as context from the previous step, but horizontal width is driven by target distance and HFOV.</div>';
