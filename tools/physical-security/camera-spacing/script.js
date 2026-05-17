@@ -776,7 +776,8 @@ function escapeHtml(value) {
     if (Number(data.cams) <= 1 || data.singleCamera) return "Single-camera coverage check";
     if (data.spacingClass === "Wide Spacing") return "Spacing gap risk";
     if (data.spacingClass === "Tight Spacing") return "Camera count pressure";
-    if (Number(data.ovPct) >= 25) return "Overlap compression";
+    if (Number(data.ovPct) >= 35) return "High overlap efficiency pressure";
+    if (Number(data.ovPct) >= 25) return "Elevated overlap";
     return "Spacing balance";
   }
 
@@ -790,8 +791,11 @@ function escapeHtml(value) {
     if (data.spacingClass === "Tight Spacing") {
       return "This is likely safe for continuity, but review whether the layout is using more cameras than the project requires.";
     }
+    if (Number(data.ovPct) >= 35) {
+      return "Spacing continuity passes, but the overlap target is high. Treat this as a valid but camera-heavy branch unless the project intentionally needs redundant shared coverage.";
+    }
     if (Number(data.ovPct) >= 25) {
-      return "The spacing works, but camera-to-camera overlap target is high. Confirm the reserve is intentional before carrying it forward.";
+      return "The spacing works, but overlap is elevated. Confirm the target is intentional before carrying it forward.";
     }
     return "This scenario is within current planning guardrails. Validate the field gap condition in Blind Spot Check before relying on it.";
   }
@@ -971,22 +975,32 @@ function escapeHtml(value) {
     const active = activeAssistantScenario ? activeAssistantScenario.id : "current";
     const selectedPath = activeAssistantScenario ? activeAssistantScenario.label : "Custom Design";
     const singleCamera = Number(data.cams) <= 1 || data.singleCamera;
+    const actualOverlapPct = !singleCamera && Number(data.rawWidth) > 0
+      ? Math.max(0, ((Number(data.rawWidth) - Number(data.spacing)) / Number(data.rawWidth)) * 100)
+      : 0;
+    const highOverlap = !singleCamera && (Number(data.ovPct) >= 35 || actualOverlapPct >= 45);
 
     const coverageCheck = data.spacingClass === "Wide Spacing"
       ? "No - spacing is too close to the usable limit"
-      : "Yes - spacing is inside the usable range";
+      : highOverlap
+        ? "Yes - spacing passes with high overlap"
+        : "Yes - spacing is inside the usable range";
 
     const reserveCheck = singleCamera
       ? "Not applicable - one camera"
-      : data.spacingClass === "Tight Spacing"
-        ? "Conservative - camera-heavy"
-        : data.ovPct >= 25
-          ? "High overlap - review efficiency"
-          : "Practical overlap";
+      : highOverlap
+        ? "High overlap - valid but inefficient"
+        : data.spacingClass === "Tight Spacing"
+          ? "Conservative - camera-heavy"
+          : data.ovPct >= 25
+            ? "Elevated overlap - review efficiency"
+            : "Practical overlap";
 
     const designPath = data.spacingClass === "Wide Spacing"
       ? "Apply correction before Blind Spot"
-      : "Continue to Blind Spot validation";
+      : highOverlap
+        ? "Validate downstream or reduce camera count"
+        : "Continue to Blind Spot validation";
 
     return {
       mount: els.assistant,
@@ -1018,7 +1032,9 @@ function escapeHtml(value) {
         title: data.cams + " camera" + (data.cams === 1 ? "" : "s"),
         copy: singleCamera
           ? "This is a single-camera coverage check. Actual camera-to-camera spacing is not applicable; compare protected length against usable width instead."
-          : "This spacing plan uses " + fmtFt(data.spacing) + " actual spacing against " + fmtFt(data.usableWidth) + " usable width.",
+          : highOverlap
+            ? "This spacing plan passes continuity, but overlap is high. Treat it as a valid camera-heavy branch unless the project intentionally needs extra shared coverage."
+            : "This spacing plan uses " + fmtFt(data.spacing) + " actual spacing against " + fmtFt(data.usableWidth) + " usable width.",
         metrics: [
           { label: singleCamera ? "Protected run" : "Actual spacing", value: singleCamera ? fmtFt(data.len) : fmtFt(data.spacing), note: singleCamera ? "Single-camera span." : "Center spacing." },
           { label: "Usable width", value: fmtFt(data.usableWidth), note: singleCamera ? "After coverage reserve." : "After overlap." },
@@ -1028,10 +1044,12 @@ function escapeHtml(value) {
       },
       driver: {
         kicker: "Dominant driver",
-        title: singleCamera ? "Single-camera coverage check" : factorySpacingProblemLabel(data) + " is creating planning pressure.",
+        title: singleCamera ? "Single-camera coverage check" : highOverlap ? "High overlap is creating efficiency pressure." : factorySpacingProblemLabel(data) + " is creating planning pressure.",
         copy: singleCamera
           ? "This area has one camera, so adjacent-camera overlap pressure is not scored. Validate usable width, reserve margin, and blind spots instead."
-          : "The bars show which spacing condition is pushing the current result toward Watch or Risk.",
+          : highOverlap
+            ? "Spacing continuity passes, but the current branch uses heavy shared coverage. That can be valid for critical zones, but it may overuse cameras or reduce layout efficiency."
+            : "The bars show which spacing condition is pushing the current result toward Watch or Risk.",
         bars: singleCamera ? [
           { label: "Protected run", value: 0, display: fmtFt(data.len) },
           { label: "Usable width", value: 0, display: fmtFt(data.usableWidth) },
@@ -1056,9 +1074,9 @@ function escapeHtml(value) {
         metrics: []
       },
       checks: [
-        { kicker: "Coverage check", title: coverageCheck, copy: "Does spacing stay inside the effective usable footprint?" },
-        { kicker: singleCamera ? "Single-camera check" : "Overlap check", title: reserveCheck, copy: singleCamera ? "Camera-to-camera overlap is not applicable without an adjacent camera." : "Is the camera-to-camera overlap target helping continuity without over-compressing layout?" },
-        { kicker: "Design path", title: designPath, copy: "Use this to decide whether to correct now or validate downstream." }
+        { kicker: "Coverage check", title: coverageCheck, copy: highOverlap ? "Spacing stays inside the usable footprint, but the layout is doing that by carrying a lot of shared coverage." : "Does spacing stay inside the effective usable footprint?" },
+        { kicker: singleCamera ? "Single-camera check" : "Overlap check", title: reserveCheck, copy: singleCamera ? "Camera-to-camera overlap is not applicable without an adjacent camera." : highOverlap ? "The overlap target is helping continuity, but it is also making the branch camera-heavy. Keep it only if that redundancy is intentional." : "Is the camera-to-camera overlap target helping continuity without over-compressing layout?" },
+        { kicker: "Design path", title: designPath, copy: highOverlap ? "Continue to Blind Spot validation if the redundancy is intentional, or test fewer cameras / lower overlap if efficiency matters." : "Use this to decide whether to correct now or validate downstream." }
       ],
       targets: {
         kicker: "Design targets / path to acceptable",
@@ -1071,9 +1089,11 @@ function escapeHtml(value) {
           { label: singleCamera ? "Overlap reference" : "Overlap", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Current target." },
           { label: "Main blocker", value: factorySpacingProblemLabel(data), note: "Primary condition shaping this scenario." }
         ],
-        banner: data.status === "HEALTHY"
-          ? "This scenario is within current planning guardrails. Validate blind spots before relying on it."
-          : "This scenario needs correction or downstream validation before it should be treated as healthy."
+        banner: highOverlap
+          ? "Spacing continuity can pass while still being inefficient. This branch is valid for redundancy, but review camera count or overlap target if efficiency matters."
+          : data.status === "HEALTHY"
+            ? "This scenario is within current planning guardrails. Validate blind spots before relying on it."
+            : "This scenario needs correction or downstream validation before it should be treated as healthy."
       },
       comparison: {
         kicker: "Scenario comparison",
