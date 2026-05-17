@@ -684,38 +684,49 @@
     const centerStroke = "rgba(255,255,255,.28)";
     const requiredX = targetX + 28;
 
-    const svg =
+    const liveSvg =
       '<svg class="fov-geometry-svg" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Field of view geometry diagram">' +
-        '<defs>' +
-          '<marker id="fovArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">' +
-            '<path d="M0,0 L8,4 L0,8 Z" fill="rgba(255,255,255,.62)"></path>' +
-          '</marker>' +
-        '</defs>' +
-
+        '<defs><marker id="fovArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(255,255,255,.62)"></path></marker></defs>' +
         '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="' + centerStroke + '" stroke-width="2" stroke-dasharray="5 7"></line>' +
-
         '<polygon points="' + cameraX + ',' + centerY + ' ' + targetX + ',' + coneTopY + ' ' + targetX + ',' + coneBottomY + '" fill="' + coneFill + '" stroke="' + coneStroke + '" stroke-width="2"></polygon>' +
-
         '<line x1="' + targetX + '" y1="' + coneTopY + '" x2="' + targetX + '" y2="' + coneBottomY + '" stroke="' + coneStroke + '" stroke-width="5" stroke-linecap="round"></line>' +
         '<line x1="' + requiredX + '" y1="' + requiredTopY + '" x2="' + requiredX + '" y2="' + requiredBottomY + '" stroke="' + requiredStroke + '" stroke-width="4" stroke-linecap="round"></line>' +
-
         '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(125,255,158,.95)"></circle>' +
         '<circle cx="' + cameraX + '" cy="' + centerY + '" r="16" fill="none" stroke="rgba(125,255,158,.26)" stroke-width="2"></circle>' +
-
         '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(255,255,255,.52)" stroke-width="2" marker-end="url(#fovArrow)"></line>' +
         '<line x1="' + cameraX + '" y1="' + (axisY - 7) + '" x2="' + cameraX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
         '<line x1="' + targetX + '" y1="' + (axisY - 7) + '" x2="' + targetX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
-
         '<text x="' + cameraX + '" y="' + (centerY - 25) + '" fill="rgba(255,255,255,.86)" font-size="11" font-weight="800" text-anchor="middle">Camera</text>' +
         '<text x="' + cameraX + '" y="' + (centerY + 36) + '" fill="rgba(255,255,255,.62)" font-size="10" text-anchor="middle">Mount ' + escapeFovHtml(fmtFtShort(data.h)) + '</text>' +
         '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 21) + '" fill="rgba(255,255,255,.72)" font-size="11" font-weight="800" text-anchor="middle">Target distance: ' + escapeFovHtml(fmtFtShort(data.dist)) + '</text>' +
         '<text x="' + ((cameraX + targetX) / 2) + '" y="27" fill="rgba(255,255,255,.70)" font-size="11" font-weight="800" text-anchor="middle">HFOV ' + escapeFovHtml(fmtDegText(data.hfov)) + '</text>' +
-
         '<text x="' + targetX + '" y="' + Math.max(18, coneTopY - 8) + '" fill="rgba(255,255,255,.80)" font-size="10" font-weight="800" text-anchor="middle">calculated</text>' +
         '<text x="' + requiredX + '" y="' + Math.max(18, requiredTopY - 8) + '" fill="rgba(255,255,255,.72)" font-size="10" font-weight="800" text-anchor="middle">required</text>' +
       '</svg>';
 
+    const exportSvg =
+      '<svg data-export-svg viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Field of view geometry diagram for export">' +
+        '<defs><marker id="fovExportArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#52615c"></path></marker></defs>' +
+        '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#ffffff"></rect>' +
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="#aebbb3" stroke-width="2" stroke-dasharray="5 7"></line>' +
+        '<polygon points="' + cameraX + ',' + centerY + ' ' + targetX + ',' + coneTopY + ' ' + targetX + ',' + coneBottomY + '" fill="#eaf7f0" stroke="#1d8f55" stroke-width="2"></polygon>' +
+        '<line x1="' + targetX + '" y1="' + coneTopY + '" x2="' + targetX + '" y2="' + coneBottomY + '" stroke="#1d8f55" stroke-width="5" stroke-linecap="round"></line>' +
+        '<line x1="' + requiredX + '" y1="' + requiredTopY + '" x2="' + requiredX + '" y2="' + requiredBottomY + '" stroke="#52615c" stroke-width="4" stroke-linecap="round"></line>' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="#1d8f55"></circle>' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="16" fill="none" stroke="#bde6ce" stroke-width="2"></circle>' +
+        '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="#52615c" stroke-width="2" marker-end="url(#fovExportArrow)"></line>' +
+        '<text x="' + cameraX + '" y="' + (centerY - 25) + '" fill="#101715" font-size="11" font-weight="800" text-anchor="middle">Camera</text>' +
+        '<text x="' + cameraX + '" y="' + (centerY + 36) + '" fill="#52615c" font-size="10" text-anchor="middle">Mount ' + escapeFovHtml(fmtFtShort(data.h)) + '</text>' +
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 21) + '" fill="#52615c" font-size="11" font-weight="800" text-anchor="middle">Target distance: ' + escapeFovHtml(fmtFtShort(data.dist)) + '</text>' +
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="27" fill="#52615c" font-size="11" font-weight="800" text-anchor="middle">HFOV ' + escapeFovHtml(fmtDegText(data.hfov)) + '</text>' +
+        '<text x="' + targetX + '" y="' + Math.max(18, coneTopY - 8) + '" fill="#101715" font-size="10" font-weight="800" text-anchor="middle">calculated</text>' +
+        '<text x="' + requiredX + '" y="' + Math.max(18, requiredTopY - 8) + '" fill="#52615c" font-size="10" font-weight="800" text-anchor="middle">required</text>' +
+      '</svg>';
+
     els.fovGeometry.hidden = false;
+    els.fovGeometry.setAttribute("data-export-section", "true");
+    els.fovGeometry.setAttribute("data-export-title", "Field of View Geometry");
+
     els.fovGeometry.innerHTML =
       '<div class="fov-geometry-head">' +
         '<div>' +
@@ -730,8 +741,19 @@
         '<div class="fov-geometry-metric">Required width<strong>' + escapeFovHtml(fmtFtShort(data.scene)) + '</strong></div>' +
         '<div class="fov-geometry-metric">Target distance<strong>' + escapeFovHtml(fmtFtShort(data.dist)) + '</strong></div>' +
       '</div>' +
-      '<div class="fov-geometry-svg-wrap">' + svg + '</div>' +
-      '<div class="fov-geometry-note">Planning note: this is a simplified horizontal field-of-view diagram. Mount height is shown as context from the previous step, but horizontal width is driven by target distance and HFOV.</div>';
+      '<div class="fov-geometry-svg-wrap">' + liveSvg + '</div>' +
+      '<div class="fov-geometry-note" data-export-text>Planning note: this is a simplified horizontal field-of-view diagram. Mount height is shown as context from the previous step, but horizontal width is driven by target distance and HFOV.</div>' +
+      '<div class="fov-geometry-export-only">' +
+        '<table><thead><tr><th>Geometry Metric</th><th>Value</th></tr></thead><tbody>' +
+          '<tr><td>Coverage ratio</td><td>' + escapeFovHtml(fmtRatio(data.coverageRatio)) + '</td></tr>' +
+          '<tr><td>Calculated coverage</td><td>' + escapeFovHtml(fmtFtShort(data.sceneWidth)) + '</td></tr>' +
+          '<tr><td>Required width</td><td>' + escapeFovHtml(fmtFtShort(data.scene)) + '</td></tr>' +
+          '<tr><td>Target distance</td><td>' + escapeFovHtml(fmtFtShort(data.dist)) + '</td></tr>' +
+          '<tr><td>Horizontal FOV</td><td>' + escapeFovHtml(fmtDegText(data.hfov)) + '</td></tr>' +
+          '<tr><td>Mount height context</td><td>' + escapeFovHtml(fmtFtShort(data.h)) + '</td></tr>' +
+        '</tbody></table>' +
+        exportSvg +
+      '</div>';
   }
 
   function renderError(message) {

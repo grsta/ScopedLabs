@@ -745,14 +745,30 @@
         .map((el) => String(el.textContent || "").replace(/\s+/g, " ").trim())
         .filter(Boolean);
 
+      const svgNodes = Array.from(node.querySelectorAll("svg[data-export-svg], [data-export-svg] svg"));
+      const seenSvg = new Set();
+      const svgs = [];
+
+      for (const svg of svgNodes) {
+        if (!svg || seenSvg.has(svg)) continue;
+        seenSvg.add(svg);
+
+        const clone = svg.cloneNode(true);
+        clone.setAttribute("width", "100%");
+        clone.setAttribute("height", "auto");
+        clone.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        svgs.push(clone.outerHTML);
+      }
+
       const text = textNodes.join("\n\n");
 
-      if (!tables.length && !text) continue;
+      if (!tables.length && !text && !svgs.length) continue;
 
       sections.push({
         title,
         tables,
-        text
+        text,
+        svgs
       });
     }
 
@@ -764,6 +780,10 @@
       const textBlock = section.text
         ? `<div class="body-copy">${escapeHtml(section.text).replace(/\n/g, "<br>")}</div>`
         : "";
+
+      const svgBlocks = (section.svgs || []).map((svg) => {
+        return `<div class="extra-svg-wrap">${svg}</div>`;
+      }).join("");
 
       const tableBlocks = (section.tables || []).map((table) => {
         const headers = (table.headers || []).length
@@ -790,6 +810,7 @@
         <section class="section">
           <h2>${escapeHtml(section.title)}</h2>
           ${textBlock}
+          ${svgBlocks}
           ${tableBlocks}
         </section>
       `;
