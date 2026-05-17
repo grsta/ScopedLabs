@@ -782,7 +782,7 @@
         : "";
 
       const svgBlocks = (section.svgs || []).map((svg) => {
-        return `<div class="extra-svg-wrap">${svg}</div>`;
+        return `<div class="extra-svg-wrap print-low-ink-sentinel">${svg}</div>`;
       }).join("");
 
       const tableBlocks = (section.tables || []).map((table) => {
@@ -1367,7 +1367,18 @@ const extraSections = getExtraExportSections();
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none !important}
       .report{padding:0}
-    }
+    
+      .extra-svg-wrap,
+      .extra-svg-wrap.print-low-ink-sentinel{
+        background:#fff !important;
+        border:1px solid var(--line) !important;
+        padding:10px !important;
+        box-shadow:none !important;
+      }
+      .extra-svg-wrap svg{
+        filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15) !important;
+      }
+}
   </style>
 </head>
 <body>
