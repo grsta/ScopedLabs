@@ -1046,7 +1046,7 @@ function escapeHtml(value) {
           { label: "Coverage layout", value: data.cams + (data.cams === 1 ? " camera" : " cameras"), note: "Calculated count for protected run." },
           { label: singleCamera ? "Protected run" : "Actual spacing", value: singleCamera ? fmtFt(data.len) : fmtFt(data.spacing), note: singleCamera ? "Single-camera span." : "Camera center spacing." },
           { label: "Usable width", value: fmtFt(data.usableWidth), note: singleCamera ? "Width after coverage reserve." : "Width after overlap." },
-          { label: singleCamera ? "Overlap reference" : "Camera-to-camera overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Applied before spacing." }
+          { label: singleCamera ? "Overlap reference" : "Overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Target requirement." }
         ]
       },
       checks: [
@@ -1062,7 +1062,7 @@ function escapeHtml(value) {
         metrics: [
           { label: "Max spacing / camera", value: fmtFt(data.usableWidth), note: "Actual spacing should stay at or below this." },
           { label: "Suggested cameras", value: String(data.cams), note: "Based on usable width and protected run." },
-          { label: singleCamera ? "Overlap reference" : "Camera-to-camera overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Applied before spacing." },
+          { label: singleCamera ? "Overlap reference" : "Overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Target requirement." },
           { label: "Main blocker", value: factorySpacingProblemLabel(data), note: "Primary condition shaping this scenario." }
         ],
         banner: data.status === "HEALTHY"
@@ -2592,7 +2592,7 @@ function assistantStatusClass(data) {
         { label: "Perimeter Length", value: fmtFt(data.len, 0) },
         { label: "Distance to Target", value: fmtFt(data.dist) },
         { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
-        { label: data.singleCamera ? "Overlap Reference" : "Camera-to-Camera Overlap Target", value: data.singleCamera ? "N/A" : fmtPct(data.ovPct, 1) },
+        { label: data.singleCamera ? "Overlap Reference" : "Overlap Target", value: data.singleCamera ? "N/A" : fmtPct(data.ovPct, 1) },
         { label: "Spacing Ratio", value: fmt(data.ratio, 2) },
         { label: "Spacing Classification", value: data.spacingClass },
         { label: "Source Mode", value: sourceModeForCurrentResult(getManualOverrideMetadata(data)) },
