@@ -1042,12 +1042,7 @@ function escapeHtml(value) {
           ? "Protected run is compared against usable camera width. Camera-to-camera overlap is not applied because there is no adjacent camera."
           : "Actual spacing is compared against usable camera width after camera-to-camera overlap target is applied.",
         html: spacingVisualSvg(data),
-        metrics: [
-          { label: "Coverage layout", value: data.cams + (data.cams === 1 ? " camera" : " cameras"), note: "Calculated count for protected run." },
-          { label: singleCamera ? "Protected run" : "Actual spacing", value: singleCamera ? fmtFt(data.len) : fmtFt(data.spacing), note: singleCamera ? "Single-camera span." : "Camera center spacing." },
-          { label: "Usable width", value: fmtFt(data.usableWidth), note: singleCamera ? "Width after coverage reserve." : "Width after overlap." },
-          { label: singleCamera ? "Overlap reference" : "Overlap", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Current target." }
-        ]
+        metrics: []
       },
       checks: [
         { kicker: "Coverage check", title: coverageCheck, copy: "Does spacing stay inside the effective usable footprint?" },
