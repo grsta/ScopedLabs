@@ -324,6 +324,7 @@ function escapeHtml(value) {
 
   function spacingProblemLabel(data) {
     if (!data) return "Review required";
+    if (Number(data.cams) <= 1 || data.singleCamera) return "Single-camera coverage check";
 
     if (data.spacingClass === "Wide Spacing") return "Spacing is too wide for the usable footprint";
     if (data.spacingClass === "Tight Spacing") return "Spacing is conservative and camera-heavy";
@@ -334,6 +335,9 @@ function escapeHtml(value) {
 
   function spacingRecommendedAction(data) {
     if (!data) return "Review the spacing result before continuing.";
+    if (Number(data.cams) <= 1 || data.singleCamera) {
+      return "Treat this as a single-camera coverage validation. Camera-to-camera overlap pressure is not applicable; continue to Blind Spot Check to verify edge and gap conditions.";
+    }
 
     if (data.spacingClass === "Wide Spacing") {
       return "Apply a correction branch that shortens spacing, increases camera count, or revisits upstream geometry before Blind Spot Check.";
@@ -699,11 +703,12 @@ function escapeHtml(value) {
     const ratio = Number(data?.ratio);
     const ovPct = Number(data?.ovPct);
     const cams = Number(data?.cams);
+    const singleCamera = cams <= 1 || data?.singleCamera;
 
-    const gap = ratio > 0.92 ? Math.min((ratio - 0.92) * 220, 100) : 0;
-    const compression = ratio < 0.72 ? Math.min((0.72 - ratio) * 180, 100) : 0;
-    const overlap = Number.isFinite(ovPct) ? Math.min(Math.max(ovPct, 0), 100) * 0.72 : 0;
-    const camera = Number.isFinite(cams) ? Math.min(Math.max((cams - 1) * 10, 0), 100) : 0;
+    const gap = singleCamera ? 0 : (ratio > 0.92 ? Math.min((ratio - 0.92) * 220, 100) : 0);
+    const compression = singleCamera ? 0 : (ratio < 0.72 ? Math.min((0.72 - ratio) * 180, 100) : 0);
+    const overlap = singleCamera ? 0 : (Number.isFinite(ovPct) ? Math.min(Math.max(ovPct, 0), 100) * 0.72 : 0);
+    const camera = singleCamera ? 0 : (Number.isFinite(cams) ? Math.min(Math.max((cams - 1) * 10, 0), 100) : 0);
 
     return { gap, compression, overlap, camera };
   }
@@ -759,6 +764,7 @@ function escapeHtml(value) {
   }
 
   function factorySpacingProblemLabel(data) {
+    if (Number(data.cams) <= 1 || data.singleCamera) return "Single-camera coverage check";
     if (data.spacingClass === "Wide Spacing") return "Spacing gap risk";
     if (data.spacingClass === "Tight Spacing") return "Camera count pressure";
     if (Number(data.ovPct) >= 25) return "Overlap compression";
@@ -766,6 +772,9 @@ function escapeHtml(value) {
   }
 
   function factorySpacingRecommendation(data) {
+    if (Number(data.cams) <= 1 || data.singleCamera) {
+      return "Camera-to-camera overlap is not applicable for a one-camera area. Continue to Blind Spot Check to validate edge margin and remaining gap risk.";
+    }
     if (data.spacingClass === "Wide Spacing") {
       return "Reduce spacing pressure by shortening spacing, increasing camera count, or revisiting upstream geometry before Blind Spot Check.";
     }
@@ -886,6 +895,19 @@ function escapeHtml(value) {
     const bestScenario = factorySpacingBestScenario(data, scenarios);
     const bestSummary = bestScenario ? factorySpacingResultSummary(bestScenario) : currentSummary;
 
+    if (Number(data.cams) <= 1 || data.singleCamera) {
+      return {
+        scenarioId: "current",
+        action: "Keep Single-Camera Coverage Check",
+        buttonLabel: "Keep Current Baseline",
+        reason: "This area is using one camera, so camera-to-camera overlap pressure is not applicable.",
+        expectedResult: currentSummary,
+        confidence: "Single-camera validation",
+        nextStep: "Blind Spot Check",
+        detail: "Validate the usable footprint, edge margin, and any remaining blind-zone risk downstream instead of treating overlap as an adjacent-camera requirement."
+      };
+    }
+
     if (data.status === "HEALTHY" && data.spacingClass !== "Wide Spacing") {
       return {
         scenarioId: "current",
@@ -937,16 +959,19 @@ function escapeHtml(value) {
     const pressure = Math.round(factorySpacingPressureScore(data));
     const active = activeAssistantScenario ? activeAssistantScenario.id : "current";
     const selectedPath = activeAssistantScenario ? activeAssistantScenario.label : "Custom Design";
+    const singleCamera = Number(data.cams) <= 1 || data.singleCamera;
 
     const coverageCheck = data.spacingClass === "Wide Spacing"
       ? "No - spacing is too close to the usable limit"
       : "Yes - spacing is inside the usable range";
 
-    const reserveCheck = data.spacingClass === "Tight Spacing"
-      ? "Conservative - camera-heavy"
-      : data.ovPct >= 25
-        ? "High reserve - review efficiency"
-        : "Practical reserve";
+    const reserveCheck = singleCamera
+      ? "Not applicable - one camera"
+      : data.spacingClass === "Tight Spacing"
+        ? "Conservative - camera-heavy"
+        : data.ovPct >= 25
+          ? "High overlap - review efficiency"
+          : "Practical overlap";
 
     const designPath = data.spacingClass === "Wide Spacing"
       ? "Apply correction before Blind Spot"
@@ -966,7 +991,7 @@ function escapeHtml(value) {
       custom: {
         kicker: "Custom planning assumptions",
         title: "Edit the spacing assumptions without leaving the assistant",
-        copy: "Use these controls to test perimeter length, target camera count, distance, HFOV, and overlap before carrying the result into Blind Spot Check.",
+        copy: singleCamera ? "Use these controls to test perimeter length, target camera count, distance, HFOV, and overlap assumptions. Overlap becomes camera-to-camera only when Target Cameras is 2 or more." : "Use these controls to test perimeter length, target camera count, distance, HFOV, and overlap before carrying the result into Blind Spot Check.",
         pill: "Custom What-If",
         buttonLabel: "Apply Custom Spacing Check",
         inputs: [
@@ -980,19 +1005,28 @@ function escapeHtml(value) {
       selectedResult: {
         kicker: "Selected scenario result",
         title: data.cams + " camera" + (data.cams === 1 ? "" : "s"),
-        copy: "This spacing plan uses " + fmtFt(data.spacing) + " actual spacing against " + fmtFt(data.usableWidth) + " usable width.",
+        copy: singleCamera
+          ? "This is a single-camera coverage check. Actual camera-to-camera spacing is not applicable; compare protected length against usable width instead."
+          : "This spacing plan uses " + fmtFt(data.spacing) + " actual spacing against " + fmtFt(data.usableWidth) + " usable width.",
         metrics: [
-          { label: "Actual spacing", value: fmtFt(data.spacing), note: "Center spacing." },
-          { label: "Usable width", value: fmtFt(data.usableWidth), note: "After overlap." },
-          { label: "Overlap", value: fmtPct(data.ovPct, 1), note: "Current target." },
+          { label: singleCamera ? "Protected run" : "Actual spacing", value: singleCamera ? fmtFt(data.len) : fmtFt(data.spacing), note: singleCamera ? "Single-camera span." : "Center spacing." },
+          { label: "Usable width", value: fmtFt(data.usableWidth), note: singleCamera ? "After coverage reserve." : "After overlap." },
+          { label: singleCamera ? "Overlap reference" : "Overlap", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Current target." },
           { label: "Status", value: data.status, note: "Combined status." }
         ]
       },
       driver: {
         kicker: "Dominant driver",
-        title: factorySpacingProblemLabel(data) + " is creating planning pressure.",
-        copy: "The bars show which spacing condition is pushing the current result toward Watch or Risk.",
-        bars: [
+        title: singleCamera ? "Single-camera coverage check" : factorySpacingProblemLabel(data) + " is creating planning pressure.",
+        copy: singleCamera
+          ? "This area has one camera, so adjacent-camera overlap pressure is not scored. Validate usable width, reserve margin, and blind spots instead."
+          : "The bars show which spacing condition is pushing the current result toward Watch or Risk.",
+        bars: singleCamera ? [
+          { label: "Protected run", value: 0, display: fmtFt(data.len) },
+          { label: "Usable width", value: 0, display: fmtFt(data.usableWidth) },
+          { label: "Overlap pressure", value: 0, display: "N/A" },
+          { label: "Camera count pressure", value: 0, display: "1 camera" }
+        ] : [
           { label: "Gap exposure", value: m.gap, display: fmtPct(Math.max((data.ratio - 0.92) * 100, 0), 1) },
           { label: "Spacing compression", value: m.compression, display: fmtPct(Math.max((0.72 - data.ratio) * 100, 0), 1) },
           { label: "Overlap pressure", value: m.overlap, display: fmtPct(data.ovPct, 1) },
@@ -1001,30 +1035,34 @@ function escapeHtml(value) {
       },
       visual: {
         kicker: "FOV / coverage layout",
-        title: data.cams + (data.cams === 1 ? " camera" : " cameras") + " | " + fmtFt(data.spacing) + " spacing | " + fmtPct(data.ovPct, 1) + " overlap",
-        copy: "Actual spacing is compared against usable camera width after camera-to-camera overlap target is applied.",
+        title: singleCamera
+          ? "1 camera | " + fmtFt(data.len) + " protected run | overlap N/A"
+          : data.cams + (data.cams === 1 ? " camera" : " cameras") + " | " + fmtFt(data.spacing) + " spacing | " + fmtPct(data.ovPct, 1) + " overlap",
+        copy: singleCamera
+          ? "Protected run is compared against usable camera width. Camera-to-camera overlap is not applied because there is no adjacent camera."
+          : "Actual spacing is compared against usable camera width after camera-to-camera overlap target is applied.",
         html: spacingVisualSvg(data),
         metrics: [
           { label: "Coverage layout", value: data.cams + (data.cams === 1 ? " camera" : " cameras"), note: "Calculated count for protected run." },
-          { label: "Actual spacing", value: fmtFt(data.spacing), note: "Camera center spacing." },
-          { label: "Usable width", value: fmtFt(data.usableWidth), note: "Width after overlap." },
-          { label: "Camera-to-camera overlap target", value: fmtPct(data.ovPct, 1), note: "Applied before spacing." }
+          { label: singleCamera ? "Protected run" : "Actual spacing", value: singleCamera ? fmtFt(data.len) : fmtFt(data.spacing), note: singleCamera ? "Single-camera span." : "Camera center spacing." },
+          { label: "Usable width", value: fmtFt(data.usableWidth), note: singleCamera ? "Width after coverage reserve." : "Width after overlap." },
+          { label: singleCamera ? "Overlap reference" : "Camera-to-camera overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Applied before spacing." }
         ]
       },
       checks: [
         { kicker: "Coverage check", title: coverageCheck, copy: "Does spacing stay inside the effective usable footprint?" },
-        { kicker: "Reserve check", title: reserveCheck, copy: "Is the camera-to-camera overlap target helping continuity without over-compressing layout?" },
+        { kicker: singleCamera ? "Single-camera check" : "Overlap check", title: reserveCheck, copy: singleCamera ? "Camera-to-camera overlap is not applicable without an adjacent camera." : "Is the camera-to-camera overlap target helping continuity without over-compressing layout?" },
         { kicker: "Design path", title: designPath, copy: "Use this to decide whether to correct now or validate downstream." }
       ],
       targets: {
         kicker: "Design targets / path to acceptable",
         title: "What needs to change to reach a usable design?",
-        copy: "This section explains whether changing overlap is enough, or whether the real blocker is distance, HFOV, protected length, or camera count.",
+        copy: singleCamera ? "This section explains whether the single camera has enough usable footprint, or whether distance, HFOV, protected length, or detail assumptions need to change." : "This section explains whether changing overlap is enough, or whether the real blocker is distance, HFOV, protected length, or camera count.",
         pill: "Design Targets",
         metrics: [
           { label: "Max spacing / camera", value: fmtFt(data.usableWidth), note: "Actual spacing should stay at or below this." },
           { label: "Suggested cameras", value: String(data.cams), note: "Based on usable width and protected run." },
-          { label: "Camera-to-camera overlap target", value: fmtPct(data.ovPct, 1), note: "Reserve applied before spacing." },
+          { label: singleCamera ? "Overlap reference" : "Camera-to-camera overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Applied before spacing." },
           { label: "Main blocker", value: factorySpacingProblemLabel(data), note: "Primary condition shaping this scenario." }
         ],
         banner: data.status === "HEALTHY"
@@ -1034,7 +1072,7 @@ function escapeHtml(value) {
       comparison: {
         kicker: "Scenario comparison",
         title: "Scenario pressure comparison",
-        copy: "The chart compares planning pressure across available spacing paths. Lower is better; healthy spacing and useful reserve should stay near the bottom band.",
+        copy: singleCamera ? "The chart shows this as a single-camera validation path. Lower pressure means overlap is not being treated as an adjacent-camera requirement." : "The chart compares planning pressure across available spacing paths. Lower is better; healthy spacing and useful reserve should stay near the bottom band.",
         pill: "Scenario Analytics",
         metrics: [
           { label: "Selected path", value: selectedPath, note: "Scenario currently selected." },
@@ -1054,7 +1092,7 @@ function escapeHtml(value) {
       carryForward: {
         kicker: "Pipeline / report carry-forward",
         title: "Use the selected scenario in the next sanity check",
-        copy: "Blind Spot Check should validate the selected camera count, spacing, overlap, distance, and HFOV before the layout is treated as reliable.",
+        copy: singleCamera ? "Blind Spot Check should validate the usable footprint, edge margin, distance, and HFOV before the single-camera layout is treated as reliable." : "Blind Spot Check should validate the selected camera count, spacing, overlap, distance, and HFOV before the layout is treated as reliable.",
         pill: "Live Shadow Path",
         metrics: [
           { label: "Cameras", value: String(data.cams), note: "Sent to Blind Spot Check." },
@@ -1310,7 +1348,7 @@ function assistantStatusClass(data) {
       '<rect x="36" y="166" width="728" height="18" rx="9" fill="url(#spacingLine)" opacity=".75" />' +
       cameras +
       '<text x="40" y="214" fill="rgba(226,232,240,.72)" font-size="18" font-weight="800">Protected run: ' + escapeHtml(fmtFt(data.len)) + '</text>' +
-      '<text x="40" y="238" fill="rgba(226,232,240,.56)" font-size="15">Actual spacing: ' + escapeHtml(fmtFt(data.spacing)) + ' | Usable width: ' + escapeHtml(fmtFt(data.usableWidth)) + ' | Overlap: ' + escapeHtml(fmtPct(data.ovPct, 1)) + '</text>' +
+      '<text x="40" y="238" fill="rgba(226,232,240,.56)" font-size="15">' + escapeHtml((Number(data.cams) <= 1 || data.singleCamera) ? ('Protected run: ' + fmtFt(data.len) + ' | Usable width: ' + fmtFt(data.usableWidth) + ' | Overlap: N/A') : ('Actual spacing: ' + fmtFt(data.spacing) + ' | Usable width: ' + fmtFt(data.usableWidth) + ' | Overlap: ' + fmtPct(data.ovPct, 1))) + '</text>' +
     '</svg>';
   }
 
@@ -1398,11 +1436,12 @@ function assistantStatusClass(data) {
     const ratio = Number(data?.ratio);
     const ovPct = Number(data?.ovPct);
     const cams = Number(data?.cams);
+    const singleCamera = cams <= 1 || data?.singleCamera;
 
-    const gapExposure = ratio > 0.92 ? Math.min((ratio - 0.92) * 220, 100) : 0;
-    const compression = ratio < 0.72 ? Math.min((0.72 - ratio) * 180, 100) : 0;
-    const overlapPressure = Number.isFinite(ovPct) ? Math.min(Math.max(ovPct, 0), 100) : 0;
-    const cameraPressure = Number.isFinite(cams) ? Math.min(Math.max((cams - 1) * 12, 0), 100) : 0;
+    const gapExposure = singleCamera ? 0 : (ratio > 0.92 ? Math.min((ratio - 0.92) * 220, 100) : 0);
+    const compression = singleCamera ? 0 : (ratio < 0.72 ? Math.min((0.72 - ratio) * 180, 100) : 0);
+    const overlapPressure = singleCamera ? 0 : (Number.isFinite(ovPct) ? Math.min(Math.max(ovPct, 0), 100) : 0);
+    const cameraPressure = singleCamera ? 0 : (Number.isFinite(cams) ? Math.min(Math.max((cams - 1) * 12, 0), 100) : 0);
 
     return {
       gapExposure,
@@ -1431,6 +1470,16 @@ function assistantStatusClass(data) {
 
   function spacingPressureGraphHtml(data) {
     const metric = spacingPressureMetric(data);
+    const singleCamera = Number(data?.cams) <= 1 || data?.singleCamera;
+
+    if (singleCamera) {
+      return '' +
+        '<div class="spacing-advice-card spacing-pressure-card">' +
+          '<div class="spacing-section-kicker">Single-camera coverage check</div>' +
+          '<h4 class="spacing-section-title">Camera-to-camera overlap is not applicable.</h4>' +
+          '<p class="spacing-section-copy">Review usable width, reserve margin, and Blind Spot Check instead of adjacent-camera overlap pressure.</p>' +
+        '</div>';
+    }
 
     return '' +
       '<div class="spacing-advice-card spacing-pressure-card">' +
@@ -1669,6 +1718,7 @@ function assistantStatusClass(data) {
   }
 
   function spacingLensProblemLabel(data) {
+    if (Number(data.cams) <= 1 || data.singleCamera) return "Single-camera coverage check";
     if (data.spacingClass === "Wide Spacing") return "Spacing gap risk";
     if (data.spacingClass === "Tight Spacing") return "Camera count pressure";
     if (Number(data.ovPct) >= 25) return "Overlap compression";
@@ -1676,6 +1726,9 @@ function assistantStatusClass(data) {
   }
 
   function spacingLensRecommendation(data) {
+    if (Number(data.cams) <= 1 || data.singleCamera) {
+      return "Camera-to-camera overlap is not applicable for a one-camera area. Validate usable width and edge margin in Blind Spot Check.";
+    }
     if (data.spacingClass === "Wide Spacing") {
       return "Reduce spacing pressure by shortening spacing, increasing camera count, or revisiting upstream geometry before Blind Spot Check.";
     }
@@ -1695,11 +1748,12 @@ function assistantStatusClass(data) {
     const ratio = Number(data?.ratio);
     const ovPct = Number(data?.ovPct);
     const cams = Number(data?.cams);
+    const singleCamera = cams <= 1 || data?.singleCamera;
 
-    const gapPressure = ratio > 0.92 ? Math.min((ratio - 0.92) * 220, 100) : 0;
-    const compressionPressure = ratio < 0.72 ? Math.min((0.72 - ratio) * 180, 100) : 0;
-    const overlapPressure = Number.isFinite(ovPct) ? Math.min(Math.max(ovPct, 0), 100) * 0.72 : 0;
-    const cameraPressure = Number.isFinite(cams) ? Math.min(Math.max((cams - 1) * 10, 0), 100) : 0;
+    const gapPressure = singleCamera ? 0 : (ratio > 0.92 ? Math.min((ratio - 0.92) * 220, 100) : 0);
+    const compressionPressure = singleCamera ? 0 : (ratio < 0.72 ? Math.min((0.72 - ratio) * 180, 100) : 0);
+    const overlapPressure = singleCamera ? 0 : (Number.isFinite(ovPct) ? Math.min(Math.max(ovPct, 0), 100) * 0.72 : 0);
+    const cameraPressure = singleCamera ? 0 : (Number.isFinite(cams) ? Math.min(Math.max((cams - 1) * 10, 0), 100) : 0);
 
     return {
       gapPressure,
@@ -1731,6 +1785,16 @@ function assistantStatusClass(data) {
 
   function spacingLensDriverBarsHtml(data) {
     const m = spacingLensPressureMetrics(data);
+    const singleCamera = Number(data?.cams) <= 1 || data?.singleCamera;
+
+    if (singleCamera) {
+      return '' +
+        '<div class="lens-advice-card spacing-lens-driver-card">' +
+          '<div class="lens-design-kicker">Single-camera coverage check</div>' +
+          '<h4 class="lens-design-title">Camera-to-camera overlap is not applicable.</h4>' +
+          '<p class="lens-design-copy">This area has one camera, so validate usable footprint, edge margin, and blind spots instead of overlap pressure.</p>' +
+        '</div>';
+    }
 
     return '' +
       '<div class="lens-advice-card spacing-lens-driver-card">' +
@@ -2236,9 +2300,10 @@ function assistantStatusClass(data) {
     const spacing = input.len / cams;
     const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
 
+    const isSingleCamera = cams <= 1;
     const gapExposureMetric = ratio > 1 ? Math.min((ratio - 1) * 250, 100) : 0;
-    const compressionMetric = ratio < 1 ? Math.min((1 - ratio) * 100, 100) : 0;
-    const reserveMetric = input.ovPct;
+    const compressionMetric = isSingleCamera ? 0 : (ratio < 1 ? Math.min((1 - ratio) * 100, 100) : 0);
+    const reserveMetric = isSingleCamera ? 0 : input.ovPct;
 
     const metrics = [
       {
@@ -2252,9 +2317,9 @@ function assistantStatusClass(data) {
         displayValue: ratio < 1 ? fmtPct((1 - ratio) * 100, 1) : "0.0%"
       },
       {
-        label: "Camera-to-Camera Overlap Target",
+        label: isSingleCamera ? "Single-Camera Overlap Reference" : "Camera-to-Camera Overlap Target",
         value: reserveMetric,
-        displayValue: fmtPct(input.ovPct, 1)
+        displayValue: isSingleCamera ? "N/A" : fmtPct(input.ovPct, 1)
       }
     ];
 
@@ -2267,9 +2332,13 @@ function assistantStatusClass(data) {
 
     const spacingClass = classifySpacing(ratio);
 
-    let interpretation = `With a usable camera footprint of about ${fmtFt(usableWidth)}, a ${fmtFt(input.len)} perimeter needs ${cams} camera${cams === 1 ? "" : "s"} to maintain the requested overlap. That produces an actual spacing of about ${fmtFt(spacing)} between camera centers.`;
+    let interpretation = isSingleCamera
+      ? `With a usable camera footprint of about ${fmtFt(usableWidth)}, the ${fmtFt(input.len)} protected run fits within one camera under the current coverage assumptions. Camera-to-camera overlap is not applicable because there is no adjacent camera to overlap.`
+      : `With a usable camera footprint of about ${fmtFt(usableWidth)}, a ${fmtFt(input.len)} perimeter needs ${cams} cameras to maintain the requested overlap. That produces an actual spacing of about ${fmtFt(spacing)} between camera centers.`;
 
-    if (spacingClass === "Wide Spacing") {
+    if (isSingleCamera) {
+      interpretation += ` Use Coverage Area reserve and Blind Spot Check to validate edge margin, aim tolerance, and any remaining gap risk.`;
+    } else if (spacingClass === "Wide Spacing") {
       interpretation += ` The layout is running wider than the usable footprint, which raises the chance of soft gaps or outright blind zones once real mounting tolerances and scene geometry are applied.`;
     } else if (spacingClass === "Tight Spacing") {
       interpretation += ` The layout is conservative and overlap-heavy, which reduces blind-spot risk but drives camera count and compresses coverage efficiency.`;
@@ -2278,7 +2347,9 @@ function assistantStatusClass(data) {
     }
 
     let dominantConstraint = "";
-    if (spacingClass === "Wide Spacing") {
+    if (isSingleCamera) {
+      dominantConstraint = "Single-camera coverage is the active condition. Camera-to-camera overlap pressure is not applicable; the key question is whether the usable footprint and reserve margin cover the protected run cleanly.";
+    } else if (spacingClass === "Wide Spacing") {
       dominantConstraint = "Gap exposure is the dominant limiter. Camera spacing is outrunning the usable footprint, so weak zones between views become the first operational risk.";
     } else if (spacingClass === "Tight Spacing") {
       dominantConstraint = "Spacing compression is the dominant limiter. The design is safe from a continuity standpoint, but it is consuming more cameras than the coverage width strictly requires.";
@@ -2289,7 +2360,9 @@ function assistantStatusClass(data) {
     }
 
     let guidance = "";
-    if (spacingClass === "Wide Spacing") {
+    if (isSingleCamera) {
+      guidance = "Continue to Blind Spot Check as a single-camera coverage validation. Use Coverage Area reserve, usable width, and field geometry to confirm the single view still closes the protected span.";
+    } else if (spacingClass === "Wide Spacing") {
       guidance = "Reduce spacing, widen usable footprint, or increase camera count before treating this as a final layout. Then use Blind Spot Check to confirm the remaining continuity risk.";
     } else if (spacingClass === "Tight Spacing") {
       guidance = "This layout is conservative. Review whether the camera-to-camera overlap target or camera count can be relaxed without creating coverage gaps, then confirm in Blind Spot Check.";
@@ -2306,6 +2379,7 @@ function assistantStatusClass(data) {
       spacing,
       ratio,
       spacingClass,
+      singleCamera: isSingleCamera,
       status: statusPack.status,
       interpretation,
       dominantConstraint,
@@ -2331,6 +2405,7 @@ function assistantStatusClass(data) {
       spacingFt: data.spacing,
       spacingRatio: data.ratio,
       spacingClass: data.spacingClass,
+      spacingSingleCamera: !!data.singleCamera,
       spacingStatus: data.status,
       spacingRawCoverageWidthFt: data.rawWidth,
       spacingUsableWidthFt: data.usableWidth,
@@ -2364,6 +2439,7 @@ function assistantStatusClass(data) {
         spacing: data.spacing,
         ratio: data.ratio,
         spacingClass: data.spacingClass,
+        singleCamera: !!data.singleCamera,
         interpretation: data.interpretation,
         guidance: data.guidance,
         sourceMode: sourceModeForCurrentResult(manualOverrideMeta),
@@ -2399,7 +2475,7 @@ function assistantStatusClass(data) {
         { label: "Perimeter Length", value: fmtFt(data.len, 0) },
         { label: "Distance to Target", value: fmtFt(data.dist) },
         { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
-        { label: "Camera-to-Camera Overlap Target", value: fmtPct(data.ovPct, 1) },
+        { label: data.singleCamera ? "Overlap Reference" : "Camera-to-Camera Overlap Target", value: data.singleCamera ? "N/A" : fmtPct(data.ovPct, 1) },
         { label: "Spacing Ratio", value: fmt(data.ratio, 2) },
         { label: "Spacing Classification", value: data.spacingClass },
         { label: "Source Mode", value: sourceModeForCurrentResult(getManualOverrideMetadata(data)) },
