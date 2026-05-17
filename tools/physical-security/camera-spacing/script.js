@@ -380,6 +380,7 @@ function escapeHtml(value) {
     const spacing = len / cams;
     const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
     const spacingClass = classifySpacing(ratio);
+    const singleCamera = cams <= 1;
 
     return {
       len,
@@ -427,11 +428,12 @@ function escapeHtml(value) {
     if (!scenario || !scenario.changes) return "No field changes";
 
     const labels = [];
+    const singleCamera = Number(scenario.cams) <= 1 || scenario.singleCamera || Number(scenario.targetCams) <= 1 || Number(scenario.changes.targetCams) <= 1;
 
     if (Number.isFinite(Number(scenario.changes.len))) labels.push("perimeter length");
     if (Number.isFinite(Number(scenario.changes.dist))) labels.push("distance");
     if (Number.isFinite(Number(scenario.changes.hfov))) labels.push("HFOV");
-    if (Number.isFinite(Number(scenario.changes.ovPct))) labels.push("camera-to-camera overlap target");
+    if (Number.isFinite(Number(scenario.changes.ovPct))) labels.push(singleCamera ? "single-camera overlap disabled" : "camera-to-camera overlap target");
 
     return labels.length ? labels.join(", ") : "baseline values";
   }
@@ -439,11 +441,13 @@ function escapeHtml(value) {
   function spacingScenarioSummary(scenario) {
     if (!scenario || !scenario.canApply) return "Unavailable for current geometry";
 
+    const singleCamera = Number(scenario.cams) <= 1 || scenario.singleCamera || Number(scenario.targetCams) <= 1;
+
     return [
-      Number.isFinite(scenario.cams) ? scenario.cams + " cameras" : null,
-      Number.isFinite(scenario.spacing) ? fmtFt(scenario.spacing) + " spacing" : null,
+      Number.isFinite(scenario.cams) ? scenario.cams + " camera" + (Number(scenario.cams) === 1 ? "" : "s") : null,
+      Number.isFinite(scenario.spacing) ? (singleCamera ? fmtFt(scenario.spacing) + " coverage check" : fmtFt(scenario.spacing) + " spacing") : null,
       Number.isFinite(scenario.usableWidth) ? fmtFt(scenario.usableWidth) + " usable width" : null,
-      Number.isFinite(scenario.ovPct) ? fmtPct(scenario.ovPct, 1) + " overlap" : null
+      singleCamera ? "overlap N/A" : (Number.isFinite(scenario.ovPct) ? fmtPct(scenario.ovPct, 1) + " overlap" : null)
     ].filter(Boolean).join(" | ");
   }
 
@@ -611,6 +615,7 @@ function escapeHtml(value) {
       canApply: true,
       changes: { len, dist, hfov, ovPct, targetCams },
       targetCams,
+      singleCamera,
       len,
       dist,
       hfov,
@@ -646,8 +651,10 @@ function escapeHtml(value) {
     const len = Number.isFinite(Number(changes?.len)) ? Number(changes.len) : Number(data.len);
     const dist = Number.isFinite(Number(changes?.dist)) ? Number(changes.dist) : Number(data.dist);
     const hfov = Number.isFinite(Number(changes?.hfov)) ? Number(changes.hfov) : Number(data.hfov);
-    const ovPct = Number.isFinite(Number(changes?.ovPct)) ? Number(changes.ovPct) : Number(data.ovPct);
+    let ovPct = Number.isFinite(Number(changes?.ovPct)) ? Number(changes.ovPct) : Number(data.ovPct);
     const targetCams = Number.isFinite(Number(changes?.targetCams)) ? Math.max(1, Math.round(Number(changes.targetCams))) : null;
+
+    if (targetCams <= 1) ovPct = 0;
 
     const rawWidth = 2 * Math.tan((hfov / 2) * Math.PI / 180) * dist;
     const usableWidth = rawWidth * (1 - (ovPct / 100));
@@ -670,6 +677,7 @@ function escapeHtml(value) {
     const spacing = len / cams;
     const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
     const spacingClass = classifySpacing(ratio);
+    const singleCamera = cams <= 1;
 
     return {
       id,
@@ -681,6 +689,7 @@ function escapeHtml(value) {
       canApply: true,
       changes: changes || {},
       targetCams,
+      singleCamera,
       len,
       dist,
       hfov,
@@ -693,8 +702,8 @@ function escapeHtml(value) {
       spacingClass,
       summary: [
         cams + " camera" + (cams === 1 ? "" : "s"),
-        fmtFt(spacing) + " spacing",
-        fmtPct(ovPct, 1) + " overlap"
+        singleCamera ? fmtFt(spacing) + " coverage check" : fmtFt(spacing) + " spacing",
+        singleCamera ? "overlap N/A" : fmtPct(ovPct, 1) + " overlap"
       ].join(" | ")
     };
   }
@@ -871,10 +880,12 @@ function escapeHtml(value) {
     function factorySpacingResultSummary(model) {
     if (!model || model.canApply === false) return "Unavailable";
 
+    const singleCamera = Number(model.cams) <= 1 || model.singleCamera || Number(model.targetCams) <= 1;
+
     return [
       Number.isFinite(model.cams) ? model.cams + " camera" + (model.cams === 1 ? "" : "s") : null,
-      Number.isFinite(model.spacing) ? fmtFt(model.spacing) + " spacing" : null,
-      Number.isFinite(model.ovPct) ? fmtPct(model.ovPct, 1) + " overlap" : null
+      Number.isFinite(model.spacing) ? (singleCamera ? fmtFt(model.spacing) + " coverage check" : fmtFt(model.spacing) + " spacing") : null,
+      singleCamera ? "overlap N/A" : (Number.isFinite(model.ovPct) ? fmtPct(model.ovPct, 1) + " overlap" : null)
     ].filter(Boolean).join(" | ");
   }
 
@@ -1215,16 +1226,19 @@ function escapeHtml(value) {
 
     const efficiencyTarget = data.cams > 1 ? data.cams - 1 : null;
     const efficiencyOverlap = efficiencyTarget ? factorySpacingOverlapForTargetCams(data, efficiencyTarget, 0.95) : null;
+    const efficiencyChanges = Number.isFinite(efficiencyOverlap)
+      ? { ovPct: efficiencyTarget <= 1 ? 0 : efficiencyOverlap, targetCams: efficiencyTarget }
+      : {};
     scenarios.push(factorySpacingScenario(
       data,
       "camera-count-efficiency",
       "Efficiency Check",
       "Test whether the protected run can stay viable with fewer cameras.",
-      Number.isFinite(efficiencyOverlap) ? { ovPct: efficiencyOverlap, targetCams: efficiencyTarget } : {},
+      efficiencyChanges,
       Number.isFinite(efficiencyOverlap)
-        ? "Use only when reducing camera count matters and Blind Spot Check still confirms continuity."
+        ? (efficiencyTarget <= 1 ? "Use only as a single-camera coverage validation. Overlap is treated as N/A until another adjacent camera exists." : "Use only when reducing camera count matters and Blind Spot Check still confirms continuity.")
         : "Dropping a camera is not viable from the current geometry without changing upstream assumptions or accepting gap risk.",
-      efficiencyTarget ? "Apply: " + efficiencyTarget + " Cameras" : "Unavailable",
+      efficiencyTarget ? "Apply: " + efficiencyTarget + " Camera" + (efficiencyTarget === 1 ? "" : "s") : "Unavailable",
       Number.isFinite(efficiencyOverlap)
     ));
 
@@ -2081,12 +2095,13 @@ function assistantStatusClass(data) {
         '<div class="spacing-lens-control-list">' +
           scenarios.map((scenario) => {
             const disabled = !scenario || !scenario.canApply;
+            const singleCameraScenario = Number(scenario?.cams) <= 1 || scenario?.singleCamera || Number(scenario?.targetCams) <= 1;
             const result = disabled
               ? "Unavailable for current geometry"
               : [
-                  Number.isFinite(scenario.cams) ? scenario.cams + " cameras" : null,
-                  Number.isFinite(scenario.spacing) ? fmtFt(scenario.spacing) + " spacing" : null,
-                  Number.isFinite(scenario.ovPct) ? fmtPct(scenario.ovPct, 1) + " overlap" : null
+                  Number.isFinite(scenario.cams) ? scenario.cams + " camera" + (scenario.cams === 1 ? "" : "s") : null,
+                  Number.isFinite(scenario.spacing) ? (singleCameraScenario ? fmtFt(scenario.spacing) + " coverage check" : fmtFt(scenario.spacing) + " spacing") : null,
+                  singleCameraScenario ? "overlap N/A" : (Number.isFinite(scenario.ovPct) ? fmtPct(scenario.ovPct, 1) + " overlap" : null)
                 ].filter(Boolean).join(" | ");
 
             const button = disabled
