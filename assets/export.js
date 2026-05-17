@@ -1333,6 +1333,21 @@ const extraSections = getExtraExportSections();
       height:auto;
       display:inline-block;
     }
+    .extra-svg-wrap{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#07110b;
+      padding:18px;
+      text-align:center;
+      margin:12px 0 14px;
+      overflow:hidden;
+    }
+    .extra-svg-wrap svg{
+      max-width:100%;
+      height:auto;
+      display:block;
+      margin:0 auto;
+    }
     .foot{
       margin-top:26px;
       padding-top:16px;

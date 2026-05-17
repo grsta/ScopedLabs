@@ -189,6 +189,97 @@
     }
   }
 
+  function sanitizeSnapshotSvg(svg) {
+    return String(svg || "")
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/\son\w+="[^"]*"/gi, "")
+      .replace(/\son\w+='[^']*'/gi, "")
+      .replace(/javascript:/gi, "");
+  }
+
+  function renderSnapshotExtraTable(table) {
+    const headers = Array.isArray(table?.headers) && table.headers.length
+      ? table.headers
+      : ((Array.isArray(table?.rows) ? table.rows[0] : []) || []).map(function (_, index) {
+          return "Column " + (index + 1);
+        });
+
+    const rows = Array.isArray(table?.rows) ? table.rows : [];
+
+    if (!rows.length) return "";
+
+    return (
+      '<table class="sl-snapshot-table" style="margin-top:10px;">' +
+        '<thead><tr>' + headers.map(function (header) {
+          return '<th>' + escapeHtml(header) + '</th>';
+        }).join("") + '</tr></thead>' +
+        '<tbody>' + rows.map(function (row) {
+          return '<tr>' + row.map(function (cell) {
+            return '<td>' + escapeHtml(cell) + '</td>';
+          }).join("") + '</tr>';
+        }).join("") + '</tbody>' +
+      '</table>'
+    );
+  }
+
+  function renderSnapshotExtraSections(payload) {
+    const sections = Array.isArray(payload?.extraSections) ? payload.extraSections : [];
+
+    if (!sections.length) return "";
+
+    return sections.map(function (section) {
+      const title = escapeHtml(section.title || "Additional Output");
+
+      const svgHtml = Array.isArray(section.svgs)
+        ? section.svgs.map(function (svg) {
+            return '<div class="sl-snapshot-chart" style="background:#07110b; border:1px solid rgba(125,255,152,.18); border-radius:14px; padding:14px; margin-top:12px; overflow:hidden;">' + sanitizeSnapshotSvg(svg) + '</div>';
+          }).join("")
+        : "";
+
+      const tableHtml = Array.isArray(section.tables)
+        ? section.tables.map(renderSnapshotExtraTable).join("")
+        : "";
+
+      const textHtml = section.text
+        ? '<p class="muted" style="margin:.45rem 0 0;">' + escapeHtml(section.text) + '</p>'
+        : "";
+
+      if (!svgHtml && !tableHtml && !textHtml) return "";
+
+      return (
+        '<div class="card" style="background:rgba(0,0,0,.14); margin-top:10px;">' +
+          '<h4 style="margin-top:0;">' + title + '</h4>' +
+          textHtml +
+          svgHtml +
+          tableHtml +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  function filterSnapshotAnalysisSections(payload) {
+    const sections = Array.isArray(payload?.analysisSections) ? payload.analysisSections : [];
+
+    if (Array.isArray(payload?.extraSections) && payload.extraSections.length) {
+      return [];
+    }
+
+    const interpretation = String(payload?.interpretation || "").replace(/\s+/g, " ").trim().toLowerCase();
+    const summary = String(payload?.summary || "").replace(/\s+/g, " ").trim().toLowerCase();
+
+    return sections.filter(function (section) {
+      const title = String(section?.title || "").replace(/\s+/g, " ").trim().toLowerCase();
+      const body = String(section?.body || "").replace(/\s+/g, " ").trim().toLowerCase();
+
+      if (!body) return false;
+      if (title === "engineering interpretation") return false;
+      if (interpretation && (body === interpretation || body.includes(interpretation) || interpretation.includes(body))) return false;
+      if (summary && (body === summary || body.includes(summary) || summary.includes(body))) return false;
+
+      return true;
+    });
+  }
+
   function tableRows(items) {
     const rows = Array.isArray(items) ? items : [];
 
@@ -229,9 +320,7 @@
     const preparedBy = snapshot.prepared_by || payload.meta?.preparedBy || "";
     const notes = payload.meta?.customNotes || "";
 
-    const analysisSections = Array.isArray(payload.analysisSections)
-      ? payload.analysisSections
-      : [];
+    const analysisSections = filterSnapshotAnalysisSections(payload);
 
     const analysisHtml = analysisSections.length
       ? analysisSections
@@ -254,6 +343,8 @@
         '</div>'
       )
       : "";
+
+    const extraSectionsHtml = renderSnapshotExtraSections(payload);
 
     const chartHtml = payload.chartImage
       ? (
@@ -306,6 +397,7 @@
 
       interpretationHtml +
       analysisHtml +
+      extraSectionsHtml +
       chartHtml +
       notesHtml +
 
@@ -845,9 +937,7 @@
     const preparedBy = snapshot.prepared_by || payload?.meta?.preparedBy || "";
     const customNotes = payload?.meta?.customNotes || "";
 
-    const analysisSections = Array.isArray(payload.analysisSections)
-      ? payload.analysisSections
-      : [];
+    const analysisSections = filterSnapshotAnalysisSections(payload);
 
     const analysisHtml = analysisSections.map((section) => {
       return `
@@ -857,6 +947,8 @@
         </div>
       `;
     }).join("");
+
+    const slExtraSectionsHtml = renderSnapshotExtraSections(payload);
 
     const chartHtml = payload.chartImage
       ? `
@@ -914,6 +1006,7 @@
       ` : ""}
 
       ${analysisHtml}
+      ${slExtraSectionsHtml}
       ${chartHtml}
 
       ${customNotes ? `

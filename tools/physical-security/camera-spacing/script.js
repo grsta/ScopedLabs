@@ -1600,10 +1600,7 @@ function assistantStatusClass(data) {
       ...notes
     ]
       .filter(Boolean)
-      .join(" ");
-
-    els.exportSection.innerHTML =
-      '<div data-export-text>' + escapeHtml(noteText) + '</div>' +
+      .join(" ");    els.exportSection.innerHTML =
       '<div data-export-svg>' + spacingVisualSvg(data) + '</div>' +
       '<table>' +
         '<thead><tr><th>Metric</th><th>Value</th></tr></thead>' +
