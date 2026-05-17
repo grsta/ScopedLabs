@@ -84,123 +84,6 @@
       display: flex !important;
     }
 
-
-    /* Coverage Area reserve and footprint visual */
-    .coverage-reserve-card,
-    .coverage-geometry-card {
-      margin-top: 12px;
-      border: 1px solid rgba(120, 255, 120, 0.16);
-      border-radius: 16px;
-      background: rgba(0, 0, 0, 0.16);
-      padding: 12px;
-      color: rgba(255, 255, 255, 0.72);
-      line-height: 1.5;
-    }
-
-    .coverage-reserve-card strong,
-    .coverage-geometry-title {
-      color: rgba(255, 255, 255, 0.96);
-      font-weight: 850;
-    }
-
-    .coverage-reserve-warning {
-      margin-top: 10px;
-      border: 1px solid rgba(255, 211, 79, 0.30);
-      border-radius: 12px;
-      background: rgba(255, 211, 79, 0.07);
-      color: rgba(255, 246, 196, 0.95);
-      padding: 9px 10px;
-    }
-
-    .coverage-geometry-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .coverage-geometry-title {
-      margin: 0;
-    }
-
-    .coverage-geometry-subtitle {
-      color: rgba(255, 255, 255, 0.60);
-      font-size: 0.9rem;
-      line-height: 1.45;
-      margin-top: 4px;
-    }
-
-    .coverage-geometry-pill {
-      border: 1px solid rgba(120, 255, 120, 0.20);
-      background: rgba(120, 255, 120, 0.08);
-      border-radius: 999px;
-      padding: 6px 10px;
-      color: rgba(255, 255, 255, 0.88);
-      font-size: 0.78rem;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .coverage-geometry-metrics {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-      margin: 10px 0;
-    }
-
-    .coverage-geometry-metric {
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: 12px;
-      background: rgba(0, 0, 0, 0.18);
-      padding: 8px 10px;
-      color: rgba(255, 255, 255, 0.62);
-      font-size: 0.78rem;
-      line-height: 1.35;
-    }
-
-    .coverage-geometry-metric strong {
-      display: block;
-      margin-top: 2px;
-      color: rgba(255, 255, 255, 0.94);
-      font-size: 0.95rem;
-    }
-
-    .coverage-geometry-svg-wrap {
-      overflow-x: auto;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .coverage-geometry-svg {
-      display: block;
-      width: 100%;
-      min-width: 500px;
-      height: auto;
-    }
-
-    .coverage-geometry-note {
-      margin-top: 10px;
-      color: rgba(255, 255, 255, 0.62);
-      font-size: 0.88rem;
-      line-height: 1.45;
-    }
-
-    @media (max-width: 760px) {
-      .coverage-geometry-head {
-        display: grid;
-      }
-
-      .coverage-geometry-metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .coverage-geometry-pill {
-        width: fit-content;
-      }
-    }
-
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -341,7 +224,7 @@
       </section>
 
       <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
-        <h2 class="card-title" style="margin-top: 0;">Planning Inputs</h2>
+        <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
         <p class="muted" style="margin-top: -4px;">
           Estimate how much of the lens footprint remains practically usable once overlap reserve is applied, so spacing decisions are based on effective coverage instead of raw width alone.
         </p>
@@ -351,32 +234,21 @@
             <div class="label-row">
               <label for="hfov">Horizontal FOV (deg)</label>
             </div>
-            <input id="hfov" type="number" min="1" max="179" step="0.1" placeholder="Imported horizontal FOV" />
+            <input id="hfov" type="number" min="1" max="179" step="0.1" value="90" />
           </div>
 
           <div class="field">
             <div class="label-row">
               <label for="vfov">Vertical FOV (deg)</label>
             </div>
-            <input id="vfov" type="number" min="1" max="179" step="0.1" placeholder="Imported vertical FOV" />
+            <input id="vfov" type="number" min="1" max="179" step="0.1" value="55" />
           </div>
 
           <div class="field">
             <div class="label-row">
               <label for="dist">Distance to Target Plane (ft)</label>
             </div>
-            <input id="dist" type="number" min="0.1" step="0.1" placeholder="Imported target distance" />
-          </div>
-
-          
-          <div class="field">
-            <div class="label-row"><label for="reserveStrategy">Coverage Reserve Strategy</label></div>
-            <select id="reserveStrategy">
-              <option value="minimal">Minimal overlap reserve - 5%</option>
-              <option value="typical" selected>Typical spacing reserve - 15%</option>
-              <option value="conservative">Conservative overlap reserve - 25%</option>
-              <option value="custom">Custom reserve</option>
-            </select>
+            <input id="dist" type="number" min="0.1" step="0.1" value="60" />
           </div>
 
           <div class="field">
@@ -384,10 +256,6 @@
               <label for="ov">Overlap Reserve (%)</label>
             </div>
             <input id="ov" type="number" min="0" max="95" step="0.1" value="15" />
-          </div>
-
-          <div id="reserveGuidance" class="coverage-reserve-card">
-            Choose a coverage reserve strategy so spacing is based on usable width, not the raw lens footprint.
           </div>
         </div>
 
@@ -402,8 +270,6 @@
             <div class="muted">Enter valid values and press Calculate.</div>
           </div>
           <div id="analysis-copy" style="display:none;"></div>
-
-          <div id="coverageGeometry" class="coverage-geometry-card" hidden></div>
 
           <p class="mini-note">
             Model: raw coverage width and height are calculated from field of view at the target plane, then reduced by overlap reserve to estimate the effective width, height, and usable area that remain for practical layout planning.
@@ -508,7 +374,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-005"></script>
-  <script src="./script.js?v=physical-security-coverage-polish-001"></script>
+  <script src="./script.js?v=physical-security-coverage-buttons-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
