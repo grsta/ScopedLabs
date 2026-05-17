@@ -30,6 +30,7 @@
     analysis: $("analysis-copy"),
     assistant: $("coverageAssistant"),
     flowNote: $("flow-note"),
+    importedAssumptions: $("coverageImportedAssumptions"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     lockedCard: $("lockedCard"),
@@ -257,13 +258,20 @@
   }
 
   function refreshManualOverrideBanner() {
-    if (!els.flowNote) return;
+    const targets = [els.flowNote, els.importedAssumptions].filter(Boolean);
 
-    const existing = els.flowNote.querySelector(".flow-override-note");
-    if (existing) existing.remove();
+    targets.forEach((target) => {
+      const existing = target.querySelector(".flow-override-note");
+      if (existing) existing.remove();
+    });
 
     const note = renderManualOverrideNote();
-    if (note) els.flowNote.insertAdjacentHTML("beforeend", note);
+    const visibleTarget = els.importedAssumptions || els.flowNote;
+
+    if (note && visibleTarget) {
+      visibleTarget.hidden = false;
+      visibleTarget.insertAdjacentHTML("beforeend", note);
+    }
   }
 
   function applyDefaults() {
@@ -300,21 +308,33 @@
       if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
     }
 
-    refreshManualOverrideBanner();
-
     const parts = [];
     if (sceneWidth > 0) parts.push(`Scene width: <strong>${fmtFt(sceneWidth)}</strong>`);
     if (dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
-    if (hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}°</strong>`);
+    if (hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}&deg;</strong>`);
     if (fitClass) parts.push(`Fit class: <strong>${fitClass}</strong>`);
 
     if (parts.length) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
+      const noteHtml = `
         <strong>Imported Assumptions</strong><br>
         ${parts.join(" | ")}
       `;
+
+      if (els.flowNote) {
+        els.flowNote.innerHTML = noteHtml;
+        els.flowNote.hidden = true;
+      }
+
+      if (els.importedAssumptions) {
+        els.importedAssumptions.innerHTML = noteHtml;
+        els.importedAssumptions.hidden = false;
+      }
+    } else {
+      if (els.flowNote) els.flowNote.hidden = true;
+      if (els.importedAssumptions) els.importedAssumptions.hidden = true;
     }
+
+    refreshManualOverrideBanner();
   }
 
   function invalidate({ clearFlow = true } = {}) {
