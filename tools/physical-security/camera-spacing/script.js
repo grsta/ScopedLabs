@@ -138,7 +138,7 @@
     if (field === "len") return "Protected length";
     if (field === "dist") return "Distance to target plane";
     if (field === "hfov") return "Horizontal FOV";
-    if (field === "ov") return "Overlap target";
+    if (field === "ov") return "Camera-to-camera overlap target";
     return field;
   }
 
@@ -327,7 +327,7 @@ function escapeHtml(value) {
 
     if (data.spacingClass === "Wide Spacing") return "Spacing is too wide for the usable footprint";
     if (data.spacingClass === "Tight Spacing") return "Spacing is conservative and camera-heavy";
-    if (Number(data.ovPct) >= 25) return "Overlap reserve is compressing useful coverage width";
+    if (Number(data.ovPct) >= 25) return "Camera-to-camera overlap target is compressing useful coverage width";
 
     return "Spacing is balanced for this protected run";
   }
@@ -336,7 +336,7 @@ function escapeHtml(value) {
     if (!data) return "Review the spacing result before continuing.";
 
     if (data.spacingClass === "Wide Spacing") {
-      return "Apply a correction branch that adds reserve, increases effective coverage, or moves this result toward a higher camera count before Blind Spot Check.";
+      return "Apply a correction branch that shortens spacing, increases camera count, or revisits upstream geometry before Blind Spot Check.";
     }
 
     if (data.spacingClass === "Tight Spacing") {
@@ -344,7 +344,7 @@ function escapeHtml(value) {
     }
 
     if (Number(data.ovPct) >= 25) {
-      return "Spacing is workable, but overlap reserve is high. Use the balanced branch if the layout feels over-compressed.";
+      return "Spacing is workable, but camera-to-camera overlap target is high. Use the balanced branch if the layout feels over-compressed.";
     }
 
     return "Keep the baseline and continue to Blind Spot Check unless the project priority changes.";
@@ -427,7 +427,7 @@ function escapeHtml(value) {
     if (Number.isFinite(Number(scenario.changes.len))) labels.push("perimeter length");
     if (Number.isFinite(Number(scenario.changes.dist))) labels.push("distance");
     if (Number.isFinite(Number(scenario.changes.hfov))) labels.push("HFOV");
-    if (Number.isFinite(Number(scenario.changes.ovPct))) labels.push("overlap target");
+    if (Number.isFinite(Number(scenario.changes.ovPct))) labels.push("camera-to-camera overlap target");
 
     return labels.length ? labels.join(", ") : "baseline values";
   }
@@ -514,7 +514,7 @@ function escapeHtml(value) {
           miniCard("HFOV", fmt(data.hfov, 1) + " deg") +
         '</div>' +
         '<div class="spacing-mini-grid">' +
-          miniCard("Overlap Target", fmtPct(data.ovPct, 1)) +
+          miniCard("Camera-to-Camera Overlap Target", fmtPct(data.ovPct, 1)) +
           miniCard("Usable Width", fmtFt(data.usableWidth)) +
           miniCard("Raw Width", fmtFt(data.rawWidth)) +
           miniCard("Spacing Class", data.spacingClass) +
@@ -556,7 +556,7 @@ function escapeHtml(value) {
           '<label class="field"><span class="label">Target Cameras</span><input data-spacing-whatif="targetCams" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.cams || 1).toFixed(0))) + '"></label>' +
           '<label class="field"><span class="label">Distance</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
           '<label class="field"><span class="label">HFOV</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">Overlap Target</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Camera-to-Camera Overlap Target</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
         '</div>' +
         '<p class="lens-design-copy" style="margin-top:10px;"><strong>Tip:</strong> Change Target Cameras to 2, 3, or more to test what overlap is needed for that camera count. If the required overlap is unrealistic, the assistant will show the result as a pressure/tradeoff scenario.</p>' +
         '<div class="btn-row" style="margin-top:12px;"><button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button></div>' +
@@ -767,13 +767,13 @@ function escapeHtml(value) {
 
   function factorySpacingRecommendation(data) {
     if (data.spacingClass === "Wide Spacing") {
-      return "Reduce spacing pressure by adding reserve, increasing camera count, or revisiting upstream geometry before Blind Spot Check.";
+      return "Reduce spacing pressure by shortening spacing, increasing camera count, or revisiting upstream geometry before Blind Spot Check.";
     }
     if (data.spacingClass === "Tight Spacing") {
       return "This is likely safe for continuity, but review whether the layout is using more cameras than the project requires.";
     }
     if (Number(data.ovPct) >= 25) {
-      return "The spacing works, but overlap reserve is high. Confirm the reserve is intentional before carrying it forward.";
+      return "The spacing works, but camera-to-camera overlap target is high. Confirm the reserve is intentional before carrying it forward.";
     }
     return "This scenario is within current planning guardrails. Validate the field gap condition in Blind Spot Check before relying on it.";
   }
@@ -891,7 +891,7 @@ function escapeHtml(value) {
         scenarioId: "current",
         action: "Keep Current Baseline",
         buttonLabel: "Keep Current Baseline",
-        reason: "Actual spacing is inside the usable coverage width and the overlap reserve is not forcing a correction.",
+        reason: "Actual spacing is inside the usable coverage width and the camera-to-camera overlap target is not forcing a correction.",
         expectedResult: currentSummary,
         confidence: "No correction required",
         nextStep: "Blind Spot Check",
@@ -974,7 +974,7 @@ function escapeHtml(value) {
           { key: "targetCams", label: "Target Cameras", value: Number(data.cams || 1).toFixed(0), min: 1, step: 1 },
           { key: "dist", label: "Distance", value: Number(data.dist || 0).toFixed(1), min: 0.1, step: 0.1 },
           { key: "hfov", label: "HFOV", value: Number(data.hfov || 0).toFixed(1), min: 1, max: 179, step: 0.1 },
-          { key: "ovPct", label: "Overlap Target", value: Number(data.ovPct || 0).toFixed(1), min: 0, max: 95, step: 0.1 }
+          { key: "ovPct", label: "Camera-to-Camera Overlap Target", value: Number(data.ovPct || 0).toFixed(1), min: 0, max: 95, step: 0.1 }
         ]
       },
       selectedResult: {
@@ -1002,18 +1002,18 @@ function escapeHtml(value) {
       visual: {
         kicker: "FOV / coverage layout",
         title: data.cams + (data.cams === 1 ? " camera" : " cameras") + " | " + fmtFt(data.spacing) + " spacing | " + fmtPct(data.ovPct, 1) + " overlap",
-        copy: "Actual spacing is compared against usable camera width after overlap reserve is applied.",
+        copy: "Actual spacing is compared against usable camera width after camera-to-camera overlap target is applied.",
         html: spacingVisualSvg(data),
         metrics: [
           { label: "Coverage layout", value: data.cams + (data.cams === 1 ? " camera" : " cameras"), note: "Calculated count for protected run." },
           { label: "Actual spacing", value: fmtFt(data.spacing), note: "Camera center spacing." },
           { label: "Usable width", value: fmtFt(data.usableWidth), note: "Width after overlap." },
-          { label: "Overlap reserve", value: fmtPct(data.ovPct, 1), note: "Applied before spacing." }
+          { label: "Camera-to-camera overlap target", value: fmtPct(data.ovPct, 1), note: "Applied before spacing." }
         ]
       },
       checks: [
         { kicker: "Coverage check", title: coverageCheck, copy: "Does spacing stay inside the effective usable footprint?" },
-        { kicker: "Reserve check", title: reserveCheck, copy: "Is the overlap target helping continuity without over-compressing layout?" },
+        { kicker: "Reserve check", title: reserveCheck, copy: "Is the camera-to-camera overlap target helping continuity without over-compressing layout?" },
         { kicker: "Design path", title: designPath, copy: "Use this to decide whether to correct now or validate downstream." }
       ],
       targets: {
@@ -1024,7 +1024,7 @@ function escapeHtml(value) {
         metrics: [
           { label: "Max spacing / camera", value: fmtFt(data.usableWidth), note: "Actual spacing should stay at or below this." },
           { label: "Suggested cameras", value: String(data.cams), note: "Based on usable width and protected run." },
-          { label: "Overlap target", value: fmtPct(data.ovPct, 1), note: "Reserve applied before spacing." },
+          { label: "Camera-to-camera overlap target", value: fmtPct(data.ovPct, 1), note: "Reserve applied before spacing." },
           { label: "Main blocker", value: factorySpacingProblemLabel(data), note: "Primary condition shaping this scenario." }
         ],
         banner: data.status === "HEALTHY"
@@ -1173,7 +1173,7 @@ function escapeHtml(value) {
       data,
       "balanced-layout",
       "Balanced Layout",
-      "Keep the same camera count while moving overlap reserve toward a practical middle range.",
+      "Keep the same camera count while moving camera-to-camera overlap target toward a practical middle range.",
       Number.isFinite(balancedOverlap) ? { ovPct: balancedOverlap, targetCams: data.cams } : { ovPct: data.ovPct, targetCams: data.cams },
       "Use as the default correction when the goal is a clean handoff to Blind Spot Check without over-compressing spacing.",
       "Apply Balanced Layout",
@@ -1320,7 +1320,7 @@ function assistantStatusClass(data) {
 
   function dominantDriverHtml(data) {
     let headline = "Spacing and overlap are balanced.";
-    let copy = "The current camera-to-camera spacing is staying inside the usable footprint while preserving practical overlap reserve.";
+    let copy = "The current camera-to-camera spacing is staying inside the usable footprint while preserving practical camera-to-camera overlap target.";
 
     if (data.spacingClass === "Wide Spacing") {
       headline = "Spacing is creating continuity pressure.";
@@ -1436,7 +1436,7 @@ function assistantStatusClass(data) {
       '<div class="spacing-advice-card spacing-pressure-card">' +
         '<div class="spacing-section-kicker">Pressure Graph</div>' +
         '<h4 class="spacing-section-title">What is pushing this spacing result?</h4>' +
-        '<p class="spacing-section-copy">These bars show which design pressure is driving the current status. Use them to decide whether to add reserve, relax efficiency, change overlap, or revisit upstream geometry.</p>' +
+        '<p class="spacing-section-copy">These bars show which design pressure is driving the current status. Use them to decide whether to shorten spacing, relax efficiency, change the overlap target, or revisit upstream geometry.</p>' +
         spacingPressureBarHtml(
           "Gap Exposure Pressure",
           metric.gapExposure,
@@ -1450,10 +1450,10 @@ function assistantStatusClass(data) {
           "Higher pressure means the layout is overlap-heavy and likely camera-count intensive."
         ) +
         spacingPressureBarHtml(
-          "Overlap Reserve Pressure",
+          "Camera-to-Camera Overlap Pressure",
           metric.overlapPressure,
           fmtPct(data.ovPct, 1),
-          "Higher pressure means overlap reserve is reducing usable coverage width."
+          "Higher pressure means camera-to-camera overlap target is reducing usable coverage width."
         ) +
         spacingPressureBarHtml(
           "Camera Count Pressure",
@@ -1498,7 +1498,7 @@ function assistantStatusClass(data) {
           '<label class="field"><span class="label">Perimeter Length (ft)</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
           '<label class="field"><span class="label">Distance (ft)</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
           '<label class="field"><span class="label">HFOV (deg)</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Camera-to-Camera Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
         '</div>' +
         '<div class="btn-row" style="margin-top: 12px;">' +
           '<button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button>' +
@@ -1602,7 +1602,7 @@ function assistantStatusClass(data) {
           '<label class="field"><span class="label">Perimeter Length (ft)</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
           '<label class="field"><span class="label">Distance (ft)</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
           '<label class="field"><span class="label">HFOV (deg)</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Camera-to-Camera Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
         '</div>' +
         '<div class="btn-row" style="margin-top:12px;"><button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button></div>' +
       '</div>';
@@ -1677,7 +1677,7 @@ function assistantStatusClass(data) {
 
   function spacingLensRecommendation(data) {
     if (data.spacingClass === "Wide Spacing") {
-      return "Reduce spacing pressure by adding reserve, increasing camera count, or revisiting upstream geometry before Blind Spot Check.";
+      return "Reduce spacing pressure by shortening spacing, increasing camera count, or revisiting upstream geometry before Blind Spot Check.";
     }
 
     if (data.spacingClass === "Tight Spacing") {
@@ -1685,7 +1685,7 @@ function assistantStatusClass(data) {
     }
 
     if (Number(data.ovPct) >= 25) {
-      return "The spacing works, but overlap reserve is high. Confirm the reserve is intentional before carrying it forward.";
+      return "The spacing works, but camera-to-camera overlap target is high. Confirm the reserve is intentional before carrying it forward.";
     }
 
     return "This scenario is within current planning guardrails. Validate the field gap condition in Blind Spot Check before relying on it.";
@@ -1834,7 +1834,7 @@ function assistantStatusClass(data) {
     return '' +
       '<div class="spacing-lens-check-grid">' +
         '<div class="lens-advice-card"><div class="lens-design-kicker">Coverage check</div><strong>' + escapeHtml(coverageCheck) + '</strong><p>Does spacing stay inside the effective usable footprint?</p></div>' +
-        '<div class="lens-advice-card"><div class="lens-design-kicker">Reserve check</div><strong>' + escapeHtml(reserveCheck) + '</strong><p>Is the overlap target helping continuity without over-compressing layout?</p></div>' +
+        '<div class="lens-advice-card"><div class="lens-design-kicker">Reserve check</div><strong>' + escapeHtml(reserveCheck) + '</strong><p>Is the camera-to-camera overlap target helping continuity without over-compressing layout?</p></div>' +
         '<div class="lens-advice-card"><div class="lens-design-kicker">Design path</div><strong>' + escapeHtml(designPath) + '</strong><p>Use this to decide whether to correct now or validate downstream.</p></div>' +
       '</div>';
   }
@@ -1859,7 +1859,7 @@ function assistantStatusClass(data) {
         '<div class="lens-target-strip">' +
           spacingLensMiniCard("Max spacing / camera", fmtFt(maxSpacing), "Actual spacing should stay at or below this.") +
           spacingLensMiniCard("Suggested cameras", String(data.cams), "Based on usable width and protected run.") +
-          spacingLensMiniCard("Overlap target", fmtPct(data.ovPct, 1), "Reserve applied before spacing is calculated.") +
+          spacingLensMiniCard("Camera-to-camera overlap target", fmtPct(data.ovPct, 1), "Reserve applied before spacing is calculated.") +
           spacingLensMiniCard("Main blocker", mainBlocker, "Primary condition shaping this scenario.") +
         '</div>' +
         '<div class="spacing-lens-banner">' + escapeHtml(message) + '</div>' +
@@ -2252,7 +2252,7 @@ function assistantStatusClass(data) {
         displayValue: ratio < 1 ? fmtPct((1 - ratio) * 100, 1) : "0.0%"
       },
       {
-        label: "Overlap Reserve",
+        label: "Camera-to-Camera Overlap Target",
         value: reserveMetric,
         displayValue: fmtPct(input.ovPct, 1)
       }
@@ -2283,7 +2283,7 @@ function assistantStatusClass(data) {
     } else if (spacingClass === "Tight Spacing") {
       dominantConstraint = "Spacing compression is the dominant limiter. The design is safe from a continuity standpoint, but it is consuming more cameras than the coverage width strictly requires.";
     } else if (input.ovPct >= 25) {
-      dominantConstraint = "Overlap reserve is the dominant limiter. The spacing still works, but the reserve target is starting to compress usable width enough to affect layout efficiency.";
+      dominantConstraint = "Camera-to-camera overlap target is the dominant limiter. The spacing still works, but the reserve target is starting to compress usable width enough to affect layout efficiency.";
     } else {
       dominantConstraint = "The layout is balanced. Spacing, usable width, and reserve target are still working together without a strong limiting factor.";
     }
@@ -2292,7 +2292,7 @@ function assistantStatusClass(data) {
     if (spacingClass === "Wide Spacing") {
       guidance = "Reduce spacing, widen usable footprint, or increase camera count before treating this as a final layout. Then use Blind Spot Check to confirm the remaining continuity risk.";
     } else if (spacingClass === "Tight Spacing") {
-      guidance = "This layout is conservative. Review whether the overlap target or camera count can be relaxed without creating coverage gaps, then confirm in Blind Spot Check.";
+      guidance = "This layout is conservative. Review whether the camera-to-camera overlap target or camera count can be relaxed without creating coverage gaps, then confirm in Blind Spot Check.";
     } else {
       guidance = "Spacing is in a practical range. Continue to Blind Spot Check next to verify that the geometry still closes gaps across the protected span.";
     }
@@ -2399,7 +2399,7 @@ function assistantStatusClass(data) {
         { label: "Perimeter Length", value: fmtFt(data.len, 0) },
         { label: "Distance to Target", value: fmtFt(data.dist) },
         { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
-        { label: "Overlap Target", value: fmtPct(data.ovPct, 1) },
+        { label: "Camera-to-Camera Overlap Target", value: fmtPct(data.ovPct, 1) },
         { label: "Spacing Ratio", value: fmt(data.ratio, 2) },
         { label: "Spacing Classification", value: data.spacingClass },
         { label: "Source Mode", value: sourceModeForCurrentResult(getManualOverrideMetadata(data)) },

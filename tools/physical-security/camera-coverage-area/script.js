@@ -117,9 +117,9 @@
   }
 
   function classifyCoverageEfficiency(effAreaRatioPct) {
-    if (effAreaRatioPct < 65) return "Heavy Reserve";
-    if (effAreaRatioPct < 85) return "Practical Reserve";
-    return "Minimal Reserve";
+    if (effAreaRatioPct < 65) return "Heavy Coverage Reserve";
+    if (effAreaRatioPct < 85) return "Practical Coverage Reserve";
+    return "Minimal Coverage Reserve";
   }
 
   function overlapInterpretation(overlapClass) {
@@ -134,12 +134,12 @@
 
   function reserveGuidance(effWidthRatioPct) {
     if (effWidthRatioPct < 70) {
-      return "Usable width drops quickly once overlap reserve gets aggressive. This is appropriate when continuity matters more than raw coverage efficiency.";
+      return "Usable width drops quickly once usable coverage reserve gets aggressive. This is appropriate when continuity matters more than raw coverage efficiency.";
     }
     if (effWidthRatioPct < 90) {
       return "This is a healthy reserve range for many practical layouts. You preserve usable width while still protecting against blind edges.";
     }
-    return "Very little width is being reserved for overlap. Coverage efficiency is high, but spacing tolerance between cameras will be tighter.";
+    return "Very little width is being held back as usable coverage reserve. Coverage efficiency is high, but spacing tolerance between cameras will be tighter.";
   }
 
   function clearDownstream() {
@@ -280,7 +280,7 @@
       step: STEP,
       lane: LANE,
       title: "Flow Context",
-      intro: "This step converts field-of-view results into real usable scene coverage after overlap reserve is applied."
+      intro: "This step converts field-of-view results into real usable scene coverage after usable coverage reserve is applied."
     });
 
     if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
@@ -381,7 +381,7 @@
     const efficiencyClass = classifyCoverageEfficiency(areaRetentionPct);
 
     const metrics = [
-      { label: "Reserve Pressure", value: reserveLossPct, displayValue: fmtPct(reserveLossPct, 1) },
+      { label: "Coverage Reserve Pressure", value: reserveLossPct, displayValue: fmtPct(reserveLossPct, 1) },
       { label: "Width Retention Loss", value: 100 - widthRetentionPct, displayValue: fmtPct(100 - widthRetentionPct, 1) },
       { label: "Area Retention Loss", value: 100 - areaRetentionPct, displayValue: fmtPct(100 - areaRetentionPct, 1) }
     ];
@@ -398,14 +398,14 @@
 
     let dominantConstraint = "";
     if (reserveLossPct >= 35) {
-      dominantConstraint = "Reserve pressure is the dominant limiter. Too much usable scene area is being sacrificed to overlap, which can drive camera count and reduce layout efficiency.";
+      dominantConstraint = "Reserve pressure is the dominant limiter. Too much usable scene area is being held back as reserve, which can drive camera count and reduce layout efficiency.";
     } else if (reserveLossPct >= 20) {
       dominantConstraint = "Coverage efficiency is the dominant limiter. The reserve strategy is still workable, but it is beginning to compress usable scene width enough to affect downstream spacing.";
     } else {
       dominantConstraint = "Field geometry is balanced. Most of the lens footprint remains usable after reserve is applied, which gives the next spacing step a healthier starting point.";
     }
 
-    const interpretation = `At ${fmtFt(input.dist)}, the modeled lens footprint is about ${fmtFt(width)} wide by ${fmtFt(height)} high, producing ${fmtSqFt(area)} of raw area. After reserving ${fmtPct(input.ovPct)} for side-to-side overlap, effective usable width drops to ${fmtFt(effWidth)} while vertical coverage remains ${fmtFt(effHeight)}, leaving about ${fmtSqFt(effArea)} of usable scene coverage. ${interpretationCore}`;
+    const interpretation = `At ${fmtFt(input.dist)}, the modeled lens footprint is about ${fmtFt(width)} wide by ${fmtFt(height)} high, producing ${fmtSqFt(area)} of raw area. After reserving ${fmtPct(input.ovPct)} as usable coverage margin, effective usable width drops to ${fmtFt(effWidth)} while vertical coverage remains ${fmtFt(effHeight)}, leaving about ${fmtSqFt(effArea)} of usable scene coverage. ${interpretationCore}`;
 
     const guidance = `${guidanceCore} Continue to Camera Spacing next so you can translate this usable width into actual camera-to-camera placement.`;
 
@@ -527,7 +527,7 @@
         { label: "Effective Area", value: fmtSqFt(data.effArea) }
       ],
       derivedRows: [
-        { label: "Overlap Reserve", value: fmtPct(data.ovPct) },
+        { label: "Usable Coverage Reserve", value: fmtPct(data.ovPct) },
         { label: "Effective Width", value: fmtFt(data.effWidth) },
         { label: "Effective Height", value: fmtFt(data.effHeight) },
         { label: "Width Retention", value: fmtPct(data.widthRetentionPct, 1) },

@@ -6,7 +6,7 @@
   <title>Camera Spacing Planner | ScopedLabs</title>
   <meta
     name="description"
-    content="Estimate practical camera spacing and camera count from usable coverage width and overlap target."
+    content="Estimate practical camera spacing and camera count from usable coverage width and camera-to-camera overlap target."
   />
   <meta name="robots" content="noindex,follow" />
 
@@ -1282,7 +1282,7 @@
         <p class="muted"><strong>What this models</strong></p>
         <ul class="muted">
           <li>Raw versus usable coverage width per camera</li>
-          <li>Spacing required to maintain the overlap target</li>
+          <li>Spacing required to maintain the camera-to-camera overlap target</li>
           <li>Estimated camera count along the protected run</li>
           <li>Whether the layout is tight, balanced, or too wide before blind-spot validation</li>
         </ul>
@@ -1299,7 +1299,7 @@
       <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
         <h2 class="card-title" style="margin-top: 0;">Calculator</h2>
         <p class="muted" style="margin-top: -4px;">
-          Estimate how far cameras can be spaced while still honoring usable width and overlap target, so the final layout is based on practical continuity rather than raw lens footprint alone.
+          Estimate how far cameras can be spaced while still honoring usable width and camera-to-camera overlap target, so the final layout is based on practical continuity rather than raw lens footprint alone.
         </p>
 
         <div class="form-grid" style="margin-top: 14px;">
@@ -1326,9 +1326,10 @@
 
           <div class="field">
             <div class="label-row">
-              <label for="ov">Overlap Target (%)</label>
+              <label for="ov">Camera-to-Camera Overlap Target (%)</label>
             </div>
             <input id="ov" type="number" min="0" max="95" step="0.1" value="15" />
+            <p class="mini-note" style="margin-top: 6px;">Applies to adjacent cameras. For a one-camera area, overlap is not camera-to-camera; use Coverage Area reserve as the margin check.</p>
           </div>
         </div>
 
@@ -1345,7 +1346,7 @@
           <div id="analysis-copy" style="display:none;"></div>
 
           <p class="mini-note">
-            Model: raw width is calculated from horizontal field of view at the target plane, then reduced by the overlap target to estimate usable width. That usable width is applied across the total protected run to estimate camera count and actual spacing.
+            Model: raw width is calculated from horizontal field of view at the target plane, then reduced by the camera-to-camera overlap target to estimate practical spacing between adjacent cameras. For one-camera areas, this camera-to-camera overlap target is informational and should not be treated as camera-to-camera pressure.
           </p>
         </div>
 
@@ -1449,7 +1450,7 @@
 
     <script src="/assets/design-assistant-engine.js?v=design-assistant-engine-002"></script>
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-006"></script>
-  <script src="./script.js?v=physical-security-spacing-area-import-001"></script>
+  <script src="./script.js?v=physical-security-spacing-overlap-copy-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
