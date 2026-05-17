@@ -942,12 +942,12 @@ function escapeHtml(value) {
 
     return {
       scenarioId: null,
-      action: "Revisit Upstream Geometry",
-      reason: "None of the local spacing branches meaningfully improve this result with the current protected length, distance, HFOV, and overlap assumptions.",
-      expectedResult: "Recalculate Coverage Area or revise the protected run before using this spacing result downstream.",
-      confidence: "Upstream correction required",
-      nextStep: "Return to Coverage Area",
-      detail: "The assistant is not hiding this as a button because the current issue cannot be fixed cleanly inside Camera Spacing alone."
+      action: "Review Upstream Geometry",
+      reason: "The local spacing branches do not clearly improve this result because the outcome depends on upstream protected length, distance, HFOV, and overlap assumptions.",
+      expectedResult: "Review Coverage Area if the protected run, HFOV, or usable width should change before using this spacing result downstream.",
+      confidence: "Upstream review recommended",
+      nextStep: "Review Coverage Area",
+      detail: "No one-click spacing correction is being applied because this result depends on upstream coverage assumptions. Continue if those assumptions are intentional, or review Coverage Area to change protected length, HFOV, or usable width."
     };
   }
 
