@@ -1011,8 +1011,8 @@ function escapeHtml(value) {
         metrics: [
           { label: singleCamera ? "Protected run" : "Actual spacing", value: singleCamera ? fmtFt(data.len) : fmtFt(data.spacing), note: singleCamera ? "Single-camera span." : "Center spacing." },
           { label: "Usable width", value: fmtFt(data.usableWidth), note: singleCamera ? "After coverage reserve." : "After overlap." },
-          { label: singleCamera ? "Overlap reference" : "Overlap", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Current target." },
-          { label: "Status", value: data.status, note: "Combined status." }
+          { label: singleCamera ? "Overlap reference" : "Overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Target requirement." },
+          { label: "Spacing status", value: data.status, note: "Spacing continuity only." }
         ]
       },
       driver: {
