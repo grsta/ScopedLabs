@@ -2,7 +2,7 @@
   "title": "Camera Spacing Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how perimeter length, target distance, horizontal field of view, and overlap target affect camera count and spacing.",
+  "summary": "Understand how perimeter length, target distance, horizontal field of view, and camera-to-camera overlap target affect camera count and spacing.",
   "updated": "2026-05-02",
   "sections": [
     {
@@ -77,8 +77,8 @@
           ]
         },
         {
-          "label": "Overlap Target (%)",
-          "description": "The desired amount of view overlap between neighboring cameras.",
+          "label": "Camera-to-Camera Camera-to-Camera Overlap Target (%)",
+          "description": "Camera-to-Camera Overlap Target applies to adjacent cameras in a multi-camera layout. It controls how much neighboring camera footprints intentionally share coverage to reduce seams and gaps. For a one-camera area, this value is informational and should not be treated as camera-to-camera overlap pressure.",
           "examples": [
             "10% overlap",
             "20% overlap",
@@ -90,7 +90,7 @@
             {
               "label": "Check remaining blind areas",
               "kbKey": "physical-security/blind-spot-check",
-              "anchor": "Overlap Target (%)",
+              "anchor": "Camera-to-Camera Overlap Target (%)",
               "note": "Blind Spot Check helps review whether overlapping views still leave uncovered zones."
             }
           ]

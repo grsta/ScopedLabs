@@ -2,7 +2,7 @@
   "title": "Camera Coverage Area Guide",
   "eyebrow": "Knowledge Base",
   "defaultOpen": false,
-  "summary": "Understand how horizontal FOV, vertical FOV, target distance, and overlap reserve shape the practical coverage footprint of a camera.",
+  "summary": "Understand how horizontal FOV, vertical FOV, target distance, and usable coverage reserve shape the practical coverage footprint of a camera.",
   "updated": "2026-05-02",
   "sections": [
     {
@@ -77,8 +77,8 @@
           "commonMistake": "Using the room depth instead of the actual plane where coverage matters."
         },
         {
-          "label": "Overlap Reserve (%)",
-          "description": "The percentage of the calculated area held back for overlap, aiming tolerance, distortion, or edge softness.",
+          "label": "Usable Coverage Reserve (%)",
+          "description": "Usable Coverage Reserve is a margin applied to the raw field-of-view footprint before the result is carried forward. It accounts for edge softness, aim tolerance, mounting variation, and real-world usable coverage limits. It is not camera-to-camera overlap.",
           "examples": [
             "10% reserve",
             "20% overlap",
