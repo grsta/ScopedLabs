@@ -1323,84 +1323,117 @@ function assistantStatusClass(data) {
 
   function spacingVisualSvg(data) {
     const singleCamera = Number(data?.cams) <= 1 || data?.singleCamera;
-    const cameraCount = singleCamera ? 1 : Math.min(Math.max(Number(data?.cams) || 1, 2), 6);
-    const runX = 70;
-    const runY = 194;
-    const runW = 660;
-    const footprintY = 136;
-    const footprintH = 30;
-    const cameraY = 48;
-    const coneY = 130;
+    const cameraCount = singleCamera ? 1 : Math.min(Math.max(Number(data?.cams) || 2, 2), 6);
+
+    const svgW = 800;
+    const svgH = 260;
+
+    const axisX1 = 92;
+    const axisX2 = 708;
+    const axisW = axisX2 - axisX1;
+    const axisY = 198;
+
+    const cameraY = 82;
+    const footprintY = 150;
+    const labelY = 42;
 
     const protectedLen = Math.max(Number(data?.len) || 1, 1);
+    const usableFt = Math.max(Number(data?.usableWidth) || 1, 1);
     const spacingFt = Math.max(Number(data?.spacing) || protectedLen, 1);
-    const usableFt = Math.max(Number(data?.usableWidth) || spacingFt, 1);
-    const scale = runW / protectedLen;
-    const segmentW = runW / Math.max(cameraCount, 1);
-    const footprintPx = Math.max(singleCamera ? runW * 0.74 : 90, Math.min(runW, usableFt * scale));
-    const halfFootprint = footprintPx / 2;
+    const overlapPct = Number(data?.ovPct) || 0;
+
+    const scale = axisW / protectedLen;
+    const footprintPx = Math.max(36, Math.min(axisW, usableFt * scale));
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-    const cameraX = (index) => singleCamera
-      ? runX + runW / 2
-      : runX + segmentW / 2 + (segmentW * index);
 
-    const cameraParts = [];
-    for (let index = 0; index < cameraCount; index += 1) {
-      const x = cameraX(index);
-      const left = clamp(x - halfFootprint, runX, runX + runW);
-      const right = clamp(x + halfFootprint, runX, runX + runW);
-      const label = singleCamera ? "Single camera footprint" : "Camera " + (index + 1) + " footprint";
+    const cameraX = (index) => {
+      if (singleCamera) return (axisX1 + axisX2) / 2;
+      if (cameraCount === 2) return index === 0 ? axisX1 + axisW * 0.25 : axisX1 + axisW * 0.75;
+      const step = axisW / (cameraCount - 1);
+      return axisX1 + step * index;
+    };
 
-      cameraParts.push(
-        '<rect x="' + left.toFixed(1) + '" y="' + footprintY + '" width="' + Math.max(right - left, 2).toFixed(1) + '" height="' + footprintH + '" rx="15" fill="rgba(125,255,152,.10)" stroke="rgba(125,255,152,.24)" stroke-width="1" />' +
-        '<path d="M ' + x.toFixed(1) + ' ' + cameraY + ' L ' + left.toFixed(1) + ' ' + coneY + ' L ' + right.toFixed(1) + ' ' + coneY + ' Z" fill="rgba(125,255,152,.055)" stroke="rgba(125,255,152,.23)" stroke-width="1" />' +
-        '<circle cx="' + x.toFixed(1) + '" cy="' + cameraY + '" r="10" fill="rgba(8,25,15,.94)" stroke="rgba(125,255,152,.85)" stroke-width="2" />' +
-        '<line x1="' + x.toFixed(1) + '" y1="' + (cameraY + 12) + '" x2="' + x.toFixed(1) + '" y2="' + coneY + '" stroke="rgba(125,255,152,.18)" stroke-width="1" stroke-dasharray="4 6" />' +
-        '<text x="' + x.toFixed(1) + '" y="' + (cameraY - 19) + '" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="12" font-weight="800">' + escapeHtml(singleCamera ? "Camera 1" : "Camera " + (index + 1)) + '</text>' +
-        '<text x="' + x.toFixed(1) + '" y="' + (footprintY + 52) + '" text-anchor="middle" fill="rgba(226,232,240,.50)" font-size="11">' + escapeHtml(label) + '</text>'
+    const parts = [];
+
+    parts.push(
+      '<defs>' +
+        '<linearGradient id="spacingConeFill" x1="0" y1="0" x2="1" y2="0">' +
+          '<stop offset="0%" stop-color="rgba(125,255,152,.035)" />' +
+          '<stop offset="100%" stop-color="rgba(125,255,152,.11)" />' +
+        '</linearGradient>' +
+        '<linearGradient id="spacingOverlapFill" x1="0" y1="0" x2="1" y2="0">' +
+          '<stop offset="0%" stop-color="rgba(255,211,79,.10)" />' +
+          '<stop offset="100%" stop-color="rgba(255,211,79,.18)" />' +
+        '</linearGradient>' +
+      '</defs>'
+    );
+
+    parts.push(
+      '<line x1="' + axisX1 + '" y1="' + axisY + '" x2="' + axisX2 + '" y2="' + axisY + '" stroke="rgba(226,232,240,.28)" stroke-width="1.25" />' +
+      '<line x1="' + axisX1 + '" y1="' + (axisY - 8) + '" x2="' + axisX1 + '" y2="' + (axisY + 8) + '" stroke="rgba(226,232,240,.28)" stroke-width="1" />' +
+      '<line x1="' + axisX2 + '" y1="' + (axisY - 8) + '" x2="' + axisX2 + '" y2="' + (axisY + 8) + '" stroke="rgba(226,232,240,.28)" stroke-width="1" />' +
+      '<text x="' + axisX1 + '" y="' + (axisY + 26) + '" text-anchor="middle" fill="rgba(226,232,240,.44)" font-size="11">0 ft</text>' +
+      '<text x="' + axisX2 + '" y="' + (axisY + 26) + '" text-anchor="middle" fill="rgba(226,232,240,.44)" font-size="11">' + escapeHtml(fmtFt(data.len)) + '</text>' +
+      '<text x="' + ((axisX1 + axisX2) / 2) + '" y="' + (axisY + 12) + '" text-anchor="middle" fill="rgba(226,232,240,.66)" font-size="12" font-weight="800">Protected run</text>'
+    );
+
+    const footprintRanges = [];
+
+    for (let i = 0; i < cameraCount; i += 1) {
+      const cx = cameraX(i);
+      const left = clamp(cx - footprintPx / 2, axisX1, axisX2);
+      const right = clamp(cx + footprintPx / 2, axisX1, axisX2);
+      footprintRanges.push({ left, right, cx });
+
+      parts.push(
+        '<path d="M ' + cx.toFixed(1) + ' ' + cameraY + ' L ' + left.toFixed(1) + ' ' + footprintY + ' L ' + right.toFixed(1) + ' ' + footprintY + ' Z" fill="url(#spacingConeFill)" stroke="rgba(125,255,152,.34)" stroke-width="1.1" />' +
+        '<circle cx="' + cx.toFixed(1) + '" cy="' + cameraY + '" r="8.5" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.86)" stroke-width="1.8" />' +
+        '<line x1="' + left.toFixed(1) + '" y1="' + (footprintY - 10) + '" x2="' + left.toFixed(1) + '" y2="' + (footprintY + 10) + '" stroke="rgba(125,255,152,.22)" stroke-width="1" />' +
+        '<line x1="' + right.toFixed(1) + '" y1="' + (footprintY - 10) + '" x2="' + right.toFixed(1) + '" y2="' + (footprintY + 10) + '" stroke="rgba(125,255,152,.22)" stroke-width="1" />' +
+        '<line x1="' + cx.toFixed(1) + '" y1="' + (cameraY + 10) + '" x2="' + cx.toFixed(1) + '" y2="' + footprintY + '" stroke="rgba(226,232,240,.14)" stroke-width="1" stroke-dasharray="4 5" />' +
+        '<text x="' + cx.toFixed(1) + '" y="' + labelY + '" text-anchor="middle" fill="rgba(226,232,240,.68)" font-size="11" font-weight="800">' + escapeHtml('Cam ' + (i + 1)) + '</text>'
       );
     }
 
-    let measurement = "";
-    let overlapMarkup = "";
+    if (!singleCamera && footprintRanges.length >= 2) {
+      const a = footprintRanges[0];
+      const b = footprintRanges[1];
+      const overlapLeft = Math.max(a.left, b.left);
+      const overlapRight = Math.min(a.right, b.right);
+      const overlapWidth = overlapRight - overlapLeft;
 
-    if (singleCamera) {
-      measurement =
-        '<line x1="' + runX + '" y1="112" x2="' + (runX + runW) + '" y2="112" stroke="rgba(226,232,240,.25)" stroke-width="1" />' +
-        '<line x1="' + runX + '" y1="104" x2="' + runX + '" y2="120" stroke="rgba(226,232,240,.30)" stroke-width="1" />' +
-        '<line x1="' + (runX + runW) + '" y1="104" x2="' + (runX + runW) + '" y2="120" stroke="rgba(226,232,240,.30)" stroke-width="1" />' +
-        '<text x="' + (runX + runW / 2) + '" y="104" text-anchor="middle" fill="rgba(226,232,240,.75)" font-size="13" font-weight="800">Protected run: ' + escapeHtml(fmtFt(data.len)) + '</text>' +
-        '<text x="' + (runX + runW / 2) + '" y="232" text-anchor="middle" fill="rgba(255,211,79,.78)" font-size="13" font-weight="800">No adjacent camera ? overlap is N/A</text>';
-    } else {
-      const x1 = cameraX(0);
-      const x2 = cameraX(1);
-      const overlapLeft = clamp(x2 - halfFootprint, runX, runX + runW);
-      const overlapRight = clamp(x1 + halfFootprint, runX, runX + runW);
-      const overlapW = Math.max(0, overlapRight - overlapLeft);
+      parts.push(
+        '<line x1="' + a.cx.toFixed(1) + '" y1="118" x2="' + b.cx.toFixed(1) + '" y2="118" stroke="rgba(226,232,240,.26)" stroke-width="1" />' +
+        '<line x1="' + a.cx.toFixed(1) + '" y1="112" x2="' + a.cx.toFixed(1) + '" y2="124" stroke="rgba(226,232,240,.28)" stroke-width="1" />' +
+        '<line x1="' + b.cx.toFixed(1) + '" y1="112" x2="' + b.cx.toFixed(1) + '" y2="124" stroke="rgba(226,232,240,.28)" stroke-width="1" />' +
+        '<text x="' + ((a.cx + b.cx) / 2).toFixed(1) + '" y="108" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12" font-weight="800">Spacing: ' + escapeHtml(fmtFt(data.spacing)) + '</text>'
+      );
 
-      if (overlapW > 2) {
-        overlapMarkup =
-          '<rect x="' + overlapLeft.toFixed(1) + '" y="' + (footprintY - 6) + '" width="' + overlapW.toFixed(1) + '" height="' + (footprintH + 12) + '" rx="12" fill="rgba(255,211,79,.20)" stroke="rgba(255,211,79,.45)" stroke-width="1" />' +
-          '<text x="' + ((overlapLeft + overlapRight) / 2).toFixed(1) + '" y="' + (footprintY - 12) + '" text-anchor="middle" fill="rgba(255,232,160,.88)" font-size="12" font-weight="900">Shared overlap</text>';
+      if (overlapWidth > 3) {
+        parts.push(
+          '<rect x="' + overlapLeft.toFixed(1) + '" y="' + (footprintY - 5) + '" width="' + overlapWidth.toFixed(1) + '" height="10" rx="5" fill="url(#spacingOverlapFill)" stroke="rgba(255,211,79,.35)" stroke-width="1" />' +
+          '<text x="' + ((overlapLeft + overlapRight) / 2).toFixed(1) + '" y="' + (footprintY - 11) + '" text-anchor="middle" fill="rgba(255,226,128,.86)" font-size="11" font-weight="800">Shared overlap</text>'
+        );
       }
 
-      measurement =
-        '<line x1="' + x1.toFixed(1) + '" y1="108" x2="' + x2.toFixed(1) + '" y2="108" stroke="rgba(226,232,240,.32)" stroke-width="1" />' +
-        '<line x1="' + x1.toFixed(1) + '" y1="100" x2="' + x1.toFixed(1) + '" y2="116" stroke="rgba(226,232,240,.34)" stroke-width="1" />' +
-        '<line x1="' + x2.toFixed(1) + '" y1="100" x2="' + x2.toFixed(1) + '" y2="116" stroke="rgba(226,232,240,.34)" stroke-width="1" />' +
-        '<text x="' + ((x1 + x2) / 2).toFixed(1) + '" y="99" text-anchor="middle" fill="rgba(226,232,240,.78)" font-size="13" font-weight="800">Actual spacing: ' + escapeHtml(fmtFt(data.spacing)) + '</text>' +
-        '<text x="' + (runX + runW / 2) + '" y="232" text-anchor="middle" fill="rgba(226,232,240,.64)" font-size="13">Usable width: ' + escapeHtml(fmtFt(data.usableWidth)) + ' | Overlap target: ' + escapeHtml(fmtPct(data.ovPct, 1)) + '</text>';
+      parts.push(
+        '<text x="' + ((axisX1 + axisX2) / 2) + '" y="236" text-anchor="middle" fill="rgba(226,232,240,.58)" font-size="12">Usable width: ' + escapeHtml(fmtFt(data.usableWidth)) + ' | Overlap target: ' + escapeHtml(fmtPct(data.ovPct, 1)) + '</text>'
+      );
+    } else {
+      const only = footprintRanges[0];
+
+      parts.push(
+        '<line x1="' + only.left.toFixed(1) + '" y1="118" x2="' + only.right.toFixed(1) + '" y2="118" stroke="rgba(226,232,240,.26)" stroke-width="1" />' +
+        '<line x1="' + only.left.toFixed(1) + '" y1="112" x2="' + only.left.toFixed(1) + '" y2="124" stroke="rgba(226,232,240,.28)" stroke-width="1" />' +
+        '<line x1="' + only.right.toFixed(1) + '" y1="112" x2="' + only.right.toFixed(1) + '" y2="124" stroke="rgba(226,232,240,.28)" stroke-width="1" />' +
+        '<text x="' + ((only.left + only.right) / 2).toFixed(1) + '" y="108" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="12" font-weight="800">Usable width: ' + escapeHtml(fmtFt(data.usableWidth)) + '</text>' +
+        '<text x="' + ((axisX1 + axisX2) / 2) + '" y="236" text-anchor="middle" fill="rgba(255,211,79,.82)" font-size="12" font-weight="800">Single-camera coverage check | Overlap: N/A</text>'
+      );
     }
 
-    return '<svg viewBox="0 0 800 260" role="img" aria-label="Camera spacing visualization">' +
-      '<rect x="0" y="0" width="800" height="260" fill="rgba(255,255,255,.006)" />' +
-      '<rect x="' + runX + '" y="' + runY + '" width="' + runW + '" height="12" rx="6" fill="rgba(226,232,240,.10)" />' +
-      '<rect x="' + runX + '" y="' + runY + '" width="' + runW + '" height="12" rx="6" fill="rgba(125,255,152,.24)" />' +
-      '<text x="' + runX + '" y="' + (runY + 34) + '" fill="rgba(226,232,240,.72)" font-size="13" font-weight="800">Protected run: ' + escapeHtml(fmtFt(data.len)) + '</text>' +
-      measurement +
-      overlapMarkup +
-      cameraParts.join("") +
+    return '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Camera spacing visualization">' +
+      parts.join('') +
     '</svg>';
   }
 
