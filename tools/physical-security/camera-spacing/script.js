@@ -2271,7 +2271,8 @@ function assistantStatusClass(data) {
     const len = num(area.protectedLengthFt);
     const dist = num(area.distanceToTargetPlaneFt);
     const hfov = num(area.assumedHfovDeg);
-    const ovPct = num(area.overlapTargetPct);
+    const spacingOverlapTargetPct = num(area.spacingOverlapTargetPct);
+    const coverageReservePct = num(area.usableCoverageReservePct ?? area.coverageReservePct ?? area.overlapTargetPct);
 
     if (Number.isFinite(len) && len > 0) {
       captureImportedFlowValue("len", len);
@@ -2288,9 +2289,9 @@ function assistantStatusClass(data) {
       els.hfov.value = String(Number(hfov.toFixed(1)));
     }
 
-    if (Number.isFinite(ovPct) && ovPct >= 0 && ovPct <= 95) {
-      captureImportedFlowValue("ov", ovPct);
-      els.ov.value = String(Number(ovPct.toFixed(1)));
+    if (Number.isFinite(spacingOverlapTargetPct) && spacingOverlapTargetPct >= 0 && spacingOverlapTargetPct <= 95) {
+      captureImportedFlowValue("ov", spacingOverlapTargetPct);
+      els.ov.value = String(Number(spacingOverlapTargetPct.toFixed(1)));
     }
 
     return true;
@@ -2300,11 +2301,14 @@ function assistantStatusClass(data) {
     const area = getActiveSpacingArea();
     if (!area) return "";
 
+    const coverageReservePct = num(area.usableCoverageReservePct ?? area.coverageReservePct ?? area.overlapTargetPct);
+
     const parts = [];
     if (area.name) parts.push("Current Area: <strong>" + escapeHtml(area.name) + "</strong>");
     if (Number.isFinite(num(area.protectedLengthFt))) parts.push("Protected length: <strong>" + fmtFt(num(area.protectedLengthFt)) + "</strong>");
     if (Number.isFinite(num(area.distanceToTargetPlaneFt))) parts.push("Distance: <strong>" + fmtFt(num(area.distanceToTargetPlaneFt)) + "</strong>");
     if (Number.isFinite(num(area.assumedHfovDeg))) parts.push("Assumed HFOV: <strong>" + fmt(num(area.assumedHfovDeg), 1) + "&deg;</strong>");
+    if (Number.isFinite(coverageReservePct)) parts.push("Coverage reserve: <strong>" + fmtPct(coverageReservePct, 1) + "</strong> <span class=\"muted\">(not spacing overlap)</span>");
 
     if (!parts.length) return "";
 
@@ -2366,18 +2370,15 @@ function assistantStatusClass(data) {
     const prev = flow.data || {};
     const dist = num(prev.dist);
     const hfov = num(prev.hfov);
-    const ovPct = num(prev.ovPct);
+    const coverageReservePct = num(prev.usableCoverageReservePct ?? prev.coverageReservePct ?? prev.ovPct);
     const effWidth = num(prev.effWidth);
     const width = num(prev.width);
-
     captureImportedFlowValue("dist", dist);
     captureImportedFlowValue("hfov", hfov);
-    captureImportedFlowValue("ov", ovPct);
 
     if (canApplyFlowInputs()) {
       if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Number(dist.toFixed(1)));
       if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Number(hfov.toFixed(1)));
-      if (Number.isFinite(ovPct) && ovPct >= 0) els.ov.value = String(Number(ovPct.toFixed(1)));
     }
 
     const parts = [];
@@ -2385,6 +2386,7 @@ function assistantStatusClass(data) {
     if (Number.isFinite(width) && width > 0) parts.push(`Raw width: <strong>${fmtFt(width)}</strong>`);
     if (Number.isFinite(dist) && dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
     if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}&deg;</strong>`);
+    if (Number.isFinite(coverageReservePct) && coverageReservePct >= 0) parts.push(`Coverage reserve: <strong>${fmtPct(coverageReservePct, 1)}</strong> <span class="muted">(not spacing overlap)</span>`);
 
     if (parts.length || areaContext) {
       els.flowNote.hidden = false;
@@ -2451,16 +2453,18 @@ function assistantStatusClass(data) {
     if (!input.ok) return input;
 
     const rawWidth = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
-    const usableWidth = rawWidth * (1 - (input.ovPct / 100));
+    const rawCoversSingleCamera = rawWidth >= input.len;
+    const appliedOverlapTargetPct = rawCoversSingleCamera ? 0 : input.ovPct;
+    const usableWidth = rawWidth * (1 - (appliedOverlapTargetPct / 100));
 
-    const cams = Math.max(1, Math.ceil(input.len / usableWidth));
+    const cams = rawCoversSingleCamera ? 1 : Math.max(1, Math.ceil(input.len / usableWidth));
     const spacing = input.len / cams;
     const ratio = usableWidth > 0 ? spacing / usableWidth : 0;
 
     const isSingleCamera = cams <= 1;
     const gapExposureMetric = ratio > 1 ? Math.min((ratio - 1) * 250, 100) : 0;
     const compressionMetric = isSingleCamera ? 0 : (ratio < 1 ? Math.min((1 - ratio) * 100, 100) : 0);
-    const reserveMetric = isSingleCamera ? 0 : input.ovPct;
+    const reserveMetric = isSingleCamera ? 0 : appliedOverlapTargetPct;
 
     const metrics = [
       {
@@ -2476,7 +2480,7 @@ function assistantStatusClass(data) {
       {
         label: isSingleCamera ? "Single-Camera Overlap Reference" : "Camera-to-Camera Overlap Target",
         value: reserveMetric,
-        displayValue: isSingleCamera ? "N/A" : fmtPct(input.ovPct, 1)
+        displayValue: isSingleCamera ? "N/A" : fmtPct(appliedOverlapTargetPct, 1)
       }
     ];
 
@@ -2537,6 +2541,8 @@ function assistantStatusClass(data) {
       ratio,
       spacingClass,
       singleCamera: isSingleCamera,
+      requestedOverlapTargetPct: input.ovPct,
+      appliedOverlapTargetPct,
       status: statusPack.status,
       interpretation,
       dominantConstraint,
@@ -2557,7 +2563,9 @@ function assistantStatusClass(data) {
       protectedLengthFt: data.len,
       distanceToTargetPlaneFt: data.dist,
       assumedHfovDeg: data.hfov,
-      overlapTargetPct: data.ovPct,
+      overlapTargetPct: data.singleCamera ? null : data.appliedOverlapTargetPct,
+      spacingOverlapTargetPct: data.singleCamera ? null : data.appliedOverlapTargetPct,
+      spacingOverlapApplicable: !data.singleCamera,
       cameraCount: data.cams,
       spacingFt: data.spacing,
       spacingRatio: data.ratio,
