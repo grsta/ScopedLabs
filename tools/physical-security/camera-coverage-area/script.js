@@ -28,6 +28,7 @@
     reset: $("reset"),
     results: $("results"),
     analysis: $("analysis-copy"),
+    assistant: $("coverageAssistant"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
@@ -172,7 +173,7 @@
     if (number === null) return "n/a";
 
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
-    if (field === "hfov") return Math.round(number) + "?";
+    if (field === "hfov") return Math.round(number) + "&deg;";
 
     return String(number);
   }
@@ -321,6 +322,8 @@
       sessionStorage.removeItem(FLOW_KEYS.area);
       clearDownstream();
     }
+
+    renderCoverageAssistantPrompt();
 
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
@@ -499,9 +502,104 @@
     updateActiveAreaFromCoverage(data);
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function statusClassName(status) {
+    const value = String(status || "").trim().toLowerCase();
+    if (value === "risk") return "risk";
+    if (value === "watch") return "watch";
+    return "healthy";
+  }
+
+  function coverageAssistantTitle(data) {
+    if (data.reserveLossPct >= 35) return "Reserve is heavily reducing usable coverage.";
+    if (data.reserveLossPct >= 20) return "Usable coverage is workable but reserve is starting to matter.";
+    return "Usable coverage is ready for spacing validation.";
+  }
+
+  function coverageFootprintSvg(data) {
+    const reservePct = Math.max(0, Math.min(Number(data?.ovPct) || 0, 95));
+    const retainedPct = Math.max(0, Math.min(Number(data?.widthRetentionPct) || 0, 100));
+    const boxX = 72;
+    const boxY = 86;
+    const boxW = 656;
+    const boxH = 122;
+    const usableW = Math.max(4, boxW * (retainedPct / 100));
+    const usableX = boxX + (boxW - usableW) / 2;
+    const reserveW = Math.max(0, usableX - boxX);
+    const cameraX = boxX + boxW / 2;
+    const cameraY = 44;
+
+    return '<svg viewBox="0 0 800 260" role="img" aria-label="Coverage reserve visualization">' +
+      '<defs>' +
+        '<linearGradient id="coverageRaw" x1="0" y1="0" x2="1" y2="1">' +
+          '<stop offset="0%" stop-color="rgba(125,255,152,.035)" />' +
+          '<stop offset="100%" stop-color="rgba(125,255,152,.10)" />' +
+        '</linearGradient>' +
+        '<linearGradient id="coverageReserve" x1="0" y1="0" x2="1" y2="0">' +
+          '<stop offset="0%" stop-color="rgba(255,211,79,.11)" />' +
+          '<stop offset="100%" stop-color="rgba(255,211,79,.24)" />' +
+        '</linearGradient>' +
+      '</defs>' +
+      '<text x="72" y="28" fill="rgba(226,232,240,.86)" font-size="17" font-weight="900">Raw footprint vs usable coverage</text>' +
+      '<text x="72" y="50" fill="rgba(226,232,240,.56)" font-size="12">Reserve trims the raw FOV footprint before Camera Spacing uses the width.</text>' +
+      '<circle cx="' + cameraX.toFixed(1) + '" cy="' + cameraY + '" r="8" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.86)" stroke-width="1.7" />' +
+      '<path d="M ' + cameraX.toFixed(1) + ' ' + (cameraY + 10) + ' L ' + boxX + ' ' + boxY + ' L ' + (boxX + boxW) + ' ' + boxY + ' Z" fill="rgba(125,255,152,.035)" stroke="rgba(125,255,152,.22)" stroke-width="1" />' +
+      '<rect x="' + boxX + '" y="' + boxY + '" width="' + boxW + '" height="' + boxH + '" rx="16" fill="url(#coverageRaw)" stroke="rgba(125,255,152,.34)" stroke-width="1.2" />' +
+      (reserveW > 1 ? '<rect x="' + boxX + '" y="' + boxY + '" width="' + reserveW.toFixed(1) + '" height="' + boxH + '" rx="16" fill="url(#coverageReserve)" stroke="rgba(255,211,79,.24)" stroke-width="1" />' : '') +
+      (reserveW > 1 ? '<rect x="' + (usableX + usableW).toFixed(1) + '" y="' + boxY + '" width="' + reserveW.toFixed(1) + '" height="' + boxH + '" rx="16" fill="url(#coverageReserve)" stroke="rgba(255,211,79,.24)" stroke-width="1" />' : '') +
+      '<rect x="' + usableX.toFixed(1) + '" y="' + (boxY + 20) + '" width="' + usableW.toFixed(1) + '" height="' + (boxH - 40) + '" rx="12" fill="rgba(125,255,152,.10)" stroke="rgba(125,255,152,.72)" stroke-width="1.5" />' +
+      '<text x="' + (boxX + 14) + '" y="' + (boxY + 20) + '" fill="rgba(226,232,240,.68)" font-size="11" font-weight="800">Raw FOV footprint</text>' +
+      '<text x="' + cameraX.toFixed(1) + '" y="' + (boxY + 75) + '" text-anchor="middle" fill="rgba(226,232,240,.84)" font-size="13" font-weight="900">Usable footprint after reserve</text>' +
+      '<text x="' + (boxX + boxW - 14) + '" y="' + (boxY + 20) + '" text-anchor="end" fill="rgba(255,226,128,.88)" font-size="11" font-weight="800">Reserve ' + escapeHtml(fmtPct(reservePct, 1)) + '</text>' +
+      '<line x1="' + usableX.toFixed(1) + '" y1="225" x2="' + (usableX + usableW).toFixed(1) + '" y2="225" stroke="rgba(125,255,152,.82)" stroke-width="2" />' +
+      '<text x="' + cameraX.toFixed(1) + '" y="244" text-anchor="middle" fill="rgba(125,255,152,.86)" font-size="12" font-weight="900">Usable width carried forward: ' + escapeHtml(fmtFt(data.effWidth)) + '</text>' +
+    '</svg>';
+  }
+
+  function renderCoverageAssistantPrompt(message = "Enter valid values and press Calculate.") {
+    if (!els.assistant) return;
+    els.assistant.innerHTML = '<p class="muted" style="margin:0;">' + escapeHtml(message) + '</p>';
+  }
+
+  function renderCoverageAssistant(data) {
+    if (!els.assistant || !data || !data.ok) return;
+
+    const statusClass = statusClassName(data.status);
+    const title = coverageAssistantTitle(data);
+    const handoff = 'Camera Spacing should use the usable coverage width of <strong>' + escapeHtml(fmtFt(data.effWidth)) + '</strong>. The <strong>' + escapeHtml(fmtPct(data.ovPct, 1)) + '</strong> reserve is a coverage margin, not camera-to-camera overlap.';
+
+    els.assistant.innerHTML =
+      '<div class="coverage-assistant-head">' +
+        '<div>' +
+          '<p class="coverage-assistant-kicker">Coverage Assistant</p>' +
+          '<h4 class="coverage-assistant-title">' + escapeHtml(title) + '</h4>' +
+          '<p class="coverage-assistant-copy">' + escapeHtml(data.interpretation) + '</p>' +
+        '</div>' +
+        '<span class="coverage-status-pill ' + statusClass + '">' + escapeHtml(data.status) + '</span>' +
+      '</div>' +
+      '<div class="coverage-visual-stage">' + coverageFootprintSvg(data) + '</div>' +
+      '<div class="coverage-mini-grid">' +
+        '<div class="coverage-mini-card"><div class="coverage-mini-label">Raw footprint</div><div class="coverage-mini-value">' + escapeHtml(fmtFt(data.width)) + ' ? ' + escapeHtml(fmtFt(data.height)) + '</div></div>' +
+        '<div class="coverage-mini-card"><div class="coverage-mini-label">Usable width</div><div class="coverage-mini-value">' + escapeHtml(fmtFt(data.effWidth)) + '</div></div>' +
+        '<div class="coverage-mini-card"><div class="coverage-mini-label">Reserve</div><div class="coverage-mini-value">' + escapeHtml(fmtPct(data.ovPct, 1)) + '</div></div>' +
+        '<div class="coverage-mini-card"><div class="coverage-mini-label">Efficiency</div><div class="coverage-mini-value">' + escapeHtml(data.efficiencyClass) + '</div></div>' +
+      '</div>' +
+      '<div class="coverage-handoff-card"><strong>Next handoff:</strong> ' + handoff + '</div>' +
+      '<div class="coverage-handoff-card"><strong>Guidance:</strong> ' + escapeHtml(data.guidance) + '</div>';
+  }
+
   function renderError(message) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+    renderCoverageAssistantPrompt(message);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -545,6 +643,7 @@
       guidance: data.guidance
     });
 
+    renderCoverageAssistant(data);
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
     forceCoverageContinueVisible();

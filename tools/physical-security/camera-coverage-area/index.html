@@ -66,6 +66,144 @@
       line-height: 1.5;
     }
 
+    .coverage-assistant {
+      display: grid;
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .coverage-assistant-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .coverage-assistant-kicker {
+      margin: 0 0 6px;
+      color: rgba(125,255,152,.76);
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .coverage-assistant-title {
+      margin: 0;
+      color: rgba(255,255,255,.94);
+      font-size: 1.18rem;
+      line-height: 1.25;
+    }
+
+    .coverage-assistant-copy {
+      margin: 8px 0 0;
+      color: rgba(226,232,240,.72);
+      line-height: 1.55;
+    }
+
+    .coverage-status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 7px 11px;
+      border: 1px solid rgba(125,255,152,.24);
+      background: rgba(125,255,152,.09);
+      color: rgba(190,255,205,.94);
+      font-weight: 900;
+      font-size: .78rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .coverage-status-pill.watch {
+      border-color: rgba(255,211,79,.32);
+      background: rgba(255,211,79,.10);
+      color: rgba(255,226,128,.96);
+    }
+
+    .coverage-status-pill.risk {
+      border-color: rgba(255,138,102,.34);
+      background: rgba(255,138,102,.10);
+      color: rgba(255,188,166,.96);
+    }
+
+    .coverage-visual-stage {
+      border: 1px solid rgba(125,255,152,.16);
+      border-radius: 16px;
+      background: rgba(0,0,0,.16);
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    .coverage-visual-stage svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .coverage-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .coverage-mini-card {
+      border: 1px solid rgba(125,255,152,.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,.035);
+      padding: 11px 12px;
+      min-width: 0;
+    }
+
+    .coverage-mini-label {
+      color: rgba(226,232,240,.54);
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .coverage-mini-value {
+      margin-top: 5px;
+      color: rgba(255,255,255,.92);
+      font-size: .98rem;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .coverage-handoff-card {
+      border: 1px solid rgba(255,211,79,.18);
+      border-radius: 14px;
+      background: rgba(255,211,79,.055);
+      padding: 12px 14px;
+      color: rgba(226,232,240,.72);
+      line-height: 1.55;
+    }
+
+    .coverage-handoff-card strong {
+      color: rgba(255,232,160,.94);
+    }
+
+    .coverage-technical-results {
+      position: absolute !important;
+      left: -10000px !important;
+      top: auto !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    @media (max-width: 860px) {
+      .coverage-mini-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
     /* Coverage Area flow action alignment */
     .coverage-flow-actions {
       align-items: center;
@@ -264,16 +402,15 @@
           <button id="reset" class="btn" type="button">Reset</button>
         </div>
 
-        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-          <h3 class="h3" style="margin-top: 0;">Results</h3>
-          <div id="results" class="results-grid" aria-live="polite">
+        <div class="card coverage-assistant-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Coverage Assistant</h3>
+          <div id="coverageAssistant" class="coverage-assistant" aria-live="polite">
+            <p class="muted" style="margin:0;">Enter valid values and press Calculate.</p>
+          </div>
+          <div id="results" class="results-grid coverage-technical-results" aria-hidden="true">
             <div class="muted">Enter valid values and press Calculate.</div>
           </div>
           <div id="analysis-copy" style="display:none;"></div>
-
-          <p class="mini-note">
-            Model: raw coverage width and height are calculated from field of view at the target plane, then reduced by usable coverage reserve to estimate the effective width, height, and usable area that remain for practical layout planning.
-          </p>
         </div>
 
         
@@ -292,37 +429,10 @@
           <span class="pill pill--pro">Documentation & Export</span>
         </div>
 
-        <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
+        <h3 class="h3" style="margin-top: 10px;">Export & Snapshot</h3>
         <p class="muted" style="margin-bottom: 0;">
-          Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
+          Use the assistant summary and calculated output to open a clean report or save a snapshot. Project notes can be added later from the report workflow.
         </p>
-
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Camera Coverage Area Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
 
         <div class="btn-row" style="margin-top: 14px;">
           <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
@@ -374,7 +484,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-006"></script>
-  <script src="./script.js?v=physical-security-coverage-reserve-alias-002"></script>
+  <script src="./script.js?v=physical-security-coverage-assistant-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
