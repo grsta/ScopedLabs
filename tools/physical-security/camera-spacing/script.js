@@ -560,7 +560,7 @@ function escapeHtml(value) {
           '<label class="field"><span class="label">Target Cameras</span><input data-spacing-whatif="targetCams" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.cams || 1).toFixed(0))) + '"></label>' +
           '<label class="field"><span class="label">Distance</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
           '<label class="field"><span class="label">HFOV</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">Camera-to-Camera Overlap Target</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Overlap Target</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
         '</div>' +
         '<p class="lens-design-copy" style="margin-top:10px;"><strong>Tip:</strong> Change Target Cameras to 2, 3, or more to test what overlap is needed for that camera count. If the required overlap is unrealistic, the assistant will show the result as a pressure/tradeoff scenario.</p>' +
         '<div class="btn-row" style="margin-top:12px;"><button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button></div>' +
@@ -999,7 +999,7 @@ function escapeHtml(value) {
           { key: "targetCams", label: "Target Cameras", value: Number(data.cams || 1).toFixed(0), min: 1, step: 1 },
           { key: "dist", label: "Distance", value: Number(data.dist || 0).toFixed(1), min: 0.1, step: 0.1 },
           { key: "hfov", label: "HFOV", value: Number(data.hfov || 0).toFixed(1), min: 1, max: 179, step: 0.1 },
-          { key: "ovPct", label: "Camera-to-Camera Overlap Target", value: Number(data.ovPct || 0).toFixed(1), min: 0, max: 95, step: 0.1 }
+          { key: "ovPct", label: "Overlap Target", value: Number(data.ovPct || 0).toFixed(1), min: 0, max: 95, step: 0.1 }
         ]
       },
       selectedResult: {
@@ -1664,7 +1664,7 @@ function assistantStatusClass(data) {
           '<label class="field"><span class="label">Perimeter Length (ft)</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
           '<label class="field"><span class="label">Distance (ft)</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
           '<label class="field"><span class="label">HFOV (deg)</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">Camera-to-Camera Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
         '</div>' +
         '<div class="btn-row" style="margin-top: 12px;">' +
           '<button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button>' +
@@ -1768,7 +1768,7 @@ function assistantStatusClass(data) {
           '<label class="field"><span class="label">Perimeter Length (ft)</span><input data-spacing-whatif="len" type="number" min="1" step="1" value="' + escapeHtml(String(Number(data.len || 0).toFixed(0))) + '"></label>' +
           '<label class="field"><span class="label">Distance (ft)</span><input data-spacing-whatif="dist" type="number" min="0.1" step="0.1" value="' + escapeHtml(String(Number(data.dist || 0).toFixed(1))) + '"></label>' +
           '<label class="field"><span class="label">HFOV (deg)</span><input data-spacing-whatif="hfov" type="number" min="1" max="179" step="0.1" value="' + escapeHtml(String(Number(data.hfov || 0).toFixed(1))) + '"></label>' +
-          '<label class="field"><span class="label">Camera-to-Camera Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
+          '<label class="field"><span class="label">Overlap Target (%)</span><input data-spacing-whatif="ovPct" type="number" min="0" max="95" step="0.1" value="' + escapeHtml(String(Number(data.ovPct || 0).toFixed(1))) + '"></label>' +
         '</div>' +
         '<div class="btn-row" style="margin-top:12px;"><button id="spacingApplyCustomScenario" class="btn btn-primary" type="button">Apply Custom Spacing Check</button></div>' +
       '</div>';
