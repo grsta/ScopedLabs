@@ -32,6 +32,7 @@
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     assistant: $("spacingDesignAssistant"),
+    exportSection: $("spacingExportSection"),
     assistantModeNote: $("spacingAssistantModeNote"),
     assistantDiagnosis: $("spacingAssistantDiagnosis"),
     assistantBranches: $("spacingAssistantBranches"),
@@ -1512,6 +1513,108 @@ function assistantStatusClass(data) {
     '</svg>';
   }
 
+  function spacingActualOverlapPercent(data) {
+    const rawWidth = Number(data?.rawWidth);
+    const spacing = Number(data?.spacing);
+
+    if (Number(data?.cams) <= 1 || data?.singleCamera) return null;
+    if (!Number.isFinite(rawWidth) || rawWidth <= 0 || !Number.isFinite(spacing)) return null;
+
+    return Math.max(0, ((rawWidth - spacing) / rawWidth) * 100);
+  }
+
+  function spacingExportRow(label, value) {
+    return '<tr><td>' + escapeHtml(label) + '</td><td>' + escapeHtml(value) + '</td></tr>';
+  }
+
+  function spacingExportSourceNotes(data) {
+    const notes = [];
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const sourceMode = sourceModeForCurrentResult(manualOverrideMeta);
+    const assistantMeta = assistantScenarioMetadata();
+    const area = getActiveSpacingArea();
+    const coverageReservePct = num(area?.usableCoverageReservePct ?? area?.coverageReservePct ?? area?.overlapTargetPct);
+    const actualOverlapPct = spacingActualOverlapPercent(data);
+    const appliedOverlapPct = Number(data?.appliedOverlapTargetPct ?? data?.ovPct);
+
+    if (data.singleCamera) {
+      notes.push("Single-camera coverage check: camera-to-camera overlap is not applicable because there is no adjacent camera.");
+    }
+
+    if (Number.isFinite(coverageReservePct)) {
+      notes.push("Coverage Area reserve was carried as context only (" + fmtPct(coverageReservePct, 1) + ") and was not imported as Camera Spacing overlap.");
+    } else {
+      notes.push("Coverage Area reserve and Camera Spacing overlap are treated as separate assumptions.");
+    }
+
+    if (!data.singleCamera && (appliedOverlapPct >= 35 || (Number.isFinite(actualOverlapPct) && actualOverlapPct >= 45))) {
+      notes.push("High-overlap branch: spacing continuity may pass, but the branch should be treated as valid but camera-heavy unless redundancy is intentional.");
+    }
+
+    if (assistantMeta && assistantMeta.label) {
+      notes.push("Assistant branch: " + assistantMeta.label + ".");
+    } else {
+      notes.push("Assistant branch: baseline/current inputs.");
+    }
+
+    notes.push("Source mode: " + sourceMode + ".");
+
+    return notes;
+  }
+
+  function renderSpacingExportSection(data) {
+    if (!els.exportSection || !data || !data.ok) return;
+
+    const actualOverlapPct = spacingActualOverlapPercent(data);
+    const appliedOverlapPct = data.singleCamera ? null : Number(data.appliedOverlapTargetPct ?? data.ovPct);
+    const requestedOverlapPct = Number(data.requestedOverlapTargetPct ?? data.ovPct);
+    const assistantMeta = assistantScenarioMetadata();
+    const sourceMode = sourceModeForCurrentResult(getManualOverrideMetadata(data));
+    const notes = spacingExportSourceNotes(data);
+
+    const summaryRows = [
+      ["Protected run", fmtFt(data.len)],
+      ["Distance to target plane", fmtFt(data.dist)],
+      ["Horizontal FOV", fmt(data.hfov, 1) + " deg"],
+      ["Raw camera footprint", fmtFt(data.rawWidth)],
+      ["Usable spacing width", fmtFt(data.usableWidth)],
+      ["Camera count", String(data.cams)],
+      ["Actual spacing", data.singleCamera ? "N/A - single-camera coverage check" : fmtFt(data.spacing)],
+      ["Spacing classification", data.spacingClass],
+      ["Spacing status", data.status],
+      ["Requested overlap target", data.singleCamera ? "N/A" : fmtPct(requestedOverlapPct, 1)],
+      ["Applied overlap target", data.singleCamera ? "N/A" : fmtPct(appliedOverlapPct, 1)],
+      ["Actual overlap achieved", data.singleCamera ? "N/A" : (Number.isFinite(actualOverlapPct) ? fmtPct(actualOverlapPct, 1) : "N/A")],
+      ["Assistant branch", assistantMeta && assistantMeta.label ? assistantMeta.label : "Baseline/current inputs"],
+      ["Source mode", sourceMode]
+    ];
+
+    const tableRows = summaryRows
+      .map(([label, value]) => spacingExportRow(label, value))
+      .join("");
+
+    const noteText = [
+      data.interpretation,
+      data.dominantConstraint,
+      data.guidance,
+      ...notes
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    els.exportSection.innerHTML =
+      '<div data-export-text>' + escapeHtml(noteText) + '</div>' +
+      '<div data-export-svg>' + spacingVisualSvg(data) + '</div>' +
+      '<table>' +
+        '<thead><tr><th>Metric</th><th>Value</th></tr></thead>' +
+        '<tbody>' + tableRows + '</tbody>' +
+      '</table>';
+  }
+
+  function clearSpacingExportSection() {
+    if (els.exportSection) els.exportSection.innerHTML = "";
+  }
+
   function miniCard(label, value) {
     return '<div class="spacing-mini-card"><span class="spacing-mini-label">' + escapeHtml(label) + '</span><span class="spacing-mini-value">' + escapeHtml(value) + '</span></div>';
   }
@@ -2424,6 +2527,7 @@ function assistantStatusClass(data) {
       emptyMessage: "Enter valid values and press Calculate."
     });
     hideSpacingAssistant();
+    clearSpacingExportSection();
 
     renderFlowNote();
   }
@@ -2632,6 +2736,7 @@ function assistantStatusClass(data) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     hideSpacingAssistant();
+    clearSpacingExportSection();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
@@ -2663,6 +2768,7 @@ function assistantStatusClass(data) {
 
     writeFlow(data);
     renderSpacingAssistant(data);
+    renderSpacingExportSection(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
