@@ -280,8 +280,8 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      title: "Flow Context",
-      intro: "This step converts field-of-view results into real usable scene coverage after usable coverage reserve is applied."
+      title: "Imported Assumptions",
+      intro: "Values carried into this step from the previous design stage."
     });
 
     if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
@@ -311,7 +311,7 @@
     if (parts.length) {
       els.flowNote.hidden = false;
       els.flowNote.innerHTML = `
-        <strong>Flow Context</strong><br>
+        <strong>Imported Assumptions</strong><br>
         ${parts.join(" | ")}
       `;
     }
