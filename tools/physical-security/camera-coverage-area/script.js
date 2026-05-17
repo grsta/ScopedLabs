@@ -283,7 +283,7 @@
 
   function renderFlowNote() {
     const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
+      flowEl: els.importedAssumptions || els.flowNote,
       flowKey: FLOW_KEYS.area,
       category: CATEGORY,
       step: STEP,
@@ -291,6 +291,11 @@
       title: "Imported Assumptions",
       intro: "Values carried into this step from the previous design stage."
     });
+
+    if (els.flowNote) {
+      els.flowNote.innerHTML = "";
+      els.flowNote.hidden = true;
+    }
 
     if (!flow || !flow.data || flow.step !== PREVIOUS_STEP) return;
 
@@ -321,7 +326,7 @@
       `;
 
       if (els.flowNote) {
-        els.flowNote.innerHTML = noteHtml;
+        els.flowNote.innerHTML = "";
         els.flowNote.hidden = true;
       }
 
@@ -330,7 +335,10 @@
         els.importedAssumptions.hidden = false;
       }
     } else {
-      if (els.flowNote) els.flowNote.hidden = true;
+      if (els.flowNote) {
+        els.flowNote.innerHTML = "";
+        els.flowNote.hidden = true;
+      }
       if (els.importedAssumptions) els.importedAssumptions.hidden = true;
     }
 
