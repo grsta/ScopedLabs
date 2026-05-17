@@ -1011,8 +1011,8 @@ function escapeHtml(value) {
         metrics: [
           { label: singleCamera ? "Protected run" : "Actual spacing", value: singleCamera ? fmtFt(data.len) : fmtFt(data.spacing), note: singleCamera ? "Single-camera span." : "Center spacing." },
           { label: "Usable width", value: fmtFt(data.usableWidth), note: singleCamera ? "After coverage reserve." : "After overlap." },
-          { label: singleCamera ? "Overlap reference" : "Overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Target requirement." },
-          { label: "Spacing status", value: data.status, note: "Spacing continuity only." }
+          { label: singleCamera ? "Overlap reference" : "Overlap", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Current target." },
+          { label: "Status", value: data.status, note: "Combined status." }
         ]
       },
       driver: {
@@ -1046,7 +1046,7 @@ function escapeHtml(value) {
           { label: "Coverage layout", value: data.cams + (data.cams === 1 ? " camera" : " cameras"), note: "Calculated count for protected run." },
           { label: singleCamera ? "Protected run" : "Actual spacing", value: singleCamera ? fmtFt(data.len) : fmtFt(data.spacing), note: singleCamera ? "Single-camera span." : "Camera center spacing." },
           { label: "Usable width", value: fmtFt(data.usableWidth), note: singleCamera ? "Width after coverage reserve." : "Width after overlap." },
-          { label: singleCamera ? "Overlap reference" : "Overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Target requirement." }
+          { label: singleCamera ? "Overlap reference" : "Overlap", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Current target." }
         ]
       },
       checks: [
@@ -1062,7 +1062,7 @@ function escapeHtml(value) {
         metrics: [
           { label: "Max spacing / camera", value: fmtFt(data.usableWidth), note: "Actual spacing should stay at or below this." },
           { label: "Suggested cameras", value: String(data.cams), note: "Based on usable width and protected run." },
-          { label: singleCamera ? "Overlap reference" : "Overlap target", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Target requirement." },
+          { label: singleCamera ? "Overlap reference" : "Overlap", value: singleCamera ? "N/A" : fmtPct(data.ovPct, 1), note: singleCamera ? "No adjacent camera." : "Current target." },
           { label: "Main blocker", value: factorySpacingProblemLabel(data), note: "Primary condition shaping this scenario." }
         ],
         banner: data.status === "HEALTHY"
@@ -2592,7 +2592,7 @@ function assistantStatusClass(data) {
         { label: "Perimeter Length", value: fmtFt(data.len, 0) },
         { label: "Distance to Target", value: fmtFt(data.dist) },
         { label: "Horizontal FOV", value: `${fmt(data.hfov, 1)}°` },
-        { label: data.singleCamera ? "Overlap Reference" : "Overlap Target", value: data.singleCamera ? "N/A" : fmtPct(data.ovPct, 1) },
+        { label: data.singleCamera ? "Overlap Reference" : "Overlap", value: data.singleCamera ? "N/A" : fmtPct(data.ovPct, 1) },
         { label: "Spacing Ratio", value: fmt(data.ratio, 2) },
         { label: "Spacing Classification", value: data.spacingClass },
         { label: "Source Mode", value: sourceModeForCurrentResult(getManualOverrideMetadata(data)) },
