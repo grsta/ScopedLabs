@@ -625,7 +625,7 @@
           '<h4 class="coverage-assistant-title">' + escapeHtml(title) + '</h4>' +
           '<p class="coverage-assistant-copy">' + escapeHtml(data.interpretation) + '</p>' +
         '</div>' +
-        '<span class="coverage-status-pill ' + statusClass + '">' + escapeHtml(data.status) + '</span>' +
+        '<span class="coverage-status-pill ' + statusClass + '">Status: ' + escapeHtml(data.status) + '</span>' +
       '</div>' +
       '<div class="coverage-visual-stage">' + coverageFootprintSvg(data) + '</div>' +
       '<div class="coverage-mini-grid">' +

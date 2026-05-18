@@ -298,6 +298,30 @@
       color: #ffe38a;
     }
   </style>
+
+<style id="coverage-assistant-toprow-polish-001">
+  .coverage-assistant-header,
+  .coverage-assistant-head,
+  .coverage-assistant-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .coverage-assistant-copy-wrap,
+  .coverage-assistant-copy-block,
+  .coverage-assistant-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .coverage-status-pill {
+    align-self: flex-start;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+</style>
 </head>
 
 <body
@@ -424,7 +448,7 @@
         </div>
 
         <div class="card coverage-assistant-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-          <h3 class="h3" style="margin-top: 0;">Coverage Assistant</h3>
+
           <div id="coverageAssistant" class="coverage-assistant" aria-live="polite">
             <p class="muted" style="margin:0;">Enter valid values and press Calculate.</p>
           </div>
@@ -501,7 +525,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
-  <script src="./script.js?v=physical-security-coverage-status-clean-003"></script>
+  <script src="./script.js?v=physical-security-coverage-assistant-toprow-001"></script>
   <script defer src="/assets/help.js?v=help-031-coverage-spacing"></script>
 </body>
 </html>
