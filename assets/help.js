@@ -300,17 +300,24 @@
     var sections = Array.isArray(help.sections) ? help.sections : [];
     var openByDefault = help.defaultOpen === true;
     var contentId = "scopedlabs-help-content";
+    var toolPath = getToolPath();
+    var isCoverageAreaTool = !!(toolPath && toolPath.key === "physical-security/camera-coverage-area");
+    var openGuideLabel = isCoverageAreaTool ? "Open KB Guide" : "Open guide";
+    var closeGuideLabel = isCoverageAreaTool ? "Close KB Guide" : "Close guide";
+    var eyebrowHtml = isCoverageAreaTool
+      ? ""
+      : "<div class=\"pill-row\">" +
+          "<span class=\"pill\">" + escapeHtml(help.eyebrow || "Knowledge Base") + "</span>" +
+        "</div>";
 
     card.innerHTML =
-      "<div class=\"pill-row\">" +
-        "<span class=\"pill\">" + escapeHtml(help.eyebrow || "Knowledge Base") + "</span>" +
-      "</div>" +
+      eyebrowHtml +
       "<div class=\"sl-help-head\">" +
         "<div>" +
           "<h2 class=\"sl-help-title\">" + escapeHtml(help.title || "Tool Guide") + "</h2>" +
           "<p class=\"sl-help-summary\">" + escapeHtml(help.summary || "") + "</p>" +
         "</div>" +
-        "<button class=\"btn btn-ghost sl-help-toggle\" type=\"button\" data-sl-help-toggle aria-controls=\"" + contentId + "\" aria-expanded=\"" + (openByDefault ? "true" : "false") + "\">" + (openByDefault ? "Close guide" : "Open guide") + "</button>" +
+        "<button class=\"btn btn-ghost sl-help-toggle\" type=\"button\" data-sl-help-toggle aria-controls=\"" + contentId + "\" aria-expanded=\"" + (openByDefault ? "true" : "false") + "\">" + (openByDefault ? closeGuideLabel : openGuideLabel) + "</button>" +
       "</div>" +
       "<div id=\"" + contentId + "\" class=\"sl-help-content\" data-sl-help-content" + (openByDefault ? "" : " hidden") + ">" +
         "<div class=\"sl-help-list\">" + sections.map(function (section) {
@@ -325,11 +332,11 @@
       var isHidden = content.hasAttribute("hidden");
       if (isHidden) {
         content.removeAttribute("hidden");
-        toggle.textContent = "Close guide";
+        toggle.textContent = closeGuideLabel;
         toggle.setAttribute("aria-expanded", "true");
       } else {
         content.setAttribute("hidden", "");
-        toggle.textContent = "Open guide";
+        toggle.textContent = openGuideLabel;
         toggle.setAttribute("aria-expanded", "false");
       }
     });
@@ -355,7 +362,7 @@
       var isHidden = content.hasAttribute("hidden");
       if (isHidden) {
         content.removeAttribute("hidden");
-        toggle.textContent = "Close guide";
+        toggle.textContent = closeGuideLabel;
         toggle.setAttribute("aria-expanded", "true");
       }
 
