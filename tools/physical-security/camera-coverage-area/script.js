@@ -714,6 +714,18 @@
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
+  function coverageAssistantSummary(data) {
+    if (data.reserveLossPct >= 35) {
+      return "Reserve is consuming enough width that spacing efficiency should be checked carefully before carrying this forward.";
+    }
+
+    if (data.reserveLossPct >= 20) {
+      return "Reserve is starting to shape the usable width. Review the plan view, then carry the usable width into Camera Spacing.";
+    }
+
+    return "The imported FOV keeps a practical usable width after reserve. Review the plan view, then carry the usable width into Camera Spacing.";
+  }
+
   function renderCoverageAssistant(data) {
     if (!els.assistant || !data || !data.ok) return;
 
@@ -726,7 +738,7 @@
         '<div>' +
           '<p class="coverage-assistant-kicker">Coverage Assistant</p>' +
           '<h4 class="coverage-assistant-title">' + escapeHtml(title) + '</h4>' +
-          '<p class="coverage-assistant-copy">' + escapeHtml(data.interpretation) + '</p>' +
+          '<p class="coverage-assistant-copy">' + escapeHtml(coverageAssistantSummary(data)) + '</p>' +
         '</div>' +
         '<span class="coverage-status-pill ' + statusClass + '">Assistant Status: ' + escapeHtml(formatAssistantStatusLabel(data.status)) + '</span>' +
       '</div>' +
