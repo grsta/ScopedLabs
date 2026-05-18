@@ -720,6 +720,87 @@
     });
   }
 
+  function polishCoverageKbCard() {
+    document.querySelectorAll("main .card").forEach((card) => {
+      const text = String(card.textContent || "");
+      if (!/Camera Coverage Area Guide/i.test(text)) return;
+
+      card.querySelectorAll(".pill, .pill--pro").forEach((pill) => {
+        if (!/^Knowledge Base$/i.test(String(pill.textContent || "").trim())) return;
+
+        const row = pill.closest(".pill-row");
+        if (row && row.children.length <= 1) row.remove();
+        else pill.remove();
+      });
+
+      card.querySelectorAll("a, button").forEach((action) => {
+        if (String(action.textContent || "").trim() === "Open guide") {
+          action.textContent = "Open KB Guide";
+        }
+      });
+    });
+  }
+
+  function polishCoverageAreaBanner() {
+    const banner = document.getElementById("physicalSecurityAreaBanner");
+    if (!banner) return;
+
+    const card = banner.querySelector(".card") || banner.firstElementChild;
+    if (!card) return;
+
+    let label = "Active area context";
+
+    try {
+      const api = window.ScopedLabsPhysicalSecurityAreaState;
+      const ledger = api?.readLedger?.();
+      const active = api?.getActiveArea?.();
+      const areas = Array.isArray(ledger?.areas) ? ledger.areas : [];
+
+      if (active && areas.length) {
+        const index = Math.max(0, areas.findIndex((area) => area.id === active.id));
+        label = "Active area context ? Area " + (index + 1) + " of " + areas.length;
+      } else if (areas.length) {
+        label = "Active area context ? " + areas.length + " area" + (areas.length === 1 ? "" : "s") + " in plan";
+      }
+    } catch {}
+
+    let line = card.querySelector(".coverage-context-line");
+    if (!line) {
+      line = document.createElement("p");
+      line.className = "coverage-context-line";
+
+      const heading = card.querySelector("h1, h2, h3, .h3");
+      if (heading && heading.parentNode) heading.parentNode.insertBefore(line, heading);
+      else card.insertBefore(line, card.firstChild);
+    }
+
+    line.textContent = label;
+
+    const pillRow = card.querySelector(".pill-row");
+    if (pillRow) pillRow.remove();
+  }
+
+  function polishCoveragePageChrome() {
+    polishCoverageKbCard();
+    polishCoverageAreaBanner();
+  }
+
+  function setupCoverageChromeObserver() {
+    if (window.__coverageChromeObserver) return;
+
+    const target = document.querySelector("main .container") || document.body;
+    if (!target || !window.MutationObserver) return;
+
+    window.__coverageChromeObserver = new MutationObserver(() => {
+      polishCoveragePageChrome();
+    });
+
+    window.__coverageChromeObserver.observe(target, {
+      childList: true,
+      subtree: true
+    });
+  }
+
   function initTool() {
     bind();
     renderFlowNote();
@@ -729,6 +810,11 @@
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = new Date().getFullYear();
+
+    polishCoveragePageChrome();
+    setupCoverageChromeObserver();
+    setTimeout(polishCoveragePageChrome, 150);
+    setTimeout(polishCoveragePageChrome, 600);
 
     let unlocked = unlockCategoryPage();
     if (unlocked && !els.toolCard.dataset.initialized) {

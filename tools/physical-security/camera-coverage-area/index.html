@@ -198,6 +198,24 @@
       pointer-events: none !important;
     }
 
+    .coverage-context-line {
+      margin: 0 0 9px;
+      color: rgba(190, 255, 205, 0.78);
+      font-size: 0.92rem;
+      font-style: italic;
+      letter-spacing: 0.015em;
+    }
+
+    .coverage-context-line::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 1px;
+      margin-right: 8px;
+      vertical-align: middle;
+      background: linear-gradient(90deg, rgba(125,255,152,.18), rgba(125,255,152,.70));
+    }
+
     @media (max-width: 860px) {
       .coverage-mini-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -309,16 +327,11 @@
 
       
 
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-
       <h1 style="margin-top: 10px;">Camera Coverage Area</h1>
 
       <div id="pipeline"></div>
 
       <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
         <h2 class="h3" style="margin-top: 0;">This tool continues the Physical Security Design Flow</h2>
         <p class="muted" style="margin-bottom: 0;">
           Use this step to convert field-of-view width into real usable scene coverage after usable coverage reserve is applied.
@@ -421,10 +434,6 @@
           </div>
         </div>
 <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
-
         <h3 class="h3" style="margin-top: 10px;">Export & Snapshot</h3>
         <p class="muted" style="margin-bottom: 0;">
           Use the assistant summary and calculated output to open a clean report or save a snapshot. Project notes can be added later from the report workflow.
@@ -480,7 +489,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-006"></script>
-  <script src="./script.js?v=physical-security-coverage-flow-context-004"></script>
+  <script src="./script.js?v=physical-security-coverage-chrome-001"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
