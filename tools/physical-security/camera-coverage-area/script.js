@@ -680,6 +680,7 @@
         { label: "Overlap Classification", value: data.overlapClass },
         { label: "Coverage Efficiency", value: data.efficiencyClass }
       ],
+      status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance
@@ -758,4 +759,55 @@
       }
     }, 400);
   });
+})();
+
+/* Coverage Area presentation cleanup: remove duplicate analyzer status chip only. */
+(function () {
+  if (window.__coverageDuplicateStatusChipCleanup) return;
+  window.__coverageDuplicateStatusChipCleanup = true;
+
+  function cleanDuplicateStatusChip() {
+    var root =
+      document.querySelector(".coverage-assistant-card") ||
+      document.getElementById("toolCard") ||
+      document;
+
+    if (!root) return;
+
+    var nodes = root.querySelectorAll("span, div, p, strong");
+    nodes.forEach(function (node) {
+      var text = String(node.textContent || "").replace(/\s+/g, " ").trim();
+
+      if (!/^Status:\s*(HEALTHY|WATCH|RISK|undefined)$/i.test(text)) return;
+
+      var removable =
+        node.closest(".pill") ||
+        node.closest(".result-row") ||
+        node.closest("[class*=status]") ||
+        node;
+
+      if (removable && removable.parentNode) {
+        removable.parentNode.removeChild(removable);
+      }
+    });
+  }
+
+  function cleanSoon() {
+    cleanDuplicateStatusChip();
+    setTimeout(cleanDuplicateStatusChip, 0);
+    setTimeout(cleanDuplicateStatusChip, 75);
+    setTimeout(cleanDuplicateStatusChip, 200);
+    setTimeout(cleanDuplicateStatusChip, 500);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    cleanSoon();
+
+    var calc = document.getElementById("calc");
+    if (calc) {
+      calc.addEventListener("click", cleanSoon);
+    }
+  });
+
+  window.ScopedLabsCleanCoverageDuplicateStatus = cleanSoon;
 })();
