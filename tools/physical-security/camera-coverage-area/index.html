@@ -347,6 +347,42 @@
     }
   }
 </style>
+
+<style id="coverage-assistant-status-final-001">
+  .coverage-assistant-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: nowrap;
+  }
+
+  .coverage-assistant-head > div {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .coverage-status-pill {
+    flex: 0 0 auto;
+    margin-left: 16px;
+    margin-top: 2px;
+    align-self: flex-start;
+    white-space: nowrap;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+
+  @media (max-width: 760px) {
+    .coverage-assistant-head {
+      flex-wrap: wrap;
+    }
+
+    .coverage-status-pill {
+      margin-left: 0;
+    }
+  }
+</style>
+
 </head>
 
 <body
