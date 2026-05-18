@@ -221,16 +221,21 @@
     .coverage-flow-actions #next-step-row.is-visible {
       display: flex !important;
     }
-
     /* Coverage Area button rhythm */
-    .coverage-action-btn {
-      min-width: 156px;
+    .coverage-action-btn,
+    .coverage-export-btn {
+      min-height: 38px;
+      border-radius: 10px;
       justify-content: center;
+      letter-spacing: 0.01em;
+    }
+
+    .coverage-action-btn {
+      min-width: 124px;
     }
 
     .coverage-export-btn {
-      min-width: 138px;
-      justify-content: center;
+      min-width: 132px;
     }
 
 </style>
@@ -400,8 +405,8 @@
         </div>
 
         <div class="btn-row" style="margin-top: 14px;">
-          <button id="calc" class="btn btn-primary coverage-action-btn" type="button">Run Coverage Check</button>
-          <button id="reset" class="btn coverage-action-btn" type="button">Reset Inputs</button>
+          <button id="calc" class="btn btn-primary coverage-action-btn" type="button">Run Check</button>
+          <button id="reset" class="btn coverage-action-btn" type="button">Reset</button>
         </div>
 
         <div class="card coverage-assistant-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
