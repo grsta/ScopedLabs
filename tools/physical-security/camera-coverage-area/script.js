@@ -175,6 +175,7 @@
 
     if (field === "dist") return number.toFixed(1).replace(/\.0$/, "") + " ft";
     if (field === "hfov") return Math.round(number) + "&deg;";
+    if (field === "vfov") return Math.round(number) + "&deg;";
 
     return String(number);
   }
@@ -182,6 +183,7 @@
   function overrideLabel(field) {
     if (field === "dist") return "Target distance";
     if (field === "hfov") return "Horizontal FOV";
+    if (field === "vfov") return "Vertical FOV";
     return field;
   }
 
@@ -244,17 +246,39 @@
 
   function renderManualOverrideNote() {
     const overrides = Object.keys(manualFlowOverrides);
+    const sections = [];
 
-    if (!overrides.length) return "";
+    if (overrides.length) {
+      const text = overrides
+        .map((field) => {
+          const item = manualFlowOverrides[field];
+          return item.label + " changed from " + formatOverrideValue(field, item.imported) + " to " + formatOverrideValue(field, item.current);
+        })
+        .join(" | ");
 
-    const text = overrides
-      .map((field) => {
-        const item = manualFlowOverrides[field];
-        return item.label + " changed from " + formatOverrideValue(field, item.imported) + " to " + formatOverrideValue(field, item.current);
-      })
-      .join(" | ");
+      sections.push("<strong>Manual override active:</strong> " + text + ". Results are valid for this local what-if branch.");
+    }
 
-    return '<div class="flow-override-note" role="note" aria-label="Manual override warning"><strong>Manual override active:</strong> ' + text + '. Results are valid for this local what-if branch.</div>';
+    const reserveCurrent = cleanOverrideNumber(els.ov?.value);
+    const reserveDefault = cleanOverrideNumber(DEFAULTS.ov);
+
+    if (
+      reserveCurrent !== null &&
+      reserveDefault !== null &&
+      Math.abs(reserveCurrent - reserveDefault) > 0.01
+    ) {
+      sections.push(
+        "<strong>Coverage reserve assumption:</strong> Usable coverage reserve is set to " +
+        fmtPct(reserveCurrent, 1) +
+        " instead of the default " +
+        fmtPct(reserveDefault, 1) +
+        ". This is a local Coverage Area assumption, not an upstream manual override."
+      );
+    }
+
+    if (!sections.length) return "";
+
+    return '<div class="flow-override-note" role="note" aria-label="Coverage assumption warning">' + sections.join("<br>") + "</div>";
   }
 
   function refreshManualOverrideBanner() {
@@ -303,20 +327,24 @@
     const sceneWidth = num(data.sceneWidth, 0);
     const dist = num(data.dist, 0);
     const hfov = num(data.hfov, 0);
+    const vfov = num(data.vfov ?? data.verticalFovDeg ?? data.verticalFov ?? data.vfovDeg, 0);
     const fitClass = data.fitClass || "";
 
     captureImportedFlowValue("dist", dist);
     captureImportedFlowValue("hfov", hfov);
+    captureImportedFlowValue("vfov", vfov);
 
     if (canApplyFlowInputs()) {
       if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
       if (Number.isFinite(hfov) && hfov > 0) els.hfov.value = String(Math.round(hfov));
+      if (Number.isFinite(vfov) && vfov > 0) els.vfov.value = String(Math.round(vfov));
     }
 
     const parts = [];
     if (sceneWidth > 0) parts.push(`Scene width: <strong>${fmtFt(sceneWidth)}</strong>`);
     if (dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
     if (hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}&deg;</strong>`);
+    if (vfov > 0) parts.push(`VFOV: <strong>${fmt(vfov, 1)}&deg;</strong>`);
     if (fitClass) parts.push(`Fit class: <strong>${fitClass}</strong>`);
 
     if (parts.length) {
