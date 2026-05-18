@@ -221,6 +221,18 @@
     .coverage-flow-actions #next-step-row.is-visible {
       display: flex !important;
     }
+
+    /* Coverage Area button rhythm */
+    .coverage-action-btn {
+      min-width: 156px;
+      justify-content: center;
+    }
+
+    .coverage-export-btn {
+      min-width: 138px;
+      justify-content: center;
+    }
+
 </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -388,8 +400,8 @@
         </div>
 
         <div class="btn-row" style="margin-top: 14px;">
-          <button id="calc" class="btn btn-primary" type="button">Calculate</button>
-          <button id="reset" class="btn" type="button">Reset</button>
+          <button id="calc" class="btn btn-primary coverage-action-btn" type="button">Run Coverage Check</button>
+          <button id="reset" class="btn coverage-action-btn" type="button">Reset Inputs</button>
         </div>
 
         <div class="card coverage-assistant-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
@@ -421,8 +433,8 @@
         </p>
 
         <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
-          <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
+          <button id="exportReport" class="btn btn-primary coverage-export-btn" type="button" disabled>Open Report</button>
+          <button id="saveSnapshot" class="btn coverage-export-btn" type="button" disabled>Save Snapshot</button>
         </div>
 
         <div id="exportStatus" class="export-status"></div>
