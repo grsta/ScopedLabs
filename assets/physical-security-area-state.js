@@ -220,7 +220,7 @@
           '<span style="display:block;color:rgba(125,255,152,.88);font-weight:800;">Active</span>' +
           '<span style="display:block;">' + escapeHtml(areaPositionText) + '</span>' +
         '</div>' +
-        '<h2 class="h3" style="margin-top:10px;color:rgba(255,255,255,.94);font-size:1.08rem;line-height:1.25;font-weight:700;">' + escapeHtml(area.name) + '</h2>' +
+        '<h2 class="h3" style="margin-top:10px;color:rgba(255,255,255,.94);font-size:1.12rem;line-height:1.25;font-weight:700;">' + escapeHtml(area.name) + '</h2>' +
         '<p class="muted" style="margin-bottom:0;color:rgba(226,232,240,.74);line-height:1.55;">' +
           escapeHtml(area.areaType) + ' | length ' + escapeHtml(fmtFt(area.protectedLengthFt)) + ' | distance ' + escapeHtml(fmtFt(area.distanceToTargetPlaneFt)) + ' | assumed HFOV ' + escapeHtml(fmtDeg(area.assumedHfovDeg)) + ' | ' + escapeHtml(cameraText) +
         '</p>' +
