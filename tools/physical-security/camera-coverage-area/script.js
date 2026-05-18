@@ -519,7 +519,8 @@
         reserveLossPct: data.reserveLossPct,
         overlapClass: data.overlapClass,
         efficiencyClass: data.efficiencyClass,
-        interpretation: data.interpretation,
+        status: data.status,
+      interpretation: data.interpretation,
         guidance: data.guidance,
         sourceMode: manualOverrideMeta.length ? "manual-override" : "pipeline",
         manualOverrides: manualOverrideMeta
@@ -597,6 +598,19 @@
     els.assistant.innerHTML = '<p class="muted" style="margin:0;">' + escapeHtml(message) + '</p>';
   }
 
+  function removeDuplicateCoverageStatusChip() {
+    if (!els.assistant) return;
+
+    const candidates = els.assistant.querySelectorAll("span, div, p");
+    candidates.forEach((node) => {
+      const text = String(node.textContent || "").replace(/\s+/g, " ").trim();
+
+      if (/^Status:\s*(HEALTHY|WATCH|RISK|undefined)$/i.test(text)) {
+        node.remove();
+      }
+    });
+  }
+
   function renderCoverageAssistant(data) {
     if (!els.assistant || !data || !data.ok) return;
 
@@ -622,6 +636,7 @@
       '</div>' +
       '<div class="coverage-handoff-card"><strong>Next handoff:</strong> ' + handoff + '</div>' +
       '<div class="coverage-handoff-card"><strong>Guidance:</strong> ' + escapeHtml(data.guidance) + '</div>';
+    removeDuplicateCoverageStatusChip();
   }
 
   function renderError(message) {
