@@ -362,7 +362,7 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      emptyMessage: "Enter valid values and press Calculate."
+      emptyMessage: "Enter valid values and run a coverage check."
     });
 
     renderFlowNote();
@@ -380,7 +380,7 @@
       !Number.isFinite(dist) || dist <= 0 ||
       !Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95
     ) {
-      return { ok: false, message: "Enter valid values and press Calculate." };
+      return { ok: false, message: "Enter valid values and run a coverage check." };
     }
 
     return { ok: true, hfov, vfov, dist, ovPct };
@@ -593,9 +593,17 @@
     '</svg>';
   }
 
-  function renderCoverageAssistantPrompt(message = "Enter valid values and press Calculate.") {
+  function renderCoverageAssistantPrompt(message = "Enter valid values and run a coverage check.") {
     if (!els.assistant) return;
-    els.assistant.innerHTML = '<p class="muted" style="margin:0;">' + escapeHtml(message) + '</p>';
+
+    els.assistant.innerHTML =
+      '<div class="coverage-assistant-head">' +
+        '<div>' +
+          '<p class="coverage-assistant-kicker">Coverage Assistant</p>' +
+          '<h4 class="coverage-assistant-title">Ready for coverage inputs.</h4>' +
+          '<p class="coverage-assistant-copy">' + escapeHtml(message) + '</p>' +
+        '</div>' +
+      '</div>';
   }
 
   function removeDuplicateCoverageStatusChip() {
@@ -635,7 +643,7 @@
       '</div>' +
       '<div class="coverage-visual-stage">' + coverageFootprintSvg(data) + '</div>' +
       '<div class="coverage-mini-grid">' +
-        '<div class="coverage-mini-card"><div class="coverage-mini-label">Raw footprint</div><div class="coverage-mini-value">' + escapeHtml(fmtFt(data.width)) + ' ? ' + escapeHtml(fmtFt(data.height)) + '</div></div>' +
+        '<div class="coverage-mini-card"><div class="coverage-mini-label">Raw footprint</div><div class="coverage-mini-value">' + escapeHtml(fmtFt(data.width)) + ' &times; ' + escapeHtml(fmtFt(data.height)) + '</div></div>' +
         '<div class="coverage-mini-card"><div class="coverage-mini-label">Usable width</div><div class="coverage-mini-value">' + escapeHtml(fmtFt(data.effWidth)) + '</div></div>' +
         '<div class="coverage-mini-card"><div class="coverage-mini-label">Reserve</div><div class="coverage-mini-value">' + escapeHtml(fmtPct(data.ovPct, 1)) + '</div></div>' +
         '<div class="coverage-mini-card"><div class="coverage-mini-label">Efficiency</div><div class="coverage-mini-value">' + escapeHtml(data.efficiencyClass) + '</div></div>' +
