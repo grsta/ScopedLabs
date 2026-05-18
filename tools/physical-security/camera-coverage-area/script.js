@@ -190,6 +190,14 @@
   function captureImportedFlowValue(field, value) {
     const number = cleanOverrideNumber(value);
     if (number === null) return;
+
+    if (
+      (field === "dist" || field === "hfov" || field === "vfov") &&
+      number <= 0
+    ) {
+      return;
+    }
+
     if (!(field in importedFlowValues)) importedFlowValues[field] = number;
   }
 
@@ -327,12 +335,16 @@
     const sceneWidth = num(data.sceneWidth, 0);
     const dist = num(data.dist, 0);
     const hfov = num(data.hfov, 0);
-    const vfov = num(data.vfov ?? data.verticalFovDeg ?? data.verticalFov ?? data.vfovDeg, 0);
+    const importedVfov = num(data.vfov ?? data.verticalFovDeg ?? data.verticalFov ?? data.vfovDeg, NaN);
+    const vfov =
+      Number.isFinite(importedVfov) && importedVfov > 0
+        ? importedVfov
+        : num(els.vfov?.value, DEFAULTS.vfov);
     const fitClass = data.fitClass || "";
 
     captureImportedFlowValue("dist", dist);
     captureImportedFlowValue("hfov", hfov);
-    captureImportedFlowValue("vfov", vfov);
+    if (Number.isFinite(vfov) && vfov > 0) captureImportedFlowValue("vfov", vfov);
 
     if (canApplyFlowInputs()) {
       if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Math.round(dist));
@@ -344,7 +356,7 @@
     if (sceneWidth > 0) parts.push(`Scene width: <strong>${fmtFt(sceneWidth)}</strong>`);
     if (dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
     if (hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}&deg;</strong>`);
-    if (vfov > 0) parts.push(`VFOV: <strong>${fmt(vfov, 1)}&deg;</strong>`);
+    if (Number.isFinite(vfov) && vfov > 0) parts.push(`VFOV: <strong>${fmt(vfov, 1)}&deg;</strong>`);
     if (fitClass) parts.push(`Fit class: <strong>${fitClass}</strong>`);
 
     if (parts.length) {
