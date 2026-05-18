@@ -126,22 +126,22 @@
 
   function overlapInterpretation(overlapClass) {
     if (overlapClass === "Low Overlap") {
-      return "Low overlap maximizes individual camera footprint, but increases the chance of soft gaps between adjacent views.";
+      return "This keeps most of the lens footprint available, but leaves less tolerance for edge softness, mounting variance, or blind-edge drift.";
     }
     if (overlapClass === "Balanced Overlap") {
-      return "Balanced overlap is usually the best planning range for continuous scene coverage without wasting too much usable width.";
+      return "This is usually a practical planning range: enough margin for continuity without giving away too much usable width.";
     }
-    return "High overlap improves continuity and handoff between cameras, but reduces usable coverage efficiency and can increase camera count.";
+    return "This improves continuity margin, but it reduces usable width and may push the next spacing step toward more cameras.";
   }
 
   function reserveGuidance(effWidthRatioPct) {
     if (effWidthRatioPct < 70) {
-      return "Usable width drops quickly once usable coverage reserve gets aggressive. This is appropriate when continuity matters more than raw coverage efficiency.";
+      return "Reserve is consuming a large portion of the available footprint. Keep this only when continuity is more important than coverage efficiency, or reduce reserve before spacing cameras.";
     }
     if (effWidthRatioPct < 90) {
-      return "This is a healthy reserve range for many practical layouts. You preserve usable width while still protecting against blind edges.";
+      return "This is a healthy planning margin for many layouts. It protects the edges while preserving enough usable width for the next spacing decision.";
     }
-    return "Very little width is being held back as usable coverage reserve. Coverage efficiency is high, but spacing tolerance between cameras will be tighter.";
+    return "Very little reserve is being held back. The layout is efficient, but the next spacing step will have less tolerance for edge gaps or mounting variation.";
   }
 
   function clearDownstream() {
@@ -362,7 +362,7 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      emptyMessage: "Review the carried FOV and target-distance values, confirm the usable coverage reserve, then run the coverage check. Change imported values only if you are intentionally testing a local override."
+      emptyMessage: "Review the imported FOV and target-distance assumptions, confirm the usable coverage reserve, then run the coverage check. Edit imported values only when you are intentionally testing a local what-if branch."
     });
 
     renderFlowNote();
@@ -380,7 +380,7 @@
       !Number.isFinite(dist) || dist <= 0 ||
       !Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95
     ) {
-      return { ok: false, message: "Review the carried FOV and target-distance values, confirm the usable coverage reserve, then run the coverage check. Change imported values only if you are intentionally testing a local override." };
+      return { ok: false, message: "Review the imported FOV and target-distance assumptions, confirm the usable coverage reserve, then run the coverage check. Edit imported values only when you are intentionally testing a local what-if branch." };
     }
 
     return { ok: true, hfov, vfov, dist, ovPct };
@@ -429,16 +429,16 @@
 
     let dominantConstraint = "";
     if (reserveLossPct >= 35) {
-      dominantConstraint = "Reserve pressure is the dominant limiter. Too much usable scene area is being held back as reserve, which can drive camera count and reduce layout efficiency.";
+      dominantConstraint = "Reserve pressure is the dominant limiter. Too much of the lens footprint is being held back, which can reduce spacing efficiency and increase the camera count needed for continuous coverage.";
     } else if (reserveLossPct >= 20) {
-      dominantConstraint = "Coverage efficiency is the dominant limiter. The reserve strategy is still workable, but it is beginning to compress usable scene width enough to affect downstream spacing.";
+      dominantConstraint = "Coverage efficiency is the main watch item. The reserve strategy is still workable, but it is starting to compress usable width enough to matter in the spacing step.";
     } else {
-      dominantConstraint = "Field geometry is balanced. Most of the lens footprint remains usable after reserve is applied, which gives the next spacing step a healthier starting point.";
+      dominantConstraint = "Field geometry is balanced. Most of the lens footprint remains usable after reserve, giving Camera Spacing a clean starting width.";
     }
 
-    const interpretation = `At ${fmtFt(input.dist)}, the modeled lens footprint is about ${fmtFt(width)} wide by ${fmtFt(height)} high, producing ${fmtSqFt(area)} of raw area. After reserving ${fmtPct(input.ovPct)} as usable coverage margin, effective usable width drops to ${fmtFt(effWidth)} while vertical coverage remains ${fmtFt(effHeight)}, leaving about ${fmtSqFt(effArea)} of usable scene coverage. ${interpretationCore}`;
+    const interpretation = `At ${fmtFt(input.dist)}, the imported FOV creates a raw footprint of about ${fmtFt(width)} by ${fmtFt(height)}, or ${fmtSqFt(area)} of scene area. After applying a ${fmtPct(input.ovPct)} usable coverage reserve, the width carried forward becomes ${fmtFt(effWidth)} while vertical coverage remains ${fmtFt(effHeight)}, leaving about ${fmtSqFt(effArea)} of usable coverage. ${interpretationCore}`;
 
-    const guidance = `${guidanceCore} Continue to Camera Spacing next so you can translate this usable width into actual camera-to-camera placement.`;
+    const guidance = `${guidanceCore} Continue to Camera Spacing next and use the carried usable width as the spacing input, not the raw lens footprint.`;
 
     return {
       ok: true,
@@ -548,8 +548,8 @@
   }
 
   function coverageAssistantTitle(data) {
-    if (data.reserveLossPct >= 35) return "Reserve is heavily reducing usable coverage.";
-    if (data.reserveLossPct >= 20) return "Usable coverage is workable but reserve is starting to matter.";
+    if (data.reserveLossPct >= 35) return "Usable coverage is under heavy reserve pressure.";
+    if (data.reserveLossPct >= 20) return "Usable coverage is workable, but reserve is shaping the spacing step.";
     return "Usable coverage is ready for spacing validation.";
   }
 
@@ -682,14 +682,14 @@
       '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="376" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Target distance: ' + escapeHtml(fmtFt(targetDistance, 0)) + '</text>' +
     '</svg>';
   }
-  function renderCoverageAssistantPrompt(message = "Review the carried FOV and target-distance values, confirm the usable coverage reserve, then run the coverage check. Change imported values only if you are intentionally testing a local override.") {
+  function renderCoverageAssistantPrompt(message = "Review the imported FOV and target-distance assumptions, confirm the usable coverage reserve, then run the coverage check. Edit imported values only when you are intentionally testing a local what-if branch.") {
     if (!els.assistant) return;
 
     els.assistant.innerHTML =
       '<div class="coverage-assistant-head">' +
         '<div>' +
           '<p class="coverage-assistant-kicker">Coverage Assistant</p>' +
-          '<h4 class="coverage-assistant-title">Ready to validate coverage assumptions.</h4>' +
+          '<h4 class="coverage-assistant-title">Ready to validate carried coverage assumptions.</h4>' +
           '<p class="coverage-assistant-copy">' + escapeHtml(message) + '</p>' +
         '</div>' +
       '</div>';
@@ -719,7 +719,7 @@
 
     const statusClass = statusClassName(data.status);
     const title = coverageAssistantTitle(data);
-    const handoff = 'Camera Spacing should use the usable coverage width of <strong>' + escapeHtml(fmtFt(data.effWidth)) + '</strong>. The <strong>' + escapeHtml(fmtPct(data.ovPct, 1)) + '</strong> reserve is a coverage margin, not camera-to-camera overlap.';
+    const handoff = 'Carry <strong>' + escapeHtml(fmtFt(data.effWidth)) + '</strong> into Camera Spacing as the usable coverage width. The <strong>' + escapeHtml(fmtPct(data.ovPct, 1)) + '</strong> reserve is a lens-footprint margin, not the camera-to-camera overlap target.';
 
     els.assistant.innerHTML =
       '<div class="coverage-assistant-head">' +
@@ -737,8 +737,8 @@
         '<div class="coverage-mini-card"><div class="coverage-mini-label">Reserve</div><div class="coverage-mini-value">' + escapeHtml(fmtPct(data.ovPct, 1)) + '</div></div>' +
         '<div class="coverage-mini-card"><div class="coverage-mini-label">Efficiency</div><div class="coverage-mini-value">' + escapeHtml(data.efficiencyClass) + '</div></div>' +
       '</div>' +
-      '<div class="coverage-handoff-card"><strong>Next handoff:</strong> ' + handoff + '</div>' +
-      '<div class="coverage-handoff-card"><strong>Guidance:</strong> ' + escapeHtml(data.guidance) + '</div>';
+      '<div class="coverage-handoff-card"><strong>Spacing handoff:</strong> ' + handoff + '</div>' +
+      '<div class="coverage-handoff-card"><strong>Assistant guidance:</strong> ' + escapeHtml(data.guidance) + '</div>';
     removeDuplicateCoverageStatusChip();
   }
 
