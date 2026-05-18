@@ -637,8 +637,8 @@
       '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="rgba(125,255,152,.16)" />' +
       '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / TARGET PLANE</text>' +
 
-      '<text x="' + (cameraX - 38) + '" y="' + (centerY - 3) + '" text-anchor="end" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
-      '<text x="' + (cameraX - 38) + '" y="' + (centerY + 16) + '" text-anchor="end" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + escapeHtml(fmt(data.hfov, 0)) + ' deg</text>' +
+      '<text x="' + (cameraX - 14) + '" y="' + (centerY - 4) + '" text-anchor="end" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
+      '<text x="' + (cameraX - 14) + '" y="' + (centerY + 14) + '" text-anchor="end" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + escapeHtml(fmt(data.hfov, 0)) + ' deg</text>' +
       '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />' +
 
       '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + rawTopY.toFixed(1) + ' L ' + targetX + ' ' + rawBotY.toFixed(1) + ' Z" fill="url(#coverageFovFill)" stroke="rgba(226,232,240,.24)" stroke-width="1" stroke-dasharray="5 6" />' +
@@ -665,8 +665,9 @@
       '<line x1="' + (targetX + 128) + '" y1="' + rawTopY.toFixed(1) + '" x2="' + (targetX + 128) + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(226,232,240,.44)" stroke-width="1" />' +
       '<line x1="' + (targetX + 121) + '" y1="' + rawTopY.toFixed(1) + '" x2="' + (targetX + 135) + '" y2="' + rawTopY.toFixed(1) + '" stroke="rgba(226,232,240,.44)" stroke-width="1" />' +
       '<line x1="' + (targetX + 121) + '" y1="' + rawBotY.toFixed(1) + '" x2="' + (targetX + 135) + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(226,232,240,.44)" stroke-width="1" />' +
-      '<text x="' + (stageX + stageW - 18) + '" y="' + (centerY - 8) + '" text-anchor="end" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Raw footprint</text>' +
-      '<text x="' + (stageX + stageW - 18) + '" y="' + (centerY + 12) + '" text-anchor="end" fill="rgba(226,232,240,.82)" font-size="13" font-weight="950">' + escapeHtml(fmtFt(rawWidth)) + '</text>' +
+      '<text x="' + (stageX + stageW - 18) + '" y="' + (centerY - 18) + '" text-anchor="end" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Raw</text>' +
+      '<text x="' + (stageX + stageW - 18) + '" y="' + (centerY - 3) + '" text-anchor="end" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">footprint</text>' +
+      '<text x="' + (stageX + stageW - 18) + '" y="' + (centerY + 16) + '" text-anchor="end" fill="rgba(226,232,240,.82)" font-size="13" font-weight="950">' + escapeHtml(fmtFt(rawWidth)) + '</text>' +
 
       '<line x1="' + cameraX + '" y1="354" x2="' + targetX + '" y2="354" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
       '<line x1="' + cameraX + '" y1="348" x2="' + cameraX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
