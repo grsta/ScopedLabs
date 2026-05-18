@@ -665,7 +665,6 @@
         { label: "Overlap Classification", value: data.overlapClass },
         { label: "Coverage Efficiency", value: data.efficiencyClass }
       ],
-      status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance
