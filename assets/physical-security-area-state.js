@@ -216,7 +216,10 @@
 
     return '' +
       '<div class="card" style="margin-top:14px;border-color:rgba(125,255,158,.20);background:rgba(125,255,152,.035);">' +
-        '<div class="pill-row"><span class="pill">Active</span><span class="pill">' + escapeHtml(areaPositionText) + '</span></div>' +
+        '<div style="margin:0 0 10px;color:rgba(190,255,205,.78);font-size:.92rem;font-style:italic;letter-spacing:.015em;line-height:1.35;">' +
+          '<span style="display:block;color:rgba(125,255,152,.88);font-weight:800;">Active</span>' +
+          '<span style="display:block;">' + escapeHtml(areaPositionText) + '</span>' +
+        '</div>' +
         '<h2 class="h3" style="margin-top:10px;">' + escapeHtml(area.name) + '</h2>' +
         '<p class="muted" style="margin-bottom:0;">' +
           escapeHtml(area.areaType) + ' | length ' + escapeHtml(fmtFt(area.protectedLengthFt)) + ' | distance ' + escapeHtml(fmtFt(area.distanceToTargetPlaneFt)) + ' | assumed HFOV ' + escapeHtml(fmtDeg(area.assumedHfovDeg)) + ' | ' + escapeHtml(cameraText) +
