@@ -591,6 +591,9 @@
 
     const usableBarW = Math.max(8, barW * (retainedPct / 100));
     const reserveBarW = Math.max(8, barW * (reservePct / 100));
+    const reserveTone = reservePct >= 35 ? "risk" : reservePct >= 20 ? "watch" : "normal";
+    const reserveBarFill = reserveTone === "risk" ? "url(#coverageRiskBar)" : "url(#coverageReserveBar)";
+    const reserveValueFill = reserveTone === "risk" ? "rgba(255,188,166,.96)" : "rgba(255,239,176,.96)";
 
     return '<svg viewBox="0 0 800 398" role="img" aria-label="Coverage reserve plan view visualization">' +
       '<defs>' +
@@ -605,6 +608,10 @@
         '<linearGradient id="coverageReserveBar" x1="0" y1="0" x2="1" y2="0">' +
           '<stop offset="0%" stop-color="rgba(255,211,79,.76)" />' +
           '<stop offset="100%" stop-color="rgba(255,226,128,.90)" />' +
+        '</linearGradient>' +
+        '<linearGradient id="coverageRiskBar" x1="0" y1="0" x2="1" y2="0">' +
+          '<stop offset="0%" stop-color="rgba(255,138,102,.82)" />' +
+          '<stop offset="100%" stop-color="rgba(255,94,94,.92)" />' +
         '</linearGradient>' +
         '<linearGradient id="coverageFovFill" x1="0" y1="0" x2="1" y2="0">' +
           '<stop offset="0%" stop-color="rgba(125,255,152,.035)" />' +
@@ -631,14 +638,14 @@
 
       '<text x="' + labelX + '" y="' + (row1Y + rowGap * 2) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Held-back reserve</text>' +
       '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />' +
-      '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + reserveBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#coverageReserveBar)" />' +
-      '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="rgba(255,239,176,.96)" font-size="11" font-weight="900">' + escapeHtml(fmtPct(reservePct, 1)) + ' reserve | ' + escapeHtml(fmtPct(areaRetainedPct, 1)) + ' area retained</text>' +
+      '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + reserveBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + reserveBarFill + '" />' +
+      '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + reserveValueFill + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(reservePct, 1)) + ' reserve | ' + escapeHtml(fmtPct(areaRetainedPct, 1)) + ' area retained</text>' +
 
       '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="rgba(125,255,152,.16)" />' +
       '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / TARGET PLANE</text>' +
 
-      '<text x="' + (cameraX - 14) + '" y="' + (centerY - 4) + '" text-anchor="end" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
-      '<text x="' + (cameraX - 14) + '" y="' + (centerY + 14) + '" text-anchor="end" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + escapeHtml(fmt(data.hfov, 0)) + ' deg</text>' +
+      '<text x="' + (cameraX - 76) + '" y="' + (centerY - 4) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
+      '<text x="' + (cameraX - 76) + '" y="' + (centerY + 14) + '" text-anchor="start" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + escapeHtml(fmt(data.hfov, 0)) + ' deg</text>' +
       '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />' +
 
       '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + rawTopY.toFixed(1) + ' L ' + targetX + ' ' + rawBotY.toFixed(1) + ' Z" fill="url(#coverageFovFill)" stroke="rgba(226,232,240,.24)" stroke-width="1" stroke-dasharray="5 6" />' +
