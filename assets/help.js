@@ -302,6 +302,9 @@
     var contentId = "scopedlabs-help-content";
     var toolPath = getToolPath();
     var isCoverageAreaTool = !!(toolPath && toolPath.key === "physical-security/camera-coverage-area");
+    if (isCoverageAreaTool) {
+      card.style.margin = "28px 0 0";
+    }
     var openGuideLabel = isCoverageAreaTool ? "Open KB Guide" : "Open guide";
     var closeGuideLabel = isCoverageAreaTool ? "Close KB Guide" : "Close guide";
     var eyebrowHtml = isCoverageAreaTool
