@@ -208,10 +208,15 @@
     }
 
     const cameraText = area.cameraCount ? area.cameraCount + ' camera' + (Number(area.cameraCount) === 1 ? '' : 's') : 'camera count pending';
+    const areas = Array.isArray(ledger.areas) ? ledger.areas : [];
+    const activeIndex = Math.max(0, areas.findIndex((item) => item && item.id === area.id));
+    const areaPositionText = areas.length
+      ? 'Area ' + (activeIndex + 1) + ' of ' + areas.length
+      : 'Area 1 of 1';
 
     return '' +
       '<div class="card" style="margin-top:14px;border-color:rgba(125,255,158,.20);background:rgba(125,255,152,.035);">' +
-        '<div class="pill-row"><span class="pill">Current Area</span><span class="pill">' + escapeHtml(String((ledger.areas || []).length)) + ' area' + ((ledger.areas || []).length === 1 ? '' : 's') + '</span></div>' +
+        '<div class="pill-row"><span class="pill">Active</span><span class="pill">' + escapeHtml(areaPositionText) + '</span></div>' +
         '<h2 class="h3" style="margin-top:10px;">' + escapeHtml(area.name) + '</h2>' +
         '<p class="muted" style="margin-bottom:0;">' +
           escapeHtml(area.areaType) + ' | length ' + escapeHtml(fmtFt(area.protectedLengthFt)) + ' | distance ' + escapeHtml(fmtFt(area.distanceToTargetPlaneFt)) + ' | assumed HFOV ' + escapeHtml(fmtDeg(area.assumedHfovDeg)) + ' | ' + escapeHtml(cameraText) +
