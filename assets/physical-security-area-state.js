@@ -204,7 +204,7 @@
 
   function bannerHtml(area, ledger) {
     if (!area) {
-      return '<div class="card" style="margin-top:28px;border-color:rgba(255,211,79,.28);"><strong>Area Planner</strong><p class="muted" style="margin-bottom:0;">No active area selected. Start with Area / Zone Planner before using this guided flow.</p></div>';
+      return '<div class="card" style="margin-top:24px;border-color:rgba(255,211,79,.28);"><strong>Area Planner</strong><p class="muted" style="margin-bottom:0;">No active area selected. Start with Area / Zone Planner before using this guided flow.</p></div>';
     }
 
     const cameraText = area.cameraCount ? area.cameraCount + ' camera' + (Number(area.cameraCount) === 1 ? '' : 's') : 'camera count pending';
@@ -215,7 +215,7 @@
       : 'Area 1 of 1';
 
     return '' +
-      '<div class="card" style="margin-top:28px;border-color:rgba(125,255,158,.20);background:rgba(125,255,152,.035);">' +
+      '<div class="card" style="margin-top:24px;border-color:rgba(125,255,158,.20);background:rgba(125,255,152,.035);">' +
         '<div style="margin:0 0 10px;color:rgba(190,255,205,.78);font-size:.92rem;font-style:italic;letter-spacing:.015em;line-height:1.35;">' +
           '<span style="display:block;color:rgba(125,255,152,.88);font-weight:800;">Active</span>' +
           '<span style="display:block;">' + escapeHtml(areaPositionText) + '</span>' +
