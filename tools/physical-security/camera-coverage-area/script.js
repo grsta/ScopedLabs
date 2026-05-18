@@ -362,7 +362,7 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      emptyMessage: "Enter valid values and run a coverage check."
+      emptyMessage: "Review the carried FOV and target-distance values, confirm the usable coverage reserve, then run the coverage check. Change imported values only if you are intentionally testing a local override."
     });
 
     renderFlowNote();
@@ -380,7 +380,7 @@
       !Number.isFinite(dist) || dist <= 0 ||
       !Number.isFinite(ovPct) || ovPct < 0 || ovPct > 95
     ) {
-      return { ok: false, message: "Enter valid values and run a coverage check." };
+      return { ok: false, message: "Review the carried FOV and target-distance values, confirm the usable coverage reserve, then run the coverage check. Change imported values only if you are intentionally testing a local override." };
     }
 
     return { ok: true, hfov, vfov, dist, ovPct };
@@ -593,14 +593,14 @@
     '</svg>';
   }
 
-  function renderCoverageAssistantPrompt(message = "Enter valid values and run a coverage check.") {
+  function renderCoverageAssistantPrompt(message = "Review the carried FOV and target-distance values, confirm the usable coverage reserve, then run the coverage check. Change imported values only if you are intentionally testing a local override.") {
     if (!els.assistant) return;
 
     els.assistant.innerHTML =
       '<div class="coverage-assistant-head">' +
         '<div>' +
           '<p class="coverage-assistant-kicker">Coverage Assistant</p>' +
-          '<h4 class="coverage-assistant-title">Ready for coverage inputs.</h4>' +
+          '<h4 class="coverage-assistant-title">Ready to validate coverage assumptions.</h4>' +
           '<p class="coverage-assistant-copy">' + escapeHtml(message) + '</p>' +
         '</div>' +
       '</div>';
