@@ -611,6 +611,12 @@
     });
   }
 
+  function formatAssistantStatusLabel(value) {
+    const text = String(value || "").trim().toLowerCase();
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
   function renderCoverageAssistant(data) {
     if (!els.assistant || !data || !data.ok) return;
 
@@ -625,7 +631,7 @@
           '<h4 class="coverage-assistant-title">' + escapeHtml(title) + '</h4>' +
           '<p class="coverage-assistant-copy">' + escapeHtml(data.interpretation) + '</p>' +
         '</div>' +
-        '<span class="coverage-status-pill ' + statusClass + '">Status: ' + escapeHtml(data.status) + '</span>' +
+        '<span class="coverage-status-pill ' + statusClass + '">Assistant Status: ' + escapeHtml(formatAssistantStatusLabel(data.status)) + '</span>' +
       '</div>' +
       '<div class="coverage-visual-stage">' + coverageFootprintSvg(data) + '</div>' +
       '<div class="coverage-mini-grid">' +
@@ -777,6 +783,9 @@
     var nodes = root.querySelectorAll("span, div, p, strong");
     nodes.forEach(function (node) {
       var text = String(node.textContent || "").replace(/\s+/g, " ").trim();
+
+      if (node.classList && node.classList.contains("coverage-status-pill")) return;
+      if (node.closest && node.closest(".coverage-status-pill")) return;
 
       if (!/^Status:\s*(HEALTHY|WATCH|RISK|undefined)$/i.test(text)) return;
 

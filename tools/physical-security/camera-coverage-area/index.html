@@ -322,6 +322,31 @@
     margin-left: auto;
   }
 </style>
+
+<style id="coverage-assistant-status-topright-001">
+  .coverage-assistant-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .coverage-status-pill {
+    margin-left: auto;
+    align-self: flex-start;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 700px) {
+    .coverage-assistant-head {
+      flex-direction: column;
+    }
+
+    .coverage-status-pill {
+      margin-left: 0;
+    }
+  }
+</style>
 </head>
 
 <body
@@ -525,7 +550,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
-  <script src="./script.js?v=physical-security-coverage-assistant-toprow-001"></script>
+  <script src="./script.js?v=physical-security-coverage-assistant-status-002"></script>
   <script defer src="/assets/help.js?v=help-031-coverage-spacing"></script>
 </body>
 </html>
