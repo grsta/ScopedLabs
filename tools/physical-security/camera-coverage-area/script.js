@@ -635,7 +635,7 @@
     const reserveBarFill = reserveTone === "risk" ? "url(#coverageRiskBar)" : "url(#coverageReserveBar)";
     const reserveValueFill = reserveTone === "risk" ? "rgba(255,188,166,.96)" : "rgba(255,239,176,.96)";
 
-    return '<svg viewBox="0 0 800 398" role="img" aria-label="Coverage reserve plan view visualization">' +
+    return '<svg data-export-svg viewBox="0 0 800 398" role="img" aria-label="Coverage reserve plan view visualization">' +
       '<defs>' +
         '<linearGradient id="coverageRawBar" x1="0" y1="0" x2="1" y2="0">' +
           '<stop offset="0%" stop-color="rgba(84,212,116,.70)" />' +
@@ -782,7 +782,10 @@
         '</div>' +
         '<span class="coverage-status-pill ' + statusClass + '">Assistant Status: ' + escapeHtml(formatAssistantStatusLabel(data.status)) + '</span>' +
       '</div>' +
-      '<div class="coverage-visual-stage">' + coverageFootprintSvg(data) + '</div>' +
+      '<div class="coverage-visual-stage" data-export-section data-export-title="Coverage Assistant Plan View">' +
+        '<div class="coverage-export-summary" data-export-text>Plan-view coverage visual showing raw footprint, usable width, held-back reserve, and the target-distance handoff used by Camera Spacing.</div>' +
+        coverageFootprintSvg(data) +
+      '</div>' +
       '<div class="coverage-mini-grid">' +
         '<div class="coverage-mini-card"><div class="coverage-mini-label">Raw footprint</div><div class="coverage-mini-value">' + escapeHtml(fmtFt(data.width)) + ' &times; ' + escapeHtml(fmtFt(data.height)) + '</div></div>' +
         '<div class="coverage-mini-card"><div class="coverage-mini-label">Usable width</div><div class="coverage-mini-value">' + escapeHtml(fmtFt(data.effWidth)) + '</div></div>' +
