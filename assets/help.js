@@ -303,7 +303,7 @@
     var toolPath = getToolPath();
     var isCoverageAreaTool = !!(toolPath && toolPath.key === "physical-security/camera-coverage-area");
     if (isCoverageAreaTool) {
-      card.style.margin = "24px 0 0";
+      card.style.margin = "22px 0 0";
     }
     var openGuideLabel = isCoverageAreaTool ? "Open KB Guide" : "Open guide";
     var closeGuideLabel = isCoverageAreaTool ? "Close KB Guide" : "Close guide";
