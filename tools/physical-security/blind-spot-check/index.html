@@ -126,6 +126,63 @@
   color: inherit;
 }
   </style>
+
+  <style data-blindspot-button-shape-polish>
+    body[data-tool="blind-spot-check"] #lockedCard .actions,
+    body[data-tool="blind-spot-check"] #toolCard .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    body[data-tool="blind-spot-check"] #lockedCard .btn,
+    body[data-tool="blind-spot-check"] #toolCard .btn,
+    body[data-tool="blind-spot-check"] .sl-help-card .btn,
+    body[data-tool="blind-spot-check"] button.btn,
+    body[data-tool="blind-spot-check"] a.btn {
+      border-radius: 12px !important;
+      min-height: 42px;
+      padding: 10px 16px !important;
+      line-height: 1.15;
+      font-weight: 800;
+      box-shadow: none !important;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease, color .18s ease, opacity .18s ease;
+    }
+
+    body[data-tool="blind-spot-check"] #lockedCard .btn,
+    body[data-tool="blind-spot-check"] #toolCard .btn,
+    body[data-tool="blind-spot-check"] .sl-help-card .btn {
+      background: linear-gradient(180deg, rgba(45,128,67,.72), rgba(27,88,45,.84)) !important;
+      border: 1px solid rgba(125,255,152,.24) !important;
+      color: #f4fff6 !important;
+    }
+
+    body[data-tool="blind-spot-check"] #lockedCard .btn-primary,
+    body[data-tool="blind-spot-check"] #toolCard .btn-primary {
+      background: linear-gradient(180deg, rgba(58,145,79,.78), rgba(33,104,53,.88)) !important;
+      border-color: rgba(125,255,152,.30) !important;
+    }
+
+    body[data-tool="blind-spot-check"] #lockedCard .btn:hover,
+    body[data-tool="blind-spot-check"] #toolCard .btn:hover,
+    body[data-tool="blind-spot-check"] .sl-help-card .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(125,255,152,.42) !important;
+    }
+
+    body[data-tool="blind-spot-check"] #toolCard .btn[disabled],
+    body[data-tool="blind-spot-check"] #toolCard button[disabled] {
+      opacity: .58;
+      cursor: not-allowed;
+      filter: saturate(.82);
+    }
+
+    body[data-tool="blind-spot-check"] .blindspot-status-pill {
+      border-radius: 999px !important;
+    }
+  </style>
+
 </head>
 
 <body
