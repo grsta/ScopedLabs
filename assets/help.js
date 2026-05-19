@@ -2,7 +2,7 @@
   "use strict";
 
   var HELP_INDEX_URL = "/assets/help/index.json";
-  var VERSION_PLACEHOLDER = "help-026";
+  var VERSION_PLACEHOLDER = "help-032-blindspot-kb";
   var helpIndexCache = null;
 
   function escapeHtml(value) {
@@ -301,13 +301,19 @@
     var openByDefault = help.defaultOpen === true;
     var contentId = "scopedlabs-help-content";
     var toolPath = getToolPath();
-    var isCoverageAreaTool = !!(toolPath && toolPath.key === "physical-security/camera-coverage-area");
-    if (isCoverageAreaTool) {
+    var cleanKnowledgeCardTools = {
+      "physical-security/camera-coverage-area": true,
+      "physical-security/blind-spot-check": true
+    };
+    var useCleanKnowledgeCard = !!(toolPath && cleanKnowledgeCardTools[toolPath.key]);
+
+    if (useCleanKnowledgeCard) {
       card.style.margin = "22px 0 0";
     }
-    var openGuideLabel = isCoverageAreaTool ? "Open KB Guide" : "Open guide";
-    var closeGuideLabel = isCoverageAreaTool ? "Close KB Guide" : "Close guide";
-    var eyebrowHtml = isCoverageAreaTool
+
+    var openGuideLabel = useCleanKnowledgeCard ? "Open KB Guide" : "Open guide";
+    var closeGuideLabel = useCleanKnowledgeCard ? "Close KB Guide" : "Close guide";
+    var eyebrowHtml = useCleanKnowledgeCard
       ? ""
       : "<div class=\"pill-row\">" +
           "<span class=\"pill\">" + escapeHtml(help.eyebrow || "Knowledge Base") + "</span>" +
