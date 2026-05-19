@@ -337,11 +337,18 @@
   }
 
   function renderAreaOnlyFlowContext() {
-    const html = activeAreaFlowContextHtml();
-    if (!html || !els.flowNote) return false;
+    if (!els.flowNote) return false;
+
+    const overrideNote = renderManualOverrideNote();
+
+    if (!overrideNote) {
+      els.flowNote.hidden = true;
+      els.flowNote.innerHTML = "";
+      return false;
+    }
 
     els.flowNote.hidden = false;
-    els.flowNote.innerHTML = html + renderManualOverrideNote();
+    els.flowNote.innerHTML = overrideNote;
     return true;
   }
 
@@ -398,29 +405,16 @@
       if (Number.isFinite(overlap) && overlap >= 0 && overlap <= 95) els.overlap.value = String(Number(overlap.toFixed(1)));
     }
 
-    const areaContext = activeAreaFlowContextHtml();
-    const parts = [];
-    if (Number.isFinite(w)) parts.push("Protected width: <strong>" + fmtFt(w) + "</strong>");
-    if (Number.isFinite(cams)) parts.push("Cameras: <strong>" + fmt(cams, 0) + "</strong>");
-    if (Number.isFinite(spacing)) parts.push("Spacing: <strong>" + fmtFt(spacing) + "</strong>");
-    if (Number.isFinite(dist)) parts.push("Distance: <strong>" + fmtFt(dist) + "</strong>");
-    if (Number.isFinite(hfov)) parts.push("HFOV: <strong>" + fmt(hfov, 1) + " deg</strong>");
-    if (Number.isFinite(overlap)) parts.push("Overlap: <strong>" + fmtPct(overlap) + "</strong>");
+    const overrideNote = renderManualOverrideNote();
 
-    if (!parts.length && !areaContext) {
+    if (!overrideNote) {
       els.flowNote.hidden = true;
       els.flowNote.innerHTML = "";
       return;
     }
 
     els.flowNote.hidden = false;
-    els.flowNote.innerHTML =
-      (areaContext ? areaContext + "<br><br>" : "") +
-      "<strong>Flow Context</strong><br>" +
-      parts.join(" | ") +
-      "<br><br>" +
-      "This step validates whether the spacing plan from the previous step still produces continuous coverage once overlap is applied." +
-      renderManualOverrideNote();
+    els.flowNote.innerHTML = overrideNote;
   }
 
   function invalidate({ clearFlow = true } = {}) {
@@ -706,11 +700,11 @@
       '<defs><linearGradient id="blindCoverageLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(82,201,112,.76)" /><stop offset="100%" stop-color="rgba(151,255,176,.92)" /></linearGradient></defs>' +
       '<text x="52" y="26" fill="rgba(248,250,252,.92)" font-size="18" font-weight="900">Plan view: spacing coverage continuity</text>' +
       '<text x="52" y="48" fill="rgba(226,232,240,.62)" font-size="12">Green shows modeled coverage across the protected span. Red appears only where a blind gap remains.</text>' +
-      '<text x="52" y="82" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Protected span</text>' +
+      '<text x="52" y="82" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Required protected span</text>' +
       '<rect x="250" y="74" width="304" height="10" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(226,232,240,.12)" />' +
       '<rect x="250" y="74" width="304" height="10" rx="5" fill="rgba(226,232,240,.24)" />' +
       '<text x="748" y="82" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(width)) + '</text>' +
-      '<text x="52" y="114" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Total modeled coverage</text>' +
+      '<text x="52" y="114" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Modeled coverage available</text>' +
       '<rect x="250" y="106" width="304" height="10" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
       '<rect x="250" y="106" width="' + coverageBarPx + '" height="10" rx="5" fill="url(#blindCoverageLine)" />' +
       '<text x="748" y="114" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(coverage)) + '</text>' +
@@ -726,7 +720,7 @@
       gapSection +
       '<line x1="' + startX + '" y1="' + (lineY - 10) + '" x2="' + startX + '" y2="' + (lineY + 10) + '" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
       '<line x1="' + (startX + protectedW) + '" y1="' + (lineY - 10) + '" x2="' + (startX + protectedW) + '" y2="' + (lineY + 10) + '" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
-      '<text x="' + (startX + protectedW / 2) + '" y="' + (lineY + 26) + '" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Protected width: ' + escapeHtml(fmtFt(width)) + '</text>' +
+      '<text x="' + (startX + protectedW / 2) + '" y="' + (lineY + 26) + '" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Required width: ' + escapeHtml(fmtFt(width)) + '</text>' +
       marginText +
       '<text x="68" y="294" fill="rgba(226,232,240,.56)" font-size="10.5">Each marker represents a planned camera position. Coverage is validated before carrying the layout into Pixel Density.</text>' +
     '</svg>';
@@ -746,7 +740,7 @@
     els.assistant.innerHTML =
       '<div class="blindspot-assistant-head"><div><p class="blindspot-assistant-kicker">Blind Spot Assistant</p><h3 class="blindspot-assistant-title">' + escapeHtml(blindSpotAssistantTitle(data)) + '</h3><p class="blindspot-assistant-copy">' + escapeHtml(blindSpotAssistantSummary(data)) + '</p></div><span class="blindspot-status-pill ' + statusClass + '">Assistant Status: ' + escapeHtml(formatAssistantStatusLabel(data.status)) + '</span></div>' +
       '<div class="blindspot-visual-stage" data-export-section data-export-title="Blind Spot Assistant Plan View"><div class="blindspot-export-summary" data-export-text>Plan-view blind spot visual showing protected span, modeled coverage continuity, camera positions, overlap pressure, and remaining gap if present.</div>' + blindSpotPlanViewSvg(data) + '</div>' +
-      '<div class="blindspot-mini-grid"><div class="blindspot-mini-card"><div class="blindspot-mini-label">Protected width</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.w)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Total coverage</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.totalCoverageFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Gap</div><div class="blindspot-mini-value">' + escapeHtml(data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Result</div><div class="blindspot-mini-value">' + escapeHtml(data.coverageClass) + '</div></div></div>' +
+      '<div class="blindspot-mini-grid"><div class="blindspot-mini-card"><div class="blindspot-mini-label">Required span</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.w)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Modeled coverage</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.totalCoverageFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Gap / margin</div><div class="blindspot-mini-value">' + escapeHtml(data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Result</div><div class="blindspot-mini-value">' + escapeHtml(data.coverageClass) + '</div></div></div>' +
       '<div class="blindspot-handoff-card"><strong>Pixel Density handoff:</strong> ' + handoff + '</div>' +
       '<div class="blindspot-handoff-card"><strong>Assistant guidance:</strong> ' + escapeHtml(data.guidance) + '</div>';
   }
@@ -794,12 +788,6 @@ ScopedLabsAnalyzer.renderOutput({
     if (els.results) {
       els.results.querySelectorAll("canvas").forEach((node) => node.remove());
     }
-
-    // Blind Spot assistant plan-view SVG is the report visual.
-    if (window.ScopedLabsAnalyzer && typeof ScopedLabsAnalyzer.clearChart === "function") {
-      ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
-    }
-
     renderBlindSpotAssistant(data);
     writeFlow(data);
 
