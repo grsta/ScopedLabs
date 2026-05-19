@@ -782,29 +782,7 @@ ScopedLabsAnalyzer.renderOutput({
       status: data.status,
       interpretation: data.interpretation,
       dominantConstraint: data.dominantConstraint,
-      guidance: data.guidance,
-      chart: {
-        labels: ["Gap Pressure", "Coverage Shortfall", "Overlap Compression"],
-        values: [
-          Number(data.gapPressureMetric.toFixed(1)),
-          Number(data.shortfallMetric.toFixed(1)),
-          Number(data.overlapMetric.toFixed(1))
-        ],
-        displayValues: [
-          data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt),
-          fmtPct(data.gapPct),
-          fmtPct(data.overlapPct)
-        ],
-        referenceValue: 25,
-        healthyMax: 25,
-        watchMax: 60,
-        axisTitle: "Coverage Risk Pressure",
-        referenceLabel: "Comfort Band",
-        healthyLabel: "Healthy",
-        watchLabel: "Watch",
-        riskLabel: "Risk",
-        chartMax: 100
-      }
+      guidance: data.guidance
     });
 
     // Blind Spot now uses the assistant plan-view SVG as the report/snapshot visual.
@@ -815,6 +793,11 @@ ScopedLabsAnalyzer.renderOutput({
 
     if (els.results) {
       els.results.querySelectorAll("canvas").forEach((node) => node.remove());
+    }
+
+    // Blind Spot assistant plan-view SVG is the report visual.
+    if (window.ScopedLabsAnalyzer && typeof ScopedLabsAnalyzer.clearChart === "function") {
+      ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     }
 
     renderBlindSpotAssistant(data);
