@@ -128,32 +128,55 @@
   </style>
 
   <style data-blindspot-button-shape-polish>
-    /* Coverage Area button rhythm */
-    .blindspot-action-btn {
-      min-height: 38px;
-      min-width: 124px;
-      border-radius: 10px;
-      justify-content: center;
-      letter-spacing: 0.01em;
-      border-color: rgba(88, 255, 124, 0.26);
-      background: linear-gradient(180deg, rgba(28, 86, 38, 0.58), rgba(14, 56, 24, 0.64));
-      color: rgba(255, 255, 255, 0.96);
+    body[data-tool="blind-spot-check"] #calc,
+    body[data-tool="blind-spot-check"] #reset,
+    body[data-tool="blind-spot-check"] #continue,
+    body[data-tool="blind-spot-check"] #exportReport,
+    body[data-tool="blind-spot-check"] #saveSnapshot,
+    body[data-tool="blind-spot-check"] #toolCard a.btn,
+    body[data-tool="blind-spot-check"] #lockedCard a.btn,
+    body[data-tool="blind-spot-check"] .sl-help-card .btn {
+      min-height: 38px !important;
+      min-width: 124px !important;
+      border-radius: 10px !important;
+      justify-content: center !important;
+      letter-spacing: 0.01em !important;
+      border-color: rgba(88, 255, 124, 0.26) !important;
+      background: linear-gradient(180deg, rgba(28, 86, 38, 0.58), rgba(14, 56, 24, 0.64)) !important;
+      color: rgba(255, 255, 255, 0.96) !important;
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 0 0 1px rgba(88, 255, 124, 0.08);
+        0 0 0 1px rgba(88, 255, 124, 0.08) !important;
     }
 
-    .blindspot-action-btn:hover,
-    .blindspot-action-btn:hover {
-      border-color: rgba(118, 255, 151, 0.38);
-      background: linear-gradient(180deg, rgba(34, 105, 44, 0.64), rgba(18, 72, 29, 0.70));
+    body[data-tool="blind-spot-check"] #calc:hover,
+    body[data-tool="blind-spot-check"] #reset:hover,
+    body[data-tool="blind-spot-check"] #continue:hover,
+    body[data-tool="blind-spot-check"] #exportReport:hover,
+    body[data-tool="blind-spot-check"] #saveSnapshot:hover,
+    body[data-tool="blind-spot-check"] #toolCard a.btn:hover,
+    body[data-tool="blind-spot-check"] #lockedCard a.btn:hover,
+    body[data-tool="blind-spot-check"] .sl-help-card .btn:hover {
+      border-color: rgba(118, 255, 151, 0.38) !important;
+      background: linear-gradient(180deg, rgba(34, 105, 44, 0.64), rgba(18, 72, 29, 0.70)) !important;
     }
 
-    .blindspot-action-btn:disabled,
-    .blindspot-action-btn:disabled {
-      opacity: 0.56;
-      cursor: not-allowed;
-      filter: saturate(0.8);
+    body[data-tool="blind-spot-check"] #calc:disabled,
+    body[data-tool="blind-spot-check"] #reset:disabled,
+    body[data-tool="blind-spot-check"] #continue:disabled,
+    body[data-tool="blind-spot-check"] #exportReport:disabled,
+    body[data-tool="blind-spot-check"] #saveSnapshot:disabled {
+      opacity: 0.56 !important;
+      cursor: not-allowed !important;
+      filter: saturate(0.8) !important;
+    }
+
+    body[data-tool="blind-spot-check"] #lockedCard .actions,
+    body[data-tool="blind-spot-check"] #toolCard .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
     }
 
     body[data-tool="blind-spot-check"] .blindspot-status-pill {
