@@ -54,7 +54,31 @@
       font-size: 0.92rem;
       line-height: 1.5;
     }
-  </style>
+  
+
+    /* Blind Spot assistant shell v1 */
+    .blindspot-assistant { display: grid; gap: 14px; margin-top: 12px; }
+    .blindspot-assistant-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: nowrap; }
+    .blindspot-assistant-head > div { flex: 1 1 auto; min-width: 0; }
+    .blindspot-assistant-kicker { margin: 0 0 6px; color: rgba(125,255,152,.76); font-size: .78rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .blindspot-assistant-title { margin: 0; color: rgba(255,255,255,.94); font-size: 1.18rem; line-height: 1.25; }
+    .blindspot-assistant-copy { margin: 8px 0 0; color: rgba(226,232,240,.72); line-height: 1.55; }
+    .blindspot-status-pill { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; margin-left: 16px; margin-top: 2px; border-radius: 999px; padding: 7px 11px; border: 1px solid rgba(125,255,152,.24); background: rgba(125,255,152,.09); color: rgba(190,255,205,.94); font-weight: 900; font-size: .78rem; letter-spacing: .02em; white-space: nowrap; text-transform: none; }
+    .blindspot-status-pill.watch { border-color: rgba(255,211,79,.32); background: rgba(255,211,79,.10); color: rgba(255,226,128,.96); }
+    .blindspot-status-pill.risk { border-color: rgba(255,138,102,.34); background: rgba(255,138,102,.10); color: rgba(255,188,166,.96); }
+    .blindspot-visual-stage { border: 1px solid rgba(125,255,152,.16); border-radius: 16px; background: rgba(0,0,0,.16); padding: 14px; overflow: hidden; }
+    .blindspot-visual-stage svg { display: block; width: 100%; height: auto; }
+    .blindspot-export-summary { position: absolute !important; left: -10000px !important; top: auto !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
+    .blindspot-mini-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .blindspot-mini-card { border: 1px solid rgba(125,255,152,.14); border-radius: 14px; background: rgba(255,255,255,.035); padding: 11px 12px; min-width: 0; }
+    .blindspot-mini-label { color: rgba(226,232,240,.54); font-size: .72rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+    .blindspot-mini-value { margin-top: 5px; color: rgba(255,255,255,.92); font-size: .98rem; font-weight: 900; line-height: 1.25; }
+    .blindspot-handoff-card { border: 1px solid rgba(255,211,79,.18); border-radius: 14px; background: rgba(255,211,79,.055); padding: 12px 14px; color: rgba(226,232,240,.72); line-height: 1.55; }
+    .blindspot-handoff-card strong { color: rgba(255,232,160,.94); }
+    .blindspot-technical-results { position: absolute !important; left: -10000px !important; top: auto !important; width: 1px !important; height: 1px !important; overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }
+    @media (max-width: 860px) { .blindspot-mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { .blindspot-assistant-head { flex-wrap: wrap; } .blindspot-status-pill { margin-left: 0; } }
+</style>
 
   <style data-scopedlabs-export-card-styles>
     .export-grid {
@@ -245,20 +269,23 @@
           <button id="calc" class="btn btn-primary" type="button">Check Coverage</button>
           <button id="reset" class="btn" type="button">Reset</button>
         </div>
+        <div class="card blindspot-assistant-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <div id="blindSpotAssistant" class="blindspot-assistant" aria-live="polite">
+            <div class="blindspot-assistant-head">
+              <div>
+                <p class="blindspot-assistant-kicker">Blind Spot Assistant</p>
+                <h3 class="blindspot-assistant-title">Ready to validate coverage continuity.</h3>
+                <p class="blindspot-assistant-copy">Review the carried spacing, camera count, HFOV, and overlap assumptions, then run the blind-spot check. Edit imported values only when testing a local what-if branch.</p>
+              </div>
+            </div>
+          </div>
 
-        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-          <h3 class="h3" style="margin-top: 0;">Results</h3>
-          <div id="results" class="results-grid" aria-live="polite">
-            <div class="muted">Enter values and press Check Coverage.</div>
+          <div id="results" class="results-grid blindspot-technical-results" aria-live="polite" aria-hidden="true">
+            <div class="muted">Run the blind-spot check to generate technical output.</div>
           </div>
           <div id="analysis-copy" style="display:none;"></div>
-
-          <p class="mini-note">
-            Model: coverage width is based on horizontal field of view at the target distance, then reduced by the requested overlap target before total usable width is compared against the protected span.
-          </p>
         </div>
-
-        <div class="btn-row" style="margin-top: 14px;">
+<div class="btn-row" style="margin-top: 14px;">
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
         </div>
 
@@ -355,7 +382,7 @@
   <script src="/assets/export.js?v=shared-export-011"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
-  <script src="./script.js?v=physical-security-blind-spot-area-writeback-002"></script>
+  <script src="./script.js?v=physical-security-blindspot-assistant-shell-001"></script>
   <script defer src="/assets/help.js?v=help-027"></script>
 </body>
 </html>

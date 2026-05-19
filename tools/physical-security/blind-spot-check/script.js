@@ -36,6 +36,7 @@
     reset: $("reset"),
     results: $("results"),
     analysis: $("analysis-copy"),
+    assistant: $("blindSpotAssistant"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
@@ -436,9 +437,10 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      emptyMessage: "Enter values and press Check Coverage."
+      emptyMessage: "Run the blind-spot check to generate technical output."
     });
 
+    renderBlindSpotAssistantPrompt("Review the carried spacing, camera count, HFOV, and overlap assumptions, then run the blind-spot check. Edit imported values only when testing a local what-if branch.");
     renderFlowNote();
   }
 
@@ -639,11 +641,122 @@
     updateActiveAreaFromBlindSpot(data, manualOverrideMeta);
   }
 
+  function statusClassName(status) {
+    const value = String(status || "").trim().toLowerCase();
+    if (value === "risk") return "risk";
+    if (value === "watch") return "watch";
+    return "healthy";
+  }
+
+  function formatAssistantStatusLabel(value) {
+    const text = String(value || "").trim().toLowerCase();
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  function blindSpotAssistantTitle(data) {
+    if (data.coverageClass === "BLIND SPOTS") return "Blind spots are likely under the current spacing assumptions.";
+    if (data.coverageClass === "MINOR GAPS") return "Coverage is close, but field tolerance is tight.";
+    if (data.overlapPct >= 25) return "Coverage is continuous, but overlap is compressing usable width.";
+    return "Coverage continuity is ready for detail validation.";
+  }
+
+  function blindSpotAssistantSummary(data) {
+    if (data.coverageClass === "BLIND SPOTS") return "The modeled camera run does not cover the full protected span once overlap is honored. Correct spacing, camera count, or HFOV before carrying the layout forward.";
+    if (data.coverageClass === "MINOR GAPS") return "The layout is almost continuous, but the remaining gap leaves little room for mounting tolerance, edge softness, or field conditions.";
+    if (data.overlapPct >= 25) return "The protected span is covered, but the overlap setting is using extra footprint. Review whether the reserve is intentional before moving on.";
+    return "The spacing plan covers the protected span with usable margin. Continue to Pixel Density to confirm the layout also delivers enough subject detail.";
+  }
+
+  function blindSpotPlanViewSvg(data) {
+    const width = Math.max(0, Number(data?.w) || 0);
+    const coverage = Math.max(0, Number(data?.totalCoverageFt) || 0);
+    const gap = Math.max(0, Number(data?.gapFt) || 0);
+    const margin = Math.max(0, Number(data?.overCoverageFt) || 0);
+    const cams = Math.max(1, Math.round(Number(data?.cams) || 1));
+    const overlapPct = Math.max(0, Math.min(Number(data?.overlapPct) || 0, 95));
+    const coverageRatio = width > 0 ? Math.min(coverage / width, 1.15) : 0;
+    const coveredPx = Math.max(0, Math.min(560, 560 * coverageRatio));
+    const cameraCount = Math.min(cams, 8);
+    const startX = 120;
+    const lineY = 250;
+    const protectedW = 560;
+    const cameraY = 204;
+
+    const cameraMarkers = Array.from({ length: cameraCount }, (_, i) => {
+      const x = cameraCount === 1 ? startX + protectedW / 2 : startX + (protectedW * i) / (cameraCount - 1);
+      return '<g>' +
+        '<line x1="' + x.toFixed(1) + '" y1="' + cameraY + '" x2="' + x.toFixed(1) + '" y2="' + (lineY - 14) + '" stroke="rgba(125,255,152,.28)" stroke-width="1" stroke-dasharray="4 5" />' +
+        '<circle cx="' + x.toFixed(1) + '" cy="' + cameraY + '" r="7" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.88)" stroke-width="1.6" />' +
+        '<text x="' + x.toFixed(1) + '" y="' + (cameraY - 13) + '" text-anchor="middle" fill="rgba(226,232,240,.68)" font-size="9.5" font-weight="900">C' + (i + 1) + '</text>' +
+      '</g>';
+    }).join('');
+
+    const gapSection = gap > 0
+      ? '<line x1="' + (startX + coveredPx).toFixed(1) + '" y1="' + lineY + '" x2="' + (startX + protectedW).toFixed(1) + '" y2="' + lineY + '" stroke="rgba(255,138,102,.92)" stroke-width="5" stroke-linecap="round" />' +
+        '<text x="' + (startX + protectedW - 4) + '" y="' + (lineY - 18) + '" text-anchor="end" fill="rgba(255,188,166,.96)" font-size="11" font-weight="950">Gap ' + escapeHtml(fmtFt(gap)) + '</text>'
+      : '<text x="' + (startX + protectedW - 4) + '" y="' + (lineY - 18) + '" text-anchor="end" fill="rgba(125,255,152,.92)" font-size="11" font-weight="950">No modeled gap</text>';
+
+    const marginText = margin > 0 ? '<text x="' + (startX + protectedW - 4) + '" y="' + (lineY + 34) + '" text-anchor="end" fill="rgba(226,232,240,.56)" font-size="10.5">Remaining margin: ' + escapeHtml(fmtFt(margin)) + '</text>' : '';
+    const overlapTone = overlapPct >= 35 ? 'rgba(255,138,102,.88)' : overlapPct >= 25 ? 'rgba(255,211,79,.88)' : 'rgba(255,226,128,.82)';
+    const coverageBarPx = Math.min(304, Math.max(8, 304 * Math.min(coverageRatio, 1))).toFixed(1);
+    const overlapBarPx = Math.max(8, Math.min(304, 304 * (overlapPct / 100))).toFixed(1);
+
+    return '<svg data-export-svg viewBox="0 0 800 340" role="img" aria-label="Blind spot plan view visualization">' +
+      '<defs><linearGradient id="blindCoverageLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(82,201,112,.76)" /><stop offset="100%" stop-color="rgba(151,255,176,.92)" /></linearGradient></defs>' +
+      '<text x="52" y="26" fill="rgba(248,250,252,.92)" font-size="18" font-weight="900">Plan view: spacing coverage continuity</text>' +
+      '<text x="52" y="48" fill="rgba(226,232,240,.62)" font-size="12">Green shows modeled coverage across the protected span. Red appears only where a blind gap remains.</text>' +
+      '<text x="52" y="82" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Protected span</text>' +
+      '<rect x="250" y="74" width="304" height="10" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(226,232,240,.12)" />' +
+      '<rect x="250" y="74" width="304" height="10" rx="5" fill="rgba(226,232,240,.24)" />' +
+      '<text x="748" y="82" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(width)) + '</text>' +
+      '<text x="52" y="114" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Total modeled coverage</text>' +
+      '<rect x="250" y="106" width="304" height="10" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
+      '<rect x="250" y="106" width="' + coverageBarPx + '" height="10" rx="5" fill="url(#blindCoverageLine)" />' +
+      '<text x="748" y="114" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(coverage)) + '</text>' +
+      '<text x="52" y="146" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Overlap target</text>' +
+      '<rect x="250" y="138" width="304" height="10" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />' +
+      '<rect x="250" y="138" width="' + overlapBarPx + '" height="10" rx="5" fill="' + overlapTone + '" />' +
+      '<text x="748" y="146" text-anchor="end" fill="' + overlapTone + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(overlapPct, 1)) + '</text>' +
+      '<rect x="48" y="166" width="704" height="142" rx="18" fill="rgba(0,0,0,.13)" stroke="rgba(125,255,152,.16)" />' +
+      '<text x="68" y="192" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / PROTECTED SPAN</text>' +
+      cameraMarkers +
+      '<line x1="' + startX + '" y1="' + lineY + '" x2="' + (startX + protectedW) + '" y2="' + lineY + '" stroke="rgba(226,232,240,.28)" stroke-width="1.2" stroke-linecap="round" />' +
+      '<line x1="' + startX + '" y1="' + lineY + '" x2="' + (startX + Math.min(protectedW, coveredPx)).toFixed(1) + '" y2="' + lineY + '" stroke="url(#blindCoverageLine)" stroke-width="5" stroke-linecap="round" />' +
+      gapSection +
+      '<line x1="' + startX + '" y1="' + (lineY - 10) + '" x2="' + startX + '" y2="' + (lineY + 10) + '" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+      '<line x1="' + (startX + protectedW) + '" y1="' + (lineY - 10) + '" x2="' + (startX + protectedW) + '" y2="' + (lineY + 10) + '" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+      '<text x="' + (startX + protectedW / 2) + '" y="' + (lineY + 26) + '" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Protected width: ' + escapeHtml(fmtFt(width)) + '</text>' +
+      marginText +
+      '<text x="68" y="294" fill="rgba(226,232,240,.56)" font-size="10.5">Each marker represents a planned camera position. Coverage is validated before carrying the layout into Pixel Density.</text>' +
+    '</svg>';
+  }
+
+  function renderBlindSpotAssistantPrompt(message = "Review the carried spacing assumptions, then run the blind-spot check.") {
+    if (!els.assistant) return;
+    els.assistant.innerHTML = '<div class="blindspot-assistant-head"><div><p class="blindspot-assistant-kicker">Blind Spot Assistant</p><h3 class="blindspot-assistant-title">Ready to validate coverage continuity.</h3><p class="blindspot-assistant-copy">' + escapeHtml(message) + '</p></div></div>';
+  }
+
+  function renderBlindSpotAssistant(data) {
+    if (!els.assistant || !data || !data.ok) return;
+
+    const statusClass = statusClassName(data.status);
+    const handoff = 'Carry this continuity result into <strong>Pixel Density</strong>. The next step should validate whether the same camera layout delivers enough subject detail, not just continuous coverage.';
+
+    els.assistant.innerHTML =
+      '<div class="blindspot-assistant-head"><div><p class="blindspot-assistant-kicker">Blind Spot Assistant</p><h3 class="blindspot-assistant-title">' + escapeHtml(blindSpotAssistantTitle(data)) + '</h3><p class="blindspot-assistant-copy">' + escapeHtml(blindSpotAssistantSummary(data)) + '</p></div><span class="blindspot-status-pill ' + statusClass + '">Assistant Status: ' + escapeHtml(formatAssistantStatusLabel(data.status)) + '</span></div>' +
+      '<div class="blindspot-visual-stage" data-export-section data-export-title="Blind Spot Assistant Plan View"><div class="blindspot-export-summary" data-export-text>Plan-view blind spot visual showing protected span, modeled coverage continuity, camera positions, overlap pressure, and remaining gap if present.</div>' + blindSpotPlanViewSvg(data) + '</div>' +
+      '<div class="blindspot-mini-grid"><div class="blindspot-mini-card"><div class="blindspot-mini-label">Protected width</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.w)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Total coverage</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.totalCoverageFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Gap</div><div class="blindspot-mini-value">' + escapeHtml(data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Result</div><div class="blindspot-mini-value">' + escapeHtml(data.coverageClass) + '</div></div></div>' +
+      '<div class="blindspot-handoff-card"><strong>Pixel Density handoff:</strong> ' + handoff + '</div>' +
+      '<div class="blindspot-handoff-card"><strong>Assistant guidance:</strong> ' + escapeHtml(data.guidance) + '</div>';
+  }
+
   function renderError(message) {
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
+    renderBlindSpotAssistantPrompt(message);
   }
 
   function renderSuccess(data) {
@@ -694,6 +807,7 @@ ScopedLabsAnalyzer.renderOutput({
       }
     });
 
+    renderBlindSpotAssistant(data);
     writeFlow(data);
 
     updateActiveAreaFromBlindSpot(data, getManualOverrideMetadata(data));
