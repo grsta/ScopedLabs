@@ -807,6 +807,16 @@ ScopedLabsAnalyzer.renderOutput({
       }
     });
 
+    // Blind Spot now uses the assistant plan-view SVG as the report/snapshot visual.
+    // Remove the legacy analyzer canvas so export.js does not create a blank Chart Snapshot.
+    if (window.ScopedLabsAnalyzer && typeof ScopedLabsAnalyzer.clearChart === "function") {
+      ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
+    }
+
+    if (els.results) {
+      els.results.querySelectorAll("canvas").forEach((node) => node.remove());
+    }
+
     renderBlindSpotAssistant(data);
     writeFlow(data);
 
