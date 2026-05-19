@@ -662,180 +662,164 @@
     return "The spacing plan covers the protected span with usable margin. Continue to Pixel Density to confirm the layout also delivers enough subject detail.";
   }
 
-  function coverageStyleBlindSpotFootprintSvg(data) {
-    const reservePct = Math.max(0, Math.min(Number(data?.ovPct) || 0, 95));
-    const retainedPct = Math.max(0, Math.min(Number(data?.widthRetentionPct) || 0, 100));
-    const areaRetainedPct = Math.max(0, Math.min(Number(data?.areaRetentionPct) || 0, 100));
-
-    const rawWidth = Math.max(0, Number(data?.width) || 0);
-    const usableWidth = Math.max(0, Number(data?.effWidth) || 0);
-    const rawHeight = Math.max(0, Number(data?.height) || 0);
+  function blindSpotMultiCameraFootprintSvg(data) {
+    const requiredSpan = Math.max(0, Number(data?.w) || 0);
+    const modeledCoverage = Math.max(0, Number(data?.totalCoverageFt) || 0);
+    const gap = Math.max(0, Number(data?.gapFt) || 0);
+    const margin = Math.max(0, Number(data?.overCoverageFt) || 0);
+    const cams = Math.max(1, Math.round(Number(data?.cams) || 1));
+    const overlapPct = Math.max(0, Math.min(Number(data?.overlapPct) || 0, 95));
+    const hfov = Math.max(0, Number(data?.hfov) || 0);
     const targetDistance = Math.max(0, Number(data?.dist) || 0);
-    const reserveEachSideFt = Math.max(0, (rawWidth - usableWidth) / 2);
-    const reserveEachSidePct = reservePct / 2;
+    const perCameraFt = Math.max(0, Number(data?.coveragePerCameraFt) || 0);
+
+    const safeSpan = Math.max(requiredSpan, 1);
+    const coveredFt = Math.max(0, Math.min(requiredSpan, modeledCoverage));
+    const coveredPct = Math.max(0, Math.min(100, (coveredFt / safeSpan) * 100));
+    const gapPct = Math.max(0, Math.min(100, (gap / safeSpan) * 100));
 
     const labelX = 52;
-    const barX = 292;
-    const barW = 280;
-    const valueX = 740;
+    const barX = 304;
+    const barW = 304;
+    const valueX = 728;
     const barH = 10;
-    const row1Y = 70;
+    const row1Y = 72;
     const rowGap = 32;
 
+    const modeledBarW = Math.max(8, Math.min(barW, barW * (coveredPct / 100)));
+    const gapBarW = Math.max(8, Math.min(barW, barW * (gapPct / 100)));
+    const overlapBarW = Math.max(8, Math.min(barW, barW * (overlapPct / 100)));
+    const overlapTone = overlapPct >= 35 ? "rgba(255,138,102,.88)" : overlapPct >= 25 ? "rgba(255,211,79,.88)" : "rgba(255,226,128,.84)";
+    const gapTone = gap > 0 ? "rgba(255,138,102,.92)" : "rgba(255,226,128,.88)";
+
     const stageX = 34;
-    const stageY = 150;
+    const stageY = 158;
     const stageW = 732;
-    const stageH = 228;
+    const stageH = 292;
 
-    const cameraX = 122;
-    const centerY = 264;
-    const targetX = 560;
-    const rawHalf = 72;
-    const usableHalf = Math.max(8, rawHalf * (retainedPct / 100));
+    const runX = 126;
+    const runY = 346;
+    const runW = 536;
+    const bandH = 14;
 
-    const rawTopY = centerY - rawHalf;
-    const rawBotY = centerY + rawHalf;
-    const usableTopY = centerY - usableHalf;
-    const usableBotY = centerY + usableHalf;
+    const modeledW = Math.max(0, Math.min(runW, runW * (coveredPct / 100)));
+    const gapW = Math.max(0, runW - modeledW);
 
-    const usableBarW = Math.max(8, barW * (retainedPct / 100));
-    const reserveBarW = Math.max(8, barW * (reservePct / 100));
-    const reserveTone = reservePct >= 35 ? "risk" : reservePct >= 20 ? "watch" : "normal";
-    const reserveBarFill = reserveTone === "risk" ? "url(#coverageRiskBar)" : "url(#coverageReserveBar)";
-    const reserveValueFill = reserveTone === "risk" ? "rgba(255,188,166,.96)" : "rgba(255,239,176,.96)";
+    const visibleCamCount = Math.min(cams, 8);
+    const camY = 224;
+    const placementW = Math.max(
+      visibleCamCount === 1 ? runW * 0.42 : runW * 0.58,
+      Math.min(runW, modeledW)
+    );
 
-    return '<svg data-export-svg viewBox="0 0 800 398" role="img" aria-label="Blind spot continuity plan view visualization">' +
+    const perCamPx = perCameraFt > 0
+      ? Math.max(96, Math.min(230, (perCameraFt / safeSpan) * runW))
+      : Math.max(96, Math.min(210, placementW / Math.max(visibleCamCount - 0.35, 1)));
+
+    const camGroups = Array.from({ length: visibleCamCount }, (_, i) => {
+      const x = visibleCamCount === 1
+        ? runX + placementW / 2
+        : runX + (placementW * i) / Math.max(visibleCamCount - 1, 1);
+
+      const left = Math.max(runX, x - perCamPx / 2);
+      const right = Math.min(runX + runW, x + perCamPx / 2);
+
+      return '<g>' +
+        '<polygon points="' + x.toFixed(1) + ',' + camY + ' ' + left.toFixed(1) + ',' + runY + ' ' + right.toFixed(1) + ',' + runY + '" fill="rgba(125,255,152,.045)" stroke="rgba(125,255,152,.34)" stroke-width="1.1" />' +
+        '<line x1="' + x.toFixed(1) + '" y1="' + (camY + 11) + '" x2="' + x.toFixed(1) + '" y2="' + (runY - 12) + '" stroke="rgba(125,255,152,.26)" stroke-width="1" stroke-dasharray="4 5" />' +
+        '<circle cx="' + x.toFixed(1) + '" cy="' + camY + '" r="7" fill="rgba(8,18,12,.98)" stroke="rgba(125,255,152,.95)" stroke-width="1.7" />' +
+        '<text x="' + x.toFixed(1) + '" y="' + (camY - 14) + '" text-anchor="middle" fill="rgba(226,232,240,.82)" font-size="9.8" font-weight="900">C' + (i + 1) + '</text>' +
+      '</g>';
+    }).join("");
+
+    const camNote = cams > visibleCamCount
+      ? '<text x="' + (stageX + stageW - 18) + '" y="' + (stageY + 26) + '" text-anchor="end" fill="rgba(226,232,240,.56)" font-size="10.5">Showing first ' + visibleCamCount + ' of ' + cams + ' cameras</text>'
+      : "";
+
+    const gapGraphic = gap > 0
+      ? '<rect x="' + (runX + modeledW).toFixed(1) + '" y="' + (runY - bandH / 2).toFixed(1) + '" width="' + gapW.toFixed(1) + '" height="' + bandH + '" rx="5" fill="rgba(255,138,102,.16)" stroke="rgba(255,138,102,.86)" stroke-width="1.15" />' +
+        '<text x="' + (runX + modeledW + gapW / 2).toFixed(1) + '" y="' + (runY - 24) + '" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="12" font-weight="950">Gap ' + escapeHtml(fmtFt(gap)) + '</text>'
+      : '<text x="' + (runX + runW - 8) + '" y="' + (runY - 24) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>';
+
+    const marginText = gap <= 0 && margin > 0
+      ? '<text x="' + (runX + runW - 8) + '" y="' + (runY + 34) + '" text-anchor="end" fill="rgba(226,232,240,.56)" font-size="10.5">Remaining margin ' + escapeHtml(fmtFt(margin)) + '</text>'
+      : "";
+
+    const rightCallout = gap > 0
+      ? '<text x="710" y="286" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">Blind</text>' +
+        '<text x="710" y="302" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">gap</text>' +
+        '<text x="710" y="322" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="13" font-weight="950">' + escapeHtml(fmtFt(gap)) + '</text>'
+      : '<text x="710" y="286" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="11" font-weight="950">Coverage</text>' +
+        '<text x="710" y="302" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="11" font-weight="950">continuous</text>' +
+        '<text x="710" y="322" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="13" font-weight="950">0.0 ft gap</text>';
+
+    return '<svg data-export-svg viewBox="0 0 800 468" role="img" aria-label="Blind spot multi-camera top-down plan view visualization">' +
       '<defs>' +
-        '<linearGradient id="coverageRawBar" x1="0" y1="0" x2="1" y2="0">' +
-          '<stop offset="0%" stop-color="rgba(84,212,116,.70)" />' +
-          '<stop offset="100%" stop-color="rgba(125,255,152,.86)" />' +
-        '</linearGradient>' +
-        '<linearGradient id="coverageUsableBar" x1="0" y1="0" x2="1" y2="0">' +
-          '<stop offset="0%" stop-color="rgba(104,240,138,.78)" />' +
+        '<linearGradient id="blindCoveredBand" x1="0" y1="0" x2="1" y2="0">' +
+          '<stop offset="0%" stop-color="rgba(82,201,112,.62)" />' +
           '<stop offset="100%" stop-color="rgba(151,255,176,.92)" />' +
         '</linearGradient>' +
-        '<linearGradient id="coverageReserveBar" x1="0" y1="0" x2="1" y2="0">' +
+        '<linearGradient id="blindGreenBar" x1="0" y1="0" x2="1" y2="0">' +
+          '<stop offset="0%" stop-color="rgba(84,212,116,.70)" />' +
+          '<stop offset="100%" stop-color="rgba(125,255,152,.90)" />' +
+        '</linearGradient>' +
+        '<linearGradient id="blindGapBar" x1="0" y1="0" x2="1" y2="0">' +
           '<stop offset="0%" stop-color="rgba(255,211,79,.76)" />' +
-          '<stop offset="100%" stop-color="rgba(255,226,128,.90)" />' +
-        '</linearGradient>' +
-        '<linearGradient id="coverageRiskBar" x1="0" y1="0" x2="1" y2="0">' +
-          '<stop offset="0%" stop-color="rgba(255,138,102,.82)" />' +
-          '<stop offset="100%" stop-color="rgba(255,94,94,.92)" />' +
-        '</linearGradient>' +
-        '<linearGradient id="coverageFovFill" x1="0" y1="0" x2="1" y2="0">' +
-          '<stop offset="0%" stop-color="rgba(125,255,152,.035)" />' +
-          '<stop offset="100%" stop-color="rgba(125,255,152,.105)" />' +
-        '</linearGradient>' +
-        '<linearGradient id="coverageUsableFill" x1="0" y1="0" x2="1" y2="0">' +
-          '<stop offset="0%" stop-color="rgba(125,255,152,.07)" />' +
-          '<stop offset="100%" stop-color="rgba(125,255,152,.18)" />' +
+          '<stop offset="100%" stop-color="rgba(255,138,102,.90)" />' +
         '</linearGradient>' +
       '</defs>' +
 
-      '<text x="52" y="26" fill="rgba(248,250,252,.92)" font-size="18" font-weight="900">Plan view: required span to modeled coverage</text>' +
-      '<text x="52" y="48" fill="rgba(226,232,240,.62)" font-size="12">Top-down continuity view. Green shows modeled coverage; yellow/red marks the remaining uncovered span.</text>' +
+      '<text x="52" y="28" fill="rgba(248,250,252,.94)" font-size="18" font-weight="950">Plan view: multi-camera continuity check</text>' +
+      '<text x="52" y="50" fill="rgba(226,232,240,.62)" font-size="12">Top-down protected-span validation. Camera markers follow the camera count input; red appears only where a blind gap remains.</text>' +
 
       '<text x="' + labelX + '" y="' + row1Y + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Required protected span</text>' +
       '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
-      '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="url(#coverageRawBar)" />' +
-      '<text x="' + valueX + '" y="' + row1Y + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(rawWidth)) + '</text>' +
+      '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(226,232,240,.26)" />' +
+      '<text x="' + valueX + '" y="' + row1Y + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(requiredSpan)) + '</text>' +
 
       '<text x="' + labelX + '" y="' + (row1Y + rowGap) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Modeled coverage available</text>' +
       '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
-      '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + usableBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#coverageUsableBar)" />' +
-      '<text x="' + valueX + '" y="' + (row1Y + rowGap) + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(usableWidth)) + ' | ' + escapeHtml(fmtPct(retainedPct, 1)) + ' retained</text>' +
+      '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + modeledBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#blindGreenBar)" />' +
+      '<text x="' + valueX + '" y="' + (row1Y + rowGap) + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(modeledCoverage)) + ' | ' + escapeHtml(fmtPct(coveredPct, 1)) + ' covered</text>' +
 
       '<text x="' + labelX + '" y="' + (row1Y + rowGap * 2) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Remaining uncovered span</text>' +
       '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />' +
-      '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + reserveBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + reserveBarFill + '" />' +
-      '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + reserveValueFill + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(reservePct, 1)) + ' gap | ' + escapeHtml(fmtPct(areaRetainedPct, 1)) + ' span covered</text>' +
+      '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + gapBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + (gap > 0 ? "url(#blindGapBar)" : "rgba(255,226,128,.55)") + '" />' +
+      '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + gapTone + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(gapPct, 1)) + ' gap | ' + escapeHtml(fmtPct(coveredPct, 1)) + ' covered</text>' +
+
+      '<text x="' + labelX + '" y="' + (row1Y + rowGap * 3) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Overlap target</text>' +
+      '<rect x="' + barX + '" y="' + (row1Y + rowGap * 3 - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />' +
+      '<rect x="' + barX + '" y="' + (row1Y + rowGap * 3 - 8) + '" width="' + overlapBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + overlapTone + '" />' +
+      '<text x="' + valueX + '" y="' + (row1Y + rowGap * 3) + '" text-anchor="end" fill="' + overlapTone + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(overlapPct, 1)) + '</text>' +
 
       '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="rgba(125,255,152,.16)" />' +
-      '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / PROTECTED SPAN</text>' +
+      '<text x="' + (stageX + 18) + '" y="' + (stageY + 26) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / PROTECTED SPAN</text>' +
+      camNote +
 
-      '<text x="' + (cameraX - 76) + '" y="' + (centerY - 4) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
-      '<text x="' + (cameraX - 76) + '" y="' + (centerY + 14) + '" text-anchor="start" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + escapeHtml(fmt(data.hfov, 0)) + ' deg</text>' +
-      '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />' +
+      camGroups +
 
-      '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + rawTopY.toFixed(1) + ' L ' + targetX + ' ' + rawBotY.toFixed(1) + ' Z" fill="url(#coverageFovFill)" stroke="rgba(226,232,240,.24)" stroke-width="1" stroke-dasharray="5 6" />' +
-      '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + usableTopY.toFixed(1) + ' L ' + targetX + ' ' + usableBotY.toFixed(1) + ' Z" fill="url(#coverageUsableFill)" stroke="rgba(125,255,152,.62)" stroke-width="1.25" />' +
+      '<line x1="' + runX + '" y1="' + runY + '" x2="' + (runX + runW) + '" y2="' + runY + '" stroke="rgba(226,232,240,.28)" stroke-width="1.05" />' +
+      '<rect x="' + runX + '" y="' + (runY - bandH / 2) + '" width="' + modeledW.toFixed(1) + '" height="' + bandH + '" rx="5" fill="url(#blindCoveredBand)" stroke="rgba(125,255,152,.86)" stroke-width="1.2" />' +
+      gapGraphic +
+      '<text x="' + (runX + Math.min(modeledW, runW) / 2).toFixed(1) + '" y="' + (runY + 4) + '" text-anchor="middle" fill="rgba(248,250,252,.90)" font-size="10.5" font-weight="900">Modeled covered span</text>' +
 
-      '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="rgba(226,232,240,.26)" stroke-width="1" stroke-dasharray="4 6" />' +
-      '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + rawTopY.toFixed(1) + '" stroke="rgba(255,226,128,.66)" stroke-width="1" stroke-dasharray="5 6" />' +
-      '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(255,226,128,.66)" stroke-width="1" stroke-dasharray="5 6" />' +
-      '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + usableTopY.toFixed(1) + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" />' +
-      '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + usableBotY.toFixed(1) + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" />' +
+      '<line x1="' + runX + '" y1="' + (runY + 48) + '" x2="' + (runX + runW) + '" y2="' + (runY + 48) + '" stroke="rgba(226,232,240,.34)" stroke-width="1" />' +
+      '<line x1="' + runX + '" y1="' + (runY + 41) + '" x2="' + runX + '" y2="' + (runY + 55) + '" stroke="rgba(226,232,240,.40)" stroke-width="1" />' +
+      '<line x1="' + (runX + runW) + '" y1="' + (runY + 41) + '" x2="' + (runX + runW) + '" y2="' + (runY + 55) + '" stroke="rgba(226,232,240,.40)" stroke-width="1" />' +
+      '<text x="' + (runX + runW / 2) + '" y="' + (runY + 70) + '" text-anchor="middle" fill="rgba(226,232,240,.78)" font-size="11" font-weight="900">Required span: ' + escapeHtml(fmtFt(requiredSpan)) + '</text>' +
+      marginText +
 
-      '<line x1="' + targetX + '" y1="' + rawTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />' +
-      '<line x1="' + targetX + '" y1="' + rawTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + usableTopY.toFixed(1) + '" stroke="rgba(255,226,128,.90)" stroke-width="2" />' +
-      '<line x1="' + targetX + '" y1="' + usableTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + usableBotY.toFixed(1) + '" stroke="rgba(125,255,152,.92)" stroke-width="2.2" />' +
-      '<line x1="' + targetX + '" y1="' + usableBotY.toFixed(1) + '" x2="' + targetX + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(255,226,128,.90)" stroke-width="2" />' +
+      '<line x1="674" y1="' + (runY - 32) + '" x2="674" y2="' + (runY + 46) + '" stroke="rgba(226,232,240,.36)" stroke-width="1" stroke-dasharray="4 5" />' +
+      rightCallout +
 
-      '<text x="' + (targetX + 18) + '" y="' + (centerY - 12) + '" fill="rgba(125,255,152,.94)" font-size="12" font-weight="950">Usable width</text>' +
-      '<text x="' + (targetX + 18) + '" y="' + (centerY + 9) + '" fill="rgba(125,255,152,.94)" font-size="14" font-weight="950">' + escapeHtml(fmtFt(usableWidth)) + '</text>' +
-      '<text x="' + (targetX + 18) + '" y="' + (centerY + 27) + '" fill="rgba(226,232,240,.58)" font-size="10.5">modeled</text>' +
-
-      '<text x="' + (targetX + 18) + '" y="' + (rawTopY + 10).toFixed(1) + '" fill="rgba(255,226,128,.92)" font-size="10.5" font-weight="900">Gap edge ' + escapeHtml(fmtFt(reserveEachSideFt)) + '</text>' +
-      '<text x="' + (targetX + 18) + '" y="' + (rawBotY - 5).toFixed(1) + '" fill="rgba(255,226,128,.92)" font-size="10.5" font-weight="900">Gap edge ' + escapeHtml(fmtFt(reserveEachSideFt)) + '</text>' +
-
-      '<line x1="' + (targetX + 128) + '" y1="' + rawTopY.toFixed(1) + '" x2="' + (targetX + 128) + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(226,232,240,.44)" stroke-width="1" />' +
-      '<line x1="' + (targetX + 121) + '" y1="' + rawTopY.toFixed(1) + '" x2="' + (targetX + 135) + '" y2="' + rawTopY.toFixed(1) + '" stroke="rgba(226,232,240,.44)" stroke-width="1" />' +
-      '<line x1="' + (targetX + 121) + '" y1="' + rawBotY.toFixed(1) + '" x2="' + (targetX + 135) + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(226,232,240,.44)" stroke-width="1" />' +
-      '<text x="' + (stageX + stageW - 76) + '" y="' + (centerY - 18) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Required</text>' +
-      '<text x="' + (stageX + stageW - 76) + '" y="' + (centerY - 3) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">span</text>' +
-      '<text x="' + (stageX + stageW - 76) + '" y="' + (centerY + 16) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="13" font-weight="950">' + escapeHtml(fmtFt(rawWidth)) + '</text>' +
-
-      '<line x1="' + cameraX + '" y1="354" x2="' + targetX + '" y2="354" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
-      '<line x1="' + cameraX + '" y1="348" x2="' + cameraX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
-      '<line x1="' + targetX + '" y1="348" x2="' + targetX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
-      '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="376" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Validation distance: ' + escapeHtml(fmtFt(targetDistance, 0)) + '</text>' +
+      '<text x="' + (stageX + 20) + '" y="' + (stageY + stageH - 15) + '" fill="rgba(226,232,240,.56)" font-size="10.5">Camera markers follow the camera count input. Continue only after the protected span has no modeled gap.</text>' +
     '</svg>';
   }
 
   function blindSpotPlanViewSvg(data) {
-    const requiredSpan = Math.max(0, Number(data?.w) || 0);
-    const modeledCoverage = Math.max(0, Number(data?.totalCoverageFt) || 0);
-    const gap = Math.max(0, Number(data?.gapFt) || 0);
-    const cameraCount = Math.max(1, Math.round(Number(data?.cams) || 1));
-
-    const deliveredCoverage = Math.max(0, Math.min(requiredSpan, modeledCoverage));
-    const spanCoveredPct = requiredSpan > 0
-      ? Math.max(0, Math.min(100, (deliveredCoverage / requiredSpan) * 100))
-      : 0;
-
-    const gapPct = requiredSpan > 0
-      ? Math.max(0, Math.min(95, (gap / requiredSpan) * 100))
-      : 0;
-
-    const validationDepth = Math.max(0, Number(data?.d) || Number(data?.dist) || 0);
-
-    const adapted = {
-      ovPct: gapPct,
-      widthRetentionPct: spanCoveredPct,
-      areaRetentionPct: spanCoveredPct,
-      width: requiredSpan,
-      effWidth: deliveredCoverage,
-      height: validationDepth,
-      dist: Math.max(0, Number(data?.dist) || 0),
-      hfov: Math.max(0, Number(data?.hfov) || 0)
-    };
-
-    let svg = coverageStyleBlindSpotFootprintSvg(adapted);
-
-    const cameraLabel = cameraCount + (cameraCount === 1 ? " camera" : " cameras");
-    svg = svg.replaceAll(">Cam 1<", ">" + escapeHtml(cameraLabel) + "<");
-
-    const statusCallout = gap > 0
-      ? '<text x="688" y="250" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">Blind</text>' +
-        '<text x="688" y="266" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">gap</text>' +
-        '<text x="688" y="286" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="13" font-weight="950">' + escapeHtml(fmtFt(gap)) + '</text>'
-      : '<text x="688" y="250" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="11" font-weight="950">Coverage</text>' +
-        '<text x="688" y="266" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="11" font-weight="950">continuous</text>' +
-        '<text x="688" y="286" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="13" font-weight="950">0.0 ft gap</text>';
-
-    svg = svg.replace("</svg>", statusCallout + "</svg>");
-    return svg;
+    return blindSpotMultiCameraFootprintSvg(data);
   }
+
   function renderBlindSpotAssistantPrompt(message = "Review the carried spacing assumptions, then run the blind-spot check.") {
     if (!els.assistant) return;
     els.assistant.innerHTML = '<div class="blindspot-assistant-head"><div><p class="blindspot-assistant-kicker">Blind Spot Assistant</p><h3 class="blindspot-assistant-title">Ready to validate coverage continuity.</h3><p class="blindspot-assistant-copy">' + escapeHtml(message) + '</p></div></div>';
