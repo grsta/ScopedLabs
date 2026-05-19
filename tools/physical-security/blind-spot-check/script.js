@@ -693,12 +693,12 @@
     const gapTone = gap > 0 ? "rgba(255,138,102,.92)" : "rgba(255,226,128,.88)";
 
     const stageX = 34;
-    const stageY = 158;
+    const stageY = 206;
     const stageW = 732;
     const stageH = 292;
 
     const runX = 126;
-    const runY = 346;
+    const runY = 394;
     const runW = 536;
     const bandH = 14;
 
@@ -706,7 +706,7 @@
     const gapW = Math.max(0, runW - modeledW);
 
     const visibleCamCount = Math.min(cams, 8);
-    const camY = 224;
+    const camY = 272;
     const placementW = Math.max(
       visibleCamCount === 1 ? runW * 0.42 : runW * 0.58,
       Math.min(runW, modeledW)
@@ -753,7 +753,7 @@
         '<text x="710" y="302" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="11" font-weight="950">continuous</text>' +
         '<text x="710" y="322" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="13" font-weight="950">0.0 ft gap</text>';
 
-    return '<svg data-export-svg viewBox="0 0 800 468" role="img" aria-label="Blind spot multi-camera top-down plan view visualization">' +
+    return '<svg data-export-svg viewBox="0 0 800 520" role="img" aria-label="Blind spot multi-camera top-down plan view visualization">' +
       '<defs>' +
         '<linearGradient id="blindCoveredBand" x1="0" y1="0" x2="1" y2="0">' +
           '<stop offset="0%" stop-color="rgba(82,201,112,.62)" />' +
