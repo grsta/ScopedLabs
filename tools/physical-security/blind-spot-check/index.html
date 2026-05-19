@@ -224,6 +224,27 @@
     }
   </style>
 
+
+  <style data-blindspot-nav-row-shell-polish>
+    body[data-tool="blind-spot-check"] #blindspot-nav-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-top: 22px !important;
+    }
+
+    body[data-tool="blind-spot-check"] #blindspot-nav-row #next-step-row {
+      margin-top: 0 !important;
+      align-items: center;
+      gap: 10px;
+    }
+
+    body[data-tool="blind-spot-check"] #blindspot-nav-row #continue {
+      white-space: nowrap;
+    }
+  </style>
+
 </head>
 
 <body
@@ -370,15 +391,16 @@
           </div>
           <div id="analysis-copy" style="display:none;"></div>
         </div>
-<div class="btn-row" style="margin-top: 14px;">
+<div id="blindspot-nav-row" class="btn-row" style="margin-top: 22px;">
           <a class="btn blindspot-action-btn" href="/tools/physical-security/">Back to Physical Security</a>
-        </div>
-
-        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-          <a id="continue" class="btn btn-primary" href="/tools/physical-security/pixel-density/">
+          <div id="next-step-row" class="btn-row blindspot-next-step-inline" style="margin-top: 0; display:none;">
+          <a id="continue" class="btn btn-primary blindspot-action-btn" href="/tools/physical-security/pixel-density/">
             Continue → Pixel Density
           </a>
         </div>
+        </div>
+
+        
       
 <section class="card" style="margin-top: 22px; background: rgba(0,0,0,.14);"><h3 class="h3" style="margin-top: 0;">Export Report</h3>
         <p class="muted" style="margin-bottom: 0;">
