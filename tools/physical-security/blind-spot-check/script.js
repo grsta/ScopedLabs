@@ -877,6 +877,7 @@
     const intervals = Array.isArray(data?.layoutIntervals) ? data.layoutIntervals : [];
     const gaps = Array.isArray(data?.layoutGaps) ? data.layoutGaps : [];
     const positions = Array.isArray(data?.cameraPositionsFt) ? data.cameraPositionsFt : [];
+    const rawFromData = Array.isArray(data?.rawIntervals) ? data.rawIntervals : [];
 
     const safeSpan = Math.max(requiredSpan, 1);
     const coveredPct = Math.max(0, Math.min(100, (modeledCoverage / safeSpan) * 100));
@@ -905,10 +906,53 @@
     const runW = 536;
     const bandH = 14;
 
-    const xForFt = (ft) => {
-      const value = Math.max(0, Math.min(safeSpan, Number(ft) || 0));
-      return runX + (value / safeSpan) * runW;
-    };
+    const clampFt = (ft) => Math.max(0, Math.min(safeSpan, Number(ft) || 0));
+    const xForFt = (ft) => runX + (clampFt(ft) / safeSpan) * runW;
+
+    const cameraCenters = positions.length
+      ? positions
+      : Array.from({ length: cams }, (_, index) => {
+          if (cams <= 1) return safeSpan / 2;
+          const spacing = actualSpacingFt > 0 ? actualSpacingFt : safeSpan / Math.max(cams, 1);
+          const first = (safeSpan - spacing * (cams - 1)) / 2;
+          return first + spacing * index;
+        });
+
+    const rawIntervals = rawFromData.length
+      ? rawFromData
+      : cameraCenters.map((centerFt, index) => ({
+          camera: index + 1,
+          centerFt,
+          startFt: centerFt - perCameraFt / 2,
+          endFt: centerFt + perCameraFt / 2
+        }));
+
+    const overlapSegments = [];
+    for (let i = 0; i < rawIntervals.length - 1; i += 1) {
+      const a = rawIntervals[i];
+      const b = rawIntervals[i + 1];
+
+      const aStart = clampFt(a.startFt);
+      const aEnd = clampFt(a.endFt);
+      const bStart = clampFt(b.startFt);
+      const bEnd = clampFt(b.endFt);
+
+      const startFt = Math.max(aStart, bStart);
+      const endFt = Math.min(aEnd, bEnd);
+      const lengthFt = endFt - startFt;
+
+      if (lengthFt > 0.05) {
+        overlapSegments.push({
+          startFt,
+          endFt,
+          lengthFt,
+          label: "Cam " + (i + 1) + " + " + "Cam " + (i + 2)
+        });
+      }
+    }
+
+    const totalOverlapFt = overlapSegments.reduce((sum, item) => sum + Math.max(0, item.lengthFt), 0);
+    const totalOverlapPct = safeSpan > 0 ? (totalOverlapFt / safeSpan) * 100 : 0;
 
     const coveredRects = intervals.length
       ? intervals.map((item) => {
@@ -920,20 +964,34 @@
         }).join("")
       : "";
 
+    const overlapRects = overlapSegments.length
+      ? overlapSegments.map((item, index) => {
+          const x1 = xForFt(item.startFt);
+          const x2 = xForFt(item.endFt);
+          const w = Math.max(0, x2 - x1);
+          const labelXPos = x1 + w / 2;
+          const label = w >= 46
+            ? '<text x="' + labelXPos.toFixed(1) + '" y="' + (runY + 35 + (index % 2) * 13) + '" text-anchor="middle" fill="rgba(255,230,150,.94)" font-size="10.5" font-weight="900">' + escapeHtml(fmtFt(item.lengthFt)) + ' overlap</text>'
+            : "";
+
+          return '<rect x="' + x1.toFixed(1) + '" y="' + (runY + 12).toFixed(1) + '" width="' + w.toFixed(1) + '" height="8" rx="4" fill="rgba(255,211,79,.82)" stroke="rgba(255,235,168,.90)" stroke-width="1" />' + label;
+        }).join("")
+      : '<text x="' + (runX + runW - 8) + '" y="' + (runY + 35) + '" text-anchor="end" fill="rgba(255,211,79,.78)" font-size="10.5" font-weight="850">No shared overlap segment</text>';
+
     const gapRects = gaps.length
       ? gaps.map((item, index) => {
           const x1 = xForFt(item.startFt);
           const x2 = xForFt(item.endFt);
           const w = Math.max(0, x2 - x1);
           const labelXPos = x1 + w / 2;
-          const labelY = index % 2 === 0 ? runY - 24 : runY + 34;
+          const labelY = index % 2 === 0 ? runY - 24 : runY + 58;
 
           return '<rect x="' + x1.toFixed(1) + '" y="' + (runY - bandH / 2).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + bandH + '" rx="5" fill="rgba(255,138,102,.18)" stroke="rgba(255,138,102,.90)" stroke-width="1.15" />' +
-            '<text x="' + labelXPos.toFixed(1) + '" y="' + labelY + '" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">' + escapeHtml(fmtFt(item.lengthFt)) + '</text>';
+            '<text x="' + labelXPos.toFixed(1) + '" y="' + labelY + '" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">' + escapeHtml(fmtFt(item.lengthFt)) + ' gap</text>';
         }).join("")
       : '<text x="' + (runX + runW - 8) + '" y="' + (runY - 24) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>';
 
-    const visiblePositions = positions.slice(0, 8);
+    const visiblePositions = cameraCenters.slice(0, 8);
     const camY = 270;
     const coneY = 358;
     const maxConePx = Math.max(72, Math.min(220, (perCameraFt / safeSpan) * runW));
@@ -957,7 +1015,7 @@
     const overlapTone = overlapPct >= 35 ? "rgba(255,138,102,.88)" : overlapPct >= 25 ? "rgba(255,211,79,.88)" : "rgba(255,226,128,.84)";
     const actualOverlapTone = actualOverlapPct + 0.01 < overlapPct ? "rgba(255,211,79,.90)" : "rgba(125,255,152,.88)";
 
-    return '<svg data-export-svg viewBox="0 0 800 520" role="img" aria-label="Blind spot spacing-layout plan view visualization">' +
+    return '<svg data-export-svg viewBox="0 0 800 520" role="img" aria-label="Blind spot spacing-layout plan view visualization with overlap zones">' +
       '<defs>' +
         '<linearGradient id="blindCoveredBand" x1="0" y1="0" x2="1" y2="0">' +
           '<stop offset="0%" stop-color="rgba(82,201,112,.62)" />' +
@@ -973,8 +1031,8 @@
         '</linearGradient>' +
       '</defs>' +
 
-      '<text x="52" y="28" fill="rgba(248,250,252,.94)" font-size="18" font-weight="950">Plan view: spacing-layout continuity check</text>' +
-      '<text x="52" y="50" fill="rgba(226,232,240,.62)" font-size="12">Camera centers use the carried Camera Spacing result; red appears only where the protected run is actually uncovered.</text>' +
+      '<text x="52" y="28" fill="rgba(248,250,252,.94)" font-size="18" font-weight="950">Plan view: spacing, overlap, and blind gaps</text>' +
+      '<text x="52" y="50" fill="rgba(226,232,240,.62)" font-size="12">Camera centers use the carried Camera Spacing result. Green is covered, amber is shared overlap, red is uncovered.</text>' +
 
       '<text x="' + labelX + '" y="' + row1Y + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Required protected span</text>' +
       '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
@@ -1001,17 +1059,25 @@
       '<text x="' + (stageX + 18) + '" y="' + (stageY + 26) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / CARRIED CAMERA SPACING</text>' +
       camNote +
 
+      '<rect x="' + (stageX + 18) + '" y="' + (stageY + 44) + '" width="16" height="7" rx="3" fill="rgba(125,255,152,.82)" />' +
+      '<text x="' + (stageX + 40) + '" y="' + (stageY + 51) + '" fill="rgba(226,232,240,.62)" font-size="10.5">covered</text>' +
+      '<rect x="' + (stageX + 104) + '" y="' + (stageY + 44) + '" width="16" height="7" rx="3" fill="rgba(255,211,79,.82)" />' +
+      '<text x="' + (stageX + 126) + '" y="' + (stageY + 51) + '" fill="rgba(226,232,240,.62)" font-size="10.5">overlap</text>' +
+      '<rect x="' + (stageX + 192) + '" y="' + (stageY + 44) + '" width="16" height="7" rx="3" fill="rgba(255,138,102,.82)" />' +
+      '<text x="' + (stageX + 214) + '" y="' + (stageY + 51) + '" fill="rgba(226,232,240,.62)" font-size="10.5">blind gap</text>' +
+
       camGroups +
 
       '<line x1="' + runX + '" y1="' + runY + '" x2="' + (runX + runW) + '" y2="' + runY + '" stroke="rgba(226,232,240,.28)" stroke-width="1.05" />' +
       coveredRects +
+      overlapRects +
       gapRects +
       '<line x1="' + runX + '" y1="' + (runY + 48) + '" x2="' + (runX + runW) + '" y2="' + (runY + 48) + '" stroke="rgba(226,232,240,.34)" stroke-width="1" />' +
       '<line x1="' + runX + '" y1="' + (runY + 41) + '" x2="' + runX + '" y2="' + (runY + 55) + '" stroke="rgba(226,232,240,.40)" stroke-width="1" />' +
       '<line x1="' + (runX + runW) + '" y1="' + (runY + 41) + '" x2="' + (runX + runW) + '" y2="' + (runY + 55) + '" stroke="rgba(226,232,240,.40)" stroke-width="1" />' +
-      '<text x="' + (runX + runW / 2) + '" y="' + (runY + 70) + '" text-anchor="middle" fill="rgba(226,232,240,.78)" font-size="11" font-weight="900">Required span: ' + escapeHtml(fmtFt(requiredSpan)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + '</text>' +
+      '<text x="' + (runX + runW / 2) + '" y="' + (runY + 70) + '" text-anchor="middle" fill="rgba(226,232,240,.78)" font-size="11" font-weight="900">Required span: ' + escapeHtml(fmtFt(requiredSpan)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + ' | Shared overlap: ' + escapeHtml(fmtFt(totalOverlapFt)) + ' (' + escapeHtml(fmtPct(totalOverlapPct, 1)) + ' of span)</text>' +
 
-      '<text x="' + (stageX + 20) + '" y="' + (stageY + stageH - 15) + '" fill="rgba(226,232,240,.56)" font-size="10.5">Layout source: ' + escapeHtml(data.layoutSource || "Blind Spot") + '. Validate gaps before carrying the result into Pixel Density.</text>' +
+      '<text x="' + (stageX + 20) + '" y="' + (stageY + stageH - 15) + '" fill="rgba(226,232,240,.56)" font-size="10.5">Layout source: ' + escapeHtml(data.layoutSource || "Blind Spot") + '. Validate overlap and gaps before carrying the result into Pixel Density.</text>' +
     '</svg>';
   }
 
