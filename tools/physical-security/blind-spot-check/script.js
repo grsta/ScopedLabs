@@ -460,6 +460,176 @@
     return { ok: true, w, d, hfov, dist, cams, overlapPct };
   }
 
+  function readSpacingFlowPayload() {
+    try {
+      const raw = sessionStorage.getItem(FLOW_KEYS.spacing);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw);
+      if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) return null;
+
+      return parsed.data || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function readBlindSpotSpacingContext(input) {
+    const flow = readSpacingFlowPayload();
+    const area = getActiveBlindSpotArea();
+
+    const flowSpacing = num(flow?.spacing ?? flow?.spacingFt ?? flow?.actualSpacing ?? flow?.actualSpacingFt);
+    const areaSpacing = num(area?.spacingFt ?? area?.actualSpacingFt);
+    const flowRawWidth = num(flow?.rawWidth ?? flow?.spacingRawCoverageWidthFt);
+    const areaRawWidth = num(area?.spacingRawCoverageWidthFt);
+    const flowUsableWidth = num(flow?.usableWidth ?? flow?.spacingUsableWidthFt);
+    const areaUsableWidth = num(area?.spacingUsableWidthFt);
+    const flowSingleCamera = !!flow?.singleCamera || !!flow?.spacingSingleCamera;
+    const areaSingleCamera = !!area?.spacingSingleCamera;
+
+    if (Number.isFinite(flowSpacing) && flowSpacing > 0) {
+      return {
+        spacingFt: flowSpacing,
+        rawWidthFt: Number.isFinite(flowRawWidth) ? flowRawWidth : null,
+        usableWidthFt: Number.isFinite(flowUsableWidth) ? flowUsableWidth : null,
+        singleCamera: flowSingleCamera,
+        source: "Camera Spacing handoff"
+      };
+    }
+
+    if (Number.isFinite(areaSpacing) && areaSpacing > 0) {
+      return {
+        spacingFt: areaSpacing,
+        rawWidthFt: Number.isFinite(areaRawWidth) ? areaRawWidth : null,
+        usableWidthFt: Number.isFinite(areaUsableWidth) ? areaUsableWidth : null,
+        singleCamera: areaSingleCamera,
+        source: "Active area spacing"
+      };
+    }
+
+    const fallbackSpacing = input.cams <= 1 ? input.w : input.w / Math.max(input.cams, 1);
+
+    return {
+      spacingFt: fallbackSpacing,
+      rawWidthFt: null,
+      usableWidthFt: null,
+      singleCamera: input.cams <= 1,
+      source: "Blind Spot local estimate"
+    };
+  }
+
+  function mergeCoverageIntervals(intervals, spanFt) {
+    const safeSpan = Math.max(0, Number(spanFt) || 0);
+
+    const clipped = (intervals || [])
+      .map((item) => ({
+        startFt: Math.max(0, Math.min(safeSpan, Number(item.startFt))),
+        endFt: Math.max(0, Math.min(safeSpan, Number(item.endFt)))
+      }))
+      .filter((item) => Number.isFinite(item.startFt) && Number.isFinite(item.endFt) && item.endFt > item.startFt)
+      .sort((a, b) => a.startFt - b.startFt);
+
+    const merged = [];
+
+    clipped.forEach((item) => {
+      const last = merged[merged.length - 1];
+
+      if (!last || item.startFt > last.endFt) {
+        merged.push({ ...item });
+      } else {
+        last.endFt = Math.max(last.endFt, item.endFt);
+      }
+    });
+
+    return merged;
+  }
+
+  function buildGapSegments(mergedIntervals, spanFt) {
+    const safeSpan = Math.max(0, Number(spanFt) || 0);
+    const gaps = [];
+    let cursor = 0;
+
+    (mergedIntervals || []).forEach((item) => {
+      if (item.startFt > cursor) {
+        gaps.push({ startFt: cursor, endFt: item.startFt, lengthFt: item.startFt - cursor });
+      }
+
+      cursor = Math.max(cursor, item.endFt);
+    });
+
+    if (cursor < safeSpan) {
+      gaps.push({ startFt: cursor, endFt: safeSpan, lengthFt: safeSpan - cursor });
+    }
+
+    return gaps.filter((item) => item.lengthFt > 0.01);
+  }
+
+  function buildBlindSpotLayoutModel(input, coveragePerCameraFt, effectiveCoverageFt) {
+    const context = readBlindSpotSpacingContext(input);
+    const cams = Math.max(1, Math.round(Number(input.cams) || 1));
+    const protectedSpan = Math.max(Number(input.w) || 0, 0);
+    const actualSpacingFt = cams <= 1
+      ? protectedSpan
+      : Math.max(Number(context.spacingFt) || 0, 0);
+
+    const spacingForLayout = actualSpacingFt > 0
+      ? actualSpacingFt
+      : protectedSpan / Math.max(cams, 1);
+
+    const totalCenterRun = cams <= 1 ? 0 : spacingForLayout * (cams - 1);
+    const firstCenter = cams <= 1 ? protectedSpan / 2 : (protectedSpan - totalCenterRun) / 2;
+
+    const cameraPositionsFt = Array.from({ length: cams }, (_, index) => {
+      return cams <= 1 ? protectedSpan / 2 : firstCenter + (spacingForLayout * index);
+    });
+
+    const rawIntervals = cameraPositionsFt.map((centerFt, index) => ({
+      camera: index + 1,
+      centerFt,
+      startFt: centerFt - (coveragePerCameraFt / 2),
+      endFt: centerFt + (coveragePerCameraFt / 2)
+    }));
+
+    const layoutIntervals = mergeCoverageIntervals(rawIntervals, protectedSpan);
+    const layoutGaps = buildGapSegments(layoutIntervals, protectedSpan);
+
+    const coveredSpanFt = layoutIntervals.reduce((sum, item) => sum + Math.max(0, item.endFt - item.startFt), 0);
+    const gapFt = layoutGaps.reduce((sum, item) => sum + item.lengthFt, 0);
+    const gapPct = protectedSpan > 0 ? (gapFt / protectedSpan) * 100 : 0;
+
+    const oldStackedCoverageFt = cams <= 1
+      ? coveragePerCameraFt
+      : coveragePerCameraFt + ((cams - 1) * effectiveCoverageFt);
+
+    const overCoverageFt = gapFt <= 0 ? Math.max(0, oldStackedCoverageFt - protectedSpan) : 0;
+
+    const actualOverlapFt = cams <= 1 ? 0 : Math.max(0, coveragePerCameraFt - spacingForLayout);
+    const actualOverlapPct = coveragePerCameraFt > 0 ? (actualOverlapFt / coveragePerCameraFt) * 100 : 0;
+    const targetOverlapFt = cams <= 1 ? 0 : coveragePerCameraFt * (input.overlapPct / 100);
+    const targetOverlapShortfallFt = cams <= 1 ? 0 : Math.max(0, targetOverlapFt - actualOverlapFt);
+    const targetOverlapShortfallPct = coveragePerCameraFt > 0 ? (targetOverlapShortfallFt / coveragePerCameraFt) * 100 : 0;
+
+    return {
+      layoutSource: context.source,
+      actualSpacingFt: spacingForLayout,
+      cameraPositionsFt,
+      rawIntervals,
+      layoutIntervals,
+      layoutGaps,
+      totalCoverageFt: coveredSpanFt,
+      modeledCoverageAvailableFt: oldStackedCoverageFt,
+      gapFt,
+      gapPct,
+      overCoverageFt,
+      coverageMarginPct: protectedSpan > 0 ? (overCoverageFt / protectedSpan) * 100 : 0,
+      actualOverlapFt,
+      actualOverlapPct,
+      targetOverlapFt,
+      targetOverlapShortfallFt,
+      targetOverlapShortfallPct
+    };
+  }
+
   function calculateModel() {
     const input = getInputs();
     if (!input.ok) return input;
@@ -468,33 +638,30 @@
     const coveragePerCameraFt = 2 * Math.tan(deg2rad(input.hfov / 2)) * input.dist;
     const overlapFt = coveragePerCameraFt * overlap;
     const effectiveCoverageFt = coveragePerCameraFt - overlapFt;
-    const totalCoverageFt = input.cams <= 1
-      ? coveragePerCameraFt
-      : coveragePerCameraFt + ((input.cams - 1) * effectiveCoverageFt);
-    const gapFt = Math.max(0, input.w - totalCoverageFt);
-    const gapPct = input.w > 0 ? (gapFt / input.w) * 100 : 0;
-    const overCoverageFt = Math.max(0, totalCoverageFt - input.w);
-    const coverageMarginPct = input.w > 0 ? (overCoverageFt / input.w) * 100 : 0;
 
-    const gapPressureMetric = gapFt <= 0 ? 0 : Math.min(gapPct * 4, 100);
-    const shortfallMetric = gapFt <= 0 ? 0 : Math.min(gapPct * 3, 100);
-    const overlapMetric = Math.min(input.overlapPct, 100);
+    const layout = buildBlindSpotLayoutModel(input, coveragePerCameraFt, effectiveCoverageFt);
+
+    const gapPressureMetric = layout.gapFt <= 0 ? 0 : Math.min(layout.gapPct * 4, 100);
+    const shortfallMetric = layout.gapFt <= 0 ? 0 : Math.min(layout.gapPct * 3, 100);
+    const overlapMetric = input.cams <= 1
+      ? 0
+      : Math.max(Math.min(input.overlapPct, 100), Math.min(layout.targetOverlapShortfallPct * 2, 100));
 
     const metrics = [
       {
         label: "Gap Pressure",
         value: gapPressureMetric,
-        displayValue: gapFt <= 0 ? "0.0 ft" : fmtFt(gapFt)
+        displayValue: layout.gapFt <= 0 ? "0.0 ft" : fmtFt(layout.gapFt)
       },
       {
         label: "Coverage Shortfall",
         value: shortfallMetric,
-        displayValue: fmtPct(gapPct)
+        displayValue: fmtPct(layout.gapPct)
       },
       {
-        label: "Overlap Compression",
+        label: input.cams <= 1 ? "Single-Camera Overlap Reference" : "Overlap / Reserve Pressure",
         value: overlapMetric,
-        displayValue: fmtPct(input.overlapPct)
+        displayValue: input.cams <= 1 ? "N/A" : fmtPct(input.overlapPct)
       }
     ];
 
@@ -508,37 +675,47 @@
     });
 
     let coverageClass = "FULL COVERAGE";
-    if (gapFt > 0 && gapPct <= 10) coverageClass = "MINOR GAPS";
-    if (gapFt > 0 && gapPct > 10) coverageClass = "BLIND SPOTS";
+    if (layout.gapFt > 0 && layout.gapPct <= 10) coverageClass = "MINOR GAPS";
+    if (layout.gapFt > 0 && layout.gapPct > 10) coverageClass = "BLIND SPOTS";
 
-    let interpretation = `Each camera covers about ${fmtFt(coveragePerCameraFt)} horizontally at the target zone. After applying ${fmtPct(input.overlapPct)} overlap between adjacent camera footprints, each additional camera contributes about ${fmtFt(effectiveCoverageFt)} of usable added width, giving total usable width of ${fmtFt(totalCoverageFt)} across ${fmt(input.cams, 0)} cameras.`;
+    const gapSegmentText = layout.layoutGaps.length
+      ? " across " + layout.layoutGaps.length + " uncovered segment" + (layout.layoutGaps.length === 1 ? "" : "s")
+      : "";
+
+    let interpretation = "Using " + layout.layoutSource + ", Blind Spot places " + fmt(input.cams, 0) + " camera" + (input.cams === 1 ? "" : "s") + " across the protected span and maps each " + fmtFt(coveragePerCameraFt) + " footprint against the " + fmtFt(input.w) + " run. The carried spacing/layout model covers " + fmtFt(layout.totalCoverageFt) + " of the span.";
 
     if (coverageClass === "BLIND SPOTS") {
-      interpretation += ` The modeled layout leaves a meaningful gap of ${fmtFt(gapFt)}, so blind spots are likely unless spacing, count, or field of view changes.`;
+      interpretation += " The modeled layout leaves " + fmtFt(layout.gapFt) + " of real uncovered span" + gapSegmentText + ", so blind spots are likely unless spacing, count, or field of view changes.";
     } else if (coverageClass === "MINOR GAPS") {
-      interpretation += ` Coverage is close, but a remaining gap of ${fmtFt(gapFt)} means real-world alignment tolerances, edge performance, and installation drift can still expose weak spots.`;
+      interpretation += " Coverage is close, but " + fmtFt(layout.gapFt) + " remains uncovered" + gapSegmentText + ". Field tolerances, edge performance, and aiming drift can still expose weak spots.";
+    } else if (layout.targetOverlapShortfallFt > 0.01) {
+      interpretation += " The protected span is covered, but actual overlap is below the requested overlap target by about " + fmtFt(layout.targetOverlapShortfallFt) + ". Treat this as a tolerance warning instead of a blind gap.";
     } else if (input.overlapPct >= 25) {
-      interpretation += ` Coverage is continuous, but overlap is consuming more usable width than necessary. The layout works geometrically, yet you are giving up footprint efficiency to maintain comfort margin.`;
+      interpretation += " Coverage is continuous, but the overlap target is high. The layout works geometrically, yet you are giving up footprint efficiency to maintain comfort margin.";
     } else {
-      interpretation += ` Coverage is continuous with remaining margin of about ${fmtFt(overCoverageFt)} across the protected width, so blind spots are not indicated by the geometric model.`;
+      interpretation += " Coverage is continuous with no modeled uncovered segments, so blind spots are not indicated by the spacing-layout model.";
     }
 
     let dominantConstraint = "";
     if (coverageClass === "BLIND SPOTS") {
-      dominantConstraint = "Coverage shortfall is the dominant limiter. The total effective footprint is too narrow for the required width once overlap is honored.";
+      dominantConstraint = "Coverage shortfall is the dominant limiter. The actual camera positions and coverage intervals leave uncovered span inside the protected run.";
     } else if (coverageClass === "MINOR GAPS") {
-      dominantConstraint = "Gap pressure is the dominant limiter. The layout is almost workable, but the remaining uncovered width is still large enough to matter in field conditions.";
+      dominantConstraint = "Gap pressure is the dominant limiter. The layout is almost workable, but one or more uncovered segments still remain.";
+    } else if (layout.targetOverlapShortfallFt > 0.01) {
+      dominantConstraint = "Overlap target shortfall is the dominant limiter. The protected span is covered, but the carried spacing does not achieve the requested overlap reserve.";
     } else if (input.overlapPct >= 25) {
-      dominantConstraint = "Overlap compression is the dominant limiter. Coverage is complete, but heavy overlap is consuming usable width faster than necessary.";
+      dominantConstraint = "Overlap compression is the dominant limiter. Coverage is complete, but heavy overlap can reduce layout efficiency.";
     } else {
-      dominantConstraint = "Field geometry is balanced. The camera count, spacing, and effective width remain aligned with the protected span.";
+      dominantConstraint = "Field geometry is balanced. The carried spacing, camera count, and footprint intervals cover the protected span.";
     }
 
     let guidance = "";
     if (coverageClass === "BLIND SPOTS") {
-      guidance = "Do not lock this layout yet. Reduce spacing, add cameras, widen the effective footprint, or revise upstream spacing assumptions before moving forward.";
+      guidance = "Do not lock this layout yet. Reduce actual spacing, add cameras, widen the effective footprint, or revise upstream Camera Spacing assumptions before moving forward.";
     } else if (coverageClass === "MINOR GAPS") {
-      guidance = "Coverage is close, but verify corners and overlap assumptions on the real mounting geometry before finalizing the design.";
+      guidance = "Coverage is close, but verify the uncovered segments against real mounting geometry before finalizing the design.";
+    } else if (layout.targetOverlapShortfallFt > 0.01) {
+      guidance = "Coverage is continuous, but the requested overlap reserve is not fully achieved. Continue only if that lower reserve is intentional, or return to Camera Spacing to tighten the branch.";
     } else if (input.overlapPct >= 25) {
       guidance = "Coverage is acceptable, but review whether overlap is intentionally this high. You may be able to recover usable width or reduce camera count without creating blind spots.";
     } else {
@@ -551,11 +728,12 @@
       coveragePerCameraFt,
       overlapFt,
       effectiveCoverageFt,
-      totalCoverageFt,
-      gapFt,
-      gapPct,
-      overCoverageFt,
-      coverageMarginPct,
+      totalCoverageFt: layout.totalCoverageFt,
+      modeledCoverageAvailableFt: layout.modeledCoverageAvailableFt,
+      gapFt: layout.gapFt,
+      gapPct: layout.gapPct,
+      overCoverageFt: layout.overCoverageFt,
+      coverageMarginPct: layout.coverageMarginPct,
       coverageClass,
       status: statusPack.status,
       interpretation,
@@ -563,7 +741,18 @@
       guidance,
       gapPressureMetric,
       shortfallMetric,
-      overlapMetric
+      overlapMetric,
+      actualSpacingFt: layout.actualSpacingFt,
+      layoutSource: layout.layoutSource,
+      cameraPositionsFt: layout.cameraPositionsFt,
+      rawIntervals: layout.rawIntervals,
+      layoutIntervals: layout.layoutIntervals,
+      layoutGaps: layout.layoutGaps,
+      actualOverlapFt: layout.actualOverlapFt,
+      actualOverlapPct: layout.actualOverlapPct,
+      targetOverlapFt: layout.targetOverlapFt,
+      targetOverlapShortfallFt: layout.targetOverlapShortfallFt,
+      targetOverlapShortfallPct: layout.targetOverlapShortfallPct
     };
   }
 
@@ -585,6 +774,13 @@
       blindSpotTotalCoverageFt: data.totalCoverageFt,
       blindSpotGapFt: data.gapFt,
       blindSpotGapPct: data.gapPct,
+      blindSpotActualSpacingFt: data.actualSpacingFt,
+      blindSpotLayoutSource: data.layoutSource,
+      blindSpotGapSegments: data.layoutGaps || [],
+      blindSpotCameraPositionsFt: data.cameraPositionsFt || [],
+      blindSpotLayoutIntervals: data.layoutIntervals || [],
+      blindSpotActualOverlapPct: data.actualOverlapPct,
+      blindSpotTargetOverlapShortfallFt: data.targetOverlapShortfallFt,
       blindSpotOverCoverageFt: data.overCoverageFt,
       blindSpotCoverageMarginPct: data.coverageMarginPct,
       blindSpotCoverageClass: data.coverageClass,
@@ -620,6 +816,13 @@
         totalCoverageFt: data.totalCoverageFt,
         gapFt: data.gapFt,
         gapPct: data.gapPct,
+        actualSpacingFt: data.actualSpacingFt,
+        layoutSource: data.layoutSource,
+        gapSegments: data.layoutGaps || [],
+        cameraPositionsFt: data.cameraPositionsFt || [],
+        layoutIntervals: data.layoutIntervals || [],
+        actualOverlapPct: data.actualOverlapPct,
+        targetOverlapShortfallFt: data.targetOverlapShortfallFt,
         overCoverageFt: data.overCoverageFt,
         coverageMarginPct: data.coverageMarginPct,
         coverageClass: data.coverageClass,
@@ -666,16 +869,17 @@
     const requiredSpan = Math.max(0, Number(data?.w) || 0);
     const modeledCoverage = Math.max(0, Number(data?.totalCoverageFt) || 0);
     const gap = Math.max(0, Number(data?.gapFt) || 0);
-    const margin = Math.max(0, Number(data?.overCoverageFt) || 0);
     const cams = Math.max(1, Math.round(Number(data?.cams) || 1));
     const overlapPct = Math.max(0, Math.min(Number(data?.overlapPct) || 0, 95));
-    const hfov = Math.max(0, Number(data?.hfov) || 0);
-    const targetDistance = Math.max(0, Number(data?.dist) || 0);
+    const actualOverlapPct = Math.max(0, Math.min(Number(data?.actualOverlapPct) || 0, 100));
+    const actualSpacingFt = Math.max(0, Number(data?.actualSpacingFt) || 0);
     const perCameraFt = Math.max(0, Number(data?.coveragePerCameraFt) || 0);
+    const intervals = Array.isArray(data?.layoutIntervals) ? data.layoutIntervals : [];
+    const gaps = Array.isArray(data?.layoutGaps) ? data.layoutGaps : [];
+    const positions = Array.isArray(data?.cameraPositionsFt) ? data.cameraPositionsFt : [];
 
     const safeSpan = Math.max(requiredSpan, 1);
-    const coveredFt = Math.max(0, Math.min(requiredSpan, modeledCoverage));
-    const coveredPct = Math.max(0, Math.min(100, (coveredFt / safeSpan) * 100));
+    const coveredPct = Math.max(0, Math.min(100, (modeledCoverage / safeSpan) * 100));
     const gapPct = Math.max(0, Math.min(100, (gap / safeSpan) * 100));
 
     const labelX = 52;
@@ -686,74 +890,74 @@
     const row1Y = 72;
     const rowGap = 32;
 
-    const modeledBarW = Math.max(8, Math.min(barW, barW * (coveredPct / 100)));
-    const gapBarW = Math.max(8, Math.min(barW, barW * (gapPct / 100)));
+    const coveredBarW = Math.max(8, Math.min(barW, barW * (coveredPct / 100)));
+    const gapBarW = gap <= 0 ? 8 : Math.max(8, Math.min(barW, barW * (gapPct / 100)));
     const overlapBarW = Math.max(8, Math.min(barW, barW * (overlapPct / 100)));
-    const overlapTone = overlapPct >= 35 ? "rgba(255,138,102,.88)" : overlapPct >= 25 ? "rgba(255,211,79,.88)" : "rgba(255,226,128,.84)";
-    const gapTone = gap > 0 ? "rgba(255,138,102,.92)" : "rgba(255,226,128,.88)";
+    const actualOverlapBarW = Math.max(8, Math.min(barW, barW * (actualOverlapPct / 100)));
 
     const stageX = 34;
-    const stageY = 206;
+    const stageY = 198;
     const stageW = 732;
-    const stageH = 292;
+    const stageH = 300;
 
     const runX = 126;
     const runY = 394;
     const runW = 536;
     const bandH = 14;
 
-    const modeledW = Math.max(0, Math.min(runW, runW * (coveredPct / 100)));
-    const gapW = Math.max(0, runW - modeledW);
+    const xForFt = (ft) => {
+      const value = Math.max(0, Math.min(safeSpan, Number(ft) || 0));
+      return runX + (value / safeSpan) * runW;
+    };
 
-    const visibleCamCount = Math.min(cams, 8);
-    const camY = 272;
-    const placementW = Math.max(
-      visibleCamCount === 1 ? runW * 0.42 : runW * 0.58,
-      Math.min(runW, modeledW)
-    );
+    const coveredRects = intervals.length
+      ? intervals.map((item) => {
+          const x1 = xForFt(item.startFt);
+          const x2 = xForFt(item.endFt);
+          const w = Math.max(0, x2 - x1);
 
-    const perCamPx = perCameraFt > 0
-      ? Math.max(96, Math.min(230, (perCameraFt / safeSpan) * runW))
-      : Math.max(96, Math.min(210, placementW / Math.max(visibleCamCount - 0.35, 1)));
-
-    const camGroups = Array.from({ length: visibleCamCount }, (_, i) => {
-      const x = visibleCamCount === 1
-        ? runX + placementW / 2
-        : runX + (placementW * i) / Math.max(visibleCamCount - 1, 1);
-
-      const left = Math.max(runX, x - perCamPx / 2);
-      const right = Math.min(runX + runW, x + perCamPx / 2);
-
-      return '<g>' +
-        '<polygon points="' + x.toFixed(1) + ',' + camY + ' ' + left.toFixed(1) + ',' + runY + ' ' + right.toFixed(1) + ',' + runY + '" fill="rgba(125,255,152,.045)" stroke="rgba(125,255,152,.34)" stroke-width="1.1" />' +
-        '<line x1="' + x.toFixed(1) + '" y1="' + (camY + 11) + '" x2="' + x.toFixed(1) + '" y2="' + (runY - 12) + '" stroke="rgba(125,255,152,.26)" stroke-width="1" stroke-dasharray="4 5" />' +
-        '<circle cx="' + x.toFixed(1) + '" cy="' + camY + '" r="7" fill="rgba(8,18,12,.98)" stroke="rgba(125,255,152,.95)" stroke-width="1.7" />' +
-        '<text x="' + x.toFixed(1) + '" y="' + (camY - 14) + '" text-anchor="middle" fill="rgba(226,232,240,.82)" font-size="9.8" font-weight="900">C' + (i + 1) + '</text>' +
-      '</g>';
-    }).join("");
-
-    const camNote = cams > visibleCamCount
-      ? '<text x="' + (stageX + stageW - 18) + '" y="' + (stageY + 26) + '" text-anchor="end" fill="rgba(226,232,240,.56)" font-size="10.5">Showing first ' + visibleCamCount + ' of ' + cams + ' cameras</text>'
+          return '<rect x="' + x1.toFixed(1) + '" y="' + (runY - bandH / 2).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + bandH + '" rx="5" fill="url(#blindCoveredBand)" stroke="rgba(125,255,152,.86)" stroke-width="1.2" />';
+        }).join("")
       : "";
 
-    const gapGraphic = gap > 0
-      ? '<rect x="' + (runX + modeledW).toFixed(1) + '" y="' + (runY - bandH / 2).toFixed(1) + '" width="' + gapW.toFixed(1) + '" height="' + bandH + '" rx="5" fill="rgba(255,138,102,.16)" stroke="rgba(255,138,102,.86)" stroke-width="1.15" />' +
-        '<text x="' + (runX + modeledW + gapW / 2).toFixed(1) + '" y="' + (runY - 24) + '" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="12" font-weight="950">Gap ' + escapeHtml(fmtFt(gap)) + '</text>'
+    const gapRects = gaps.length
+      ? gaps.map((item, index) => {
+          const x1 = xForFt(item.startFt);
+          const x2 = xForFt(item.endFt);
+          const w = Math.max(0, x2 - x1);
+          const labelXPos = x1 + w / 2;
+          const labelY = index % 2 === 0 ? runY - 24 : runY + 34;
+
+          return '<rect x="' + x1.toFixed(1) + '" y="' + (runY - bandH / 2).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + bandH + '" rx="5" fill="rgba(255,138,102,.18)" stroke="rgba(255,138,102,.90)" stroke-width="1.15" />' +
+            '<text x="' + labelXPos.toFixed(1) + '" y="' + labelY + '" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">' + escapeHtml(fmtFt(item.lengthFt)) + '</text>';
+        }).join("")
       : '<text x="' + (runX + runW - 8) + '" y="' + (runY - 24) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>';
 
-    const marginText = gap <= 0 && margin > 0
-      ? '<text x="' + (runX + runW - 8) + '" y="' + (runY + 34) + '" text-anchor="end" fill="rgba(226,232,240,.56)" font-size="10.5">Remaining margin ' + escapeHtml(fmtFt(margin)) + '</text>'
+    const visiblePositions = positions.slice(0, 8);
+    const camY = 270;
+    const coneY = 358;
+    const maxConePx = Math.max(72, Math.min(220, (perCameraFt / safeSpan) * runW));
+
+    const camGroups = visiblePositions.map((pos, index) => {
+      const cx = xForFt(pos);
+      const left = Math.max(runX, cx - maxConePx / 2);
+      const right = Math.min(runX + runW, cx + maxConePx / 2);
+
+      return '<path d="M ' + cx.toFixed(1) + ' ' + camY + ' L ' + left.toFixed(1) + ' ' + coneY + ' L ' + right.toFixed(1) + ' ' + coneY + ' Z" fill="rgba(125,255,152,.075)" stroke="rgba(125,255,152,.34)" stroke-width="1.05" />' +
+        '<circle cx="' + cx.toFixed(1) + '" cy="' + camY + '" r="8.5" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.86)" stroke-width="1.7" />' +
+        '<line x1="' + cx.toFixed(1) + '" y1="' + (camY + 10) + '" x2="' + cx.toFixed(1) + '" y2="' + coneY + '" stroke="rgba(226,232,240,.14)" stroke-width="1" stroke-dasharray="4 5" />' +
+        '<text x="' + cx.toFixed(1) + '" y="' + (camY - 18) + '" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="10.5" font-weight="850">Cam ' + (index + 1) + '</text>';
+    }).join("");
+
+    const camNote = cams > visiblePositions.length
+      ? '<text x="' + (stageX + stageW - 18) + '" y="' + (stageY + 26) + '" text-anchor="end" fill="rgba(226,232,240,.56)" font-size="10.5">Showing first ' + visiblePositions.length + ' of ' + cams + ' cameras</text>'
       : "";
 
-    const rightCallout = gap > 0
-      ? '<text x="710" y="286" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">Blind</text>' +
-        '<text x="710" y="302" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">gap</text>' +
-        '<text x="710" y="322" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="13" font-weight="950">' + escapeHtml(fmtFt(gap)) + '</text>'
-      : '<text x="710" y="286" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="11" font-weight="950">Coverage</text>' +
-        '<text x="710" y="302" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="11" font-weight="950">continuous</text>' +
-        '<text x="710" y="322" text-anchor="middle" fill="rgba(125,255,152,.98)" font-size="13" font-weight="950">0.0 ft gap</text>';
+    const gapTone = gap > 0 ? "rgba(255,138,102,.92)" : "rgba(125,255,152,.90)";
+    const overlapTone = overlapPct >= 35 ? "rgba(255,138,102,.88)" : overlapPct >= 25 ? "rgba(255,211,79,.88)" : "rgba(255,226,128,.84)";
+    const actualOverlapTone = actualOverlapPct + 0.01 < overlapPct ? "rgba(255,211,79,.90)" : "rgba(125,255,152,.88)";
 
-    return '<svg data-export-svg viewBox="0 0 800 520" role="img" aria-label="Blind spot multi-camera top-down plan view visualization">' +
+    return '<svg data-export-svg viewBox="0 0 800 520" role="img" aria-label="Blind spot spacing-layout plan view visualization">' +
       '<defs>' +
         '<linearGradient id="blindCoveredBand" x1="0" y1="0" x2="1" y2="0">' +
           '<stop offset="0%" stop-color="rgba(82,201,112,.62)" />' +
@@ -769,50 +973,45 @@
         '</linearGradient>' +
       '</defs>' +
 
-      '<text x="52" y="28" fill="rgba(248,250,252,.94)" font-size="18" font-weight="950">Plan view: multi-camera continuity check</text>' +
-      '<text x="52" y="50" fill="rgba(226,232,240,.62)" font-size="12">Top-down protected-span validation. Camera markers follow the camera count input; red appears only where a blind gap remains.</text>' +
+      '<text x="52" y="28" fill="rgba(248,250,252,.94)" font-size="18" font-weight="950">Plan view: spacing-layout continuity check</text>' +
+      '<text x="52" y="50" fill="rgba(226,232,240,.62)" font-size="12">Camera centers use the carried Camera Spacing result; red appears only where the protected run is actually uncovered.</text>' +
 
       '<text x="' + labelX + '" y="' + row1Y + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Required protected span</text>' +
       '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
       '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(226,232,240,.26)" />' +
       '<text x="' + valueX + '" y="' + row1Y + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(requiredSpan)) + '</text>' +
 
-      '<text x="' + labelX + '" y="' + (row1Y + rowGap) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Modeled coverage available</text>' +
+      '<text x="' + labelX + '" y="' + (row1Y + rowGap) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Merged covered span</text>' +
       '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
-      '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + modeledBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#blindGreenBar)" />' +
-      '<text x="' + valueX + '" y="' + (row1Y + rowGap) + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(modeledCoverage)) + ' | ' + escapeHtml(fmtPct(coveredPct, 1)) + ' covered</text>' +
+      '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + coveredBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#blindGreenBar)" />' +
+      '<text x="' + valueX + '" y="' + (row1Y + rowGap) + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(modeledCoverage)) + ' | ' + escapeHtml(fmtPct(coveredPct, 1)) + '</text>' +
 
-      '<text x="' + labelX + '" y="' + (row1Y + rowGap * 2) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Remaining uncovered span</text>' +
+      '<text x="' + labelX + '" y="' + (row1Y + rowGap * 2) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Uncovered span</text>' +
       '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />' +
-      '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + gapBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + (gap > 0 ? "url(#blindGapBar)" : "rgba(255,226,128,.55)") + '" />' +
-      '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + gapTone + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(gapPct, 1)) + ' gap | ' + escapeHtml(fmtPct(coveredPct, 1)) + ' covered</text>' +
+      '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + gapBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + (gap > 0 ? "url(#blindGapBar)" : "rgba(125,255,152,.50)") + '" />' +
+      '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + gapTone + '" font-size="11" font-weight="900">' + escapeHtml(fmtFt(gap)) + ' | ' + escapeHtml(fmtPct(gapPct, 1)) + '</text>' +
 
-      '<text x="' + labelX + '" y="' + (row1Y + rowGap * 3) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Overlap target</text>' +
+      '<text x="' + labelX + '" y="' + (row1Y + rowGap * 3) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Target / actual overlap</text>' +
       '<rect x="' + barX + '" y="' + (row1Y + rowGap * 3 - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />' +
       '<rect x="' + barX + '" y="' + (row1Y + rowGap * 3 - 8) + '" width="' + overlapBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + overlapTone + '" />' +
-      '<text x="' + valueX + '" y="' + (row1Y + rowGap * 3) + '" text-anchor="end" fill="' + overlapTone + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(overlapPct, 1)) + '</text>' +
+      '<rect x="' + barX + '" y="' + (row1Y + rowGap * 3 + 5) + '" width="' + actualOverlapBarW.toFixed(1) + '" height="4" rx="2" fill="' + actualOverlapTone + '" />' +
+      '<text x="' + valueX + '" y="' + (row1Y + rowGap * 3) + '" text-anchor="end" fill="' + overlapTone + '" font-size="11" font-weight="900">Target ' + escapeHtml(fmtPct(overlapPct, 1)) + ' | Actual ' + escapeHtml(fmtPct(actualOverlapPct, 1)) + '</text>' +
 
       '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="rgba(125,255,152,.16)" />' +
-      '<text x="' + (stageX + 18) + '" y="' + (stageY + 26) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / PROTECTED SPAN</text>' +
+      '<text x="' + (stageX + 18) + '" y="' + (stageY + 26) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / CARRIED CAMERA SPACING</text>' +
       camNote +
 
       camGroups +
 
       '<line x1="' + runX + '" y1="' + runY + '" x2="' + (runX + runW) + '" y2="' + runY + '" stroke="rgba(226,232,240,.28)" stroke-width="1.05" />' +
-      '<rect x="' + runX + '" y="' + (runY - bandH / 2) + '" width="' + modeledW.toFixed(1) + '" height="' + bandH + '" rx="5" fill="url(#blindCoveredBand)" stroke="rgba(125,255,152,.86)" stroke-width="1.2" />' +
-      gapGraphic +
-      '<text x="' + (runX + Math.min(modeledW, runW) / 2).toFixed(1) + '" y="' + (runY + 4) + '" text-anchor="middle" fill="rgba(248,250,252,.90)" font-size="10.5" font-weight="900">Modeled covered span</text>' +
-
+      coveredRects +
+      gapRects +
       '<line x1="' + runX + '" y1="' + (runY + 48) + '" x2="' + (runX + runW) + '" y2="' + (runY + 48) + '" stroke="rgba(226,232,240,.34)" stroke-width="1" />' +
       '<line x1="' + runX + '" y1="' + (runY + 41) + '" x2="' + runX + '" y2="' + (runY + 55) + '" stroke="rgba(226,232,240,.40)" stroke-width="1" />' +
       '<line x1="' + (runX + runW) + '" y1="' + (runY + 41) + '" x2="' + (runX + runW) + '" y2="' + (runY + 55) + '" stroke="rgba(226,232,240,.40)" stroke-width="1" />' +
-      '<text x="' + (runX + runW / 2) + '" y="' + (runY + 70) + '" text-anchor="middle" fill="rgba(226,232,240,.78)" font-size="11" font-weight="900">Required span: ' + escapeHtml(fmtFt(requiredSpan)) + '</text>' +
-      marginText +
+      '<text x="' + (runX + runW / 2) + '" y="' + (runY + 70) + '" text-anchor="middle" fill="rgba(226,232,240,.78)" font-size="11" font-weight="900">Required span: ' + escapeHtml(fmtFt(requiredSpan)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + '</text>' +
 
-      '<line x1="674" y1="' + (runY - 32) + '" x2="674" y2="' + (runY + 46) + '" stroke="rgba(226,232,240,.36)" stroke-width="1" stroke-dasharray="4 5" />' +
-      rightCallout +
-
-      '<text x="' + (stageX + 20) + '" y="' + (stageY + stageH - 15) + '" fill="rgba(226,232,240,.56)" font-size="10.5">Camera markers follow the camera count input. Continue only after the protected span has no modeled gap.</text>' +
+      '<text x="' + (stageX + 20) + '" y="' + (stageY + stageH - 15) + '" fill="rgba(226,232,240,.56)" font-size="10.5">Layout source: ' + escapeHtml(data.layoutSource || "Blind Spot") + '. Validate gaps before carrying the result into Pixel Density.</text>' +
     '</svg>';
   }
 
@@ -856,7 +1055,7 @@ ScopedLabsAnalyzer.renderOutput({
       summaryRows: [
         { label: "Coverage per Camera", value: fmtFt(data.coveragePerCameraFt) },
         { label: "Effective Coverage", value: fmtFt(data.effectiveCoverageFt) },
-        { label: "Total Coverage", value: fmtFt(data.totalCoverageFt) },
+        { label: "Layout Covered Span", value: fmtFt(data.totalCoverageFt) },
         { label: "Result", value: data.coverageClass }
       ],
       derivedRows: [
@@ -864,7 +1063,7 @@ ScopedLabsAnalyzer.renderOutput({
         { label: "Validation Zone Depth", value: fmtFt(data.d) },
         { label: "Gap", value: data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt) },
         { label: "Overlap Target", value: fmtPct(data.overlapPct) },
-        { label: "Coverage Margin", value: fmtPct(data.coverageMarginPct) },
+        { label: "Actual Spacing", value: fmtFt(data.actualSpacingFt) },
         { label: "Camera Count", value: fmt(data.cams, 0) }
       ],
       status: data.status,
