@@ -865,7 +865,7 @@
     return "The spacing plan covers the protected span with usable margin. Continue to Pixel Density to confirm the layout also delivers enough subject detail.";
   }
 
-  function blindSpotMultiCameraFootprintSvg(data) {
+  function blindSpotLegacyMultiCameraFootprintSvg(data) {
     const requiredSpan = Math.max(0, Number(data?.w) || 0);
     const modeledCoverage = Math.max(0, Number(data?.totalCoverageFt) || 0);
     const gap = Math.max(0, Number(data?.gapFt) || 0);
@@ -1080,6 +1080,281 @@
       '<text x="' + (stageX + 20) + '" y="' + (stageY + stageH - 15) + '" fill="rgba(226,232,240,.56)" font-size="10.5">Layout source: ' + escapeHtml(data.layoutSource || "Blind Spot") + '. Validate overlap and gaps before carrying the result into Pixel Density.</text>' +
     '</svg>';
   }
+
+
+function blindSpotMultiCameraFootprintSvg(data) {
+  const legacyFallback = () => blindSpotLegacyMultiCameraFootprintSvg(data);
+
+  try {
+    if (!window.ScopedLabsGraphics || typeof window.ScopedLabsGraphics.render !== "function") {
+      if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+        window.ScopedLabsDiagnostics.report({
+          code: "SL-GFX-BLINDSPOT-ENGINE-MISSING",
+          severity: "warn",
+          engine: "graphics",
+          renderer: "camera-layout",
+          tool: "blind-spot-check",
+          message: "ScopedLabsGraphics was not available. Blind Spot used its legacy renderer.",
+          fallback: "legacy Blind Spot SVG"
+        });
+      }
+
+      return legacyFallback();
+    }
+
+    const source = data && typeof data === "object" ? data : {};
+
+    const toNumber = (value, fallback = 0) => {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    };
+
+    const pickNumber = (keys, fallback = 0) => {
+      for (const key of keys) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          const n = Number(source[key]);
+          if (Number.isFinite(n)) return n;
+        }
+      }
+
+      return fallback;
+    };
+
+    const normalizeSegmentArray = (value) => {
+      if (!Array.isArray(value)) return [];
+
+      return value
+        .map((item) => {
+          if (!item || typeof item !== "object") return null;
+
+          const startFt = Number(item.startFt ?? item.start ?? item.fromFt ?? item.from);
+          const endFt = Number(item.endFt ?? item.end ?? item.toFt ?? item.to);
+
+          if (!Number.isFinite(startFt) || !Number.isFinite(endFt) || endFt <= startFt) {
+            return null;
+          }
+
+          return {
+            startFt,
+            endFt,
+            lengthFt: endFt - startFt
+          };
+        })
+        .filter(Boolean);
+    };
+
+    const computeOverlapSegments = (rawIntervals) => {
+      if (!Array.isArray(rawIntervals) || rawIntervals.length < 2) return [];
+
+      const sorted = rawIntervals
+        .map((item) => ({
+          startFt: Number(item.startFt),
+          endFt: Number(item.endFt)
+        }))
+        .filter((item) => Number.isFinite(item.startFt) && Number.isFinite(item.endFt) && item.endFt > item.startFt)
+        .sort((a, b) => a.startFt - b.startFt);
+
+      const overlaps = [];
+
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const startFt = Math.max(sorted[i].startFt, sorted[i + 1].startFt);
+        const endFt = Math.min(sorted[i].endFt, sorted[i + 1].endFt);
+
+        if (endFt > startFt) {
+          overlaps.push({
+            startFt,
+            endFt,
+            lengthFt: endFt - startFt
+          });
+        }
+      }
+
+      return overlaps;
+    };
+
+    const sumSegments = (items) => {
+      return (Array.isArray(items) ? items : []).reduce((sum, item) => {
+        return sum + Math.max(0, toNumber(item.endFt) - toNumber(item.startFt));
+      }, 0);
+    };
+
+    const spanFt = pickNumber([
+      "protectedSpanFt",
+      "requiredSpanFt",
+      "spanFt",
+      "widthFt",
+      "sceneWidthFt",
+      "w",
+      "len"
+    ], 0);
+
+    const rawCoverageWidthFt = pickNumber([
+      "coveragePerCameraFt",
+      "rawCoverageWidthFt",
+      "spacingRawCoverageWidthFt",
+      "rawWidth",
+      "cameraCoverageWidthFt"
+    ], 0);
+
+    const rawIntervals =
+      normalizeSegmentArray(source.rawIntervals)
+      .concat(normalizeSegmentArray(source.layoutRawIntervals))
+      .concat(normalizeSegmentArray(source.blindSpotRawIntervals));
+
+    let cameraPositions = Array.isArray(source.cameraPositionsFt)
+      ? source.cameraPositionsFt
+      : Array.isArray(source.blindSpotCameraPositionsFt)
+        ? source.blindSpotCameraPositionsFt
+        : [];
+
+    cameraPositions = cameraPositions
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value));
+
+    let cameras = [];
+
+    if (Array.isArray(source.cameras) && source.cameras.length) {
+      cameras = source.cameras.map((camera, index) => {
+        const centerFt = toNumber(camera.centerFt ?? camera.positionFt, spanFt / 2);
+        const footprintStartFt = toNumber(camera.footprintStartFt, centerFt - rawCoverageWidthFt / 2);
+        const footprintEndFt = toNumber(camera.footprintEndFt, centerFt + rawCoverageWidthFt / 2);
+
+        return {
+          label: camera.label || "Cam " + (index + 1),
+          centerFt,
+          footprintStartFt,
+          footprintEndFt
+        };
+      });
+    } else if (cameraPositions.length) {
+      cameras = cameraPositions.map((centerFt, index) => ({
+        label: "Cam " + (index + 1),
+        centerFt,
+        footprintStartFt: centerFt - rawCoverageWidthFt / 2,
+        footprintEndFt: centerFt + rawCoverageWidthFt / 2
+      }));
+    } else if (rawIntervals.length) {
+      cameras = rawIntervals.map((interval, index) => ({
+        label: "Cam " + (index + 1),
+        centerFt: (interval.startFt + interval.endFt) / 2,
+        footprintStartFt: interval.startFt,
+        footprintEndFt: interval.endFt
+      }));
+    }
+
+    const coverageSegments =
+      normalizeSegmentArray(source.layoutIntervals).length
+        ? normalizeSegmentArray(source.layoutIntervals)
+        : normalizeSegmentArray(source.coverageSegments).length
+          ? normalizeSegmentArray(source.coverageSegments)
+          : normalizeSegmentArray(source.blindSpotLayoutIntervals).length
+            ? normalizeSegmentArray(source.blindSpotLayoutIntervals)
+            : [];
+
+    const gapSegments =
+      normalizeSegmentArray(source.gapSegments).length
+        ? normalizeSegmentArray(source.gapSegments)
+        : normalizeSegmentArray(source.blindSpotGapSegments).length
+          ? normalizeSegmentArray(source.blindSpotGapSegments)
+          : [];
+
+    const overlapSegments =
+      normalizeSegmentArray(source.overlapSegments).length
+        ? normalizeSegmentArray(source.overlapSegments)
+        : computeOverlapSegments(rawIntervals.length ? rawIntervals : cameras.map((camera) => ({
+            startFt: camera.footprintStartFt,
+            endFt: camera.footprintEndFt
+          })));
+
+    const gapFt = pickNumber([
+      "gapFt",
+      "uncoveredSpanFt",
+      "blindSpotGapFt"
+    ], sumSegments(gapSegments));
+
+    const coveredSpanFt = pickNumber([
+      "layoutCoveredSpanFt",
+      "coveredSpanFt",
+      "totalCoveredSpanFt",
+      "totalCoverageFt"
+    ], Math.max(0, spanFt - gapFt));
+
+    const actualOverlapPct = pickNumber([
+      "actualOverlapPct",
+      "blindSpotActualOverlapPct",
+      "spacingActualOverlapPct"
+    ], 0);
+
+    const targetOverlapPct = pickNumber([
+      "targetOverlapPct",
+      "overlapPct",
+      "spacingOverlapTargetPct",
+      "ovPct"
+    ], 0);
+
+    const actualSpacingFt = pickNumber([
+      "actualSpacingFt",
+      "blindSpotActualSpacingFt",
+      "spacingFt",
+      "spacing"
+    ], 0);
+
+    const model = {
+      tool: "blind-spot-check",
+      title: "Plan view: spacing, overlap, and blind gaps",
+      subtitle: "Rendered by ScopedLabs Graphics Engine from Blind Spot layout data.",
+      protectedSpanFt: spanFt,
+      coveredSpanFt,
+      uncoveredSpanFt: gapFt,
+      targetOverlapPct,
+      actualOverlapPct,
+      actualSpacingFt,
+      cameras,
+      coverageSegments,
+      overlapSegments,
+      gapSegments,
+      footer: source.layoutSource
+        ? "Layout source: " + source.layoutSource
+        : "Validate overlap and gaps before carrying the result forward."
+    };
+
+    const rendered = window.ScopedLabsGraphics.render("camera-layout", model);
+
+    if (typeof rendered === "string" && rendered.includes("<svg")) {
+      return rendered;
+    }
+
+    if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+      window.ScopedLabsDiagnostics.report({
+        code: "SL-GFX-BLINDSPOT-BAD-RENDER",
+        severity: "error",
+        engine: "graphics",
+        renderer: "camera-layout",
+        tool: "blind-spot-check",
+        message: "Graphics Engine returned invalid SVG. Blind Spot used legacy renderer.",
+        fallback: "legacy Blind Spot SVG"
+      });
+    }
+
+    return legacyFallback();
+  } catch (error) {
+    if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+      window.ScopedLabsDiagnostics.report({
+        code: "SL-GFX-BLINDSPOT-ADAPTER-EXCEPTION",
+        severity: "error",
+        engine: "graphics",
+        renderer: "camera-layout",
+        tool: "blind-spot-check",
+        message: "Blind Spot graphics adapter threw an exception.",
+        cause: error && error.message,
+        fallback: "legacy Blind Spot SVG"
+      });
+    }
+
+    return legacyFallback();
+  }
+}
+
 
   function blindSpotPlanViewSvg(data) {
     return blindSpotMultiCameraFootprintSvg(data);
