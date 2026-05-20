@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-002-v8
+ * Version: scopedlabs-graphics-003-camera-layout-polish
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-002-v8";
+  const VERSION = "scopedlabs-graphics-003-camera-layout-polish";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -283,6 +283,26 @@
         '<text x="' + cx.toFixed(1) + '" y="' + (camY - 18) + '" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="10.5" font-weight="850">' + escapeHtml(camera.label || "Cam " + (index + 1)) + '</text>';
     }).join("");
 
+    const coneOverlapSvg = overlapSegments.length
+      ? overlapSegments.map((item) => {
+          const x1 = xForFt(item.startFt);
+          const x2 = xForFt(item.endFt);
+          const w = Math.max(0, x2 - x1);
+
+          if (w <= 1) return "";
+
+          const mid = x1 + w / 2;
+          const shoulder = Math.min(28, Math.max(10, w * 0.22));
+          const upperY = camY + 70;
+          const baseY = coneY;
+          const lowerY = runY - 18;
+
+          return "" +
+            '<path data-sl-visual-part="cone-overlap-zone" d="M ' + x1.toFixed(1) + ' ' + baseY + ' L ' + mid.toFixed(1) + ' ' + upperY + ' L ' + x2.toFixed(1) + ' ' + baseY + ' L ' + (x2 - shoulder).toFixed(1) + ' ' + lowerY + ' L ' + (x1 + shoulder).toFixed(1) + ' ' + lowerY + ' Z" fill="rgba(255,211,79,.105)" stroke="rgba(255,211,79,.40)" stroke-width="1" stroke-dasharray="5 5" />' +
+            '<line x1="' + mid.toFixed(1) + '" y1="' + upperY + '" x2="' + mid.toFixed(1) + '" y2="' + lowerY + '" stroke="rgba(255,230,150,.28)" stroke-width="1" stroke-dasharray="3 5" />';
+        }).join("")
+      : "";
+
     const coverageSvg = coverageSegments.map((item) => {
       const x1 = xForFt(item.startFt);
       const x2 = xForFt(item.endFt);
@@ -358,6 +378,7 @@
         '<rect x="' + (stageX + 104) + '" y="' + (stageY + 44) + '" width="16" height="7" rx="3" fill="rgba(255,211,79,.82)" /><text x="' + (stageX + 126) + '" y="' + (stageY + 51) + '" fill="rgba(226,232,240,.62)" font-size="10.5">overlap</text>' +
         '<rect x="' + (stageX + 192) + '" y="' + (stageY + 44) + '" width="16" height="7" rx="3" fill="rgba(255,138,102,.82)" /><text x="' + (stageX + 214) + '" y="' + (stageY + 51) + '" fill="rgba(226,232,240,.62)" font-size="10.5">blind gap</text>' +
 
+        coneOverlapSvg +
         cameraSvg +
         '<line x1="' + runX + '" y1="' + runY + '" x2="' + (runX + runW) + '" y2="' + runY + '" stroke="rgba(226,232,240,.28)" stroke-width="1.05" />' +
         coverageSvg +
