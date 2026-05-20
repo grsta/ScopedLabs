@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-010-camera-depth-spacing";
+  const VERSION = "scopedlabs-graphics-012-dotted-depth-only";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -640,8 +640,6 @@
       const headY = mount.y - 2.5;
 
       const floorAnchor = backPoint(centerFt);
-      const postTopY = mount.y + 5.5;
-      const postBottomY = floorAnchor.y;
 
       const bracketBaseX = headX - 1.5;
       const bracketBaseY = headY + 1.5;
@@ -652,6 +650,9 @@
       const bodyRight = headX + 4.8;
       const bodyTop = headY - 4.0;
       const bodyBottom = headY + 3.0;
+
+      const depthLineTopY = bodyBottom + 1.5;
+      const depthLineBottomY = floorAnchor.y;
 
       const noseX = bodyRight + 2.6;
       const noseY = headY - 0.5;
@@ -669,8 +670,8 @@
         + ' L ' + fe.x.toFixed(1) + ' ' + fe.y.toFixed(1)
         + ' L ' + fs.x.toFixed(1) + ' ' + fs.y.toFixed(1)
         + ' Z" fill="rgba(82,201,112,.035)" stroke="rgba(125,255,152,.34)" stroke-width="1.0" />'
-        + '<line data-sl-visual-part="iso-camera-mast" x1="' + headX.toFixed(1) + '" y1="' + postTopY.toFixed(1) + '" x2="' + headX.toFixed(1) + '" y2="' + postBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.42)" stroke-width="1.3" />'
-        + '<circle data-sl-visual-part="iso-camera-mount" cx="' + headX.toFixed(1) + '" cy="' + postBottomY.toFixed(1) + '" r="2.0" fill="rgba(226,232,240,.70)" />'
+        + '<line data-sl-visual-part="iso-camera-depth-line" x1="' + floorAnchor.x.toFixed(1) + '" y1="' + depthLineTopY.toFixed(1) + '" x2="' + floorAnchor.x.toFixed(1) + '" y2="' + depthLineBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.30)" stroke-width="1" stroke-dasharray="4 5" />'
+        + '<circle data-sl-visual-part="iso-camera-floor-dot" cx="' + floorAnchor.x.toFixed(1) + '" cy="' + floorAnchor.y.toFixed(1) + '" r="2.0" fill="rgba(226,232,240,.74)" />'
         + '<line data-sl-visual-part="iso-camera-bracket" x1="' + bracketBaseX.toFixed(1) + '" y1="' + bracketBaseY.toFixed(1) + '" x2="' + bracketTipX.toFixed(1) + '" y2="' + bracketTipY.toFixed(1) + '" stroke="rgba(226,232,240,.52)" stroke-width="1.3" />'
         + '<circle data-sl-visual-part="iso-camera-joint" cx="' + bracketBaseX.toFixed(1) + '" cy="' + bracketBaseY.toFixed(1) + '" r="1.5" fill="rgba(226,232,240,.72)" />'
         + '<path data-sl-visual-part="iso-camera-body" d="M ' + bodyLeft.toFixed(1) + ' ' + bodyTop.toFixed(1)
