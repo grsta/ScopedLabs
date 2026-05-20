@@ -755,7 +755,7 @@
 
         const clone = svg.cloneNode(true);
         clone.setAttribute("width", "100%");
-        clone.setAttribute("height", "auto");
+        clone.removeAttribute("height");
         clone.setAttribute("preserveAspectRatio", "xMidYMid meet");
         svgs.push(clone.outerHTML);
       }
