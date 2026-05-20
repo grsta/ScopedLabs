@@ -1719,57 +1719,6 @@ function assistantStatusClass(data) {
     };
   }
 
-  function tuneSpacingGraphicsPresentation(root) {
-    const scope = root && root.querySelector ? root : document;
-    const svg = scope.querySelector('.sl-spacing-iso-svg, [data-sl-renderer="camera-layout-iso"]');
-
-    if (!svg) return;
-
-    svg.style.width = "100%";
-    svg.style.maxWidth = "1040px";
-    svg.style.height = "auto";
-    svg.style.display = "block";
-    svg.style.margin = "0 auto";
-
-    let node = svg.parentElement;
-    let depth = 0;
-
-    while (node && depth < 6) {
-      node.style.overflow = "visible";
-
-      if (depth <= 2) {
-        node.style.minHeight = "760px";
-      }
-
-      node = node.parentElement;
-      depth += 1;
-    }
-  }
-
-  function scheduleSpacingGraphicsPresentationTune() {
-    if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
-
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        try {
-          tuneSpacingGraphicsPresentation(document);
-        } catch (error) {
-          if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
-            window.ScopedLabsDiagnostics.report({
-              code: "SL-GFX-CAMERASPACING-PRESENTATION-TUNE",
-              severity: "warn",
-              engine: "graphics",
-              renderer: "camera-layout-iso",
-              tool: "camera-spacing",
-              message: "Camera Spacing post-render presentation tune could not complete.",
-              cause: error && error.message
-            });
-          }
-        }
-      });
-    });
-  }
-
   function spacingVisualSvg(data) {
     const legacyFallback = () => spacingLegacyVisualSvg(data);
 
@@ -1794,13 +1743,50 @@ function assistantStatusClass(data) {
       const rendered = window.ScopedLabsGraphics.render("camera-layout-iso", model);
 
       if (typeof rendered === "string" && rendered.includes('data-sl-renderer="camera-layout-iso"')) {
-        const tuned = rendered.replace(
-          "<svg ",
-          '<svg class="sl-spacing-iso-svg" style="width:100%;max-width:1040px;height:auto;display:block;margin:0 auto;" '
-        );
+        const framed = typeof window.ScopedLabsGraphics.frameSvg === "function"
+          ? window.ScopedLabsGraphics.frameSvg(rendered, {
+              tool: "camera-spacing",
+              renderer: "camera-layout-iso",
+              size: "tall",
+              className: "sl-spacing-iso-svg",
+              maxWidth: "1040px"
+            })
+          : rendered.replace(
+              "<svg ",
+              '<svg class="sl-spacing-iso-svg" style="width:100%;max-width:1040px;height:auto;display:block;margin:0 auto;" '
+            );
 
-        scheduleSpacingGraphicsPresentationTune();
-        return tuned;
+        if (
+          typeof window.ScopedLabsGraphics.tuneFrame === "function" &&
+          typeof window.requestAnimationFrame === "function"
+        ) {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+              try {
+                window.ScopedLabsGraphics.tuneFrame(document, {
+                  selector: ".sl-spacing-iso-svg, [data-sl-renderer=\"camera-layout-iso\"]",
+                  size: "tall",
+                  maxWidth: "1040px",
+                  minHeight: "760px"
+                });
+              } catch (error) {
+                if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+                  window.ScopedLabsDiagnostics.report({
+                    code: "SL-GFX-CAMERASPACING-FRAME-TUNE",
+                    severity: "warn",
+                    engine: "graphics",
+                    renderer: "camera-layout-iso",
+                    tool: "camera-spacing",
+                    message: "Camera Spacing graphics frame tune could not complete.",
+                    cause: error && error.message
+                  });
+                }
+              }
+            });
+          });
+        }
+
+        return framed;
       }
 
       if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
