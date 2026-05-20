@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-015-spacing-readability";
+  const VERSION = "scopedlabs-graphics-016-frame-helper";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -75,6 +75,200 @@
     } catch {}
 
     return item;
+  }
+
+
+  function frameSizeDefaults(size) {
+    const key = String(size || "standard").toLowerCase();
+
+    if (key === "compact") {
+      return {
+        maxWidth: "760px",
+        minHeight: "",
+        wrapperClass: "sl-graphics-frame sl-graphics-frame--compact"
+      };
+    }
+
+    if (key === "wide") {
+      return {
+        maxWidth: "1120px",
+        minHeight: "",
+        wrapperClass: "sl-graphics-frame sl-graphics-frame--wide"
+      };
+    }
+
+    if (key === "tall") {
+      return {
+        maxWidth: "1040px",
+        minHeight: "760px",
+        wrapperClass: "sl-graphics-frame sl-graphics-frame--tall"
+      };
+    }
+
+    if (key === "report") {
+      return {
+        maxWidth: "980px",
+        minHeight: "",
+        wrapperClass: "sl-graphics-frame sl-graphics-frame--report"
+      };
+    }
+
+    return {
+      maxWidth: "900px",
+      minHeight: "",
+      wrapperClass: "sl-graphics-frame sl-graphics-frame--standard"
+    };
+  }
+
+  function styleToString(style) {
+    return Object.keys(style || {})
+      .filter((key) => style[key] !== undefined && style[key] !== null && String(style[key]).trim() !== "")
+      .map((key) => {
+        const cssKey = key.replace(/[A-Z]/g, (letter) => "-" + letter.toLowerCase());
+        return cssKey + ":" + String(style[key]).trim();
+      })
+      .join(";");
+  }
+
+  function mergeInlineStyle(svgTag, addStyle) {
+    const styleMatch = svgTag.match(/\sstyle=["']([^"']*)["']/i);
+    const cleanAdd = String(addStyle || "").trim();
+
+    if (!cleanAdd) return svgTag;
+
+    if (!styleMatch) {
+      return svgTag.replace("<svg ", '<svg style="' + escapeHtml(cleanAdd) + '" ');
+    }
+
+    const existing = styleMatch[1].trim().replace(/;$/, "");
+    const merged = existing ? existing + ";" + cleanAdd : cleanAdd;
+
+    return svgTag.replace(styleMatch[0], ' style="' + escapeHtml(merged) + '"');
+  }
+
+  function addSvgClass(svgTag, className) {
+    const cleanClass = String(className || "").trim();
+
+    if (!cleanClass) return svgTag;
+
+    const classMatch = svgTag.match(/\sclass=["']([^"']*)["']/i);
+
+    if (!classMatch) {
+      return svgTag.replace("<svg ", '<svg class="' + escapeHtml(cleanClass) + '" ');
+    }
+
+    const existing = classMatch[1].trim();
+    const merged = existing ? existing + " " + cleanClass : cleanClass;
+
+    return svgTag.replace(classMatch[0], ' class="' + escapeHtml(merged) + '"');
+  }
+
+  function addSvgDataAttribute(svgTag, name, value) {
+    const cleanName = String(name || "").trim();
+    const cleanValue = String(value || "").trim();
+
+    if (!cleanName || !cleanValue) return svgTag;
+    if (svgTag.includes(cleanName + "=")) return svgTag;
+
+    return svgTag.replace("<svg ", '<svg ' + cleanName + '="' + escapeHtml(cleanValue) + '" ');
+  }
+
+  function frameSvg(svg, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    const input = typeof svg === "string" ? svg : "";
+
+    if (!input.includes("<svg")) {
+      report({
+        code: "SL-GFX-FRAME-BAD-SVG",
+        severity: "warn",
+        renderer: opts.renderer || "",
+        tool: opts.tool || "",
+        message: "frameSvg expected an SVG string.",
+        fallback: "input returned unchanged"
+      });
+
+      return input;
+    }
+
+    const size = String(opts.size || "standard").toLowerCase();
+    const defaults = frameSizeDefaults(size);
+
+    const maxWidth = opts.maxWidth || defaults.maxWidth;
+    const minHeight = opts.minHeight || defaults.minHeight;
+    const className = opts.className || "";
+    const wrapper = opts.wrapper === true;
+
+    const svgStyle = styleToString({
+      width: "100%",
+      maxWidth,
+      height: "auto",
+      display: "block",
+      margin: opts.margin || "0 auto"
+    });
+
+    const svgTagMatch = input.match(/<svg\b[^>]*>/i);
+    if (!svgTagMatch) return input;
+
+    let svgTag = svgTagMatch[0];
+
+    svgTag = mergeInlineStyle(svgTag, svgStyle);
+    svgTag = addSvgClass(svgTag, "sl-graphics-frame-svg" + (className ? " " + className : ""));
+    svgTag = addSvgDataAttribute(svgTag, "data-sl-frame-size", size);
+
+    let output = input.replace(svgTagMatch[0], svgTag);
+
+    if (!wrapper) return output;
+
+    const wrapperStyle = styleToString({
+      width: "100%",
+      overflow: "visible",
+      minHeight
+    });
+
+    return '<div class="' + escapeHtml(defaults.wrapperClass) + '" data-sl-graphics-frame="' + escapeHtml(size) + '" style="' + escapeHtml(wrapperStyle) + '">' + output + '</div>';
+  }
+
+  function tuneFrame(root, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    const scope = root && root.querySelector ? root : document;
+    const selector = opts.selector || ".sl-graphics-frame-svg, [data-sl-renderer]";
+    const size = String(opts.size || "standard").toLowerCase();
+    const defaults = frameSizeDefaults(size);
+    const minHeight = opts.minHeight || defaults.minHeight;
+    const maxDepth = Number.isFinite(Number(opts.depth)) ? Math.max(1, Number(opts.depth)) : 5;
+
+    const nodes = Array.from(scope.querySelectorAll(selector));
+
+    nodes.forEach((svg) => {
+      if (!svg || !svg.style) return;
+
+      svg.style.width = "100%";
+      svg.style.height = "auto";
+      svg.style.display = "block";
+      svg.style.margin = opts.margin || "0 auto";
+
+      if (opts.maxWidth) {
+        svg.style.maxWidth = opts.maxWidth;
+      }
+
+      let node = svg.parentElement;
+      let depth = 0;
+
+      while (node && depth < maxDepth) {
+        if (node.style) {
+          node.style.overflow = "visible";
+
+          if (minHeight && depth <= 2) {
+            node.style.minHeight = minHeight;
+          }
+        }
+
+        node = node.parentElement;
+        depth += 1;
+      }
+    });
+
+    return nodes.length;
   }
 
   function fallbackSvg(code, message, meta = {}) {
@@ -836,11 +1030,15 @@
     renderers,
     registerRenderer,
     render,
+    frameSvg,
+    tuneFrame,
     renderCameraLayoutSvg,
     renderCameraLayoutIsoSvg,
     validateCameraLayoutModel,
     helpers: {
       escapeHtml,
+      frameSizeDefaults,
+      styleToString,
       fmt,
       fmtFt,
       fmtPct,
