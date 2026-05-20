@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-009-cad-camera-symbol
+ * Version: scopedlabs-graphics-010-camera-depth-spacing
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-009-cad-camera-symbol";
+  const VERSION = "scopedlabs-graphics-010-camera-depth-spacing";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -363,7 +363,7 @@
       + '<line x1="' + depthBack.x.toFixed(1) + '" y1="' + depthBack.y.toFixed(1) + '" x2="' + (depthBack.x + 6).toFixed(1) + '" y2="' + (depthBack.y + 6).toFixed(1) + '" stroke="rgba(226,232,240,.46)" stroke-width="1.05" />'
       + '<text x="' + depthCenterX.toFixed(1) + '" y="' + depthLabelY.toFixed(1) + '" text-anchor="middle" transform="rotate(' + depthAngle + ' ' + depthCenterX.toFixed(1) + ' ' + depthLabelY.toFixed(1) + ')" fill="rgba(226,232,240,.72)" font-size="10.2" font-weight="850">' + escapeHtml(depthLabel) + '</text>';
 
-    const summaryTextSvg = '<text x="' + widthCenterX.toFixed(1) + '" y="' + (frontLeft.y + 56) + '" text-anchor="middle" fill="rgba(226,232,240,.76)" font-size="10.6" font-weight="900">Required span: ' + escapeHtml(fmtFt(spanFt)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + ' | Shared overlap: ' + escapeHtml(fmtFt(totalOverlapFt)) + ' (' + escapeHtml(fmtPct(totalOverlapPctOfSpan, 1)) + ' of span)</text>';
+    const summaryTextSvg = '<text x="' + widthCenterX.toFixed(1) + '" y="' + (frontLeft.y + 68) + '" text-anchor="middle" fill="rgba(226,232,240,.76)" font-size="10.6" font-weight="900">Required span: ' + escapeHtml(fmtFt(spanFt)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + ' | Shared overlap: ' + escapeHtml(fmtFt(totalOverlapFt)) + ' (' + escapeHtml(fmtPct(totalOverlapPctOfSpan, 1)) + ' of span)</text>';
 
     return "" +
       '<svg data-export-svg data-sl-engine="graphics" data-sl-renderer="camera-layout" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(m.ariaLabel || "ScopedLabs camera layout visualization") + '">' +
@@ -489,14 +489,14 @@
     const floorBackY = backLeft.y;
 
     const widthDimY = frontLeft.y + 18;
-    const widthLabelY = frontLeft.y + 38;
+    const widthLabelY = frontLeft.y + 44;
     const widthCenterX = (frontLeft.x + frontRight.x) / 2;
 
     const depthFront = { x: frontLeft.x - 34, y: frontLeft.y + 6 };
     const depthBack = { x: backLeft.x - 34, y: backLeft.y - 6 };
     const depthCenterX = (depthFront.x + depthBack.x) / 2;
     const depthCenterY = (depthFront.y + depthBack.y) / 2;
-    const depthLabelY = depthCenterY - 8;
+    const depthLabelY = depthCenterY - 10;
     const depthAngle = -45;
 
     const coveredPct = clamp((coveredFt / spanFt) * 100, 0, 100);
@@ -639,8 +639,9 @@
       const headX = mount.x;
       const headY = mount.y - 2.5;
 
+      const floorAnchor = backPoint(centerFt);
       const postTopY = mount.y + 5.5;
-      const postBottomY = mount.y + 12.5;
+      const postBottomY = floorAnchor.y;
 
       const bracketBaseX = headX - 1.5;
       const bracketBaseY = headY + 1.5;
