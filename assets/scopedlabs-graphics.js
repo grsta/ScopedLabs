@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-012-dotted-depth-only";
+  const VERSION = "scopedlabs-graphics-014-dedupe-camera-depth-lines";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -683,7 +683,6 @@
         + '<line data-sl-visual-part="iso-camera-body-line" x1="' + (bodyLeft + 1.4).toFixed(1) + '" y1="' + bodyTop.toFixed(1) + '" x2="' + (bodyRight - 1.0).toFixed(1) + '" y2="' + bodyTop.toFixed(1) + '" stroke="rgba(226,232,240,.18)" stroke-width="1" />'
         + '<circle data-sl-visual-part="iso-camera-lens" cx="' + lensCx.toFixed(1) + '" cy="' + lensCy.toFixed(1) + '" r="1.75" fill="rgba(125,255,152,.88)" />'
         + '<circle data-sl-visual-part="iso-camera-lens-core" cx="' + lensCx.toFixed(1) + '" cy="' + lensCy.toFixed(1) + '" r="0.72" fill="rgba(8,18,12,.96)" />'
-        + '<line data-sl-visual-part="iso-camera-aim" x1="' + lensCx.toFixed(1) + '" y1="' + lensCy.toFixed(1) + '" x2="' + targetX.toFixed(1) + '" y2="' + targetY.toFixed(1) + '" stroke="rgba(226,232,240,.26)" stroke-width="1" stroke-dasharray="4 5" />'
         + '<text x="' + headX.toFixed(1) + '" y="' + (bodyTop - 8).toFixed(1) + '" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="10.5" font-weight="850">' + escapeHtml(camera.label || ("Cam " + (index + 1))) + '</text>';
     }).join("");
 
