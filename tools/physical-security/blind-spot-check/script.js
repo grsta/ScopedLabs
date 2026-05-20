@@ -899,10 +899,10 @@
     const stageX = 34;
     const stageY = 198;
     const stageW = 732;
-    const stageH = 300;
+    const stageH = 360;
 
     const runX = 126;
-    const runY = 394;
+    const runY = 452;
     const runW = 536;
     const bandH = 14;
 
@@ -992,8 +992,8 @@
       : '<text x="' + (runX + runW - 8) + '" y="' + (runY - 24) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>';
 
     const visiblePositions = cameraCenters.slice(0, 8);
-    const camY = 270;
-    const coneY = 358;
+    const camY = 318;
+    const coneY = 408;
     const maxConePx = Math.max(72, Math.min(220, (perCameraFt / safeSpan) * runW));
 
     const camGroups = visiblePositions.map((pos, index) => {
@@ -1015,7 +1015,7 @@
     const overlapTone = overlapPct >= 35 ? "rgba(255,138,102,.88)" : overlapPct >= 25 ? "rgba(255,211,79,.88)" : "rgba(255,226,128,.84)";
     const actualOverlapTone = actualOverlapPct + 0.01 < overlapPct ? "rgba(255,211,79,.90)" : "rgba(125,255,152,.88)";
 
-    return '<svg data-export-svg viewBox="0 0 800 520" role="img" aria-label="Blind spot spacing-layout plan view visualization with overlap zones">' +
+    return '<svg data-export-svg viewBox="0 0 800 590" role="img" aria-label="Blind spot spacing-layout plan view visualization with overlap zones">' +
       '<defs>' +
         '<linearGradient id="blindCoveredBand" x1="0" y1="0" x2="1" y2="0">' +
           '<stop offset="0%" stop-color="rgba(82,201,112,.62)" />' +
