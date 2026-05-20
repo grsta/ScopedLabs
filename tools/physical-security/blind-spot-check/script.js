@@ -978,6 +978,25 @@
         }).join("")
       : '<text x="' + (runX + runW - 8) + '" y="' + (runY + 35) + '" text-anchor="end" fill="rgba(255,211,79,.78)" font-size="10.5" font-weight="850">No shared overlap segment</text>';
 
+    const coneOverlapZones = overlapSegments.length
+      ? overlapSegments.map((item, index) => {
+          const x1 = xForFt(item.startFt);
+          const x2 = xForFt(item.endFt);
+          const w = Math.max(0, x2 - x1);
+          const zoneY = coneY - 10;
+          const zoneH = Math.max(18, (runY + 24) - zoneY);
+          const labelXPos = x1 + w / 2;
+          const label = w >= 70
+            ? '<text x="' + labelXPos.toFixed(1) + '" y="' + (zoneY - 8 - (index % 2) * 12) + '" text-anchor="middle" fill="rgba(255,230,150,.96)" font-size="10.5" font-weight="950">shared cone overlap</text>'
+            : "";
+
+          return '<rect x="' + x1.toFixed(1) + '" y="' + zoneY.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + zoneH.toFixed(1) + '" rx="10" fill="rgba(255,211,79,.115)" stroke="rgba(255,226,128,.42)" stroke-width="1.05" stroke-dasharray="5 5" />' +
+            '<line x1="' + x1.toFixed(1) + '" y1="' + zoneY.toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + (runY + 22).toFixed(1) + '" stroke="rgba(255,226,128,.46)" stroke-width="1" />' +
+            '<line x1="' + x2.toFixed(1) + '" y1="' + zoneY.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + (runY + 22).toFixed(1) + '" stroke="rgba(255,226,128,.46)" stroke-width="1" />' +
+            label;
+        }).join("")
+      : "";
+
     const gapRects = gaps.length
       ? gaps.map((item, index) => {
           const x1 = xForFt(item.startFt);
@@ -1067,6 +1086,7 @@
       '<text x="' + (stageX + 214) + '" y="' + (stageY + 51) + '" fill="rgba(226,232,240,.62)" font-size="10.5">blind gap</text>' +
 
       camGroups +
+      coneOverlapZones +
 
       '<line x1="' + runX + '" y1="' + runY + '" x2="' + (runX + runW) + '" y2="' + runY + '" stroke="rgba(226,232,240,.28)" stroke-width="1.05" />' +
       coveredRects +
