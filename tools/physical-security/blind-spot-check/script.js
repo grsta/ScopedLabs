@@ -1318,7 +1318,7 @@ function blindSpotMultiCameraFootprintSvg(data) {
         : "Validate overlap and gaps before carrying the result forward."
     };
 
-    const rendered = window.ScopedLabsGraphics.render("camera-layout", model);
+    const rendered = window.ScopedLabsGraphics.render("camera-layout-iso", model);
 
     if (typeof rendered === "string" && rendered.includes("<svg")) {
       return rendered;

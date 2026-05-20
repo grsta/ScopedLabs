@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-003-camera-layout-polish
+ * Version: scopedlabs-graphics-004-camera-layout-iso
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-003-camera-layout-polish";
+  const VERSION = "scopedlabs-graphics-004-camera-layout-iso";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -393,6 +393,286 @@
       '</svg>';
   }
 
+
+  function renderCameraLayoutIsoSvg(model) {
+    const validation = validateCameraLayoutModel(model);
+    const tool = model && model.tool ? model.tool : "unknown";
+
+    if (validation.warnings.length) {
+      report({
+        code: CODES.CAMERA_LAYOUT_BAD_SEGMENTS,
+        severity: "warn",
+        renderer: "camera-layout-iso",
+        tool,
+        message: "camera-layout-iso rendered with normalized/skipped segments.",
+        details: { warnings: validation.warnings }
+      });
+    }
+
+    if (!validation.ok) {
+      const err = validation.errors[0];
+
+      report({
+        code: err.code,
+        severity: "error",
+        renderer: "camera-layout-iso",
+        tool,
+        message: err.message,
+        fallback: "safe SVG fallback"
+      });
+
+      return fallbackSvg(err.code, err.message, {
+        renderer: "camera-layout-iso",
+        tool
+      });
+    }
+
+    const m = validation.model;
+    const spanFt = Math.max(1, num(m.protectedSpanFt, 1));
+    const coveredFt = clamp(num(m.coveredSpanFt, 0), 0, spanFt);
+    const uncoveredFt = clamp(num(m.uncoveredSpanFt, 0), 0, spanFt);
+    const targetOverlapPct = clamp(num(m.targetOverlapPct, 0), 0, 100);
+    const actualOverlapPct = clamp(num(m.actualOverlapPct, 0), 0, 100);
+    const actualSpacingFt = Math.max(0, num(m.actualSpacingFt, 0));
+
+    const cameras = m.cameras;
+    const coverageSegments = m.coverageSegments;
+    const overlapSegments = m.overlapSegments;
+    const gapSegments = m.gapSegments;
+
+    const width = 800;
+    const height = 620;
+
+    const labelX = 52;
+    const barX = 304;
+    const barW = 304;
+    const valueX = 728;
+    const barH = 10;
+    const row1Y = 72;
+    const rowGap = 32;
+
+    const stageX = 34;
+    const stageY = 198;
+    const stageW = 732;
+    const stageH = 390;
+
+    const frontLeft = { x: 122, y: 492 };
+    const frontRight = { x: 662, y: 492 };
+    const backLeft = { x: 246, y: 366 };
+    const backRight = { x: 694, y: 366 };
+
+    const floorFrontY = frontLeft.y;
+    const floorBackY = backLeft.y;
+
+    const coveredPct = clamp((coveredFt / spanFt) * 100, 0, 100);
+    const gapPct = clamp((uncoveredFt / spanFt) * 100, 0, 100);
+
+    const coveredBarW = Math.max(8, Math.min(barW, barW * (coveredPct / 100)));
+    const gapBarW = uncoveredFt <= 0 ? 8 : Math.max(8, Math.min(barW, barW * (gapPct / 100)));
+    const targetOverlapBarW = Math.max(8, Math.min(barW, barW * (targetOverlapPct / 100)));
+    const actualOverlapBarW = Math.max(8, Math.min(barW, barW * (actualOverlapPct / 100)));
+
+    const totalOverlapFt = overlapSegments.reduce((sum, item) => sum + Math.max(0, item.endFt - item.startFt), 0);
+    const totalOverlapPctOfSpan = spanFt > 0 ? (totalOverlapFt / spanFt) * 100 : 0;
+
+    const overlapTone = targetOverlapPct >= 35
+      ? "rgba(255,138,102,.88)"
+      : targetOverlapPct >= 25
+        ? "rgba(255,211,79,.88)"
+        : "rgba(255,226,128,.84)";
+
+    const actualOverlapTone = actualOverlapPct + 0.01 < targetOverlapPct
+      ? "rgba(255,211,79,.90)"
+      : "rgba(125,255,152,.88)";
+
+    const gapTone = uncoveredFt > 0 ? theme.gap : "rgba(125,255,152,.90)";
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function pointOnEdge(start, end, ft) {
+      const t = clamp(num(ft, 0) / spanFt, 0, 1);
+      return {
+        x: lerp(start.x, end.x, t),
+        y: lerp(start.y, end.y, t)
+      };
+    }
+
+    function frontPoint(ft) {
+      return pointOnEdge(frontLeft, frontRight, ft);
+    }
+
+    function backPoint(ft) {
+      return pointOnEdge(backLeft, backRight, ft);
+    }
+
+    function floorSegmentPath(startFt, endFt) {
+      const fs = frontPoint(startFt);
+      const fe = frontPoint(endFt);
+      const bs = backPoint(startFt);
+      const be = backPoint(endFt);
+
+      return "M " + fs.x.toFixed(1) + " " + fs.y.toFixed(1) +
+        " L " + fe.x.toFixed(1) + " " + fe.y.toFixed(1) +
+        " L " + be.x.toFixed(1) + " " + be.y.toFixed(1) +
+        " L " + bs.x.toFixed(1) + " " + bs.y.toFixed(1) + " Z";
+    }
+
+    function cameraMountPoint(centerFt) {
+      const back = backPoint(centerFt);
+      return {
+        x: back.x,
+        y: back.y - 48
+      };
+    }
+
+    const floorPlane = ''
+      + '<path d="M ' + frontLeft.x + ' ' + frontLeft.y
+      + ' L ' + frontRight.x + ' ' + frontRight.y
+      + ' L ' + backRight.x + ' ' + backRight.y
+      + ' L ' + backLeft.x + ' ' + backLeft.y
+      + ' Z" fill="rgba(255,255,255,.018)" stroke="rgba(226,232,240,.18)" stroke-width="1.1" />';
+
+    const floorGuides = [0, 0.25, 0.5, 0.75, 1].map((t) => {
+      const xFront = lerp(frontLeft.x, frontRight.x, t);
+      const yFront = lerp(frontLeft.y, frontRight.y, t);
+      const xBack = lerp(backLeft.x, backRight.x, t);
+      const yBack = lerp(backLeft.y, backRight.y, t);
+
+      return '<line x1="' + xFront.toFixed(1) + '" y1="' + yFront.toFixed(1) + '" x2="' + xBack.toFixed(1) + '" y2="' + yBack.toFixed(1) + '" stroke="rgba(226,232,240,.08)" stroke-width="1" />';
+    }).join("");
+
+    const floorCross = [0, 0.33, 0.66, 1].map((t) => {
+      const left = {
+        x: lerp(frontLeft.x, backLeft.x, t),
+        y: lerp(frontLeft.y, backLeft.y, t)
+      };
+      const right = {
+        x: lerp(frontRight.x, backRight.x, t),
+        y: lerp(frontRight.y, backRight.y, t)
+      };
+
+      return '<line x1="' + left.x.toFixed(1) + '" y1="' + left.y.toFixed(1) + '" x2="' + right.x.toFixed(1) + '" y2="' + right.y.toFixed(1) + '" stroke="rgba(226,232,240,.06)" stroke-width="1" />';
+    }).join("");
+
+    const coverageSvg = coverageSegments.map((item) => {
+      return '<path data-sl-visual-part="iso-covered-zone" d="' + floorSegmentPath(item.startFt, item.endFt) + '" fill="rgba(82,201,112,.28)" stroke="rgba(125,255,152,.38)" stroke-width="1.1" />';
+    }).join("");
+
+    const overlapSvg = overlapSegments.length
+      ? overlapSegments.map((item, index) => {
+          const path = floorSegmentPath(item.startFt, item.endFt);
+          const fp1 = frontPoint(item.startFt);
+          const fp2 = frontPoint(item.endFt);
+          const labelX = (fp1.x + fp2.x) / 2;
+          const labelY = frontLeft.y + 26 + (index % 2) * 12;
+
+          return ''
+            + '<path data-sl-visual-part="iso-overlap-zone" d="' + path + '" fill="rgba(255,211,79,.24)" stroke="rgba(255,226,128,.52)" stroke-width="1.15" stroke-dasharray="5 4" />'
+            + '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(255,230,150,.96)" font-size="10.5" font-weight="900">'
+            + escapeHtml(fmtFt(item.endFt - item.startFt)) + ' overlap</text>';
+        }).join("")
+      : '<text x="' + (frontRight.x - 4) + '" y="' + (frontLeft.y + 26) + '" text-anchor="end" fill="rgba(255,211,79,.78)" font-size="10.5" font-weight="850">No shared overlap segment</text>';
+
+    const gapSvg = gapSegments.length
+      ? gapSegments.map((item, index) => {
+          const path = floorSegmentPath(item.startFt, item.endFt);
+          const fp1 = frontPoint(item.startFt);
+          const fp2 = frontPoint(item.endFt);
+          const labelX = (fp1.x + fp2.x) / 2;
+          const labelY = index % 2 === 0 ? frontLeft.y - 14 : frontLeft.y + 44;
+
+          return ''
+            + '<path data-sl-visual-part="iso-gap-zone" d="' + path + '" fill="rgba(255,138,102,.24)" stroke="rgba(255,138,102,.82)" stroke-width="1.15" />'
+            + '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">'
+            + escapeHtml(fmtFt(item.endFt - item.startFt)) + ' gap</text>';
+        }).join("")
+      : '<text x="' + (frontRight.x - 4) + '" y="' + (frontLeft.y - 18) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>';
+
+    const frustumSvg = cameras.slice(0, 8).map((camera, index) => {
+      const centerFt = num(camera.centerFt, spanFt / 2);
+      const startFt = num(camera.footprintStartFt, centerFt);
+      const endFt = num(camera.footprintEndFt, centerFt);
+
+      const mount = cameraMountPoint(centerFt);
+      const bs = backPoint(startFt);
+      const be = backPoint(endFt);
+      const fs = frontPoint(startFt);
+      const fe = frontPoint(endFt);
+
+      return ''
+        + '<path data-sl-visual-part="iso-camera-frustum" d="M ' + mount.x.toFixed(1) + ' ' + mount.y.toFixed(1)
+        + ' L ' + bs.x.toFixed(1) + ' ' + bs.y.toFixed(1)
+        + ' L ' + be.x.toFixed(1) + ' ' + be.y.toFixed(1)
+        + ' L ' + fe.x.toFixed(1) + ' ' + fe.y.toFixed(1)
+        + ' L ' + fs.x.toFixed(1) + ' ' + fs.y.toFixed(1)
+        + ' Z" fill="rgba(82,201,112,.055)" stroke="rgba(125,255,152,.26)" stroke-width="1.0" />'
+        + '<circle cx="' + mount.x.toFixed(1) + '" cy="' + mount.y.toFixed(1) + '" r="8.4" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />'
+        + '<line x1="' + mount.x.toFixed(1) + '" y1="' + (mount.y + 8).toFixed(1) + '" x2="' + lerp(bs.x, be.x, 0.5).toFixed(1) + '" y2="' + lerp(bs.y, be.y, 0.5).toFixed(1) + '" stroke="rgba(226,232,240,.18)" stroke-width="1" stroke-dasharray="4 5" />'
+        + '<text x="' + mount.x.toFixed(1) + '" y="' + (mount.y - 16).toFixed(1) + '" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="10.5" font-weight="850">' + escapeHtml(camera.label || ("Cam " + (index + 1))) + '</text>';
+    }).join("");
+
+    const cameraNote = cameras.length > 8
+      ? '<text x="' + (stageX + stageW - 18) + '" y="' + (stageY + 26) + '" text-anchor="end" fill="rgba(226,232,240,.56)" font-size="10.5">Showing first 8 of ' + cameras.length + ' cameras</text>'
+      : "";
+
+    return ""
+      + '<svg data-export-svg data-sl-engine="graphics" data-sl-renderer="camera-layout-iso" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(m.ariaLabel || "ScopedLabs isometric camera layout visualization") + '">'
+      + '<defs>'
+      + '<linearGradient id="slIsoGreenBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(84,212,116,.70)" /><stop offset="100%" stop-color="rgba(125,255,152,.90)" /></linearGradient>'
+      + '<linearGradient id="slIsoGapBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.76)" /><stop offset="100%" stop-color="rgba(255,138,102,.90)" /></linearGradient>'
+      + '</defs>'
+
+      + '<text x="52" y="28" fill="' + theme.text + '" font-size="18" font-weight="950">' + escapeHtml(m.title || "Isometric plan: spacing, overlap, and blind gaps") + '</text>'
+      + '<text x="52" y="50" fill="' + theme.muted + '" font-size="12">' + escapeHtml(m.subtitle || "Report-safe isometric SVG. Green is covered, amber is shared overlap, red is uncovered.") + '</text>'
+
+      + '<text x="' + labelX + '" y="' + row1Y + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Required protected span</text>'
+      + '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />'
+      + '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(226,232,240,.26)" />'
+      + '<text x="' + valueX + '" y="' + row1Y + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(spanFt)) + '</text>'
+
+      + '<text x="' + labelX + '" y="' + (row1Y + rowGap) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Merged covered span</text>'
+      + '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />'
+      + '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + coveredBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#slIsoGreenBar)" />'
+      + '<text x="' + valueX + '" y="' + (row1Y + rowGap) + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(coveredFt)) + ' | ' + escapeHtml(fmtPct(coveredPct, 1)) + '</text>'
+
+      + '<text x="' + labelX + '" y="' + (row1Y + rowGap * 2) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Uncovered span</text>'
+      + '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />'
+      + '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + gapBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + (uncoveredFt > 0 ? "url(#slIsoGapBar)" : "rgba(125,255,152,.50)") + '" />'
+      + '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + gapTone + '" font-size="11" font-weight="900">' + escapeHtml(fmtFt(uncoveredFt)) + ' | ' + escapeHtml(fmtPct(gapPct, 1)) + '</text>'
+
+      + '<text x="' + labelX + '" y="' + (row1Y + rowGap * 3) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Target / actual overlap</text>'
+      + '<rect x="' + barX + '" y="' + (row1Y + rowGap * 3 - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />'
+      + '<rect x="' + barX + '" y="' + (row1Y + rowGap * 3 - 8) + '" width="' + targetOverlapBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + overlapTone + '" />'
+      + '<rect x="' + barX + '" y="' + (row1Y + rowGap * 3 + 5) + '" width="' + actualOverlapBarW.toFixed(1) + '" height="4" rx="2" fill="' + actualOverlapTone + '" />'
+      + '<text x="' + valueX + '" y="' + (row1Y + rowGap * 3) + '" text-anchor="end" fill="' + overlapTone + '" font-size="11" font-weight="900">Target ' + escapeHtml(fmtPct(targetOverlapPct, 1)) + ' | Actual ' + escapeHtml(fmtPct(actualOverlapPct, 1)) + '</text>'
+
+      + '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="' + theme.stageStroke + '" />'
+      + '<text x="' + (stageX + 18) + '" y="' + (stageY + 26) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">' + escapeHtml(m.stageKicker || "ISO / CAMERA LAYOUT") + '</text>'
+      + cameraNote
+
+      + '<rect x="' + (stageX + 18) + '" y="' + (stageY + 44) + '" width="16" height="7" rx="3" fill="rgba(125,255,152,.82)" /><text x="' + (stageX + 40) + '" y="' + (stageY + 51) + '" fill="rgba(226,232,240,.62)" font-size="10.5">covered</text>'
+      + '<rect x="' + (stageX + 104) + '" y="' + (stageY + 44) + '" width="16" height="7" rx="3" fill="rgba(255,211,79,.82)" /><text x="' + (stageX + 126) + '" y="' + (stageY + 51) + '" fill="rgba(226,232,240,.62)" font-size="10.5">overlap</text>'
+      + '<rect x="' + (stageX + 192) + '" y="' + (stageY + 44) + '" width="16" height="7" rx="3" fill="rgba(255,138,102,.82)" /><text x="' + (stageX + 214) + '" y="' + (stageY + 51) + '" fill="rgba(226,232,240,.62)" font-size="10.5">blind gap</text>'
+
+      + floorPlane
+      + floorGuides
+      + floorCross
+      + coverageSvg
+      + overlapSvg
+      + gapSvg
+      + frustumSvg
+
+      + '<line x1="' + frontLeft.x + '" y1="' + frontLeft.y + '" x2="' + frontRight.x + '" y2="' + frontRight.y + '" stroke="rgba(226,232,240,.42)" stroke-width="1.05" />'
+      + '<line x1="' + frontLeft.x + '" y1="' + (frontLeft.y + 18) + '" x2="' + frontLeft.x + '" y2="' + (frontLeft.y - 8) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />'
+      + '<line x1="' + frontRight.x + '" y1="' + (frontRight.y + 18) + '" x2="' + frontRight.x + '" y2="' + (frontRight.y - 8) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />'
+      + '<text x="' + ((frontLeft.x + frontRight.x) / 2).toFixed(1) + '" y="' + (frontLeft.y + 38) + '" text-anchor="middle" fill="rgba(226,232,240,.78)" font-size="11" font-weight="900">Required span: ' + escapeHtml(fmtFt(spanFt)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + ' | Shared overlap: ' + escapeHtml(fmtFt(totalOverlapFt)) + ' (' + escapeHtml(fmtPct(totalOverlapPctOfSpan, 1)) + ' of span)</text>'
+
+      + '<text x="' + (stageX + 20) + '" y="' + (stageY + stageH - 16) + '" fill="rgba(226,232,240,.56)" font-size="10.5">' + escapeHtml(m.footer || "Validate overlap and gaps before carrying the result forward.") + '</text>'
+      + '</svg>';
+  }
+
   function registerRenderer(type, fn) {
     if (!type || typeof fn !== "function") return false;
     renderers[type] = fn;
@@ -457,6 +737,7 @@
   }
 
   registerRenderer("camera-layout", renderCameraLayoutSvg);
+  registerRenderer("camera-layout-iso", renderCameraLayoutIsoSvg);
 
   window.ScopedLabsGraphics = {
     version: VERSION,
@@ -466,6 +747,7 @@
     registerRenderer,
     render,
     renderCameraLayoutSvg,
+    renderCameraLayoutIsoSvg,
     validateCameraLayoutModel,
     helpers: {
       escapeHtml,
