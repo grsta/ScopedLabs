@@ -1365,7 +1365,7 @@ function assistantStatusClass(data) {
     latestAssistantScenarios = [];
   }
 
-  function spacingVisualSvg(data) {
+  function spacingLegacyVisualSvg(data) {
     const singleCamera = Number(data?.cams) <= 1 || data?.singleCamera;
     const cameraCount = singleCamera ? 1 : Math.min(Math.max(Number(data?.cams) || 2, 2), 6);
 
@@ -1512,6 +1512,270 @@ function assistantStatusClass(data) {
       parts.join('') +
     '</svg>';
   }
+
+
+  function spacingNormalizeInterval(item) {
+    if (!item || typeof item !== "object") return null;
+
+    const startFt = Number(item.startFt);
+    const endFt = Number(item.endFt);
+
+    if (!Number.isFinite(startFt) || !Number.isFinite(endFt) || endFt <= startFt) return null;
+
+    return {
+      startFt,
+      endFt,
+      lengthFt: endFt - startFt
+    };
+  }
+
+  function spacingMergeIntervals(intervals, spanFt) {
+    const span = Math.max(1, Number(spanFt) || 1);
+
+    const sorted = (Array.isArray(intervals) ? intervals : [])
+      .map(spacingNormalizeInterval)
+      .filter(Boolean)
+      .map((item) => ({
+        startFt: Math.max(0, Math.min(span, item.startFt)),
+        endFt: Math.max(0, Math.min(span, item.endFt))
+      }))
+      .filter((item) => item.endFt > item.startFt)
+      .sort((a, b) => a.startFt - b.startFt);
+
+    const merged = [];
+
+    sorted.forEach((item) => {
+      const last = merged[merged.length - 1];
+
+      if (!last || item.startFt > last.endFt) {
+        merged.push({
+          startFt: item.startFt,
+          endFt: item.endFt,
+          lengthFt: item.endFt - item.startFt
+        });
+        return;
+      }
+
+      last.endFt = Math.max(last.endFt, item.endFt);
+      last.lengthFt = last.endFt - last.startFt;
+    });
+
+    return merged;
+  }
+
+  function spacingGapIntervals(mergedIntervals, spanFt) {
+    const span = Math.max(1, Number(spanFt) || 1);
+    const gaps = [];
+    let cursor = 0;
+
+    (Array.isArray(mergedIntervals) ? mergedIntervals : []).forEach((item) => {
+      const startFt = Math.max(0, Math.min(span, Number(item.startFt) || 0));
+      const endFt = Math.max(0, Math.min(span, Number(item.endFt) || 0));
+
+      if (startFt > cursor) {
+        gaps.push({
+          startFt: cursor,
+          endFt: startFt,
+          lengthFt: startFt - cursor
+        });
+      }
+
+      cursor = Math.max(cursor, endFt);
+    });
+
+    if (cursor < span) {
+      gaps.push({
+        startFt: cursor,
+        endFt: span,
+        lengthFt: span - cursor
+      });
+    }
+
+    return gaps.filter((item) => item.lengthFt > 0.01);
+  }
+
+  function spacingOverlapIntervals(rawIntervals, spanFt) {
+    const span = Math.max(1, Number(spanFt) || 1);
+
+    const sorted = (Array.isArray(rawIntervals) ? rawIntervals : [])
+      .map(spacingNormalizeInterval)
+      .filter(Boolean)
+      .sort((a, b) => a.startFt - b.startFt);
+
+    const overlaps = [];
+
+    for (let i = 0; i < sorted.length - 1; i += 1) {
+      const startFt = Math.max(0, Math.min(span, Math.max(sorted[i].startFt, sorted[i + 1].startFt)));
+      const endFt = Math.max(0, Math.min(span, Math.min(sorted[i].endFt, sorted[i + 1].endFt)));
+
+      if (endFt > startFt) {
+        overlaps.push({
+          startFt,
+          endFt,
+          lengthFt: endFt - startFt
+        });
+      }
+    }
+
+    return overlaps;
+  }
+
+  function spacingSumIntervals(intervals) {
+    return (Array.isArray(intervals) ? intervals : []).reduce((sum, item) => {
+      return sum + Math.max(0, (Number(item.endFt) || 0) - (Number(item.startFt) || 0));
+    }, 0);
+  }
+
+  function spacingGraphicsModel(data) {
+    const source = data && typeof data === "object" ? data : {};
+
+    const spanFt = Math.max(1, Number(source.len) || Number(source.protectedLengthFt) || 1);
+    const camsRaw = Number(source.cams) || Number(source.cameraCount) || 1;
+    const singleCamera = Number(camsRaw) <= 1 || !!source.singleCamera;
+    const cameraCount = singleCamera ? 1 : Math.max(2, Math.round(camsRaw));
+
+    const spacingFt = singleCamera
+      ? 0
+      : Math.max(0, Number(source.spacing) || Number(source.spacingFt) || (spanFt / Math.max(cameraCount, 1)));
+
+    const usableWidthFt = Math.max(0, Number(source.usableWidth) || Number(source.spacingUsableWidthFt) || 0);
+    const rawWidthFt = Math.max(
+      usableWidthFt,
+      Number(source.rawWidth) || Number(source.spacingRawCoverageWidthFt) || usableWidthFt || 0
+    );
+
+    const requestedOverlapPct = Number.isFinite(Number(source.appliedOverlapTargetPct))
+      ? Number(source.appliedOverlapTargetPct)
+      : Number.isFinite(Number(source.ovPct))
+        ? Number(source.ovPct)
+        : Number.isFinite(Number(source.spacingOverlapTargetPct))
+          ? Number(source.spacingOverlapTargetPct)
+          : 0;
+
+    const actualOverlapFt = singleCamera || rawWidthFt <= 0
+      ? 0
+      : Math.max(0, rawWidthFt - spacingFt);
+
+    const actualOverlapPct = singleCamera || rawWidthFt <= 0
+      ? 0
+      : (actualOverlapFt / rawWidthFt) * 100;
+
+    const totalCenterRun = singleCamera ? 0 : spacingFt * (cameraCount - 1);
+    const startCenter = singleCamera
+      ? spanFt / 2
+      : Math.max(0, Math.min(spanFt, (spanFt - totalCenterRun) / 2));
+
+    const cameras = [];
+    const rawIntervals = [];
+
+    for (let i = 0; i < cameraCount; i += 1) {
+      const centerFt = singleCamera ? spanFt / 2 : startCenter + (spacingFt * i);
+      const footprintStartFt = centerFt - (rawWidthFt / 2);
+      const footprintEndFt = centerFt + (rawWidthFt / 2);
+
+      cameras.push({
+        label: "Cam " + (i + 1),
+        centerFt,
+        footprintStartFt,
+        footprintEndFt
+      });
+
+      rawIntervals.push({
+        startFt: footprintStartFt,
+        endFt: footprintEndFt,
+        lengthFt: footprintEndFt - footprintStartFt
+      });
+    }
+
+    const coverageSegments = spacingMergeIntervals(rawIntervals, spanFt);
+    const gapSegments = spacingGapIntervals(coverageSegments, spanFt);
+    const overlapSegments = singleCamera ? [] : spacingOverlapIntervals(rawIntervals, spanFt);
+
+    const coveredSpanFt = Math.max(0, Math.min(spanFt, spacingSumIntervals(coverageSegments)));
+    const uncoveredSpanFt = Math.max(0, Math.min(spanFt, spacingSumIntervals(gapSegments)));
+
+    return {
+      tool: "camera-spacing",
+      title: "Isometric spacing layout",
+      subtitle: singleCamera
+        ? "Single-camera coverage check. Overlap is not applied without an adjacent camera."
+        : "Camera Spacing layout rendered through the ScopedLabs Graphics Engine.",
+      stageKicker: "ISO / CAMERA SPACING",
+      protectedSpanFt: spanFt,
+      coveredSpanFt,
+      uncoveredSpanFt,
+      targetOverlapPct: singleCamera ? 0 : requestedOverlapPct,
+      actualOverlapPct,
+      actualSpacingFt: singleCamera ? 0 : spacingFt,
+      depthLabel: "Coverage depth (visual)",
+      cameras,
+      coverageSegments,
+      overlapSegments,
+      gapSegments,
+      footer: singleCamera
+        ? "Single-camera scenario: validate coverage width before continuing downstream."
+        : "Spacing intent: validate continuity in Blind Spot Check before accepting final seam coverage."
+    };
+  }
+
+  function spacingVisualSvg(data) {
+    const legacyFallback = () => spacingLegacyVisualSvg(data);
+
+    try {
+      if (!window.ScopedLabsGraphics || typeof window.ScopedLabsGraphics.render !== "function") {
+        if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+          window.ScopedLabsDiagnostics.report({
+            code: "SL-GFX-CAMERASPACING-ENGINE-MISSING",
+            severity: "warn",
+            engine: "graphics",
+            renderer: "camera-layout-iso",
+            tool: "camera-spacing",
+            message: "ScopedLabsGraphics was not available. Camera Spacing used its legacy renderer.",
+            fallback: "legacy Camera Spacing SVG"
+          });
+        }
+
+        return legacyFallback();
+      }
+
+      const model = spacingGraphicsModel(data);
+      const rendered = window.ScopedLabsGraphics.render("camera-layout-iso", model);
+
+      if (typeof rendered === "string" && rendered.includes('data-sl-renderer="camera-layout-iso"')) {
+        return rendered;
+      }
+
+      if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+        window.ScopedLabsDiagnostics.report({
+          code: "SL-GFX-CAMERASPACING-BAD-RENDER",
+          severity: "error",
+          engine: "graphics",
+          renderer: "camera-layout-iso",
+          tool: "camera-spacing",
+          message: "Graphics Engine returned fallback or invalid SVG. Camera Spacing used its legacy renderer.",
+          fallback: "legacy Camera Spacing SVG"
+        });
+      }
+
+      return legacyFallback();
+    } catch (error) {
+      if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+        window.ScopedLabsDiagnostics.report({
+          code: "SL-GFX-CAMERASPACING-ADAPTER-EXCEPTION",
+          severity: "error",
+          engine: "graphics",
+          renderer: "camera-layout-iso",
+          tool: "camera-spacing",
+          message: "Camera Spacing graphics adapter threw an exception.",
+          cause: error && error.message,
+          fallback: "legacy Camera Spacing SVG"
+        });
+      }
+
+      return legacyFallback();
+    }
+  }
+
 
   function spacingActualOverlapPercent(data) {
     const rawWidth = Number(data?.rawWidth);
