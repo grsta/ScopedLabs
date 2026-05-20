@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-014-dedupe-camera-depth-lines";
+  const VERSION = "scopedlabs-graphics-015-spacing-readability";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -318,7 +318,7 @@
           const x2 = xForFt(item.endFt);
           const w = Math.max(0, x2 - x1);
           const labelXPos = x1 + w / 2;
-          const label = w >= 46
+          const label = !m.hideOverlapSegmentLabels && w >= 46
             ? '<text x="' + labelXPos.toFixed(1) + '" y="' + (runY + 35 + (index % 2) * 13) + '" text-anchor="middle" fill="rgba(255,230,150,.94)" font-size="10.5" font-weight="900">' + escapeHtml(fmtFt(item.endFt - item.startFt)) + ' overlap</text>'
             : "";
 

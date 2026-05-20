@@ -1701,6 +1701,7 @@ function assistantStatusClass(data) {
         ? "Single-camera coverage check. Overlap is not applied without an adjacent camera."
         : "Camera Spacing layout rendered through the ScopedLabs Graphics Engine.",
       stageKicker: "ISO / CAMERA SPACING",
+      hideOverlapSegmentLabels: true,
       protectedSpanFt: spanFt,
       coveredSpanFt,
       uncoveredSpanFt,
@@ -1742,7 +1743,10 @@ function assistantStatusClass(data) {
       const rendered = window.ScopedLabsGraphics.render("camera-layout-iso", model);
 
       if (typeof rendered === "string" && rendered.includes('data-sl-renderer="camera-layout-iso"')) {
-        return rendered;
+        return rendered.replace(
+          "<svg ",
+          '<svg style="width:100%;max-width:1040px;height:auto;display:block;margin:0 auto;" '
+        );
       }
 
       if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
