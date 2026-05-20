@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-006-camera-layout-iso-dimensions
+ * Version: scopedlabs-graphics-007-camera-symbol-polish
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-006-camera-layout-iso-dimensions";
+  const VERSION = "scopedlabs-graphics-007-camera-symbol-polish";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -636,6 +636,19 @@
       const fs = frontPoint(startFt);
       const fe = frontPoint(endFt);
 
+      const headX = mount.x;
+      const headY = mount.y - 2;
+      const bodyLeft = headX - 8;
+      const bodyRight = headX + 6;
+      const bodyTop = headY - 5;
+      const bodyBottom = headY + 5;
+      const lensCx = headX + 3.5;
+      const lensCy = headY;
+      const mastTopY = mount.y + 6;
+      const mastBottomY = mount.y + 13;
+      const targetX = lerp(bs.x, be.x, 0.5);
+      const targetY = lerp(bs.y, be.y, 0.5);
+
       return ''
         + '<path data-sl-visual-part="iso-camera-frustum" d="M ' + mount.x.toFixed(1) + ' ' + mount.y.toFixed(1)
         + ' L ' + bs.x.toFixed(1) + ' ' + bs.y.toFixed(1)
@@ -643,9 +656,14 @@
         + ' L ' + fe.x.toFixed(1) + ' ' + fe.y.toFixed(1)
         + ' L ' + fs.x.toFixed(1) + ' ' + fs.y.toFixed(1)
         + ' Z" fill="rgba(82,201,112,.035)" stroke="rgba(125,255,152,.34)" stroke-width="1.0" />'
-        + '<circle cx="' + mount.x.toFixed(1) + '" cy="' + mount.y.toFixed(1) + '" r="8.4" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />'
-        + '<line x1="' + mount.x.toFixed(1) + '" y1="' + (mount.y + 8).toFixed(1) + '" x2="' + lerp(bs.x, be.x, 0.5).toFixed(1) + '" y2="' + lerp(bs.y, be.y, 0.5).toFixed(1) + '" stroke="rgba(226,232,240,.26)" stroke-width="1" stroke-dasharray="4 5" />'
-        + '<text x="' + mount.x.toFixed(1) + '" y="' + (mount.y - 16).toFixed(1) + '" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="10.5" font-weight="850">' + escapeHtml(camera.label || ("Cam " + (index + 1))) + '</text>';
+        + '<line data-sl-visual-part="iso-camera-mast" x1="' + headX.toFixed(1) + '" y1="' + mastTopY.toFixed(1) + '" x2="' + headX.toFixed(1) + '" y2="' + mastBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.42)" stroke-width="1.4" />'
+        + '<circle data-sl-visual-part="iso-camera-mount" cx="' + headX.toFixed(1) + '" cy="' + mastBottomY.toFixed(1) + '" r="2.2" fill="rgba(226,232,240,.70)" />'
+        + '<rect data-sl-visual-part="iso-camera-body" x="' + bodyLeft.toFixed(1) + '" y="' + bodyTop.toFixed(1) + '" width="' + (bodyRight - bodyLeft).toFixed(1) + '" height="' + (bodyBottom - bodyTop).toFixed(1) + '" rx="2.2" fill="rgba(10,18,14,.98)" stroke="rgba(125,255,152,.92)" stroke-width="1.45" />'
+        + '<line data-sl-visual-part="iso-camera-body-line" x1="' + (bodyLeft + 2).toFixed(1) + '" y1="' + bodyTop.toFixed(1) + '" x2="' + (bodyRight - 2).toFixed(1) + '" y2="' + bodyTop.toFixed(1) + '" stroke="rgba(226,232,240,.18)" stroke-width="1" />'
+        + '<circle data-sl-visual-part="iso-camera-lens" cx="' + lensCx.toFixed(1) + '" cy="' + lensCy.toFixed(1) + '" r="1.9" fill="rgba(125,255,152,.88)" />'
+        + '<circle data-sl-visual-part="iso-camera-lens-core" cx="' + lensCx.toFixed(1) + '" cy="' + lensCy.toFixed(1) + '" r="0.8" fill="rgba(8,18,12,.96)" />'
+        + '<line data-sl-visual-part="iso-camera-aim" x1="' + lensCx.toFixed(1) + '" y1="' + lensCy.toFixed(1) + '" x2="' + targetX.toFixed(1) + '" y2="' + targetY.toFixed(1) + '" stroke="rgba(226,232,240,.26)" stroke-width="1" stroke-dasharray="4 5" />'
+        + '<text x="' + headX.toFixed(1) + '" y="' + (bodyTop - 8).toFixed(1) + '" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="10.5" font-weight="850">' + escapeHtml(camera.label || ("Cam " + (index + 1))) + '</text>';
     }).join("");
 
     const cameraNote = cameras.length > 8
