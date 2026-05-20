@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-005-camera-layout-iso-polish
+ * Version: scopedlabs-graphics-006-camera-layout-iso-dimensions
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-005-camera-layout-iso-polish";
+  const VERSION = "scopedlabs-graphics-006-camera-layout-iso-dimensions";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -215,6 +215,7 @@
     const targetOverlapPct = clamp(num(m.targetOverlapPct, 0), 0, 100);
     const actualOverlapPct = clamp(num(m.actualOverlapPct, 0), 0, 100);
     const actualSpacingFt = Math.max(0, num(m.actualSpacingFt, 0));
+    const depthLabel = m.depthLabel || "Coverage depth (visual)";
 
     const cameras = m.cameras;
     const coverageSegments = m.coverageSegments;
@@ -342,6 +343,28 @@
       ? '<text x="' + (stageX + stageW - 18) + '" y="' + (stageY + 26) + '" text-anchor="end" fill="rgba(226,232,240,.56)" font-size="10.5">Showing first 8 of ' + cameras.length + ' cameras</text>'
       : "";
 
+    const widthDimensionSvg = ''
+      + '<line x1="' + frontLeft.x + '" y1="' + frontLeft.y + '" x2="' + frontLeft.x + '" y2="' + (widthDimY - 2) + '" stroke="rgba(226,232,240,.34)" stroke-width="1" />'
+      + '<line x1="' + frontRight.x + '" y1="' + frontRight.y + '" x2="' + frontRight.x + '" y2="' + (widthDimY - 2) + '" stroke="rgba(226,232,240,.34)" stroke-width="1" />'
+      + '<line x1="' + frontLeft.x + '" y1="' + widthDimY + '" x2="' + frontRight.x + '" y2="' + widthDimY + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<line x1="' + frontLeft.x + '" y1="' + widthDimY + '" x2="' + (frontLeft.x + 8) + '" y2="' + (widthDimY - 4) + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<line x1="' + frontLeft.x + '" y1="' + widthDimY + '" x2="' + (frontLeft.x + 8) + '" y2="' + (widthDimY + 4) + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<line x1="' + frontRight.x + '" y1="' + widthDimY + '" x2="' + (frontRight.x - 8) + '" y2="' + (widthDimY - 4) + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<line x1="' + frontRight.x + '" y1="' + widthDimY + '" x2="' + (frontRight.x - 8) + '" y2="' + (widthDimY + 4) + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<text x="' + widthCenterX.toFixed(1) + '" y="' + widthLabelY + '" text-anchor="middle" fill="rgba(226,232,240,.84)" font-size="10.8" font-weight="900">Width / protected span: ' + escapeHtml(fmtFt(spanFt)) + '</text>';
+
+    const depthDimensionSvg = ''
+      + '<line x1="' + frontLeft.x + '" y1="' + frontLeft.y + '" x2="' + depthFront.x.toFixed(1) + '" y2="' + depthFront.y.toFixed(1) + '" stroke="rgba(226,232,240,.22)" stroke-width="1" />'
+      + '<line x1="' + backLeft.x + '" y1="' + backLeft.y + '" x2="' + depthBack.x.toFixed(1) + '" y2="' + depthBack.y.toFixed(1) + '" stroke="rgba(226,232,240,.22)" stroke-width="1" />'
+      + '<line x1="' + depthFront.x.toFixed(1) + '" y1="' + depthFront.y.toFixed(1) + '" x2="' + depthBack.x.toFixed(1) + '" y2="' + depthBack.y.toFixed(1) + '" stroke="rgba(226,232,240,.46)" stroke-width="1.05" />'
+      + '<line x1="' + depthFront.x.toFixed(1) + '" y1="' + depthFront.y.toFixed(1) + '" x2="' + (depthFront.x + 6).toFixed(1) + '" y2="' + (depthFront.y - 6).toFixed(1) + '" stroke="rgba(226,232,240,.46)" stroke-width="1.05" />'
+      + '<line x1="' + depthFront.x.toFixed(1) + '" y1="' + depthFront.y.toFixed(1) + '" x2="' + (depthFront.x + 6).toFixed(1) + '" y2="' + (depthFront.y + 6).toFixed(1) + '" stroke="rgba(226,232,240,.46)" stroke-width="1.05" />'
+      + '<line x1="' + depthBack.x.toFixed(1) + '" y1="' + depthBack.y.toFixed(1) + '" x2="' + (depthBack.x + 6).toFixed(1) + '" y2="' + (depthBack.y - 6).toFixed(1) + '" stroke="rgba(226,232,240,.46)" stroke-width="1.05" />'
+      + '<line x1="' + depthBack.x.toFixed(1) + '" y1="' + depthBack.y.toFixed(1) + '" x2="' + (depthBack.x + 6).toFixed(1) + '" y2="' + (depthBack.y + 6).toFixed(1) + '" stroke="rgba(226,232,240,.46)" stroke-width="1.05" />'
+      + '<text x="' + depthCenterX.toFixed(1) + '" y="' + depthLabelY.toFixed(1) + '" text-anchor="middle" transform="rotate(' + depthAngle + ' ' + depthCenterX.toFixed(1) + ' ' + depthLabelY.toFixed(1) + ')" fill="rgba(226,232,240,.72)" font-size="10.2" font-weight="850">' + escapeHtml(depthLabel) + '</text>';
+
+    const summaryTextSvg = '<text x="' + widthCenterX.toFixed(1) + '" y="' + (frontLeft.y + 56) + '" text-anchor="middle" fill="rgba(226,232,240,.76)" font-size="10.6" font-weight="900">Required span: ' + escapeHtml(fmtFt(spanFt)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + ' | Shared overlap: ' + escapeHtml(fmtFt(totalOverlapFt)) + ' (' + escapeHtml(fmtPct(totalOverlapPctOfSpan, 1)) + ' of span)</text>';
+
     return "" +
       '<svg data-export-svg data-sl-engine="graphics" data-sl-renderer="camera-layout" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(m.ariaLabel || "ScopedLabs camera layout visualization") + '">' +
         '<defs><linearGradient id="slCoveredBand" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(82,201,112,.62)" /><stop offset="100%" stop-color="rgba(151,255,176,.92)" /></linearGradient><linearGradient id="slGreenBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(84,212,116,.70)" /><stop offset="100%" stop-color="rgba(125,255,152,.90)" /></linearGradient><linearGradient id="slGapBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.76)" /><stop offset="100%" stop-color="rgba(255,138,102,.90)" /></linearGradient></defs>' +
@@ -434,6 +457,7 @@
     const targetOverlapPct = clamp(num(m.targetOverlapPct, 0), 0, 100);
     const actualOverlapPct = clamp(num(m.actualOverlapPct, 0), 0, 100);
     const actualSpacingFt = Math.max(0, num(m.actualSpacingFt, 0));
+    const depthLabel = m.depthLabel || "Coverage depth (visual)";
 
     const cameras = m.cameras;
     const coverageSegments = m.coverageSegments;
@@ -463,6 +487,17 @@
 
     const floorFrontY = frontLeft.y;
     const floorBackY = backLeft.y;
+
+    const widthDimY = frontLeft.y + 18;
+    const widthLabelY = frontLeft.y + 38;
+    const widthCenterX = (frontLeft.x + frontRight.x) / 2;
+
+    const depthFront = { x: frontLeft.x - 34, y: frontLeft.y + 6 };
+    const depthBack = { x: backLeft.x - 34, y: backLeft.y - 6 };
+    const depthCenterX = (depthFront.x + depthBack.x) / 2;
+    const depthCenterY = (depthFront.y + depthBack.y) / 2;
+    const depthLabelY = depthCenterY - 8;
+    const depthAngle = -45;
 
     const coveredPct = clamp((coveredFt / spanFt) * 100, 0, 100);
     const gapPct = clamp((uncoveredFt / spanFt) * 100, 0, 100);
@@ -617,6 +652,24 @@
       ? '<text x="' + (stageX + stageW - 18) + '" y="' + (stageY + 26) + '" text-anchor="end" fill="rgba(226,232,240,.56)" font-size="10.5">Showing first 8 of ' + cameras.length + ' cameras</text>'
       : "";
 
+    const widthDimensionSvg = ''
+      + '<line x1="' + frontLeft.x + '" y1="' + frontLeft.y + '" x2="' + frontLeft.x + '" y2="' + (widthDimY - 2) + '" stroke="rgba(226,232,240,.34)" stroke-width="1" />'
+      + '<line x1="' + frontRight.x + '" y1="' + frontRight.y + '" x2="' + frontRight.x + '" y2="' + (widthDimY - 2) + '" stroke="rgba(226,232,240,.34)" stroke-width="1" />'
+      + '<line x1="' + frontLeft.x + '" y1="' + widthDimY + '" x2="' + frontRight.x + '" y2="' + widthDimY + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<line x1="' + frontLeft.x + '" y1="' + widthDimY + '" x2="' + (frontLeft.x + 8) + '" y2="' + (widthDimY - 4) + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<line x1="' + frontLeft.x + '" y1="' + widthDimY + '" x2="' + (frontLeft.x + 8) + '" y2="' + (widthDimY + 4) + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<line x1="' + frontRight.x + '" y1="' + widthDimY + '" x2="' + (frontRight.x - 8) + '" y2="' + (widthDimY - 4) + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<line x1="' + frontRight.x + '" y1="' + widthDimY + '" x2="' + (frontRight.x - 8) + '" y2="' + (widthDimY + 4) + '" stroke="rgba(226,232,240,.54)" stroke-width="1.05" />'
+      + '<text x="' + widthCenterX.toFixed(1) + '" y="' + widthLabelY + '" text-anchor="middle" fill="rgba(226,232,240,.84)" font-size="10.8" font-weight="900">Width / protected span: ' + escapeHtml(fmtFt(spanFt)) + '</text>';
+
+    const depthDimensionSvg = ''
+      + '<line x1="' + frontLeft.x + '" y1="' + frontLeft.y + '" x2="' + depthFront.x.toFixed(1) + '" y2="' + depthFront.y.toFixed(1) + '" stroke="rgba(226,232,240,.22)" stroke-width="1" />'
+      + '<line x1="' + backLeft.x + '" y1="' + backLeft.y + '" x2="' + depthBack.x.toFixed(1) + '" y2="' + depthBack.y.toFixed(1) + '" stroke="rgba(226,232,240,.22)" stroke-width="1" />'
+      + '<line x1="' + depthFront.x.toFixed(1) + '" y1="' + depthFront.y.toFixed(1) + '" x2="' + depthBack.x.toFixed(1) + '" y2="' + depthBack.y.toFixed(1) + '" stroke="rgba(226,232,240,.46)" stroke-width="1.05" />'
+      + '<text x="' + depthCenterX.toFixed(1) + '" y="' + depthLabelY.toFixed(1) + '" text-anchor="middle" transform="rotate(' + depthAngle + ' ' + depthCenterX.toFixed(1) + ' ' + depthLabelY.toFixed(1) + ')" fill="rgba(226,232,240,.72)" font-size="10.2" font-weight="850">' + escapeHtml(depthLabel) + '</text>';
+
+    const summaryTextSvg = '<text x="' + widthCenterX.toFixed(1) + '" y="' + (frontLeft.y + 56) + '" text-anchor="middle" fill="rgba(226,232,240,.76)" font-size="10.6" font-weight="900">Required span: ' + escapeHtml(fmtFt(spanFt)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + ' | Shared overlap: ' + escapeHtml(fmtFt(totalOverlapFt)) + ' (' + escapeHtml(fmtPct(totalOverlapPctOfSpan, 1)) + ' of span)</text>';
+
     return ""
       + '<svg data-export-svg data-sl-engine="graphics" data-sl-renderer="camera-layout-iso" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(m.ariaLabel || "ScopedLabs isometric camera layout visualization") + '">'
       + '<defs>'
@@ -664,10 +717,9 @@
       + gapSvg
       + frustumSvg
 
-      + '<line x1="' + frontLeft.x + '" y1="' + frontLeft.y + '" x2="' + frontRight.x + '" y2="' + frontRight.y + '" stroke="rgba(226,232,240,.50)" stroke-width="1.1" />'
-      + '<line x1="' + frontLeft.x + '" y1="' + (frontLeft.y + 18) + '" x2="' + frontLeft.x + '" y2="' + (frontLeft.y - 8) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />'
-      + '<line x1="' + frontRight.x + '" y1="' + (frontRight.y + 18) + '" x2="' + frontRight.x + '" y2="' + (frontRight.y - 8) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />'
-      + '<text x="' + ((frontLeft.x + frontRight.x) / 2).toFixed(1) + '" y="' + (frontLeft.y + 50) + '" text-anchor="middle" fill="rgba(226,232,240,.76)" font-size="10.6" font-weight="900">Required span: ' + escapeHtml(fmtFt(spanFt)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + ' | Shared overlap: ' + escapeHtml(fmtFt(totalOverlapFt)) + ' (' + escapeHtml(fmtPct(totalOverlapPctOfSpan, 1)) + ' of span)</text>'
+      + widthDimensionSvg
+      + depthDimensionSvg
+      + summaryTextSvg
 
       + '<text x="' + (stageX + 20) + '" y="' + (stageY + stageH - 16) + '" fill="rgba(226,232,240,.56)" font-size="10.5">' + escapeHtml(m.footer || "Validate overlap and gaps before carrying the result forward.") + '</text>'
       + '</svg>';
