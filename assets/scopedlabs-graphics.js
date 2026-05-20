@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-004-camera-layout-iso
+ * Version: scopedlabs-graphics-005-camera-layout-iso-polish
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-004-camera-layout-iso";
+  const VERSION = "scopedlabs-graphics-005-camera-layout-iso-polish";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -441,7 +441,7 @@
     const gapSegments = m.gapSegments;
 
     const width = 800;
-    const height = 620;
+    const height = 642;
 
     const labelX = 52;
     const barX = 304;
@@ -454,12 +454,12 @@
     const stageX = 34;
     const stageY = 198;
     const stageW = 732;
-    const stageH = 390;
+    const stageH = 408;
 
-    const frontLeft = { x: 122, y: 492 };
-    const frontRight = { x: 662, y: 492 };
-    const backLeft = { x: 246, y: 366 };
-    const backRight = { x: 694, y: 366 };
+    const frontLeft = { x: 122, y: 500 };
+    const frontRight = { x: 662, y: 500 };
+    const backLeft = { x: 246, y: 372 };
+    const backRight = { x: 694, y: 372 };
 
     const floorFrontY = frontLeft.y;
     const floorBackY = backLeft.y;
@@ -532,7 +532,7 @@
       + ' L ' + frontRight.x + ' ' + frontRight.y
       + ' L ' + backRight.x + ' ' + backRight.y
       + ' L ' + backLeft.x + ' ' + backLeft.y
-      + ' Z" fill="rgba(255,255,255,.018)" stroke="rgba(226,232,240,.18)" stroke-width="1.1" />';
+      + ' Z" fill="rgba(255,255,255,.024)" stroke="rgba(226,232,240,.22)" stroke-width="1.1" />';
 
     const floorGuides = [0, 0.25, 0.5, 0.75, 1].map((t) => {
       const xFront = lerp(frontLeft.x, frontRight.x, t);
@@ -540,7 +540,7 @@
       const xBack = lerp(backLeft.x, backRight.x, t);
       const yBack = lerp(backLeft.y, backRight.y, t);
 
-      return '<line x1="' + xFront.toFixed(1) + '" y1="' + yFront.toFixed(1) + '" x2="' + xBack.toFixed(1) + '" y2="' + yBack.toFixed(1) + '" stroke="rgba(226,232,240,.08)" stroke-width="1" />';
+      return '<line x1="' + xFront.toFixed(1) + '" y1="' + yFront.toFixed(1) + '" x2="' + xBack.toFixed(1) + '" y2="' + yBack.toFixed(1) + '" stroke="rgba(226,232,240,.10)" stroke-width="1" />';
     }).join("");
 
     const floorCross = [0, 0.33, 0.66, 1].map((t) => {
@@ -553,11 +553,11 @@
         y: lerp(frontRight.y, backRight.y, t)
       };
 
-      return '<line x1="' + left.x.toFixed(1) + '" y1="' + left.y.toFixed(1) + '" x2="' + right.x.toFixed(1) + '" y2="' + right.y.toFixed(1) + '" stroke="rgba(226,232,240,.06)" stroke-width="1" />';
+      return '<line x1="' + left.x.toFixed(1) + '" y1="' + left.y.toFixed(1) + '" x2="' + right.x.toFixed(1) + '" y2="' + right.y.toFixed(1) + '" stroke="rgba(226,232,240,.08)" stroke-width="1" />';
     }).join("");
 
     const coverageSvg = coverageSegments.map((item) => {
-      return '<path data-sl-visual-part="iso-covered-zone" d="' + floorSegmentPath(item.startFt, item.endFt) + '" fill="rgba(82,201,112,.28)" stroke="rgba(125,255,152,.38)" stroke-width="1.1" />';
+      return '<path data-sl-visual-part="iso-covered-zone" d="' + floorSegmentPath(item.startFt, item.endFt) + '" fill="rgba(82,201,112,.18)" stroke="rgba(125,255,152,.30)" stroke-width="1.0" />';
     }).join("");
 
     const overlapSvg = overlapSegments.length
@@ -566,10 +566,10 @@
           const fp1 = frontPoint(item.startFt);
           const fp2 = frontPoint(item.endFt);
           const labelX = (fp1.x + fp2.x) / 2;
-          const labelY = frontLeft.y + 26 + (index % 2) * 12;
+          const labelY = frontLeft.y + 30 + (index % 2) * 12;
 
           return ''
-            + '<path data-sl-visual-part="iso-overlap-zone" d="' + path + '" fill="rgba(255,211,79,.24)" stroke="rgba(255,226,128,.52)" stroke-width="1.15" stroke-dasharray="5 4" />'
+            + '<path data-sl-visual-part="iso-overlap-zone" d="' + path + '" fill="rgba(255,211,79,.20)" stroke="rgba(255,226,128,.66)" stroke-width="1.2" stroke-dasharray="5 4" />'
             + '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(255,230,150,.96)" font-size="10.5" font-weight="900">'
             + escapeHtml(fmtFt(item.endFt - item.startFt)) + ' overlap</text>';
         }).join("")
@@ -588,7 +588,7 @@
             + '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">'
             + escapeHtml(fmtFt(item.endFt - item.startFt)) + ' gap</text>';
         }).join("")
-      : '<text x="' + (frontRight.x - 4) + '" y="' + (frontLeft.y - 18) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>';
+      : '<text x="' + (frontRight.x - 10) + '" y="' + (frontLeft.y - 12) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>';
 
     const frustumSvg = cameras.slice(0, 8).map((camera, index) => {
       const centerFt = num(camera.centerFt, spanFt / 2);
@@ -607,9 +607,9 @@
         + ' L ' + be.x.toFixed(1) + ' ' + be.y.toFixed(1)
         + ' L ' + fe.x.toFixed(1) + ' ' + fe.y.toFixed(1)
         + ' L ' + fs.x.toFixed(1) + ' ' + fs.y.toFixed(1)
-        + ' Z" fill="rgba(82,201,112,.055)" stroke="rgba(125,255,152,.26)" stroke-width="1.0" />'
+        + ' Z" fill="rgba(82,201,112,.035)" stroke="rgba(125,255,152,.34)" stroke-width="1.0" />'
         + '<circle cx="' + mount.x.toFixed(1) + '" cy="' + mount.y.toFixed(1) + '" r="8.4" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />'
-        + '<line x1="' + mount.x.toFixed(1) + '" y1="' + (mount.y + 8).toFixed(1) + '" x2="' + lerp(bs.x, be.x, 0.5).toFixed(1) + '" y2="' + lerp(bs.y, be.y, 0.5).toFixed(1) + '" stroke="rgba(226,232,240,.18)" stroke-width="1" stroke-dasharray="4 5" />'
+        + '<line x1="' + mount.x.toFixed(1) + '" y1="' + (mount.y + 8).toFixed(1) + '" x2="' + lerp(bs.x, be.x, 0.5).toFixed(1) + '" y2="' + lerp(bs.y, be.y, 0.5).toFixed(1) + '" stroke="rgba(226,232,240,.26)" stroke-width="1" stroke-dasharray="4 5" />'
         + '<text x="' + mount.x.toFixed(1) + '" y="' + (mount.y - 16).toFixed(1) + '" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="10.5" font-weight="850">' + escapeHtml(camera.label || ("Cam " + (index + 1))) + '</text>';
     }).join("");
 
@@ -664,10 +664,10 @@
       + gapSvg
       + frustumSvg
 
-      + '<line x1="' + frontLeft.x + '" y1="' + frontLeft.y + '" x2="' + frontRight.x + '" y2="' + frontRight.y + '" stroke="rgba(226,232,240,.42)" stroke-width="1.05" />'
+      + '<line x1="' + frontLeft.x + '" y1="' + frontLeft.y + '" x2="' + frontRight.x + '" y2="' + frontRight.y + '" stroke="rgba(226,232,240,.50)" stroke-width="1.1" />'
       + '<line x1="' + frontLeft.x + '" y1="' + (frontLeft.y + 18) + '" x2="' + frontLeft.x + '" y2="' + (frontLeft.y - 8) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />'
       + '<line x1="' + frontRight.x + '" y1="' + (frontRight.y + 18) + '" x2="' + frontRight.x + '" y2="' + (frontRight.y - 8) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />'
-      + '<text x="' + ((frontLeft.x + frontRight.x) / 2).toFixed(1) + '" y="' + (frontLeft.y + 38) + '" text-anchor="middle" fill="rgba(226,232,240,.78)" font-size="11" font-weight="900">Required span: ' + escapeHtml(fmtFt(spanFt)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + ' | Shared overlap: ' + escapeHtml(fmtFt(totalOverlapFt)) + ' (' + escapeHtml(fmtPct(totalOverlapPctOfSpan, 1)) + ' of span)</text>'
+      + '<text x="' + ((frontLeft.x + frontRight.x) / 2).toFixed(1) + '" y="' + (frontLeft.y + 50) + '" text-anchor="middle" fill="rgba(226,232,240,.76)" font-size="10.6" font-weight="900">Required span: ' + escapeHtml(fmtFt(spanFt)) + ' | Actual spacing: ' + escapeHtml(fmtFt(actualSpacingFt)) + ' | Shared overlap: ' + escapeHtml(fmtFt(totalOverlapFt)) + ' (' + escapeHtml(fmtPct(totalOverlapPctOfSpan, 1)) + ' of span)</text>'
 
       + '<text x="' + (stageX + 20) + '" y="' + (stageY + stageH - 16) + '" fill="rgba(226,232,240,.56)" font-size="10.5">' + escapeHtml(m.footer || "Validate overlap and gaps before carrying the result forward.") + '</text>'
       + '</svg>';
