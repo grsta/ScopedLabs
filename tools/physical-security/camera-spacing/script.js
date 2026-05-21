@@ -1719,8 +1719,22 @@ function assistantStatusClass(data) {
     };
   }
 
-  function spacingVisualSvg(data) {
+  function spacingVisualSvg(data, visualOptions = {}) {
     const legacyFallback = () => spacingLegacyVisualSvg(data);
+
+    const frameOptions = visualOptions && typeof visualOptions === "object" ? visualOptions : {};
+    const frameSize = frameOptions.size || "tall";
+    const frameMaxWidth = frameOptions.maxWidth || (frameSize === "report" ? "860px" : "1040px");
+    const frameMinHeight = Object.prototype.hasOwnProperty.call(frameOptions, "minHeight")
+      ? frameOptions.minHeight
+      : (frameSize === "report" ? "" : "760px");
+    const frameClassName = frameOptions.className || (
+      frameSize === "report"
+        ? "sl-spacing-iso-svg sl-spacing-iso-svg--report"
+        : "sl-spacing-iso-svg sl-spacing-iso-svg--page"
+    );
+    const shouldTuneFrame = frameOptions.tune !== false;
+    const tuneSelector = frameOptions.selector || ".sl-spacing-iso-svg--page";
 
     try {
       if (!window.ScopedLabsGraphics || typeof window.ScopedLabsGraphics.render !== "function") {
@@ -1747,16 +1761,18 @@ function assistantStatusClass(data) {
           ? window.ScopedLabsGraphics.frameSvg(rendered, {
               tool: "camera-spacing",
               renderer: "camera-layout-iso",
-              size: "tall",
-              className: "sl-spacing-iso-svg",
-              maxWidth: "1040px"
+              size: frameSize,
+              className: frameClassName,
+              maxWidth: frameMaxWidth,
+              minHeight: frameMinHeight
             })
           : rendered.replace(
               "<svg ",
-              '<svg class="sl-spacing-iso-svg" style="width:100%;max-width:1040px;height:auto;display:block;margin:0 auto;" '
+              '<svg class="' + frameClassName + '" style="width:100%;max-width:' + frameMaxWidth + ';height:auto;display:block;margin:0 auto;" '
             );
 
         if (
+          shouldTuneFrame &&
           typeof window.ScopedLabsGraphics.tuneFrame === "function" &&
           typeof window.requestAnimationFrame === "function"
         ) {
@@ -1764,10 +1780,10 @@ function assistantStatusClass(data) {
             window.requestAnimationFrame(() => {
               try {
                 window.ScopedLabsGraphics.tuneFrame(document, {
-                  selector: ".sl-spacing-iso-svg, [data-sl-renderer=\"camera-layout-iso\"]",
-                  size: "tall",
-                  maxWidth: "1040px",
-                  minHeight: "760px"
+                  selector: tuneSelector,
+                  size: frameSize,
+                  maxWidth: frameMaxWidth,
+                  minHeight: frameMinHeight
                 });
               } catch (error) {
                 if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
@@ -1909,7 +1925,13 @@ function assistantStatusClass(data) {
     ]
       .filter(Boolean)
       .join(" ");    els.exportSection.innerHTML =
-      '<div data-export-svg>' + spacingVisualSvg(data) + '</div>' +
+      '<div data-export-svg>' + spacingVisualSvg(data, {
+        size: "report",
+        maxWidth: "860px",
+        minHeight: "",
+        tune: false,
+        className: "sl-spacing-iso-svg sl-spacing-iso-svg--report"
+      }) + '</div>' +
       '<table>' +
         '<thead><tr><th>Metric</th><th>Value</th></tr></thead>' +
         '<tbody>' + tableRows + '</tbody>' +
