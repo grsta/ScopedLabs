@@ -1950,7 +1950,39 @@ function assistantStatusClass(data) {
     return notes;
   }
 
-  function renderSpacingExportSection(data) {
+  
+  function spacingScenarioExportChartHtml(data) {
+    try {
+      const scenarios = Array.isArray(latestAssistantScenarios) ? latestAssistantScenarios : [];
+      if (typeof factorySpacingScenarioChartSvg !== "function") return "";
+
+      const chart = factorySpacingScenarioChartSvg(data, scenarios);
+      if (!chart || typeof chart !== "string") return "";
+
+      return '' +
+        '<div data-export-svg style="margin:12px 0 14px 0;break-inside:avoid;">' +
+          '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">Scenario pressure comparison</h3>' +
+          chart +
+        '</div>';
+    } catch (error) {
+      if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+        window.ScopedLabsDiagnostics.report({
+          code: "SL-EXPORT-CAMERASPACING-SCENARIO-LINE",
+          severity: "warn",
+          engine: "export",
+          renderer: "scenario-pressure-line",
+          tool: "camera-spacing",
+          message: "Camera Spacing scenario line chart was skipped in export.",
+          cause: error && error.message
+        });
+      }
+
+      return "";
+    }
+  }
+
+function renderSpacingExportSection(data) {
+    const scenarioExportChart = spacingScenarioExportChartHtml(data);
     if (!els.exportSection || !data || !data.ok) return;
 
     const actualOverlapPct = spacingActualOverlapPercent(data);
@@ -1990,6 +2022,7 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
         tune: false,
         className: "sl-spacing-iso-svg sl-spacing-iso-svg--report"
       }) + '</div>' +
+        scenarioExportChart +
       '<table>' +
         '<thead><tr><th>Metric</th><th>Value</th></tr></thead>' +
         '<tbody>' + tableRows + '</tbody>' +
