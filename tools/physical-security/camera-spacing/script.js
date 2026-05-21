@@ -1924,7 +1924,9 @@ function assistantStatusClass(data) {
       ...notes
     ]
       .filter(Boolean)
-      .join(" ");    els.exportSection.innerHTML =
+      .join(" ");    const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, assistantMeta);
+
+    els.exportSection.innerHTML =
       '<div data-export-svg>' + spacingVisualSvg(data, {
         size: "report",
         maxWidth: "860px",
@@ -1935,8 +1937,97 @@ function assistantStatusClass(data) {
       '<table>' +
         '<thead><tr><th>Metric</th><th>Value</th></tr></thead>' +
         '<tbody>' + tableRows + '</tbody>' +
-      '</table>';
+      '</table>' +
+      exportNarrativeHtml;
   }
+
+
+  function spacingExportMiniTable(title, rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : [])
+      .filter((row) => row && row.length >= 2 && row[1] !== undefined && row[1] !== null && String(row[1]).trim() !== "");
+
+    if (!cleanRows.length) return "";
+
+    return '' +
+      '<div style="border:1px solid #d8dee6;border-radius:10px;padding:12px 14px;margin:0 0 12px 0;break-inside:avoid;">' +
+        '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">' + escapeHtml(title) + '</h3>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+          '<tbody>' +
+            cleanRows.map((row) => {
+              return '<tr>' +
+                '<td style="padding:5px 8px 5px 0;border-bottom:1px solid #eef2f7;color:#4b5563;width:52%;">' + escapeHtml(row[0]) + '</td>' +
+                '<td style="padding:5px 0 5px 8px;border-bottom:1px solid #eef2f7;color:#111827;font-weight:700;text-align:right;">' + escapeHtml(row[1]) + '</td>' +
+              '</tr>';
+            }).join("") +
+          '</tbody>' +
+        '</table>' +
+      '</div>';
+  }
+
+  function spacingExportParagraph(title, text) {
+    const clean = String(text || "").trim();
+    if (!clean) return "";
+
+    return '' +
+      '<div style="border:1px solid #d8dee6;border-radius:10px;padding:12px 14px;margin:0 0 12px 0;break-inside:avoid;">' +
+        '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">' + escapeHtml(title) + '</h3>' +
+        '<p style="font-size:12.5px;line-height:1.55;margin:0;color:#111827;">' + escapeHtml(clean) + '</p>' +
+      '</div>';
+  }
+
+  function spacingExportNarrativeHtml(data, notes = [], sourceMode = "pipeline", assistantMeta = null) {
+    const source = data && typeof data === "object" ? data : {};
+    const overlapValue = source.singleCamera ? "N/A" : fmtPct(source.ovPct, 1);
+    const statusValue = source.status || source.spacingClass || "N/A";
+    const assistantLabel = assistantMeta && assistantMeta.label ? assistantMeta.label : "Baseline/current inputs";
+
+    const primaryRows = [
+      ["Camera count", String(source.cams || "N/A")],
+      ["Actual spacing", fmtFt(source.spacing)],
+      ["Usable width", fmtFt(source.usableWidth)],
+      ["Layout status", statusValue]
+    ];
+
+    const inputRows = [
+      ["Protected run", fmtFt(source.len)],
+      ["Distance to target", fmtFt(source.dist)],
+      ["Horizontal FOV", fmtDeg(source.hfov)],
+      ["Overlap reference", overlapValue]
+    ];
+
+    const continuityRows = [
+      ["Raw coverage width", fmtFt(source.rawWidth)],
+      ["Spacing source mode", sourceMode],
+      ["Assistant branch", assistantLabel],
+      ["Single-camera mode", source.singleCamera ? "Yes - overlap not applicable" : "No"]
+    ];
+
+    const noteList = (Array.isArray(notes) ? notes : [])
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+
+    return '' +
+      '<div class="spacing-export-clean-summary" style="margin-top:14px;break-inside:avoid;">' +
+        '<h2 style="font-size:16px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 10px 0;color:#111827;">Camera Spacing Summary</h2>' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:2px;">' +
+          spacingExportMiniTable("Primary result", primaryRows) +
+          spacingExportMiniTable("Design inputs", inputRows) +
+          spacingExportMiniTable("Continuity context", continuityRows) +
+        '</div>' +
+        spacingExportParagraph("Engineering interpretation", source.interpretation) +
+        spacingExportParagraph("Dominant constraint", source.dominantConstraint) +
+        spacingExportParagraph("Recommended action", source.guidance) +
+        (noteList.length
+          ? '<div style="border:1px solid #d8dee6;border-radius:10px;padding:12px 14px;margin:0 0 12px 0;break-inside:avoid;">' +
+              '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">Additional notes</h3>' +
+              '<ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.55;color:#111827;">' +
+                noteList.map((item) => '<li>' + escapeHtml(item) + '</li>').join("") +
+              '</ul>' +
+            '</div>'
+          : '') +
+      '</div>';
+  }
+
 
   function clearSpacingExportSection() {
     if (els.exportSection) els.exportSection.innerHTML = "";
