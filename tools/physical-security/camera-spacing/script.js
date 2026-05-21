@@ -2056,9 +2056,7 @@ function renderSpacingExportSection(data) {
 const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, assistantMeta);
 
     els.exportSection.innerHTML =
-      '<div data-export-svg data-export-primary-visual="true" style="page-break-before:always;break-before:page;break-inside:avoid;page-break-inside:avoid;">' +
-        '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">Camera Spacing Design Summary</h3>' +
-        spacingVisualSvg(data, {
+      '<div data-export-svg data-export-primary-visual="true" style="break-inside:avoid;page-break-inside:avoid;">' +        spacingVisualSvg(data, {
         size: "report",
         maxWidth: "860px",
         minHeight: "",
