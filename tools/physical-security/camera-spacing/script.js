@@ -1944,6 +1944,7 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
       '<div style="border:1px solid #d8dee6;border-radius:10px;padding:12px 14px;margin:0 0 12px 0;break-inside:avoid;">' +
         '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">' + escapeHtml(title) + '</h3>' +
         '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+          '<thead><tr><th style="padding:7px 8px;border-bottom:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Metric</th><th style="padding:7px 8px;border-bottom:1px solid #d8dee6;background:#f7faf8;text-align:right;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Value</th></tr></thead>' +
           '<tbody>' +
             cleanRows.map((row) => {
               return '<tr>' +
@@ -1962,6 +1963,7 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
 
     return '' +
       '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr><th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th><th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th></tr></thead>' +
         '<tbody>' +
           '<tr>' +
             '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapeHtml(title) + ':</td>' +
@@ -2015,6 +2017,7 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
         spacingExportParagraph("Recommended action", source.guidance) +
         (noteList.length
           ? '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
+              '<thead><tr><th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th><th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th></tr></thead>' +
               '<tbody>' +
                 '<tr>' +
                   '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">Additional notes:</td>' +
