@@ -1961,10 +1961,14 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
     if (!clean) return "";
 
     return '' +
-      '<div data-export-text style="border:1px solid #d8dee6;border-radius:10px;padding:12px 14px;margin:0 0 12px 0;break-inside:avoid;">' +
-        '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">' + escapeHtml(title) + '</h3>' +
-        '<p style="font-size:12.5px;line-height:1.55;margin:0;color:#111827;">' + escapeHtml(clean) + '</p>' +
-      '</div>';
+      '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
+        '<tbody>' +
+          '<tr>' +
+            '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapeHtml(title) + ':</td>' +
+            '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' + escapeHtml(clean) + '</td>' +
+          '</tr>' +
+        '</tbody>' +
+      '</table>';
   }
 
   function spacingExportNarrativeHtml(data, notes = [], sourceMode = "pipeline", assistantMeta = null) {
@@ -2010,12 +2014,16 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
         spacingExportParagraph("Dominant constraint", source.dominantConstraint) +
         spacingExportParagraph("Recommended action", source.guidance) +
         (noteList.length
-          ? '<div data-export-text style="border:1px solid #d8dee6;border-radius:10px;padding:12px 14px;margin:0 0 12px 0;break-inside:avoid;">' +
-              '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">Additional notes</h3>' +
-              '<ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.55;color:#111827;">' +
-                noteList.map((item) => '<li>' + escapeHtml(item) + '</li>').join("") +
-              '</ul>' +
-            '</div>'
+          ? '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
+              '<tbody>' +
+                '<tr>' +
+                  '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">Additional notes:</td>' +
+                  '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' +
+                    noteList.map((item) => '&bull; ' + escapeHtml(item)).join("<br>") +
+                  '</td>' +
+                '</tr>' +
+              '</tbody>' +
+            '</table>'
           : '') +
       '</div>';
   }
