@@ -729,6 +729,13 @@
         continue;
       }
 
+      const suppressTitle =
+        String(
+          node.dataset?.exportSuppressTitle ||
+          node.getAttribute("data-export-suppress-title") ||
+          ""
+        ).trim().toLowerCase() === "true";
+
       const title =
         node.dataset?.exportTitle ||
         node.getAttribute("aria-label") ||
@@ -765,6 +772,7 @@
       if (!tables.length && !text && !svgs.length) continue;
 
       sections.push({
+        suppressTitle,
         title,
         tables,
         text,
@@ -808,7 +816,7 @@
 
       return `
         <section class="section">
-          <h2>${escapeHtml(section.title)}</h2>
+          ${section.suppressTitle ? "" : `<h2>${escapeHtml(section.title)}</h2>`}
           ${textBlock}
           ${svgBlocks}
           ${tableBlocks}
