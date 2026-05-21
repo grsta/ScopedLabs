@@ -2,7 +2,7 @@
   "use strict";
 
   var HELP_INDEX_URL = "/assets/help/index.json";
-  var VERSION_PLACEHOLDER = "help-032-blindspot-kb";
+  var VERSION_PLACEHOLDER = "help-033-camera-spacing-kb-card";
   var helpIndexCache = null;
 
   function escapeHtml(value) {
@@ -302,7 +302,8 @@
     var contentId = "scopedlabs-help-content";
     var toolPath = getToolPath();
     var cleanKnowledgeCardTools = {
-      "physical-security/camera-coverage-area": true,
+            "physical-security/camera-spacing": true,
+"physical-security/camera-coverage-area": true,
       "physical-security/blind-spot-check": true
     };
     var useCleanKnowledgeCard = !!(toolPath && cleanKnowledgeCardTools[toolPath.key]);
