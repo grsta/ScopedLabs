@@ -1916,15 +1916,7 @@ function assistantStatusClass(data) {
     const tableRows = summaryRows
       .map(([label, value]) => spacingExportRow(label, value))
       .join("");
-
-    const noteText = [
-      data.interpretation,
-      data.dominantConstraint,
-      data.guidance,
-      ...notes
-    ]
-      .filter(Boolean)
-      .join(" ");    const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, assistantMeta);
+const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, assistantMeta);
 
     els.exportSection.innerHTML =
       '<div data-export-svg>' + spacingVisualSvg(data, {
@@ -1991,7 +1983,7 @@ function assistantStatusClass(data) {
     const inputRows = [
       ["Protected run", fmtFt(source.len)],
       ["Distance to target", fmtFt(source.dist)],
-      ["Horizontal FOV", fmtDeg(source.hfov)],
+      ["Horizontal FOV", fmt(source.hfov, 1) + " deg"],
       ["Overlap reference", overlapValue]
     ];
 
