@@ -817,22 +817,16 @@
     }).join("");
   }
 
+  function shouldSuppressDefaultInterpretationBlock() {
+    const body = document.body || null;
+    if (!body) return false;
 
-  function shouldSuppressDefaultInterpretation(extraSections) {
-    const sections = Array.isArray(extraSections) ? extraSections : [];
+    const value =
+      body.dataset?.suppressDefaultExportInterpretation ||
+      body.getAttribute("data-suppress-default-export-interpretation") ||
+      "";
 
-    return sections.some((section) => {
-      const title = normalizeSlug(section && section.title ? section.title : "");
-
-      return (
-        title === normalizeSlug("Camera Spacing Design Summary") &&
-        (
-          (Array.isArray(section.tables) && section.tables.length > 0) ||
-          (Array.isArray(section.svgs) && section.svgs.length > 0) ||
-          String(section.text || "").trim()
-        )
-      );
-    });
+    return String(value).trim().toLowerCase() === "true";
   }
 
   function buildPayload() {
@@ -858,10 +852,9 @@ if (!interpretation && interpretationSection?.body) {
 const chartImage = captureVisibleChart();
 const extraSections = getExtraExportSections();
 
-if (shouldSuppressDefaultInterpretation(extraSections)) {
+if (shouldSuppressDefaultInterpretationBlock()) {
   interpretation = "";
 }
-
 
     return {
       reportId: makeReportId(state.options.reportPrefix),
