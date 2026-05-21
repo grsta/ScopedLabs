@@ -1194,6 +1194,152 @@
       }
     }
   </style>
+
+  <style data-scopedlabs-camera-spacing-button-polish>
+    body[data-tool="camera-spacing"] #toolCard .btn-row,
+    body[data-tool="camera-spacing"] #lockedCard .actions,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .btn-row {
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    body[data-tool="camera-spacing"] #toolCard .btn,
+    body[data-tool="camera-spacing"] #lockedCard .actions .btn,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .btn,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant button.btn,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .lens-scenario-pill {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 18px;
+      border-radius: 11px;
+      border: 1px solid rgba(226, 232, 240, 0.18);
+      background: linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035));
+      color: rgba(246, 255, 248, 0.92);
+      font-weight: 850;
+      letter-spacing: 0.01em;
+      line-height: 1.1;
+      text-decoration: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 24px rgba(0,0,0,0.18);
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+    }
+
+    body[data-tool="camera-spacing"] #toolCard .btn:hover,
+    body[data-tool="camera-spacing"] #lockedCard .actions .btn:hover,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .btn:hover,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant button.btn:hover,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .lens-scenario-pill:hover {
+      transform: translateY(-1px);
+      border-color: rgba(125, 255, 152, 0.34);
+      background: linear-gradient(180deg, rgba(255,255,255,0.105), rgba(255,255,255,0.045));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.11), 0 14px 28px rgba(0,0,0,0.24);
+    }
+
+    body[data-tool="camera-spacing"] #toolCard .btn.btn-primary,
+    body[data-tool="camera-spacing"] #lockedCard .actions .btn.btn-primary,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .btn.btn-primary,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant button.btn.btn-primary,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .lens-scenario-pill.active {
+      border-color: rgba(125, 255, 152, 0.55);
+      background: linear-gradient(180deg, rgba(125,255,152,0.98), rgba(34,197,94,0.90));
+      color: #07130f;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 12px 30px rgba(34,197,94,0.22);
+    }
+
+    body[data-tool="camera-spacing"] #toolCard .btn.btn-primary:hover,
+    body[data-tool="camera-spacing"] #lockedCard .actions .btn.btn-primary:hover,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .btn.btn-primary:hover,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant button.btn.btn-primary:hover,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .lens-scenario-pill.active:hover {
+      border-color: rgba(190, 255, 207, 0.75);
+      background: linear-gradient(180deg, rgba(166,255,188,1), rgba(49,213,111,0.94));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.42), 0 16px 34px rgba(34,197,94,0.28);
+    }
+
+    body[data-tool="camera-spacing"] #toolCard .btn:disabled,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .btn:disabled,
+    body[data-tool="camera-spacing"] #spacingDesignAssistant button.btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+      transform: none;
+      box-shadow: none;
+      filter: saturate(0.7);
+    }
+
+    body[data-tool="camera-spacing"] #calc,
+    body[data-tool="camera-spacing"] #reset,
+    body[data-tool="camera-spacing"] #exportReport,
+    body[data-tool="camera-spacing"] #saveSnapshot,
+    body[data-tool="camera-spacing"] #continue {
+      min-width: 154px;
+    }
+
+    body[data-tool="camera-spacing"] #exportReport {
+      min-width: 190px;
+    }
+
+    body[data-tool="camera-spacing"] #continue {
+      min-width: 224px;
+    }
+
+    body[data-tool="camera-spacing"] #spacingApplyCustomScenario {
+      min-width: 230px;
+    }
+
+    body[data-tool="camera-spacing"] .spacing-branch-item,
+    body[data-tool="camera-spacing"] .spacing-lens-control-row {
+      gap: 16px;
+      align-items: center;
+    }
+
+    body[data-tool="camera-spacing"] .spacing-branch-item .spacing-assistant-apply,
+    body[data-tool="camera-spacing"] .spacing-lens-control-row .spacing-assistant-apply {
+      flex: 0 0 auto;
+      min-width: 150px;
+      white-space: nowrap;
+    }
+
+    body[data-tool="camera-spacing"] .lens-scenario-pill-row {
+      gap: 10px;
+    }
+
+    body[data-tool="camera-spacing"] #spacingDesignAssistant .lens-scenario-pill {
+      min-height: 36px;
+      padding: 0 14px;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 720px) {
+      body[data-tool="camera-spacing"] #toolCard .btn,
+      body[data-tool="camera-spacing"] #lockedCard .actions .btn,
+      body[data-tool="camera-spacing"] #spacingDesignAssistant .btn,
+      body[data-tool="camera-spacing"] #spacingDesignAssistant button.btn {
+        width: 100%;
+      }
+
+      body[data-tool="camera-spacing"] #next-step-row {
+        width: 100%;
+      }
+
+      body[data-tool="camera-spacing"] #continue {
+        width: 100%;
+      }
+
+      body[data-tool="camera-spacing"] .spacing-branch-item,
+      body[data-tool="camera-spacing"] .spacing-lens-control-row {
+        align-items: stretch;
+      }
+
+      body[data-tool="camera-spacing"] .spacing-branch-item .spacing-assistant-apply,
+      body[data-tool="camera-spacing"] .spacing-lens-control-row .spacing-assistant-apply {
+        width: 100%;
+      }
+    }
+  </style>
+
 </head>
 
 <body data-suppress-default-export-interpretation="true"
