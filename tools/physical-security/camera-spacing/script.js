@@ -732,7 +732,7 @@ function escapeHtml(value) {
     return Math.max(m.gap, m.compression, m.overlap, m.camera);
   }
 
-  function factorySpacingScenarioChartSvg(data, scenarios) {
+  function factorySpacingLegacyScenarioChartSvg(data, scenarios) {
     const candidates = [{ label: "Custom Design", score: factorySpacingPressureScore(data) }];
 
     scenarios.filter((scenario) => scenario && scenario.canApply).slice(0, 4).forEach((scenario) => {
@@ -776,6 +776,70 @@ function escapeHtml(value) {
         }).join("") +
       '</svg>';
   }
+
+
+  function factorySpacingScenarioChartSvg(data, scenarios) {
+    const legacyFallback = () => factorySpacingLegacyScenarioChartSvg(data, scenarios);
+
+    try {
+      if (!window.ScopedLabsGraphics || typeof window.ScopedLabsGraphics.render !== "function") {
+        return legacyFallback();
+      }
+
+      const candidates = [{ label: "Custom Design", score: factorySpacingPressureScore(data), isCurrent: true }];
+
+      (Array.isArray(scenarios) ? scenarios : [])
+        .filter((scenario) => scenario && scenario.canApply)
+        .slice(0, 4)
+        .forEach((scenario) => {
+          candidates.push({
+            label: scenario.pillLabel || scenario.label,
+            score: factorySpacingPressureScore(scenario)
+          });
+        });
+
+      const rendered = window.ScopedLabsGraphics.render("scenario-pressure-line", {
+        tool: "camera-spacing",
+        stageKicker: "SCENARIO ANALYTICS",
+        title: "Planning pressure by scenario",
+        subtitle: "Lower is better",
+        footer: "Pressure score / 100",
+        lowerIsBetter: true,
+        healthyMax: 25,
+        watchMax: 60,
+        points: candidates
+      });
+
+      if (typeof rendered === "string" && rendered.includes('data-sl-renderer="scenario-pressure-line"')) {
+        return typeof window.ScopedLabsGraphics.frameSvg === "function"
+          ? window.ScopedLabsGraphics.frameSvg(rendered, {
+              tool: "camera-spacing",
+              renderer: "scenario-pressure-line",
+              size: "wide",
+              className: "sl-scenario-pressure-line-svg",
+              maxWidth: "900px"
+            })
+          : rendered;
+      }
+
+      return legacyFallback();
+    } catch (error) {
+      if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+        window.ScopedLabsDiagnostics.report({
+          code: "SL-GFX-CAMERASPACING-SCENARIO-LINE",
+          severity: "warn",
+          engine: "graphics",
+          renderer: "scenario-pressure-line",
+          tool: "camera-spacing",
+          message: "Camera Spacing scenario line chart used its legacy renderer.",
+          cause: error && error.message
+        });
+      }
+
+      return legacyFallback();
+    }
+  }
+
 
   function factorySpacingProblemLabel(data) {
     if (Number(data.cams) <= 1 || data.singleCamera) return "Single-camera coverage check";
@@ -2512,7 +2576,7 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
     return spacingLensPressureScore(item);
   }
 
-  function spacingLensScenarioChartSvg(data, scenarios) {
+  function spacingLensLegacyScenarioChartSvg(data, scenarios) {
     const candidates = [
       { label: "Custom Design", score: spacingLensPressureScore(data) }
     ];
@@ -2561,6 +2625,72 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
         }).join("") +
       '</svg>';
   }
+
+
+  function spacingLensScenarioChartSvg(data, scenarios) {
+    const legacyFallback = () => spacingLensLegacyScenarioChartSvg(data, scenarios);
+
+    try {
+      if (!window.ScopedLabsGraphics || typeof window.ScopedLabsGraphics.render !== "function") {
+        return legacyFallback();
+      }
+
+      const candidates = [
+        { label: "Custom Design", score: spacingLensPressureScore(data), isCurrent: true }
+      ];
+
+      (Array.isArray(scenarios) ? scenarios : [])
+        .filter((scenario) => scenario && scenario.canApply)
+        .slice(0, 4)
+        .forEach((scenario) => {
+          candidates.push({
+            label: spacingLensPillLabel(scenario),
+            score: spacingLensScenarioPressure(scenario)
+          });
+        });
+
+      const rendered = window.ScopedLabsGraphics.render("scenario-pressure-line", {
+        tool: "camera-spacing",
+        stageKicker: "SCENARIO ANALYTICS",
+        title: "Planning pressure by scenario",
+        subtitle: "Lower is better",
+        footer: "Pressure score / 100",
+        lowerIsBetter: true,
+        healthyMax: 25,
+        watchMax: 60,
+        points: candidates
+      });
+
+      if (typeof rendered === "string" && rendered.includes('data-sl-renderer="scenario-pressure-line"')) {
+        return typeof window.ScopedLabsGraphics.frameSvg === "function"
+          ? window.ScopedLabsGraphics.frameSvg(rendered, {
+              tool: "camera-spacing",
+              renderer: "scenario-pressure-line",
+              size: "wide",
+              className: "sl-scenario-pressure-line-svg",
+              maxWidth: "900px"
+            })
+          : rendered;
+      }
+
+      return legacyFallback();
+    } catch (error) {
+      if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+        window.ScopedLabsDiagnostics.report({
+          code: "SL-GFX-CAMERASPACING-LENS-SCENARIO-LINE",
+          severity: "warn",
+          engine: "graphics",
+          renderer: "scenario-pressure-line",
+          tool: "camera-spacing",
+          message: "Camera Spacing lens scenario line chart used its legacy renderer.",
+          cause: error && error.message
+        });
+      }
+
+      return legacyFallback();
+    }
+  }
+
 
   
 

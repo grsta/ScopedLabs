@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-016-frame-helper";
+  const VERSION = "scopedlabs-graphics-017-scenario-pressure-line";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1021,6 +1021,141 @@
   }
 
   registerRenderer("camera-layout", renderCameraLayoutSvg);
+  
+  function renderScenarioPressureLineSvg(model) {
+    const m = model && typeof model === "object" ? model : {};
+    const rawPoints = Array.isArray(m.points)
+      ? m.points
+      : Array.isArray(m.candidates)
+        ? m.candidates
+        : [];
+
+    const healthyMax = Number.isFinite(Number(m.healthyMax)) ? Number(m.healthyMax) : 25;
+    const watchMax = Number.isFinite(Number(m.watchMax)) ? Number(m.watchMax) : 60;
+    const lowerIsBetter = m.lowerIsBetter !== false;
+
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const pointsData = rawPoints
+      .map((item, index) => {
+        if (!item || typeof item !== "object") return null;
+
+        const score = Number(item.score ?? item.value ?? item.y);
+        if (!Number.isFinite(score)) return null;
+
+        return {
+          label: String(item.label || item.name || ("Scenario " + (index + 1))),
+          score: clamp(score, 0, 100),
+          isCurrent: !!item.isCurrent || !!item.current || index === Number(m.currentIndex || -1)
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 6);
+
+    if (!pointsData.length) {
+      return fallbackSvg(
+        "SL-GFX-SCENARIO-LINE-BAD-MODEL",
+        "Scenario pressure line renderer needs at least one valid point.",
+        {
+          engine: "graphics",
+          renderer: "scenario-pressure-line",
+          tool: m.tool || ""
+        }
+      );
+    }
+
+    const width = Number.isFinite(Number(m.width)) ? Number(m.width) : 900;
+    const height = Number.isFinite(Number(m.height)) ? Number(m.height) : 260;
+    const left = 68;
+    const right = 42;
+    const top = 38;
+    const bottom = 64;
+    const plotW = width - left - right;
+    const plotH = height - top - bottom;
+
+    const yFor = (score) => top + plotH - ((clamp(score, 0, 100) / 100) * plotH);
+    const xStep = pointsData.length > 1 ? plotW / (pointsData.length - 1) : plotW;
+
+    const plotted = pointsData.map((item, index) => ({
+      ...item,
+      x: pointsData.length > 1 ? left + (xStep * index) : left + plotW / 2,
+      y: yFor(item.score)
+    }));
+
+    const polyline = plotted.map((p) => p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+
+    const colorFor = (score) => {
+      if (lowerIsBetter) {
+        if (score <= healthyMax) return "#7dff98";
+        if (score <= watchMax) return "#ffd34f";
+        return "#ff8f88";
+      }
+
+      if (score >= watchMax) return "#7dff98";
+      if (score >= healthyMax) return "#ffd34f";
+      return "#ff8f88";
+    };
+
+    const statusFor = (score) => {
+      if (lowerIsBetter) {
+        if (score <= healthyMax) return "Healthy";
+        if (score <= watchMax) return "Watch";
+        return "Risk";
+      }
+
+      if (score >= watchMax) return "Healthy";
+      if (score >= healthyMax) return "Watch";
+      return "Risk";
+    };
+
+    const riskTop = top;
+    const riskBottom = yFor(watchMax);
+    const watchTop = yFor(watchMax);
+    const watchBottom = yFor(healthyMax);
+    const healthyTop = yFor(healthyMax);
+    const healthyBottom = top + plotH;
+
+    const title = m.title || "Scenario pressure";
+    const subtitle = m.subtitle || "Lower pressure is easier to carry forward.";
+    const kicker = m.stageKicker || "SCENARIO ANALYTICS";
+    const footer = m.footer || (lowerIsBetter ? "Lower is better." : "Higher is better.");
+
+    return '' +
+      '<svg data-sl-renderer="scenario-pressure-line" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(title) + '">' +
+        '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="18" fill="rgba(8,16,14,.34)"></rect>' +
+        '<text x="' + left + '" y="21" fill="rgba(226,232,240,.62)" font-size="10" font-weight="900" letter-spacing=".12em">' + escapeHtml(kicker) + '</text>' +
+        '<text x="' + left + '" y="35" fill="rgba(226,232,240,.90)" font-size="14" font-weight="900">' + escapeHtml(title) + '</text>' +
+        '<text x="' + (width - right) + '" y="34" text-anchor="end" fill="rgba(226,232,240,.64)" font-size="11" font-weight="800">' + escapeHtml(subtitle) + '</text>' +
+
+        '<rect x="' + left + '" y="' + riskTop.toFixed(1) + '" width="' + plotW + '" height="' + Math.max(0, riskBottom - riskTop).toFixed(1) + '" fill="rgba(255,96,88,.12)"></rect>' +
+        '<rect x="' + left + '" y="' + watchTop.toFixed(1) + '" width="' + plotW + '" height="' + Math.max(0, watchBottom - watchTop).toFixed(1) + '" fill="rgba(255,211,79,.12)"></rect>' +
+        '<rect x="' + left + '" y="' + healthyTop.toFixed(1) + '" width="' + plotW + '" height="' + Math.max(0, healthyBottom - healthyTop).toFixed(1) + '" fill="rgba(125,255,152,.12)"></rect>' +
+
+        '<line x1="' + left + '" y1="' + (top + plotH).toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + (top + plotH).toFixed(1) + '" stroke="rgba(226,232,240,.28)" stroke-width="1"></line>' +
+        '<line x1="' + left + '" y1="' + top + '" x2="' + left + '" y2="' + (top + plotH).toFixed(1) + '" stroke="rgba(226,232,240,.22)" stroke-width="1"></line>' +
+        '<line x1="' + left + '" y1="' + yFor(healthyMax).toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + yFor(healthyMax).toFixed(1) + '" stroke="rgba(125,255,152,.30)" stroke-width="1" stroke-dasharray="5 5"></line>' +
+        '<line x1="' + left + '" y1="' + yFor(watchMax).toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + yFor(watchMax).toFixed(1) + '" stroke="rgba(255,211,79,.30)" stroke-width="1" stroke-dasharray="5 5"></line>' +
+
+        '<text x="' + (left - 12) + '" y="' + (top + 4) + '" text-anchor="end" fill="rgba(226,232,240,.48)" font-size="10">100</text>' +
+        '<text x="' + (left - 12) + '" y="' + (top + plotH + 3).toFixed(1) + '" text-anchor="end" fill="rgba(226,232,240,.48)" font-size="10">0</text>' +
+        '<text x="' + (width - right) + '" y="' + (top + 14) + '" text-anchor="end" fill="rgba(226,232,240,.70)" font-size="11" font-weight="900">' + escapeHtml(footer) + '</text>' +
+
+        '<polyline points="' + polyline + '" fill="none" stroke="rgba(125,255,152,.92)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>' +
+        plotted.map((p) => {
+          const fill = colorFor(p.score);
+          const label = p.label.length > 18 ? p.label.slice(0, 17) + "…" : p.label;
+          const status = statusFor(p.score);
+
+          return '' +
+            '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (p.isCurrent ? 9 : 7) + '" fill="' + fill + '" stroke="rgba(255,255,255,.86)" stroke-width="' + (p.isCurrent ? 2.8 : 2) + '"></circle>' +
+            '<text x="' + p.x.toFixed(1) + '" y="' + (p.y - 15).toFixed(1) + '" text-anchor="middle" fill="' + fill + '" font-size="12" font-weight="950">' + Math.round(p.score) + '</text>' +
+            '<text x="' + p.x.toFixed(1) + '" y="' + (height - 30) + '" text-anchor="middle" fill="rgba(226,232,240,.82)" font-size="10.5" font-weight="800">' + escapeHtml(label) + '</text>' +
+            '<text x="' + p.x.toFixed(1) + '" y="' + (height - 16) + '" text-anchor="middle" fill="rgba(226,232,240,.48)" font-size="9.5" font-weight="800">' + escapeHtml(status) + '</text>';
+        }).join("") +
+      '</svg>';
+  }
+
+registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
   registerRenderer("camera-layout-iso", renderCameraLayoutIsoSvg);
 
   window.ScopedLabsGraphics = {
@@ -1033,6 +1168,7 @@
     frameSvg,
     tuneFrame,
     renderCameraLayoutSvg,
+    renderScenarioPressureLineSvg,
     renderCameraLayoutIsoSvg,
     validateCameraLayoutModel,
     helpers: {
