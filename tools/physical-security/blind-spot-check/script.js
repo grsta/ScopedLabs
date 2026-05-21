@@ -1092,7 +1092,7 @@ function blindSpotMultiCameraFootprintSvg(data) {
           code: "SL-GFX-BLINDSPOT-ENGINE-MISSING",
           severity: "warn",
           engine: "graphics",
-          renderer: "camera-layout",
+          renderer: "camera-layout-iso",
           tool: "blind-spot-check",
           message: "ScopedLabsGraphics was not available. Blind Spot used its legacy renderer.",
           fallback: "legacy Blind Spot SVG"
@@ -1321,7 +1321,50 @@ function blindSpotMultiCameraFootprintSvg(data) {
     const rendered = window.ScopedLabsGraphics.render("camera-layout-iso", model);
 
     if (typeof rendered === "string" && rendered.includes("<svg")) {
-      return rendered;
+      const framed = typeof window.ScopedLabsGraphics.frameSvg === "function"
+        ? window.ScopedLabsGraphics.frameSvg(rendered, {
+            tool: "blind-spot-check",
+            renderer: "camera-layout-iso",
+            size: "tall",
+            className: "sl-blindspot-iso-svg",
+            maxWidth: "1040px"
+          })
+        : rendered.replace(
+            "<svg ",
+            '<svg class="sl-blindspot-iso-svg" style="width:100%;max-width:1040px;height:auto;display:block;margin:0 auto;" '
+          );
+
+      if (
+        typeof window.ScopedLabsGraphics.tuneFrame === "function" &&
+        typeof window.requestAnimationFrame === "function"
+      ) {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            try {
+              window.ScopedLabsGraphics.tuneFrame(document, {
+                selector: ".sl-blindspot-iso-svg, [data-sl-renderer=\"camera-layout-iso\"]",
+                size: "tall",
+                maxWidth: "1040px",
+                minHeight: "760px"
+              });
+            } catch (error) {
+              if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+                window.ScopedLabsDiagnostics.report({
+                  code: "SL-GFX-BLINDSPOT-FRAME-TUNE",
+                  severity: "warn",
+                  engine: "graphics",
+                  renderer: "camera-layout-iso",
+                  tool: "blind-spot-check",
+                  message: "Blind Spot graphics frame tune could not complete.",
+                  cause: error && error.message
+                });
+              }
+            }
+          });
+        });
+      }
+
+      return framed;
     }
 
     if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
@@ -1329,7 +1372,7 @@ function blindSpotMultiCameraFootprintSvg(data) {
         code: "SL-GFX-BLINDSPOT-BAD-RENDER",
         severity: "error",
         engine: "graphics",
-        renderer: "camera-layout",
+        renderer: "camera-layout-iso",
         tool: "blind-spot-check",
         message: "Graphics Engine returned invalid SVG. Blind Spot used legacy renderer.",
         fallback: "legacy Blind Spot SVG"
@@ -1343,7 +1386,7 @@ function blindSpotMultiCameraFootprintSvg(data) {
         code: "SL-GFX-BLINDSPOT-ADAPTER-EXCEPTION",
         severity: "error",
         engine: "graphics",
-        renderer: "camera-layout",
+        renderer: "camera-layout-iso",
         tool: "blind-spot-check",
         message: "Blind Spot graphics adapter threw an exception.",
         cause: error && error.message,
