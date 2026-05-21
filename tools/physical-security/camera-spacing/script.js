@@ -1953,6 +1953,76 @@ function assistantStatusClass(data) {
   
   
 
+
+  function spacingScenarioExportChartHtml(data) {
+    try {
+      if (!window.ScopedLabsGraphics || typeof window.ScopedLabsGraphics.render !== "function") {
+        return "";
+      }
+
+      if (typeof factorySpacingPressureScore !== "function") {
+        return "";
+      }
+
+      const scenarios = Array.isArray(latestAssistantScenarios) ? latestAssistantScenarios : [];
+      const points = [
+        {
+          label: "Custom Design",
+          score: factorySpacingPressureScore(data),
+          isCurrent: true
+        }
+      ];
+
+      scenarios
+        .filter((scenario) => scenario && scenario.canApply)
+        .slice(0, 4)
+        .forEach((scenario) => {
+          points.push({
+            label: scenario.pillLabel || scenario.label || "Scenario",
+            score: factorySpacingPressureScore(scenario)
+          });
+        });
+
+      const svg = window.ScopedLabsGraphics.render("scenario-pressure-line", {
+        tool: "camera-spacing",
+        stageKicker: "SCENARIO ANALYTICS",
+        title: "Scenario pressure comparison",
+        subtitle: "Lower is better",
+        footer: "Pressure score / 100",
+        lowerIsBetter: true,
+        healthyMax: 25,
+        watchMax: 60,
+        width: 860,
+        height: 238,
+        points
+      });
+
+      if (!svg || typeof svg !== "string" || !svg.includes('data-sl-renderer="scenario-pressure-line"')) {
+        return "";
+      }
+
+      return '' +
+        '<div data-export-svg data-export-scenario-line="true" style="margin:12px 0 12px 0;break-inside:avoid;page-break-inside:avoid;">' +
+          '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">Scenario pressure comparison</h3>' +
+          svg +
+        '</div>';
+    } catch (error) {
+      if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+        window.ScopedLabsDiagnostics.report({
+          code: "SL-EXPORT-CAMERASPACING-SCENARIO-LINE",
+          severity: "warn",
+          engine: "export",
+          renderer: "scenario-pressure-line",
+          tool: "camera-spacing",
+          message: "Camera Spacing scenario line chart was skipped in export.",
+          cause: error && error.message
+        });
+      }
+
+      return "";
+    }
+  }
+
 function renderSpacingExportSection(data) {
     if (!els.exportSection || !data || !data.ok) return;
 
@@ -1998,6 +2068,29 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
         '<tbody>' + tableRows + '</tbody>' +
       '</table>' +
       exportNarrativeHtml;
+  
+
+    try {
+      const exportSection = document.getElementById("spacingExportSection");
+      const scenarioExportChart = spacingScenarioExportChartHtml(data);
+
+      if (exportSection && scenarioExportChart && !exportSection.querySelector("[data-export-scenario-line]")) {
+        exportSection.insertAdjacentHTML("beforeend", scenarioExportChart);
+      }
+    } catch (error) {
+      if (window.ScopedLabsDiagnostics && typeof window.ScopedLabsDiagnostics.report === "function") {
+        window.ScopedLabsDiagnostics.report({
+          code: "SL-EXPORT-CAMERASPACING-SCENARIO-APPEND",
+          severity: "warn",
+          engine: "export",
+          renderer: "scenario-pressure-line",
+          tool: "camera-spacing",
+          message: "Camera Spacing scenario line chart could not be appended to the export section.",
+          cause: error && error.message
+        });
+      }
+    }
+
   }
 
 
