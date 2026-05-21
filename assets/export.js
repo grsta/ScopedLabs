@@ -817,6 +817,24 @@
     }).join("");
   }
 
+
+  function shouldSuppressDefaultInterpretation(extraSections) {
+    const sections = Array.isArray(extraSections) ? extraSections : [];
+
+    return sections.some((section) => {
+      const title = normalizeSlug(section && section.title ? section.title : "");
+
+      return (
+        title === normalizeSlug("Camera Spacing Design Summary") &&
+        (
+          (Array.isArray(section.tables) && section.tables.length > 0) ||
+          (Array.isArray(section.svgs) && section.svgs.length > 0) ||
+          String(section.text || "").trim()
+        )
+      );
+    });
+  }
+
   function buildPayload() {
     const outputs = getResultRows();
 
@@ -839,6 +857,11 @@ if (!interpretation && interpretationSection?.body) {
 
 const chartImage = captureVisibleChart();
 const extraSections = getExtraExportSections();
+
+if (shouldSuppressDefaultInterpretation(extraSections)) {
+  interpretation = "";
+}
+
 
     return {
       reportId: makeReportId(state.options.reportPrefix),
