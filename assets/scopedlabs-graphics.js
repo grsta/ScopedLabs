@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-018-scenario-line-polish";
+  const VERSION = "scopedlabs-graphics-019-analytical-line";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1065,9 +1065,9 @@
 
     const width = Number.isFinite(Number(m.width)) ? Number(m.width) : 940;
     const height = Number.isFinite(Number(m.height)) ? Number(m.height) : 292;
-    const left = 78;
-    const right = 52;
-    const top = 68;
+    const left = 82;
+    const right = 58;
+    const top = 66;
     const bottom = 76;
     const plotW = width - left - right;
     const plotH = height - top - bottom;
@@ -1126,71 +1126,66 @@
     const kicker = m.stageKicker || "SCENARIO ANALYTICS";
     const footer = m.footer || (lowerIsBetter ? "Pressure score / 100" : "Score / 100");
 
-    const gridLines = [0, 25, 50, 75, 100].map((value) => {
+    const gridTicks = [0, 20, 40, 60, 80, 100];
+
+    const gridLines = gridTicks.map((value) => {
       const y = yFor(value);
-      const strong = value === 0 || value === 100;
+      const strong = value === 0 || value === 100 || value === healthyMax || value === watchMax;
+
       return '' +
-        '<line x1="' + left + '" y1="' + y.toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + y.toFixed(1) + '" stroke="rgba(226,232,240,' + (strong ? '.22' : '.10') + ')" stroke-width="1"></line>' +
-        '<text x="' + (left - 14) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" fill="rgba(226,232,240,.48)" font-size="10" font-weight="800">' + value + '</text>';
+        '<line x1="' + left + '" y1="' + y.toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + y.toFixed(1) + '" stroke="rgba(226,232,240,' + (strong ? '.20' : '.085') + ')" stroke-width="' + (strong ? '1' : '.75') + '"></line>' +
+        '<text x="' + (left - 16) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" fill="rgba(226,232,240,.46)" font-size="9.5" font-weight="800">' + value + '</text>';
     }).join("");
 
-    const bandLabelX = left + plotW + 10;
+    const verticalGuides = plotted.map((p) => {
+      return '<line x1="' + p.x.toFixed(1) + '" y1="' + top + '" x2="' + p.x.toFixed(1) + '" y2="' + (top + plotH).toFixed(1) + '" stroke="rgba(226,232,240,.07)" stroke-width=".75"></line>';
+    }).join("");
+
+    const bandLabelX = left + plotW + 12;
 
     return '' +
       '<svg data-sl-renderer="scenario-pressure-line" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(title) + '">' +
-        '<defs>' +
-          '<linearGradient id="slScenarioLineStroke" x1="0%" y1="0%" x2="100%" y2="0%">' +
-            '<stop offset="0%" stop-color="#7dff98" stop-opacity=".98"></stop>' +
-            '<stop offset="58%" stop-color="#83f7ad" stop-opacity=".98"></stop>' +
-            '<stop offset="100%" stop-color="#ffd34f" stop-opacity=".94"></stop>' +
-          '</linearGradient>' +
-          '<filter id="slScenarioLineGlow" x="-20%" y="-40%" width="140%" height="180%">' +
-            '<feGaussianBlur stdDeviation="3.5" result="blur"></feGaussianBlur>' +
-            '<feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>' +
-          '</filter>' +
-        '</defs>' +
+        '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="18" fill="rgba(5,16,13,.44)"></rect>' +
+        '<rect x="14" y="14" width="' + (width - 28) + '" height="' + (height - 28) + '" rx="14" fill="rgba(255,255,255,.012)" stroke="rgba(125,255,152,.12)" stroke-width=".8"></rect>' +
 
-        '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="20" fill="rgba(7,18,15,.48)"></rect>' +
-        '<rect x="12" y="12" width="' + (width - 24) + '" height="' + (height - 24) + '" rx="17" fill="rgba(255,255,255,.018)" stroke="rgba(125,255,152,.13)" stroke-width="1"></rect>' +
+        '<text x="' + left + '" y="29" fill="#7dff98" font-size="9.5" font-weight="950" letter-spacing=".16em">' + escapeHtml(kicker) + '</text>' +
+        '<text x="' + left + '" y="50" fill="rgba(246,255,248,.93)" font-size="15.5" font-weight="950">' + escapeHtml(title) + '</text>' +
+        '<text x="' + (width - right) + '" y="30" text-anchor="end" fill="rgba(226,232,240,.70)" font-size="10.5" font-weight="900">' + escapeHtml(subtitle) + '</text>' +
+        '<text x="' + (width - right) + '" y="49" text-anchor="end" fill="rgba(226,232,240,.50)" font-size="9.5" font-weight="800">' + escapeHtml(footer) + '</text>' +
 
-        '<text x="' + left + '" y="30" fill="#7dff98" font-size="10" font-weight="950" letter-spacing=".14em">' + escapeHtml(kicker) + '</text>' +
-        '<text x="' + left + '" y="51" fill="rgba(246,255,248,.94)" font-size="17" font-weight="950">' + escapeHtml(title) + '</text>' +
-        '<text x="' + (width - right) + '" y="31" text-anchor="end" fill="rgba(226,232,240,.70)" font-size="11" font-weight="900">' + escapeHtml(subtitle) + '</text>' +
-        '<text x="' + (width - right) + '" y="50" text-anchor="end" fill="rgba(226,232,240,.52)" font-size="10" font-weight="800">' + escapeHtml(footer) + '</text>' +
+        '<rect x="' + left + '" y="' + riskTop.toFixed(1) + '" width="' + plotW + '" height="' + Math.max(0, riskBottom - riskTop).toFixed(1) + '" fill="rgba(255,96,88,.075)"></rect>' +
+        '<rect x="' + left + '" y="' + watchTop.toFixed(1) + '" width="' + plotW + '" height="' + Math.max(0, watchBottom - watchTop).toFixed(1) + '" fill="rgba(255,211,79,.075)"></rect>' +
+        '<rect x="' + left + '" y="' + healthyTop.toFixed(1) + '" width="' + plotW + '" height="' + Math.max(0, healthyBottom - healthyTop).toFixed(1) + '" fill="rgba(125,255,152,.070)"></rect>' +
 
-        '<rect x="' + left + '" y="' + riskTop.toFixed(1) + '" width="' + plotW + '" height="' + Math.max(0, riskBottom - riskTop).toFixed(1) + '" fill="rgba(255,96,88,.135)"></rect>' +
-        '<rect x="' + left + '" y="' + watchTop.toFixed(1) + '" width="' + plotW + '" height="' + Math.max(0, watchBottom - watchTop).toFixed(1) + '" fill="rgba(255,211,79,.135)"></rect>' +
-        '<rect x="' + left + '" y="' + healthyTop.toFixed(1) + '" width="' + plotW + '" height="' + Math.max(0, healthyBottom - healthyTop).toFixed(1) + '" fill="rgba(125,255,152,.12)"></rect>' +
-
+        verticalGuides +
         gridLines +
-        '<line x1="' + left + '" y1="' + top + '" x2="' + left + '" y2="' + (top + plotH).toFixed(1) + '" stroke="rgba(226,232,240,.26)" stroke-width="1.2"></line>' +
-        '<line x1="' + left + '" y1="' + (top + plotH).toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + (top + plotH).toFixed(1) + '" stroke="rgba(226,232,240,.30)" stroke-width="1.2"></line>' +
-        '<line x1="' + left + '" y1="' + healthyY.toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + healthyY.toFixed(1) + '" stroke="rgba(125,255,152,.38)" stroke-width="1.1" stroke-dasharray="6 6"></line>' +
-        '<line x1="' + left + '" y1="' + watchY.toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + watchY.toFixed(1) + '" stroke="rgba(255,211,79,.38)" stroke-width="1.1" stroke-dasharray="6 6"></line>' +
 
-        '<text x="' + bandLabelX + '" y="' + ((healthyTop + healthyBottom) / 2 + 4).toFixed(1) + '" fill="rgba(125,255,152,.82)" font-size="9.5" font-weight="950">HEALTHY</text>' +
-        '<text x="' + bandLabelX + '" y="' + ((watchTop + watchBottom) / 2 + 4).toFixed(1) + '" fill="rgba(255,211,79,.86)" font-size="9.5" font-weight="950">WATCH</text>' +
-        '<text x="' + bandLabelX + '" y="' + ((riskTop + riskBottom) / 2 + 4).toFixed(1) + '" fill="rgba(255,143,136,.86)" font-size="9.5" font-weight="950">RISK</text>' +
+        '<rect x="' + left + '" y="' + top + '" width="' + plotW + '" height="' + plotH + '" fill="none" stroke="rgba(226,232,240,.24)" stroke-width=".9"></rect>' +
+        '<line x1="' + left + '" y1="' + healthyY.toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + healthyY.toFixed(1) + '" stroke="rgba(125,255,152,.42)" stroke-width=".9" stroke-dasharray="4 5"></line>' +
+        '<line x1="' + left + '" y1="' + watchY.toFixed(1) + '" x2="' + (left + plotW) + '" y2="' + watchY.toFixed(1) + '" stroke="rgba(255,211,79,.42)" stroke-width=".9" stroke-dasharray="4 5"></line>' +
 
-        '<polyline points="' + polyline + '" fill="none" stroke="rgba(125,255,152,.18)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#slScenarioLineGlow)"></polyline>' +
-        '<polyline points="' + polyline + '" fill="none" stroke="url(#slScenarioLineStroke)" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"></polyline>' +
+        '<text x="' + bandLabelX + '" y="' + ((healthyTop + healthyBottom) / 2 + 3).toFixed(1) + '" fill="rgba(125,255,152,.78)" font-size="8.8" font-weight="950">HEALTHY</text>' +
+        '<text x="' + bandLabelX + '" y="' + ((watchTop + watchBottom) / 2 + 3).toFixed(1) + '" fill="rgba(255,211,79,.78)" font-size="8.8" font-weight="950">WATCH</text>' +
+        '<text x="' + bandLabelX + '" y="' + ((riskTop + riskBottom) / 2 + 3).toFixed(1) + '" fill="rgba(255,143,136,.78)" font-size="8.8" font-weight="950">RISK</text>' +
+
+        '<polyline points="' + polyline + '" fill="none" stroke="rgba(125,255,152,.92)" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"></polyline>' +
 
         plotted.map((p) => {
           const fill = colorFor(p.score);
           const label = labelFor(p.label, 17);
           const status = statusFor(p.score);
-          const r = p.isCurrent ? 9.5 : 7.2;
-          const halo = p.isCurrent
-            ? '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="15" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.4" stroke-dasharray="3 4"></circle>'
+          const r = p.isCurrent ? 6.4 : 5.4;
+          const currentRing = p.isCurrent
+            ? '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="10.5" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="1" stroke-dasharray="2.5 3.5"></circle>'
             : '';
 
           return '' +
-            '<line x1="' + p.x.toFixed(1) + '" y1="' + p.y.toFixed(1) + '" x2="' + p.x.toFixed(1) + '" y2="' + (top + plotH).toFixed(1) + '" stroke="rgba(226,232,240,.13)" stroke-width="1" stroke-dasharray="3 6"></line>' +
-            halo +
-            '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + r + '" fill="' + fill + '" stroke="rgba(255,255,255,.90)" stroke-width="' + (p.isCurrent ? 3 : 2.1) + '"></circle>' +
-            '<text x="' + p.x.toFixed(1) + '" y="' + (p.y - 18).toFixed(1) + '" text-anchor="middle" fill="' + fill + '" font-size="13" font-weight="950">' + Math.round(p.score) + '</text>' +
-            '<text x="' + p.x.toFixed(1) + '" y="' + (height - 38) + '" text-anchor="middle" fill="rgba(246,255,248,.86)" font-size="10.5" font-weight="900">' + escapeHtml(label) + '</text>' +
-            '<text x="' + p.x.toFixed(1) + '" y="' + (height - 22) + '" text-anchor="middle" fill="' + fill + '" font-size="9.5" font-weight="900">' + escapeHtml(status) + '</text>';
+            currentRing +
+            '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + r + '" fill="rgba(5,16,13,.95)" stroke="' + fill + '" stroke-width="1.7"></circle>' +
+            '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="2.1" fill="' + fill + '"></circle>' +
+            '<text x="' + p.x.toFixed(1) + '" y="' + (p.y - 13).toFixed(1) + '" text-anchor="middle" fill="' + fill + '" font-size="11" font-weight="950">' + Math.round(p.score) + '</text>' +
+            '<text x="' + p.x.toFixed(1) + '" y="' + (height - 39) + '" text-anchor="middle" fill="rgba(246,255,248,.82)" font-size="9.6" font-weight="900">' + escapeHtml(label) + '</text>' +
+            '<text x="' + p.x.toFixed(1) + '" y="' + (height - 24) + '" text-anchor="middle" fill="' + fill + '" font-size="8.7" font-weight="900">' + escapeHtml(status) + '</text>';
         }).join("") +
       '</svg>';
   }
