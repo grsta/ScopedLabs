@@ -667,15 +667,30 @@
     };
   }
 
-  function fovGeometrySvg(data, fallbackSvg) {
+  function fovGeometrySvg(data, fallbackSvg, options = {}) {
     const gfx = window.ScopedLabsGraphics;
+    const renderForExport = options && options.exportSvg === true;
 
     if (gfx && typeof gfx.render === "function") {
-      const model = fovGeometryGraphicsModel(data);
+      const model = Object.assign({}, fovGeometryGraphicsModel(data), {
+        exportMode: renderForExport
+      });
       let svg = gfx.render("fov-geometry-plan", model);
 
       if (typeof svg === "string" && svg.includes("<svg") && !svg.includes("data-sl-diagnostic-code")) {
-        return svg.replace(/\sdata-export-svg\b/g, "");
+        if (!renderForExport) {
+          svg = svg.replace(/\sdata-export-svg\b/g, "");
+        }
+
+        if (typeof gfx.frameSvg === "function") {
+          svg = gfx.frameSvg(svg, {
+            renderer: "fov-geometry-plan",
+            tool: "field-of-view",
+            size: "wide"
+          });
+        }
+
+        return svg;
       }
     }
 
@@ -736,34 +751,18 @@
 
     const liveSvg = fovGeometrySvg(data, fallbackLiveSvg);
 
-    const exportSvg =
-      '<svg data-export-svg viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Field of view geometry diagram for export">' +
-        '<defs><marker id="fovExportArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="#52615c"></path></marker></defs>' +
-        '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#ffffff"></rect>' +
-        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="#aebbb3" stroke-width="2" stroke-dasharray="5 7"></line>' +
-        '<polygon points="' + cameraX + ',' + centerY + ' ' + targetX + ',' + coneTopY + ' ' + targetX + ',' + coneBottomY + '" fill="#eaf7f0" stroke="#1d8f55" stroke-width="2"></polygon>' +
-        '<line x1="' + targetX + '" y1="' + coneTopY + '" x2="' + targetX + '" y2="' + coneBottomY + '" stroke="#1d8f55" stroke-width="5" stroke-linecap="round"></line>' +
-        '<line x1="' + requiredX + '" y1="' + requiredTopY + '" x2="' + requiredX + '" y2="' + requiredBottomY + '" stroke="#52615c" stroke-width="4" stroke-linecap="round"></line>' +
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="#1d8f55"></circle>' +
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="16" fill="none" stroke="#bde6ce" stroke-width="2"></circle>' +
-        '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="#52615c" stroke-width="2" marker-end="url(#fovExportArrow)"></line>' +
-        '<text x="' + cameraX + '" y="' + (centerY - 25) + '" fill="#101715" font-size="11" font-weight="800" text-anchor="middle">Camera</text>' +
-        '<text x="' + cameraX + '" y="' + (centerY + 36) + '" fill="#52615c" font-size="10" text-anchor="middle">Mount ' + escapeFovHtml(fmtFtShort(data.h)) + '</text>' +
-        '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 21) + '" fill="#52615c" font-size="11" font-weight="800" text-anchor="middle">Target distance: ' + escapeFovHtml(fmtFtShort(data.dist)) + '</text>' +
-        '<text x="' + ((cameraX + targetX) / 2) + '" y="27" fill="#52615c" font-size="11" font-weight="800" text-anchor="middle">HFOV ' + escapeFovHtml(fmtDegText(data.hfov)) + '</text>' +
-        '<text x="' + targetX + '" y="' + Math.max(18, coneTopY - 8) + '" fill="#101715" font-size="10" font-weight="800" text-anchor="middle">calculated</text>' +
-        '<text x="' + requiredX + '" y="' + Math.max(18, requiredTopY - 8) + '" fill="#52615c" font-size="10" font-weight="800" text-anchor="middle">required</text>' +
-      '</svg>';
+    const exportSvg = fovGeometrySvg(data, "", { exportSvg: true });
 
     els.fovGeometry.hidden = false;
     els.fovGeometry.setAttribute("data-export-section", "true");
     els.fovGeometry.setAttribute("data-export-title", "Field of View Geometry");
+    els.fovGeometry.setAttribute("data-export-compact-svg", "true");
 
     els.fovGeometry.innerHTML =
       '<div class="fov-geometry-head">' +
         '<div>' +
           '<p class="fov-geometry-title">Field of View Geometry</p>' +
-          '<div class="fov-geometry-subtitle">Top-view planning diagram showing the camera cone, target distance, calculated scene width, and required scene width.</div>' +
+          '<div class="fov-geometry-subtitle">CAD-style plan view showing the camera position, target plane, calculated footprint, and requested scene width.</div>' +
         '</div>' +
         '<div class="fov-geometry-pill">' + escapeFovHtml(fovStatusLabel(data)) + '</div>' +
       '</div>' +
@@ -774,7 +773,7 @@
         '<div class="fov-geometry-metric">Target distance<strong>' + escapeFovHtml(fmtFtShort(data.dist)) + '</strong></div>' +
       '</div>' +
       '<div class="fov-geometry-svg-wrap">' + liveSvg + '</div>' +
-      '<div class="fov-geometry-note" data-export-text>Planning note: this is a simplified horizontal field-of-view diagram. Mount height is shown as context from the previous step, but horizontal width is driven by target distance and HFOV.</div>' +
+      '<div class="fov-geometry-note" data-export-text>Planning note: this CAD plan view renders the existing Field of View result model. Mount height is context from the previous step; horizontal footprint is still driven by target distance and HFOV.</div>' +
       '<div class="fov-geometry-export-only">' +
         '<table><thead><tr><th>Geometry Metric</th><th>Value</th></tr></thead><tbody>' +
           '<tr><td>Coverage ratio</td><td>' + escapeFovHtml(fmtRatio(data.coverageRatio)) + '</td></tr>' +
