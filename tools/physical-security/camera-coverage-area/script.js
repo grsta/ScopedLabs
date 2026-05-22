@@ -722,6 +722,89 @@
       '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="376" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Target distance: ' + escapeHtml(fmtFt(targetDistance, 0)) + '</text>' +
     '</svg>';
   }
+
+  function coverageFallbackExportTable(title, rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : [])
+      .filter((row) => row && row[0] && row[1] !== undefined && row[1] !== null && String(row[1]).trim() !== "");
+
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<table style="width:100%;border-collapse:collapse;margin:12px 0 0 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th colspan="2" style="padding:8px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">' + escapeHtml(title) + '</th>' +
+        '</tr><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Metric</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:right;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Value</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          cleanRows.map((row) => '<tr><td style="width:48%;padding:7px 10px;border:1px solid #d8dee6;color:#4b5563;vertical-align:top;">' + escapeHtml(row[0]) + '</td><td style="padding:7px 10px;border:1px solid #d8dee6;color:#111827;font-weight:700;text-align:right;vertical-align:top;">' + escapeHtml(row[1]) + '</td></tr>').join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function coverageFallbackNotesTable(rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : [])
+      .filter((row) => row && row[0] && row[1]);
+
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<table style="width:100%;border-collapse:collapse;margin:12px 0 0 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          cleanRows.map((row) => '<tr><td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapeHtml(row[0]) + '</td><td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' + escapeHtml(row[1]) + '</td></tr>').join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function coverageStructuredExportTables(data) {
+    if (!data || !data.ok) return "";
+
+    const manualOverrides = typeof getManualOverrideMetadata === "function" ? getManualOverrideMetadata(data) : [];
+    const sourceMode = manualOverrides && manualOverrides.length ? "manual override" : "pipeline";
+
+    const metrics = [
+      ["Raw coverage width", fmtFt(data.width)],
+      ["Raw coverage height", fmtFt(data.height)],
+      ["Raw coverage area", fmtSqFt(data.area)],
+      ["Usable coverage width", fmtFt(data.effWidth)],
+      ["Effective coverage area", fmtSqFt(data.effArea)],
+      ["Usable coverage reserve", fmtPct(data.ovPct, 1)],
+      ["Width retention", fmtPct(data.widthRetentionPct, 1)],
+      ["Area retention", fmtPct(data.areaRetentionPct, 1)],
+      ["Coverage efficiency", data.efficiencyClass],
+      ["Assistant status", data.status],
+      ["Source mode", sourceMode]
+    ];
+
+    const handoff = "Carry " + fmtFt(data.effWidth) + " into Camera Spacing as the usable coverage width. The " + fmtPct(data.ovPct, 1) + " reserve is a lens-footprint margin, not the camera-to-camera overlap target.";
+
+    const notes = [
+      ["Engineering interpretation", data.interpretation],
+      ["Dominant constraint", data.dominantConstraint],
+      ["Recommended action", data.guidance],
+      ["Camera Spacing handoff", handoff]
+    ];
+
+    const metricHtml = window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderMetricTable === "function"
+      ? window.ScopedLabsAssistantExport.renderMetricTable("Coverage Area Design Summary", metrics)
+      : coverageFallbackExportTable("Coverage Area Design Summary", metrics);
+
+    const notesHtml = window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderNotesTable === "function"
+      ? window.ScopedLabsAssistantExport.renderNotesTable(notes)
+      : coverageFallbackNotesTable(notes);
+
+    return "" +
+      '<div class="coverage-export-structured-tables" data-export-section data-export-suppress-title="true" style="position:absolute;left:-10000px;top:auto;width:820px;max-height:1px;overflow:hidden;opacity:0;pointer-events:none;">' +
+        metricHtml +
+        notesHtml +
+      '</div>';
+  }
+
   function renderCoverageAssistantPrompt(message = "Review the imported FOV and target-distance assumptions, confirm the usable coverage reserve, then run the coverage check. Edit imported values only when you are intentionally testing a local what-if branch.") {
     if (!els.assistant) return;
 
@@ -782,10 +865,10 @@
         '</div>' +
         '<span class="coverage-status-pill ' + statusClass + '">Assistant Status: ' + escapeHtml(formatAssistantStatusLabel(data.status)) + '</span>' +
       '</div>' +
-      '<div class="coverage-visual-stage" data-export-section data-export-title="Coverage Assistant Plan View">' +
-        '<div class="coverage-export-summary" data-export-text>Plan-view coverage visual showing raw footprint, usable width, held-back reserve, and the target-distance handoff used by Camera Spacing.</div>' +
+      '<div class="coverage-visual-stage" data-export-section data-export-suppress-title="true" data-export-compact-svg="true">' +
         coverageFootprintSvg(data) +
       '</div>' +
+      coverageStructuredExportTables(data) +
       '<div class="coverage-mini-grid">' +
         '<div class="coverage-mini-card"><div class="coverage-mini-label">Raw footprint</div><div class="coverage-mini-value">' + escapeHtml(fmtFt(data.width)) + ' &times; ' + escapeHtml(fmtFt(data.height)) + '</div></div>' +
         '<div class="coverage-mini-card"><div class="coverage-mini-label">Usable width</div><div class="coverage-mini-value">' + escapeHtml(fmtFt(data.effWidth)) + '</div></div>' +

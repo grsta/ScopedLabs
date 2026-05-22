@@ -354,6 +354,8 @@
   data-tool="camera-coverage-area"
   data-step="camera-coverage-area"
   data-lane="v1"
+
+  data-suppress-default-export-interpretation="true"
 >
   <header class="site-header">
     <div class="container header-inner">
@@ -499,6 +501,16 @@
           Use the assistant summary and calculated output to open a clean report or save a snapshot. Project notes can be added later from the report workflow.
         </p>
 
+
+        <div
+          id="reportMetadataMount"
+          data-report-metadata
+          data-report-title="Report details"
+          data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."
+          data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+          data-collapsed="true"
+        ></div>
+
         <div class="btn-row" style="margin-top: 14px;">
           <button id="exportReport" class="btn coverage-action-btn" type="button" disabled>Open Report</button>
           <button id="saveSnapshot" class="btn coverage-action-btn" type="button" disabled>Save Snapshot</button>
@@ -545,11 +557,13 @@
       "disclaimer": "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
 };
   </script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-001"></script>
 
-  <script src="/assets/export.js?v=shared-export-010"></script>
+  <script src="/assets/export.js?v=shared-export-020-compact-svg-width-nudge"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
-  <script src="./script.js?v=physical-security-coverage-export-visual-001"></script>
+  <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
+  <script src="./script.js?v=physical-security-coverage-shell-001"></script>
   <script defer src="/assets/help.js?v=help-031-coverage-spacing"></script>
 </body>
 </html>
