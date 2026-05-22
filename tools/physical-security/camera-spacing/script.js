@@ -2053,7 +2053,15 @@ function renderSpacingExportSection(data) {
     const tableRows = summaryRows
       .map(([label, value]) => spacingExportRow(label, value))
       .join("");
-const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, assistantMeta);
+    const summaryTableHtml =
+      window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderMetricTable === "function"
+        ? window.ScopedLabsAssistantExport.renderMetricTable("Camera Spacing Design Summary", summaryRows)
+        : '<table>' +
+            '<thead><tr><th>Metric</th><th>Value</th></tr></thead>' +
+            '<tbody>' + tableRows + '</tbody>' +
+          '</table>';
+
+    const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, assistantMeta);
 
     els.exportSection.innerHTML =
       '<div data-export-svg data-export-primary-visual="true" style="break-inside:avoid;page-break-inside:avoid;">' +        spacingVisualSvg(data, {
@@ -2063,10 +2071,7 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
         tune: false,
         className: "sl-spacing-iso-svg sl-spacing-iso-svg--report"
       }) + '</div>' +
-      '<table>' +
-        '<thead><tr><th>Metric</th><th>Value</th></tr></thead>' +
-        '<tbody>' + tableRows + '</tbody>' +
-      '</table>' +
+      summaryTableHtml +
       exportNarrativeHtml;
   
 
@@ -2148,6 +2153,14 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
     ].filter((row) => row[1]);
 
     if (!rows.length) return "";
+
+    if (window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderNotesTable === "function") {
+      return "" +
+        '<div style="margin-top:12px;break-inside:avoid;page-break-inside:avoid;">' +
+          '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">Engineering Notes</h3>' +
+          window.ScopedLabsAssistantExport.renderNotesTable(rows) +
+        '</div>';
+    }
 
     return "" +
       '<div style="margin-top:12px;break-inside:avoid;page-break-inside:avoid;">' +
