@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-002-fov-cad-cleanup
+ * Version: physical-security-graphics-003-standard-camera-symbol
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-002-fov-cad-cleanup";
+  const VERSION = "physical-security-graphics-003-standard-camera-symbol";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -124,6 +124,10 @@
     return lines.join("");
   }
 
+  function cameraLensTipX(x) {
+    return x + 118;
+  }
+
   function cameraPlanMarker(x, y, options) {
     const opts = options && typeof options === "object" ? options : {};
     const label = opts.label || "CAMERA";
@@ -131,21 +135,33 @@
 
     return "" +
       '<g data-ps-graphic-part="camera-marker">' +
-        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="20" fill="rgba(125,255,158,.03)" stroke="rgba(125,255,158,.18)" stroke-width=".9" />' +
-        '<rect x="' + fmt(x - 10, 2) + '" y="' + fmt(y - 8, 2) + '" width="16" height="16" rx="4" fill="rgba(6,18,12,.88)" stroke="' + esc(color) + '" stroke-width="1.05" />' +
-        '<path d="M ' + fmt(x + 6, 2) + ' ' + fmt(y - 6, 2) + ' L ' + fmt(x + 20, 2) + ' ' + fmt(y, 2) + ' L ' + fmt(x + 6, 2) + ' ' + fmt(y + 6, 2) + ' Z" fill="rgba(125,255,158,.15)" stroke="' + esc(color) + '" stroke-width=".95" />' +
-        '<circle cx="' + fmt(x - 2, 2) + '" cy="' + fmt(y, 2) + '" r="2.2" fill="' + esc(color) + '" />' +
-        CAD.text(x, y - 34, label, {
+        CAD.text(x + 63, y - 40, label, {
           anchor: "middle",
-          fill: opts.labelFill || "rgba(248,250,252,.70)",
-          size: 9.2,
+          fill: opts.labelFill || "rgba(248,250,252,.72)",
+          size: 8.9,
           weight: 900,
           spacing: ".08em"
         }) +
+
+        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="16" fill="rgba(125,255,158,.028)" stroke="rgba(125,255,158,.18)" stroke-width=".9" />' +
+        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="3.7" fill="' + esc(color) + '" />' +
+
+        CAD.line(x + 4, y, x + 26, y, {
+          stroke: "rgba(125,255,158,.72)",
+          width: 1.45,
+          linecap: "round"
+        }) +
+
+        '<rect x="' + fmt(x + 26, 2) + '" y="' + fmt(y - 14, 2) + '" width="70" height="28" rx="2.5" fill="rgba(6,18,12,.90)" stroke="' + esc(color) + '" stroke-width="1.25" />' +
+        '<rect x="' + fmt(x + 35, 2) + '" y="' + fmt(y - 8, 2) + '" width="45" height="16" rx="1.5" fill="rgba(125,255,158,.045)" stroke="rgba(125,255,158,.14)" stroke-width=".75" />' +
+
+        '<path d="M ' + fmt(x + 96, 2) + ' ' + fmt(y - 11, 2) + ' L ' + fmt(x + 118, 2) + ' ' + fmt(y, 2) + ' L ' + fmt(x + 96, 2) + ' ' + fmt(y + 11, 2) + ' Z" fill="rgba(125,255,158,.145)" stroke="' + esc(color) + '" stroke-width="1.25" stroke-linejoin="round" />' +
+        '<line x1="' + fmt(x + 118, 2) + '" y1="' + fmt(y - 9, 2) + '" x2="' + fmt(x + 118, 2) + '" y2="' + fmt(y + 9, 2) + '" stroke="rgba(125,255,158,.30)" stroke-width=".8" />' +
+        '<circle cx="' + fmt(x + 118, 2) + '" cy="' + fmt(y, 2) + '" r="2" fill="' + esc(color) + '" />' +
       '</g>';
   }
 
-  function fovCone(cameraX, centerY, targetX, topY, bottomY, options) {
+  function fovCone(lensTipX, centerY, targetX, topY, bottomY, options) {
     const opts = options && typeof options === "object" ? options : {};
 
     return '<path data-ps-graphic-part="fov-cone" d="M ' +
@@ -254,6 +270,7 @@
     const svgH = 342;
     const stage = { x: 26, y: 24, width: 788, height: 292 };
     const cameraX = 156;
+    const lensTipX = cameraLensTipX(cameraX);
     const centerY = 176;
     const targetX = 590;
     const requiredX = 706;
@@ -301,12 +318,12 @@
           size: 9.1
         }) +
 
-        CAD.line(cameraX, centerY, requiredX + 22, centerY, {
+        CAD.line(lensTipX, centerY, requiredX + 22, centerY, {
           stroke: "rgba(226,232,240,.18)",
           width: 0.85,
           dash: "5 8"
         }) +
-        fovCone(cameraX, centerY, targetX, calcTopY, calcBottomY, {
+        fovCone(lensTipX, centerY, targetX, calcTopY, calcBottomY, {
           fill: "url(#" + coneId + ")",
           stroke: tone.line,
           width: 1.05
@@ -327,7 +344,7 @@
         }) +
         spanLinks(targetX, calcTopY, calcBottomY, requiredX, reqTopY, reqBottomY) +
 
-        CAD.axisLine(cameraX, dimY, targetX, dimY, "Target distance: " + fmtFt(targetDistance), {
+        CAD.axisLine(lensTipX, dimY, targetX, dimY, "Target distance: " + fmtFt(targetDistance), {
           markerId: arrowId,
           labelOffset: 18,
           color: colors.axis
@@ -338,7 +355,7 @@
           labelOffset: -10,
           tick: 5
         }) +
-        hfovCallout(cameraX, centerY, targetX, calcTopY, calcBottomY, "HFOV " + fmt(hfovDeg, 1) + "?", {
+        hfovCallout(lensTipX, centerY, targetX, calcTopY, calcBottomY, "HFOV " + fmt(hfovDeg, 1) + "?", {
           color: "rgba(226,232,240,.32)"
         }) +
       '</svg>';
@@ -346,6 +363,7 @@
 
   const primitives = {
     cadGrid,
+    cameraLensTipX,
     cameraPlanMarker,
     fovCone,
     targetPlane,
