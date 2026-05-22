@@ -1399,6 +1399,91 @@ function blindSpotMultiCameraFootprintSvg(data) {
 }
 
 
+
+  function blindSpotExportTable(title, rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : [])
+      .filter((row) => row && row[0] && row[1] !== undefined && row[1] !== null && String(row[1]).trim() !== "");
+
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<table style="width:100%;border-collapse:collapse;margin:12px 0 0 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th colspan="2" style="padding:8px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">' + escapeHtml(title) + '</th>' +
+        '</tr><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Metric</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:right;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Value</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          cleanRows.map((row) => {
+            return '<tr>' +
+              '<td style="width:48%;padding:7px 10px;border:1px solid #d8dee6;color:#4b5563;vertical-align:top;">' + escapeHtml(row[0]) + '</td>' +
+              '<td style="padding:7px 10px;border:1px solid #d8dee6;color:#111827;font-weight:700;text-align:right;vertical-align:top;">' + escapeHtml(row[1]) + '</td>' +
+            '</tr>';
+          }).join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function blindSpotExportNotesTable(rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : [])
+      .filter((row) => row && row[0] && row[1]);
+
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<table style="width:100%;border-collapse:collapse;margin:12px 0 0 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          cleanRows.map((row) => {
+            return '<tr>' +
+              '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapeHtml(row[0]) + '</td>' +
+              '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' + escapeHtml(row[1]) + '</td>' +
+            '</tr>';
+          }).join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function blindSpotStructuredExportTables(data) {
+    if (!data || !data.ok) return "";
+
+    const actualOverlap = Number(data.cams) <= 1 ? "N/A" : fmtFt(data.actualOverlapFt) + " / " + fmtPct(data.actualOverlapPct);
+    const gapValue = Number(data.gapFt) <= 0 ? "0.0 ft" : fmtFt(data.gapFt);
+
+    const metrics = [
+      ["Required span", fmtFt(data.w)],
+      ["Validation zone depth", fmtFt(data.d)],
+      ["Camera count", fmt(data.cams, 0)],
+      ["Actual spacing", fmtFt(data.actualSpacingFt)],
+      ["Coverage per camera", fmtFt(data.coveragePerCameraFt)],
+      ["Effective coverage", fmtFt(data.effectiveCoverageFt)],
+      ["Modeled covered span", fmtFt(data.totalCoverageFt)],
+      ["Gap / margin", gapValue],
+      ["Overlap target", fmtPct(data.overlapPct)],
+      ["Actual overlap", actualOverlap],
+      ["Result", data.coverageClass],
+      ["Assistant status", data.status],
+      ["Layout source", data.layoutSource]
+    ];
+
+    const notes = [
+      ["Engineering interpretation", data.interpretation],
+      ["Dominant constraint", data.dominantConstraint],
+      ["Recommended action", data.guidance],
+      ["Pixel Density handoff", "Carry this continuity result into Pixel Density. The next step should validate whether the same camera layout delivers enough subject detail, not just continuous coverage."]
+    ];
+
+    return "" +
+      '<div class="blindspot-export-structured-tables" style="position:absolute;left:-10000px;top:auto;width:820px;max-height:1px;overflow:hidden;opacity:0;pointer-events:none;">' +
+        blindSpotExportTable("Blind Spot Design Summary", metrics) +
+        blindSpotExportNotesTable(notes) +
+      '</div>';
+  }
+
   function blindSpotPlanViewSvg(data) {
     return blindSpotMultiCameraFootprintSvg(data);
   }
@@ -1416,7 +1501,7 @@ function blindSpotMultiCameraFootprintSvg(data) {
 
     els.assistant.innerHTML =
       '<div class="blindspot-assistant-head"><div><p class="blindspot-assistant-kicker">Blind Spot Assistant</p><h3 class="blindspot-assistant-title">' + escapeHtml(blindSpotAssistantTitle(data)) + '</h3><p class="blindspot-assistant-copy">' + escapeHtml(blindSpotAssistantSummary(data)) + '</p></div><span class="blindspot-status-pill ' + statusClass + '">Assistant Status: ' + escapeHtml(formatAssistantStatusLabel(data.status)) + '</span></div>' +
-      '<div class="blindspot-visual-stage" data-export-section data-export-title="Blind Spot Assistant Plan View"><div class="blindspot-export-summary" data-export-text>Plan-view blind spot visual showing protected span, modeled coverage continuity, camera positions, overlap pressure, and remaining gap if present.</div>' + blindSpotPlanViewSvg(data) + '</div>' +
+      '<div class="blindspot-visual-stage" data-export-section data-export-title="Blind Spot Assistant Plan View"><div class="blindspot-export-summary" data-export-text>Plan-view blind spot visual showing protected span, modeled coverage continuity, camera positions, overlap pressure, and remaining gap if present.</div>' + blindSpotPlanViewSvg(data) + blindSpotStructuredExportTables(data) + '</div>' +
       '<div class="blindspot-mini-grid"><div class="blindspot-mini-card"><div class="blindspot-mini-label">Required span</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.w)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Modeled coverage</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.totalCoverageFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Gap / margin</div><div class="blindspot-mini-value">' + escapeHtml(data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Result</div><div class="blindspot-mini-value">' + escapeHtml(data.coverageClass) + '</div></div></div>' +
       '<div class="blindspot-handoff-card"><strong>Pixel Density handoff:</strong> ' + handoff + '</div>' +
       '<div class="blindspot-handoff-card"><strong>Assistant guidance:</strong> ' + escapeHtml(data.guidance) + '</div>';
