@@ -795,7 +795,7 @@
           const fp1 = frontPoint(item.startFt);
           const fp2 = frontPoint(item.endFt);
           const labelX = (fp1.x + fp2.x) / 2;
-          const labelY = frontLeft.y + 13 + (index % 2) * 10;
+          const labelY = frontLeft.y + 13;
 
           const labelText = escapeHtml(fmtFt(item.endFt - item.startFt)) + ' overlap';
           const labelWidth = Math.max(64, labelText.length * 6.2);
