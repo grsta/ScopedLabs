@@ -1523,32 +1523,14 @@
           Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
         </p>
 
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Camera Spacing Planner Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
+        <div
+          id="reportMetadataMount"
+          data-report-metadata
+          data-report-title="Report details"
+          data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."
+          data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+          data-collapsed="true"
+        ></div>
 
         <div class="btn-row" style="margin-top: 14px;">
           <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
@@ -1596,6 +1578,7 @@
       "disclaimer": "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
 };
   </script>
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-001"></script>
 
   <script src="/assets/export.js?v=shared-export-016-suppress-extra-title"></script>
 
