@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-025-fov-geometry-plan
+ * Version: scopedlabs-graphics-026-fov-geometry-polish
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-025-fov-geometry-plan";
+  const VERSION = "scopedlabs-graphics-026-fov-geometry-polish";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1339,19 +1339,13 @@
   function renderFovGeometryPlanSvg(model) {
     const m = model && typeof model === "object" ? model : {};
 
-    const cameraX = 72;
-    const targetX = 492;
-    const centerY = 122;
-    const maxSpanPx = 126;
-    const svgW = 610;
-    const svgH = 232;
-
     const calculatedWidth = Math.max(num(m.calculatedWidthFt ?? m.sceneWidthFt ?? m.coverageWidthFt, 0), 0.1);
     const requiredWidth = Math.max(num(m.requiredWidthFt ?? m.targetSceneWidthFt ?? m.sceneFt, 0), 0.1);
     const targetDistance = num(m.targetDistanceFt ?? m.distanceFt ?? m.dist, 0);
     const hfovDeg = num(m.hfovDeg ?? m.horizontalFovDeg ?? m.hfov, 0);
     const mountHeight = num(m.mountHeightFt ?? m.h, NaN);
     const fitClass = String(m.fitClass || m.status || "Planning View");
+    const ratio = requiredWidth > 0 ? calculatedWidth / requiredWidth : 0;
 
     if (!Number.isFinite(calculatedWidth) || !Number.isFinite(requiredWidth) || calculatedWidth <= 0 || requiredWidth <= 0) {
       return fallbackSvg(
@@ -1364,46 +1358,95 @@
       );
     }
 
+    const svgW = 800;
+    const svgH = 292;
+    const stageX = 24;
+    const stageY = 18;
+    const stageW = 752;
+    const stageH = 252;
+
+    const cameraX = 116;
+    const centerY = 136;
+    const targetX = 548;
+    const requiredX = 612;
+    const axisY = 232;
+
+    const maxSpanPx = 116;
     const maxWidth = Math.max(calculatedWidth, requiredWidth, 1);
     const scale = maxSpanPx / maxWidth;
-    const calculatedPx = Math.max(10, calculatedWidth * scale);
-    const requiredPx = Math.max(10, requiredWidth * scale);
 
-    const coneTopY = centerY - calculatedPx / 2;
-    const coneBottomY = centerY + calculatedPx / 2;
-    const requiredTopY = centerY - requiredPx / 2;
-    const requiredBottomY = centerY + requiredPx / 2;
+    const calcPx = Math.max(18, calculatedWidth * scale);
+    const reqPx = Math.max(18, requiredWidth * scale);
 
-    const axisY = 202;
-    const goodFit = fitClass === "Good Fit" || fitClass === "Geometry Fit";
-    const tooNarrow = fitClass === "Too Narrow";
-    const coneStroke = goodFit ? "rgba(125,255,158,.95)" : tooNarrow ? "rgba(255,190,120,.95)" : "rgba(255,220,120,.95)";
-    const coneFill = goodFit ? "rgba(125,255,158,.14)" : tooNarrow ? "rgba(255,150,80,.14)" : "rgba(255,210,90,.13)";
-    const requiredStroke = "rgba(255,255,255,.78)";
-    const centerStroke = "rgba(255,255,255,.28)";
-    const requiredX = targetX + 28;
+    const calcTopY = centerY - calcPx / 2;
+    const calcBottomY = centerY + calcPx / 2;
+    const reqTopY = centerY - reqPx / 2;
+    const reqBottomY = centerY + reqPx / 2;
+
+    const goodFit = ratio >= 1 && ratio <= 1.35;
+    const narrow = ratio < 1;
+    const wide = ratio > 1.35;
+
+    const statusText = narrow ? "Too narrow" : wide ? "Extra width" : "Geometry fit";
+    const statusFill = narrow ? "rgba(255,190,120,.95)" : wide ? "rgba(255,226,128,.95)" : "rgba(125,255,158,.95)";
+    const coneStroke = narrow ? "rgba(255,190,120,.95)" : "rgba(125,255,158,.95)";
+    const coneFill = narrow ? "rgba(255,150,80,.13)" : "rgba(125,255,158,.14)";
     const mountLabel = Number.isFinite(mountHeight) ? "Mount " + fmtFt(mountHeight) : "Mount context";
+
+    function pill(x, y, w, text, fill, stroke, textFill) {
+      return "" +
+        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="23" rx="11.5" fill="' + fill + '" stroke="' + stroke + '" />' +
+        '<text x="' + (x + w / 2) + '" y="' + (y + 15.5) + '" text-anchor="middle" fill="' + textFill + '" font-size="10.5" font-weight="900">' + escapeHtml(text) + '</text>';
+    }
 
     return "" +
       '<svg data-export-svg class="fov-geometry-svg" data-sl-engine="graphics" data-sl-renderer="fov-geometry-plan" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + escapeHtml(m.ariaLabel || "Field of view geometry diagram") + '">' +
-        '<defs><marker id="fovGeometryPlanArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(255,255,255,.62)"></path></marker></defs>' +
-        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="' + centerStroke + '" stroke-width="2" stroke-dasharray="5 7"></line>' +
-        '<polygon points="' + cameraX + ',' + centerY + ' ' + targetX + ',' + coneTopY + ' ' + targetX + ',' + coneBottomY + '" fill="' + coneFill + '" stroke="' + coneStroke + '" stroke-width="2"></polygon>' +
-        '<line x1="' + targetX + '" y1="' + coneTopY + '" x2="' + targetX + '" y2="' + coneBottomY + '" stroke="' + coneStroke + '" stroke-width="5" stroke-linecap="round"></line>' +
-        '<line x1="' + requiredX + '" y1="' + requiredTopY + '" x2="' + requiredX + '" y2="' + requiredBottomY + '" stroke="' + requiredStroke + '" stroke-width="4" stroke-linecap="round"></line>' +
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(125,255,158,.95)"></circle>' +
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="16" fill="none" stroke="rgba(125,255,158,.26)" stroke-width="2"></circle>' +
-        '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(255,255,255,.52)" stroke-width="2" marker-end="url(#fovGeometryPlanArrow)"></line>' +
-        '<line x1="' + cameraX + '" y1="' + (axisY - 7) + '" x2="' + cameraX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
-        '<line x1="' + targetX + '" y1="' + (axisY - 7) + '" x2="' + targetX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
-        '<text x="' + cameraX + '" y="' + (centerY - 25) + '" fill="rgba(255,255,255,.86)" font-size="11" font-weight="800" text-anchor="middle">Camera</text>' +
-        '<text x="' + cameraX + '" y="' + (centerY + 36) + '" fill="rgba(255,255,255,.62)" font-size="10" text-anchor="middle">' + escapeHtml(mountLabel) + '</text>' +
-        '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 21) + '" fill="rgba(255,255,255,.72)" font-size="11" font-weight="800" text-anchor="middle">Target distance: ' + escapeHtml(fmtFt(targetDistance)) + '</text>' +
-        '<text x="' + ((cameraX + targetX) / 2) + '" y="27" fill="rgba(255,255,255,.70)" font-size="11" font-weight="800" text-anchor="middle">HFOV ' + escapeHtml(fmt(hfovDeg, 1).replace(/\\.0$/, "")) + ' deg</text>' +
-        '<text x="' + targetX + '" y="' + Math.max(18, coneTopY - 8) + '" fill="rgba(255,255,255,.80)" font-size="10" font-weight="800" text-anchor="middle">calculated</text>' +
-        '<text x="' + requiredX + '" y="' + Math.max(18, requiredTopY - 8) + '" fill="rgba(255,255,255,.72)" font-size="10" font-weight="800" text-anchor="middle">required</text>' +
+        '<defs>' +
+          '<marker id="fovPlanArrow026" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(226,232,240,.66)"></path></marker>' +
+          '<linearGradient id="fovPlanCone026" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="rgba(125,255,158,.045)" />' +
+            '<stop offset="100%" stop-color="' + coneFill + '" />' +
+          '</linearGradient>' +
+        '</defs>' +
+
+        '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.16)" stroke="rgba(125,255,158,.20)" />' +
+
+        '<text x="48" y="48" fill="rgba(125,255,158,.80)" font-size="11" font-weight="950" letter-spacing=".08em">FIELD OF VIEW / TARGET PLANE</text>' +
+        pill(620, 34, 118, statusText, "rgba(6,18,12,.86)", "rgba(125,255,158,.24)", statusFill) +
+
+        '<text x="48" y="76" fill="rgba(226,232,240,.64)" font-size="11">Top-view geometry. Green shows calculated lens footprint; white shows required scene width.</text>' +
+
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="rgba(226,232,240,.24)" stroke-width="1.4" stroke-dasharray="5 7" />' +
+
+        '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + calcTopY.toFixed(1) + ' L ' + targetX + ' ' + calcBottomY.toFixed(1) + ' Z" fill="url(#fovPlanCone026)" stroke="' + coneStroke + '" stroke-width="2.1" />' +
+
+        '<line x1="' + targetX + '" y1="' + calcTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + calcBottomY.toFixed(1) + '" stroke="' + coneStroke + '" stroke-width="5.5" stroke-linecap="round" />' +
+        '<line x1="' + requiredX + '" y1="' + reqTopY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqBottomY.toFixed(1) + '" stroke="rgba(248,250,252,.76)" stroke-width="4.5" stroke-linecap="round" />' +
+
+        '<line x1="' + targetX + '" y1="' + calcTopY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqTopY.toFixed(1) + '" stroke="rgba(226,232,240,.18)" stroke-dasharray="4 7" />' +
+        '<line x1="' + targetX + '" y1="' + calcBottomY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.18)" stroke-dasharray="4 7" />' +
+
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="9" fill="rgba(125,255,158,.95)" />' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="20" fill="rgba(125,255,158,.08)" stroke="rgba(125,255,158,.30)" stroke-width="2" />' +
+        '<text x="' + cameraX + '" y="' + (centerY - 36) + '" fill="rgba(248,250,252,.88)" font-size="11" font-weight="900" text-anchor="middle">Camera</text>' +
+        '<text x="' + cameraX + '" y="' + (centerY + 43) + '" fill="rgba(226,232,240,.62)" font-size="10.5" text-anchor="middle">' + escapeHtml(mountLabel) + '</text>' +
+
+        '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="103" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="11" font-weight="900">HFOV ' + escapeHtml(fmt(hfovDeg, 1).replace(/\\.0$/, "")) + ' deg</text>' +
+
+        '<text x="' + (targetX - 6) + '" y="' + Math.max(101, calcTopY - 12).toFixed(1) + '" text-anchor="end" fill="rgba(125,255,158,.95)" font-size="10.5" font-weight="950">calculated</text>' +
+        '<text x="' + (requiredX + 8) + '" y="' + Math.max(121, reqTopY + 8).toFixed(1) + '" fill="rgba(248,250,252,.82)" font-size="10.5" font-weight="950">required</text>' +
+
+        '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(226,232,240,.52)" stroke-width="1.6" marker-end="url(#fovPlanArrow026)" />' +
+        '<line x1="' + cameraX + '" y1="' + (axisY - 7) + '" x2="' + cameraX + '" y2="' + (axisY + 7) + '" stroke="rgba(226,232,240,.52)" stroke-width="1.6" />' +
+        '<line x1="' + targetX + '" y1="' + (axisY - 7) + '" x2="' + targetX + '" y2="' + (axisY + 7) + '" stroke="rgba(226,232,240,.52)" stroke-width="1.6" />' +
+        '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="' + (axisY + 24) + '" fill="rgba(226,232,240,.74)" font-size="11" font-weight="900" text-anchor="middle">Target distance: ' + escapeHtml(fmtFt(targetDistance)) + '</text>' +
+
+        '<rect x="556" y="196" width="174" height="46" rx="13" fill="rgba(6,18,12,.74)" stroke="rgba(125,255,158,.18)" />' +
+        '<text x="574" y="216" fill="rgba(125,255,158,.92)" font-size="10.5" font-weight="950">Calculated ' + escapeHtml(fmtFt(calculatedWidth)) + '</text>' +
+        '<text x="574" y="233" fill="rgba(248,250,252,.78)" font-size="10.5" font-weight="850">Required ' + escapeHtml(fmtFt(requiredWidth)) + ' | Ratio ' + escapeHtml(fmt(ratio, 2)) + 'x</text>' +
       '</svg>';
   }
+
 
   function renderScenarioPressureLineSvg(model) {
     const m = model && typeof model === "object" ? model : {};
