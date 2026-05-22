@@ -742,6 +742,13 @@
         node.querySelector("h2, h3, h4")?.textContent?.trim() ||
         "Additional Output";
 
+      const compactSvg =
+        String(
+          node.dataset?.exportCompactSvg ||
+          node.getAttribute("data-export-compact-svg") ||
+          ""
+        ).trim().toLowerCase() === "true";
+
       const tables = Array.from(node.querySelectorAll("table"))
         .map(readExtraTable)
         .filter(Boolean);
@@ -773,6 +780,7 @@
 
       sections.push({
         suppressTitle,
+        compactSvg,
         title,
         tables,
         text,
@@ -790,7 +798,11 @@
         : "";
 
       const svgBlocks = (section.svgs || []).map((svg) => {
-        return `<div class="extra-svg-wrap print-low-ink-sentinel">${svg}</div>`;
+        const svgWrapClass = section.compactSvg
+          ? "extra-svg-wrap extra-svg-wrap--compact print-low-ink-sentinel"
+          : "extra-svg-wrap print-low-ink-sentinel";
+
+        return `<div class="${svgWrapClass}">${svg}</div>`;
       }).join("");
 
       const tableBlocks = (section.tables || []).map((table) => {
@@ -1371,6 +1383,16 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       height:auto;
       display:block;
       margin:0 auto;
+    }
+    .extra-svg-wrap--compact{
+      padding:12px;
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    .extra-svg-wrap--compact svg{
+      max-height:4.45in;
+      width:auto;
+      max-width:100%;
     }
     .foot{
       margin-top:26px;
