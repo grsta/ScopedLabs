@@ -652,6 +652,36 @@
     els.fovGeometry.innerHTML = "";
   }
 
+  function fovGeometryGraphicsModel(data) {
+    return {
+      tool: "field-of-view",
+      ariaLabel: "Field of view geometry diagram",
+      calculatedWidthFt: data && data.sceneWidth,
+      requiredWidthFt: data && data.scene,
+      targetDistanceFt: data && data.dist,
+      hfovDeg: data && data.hfov,
+      mountHeightFt: data && data.h,
+      fitClass: data && data.fitClass,
+      coverageRatio: data && data.coverageRatio,
+      status: data && data.status
+    };
+  }
+
+  function fovGeometrySvg(data, fallbackSvg) {
+    const gfx = window.ScopedLabsGraphics;
+
+    if (gfx && typeof gfx.render === "function") {
+      const model = fovGeometryGraphicsModel(data);
+      let svg = gfx.render("fov-geometry-plan", model);
+
+      if (typeof svg === "string" && svg.includes("<svg") && !svg.includes("data-sl-diagnostic-code")) {
+        return svg.replace(/\sdata-export-svg\b/g, "");
+      }
+    }
+
+    return fallbackSvg || "";
+  }
+
   function renderFovGeometryDiagram(data) {
     if (!els.fovGeometry || !data || !data.ok) return;
 
@@ -684,7 +714,7 @@
     const centerStroke = "rgba(255,255,255,.28)";
     const requiredX = targetX + 28;
 
-    const liveSvg =
+    const fallbackLiveSvg =
       '<svg class="fov-geometry-svg" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Field of view geometry diagram">' +
         '<defs><marker id="fovArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(255,255,255,.62)"></path></marker></defs>' +
         '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="' + centerStroke + '" stroke-width="2" stroke-dasharray="5 7"></line>' +
@@ -703,6 +733,8 @@
         '<text x="' + targetX + '" y="' + Math.max(18, coneTopY - 8) + '" fill="rgba(255,255,255,.80)" font-size="10" font-weight="800" text-anchor="middle">calculated</text>' +
         '<text x="' + requiredX + '" y="' + Math.max(18, requiredTopY - 8) + '" fill="rgba(255,255,255,.72)" font-size="10" font-weight="800" text-anchor="middle">required</text>' +
       '</svg>';
+
+    const liveSvg = fovGeometrySvg(data, fallbackLiveSvg);
 
     const exportSvg =
       '<svg data-export-svg viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Field of view geometry diagram for export">' +

@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-024-coverage-footprint-plan
+ * Version: scopedlabs-graphics-025-fov-geometry-plan
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-024-coverage-footprint-plan";
+  const VERSION = "scopedlabs-graphics-025-fov-geometry-plan";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1335,6 +1335,76 @@
       '</svg>';
   }
 
+
+  function renderFovGeometryPlanSvg(model) {
+    const m = model && typeof model === "object" ? model : {};
+
+    const cameraX = 72;
+    const targetX = 492;
+    const centerY = 122;
+    const maxSpanPx = 126;
+    const svgW = 610;
+    const svgH = 232;
+
+    const calculatedWidth = Math.max(num(m.calculatedWidthFt ?? m.sceneWidthFt ?? m.coverageWidthFt, 0), 0.1);
+    const requiredWidth = Math.max(num(m.requiredWidthFt ?? m.targetSceneWidthFt ?? m.sceneFt, 0), 0.1);
+    const targetDistance = num(m.targetDistanceFt ?? m.distanceFt ?? m.dist, 0);
+    const hfovDeg = num(m.hfovDeg ?? m.horizontalFovDeg ?? m.hfov, 0);
+    const mountHeight = num(m.mountHeightFt ?? m.h, NaN);
+    const fitClass = String(m.fitClass || m.status || "Planning View");
+
+    if (!Number.isFinite(calculatedWidth) || !Number.isFinite(requiredWidth) || calculatedWidth <= 0 || requiredWidth <= 0) {
+      return fallbackSvg(
+        "SL-GFX-FOV-GEOMETRY-BAD-MODEL",
+        "Field of View renderer needs calculated and required widths.",
+        {
+          renderer: "fov-geometry-plan",
+          tool: m.tool || "field-of-view"
+        }
+      );
+    }
+
+    const maxWidth = Math.max(calculatedWidth, requiredWidth, 1);
+    const scale = maxSpanPx / maxWidth;
+    const calculatedPx = Math.max(10, calculatedWidth * scale);
+    const requiredPx = Math.max(10, requiredWidth * scale);
+
+    const coneTopY = centerY - calculatedPx / 2;
+    const coneBottomY = centerY + calculatedPx / 2;
+    const requiredTopY = centerY - requiredPx / 2;
+    const requiredBottomY = centerY + requiredPx / 2;
+
+    const axisY = 202;
+    const goodFit = fitClass === "Good Fit" || fitClass === "Geometry Fit";
+    const tooNarrow = fitClass === "Too Narrow";
+    const coneStroke = goodFit ? "rgba(125,255,158,.95)" : tooNarrow ? "rgba(255,190,120,.95)" : "rgba(255,220,120,.95)";
+    const coneFill = goodFit ? "rgba(125,255,158,.14)" : tooNarrow ? "rgba(255,150,80,.14)" : "rgba(255,210,90,.13)";
+    const requiredStroke = "rgba(255,255,255,.78)";
+    const centerStroke = "rgba(255,255,255,.28)";
+    const requiredX = targetX + 28;
+    const mountLabel = Number.isFinite(mountHeight) ? "Mount " + fmtFt(mountHeight) : "Mount context";
+
+    return "" +
+      '<svg data-export-svg class="fov-geometry-svg" data-sl-engine="graphics" data-sl-renderer="fov-geometry-plan" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + escapeHtml(m.ariaLabel || "Field of view geometry diagram") + '">' +
+        '<defs><marker id="fovGeometryPlanArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(255,255,255,.62)"></path></marker></defs>' +
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="' + centerStroke + '" stroke-width="2" stroke-dasharray="5 7"></line>' +
+        '<polygon points="' + cameraX + ',' + centerY + ' ' + targetX + ',' + coneTopY + ' ' + targetX + ',' + coneBottomY + '" fill="' + coneFill + '" stroke="' + coneStroke + '" stroke-width="2"></polygon>' +
+        '<line x1="' + targetX + '" y1="' + coneTopY + '" x2="' + targetX + '" y2="' + coneBottomY + '" stroke="' + coneStroke + '" stroke-width="5" stroke-linecap="round"></line>' +
+        '<line x1="' + requiredX + '" y1="' + requiredTopY + '" x2="' + requiredX + '" y2="' + requiredBottomY + '" stroke="' + requiredStroke + '" stroke-width="4" stroke-linecap="round"></line>' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(125,255,158,.95)"></circle>' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="16" fill="none" stroke="rgba(125,255,158,.26)" stroke-width="2"></circle>' +
+        '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(255,255,255,.52)" stroke-width="2" marker-end="url(#fovGeometryPlanArrow)"></line>' +
+        '<line x1="' + cameraX + '" y1="' + (axisY - 7) + '" x2="' + cameraX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
+        '<line x1="' + targetX + '" y1="' + (axisY - 7) + '" x2="' + targetX + '" y2="' + (axisY + 7) + '" stroke="rgba(255,255,255,.52)" stroke-width="2"></line>' +
+        '<text x="' + cameraX + '" y="' + (centerY - 25) + '" fill="rgba(255,255,255,.86)" font-size="11" font-weight="800" text-anchor="middle">Camera</text>' +
+        '<text x="' + cameraX + '" y="' + (centerY + 36) + '" fill="rgba(255,255,255,.62)" font-size="10" text-anchor="middle">' + escapeHtml(mountLabel) + '</text>' +
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="' + (axisY + 21) + '" fill="rgba(255,255,255,.72)" font-size="11" font-weight="800" text-anchor="middle">Target distance: ' + escapeHtml(fmtFt(targetDistance)) + '</text>' +
+        '<text x="' + ((cameraX + targetX) / 2) + '" y="27" fill="rgba(255,255,255,.70)" font-size="11" font-weight="800" text-anchor="middle">HFOV ' + escapeHtml(fmt(hfovDeg, 1).replace(/\\.0$/, "")) + ' deg</text>' +
+        '<text x="' + targetX + '" y="' + Math.max(18, coneTopY - 8) + '" fill="rgba(255,255,255,.80)" font-size="10" font-weight="800" text-anchor="middle">calculated</text>' +
+        '<text x="' + requiredX + '" y="' + Math.max(18, requiredTopY - 8) + '" fill="rgba(255,255,255,.72)" font-size="10" font-weight="800" text-anchor="middle">required</text>' +
+      '</svg>';
+  }
+
   function renderScenarioPressureLineSvg(model) {
     const m = model && typeof model === "object" ? model : {};
     const rawPoints = Array.isArray(m.points)
@@ -1504,6 +1574,7 @@
   }
 
 registerRenderer("coverage-footprint-plan", renderCoverageFootprintPlanSvg);
+registerRenderer("fov-geometry-plan", renderFovGeometryPlanSvg);
 registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
   registerRenderer("camera-layout-iso", renderCameraLayoutIsoSvg);
 
@@ -1520,6 +1591,7 @@ registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
     renderScenarioPressureLineSvg,
     renderCameraLayoutIsoSvg,
     renderCoverageFootprintPlanSvg,
+    renderFovGeometryPlanSvg,
     validateCameraLayoutModel,
     helpers: {
       escapeHtml,
