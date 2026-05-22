@@ -593,7 +593,48 @@
     return "Usable coverage is ready for spacing validation.";
   }
 
+  function coverageFootprintGraphicsModel(data) {
+    return {
+      tool: "camera-coverage-area",
+      title: "Plan view: raw footprint to usable width",
+      subtitle: "Top-down footprint at the target plane. Green is usable coverage; yellow marks held-back reserve before spacing.",
+      ariaLabel: "Coverage reserve plan view visualization",
+      rawWidthFt: data && data.width,
+      usableWidthFt: data && data.effWidth,
+      rawHeightFt: data && data.height,
+      targetDistanceFt: data && data.dist,
+      hfovDeg: data && data.hfov,
+      reservePct: data && data.ovPct,
+      widthRetentionPct: data && data.widthRetentionPct,
+      areaRetentionPct: data && data.areaRetentionPct,
+      status: data && data.status
+    };
+  }
+
   function coverageFootprintSvg(data) {
+    const gfx = window.ScopedLabsGraphics;
+
+    if (gfx && typeof gfx.render === "function") {
+      const model = coverageFootprintGraphicsModel(data);
+      let svg = gfx.render("coverage-footprint-plan", model);
+
+      if (typeof svg === "string" && svg.includes("<svg")) {
+        if (typeof gfx.frameSvg === "function") {
+          svg = gfx.frameSvg(svg, {
+            renderer: "coverage-footprint-plan",
+            tool: "camera-coverage-area",
+            size: "wide"
+          });
+        }
+
+        return svg;
+      }
+    }
+
+    return coverageFootprintSvgLocal(data);
+  }
+
+  function coverageFootprintSvgLocal(data) {
     const reservePct = Math.max(0, Math.min(Number(data?.ovPct) || 0, 95));
     const retainedPct = Math.max(0, Math.min(Number(data?.widthRetentionPct) || 0, 100));
     const areaRetainedPct = Math.max(0, Math.min(Number(data?.areaRetentionPct) || 0, 100));

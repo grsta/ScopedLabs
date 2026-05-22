@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-010-camera-depth-spacing
+ * Version: scopedlabs-graphics-024-coverage-footprint-plan
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-023-gap-label-alignment";
+  const VERSION = "scopedlabs-graphics-024-coverage-footprint-plan";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1187,6 +1187,154 @@
 
   registerRenderer("camera-layout", renderCameraLayoutSvg);
   
+
+  function renderCoverageFootprintPlanSvg(model) {
+    const m = model && typeof model === "object" ? model : {};
+
+    const rawWidth = Math.max(0, num(m.rawWidthFt ?? m.widthFt, 0));
+    const usableWidth = Math.max(0, num(m.usableWidthFt ?? m.effectiveWidthFt, 0));
+    const rawHeight = Math.max(0, num(m.rawHeightFt ?? m.heightFt, 0));
+    const targetDistance = Math.max(0, num(m.targetDistanceFt ?? m.distanceFt, 0));
+    const hfovDeg = Math.max(0, num(m.hfovDeg ?? m.hfov, 0));
+
+    if (!rawWidth && !usableWidth) {
+      return fallbackSvg(
+        "SL-GFX-COVERAGE-FOOTPRINT-BAD-MODEL",
+        "Coverage footprint renderer needs rawWidthFt or usableWidthFt.",
+        {
+          renderer: "coverage-footprint-plan",
+          tool: m.tool || "camera-coverage-area"
+        }
+      );
+    }
+
+    const reservePct = clamp(num(m.reservePct ?? m.usableCoverageReservePct ?? m.ovPct, rawWidth > 0 ? Math.max(0, 100 - ((usableWidth / rawWidth) * 100)) : 0), 0, 95);
+    const retainedPct = clamp(num(m.widthRetentionPct, rawWidth > 0 ? (usableWidth / rawWidth) * 100 : 0), 0, 100);
+    const areaRetainedPct = clamp(num(m.areaRetentionPct, retainedPct), 0, 100);
+    const reserveEachSideFt = Math.max(0, (rawWidth - usableWidth) / 2);
+
+    const labelX = 52;
+    const barX = 292;
+    const barW = 280;
+    const valueX = 740;
+    const barH = 10;
+    const row1Y = 70;
+    const rowGap = 32;
+
+    const stageX = 34;
+    const stageY = 150;
+    const stageW = 732;
+    const stageH = 228;
+
+    const cameraX = 122;
+    const centerY = 264;
+    const targetX = 560;
+    const rawHalf = 72;
+    const usableHalf = Math.max(8, rawHalf * (retainedPct / 100));
+
+    const rawTopY = centerY - rawHalf;
+    const rawBotY = centerY + rawHalf;
+    const usableTopY = centerY - usableHalf;
+    const usableBotY = centerY + usableHalf;
+
+    const usableBarW = Math.max(8, barW * (retainedPct / 100));
+    const reserveBarW = Math.max(8, barW * (reservePct / 100));
+    const reserveTone = reservePct >= 35 ? "risk" : reservePct >= 20 ? "watch" : "normal";
+    const reserveBarFill = reserveTone === "risk" ? "url(#coveragePlanRiskBar)" : "url(#coveragePlanReserveBar)";
+    const reserveValueFill = reserveTone === "risk" ? "rgba(255,188,166,.96)" : "rgba(255,239,176,.96)";
+
+    const title = m.title || "Plan view: raw footprint to usable width";
+    const subtitle = m.subtitle || "Top-down footprint at the target plane. Green is usable coverage; yellow marks held-back reserve before spacing.";
+
+    return "" +
+      '<svg data-export-svg data-sl-engine="graphics" data-sl-renderer="coverage-footprint-plan" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 800 398" role="img" aria-label="' + escapeHtml(m.ariaLabel || "Coverage reserve plan view visualization") + '">' +
+        '<defs>' +
+          '<linearGradient id="coveragePlanRawBar" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="rgba(84,212,116,.70)" />' +
+            '<stop offset="100%" stop-color="rgba(125,255,152,.86)" />' +
+          '</linearGradient>' +
+          '<linearGradient id="coveragePlanUsableBar" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="rgba(104,240,138,.78)" />' +
+            '<stop offset="100%" stop-color="rgba(151,255,176,.92)" />' +
+          '</linearGradient>' +
+          '<linearGradient id="coveragePlanReserveBar" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="rgba(255,211,79,.76)" />' +
+            '<stop offset="100%" stop-color="rgba(255,226,128,.90)" />' +
+          '</linearGradient>' +
+          '<linearGradient id="coveragePlanRiskBar" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="rgba(255,138,102,.82)" />' +
+            '<stop offset="100%" stop-color="rgba(255,94,94,.92)" />' +
+          '</linearGradient>' +
+          '<linearGradient id="coveragePlanFovFill" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="rgba(125,255,152,.035)" />' +
+            '<stop offset="100%" stop-color="rgba(125,255,152,.105)" />' +
+          '</linearGradient>' +
+          '<linearGradient id="coveragePlanUsableFill" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="rgba(125,255,152,.07)" />' +
+            '<stop offset="100%" stop-color="rgba(125,255,152,.18)" />' +
+          '</linearGradient>' +
+        '</defs>' +
+
+        '<text x="52" y="26" fill="rgba(248,250,252,.92)" font-size="18" font-weight="900">' + escapeHtml(title) + '</text>' +
+        '<text x="52" y="48" fill="rgba(226,232,240,.62)" font-size="12">' + escapeHtml(subtitle) + '</text>' +
+
+        '<text x="' + labelX + '" y="' + row1Y + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Raw footprint width</text>' +
+        '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
+        '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="url(#coveragePlanRawBar)" />' +
+        '<text x="' + valueX + '" y="' + row1Y + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(rawWidth)) + '</text>' +
+
+        '<text x="' + labelX + '" y="' + (row1Y + rowGap) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Usable width after reserve</text>' +
+        '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
+        '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + usableBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#coveragePlanUsableBar)" />' +
+        '<text x="' + valueX + '" y="' + (row1Y + rowGap) + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + escapeHtml(fmtFt(usableWidth)) + ' | ' + escapeHtml(fmtPct(retainedPct, 1)) + ' retained</text>' +
+
+        '<text x="' + labelX + '" y="' + (row1Y + rowGap * 2) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Held-back reserve</text>' +
+        '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />' +
+        '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + reserveBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="' + reserveBarFill + '" />' +
+        '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + reserveValueFill + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(reservePct, 1)) + ' reserve | ' + escapeHtml(fmtPct(areaRetainedPct, 1)) + ' area retained</text>' +
+
+        '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="' + theme.stageStroke + '" />' +
+        '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / TARGET PLANE</text>' +
+
+        '<text x="' + (cameraX - 76) + '" y="' + (centerY - 4) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
+        '<text x="' + (cameraX - 76) + '" y="' + (centerY + 14) + '" text-anchor="start" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + escapeHtml(fmt(hfovDeg, 0)) + ' deg</text>' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />' +
+
+        '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + rawTopY.toFixed(1) + ' L ' + targetX + ' ' + rawBotY.toFixed(1) + ' Z" fill="url(#coveragePlanFovFill)" stroke="rgba(226,232,240,.24)" stroke-width="1" stroke-dasharray="5 6" />' +
+        '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + usableTopY.toFixed(1) + ' L ' + targetX + ' ' + usableBotY.toFixed(1) + ' Z" fill="url(#coveragePlanUsableFill)" stroke="rgba(125,255,152,.62)" stroke-width="1.25" />' +
+
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="rgba(226,232,240,.26)" stroke-width="1" stroke-dasharray="4 6" />' +
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + rawTopY.toFixed(1) + '" stroke="rgba(255,226,128,.66)" stroke-width="1" stroke-dasharray="5 6" />' +
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(255,226,128,.66)" stroke-width="1" stroke-dasharray="5 6" />' +
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + usableTopY.toFixed(1) + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" />' +
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + usableBotY.toFixed(1) + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" />' +
+
+        '<line x1="' + targetX + '" y1="' + rawTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />' +
+        '<line x1="' + targetX + '" y1="' + rawTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + usableTopY.toFixed(1) + '" stroke="rgba(255,226,128,.90)" stroke-width="2" />' +
+        '<line x1="' + targetX + '" y1="' + usableTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + usableBotY.toFixed(1) + '" stroke="rgba(125,255,152,.92)" stroke-width="2.2" />' +
+        '<line x1="' + targetX + '" y1="' + usableBotY.toFixed(1) + '" x2="' + targetX + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(255,226,128,.90)" stroke-width="2" />' +
+
+        '<text x="' + (targetX + 18) + '" y="' + (centerY - 12) + '" fill="rgba(125,255,152,.94)" font-size="12" font-weight="950">Usable width</text>' +
+        '<text x="' + (targetX + 18) + '" y="' + (centerY + 9) + '" fill="rgba(125,255,152,.94)" font-size="14" font-weight="950">' + escapeHtml(fmtFt(usableWidth)) + '</text>' +
+        '<text x="' + (targetX + 18) + '" y="' + (centerY + 27) + '" fill="rgba(226,232,240,.58)" font-size="10.5">after reserve</text>' +
+
+        '<text x="' + (targetX + 18) + '" y="' + (rawTopY + 10).toFixed(1) + '" fill="rgba(255,226,128,.92)" font-size="10.5" font-weight="900">Reserve ' + escapeHtml(fmtFt(reserveEachSideFt)) + '</text>' +
+        '<text x="' + (targetX + 18) + '" y="' + (rawBotY - 5).toFixed(1) + '" fill="rgba(255,226,128,.92)" font-size="10.5" font-weight="900">Reserve ' + escapeHtml(fmtFt(reserveEachSideFt)) + '</text>' +
+
+        '<line x1="' + (targetX + 128) + '" y1="' + rawTopY.toFixed(1) + '" x2="' + (targetX + 128) + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(226,232,240,.44)" stroke-width="1" />' +
+        '<line x1="' + (targetX + 121) + '" y1="' + rawTopY.toFixed(1) + '" x2="' + (targetX + 135) + '" y2="' + rawTopY.toFixed(1) + '" stroke="rgba(226,232,240,.44)" stroke-width="1" />' +
+        '<line x1="' + (targetX + 121) + '" y1="' + rawBotY.toFixed(1) + '" x2="' + (targetX + 135) + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(226,232,240,.44)" stroke-width="1" />' +
+        '<text x="' + (stageX + stageW - 76) + '" y="' + (centerY - 18) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Raw</text>' +
+        '<text x="' + (stageX + stageW - 76) + '" y="' + (centerY - 3) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">footprint</text>' +
+        '<text x="' + (stageX + stageW - 76) + '" y="' + (centerY + 16) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="13" font-weight="950">' + escapeHtml(fmtFt(rawWidth)) + '</text>' +
+
+        '<line x1="' + cameraX + '" y1="354" x2="' + targetX + '" y2="354" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+        '<line x1="' + cameraX + '" y1="348" x2="' + cameraX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+        '<line x1="' + targetX + '" y1="348" x2="' + targetX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+        '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="376" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Target distance: ' + escapeHtml(fmtFt(targetDistance, 0)) + '</text>' +
+      '</svg>';
+  }
+
   function renderScenarioPressureLineSvg(model) {
     const m = model && typeof model === "object" ? model : {};
     const rawPoints = Array.isArray(m.points)
@@ -1355,6 +1503,7 @@
       '</svg>';
   }
 
+registerRenderer("coverage-footprint-plan", renderCoverageFootprintPlanSvg);
 registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
   registerRenderer("camera-layout-iso", renderCameraLayoutIsoSvg);
 
@@ -1370,6 +1519,7 @@ registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
     renderCameraLayoutSvg,
     renderScenarioPressureLineSvg,
     renderCameraLayoutIsoSvg,
+    renderCoverageFootprintPlanSvg,
     validateCameraLayoutModel,
     helpers: {
       escapeHtml,
