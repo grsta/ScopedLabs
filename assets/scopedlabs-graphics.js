@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-026-fov-geometry-polish
+ * Version: scopedlabs-graphics-027-fov-thin-line
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-026-fov-geometry-polish";
+  const VERSION = "scopedlabs-graphics-027-fov-thin-line";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1341,10 +1341,8 @@
 
     const calculatedWidth = Math.max(num(m.calculatedWidthFt ?? m.sceneWidthFt ?? m.coverageWidthFt, 0), 0.1);
     const requiredWidth = Math.max(num(m.requiredWidthFt ?? m.targetSceneWidthFt ?? m.sceneFt, 0), 0.1);
-    const targetDistance = num(m.targetDistanceFt ?? m.distanceFt ?? m.dist, 0);
-    const hfovDeg = num(m.hfovDeg ?? m.horizontalFovDeg ?? m.hfov, 0);
-    const mountHeight = num(m.mountHeightFt ?? m.h, NaN);
-    const fitClass = String(m.fitClass || m.status || "Planning View");
+    const targetDistance = Math.max(num(m.targetDistanceFt ?? m.distanceFt ?? m.dist, 0), 0);
+    const hfovDeg = Math.max(num(m.hfovDeg ?? m.horizontalFovDeg ?? m.hfov, 0), 0);
     const ratio = requiredWidth > 0 ? calculatedWidth / requiredWidth : 0;
 
     if (!Number.isFinite(calculatedWidth) || !Number.isFinite(requiredWidth) || calculatedWidth <= 0 || requiredWidth <= 0) {
@@ -1359,19 +1357,20 @@
     }
 
     const svgW = 800;
-    const svgH = 292;
-    const stageX = 24;
-    const stageY = 18;
-    const stageW = 752;
-    const stageH = 252;
+    const svgH = 260;
 
-    const cameraX = 116;
-    const centerY = 136;
-    const targetX = 548;
-    const requiredX = 612;
-    const axisY = 232;
+    const stageX = 28;
+    const stageY = 20;
+    const stageW = 744;
+    const stageH = 218;
 
-    const maxSpanPx = 116;
+    const cameraX = 112;
+    const centerY = 134;
+    const targetX = 560;
+    const requiredX = 620;
+    const axisY = 214;
+
+    const maxSpanPx = 105;
     const maxWidth = Math.max(calculatedWidth, requiredWidth, 1);
     const scale = maxSpanPx / maxWidth;
 
@@ -1383,67 +1382,65 @@
     const reqTopY = centerY - reqPx / 2;
     const reqBottomY = centerY + reqPx / 2;
 
-    const goodFit = ratio >= 1 && ratio <= 1.35;
-    const narrow = ratio < 1;
-    const wide = ratio > 1.35;
+    const isNarrow = ratio < 1;
+    const isWide = ratio > 1.35;
+    const statusText = isNarrow ? "Narrow" : isWide ? "Wide" : "Fit";
+    const statusStroke = isNarrow ? "rgba(255,190,120,.70)" : isWide ? "rgba(255,226,128,.70)" : "rgba(125,255,158,.70)";
+    const statusFill = isNarrow ? "rgba(255,190,120,.13)" : isWide ? "rgba(255,226,128,.12)" : "rgba(125,255,158,.12)";
+    const statusTextFill = isNarrow ? "rgba(255,210,170,.95)" : isWide ? "rgba(255,235,170,.95)" : "rgba(150,255,178,.95)";
 
-    const statusText = narrow ? "Too narrow" : wide ? "Extra width" : "Geometry fit";
-    const statusFill = narrow ? "rgba(255,190,120,.95)" : wide ? "rgba(255,226,128,.95)" : "rgba(125,255,158,.95)";
-    const coneStroke = narrow ? "rgba(255,190,120,.95)" : "rgba(125,255,158,.95)";
-    const coneFill = narrow ? "rgba(255,150,80,.13)" : "rgba(125,255,158,.14)";
-    const mountLabel = Number.isFinite(mountHeight) ? "Mount " + fmtFt(mountHeight) : "Mount context";
+    const coneStroke = isNarrow ? "rgba(255,190,120,.82)" : "rgba(125,255,158,.84)";
+    const coneFill = isNarrow ? "rgba(255,170,92,.085)" : "rgba(125,255,158,.085)";
 
-    function pill(x, y, w, text, fill, stroke, textFill) {
+    function metricChip(x, y, label, value, accent) {
       return "" +
-        '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="23" rx="11.5" fill="' + fill + '" stroke="' + stroke + '" />' +
-        '<text x="' + (x + w / 2) + '" y="' + (y + 15.5) + '" text-anchor="middle" fill="' + textFill + '" font-size="10.5" font-weight="900">' + escapeHtml(text) + '</text>';
+        '<rect x="' + x + '" y="' + y + '" width="142" height="38" rx="12" fill="rgba(6,18,12,.72)" stroke="' + accent + '" />' +
+        '<text x="' + (x + 12) + '" y="' + (y + 15) + '" fill="rgba(226,232,240,.54)" font-size="9.5" font-weight="850" letter-spacing=".06em">' + escapeHtml(label) + '</text>' +
+        '<text x="' + (x + 12) + '" y="' + (y + 30) + '" fill="rgba(248,250,252,.88)" font-size="11" font-weight="950">' + escapeHtml(value) + '</text>';
     }
 
     return "" +
-      '<svg data-export-svg class="fov-geometry-svg" data-sl-engine="graphics" data-sl-renderer="fov-geometry-plan" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + escapeHtml(m.ariaLabel || "Field of view geometry diagram") + '">' +
+      '<svg data-export-svg class="fov-geometry-svg" data-sl-engine="graphics" data-sl-renderer="fov-geometry-plan" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + escapeHtml(m.ariaLabel || "Field of view geometry plan view") + '">' +
         '<defs>' +
-          '<marker id="fovPlanArrow026" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(226,232,240,.66)"></path></marker>' +
-          '<linearGradient id="fovPlanCone026" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%" stop-color="rgba(125,255,158,.045)" />' +
+          '<marker id="fovThinArrow027" markerWidth="7" markerHeight="7" refX="6.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(226,232,240,.54)"></path></marker>' +
+          '<linearGradient id="fovThinCone027" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="rgba(125,255,158,.025)" />' +
             '<stop offset="100%" stop-color="' + coneFill + '" />' +
           '</linearGradient>' +
         '</defs>' +
 
-        '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.16)" stroke="rgba(125,255,158,.20)" />' +
+        '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.14)" stroke="rgba(125,255,158,.18)" />' +
 
-        '<text x="48" y="48" fill="rgba(125,255,158,.80)" font-size="11" font-weight="950" letter-spacing=".08em">FIELD OF VIEW / TARGET PLANE</text>' +
-        pill(620, 34, 118, statusText, "rgba(6,18,12,.86)", "rgba(125,255,158,.24)", statusFill) +
+        '<text x="52" y="48" fill="rgba(125,255,158,.82)" font-size="11" font-weight="950" letter-spacing=".09em">FIELD OF VIEW / TARGET PLANE</text>' +
+        '<rect x="700" y="32" width="48" height="22" rx="11" fill="' + statusFill + '" stroke="' + statusStroke + '" />' +
+        '<text x="724" y="47" text-anchor="middle" fill="' + statusTextFill + '" font-size="10" font-weight="950">' + escapeHtml(statusText) + '</text>' +
 
-        '<text x="48" y="76" fill="rgba(226,232,240,.64)" font-size="11">Top-view geometry. Green shows calculated lens footprint; white shows required scene width.</text>' +
+        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="rgba(226,232,240,.22)" stroke-width="1" stroke-dasharray="5 7" />' +
 
-        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="rgba(226,232,240,.24)" stroke-width="1.4" stroke-dasharray="5 7" />' +
+        '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + calcTopY.toFixed(1) + ' L ' + targetX + ' ' + calcBottomY.toFixed(1) + ' Z" fill="url(#fovThinCone027)" stroke="' + coneStroke + '" stroke-width="1.45" />' +
 
-        '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + calcTopY.toFixed(1) + ' L ' + targetX + ' ' + calcBottomY.toFixed(1) + ' Z" fill="url(#fovPlanCone026)" stroke="' + coneStroke + '" stroke-width="2.1" />' +
+        '<line x1="' + targetX + '" y1="' + calcTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + calcBottomY.toFixed(1) + '" stroke="' + coneStroke + '" stroke-width="3.2" stroke-linecap="round" />' +
+        '<line x1="' + requiredX + '" y1="' + reqTopY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqBottomY.toFixed(1) + '" stroke="rgba(248,250,252,.68)" stroke-width="3" stroke-linecap="round" />' +
 
-        '<line x1="' + targetX + '" y1="' + calcTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + calcBottomY.toFixed(1) + '" stroke="' + coneStroke + '" stroke-width="5.5" stroke-linecap="round" />' +
-        '<line x1="' + requiredX + '" y1="' + reqTopY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqBottomY.toFixed(1) + '" stroke="rgba(248,250,252,.76)" stroke-width="4.5" stroke-linecap="round" />' +
+        '<line x1="' + targetX + '" y1="' + calcTopY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqTopY.toFixed(1) + '" stroke="rgba(226,232,240,.15)" stroke-dasharray="4 7" stroke-width="1" />' +
+        '<line x1="' + targetX + '" y1="' + calcBottomY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.15)" stroke-dasharray="4 7" stroke-width="1" />' +
 
-        '<line x1="' + targetX + '" y1="' + calcTopY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqTopY.toFixed(1) + '" stroke="rgba(226,232,240,.18)" stroke-dasharray="4 7" />' +
-        '<line x1="' + targetX + '" y1="' + calcBottomY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.18)" stroke-dasharray="4 7" />' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="7" fill="rgba(125,255,158,.92)" />' +
+        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="17" fill="rgba(125,255,158,.055)" stroke="rgba(125,255,158,.28)" stroke-width="1.25" />' +
+        '<text x="' + (cameraX - 44) + '" y="' + (centerY - 7) + '" fill="rgba(248,250,252,.78)" font-size="10.5" font-weight="900">Camera</text>' +
 
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="9" fill="rgba(125,255,158,.95)" />' +
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="20" fill="rgba(125,255,158,.08)" stroke="rgba(125,255,158,.30)" stroke-width="2" />' +
-        '<text x="' + cameraX + '" y="' + (centerY - 36) + '" fill="rgba(248,250,252,.88)" font-size="11" font-weight="900" text-anchor="middle">Camera</text>' +
-        '<text x="' + cameraX + '" y="' + (centerY + 43) + '" fill="rgba(226,232,240,.62)" font-size="10.5" text-anchor="middle">' + escapeHtml(mountLabel) + '</text>' +
+        '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="' + (centerY - 49) + '" text-anchor="middle" fill="rgba(226,232,240,.60)" font-size="10" font-weight="850">HFOV ' + escapeHtml(fmt(hfovDeg, 1).replace(/\\.0$/, "")) + ' deg</text>' +
 
-        '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="103" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="11" font-weight="900">HFOV ' + escapeHtml(fmt(hfovDeg, 1).replace(/\\.0$/, "")) + ' deg</text>' +
+        '<text x="' + (targetX - 8) + '" y="' + Math.max(84, calcTopY - 9).toFixed(1) + '" text-anchor="end" fill="rgba(125,255,158,.86)" font-size="9.5" font-weight="950">calculated</text>' +
+        '<text x="' + (requiredX + 9) + '" y="' + Math.max(86, reqTopY + 5).toFixed(1) + '" fill="rgba(248,250,252,.70)" font-size="9.5" font-weight="950">required</text>' +
 
-        '<text x="' + (targetX - 6) + '" y="' + Math.max(101, calcTopY - 12).toFixed(1) + '" text-anchor="end" fill="rgba(125,255,158,.95)" font-size="10.5" font-weight="950">calculated</text>' +
-        '<text x="' + (requiredX + 8) + '" y="' + Math.max(121, reqTopY + 8).toFixed(1) + '" fill="rgba(248,250,252,.82)" font-size="10.5" font-weight="950">required</text>' +
+        '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(226,232,240,.46)" stroke-width="1.25" marker-end="url(#fovThinArrow027)" />' +
+        '<line x1="' + cameraX + '" y1="' + (axisY - 6) + '" x2="' + cameraX + '" y2="' + (axisY + 6) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />' +
+        '<line x1="' + targetX + '" y1="' + (axisY - 6) + '" x2="' + targetX + '" y2="' + (axisY + 6) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />' +
+        '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="' + (axisY + 18) + '" fill="rgba(226,232,240,.62)" font-size="10.5" font-weight="850" text-anchor="middle">Target distance: ' + escapeHtml(fmtFt(targetDistance)) + '</text>' +
 
-        '<line x1="' + cameraX + '" y1="' + axisY + '" x2="' + targetX + '" y2="' + axisY + '" stroke="rgba(226,232,240,.52)" stroke-width="1.6" marker-end="url(#fovPlanArrow026)" />' +
-        '<line x1="' + cameraX + '" y1="' + (axisY - 7) + '" x2="' + cameraX + '" y2="' + (axisY + 7) + '" stroke="rgba(226,232,240,.52)" stroke-width="1.6" />' +
-        '<line x1="' + targetX + '" y1="' + (axisY - 7) + '" x2="' + targetX + '" y2="' + (axisY + 7) + '" stroke="rgba(226,232,240,.52)" stroke-width="1.6" />' +
-        '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="' + (axisY + 24) + '" fill="rgba(226,232,240,.74)" font-size="11" font-weight="900" text-anchor="middle">Target distance: ' + escapeHtml(fmtFt(targetDistance)) + '</text>' +
-
-        '<rect x="556" y="196" width="174" height="46" rx="13" fill="rgba(6,18,12,.74)" stroke="rgba(125,255,158,.18)" />' +
-        '<text x="574" y="216" fill="rgba(125,255,158,.92)" font-size="10.5" font-weight="950">Calculated ' + escapeHtml(fmtFt(calculatedWidth)) + '</text>' +
-        '<text x="574" y="233" fill="rgba(248,250,252,.78)" font-size="10.5" font-weight="850">Required ' + escapeHtml(fmtFt(requiredWidth)) + ' | Ratio ' + escapeHtml(fmt(ratio, 2)) + 'x</text>' +
+        metricChip(574, 154, "CALCULATED", fmtFt(calculatedWidth), "rgba(125,255,158,.20)") +
+        metricChip(574, 198, "REQUIRED", fmtFt(requiredWidth) + " | " + fmt(ratio, 2) + "x", "rgba(248,250,252,.16)") +
       '</svg>';
   }
 
