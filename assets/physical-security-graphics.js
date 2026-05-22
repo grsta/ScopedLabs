@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-003-standard-camera-symbol
+ * Version: physical-security-graphics-004-fov-cone-lens-tip-fix
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-003-standard-camera-symbol";
+  const VERSION = "physical-security-graphics-004-fov-cone-lens-tip-fix";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -165,7 +165,7 @@
     const opts = options && typeof options === "object" ? options : {};
 
     return '<path data-ps-graphic-part="fov-cone" d="M ' +
-      fmt(cameraX, 2) + ' ' + fmt(centerY, 2) +
+      fmt(lensTipX, 2) + ' ' + fmt(centerY, 2) +
       ' L ' + fmt(targetX, 2) + ' ' + fmt(topY, 2) +
       ' L ' + fmt(targetX, 2) + ' ' + fmt(bottomY, 2) +
       ' Z" fill="' + esc(opts.fill || colors.greenSoft) +
@@ -355,7 +355,7 @@
           labelOffset: -10,
           tick: 5
         }) +
-        hfovCallout(lensTipX, centerY, targetX, calcTopY, calcBottomY, "HFOV " + fmt(hfovDeg, 1) + "?", {
+        hfovCallout(lensTipX, centerY, targetX, calcTopY, calcBottomY, "HFOV " + fmt(hfovDeg, 1) + " deg", {
           color: "rgba(226,232,240,.32)"
         }) +
       '</svg>';
