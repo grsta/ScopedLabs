@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-019-analytical-line";
+  const VERSION = "scopedlabs-graphics-022-uncovered-intervals";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -316,6 +316,122 @@
     return { segments, warnings };
   }
 
+
+  function firstSegmentArray() {
+    for (const items of arguments) {
+      if (Array.isArray(items) && items.length) return items;
+    }
+
+    return [];
+  }
+
+  function mergeCameraLayoutSegments(segments, spanFt) {
+    const span = Math.max(1, num(spanFt, 1));
+    const sorted = (Array.isArray(segments) ? segments : [])
+      .map((segment) => {
+        return {
+          startFt: clamp(num(segment && segment.startFt, 0), 0, span),
+          endFt: clamp(num(segment && segment.endFt, 0), 0, span)
+        };
+      })
+      .filter((segment) => segment.endFt > segment.startFt)
+      .sort((a, b) => a.startFt - b.startFt);
+
+    const merged = [];
+
+    sorted.forEach((segment) => {
+      const last = merged[merged.length - 1];
+
+      if (!last || segment.startFt > last.endFt + 0.001) {
+        merged.push({
+          startFt: segment.startFt,
+          endFt: segment.endFt
+        });
+        return;
+      }
+
+      last.endFt = Math.max(last.endFt, segment.endFt);
+    });
+
+    return merged;
+  }
+
+  function deriveCameraLayoutGapsFromCoverage(coverageSegments, spanFt) {
+    const span = Math.max(1, num(spanFt, 1));
+    const merged = mergeCameraLayoutSegments(coverageSegments, span);
+    const gaps = [];
+    let cursor = 0;
+
+    merged.forEach((segment) => {
+      if (segment.startFt > cursor + 0.001) {
+        gaps.push({
+          startFt: cursor,
+          endFt: segment.startFt,
+          source: "derived-from-coverage"
+        });
+      }
+
+      cursor = Math.max(cursor, segment.endFt);
+    });
+
+    if (cursor < span - 0.001) {
+      gaps.push({
+        startFt: cursor,
+        endFt: span,
+        source: "derived-from-coverage"
+      });
+    }
+
+    return gaps;
+  }
+
+  function fallbackCameraLayoutGapsFromUncovered(model, spanFt) {
+    const span = Math.max(1, num(spanFt, 1));
+    const uncovered = clamp(num(model && model.uncoveredSpanFt, 0), 0, span);
+
+    if (uncovered <= 0) return [];
+
+    const placement = String(
+      model && (
+        model.uncoveredPlacement ||
+        model.gapPlacement ||
+        model.blindGapPlacement ||
+        ""
+      )
+    ).trim().toLowerCase();
+
+    if (placement.includes("left")) {
+      return [{
+        startFt: 0,
+        endFt: uncovered,
+        source: "fallback-uncovered-left"
+      }];
+    }
+
+    if (placement.includes("split") || placement.includes("both") || placement.includes("edges")) {
+      const half = uncovered / 2;
+
+      return [
+        {
+          startFt: 0,
+          endFt: half,
+          source: "fallback-uncovered-left"
+        },
+        {
+          startFt: span - half,
+          endFt: span,
+          source: "fallback-uncovered-right"
+        }
+      ];
+    }
+
+    return [{
+      startFt: span - uncovered,
+      endFt: span,
+      source: "fallback-uncovered-right"
+    }];
+  }
+
   function validateCameraLayoutModel(model) {
     const errors = [];
     const warnings = [];
@@ -332,9 +448,49 @@
 
     const safeSpan = Number.isFinite(spanFt) && spanFt > 0 ? spanFt : 1;
 
-    const coverage = normalizeSegments(m.coverageSegments, safeSpan, "coverage");
-    const overlap = normalizeSegments(m.overlapSegments, safeSpan, "overlap");
-    const gaps = normalizeSegments(m.gapSegments, safeSpan, "gap");
+    const coverageSource = firstSegmentArray(
+      m.coverageSegments,
+      m.coveredIntervals,
+      m.coveredSegments,
+      m.coverageIntervals
+    );
+
+    const overlapSource = firstSegmentArray(
+      m.overlapSegments,
+      m.overlapIntervals,
+      m.sharedOverlapSegments,
+      m.sharedOverlapIntervals
+    );
+
+    const gapSource = firstSegmentArray(
+      m.gapSegments,
+      m.gapIntervals,
+      m.uncoveredIntervals,
+      m.uncoveredSegments,
+      m.blindGapSegments,
+      m.blindGapIntervals
+    );
+
+    const coverage = normalizeSegments(coverageSource, safeSpan, "coverage");
+    const overlap = normalizeSegments(overlapSource, safeSpan, "overlap");
+    let gaps = normalizeSegments(gapSource, safeSpan, "gap");
+
+    if (!gaps.segments.length && coverage.segments.length) {
+      const derivedGaps = deriveCameraLayoutGapsFromCoverage(coverage.segments, safeSpan);
+
+      if (derivedGaps.length) {
+        gaps = normalizeSegments(derivedGaps, safeSpan, "derived gap");
+      }
+    }
+
+    if (!gaps.segments.length && num(m.uncoveredSpanFt, 0) > 0) {
+      const fallbackGaps = fallbackCameraLayoutGapsFromUncovered(m, safeSpan);
+
+      if (fallbackGaps.length) {
+        gaps = normalizeSegments(fallbackGaps, safeSpan, "fallback gap");
+        warnings.push("gap segments missing; rendered fallback uncovered segment from uncoveredSpanFt.");
+      }
+    }
 
     warnings.push(...coverage.warnings, ...overlap.warnings, ...gaps.warnings);
 
@@ -821,7 +977,9 @@
             + '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">'
             + escapeHtml(fmtFt(item.endFt - item.startFt)) + ' gap</text>';
         }).join("")
-      : '<text x="' + (frontRight.x - 10) + '" y="' + (frontLeft.y - 12) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>';
+      : (uncoveredFt > 0
+        ? '<text x="' + (frontRight.x - 10) + '" y="' + (frontLeft.y - 12) + '" text-anchor="end" fill="rgba(255,188,166,.98)" font-size="12" font-weight="950">' + escapeHtml(fmtFt(uncoveredFt)) + ' uncovered</text>'
+        : '<text x="' + (frontRight.x - 10) + '" y="' + (frontLeft.y - 12) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>');
 
     const frustumSvg = cameras.slice(0, 8).map((camera, index) => {
       const centerFt = num(camera.centerFt, spanFt / 2);
