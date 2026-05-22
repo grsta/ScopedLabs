@@ -827,7 +827,7 @@
       }).join("");
 
       return `
-        <section class="section">
+        <section class="${section.compactSvg ? "section section--compact-svg" : "section"}">
           ${section.suppressTitle ? "" : `<h2>${escapeHtml(section.title)}</h2>`}
           ${textBlock}
           ${svgBlocks}
@@ -1433,7 +1433,60 @@ if (shouldSuppressDefaultInterpretationBlock()) {
         filter:invert(1) hue-rotate(180deg) saturate(.75) contrast(1.15) !important;
       }
 }
-  </style>
+  
+    /* data-scopedlabs-wide-compact-svg-contract */
+    .section--compact-svg,
+    .section:has(.extra-svg-wrap--compact){
+      width:100% !important;
+      max-width:none !important;
+      margin:10px 0 14px !important;
+      padding:10px 12px !important;
+      box-sizing:border-box !important;
+    }
+
+    .section--compact-svg h2,
+    .section:has(.extra-svg-wrap--compact) h2{
+      margin-top:0 !important;
+    }
+
+    .extra-svg-wrap--compact{
+      width:100% !important;
+      max-width:none !important;
+      margin:0 auto !important;
+      padding:0 !important;
+      box-sizing:border-box !important;
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+
+    .extra-svg-wrap--compact svg{
+      width:100% !important;
+      max-width:100% !important;
+      height:auto !important;
+      max-height:6.05in !important;
+      display:block !important;
+      margin:0 auto !important;
+      object-fit:contain;
+    }
+
+    @media print{
+      .section--compact-svg,
+      .section:has(.extra-svg-wrap--compact){
+        width:100% !important;
+        max-width:none !important;
+        margin:0 0 10px !important;
+        padding:6px 8px !important;
+        break-inside:avoid;
+        page-break-inside:avoid;
+      }
+
+      .extra-svg-wrap--compact svg{
+        width:100% !important;
+        max-width:100% !important;
+        max-height:6.25in !important;
+      }
+    }
+</style>
 </head>
 <body>
   <div class="page">
