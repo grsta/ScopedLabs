@@ -1494,6 +1494,141 @@ function blindSpotMultiCameraFootprintSvg(data) {
     return blindSpotMultiCameraFootprintSvg(data);
   }
 
+
+  function blindSpotRequiredCameraCount(data) {
+    const span = Math.max(0, Number(data?.w) || 0);
+    const usable = Math.max(0.01, Number(data?.effectiveCoverageFt || data?.coveragePerCameraFt) || 0.01);
+    const current = Math.max(1, Math.round(Number(data?.cams) || 1));
+
+    return Math.max(current, Math.ceil(span / usable));
+  }
+
+  function blindSpotRequiredHfovForFootprint(footprintFt, distanceFt) {
+    const footprint = Math.max(0, Number(footprintFt) || 0);
+    const distance = Math.max(0, Number(distanceFt) || 0);
+
+    if (!footprint || !distance) return null;
+
+    return (2 * Math.atan(footprint / (2 * distance))) * (180 / Math.PI);
+  }
+
+  function blindSpotScenarioCardHtml(card) {
+    const classes = "blindspot-scenario-card" +
+      (card.primary ? " primary" : "") +
+      (card.tone ? " " + card.tone : "");
+
+    return "" +
+      '<div class="' + escapeHtml(classes) + '">' +
+        '<div class="blindspot-scenario-kicker">' + escapeHtml(card.kicker || "Scenario") + '</div>' +
+        '<div class="blindspot-scenario-title">' + escapeHtml(card.title || "") + '</div>' +
+        '<p class="blindspot-scenario-copy">' + escapeHtml(card.copy || "") + '</p>' +
+        (card.result ? '<div class="blindspot-scenario-result">' + escapeHtml(card.result) + '</div>' : '') +
+      '</div>';
+  }
+
+  function blindSpotScenarioCardsHtml(data) {
+    if (!data || !data.ok) return "";
+
+    const cards = [];
+    const span = Math.max(0, Number(data.w) || 0);
+    const currentCams = Math.max(1, Math.round(Number(data.cams) || 1));
+    const coverage = Math.max(0, Number(data.coveragePerCameraFt) || 0);
+    const effective = Math.max(0, Number(data.effectiveCoverageFt || data.coveragePerCameraFt) || 0);
+    const distance = Math.max(0, Number(data.d) || 0);
+    const neededCams = blindSpotRequiredCameraCount(data);
+    const expectedSpacing = neededCams > 0 ? span / neededCams : 0;
+    const expectedOverlapPct = coverage > 0 && expectedSpacing > 0
+      ? Math.max(0, ((coverage - expectedSpacing) / coverage) * 100)
+      : 0;
+
+    if (data.coverageClass === "BLIND SPOTS") {
+      cards.push({
+        primary: true,
+        tone: "risk",
+        kicker: "Primary correction",
+        title: neededCams > currentCams ? "Add cameras / reduce spacing" : "Reduce actual spacing",
+        copy: "Close the uncovered span by keeping each camera center spacing inside the usable footprint.",
+        result: neededCams > currentCams
+          ? "Use about " + neededCams + " cameras over " + fmtFt(span) + " at roughly " + fmtFt(expectedSpacing) + " spacing. Expected modeled gap: 0.0 ft."
+          : "Keep actual spacing at or below " + fmtFt(effective || coverage) + ". Expected modeled gap: 0.0 ft."
+      });
+
+      const requiredFootprint = currentCams <= 1
+        ? span
+        : Math.max(coverage, Number(data.actualSpacingFt) || 0);
+
+      const requiredHfov = blindSpotRequiredHfovForFootprint(requiredFootprint, distance);
+
+      cards.push({
+        tone: "watch",
+        kicker: "Optical correction",
+        title: "Widen the effective footprint",
+        copy: "Use a wider HFOV, shorter target distance, or different lens/framing assumption if adding cameras is not preferred.",
+        result: requiredHfov
+          ? "Footprint target: " + fmtFt(requiredFootprint) + " at " + fmtFt(distance) + " distance, about " + fmt(requiredHfov, 1) + " deg HFOV."
+          : "Increase the usable footprint until it meets or exceeds the spacing gap."
+      });
+
+      cards.push({
+        tone: "watch",
+        kicker: "Zone correction",
+        title: "Split the protected run",
+        copy: "If the run changes direction or needs different assumptions, split it into another area instead of forcing one layout to cover everything.",
+        result: "Current modeled coverage is " + fmtFt(data.totalCoverageFt) + " against " + fmtFt(span) + ". Remaining gap: " + fmtFt(data.gapFt) + "."
+      });
+    } else if (data.coverageClass === "MINOR GAPS") {
+      cards.push({
+        primary: true,
+        tone: "watch",
+        kicker: "Primary correction",
+        title: "Tighten spacing slightly",
+        copy: "The layout is close. A small spacing or footprint adjustment should close the remaining gap.",
+        result: "Remaining modeled gap: " + fmtFt(data.gapFt) + ". Target corrected gap: 0.0 ft."
+      });
+
+      cards.push({
+        kicker: "Validation path",
+        title: "Field-check edge conditions",
+        copy: "Confirm mount location, aim angle, edge softness, and real-world obstruction before accepting this as continuous.",
+        result: "Continue only if the uncovered segment is outside the required protected span."
+      });
+
+      cards.push({
+        kicker: "Upstream correction",
+        title: "Return to Camera Spacing",
+        copy: "Use Camera Spacing to reduce actual spacing or increase camera count if field tolerance is not acceptable.",
+        result: "Use Blind Spot again after the spacing correction."
+      });
+    } else {
+      cards.push({
+        primary: true,
+        kicker: "Recommended path",
+        title: "Keep current layout",
+        copy: "Coverage continuity is acceptable from a blind-spot standpoint.",
+        result: "Expected modeled gap: 0.0 ft. Continue to Pixel Density."
+      });
+
+      cards.push({
+        kicker: "Optional redundancy",
+        title: "Add margin only if required",
+        copy: "Extra cameras or higher overlap may be valid for redundancy, but can increase cost and device-count pressure.",
+        result: "Use only when project requirements justify the added camera count."
+      });
+
+      cards.push({
+        kicker: "Integrity check",
+        title: "Revisit upstream if assumptions changed",
+        copy: "If distance, HFOV, camera count, or protected span is not field-accurate, correct Camera Spacing before continuing.",
+        result: "Healthy status depends on real carried assumptions."
+      });
+    }
+
+    return "" +
+      '<div class="blindspot-scenario-grid">' +
+        cards.map(blindSpotScenarioCardHtml).join("") +
+      '</div>';
+  }
+
   function renderBlindSpotAssistantPrompt(message = "Review the carried spacing assumptions, then run the blind-spot check.") {
     if (!els.assistant) return;
     els.assistant.innerHTML = '<div class="blindspot-assistant-head"><div><p class="blindspot-assistant-kicker">Blind Spot Assistant</p><h3 class="blindspot-assistant-title">Ready to validate coverage continuity.</h3><p class="blindspot-assistant-copy">' + escapeHtml(message) + '</p></div></div>';
@@ -1509,6 +1644,7 @@ function blindSpotMultiCameraFootprintSvg(data) {
       '<div class="blindspot-assistant-head"><div><p class="blindspot-assistant-kicker">Blind Spot Assistant</p><h3 class="blindspot-assistant-title">' + escapeHtml(blindSpotAssistantTitle(data)) + '</h3><p class="blindspot-assistant-copy">' + escapeHtml(blindSpotAssistantSummary(data)) + '</p></div><span class="blindspot-status-pill ' + statusClass + '">Assistant Status: ' + escapeHtml(formatAssistantStatusLabel(data.status)) + '</span></div>' +
       '<div class="blindspot-visual-stage" data-export-section data-export-title="Blind Spot Assistant Plan View"><div class="blindspot-export-summary" data-export-text>Plan-view blind spot visual showing protected span, modeled coverage continuity, camera positions, overlap pressure, and remaining gap if present.</div>' + blindSpotPlanViewSvg(data) + blindSpotStructuredExportTables(data) + '</div>' +
       '<div class="blindspot-mini-grid"><div class="blindspot-mini-card"><div class="blindspot-mini-label">Required span</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.w)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Modeled coverage</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.totalCoverageFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Gap / margin</div><div class="blindspot-mini-value">' + escapeHtml(data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Result</div><div class="blindspot-mini-value">' + escapeHtml(data.coverageClass) + '</div></div></div>' +
+      blindSpotScenarioCardsHtml(data) +
       '<div class="blindspot-handoff-card"><strong>Pixel Density handoff:</strong> ' + handoff + '</div>' +
       '<div class="blindspot-handoff-card"><strong>Assistant guidance:</strong> ' + escapeHtml(data.guidance) + '</div>';
   }
