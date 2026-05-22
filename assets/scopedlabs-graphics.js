@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-028-fov-cad-layout
+ * Version: scopedlabs-graphics-029-cad-kit-v1
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-028-fov-cad-layout";
+  const VERSION = "scopedlabs-graphics-029-cad-kit-v1";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -282,6 +282,220 @@
         '<text x="52" y="200" fill="rgba(226,232,240,.48)" font-size="11">Renderer: ' + escapeHtml(meta.renderer || "unknown") + ' | Tool: ' + escapeHtml(meta.tool || "unknown") + '</text>' +
       '</svg>';
   }
+
+
+
+  const CAD = {
+    colors: {
+      text: "rgba(248,250,252,.92)",
+      muted: "rgba(226,232,240,.58)",
+      faint: "rgba(226,232,240,.30)",
+      line: "rgba(226,232,240,.42)",
+      grid: "rgba(226,232,240,.12)",
+      green: "rgba(125,255,158,.86)",
+      greenSoft: "rgba(125,255,158,.08)",
+      amber: "rgba(255,211,79,.86)",
+      amberSoft: "rgba(255,211,79,.10)",
+      red: "rgba(255,138,102,.90)",
+      redSoft: "rgba(255,138,102,.10)",
+      panel: "rgba(0,0,0,.13)",
+      chip: "rgba(6,18,12,.66)",
+      stageStroke: "rgba(125,255,158,.16)"
+    },
+
+    line: function (x1, y1, x2, y2, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      return '<line x1="' + fmt(x1, 2) + '" y1="' + fmt(y1, 2) + '" x2="' + fmt(x2, 2) + '" y2="' + fmt(y2, 2) + '" stroke="' + escapeHtml(opts.stroke || CAD.colors.line) + '" stroke-width="' + escapeHtml(opts.width || 1) + '"' + (opts.dash ? ' stroke-dasharray="' + escapeHtml(opts.dash) + '"' : '') + (opts.linecap ? ' stroke-linecap="' + escapeHtml(opts.linecap) + '"' : '') + (opts.markerEnd ? ' marker-end="' + escapeHtml(opts.markerEnd) + '"' : '') + ' />';
+    },
+
+    rect: function (x, y, width, height, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      return '<rect x="' + fmt(x, 2) + '" y="' + fmt(y, 2) + '" width="' + fmt(width, 2) + '" height="' + fmt(height, 2) + '" rx="' + escapeHtml(opts.rx ?? 0) + '" fill="' + escapeHtml(opts.fill || "none") + '"' + (opts.stroke ? ' stroke="' + escapeHtml(opts.stroke) + '"' : '') + (opts.strokeWidth ? ' stroke-width="' + escapeHtml(opts.strokeWidth) + '"' : '') + (opts.opacity ? ' opacity="' + escapeHtml(opts.opacity) + '"' : '') + ' />';
+    },
+
+    text: function (x, y, text, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      return '<text x="' + fmt(x, 2) + '" y="' + fmt(y, 2) + '"' + (opts.anchor ? ' text-anchor="' + escapeHtml(opts.anchor) + '"' : '') + ' fill="' + escapeHtml(opts.fill || CAD.colors.text) + '" font-size="' + escapeHtml(opts.size || 10) + '" font-weight="' + escapeHtml(opts.weight || 850) + '"' + (opts.spacing ? ' letter-spacing="' + escapeHtml(opts.spacing) + '"' : '') + '>' + escapeHtml(text) + '</text>';
+    },
+
+    stage: function (x, y, width, height, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      return CAD.rect(x, y, width, height, {
+        rx: opts.rx ?? 18,
+        fill: opts.fill || CAD.colors.panel,
+        stroke: opts.stroke || CAD.colors.stageStroke,
+        strokeWidth: opts.strokeWidth || 1
+      });
+    },
+
+    statusPill: function (x, y, text, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      const width = opts.width || Math.max(42, String(text || "").length * 7 + 18);
+      const height = opts.height || 20;
+      const color = opts.color || CAD.colors.green;
+
+      return CAD.rect(x, y, width, height, {
+        rx: height / 2,
+        fill: opts.fill || "rgba(6,18,12,.72)",
+        stroke: opts.stroke || color,
+        strokeWidth: opts.strokeWidth || 1
+      }) + CAD.text(x + width / 2, y + height / 2 + 4, text, {
+        anchor: "middle",
+        fill: opts.textFill || color,
+        size: opts.size || 9.5,
+        weight: 950,
+        spacing: opts.spacing || ".04em"
+      });
+    },
+
+    metricChip: function (x, y, label, value, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      const width = opts.width || 132;
+      const height = opts.height || 36;
+      const accent = opts.accent || CAD.colors.green;
+
+      return CAD.rect(x, y, width, height, {
+        rx: opts.rx ?? 10,
+        fill: opts.fill || CAD.colors.chip,
+        stroke: opts.stroke || "rgba(125,255,158,.14)",
+        strokeWidth: 1
+      }) + CAD.text(x + 11, y + 13, label, {
+        fill: opts.labelFill || "rgba(226,232,240,.48)",
+        size: opts.labelSize || 8.8,
+        weight: 850,
+        spacing: ".08em"
+      }) + CAD.text(x + 11, y + 28, value, {
+        fill: opts.valueFill || accent,
+        size: opts.valueSize || 10.5,
+        weight: 950
+      });
+    },
+
+    dimensionLine: function (x1, y1, x2, y2, label, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      const color = opts.color || CAD.colors.line;
+      const tick = opts.tick ?? 6;
+      const labelOffset = opts.labelOffset ?? 18;
+
+      return CAD.line(x1, y1, x2, y2, { stroke: color, width: opts.width || 1, markerEnd: opts.markerEnd }) +
+        CAD.line(x1, y1 - tick, x1, y1 + tick, { stroke: color, width: opts.width || 1 }) +
+        CAD.line(x2, y2 - tick, x2, y2 + tick, { stroke: color, width: opts.width || 1 }) +
+        CAD.text((x1 + x2) / 2, y1 + labelOffset, label, {
+          anchor: "middle",
+          fill: opts.labelFill || CAD.colors.muted,
+          size: opts.labelSize || 10,
+          weight: 850
+        });
+    },
+
+    verticalDimension: function (x, y1, y2, label, value, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      const color = opts.color || CAD.colors.green;
+      const tick = opts.tick ?? 8;
+      const labelY = opts.labelY ?? Math.max(58, Math.min(y1, y2) - 9);
+      const valueY = opts.valueY ?? Math.max(y1, y2) + 15;
+
+      return CAD.line(x, y1, x, y2, { stroke: color, width: opts.width || 2.1, linecap: "round" }) +
+        CAD.line(x - tick, y1, x + tick, y1, { stroke: color, width: 1 }) +
+        CAD.line(x - tick, y2, x + tick, y2, { stroke: color, width: 1 }) +
+        CAD.text(x, labelY, label, {
+          anchor: "middle",
+          fill: opts.labelFill || color,
+          size: opts.labelSize || 9,
+          weight: 950,
+          spacing: ".06em"
+        }) +
+        CAD.text(x, valueY, value, {
+          anchor: "middle",
+          fill: opts.valueFill || "rgba(248,250,252,.72)",
+          size: opts.valueSize || 9.8,
+          weight: 900
+        });
+    },
+
+    axisLine: function (x1, y1, x2, y2, label, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      const markerId = opts.markerId || "slCadAxisArrow";
+
+      return CAD.dimensionLine(x1, y1, x2, y2, label, {
+        color: opts.color || "rgba(226,232,240,.38)",
+        labelFill: opts.labelFill || CAD.colors.muted,
+        markerEnd: "url(#" + markerId + ")",
+        labelOffset: opts.labelOffset ?? 18,
+        tick: opts.tick ?? 6
+      });
+    },
+
+    defs: function (idPrefix, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      const arrowId = opts.arrowId || (idPrefix + "Arrow");
+      const coneId = opts.coneId || (idPrefix + "Cone");
+      const coneFill = opts.coneFill || CAD.colors.greenSoft;
+
+      return '<defs>' +
+        '<marker id="' + escapeHtml(arrowId) + '" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(226,232,240,.46)"></path></marker>' +
+        '<linearGradient id="' + escapeHtml(coneId) + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,158,.016)" /><stop offset="100%" stop-color="' + escapeHtml(coneFill) + '" /></linearGradient>' +
+      '</defs>';
+    }
+  };
+
+  const PhysicalSecurity = {
+    cameraMarker: function (x, y, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      const label = opts.label || "CAM 1";
+      const labelX = opts.labelX ?? (x - 38);
+      const labelY = opts.labelY ?? (y - 7);
+      const color = opts.color || CAD.colors.green;
+
+      return '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="6.5" fill="' + escapeHtml(color) + '" />' +
+        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="15" fill="rgba(125,255,158,.04)" stroke="rgba(125,255,158,.22)" stroke-width="1" />' +
+        CAD.text(labelX, labelY, label, {
+          fill: opts.labelFill || "rgba(248,250,252,.68)",
+          size: opts.labelSize || 9.5,
+          weight: 900
+        });
+    },
+
+    fovCone: function (cameraX, centerY, targetX, topY, bottomY, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      return '<path d="M ' + fmt(cameraX, 2) + ' ' + fmt(centerY, 2) + ' L ' + fmt(targetX, 2) + ' ' + fmt(topY, 2) + ' L ' + fmt(targetX, 2) + ' ' + fmt(bottomY, 2) + ' Z" fill="' + escapeHtml(opts.fill || CAD.colors.greenSoft) + '" stroke="' + escapeHtml(opts.stroke || CAD.colors.green) + '" stroke-width="' + escapeHtml(opts.width || 1.15) + '" />';
+    },
+
+    targetPlane: function (x, y1, y2, label, value, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      return CAD.verticalDimension(x, y1, y2, label, value, {
+        color: opts.color || CAD.colors.green,
+        labelFill: opts.labelFill || opts.color || CAD.colors.green,
+        valueFill: opts.valueFill || "rgba(248,250,252,.72)",
+        width: opts.width || 2.1,
+        tick: opts.tick ?? 8,
+        labelY: opts.labelY,
+        valueY: opts.valueY
+      });
+    },
+
+    spanLink: function (x1, y1, x2, y2, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      return CAD.line(x1, y1, x2, y2, {
+        stroke: opts.stroke || "rgba(226,232,240,.12)",
+        width: opts.width || .8,
+        dash: opts.dash || "4 7"
+      });
+    },
+
+    hfovArc: function (x, y, label, options) {
+      const opts = options && typeof options === "object" ? options : {};
+      const arcPath = opts.path || ("M " + fmt(x + 34, 2) + " " + fmt(y - 8, 2) + " Q " + fmt(x + 72, 2) + " " + fmt(y - 26, 2) + " " + fmt(x + 112, 2) + " " + fmt(y - 24, 2));
+
+      return '<path d="' + arcPath + '" fill="none" stroke="rgba(226,232,240,.20)" stroke-width=".8" />' +
+        CAD.text(opts.labelX ?? (x + 118), opts.labelY ?? (y - 23), label, {
+          fill: opts.fill || "rgba(226,232,240,.54)",
+          size: opts.size || 9.5,
+          weight: 850
+        });
+    }
+  };
+
 
   function normalizeSegments(items, spanFt, kind) {
     const span = Math.max(1, num(spanFt, 1));
@@ -1358,12 +1572,10 @@
 
     const svgW = 800;
     const svgH = 286;
-
     const stageX = 30;
     const stageY = 20;
     const stageW = 740;
     const stageH = 246;
-
     const cameraX = 104;
     const centerY = 137;
     const targetX = 540;
@@ -1373,7 +1585,6 @@
     const maxSpanPx = 104;
     const maxWidth = Math.max(calculatedWidth, requiredWidth, 1);
     const scale = maxSpanPx / maxWidth;
-
     const calcPx = Math.max(18, calculatedWidth * scale);
     const reqPx = Math.max(18, requiredWidth * scale);
 
@@ -1385,81 +1596,35 @@
     const isNarrow = ratio < 1;
     const isWide = ratio > 1.35;
     const statusText = isNarrow ? "NARROW" : isWide ? "WIDE" : "FIT";
-    const statusFill = isNarrow ? "rgba(255,190,120,.90)" : isWide ? "rgba(255,226,128,.90)" : "rgba(125,255,158,.92)";
-    const coneStroke = isNarrow ? "rgba(255,190,120,.74)" : "rgba(125,255,158,.76)";
-    const coneFill = isNarrow ? "rgba(255,170,92,.055)" : "rgba(125,255,158,.055)";
-
-    function tick(x, y1, y2, color) {
-      return '<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '" stroke="' + color + '" stroke-width="1" />';
-    }
-
-    function dimensionLine(x1, y1, x2, y2, label) {
-      return "" +
-        '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />' +
-        tick(x1, y1 - 6, y1 + 6, "rgba(226,232,240,.42)") +
-        tick(x2, y2 - 6, y2 + 6, "rgba(226,232,240,.42)") +
-        '<text x="' + ((x1 + x2) / 2).toFixed(1) + '" y="' + (y1 + 18) + '" text-anchor="middle" fill="rgba(226,232,240,.62)" font-size="10" font-weight="850">' + escapeHtml(label) + '</text>';
-    }
-
-    function verticalDimension(x, y1, y2, label, value, color) {
-      const labelY = Math.max(62, y1 - 8);
-      return "" +
-        '<line x1="' + x + '" y1="' + y1.toFixed(1) + '" x2="' + x + '" y2="' + y2.toFixed(1) + '" stroke="' + color + '" stroke-width="2.4" stroke-linecap="round" />' +
-        '<line x1="' + (x - 9) + '" y1="' + y1.toFixed(1) + '" x2="' + (x + 9) + '" y2="' + y1.toFixed(1) + '" stroke="' + color + '" stroke-width="1" />' +
-        '<line x1="' + (x - 9) + '" y1="' + y2.toFixed(1) + '" x2="' + (x + 9) + '" y2="' + y2.toFixed(1) + '" stroke="' + color + '" stroke-width="1" />' +
-        '<text x="' + x + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="' + color + '" font-size="9.5" font-weight="950" letter-spacing=".05em">' + escapeHtml(label) + '</text>' +
-        '<text x="' + x + '" y="' + (y2 + 16).toFixed(1) + '" text-anchor="middle" fill="rgba(248,250,252,.76)" font-size="10" font-weight="900">' + escapeHtml(value) + '</text>';
-    }
-
-    function smallMetric(x, y, label, value, color) {
-      return "" +
-        '<rect x="' + x + '" y="' + y + '" width="128" height="34" rx="10" fill="rgba(6,18,12,.58)" stroke="rgba(125,255,158,.14)" />' +
-        '<text x="' + (x + 11) + '" y="' + (y + 13) + '" fill="rgba(226,232,240,.48)" font-size="8.8" font-weight="850" letter-spacing=".08em">' + escapeHtml(label) + '</text>' +
-        '<text x="' + (x + 11) + '" y="' + (y + 27) + '" fill="' + color + '" font-size="10.5" font-weight="950">' + escapeHtml(value) + '</text>';
-    }
+    const statusColor = isNarrow ? CAD.colors.amber : isWide ? CAD.colors.amber : CAD.colors.green;
+    const coneStroke = isNarrow ? "rgba(255,190,120,.74)" : CAD.colors.green;
+    const coneFill = isNarrow ? CAD.colors.amberSoft : CAD.colors.greenSoft;
+    const arrowId = "fovCadKitArrow029";
+    const coneId = "fovCadKitCone029";
 
     return "" +
       '<svg data-export-svg class="fov-geometry-svg" data-sl-engine="graphics" data-sl-renderer="fov-geometry-plan" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + escapeHtml(m.ariaLabel || "Field of view CAD plan view") + '">' +
-        '<defs>' +
-          '<marker id="fovCadArrow028" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(226,232,240,.46)"></path></marker>' +
-          '<linearGradient id="fovCadCone028" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%" stop-color="rgba(125,255,158,.018)" />' +
-            '<stop offset="100%" stop-color="' + coneFill + '" />' +
-          '</linearGradient>' +
-        '</defs>' +
+        CAD.defs("fovCadKit029", { arrowId, coneId, coneFill }) +
+        CAD.stage(stageX, stageY, stageW, stageH) +
+        CAD.text(54, 49, "FIELD OF VIEW / TARGET PLANE", { fill: "rgba(125,255,158,.78)", size: 10.5, weight: 950, spacing: ".10em" }) +
+        CAD.statusPill(705, 34, statusText, { width: 42, height: 20, color: statusColor, textFill: statusColor, size: 9.5 }) +
 
-        '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="rgba(125,255,158,.16)" />' +
-        '<text x="54" y="49" fill="rgba(125,255,158,.78)" font-size="10.5" font-weight="950" letter-spacing=".10em">FIELD OF VIEW / TARGET PLANE</text>' +
-        '<rect x="705" y="34" width="42" height="20" rx="10" fill="rgba(6,18,12,.72)" stroke="' + statusFill + '" stroke-opacity=".42" />' +
-        '<text x="726" y="48" text-anchor="middle" fill="' + statusFill + '" font-size="9.5" font-weight="950">' + escapeHtml(statusText) + '</text>' +
+        CAD.line(cameraX, centerY, targetX, centerY, { stroke: "rgba(226,232,240,.20)", width: .9, dash: "5 7" }) +
+        PhysicalSecurity.fovCone(cameraX, centerY, targetX, calcTopY, calcBottomY, { fill: "url(#" + coneId + ")", stroke: coneStroke, width: 1.15 }) +
+        PhysicalSecurity.cameraMarker(cameraX, centerY, { label: "CAM 1" }) +
 
-        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="rgba(226,232,240,.20)" stroke-width=".9" stroke-dasharray="5 7" />' +
-        '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + calcTopY.toFixed(1) + ' L ' + targetX + ' ' + calcBottomY.toFixed(1) + ' Z" fill="url(#fovCadCone028)" stroke="' + coneStroke + '" stroke-width="1.15" />' +
+        PhysicalSecurity.targetPlane(targetX, calcTopY, calcBottomY, "CALC", fmtFt(calculatedWidth), { color: CAD.colors.green, valueFill: "rgba(248,250,252,.72)" }) +
+        PhysicalSecurity.targetPlane(requiredX, reqTopY, reqBottomY, "REQ", fmtFt(requiredWidth), { color: "rgba(248,250,252,.68)", labelFill: "rgba(248,250,252,.68)", valueFill: "rgba(248,250,252,.72)" }) +
+        PhysicalSecurity.spanLink(targetX, calcTopY, requiredX, reqTopY) +
+        PhysicalSecurity.spanLink(targetX, calcBottomY, requiredX, reqBottomY) +
+        CAD.axisLine(cameraX, dimBaseY, targetX, dimBaseY, "Target distance: " + fmtFt(targetDistance), { markerId: arrowId, labelOffset: 19 }) +
+        PhysicalSecurity.hfovArc(cameraX, centerY, "HFOV " + fmt(hfovDeg, 1).replace(/\.0$/, "") + "°") +
 
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="6.5" fill="rgba(125,255,158,.88)" />' +
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="15" fill="rgba(125,255,158,.04)" stroke="rgba(125,255,158,.22)" stroke-width="1" />' +
-        '<text x="' + (cameraX - 38) + '" y="' + (centerY - 7) + '" fill="rgba(248,250,252,.68)" font-size="9.5" font-weight="900">CAM 1</text>' +
-
-        verticalDimension(targetX, calcTopY, calcBottomY, "CALC", fmtFt(calculatedWidth), "rgba(125,255,158,.88)") +
-        verticalDimension(requiredX, reqTopY, reqBottomY, "REQ", fmtFt(requiredWidth), "rgba(248,250,252,.68)") +
-
-        '<line x1="' + targetX + '" y1="' + calcTopY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqTopY.toFixed(1) + '" stroke="rgba(226,232,240,.12)" stroke-width=".8" stroke-dasharray="4 7" />' +
-        '<line x1="' + targetX + '" y1="' + calcBottomY.toFixed(1) + '" x2="' + requiredX + '" y2="' + reqBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.12)" stroke-width=".8" stroke-dasharray="4 7" />' +
-
-        '<line x1="' + cameraX + '" y1="' + dimBaseY + '" x2="' + targetX + '" y2="' + dimBaseY + '" stroke="rgba(226,232,240,.38)" stroke-width="1" marker-end="url(#fovCadArrow028)" />' +
-        tick(cameraX, dimBaseY - 6, dimBaseY + 6, "rgba(226,232,240,.38)") +
-        tick(targetX, dimBaseY - 6, dimBaseY + 6, "rgba(226,232,240,.38)") +
-        '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="' + (dimBaseY + 19) + '" text-anchor="middle" fill="rgba(226,232,240,.58)" font-size="10" font-weight="850">Target distance: ' + escapeHtml(fmtFt(targetDistance)) + '</text>' +
-
-        '<path d="M ' + (cameraX + 34) + ' ' + (centerY - 8) + ' Q ' + (cameraX + 72) + ' ' + (centerY - 26) + ' ' + (cameraX + 112) + ' ' + (centerY - 24) + '" fill="none" stroke="rgba(226,232,240,.22)" stroke-width=".8" />' +
-        '<text x="' + (cameraX + 118) + '" y="' + (centerY - 23) + '" fill="rgba(226,232,240,.54)" font-size="9.5" font-weight="850">HFOV ' + escapeHtml(fmt(hfovDeg, 1).replace(/\\.0$/, "")) + '°</text>' +
-
-        smallMetric(54, 70, "CALCULATED", fmtFt(calculatedWidth), "rgba(125,255,158,.88)") +
-        smallMetric(54, 112, "REQUIRED", fmtFt(requiredWidth), "rgba(248,250,252,.74)") +
-        smallMetric(54, 154, "RATIO", fmt(ratio, 2) + "x", statusFill) +
+        CAD.metricChip(54, 70, "CALCULATED", fmtFt(calculatedWidth), { accent: CAD.colors.green, valueFill: CAD.colors.green }) +
+        CAD.metricChip(54, 112, "REQUIRED", fmtFt(requiredWidth), { accent: "rgba(248,250,252,.72)", valueFill: "rgba(248,250,252,.74)" }) +
+        CAD.metricChip(54, 154, "RATIO", fmt(ratio, 2) + "x", { accent: statusColor, valueFill: statusColor }) +
       '</svg>';
   }
-
 
   function renderScenarioPressureLineSvg(model) {
     const m = model && typeof model === "object" ? model : {};
@@ -1638,6 +1803,8 @@ registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
     version: VERSION,
     codes: CODES,
     theme,
+    CAD,
+    PhysicalSecurity,
     renderers,
     registerRenderer,
     render,
