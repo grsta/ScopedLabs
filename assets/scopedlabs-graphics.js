@@ -795,12 +795,16 @@
           const fp1 = frontPoint(item.startFt);
           const fp2 = frontPoint(item.endFt);
           const labelX = (fp1.x + fp2.x) / 2;
-          const labelY = frontLeft.y + 30 + (index % 2) * 12;
+          const labelY = frontLeft.y + 13 + (index % 2) * 10;
+
+          const labelText = escapeHtml(fmtFt(item.endFt - item.startFt)) + ' overlap';
+          const labelWidth = Math.max(64, labelText.length * 6.2);
 
           return ''
             + '<path data-sl-visual-part="iso-overlap-zone" d="' + path + '" fill="rgba(255,211,79,.20)" stroke="rgba(255,226,128,.66)" stroke-width="1.2" stroke-dasharray="5 4" />'
-            + '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(255,230,150,.96)" font-size="10.5" font-weight="900">'
-            + escapeHtml(fmtFt(item.endFt - item.startFt)) + ' overlap</text>';
+            + '<rect x="' + (labelX - labelWidth / 2).toFixed(1) + '" y="' + (labelY - 12).toFixed(1) + '" width="' + labelWidth.toFixed(1) + '" height="16" rx="8" fill="rgba(5,15,10,.78)" stroke="rgba(255,226,128,.28)" stroke-width="1" />'
+            + '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(255,230,150,.96)" font-size="10.2" font-weight="900">'
+            + labelText + '</text>';
         }).join("")
       : '<text x="' + (frontRight.x - 4) + '" y="' + (frontLeft.y + 26) + '" text-anchor="end" fill="rgba(255,211,79,.78)" font-size="10.5" font-weight="850">No shared overlap segment</text>';
 
