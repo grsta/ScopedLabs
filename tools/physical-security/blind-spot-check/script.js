@@ -1401,6 +1401,9 @@ function blindSpotMultiCameraFootprintSvg(data) {
 
 
   function blindSpotExportTable(title, rows) {
+    if (window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderMetricTable === "function") {
+      return window.ScopedLabsAssistantExport.renderMetricTable(title, rows);
+    }
     const cleanRows = (Array.isArray(rows) ? rows : [])
       .filter((row) => row && row[0] && row[1] !== undefined && row[1] !== null && String(row[1]).trim() !== "");
 
@@ -1426,6 +1429,9 @@ function blindSpotMultiCameraFootprintSvg(data) {
   }
 
   function blindSpotExportNotesTable(rows) {
+    if (window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderNotesTable === "function") {
+      return window.ScopedLabsAssistantExport.renderNotesTable(rows);
+    }
     const cleanRows = (Array.isArray(rows) ? rows : [])
       .filter((row) => row && row[0] && row[1]);
 
