@@ -24,7 +24,7 @@
     window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
   </script>
   <script defer src="/assets/auth.js?v=0314"></script>
-  <script defer src="/assets/account.js?v=acct-507-snapshot-extra"></script>
+  <script defer src="/assets/account.js?v=acct-508-snapshot-shell-sections"></script>
 
   <style data-scopedlabs-account-snapshots>
     .sl-snapshots-list {
@@ -184,6 +184,23 @@
       .sl-snapshot-grid {
         grid-template-columns: 1fr;
       }
+    }
+  
+    /* data-scopedlabs-snapshot-table-contract */
+
+    /* Shell/export-owned snapshots: keep metric/value tables easier to scan. */
+    .sl-snapshot-table {
+      table-layout: fixed;
+    }
+
+    .sl-snapshot-table th:first-child,
+    .sl-snapshot-table td:first-child {
+      width: 44%;
+    }
+
+    .sl-snapshot-table th:last-child,
+    .sl-snapshot-table td:last-child {
+      width: 56%;
     }
   </style>
 </head>

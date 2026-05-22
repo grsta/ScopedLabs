@@ -189,6 +189,16 @@
     }
   }
 
+
+  function slPayloadHasExtraSections(payload) {
+    return Array.isArray(payload?.extraSections) && payload.extraSections.length > 0;
+  }
+
+  function slSuppressLegacySnapshotGrid(detail, payload) {
+    if (!detail || !slPayloadHasExtraSections(payload)) return;
+    detail.querySelector(".sl-snapshot-grid")?.remove();
+  }
+
   function sanitizeSnapshotSvg(svg) {
     return String(svg || "")
       .replace(/<script[\s\S]*?<\/script>/gi, "")
@@ -405,6 +415,8 @@
         '<button class="btn" type="button" data-snapshot-close>Close</button>' +
         '<button class="btn" type="button" data-snapshot-delete="' + escapeHtml(snapshot.id || "") + '">Delete Snapshot</button>' +
       '</div>';
+
+    slSuppressLegacySnapshotGrid(els.snapshotDetail, payload);
   }
 
   async function viewSnapshot(id) {
@@ -1022,6 +1034,7 @@
       </div>
     `;
 
+    slSuppressLegacySnapshotGrid(detail, payload);
     detail.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
