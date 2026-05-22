@@ -147,6 +147,29 @@
     .blindspot-technical-results { position: absolute !important; left: -10000px !important; top: auto !important; width: 1px !important; height: 1px !important; overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }
     @media (max-width: 860px) { .blindspot-mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 760px) { .blindspot-assistant-head { flex-wrap: wrap; } .blindspot-status-pill { margin-left: 0; } }
+
+    /* data-scopedlabs-blindspot-print-contract */
+    @media print {
+      .blindspot-export-figure,
+      .blindspot-export-figure .blindspot-visual-stage {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .blindspot-export-figure svg {
+        max-height: 5.85in !important;
+        width: 100% !important;
+        height: auto !important;
+        display: block !important;
+      }
+
+      .blindspot-export-structured-tables {
+        break-before: auto !important;
+        page-break-before: auto !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+      }
+    }
 </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -540,7 +563,7 @@
   <script src="/assets/scopedlabs-diagnostics.js?v=scopedlabs-diagnostics-001"></script>
   <script src="/assets/scopedlabs-graphics.js?v=scopedlabs-graphics-023-gap-label-alignment"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
-  <script src="./script.js?v=blindspot-export-section-split-001"></script>
+  <script src="./script.js?v=blindspot-print-flow-002"></script>
   <script defer src="/assets/help.js?v=help-032-blindspot-kb"></script>
 </body>
 </html>

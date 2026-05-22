@@ -1642,7 +1642,7 @@ function blindSpotMultiCameraFootprintSvg(data) {
 
     els.assistant.innerHTML =
       '<div class="blindspot-assistant-head"><div><p class="blindspot-assistant-kicker">Blind Spot Assistant</p><h3 class="blindspot-assistant-title">' + escapeHtml(blindSpotAssistantTitle(data)) + '</h3><p class="blindspot-assistant-copy">' + escapeHtml(blindSpotAssistantSummary(data)) + '</p></div><span class="blindspot-status-pill ' + statusClass + '">Assistant Status: ' + escapeHtml(formatAssistantStatusLabel(data.status)) + '</span></div>' +
-      '<div class="blindspot-visual-stage" data-export-section data-export-suppress-title="true" style="break-inside:avoid;page-break-inside:avoid;">' + blindSpotPlanViewSvg(data) + '</div>' +
+      '<div class="blindspot-export-figure" data-export-section data-export-suppress-title="true" style="break-inside:avoid;page-break-inside:avoid;">' + blindSpotPlanViewSvg(data) + '</div>' +
       blindSpotStructuredExportTables(data) +
       '<div class="blindspot-mini-grid"><div class="blindspot-mini-card"><div class="blindspot-mini-label">Required span</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.w)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Modeled coverage</div><div class="blindspot-mini-value">' + escapeHtml(fmtFt(data.totalCoverageFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Gap / margin</div><div class="blindspot-mini-value">' + escapeHtml(data.gapFt <= 0 ? "0.0 ft" : fmtFt(data.gapFt)) + '</div></div><div class="blindspot-mini-card"><div class="blindspot-mini-label">Result</div><div class="blindspot-mini-value">' + escapeHtml(data.coverageClass) + '</div></div></div>' +
       blindSpotScenarioCardsHtml(data) +
