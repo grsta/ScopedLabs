@@ -668,45 +668,30 @@
   }
 
   function fovGeometrySvg(data, fallbackSvg, options = {}) {
-    const renderForExport = options && options.exportSvg === true;
-    const modelSource = typeof fovGeometryGraphicsModel === "function" ? fovGeometryGraphicsModel(data) : data;
-    const model = Object.assign({}, modelSource, {
-      exportMode: renderForExport
-    });
-
-    function finalizeSvg(svg) {
-      if (typeof svg !== "string" || !svg.includes("<svg") || svg.includes("data-sl-diagnostic-code")) {
-        return "";
-      }
-
-      let output = svg;
-
-      if (!renderForExport) {
-        output = output.replace(/\sdata-export-svg\b/g, "");
-      }
-
-      const gfx = window.ScopedLabsGraphics;
-      if (gfx && typeof gfx.frameSvg === "function") {
-        output = gfx.frameSvg(output, {
-          renderer: "fov-geometry-plan",
-          tool: "field-of-view",
-          size: "wide"
-        });
-      }
-
-      return output;
-    }
-
-    const psGfx = window.ScopedLabsPhysicalSecurityGraphics;
-    if (psGfx && typeof psGfx.renderFovGeometryPlanSvg === "function") {
-      const svg = finalizeSvg(psGfx.renderFovGeometryPlanSvg(model));
-      if (svg) return svg;
-    }
-
     const gfx = window.ScopedLabsGraphics;
+    const renderForExport = options && options.exportSvg === true;
+
     if (gfx && typeof gfx.render === "function") {
-      const svg = finalizeSvg(gfx.render("fov-geometry-plan", model));
-      if (svg) return svg;
+      const model = Object.assign({}, fovGeometryGraphicsModel(data), {
+        exportMode: renderForExport
+      });
+      let svg = gfx.render("fov-geometry-plan", model);
+
+      if (typeof svg === "string" && svg.includes("<svg") && !svg.includes("data-sl-diagnostic-code")) {
+        if (!renderForExport) {
+          svg = svg.replace(/\sdata-export-svg\b/g, "");
+        }
+
+        if (typeof gfx.frameSvg === "function") {
+          svg = gfx.frameSvg(svg, {
+            renderer: "fov-geometry-plan",
+            tool: "field-of-view",
+            size: "wide"
+          });
+        }
+
+        return svg;
+      }
     }
 
     return fallbackSvg || "";
