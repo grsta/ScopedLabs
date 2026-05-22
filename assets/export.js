@@ -1385,14 +1385,22 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       margin:0 auto;
     }
     .extra-svg-wrap--compact{
-      padding:12px;
+      width:100%;
+      max-width:10.25in;
+      margin:0 auto;
+      padding:8px 10px;
+      box-sizing:border-box;
       break-inside:avoid;
       page-break-inside:avoid;
     }
     .extra-svg-wrap--compact svg{
-      max-height:4.45in;
-      width:auto;
-      max-width:100%;
+      width:100% !important;
+      max-width:100% !important;
+      height:auto !important;
+      max-height:5.15in;
+      display:block !important;
+      margin:0 auto !important;
+      object-fit:contain;
     }
     .foot{
       margin-top:26px;
