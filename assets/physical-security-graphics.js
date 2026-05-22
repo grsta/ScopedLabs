@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-003-standard-camera-symbol
+ * Version: physical-security-graphics-004-direct-fov-render
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-003-standard-camera-symbol";
+  const VERSION = "physical-security-graphics-004-direct-fov-render";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
