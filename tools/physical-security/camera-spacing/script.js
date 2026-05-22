@@ -2135,59 +2135,37 @@ const exportNarrativeHtml = spacingExportNarrativeHtml(data, notes, sourceMode, 
 
   function spacingExportNarrativeHtml(data, notes = [], sourceMode = "pipeline", assistantMeta = null) {
     const source = data && typeof data === "object" ? data : {};
-    const overlapValue = source.singleCamera ? "N/A" : fmtPct(source.ovPct, 1);
-    const statusValue = source.status || source.spacingClass || "N/A";
     const assistantLabel = assistantMeta && assistantMeta.label ? assistantMeta.label : "Baseline/current inputs";
+    const noteList = Array.isArray(notes) ? notes.filter(Boolean) : [];
 
-    const primaryRows = [
-      ["Camera count", String(source.cams || "N/A")],
-      ["Actual spacing", fmtFt(source.spacing)],
-      ["Usable width", fmtFt(source.usableWidth)],
-      ["Layout status", statusValue]
-    ];
+    const rows = [
+      ["Engineering interpretation", source.interpretation],
+      ["Dominant constraint", source.dominantConstraint],
+      ["Recommended action", source.guidance],
+      ["Additional notes", noteList.length
+        ? noteList.map((item) => "• " + item).join("\n")
+        : "Assistant branch: " + assistantLabel + ". Source mode: " + sourceMode + "."]
+    ].filter((row) => row[1]);
 
-    const inputRows = [
-      ["Protected run", fmtFt(source.len)],
-      ["Distance to target", fmtFt(source.dist)],
-      ["Horizontal FOV", fmt(source.hfov, 1) + " deg"],
-      ["Overlap reference", overlapValue]
-    ];
+    if (!rows.length) return "";
 
-    const continuityRows = [
-      ["Raw coverage width", fmtFt(source.rawWidth)],
-      ["Spacing source mode", sourceMode],
-      ["Assistant branch", assistantLabel],
-      ["Single-camera mode", source.singleCamera ? "Yes - overlap not applicable" : "No"]
-    ];
-
-    const noteList = (Array.isArray(notes) ? notes : [])
-      .map((item) => String(item || "").trim())
-      .filter(Boolean);
-
-    return '' +
-      '<div class="spacing-export-clean-summary" style="margin-top:14px;break-inside:avoid;">' +
-        '<h2 style="font-size:16px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 10px 0;color:#111827;">Camera Spacing Summary</h2>' +
-        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:2px;">' +
-          spacingExportMiniTable("Primary result", primaryRows) +
-          spacingExportMiniTable("Design inputs", inputRows) +
-          spacingExportMiniTable("Continuity context", continuityRows) +
-        '</div>' +
-        spacingExportParagraph("Engineering interpretation", source.interpretation) +
-        spacingExportParagraph("Dominant constraint", source.dominantConstraint) +
-        spacingExportParagraph("Recommended action", source.guidance) +
-        (noteList.length
-          ? '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
-              '<thead><tr><th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th><th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th></tr></thead>' +
-              '<tbody>' +
-                '<tr>' +
-                  '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">Additional notes:</td>' +
-                  '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' +
-                    noteList.map((item) => '&bull; ' + escapeHtml(item)).join("<br>") +
-                  '</td>' +
-                '</tr>' +
-              '</tbody>' +
-            '</table>'
-          : '') +
+    return "" +
+      '<div style="margin-top:12px;break-inside:avoid;page-break-inside:avoid;">' +
+        '<h3 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px 0;color:#111827;">Engineering Notes</h3>' +
+        '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
+          '<thead><tr>' +
+            '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th>' +
+            '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th>' +
+          '</tr></thead>' +
+          '<tbody>' +
+            rows.map((row) => {
+              return '<tr>' +
+                '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapeHtml(row[0]) + '</td>' +
+                '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;white-space:pre-line;">' + escapeHtml(row[1]) + '</td>' +
+              '</tr>';
+            }).join("") +
+          '</tbody>' +
+        '</table>' +
       '</div>';
   }
 
