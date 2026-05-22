@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-022-uncovered-intervals";
+  const VERSION = "scopedlabs-graphics-023-gap-label-alignment";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -970,12 +970,15 @@
           const fp1 = frontPoint(item.startFt);
           const fp2 = frontPoint(item.endFt);
           const labelX = (fp1.x + fp2.x) / 2;
-          const labelY = index % 2 === 0 ? frontLeft.y - 14 : frontLeft.y + 44;
+          const labelY = frontLeft.y + 13;
+          const labelText = escapeHtml(fmtFt(item.endFt - item.startFt)) + ' gap';
+          const labelWidth = Math.max(56, labelText.length * 6.2);
 
           return ''
             + '<path data-sl-visual-part="iso-gap-zone" d="' + path + '" fill="rgba(255,138,102,.24)" stroke="rgba(255,138,102,.82)" stroke-width="1.15" />'
-            + '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(255,188,166,.98)" font-size="11" font-weight="950">'
-            + escapeHtml(fmtFt(item.endFt - item.startFt)) + ' gap</text>';
+            + '<rect x="' + (labelX - labelWidth / 2).toFixed(1) + '" y="' + (labelY - 12).toFixed(1) + '" width="' + labelWidth.toFixed(1) + '" height="16" rx="8" fill="rgba(67,24,14,.88)" stroke="rgba(255,168,135,.42)" stroke-width="1" />'
+            + '<text x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(255,236,229,.98)" font-size="10.2" font-weight="900">'
+            + labelText + '</text>';
         }).join("")
       : (uncoveredFt > 0
         ? '<text x="' + (frontRight.x - 10) + '" y="' + (frontLeft.y - 12) + '" text-anchor="end" fill="rgba(255,188,166,.98)" font-size="12" font-weight="950">' + escapeHtml(fmtFt(uncoveredFt)) + ' uncovered</text>'
