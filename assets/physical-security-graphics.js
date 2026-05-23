@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-012-fov-target-plane-cad-v2
+ * Version: physical-security-graphics-014-pixel-density-detail-plan
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-012-fov-target-plane-cad-v2";
+  const VERSION = "physical-security-graphics-014-pixel-density-detail-plan";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -707,6 +707,130 @@
       '</svg>';
   }
 
+  function renderPixelDensityDetailPlanSvg(model) {
+    const m = model && typeof model === "object" ? model : {};
+    const ppf = Math.max(num(m.ppf ?? m.deliveredPpf, 0), 0);
+    const targetPpf = Math.max(num(m.targetPpf ?? m.tppf, 0), 0);
+    const sceneWidth = Math.max(num(m.sceneWidthFt ?? m.sceneW, 0), 0);
+    const targetWidth = Math.max(num(m.targetWidthFt ?? m.tw, 0), 0);
+    const resolutionPx = Math.max(num(m.resolutionPx ?? m.res, 0), 0);
+    const pixelsOnTarget = Math.max(num(m.pixelsOnTarget, ppf * targetWidth), 0);
+    const targetDistance = Math.max(num(m.targetDistanceFt ?? m.distanceFt ?? m.dist, 0), 0);
+    const hfovDeg = Math.max(num(m.hfovDeg ?? m.hfov, 0), 0);
+    const distanceForTarget = Math.max(num(m.distanceForTargetFt ?? m.distForTppf, 0), 0);
+    const utilizationPct = Math.max(num(m.utilizationPct, distanceForTarget > 0 ? (targetDistance / distanceForTarget) * 100 : 0), 0);
+    const ratio = targetPpf > 0 ? ppf / targetPpf : 0;
+    const level = String(m.level || m.detailLevel || "Detail");
+
+    if (!Number.isFinite(ppf) || !Number.isFinite(targetPpf) || ppf <= 0 || targetPpf <= 0) {
+      return fallbackSvg("SL-PS-GFX-PIXEL-DENSITY-BAD-MODEL", "Pixel Density renderer needs ppf and targetPpf.", {
+        renderer: "pixel-density-detail-plan",
+        tool: m.tool || "pixel-density"
+      });
+    }
+
+    const isRisk = ratio < 0.85;
+    const isWatch = !isRisk && (ratio < 1 || utilizationPct > 95);
+    const statusLabel = isRisk ? "RISK" : isWatch ? "WATCH" : "HEALTHY";
+    const statusColor = isRisk ? "rgba(255,143,136,.92)" : isWatch ? "rgba(255,211,79,.92)" : "rgba(125,255,158,.90)";
+    const coneFill = isRisk ? "rgba(255,143,136,.10)" : isWatch ? "rgba(255,211,79,.10)" : "rgba(125,255,158,.18)";
+    const coneLine = isRisk ? "rgba(255,143,136,.76)" : isWatch ? "rgba(255,211,79,.76)" : "rgba(125,255,158,.82)";
+
+    const labelX = 52;
+    const barX = 292;
+    const barW = 280;
+    const valueX = 740;
+    const barH = 10;
+    const row1Y = 70;
+    const rowGap = 32;
+    const maxPpf = Math.max(ppf, targetPpf, 1);
+    const deliveredBarW = Math.max(8, barW * Math.min(ppf / maxPpf, 1));
+    const targetBarW = Math.max(8, barW * Math.min(targetPpf / maxPpf, 1));
+    const targetPixels = targetPpf * targetWidth;
+    const maxPixels = Math.max(pixelsOnTarget, targetPixels, 1);
+    const pixelsBarW = Math.max(8, barW * Math.min(pixelsOnTarget / maxPixels, 1));
+
+    const stageX = 34;
+    const stageY = 150;
+    const stageW = 732;
+    const stageH = 228;
+    const cameraX = 122;
+    const centerY = 264;
+    const lensTipX = cameraX + 36;
+    const targetX = 590;
+    const sceneHalf = 78;
+    const sceneTopY = centerY - sceneHalf;
+    const sceneBotY = centerY + sceneHalf;
+    const targetRatio = sceneWidth > 0 ? targetWidth / sceneWidth : 0.12;
+    const targetHalf = clamp(sceneHalf * targetRatio, 14, 42);
+    const targetTopY = centerY - targetHalf;
+    const targetBotY = centerY + targetHalf;
+
+    const cameraMarkerMarkup = cameraCadIcon(cameraX, centerY, {
+      scale: 0.50,
+      color: coneLine,
+      stroke: coneLine,
+      accent: coneLine,
+      symbol: "pixel-density-camera-marker"
+    });
+
+    return "" +
+      '<svg data-export-svg class="pixel-density-detail-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="pixel-density-detail-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 800 398" role="img" aria-label="' + esc(m.ariaLabel || "Pixel Density CAD detail validation view") + '">' +
+        '<defs>' +
+          '<linearGradient id="psPixelDetailDeliveredBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(84,212,116,.70)" /><stop offset="100%" stop-color="rgba(125,255,152,.90)" /></linearGradient>' +
+          '<linearGradient id="psPixelDetailTargetBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.60)" /><stop offset="100%" stop-color="rgba(255,226,128,.88)" /></linearGradient>' +
+          '<linearGradient id="psPixelDetailPixelsBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,152,.58)" /><stop offset="100%" stop-color="rgba(125,255,152,.86)" /></linearGradient>' +
+          '<linearGradient id="psPixelDetailCone" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="' + coneFill + '" /><stop offset="100%" stop-color="rgba(125,255,158,.28)" /></linearGradient>' +
+          '<pattern id="psPixelDetailScanLines" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M 0 0 L 6 0" stroke="rgba(125,255,158,.30)" stroke-width="1" /></pattern>' +
+        '</defs>' +
+
+        '<text x="52" y="26" fill="rgba(248,250,252,.92)" font-size="18" font-weight="900">Plan view: pixel detail at target width</text>' +
+        '<text x="52" y="48" fill="rgba(226,232,240,.62)" font-size="12">Green shows delivered pixel density across the scene; the centered target bracket shows subject detail.</text>' +
+
+        '<text x="' + labelX + '" y="' + row1Y + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Delivered pixel density</text>' +
+        '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
+        '<rect x="' + barX + '" y="' + (row1Y - 8) + '" width="' + deliveredBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#psPixelDetailDeliveredBar)" />' +
+        '<text x="' + valueX + '" y="' + row1Y + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + esc(fmt(ppf, 1) + " PPF") + '</text>' +
+
+        '<text x="' + labelX + '" y="' + (row1Y + rowGap) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Target pixel density</text>' +
+        '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(255,211,79,.12)" />' +
+        '<rect x="' + barX + '" y="' + (row1Y + rowGap - 8) + '" width="' + targetBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#psPixelDetailTargetBar)" />' +
+        '<text x="' + valueX + '" y="' + (row1Y + rowGap) + '" text-anchor="end" fill="rgba(255,226,128,.92)" font-size="11" font-weight="900">' + esc(fmt(targetPpf, 1) + " PPF") + '</text>' +
+
+        '<text x="' + labelX + '" y="' + (row1Y + rowGap * 2) + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">Pixels on target</text>' +
+        '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="rgba(125,255,152,.12)" />' +
+        '<rect x="' + barX + '" y="' + (row1Y + rowGap * 2 - 8) + '" width="' + pixelsBarW.toFixed(1) + '" height="' + barH + '" rx="5" fill="url(#psPixelDetailPixelsBar)" />' +
+        '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + esc(statusColor) + '" font-size="11" font-weight="900">' + esc(fmt(pixelsOnTarget, 0) + " px | " + level) + '</text>' +
+
+        '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="rgba(125,255,152,.16)" />' +
+        '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / DETAIL DENSITY CHECK</text>' +
+        '<text x="' + (stageX + stageW - 86) + '" y="' + (stageY + 24) + '" text-anchor="middle" fill="' + esc(statusColor) + '" font-size="10" font-weight="950">' + esc(statusLabel) + '</text>' +
+
+        '<text x="' + (cameraX - 80) + '" y="' + (centerY - 5) + '" fill="rgba(226,232,240,.88)" font-size="10.5" font-weight="900">Cam 1</text>' +
+        '<text x="' + (cameraX - 80) + '" y="' + (centerY + 14) + '" fill="rgba(226,232,240,.56)" font-size="9.5" font-weight="700">HFOV ' + esc(fmt(hfovDeg, 0)) + ' deg</text>' +
+        cameraMarkerMarkup +
+
+        '<path d="M ' + fmt(lensTipX, 1) + ' ' + fmt(centerY, 1) + ' L ' + fmt(targetX, 1) + ' ' + fmt(sceneTopY, 1) + ' L ' + fmt(targetX, 1) + ' ' + fmt(sceneBotY, 1) + ' Z" fill="url(#psPixelDetailCone)" stroke="' + esc(coneLine) + '" stroke-width="1.55" />' +
+        '<line x1="' + lensTipX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="rgba(226,232,240,.24)" stroke-width="1" stroke-dasharray="4 6" />' +
+
+        '<line x1="' + targetX + '" y1="' + sceneTopY + '" x2="' + targetX + '" y2="' + sceneBotY + '" stroke="rgba(226,232,240,.35)" stroke-width="1" />' +
+        '<line x1="' + (targetX - 8) + '" y1="' + sceneTopY + '" x2="' + (targetX + 8) + '" y2="' + sceneTopY + '" stroke="rgba(226,232,240,.35)" stroke-width="1" />' +
+        '<line x1="' + (targetX - 8) + '" y1="' + sceneBotY + '" x2="' + (targetX + 8) + '" y2="' + sceneBotY + '" stroke="rgba(226,232,240,.35)" stroke-width="1" />' +
+        '<rect x="' + (targetX - 12) + '" y="' + fmt(targetTopY, 1) + '" width="24" height="' + fmt(Math.max(1, targetBotY - targetTopY), 1) + '" rx="7" fill="url(#psPixelDetailScanLines)" stroke="' + esc(statusColor) + '" stroke-width="1.4" />' +
+        '<line x1="' + (targetX - 18) + '" y1="' + fmt(targetTopY, 1) + '" x2="' + (targetX + 18) + '" y2="' + fmt(targetTopY, 1) + '" stroke="' + esc(statusColor) + '" stroke-width="1.1" />' +
+        '<line x1="' + (targetX - 18) + '" y1="' + fmt(targetBotY, 1) + '" x2="' + (targetX + 18) + '" y2="' + fmt(targetBotY, 1) + '" stroke="' + esc(statusColor) + '" stroke-width="1.1" />' +
+
+        '<text x="' + (targetX + 24) + '" y="' + (centerY - 24) + '" fill="' + esc(statusColor) + '" font-size="12" font-weight="950">Delivered detail</text>' +
+        '<text x="' + (targetX + 24) + '" y="' + (centerY - 3) + '" fill="' + esc(statusColor) + '" font-size="14" font-weight="950">' + esc(fmt(ppf, 1) + " PPF") + '</text>' +
+        '<text x="' + (targetX + 24) + '" y="' + (centerY + 17) + '" fill="rgba(226,232,240,.62)" font-size="10.5">Target: ' + esc(fmt(targetPpf, 1) + " PPF") + '</text>' +
+        '<text x="' + (targetX + 24) + '" y="' + (centerY + 37) + '" fill="rgba(226,232,240,.62)" font-size="10.5">Subject: ' + esc(fmtFt(targetWidth, 1)) + '</text>' +
+
+        '<line x1="' + lensTipX + '" y1="354" x2="' + targetX + '" y2="354" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+        '<line x1="' + lensTipX + '" y1="348" x2="' + lensTipX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+        '<line x1="' + targetX + '" y1="348" x2="' + targetX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+        '<text x="' + ((lensTipX + targetX) / 2).toFixed(1) + '" y="376" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Target distance: ' + esc(fmtFt(targetDistance, 0)) + '</text>' +
+      '</svg>';
+  }
 
   const primitives = {
     cadGrid,
@@ -727,6 +851,7 @@
     hfovCallout
   };
 
+  gfx.registerRenderer("pixel-density-detail-plan", renderPixelDensityDetailPlanSvg);
   gfx.registerRenderer("coverage-footprint-plan", renderCoverageFootprintPlanSvg);
   gfx.registerRenderer("fov-geometry-plan", renderFovGeometryPlanSvg);
 
@@ -736,6 +861,7 @@
     ready: true,
     colors,
     primitives,
+    renderPixelDensityDetailPlanSvg,
     renderFovGeometryPlanSvg
   };
 })();

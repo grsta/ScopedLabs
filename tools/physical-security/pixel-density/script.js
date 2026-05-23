@@ -34,7 +34,8 @@
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
-    continueBtn: $("continue")
+    continueBtn: $("continue"),
+    pixelVisual: $("pixelDensityVisual")
   };
 
   const DEFAULTS = {
@@ -368,6 +369,7 @@
       emptyMessage: "Enter values and press Calculate."
     });
 
+    clearPixelDensityVisual();
     renderFlowNote();
   }
 
@@ -571,7 +573,87 @@
     updateActiveAreaFromPixelDensity(data, manualOverrideMeta);
   }
 
+
+  function pixelDensityGraphicsModel(data) {
+    return {
+      tool: "pixel-density",
+      ppf: data.ppf,
+      targetPpf: data.tppf,
+      sceneWidthFt: data.sceneW,
+      targetWidthFt: data.tw,
+      resolutionPx: data.res,
+      pixelsOnTarget: data.pixelsOnTarget,
+      targetDistanceFt: data.dist,
+      hfovDeg: data.hfov,
+      distanceForTargetFt: data.distForTppf,
+      utilizationPct: data.utilizationPct,
+      level: data.level,
+      status: data.status
+    };
+  }
+
+  function pixelDensityVisualSvg(data) {
+    const model = pixelDensityGraphicsModel(data);
+    const gfx = window.ScopedLabsGraphics;
+
+    if (gfx && typeof gfx.render === "function") {
+      return gfx.render("pixel-density-detail-plan", model);
+    }
+
+    const psGraphics = window.ScopedLabsPhysicalSecurityGraphics;
+    if (psGraphics && typeof psGraphics.renderPixelDensityDetailPlanSvg === "function") {
+      return psGraphics.renderPixelDensityDetailPlanSvg(model);
+    }
+
+    return "" +
+      '<svg data-export-svg data-sl-renderer="pixel-density-detail-plan" data-sl-diagnostic-code="SL-PS-GFX-PIXEL-RENDERER-MISSING" viewBox="0 0 800 220" role="img" aria-label="Pixel Density visual fallback">' +
+        '<rect x="24" y="24" width="752" height="172" rx="18" fill="rgba(0,0,0,.16)" stroke="rgba(255,211,79,.32)" />' +
+        '<text x="52" y="86" fill="rgba(255,226,128,.96)" font-size="17" font-weight="950">Pixel Density visual unavailable</text>' +
+        '<text x="52" y="118" fill="rgba(226,232,240,.72)" font-size="12">Physical Security graphics library was not available.</text>' +
+      '</svg>';
+  }
+
+  function clearPixelDensityVisual() {
+    if (!els.pixelVisual) return;
+    els.pixelVisual.hidden = true;
+    els.pixelVisual.innerHTML = "";
+    els.pixelVisual.removeAttribute("data-export-section");
+    els.pixelVisual.removeAttribute("data-export-title");
+    els.pixelVisual.removeAttribute("data-export-compact-svg");
+  }
+
+  function renderPixelDensityVisual(data) {
+    if (!els.pixelVisual || !data || !data.ok) return;
+
+    const liveSvg = pixelDensityVisualSvg(data);
+
+    els.pixelVisual.hidden = false;
+    els.pixelVisual.setAttribute("data-export-section", "true");
+    els.pixelVisual.setAttribute("data-export-title", "Pixel Density Detail Geometry");
+    els.pixelVisual.setAttribute("data-export-compact-svg", "true");
+    els.pixelVisual.innerHTML =
+      '<div class="pixel-density-visual-head">' +
+        '<div>' +
+          '<p class="pixel-density-visual-title">Pixel Density Detail Geometry</p>' +
+          '<div class="pixel-density-visual-subtitle">CAD-style plan view showing delivered PPF against the target detail requirement.</div>' +
+        '</div>' +
+        '<div class="pixel-density-visual-pill">' + escapeHtml(data.status || data.level) + '</div>' +
+      '</div>' +
+      '<div class="pixel-density-visual-svg-wrap">' + liveSvg + '</div>' +
+      '<div class="pixel-density-visual-note" data-export-text>Detail note: pixel density is calculated by dividing horizontal resolution across the full scene width at the target distance, then comparing delivered PPF against the requested detail target.</div>' +
+      '<div class="pixel-density-visual-export-only">' +
+        '<table><thead><tr><th>Detail Metric</th><th>Value</th></tr></thead><tbody>' +
+          '<tr><td>Delivered pixel density</td><td>' + escapeHtml(fmtPpf(data.ppf)) + '</td></tr>' +
+          '<tr><td>Target pixel density</td><td>' + escapeHtml(fmtPpf(data.tppf)) + '</td></tr>' +
+          '<tr><td>Pixels on target</td><td>' + escapeHtml(fmtPx(data.pixelsOnTarget, 0)) + '</td></tr>' +
+          '<tr><td>Scene width</td><td>' + escapeHtml(fmtFt(data.sceneW)) + '</td></tr>' +
+          '<tr><td>Target width</td><td>' + escapeHtml(fmtFt(data.tw)) + '</td></tr>' +
+        '</tbody></table>' +
+      '</div>';
+  }
+
   function renderError(message) {
+    clearPixelDensityVisual();
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
@@ -626,6 +708,7 @@
       }
     });
 
+    renderPixelDensityVisual(data);
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
