@@ -163,6 +163,22 @@
       margin-top: -2px;
     }
 
+    .target-ppf-preset-stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .target-ppf-preset-note {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.54);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .target-ppf-preset-stack:not(.is-custom) #tppf {
+      display: none;
+    }
+
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -326,7 +342,19 @@
             <div class="label-row">
               <label for="tppf">Target Pixel Density (PPF)</label>
             </div>
-            <input id="tppf" type="number" min="1" step="0.1" value="80" />
+            <div class="target-ppf-preset-stack">
+              <select id="tppfPreset" aria-label="Target detail goal preset">
+                <option value="20">Detection / awareness — 20 PPF</option>
+                <option value="40">Observation / activity review — 40 PPF</option>
+                <option value="60">Enhanced subject detail — 60 PPF</option>
+                <option value="80">Recognition-focused — 80 PPF</option>
+                <option value="120">Identification / high detail — 120 PPF</option>
+                <option value="150">Plate or specialty detail — 150 PPF</option>
+                <option value="custom">Custom…</option>
+              </select>
+              <input id="tppf" type="number" min="1" step="0.1" value="80" />
+              <p class="target-ppf-preset-note">Choose the intended detail goal. Select Custom to enter an exact PPF target.</p>
+            </div>
           </div>
 
           <div class="field">
@@ -455,7 +483,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
-  <script src="./script.js?v=physical-security-pixel-density-004-custom-resolution-toggle"></script>
+  <script src="./script.js?v=physical-security-pixel-density-005-detail-goal-presets"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>

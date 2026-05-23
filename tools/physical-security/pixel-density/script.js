@@ -28,6 +28,7 @@
     hfov: $("hfov"),
     dist: $("dist"),
     tppf: $("tppf"),
+    tppfPreset: $("tppfPreset"),
     tw: $("tw"),
     calc: $("calc"),
     reset: $("reset"),
@@ -55,6 +56,15 @@
     3072,
     3840,
     4096
+  ];
+
+  const DETAIL_PPF_PRESETS = [
+    20,
+    40,
+    60,
+    80,
+    120,
+    150
   ];
 
   function num(value, fallback = NaN) {
@@ -312,6 +322,48 @@
     els.res.value = String(value);
   }
 
+
+  function findTargetPpfPresetValue(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "custom";
+
+    const match = DETAIL_PPF_PRESETS.find((preset) => Math.abs(Number(preset) - number) <= 0.05);
+    return match ? String(match) : "custom";
+  }
+
+  function updateTargetPpfPresetUi() {
+    if (!els.tppfPreset || !els.tppf) return;
+
+    const stack = els.tppf.closest(".target-ppf-preset-stack");
+    if (!stack) return;
+
+    stack.classList.toggle("is-custom", els.tppfPreset.value === "custom");
+  }
+
+  function syncTargetPpfPresetFromInput() {
+    if (!els.tppfPreset || !els.tppf) return;
+
+    els.tppfPreset.value = findTargetPpfPresetValue(els.tppf.value);
+    updateTargetPpfPresetUi();
+  }
+
+  function applyTargetPpfPreset() {
+    if (!els.tppfPreset || !els.tppf) return;
+
+    const preset = els.tppfPreset.value;
+    updateTargetPpfPresetUi();
+
+    if (!preset || preset === "custom") {
+      els.tppf.focus();
+      return;
+    }
+
+    const value = Number(preset);
+    if (!Number.isFinite(value) || value <= 0) return;
+
+    els.tppf.value = String(value);
+  }
+
   function applyDefaults() {
     els.res.value = String(DEFAULTS.res);
     els.hfov.value = String(DEFAULTS.hfov);
@@ -320,6 +372,7 @@
     els.tw.value = String(DEFAULTS.tw);
 
     applyAreaPlanInputs();
+    syncTargetPpfPresetFromInput();
     syncResolutionPresetFromInput();
   }
 
@@ -770,6 +823,7 @@
     resetFlowOverrideState();
     applyDefaults();
     renderFlowNote();
+    syncTargetPpfPresetFromInput();
     invalidate({ clearFlow: true });
   }
 
@@ -779,11 +833,13 @@
       if (!el) return;
       el.addEventListener("input", () => {
         if (id === "res") syncResolutionPresetFromInput();
+        if (id === "tppf") syncTargetPpfPresetFromInput();
         markFlowInputOverride(id);
         invalidate({ clearFlow: true });
       });
       el.addEventListener("change", () => {
         if (id === "res") syncResolutionPresetFromInput();
+        if (id === "tppf") syncTargetPpfPresetFromInput();
         markFlowInputOverride(id);
         invalidate({ clearFlow: true });
       });
@@ -793,6 +849,13 @@
       applyResolutionPreset();
       updateResolutionPresetUi();
       markFlowInputOverride("res");
+      invalidate({ clearFlow: true });
+    });
+
+    els.tppfPreset?.addEventListener("change", () => {
+      applyTargetPpfPreset();
+      updateTargetPpfPresetUi();
+      markFlowInputOverride("tppf");
       invalidate({ clearFlow: true });
     });
 
@@ -816,6 +879,7 @@
     applyDefaults();
     bind();
     renderFlowNote();
+    syncTargetPpfPresetFromInput();
     invalidate({ clearFlow: false });
   }
 
