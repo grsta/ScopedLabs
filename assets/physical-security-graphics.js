@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-004-fov-cone-lens-tip-fix
+ * Version: physical-security-graphics-005-reference-camera-marker
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-004-fov-cone-lens-tip-fix";
+  const VERSION = "physical-security-graphics-005-reference-camera-marker";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -125,17 +125,19 @@
   }
 
   function cameraLensTipX(x) {
-    return x + 118;
+    return x + 138;
   }
 
   function cameraPlanMarker(x, y, options) {
     const opts = options && typeof options === "object" ? options : {};
     const label = opts.label || "CAMERA";
     const color = opts.color || colors.camera;
+    const mutedStroke = "rgba(125,255,158,.40)";
+    const softFill = "rgba(125,255,158,.055)";
 
     return "" +
-      '<g data-ps-graphic-part="camera-marker">' +
-        CAD.text(x + 63, y - 40, label, {
+      '<g data-ps-graphic-part="camera-marker" data-ps-camera-symbol="bullet-reference">' +
+        CAD.text(x + 72, y - 42, label, {
           anchor: "middle",
           fill: opts.labelFill || "rgba(248,250,252,.72)",
           size: 8.9,
@@ -143,21 +145,37 @@
           spacing: ".08em"
         }) +
 
-        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="16" fill="rgba(125,255,158,.028)" stroke="rgba(125,255,158,.18)" stroke-width=".9" />' +
-        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="3.7" fill="' + esc(color) + '" />' +
+        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="15" fill="rgba(125,255,158,.026)" stroke="rgba(125,255,158,.18)" stroke-width=".85" />' +
+        '<rect x="' + fmt(x - 5, 2) + '" y="' + fmt(y - 13, 2) + '" width="10" height="26" rx="2" fill="rgba(6,18,12,.90)" stroke="rgba(125,255,158,.58)" stroke-width=".95" />' +
+        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="3.5" fill="' + esc(color) + '" />' +
 
-        CAD.line(x + 4, y, x + 26, y, {
+        CAD.line(x + 5, y, x + 27, y, {
           stroke: "rgba(125,255,158,.72)",
-          width: 1.45,
+          width: 1.35,
           linecap: "round"
         }) +
 
-        '<rect x="' + fmt(x + 26, 2) + '" y="' + fmt(y - 14, 2) + '" width="70" height="28" rx="2.5" fill="rgba(6,18,12,.90)" stroke="' + esc(color) + '" stroke-width="1.25" />' +
-        '<rect x="' + fmt(x + 35, 2) + '" y="' + fmt(y - 8, 2) + '" width="45" height="16" rx="1.5" fill="rgba(125,255,158,.045)" stroke="rgba(125,255,158,.14)" stroke-width=".75" />' +
+        '<circle cx="' + fmt(x + 29, 2) + '" cy="' + fmt(y, 2) + '" r="5.2" fill="rgba(6,18,12,.92)" stroke="' + esc(color) + '" stroke-width="1.05" />' +
 
-        '<path d="M ' + fmt(x + 96, 2) + ' ' + fmt(y - 11, 2) + ' L ' + fmt(x + 118, 2) + ' ' + fmt(y, 2) + ' L ' + fmt(x + 96, 2) + ' ' + fmt(y + 11, 2) + ' Z" fill="rgba(125,255,158,.145)" stroke="' + esc(color) + '" stroke-width="1.25" stroke-linejoin="round" />' +
-        '<line x1="' + fmt(x + 118, 2) + '" y1="' + fmt(y - 9, 2) + '" x2="' + fmt(x + 118, 2) + '" y2="' + fmt(y + 9, 2) + '" stroke="rgba(125,255,158,.30)" stroke-width=".8" />' +
-        '<circle cx="' + fmt(x + 118, 2) + '" cy="' + fmt(y, 2) + '" r="2" fill="' + esc(color) + '" />' +
+        '<path d="M ' + fmt(x + 34, 2) + ' ' + fmt(y - 16, 2) +
+          ' L ' + fmt(x + 94, 2) + ' ' + fmt(y - 14, 2) +
+          ' Q ' + fmt(x + 108, 2) + ' ' + fmt(y - 12, 2) + ' ' + fmt(x + 112, 2) + ' ' + fmt(y - 5, 2) +
+          ' L ' + fmt(x + 112, 2) + ' ' + fmt(y + 5, 2) +
+          ' Q ' + fmt(x + 108, 2) + ' ' + fmt(y + 12, 2) + ' ' + fmt(x + 94, 2) + ' ' + fmt(y + 14, 2) +
+          ' L ' + fmt(x + 34, 2) + ' ' + fmt(y + 16, 2) +
+          ' Z" fill="rgba(6,18,12,.92)" stroke="' + esc(color) + '" stroke-width="1.2" stroke-linejoin="round" />' +
+
+        '<path d="M ' + fmt(x + 43, 2) + ' ' + fmt(y - 9, 2) +
+          ' L ' + fmt(x + 88, 2) + ' ' + fmt(y - 8, 2) +
+          ' Q ' + fmt(x + 99, 2) + ' ' + fmt(y - 6, 2) + ' ' + fmt(x + 102, 2) + ' ' + fmt(y, 2) +
+          ' Q ' + fmt(x + 99, 2) + ' ' + fmt(y + 6, 2) + ' ' + fmt(x + 88, 2) + ' ' + fmt(y + 8, 2) +
+          ' L ' + fmt(x + 43, 2) + ' ' + fmt(y + 9, 2) +
+          ' Z" fill="' + softFill + '" stroke="rgba(125,255,158,.12)" stroke-width=".75" />' +
+
+        '<rect x="' + fmt(x + 112, 2) + '" y="' + fmt(y - 8, 2) + '" width="20" height="16" rx="4" fill="rgba(6,18,12,.94)" stroke="' + esc(color) + '" stroke-width="1.1" />' +
+        '<line x1="' + fmt(x + 126, 2) + '" y1="' + fmt(y - 7, 2) + '" x2="' + fmt(x + 126, 2) + '" y2="' + fmt(y + 7, 2) + '" stroke="' + mutedStroke + '" stroke-width=".75" />' +
+        '<ellipse cx="' + fmt(x + 136, 2) + '" cy="' + fmt(y, 2) + '" rx="2.8" ry="6.4" fill="rgba(125,255,158,.11)" stroke="' + esc(color) + '" stroke-width=".9" />' +
+        '<circle cx="' + fmt(x + 138, 2) + '" cy="' + fmt(y, 2) + '" r="1.75" fill="' + esc(color) + '" />' +
       '</g>';
   }
 
