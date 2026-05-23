@@ -687,6 +687,21 @@
     const cameraX = 122;
     const centerY = 264;
     const lensTipX = cameraX + 36;
+    const psPrimitives = typeof window !== "undefined" &&
+      window.ScopedLabsPhysicalSecurityGraphics &&
+      window.ScopedLabsPhysicalSecurityGraphics.primitives
+        ? window.ScopedLabsPhysicalSecurityGraphics.primitives
+        : null;
+    const cameraMarkerMarkup = psPrimitives && typeof psPrimitives.cameraCadIcon === "function"
+      ? psPrimitives.cameraCadIcon(cameraX, centerY, {
+          scale: 0.42,
+          color: "rgba(125,255,152,.92)",
+          stroke: "rgba(125,255,152,.92)",
+          accent: "rgba(125,255,152,.78)",
+          symbol: "coverage-area-camera-marker"
+        })
+      : '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />' +
+        '<line x1="' + (cameraX + 8) + '" y1="' + centerY + '" x2="' + lensTipX + '" y2="' + centerY + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" stroke-linecap="round" />';
     const targetX = 590;
     const rawHalf = 78;
     const nearHalf = 22;
@@ -769,8 +784,7 @@
 
         '<text x="' + (cameraX - 76) + '" y="' + (centerY - 4) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
         '<text x="' + (cameraX - 76) + '" y="' + (centerY + 14) + '" text-anchor="start" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + escapeHtml(fmt(hfovDeg, 0)) + ' deg</text>' +
-        '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />' +
-        '<line x1="' + (cameraX + 8) + '" y1="' + centerY + '" x2="' + lensTipX + '" y2="' + centerY + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" stroke-linecap="round" />' +
+        cameraMarkerMarkup +
 
         '<polygon points="' + polyPoints(rawFootprint) + '" fill="url(#coveragePlanRawFill)" stroke="rgba(226,232,240,.15)" stroke-width=".85" stroke-dasharray="6 7" />' +
         '<polygon points="' + polyPoints(leftReserveBand) + '" fill="url(#coveragePlanReserveFill)" stroke="rgba(255,226,128,.78)" stroke-width="1.15" />' +
