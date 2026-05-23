@@ -284,15 +284,27 @@
     return RESOLUTION_PRESETS.includes(rounded) ? String(rounded) : "custom";
   }
 
+  function updateResolutionPresetUi() {
+    if (!els.resPreset || !els.res) return;
+    const stack = els.res.closest(".resolution-preset-stack");
+    if (!stack) return;
+    stack.classList.toggle("is-custom", els.resPreset.value === "custom");
+  }
+
   function syncResolutionPresetFromInput() {
     if (!els.resPreset || !els.res) return;
     els.resPreset.value = findResolutionPresetValue(els.res.value);
+    updateResolutionPresetUi();
   }
 
   function applyResolutionPreset() {
     if (!els.resPreset || !els.res) return;
     const preset = els.resPreset.value;
-    if (!preset || preset === "custom") return;
+    updateResolutionPresetUi();
+    if (!preset || preset === "custom") {
+      els.res.focus();
+      return;
+    }
 
     const value = Number(preset);
     if (!Number.isFinite(value) || value <= 0) return;
@@ -779,6 +791,7 @@
 
     els.resPreset?.addEventListener("change", () => {
       applyResolutionPreset();
+      updateResolutionPresetUi();
       markFlowInputOverride("res");
       invalidate({ clearFlow: true });
     });

@@ -155,6 +155,14 @@
       line-height: 1.35;
     }
 
+    .resolution-preset-stack:not(.is-custom) #res {
+      display: none;
+    }
+
+    .resolution-preset-stack:not(.is-custom) .resolution-preset-note {
+      margin-top: -2px;
+    }
+
   </style>
 
   <style data-scopedlabs-export-card-styles>
@@ -296,7 +304,7 @@
                 <option value="custom">Custom…</option>
               </select>
               <input id="res" type="number" min="1" step="1" value="3840" />
-              <p class="resolution-preset-note">Choose a common camera resolution or select Custom and enter the horizontal pixel count manually.</p>
+              <p class="resolution-preset-note">Choose a common camera resolution. Select Custom to enter a manual horizontal pixel count.</p>
             </div>
           </div>
 
@@ -447,7 +455,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
-  <script src="./script.js?v=physical-security-pixel-density-003-resolution-presets"></script>
+  <script src="./script.js?v=physical-security-pixel-density-004-custom-resolution-toggle"></script>
   <script defer src="/assets/help.js?v=help-026"></script>
 </body>
 </html>
