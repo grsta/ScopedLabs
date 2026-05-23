@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-029-cad-kit-v1
+ * Version: scopedlabs-graphics-030-coverage-footprint-shared-poly
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-029-cad-kit-v1";
+  const VERSION = "scopedlabs-graphics-030-coverage-footprint-shared-poly";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1426,6 +1426,9 @@
     const retainedPct = clamp(num(m.widthRetentionPct, rawWidth > 0 ? (usableWidth / rawWidth) * 100 : 0), 0, 100);
     const areaRetainedPct = clamp(num(m.areaRetentionPct, retainedPct), 0, 100);
     const reserveEachSideFt = Math.max(0, (rawWidth - usableWidth) / 2);
+    const reserveEachSideRatio = clamp((1 - (retainedPct / 100)) / 2, 0, 0.475);
+    const usableStartT = reserveEachSideRatio;
+    const usableEndT = 1 - reserveEachSideRatio;
 
     const labelX = 52;
     const barX = 292;
@@ -1442,15 +1445,44 @@
 
     const cameraX = 122;
     const centerY = 264;
-    const targetX = 560;
-    const rawHalf = 72;
-    const usableHalf = Math.max(8, rawHalf * (retainedPct / 100));
-
+    const lensTipX = cameraX + 36;
+    const targetX = 590;
+    const rawHalf = 78;
+    const nearHalf = 22;
     const rawTopY = centerY - rawHalf;
     const rawBotY = centerY + rawHalf;
-    const usableTopY = centerY - usableHalf;
-    const usableBotY = centerY + usableHalf;
+    const rawMidY = centerY;
 
+    function lerpPoint(a, b, t) {
+      return {
+        x: a.x + (b.x - a.x) * t,
+        y: a.y + (b.y - a.y) * t
+      };
+    }
+
+    function polyPoints(points) {
+      return points.map(function (point) {
+        return fmt(point.x, 1) + " " + fmt(point.y, 1);
+      }).join(" ");
+    }
+
+    const nearLeft = { x: lensTipX, y: centerY - nearHalf };
+    const nearRight = { x: lensTipX, y: centerY + nearHalf };
+    const farLeft = { x: targetX, y: rawTopY };
+    const farRight = { x: targetX, y: rawBotY };
+
+    const nearUsableLeft = lerpPoint(nearLeft, nearRight, usableStartT);
+    const nearUsableRight = lerpPoint(nearLeft, nearRight, usableEndT);
+    const farUsableLeft = lerpPoint(farLeft, farRight, usableStartT);
+    const farUsableRight = lerpPoint(farLeft, farRight, usableEndT);
+
+    const rawFootprint = [nearLeft, nearRight, farRight, farLeft];
+    const leftReserveBand = [nearLeft, nearUsableLeft, farUsableLeft, farLeft];
+    const usableFootprint = [nearUsableLeft, nearUsableRight, farUsableRight, farUsableLeft];
+    const rightReserveBand = [nearUsableRight, nearRight, farRight, farUsableRight];
+
+    const usableTopY = farUsableLeft.y;
+    const usableBotY = farUsableRight.y;
     const usableBarW = Math.max(8, barW * (retainedPct / 100));
     const reserveBarW = Math.max(8, barW * (reservePct / 100));
     const reserveTone = reservePct >= 35 ? "risk" : reservePct >= 20 ? "watch" : "normal";
@@ -1463,30 +1495,13 @@
     return "" +
       '<svg data-export-svg data-sl-engine="graphics" data-sl-renderer="coverage-footprint-plan" data-sl-version="' + escapeHtml(VERSION) + '" viewBox="0 0 800 398" role="img" aria-label="' + escapeHtml(m.ariaLabel || "Coverage reserve plan view visualization") + '">' +
         '<defs>' +
-          '<linearGradient id="coveragePlanRawBar" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%" stop-color="rgba(84,212,116,.70)" />' +
-            '<stop offset="100%" stop-color="rgba(125,255,152,.86)" />' +
-          '</linearGradient>' +
-          '<linearGradient id="coveragePlanUsableBar" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%" stop-color="rgba(104,240,138,.78)" />' +
-            '<stop offset="100%" stop-color="rgba(151,255,176,.92)" />' +
-          '</linearGradient>' +
-          '<linearGradient id="coveragePlanReserveBar" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%" stop-color="rgba(255,211,79,.76)" />' +
-            '<stop offset="100%" stop-color="rgba(255,226,128,.90)" />' +
-          '</linearGradient>' +
-          '<linearGradient id="coveragePlanRiskBar" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%" stop-color="rgba(255,138,102,.82)" />' +
-            '<stop offset="100%" stop-color="rgba(255,94,94,.92)" />' +
-          '</linearGradient>' +
-          '<linearGradient id="coveragePlanFovFill" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%" stop-color="rgba(125,255,152,.035)" />' +
-            '<stop offset="100%" stop-color="rgba(125,255,152,.105)" />' +
-          '</linearGradient>' +
-          '<linearGradient id="coveragePlanUsableFill" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%" stop-color="rgba(125,255,152,.07)" />' +
-            '<stop offset="100%" stop-color="rgba(125,255,152,.18)" />' +
-          '</linearGradient>' +
+          '<linearGradient id="coveragePlanRawBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(84,212,116,.70)" /><stop offset="100%" stop-color="rgba(125,255,152,.86)" /></linearGradient>' +
+          '<linearGradient id="coveragePlanUsableBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(104,240,138,.78)" /><stop offset="100%" stop-color="rgba(151,255,176,.92)" /></linearGradient>' +
+          '<linearGradient id="coveragePlanReserveBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.76)" /><stop offset="100%" stop-color="rgba(255,226,128,.90)" /></linearGradient>' +
+          '<linearGradient id="coveragePlanRiskBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,138,102,.82)" /><stop offset="100%" stop-color="rgba(255,94,94,.92)" /></linearGradient>' +
+          '<linearGradient id="coveragePlanRawFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,152,.035)" /><stop offset="100%" stop-color="rgba(125,255,152,.085)" /></linearGradient>' +
+          '<linearGradient id="coveragePlanUsableFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,152,.12)" /><stop offset="100%" stop-color="rgba(125,255,152,.21)" /></linearGradient>' +
+          '<linearGradient id="coveragePlanReserveFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.10)" /><stop offset="100%" stop-color="rgba(255,226,128,.20)" /></linearGradient>' +
         '</defs>' +
 
         '<text x="52" y="26" fill="rgba(248,250,252,.92)" font-size="18" font-weight="900">' + escapeHtml(title) + '</text>' +
@@ -1508,20 +1523,23 @@
         '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + reserveValueFill + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(reservePct, 1)) + ' reserve | ' + escapeHtml(fmtPct(areaRetainedPct, 1)) + ' area retained</text>' +
 
         '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="' + theme.stageStroke + '" />' +
-        '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / TARGET PLANE</text>' +
+        '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / PROJECTED FOOTPRINT</text>' +
 
         '<text x="' + (cameraX - 76) + '" y="' + (centerY - 4) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
         '<text x="' + (cameraX - 76) + '" y="' + (centerY + 14) + '" text-anchor="start" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + escapeHtml(fmt(hfovDeg, 0)) + ' deg</text>' +
         '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />' +
+        '<line x1="' + (cameraX + 8) + '" y1="' + centerY + '" x2="' + lensTipX + '" y2="' + centerY + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" stroke-linecap="round" />' +
 
-        '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + rawTopY.toFixed(1) + ' L ' + targetX + ' ' + rawBotY.toFixed(1) + ' Z" fill="url(#coveragePlanFovFill)" stroke="rgba(226,232,240,.24)" stroke-width="1" stroke-dasharray="5 6" />' +
-        '<path d="M ' + cameraX + ' ' + centerY + ' L ' + targetX + ' ' + usableTopY.toFixed(1) + ' L ' + targetX + ' ' + usableBotY.toFixed(1) + ' Z" fill="url(#coveragePlanUsableFill)" stroke="rgba(125,255,152,.62)" stroke-width="1.25" />' +
+        '<polygon points="' + polyPoints(rawFootprint) + '" fill="url(#coveragePlanRawFill)" stroke="rgba(226,232,240,.24)" stroke-width="1" stroke-dasharray="5 6" />' +
+        '<polygon points="' + polyPoints(leftReserveBand) + '" fill="url(#coveragePlanReserveFill)" stroke="rgba(255,226,128,.36)" stroke-width=".85" />' +
+        '<polygon points="' + polyPoints(rightReserveBand) + '" fill="url(#coveragePlanReserveFill)" stroke="rgba(255,226,128,.36)" stroke-width=".85" />' +
+        '<polygon points="' + polyPoints(usableFootprint) + '" fill="url(#coveragePlanUsableFill)" stroke="rgba(125,255,152,.70)" stroke-width="1.25" />' +
 
-        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + centerY + '" stroke="rgba(226,232,240,.26)" stroke-width="1" stroke-dasharray="4 6" />' +
-        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + rawTopY.toFixed(1) + '" stroke="rgba(255,226,128,.66)" stroke-width="1" stroke-dasharray="5 6" />' +
-        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(255,226,128,.66)" stroke-width="1" stroke-dasharray="5 6" />' +
-        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + usableTopY.toFixed(1) + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" />' +
-        '<line x1="' + cameraX + '" y1="' + centerY + '" x2="' + targetX + '" y2="' + usableBotY.toFixed(1) + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" />' +
+        '<line x1="' + lensTipX + '" y1="' + rawMidY + '" x2="' + targetX + '" y2="' + rawMidY + '" stroke="rgba(226,232,240,.26)" stroke-width="1" stroke-dasharray="4 6" />' +
+        '<line x1="' + nearLeft.x + '" y1="' + nearLeft.y + '" x2="' + farLeft.x + '" y2="' + farLeft.y + '" stroke="rgba(255,226,128,.62)" stroke-width="1" stroke-dasharray="5 6" />' +
+        '<line x1="' + nearRight.x + '" y1="' + nearRight.y + '" x2="' + farRight.x + '" y2="' + farRight.y + '" stroke="rgba(255,226,128,.62)" stroke-width="1" stroke-dasharray="5 6" />' +
+        '<line x1="' + nearUsableLeft.x.toFixed(1) + '" y1="' + nearUsableLeft.y.toFixed(1) + '" x2="' + farUsableLeft.x.toFixed(1) + '" y2="' + farUsableLeft.y.toFixed(1) + '" stroke="rgba(125,255,152,.72)" stroke-width="1.25" />' +
+        '<line x1="' + nearUsableRight.x.toFixed(1) + '" y1="' + nearUsableRight.y.toFixed(1) + '" x2="' + farUsableRight.x.toFixed(1) + '" y2="' + farUsableRight.y.toFixed(1) + '" stroke="rgba(125,255,152,.72)" stroke-width="1.25" />' +
 
         '<line x1="' + targetX + '" y1="' + rawTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + rawBotY.toFixed(1) + '" stroke="rgba(226,232,240,.42)" stroke-width="1" />' +
         '<line x1="' + targetX + '" y1="' + rawTopY.toFixed(1) + '" x2="' + targetX + '" y2="' + usableTopY.toFixed(1) + '" stroke="rgba(255,226,128,.90)" stroke-width="2" />' +
@@ -1542,13 +1560,12 @@
         '<text x="' + (stageX + stageW - 76) + '" y="' + (centerY - 3) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">footprint</text>' +
         '<text x="' + (stageX + stageW - 76) + '" y="' + (centerY + 16) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="13" font-weight="950">' + escapeHtml(fmtFt(rawWidth)) + '</text>' +
 
-        '<line x1="' + cameraX + '" y1="354" x2="' + targetX + '" y2="354" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
-        '<line x1="' + cameraX + '" y1="348" x2="' + cameraX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+        '<line x1="' + lensTipX + '" y1="354" x2="' + targetX + '" y2="354" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
+        '<line x1="' + lensTipX + '" y1="348" x2="' + lensTipX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
         '<line x1="' + targetX + '" y1="348" x2="' + targetX + '" y2="360" stroke="rgba(226,232,240,.46)" stroke-width="1" />' +
-        '<text x="' + ((cameraX + targetX) / 2).toFixed(1) + '" y="376" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Target distance: ' + escapeHtml(fmtFt(targetDistance, 0)) + '</text>' +
+        '<text x="' + ((lensTipX + targetX) / 2).toFixed(1) + '" y="376" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="11" font-weight="900">Target distance: ' + escapeHtml(fmtFt(targetDistance, 0)) + '</text>' +
       '</svg>';
   }
-
 
   function renderFovGeometryPlanSvg(model) {
     const m = model && typeof model === "object" ? model : {};
