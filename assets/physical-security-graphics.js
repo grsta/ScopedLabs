@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-009-coverage-footprint-plan-v1
+ * Version: physical-security-graphics-010-coverage-camera-label-polish
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-009-coverage-footprint-plan-v1";
+  const VERSION = "physical-security-graphics-010-coverage-camera-label-polish";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -535,7 +535,7 @@
     const centerY = 264;
     const lensTipX = cameraX + 36;
     const cameraMarkerMarkup = cameraCadIcon(cameraX, centerY, {
-          scale: 0.42,
+          scale: 0.50,
           color: "rgba(125,255,152,.92)",
           stroke: "rgba(125,255,152,.92)",
           accent: "rgba(125,255,152,.78)",
@@ -624,8 +624,8 @@
         '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="' + (colors.stageStroke || "rgba(125,255,152,.16)") + '" />' +
         '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / SHARED FOOTPRINT GEOMETRY</text>' +
 
-        '<text x="' + (cameraX - 76) + '" y="' + (centerY - 4) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
-        '<text x="' + (cameraX - 76) + '" y="' + (centerY + 14) + '" text-anchor="start" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + esc(fmt(hfovDeg, 0)) + ' deg</text>' +
+        '<text x="' + (cameraX - 88) + '" y="' + (centerY - 5) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
+        '<text x="' + (cameraX - 88) + '" y="' + (centerY + 14) + '" text-anchor="start" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + esc(fmt(hfovDeg, 0)) + ' deg</text>' +
         cameraMarkerMarkup +
 
         '<polygon points="' + polyPoints(rawFootprint) + '" fill="url(#coveragePlanRawFill)" stroke="rgba(226,232,240,.15)" stroke-width=".85" stroke-dasharray="6 7" />' +
