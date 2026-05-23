@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-006-camera-cad-icon
+ * Version: physical-security-graphics-007-camera-cad-small-cone-color
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-006-camera-cad-icon";
+  const VERSION = "physical-security-graphics-007-camera-cad-small-cone-color";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -125,38 +125,40 @@
   }
 
   function cameraLensTipX(x) {
-    return x + 42;
+    return x + 21;
   }
 
   function cameraPlanMarker(x, y, options) {
     const opts = options && typeof options === "object" ? options : {};
     const label = opts.label || "CAMERA";
-    const stroke = opts.stroke || "rgba(226, 232, 240, 0.95)";
+    const stroke = opts.color || colors.camera;
     const fill = opts.fill || "rgba(15, 23, 42, 0.92)";
     const accent = opts.color || colors.camera;
 
     return "" +
-      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ')" class="sl-cad-camera" data-ps-graphic-part="camera-marker" data-graphics-symbol="camera-cad">' +
+      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ')" class="sl-cad-camera" data-ps-graphic-part="camera-marker" data-graphics-symbol="camera-cad-small">' +
 
-        CAD.text(0, -30, label, {
+        CAD.text(0, -18, label, {
           anchor: "middle",
           fill: opts.labelFill || "rgba(226, 232, 240, 0.92)",
-          size: 8.8,
+          size: 8.2,
           weight: 900,
           spacing: ".08em"
         }) +
 
-        '<rect x="-22" y="-13" width="44" height="26" rx="4" fill="' + esc(fill) + '" stroke="' + esc(stroke) + '" stroke-width="1.7" />' +
-        '<path d="M 22 -8 L 42 -14 L 42 14 L 22 8 Z" fill="rgba(15, 23, 42, 0.96)" stroke="' + esc(stroke) + '" stroke-width="1.7" stroke-linejoin="round" />' +
-        '<line x1="42" y1="-12" x2="42" y2="12" stroke="' + esc(accent) + '" stroke-width="1.7" stroke-linecap="round" />' +
+        '<g transform="scale(0.5)">' +
+          '<rect x="-22" y="-13" width="44" height="26" rx="4" fill="' + esc(fill) + '" stroke="' + esc(stroke) + '" stroke-width="1.7" />' +
+          '<path d="M 22 -8 L 42 -14 L 42 14 L 22 8 Z" fill="rgba(15, 23, 42, 0.96)" stroke="' + esc(stroke) + '" stroke-width="1.7" stroke-linejoin="round" />' +
+          '<line x1="42" y1="-12" x2="42" y2="12" stroke="' + esc(accent) + '" stroke-width="1.7" stroke-linecap="round" />' +
 
-        '<line x1="-13" y1="-13" x2="-13" y2="13" stroke="rgba(148, 163, 184, 0.55)" stroke-width=".9" />' +
-        '<circle cx="-5" cy="0" r="4" fill="none" stroke="rgba(148, 163, 184, 0.8)" stroke-width="1.2" />' +
+          '<line x1="-13" y1="-13" x2="-13" y2="13" stroke="rgba(125, 255, 158, 0.38)" stroke-width=".9" />' +
+          '<circle cx="-5" cy="0" r="4" fill="none" stroke="rgba(125, 255, 158, 0.55)" stroke-width="1.2" />' +
 
-        '<circle cx="-30" cy="0" r="5" fill="rgba(2, 6, 23, 0.95)" stroke="' + esc(stroke) + '" stroke-width="1.7" />' +
-        '<line x1="-25" y1="0" x2="-22" y2="0" stroke="' + esc(stroke) + '" stroke-width="1.7" stroke-linecap="round" />' +
+          '<circle cx="-30" cy="0" r="5" fill="rgba(2, 6, 23, 0.95)" stroke="' + esc(stroke) + '" stroke-width="1.7" />' +
+          '<line x1="-25" y1="0" x2="-22" y2="0" stroke="' + esc(stroke) + '" stroke-width="1.7" stroke-linecap="round" />' +
 
-        '<line x1="44" y1="0" x2="70" y2="0" stroke="' + esc(accent) + '" stroke-width="1.2" stroke-dasharray="4 5" stroke-linecap="round" />' +
+          '<line x1="44" y1="0" x2="70" y2="0" stroke="' + esc(accent) + '" stroke-width="1.2" stroke-dasharray="4 5" stroke-linecap="round" />' +
+        '</g>' +
       '</g>';
   }
 
@@ -328,7 +330,8 @@
           width: 1.05
         }) +
         cameraPlanMarker(cameraX, centerY, {
-          label: "CAMERA"
+          label: "CAMERA",
+          color: tone.line
         }) +
 
         targetPlane(targetX, calcTopY, calcBottomY, "CALCULATED", fmtFt(calculatedWidth), {
