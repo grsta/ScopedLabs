@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-014-pixel-density-detail-plan
+ * Version: physical-security-graphics-015-spacing-blindspot-contract
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-014-pixel-density-detail-plan";
+  const VERSION = "physical-security-graphics-015-spacing-blindspot-contract";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -832,6 +832,66 @@
       '</svg>';
   }
 
+  const sharedCameraLayoutIsoRenderer = gfx.renderers && gfx.renderers["camera-layout-iso"];
+  const sharedScenarioPressureLineRenderer = gfx.renderers && gfx.renderers["scenario-pressure-line"];
+
+  function brandSharedPhysicalSecuritySvg(svg, rendererName) {
+    let output = String(svg || "");
+    if (!output.includes("<svg")) return output;
+
+    if (/data-sl-engine="[^"]*"/.test(output)) {
+      output = output.replace(/data-sl-engine="[^"]*"/, 'data-sl-engine="physical-security-graphics"');
+    } else {
+      output = output.replace(/<svg\b/, '<svg data-sl-engine="physical-security-graphics"');
+    }
+
+    if (/data-sl-category="[^"]*"/.test(output)) {
+      output = output.replace(/data-sl-category="[^"]*"/, 'data-sl-category="' + esc(CATEGORY) + '"');
+    } else {
+      output = output.replace(/<svg\b/, '<svg data-sl-category="' + esc(CATEGORY) + '"');
+    }
+
+    if (/data-sl-version="[^"]*"/.test(output)) {
+      output = output.replace(/data-sl-version="[^"]*"/, 'data-sl-version="' + esc(VERSION) + '"');
+    } else {
+      output = output.replace(/<svg\b/, '<svg data-sl-version="' + esc(VERSION) + '"');
+    }
+
+    if (!/data-sl-renderer="[^"]*"/.test(output)) {
+      output = output.replace(/<svg\b/, '<svg data-sl-renderer="' + esc(rendererName) + '"');
+    }
+
+    return output;
+  }
+
+  function renderSharedPhysicalSecuritySvg(rendererName, sharedRenderer, model) {
+    if (typeof sharedRenderer !== "function") {
+      return fallbackSvg("SL-PS-GFX-SHARED-RENDERER-MISSING", "Shared renderer was not available for the Physical Security graphics contract.", {
+        renderer: rendererName,
+        tool: model && model.tool || "physical-security"
+      });
+    }
+
+    const svg = sharedRenderer(model || {});
+    if (typeof svg !== "string" || !svg.includes("<svg")) {
+      return fallbackSvg("SL-PS-GFX-SHARED-RENDERER-BAD-OUTPUT", "Shared renderer did not return SVG output.", {
+        renderer: rendererName,
+        tool: model && model.tool || "physical-security"
+      });
+    }
+
+    return brandSharedPhysicalSecuritySvg(svg, rendererName);
+  }
+
+  function renderCameraLayoutIsoSvg(model) {
+    return renderSharedPhysicalSecuritySvg("camera-layout-iso", sharedCameraLayoutIsoRenderer, model);
+  }
+
+  function renderScenarioPressureLineSvg(model) {
+    return renderSharedPhysicalSecuritySvg("scenario-pressure-line", sharedScenarioPressureLineRenderer, model);
+  }
+
+
   const primitives = {
     cadGrid,
     cameraLensTipX,
@@ -851,6 +911,8 @@
     hfovCallout
   };
 
+  gfx.registerRenderer("camera-layout-iso", renderCameraLayoutIsoSvg);
+  gfx.registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
   gfx.registerRenderer("pixel-density-detail-plan", renderPixelDensityDetailPlanSvg);
   gfx.registerRenderer("coverage-footprint-plan", renderCoverageFootprintPlanSvg);
   gfx.registerRenderer("fov-geometry-plan", renderFovGeometryPlanSvg);
@@ -861,6 +923,9 @@
     ready: true,
     colors,
     primitives,
+    renderCameraLayoutIsoSvg,
+    renderScenarioPressureLineSvg,
+    renderCoverageFootprintPlanSvg,
     renderPixelDensityDetailPlanSvg,
     renderFovGeometryPlanSvg
   };
