@@ -597,7 +597,7 @@
     return {
       tool: "camera-coverage-area",
       title: "Plan view: raw footprint to usable width",
-      subtitle: "Top-down footprint at the target plane. Green is usable coverage; yellow marks held-back reserve before spacing.",
+      subtitle: "One raw FOV polygon is split into amber reserve bands and the green usable footprint.",
       ariaLabel: "Coverage reserve plan view visualization",
       rawWidthFt: data && data.width,
       usableWidthFt: data && data.effWidth,
@@ -731,7 +731,7 @@
     const reserveValueFill = reserveTone === "risk" ? "rgba(255,188,166,.96)" : "rgba(255,239,176,.96)";
 
     const title = m.title || "Plan view: raw footprint to usable width";
-    const subtitle = m.subtitle || "Top-down footprint at the target plane. Green is usable coverage; yellow marks held-back reserve before spacing.";
+    const subtitle = m.subtitle || "One raw FOV polygon is split into amber reserve bands and the green usable footprint.";
 
     return "" +
       '<svg data-export-svg viewBox="0 0 800 398" role="img" aria-label="' + escapeHtml(m.ariaLabel || "Coverage reserve plan view visualization") + '">' +
@@ -740,9 +740,10 @@
           '<linearGradient id="coveragePlanUsableBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(104,240,138,.78)" /><stop offset="100%" stop-color="rgba(151,255,176,.92)" /></linearGradient>' +
           '<linearGradient id="coveragePlanReserveBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.76)" /><stop offset="100%" stop-color="rgba(255,226,128,.90)" /></linearGradient>' +
           '<linearGradient id="coveragePlanRiskBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,138,102,.82)" /><stop offset="100%" stop-color="rgba(255,94,94,.92)" /></linearGradient>' +
-          '<linearGradient id="coveragePlanRawFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,152,.035)" /><stop offset="100%" stop-color="rgba(125,255,152,.085)" /></linearGradient>' +
-          '<linearGradient id="coveragePlanUsableFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,152,.12)" /><stop offset="100%" stop-color="rgba(125,255,152,.21)" /></linearGradient>' +
-          '<linearGradient id="coveragePlanReserveFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.10)" /><stop offset="100%" stop-color="rgba(255,226,128,.20)" /></linearGradient>' +
+          '<linearGradient id="coveragePlanRawFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,152,.020)" /><stop offset="100%" stop-color="rgba(125,255,152,.052)" /></linearGradient>' +
+          '<linearGradient id="coveragePlanUsableFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,152,.18)" /><stop offset="100%" stop-color="rgba(125,255,152,.34)" /></linearGradient>' +
+          '<linearGradient id="coveragePlanReserveFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.24)" /><stop offset="100%" stop-color="rgba(255,226,128,.38)" /></linearGradient>' +
+          '<pattern id="coveragePlanReserveHatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)"><path d="M 0 0 L 0 8" stroke="rgba(255,239,176,.42)" stroke-width="1" /></pattern>' +
         '</defs>' +
 
         '<text x="52" y="26" fill="rgba(248,250,252,.92)" font-size="18" font-weight="900">' + escapeHtml(title) + '</text>' +
@@ -764,17 +765,19 @@
         '<text x="' + valueX + '" y="' + (row1Y + rowGap * 2) + '" text-anchor="end" fill="' + reserveValueFill + '" font-size="11" font-weight="900">' + escapeHtml(fmtPct(reservePct, 1)) + ' reserve | ' + escapeHtml(fmtPct(areaRetainedPct, 1)) + ' area retained</text>' +
 
         '<rect x="' + stageX + '" y="' + stageY + '" width="' + stageW + '" height="' + stageH + '" rx="18" fill="rgba(0,0,0,.13)" stroke="' + "rgba(125,255,152,.16)" + '" />' +
-        '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / PROJECTED FOOTPRINT</text>' +
+        '<text x="' + (stageX + 18) + '" y="' + (stageY + 24) + '" fill="rgba(125,255,152,.78)" font-size="11" font-weight="950" letter-spacing=".08em">PLAN VIEW / SHARED FOOTPRINT GEOMETRY</text>' +
 
         '<text x="' + (cameraX - 76) + '" y="' + (centerY - 4) + '" text-anchor="start" fill="rgba(226,232,240,.82)" font-size="11" font-weight="900">Cam 1</text>' +
         '<text x="' + (cameraX - 76) + '" y="' + (centerY + 14) + '" text-anchor="start" fill="rgba(226,232,240,.58)" font-size="10">HFOV ' + escapeHtml(fmt(hfovDeg, 0)) + ' deg</text>' +
         '<circle cx="' + cameraX + '" cy="' + centerY + '" r="8" fill="rgba(8,18,12,.96)" stroke="rgba(125,255,152,.90)" stroke-width="1.8" />' +
         '<line x1="' + (cameraX + 8) + '" y1="' + centerY + '" x2="' + lensTipX + '" y2="' + centerY + '" stroke="rgba(125,255,152,.78)" stroke-width="1.4" stroke-linecap="round" />' +
 
-        '<polygon points="' + polyPoints(rawFootprint) + '" fill="url(#coveragePlanRawFill)" stroke="rgba(226,232,240,.24)" stroke-width="1" stroke-dasharray="5 6" />' +
-        '<polygon points="' + polyPoints(leftReserveBand) + '" fill="url(#coveragePlanReserveFill)" stroke="rgba(255,226,128,.36)" stroke-width=".85" />' +
-        '<polygon points="' + polyPoints(rightReserveBand) + '" fill="url(#coveragePlanReserveFill)" stroke="rgba(255,226,128,.36)" stroke-width=".85" />' +
-        '<polygon points="' + polyPoints(usableFootprint) + '" fill="url(#coveragePlanUsableFill)" stroke="rgba(125,255,152,.70)" stroke-width="1.25" />' +
+        '<polygon points="' + polyPoints(rawFootprint) + '" fill="url(#coveragePlanRawFill)" stroke="rgba(226,232,240,.15)" stroke-width=".85" stroke-dasharray="6 7" />' +
+        '<polygon points="' + polyPoints(leftReserveBand) + '" fill="url(#coveragePlanReserveFill)" stroke="rgba(255,226,128,.78)" stroke-width="1.15" />' +
+        '<polygon points="' + polyPoints(leftReserveBand) + '" fill="url(#coveragePlanReserveHatch)" opacity=".62" />' +
+        '<polygon points="' + polyPoints(rightReserveBand) + '" fill="url(#coveragePlanReserveFill)" stroke="rgba(255,226,128,.78)" stroke-width="1.15" />' +
+        '<polygon points="' + polyPoints(rightReserveBand) + '" fill="url(#coveragePlanReserveHatch)" opacity=".62" />' +
+        '<polygon points="' + polyPoints(usableFootprint) + '" fill="url(#coveragePlanUsableFill)" stroke="rgba(125,255,152,.96)" stroke-width="1.55" />' +
 
         '<line x1="' + lensTipX + '" y1="' + rawMidY + '" x2="' + targetX + '" y2="' + rawMidY + '" stroke="rgba(226,232,240,.26)" stroke-width="1" stroke-dasharray="4 6" />' +
         '<line x1="' + nearLeft.x + '" y1="' + nearLeft.y + '" x2="' + farLeft.x + '" y2="' + farLeft.y + '" stroke="rgba(255,226,128,.62)" stroke-width="1" stroke-dasharray="5 6" />' +
