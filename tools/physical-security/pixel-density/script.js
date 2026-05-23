@@ -24,6 +24,7 @@
 
   const els = {
     res: $("res"),
+    resPreset: $("resPreset"),
     hfov: $("hfov"),
     dist: $("dist"),
     tppf: $("tppf"),
@@ -45,6 +46,16 @@
     tppf: 80,
     tw: 10
   };
+
+  const RESOLUTION_PRESETS = [
+    1280,
+    1920,
+    2560,
+    2688,
+    3072,
+    3840,
+    4096
+  ];
 
   function num(value, fallback = NaN) {
     return ScopedLabsAnalyzer.safeNumber(value, fallback);
@@ -266,6 +277,29 @@
 
   
 
+
+  function findResolutionPresetValue(value) {
+    const rounded = Math.round(Number(value));
+    if (!Number.isFinite(rounded)) return "custom";
+    return RESOLUTION_PRESETS.includes(rounded) ? String(rounded) : "custom";
+  }
+
+  function syncResolutionPresetFromInput() {
+    if (!els.resPreset || !els.res) return;
+    els.resPreset.value = findResolutionPresetValue(els.res.value);
+  }
+
+  function applyResolutionPreset() {
+    if (!els.resPreset || !els.res) return;
+    const preset = els.resPreset.value;
+    if (!preset || preset === "custom") return;
+
+    const value = Number(preset);
+    if (!Number.isFinite(value) || value <= 0) return;
+
+    els.res.value = String(value);
+  }
+
   function applyDefaults() {
     els.res.value = String(DEFAULTS.res);
     els.hfov.value = String(DEFAULTS.hfov);
@@ -274,6 +308,7 @@
     els.tw.value = String(DEFAULTS.tw);
 
     applyAreaPlanInputs();
+    syncResolutionPresetFromInput();
   }
 
   function clearDownstream() {
@@ -731,13 +766,21 @@
       const el = $(id);
       if (!el) return;
       el.addEventListener("input", () => {
+        if (id === "res") syncResolutionPresetFromInput();
         markFlowInputOverride(id);
         invalidate({ clearFlow: true });
       });
       el.addEventListener("change", () => {
+        if (id === "res") syncResolutionPresetFromInput();
         markFlowInputOverride(id);
         invalidate({ clearFlow: true });
       });
+    });
+
+    els.resPreset?.addEventListener("change", () => {
+      applyResolutionPreset();
+      markFlowInputOverride("res");
+      invalidate({ clearFlow: true });
     });
 
     els.calc?.addEventListener("click", calc);
