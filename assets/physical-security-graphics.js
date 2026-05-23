@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-011-coverage-label-balance
+ * Version: physical-security-graphics-012-fov-target-plane-cad-v2
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-011-coverage-label-balance";
+  const VERSION = "physical-security-graphics-012-fov-target-plane-cad-v2";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -395,29 +395,35 @@
 
     const tone = toneFor(Object.assign({}, m, { coverageRatio: ratio }));
     const svgW = 840;
-    const svgH = 342;
-    const stage = { x: 26, y: 24, width: 788, height: 292 };
-    const cameraX = 156;
-    const lensTipX = cameraLensTipX(cameraX);
-    const centerY = 176;
-    const targetX = 590;
-    const requiredX = 706;
-    const dimY = 280;
-    const maxSpanPx = 178;
+    const svgH = 360;
+    const stage = { x: 26, y: 24, width: 788, height: 306 };
+
+    const cameraX = 132;
+    const centerY = 184;
+    const lensTipX = cameraX + 36;
+    const targetX = 600;
+    const requiredX = 658;
+    const dimY = 296;
+
+    const maxSpanPx = 168;
     const maxWidth = Math.max(calculatedWidth, requiredWidth, 1);
     const scale = maxSpanPx / maxWidth;
     const calcPx = clamp(calculatedWidth * scale, 34, maxSpanPx);
     const reqPx = clamp(requiredWidth * scale, 34, maxSpanPx);
+
     const calcTopY = centerY - calcPx / 2;
     const calcBottomY = centerY + calcPx / 2;
     const reqTopY = centerY - reqPx / 2;
     const reqBottomY = centerY + reqPx / 2;
-    const arrowId = "psFovCadArrow002";
-    const coneId = "psFovCadCone002";
+
+    const arrowId = "psFovTargetPlaneCadArrow012";
+    const coneId = "psFovTargetPlaneCadCone012";
+    const requiredColor = ratio < 1 ? "rgba(255,190,120,.82)" : "rgba(226,232,240,.64)";
+    const requiredFill = ratio < 1 ? "rgba(255,190,120,.10)" : "rgba(226,232,240,.045)";
 
     return "" +
-      '<svg data-export-svg class="fov-geometry-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="fov-geometry-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + esc(m.ariaLabel || "Field of View CAD plan view") + '">' +
-        CAD.defs("psFovCad002", {
+      '<svg data-export-svg class="fov-geometry-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="fov-geometry-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + esc(m.ariaLabel || "Field of View CAD target-plane view") + '">' +
+        CAD.defs("psFovTargetPlaneCad012", {
           arrowId,
           coneId,
           coneFill: tone.soft
@@ -427,13 +433,13 @@
         }) +
         cadGrid(stage) +
 
-        CAD.text(54, 54, "PHYSICAL SECURITY / FOV PLAN", {
-          fill: "rgba(125,255,158,.74)",
-          size: 10.2,
-          weight: 925,
+        CAD.text(54, 54, "FIELD OF VIEW / TARGET PLANE", {
+          fill: "rgba(125,255,158,.78)",
+          size: 10.4,
+          weight: 950,
           spacing: ".11em"
         }) +
-        CAD.text(54, 74, "Plan-view footprint comparison. Summary metrics stay outside the drawing frame.", {
+        CAD.text(54, 75, "Camera cone projected to the target distance. Required width is shown as the offset reference bracket.", {
           fill: colors.muted,
           size: 9.4,
           weight: 720
@@ -446,46 +452,80 @@
           size: 9.1
         }) +
 
-        CAD.line(lensTipX, centerY, requiredX + 22, centerY, {
-          stroke: "rgba(226,232,240,.18)",
+        CAD.line(lensTipX, centerY, requiredX + 28, centerY, {
+          stroke: "rgba(226,232,240,.17)",
           width: 0.85,
           dash: "5 8"
         }) +
+
         fovCone(lensTipX, centerY, targetX, calcTopY, calcBottomY, {
           fill: "url(#" + coneId + ")",
           stroke: tone.line,
-          width: 1.05
-        }) +
-        cameraPlanMarker(cameraX, centerY, {
-          label: "CAMERA",
-          color: tone.line
+          width: 1.22
         }) +
 
+        '<text x="' + (cameraX - 82) + '" y="' + (centerY - 5) + '" fill="rgba(226,232,240,.88)" font-size="10.5" font-weight="900">CAM 1</text>' +
+        '<text x="' + (cameraX - 82) + '" y="' + (centerY + 14) + '" fill="rgba(226,232,240,.56)" font-size="9.5" font-weight="700">HFOV ' + esc(fmt(hfovDeg, 1)) + ' deg</text>' +
+        cameraCadIcon(cameraX, centerY, {
+          scale: 0.50,
+          color: tone.line,
+          stroke: tone.line,
+          accent: tone.line,
+          symbol: "field-of-view-camera-marker"
+        }) +
+
+        '<rect x="' + (targetX - 10) + '" y="' + fmt(calcTopY, 1) + '" width="20" height="' + fmt(Math.max(1, calcBottomY - calcTopY), 1) + '" rx="9" fill="rgba(125,255,158,.045)" stroke="rgba(125,255,158,.20)" stroke-width=".8" />' +
         targetPlane(targetX, calcTopY, calcBottomY, "CALCULATED", fmtFt(calculatedWidth), {
           color: tone.color,
-          valueFill: "rgba(248,250,252,.74)"
+          valueFill: "rgba(248,250,252,.78)",
+          labelY: Math.max(98, calcTopY - 22),
+          valueY: Math.min(300, calcBottomY + 26)
         }) +
+
+        '<rect x="' + (requiredX - 9) + '" y="' + fmt(reqTopY, 1) + '" width="18" height="' + fmt(Math.max(1, reqBottomY - reqTopY), 1) + '" rx="8" fill="' + requiredFill + '" stroke="rgba(226,232,240,.13)" stroke-width=".75" />' +
         targetPlane(requiredX, reqTopY, reqBottomY, "REQUIRED", fmtFt(requiredWidth), {
-          color: colors.required,
-          labelFill: "rgba(226,232,240,.68)",
-          valueFill: "rgba(248,250,252,.68)",
-          width: 1.18
+          color: requiredColor,
+          labelFill: requiredColor,
+          valueFill: "rgba(248,250,252,.70)",
+          width: 1.12,
+          labelY: Math.max(100, reqTopY - 22),
+          valueY: Math.min(302, reqBottomY + 26)
         }) +
+
         spanLinks(targetX, calcTopY, calcBottomY, requiredX, reqTopY, reqBottomY) +
 
         CAD.axisLine(lensTipX, dimY, targetX, dimY, "Target distance: " + fmtFt(targetDistance), {
           markerId: arrowId,
-          labelOffset: 18,
+          labelOffset: 19,
           color: colors.axis
         }) +
-        CAD.dimensionLine(targetX, dimY - 44, requiredX, dimY - 44, "width comparison", {
-          color: "rgba(226,232,240,.20)",
-          labelFill: "rgba(226,232,240,.46)",
+
+        CAD.dimensionLine(targetX, dimY - 45, requiredX, dimY - 45, "same target plane reference", {
+          color: "rgba(226,232,240,.18)",
+          labelFill: "rgba(226,232,240,.44)",
           labelOffset: -10,
           tick: 5
         }) +
-        hfovCallout(lensTipX, centerY, targetX, calcTopY, calcBottomY, "HFOV " + fmt(hfovDeg, 1) + " deg", {
-          color: "rgba(226,232,240,.32)"
+
+        hfovCallout(lensTipX, centerY, targetX, calcTopY, calcBottomY, "cone angle", {
+          color: "rgba(226,232,240,.28)",
+          labelFill: "rgba(226,232,240,.46)"
+        }) +
+
+        CAD.metricChip(54, 258, "RATIO", fmt(ratio, 2) + "x", {
+          accent: tone.color,
+          valueFill: tone.color,
+          width: 118
+        }) +
+        CAD.metricChip(186, 258, "CALCULATED", fmtFt(calculatedWidth), {
+          accent: tone.color,
+          valueFill: tone.color,
+          width: 142
+        }) +
+        CAD.metricChip(342, 258, "REQUIRED", fmtFt(requiredWidth), {
+          accent: requiredColor,
+          valueFill: requiredColor,
+          width: 132
         }) +
       '</svg>';
   }
