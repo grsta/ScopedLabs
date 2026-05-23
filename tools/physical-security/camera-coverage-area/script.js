@@ -722,8 +722,11 @@
       }).join(" ");
     }
 
-    const nearLeft = { x: lensTipX, y: centerY - nearHalf };
-    const nearRight = { x: lensTipX, y: centerY + nearHalf };
+    // Collapse the near edge into a single optical apex so the FOV cone starts
+    // at the CAD camera/lens instead of a blunt rectangular edge.
+    const fovApex = { x: lensTipX, y: centerY };
+    const nearLeft = fovApex;
+    const nearRight = fovApex;
     const farLeft = { x: targetX, y: rawTopY };
     const farRight = { x: targetX, y: rawBotY };
 
