@@ -755,7 +755,7 @@
 
     els.fovGeometry.hidden = false;
     els.fovGeometry.setAttribute("data-export-section", "true");
-    els.fovGeometry.setAttribute("data-export-title", "Field of View Geometry");
+    els.fovGeometry.setAttribute("data-export-title", "\u00A0\u00A0Field of View Geometry");
     els.fovGeometry.setAttribute("data-export-compact-svg", "true");
 
     els.fovGeometry.innerHTML =
