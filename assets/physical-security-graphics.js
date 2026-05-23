@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-007-camera-cad-small-cone-color
+ * Version: physical-security-graphics-008-primitive-library-v1
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-007-camera-cad-small-cone-color";
+  const VERSION = "physical-security-graphics-008-primitive-library-v1";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -128,38 +128,43 @@
     return x + 21;
   }
 
+  function cameraCadIcon(x, y, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    const stroke = opts.stroke || opts.color || colors.camera;
+    const fill = opts.fill || "rgba(15, 23, 42, 0.92)";
+    const accent = opts.accent || opts.color || colors.camera;
+    const scale = Number.isFinite(Number(opts.scale)) ? Number(opts.scale) : 0.5;
+    const dataSymbol = opts.symbol || "camera-cad-small";
+
+    return "" +
+      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-camera" data-ps-graphic-part="camera-marker" data-graphics-symbol="' + esc(dataSymbol) + '">' +
+        '<rect x="-22" y="-13" width="44" height="26" rx="4" fill="' + esc(fill) + '" stroke="' + esc(stroke) + '" stroke-width="1.7" />' +
+        '<path d="M 22 -8 L 42 -14 L 42 14 L 22 8 Z" fill="rgba(15, 23, 42, 0.96)" stroke="' + esc(stroke) + '" stroke-width="1.7" stroke-linejoin="round" />' +
+        '<line x1="42" y1="-12" x2="42" y2="12" stroke="' + esc(accent) + '" stroke-width="1.7" stroke-linecap="round" />' +
+        '<line x1="-13" y1="-13" x2="-13" y2="13" stroke="rgba(125, 255, 158, 0.38)" stroke-width=".9" />' +
+        '<circle cx="-5" cy="0" r="4" fill="none" stroke="rgba(125, 255, 158, 0.55)" stroke-width="1.2" />' +
+        '<circle cx="-30" cy="0" r="5" fill="rgba(2, 6, 23, 0.95)" stroke="' + esc(stroke) + '" stroke-width="1.7" />' +
+        '<line x1="-25" y1="0" x2="-22" y2="0" stroke="' + esc(stroke) + '" stroke-width="1.7" stroke-linecap="round" />' +
+        '<line x1="44" y1="0" x2="70" y2="0" stroke="' + esc(accent) + '" stroke-width="1.2" stroke-dasharray="4 5" stroke-linecap="round" />' +
+      '</g>';
+  }
+
   function cameraPlanMarker(x, y, options) {
     const opts = options && typeof options === "object" ? options : {};
     const label = opts.label || "CAMERA";
-    const stroke = opts.color || colors.camera;
-    const fill = opts.fill || "rgba(15, 23, 42, 0.92)";
-    const accent = opts.color || colors.camera;
+    const labelOffsetY = Number.isFinite(Number(opts.labelOffsetY)) ? Number(opts.labelOffsetY) : -18;
 
     return "" +
-      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ')" class="sl-cad-camera" data-ps-graphic-part="camera-marker" data-graphics-symbol="camera-cad-small">' +
-
-        CAD.text(0, -18, label, {
-          anchor: "middle",
-          fill: opts.labelFill || "rgba(226, 232, 240, 0.92)",
-          size: 8.2,
-          weight: 900,
-          spacing: ".08em"
-        }) +
-
-        '<g transform="scale(0.5)">' +
-          '<rect x="-22" y="-13" width="44" height="26" rx="4" fill="' + esc(fill) + '" stroke="' + esc(stroke) + '" stroke-width="1.7" />' +
-          '<path d="M 22 -8 L 42 -14 L 42 14 L 22 8 Z" fill="rgba(15, 23, 42, 0.96)" stroke="' + esc(stroke) + '" stroke-width="1.7" stroke-linejoin="round" />' +
-          '<line x1="42" y1="-12" x2="42" y2="12" stroke="' + esc(accent) + '" stroke-width="1.7" stroke-linecap="round" />' +
-
-          '<line x1="-13" y1="-13" x2="-13" y2="13" stroke="rgba(125, 255, 158, 0.38)" stroke-width=".9" />' +
-          '<circle cx="-5" cy="0" r="4" fill="none" stroke="rgba(125, 255, 158, 0.55)" stroke-width="1.2" />' +
-
-          '<circle cx="-30" cy="0" r="5" fill="rgba(2, 6, 23, 0.95)" stroke="' + esc(stroke) + '" stroke-width="1.7" />' +
-          '<line x1="-25" y1="0" x2="-22" y2="0" stroke="' + esc(stroke) + '" stroke-width="1.7" stroke-linecap="round" />' +
-
-          '<line x1="44" y1="0" x2="70" y2="0" stroke="' + esc(accent) + '" stroke-width="1.2" stroke-dasharray="4 5" stroke-linecap="round" />' +
-        '</g>' +
-      '</g>';
+      CAD.text(x, y + labelOffsetY, label, {
+        anchor: "middle",
+        fill: opts.labelFill || "rgba(226, 232, 240, 0.92)",
+        size: opts.labelSize || 8.2,
+        weight: 900,
+        spacing: ".08em"
+      }) +
+      cameraCadIcon(x, y, Object.assign({}, opts, {
+        scale: Number.isFinite(Number(opts.scale)) ? Number(opts.scale) : 0.5
+      }));
   }
 
   function fovCone(lensTipX, centerY, targetX, topY, bottomY, options) {
@@ -210,6 +215,124 @@
           weight: 850
         }) +
       '</g>';
+  }
+
+  function dimensionLine(x1, y1, x2, y2, label, options) {
+    return CAD.dimensionLine(x1, y1, x2, y2, label, options);
+  }
+
+  function axisLine(x1, y1, x2, y2, label, options) {
+    return CAD.axisLine(x1, y1, x2, y2, label, options);
+  }
+
+  function metricChip(x, y, label, value, options) {
+    return CAD.metricChip(x, y, label, value, options);
+  }
+
+  function statusPill(x, y, label, options) {
+    return CAD.statusPill(x, y, label, options);
+  }
+
+  function cameraPositionMarker(x, y, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    const color = opts.color || colors.camera;
+    const label = opts.label || "";
+    const r = Number.isFinite(Number(opts.radius)) ? Number(opts.radius) : 4.5;
+
+    return "" +
+      '<g data-ps-graphic-part="camera-position-marker">' +
+        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="' + fmt(r + 9, 2) + '" fill="rgba(125,255,158,.035)" stroke="rgba(125,255,158,.18)" stroke-width=".85" />' +
+        '<circle cx="' + fmt(x, 2) + '" cy="' + fmt(y, 2) + '" r="' + fmt(r, 2) + '" fill="' + esc(color) + '" />' +
+        (label ? CAD.text(opts.labelX ?? (x - 18), opts.labelY ?? (y - 13), label, {
+          fill: opts.labelFill || "rgba(248,250,252,.68)",
+          size: opts.labelSize || 8.8,
+          weight: 900
+        }) : "") +
+      '</g>';
+  }
+
+  function coverageFootprint(x, y, width, height, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    const reserveRatio = clamp(num(opts.reserveRatio, 0.15), 0, 0.45);
+    const reserveEach = Math.max(0, width * reserveRatio / 2);
+    const usableX = x + reserveEach;
+    const usableWidth = Math.max(1, width - reserveEach * 2);
+    const rawStroke = opts.rawStroke || "rgba(125,255,158,.34)";
+    const usableStroke = opts.usableStroke || colors.green;
+    const reserveFill = opts.reserveFill || colors.amberSoft;
+
+    return "" +
+      '<g data-ps-graphic-part="coverage-footprint">' +
+        CAD.rect(x, y, width, height, {
+          rx: opts.rx ?? 14,
+          fill: opts.rawFill || "rgba(125,255,158,.045)",
+          stroke: rawStroke,
+          strokeWidth: opts.rawStrokeWidth || 1.05
+        }) +
+        CAD.rect(x, y, reserveEach, height, {
+          rx: opts.rx ?? 14,
+          fill: reserveFill,
+          stroke: opts.reserveStroke || "rgba(255,211,79,.24)",
+          strokeWidth: 0.75
+        }) +
+        CAD.rect(x + width - reserveEach, y, reserveEach, height, {
+          rx: opts.rx ?? 14,
+          fill: reserveFill,
+          stroke: opts.reserveStroke || "rgba(255,211,79,.24)",
+          strokeWidth: 0.75
+        }) +
+        CAD.rect(usableX, y + (opts.usableInsetY ?? 12), usableWidth, Math.max(1, height - (opts.usableInsetY ?? 12) * 2), {
+          rx: opts.usableRx ?? 10,
+          fill: opts.usableFill || colors.greenSoft,
+          stroke: usableStroke,
+          strokeWidth: opts.usableStrokeWidth || 1.1
+        }) +
+        (opts.label ? CAD.text(x + width / 2, y + height / 2 + 4, opts.label, {
+          anchor: "middle",
+          fill: opts.labelFill || colors.green,
+          size: opts.labelSize || 10.5,
+          weight: 950,
+          spacing: ".06em"
+        }) : "") +
+      '</g>';
+  }
+
+  function semanticBand(x, y, width, height, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    return "" +
+      '<g data-ps-graphic-part="' + esc(opts.part || "semantic-band") + '">' +
+        CAD.rect(x, y, width, height, {
+          rx: opts.rx ?? 10,
+          fill: opts.fill || colors.greenSoft,
+          stroke: opts.stroke || colors.green,
+          strokeWidth: opts.strokeWidth || 1.05
+        }) +
+        (opts.label ? CAD.text(x + width / 2, y - 8, opts.label, {
+          anchor: "middle",
+          fill: opts.labelFill || opts.stroke || colors.green,
+          size: opts.labelSize || 9.5,
+          weight: 950,
+          spacing: ".05em"
+        }) : "") +
+      '</g>';
+  }
+
+  function overlapBand(x, y, width, height, options) {
+    return semanticBand(x, y, width, height, Object.assign({
+      part: "overlap-band",
+      fill: colors.amberSoft,
+      stroke: colors.amber,
+      label: "OVERLAP"
+    }, options || {}));
+  }
+
+  function blindGap(x, y, width, height, options) {
+    return semanticBand(x, y, width, height, Object.assign({
+      part: "blind-gap",
+      fill: colors.redSoft,
+      stroke: colors.red,
+      label: "BLIND GAP"
+    }, options || {}));
   }
 
   function spanLinks(x1, yTop1, yBottom1, x2, yTop2, yBottom2) {
@@ -366,9 +489,18 @@
   const primitives = {
     cadGrid,
     cameraLensTipX,
+    cameraCadIcon,
     cameraPlanMarker,
+    cameraPositionMarker,
     fovCone,
     targetPlane,
+    dimensionLine,
+    axisLine,
+    coverageFootprint,
+    overlapBand,
+    blindGap,
+    metricChip,
+    statusPill,
     spanLinks,
     hfovCallout
   };
