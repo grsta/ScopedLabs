@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-022-scene-bottom-fixtures";
+  const VERSION = "physical-security-graphics-024-scene-cad-streetlight-silhouette";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -979,21 +979,33 @@
     }
 
     function fixture(x, y, index) {
-      const glowY = y - 26;
+      const headX = x + 31;
+      const headY = y - 49;
+      const beamTopY = planY + 14;
+      const beamMidY = planY + Math.max(34, planH * 0.42);
+      const beamBottomY = headY + 6;
+      const beamHalfTop = 56;
+      const beamHalfMid = 34;
 
       return "" +
         '<g data-ps-graphic-part="lighting-fixture">' +
-          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(glowY - 6, 1) + '" rx="126" ry="60" fill="url(#psSceneLightHaloOuter)" opacity=".76" />' +
-          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(glowY - 12, 1) + '" rx="78" ry="38" fill="url(#psSceneLightHaloMid)" opacity=".86" />' +
-          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(glowY - 16, 1) + '" rx="38" ry="19" fill="url(#psSceneLightHaloCore)" opacity=".96" />' +
-          '<line x1="' + fmt(x, 1) + '" y1="' + fmt(y - 16, 1) + '" x2="' + fmt(x, 1) + '" y2="' + fmt(planY + 24, 1) + '" stroke="rgba(255,226,128,.18)" stroke-width=".8" stroke-dasharray="4 6" />' +
+          '<path d="M ' + fmt(headX, 1) + ' ' + fmt(beamBottomY, 1) +
+            ' L ' + fmt(headX - beamHalfTop, 1) + ' ' + fmt(beamTopY, 1) +
+            ' Q ' + fmt(headX, 1) + ' ' + fmt(beamMidY, 1) +
+            ' ' + fmt(headX + beamHalfTop, 1) + ' ' + fmt(beamTopY, 1) +
+            ' Z" fill="url(#psSceneLightBeamWide)" stroke="rgba(255,226,128,.14)" stroke-width=".7" />' +
+          '<path d="M ' + fmt(headX, 1) + ' ' + fmt(beamBottomY, 1) +
+            ' L ' + fmt(headX - beamHalfMid, 1) + ' ' + fmt(beamMidY, 1) +
+            ' Q ' + fmt(headX, 1) + ' ' + fmt(beamMidY - 14, 1) +
+            ' ' + fmt(headX + beamHalfMid, 1) + ' ' + fmt(beamMidY, 1) +
+            ' Z" fill="url(#psSceneLightBeamCore)" opacity=".94" />' +
+          '<line x1="' + fmt(headX, 1) + '" y1="' + fmt(headY + 5, 1) + '" x2="' + fmt(headX, 1) + '" y2="' + fmt(beamTopY + 12, 1) + '" stroke="rgba(255,226,128,.17)" stroke-width=".72" stroke-dasharray="4 6" />' +
           streetLightFixtureCadIcon(x, y, {
-            scale: 0.86,
-            rotation: -90,
+            scale: 0.82,
             stroke: "rgba(255,226,128,.92)",
             accent: "rgba(255,239,176,.88)"
           }) +
-          '<text x="' + fmt(x, 1) + '" y="' + fmt(y + 28, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.86)" font-size="8.4" font-weight="950">L' + index + '</text>' +
+          '<text x="' + fmt(x, 1) + '" y="' + fmt(y + 16, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.86)" font-size="8.2" font-weight="950">L' + index + '</text>' +
         '</g>';
     }
 
@@ -1091,29 +1103,19 @@
   // data-physical-security-light-fixture-primitive-001
   function streetLightFixtureCadIcon(x, y, options) {
     const opts = options && typeof options === "object" ? options : {};
-    const stroke = opts.stroke || opts.color || "rgba(255,226,128,.86)";
-    const fill = opts.fill || "rgba(15,23,42,.92)";
-    const accent = opts.accent || stroke;
-    const scale = Number.isFinite(Number(opts.scale)) ? Number(opts.scale) : 0.42;
-    const rotation = Number.isFinite(Number(opts.rotation)) ? Number(opts.rotation) : 0;
-    const symbol = opts.symbol || "street-light-fixture-cad";
+    const stroke = opts.stroke || opts.color || "rgba(255,226,128,.90)";
+    const accent = opts.accent || "rgba(255,239,176,.92)";
+    const scale = Number.isFinite(Number(opts.scale)) ? Number(opts.scale) : 1;
 
     return "" +
-      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ') rotate(' + fmt(rotation, 2) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-light-fixture" data-ps-graphic-part="lighting-fixture-icon" data-graphics-symbol="' + esc(symbol) + '">' +
-        '<rect x="-78" y="-13" width="28" height="26" rx="3" fill="rgba(2,6,23,.82)" stroke="' + esc(stroke) + '" stroke-opacity=".78" stroke-width="1.45" />' +
-        '<circle cx="-72" cy="-7" r="2" fill="rgba(255,239,176,.82)" />' +
-        '<circle cx="-56" cy="-7" r="2" fill="rgba(255,239,176,.82)" />' +
-        '<circle cx="-72" cy="7" r="2" fill="rgba(255,239,176,.82)" />' +
-        '<circle cx="-56" cy="7" r="2" fill="rgba(255,239,176,.82)" />' +
-        '<line x1="-50" y1="0" x2="-18" y2="0" stroke="' + esc(stroke) + '" stroke-width="2.2" stroke-linecap="round" />' +
-        '<line x1="-48" y1="-3.6" x2="-18" y2="-3.6" stroke="rgba(255,239,176,.26)" stroke-width=".9" stroke-linecap="round" />' +
-        '<line x1="-18" y1="-9" x2="-18" y2="9" stroke="' + esc(stroke) + '" stroke-width="1.35" stroke-linecap="round" />' +
-        '<path d="M -18 -7 L 7 -9 C 28 -11 48 -6 58 0 C 48 6 28 11 7 9 L -18 7 Z" fill="' + esc(fill) + '" stroke="' + esc(stroke) + '" stroke-width="1.55" stroke-linejoin="round" />' +
-        '<path d="M 8 -6 C 24 -8 40 -5 50 0 C 40 5 24 8 8 6 Z" fill="rgba(255,226,128,.10)" stroke="rgba(255,226,128,.28)" stroke-width=".75" />' +
-        '<line x1="-2" y1="-7" x2="-2" y2="7" stroke="rgba(255,239,176,.28)" stroke-width=".8" />' +
-        '<line x1="15" y1="-7.2" x2="15" y2="7.2" stroke="rgba(255,239,176,.22)" stroke-width=".75" />' +
-        '<line x1="32" y1="-5.8" x2="32" y2="5.8" stroke="rgba(255,239,176,.18)" stroke-width=".7" />' +
-        '<line x1="58" y1="0" x2="82" y2="0" stroke="' + esc(accent) + '" stroke-opacity=".58" stroke-width="1" stroke-dasharray="4 5" stroke-linecap="round" />' +
+      '<g transform="translate(' + fmt(x, 1) + ' ' + fmt(y, 1) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-light-fixture" data-ps-graphic-part="lighting-fixture-icon" data-graphics-symbol="cad-streetlight-silhouette">' +
+        '<line x1="0" y1="0" x2="0" y2="-46" stroke="' + esc(stroke) + '" stroke-width="1.35" stroke-linecap="round" />' +
+        '<rect x="-4.5" y="-1.5" width="9" height="4.5" rx="1" fill="rgba(2,6,23,.74)" stroke="' + esc(stroke) + '" stroke-width=".85" />' +
+        '<line x1="-6" y1="3.5" x2="6" y2="3.5" stroke="' + esc(stroke) + '" stroke-width=".9" stroke-linecap="round" />' +
+        '<path d="M 0 -46 C 9 -50 16 -51 24 -49" fill="none" stroke="' + esc(stroke) + '" stroke-width="1.15" stroke-linecap="round" />' +
+        '<path d="M 21 -53 L 42 -50 Q 48 -48 42 -45 L 21 -42 Z" fill="rgba(15,23,42,.82)" stroke="' + esc(stroke) + '" stroke-width="1.05" stroke-linejoin="round" />' +
+        '<line x1="39" y1="-49.5" x2="50" y2="-49.5" stroke="' + esc(accent) + '" stroke-width=".8" stroke-opacity=".64" stroke-dasharray="3 4" stroke-linecap="round" />' +
+        '<circle cx="0" cy="-46" r="1.7" fill="' + esc(accent) + '" opacity=".86" />' +
       '</g>';
   }
 
