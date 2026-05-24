@@ -2632,3 +2632,45 @@ body[data-tool="face-recognition-range"] .btn:not(.nav-tab):not(.pill):not(.pill
 body[data-tool="license-plate-range"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover {
   border-color: rgba(118, 255, 151, 0.38) !important;
 }
+
+
+/* === ScopedLabs Physical Security action button tone normalization v028 === */
+/* Keep Physical Security action text consistent across local tool styles. */
+body[data-category="physical-security"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="area-planner"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="scene-illumination"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="mounting-height"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="field-of-view"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="camera-coverage-area"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="camera-spacing"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="blind-spot-check"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="pixel-density"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="face-recognition-range"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="license-plate-range"] .btn:not(.nav-tab):not(.pill):not(.pill-link) {
+  font-weight: 650 !important;
+}
+
+/* Coverage Area had one local class making Reset/Back read like primary actions. */
+body[data-tool="camera-coverage-area"] #reset.coverage-action-btn,
+body[data-tool="camera-coverage-area"] a.coverage-action-btn:not(#continue),
+body[data-tool="camera-coverage-area"] #saveSnapshot.coverage-action-btn {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025)) !important;
+  color: rgba(235, 245, 238, 0.92) !important;
+  box-shadow: none !important;
+}
+
+body[data-tool="camera-coverage-area"] #reset.coverage-action-btn:hover,
+body[data-tool="camera-coverage-area"] a.coverage-action-btn:not(#continue):hover,
+body[data-tool="camera-coverage-area"] #saveSnapshot.coverage-action-btn:hover {
+  border-color: rgba(118, 255, 151, 0.28) !important;
+  background: rgba(83,255,61,.06) !important;
+}
+
+/* Keep Coverage's primary flow actions visually green. */
+body[data-tool="camera-coverage-area"] #calc.coverage-action-btn,
+body[data-tool="camera-coverage-area"] #continue.coverage-action-btn {
+  border-color: rgba(125, 255, 152, 0.52) !important;
+  background: linear-gradient(180deg, rgba(25, 129, 56, 0.96), rgba(10, 91, 40, 0.94)) !important;
+  color: rgba(246, 255, 249, 0.98) !important;
+}
