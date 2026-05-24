@@ -35,12 +35,37 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    planningFlowContext: $("planning-flow-context"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     completeWrap: $("complete-wrap"),
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard")
   };
+function visibleFlowContextEl() {
+  const el = els.planningFlowContext || els.flowNote;
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+  return el;
+}
+
+function hideVisibleFlowContext() {
+  const el = visibleFlowContextEl();
+  if (el) {
+    el.hidden = true;
+    el.innerHTML = "";
+  }
+
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+}
+
 
   const DEFAULTS = {
     res: 3840,
@@ -178,7 +203,7 @@
   }
 
   function refreshManualOverrideBanner() {
-    if (!els.flowNote) return;
+    if (!visibleFlowContextEl()) return;
 
     const existing = els.flowNote.querySelector(".flow-override-note");
     if (existing) existing.remove();
@@ -288,8 +313,8 @@
     const html = activeAreaPlateContextHtml();
     if (!html || !els.flowNote) return false;
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = html + renderManualOverrideNote();
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML = html + renderManualOverrideNote();
     return true;
   }
 
@@ -408,15 +433,14 @@
     if (Number.isFinite(ppp) && ppp > 0) parts.push("plate target <strong>" + fmtPx(ppp) + "</strong>");
 
     if (!parts.length && !areaContext) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideVisibleFlowContext();
       return;
     }
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML =
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML =
       (areaContext ? areaContext + "<br><br>" : "") +
-      (parts.length ? "<strong>Flow Context</strong><br>Face / area results detected ? " + parts.join(", ") + "." : "") +
+      (parts.length ? "<strong>Imported Assumptions</strong><br>Face / area results detected ? " + parts.join(", ") + "." : "") +
       "<br><br>This final step checks whether the same active-area optic can support readable license plate capture." +
       renderManualOverrideNote();
   }

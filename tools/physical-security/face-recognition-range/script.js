@@ -32,11 +32,36 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    planningFlowContext: $("planning-flow-context"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard")
   };
+function visibleFlowContextEl() {
+  const el = els.planningFlowContext || els.flowNote;
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+  return el;
+}
+
+function hideVisibleFlowContext() {
+  const el = visibleFlowContextEl();
+  if (el) {
+    el.hidden = true;
+    el.innerHTML = "";
+  }
+
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+}
+
 
   const DEFAULTS = {
     res: 3840,
@@ -317,8 +342,8 @@
     const html = activeAreaFaceContextHtml();
     if (!html || !els.flowNote) return false;
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = html + renderManualOverrideNote();
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML = html + renderManualOverrideNote();
     return true;
   }
 
@@ -396,15 +421,14 @@
     if (Number.isFinite(ppf) && ppf > 0) parts.push("face target <strong>" + fmtPx(ppf) + "</strong>");
 
     if (!parts.length && !areaContext) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideVisibleFlowContext();
       return;
     }
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML =
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML =
       (areaContext ? areaContext + "<br><br>" : "") +
-      (parts.length ? "<strong>Flow Context</strong><br>Lens / area results detected ? " + parts.join(", ") + "." : "") +
+      (parts.length ? "<strong>Imported Assumptions</strong><br>Lens / area results detected ? " + parts.join(", ") + "." : "") +
       "<br><br>This step checks whether that optic can still deliver the face detail needed at the intended working distance." +
       renderManualOverrideNote();
   }

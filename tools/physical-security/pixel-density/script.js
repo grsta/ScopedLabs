@@ -35,10 +35,35 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    planningFlowContext: $("planning-flow-context"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     pixelVisual: $("pixelDensityVisual")
   };
+function visibleFlowContextEl() {
+  const el = els.planningFlowContext || els.flowNote;
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+  return el;
+}
+
+function hideVisibleFlowContext() {
+  const el = visibleFlowContextEl();
+  if (el) {
+    el.hidden = true;
+    el.innerHTML = "";
+  }
+
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+}
+
 
   const DEFAULTS = {
     res: 3840,
@@ -280,8 +305,8 @@
     const html = activeAreaFlowContextHtml();
     if (!html || !els.flowNote) return false;
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = html + renderManualOverrideNote();
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML = html + renderManualOverrideNote();
     return true;
   }
 
@@ -436,15 +461,14 @@
     if (Number.isFinite(gap)) parts.push("Gap: <strong>" + fmtFt(gap) + "</strong>");
 
     if (!parts.length && !areaContext) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideVisibleFlowContext();
       return;
     }
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML =
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML =
       (areaContext ? areaContext + "<br><br>" : "") +
-      "<strong>Flow Context</strong><br>" +
+      "<strong>Imported Assumptions</strong><br>" +
       parts.join(" | ") +
       renderManualOverrideNote();
   }

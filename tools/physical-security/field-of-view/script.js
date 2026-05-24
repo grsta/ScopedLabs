@@ -34,6 +34,30 @@
     continueWrap: $("next-step-row"),
     continueBtn: $("continue")
   };
+function visibleFlowContextEl() {
+  const el = els.planningFlowContext || els.flowNote;
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+  return el;
+}
+
+function hideVisibleFlowContext() {
+  const el = visibleFlowContextEl();
+  if (el) {
+    el.hidden = true;
+    el.innerHTML = "";
+  }
+
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+}
+
 
   const DEFAULTS = {
     dist: 40,
@@ -360,7 +384,7 @@
   function renderFlowNote() {
     const contextEl = els.planningFlowContext || els.flowNote;
     if (els.flowNote && els.flowNote !== contextEl) {
-      els.flowNote.hidden = true;
+      visibleFlowContextEl().hidden = true;
     }
 
     const flow = ScopedLabsAnalyzer.renderFlowNote({
@@ -369,7 +393,7 @@
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      title: "Flow Context",
+      title: "Imported Assumptions",
       intro: "This step uses the prior mounting-height recommendation to estimate how much scene width the selected field of view can realistically cover at the target distance."
     });
 
@@ -405,7 +429,7 @@
     }
 
     if (els.flowNote && els.flowNote !== contextEl) {
-      els.flowNote.hidden = true;
+      visibleFlowContextEl().hidden = true;
     }
   }
 

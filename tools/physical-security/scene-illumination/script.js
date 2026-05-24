@@ -38,11 +38,36 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    planningFlowContext: $("planning-flow-context"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard")
   };
+function visibleFlowContextEl() {
+  const el = els.planningFlowContext || els.flowNote;
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+  return el;
+}
+
+function hideVisibleFlowContext() {
+  const el = visibleFlowContextEl();
+  if (el) {
+    el.hidden = true;
+    el.innerHTML = "";
+  }
+
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+}
+
 
   const DEFAULTS = {
     w: 60,
@@ -376,10 +401,10 @@
   }
 
   function renderFlowNote() {
-    if (!els.flowNote) return;
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = `
-      <strong>Flow Context</strong><br>
+    if (!visibleFlowContextEl()) return;
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML = `
+      <strong>Planning Context</strong><br>
       This tool starts the design flow by establishing the scene-lighting baseline that downstream geometry and detail steps will build on.
     `;
   }

@@ -38,11 +38,36 @@
     analysis: $("analysis-copy"),
     assistant: $("blindSpotAssistant"),
     flowNote: $("flow-note"),
+    planningFlowContext: $("planning-flow-context"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard")
   };
+function visibleFlowContextEl() {
+  const el = els.planningFlowContext || els.flowNote;
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+  return el;
+}
+
+function hideVisibleFlowContext() {
+  const el = visibleFlowContextEl();
+  if (el) {
+    el.hidden = true;
+    el.innerHTML = "";
+  }
+
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+}
+
 
   const DEFAULTS = {
     w: 120,
@@ -342,13 +367,12 @@
     const overrideNote = renderManualOverrideNote();
 
     if (!overrideNote) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideVisibleFlowContext();
       return false;
     }
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = overrideNote;
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML = overrideNote;
     return true;
   }
 
@@ -408,13 +432,12 @@
     const overrideNote = renderManualOverrideNote();
 
     if (!overrideNote) {
-      els.flowNote.hidden = true;
-      els.flowNote.innerHTML = "";
+      hideVisibleFlowContext();
       return;
     }
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = overrideNote;
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML = overrideNote;
   }
 
   function invalidate({ clearFlow = true } = {}) {

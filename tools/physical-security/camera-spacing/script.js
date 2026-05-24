@@ -29,6 +29,7 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    planningFlowContext: $("planning-flow-context"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     assistant: $("spacingDesignAssistant"),
@@ -40,6 +41,30 @@
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard")
   };
+function visibleFlowContextEl() {
+  const el = els.planningFlowContext || els.flowNote;
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+  return el;
+}
+
+function hideVisibleFlowContext() {
+  const el = visibleFlowContextEl();
+  if (el) {
+    el.hidden = true;
+    el.innerHTML = "";
+  }
+
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+}
+
 
   const DEFAULTS = {
     len: 300,
@@ -3066,8 +3091,8 @@ function renderSpacingExportSection(data) {
     const html = activeAreaFlowContextHtml();
     if (!html || !els.flowNote) return false;
 
-    els.flowNote.hidden = false;
-    els.flowNote.innerHTML = html + renderManualOverrideNote();
+    visibleFlowContextEl().hidden = false;
+    visibleFlowContextEl().innerHTML = html + renderManualOverrideNote();
     return true;
   }
 
@@ -3098,12 +3123,12 @@ function renderSpacingExportSection(data) {
   function renderFlowNote() {
     const areaContext = activeAreaFlowContextHtml();
     const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
+      flowEl: visibleFlowContextEl(),
       flowKey: FLOW_KEYS.spacing,
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      title: "Flow Context",
+      title: "Imported Assumptions",
       intro: "This step converts effective single-camera coverage into real camera-to-camera spacing along the protected perimeter."
     });
 
@@ -3134,10 +3159,10 @@ function renderSpacingExportSection(data) {
     if (Number.isFinite(coverageReservePct) && coverageReservePct >= 0) parts.push(`Coverage reserve: <strong>${fmtPct(coverageReservePct, 1)}</strong> <span class="muted">(not spacing overlap)</span>`);
 
     if (parts.length || areaContext) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
+      visibleFlowContextEl().hidden = false;
+      visibleFlowContextEl().innerHTML = `
         ${areaContext ? areaContext + "<br><br>" : ""}
-        <strong>Flow Context</strong><br>
+        <strong>Imported Assumptions</strong><br>
         ${parts.join(" | ")}
         ${renderManualOverrideNote()}
       `;

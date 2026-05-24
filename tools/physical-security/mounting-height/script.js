@@ -36,11 +36,36 @@
     results: $("results"),
     analysis: $("analysis-copy"),
     flowNote: $("flow-note"),
+    planningFlowContext: $("planning-flow-context"),
     overrideNotice: $("mountingOverrideNotice"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     toolCard: $("toolCard")
   };
+function visibleFlowContextEl() {
+  const el = els.planningFlowContext || els.flowNote;
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+  return el;
+}
+
+function hideVisibleFlowContext() {
+  const el = visibleFlowContextEl();
+  if (el) {
+    el.hidden = true;
+    el.innerHTML = "";
+  }
+
+  if (els.flowNote && el !== els.flowNote) {
+    els.flowNote.hidden = true;
+    els.flowNote.innerHTML = "";
+    els.flowNote.setAttribute("aria-hidden", "true");
+  }
+}
+
 
   const DEFAULTS = {
     h: "",
@@ -494,12 +519,12 @@
 
   function renderFlowNote() {
     const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
+      flowEl: visibleFlowContextEl(),
       flowKey: FLOW_KEYS.mount,
       category: CATEGORY,
       step: STEP,
       lane: LANE,
-      title: "Flow Context",
+      title: "Imported Assumptions",
       intro: "This step uses the prior illumination plan to choose a workable install height before locking field of view."
     });
 
@@ -516,9 +541,9 @@
     if (lumens > 0) parts.push(`Estimated lumens: <strong>${fmt(lumens, 0)} lm</strong>`);
 
     if (parts.length) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow Context</strong><br>
+      visibleFlowContextEl().hidden = false;
+      visibleFlowContextEl().innerHTML = `
+        <strong>Imported Assumptions</strong><br>
         ${parts.join(" | ")}
       `;
     }
