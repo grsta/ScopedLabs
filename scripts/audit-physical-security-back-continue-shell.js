@@ -1,6 +1,6 @@
 /*
  * ScopedLabs Physical Security Back + Continue Shell Audit
- * Version: physical-security-back-continue-shell-audit-001
+ * Version: physical-security-back-continue-shell-audit-002-helper-row-detection
  *
  * Read-only audit. No files are modified by this script.
  */
@@ -16,7 +16,21 @@ function read(file) {
 }
 
 function scripts(html) {
-  return Array.from(html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)).map((m) => m[1]);
+  return Array.from(html.matchAll(/<script\b[^>]*\bsrc=["\']([^"\']+)["\'][^>]*>/gi)).map((m) => m[1]);
+}
+
+function hasId(html, id) {
+  if (!id) return false;
+  return html.includes('id="' + id + '"') || html.includes("id='" + id + "'");
+}
+
+function detectRowId(html, helperRowId) {
+  if (helperRowId && hasId(html, helperRowId)) return helperRowId;
+
+  const candidates = Array.from(html.matchAll(/<div\s+id=["\']([^"\']+)["\'][^>]*>/gi)).map((m) => m[1]);
+  const likely = candidates.find((id) => /FlowActions|flowActions|Actions|nav-row/i.test(id));
+
+  return likely || "-";
 }
 
 if (!fs.existsSync(toolsRoot)) {
@@ -29,16 +43,17 @@ const tools = fs.readdirSync(toolsRoot, { withFileTypes: true })
   .sort();
 
 const rows = tools.map((tool) => {
-  const file = path.join(toolsRoot, tool, "index.html");
-  const html = read(file);
+  const indexFile = path.join(toolsRoot, tool, "index.html");
+  const html = read(indexFile);
   const srcs = scripts(html);
 
-  const rowMatch = html.match(/<div\\s+id=["\']([^"\']*(?:FlowActions|flowActions|Actions|nav-row)[^"\']*)["\'][^>]*>/i);
   const helperCallMatch = html.match(/applyBackContinueShell\?\.\(\{\s*rowId:\s*"([^"]+)"/);
+  const helperRowId = helperCallMatch ? helperCallMatch[1] : "";
+  const rowIdDetected = detectRowId(html, helperRowId);
 
   const hasBack = /Back to Physical Security/i.test(html);
-  const hasNextStepRow = /id=["']next-step-row["']/i.test(html);
-  const hasContinue = /id=["']continue["']/i.test(html);
+  const hasNextStepRow = /id=["\']next-step-row["\']/i.test(html);
+  const hasContinue = /id=["\']continue["\']/i.test(html);
   const hasShell = html.includes("scopedlabs-tool-shell.js");
   const hasShell004OrNewer = /scopedlabs-tool-shell\.js\?v=scopedlabs-tool-shell-00[4-9]/.test(html);
 
@@ -48,18 +63,19 @@ const rows = tools.map((tool) => {
   if (!hasNextStepRow) issues.push("missing #next-step-row");
   if (!hasContinue) issues.push("missing #continue");
   if (!hasShell) issues.push("missing Tool Shell helper");
-  if (helperCallMatch && !rowMatch) issues.push("helper call exists but row ID was not detected");
-  if (helperCallMatch && helperCallMatch[1] !== (rowMatch && rowMatch[1])) {
-    issues.push("helper rowId does not match detected row");
+
+  if (helperRowId && !hasId(html, helperRowId)) {
+    issues.push("helper call rowId does not exist in page markup");
   }
-  if (helperCallMatch && !hasShell004OrNewer) {
+
+  if (helperRowId && !hasShell004OrNewer) {
     issues.push("helper call exists but shell version may not include applyBackContinueShell");
   }
 
   return {
     tool,
-    rowIdDetected: rowMatch ? rowMatch[1] : "-",
-    helperCall: helperCallMatch ? helperCallMatch[1] : "-",
+    rowIdDetected,
+    helperCall: helperRowId || "-",
     back: hasBack ? "yes" : "no",
     nextStepRow: hasNextStepRow ? "yes" : "no",
     continueId: hasContinue ? "yes" : "no",
@@ -77,21 +93,21 @@ const helperProofs = rows.filter((row) => row.helperCall !== "-");
 const watch = rows.filter((row) => row.status !== "ok");
 
 console.log("\nSummary:");
-console.log(`- Tools audited: ${rows.length}`);
-console.log(`- Tools with Back + Continue shell proof call: ${helperProofs.length}/${rows.length}`);
-console.log(`- Watch issues: ${watch.length}`);
+console.log("- Tools audited: " + rows.length);
+console.log("- Tools with Back + Continue shell proof call: " + helperProofs.length + "/" + rows.length);
+console.log("- Watch issues: " + watch.length);
 
 if (helperProofs.length) {
   console.log("\nCurrent Back + Continue shell proofs:");
   for (const row of helperProofs) {
-    console.log(`- ${row.tool}: ${row.helperCall}`);
+    console.log("- " + row.tool + ": " + row.helperCall);
   }
 }
 
 if (watch.length) {
   console.log("\nWatch items:");
   for (const row of watch) {
-    console.log(`- ${row.tool}: ${row.issues}`);
+    console.log("- " + row.tool + ": " + row.issues);
   }
   process.exitCode = 1;
 }
