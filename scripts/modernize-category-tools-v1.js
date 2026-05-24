@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-001-back-continue-module
+ * Version: scopedlabs-category-modernizer-002-tool-shell-module
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["back-continue"]
+  modules: ["tool-shell", "back-continue"]
 };
 
 function read(file) {
@@ -54,6 +54,69 @@ function write(file, text) {
 function hasId(html, id) {
   if (!id) return false;
   return html.includes('id="' + id + '"') || html.includes("id='" + id + "'");
+}
+
+function scripts(html) {
+  return Array.from(html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)).map((m) => m[1]);
+}
+
+function scriptIndex(srcs, needle) {
+  return srcs.findIndex((src) => src.includes(needle));
+}
+
+function requiredIdsForTool(tool) {
+  const ids = ["pipeline", "toolCard", "continue", "next-step-row"];
+
+  if (tool !== "area-planner") {
+    ids.push("results");
+  }
+
+  return ids;
+}
+
+function planToolShell(tool, html) {
+  if (!html) {
+    return {
+      classification: "FAIL",
+      action: "none",
+      detail: "missing index.html"
+    };
+  }
+
+  const srcs = scripts(html);
+  const registryIndex = scriptIndex(srcs, category + "-tool-registry.js");
+  const shellIndex = scriptIndex(srcs, "scopedlabs-tool-shell.js");
+  const localScriptIndex = scriptIndex(srcs, "./script.js");
+
+  const missingIds = requiredIdsForTool(tool).filter((id) => !hasId(html, id));
+  const issues = [];
+
+  if (registryIndex < 0) issues.push("missing category tool registry script");
+  if (shellIndex < 0) issues.push("missing Tool Shell helper script");
+  if (localScriptIndex < 0) issues.push("missing local ./script.js");
+  if (registryIndex >= 0 && shellIndex >= 0 && registryIndex > shellIndex) {
+    issues.push("registry loads after Tool Shell helper");
+  }
+  if (shellIndex >= 0 && localScriptIndex >= 0 && shellIndex > localScriptIndex) {
+    issues.push("Tool Shell helper loads after local script");
+  }
+  if (missingIds.length) {
+    issues.push("missing required IDs: " + missingIds.join(", "));
+  }
+
+  if (issues.length) {
+    return {
+      classification: "WATCH",
+      action: "none",
+      detail: issues.join("; ")
+    };
+  }
+
+  return {
+    classification: "SAFE",
+    action: "noop",
+    detail: "Tool Shell wiring and required IDs are already standard"
+  };
 }
 
 function findHelperRowId(html) {
@@ -300,6 +363,37 @@ function planBackContinuePatch(tool, html) {
   };
 }
 
+const ToolShellModule = {
+  id: "tool-shell",
+  version: "tool-shell-module-001",
+  description: "Checks Tool Shell registry/helper wiring, script order, and required IDs.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const plan = planToolShell(tool, html);
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: plan.classification,
+      action: plan.action,
+      rowId: "-",
+      detail: plan.detail
+    };
+  }
+};
+
 const BackContinueModule = {
   id: "back-continue",
   version: "back-continue-module-001",
@@ -335,7 +429,7 @@ const BackContinueModule = {
   }
 };
 
-const modules = [BackContinueModule];
+const modules = [ToolShellModule, BackContinueModule];
 
 if (!fs.existsSync(categoryRoot)) {
   console.error("Missing category folder: " + path.relative(root, categoryRoot));
@@ -359,7 +453,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-001-back-continue-module");
+console.log("Version: scopedlabs-category-modernizer-002-tool-shell-module");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + modules.map((m) => m.id + "@" + m.version).join(", "));
