@@ -33,6 +33,7 @@
     llf: $("llf"),
     llfPreset: $("llfPreset"),
     factorGuidance: $("factorGuidance"),
+    liveVisual: $("sceneIlluminationLiveVisual"),
     calc: $("calc"),
     reset: $("reset"),
     results: $("results"),
@@ -415,6 +416,8 @@ function hideVisibleFlowContext() {
       clearDownstream();
     }
 
+    clearSceneIlluminationLiveVisual();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -647,6 +650,75 @@ function hideVisibleFlowContext() {
     };
   }
 
+
+  // data-scopedlabs-scene-live-visual-001
+  function sceneIlluminationGraphicsModel(data) {
+    return {
+      tool: "scene-illumination",
+      ariaLabel: "Scene Illumination lighting baseline CAD view",
+      areaWidthFt: data && data.w,
+      areaDepthFt: data && data.d,
+      areaSqFt: data && data.area,
+      targetFootcandles: data && data.fc,
+      estimatedLumens: data && data.lumens,
+      effectiveFactor: data && data.effectiveFactor,
+      utilizationPct: data && data.ufPct,
+      lightLossPct: data && data.llfPct,
+      lumenDensity: data && data.lumenDensity,
+      status: data && data.status,
+      lightingClass: data && data.lightingClass,
+      lightingGoalLabel: data && data.lightingGoalLabel
+    };
+  }
+
+  function clearSceneIlluminationLiveVisual() {
+    if (!els.liveVisual) return;
+    els.liveVisual.hidden = true;
+    els.liveVisual.innerHTML = "";
+    els.liveVisual.setAttribute("aria-hidden", "true");
+  }
+
+  function renderSceneIlluminationLiveVisual(data) {
+    if (!els.liveVisual || !data || !data.ok) return;
+
+    const gfx = window.ScopedLabsGraphics;
+    let svg = "";
+
+    if (gfx && typeof gfx.render === "function") {
+      svg = gfx.render("scene-illumination-lighting-plan", sceneIlluminationGraphicsModel(data));
+
+      if (typeof svg === "string" && svg.includes("<svg")) {
+        svg = svg.replace(/\sdata-export-svg\b/g, "");
+
+        if (typeof gfx.frameSvg === "function") {
+          svg = gfx.frameSvg(svg, {
+            renderer: "scene-illumination-lighting-plan",
+            tool: "scene-illumination",
+            size: "wide"
+          });
+        }
+      }
+    }
+
+    if (typeof svg !== "string" || !svg.includes("<svg")) {
+      clearSceneIlluminationLiveVisual();
+      return;
+    }
+
+    els.liveVisual.innerHTML = svg;
+    els.liveVisual.hidden = false;
+    els.liveVisual.removeAttribute("hidden");
+    els.liveVisual.setAttribute("aria-hidden", "false");
+
+    if (gfx && typeof gfx.tuneFrame === "function") {
+      gfx.tuneFrame(els.liveVisual, {
+        selector: ".sl-graphics-frame-svg, [data-sl-renderer]",
+        size: "wide"
+      });
+    }
+  }
+
+
   function updateActiveAreaFromScene(data) {
     const api = window.ScopedLabsPhysicalSecurityAreaState;
     if (!api || typeof api.updateActiveAreaResult !== "function") return;
@@ -852,6 +924,7 @@ function hideVisibleFlowContext() {
     sceneExportRoot().appendChild(node);
   }
   function renderError(message) {
+clearSceneIlluminationLiveVisual();
 clearSceneStructuredExport();
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
@@ -929,6 +1002,7 @@ clearSceneStructuredExport();
         chartMax: 100
       }
     });
+renderSceneIlluminationLiveVisual(data);
 renderSceneStructuredExport(data);
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
