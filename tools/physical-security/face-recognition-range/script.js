@@ -618,7 +618,126 @@ function hideVisibleFlowContext() {
     updateActiveAreaFromFaceRecognition(data, manualOverrideMeta);
   }
 
+  
+  // data-scopedlabs-face-structured-export-001
+  function faceExportRoot() {
+    return els.toolCard || document.getElementById("toolCard") || document.querySelector("main .container") || document.body;
+  }
+
+  function escapeFaceExportHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function faceFallbackExportTable(title, rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : []).filter((row) => row && row[0] && row[1] != null);
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">' + escapeFaceExportHtml(title) + '</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Value</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          cleanRows.map((row) =>
+            '<tr>' +
+              '<td style="width:42%;padding:8px 10px;border-bottom:1px solid #d8dee6;color:#4b5563;vertical-align:top;">' + escapeFaceExportHtml(row[0]) + '</td>' +
+              '<td style="padding:8px 10px;border-bottom:1px solid #d8dee6;color:#111827;font-weight:700;text-align:left;vertical-align:top;">' + escapeFaceExportHtml(row[1]) + '</td>' +
+            '</tr>'
+          ).join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function faceFallbackNotesTable(rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : []).filter((row) => row && row[0] && row[1]);
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<table style="width:100%;border-collapse:collapse;margin:12px 0 0 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          cleanRows.map((row) =>
+            '<tr>' +
+              '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapeFaceExportHtml(row[0]) + '</td>' +
+              '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' + escapeFaceExportHtml(row[1]) + '</td>' +
+            '</tr>'
+          ).join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function clearFaceStructuredExport() {
+    document.querySelectorAll('[data-face-structured-export="true"]').forEach((node) => node.remove());
+  }
+
+  function faceStructuredExportTables(data) {
+    if (!data || !data.ok) return "";
+
+    const metrics = [
+      ["Target requirement", data.classification],
+      ["Max recognition distance", fmtFt(data.maxDist)],
+      ["Actual working distance", fmtFt(data.dist)],
+      ["Range margin", data.marginFt >= 0 ? fmtFt(data.marginFt) : "-" + fmtFt(Math.abs(data.marginFt))],
+      ["Horizontal resolution", fmtPx(data.res)],
+      ["Horizontal FOV", fmt(data.hfov, 1) + "°"],
+      ["Target pixels per face", fmtPx(data.ppf)],
+      ["Delivered pixels per face", fmtPx(data.deliveredPpf, 1)],
+      ["Face width assumption", fmtFt(data.fw, 2)],
+      ["Range utilization", fmtPct(data.utilizationPct)],
+      ["Assistant status", data.status],
+      ["Validation type", "Optional face recognition validation"]
+    ];
+
+    const handoff = "Use this result as a specialist validation branch for recognition areas only. If the same entrance, corridor, or approach zone also needs vehicle detail, continue to License Plate and validate that lane separately.";
+
+    const notes = [
+      ["Engineering interpretation", data.interpretation],
+      ["Dominant constraint", data.dominantConstraint],
+      ["Recommended action", data.guidance],
+      ["License Plate handoff", handoff]
+    ];
+
+    const metricHtml = window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderMetricTable === "function"
+      ? window.ScopedLabsAssistantExport.renderMetricTable("Face Recognition Design Summary", metrics)
+      : faceFallbackExportTable("Face Recognition Design Summary", metrics);
+
+    const notesHtml = window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderNotesTable === "function"
+      ? window.ScopedLabsAssistantExport.renderNotesTable(notes)
+      : faceFallbackNotesTable(notes);
+
+    return "" +
+      '<div class="face-export-structured-tables" data-face-structured-export="true" data-export-section data-export-suppress-title="true" style="position:absolute;left:-10000px;top:auto;width:820px;max-height:1px;overflow:hidden;opacity:0;pointer-events:none;">' +
+        metricHtml +
+        notesHtml +
+      '</div>';
+  }
+
+  function renderFaceStructuredExport(data) {
+    clearFaceStructuredExport();
+
+    const html = faceStructuredExportTables(data);
+    if (!html) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html;
+    const node = wrapper.firstElementChild;
+    if (!node) return;
+
+    faceExportRoot().appendChild(node);
+  }
+
+
+
   function renderError(message) {
+    clearFaceStructuredExport();
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
@@ -648,6 +767,7 @@ function hideVisibleFlowContext() {
       guidance: data.guidance
     });
 
+    renderFaceStructuredExport(data);
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
