@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-012-runner-ux
+ * Version: scopedlabs-category-modernizer-013-cache-bust-module
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card", "script-order"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card", "script-order", "cache-bust"]
 };
 
 function read(file) {
@@ -888,6 +888,92 @@ const ScriptOrderModule = {
   }
 };
 
+
+const CacheBustModule = {
+  id: "cache-bust",
+  version: "cache-bust-module-001-audit-only",
+  description: "Audits cache-bust query versions on local and shared ScopedLabs assets.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const srcs = scripts(html);
+
+    const scopedScriptSrcs = srcs.filter((src) =>
+      src.includes("./script.js") ||
+      src.includes("/assets/")
+    );
+
+    const unversionedScripts = scopedScriptSrcs.filter((src) => !/[?&]v=/.test(src));
+
+    const localScript = srcs.find((src) => src.includes("./script.js")) || "-";
+    const localScriptVersioned = localScript !== "-" && /[?&]v=/.test(localScript);
+
+    const criticalAssets = [
+      "/assets/tool-flow.js",
+      "/assets/catalog.js",
+      "/assets/pipelines.js",
+      "/assets/pipeline.js",
+      "/assets/help.js",
+      "/assets/export.js",
+      "scopedlabs-tool-shell.js",
+      category + "-tool-registry.js",
+      "scopedlabs-graphics.js",
+      category + "-graphics.js"
+    ];
+
+    const presentCriticalAssets = criticalAssets
+      .map((needle) => srcs.find((src) => src.includes(needle)) || "")
+      .filter(Boolean);
+
+    const unversionedCriticalAssets = presentCriticalAssets.filter((src) => !/[?&]v=/.test(src));
+
+    const cssHrefs = Array.from(html.matchAll(/<link\b[^>]*\bhref=["']([^"']+\.css[^"']*)["'][^>]*>/gi))
+      .map((m) => m[1])
+      .filter((href) => href.includes("/assets/") || href.includes("./") || href.includes("/style.css"));
+
+    const unversionedCss = cssHrefs.filter((href) => !/[?&]v=/.test(href));
+
+    const issues = [];
+
+    if (localScript === "-") issues.push("missing local ./script.js");
+    if (localScript !== "-" && !localScriptVersioned) issues.push("local ./script.js missing ?v=");
+    if (unversionedCriticalAssets.length) {
+      issues.push("critical assets missing ?v=: " + unversionedCriticalAssets.join(", "));
+    }
+
+    const detailParts = [
+      "localScript=" + localScript,
+      "localScriptVersioned=" + (localScriptVersioned ? "yes" : "no"),
+      "scopedScripts=" + scopedScriptSrcs.length,
+      "unversionedScripts=" + (unversionedScripts.length ? unversionedScripts.join(",") : "-"),
+      "criticalAssets=" + (presentCriticalAssets.length ? presentCriticalAssets.join(",") : "-"),
+      "unversionedCriticalAssets=" + (unversionedCriticalAssets.length ? unversionedCriticalAssets.join(",") : "-"),
+      "cssLinks=" + (cssHrefs.length ? cssHrefs.join(",") : "-"),
+      "unversionedCss=" + (unversionedCss.length ? unversionedCss.join(",") : "-")
+    ];
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail: issues.length ? issues.join("; ") + " | " + detailParts.join("; ") : detailParts.join("; ")
+    };
+  }
+};
+
 const BackContinueModule = {
   id: "back-continue",
   version: "back-continue-module-001",
@@ -923,7 +1009,7 @@ const BackContinueModule = {
   }
 };
 
-const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule];
+const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule];
 
 const args = process.argv.slice(2);
 const summaryOnly = args.includes("--summary-only");
@@ -967,7 +1053,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-012-runner-ux");
+console.log("Version: scopedlabs-category-modernizer-013-cache-bust-module");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
