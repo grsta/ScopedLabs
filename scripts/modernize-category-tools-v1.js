@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-013-cache-bust-module
+ * Version: scopedlabs-category-modernizer-015-diagnostics-visible-text-safe
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card", "script-order", "cache-bust"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card", "script-order", "cache-bust", "diagnostics"]
 };
 
 function read(file) {
@@ -974,6 +974,117 @@ const CacheBustModule = {
   }
 };
 
+
+const DiagnosticsModule = {
+  id: "diagnostics",
+  version: "diagnostics-module-002-visible-text-safe-audit-only",
+  description: "Audits factory diagnostic signals and obvious broken visible UI artifacts without modifying page files.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const srcs = scripts(html);
+    const registryScript = srcs.find((src) => src.includes(category + "-tool-registry.js")) || "-";
+    const toolShellScript = srcs.find((src) => src.includes("scopedlabs-tool-shell.js")) || "-";
+    const localScript = srcs.find((src) => src.includes("./script.js")) || "-";
+
+    const localScriptPath = localScript !== "-"
+      ? path.join(path.dirname(indexFile), localScript.split("?")[0].replace(/^\.\//, ""))
+      : "";
+
+    const localScriptText = localScriptPath && fs.existsSync(localScriptPath)
+      ? fs.readFileSync(localScriptPath, "utf8")
+      : "";
+
+    const combinedText = html + "\n" + localScriptText;
+
+    const visibleText = html
+      .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const obviousBrokenArtifacts = [];
+
+    if (/\bStatus:\s*undefined\b/.test(visibleText)) obviousBrokenArtifacts.push("Status: undefined");
+    if (/\bundefined\b/.test(visibleText)) obviousBrokenArtifacts.push("visible undefined text");
+    if (/\bNaN\b/.test(visibleText)) obviousBrokenArtifacts.push("visible NaN text");
+    if (/\bnull\b/.test(visibleText)) obviousBrokenArtifacts.push("visible null text");
+
+    const expectedRenderersByCategory = {
+      "physical-security": {
+        "camera-coverage-area": ["coverage-footprint-plan"],
+        "field-of-view": ["fov-geometry-plan"],
+        "pixel-density": ["pixel-density-detail-plan"],
+        "camera-spacing": ["camera-layout-iso", "scenario-pressure-line"],
+        "blind-spot-check": ["camera-layout-iso"]
+      }
+    };
+
+    const expectedRenderers =
+      expectedRenderersByCategory[category] && expectedRenderersByCategory[category][tool]
+        ? expectedRenderersByCategory[category][tool]
+        : [];
+
+    const graphicsTool = expectedRenderers.length > 0;
+    const hasReportVisualSignal =
+      combinedText.includes("data-report-visual-owner") ||
+      combinedText.includes("data-report-renderer") ||
+      combinedText.includes("data-suppress-legacy-chart-export") ||
+      combinedText.includes("report-visual-contract");
+
+    const hasShellDiagnostics =
+      combinedText.includes("runDiagnostics") ||
+      combinedText.includes("buildDiagnosticResult") ||
+      toolShellScript !== "-";
+
+    const requiredIds = requiredIdsForTool(tool);
+    const missingRequiredIds = requiredIds.filter((id) => !hasId(html, id));
+
+    const issues = [];
+
+    if (registryScript === "-") issues.push("missing category registry script");
+    if (toolShellScript === "-") issues.push("missing Tool Shell script");
+    if (localScript === "-") issues.push("missing local ./script.js");
+    if (missingRequiredIds.length) issues.push("missing required IDs: " + missingRequiredIds.join(", "));
+    if (obviousBrokenArtifacts.length) issues.push("broken visible UI artifacts: " + obviousBrokenArtifacts.join(", "));
+    if (graphicsTool && !hasReportVisualSignal) issues.push("graphics tool missing report visual contract signal");
+
+    const detailParts = [
+      "registry=" + registryScript,
+      "toolShell=" + toolShellScript,
+      "localScript=" + localScript,
+      "requiredIds=" + requiredIds.join(","),
+      "missingRequiredIds=" + (missingRequiredIds.length ? missingRequiredIds.join(",") : "-"),
+      "shellDiagnostics=" + (hasShellDiagnostics ? "present" : "missing"),
+      "graphicsTool=" + (graphicsTool ? "yes" : "no"),
+      "expectedRenderers=" + (expectedRenderers.length ? expectedRenderers.join(",") : "-"),
+      "reportVisualSignal=" + (hasReportVisualSignal ? "present" : graphicsTool ? "missing" : "not-required"),
+      "brokenVisibleArtifacts=" + (obviousBrokenArtifacts.length ? obviousBrokenArtifacts.join(",") : "-")
+    ];
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail: issues.length ? issues.join("; ") + " | " + detailParts.join("; ") : detailParts.join("; ")
+    };
+  }
+};
+
 const BackContinueModule = {
   id: "back-continue",
   version: "back-continue-module-001",
@@ -1009,7 +1120,7 @@ const BackContinueModule = {
   }
 };
 
-const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule];
+const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule, DiagnosticsModule];
 
 const args = process.argv.slice(2);
 const summaryOnly = args.includes("--summary-only");
@@ -1053,7 +1164,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-013-cache-bust-module");
+console.log("Version: scopedlabs-category-modernizer-015-diagnostics-visible-text-safe");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
