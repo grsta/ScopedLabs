@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-016-report-visual-contract";
+  const VERSION = "physical-security-graphics-017-scene-illumination-renderer";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -903,6 +903,165 @@
     return brandSharedPhysicalSecuritySvg(svg, rendererName);
   }
 
+  // data-physical-security-scene-illumination-renderer-001
+  function renderSceneIlluminationLightingPlanSvg(model) {
+    const m = model && typeof model === "object" ? model : {};
+
+    const areaWidth = Math.max(0, num(m.areaWidthFt ?? m.w ?? m.widthFt, 0));
+    const areaDepth = Math.max(0, num(m.areaDepthFt ?? m.d ?? m.depthFt, 0));
+    const areaSqFt = Math.max(0, num(m.areaSqFt ?? m.area, areaWidth * areaDepth));
+    const targetFc = Math.max(0, num(m.targetFootcandles ?? m.fc, 0));
+    const lumens = Math.max(0, num(m.estimatedLumens ?? m.lumens, 0));
+    const effectiveFactor = clamp(num(m.effectiveFactor, 0), 0, 1);
+    const ufPct = clamp(num(m.utilizationPct ?? m.ufPct, 0), 0, 100);
+    const llfPct = clamp(num(m.lightLossPct ?? m.llfPct, 0), 0, 100);
+    const lumenDensity = Math.max(0, num(m.lumenDensity, areaSqFt > 0 ? lumens / areaSqFt : 0));
+    const status = String(m.status || "Healthy").toLowerCase();
+    const lightingClass = String(m.lightingClass || "Lighting baseline");
+    const goalLabel = String(m.lightingGoalLabel || m.goalLabel || "Scene lighting");
+
+    if (!areaWidth || !areaDepth || !targetFc || !lumens) {
+      return fallbackSvg("SL-PS-GFX-SCENE-ILLUMINATION-BAD-MODEL", "Scene Illumination renderer needs area width/depth, target footcandles, and estimated lumens.", {
+        renderer: "scene-illumination-lighting-plan",
+        tool: m.tool || "scene-illumination"
+      });
+    }
+
+    const svgW = 800;
+    const svgH = 398;
+    const stage = { x: 34, y: 150, width: 732, height: 224 };
+
+    const statusLabel = status.includes("risk") ? "RISK" : status.includes("watch") ? "WATCH" : "HEALTHY";
+    const statusColor = statusLabel === "RISK"
+      ? "rgba(255,143,136,.92)"
+      : statusLabel === "WATCH"
+        ? "rgba(255,211,79,.92)"
+        : "rgba(125,255,158,.90)";
+
+    const statusSoft = statusLabel === "RISK"
+      ? "rgba(255,143,136,.10)"
+      : statusLabel === "WATCH"
+        ? "rgba(255,211,79,.10)"
+        : "rgba(125,255,158,.10)";
+
+    const barX = 292;
+    const barW = 280;
+    const labelX = 52;
+    const valueX = 740;
+    const row1Y = 70;
+    const rowGap = 32;
+    const barH = 10;
+
+    const targetMax = Math.max(targetFc, 10);
+    const fcBarW = Math.max(8, Math.min(barW, barW * (targetFc / targetMax)));
+    const factorBarW = Math.max(8, Math.min(barW, barW * effectiveFactor));
+    const lumensPerSqFtMax = Math.max(lumenDensity, 12);
+    const loadBarW = Math.max(8, Math.min(barW, barW * (lumenDensity / lumensPerSqFtMax)));
+
+    const planX = 126;
+    const planY = 188;
+    const planW = 480;
+    const planH = 138;
+    const fixtureY = planY - 30;
+    const fixtureXs = [planX + 72, planX + planW / 2, planX + planW - 72];
+
+    const lightFill = statusLabel === "RISK"
+      ? "url(#psSceneIlluminationRiskFill)"
+      : statusLabel === "WATCH"
+        ? "url(#psSceneIlluminationWatchFill)"
+        : "url(#psSceneIlluminationHealthyFill)";
+
+    function barRow(y, label, value, width, fill, stroke) {
+      return "" +
+        '<text x="' + labelX + '" y="' + y + '" fill="rgba(226,232,240,.72)" font-size="11" font-weight="850">' + esc(label) + '</text>' +
+        '<rect x="' + barX + '" y="' + (y - 8) + '" width="' + barW + '" height="' + barH + '" rx="5" fill="rgba(255,255,255,.035)" stroke="' + esc(stroke || "rgba(125,255,152,.12)") + '" />' +
+        '<rect x="' + barX + '" y="' + (y - 8) + '" width="' + fmt(width, 1) + '" height="' + barH + '" rx="5" fill="' + esc(fill) + '" />' +
+        '<text x="' + valueX + '" y="' + y + '" text-anchor="end" fill="rgba(248,250,252,.92)" font-size="11" font-weight="900">' + esc(value) + '</text>';
+    }
+
+    function fixture(x, y, index) {
+      return "" +
+        '<g data-ps-graphic-part="lighting-fixture">' +
+          '<circle cx="' + fmt(x, 1) + '" cy="' + fmt(y, 1) + '" r="10" fill="rgba(255,226,128,.10)" stroke="rgba(255,226,128,.75)" stroke-width="1.15" />' +
+          '<circle cx="' + fmt(x, 1) + '" cy="' + fmt(y, 1) + '" r="3" fill="rgba(255,226,128,.92)" />' +
+          '<path d="M ' + fmt(x - 54, 1) + ' ' + fmt(planY + 4, 1) + ' Q ' + fmt(x, 1) + ' ' + fmt(y + 38, 1) + ' ' + fmt(x + 54, 1) + ' ' + fmt(planY + 4, 1) + '" fill="rgba(255,226,128,.06)" stroke="rgba(255,226,128,.20)" stroke-width=".8" />' +
+          '<text x="' + fmt(x, 1) + '" y="' + fmt(y - 17, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.74)" font-size="8.2" font-weight="900">L' + index + '</text>' +
+        '</g>';
+    }
+
+    return "" +
+      '<svg data-suppress-legacy-chart-export="true" data-report-renderer="scene-illumination-lighting-plan" data-report-visual-owner="physical-security-graphics" data-export-svg class="scene-illumination-lighting-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="scene-illumination-lighting-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + esc(m.ariaLabel || "Scene Illumination CAD lighting baseline view") + '">' +
+        '<defs>' +
+          '<linearGradient id="psSceneIlluminationTargetBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.62)" /><stop offset="100%" stop-color="rgba(255,226,128,.90)" /></linearGradient>' +
+          '<linearGradient id="psSceneIlluminationFactorBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,158,.54)" /><stop offset="100%" stop-color="rgba(125,255,158,.88)" /></linearGradient>' +
+          '<linearGradient id="psSceneIlluminationLoadBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="' + statusColor + '" stop-opacity=".62" /><stop offset="100%" stop-color="' + statusColor + '" stop-opacity=".92" /></linearGradient>' +
+          '<linearGradient id="psSceneIlluminationHealthyFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(125,255,158,.20)" /><stop offset="100%" stop-color="rgba(125,255,158,.055)" /></linearGradient>' +
+          '<linearGradient id="psSceneIlluminationWatchFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(255,211,79,.22)" /><stop offset="100%" stop-color="rgba(255,211,79,.055)" /></linearGradient>' +
+          '<linearGradient id="psSceneIlluminationRiskFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(255,143,136,.20)" /><stop offset="100%" stop-color="rgba(255,143,136,.055)" /></linearGradient>' +
+          '<pattern id="psSceneIlluminationGrid" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M 22 0 L 0 0 0 22" fill="none" stroke="rgba(226,232,240,.075)" stroke-width=".7" /></pattern>' +
+        '</defs>' +
+
+        '<text x="52" y="26" fill="rgba(248,250,252,.92)" font-size="18" font-weight="900">Scene lighting baseline</text>' +
+        '<text x="52" y="48" fill="rgba(226,232,240,.62)" font-size="12">' + esc(goalLabel) + ' / ' + esc(lightingClass) + ' / maintained-light planning factor.</text>' +
+
+        barRow(row1Y, "Target illumination", fmt(targetFc, 1) + " fc", fcBarW, "url(#psSceneIlluminationTargetBar)", "rgba(255,211,79,.14)") +
+        barRow(row1Y + rowGap, "Effective planning factor", fmtPct(effectiveFactor * 100, 0), factorBarW, "url(#psSceneIlluminationFactorBar)", "rgba(125,255,152,.12)") +
+        barRow(row1Y + rowGap * 2, "Output load density", fmt(lumenDensity, 2) + " lm/sq ft", loadBarW, "url(#psSceneIlluminationLoadBar)", statusColor) +
+
+        CAD.stage(stage.x, stage.y, stage.width, stage.height, { rx: 20 }) +
+        cadGrid(stage) +
+
+        '<text x="54" y="174" fill="rgba(125,255,158,.78)" font-size="10.4" font-weight="950" letter-spacing=".11em">LIGHTING AREA / MAINTAINED OUTPUT</text>' +
+        CAD.statusPill(708, 164, statusLabel, {
+          width: 66,
+          height: 22,
+          color: statusColor,
+          textFill: statusColor,
+          size: 9.1
+        }) +
+
+        '<rect x="' + planX + '" y="' + planY + '" width="' + planW + '" height="' + planH + '" rx="16" fill="' + lightFill + '" stroke="' + statusColor + '" stroke-opacity=".46" stroke-width="1.15" />' +
+        '<rect x="' + planX + '" y="' + planY + '" width="' + planW + '" height="' + planH + '" rx="16" fill="url(#psSceneIlluminationGrid)" opacity=".70" />' +
+
+        fixture(fixtureXs[0], fixtureY, 1) +
+        fixture(fixtureXs[1], fixtureY, 2) +
+        fixture(fixtureXs[2], fixtureY, 3) +
+
+        CAD.dimensionLine(planX, planY + planH + 30, planX + planW, planY + planH + 30, "Area width: " + fmtFt(areaWidth, 0), {
+          color: colors.axis,
+          labelFill: "rgba(226,232,240,.72)",
+          tick: 7
+        }) +
+        CAD.dimensionLine(planX + planW + 34, planY, planX + planW + 34, planY + planH, "Depth: " + fmtFt(areaDepth, 0), {
+          color: colors.axis,
+          labelFill: "rgba(226,232,240,.72)",
+          tick: 7
+        }) +
+
+        CAD.metricChip(54, 334, "AREA", fmt(areaSqFt, 0) + " sq ft", {
+          accent: "rgba(125,255,158,.82)",
+          valueFill: "rgba(248,250,252,.88)",
+          width: 132
+        }) +
+        CAD.metricChip(202, 334, "LUMENS", fmt(lumens, 0), {
+          accent: statusColor,
+          valueFill: statusColor,
+          width: 126
+        }) +
+        CAD.metricChip(344, 334, "UF / LLF", fmtPct(ufPct, 0) + " / " + fmtPct(llfPct, 0), {
+          accent: "rgba(255,226,128,.86)",
+          valueFill: "rgba(255,239,176,.92)",
+          width: 136
+        }) +
+        CAD.metricChip(496, 334, "EFFECTIVE", fmtPct(effectiveFactor * 100, 0), {
+          accent: statusColor,
+          valueFill: statusColor,
+          width: 132
+        }) +
+      '</svg>';
+  }
+
+
   function renderCameraLayoutIsoSvg(model) {
     return renderSharedPhysicalSecuritySvg("camera-layout-iso", sharedCameraLayoutIsoRenderer, model);
   }
@@ -933,6 +1092,7 @@
 
   gfx.registerRenderer("camera-layout-iso", renderCameraLayoutIsoSvg);
   gfx.registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
+  gfx.registerRenderer("scene-illumination-lighting-plan", renderSceneIlluminationLightingPlanSvg);
   gfx.registerRenderer("pixel-density-detail-plan", renderPixelDensityDetailPlanSvg);
   gfx.registerRenderer("coverage-footprint-plan", renderCoverageFootprintPlanSvg);
   gfx.registerRenderer("fov-geometry-plan", renderFovGeometryPlanSvg);
@@ -945,6 +1105,7 @@
     primitives,
     renderCameraLayoutIsoSvg,
     renderScenarioPressureLineSvg,
+    renderSceneIlluminationLightingPlanSvg,
     renderCoverageFootprintPlanSvg,
     renderPixelDensityDetailPlanSvg,
     renderFovGeometryPlanSvg
