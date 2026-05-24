@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-004-label-standard-module
+ * Version: scopedlabs-category-modernizer-005-export-shell-module
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell"]
 };
 
 function read(file) {
@@ -500,6 +500,82 @@ const LabelStandardModule = {
   }
 };
 
+
+const ExportShellModule = {
+  id: "export-shell",
+  version: "export-shell-module-001-audit-only",
+  description: "Inventories export/snapshot/report wiring without modifying page files.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const srcs = scripts(html);
+    const exportScript = srcs.find((src) => src.includes("/assets/export.js")) || "-";
+    const assistantExportScript = srcs.find((src) => src.includes("scopedlabs-assistant-export.js")) || "-";
+
+    const hasExportConfig = html.includes("ScopedLabsExportConfig") || html.includes("data-scopedlabs-export-config");
+    const hasExportReport = hasId(html, "exportReport");
+    const hasSaveSnapshot = hasId(html, "saveSnapshot");
+    const hasExportStatus = hasId(html, "exportStatus");
+
+    const reportFields = [
+      "reportTitle",
+      "projectName",
+      "clientName",
+      "preparedBy",
+      "customNotes"
+    ];
+
+    const presentReportFields = reportFields.filter((id) => hasId(html, id));
+    const missingReportFields = reportFields.filter((id) => !hasId(html, id));
+
+    const hasReportMetadataCard =
+      html.includes("data-report-fields") ||
+      presentReportFields.length >= 3 ||
+      html.includes("Project Name") ||
+      html.includes("Custom Notes");
+
+    const issues = [];
+
+    if (exportScript === "-") issues.push("missing export.js");
+    if (!hasExportConfig) issues.push("missing export config");
+    if (!hasExportReport) issues.push("missing #exportReport");
+    if (!hasSaveSnapshot) issues.push("missing #saveSnapshot");
+    if (!hasExportStatus) issues.push("missing #exportStatus");
+
+    const detailParts = [
+      "exportScript=" + exportScript,
+      "exportConfig=" + (hasExportConfig ? "present" : "missing"),
+      "exportReport=" + (hasExportReport ? "present" : "missing"),
+      "saveSnapshot=" + (hasSaveSnapshot ? "present" : "missing"),
+      "exportStatus=" + (hasExportStatus ? "present" : "missing"),
+      "metadataCard=" + (hasReportMetadataCard ? "present" : "missing"),
+      "metadataFields=" + (presentReportFields.length ? presentReportFields.join(",") : "-"),
+      "missingMetadataFields=" + (missingReportFields.length ? missingReportFields.join(",") : "-"),
+      "assistantExport=" + assistantExportScript
+    ];
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail: issues.length ? issues.join("; ") + " | " + detailParts.join("; ") : detailParts.join("; ")
+    };
+  }
+};
+
 const BackContinueModule = {
   id: "back-continue",
   version: "back-continue-module-001",
@@ -535,7 +611,7 @@ const BackContinueModule = {
   }
 };
 
-const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule];
+const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule];
 
 if (!fs.existsSync(categoryRoot)) {
   console.error("Missing category folder: " + path.relative(root, categoryRoot));
@@ -559,7 +635,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-004-label-standard-module");
+console.log("Version: scopedlabs-category-modernizer-005-export-shell-module");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + modules.map((m) => m.id + "@" + m.version).join(", "));
