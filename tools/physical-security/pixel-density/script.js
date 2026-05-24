@@ -302,12 +302,8 @@ function hideVisibleFlowContext() {
   }
 
   function renderAreaOnlyFlowContext() {
-    const html = activeAreaFlowContextHtml();
-    if (!html || !els.flowNote) return false;
-
-    visibleFlowContextEl().hidden = false;
-    visibleFlowContextEl().innerHTML = html + renderManualOverrideNote();
-    return true;
+    hideVisibleFlowContext();
+    return false;
   }
 
   
@@ -453,14 +449,14 @@ function hideVisibleFlowContext() {
       if (Number.isFinite(tppf) && tppf > 0) els.tppf.value = String(Number(tppf.toFixed(1)));
     }
 
-    const areaContext = activeAreaFlowContextHtml();
+    const areaContext = "";
     const parts = [];
     if (status) parts.push("Blind-spot result: <strong>" + escapeHtml(status) + "</strong>");
     if (Number.isFinite(dist) && dist > 0) parts.push("Distance: <strong>" + fmtFt(dist) + "</strong>");
     if (Number.isFinite(hfov) && hfov > 0) parts.push("HFOV: <strong>" + fmt(hfov, 1) + " deg</strong>");
     if (Number.isFinite(gap)) parts.push("Gap: <strong>" + fmtFt(gap) + "</strong>");
 
-    if (!parts.length && !areaContext) {
+    if (!parts.length) {
       hideVisibleFlowContext();
       return;
     }

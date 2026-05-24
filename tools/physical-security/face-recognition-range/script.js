@@ -339,12 +339,8 @@ function hideVisibleFlowContext() {
   }
 
   function renderAreaOnlyFlowContext() {
-    const html = activeAreaFaceContextHtml();
-    if (!html || !els.flowNote) return false;
-
-    visibleFlowContextEl().hidden = false;
-    visibleFlowContextEl().innerHTML = html + renderManualOverrideNote();
-    return true;
+    hideVisibleFlowContext();
+    return false;
   }
 
 
@@ -382,7 +378,7 @@ function hideVisibleFlowContext() {
       }
     }
 
-    const areaContext = activeAreaFaceContextHtml();
+    const areaContext = "";
     const areaValues = faceImportValuesFromArea();
     const hasLensFlow = parsed && parsed.category === CATEGORY && parsed.step === PREVIOUS_STEP;
     const prev = hasLensFlow ? (parsed.data || {}) : {};
@@ -420,7 +416,7 @@ function hideVisibleFlowContext() {
     if (Number.isFinite(dist) && dist > 0) parts.push("working distance <strong>" + fmtFt(dist) + "</strong>");
     if (Number.isFinite(ppf) && ppf > 0) parts.push("face target <strong>" + fmtPx(ppf) + "</strong>");
 
-    if (!parts.length && !areaContext) {
+    if (!parts.length) {
       hideVisibleFlowContext();
       return;
     }

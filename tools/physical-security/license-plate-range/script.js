@@ -310,12 +310,8 @@ function hideVisibleFlowContext() {
   }
 
   function renderAreaOnlyFlowContext() {
-    const html = activeAreaPlateContextHtml();
-    if (!html || !els.flowNote) return false;
-
-    visibleFlowContextEl().hidden = false;
-    visibleFlowContextEl().innerHTML = html + renderManualOverrideNote();
-    return true;
+    hideVisibleFlowContext();
+    return false;
   }
 
 
@@ -394,7 +390,7 @@ function hideVisibleFlowContext() {
       }
     }
 
-    const areaContext = activeAreaPlateContextHtml();
+    const areaContext = "";
     const areaValues = plateImportValuesFromArea();
     const hasFaceFlow = parsed && parsed.category === CATEGORY && parsed.step === PREVIOUS_STEP;
     const prev = hasFaceFlow ? (parsed.data || {}) : {};
@@ -432,7 +428,7 @@ function hideVisibleFlowContext() {
     if (Number.isFinite(dist) && dist > 0) parts.push("working distance <strong>" + fmtFt(dist) + "</strong>");
     if (Number.isFinite(ppp) && ppp > 0) parts.push("plate target <strong>" + fmtPx(ppp) + "</strong>");
 
-    if (!parts.length && !areaContext) {
+    if (!parts.length) {
       hideVisibleFlowContext();
       return;
     }

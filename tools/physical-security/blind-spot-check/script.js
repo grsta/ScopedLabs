@@ -362,18 +362,8 @@ function hideVisibleFlowContext() {
   }
 
   function renderAreaOnlyFlowContext() {
-    if (!els.flowNote) return false;
-
-    const overrideNote = renderManualOverrideNote();
-
-    if (!overrideNote) {
-      hideVisibleFlowContext();
-      return false;
-    }
-
-    visibleFlowContextEl().hidden = false;
-    visibleFlowContextEl().innerHTML = overrideNote;
-    return true;
+    hideVisibleFlowContext();
+    return false;
   }
 
   function applyDefaults() {

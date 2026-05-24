@@ -3088,12 +3088,8 @@ function renderSpacingExportSection(data) {
   }
 
   function renderAreaOnlyFlowContext() {
-    const html = activeAreaFlowContextHtml();
-    if (!html || !els.flowNote) return false;
-
-    visibleFlowContextEl().hidden = false;
-    visibleFlowContextEl().innerHTML = html + renderManualOverrideNote();
-    return true;
+    hideVisibleFlowContext();
+    return false;
   }
 
   function applyDefaults() {
@@ -3121,7 +3117,7 @@ function renderSpacingExportSection(data) {
   }
 
   function renderFlowNote() {
-    const areaContext = activeAreaFlowContextHtml();
+    const areaContext = "";
     const flow = ScopedLabsAnalyzer.renderFlowNote({
       flowEl: visibleFlowContextEl(),
       flowKey: FLOW_KEYS.spacing,
@@ -3158,10 +3154,9 @@ function renderSpacingExportSection(data) {
     if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}&deg;</strong>`);
     if (Number.isFinite(coverageReservePct) && coverageReservePct >= 0) parts.push(`Coverage reserve: <strong>${fmtPct(coverageReservePct, 1)}</strong> <span class="muted">(not spacing overlap)</span>`);
 
-    if (parts.length || areaContext) {
+    if (parts.length) {
       visibleFlowContextEl().hidden = false;
       visibleFlowContextEl().innerHTML = `
-        ${areaContext ? areaContext + "<br><br>" : ""}
         <strong>Imported Assumptions</strong><br>
         ${parts.join(" | ")}
         ${renderManualOverrideNote()}
