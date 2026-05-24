@@ -1352,6 +1352,30 @@
     }
   </style>
 
+
+  <style data-camera-spacing-assistant-placeholder-002>
+    body[data-tool="camera-spacing"] #spacingAssistantPlaceholder {
+      margin-top: 18px !important;
+    }
+
+    body[data-tool="camera-spacing"] #spacingAssistantPlaceholder .spacing-hero-card {
+      display: grid;
+      gap: 6px;
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(125,255,152,.16);
+      background: rgba(125,255,152,.035);
+      color: rgba(226,232,240,.78);
+      line-height: 1.5;
+    }
+
+    body[data-tool="camera-spacing"] #spacingAssistantPlaceholder .spacing-hero-card strong {
+      color: rgba(255,255,255,.94);
+      font-weight: 900;
+    }
+  </style>
+
 </head>
 
 <body data-suppress-default-export-interpretation="true"
@@ -1491,6 +1515,24 @@
           </p>
         </div>
 
+        <section id="spacingAssistantPlaceholder" class="spacing-design-assistant spacing-assistant-placeholder" aria-live="polite">
+          <div class="spacing-design-head">
+            <div>
+              <p class="spacing-design-kicker">Design Assistant</p>
+              <h3 class="spacing-design-title">Ready to validate camera spacing.</h3>
+              <p class="spacing-design-copy">Run the spacing calculation to generate the recommended spacing path, camera-count pressure, overlap interpretation, and downstream blind-spot handoff.</p>
+            </div>
+            <span class="spacing-status-pill">Ready</span>
+          </div>
+
+          <div class="spacing-hero-card">
+            <strong>Assistant starts after calculation.</strong>
+            <span>Use the inputs above to calculate spacing. The assistant will then expose the primary recommendation, scenario branches, and validation guidance without showing the old technical result table.</span>
+          </div>
+        </section>
+
+
+
         <section id="spacingDesignAssistant" class="spacing-design-assistant" hidden></section>
 
         <section
@@ -1585,7 +1627,7 @@
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-004-back-continue-proof"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
-  <script src="./script.js?v=physical-security-spacing-assistant-export-shell-001"></script>
+  <script src="./script.js?v=physical-security-spacing-assistant-placeholder-002"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "spacingFlowActions" });
   </script>

@@ -33,6 +33,7 @@
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
     assistant: $("spacingDesignAssistant"),
+    assistantPlaceholder: $("spacingAssistantPlaceholder"),
     exportSection: $("spacingExportSection"),
     assistantModeNote: $("spacingAssistantModeNote"),
     assistantDiagnosis: $("spacingAssistantDiagnosis"),
@@ -65,6 +66,22 @@ function hideVisibleFlowContext() {
   }
 }
 
+
+
+  // data-camera-spacing-assistant-placeholder-002
+  function showSpacingAssistantPlaceholder() {
+    if (!els.assistantPlaceholder) return;
+    els.assistantPlaceholder.hidden = false;
+    els.assistantPlaceholder.removeAttribute("hidden");
+    els.assistantPlaceholder.setAttribute("aria-hidden", "false");
+  }
+
+  function hideSpacingAssistantPlaceholder() {
+    if (!els.assistantPlaceholder) return;
+    els.assistantPlaceholder.hidden = true;
+    els.assistantPlaceholder.setAttribute("hidden", "");
+    els.assistantPlaceholder.setAttribute("aria-hidden", "true");
+  }
 
   const DEFAULTS = {
     len: 300,
@@ -1232,6 +1249,7 @@ function escapeHtml(value) {
 
         if (scenario.canApply === false) {
           customAssistantNotice = scenario.disabledReason || scenario.note || "That custom target is not viable with the current geometry.";
+          hideSpacingAssistantPlaceholder();
           renderSpacingAssistant(data);
           return;
         }
@@ -3185,6 +3203,7 @@ function renderSpacingExportSection(data) {
       emptyMessage: "Enter valid values and press Calculate."
     });
     hideSpacingAssistant();
+    showSpacingAssistantPlaceholder();
     clearSpacingExportSection();
 
     renderFlowNote();
@@ -3394,6 +3413,7 @@ function renderSpacingExportSection(data) {
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     hideSpacingAssistant();
+    showSpacingAssistantPlaceholder();
     clearSpacingExportSection();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
@@ -3482,6 +3502,7 @@ function renderSpacingExportSection(data) {
     applyDefaults();
     bind();
     renderFlowNote();
+    showSpacingAssistantPlaceholder();
     invalidate({ clearFlow: false });
   }
 
