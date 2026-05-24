@@ -746,6 +746,10 @@ function hideVisibleFlowContext() {
     return "" +
       '<h2 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:20px 0 8px;color:#111827;">' + escapeSceneExportHtml(title) + '</h2>' +
       '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">' + escapeSceneExportHtml(title) + '</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Value</th>' +
+        '</tr></thead>' +
         '<tbody>' +
           cleanRows.map((row) =>
             '<tr>' +
