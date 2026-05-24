@@ -1011,7 +1011,7 @@ function hideVisibleFlowContext() {
     mountingExportRoot().appendChild(node);
   }
   
-  // data-mounting-live-visual-001
+  // data-mounting-live-visual-002
   function mountingLiveVisualEl() {
     return document.getElementById("mountingLiveVisual");
   }
@@ -1036,6 +1036,21 @@ function hideVisibleFlowContext() {
     if (score > 45) return "risk";
     if (score > 20) return "watch";
     return "";
+  }
+
+
+  function mountingCadCameraIcon(x, y) {
+    return "" +
+      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ') scale(0.5)" class="sl-cad-camera" data-ps-graphic-part="camera-marker" data-graphics-symbol="camera-cad-small">' +
+        '<rect x="-22" y="-13" width="44" height="26" rx="4" fill="rgba(15, 23, 42, 0.92)" stroke="rgba(125,255,158,.92)" stroke-width="1.7" />' +
+        '<path d="M 22 -8 L 42 -14 L 42 14 L 22 8 Z" fill="rgba(15, 23, 42, 0.96)" stroke="rgba(125,255,158,.92)" stroke-width="1.7" stroke-linejoin="round" />' +
+        '<line x1="42" y1="-12" x2="42" y2="12" stroke="rgba(125,255,158,.92)" stroke-width="1.7" stroke-linecap="round" />' +
+        '<line x1="-13" y1="-13" x2="-13" y2="13" stroke="rgba(125, 255, 158, 0.38)" stroke-width=".9" />' +
+        '<circle cx="-5" cy="0" r="4" fill="none" stroke="rgba(125, 255, 158, 0.55)" stroke-width="1.2" />' +
+        '<circle cx="-30" cy="0" r="5" fill="rgba(2, 6, 23, 0.95)" stroke="rgba(125,255,158,.92)" stroke-width="1.7" />' +
+        '<line x1="-25" y1="0" x2="-22" y2="0" stroke="rgba(125,255,158,.92)" stroke-width="1.7" stroke-linecap="round" />' +
+        '<line x1="44" y1="0" x2="70" y2="0" stroke="rgba(125,255,158,.92)" stroke-width="1.2" stroke-dasharray="4 5" stroke-linecap="round" />' +
+      '</g>';
   }
 
   function clearMountingLiveVisual() {
@@ -1137,11 +1152,9 @@ function hideVisibleFlowContext() {
         '<line x1="' + camX + '" y1="' + camY + '" x2="' + targetX + '" y2="' + targetY + '" stroke="rgba(125,255,152,.88)" stroke-width="2"/>' +
         '<line x1="' + camX + '" y1="' + camY + '" x2="' + targetX + '" y2="' + topY + '" stroke="rgba(125,255,152,.38)" stroke-width="1" stroke-dasharray="5 5"/>' +
         '<line x1="' + camX + '" y1="' + camY + '" x2="' + targetX + '" y2="' + bottomY + '" stroke="rgba(125,255,152,.38)" stroke-width="1" stroke-dasharray="5 5"/>' +
-
-        '<line x1="' + camX + '" y1="' + mountBaseY + '" x2="' + camX + '" y2="' + camY + '" stroke="rgba(226,232,240,.58)" stroke-width="2"/>' +
-        '<rect x="' + (camX - 16) + '" y="' + (camY - 11) + '" width="32" height="22" rx="4" fill="rgba(15,23,42,.92)" stroke="rgba(125,255,152,.72)" stroke-width="1.5"/>' +
-        '<path d="M' + (camX + 16) + ' ' + (camY - 7) + ' L' + (camX + 39) + ' ' + camY + ' L' + (camX + 16) + ' ' + (camY + 7) + ' Z" fill="rgba(125,255,152,.22)" stroke="rgba(125,255,152,.72)" stroke-width="1.5"/>' +
-        '<text x="' + (camX - 44) + '" y="' + (camY - 22) + '" fill="rgba(226,232,240,.88)" font-size="12" font-weight="800">Mount ' + escapeMountingVisualHtml(fmtFt(h)) + '</text>' +
+        '<line x1="' + camX + '" y1="' + mountBaseY + '" x2="' + camX + '" y2="' + camY + '" stroke="rgba(226,232,240,.46)" stroke-width="1.4"/>' +
+        mountingCadCameraIcon(camX, camY) +
+        '<text x="' + (camX - 44) + '" y="' + (camY - 26) + '" fill="rgba(226,232,240,.88)" font-size="12" font-weight="800">Mount ' + escapeMountingVisualHtml(fmtFt(h)) + '</text>' +
 
         '<line x1="' + targetX + '" y1="' + groundY + '" x2="' + targetX + '" y2="' + targetY + '" stroke="rgba(245,197,66,.72)" stroke-width="2"/>' +
         '<circle cx="' + targetX + '" cy="' + targetY + '" r="5" fill="rgba(245,197,66,.96)"/>' +

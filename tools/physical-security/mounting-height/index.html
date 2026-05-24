@@ -207,8 +207,7 @@
     }
   </style>
 
-
-  <style data-mounting-live-visual-001>
+  <style data-mounting-live-visual-002>
     body[data-tool="mounting-height"] #mountingLiveVisual {
       margin-top: 14px;
     }
@@ -267,10 +266,10 @@
     body[data-tool="mounting-height"] .mounting-cad-stage {
       overflow: hidden;
       border-radius: 14px;
-      border: 1px solid rgba(148,163,184,.16);
+      border: 1px solid rgba(125,255,152,.16);
       background:
-        linear-gradient(180deg, rgba(15,23,42,.62), rgba(2,6,23,.44)),
-        radial-gradient(circle at 18% 16%, rgba(125,255,152,.08), transparent 38%);
+        radial-gradient(circle at 17% 8%, rgba(125,255,152,.055), transparent 38%),
+        rgba(0,0,0,.16);
     }
 
     body[data-tool="mounting-height"] .mounting-cad-stage svg {
@@ -290,7 +289,7 @@
       padding: 12px;
       border-radius: 13px;
       border: 1px solid rgba(148,163,184,.15);
-      background: rgba(15,23,42,.26);
+      background: rgba(0,0,0,.14);
     }
 
     body[data-tool="mounting-height"] .mounting-pressure-label {
@@ -589,7 +588,7 @@
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-004-back-continue-proof"></script>
 
-  <script src="./script.js?v=physical-security-mounting-live-visual-001"></script>
+  <script src="./script.js?v=physical-security-mounting-live-visual-002-cad-camera"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "mountingFlowActions" });
   </script>
