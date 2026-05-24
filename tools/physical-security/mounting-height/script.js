@@ -608,6 +608,61 @@ function hideVisibleFlowContext() {
     };
   }
 
+
+  // data-mounting-objective-aware-status-001
+  function mountingObjectiveFromActiveArea() {
+    try {
+      const api = window.ScopedLabsPhysicalSecurityAreaState;
+      const area = api && typeof api.getActiveArea === "function" ? api.getActiveArea() : null;
+
+      if (!area || typeof area !== "object") return "general";
+
+      const candidates = [
+        area.detailGoal,
+        area.targetDetailGoal,
+        area.securityDetailGoal,
+        area.coverageGoal,
+        area.objective,
+        area.goal,
+        area.areaType,
+        area.type,
+        area.name
+      ];
+
+      const text = candidates
+        .map((value) => String(value || "").toLowerCase())
+        .filter(Boolean)
+        .join(" ");
+
+      if (/license|plate|lpr|face|facial|recognition|identify|identification|detail|forensic/.test(text)) {
+        return "detail";
+      }
+
+      return "general";
+    } catch {
+      return "general";
+    }
+  }
+
+  function objectiveAwareSubjectAngleStatusPressure(tilt, rawPressure, objective) {
+    const raw = Number(rawPressure);
+
+    if (!Number.isFinite(raw)) return 100;
+
+    if (String(objective || "").toLowerCase() === "detail") {
+      return raw;
+    }
+
+    // For general overview/awareness areas, shallow angle should warn that detail is limited,
+    // but it should not automatically fail the whole mounting placement if framing and mount
+    // height are otherwise workable.
+    if (tilt < 4) return Math.min(raw, 44);
+    if (tilt < 8) return Math.min(raw, 38);
+    if (tilt < 12) return Math.min(raw, 28);
+
+    return raw;
+  }
+
   function subjectAngleFitPressure(tilt) {
     if (!Number.isFinite(tilt)) return 100;
 
@@ -743,16 +798,31 @@ function hideVisibleFlowContext() {
       }
     ];
 
+    const mountingObjective = mountingObjectiveFromActiveArea();
+    const subjectAngleStatusMetric = objectiveAwareSubjectAngleStatusPressure(tilt, subjectAngleMetric, mountingObjective);
+    const statusMetrics = metrics.map((metric) => {
+      if (metric.label !== "Subject Angle Fit") return metric;
+
+      return Object.assign({}, metric, {
+        value: subjectAngleStatusMetric,
+        displayValue: metric.displayValue + (mountingObjective === "detail" ? " / detail objective" : " / overview objective")
+      });
+    });
+
     const statusPack = ScopedLabsAnalyzer.resolveStatus({
-      compositeScore: Math.max(subjectAngleMetric, mountPressureMetric, framingPressureMetric),
-      metrics,
+      compositeScore: Math.max(subjectAngleStatusMetric, mountPressureMetric, framingPressureMetric),
+      metrics: statusMetrics,
       healthyMax: 20,
       watchMax: 45
     });
 
     let dominantConstraint = "";
     if (tilt < 8) {
-      dominantConstraint = "Subject angle fit is the dominant limiter. The camera is only " + fmtFt(drop) + " above the target height while viewing " + fmtFt(input.dist) + " away, creating a very shallow " + fmtDeg(tilt) + " subject angle. The risk is caused by the angle being too low, not too high.";
+      if (mountingObjective === "detail") {
+        dominantConstraint = "Subject angle fit is the dominant limiter for the selected detail objective. The camera is only " + fmtFt(drop) + " above the target height while viewing " + fmtFt(input.dist) + " away, creating a very shallow " + fmtDeg(tilt) + " subject angle. Detail and identification quality are likely limited unless the camera is raised, moved closer, or the area is treated as overview coverage.";
+      } else {
+        dominantConstraint = "Subject angle fit is shallow. This can still be usable for general overview or awareness coverage, but it should be treated as detail-limited. Do not rely on this mounting geometry for strong face or identification detail unless the camera is raised, moved closer, or validated in a specialist detail step.";
+      }
     } else if (tilt < 12) {
       dominantConstraint = "Subject angle fit is near the lower edge. The camera is only " + fmtFt(drop) + " above the target height while viewing " + fmtFt(input.dist) + " away, creating a borderline " + fmtDeg(tilt) + " subject angle. A small height or placement change can improve the result, but this should be treated as Watch rather than a clean pass.";
     } else if (tilt >= 45) {
@@ -765,7 +835,7 @@ function hideVisibleFlowContext() {
       dominantConstraint = "The geometry is balanced. Mount height, target distance, subject angle, and vertical framing remain in a practical range for the next field-of-view step.";
     }
 
-    const interpretation = "Mounting context is " + input.mountContextLabel + ". With a mount height of " + fmtFt(input.h) + " and a target point " + fmtFt(input.dist) + " away at " + fmtFt(input.th) + ", the suggested down-tilt is about " + fmtDeg(tilt) + ". Preferred subject-angle band is roughly 12-35 deg, with 8-45 deg generally workable, so this result is classified as " + subjectFitText + ". At that distance, a " + fmtDeg(input.vfov) + " vertical field of view spans about " + fmtFt(span) + " vertically, with the view landing from roughly " + fmtFt(topEdgeHeight) + " down to " + fmtFt(bottomEdgeHeight) + ". " + angleText;
+    const interpretation = "Mounting context is " + input.mountContextLabel + ". With a mount height of " + fmtFt(input.h) + " and a target point " + fmtFt(input.dist) + " away at " + fmtFt(input.th) + ", the suggested down-tilt is about " + fmtDeg(tilt) + ". Preferred subject-angle band is roughly 12-35 deg for detail-oriented placement, with 8-45 deg generally workable. Current objective mode is " + (mountingObjective === "detail" ? "detail/identification" : "general overview") + ", so this result is classified as " + subjectFitText + ". At that distance, a " + fmtDeg(input.vfov) + " vertical field of view spans about " + fmtFt(span) + " vertically, with the view landing from roughly " + fmtFt(topEdgeHeight) + " down to " + fmtFt(bottomEdgeHeight) + ". " + angleText;
 
     let guidance = "";
     if (tilt < 8) {
