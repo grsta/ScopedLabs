@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-036-face-recognition-renderer";
+  const VERSION = "physical-security-graphics-037-face-cad-target-marker";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -903,6 +903,48 @@
     return brandSharedPhysicalSecuritySvg(svg, rendererName);
   }
 
+  // data-physical-security-face-cad-target-marker-001
+  function faceRecognitionCadTargetMarker(x, y, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    const stroke = opts.stroke || opts.color || "rgba(125,255,158,.92)";
+    const muted = opts.muted || "rgba(226,232,240,.42)";
+    const soft = opts.soft || "rgba(125,255,158,.075)";
+    const scale = Number.isFinite(Number(opts.scale)) ? Number(opts.scale) : 0.58;
+    const label = opts.label || "";
+
+    return "" +
+      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-face-target" data-ps-graphic-part="face-recognition-target-marker" data-graphics-symbol="cad-face-recognition-target">' +
+
+        '<ellipse cx="0" cy="0" rx="64" ry="48" fill="' + esc(soft) + '" stroke="' + esc(stroke) + '" stroke-width="1.15" stroke-opacity=".62" />' +
+        '<line x1="-86" y1="0" x2="-50" y2="0" stroke="' + esc(stroke) + '" stroke-width=".9" stroke-dasharray="5 6" stroke-linecap="round" stroke-opacity=".58" />' +
+        '<line x1="50" y1="0" x2="86" y2="0" stroke="' + esc(stroke) + '" stroke-width=".9" stroke-dasharray="5 6" stroke-linecap="round" stroke-opacity=".58" />' +
+        '<line x1="0" y1="-70" x2="0" y2="-42" stroke="' + esc(stroke) + '" stroke-width=".9" stroke-dasharray="5 6" stroke-linecap="round" stroke-opacity=".58" />' +
+        '<line x1="0" y1="44" x2="0" y2="70" stroke="' + esc(stroke) + '" stroke-width=".9" stroke-dasharray="5 6" stroke-linecap="round" stroke-opacity=".58" />' +
+
+        '<path d="M -46 38 C -38 17 -22 7 -8 3 C -3 8 3 8 8 3 C 24 8 39 19 46 38" fill="rgba(2,6,23,.62)" stroke="' + esc(stroke) + '" stroke-width="1.25" stroke-linejoin="round" />' +
+        '<path d="M -29 37 C -24 20 -14 13 -5 10 L 0 18 L 5 10 C 15 13 24 20 29 37" fill="none" stroke="' + esc(muted) + '" stroke-width=".85" stroke-linecap="round" />' +
+
+        '<path d="M -24 -18 C -21 -39 -7 -48 7 -45 C 22 -41 29 -25 24 -6 C 21 8 11 20 0 22 C -12 20 -22 7 -24 -18 Z" fill="rgba(2,6,23,.72)" stroke="' + esc(stroke) + '" stroke-width="1.35" />' +
+        '<path d="M -23 -23 C -14 -38 1 -40 15 -32 C 26 -25 29 -12 25 -1 C 19 -8 8 -10 -2 -8 C -12 -6 -20 -10 -23 -23 Z" fill="none" stroke="' + esc(stroke) + '" stroke-width=".95" stroke-opacity=".8" />' +
+
+        '<path d="M -15 -28 C -6 -35 5 -35 17 -28" fill="none" stroke="' + esc(muted) + '" stroke-width=".75" stroke-linecap="round" />' +
+        '<path d="M -17 -21 C -5 -27 7 -27 18 -20" fill="none" stroke="' + esc(muted) + '" stroke-width=".7" stroke-linecap="round" />' +
+        '<path d="M -14 -14 C -4 -20 7 -19 15 -13" fill="none" stroke="' + esc(muted) + '" stroke-width=".65" stroke-linecap="round" />' +
+
+        '<path d="M -18 -2 C -10 4 10 4 18 -2" fill="none" stroke="' + esc(muted) + '" stroke-width=".75" stroke-linecap="round" stroke-opacity=".66" />' +
+        '<line x1="-6" y1="19" x2="0" y2="30" stroke="' + esc(stroke) + '" stroke-width=".85" stroke-linecap="round" />' +
+        '<line x1="6" y1="19" x2="0" y2="30" stroke="' + esc(stroke) + '" stroke-width=".85" stroke-linecap="round" />' +
+
+        (label ? CAD.text(0, 84, label, {
+          anchor: "middle",
+          fill: stroke,
+          size: 12,
+          weight: 950,
+          spacing: ".09em"
+        }) : "") +
+      '</g>';
+  }
+
   // data-physical-security-face-recognition-renderer-001
   function renderFaceRecognitionRangePlanSvg(model) {
     const m = model && typeof model === "object" ? model : {};
@@ -1018,11 +1060,16 @@
         '<line x1="' + fmt(maxX, 1) + '" y1="' + fmt(trackY - 56, 1) + '" x2="' + fmt(maxX, 1) + '" y2="' + fmt(trackY + 56, 1) + '" stroke="rgba(125,255,158,.70)" stroke-width="1.15" stroke-dasharray="5 6" />' +
         '<text x="' + fmt(maxX, 1) + '" y="' + fmt(trackY - 66, 1) + '" text-anchor="middle" fill="rgba(125,255,158,.84)" font-size="9" font-weight="900">MAX</text>' +
 
-        '<line x1="' + fmt(actualX, 1) + '" y1="' + fmt(targetTop - 10, 1) + '" x2="' + fmt(actualX, 1) + '" y2="' + fmt(targetBottom + 10, 1) + '" stroke="' + targetColor + '" stroke-width="1.45" />' +
-        '<circle cx="' + fmt(actualX, 1) + '" cy="' + fmt(trackY - 18, 1) + '" r="12" fill="' + statusSoft + '" stroke="' + targetColor + '" stroke-width="1.1" />' +
-        '<circle cx="' + fmt(actualX, 1) + '" cy="' + fmt(trackY - 23, 1) + '" r="4.2" fill="none" stroke="' + targetColor + '" stroke-width="1.05" />' +
-        '<path d="M ' + fmt(actualX - 8, 1) + ' ' + fmt(trackY - 9, 1) + ' Q ' + fmt(actualX, 1) + ' ' + fmt(trackY - 16, 1) + ' ' + fmt(actualX + 8, 1) + ' ' + fmt(trackY - 9, 1) + '" fill="none" stroke="' + targetColor + '" stroke-width="1.05" />' +
-        '<text x="' + fmt(actualX, 1) + '" y="' + fmt(trackY + 56, 1) + '" text-anchor="middle" fill="' + targetColor + '" font-size="9" font-weight="950">TARGET</text>' +
+        '<line x1="' + fmt(actualX, 1) + '" y1="' + fmt(targetTop - 10, 1) + '" x2="' + fmt(actualX, 1) + '" y2="' + fmt(targetBottom + 10, 1) + '" stroke="' + targetColor + '" stroke-width="1.15" stroke-dasharray="6 7" opacity=".72" />' +
+
+        faceRecognitionCadTargetMarker(actualX, trackY - 12, {
+          scale: 0.50,
+          stroke: targetColor,
+          color: targetColor,
+          muted: "rgba(226,232,240,.48)",
+          soft: statusSoft,
+          label: "TARGET"
+        }) +
 
         '<text x="128" y="178" fill="rgba(226,232,240,.68)" font-size="9.5" font-weight="800">Recognition envelope</text>' +
         '<text x="' + fmt(Math.min(trackX2 - 8, actualX + 12), 1) + '" y="' + fmt(trackY - 44, 1) + '" fill="' + targetColor + '" font-size="10" font-weight="950">' + esc(fmt(Math.round(deliveredPpf), 0) + " px delivered") + '</text>' +
