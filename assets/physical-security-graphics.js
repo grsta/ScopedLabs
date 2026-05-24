@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-026-scene-halo-falloff-fixtures";
+  const VERSION = "physical-security-graphics-027-scene-topview-round-pole-halo";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -980,15 +980,18 @@
 
     function fixture(x, y, index) {
       const haloY = planY + Math.max(44, planH * 0.46);
+      const headX = x + 33;
+      const headY = y - 32;
 
       return "" +
         '<g data-ps-graphic-part="lighting-fixture">' +
-          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(haloY, 1) + '" rx="126" ry="64" fill="url(#psSceneLightHaloOuter)" opacity=".74" />' +
-          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(haloY + 2, 1) + '" rx="82" ry="42" fill="url(#psSceneLightHaloMid)" opacity=".84" />' +
-          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(haloY + 4, 1) + '" rx="42" ry="22" fill="url(#psSceneLightHaloCore)" opacity=".92" />' +
-          '<line x1="' + fmt(x, 1) + '" y1="' + fmt(y - 14, 1) + '" x2="' + fmt(x, 1) + '" y2="' + fmt(haloY + 28, 1) + '" stroke="rgba(255,226,128,.13)" stroke-width=".65" stroke-dasharray="4 7" />' +
+          '<ellipse cx="' + fmt(headX, 1) + '" cy="' + fmt(haloY, 1) + '" rx="128" ry="64" fill="url(#psSceneLightHaloOuter)" opacity=".74" />' +
+          '<ellipse cx="' + fmt(headX, 1) + '" cy="' + fmt(haloY + 2, 1) + '" rx="82" ry="42" fill="url(#psSceneLightHaloMid)" opacity=".84" />' +
+          '<ellipse cx="' + fmt(headX, 1) + '" cy="' + fmt(haloY + 4, 1) + '" rx="42" ry="22" fill="url(#psSceneLightHaloCore)" opacity=".92" />' +
+          '<line x1="' + fmt(headX, 1) + '" y1="' + fmt(headY, 1) + '" x2="' + fmt(headX, 1) + '" y2="' + fmt(haloY + 28, 1) + '" stroke="rgba(255,226,128,.13)" stroke-width=".65" stroke-dasharray="4 7" />' +
           streetLightFixtureCadIcon(x, y, {
-            scale: 0.78,
+            scale: 0.82,
+            direction: "up",
             stroke: "rgba(255,226,128,.92)",
             accent: "rgba(255,239,176,.88)"
           }) +
@@ -1092,14 +1095,40 @@
     const opts = options && typeof options === "object" ? options : {};
     const stroke = opts.stroke || opts.color || "rgba(255,226,128,.90)";
     const accent = opts.accent || "rgba(255,239,176,.92)";
+    const fill = opts.fill || "rgba(15,23,42,.78)";
     const scale = Number.isFinite(Number(opts.scale)) ? Number(opts.scale) : 1;
+    const direction = opts.direction === "down" ? 1 : -1;
+
+    const poleR = 3.4;
+    const armLength = 28;
+    const headY = direction * -44;
+    const neckY = direction * -27;
 
     return "" +
-      '<g transform="translate(' + fmt(x, 1) + ' ' + fmt(y, 1) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-light-fixture" data-ps-graphic-part="lighting-fixture-icon" data-graphics-symbol="cad-edge-light-marker">' +
-        '<rect x="-10" y="-5" width="20" height="10" rx="1.5" fill="rgba(2,6,23,.82)" stroke="' + esc(stroke) + '" stroke-width="1.05" />' +
-        '<line x1="-15" y1="6.5" x2="15" y2="6.5" stroke="' + esc(stroke) + '" stroke-width=".9" stroke-linecap="round" />' +
-        '<path d="M -12 -5 L 12 -5 L 7 -15 L -7 -15 Z" fill="rgba(15,23,42,.84)" stroke="' + esc(stroke) + '" stroke-width="1.05" stroke-linejoin="round" />' +
-        '<line x1="-5" y1="-15" x2="5" y2="-15" stroke="' + esc(accent) + '" stroke-width="1" stroke-linecap="round" />' +
+      '<g transform="translate(' + fmt(x, 1) + ' ' + fmt(y, 1) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-light-fixture" data-ps-graphic-part="lighting-fixture-icon" data-graphics-symbol="cad-topview-round-pole-light">' +
+        '<circle cx="0" cy="0" r="' + fmt(poleR + 1.7, 1) + '" fill="rgba(255,226,128,.045)" stroke="' + esc(stroke) + '" stroke-width=".85" />' +
+        '<circle cx="0" cy="0" r="' + fmt(poleR, 1) + '" fill="rgba(2,6,23,.80)" stroke="' + esc(stroke) + '" stroke-width="1.05" />' +
+        '<circle cx="0" cy="0" r="1.3" fill="' + esc(accent) + '" opacity=".82" />' +
+
+        '<line x1="0" y1="' + fmt(direction * -poleR, 1) + '" x2="0" y2="' + fmt(neckY, 1) + '" stroke="' + esc(stroke) + '" stroke-width="1.15" stroke-linecap="round" />' +
+        '<line x1="-5.5" y1="' + fmt(direction * -9, 1) + '" x2="5.5" y2="' + fmt(direction * -9, 1) + '" stroke="' + esc(stroke) + '" stroke-width=".75" stroke-linecap="round" opacity=".72" />' +
+
+        '<path d="M 0 ' + fmt(neckY, 1) +
+          ' C 9 ' + fmt(direction * -33, 1) + ' 17 ' + fmt(direction * -38, 1) + ' 25 ' + fmt(direction * -40, 1) +
+          '" fill="none" stroke="' + esc(stroke) + '" stroke-width="1.05" stroke-linecap="round" />' +
+
+        '<path d="M 21 ' + fmt(direction * -46, 1) +
+          ' L 43 ' + fmt(direction * -42, 1) +
+          ' Q 52 ' + fmt(direction * -39, 1) + ' 43 ' + fmt(direction * -35, 1) +
+          ' L 21 ' + fmt(direction * -32, 1) +
+          ' Q 14 ' + fmt(direction * -39, 1) + ' 21 ' + fmt(direction * -46, 1) +
+          ' Z" fill="' + esc(fill) + '" stroke="' + esc(stroke) + '" stroke-width="1.05" stroke-linejoin="round" />' +
+
+        '<path d="M 25 ' + fmt(direction * -43, 1) +
+          ' Q 38 ' + fmt(direction * -39, 1) + ' 25 ' + fmt(direction * -35, 1) +
+          '" fill="none" stroke="' + esc(accent) + '" stroke-width=".55" opacity=".64" />' +
+
+        '<line x1="42" y1="' + fmt(direction * -39, 1) + '" x2="55" y2="' + fmt(direction * -39, 1) + '" stroke="' + esc(accent) + '" stroke-width=".75" stroke-opacity=".48" stroke-dasharray="3 4" stroke-linecap="round" />' +
       '</g>';
   }
 
