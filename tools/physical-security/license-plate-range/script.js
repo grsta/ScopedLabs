@@ -34,6 +34,7 @@
     reset: $("reset"),
     results: $("results"),
     analysis: $("analysis-copy"),
+    liveVisual: $("licensePlateLiveVisual"),
     flowNote: $("flow-note"),
     planningFlowContext: $("planning-flow-context"),
     continueWrap: $("next-step-row"),
@@ -453,6 +454,10 @@ function hideVisibleFlowContext() {
       });
     }
 
+    clearLicensePlateLiveVisual();
+
+
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -600,6 +605,51 @@ function hideVisibleFlowContext() {
       requirementMetric
     };
   }
+
+
+  // data-scopedlabs-license-plate-live-visual-001
+  function licensePlateGraphicsModel(data) {
+    return {
+      tool: STEP,
+      status: data.status,
+      classification: data.classification,
+      maxDistFt: data.maxDist,
+      actualDistanceFt: data.dist,
+      marginFt: data.marginFt,
+      utilizationPct: data.utilizationPct,
+      deliveredPpp: data.deliveredPpp,
+      targetPpp: data.ppp,
+      plateWidthFt: data.pw,
+      horizontalResolutionPx: data.res,
+      hfovDeg: data.hfov
+    };
+  }
+
+  function clearLicensePlateLiveVisual() {
+    if (!els.liveVisual) return;
+    els.liveVisual.hidden = true;
+    els.liveVisual.innerHTML = "";
+  }
+
+  function renderLicensePlateLiveVisual(data) {
+    if (!els.liveVisual) return;
+
+    const gfx = window.ScopedLabsGraphics;
+    if (!gfx || typeof gfx.render !== "function") {
+      clearLicensePlateLiveVisual();
+      return;
+    }
+
+    const svg = gfx.render("license-plate-range-plan", licensePlateGraphicsModel(data));
+    if (typeof svg !== "string" || !svg.includes("<svg")) {
+      clearLicensePlateLiveVisual();
+      return;
+    }
+
+    els.liveVisual.innerHTML = svg;
+    els.liveVisual.hidden = false;
+  }
+
 
   function updateActiveAreaFromLicensePlate(data, manualOverrideMeta = []) {
     const api = window.ScopedLabsPhysicalSecurityAreaState;
@@ -773,7 +823,8 @@ function hideVisibleFlowContext() {
     plateExportRoot().appendChild(node);
   }
   function renderError(message) {
-clearPlateStructuredExport();
+    clearPlateStructuredExport();
+    clearLicensePlateLiveVisual();
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     hideComplete();
@@ -827,6 +878,8 @@ clearPlateStructuredExport();
         chartMax: 100
       }
     });
+renderLicensePlateLiveVisual(data);
+
 renderPlateStructuredExport(data);
     writeFlow(data);
     showComplete();

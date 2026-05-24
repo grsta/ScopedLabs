@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-038-face-status-pill-layout";
+  const VERSION = "physical-security-graphics-039-license-plate-renderer";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -1102,6 +1102,223 @@
       '</svg>';
   }
 
+  // data-physical-security-license-plate-cad-target-001
+  function licensePlateCadTargetMarker(x, y, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    const stroke = opts.stroke || opts.color || "rgba(125,255,224,.92)";
+    const muted = opts.muted || "rgba(226,232,240,.48)";
+    const fill = opts.fill || "rgba(2,6,23,.76)";
+    const scale = Number.isFinite(Number(opts.scale)) ? Number(opts.scale) : 0.38;
+    const clarityRatio = clamp(Number(opts.clarityRatio || 1), 0.18, 1.45);
+    const degrade = clamp(Number(opts.degrade || 0), 0, 1);
+    const plateText = opts.text || "ABC-1234";
+
+    const textOpacity = clamp(0.34 + (clarityRatio * 0.58), 0.34, 1);
+    const lineOpacity = clamp(0.46 + (clarityRatio * 0.42), 0.46, 1);
+    const pixelOpacity = clamp(degrade * 0.62, 0, 0.70);
+    const ghostOffset = clamp(degrade * 3.2, 0, 4.2);
+
+    return "" +
+      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-license-plate-target" data-ps-graphic-part="license-plate-target-marker" data-graphics-symbol="cad-license-plate-target">' +
+        '<g opacity="' + fmt(lineOpacity, 2) + '">' +
+          '<rect x="-150" y="-72" width="300" height="144" rx="18" fill="' + esc(fill) + '" stroke="' + esc(muted) + '" stroke-width="1.4" />' +
+          '<rect x="-140" y="-62" width="280" height="124" rx="12" fill="rgba(2,6,23,.36)" stroke="' + esc(stroke) + '" stroke-width="1.1" stroke-opacity=".74" />' +
+
+          '<circle cx="-104" cy="-44" r="8" fill="rgba(2,6,23,.60)" stroke="' + esc(stroke) + '" stroke-width=".95" />' +
+          '<path d="M -104 -50 L -98 -47 L -98 -41 L -104 -38 L -110 -41 L -110 -47 Z" fill="none" stroke="' + esc(muted) + '" stroke-width=".8" />' +
+          '<circle cx="104" cy="-44" r="8" fill="rgba(2,6,23,.60)" stroke="' + esc(stroke) + '" stroke-width=".95" />' +
+          '<path d="M 104 -50 L 110 -47 L 110 -41 L 104 -38 L 98 -41 L 98 -47 Z" fill="none" stroke="' + esc(muted) + '" stroke-width=".8" />' +
+          '<circle cx="-104" cy="44" r="8" fill="rgba(2,6,23,.60)" stroke="' + esc(stroke) + '" stroke-width=".95" />' +
+          '<path d="M -104 38 L -98 41 L -98 47 L -104 50 L -110 47 L -110 41 Z" fill="none" stroke="' + esc(muted) + '" stroke-width=".8" />' +
+          '<circle cx="104" cy="44" r="8" fill="rgba(2,6,23,.60)" stroke="' + esc(stroke) + '" stroke-width=".95" />' +
+          '<path d="M 104 38 L 110 41 L 110 47 L 104 50 L 98 47 L 98 41 Z" fill="none" stroke="' + esc(muted) + '" stroke-width=".8" />' +
+
+          '<line x1="-170" y1="-96" x2="-132" y2="-96" stroke="' + esc(stroke) + '" stroke-width="1.15" />' +
+          '<line x1="-170" y1="-96" x2="-170" y2="-58" stroke="' + esc(stroke) + '" stroke-width="1.15" />' +
+          '<line x1="170" y1="-96" x2="132" y2="-96" stroke="' + esc(stroke) + '" stroke-width="1.15" />' +
+          '<line x1="170" y1="-96" x2="170" y2="-58" stroke="' + esc(stroke) + '" stroke-width="1.15" />' +
+          '<line x1="-170" y1="96" x2="-132" y2="96" stroke="' + esc(stroke) + '" stroke-width="1.15" />' +
+          '<line x1="-170" y1="96" x2="-170" y2="58" stroke="' + esc(stroke) + '" stroke-width="1.15" />' +
+          '<line x1="170" y1="96" x2="132" y2="96" stroke="' + esc(stroke) + '" stroke-width="1.15" />' +
+          '<line x1="170" y1="96" x2="170" y2="58" stroke="' + esc(stroke) + '" stroke-width="1.15" />' +
+
+          '<line x1="-16" y1="-100" x2="16" y2="-100" stroke="' + esc(stroke) + '" stroke-width="1" />' +
+          '<line x1="0" y1="-116" x2="0" y2="-84" stroke="' + esc(stroke) + '" stroke-width="1" />' +
+          '<line x1="-16" y1="100" x2="16" y2="100" stroke="' + esc(stroke) + '" stroke-width="1" />' +
+          '<line x1="0" y1="84" x2="0" y2="116" stroke="' + esc(stroke) + '" stroke-width="1" />' +
+        '</g>' +
+
+        '<g filter="url(#psPlateClarityBlur)" opacity="' + fmt(textOpacity, 2) + '">' +
+          '<text x="' + fmt(-ghostOffset, 1) + '" y="24" text-anchor="middle" fill="none" stroke="rgba(248,250,252,.26)" stroke-width="3.6" font-size="52" font-weight="950" font-family="monospace" letter-spacing=".05em">' + esc(plateText) + '</text>' +
+          '<text x="' + fmt(ghostOffset, 1) + '" y="24" text-anchor="middle" fill="none" stroke="' + esc(stroke) + '" stroke-width="1.35" font-size="52" font-weight="950" font-family="monospace" letter-spacing=".05em">' + esc(plateText) + '</text>' +
+        '</g>' +
+
+        '<rect x="-140" y="-62" width="280" height="124" rx="12" fill="url(#psPlatePixelPattern)" opacity="' + fmt(pixelOpacity, 2) + '" />' +
+      '</g>';
+  }
+
+  // data-physical-security-license-plate-renderer-001
+  function renderLicensePlateRangePlanSvg(model) {
+    const m = model && typeof model === "object" ? model : {};
+
+    const maxDist = Math.max(0, num(m.maxDistFt ?? m.maxDist, 0));
+    const actualDist = Math.max(0, num(m.actualDistanceFt ?? m.dist, 0));
+    const deliveredPpp = Math.max(0, num(m.deliveredPpp, 0));
+    const targetPpp = Math.max(0, num(m.targetPpp ?? m.ppp, 0));
+    const marginFt = num(m.marginFt, maxDist - actualDist);
+    const utilizationPct = Math.max(0, num(m.utilizationPct, maxDist > 0 ? (actualDist / maxDist) * 100 : 0));
+    const status = String(m.status || "Healthy").toLowerCase();
+    const classification = String(m.classification || "License plate capture");
+
+    if (!maxDist || !actualDist || !targetPpp || !deliveredPpp) {
+      return fallbackSvg("SL-PS-GFX-PLATE-BAD-MODEL", "License Plate renderer needs max distance, actual distance, delivered PPP, and target PPP.", {
+        renderer: "license-plate-range-plan",
+        tool: m.tool || "license-plate-range"
+      });
+    }
+
+    const svgW = 800;
+    const svgH = 430;
+    const stage = { x: 34, y: 92, width: 732, height: 286 };
+
+    const statusLabel = status.includes("risk") ? "RISK" : status.includes("watch") ? "WATCH" : "HEALTHY";
+    const statusColor = statusLabel === "RISK"
+      ? "rgba(255,143,136,.92)"
+      : statusLabel === "WATCH"
+        ? "rgba(255,211,79,.92)"
+        : "rgba(125,255,158,.90)";
+
+    const statusSoft = statusLabel === "RISK"
+      ? "rgba(255,143,136,.12)"
+      : statusLabel === "WATCH"
+        ? "rgba(255,211,79,.12)"
+        : "rgba(125,255,158,.10)";
+
+    const rangeMax = Math.max(maxDist, actualDist) * 1.18;
+    const trackX1 = 128;
+    const trackX2 = 686;
+    const trackY = 225;
+    const trackW = trackX2 - trackX1;
+
+    function xForDistance(value) {
+      return trackX1 + (clamp(value / rangeMax, 0, 1) * trackW);
+    }
+
+    const maxX = xForDistance(maxDist);
+    const actualX = xForDistance(actualDist);
+    const cameraX = 90;
+    const cameraY = trackY;
+    const laneTop = 158;
+    const laneBottom = 292;
+
+    const detailRatio = clamp(deliveredPpp / Math.max(targetPpp, 1), 0.18, 1.45);
+    const degradation = clamp((1.08 - detailRatio) / 0.58, 0, 1);
+    const blur = clamp(degradation * 2.2, 0, 2.4);
+    const pppBarW = clamp(270 * Math.min(detailRatio, 1.25), 10, 338);
+
+    const targetColor = marginFt < 0
+      ? "rgba(255,143,136,.92)"
+      : utilizationPct > 95
+        ? "rgba(255,211,79,.92)"
+        : "rgba(125,255,158,.92)";
+
+    return "" +
+      '<svg data-suppress-legacy-chart-export="true" data-report-renderer="license-plate-range-plan" data-report-visual-owner="physical-security-graphics" data-export-svg class="license-plate-range-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="license-plate-range-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + esc(m.ariaLabel || "License Plate range validation visual") + '">' +
+        '<defs>' +
+          '<linearGradient id="psPlateEnvelope" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,224,.16)" /><stop offset="100%" stop-color="rgba(125,255,224,.035)" /></linearGradient>' +
+          '<linearGradient id="psPlateBeyond" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,143,136,.10)" /><stop offset="100%" stop-color="rgba(255,143,136,.03)" /></linearGradient>' +
+          '<linearGradient id="psPlatePppBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="' + targetColor + '" stop-opacity=".54" /><stop offset="100%" stop-color="' + targetColor + '" stop-opacity=".92" /></linearGradient>' +
+          '<filter id="psPlateClarityBlur"><feGaussianBlur stdDeviation="' + fmt(blur, 2) + '" /></filter>' +
+          '<pattern id="psPlatePixelPattern" width="9" height="9" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="rgba(2,6,23,.42)" /><rect x="1" y="1" width="3" height="3" fill="rgba(125,255,224,.18)" /><rect x="5" y="5" width="3" height="3" fill="rgba(248,250,252,.08)" /></pattern>' +
+        '</defs>' +
+
+        '<text x="52" y="34" fill="rgba(248,250,252,.92)" font-size="18" font-weight="950">License plate capture range validation</text>' +
+        '<text x="52" y="56" fill="rgba(226,232,240,.62)" font-size="12">' + esc(classification) + ' / readable plate detail compared with working distance.</text>' +
+
+        CAD.stage(stage.x, stage.y, stage.width, stage.height, { rx: 20 }) +
+        cadGrid(stage) +
+        CAD.statusPill(672, 112, statusLabel, {
+          width: 72,
+          height: 22,
+          color: statusColor,
+          textFill: statusColor,
+          size: 9.2
+        }) +
+
+        '<text x="54" y="122" fill="rgba(125,255,224,.82)" font-size="10.4" font-weight="950" letter-spacing=".11em">PLATE CAPTURE ENVELOPE / READABILITY</text>' +
+        '<text x="54" y="144" fill="rgba(226,232,240,.58)" font-size="9.8" font-weight="720">Camera geometry, plate-width assumption, and pixels-per-plate target.</text>' +
+
+        cameraCadIcon(cameraX, cameraY, {
+          scale: 0.52,
+          color: "rgba(125,255,224,.90)",
+          accent: "rgba(125,255,224,.78)",
+          symbol: "license-plate-camera"
+        }) +
+
+        '<path d="M ' + fmt(cameraLensTipX(cameraX), 1) + ' ' + fmt(cameraY, 1) + ' L ' + fmt(maxX, 1) + ' ' + fmt(laneTop, 1) + ' L ' + fmt(maxX, 1) + ' ' + fmt(laneBottom, 1) + ' Z" fill="rgba(125,255,224,.04)" stroke="rgba(125,255,224,.23)" stroke-width=".9" />' +
+
+        '<rect x="' + fmt(trackX1, 1) + '" y="' + fmt(trackY - 44, 1) + '" width="' + fmt(Math.max(4, maxX - trackX1), 1) + '" height="88" rx="18" fill="url(#psPlateEnvelope)" stroke="rgba(125,255,224,.34)" stroke-width="1" />' +
+        (actualDist > maxDist
+          ? '<rect x="' + fmt(maxX, 1) + '" y="' + fmt(trackY - 44, 1) + '" width="' + fmt(Math.max(4, actualX - maxX), 1) + '" height="88" rx="12" fill="url(#psPlateBeyond)" stroke="rgba(255,143,136,.34)" stroke-width="1" />'
+          : "") +
+
+        CAD.dimensionLine(trackX1, 330, maxX, 330, "Modeled envelope: " + fmtFt(maxDist, 1), {
+          color: "rgba(125,255,224,.58)",
+          labelFill: "rgba(125,255,224,.84)",
+          tick: 7
+        }) +
+
+        CAD.dimensionLine(trackX1, 360, actualX, 360, "Actual distance: " + fmtFt(actualDist, 1), {
+          color: targetColor,
+          labelFill: targetColor,
+          tick: 7
+        }) +
+
+        '<line x1="' + fmt(maxX, 1) + '" y1="' + fmt(trackY - 66, 1) + '" x2="' + fmt(maxX, 1) + '" y2="' + fmt(trackY + 66, 1) + '" stroke="rgba(125,255,224,.70)" stroke-width="1.15" stroke-dasharray="5 6" />' +
+        '<text x="' + fmt(maxX, 1) + '" y="' + fmt(trackY - 76, 1) + '" text-anchor="middle" fill="rgba(125,255,224,.84)" font-size="9" font-weight="900">MAX</text>' +
+
+        '<line x1="' + fmt(actualX, 1) + '" y1="' + fmt(laneTop - 12, 1) + '" x2="' + fmt(actualX, 1) + '" y2="' + fmt(laneBottom + 12, 1) + '" stroke="' + targetColor + '" stroke-width="1.15" stroke-dasharray="6 7" opacity=".72" />' +
+
+        licensePlateCadTargetMarker(actualX, trackY - 4, {
+          scale: 0.34,
+          stroke: targetColor,
+          color: targetColor,
+          muted: "rgba(226,232,240,.52)",
+          fill: "rgba(2,6,23,.78)",
+          clarityRatio: detailRatio,
+          degrade: degradation
+        }) +
+
+        '<text x="' + fmt(actualX, 1) + '" y="' + fmt(trackY + 82, 1) + '" text-anchor="middle" fill="' + targetColor + '" font-size="9" font-weight="950">TARGET PLATE</text>' +
+
+        '<rect x="414" y="132" width="270" height="10" rx="5" fill="rgba(255,255,255,.04)" stroke="rgba(226,232,240,.12)" />' +
+        '<rect x="414" y="132" width="' + fmt(pppBarW, 1) + '" height="10" rx="5" fill="url(#psPlatePppBar)" />' +
+        '<text x="414" y="122" fill="rgba(226,232,240,.62)" font-size="9.4" font-weight="850">Delivered plate detail vs target</text>' +
+        '<text x="684" y="122" text-anchor="end" fill="' + targetColor + '" font-size="9.4" font-weight="950">' + esc(fmt(deliveredPpp, 0) + " / " + fmt(targetPpp, 0) + " px") + '</text>' +
+
+        CAD.metricChip(72, 386, "MAX RANGE", fmtFt(maxDist, 1), {
+          accent: "rgba(125,255,224,.82)",
+          valueFill: "rgba(125,255,224,.92)",
+          width: 146
+        }) +
+        CAD.metricChip(236, 386, "ACTUAL", fmtFt(actualDist, 1), {
+          accent: targetColor,
+          valueFill: targetColor,
+          width: 132
+        }) +
+        CAD.metricChip(386, 386, "DELIVERED", fmt(deliveredPpp, 0) + " px", {
+          accent: targetColor,
+          valueFill: targetColor,
+          width: 136
+        }) +
+        CAD.metricChip(540, 386, "MARGIN", (marginFt >= 0 ? "+" : "-") + fmtFt(Math.abs(marginFt), 1), {
+          accent: statusColor,
+          valueFill: statusColor,
+          width: 142
+        }) +
+      '</svg>';
+  }
+
   // data-physical-security-scene-illumination-renderer-002
   function renderSceneIlluminationLightingPlanSvg(model) {
     const m = model && typeof model === "object" ? model : {};
@@ -1418,6 +1635,7 @@
   gfx.registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
   gfx.registerRenderer("scene-illumination-lighting-plan", renderSceneIlluminationLightingPlanSvg);
   gfx.registerRenderer("face-recognition-range-plan", renderFaceRecognitionRangePlanSvg);
+  gfx.registerRenderer("license-plate-range-plan", renderLicensePlateRangePlanSvg);
   gfx.registerRenderer("pixel-density-detail-plan", renderPixelDensityDetailPlanSvg);
   gfx.registerRenderer("coverage-footprint-plan", renderCoverageFootprintPlanSvg);
   gfx.registerRenderer("fov-geometry-plan", renderFovGeometryPlanSvg);
@@ -1432,6 +1650,7 @@
     renderScenarioPressureLineSvg,
     renderSceneIlluminationLightingPlanSvg,
     renderFaceRecognitionRangePlanSvg,
+    renderLicensePlateRangePlanSvg,
     renderCoverageFootprintPlanSvg,
     renderPixelDensityDetailPlanSvg,
     renderFovGeometryPlanSvg
