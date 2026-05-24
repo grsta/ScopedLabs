@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-035-scene-fc-halo-size-intensity";
+  const VERSION = "physical-security-graphics-036-face-recognition-renderer";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -903,6 +903,158 @@
     return brandSharedPhysicalSecuritySvg(svg, rendererName);
   }
 
+  // data-physical-security-face-recognition-renderer-001
+  function renderFaceRecognitionRangePlanSvg(model) {
+    const m = model && typeof model === "object" ? model : {};
+
+    const maxDist = Math.max(0, num(m.maxDistFt ?? m.maxDist, 0));
+    const actualDist = Math.max(0, num(m.actualDistanceFt ?? m.dist, 0));
+    const deliveredPpf = Math.max(0, num(m.deliveredPpf, 0));
+    const targetPpf = Math.max(0, num(m.targetPpf ?? m.ppf, 0));
+    const marginFt = num(m.marginFt, maxDist - actualDist);
+    const utilizationPct = Math.max(0, num(m.utilizationPct, maxDist > 0 ? (actualDist / maxDist) * 100 : 0));
+    const status = String(m.status || "Healthy").toLowerCase();
+    const classification = String(m.classification || "Face recognition");
+
+    if (!maxDist || !actualDist || !targetPpf || !deliveredPpf) {
+      return fallbackSvg("SL-PS-GFX-FACE-BAD-MODEL", "Face Recognition renderer needs max distance, actual distance, delivered PPF, and target PPF.", {
+        renderer: "face-recognition-range-plan",
+        tool: m.tool || "face-recognition-range"
+      });
+    }
+
+    const svgW = 800;
+    const svgH = 430;
+    const stage = { x: 34, y: 92, width: 732, height: 286 };
+
+    const statusLabel = status.includes("risk") ? "RISK" : status.includes("watch") ? "WATCH" : "HEALTHY";
+    const statusColor = statusLabel === "RISK"
+      ? "rgba(255,143,136,.92)"
+      : statusLabel === "WATCH"
+        ? "rgba(255,211,79,.92)"
+        : "rgba(125,255,158,.90)";
+
+    const statusSoft = statusLabel === "RISK"
+      ? "rgba(255,143,136,.12)"
+      : statusLabel === "WATCH"
+        ? "rgba(255,211,79,.12)"
+        : "rgba(125,255,158,.11)";
+
+    const rangeMax = Math.max(maxDist, actualDist) * 1.18;
+    const trackX1 = 128;
+    const trackX2 = 686;
+    const trackY = 220;
+    const trackW = trackX2 - trackX1;
+
+    function xForDistance(value) {
+      return trackX1 + (clamp(value / rangeMax, 0, 1) * trackW);
+    }
+
+    const maxX = xForDistance(maxDist);
+    const actualX = xForDistance(actualDist);
+    const cameraX = 90;
+    const cameraY = trackY;
+    const targetTop = 142;
+    const targetBottom = 300;
+    const ppfRatio = clamp(deliveredPpf / Math.max(targetPpf, 1), 0, 1.4);
+    const ppfBarW = clamp(260 * ppfRatio, 10, 340);
+
+    const targetColor = marginFt < 0
+      ? "rgba(255,143,136,.92)"
+      : utilizationPct > 95
+        ? "rgba(255,211,79,.92)"
+        : "rgba(125,255,158,.92)";
+
+    return "" +
+      '<svg data-suppress-legacy-chart-export="true" data-report-renderer="face-recognition-range-plan" data-report-visual-owner="physical-security-graphics" data-export-svg class="face-recognition-range-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="face-recognition-range-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + esc(m.ariaLabel || "Face Recognition range validation visual") + '">' +
+        '<defs>' +
+          '<linearGradient id="psFaceEnvelope" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,158,.18)" /><stop offset="100%" stop-color="rgba(125,255,158,.04)" /></linearGradient>' +
+          '<linearGradient id="psFaceBeyond" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,143,136,.10)" /><stop offset="100%" stop-color="rgba(255,143,136,.03)" /></linearGradient>' +
+          '<linearGradient id="psFacePpfBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="' + statusColor + '" stop-opacity=".54" /><stop offset="100%" stop-color="' + statusColor + '" stop-opacity=".92" /></linearGradient>' +
+        '</defs>' +
+
+        '<text x="52" y="34" fill="rgba(248,250,252,.92)" font-size="18" font-weight="950">Face recognition range validation</text>' +
+        '<text x="52" y="56" fill="rgba(226,232,240,.62)" font-size="12">' + esc(classification) + ' / delivered face detail compared with working distance.</text>' +
+
+        CAD.stage(stage.x, stage.y, stage.width, stage.height, { rx: 20 }) +
+        cadGrid(stage) +
+        CAD.statusPill(672, 112, statusLabel, {
+          width: 72,
+          height: 22,
+          color: statusColor,
+          textFill: statusColor,
+          size: 9.2
+        }) +
+
+        '<text x="54" y="122" fill="rgba(125,255,158,.82)" font-size="10.4" font-weight="950" letter-spacing=".11em">RECOGNITION ENVELOPE / WORKING DISTANCE</text>' +
+        '<text x="54" y="144" fill="rgba(226,232,240,.58)" font-size="9.8" font-weight="720">Camera geometry, face-width assumption, and pixels-per-face target.</text>' +
+
+        cameraCadIcon(cameraX, cameraY, {
+          scale: 0.52,
+          color: "rgba(125,255,158,.90)",
+          accent: "rgba(125,255,158,.78)",
+          symbol: "face-recognition-camera"
+        }) +
+
+        '<path d="M ' + fmt(cameraLensTipX(cameraX), 1) + ' ' + fmt(cameraY, 1) + ' L ' + fmt(maxX, 1) + ' ' + fmt(targetTop, 1) + ' L ' + fmt(maxX, 1) + ' ' + fmt(targetBottom, 1) + ' Z" fill="rgba(125,255,158,.045)" stroke="rgba(125,255,158,.24)" stroke-width=".9" />' +
+
+        '<rect x="' + fmt(trackX1, 1) + '" y="' + fmt(trackY - 34, 1) + '" width="' + fmt(Math.max(4, maxX - trackX1), 1) + '" height="68" rx="16" fill="url(#psFaceEnvelope)" stroke="rgba(125,255,158,.34)" stroke-width="1" />' +
+        (actualDist > maxDist
+          ? '<rect x="' + fmt(maxX, 1) + '" y="' + fmt(trackY - 34, 1) + '" width="' + fmt(Math.max(4, actualX - maxX), 1) + '" height="68" rx="12" fill="url(#psFaceBeyond)" stroke="rgba(255,143,136,.34)" stroke-width="1" />'
+          : "") +
+
+        CAD.dimensionLine(trackX1, 330, maxX, 330, "Modeled envelope: " + fmtFt(maxDist, 1), {
+          color: "rgba(125,255,158,.58)",
+          labelFill: "rgba(125,255,158,.84)",
+          tick: 7
+        }) +
+
+        CAD.dimensionLine(trackX1, 360, actualX, 360, "Actual distance: " + fmtFt(actualDist, 1), {
+          color: targetColor,
+          labelFill: targetColor,
+          tick: 7
+        }) +
+
+        '<line x1="' + fmt(maxX, 1) + '" y1="' + fmt(trackY - 56, 1) + '" x2="' + fmt(maxX, 1) + '" y2="' + fmt(trackY + 56, 1) + '" stroke="rgba(125,255,158,.70)" stroke-width="1.15" stroke-dasharray="5 6" />' +
+        '<text x="' + fmt(maxX, 1) + '" y="' + fmt(trackY - 66, 1) + '" text-anchor="middle" fill="rgba(125,255,158,.84)" font-size="9" font-weight="900">MAX</text>' +
+
+        '<line x1="' + fmt(actualX, 1) + '" y1="' + fmt(targetTop - 10, 1) + '" x2="' + fmt(actualX, 1) + '" y2="' + fmt(targetBottom + 10, 1) + '" stroke="' + targetColor + '" stroke-width="1.45" />' +
+        '<circle cx="' + fmt(actualX, 1) + '" cy="' + fmt(trackY - 18, 1) + '" r="12" fill="' + statusSoft + '" stroke="' + targetColor + '" stroke-width="1.1" />' +
+        '<circle cx="' + fmt(actualX, 1) + '" cy="' + fmt(trackY - 23, 1) + '" r="4.2" fill="none" stroke="' + targetColor + '" stroke-width="1.05" />' +
+        '<path d="M ' + fmt(actualX - 8, 1) + ' ' + fmt(trackY - 9, 1) + ' Q ' + fmt(actualX, 1) + ' ' + fmt(trackY - 16, 1) + ' ' + fmt(actualX + 8, 1) + ' ' + fmt(trackY - 9, 1) + '" fill="none" stroke="' + targetColor + '" stroke-width="1.05" />' +
+        '<text x="' + fmt(actualX, 1) + '" y="' + fmt(trackY + 56, 1) + '" text-anchor="middle" fill="' + targetColor + '" font-size="9" font-weight="950">TARGET</text>' +
+
+        '<text x="128" y="178" fill="rgba(226,232,240,.68)" font-size="9.5" font-weight="800">Recognition envelope</text>' +
+        '<text x="' + fmt(Math.min(trackX2 - 8, actualX + 12), 1) + '" y="' + fmt(trackY - 44, 1) + '" fill="' + targetColor + '" font-size="10" font-weight="950">' + esc(fmt(Math.round(deliveredPpf), 0) + " px delivered") + '</text>' +
+
+        '<rect x="414" y="132" width="270" height="10" rx="5" fill="rgba(255,255,255,.04)" stroke="rgba(226,232,240,.12)" />' +
+        '<rect x="414" y="132" width="' + fmt(ppfBarW, 1) + '" height="10" rx="5" fill="url(#psFacePpfBar)" />' +
+        '<text x="414" y="122" fill="rgba(226,232,240,.62)" font-size="9.4" font-weight="850">Delivered detail vs target</text>' +
+        '<text x="684" y="122" text-anchor="end" fill="' + targetColor + '" font-size="9.4" font-weight="950">' + esc(fmt(deliveredPpf, 0) + " / " + fmt(targetPpf, 0) + " px") + '</text>' +
+
+        CAD.metricChip(72, 386, "MAX RANGE", fmtFt(maxDist, 1), {
+          accent: "rgba(125,255,158,.82)",
+          valueFill: "rgba(125,255,158,.92)",
+          width: 146
+        }) +
+        CAD.metricChip(236, 386, "ACTUAL", fmtFt(actualDist, 1), {
+          accent: targetColor,
+          valueFill: targetColor,
+          width: 132
+        }) +
+        CAD.metricChip(386, 386, "DELIVERED", fmt(deliveredPpf, 0) + " px", {
+          accent: targetColor,
+          valueFill: targetColor,
+          width: 136
+        }) +
+        CAD.metricChip(540, 386, "MARGIN", (marginFt >= 0 ? "+" : "-") + fmtFt(Math.abs(marginFt), 1), {
+          accent: statusColor,
+          valueFill: statusColor,
+          width: 142
+        }) +
+      '</svg>';
+  }
+
   // data-physical-security-scene-illumination-renderer-002
   function renderSceneIlluminationLightingPlanSvg(model) {
     const m = model && typeof model === "object" ? model : {};
@@ -1218,6 +1370,7 @@
   gfx.registerRenderer("camera-layout-iso", renderCameraLayoutIsoSvg);
   gfx.registerRenderer("scenario-pressure-line", renderScenarioPressureLineSvg);
   gfx.registerRenderer("scene-illumination-lighting-plan", renderSceneIlluminationLightingPlanSvg);
+  gfx.registerRenderer("face-recognition-range-plan", renderFaceRecognitionRangePlanSvg);
   gfx.registerRenderer("pixel-density-detail-plan", renderPixelDensityDetailPlanSvg);
   gfx.registerRenderer("coverage-footprint-plan", renderCoverageFootprintPlanSvg);
   gfx.registerRenderer("fov-geometry-plan", renderFovGeometryPlanSvg);
@@ -1231,6 +1384,7 @@
     renderCameraLayoutIsoSvg,
     renderScenarioPressureLineSvg,
     renderSceneIlluminationLightingPlanSvg,
+    renderFaceRecognitionRangePlanSvg,
     renderCoverageFootprintPlanSvg,
     renderPixelDensityDetailPlanSvg,
     renderFovGeometryPlanSvg

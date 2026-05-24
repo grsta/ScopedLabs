@@ -31,6 +31,7 @@
     reset: $("reset"),
     results: $("results"),
     analysis: $("analysis-copy"),
+    liveVisual: $("faceRecognitionLiveVisual"),
     flowNote: $("flow-note"),
     planningFlowContext: $("planning-flow-context"),
     continueWrap: $("next-step-row"),
@@ -432,6 +433,10 @@ function hideVisibleFlowContext() {
   function invalidate({ clearFlow = true } = {}) {
     if (clearFlow) clearDownstream();
 
+    clearFaceRecognitionLiveVisual();
+
+
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -589,6 +594,51 @@ function hideVisibleFlowContext() {
 
 
 
+
+  // data-scopedlabs-face-live-visual-001
+  function faceRecognitionGraphicsModel(data) {
+    return {
+      tool: STEP,
+      status: data.status,
+      classification: data.classification,
+      maxDistFt: data.maxDist,
+      actualDistanceFt: data.dist,
+      marginFt: data.marginFt,
+      utilizationPct: data.utilizationPct,
+      deliveredPpf: data.deliveredPpf,
+      targetPpf: data.ppf,
+      faceWidthFt: data.fw,
+      horizontalResolutionPx: data.res,
+      hfovDeg: data.hfov
+    };
+  }
+
+  function clearFaceRecognitionLiveVisual() {
+    if (!els.liveVisual) return;
+    els.liveVisual.hidden = true;
+    els.liveVisual.innerHTML = "";
+  }
+
+  function renderFaceRecognitionLiveVisual(data) {
+    if (!els.liveVisual) return;
+
+    const gfx = window.ScopedLabsGraphics;
+    if (!gfx || typeof gfx.render !== "function") {
+      clearFaceRecognitionLiveVisual();
+      return;
+    }
+
+    const svg = gfx.render("face-recognition-range-plan", faceRecognitionGraphicsModel(data));
+    if (typeof svg !== "string" || !svg.includes("<svg")) {
+      clearFaceRecognitionLiveVisual();
+      return;
+    }
+
+    els.liveVisual.innerHTML = svg;
+    els.liveVisual.hidden = false;
+  }
+
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
 
@@ -734,7 +784,8 @@ function hideVisibleFlowContext() {
     faceExportRoot().appendChild(node);
   }
   function renderError(message) {
-clearFaceStructuredExport();
+    clearFaceStructuredExport();
+    clearFaceRecognitionLiveVisual();
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
     els.results.innerHTML = `<div class="muted">${message}</div>`;
@@ -763,6 +814,8 @@ clearFaceStructuredExport();
       dominantConstraint: data.dominantConstraint,
       guidance: data.guidance
     });
+renderFaceRecognitionLiveVisual(data);
+
 renderFaceStructuredExport(data);
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
