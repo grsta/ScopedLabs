@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-006-export-shell-role-aware
+ * Version: scopedlabs-category-modernizer-007-graphics-contract-module
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract"]
 };
 
 function read(file) {
@@ -604,6 +604,124 @@ const ExportShellModule = {
   }
 };
 
+
+const GraphicsContractModule = {
+  id: "graphics-contract",
+  version: "graphics-contract-module-001-audit-only",
+  description: "Audits expected Graphics Engine/category graphics wiring without modifying page files.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const expectedRenderersByCategory = {
+      "physical-security": {
+        "camera-coverage-area": ["coverage-footprint-plan"],
+        "field-of-view": ["fov-geometry-plan"],
+        "pixel-density": ["pixel-density-detail-plan"],
+        "camera-spacing": ["camera-layout-iso", "scenario-pressure-line"],
+        "blind-spot-check": ["camera-layout-iso"]
+      }
+    };
+
+    const expectedRenderers =
+      expectedRenderersByCategory[category] && expectedRenderersByCategory[category][tool]
+        ? expectedRenderersByCategory[category][tool]
+        : [];
+
+    if (!expectedRenderers.length) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SAFE",
+        action: "noop",
+        rowId: "-",
+        detail: "graphicsRequired=no"
+      };
+    }
+
+    const srcs = scripts(html);
+    const localScriptIndex = scriptIndex(srcs, "./script.js");
+    const sharedGraphicsIndex = scriptIndex(srcs, "scopedlabs-graphics.js");
+    const categoryGraphicsName = category + "-graphics.js";
+    const categoryGraphicsIndex = scriptIndex(srcs, categoryGraphicsName);
+
+    const sharedGraphicsScript = sharedGraphicsIndex >= 0 ? srcs[sharedGraphicsIndex] : "-";
+    const categoryGraphicsScript = categoryGraphicsIndex >= 0 ? srcs[categoryGraphicsIndex] : "-";
+    const localScriptSrc = localScriptIndex >= 0 ? srcs[localScriptIndex] : "-";
+
+    const localScriptPath = localScriptSrc !== "-"
+      ? path.join(path.dirname(indexFile), localScriptSrc.split("?")[0].replace(/^\.\//, ""))
+      : "";
+
+    const localScriptText = localScriptPath && fs.existsSync(localScriptPath)
+      ? fs.readFileSync(localScriptPath, "utf8")
+      : "";
+
+    const combinedText = html + "\n" + localScriptText;
+
+    const rendererRefs = expectedRenderers.filter((renderer) => combinedText.includes(renderer));
+    const missingRendererRefs = expectedRenderers.filter((renderer) => !combinedText.includes(renderer));
+
+    const hasReportContractVersion =
+      categoryGraphicsScript.includes("report-visual-contract") ||
+      combinedText.includes("data-report-visual-owner") ||
+      combinedText.includes("data-suppress-legacy-chart-export");
+
+    const issues = [];
+
+    if (sharedGraphicsIndex < 0) issues.push("missing scopedlabs-graphics.js");
+    if (categoryGraphicsIndex < 0) issues.push("missing " + categoryGraphicsName);
+    if (localScriptIndex < 0) issues.push("missing local ./script.js");
+
+    if (sharedGraphicsIndex >= 0 && categoryGraphicsIndex >= 0 && sharedGraphicsIndex > categoryGraphicsIndex) {
+      issues.push("shared graphics loads after category graphics");
+    }
+
+    if (sharedGraphicsIndex >= 0 && localScriptIndex >= 0 && sharedGraphicsIndex > localScriptIndex) {
+      issues.push("shared graphics loads after local script");
+    }
+
+    if (categoryGraphicsIndex >= 0 && localScriptIndex >= 0 && categoryGraphicsIndex > localScriptIndex) {
+      issues.push("category graphics loads after local script");
+    }
+
+    if (!hasReportContractVersion) {
+      issues.push("missing report visual contract signal");
+    }
+
+    const detailParts = [
+      "graphicsRequired=yes",
+      "expectedRenderers=" + expectedRenderers.join(","),
+      "rendererRefs=" + (rendererRefs.length ? rendererRefs.join(",") : "-"),
+      "missingRendererRefs=" + (missingRendererRefs.length ? missingRendererRefs.join(",") : "-"),
+      "sharedGraphics=" + sharedGraphicsScript,
+      "categoryGraphics=" + categoryGraphicsScript,
+      "localScript=" + localScriptSrc,
+      "reportContract=" + (hasReportContractVersion ? "present" : "missing")
+    ];
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail: issues.length ? issues.join("; ") + " | " + detailParts.join("; ") : detailParts.join("; ")
+    };
+  }
+};
+
 const BackContinueModule = {
   id: "back-continue",
   version: "back-continue-module-001",
@@ -639,7 +757,7 @@ const BackContinueModule = {
   }
 };
 
-const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule];
+const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule];
 
 if (!fs.existsSync(categoryRoot)) {
   console.error("Missing category folder: " + path.relative(root, categoryRoot));
@@ -663,7 +781,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-006-export-shell-role-aware");
+console.log("Version: scopedlabs-category-modernizer-007-graphics-contract-module");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + modules.map((m) => m.id + "@" + m.version).join(", "));
