@@ -2725,3 +2725,60 @@ body[data-tool="camera-coverage-area"] #saveSnapshot.coverage-action-btn:disable
   transform: none !important;
   filter: saturate(0.82) !important;
 }
+
+
+/* === ScopedLabs Physical Security card shell rhythm v030 === */
+/* Shared Physical Security card/title rhythm, based on accepted Coverage Area shell. */
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .container > section.card,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) #toolCard,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) #lockedCard,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-card {
+  margin-top: 22px !important;
+}
+
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .container > section.card > h2.h3,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .container > section.card > h2.card-title,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) #toolCard > h2.card-title,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .container > section.card > h3.h3,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-title {
+  margin-top: 0 !important;
+  margin-bottom: 12px !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  font-size: 1.24rem !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+  letter-spacing: normal !important;
+}
+
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .container > section.card > p.muted,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) #toolCard > p.muted,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-summary {
+  color: rgba(226, 232, 240, 0.74) !important;
+  line-height: 1.55 !important;
+}
+
+/* Remove decorative card badges while preserving status pills/chips elsewhere. */
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-card .pill,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-card .badge,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-card .chip,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-kicker,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-eyebrow,
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-label {
+  display: none !important;
+}
+
+/* KB card CTA should visually match Coverage's rectangular action button rhythm. */
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) .sl-help-card .btn {
+  min-height: 38px !important;
+  min-width: 124px !important;
+  border-radius: 10px !important;
+  justify-content: center !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* Keep locked-card headings from becoming oversized visual anchors. */
+body[data-category="physical-security"]:not([data-tool="lens-selection"]) #lockedCard > h2.h2 {
+  font-size: 1.24rem !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+}
