@@ -30,6 +30,7 @@
     analysis: $("analysis-copy"),
     fovGeometry: $("fovGeometry"),
     flowNote: $("flow-note"),
+    planningFlowContext: $("planning-flow-context"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue")
   };
@@ -357,8 +358,13 @@
   }
 
   function renderFlowNote() {
+    const contextEl = els.planningFlowContext || els.flowNote;
+    if (els.flowNote && els.flowNote !== contextEl) {
+      els.flowNote.hidden = true;
+    }
+
     const flow = ScopedLabsAnalyzer.renderFlowNote({
-      flowEl: els.flowNote,
+      flowEl: contextEl,
       flowKey: FLOW_KEYS.fov,
       category: CATEGORY,
       step: STEP,
@@ -389,12 +395,17 @@
     if (Number.isFinite(tilt) && tilt > 0) parts.push(`Suggested tilt: <strong>${fmtDeg(tilt)}</strong>`);
     if (tiltClass) parts.push(`Angle quality: <strong>${tiltClass}</strong>`);
 
-    if (parts.length) {
-      els.flowNote.hidden = false;
-      els.flowNote.innerHTML = `
-        <strong>Flow Context</strong><br>
-        ${parts.join(" | ")}\n        ${renderManualOverrideNote()}
+    if (parts.length && contextEl) {
+      contextEl.hidden = false;
+      contextEl.innerHTML = `
+        <strong>Imported Assumptions</strong><br>
+        ${parts.join(" | ")}
+        ${renderManualOverrideNote()}
       `;
+    }
+
+    if (els.flowNote && els.flowNote !== contextEl) {
+      els.flowNote.hidden = true;
     }
   }
 
