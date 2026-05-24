@@ -555,6 +555,8 @@ function hideVisibleFlowContext() {
       clearDownstream();
     }
 
+    clearMountingLiveVisual();
+
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
       analysisEl: els.analysis,
@@ -1008,7 +1010,179 @@ function hideVisibleFlowContext() {
 
     mountingExportRoot().appendChild(node);
   }
+  
+  // data-mounting-live-visual-001
+  function mountingLiveVisualEl() {
+    return document.getElementById("mountingLiveVisual");
+  }
+
+  function escapeMountingVisualHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function clampMountingVisual(value, min, max) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return min;
+    return Math.min(max, Math.max(min, number));
+  }
+
+  function mountingPressureClass(value) {
+    const score = Number(value);
+    if (!Number.isFinite(score)) return "";
+    if (score > 45) return "risk";
+    if (score > 20) return "watch";
+    return "";
+  }
+
+  function clearMountingLiveVisual() {
+    const el = mountingLiveVisualEl();
+    if (!el) return;
+    el.innerHTML = "";
+    el.hidden = true;
+    el.setAttribute("hidden", "");
+    el.setAttribute("aria-hidden", "true");
+  }
+
+  function renderMountingLiveVisual(data) {
+    const el = mountingLiveVisualEl();
+    if (!el || !data || !data.ok) {
+      clearMountingLiveVisual();
+      return;
+    }
+
+    const h = Number(data.h);
+    const th = Number(data.th);
+    const dist = Number(data.dist);
+    const topEdge = Number(data.topEdgeHeight);
+    const bottomEdge = Number(data.bottomEdgeHeight);
+
+    if (![h, th, dist, topEdge, bottomEdge].every(Number.isFinite)) {
+      clearMountingLiveVisual();
+      return;
+    }
+
+    const svgW = 780;
+    const svgH = 320;
+    const groundY = 250;
+    const camX = 95;
+    const targetX = 645;
+
+    const minH = Math.min(0, bottomEdge, th);
+    const maxH = Math.max(8, h, th, topEdge);
+    const rangeH = Math.max(8, maxH - minH);
+
+    function yFor(height) {
+      return groundY - ((height - minH) / rangeH) * 178;
+    }
+
+    const camY = yFor(h);
+    const targetY = yFor(th);
+    const topY = yFor(topEdge);
+    const bottomY = yFor(bottomEdge);
+    const mountBaseY = groundY;
+    const labelTilt = Number.isFinite(data.tilt) ? fmtDeg(data.tilt) : "—";
+
+    const pressureRows = [
+      {
+        label: "Subject Angle Fit",
+        score: data.subjectAngleMetric,
+        detail: fmtDeg(data.tilt) + " actual / 12-35° preferred"
+      },
+      {
+        label: "Mount Height Balance",
+        score: data.mountPressureMetric,
+        detail: fmtFt(data.h) + " mount / " + (data.mountFitText || "review")
+      },
+      {
+        label: "Vertical Framing Fit",
+        score: data.framingPressureMetric,
+        detail: fmtFt(data.topEdgeHeight) + " to " + fmtFt(data.bottomEdgeHeight)
+      }
+    ];
+
+    const pressureHtml = pressureRows.map((row) => {
+      const score = clampMountingVisual(row.score, 0, 100);
+      const cls = mountingPressureClass(score);
+      return '' +
+        '<div class="mounting-pressure-item">' +
+          '<div class="mounting-pressure-label">' +
+            '<span>' + escapeMountingVisualHtml(row.label) + '</span>' +
+            '<span class="mounting-pressure-score">' + score.toFixed(0) + '/100</span>' +
+          '</div>' +
+          '<div class="mounting-pressure-track">' +
+            '<div class="mounting-pressure-fill ' + cls + '" style="width:' + score.toFixed(1) + '%"></div>' +
+          '</div>' +
+          '<div class="mounting-pressure-detail">' + escapeMountingVisualHtml(row.detail) + '</div>' +
+        '</div>';
+    }).join("");
+
+    const svg = '' +
+      '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Mounting height side-view geometry">' +
+        '<defs>' +
+          '<linearGradient id="mountingFovFill" x1="0" x2="1" y1="0" y2="1">' +
+            '<stop offset="0%" stop-color="rgba(125,255,152,.24)"/>' +
+            '<stop offset="100%" stop-color="rgba(125,255,152,.05)"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+
+        '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="rgba(2,6,23,.10)"/>' +
+        '<line x1="46" y1="' + groundY + '" x2="735" y2="' + groundY + '" stroke="rgba(148,163,184,.42)" stroke-width="1"/>' +
+        '<text x="48" y="' + (groundY + 24) + '" fill="rgba(148,163,184,.82)" font-size="12" font-weight="700">Grade / target plane reference</text>' +
+
+        '<polygon points="' + camX + ',' + camY + ' ' + targetX + ',' + topY + ' ' + targetX + ',' + bottomY + '" fill="url(#mountingFovFill)" stroke="rgba(125,255,152,.34)" stroke-width="1"/>' +
+        '<line x1="' + camX + '" y1="' + camY + '" x2="' + targetX + '" y2="' + targetY + '" stroke="rgba(125,255,152,.88)" stroke-width="2"/>' +
+        '<line x1="' + camX + '" y1="' + camY + '" x2="' + targetX + '" y2="' + topY + '" stroke="rgba(125,255,152,.38)" stroke-width="1" stroke-dasharray="5 5"/>' +
+        '<line x1="' + camX + '" y1="' + camY + '" x2="' + targetX + '" y2="' + bottomY + '" stroke="rgba(125,255,152,.38)" stroke-width="1" stroke-dasharray="5 5"/>' +
+
+        '<line x1="' + camX + '" y1="' + mountBaseY + '" x2="' + camX + '" y2="' + camY + '" stroke="rgba(226,232,240,.58)" stroke-width="2"/>' +
+        '<rect x="' + (camX - 16) + '" y="' + (camY - 11) + '" width="32" height="22" rx="4" fill="rgba(15,23,42,.92)" stroke="rgba(125,255,152,.72)" stroke-width="1.5"/>' +
+        '<path d="M' + (camX + 16) + ' ' + (camY - 7) + ' L' + (camX + 39) + ' ' + camY + ' L' + (camX + 16) + ' ' + (camY + 7) + ' Z" fill="rgba(125,255,152,.22)" stroke="rgba(125,255,152,.72)" stroke-width="1.5"/>' +
+        '<text x="' + (camX - 44) + '" y="' + (camY - 22) + '" fill="rgba(226,232,240,.88)" font-size="12" font-weight="800">Mount ' + escapeMountingVisualHtml(fmtFt(h)) + '</text>' +
+
+        '<line x1="' + targetX + '" y1="' + groundY + '" x2="' + targetX + '" y2="' + targetY + '" stroke="rgba(245,197,66,.72)" stroke-width="2"/>' +
+        '<circle cx="' + targetX + '" cy="' + targetY + '" r="5" fill="rgba(245,197,66,.96)"/>' +
+        '<text x="' + (targetX - 18) + '" y="' + (targetY - 16) + '" fill="rgba(245,197,66,.94)" font-size="12" font-weight="800">Target ' + escapeMountingVisualHtml(fmtFt(th)) + '</text>' +
+
+        '<line x1="' + camX + '" y1="' + (groundY + 42) + '" x2="' + targetX + '" y2="' + (groundY + 42) + '" stroke="rgba(148,163,184,.48)" stroke-width="1" stroke-dasharray="4 5"/>' +
+        '<line x1="' + camX + '" y1="' + (groundY + 34) + '" x2="' + camX + '" y2="' + (groundY + 50) + '" stroke="rgba(148,163,184,.48)" stroke-width="1"/>' +
+        '<line x1="' + targetX + '" y1="' + (groundY + 34) + '" x2="' + targetX + '" y2="' + (groundY + 50) + '" stroke="rgba(148,163,184,.48)" stroke-width="1"/>' +
+        '<text x="' + ((camX + targetX) / 2 - 54) + '" y="' + (groundY + 64) + '" fill="rgba(226,232,240,.78)" font-size="12" font-weight="800">Distance ' + escapeMountingVisualHtml(fmtFt(dist)) + '</text>' +
+
+        '<line x1="' + (targetX + 32) + '" y1="' + topY + '" x2="' + (targetX + 32) + '" y2="' + bottomY + '" stroke="rgba(96,165,250,.72)" stroke-width="2"/>' +
+        '<line x1="' + (targetX + 24) + '" y1="' + topY + '" x2="' + (targetX + 40) + '" y2="' + topY + '" stroke="rgba(96,165,250,.72)" stroke-width="2"/>' +
+        '<line x1="' + (targetX + 24) + '" y1="' + bottomY + '" x2="' + (targetX + 40) + '" y2="' + bottomY + '" stroke="rgba(96,165,250,.72)" stroke-width="2"/>' +
+        '<text x="' + (targetX + 48) + '" y="' + (topY + 4) + '" fill="rgba(191,219,254,.90)" font-size="12" font-weight="800">Top ' + escapeMountingVisualHtml(fmtFt(topEdge)) + '</text>' +
+        '<text x="' + (targetX + 48) + '" y="' + (bottomY + 4) + '" fill="rgba(191,219,254,.90)" font-size="12" font-weight="800">Bottom ' + escapeMountingVisualHtml(fmtFt(bottomEdge)) + '</text>' +
+
+        '<text x="302" y="48" fill="rgba(125,255,152,.96)" font-size="13" font-weight="900">Down-tilt ' + escapeMountingVisualHtml(labelTilt) + '</text>' +
+        '<text x="302" y="68" fill="rgba(148,163,184,.84)" font-size="12" font-weight="700">VFOV ' + escapeMountingVisualHtml(fmtDeg(data.vfov)) + ' / vertical span ' + escapeMountingVisualHtml(fmtFt(data.span)) + '</text>' +
+      '</svg>';
+
+    el.innerHTML =
+      '<div class="mounting-live-visual-card">' +
+        '<div class="mounting-live-visual-head">' +
+          '<div>' +
+            '<h4 class="mounting-live-visual-title">Mounting geometry and assumption pressure</h4>' +
+            '<p class="mounting-live-visual-copy">Side-view geometry shows the camera height, target point, down-tilt, and vertical field of view at the target plane.</p>' +
+          '</div>' +
+          '<span class="mounting-live-visual-pill">' + escapeMountingVisualHtml(data.status || "Review") + '</span>' +
+        '</div>' +
+        '<div class="mounting-cad-stage">' + svg + '</div>' +
+        '<div class="mounting-pressure-grid">' + pressureHtml + '</div>' +
+      '</div>';
+
+    el.hidden = false;
+    el.removeAttribute("hidden");
+    el.setAttribute("aria-hidden", "false");
+  }
+
+
   function renderError(message) {
+    clearMountingLiveVisual();
 clearMountingStructuredExport();
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
@@ -1083,6 +1257,7 @@ clearMountingStructuredExport();
         chartMax: 100
       }
     });
+    renderMountingLiveVisual(data);
 renderMountingStructuredExport(data);
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
