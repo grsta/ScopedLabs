@@ -1011,7 +1011,7 @@ function hideVisibleFlowContext() {
     mountingExportRoot().appendChild(node);
   }
   
-  // data-mounting-live-visual-003
+  // data-mounting-live-visual-004
   function mountingLiveVisualEl() {
     return document.getElementById("mountingLiveVisual");
   }
@@ -1046,9 +1046,12 @@ function hideVisibleFlowContext() {
   }
 
 
-  function mountingCadCameraIcon(x, y) {
+  
+  function mountingCadCameraIcon(x, y, rotationDeg) {
+    const rotation = Number.isFinite(Number(rotationDeg)) ? Number(rotationDeg) : 0;
+
     return "" +
-      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ') scale(0.5)" class="sl-cad-camera" data-ps-graphic-part="camera-marker" data-graphics-symbol="camera-cad-small">' +
+      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ') rotate(' + fmt(rotation, 2) + ') scale(0.5)" class="sl-cad-camera" data-ps-graphic-part="camera-marker" data-graphics-symbol="camera-cad-small">' +
         '<rect x="-22" y="-13" width="44" height="26" rx="4" fill="rgba(15, 23, 42, 0.92)" stroke="rgba(125,255,158,.92)" stroke-width="1.7" />' +
         '<path d="M 22 -8 L 42 -14 L 42 14 L 22 8 Z" fill="rgba(15, 23, 42, 0.96)" stroke="rgba(125,255,158,.92)" stroke-width="1.7" stroke-linejoin="round" />' +
         '<line x1="42" y1="-12" x2="42" y2="12" stroke="rgba(125,255,158,.92)" stroke-width="1.7" stroke-linecap="round" />' +
@@ -1056,7 +1059,6 @@ function hideVisibleFlowContext() {
         '<circle cx="-5" cy="0" r="4" fill="none" stroke="rgba(125, 255, 158, 0.55)" stroke-width="1.2" />' +
         '<circle cx="-30" cy="0" r="5" fill="rgba(2, 6, 23, 0.95)" stroke="rgba(125,255,158,.92)" stroke-width="1.7" />' +
         '<line x1="-25" y1="0" x2="-22" y2="0" stroke="rgba(125,255,158,.92)" stroke-width="1.7" stroke-linecap="round" />' +
-        '<line x1="44" y1="0" x2="70" y2="0" stroke="rgba(125,255,158,.92)" stroke-width="1.2" stroke-dasharray="4 5" stroke-linecap="round" />' +
       '</g>';
   }
 
@@ -1069,6 +1071,7 @@ function hideVisibleFlowContext() {
     el.setAttribute("aria-hidden", "true");
   }
 
+  
   function renderMountingLiveVisual(data) {
     const el = mountingLiveVisualEl();
     if (!el || !data || !data.ok) {
@@ -1088,25 +1091,52 @@ function hideVisibleFlowContext() {
     }
 
     const svgW = 780;
-    const svgH = 320;
-    const groundY = 250;
-    const camX = 95;
-    const targetX = 645;
+    const svgH = 330;
+    const floorY = 252;
+    const camX = 108;
+    const targetX = 642;
 
     const minH = Math.min(0, bottomEdge, th);
     const maxH = Math.max(8, h, th, topEdge);
     const rangeH = Math.max(8, maxH - minH);
 
     function yFor(height) {
-      return groundY - ((height - minH) / rangeH) * 178;
+      return floorY - ((height - minH) / rangeH) * 180;
     }
 
     const camY = yFor(h);
     const targetY = yFor(th);
     const topY = yFor(topEdge);
     const bottomY = yFor(bottomEdge);
-    const mountBaseY = groundY;
+    const gradeY = yFor(0);
+    const cameraTilt = clampMountingVisual(data.tilt, -75, 75);
+    const tiltRad = deg2rad(cameraTilt);
+    const lensReach = 21;
+    const lensTipX = camX + Math.cos(tiltRad) * lensReach;
+    const lensTipY = camY + Math.sin(tiltRad) * lensReach;
     const labelTilt = Number.isFinite(data.tilt) ? fmtDeg(data.tilt) : "—";
+    const dimensionY = Math.min(svgH - 24, Math.max(gradeY, bottomY) + 42);
+
+    let groundHitMarkup = "";
+    const lowerDenom = bottomY - lensTipY;
+    const lowerRayHitsGrade =
+      bottomEdge < 0 &&
+      Number.isFinite(lowerDenom) &&
+      Math.abs(lowerDenom) > 0.001 &&
+      gradeY >= Math.min(lensTipY, bottomY) &&
+      gradeY <= Math.max(lensTipY, bottomY);
+
+    if (lowerRayHitsGrade) {
+      const hitT = (gradeY - lensTipY) / lowerDenom;
+      const hitX = lensTipX + (targetX - lensTipX) * hitT;
+
+      if (Number.isFinite(hitX) && hitX > lensTipX && hitX < targetX) {
+        groundHitMarkup =
+          '<circle cx="' + fmt(hitX, 2) + '" cy="' + fmt(gradeY, 2) + '" r="4" fill="rgba(245,197,66,.96)" />' +
+          '<line x1="' + fmt(hitX, 2) + '" y1="' + fmt(gradeY - 12, 2) + '" x2="' + fmt(hitX, 2) + '" y2="' + fmt(gradeY + 12, 2) + '" stroke="rgba(245,197,66,.72)" stroke-width="1" />' +
+          '<text x="' + fmt(hitX + 10, 2) + '" y="' + fmt(gradeY - 10, 2) + '" fill="rgba(255,226,128,.94)" font-size="11" font-weight="900">Lower ray hits grade</text>';
+      }
+    }
 
     const pressureRows = [
       {
@@ -1146,37 +1176,40 @@ function hideVisibleFlowContext() {
       '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="Mounting height side-view geometry">' +
         '<defs>' +
           '<linearGradient id="mountingFovFill" x1="0" x2="1" y1="0" y2="1">' +
-            '<stop offset="0%" stop-color="rgba(125,255,152,.24)"/>' +
-            '<stop offset="100%" stop-color="rgba(125,255,152,.05)"/>' +
+            '<stop offset="0%" stop-color="rgba(125,255,152,.22)"/>' +
+            '<stop offset="100%" stop-color="rgba(125,255,152,.045)"/>' +
           '</linearGradient>' +
         '</defs>' +
 
-        '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="rgba(2,6,23,.10)"/>' +
-        '<line x1="46" y1="' + groundY + '" x2="735" y2="' + groundY + '" stroke="rgba(148,163,184,.42)" stroke-width="1"/>' +
-        '<text x="48" y="' + (groundY + 24) + '" fill="rgba(148,163,184,.82)" font-size="12" font-weight="700">Grade / target plane reference</text>' +
+        '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="rgba(0,0,0,.08)"/>' +
+        '<line x1="48" y1="' + fmt(gradeY, 2) + '" x2="735" y2="' + fmt(gradeY, 2) + '" stroke="rgba(148,163,184,.42)" stroke-width="1"/>' +
+        '<text x="50" y="' + fmt(gradeY + 22, 2) + '" fill="rgba(148,163,184,.82)" font-size="12" font-weight="700">Grade / 0 ft reference</text>' +
 
-        '<polygon points="' + camX + ',' + camY + ' ' + targetX + ',' + topY + ' ' + targetX + ',' + bottomY + '" fill="url(#mountingFovFill)" stroke="rgba(125,255,152,.34)" stroke-width="1"/>' +
-        '<line x1="' + camX + '" y1="' + camY + '" x2="' + targetX + '" y2="' + targetY + '" stroke="rgba(125,255,152,.88)" stroke-width="2"/>' +
-        '<line x1="' + camX + '" y1="' + camY + '" x2="' + targetX + '" y2="' + topY + '" stroke="rgba(125,255,152,.38)" stroke-width="1" stroke-dasharray="5 5"/>' +
-        '<line x1="' + camX + '" y1="' + camY + '" x2="' + targetX + '" y2="' + bottomY + '" stroke="rgba(125,255,152,.38)" stroke-width="1" stroke-dasharray="5 5"/>' +
-        '<line x1="' + camX + '" y1="' + mountBaseY + '" x2="' + camX + '" y2="' + camY + '" stroke="rgba(226,232,240,.46)" stroke-width="1.4"/>' +
-        mountingCadCameraIcon(camX, camY) +
-        '<text x="' + (camX - 44) + '" y="' + (camY - 26) + '" fill="rgba(226,232,240,.88)" font-size="12" font-weight="800">Mount ' + escapeMountingVisualHtml(fmtFt(h)) + '</text>' +
+        '<polygon points="' + fmt(lensTipX, 2) + ',' + fmt(lensTipY, 2) + ' ' + targetX + ',' + fmt(topY, 2) + ' ' + targetX + ',' + fmt(bottomY, 2) + '" fill="url(#mountingFovFill)" stroke="rgba(125,255,152,.34)" stroke-width="1"/>' +
+        '<line x1="' + fmt(lensTipX, 2) + '" y1="' + fmt(lensTipY, 2) + '" x2="' + targetX + '" y2="' + fmt(targetY, 2) + '" stroke="rgba(125,255,152,.88)" stroke-width="2"/>' +
+        '<line x1="' + fmt(lensTipX, 2) + '" y1="' + fmt(lensTipY, 2) + '" x2="' + targetX + '" y2="' + fmt(topY, 2) + '" stroke="rgba(125,255,152,.38)" stroke-width="1" stroke-dasharray="5 5"/>' +
+        '<line x1="' + fmt(lensTipX, 2) + '" y1="' + fmt(lensTipY, 2) + '" x2="' + targetX + '" y2="' + fmt(bottomY, 2) + '" stroke="rgba(125,255,152,.38)" stroke-width="1" stroke-dasharray="5 5"/>' +
 
-        '<line x1="' + targetX + '" y1="' + groundY + '" x2="' + targetX + '" y2="' + targetY + '" stroke="rgba(245,197,66,.72)" stroke-width="2"/>' +
-        '<circle cx="' + targetX + '" cy="' + targetY + '" r="5" fill="rgba(245,197,66,.96)"/>' +
-        '<text x="' + (targetX - 18) + '" y="' + (targetY - 16) + '" fill="rgba(245,197,66,.94)" font-size="12" font-weight="800">Target ' + escapeMountingVisualHtml(fmtFt(th)) + '</text>' +
+        '<line x1="' + camX + '" y1="' + fmt(gradeY, 2) + '" x2="' + camX + '" y2="' + fmt(camY, 2) + '" stroke="rgba(226,232,240,.46)" stroke-width="1.4"/>' +
+        mountingCadCameraIcon(camX, camY, cameraTilt) +
+        '<text x="' + (camX - 44) + '" y="' + fmt(camY - 26, 2) + '" fill="rgba(226,232,240,.88)" font-size="12" font-weight="800">Mount ' + escapeMountingVisualHtml(fmtFt(h)) + '</text>' +
 
-        '<line x1="' + camX + '" y1="' + (groundY + 42) + '" x2="' + targetX + '" y2="' + (groundY + 42) + '" stroke="rgba(148,163,184,.48)" stroke-width="1" stroke-dasharray="4 5"/>' +
-        '<line x1="' + camX + '" y1="' + (groundY + 34) + '" x2="' + camX + '" y2="' + (groundY + 50) + '" stroke="rgba(148,163,184,.48)" stroke-width="1"/>' +
-        '<line x1="' + targetX + '" y1="' + (groundY + 34) + '" x2="' + targetX + '" y2="' + (groundY + 50) + '" stroke="rgba(148,163,184,.48)" stroke-width="1"/>' +
-        '<text x="' + ((camX + targetX) / 2 - 54) + '" y="' + (groundY + 64) + '" fill="rgba(226,232,240,.78)" font-size="12" font-weight="800">Distance ' + escapeMountingVisualHtml(fmtFt(dist)) + '</text>' +
+        '<line x1="' + targetX + '" y1="' + fmt(gradeY, 2) + '" x2="' + targetX + '" y2="' + fmt(targetY, 2) + '" stroke="rgba(245,197,66,.72)" stroke-width="2"/>' +
+        '<circle cx="' + targetX + '" cy="' + fmt(targetY, 2) + '" r="5" fill="rgba(245,197,66,.96)"/>' +
+        '<text x="' + (targetX - 18) + '" y="' + fmt(targetY - 16, 2) + '" fill="rgba(245,197,66,.94)" font-size="12" font-weight="800">Target ' + escapeMountingVisualHtml(fmtFt(th)) + '</text>' +
 
-        '<line x1="' + (targetX + 32) + '" y1="' + topY + '" x2="' + (targetX + 32) + '" y2="' + bottomY + '" stroke="rgba(96,165,250,.72)" stroke-width="2"/>' +
-        '<line x1="' + (targetX + 24) + '" y1="' + topY + '" x2="' + (targetX + 40) + '" y2="' + topY + '" stroke="rgba(96,165,250,.72)" stroke-width="2"/>' +
-        '<line x1="' + (targetX + 24) + '" y1="' + bottomY + '" x2="' + (targetX + 40) + '" y2="' + bottomY + '" stroke="rgba(96,165,250,.72)" stroke-width="2"/>' +
-        '<text x="' + (targetX + 48) + '" y="' + (topY + 4) + '" fill="rgba(191,219,254,.90)" font-size="12" font-weight="800">Top ' + escapeMountingVisualHtml(fmtFt(topEdge)) + '</text>' +
-        '<text x="' + (targetX + 48) + '" y="' + (bottomY + 4) + '" fill="rgba(191,219,254,.90)" font-size="12" font-weight="800">Bottom ' + escapeMountingVisualHtml(fmtFt(bottomEdge)) + '</text>' +
+        groundHitMarkup +
+
+        '<line x1="' + camX + '" y1="' + fmt(dimensionY, 2) + '" x2="' + targetX + '" y2="' + fmt(dimensionY, 2) + '" stroke="rgba(148,163,184,.48)" stroke-width="1" stroke-dasharray="4 5"/>' +
+        '<line x1="' + camX + '" y1="' + fmt(dimensionY - 8, 2) + '" x2="' + camX + '" y2="' + fmt(dimensionY + 8, 2) + '" stroke="rgba(148,163,184,.48)" stroke-width="1"/>' +
+        '<line x1="' + targetX + '" y1="' + fmt(dimensionY - 8, 2) + '" x2="' + targetX + '" y2="' + fmt(dimensionY + 8, 2) + '" stroke="rgba(148,163,184,.48)" stroke-width="1"/>' +
+        '<text x="' + ((camX + targetX) / 2 - 54) + '" y="' + fmt(dimensionY + 18, 2) + '" fill="rgba(226,232,240,.78)" font-size="12" font-weight="800">Distance ' + escapeMountingVisualHtml(fmtFt(dist)) + '</text>' +
+
+        '<line x1="' + (targetX + 32) + '" y1="' + fmt(topY, 2) + '" x2="' + (targetX + 32) + '" y2="' + fmt(bottomY, 2) + '" stroke="rgba(96,165,250,.72)" stroke-width="2"/>' +
+        '<line x1="' + (targetX + 24) + '" y1="' + fmt(topY, 2) + '" x2="' + (targetX + 40) + '" y2="' + fmt(topY, 2) + '" stroke="rgba(96,165,250,.72)" stroke-width="2"/>' +
+        '<line x1="' + (targetX + 24) + '" y1="' + fmt(bottomY, 2) + '" x2="' + (targetX + 40) + '" y2="' + fmt(bottomY, 2) + '" stroke="rgba(96,165,250,.72)" stroke-width="2"/>' +
+        '<text x="' + (targetX + 48) + '" y="' + fmt(topY + 4, 2) + '" fill="rgba(191,219,254,.90)" font-size="12" font-weight="800">Top ' + escapeMountingVisualHtml(fmtFt(topEdge)) + '</text>' +
+        '<text x="' + (targetX + 48) + '" y="' + fmt(bottomY + 4, 2) + '" fill="rgba(191,219,254,.90)" font-size="12" font-weight="800">Bottom ' + escapeMountingVisualHtml(fmtFt(bottomEdge)) + '</text>' +
 
         '<text x="302" y="48" fill="rgba(125,255,152,.96)" font-size="13" font-weight="900">Down-tilt ' + escapeMountingVisualHtml(labelTilt) + '</text>' +
         '<text x="302" y="68" fill="rgba(148,163,184,.84)" font-size="12" font-weight="700">VFOV ' + escapeMountingVisualHtml(fmtDeg(data.vfov)) + ' / vertical span ' + escapeMountingVisualHtml(fmtFt(data.span)) + '</text>' +
@@ -1187,7 +1220,7 @@ function hideVisibleFlowContext() {
         '<div class="mounting-live-visual-head">' +
           '<div>' +
             '<h4 class="mounting-live-visual-title">Mounting geometry and assumption pressure</h4>' +
-            '<p class="mounting-live-visual-copy">Side-view geometry shows the camera height, target point, down-tilt, and vertical field of view at the target plane.</p>' +
+            '<p class="mounting-live-visual-copy">Side-view geometry shows the tilted camera, lens aim, target point, and vertical field of view against the 0 ft grade reference.</p>' +
           '</div>' +
           '<span class="mounting-live-visual-pill ' + mountingStatusClass(data.status) + '">' + escapeMountingVisualHtml(data.status || "Review") + '</span>' +
         '</div>' +
