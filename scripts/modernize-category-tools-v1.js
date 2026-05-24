@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-021-canonical-title-cleanup
+ * Version: scopedlabs-category-modernizer-022-pipeline-label-title-cleanup
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -483,8 +483,8 @@ const BadgeCleanupModule = {
 
 const LabelStandardModule = {
   id: "label-standard",
-  version: "label-standard-module-005-canonical-title-cleanup",
-  description: "Safely removes crumbs rows and standardizes active page H1/title labels to registry titles.",
+  version: "label-standard-module-006-pipeline-label-title-cleanup",
+  description: "Safely removes crumbs rows and standardizes active page H1/title labels to pipeline nav labels.",
   run(tool, indexFile, html) {
     if (config.protectedTools.has(tool)) {
       return {
@@ -502,37 +502,40 @@ const LabelStandardModule = {
       return String(value || "")
         .replace(/<script[\s\S]*?<\/script>/gi, "")
         .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/&bull;|&#8226;|&#x2022;/gi, "?")
         .replace(/<[^>]+>/g, " ")
         .replace(/&nbsp;/gi, " ")
         .replace(/\s+/g, " ")
         .trim();
     }
 
-    const canonical = {
+    const pipelineLabels = {
       "area-planner": "Area / Zone Planner",
       "scene-illumination": "Scene Illumination",
       "mounting-height": "Mounting Height",
       "field-of-view": "Field of View",
-      "camera-coverage-area": "Camera Coverage Area",
+      "camera-coverage-area": "Coverage Area",
       "camera-spacing": "Camera Spacing",
       "blind-spot-check": "Blind Spot Check",
       "pixel-density": "Pixel Density",
-      "face-recognition-range": "Face Recognition Range",
-      "license-plate-range": "License Plate Capture Range"
+      "face-recognition-range": "Face Recognition",
+      "license-plate-range": "License Plate"
     };
 
-    const h1Aliases = {
+    const aliases = {
       "scene-illumination": ["Scene Illumination Estimator"],
-      "camera-coverage-area": ["Coverage Area"],
+      "camera-coverage-area": ["Camera Coverage Area"],
       "camera-spacing": ["Camera Spacing Planner"],
-      "pixel-density": ["Pixel Density Calculator"]
+      "pixel-density": ["Pixel Density Calculator"],
+      "face-recognition-range": ["Face Recognition Range"],
+      "license-plate-range": ["License Plate Capture Range", "License Plate Range"]
     };
 
     let patched = html;
     const actions = [];
 
-    const expected = canonical[tool] || "";
-    const aliases = h1Aliases[tool] || [];
+    const expected = pipelineLabels[tool] || "";
+    const allowedAliases = aliases[tool] || [];
 
     const h1Before = cleanText((html.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/i) || [""])[0]);
     const titleBefore = cleanText((html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i) || ["", ""])[1]);
@@ -574,7 +577,7 @@ const LabelStandardModule = {
           return match;
         }
 
-        if (!aliases.includes(current)) {
+        if (!allowedAliases.includes(current)) {
           return match;
         }
 
@@ -586,23 +589,25 @@ const LabelStandardModule = {
 
       patched = patched.replace(titleRx, function(match, attrs) {
         const current = cleanText(match);
-        const accepted = new Set([
-          expected + " | ScopedLabs",
-          expected + " ? ScopedLabs",
-          ...aliases.map((alias) => alias + " | ScopedLabs"),
-          ...aliases.map((alias) => alias + " ? ScopedLabs")
-        ]);
+        const desired = expected + " | ScopedLabs";
 
-        if (current === expected + " | ScopedLabs") {
+        if (current === desired) {
           return match;
         }
 
-        if (!accepted.has(current)) {
+        const acceptedTitles = new Set();
+
+        [expected].concat(allowedAliases).forEach(function(label) {
+          acceptedTitles.add(label + " | ScopedLabs");
+          acceptedTitles.add(label + " ? ScopedLabs");
+        });
+
+        if (!acceptedTitles.has(current)) {
           return match;
         }
 
         actions.push("standardize-title");
-        return "<title" + attrs + ">" + expected + " | ScopedLabs</title>";
+        return "<title" + attrs + ">" + desired + "</title>";
       });
     }
 
@@ -1299,7 +1304,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-021-canonical-title-cleanup");
+console.log("Version: scopedlabs-category-modernizer-022-pipeline-label-title-cleanup");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
