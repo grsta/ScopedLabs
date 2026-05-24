@@ -819,6 +819,26 @@ function hideVisibleFlowContext() {
     document.querySelectorAll('[data-face-structured-export="true"]').forEach((node) => node.remove());
   }
 
+
+  // data-scopedlabs-face-export-visual-001
+  function faceRecognitionExportVisualSvg(data) {
+    if (!data || !data.ok) return "";
+
+    const gfx = window.ScopedLabsGraphics;
+    if (!gfx || typeof gfx.render !== "function" || typeof faceRecognitionGraphicsModel !== "function") {
+      return "";
+    }
+
+    const svg = gfx.render("face-recognition-range-plan", faceRecognitionGraphicsModel(data));
+    if (typeof svg !== "string" || !svg.includes("<svg")) return "";
+
+    return "" +
+      '<div data-face-export-visual="true" style="break-inside:avoid;margin:0 0 12px 0;">' +
+        svg +
+      '</div>';
+  }
+
+
   function faceStructuredExportTables(data) {
     if (!data || !data.ok) return "";
 
@@ -854,9 +874,14 @@ function hideVisibleFlowContext() {
       ? window.ScopedLabsAssistantExport.renderNotesTable(notes)
       : faceFallbackNotesTable(notes);
 
+    const visualHtml = faceRecognitionExportVisualSvg(data);
+
     return "" +
       '<div class="face-export-structured-tables" data-face-structured-export="true" data-export-section data-export-suppress-title="true" style="position:absolute;left:-10000px;top:auto;width:820px;max-height:1px;overflow:hidden;opacity:0;pointer-events:none;">' +
+        visualHtml +
+
         metricHtml +
+
         notesHtml +
       '</div>';
   }
