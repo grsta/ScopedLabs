@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-003-badge-cleanup-module
+ * Version: scopedlabs-category-modernizer-004-label-standard-module
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue", "badge-cleanup"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard"]
 };
 
 function read(file) {
@@ -435,6 +435,71 @@ const BadgeCleanupModule = {
   }
 };
 
+
+const LabelStandardModule = {
+  id: "label-standard",
+  version: "label-standard-module-001-audit-only",
+  description: "Inventories page labels, headings, calculator wording, and standard section labels.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    function cleanText(value) {
+      return String(value || "")
+        .replace(/<[^>]+>/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function firstMatchText(pattern) {
+      const match = html.match(pattern);
+      return match ? cleanText(match[1]) : "-";
+    }
+
+    const pageTitle = firstMatchText(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+    const h1 = firstMatchText(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i);
+    const h2s = Array.from(html.matchAll(/<h2\b[^>]*>([\s\S]*?)<\/h2>/gi)).map((m) => cleanText(m[1]));
+    const h3s = Array.from(html.matchAll(/<h3\b[^>]*>([\s\S]*?)<\/h3>/gi)).map((m) => cleanText(m[1]));
+
+    const calculatorRefs = (html.match(/\bCalculator\b/gi) || []).length;
+    const hasPlanningInputs = /Planning Inputs|Active Area Setup|Inputs/i.test(html);
+    const hasResultsLabel = /\bResults\b/i.test(h2s.concat(h3s).join(" | "));
+    const hasExportLabel = /Documentation & Export|Export & Snapshot|Export Report|Open Export Report/i.test(html);
+    const hasBestFor = /Best for:/i.test(html);
+    const hasSubhead = /class=["'][^"']*\bsubhead\b/i.test(html);
+
+    const detailParts = [
+      "title=" + pageTitle,
+      "h1=" + h1,
+      "calculatorRefs=" + calculatorRefs,
+      "planningLabel=" + (hasPlanningInputs ? "present" : "missing"),
+      "resultsLabel=" + (hasResultsLabel ? "present" : "missing"),
+      "exportLabel=" + (hasExportLabel ? "present" : "missing"),
+      "bestFor=" + (hasBestFor ? "present" : "missing"),
+      "subhead=" + (hasSubhead ? "present" : "missing")
+    ];
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail: detailParts.join("; ")
+    };
+  }
+};
+
 const BackContinueModule = {
   id: "back-continue",
   version: "back-continue-module-001",
@@ -470,7 +535,7 @@ const BackContinueModule = {
   }
 };
 
-const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule];
+const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule];
 
 if (!fs.existsSync(categoryRoot)) {
   console.error("Missing category folder: " + path.relative(root, categoryRoot));
@@ -494,7 +559,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-003-badge-cleanup-module");
+console.log("Version: scopedlabs-category-modernizer-004-label-standard-module");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + modules.map((m) => m.id + "@" + m.version).join(", "));
