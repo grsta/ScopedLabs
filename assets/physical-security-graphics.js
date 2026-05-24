@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-019-scene-light-gradient-plan";
+  const VERSION = "physical-security-graphics-020-light-fixture-primitive";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -1082,11 +1082,59 @@
   }
 
 
+  // data-physical-security-light-fixture-primitive-001
+  function streetLightFixtureCadIcon(x, y, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    const stroke = opts.stroke || opts.color || "rgba(255,226,128,.86)";
+    const fill = opts.fill || "rgba(15,23,42,.92)";
+    const accent = opts.accent || stroke;
+    const scale = Number.isFinite(Number(opts.scale)) ? Number(opts.scale) : 0.42;
+    const rotation = Number.isFinite(Number(opts.rotation)) ? Number(opts.rotation) : 0;
+    const symbol = opts.symbol || "street-light-fixture-cad";
+
+    return "" +
+      '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ') rotate(' + fmt(rotation, 2) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-light-fixture" data-ps-graphic-part="lighting-fixture-icon" data-graphics-symbol="' + esc(symbol) + '">' +
+        '<rect x="-78" y="-13" width="28" height="26" rx="3" fill="rgba(2,6,23,.82)" stroke="' + esc(stroke) + '" stroke-opacity=".78" stroke-width="1.45" />' +
+        '<circle cx="-72" cy="-7" r="2" fill="rgba(255,239,176,.82)" />' +
+        '<circle cx="-56" cy="-7" r="2" fill="rgba(255,239,176,.82)" />' +
+        '<circle cx="-72" cy="7" r="2" fill="rgba(255,239,176,.82)" />' +
+        '<circle cx="-56" cy="7" r="2" fill="rgba(255,239,176,.82)" />' +
+        '<line x1="-50" y1="0" x2="-18" y2="0" stroke="' + esc(stroke) + '" stroke-width="2.2" stroke-linecap="round" />' +
+        '<line x1="-48" y1="-3.6" x2="-18" y2="-3.6" stroke="rgba(255,239,176,.26)" stroke-width=".9" stroke-linecap="round" />' +
+        '<line x1="-18" y1="-9" x2="-18" y2="9" stroke="' + esc(stroke) + '" stroke-width="1.35" stroke-linecap="round" />' +
+        '<path d="M -18 -7 L 7 -9 C 28 -11 48 -6 58 0 C 48 6 28 11 7 9 L -18 7 Z" fill="' + esc(fill) + '" stroke="' + esc(stroke) + '" stroke-width="1.55" stroke-linejoin="round" />' +
+        '<path d="M 8 -6 C 24 -8 40 -5 50 0 C 40 5 24 8 8 6 Z" fill="rgba(255,226,128,.10)" stroke="rgba(255,226,128,.28)" stroke-width=".75" />' +
+        '<line x1="-2" y1="-7" x2="-2" y2="7" stroke="rgba(255,239,176,.28)" stroke-width=".8" />' +
+        '<line x1="15" y1="-7.2" x2="15" y2="7.2" stroke="rgba(255,239,176,.22)" stroke-width=".75" />' +
+        '<line x1="32" y1="-5.8" x2="32" y2="5.8" stroke="rgba(255,239,176,.18)" stroke-width=".7" />' +
+        '<line x1="58" y1="0" x2="82" y2="0" stroke="' + esc(accent) + '" stroke-opacity=".58" stroke-width="1" stroke-dasharray="4 5" stroke-linecap="round" />' +
+      '</g>';
+  }
+
+  function lightingFixturePlanMarker(x, y, options) {
+    const opts = options && typeof options === "object" ? options : {};
+    const label = opts.label || "";
+    const labelY = Number.isFinite(Number(opts.labelY)) ? Number(opts.labelY) : y - 24;
+
+    return "" +
+      (label ? CAD.text(x, labelY, label, {
+        anchor: "middle",
+        fill: opts.labelFill || "rgba(255,239,176,.84)",
+        size: opts.labelSize || 8.8,
+        weight: 950,
+        spacing: ".08em"
+      }) : "") +
+      streetLightFixtureCadIcon(x, y, opts);
+  }
+
+
   const primitives = {
     cadGrid,
     cameraLensTipX,
     cameraCadIcon,
     cameraPlanMarker,
+    streetLightFixtureCadIcon,
+    lightingFixturePlanMarker,
     cameraPositionMarker,
     fovCone,
     targetPlane,
