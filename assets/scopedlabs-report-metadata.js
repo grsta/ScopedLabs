@@ -144,3 +144,61 @@
     init();
   }
 })();
+
+/* data-scopedlabs-report-metadata-title-defaults-v002
+   Keeps compact report metadata defaults scoped to the current tool.
+   This is intentionally presentation-only: it does not change export, snapshot,
+   analyzer, pipeline, auth, checkout, or calculation behavior.
+*/
+(function () {
+  function currentToolAssessmentTitle() {
+    var cfg = window.ScopedLabsExportConfig || {};
+    var label = String(cfg.toolLabel || "").trim();
+
+    if (!label) {
+      var h1 = document.querySelector("h1");
+      label = h1 ? String(h1.textContent || "").trim() : "";
+    }
+
+    if (!label) label = "ScopedLabs Report";
+
+    return /assessment$/i.test(label) ? label : label + " Assessment";
+  }
+
+  function applyReportTitleDefault() {
+    var input = document.getElementById("reportTitle");
+    if (!input) return;
+
+    var title = currentToolAssessmentTitle();
+    var wrongDefault = /Camera\s+Spacing\s+Planner\s+Assessment/i;
+
+    if (!input.placeholder || wrongDefault.test(input.placeholder)) {
+      input.placeholder = title;
+    }
+
+    if (wrongDefault.test(String(input.value || ""))) {
+      input.value = title;
+    }
+
+    if (wrongDefault.test(String(input.defaultValue || ""))) {
+      input.defaultValue = title;
+    }
+  }
+
+  function run() {
+    applyReportTitleDefault();
+
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(applyReportTitleDefault);
+    }
+
+    window.setTimeout(applyReportTitleDefault, 80);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
+  }
+})();
+
