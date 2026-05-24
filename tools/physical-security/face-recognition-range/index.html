@@ -99,6 +99,28 @@
       color: #ffe38a;
     }
   </style>
+
+  <style data-physical-security-assistant-chrome-001>
+    body[data-tool="face-recognition-range"] #toolCard > .card h3.h3:first-child,
+    body[data-tool="face-recognition-range"] #toolCard .card h3.h3:first-child {
+      color: rgba(116, 255, 148, 0.96) !important;
+      font-size: 0.78rem !important;
+      line-height: 1.2 !important;
+      font-weight: 900 !important;
+      letter-spacing: 0.14em !important;
+      text-transform: uppercase !important;
+      margin-top: 0 !important;
+      margin-bottom: 8px !important;
+    }
+
+    body[data-tool="face-recognition-range"] #toolCard > .card h3.h3:first-child + p.muted,
+    body[data-tool="face-recognition-range"] #toolCard .card h3.h3:first-child + p.muted {
+      margin-top: 0 !important;
+      color: rgba(226, 232, 240, 0.76) !important;
+      line-height: 1.55 !important;
+    }
+  </style>
+
 </head>
 
 <body
@@ -235,7 +257,7 @@
 
         <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
           <h3 class="h3" style="margin-top: 0;">Face Recognition Assistant</h3>
-        <p class="muted" style="margin-top: -4px;">Review facial-detail range, working-distance margin, and recognition-risk guidance before treating this area as recognition-ready.</p>
+          <p class="muted" style="margin-top: -4px;">Review facial-detail range, working-distance margin, and recognition-risk guidance before treating this area as recognition-ready.</p>
           <div id="results" class="results-grid" aria-live="polite">
             <div class="muted">Enter values and press Calculate.</div>
           </div>
