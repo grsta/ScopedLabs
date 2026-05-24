@@ -225,6 +225,13 @@
       color: #ffe38a;
     }
   </style>
+
+  <style data-pixel-density-hide-technical-results>
+    body[data-tool="pixel-density"] .pixel-density-technical-results {
+      display: none !important;
+    }
+  </style>
+
 </head>
 
 <body
@@ -365,7 +372,7 @@
         <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
           <h3 class="h3" style="margin-top: 0;">Pixel Density Assistant</h3>
         <p class="muted" style="margin-top: -4px;">Review delivered PPF, detail margin, and correction guidance before carrying the validated detail requirement into lens selection.</p>
-          <div id="results" class="results-grid" aria-live="polite">
+          <div id="results" class="results-grid pixel-density-technical-results" aria-live="polite" aria-hidden="true">
             <div class="muted">Enter values and press Calculate.</div>
           </div>
           <div id="analysis-copy" style="display:none;"></div>
@@ -461,7 +468,7 @@
   <script src="/assets/export.js?v=shared-export-010"></script>
 
     <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
-  <script src="./script.js?v=physical-security-pixel-export-notes-001"></script>
+  <script src="./script.js?v=physical-security-pixel-hide-technical-results-001"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "pixelDensityFlowActions" });
   </script>
