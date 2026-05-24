@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-033-scene-chip-row-only-lift";
+  const VERSION = "physical-security-graphics-034-scene-fc-halo-intensity";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -958,6 +958,15 @@
     const lumensPerSqFtMax = Math.max(lumenDensity, 12);
     const loadBarW = Math.max(8, Math.min(barW, barW * (lumenDensity / lumensPerSqFtMax)));
 
+    // Visual-only intensity model: shows lower fc targets as softer halos and higher fc targets as stronger halos.
+    // This is not a fixture photometric simulation.
+    const haloFcVisual = clamp(Math.sqrt(Math.max(targetFc, 0.1) / 5), 0.18, 1.12);
+    const haloMaintenanceVisual = clamp(0.72 + (effectiveFactor * 0.50), 0.74, 1.08);
+    const haloVisual = clamp(haloFcVisual * haloMaintenanceVisual, 0.18, 1.12);
+    const haloOuterOpacity = clamp(0.16 + (haloVisual * 0.52), 0.20, 0.78);
+    const haloMidOpacity = clamp(0.22 + (haloVisual * 0.58), 0.26, 0.88);
+    const haloCoreOpacity = clamp(0.28 + (haloVisual * 0.62), 0.32, 0.96);
+
     const planX = 112;
     const planY = 235;
     const planW = 520;
@@ -997,9 +1006,9 @@
 
       return "" +
         '<g data-ps-graphic-part="lighting-fixture">' +
-          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy, 1) + '" rx="118" ry="60" fill="url(#psSceneLightHaloOuter)" opacity=".72" />' +
-          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 1, 1) + '" rx="72" ry="34" fill="url(#psSceneLightHaloMid)" opacity=".84" />' +
-          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 1, 1) + '" rx="34" ry="16" fill="url(#psSceneLightHaloCore)" opacity=".94" />' +
+          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy, 1) + '" rx="118" ry="60" fill="url(#psSceneLightHaloOuter)" opacity="' + fmt(haloOuterOpacity, 2) + '" />' +
+          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 1, 1) + '" rx="72" ry="34" fill="url(#psSceneLightHaloMid)" opacity="' + fmt(haloMidOpacity, 2) + '" />' +
+          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 1, 1) + '" rx="34" ry="16" fill="url(#psSceneLightHaloCore)" opacity="' + fmt(haloCoreOpacity, 2) + '" />' +
 
           '<line x1="' + fmt(haloCx, 1) + '" y1="' + fmt(haloCy + 18, 1) + '" x2="' + fmt(haloCx, 1) + '" y2="' + fmt(iconHeadY + 5, 1) + '" stroke="rgba(255,226,128,.14)" stroke-width=".8" stroke-dasharray="4 7" />' +
 
