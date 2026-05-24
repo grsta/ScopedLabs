@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-024-scene-cad-streetlight-silhouette";
+  const VERSION = "physical-security-graphics-025-scene-simple-edge-fixtures";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -963,7 +963,7 @@
     const planW = 520;
     const planH = 142;
 
-    const fixtureY = planY + planH - 30;
+    const fixtureY = planY + planH - 12;
     const fixtureXs = [
       planX + planW * 0.22,
       planX + planW * 0.50,
@@ -979,33 +979,30 @@
     }
 
     function fixture(x, y, index) {
-      const headX = x + 31;
-      const headY = y - 49;
-      const beamTopY = planY + 14;
-      const beamMidY = planY + Math.max(34, planH * 0.42);
-      const beamBottomY = headY + 6;
-      const beamHalfTop = 56;
-      const beamHalfMid = 34;
+      const beamTopY = planY + 18;
+      const beamMidY = planY + Math.max(38, planH * 0.48);
+      const beamBottomY = y - 18;
+      const beamHalfTop = 70;
+      const beamHalfMid = 42;
 
       return "" +
         '<g data-ps-graphic-part="lighting-fixture">' +
-          '<path d="M ' + fmt(headX, 1) + ' ' + fmt(beamBottomY, 1) +
-            ' L ' + fmt(headX - beamHalfTop, 1) + ' ' + fmt(beamTopY, 1) +
-            ' Q ' + fmt(headX, 1) + ' ' + fmt(beamMidY, 1) +
-            ' ' + fmt(headX + beamHalfTop, 1) + ' ' + fmt(beamTopY, 1) +
-            ' Z" fill="url(#psSceneLightBeamWide)" stroke="rgba(255,226,128,.14)" stroke-width=".7" />' +
-          '<path d="M ' + fmt(headX, 1) + ' ' + fmt(beamBottomY, 1) +
-            ' L ' + fmt(headX - beamHalfMid, 1) + ' ' + fmt(beamMidY, 1) +
-            ' Q ' + fmt(headX, 1) + ' ' + fmt(beamMidY - 14, 1) +
-            ' ' + fmt(headX + beamHalfMid, 1) + ' ' + fmt(beamMidY, 1) +
-            ' Z" fill="url(#psSceneLightBeamCore)" opacity=".94" />' +
-          '<line x1="' + fmt(headX, 1) + '" y1="' + fmt(headY + 5, 1) + '" x2="' + fmt(headX, 1) + '" y2="' + fmt(beamTopY + 12, 1) + '" stroke="rgba(255,226,128,.17)" stroke-width=".72" stroke-dasharray="4 6" />' +
+          '<path d="M ' + fmt(x, 1) + ' ' + fmt(beamBottomY, 1) +
+            ' L ' + fmt(x - beamHalfTop, 1) + ' ' + fmt(beamTopY, 1) +
+            ' Q ' + fmt(x, 1) + ' ' + fmt(beamMidY, 1) +
+            ' ' + fmt(x + beamHalfTop, 1) + ' ' + fmt(beamTopY, 1) +
+            ' Z" fill="url(#psSceneLightBeamWide)" stroke="rgba(255,226,128,.13)" stroke-width=".7" />' +
+          '<path d="M ' + fmt(x, 1) + ' ' + fmt(beamBottomY, 1) +
+            ' L ' + fmt(x - beamHalfMid, 1) + ' ' + fmt(beamMidY, 1) +
+            ' Q ' + fmt(x, 1) + ' ' + fmt(beamMidY - 16, 1) +
+            ' ' + fmt(x + beamHalfMid, 1) + ' ' + fmt(beamMidY, 1) +
+            ' Z" fill="url(#psSceneLightBeamCore)" opacity=".90" />' +
           streetLightFixtureCadIcon(x, y, {
-            scale: 0.82,
+            scale: 0.78,
             stroke: "rgba(255,226,128,.92)",
             accent: "rgba(255,239,176,.88)"
           }) +
-          '<text x="' + fmt(x, 1) + '" y="' + fmt(y + 16, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.86)" font-size="8.2" font-weight="950">L' + index + '</text>' +
+          '<text x="' + fmt(x, 1) + '" y="' + fmt(y + 18, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.84)" font-size="8.2" font-weight="950">L' + index + '</text>' +
         '</g>';
     }
 
@@ -1108,14 +1105,12 @@
     const scale = Number.isFinite(Number(opts.scale)) ? Number(opts.scale) : 1;
 
     return "" +
-      '<g transform="translate(' + fmt(x, 1) + ' ' + fmt(y, 1) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-light-fixture" data-ps-graphic-part="lighting-fixture-icon" data-graphics-symbol="cad-streetlight-silhouette">' +
-        '<line x1="0" y1="0" x2="0" y2="-46" stroke="' + esc(stroke) + '" stroke-width="1.35" stroke-linecap="round" />' +
-        '<rect x="-4.5" y="-1.5" width="9" height="4.5" rx="1" fill="rgba(2,6,23,.74)" stroke="' + esc(stroke) + '" stroke-width=".85" />' +
-        '<line x1="-6" y1="3.5" x2="6" y2="3.5" stroke="' + esc(stroke) + '" stroke-width=".9" stroke-linecap="round" />' +
-        '<path d="M 0 -46 C 9 -50 16 -51 24 -49" fill="none" stroke="' + esc(stroke) + '" stroke-width="1.15" stroke-linecap="round" />' +
-        '<path d="M 21 -53 L 42 -50 Q 48 -48 42 -45 L 21 -42 Z" fill="rgba(15,23,42,.82)" stroke="' + esc(stroke) + '" stroke-width="1.05" stroke-linejoin="round" />' +
-        '<line x1="39" y1="-49.5" x2="50" y2="-49.5" stroke="' + esc(accent) + '" stroke-width=".8" stroke-opacity=".64" stroke-dasharray="3 4" stroke-linecap="round" />' +
-        '<circle cx="0" cy="-46" r="1.7" fill="' + esc(accent) + '" opacity=".86" />' +
+      '<g transform="translate(' + fmt(x, 1) + ' ' + fmt(y, 1) + ') scale(' + fmt(scale, 3) + ')" class="sl-cad-light-fixture" data-ps-graphic-part="lighting-fixture-icon" data-graphics-symbol="cad-edge-light-marker">' +
+        '<rect x="-11" y="-5" width="22" height="10" rx="1.5" fill="rgba(2,6,23,.82)" stroke="' + esc(stroke) + '" stroke-width="1.05" />' +
+        '<line x1="-15" y1="6.5" x2="15" y2="6.5" stroke="' + esc(stroke) + '" stroke-width=".9" stroke-linecap="round" />' +
+        '<path d="M -13 -5 L 13 -5 L 7 -17 L -7 -17 Z" fill="rgba(15,23,42,.84)" stroke="' + esc(stroke) + '" stroke-width="1.05" stroke-linejoin="round" />' +
+        '<line x1="-5" y1="-17" x2="5" y2="-17" stroke="' + esc(accent) + '" stroke-width="1.05" stroke-linecap="round" />' +
+        '<line x1="0" y1="-18" x2="0" y2="-37" stroke="' + esc(accent) + '" stroke-opacity=".42" stroke-width=".75" stroke-dasharray="3 4" stroke-linecap="round" />' +
       '</g>';
   }
 
