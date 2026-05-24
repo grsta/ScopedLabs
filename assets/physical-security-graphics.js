@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-034-scene-fc-halo-intensity";
+  const VERSION = "physical-security-graphics-035-scene-fc-halo-size-intensity";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -958,14 +958,22 @@
     const lumensPerSqFtMax = Math.max(lumenDensity, 12);
     const loadBarW = Math.max(8, Math.min(barW, barW * (lumenDensity / lumensPerSqFtMax)));
 
-    // Visual-only intensity model: shows lower fc targets as softer halos and higher fc targets as stronger halos.
+    // Visual-only intensity model: higher fc targets draw larger/brighter halos; lower fc targets draw smaller/softer halos.
     // This is not a fixture photometric simulation.
-    const haloFcVisual = clamp(Math.sqrt(Math.max(targetFc, 0.1) / 5), 0.18, 1.12);
-    const haloMaintenanceVisual = clamp(0.72 + (effectiveFactor * 0.50), 0.74, 1.08);
-    const haloVisual = clamp(haloFcVisual * haloMaintenanceVisual, 0.18, 1.12);
-    const haloOuterOpacity = clamp(0.16 + (haloVisual * 0.52), 0.20, 0.78);
-    const haloMidOpacity = clamp(0.22 + (haloVisual * 0.58), 0.26, 0.88);
-    const haloCoreOpacity = clamp(0.28 + (haloVisual * 0.62), 0.32, 0.96);
+    const haloFcVisual = clamp(Math.sqrt(Math.max(targetFc, 0.1) / 5), 0.26, 1.38);
+    const haloMaintenanceVisual = clamp(0.78 + (effectiveFactor * 0.44), 0.78, 1.10);
+    const haloVisual = clamp(haloFcVisual * haloMaintenanceVisual, 0.24, 1.42);
+
+    const haloOuterRx = clamp(78 + (haloVisual * 54), 84, 154);
+    const haloOuterRy = clamp(38 + (haloVisual * 28), 42, 78);
+    const haloMidRx = clamp(46 + (haloVisual * 38), 50, 98);
+    const haloMidRy = clamp(22 + (haloVisual * 22), 24, 52);
+    const haloCoreRx = clamp(18 + (haloVisual * 24), 20, 50);
+    const haloCoreRy = clamp(9 + (haloVisual * 14), 10, 28);
+
+    const haloOuterOpacity = clamp(0.10 + (haloVisual * 0.58), 0.18, 0.88);
+    const haloMidOpacity = clamp(0.15 + (haloVisual * 0.66), 0.22, 0.96);
+    const haloCoreOpacity = clamp(0.22 + (haloVisual * 0.72), 0.30, 1.00);
 
     const planX = 112;
     const planY = 235;
@@ -1001,14 +1009,14 @@
       const haloCy = planY + Math.max(58, planH * 0.50);
       const fixtureScale = 0.34;
       const headOffsetFromBase = 122 * fixtureScale;
-      const iconHeadY = planY + planH - 50;
+      const iconHeadY = planY + planH - 62;
       const iconBaseY = iconHeadY + headOffsetFromBase;
 
       return "" +
         '<g data-ps-graphic-part="lighting-fixture">' +
-          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy, 1) + '" rx="118" ry="60" fill="url(#psSceneLightHaloOuter)" opacity="' + fmt(haloOuterOpacity, 2) + '" />' +
-          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 1, 1) + '" rx="72" ry="34" fill="url(#psSceneLightHaloMid)" opacity="' + fmt(haloMidOpacity, 2) + '" />' +
-          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 1, 1) + '" rx="34" ry="16" fill="url(#psSceneLightHaloCore)" opacity="' + fmt(haloCoreOpacity, 2) + '" />' +
+          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy, 1) + '" rx="' + fmt(haloOuterRx, 1) + '" ry="' + fmt(haloOuterRy, 1) + '" fill="url(#psSceneLightHaloOuter)" opacity="' + fmt(haloOuterOpacity, 2) + '" />' +
+          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 1, 1) + '" rx="' + fmt(haloMidRx, 1) + '" ry="' + fmt(haloMidRy, 1) + '" fill="url(#psSceneLightHaloMid)" opacity="' + fmt(haloMidOpacity, 2) + '" />' +
+          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 1, 1) + '" rx="' + fmt(haloCoreRx, 1) + '" ry="' + fmt(haloCoreRy, 1) + '" fill="url(#psSceneLightHaloCore)" opacity="' + fmt(haloCoreOpacity, 2) + '" />' +
 
           '<line x1="' + fmt(haloCx, 1) + '" y1="' + fmt(haloCy + 18, 1) + '" x2="' + fmt(haloCx, 1) + '" y2="' + fmt(iconHeadY + 5, 1) + '" stroke="rgba(255,226,128,.14)" stroke-width=".8" stroke-dasharray="4 7" />' +
 
