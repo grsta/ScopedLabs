@@ -1503,7 +1503,7 @@
           style="position:absolute; left:-10000px; top:auto; width:800px; max-height:1px; overflow:hidden; opacity:0; pointer-events:none;"
         ></section>
 
-        <div class="btn-row" style="margin-top: 14px; display: flex; align-items: center; justify-content: flex-start; gap: 12px; flex-wrap: wrap;">
+        <div id="spacingFlowActions" class="btn-row" style="margin-top: 14px; display: flex; align-items: center; justify-content: flex-start; gap: 12px; flex-wrap: wrap;">
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
 
           <div id="next-step-row" style="display:none;">
@@ -1591,6 +1591,9 @@
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-004-back-continue-proof"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
   <script src="./script.js?v=physical-security-spacing-assistant-export-shell-001"></script>
+  <script>
+    window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "spacingFlowActions" });
+  </script>
   <script defer src="/assets/help.js?v=help-033-camera-spacing-kb-card"></script>
 </body>
 </html>
