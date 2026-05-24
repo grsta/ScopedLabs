@@ -657,7 +657,126 @@ function hideVisibleFlowContext() {
     updateActiveAreaFromLicensePlate(data, manualOverrideMeta);
   }
 
+  
+  // data-scopedlabs-plate-structured-export-001
+  function plateExportRoot() {
+    return els.toolCard || document.getElementById("toolCard") || document.querySelector("main .container") || document.body;
+  }
+
+  function escapePlateExportHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function plateFallbackExportTable(title, rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : []).filter((row) => row && row[0] && row[1] != null);
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">' + escapePlateExportHtml(title) + '</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Value</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          cleanRows.map((row) =>
+            '<tr>' +
+              '<td style="width:42%;padding:8px 10px;border-bottom:1px solid #d8dee6;color:#4b5563;vertical-align:top;">' + escapePlateExportHtml(row[0]) + '</td>' +
+              '<td style="padding:8px 10px;border-bottom:1px solid #d8dee6;color:#111827;font-weight:700;text-align:left;vertical-align:top;">' + escapePlateExportHtml(row[1]) + '</td>' +
+            '</tr>'
+          ).join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function plateFallbackNotesTable(rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : []).filter((row) => row && row[0] && row[1]);
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<table style="width:100%;border-collapse:collapse;margin:12px 0 0 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          cleanRows.map((row) =>
+            '<tr>' +
+              '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapePlateExportHtml(row[0]) + '</td>' +
+              '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' + escapePlateExportHtml(row[1]) + '</td>' +
+            '</tr>'
+          ).join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function clearPlateStructuredExport() {
+    document.querySelectorAll('[data-plate-structured-export="true"]').forEach((node) => node.remove());
+  }
+
+  function plateStructuredExportTables(data) {
+    if (!data || !data.ok) return "";
+
+    const metrics = [
+      ["Plate readability target", data.classification],
+      ["Max capture distance", fmtFt(data.maxDist)],
+      ["Actual working distance", fmtFt(data.dist)],
+      ["Range margin", data.marginFt >= 0 ? fmtFt(data.marginFt) : "-" + fmtFt(Math.abs(data.marginFt))],
+      ["Horizontal resolution", fmtPx(data.res)],
+      ["Horizontal FOV", fmt(data.hfov, 1) + "°"],
+      ["Target pixels per plate", fmtPx(data.ppp)],
+      ["Delivered pixels per plate", fmtPx(data.deliveredPpp, 1)],
+      ["Plate width assumption", fmtFt(data.pw, 2)],
+      ["Range utilization", fmtPct(data.utilizationPct)],
+      ["Assistant status", data.status],
+      ["Validation type", "Optional license plate validation"]
+    ];
+
+    const handoff = "Use this result as a specialist vehicle-detail validation branch. Plate capture should be validated separately from general coverage because shutter speed, glare, plate angle, IR behavior, and vehicle speed can dominate real-world readability.";
+
+    const notes = [
+      ["Engineering interpretation", data.interpretation],
+      ["Dominant constraint", data.dominantConstraint],
+      ["Recommended action", data.guidance],
+      ["Final validation note", handoff]
+    ];
+
+    const metricHtml = window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderMetricTable === "function"
+      ? window.ScopedLabsAssistantExport.renderMetricTable("License Plate Design Summary", metrics)
+      : plateFallbackExportTable("License Plate Design Summary", metrics);
+
+    const notesHtml = window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderNotesTable === "function"
+      ? window.ScopedLabsAssistantExport.renderNotesTable(notes)
+      : plateFallbackNotesTable(notes);
+
+    return "" +
+      '<div class="plate-export-structured-tables" data-plate-structured-export="true" data-export-section data-export-suppress-title="true" style="position:absolute;left:-10000px;top:auto;width:820px;max-height:1px;overflow:hidden;opacity:0;pointer-events:none;">' +
+        metricHtml +
+        notesHtml +
+      '</div>';
+  }
+
+  function renderPlateStructuredExport(data) {
+    clearPlateStructuredExport();
+
+    const html = plateStructuredExportTables(data);
+    if (!html) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html;
+    const node = wrapper.firstElementChild;
+    if (!node) return;
+
+    plateExportRoot().appendChild(node);
+  }
+
+
+
   function renderError(message) {
+    clearPlateStructuredExport();
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     hideComplete();
@@ -712,6 +831,7 @@ function hideVisibleFlowContext() {
       }
     });
 
+    renderPlateStructuredExport(data);
     writeFlow(data);
     showComplete();
   }
