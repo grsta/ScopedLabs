@@ -1,6 +1,6 @@
 /*
  * ScopedLabs Physical Security Tool Shell V1 Audit
- * Version: physical-security-shell-audit-001-registry-driven
+ * Version: physical-security-shell-audit-002-shell-opt-in
  *
  * Registry-driven read-only audit.
  * No files are modified by this script.
@@ -203,6 +203,25 @@ function graphicsScriptOrderOk(html, rendererKeys) {
   return sharedIdx >= 0 && psIdx > sharedIdx && localIdx > psIdx;
 }
 
+function shellOptInStatus(html) {
+  const srcs = scriptSrcs(html);
+
+  const registryIdx = scriptIndex(srcs, "/assets/physical-security-tool-registry.js");
+  const shellIdx = scriptIndex(srcs, "/assets/scopedlabs-tool-shell.js");
+  const localIdx = scriptIndex(srcs, "./script.js");
+
+  const registryLoaded = registryIdx >= 0;
+  const shellLoaded = shellIdx >= 0;
+  const optIn = registryLoaded || shellLoaded;
+
+  return {
+    optIn,
+    registryLoaded,
+    shellLoaded,
+    orderOk: !optIn || (registryLoaded && shellLoaded && shellIdx > registryIdx && localIdx > shellIdx)
+  };
+}
+
 function audit() {
   if (!fs.existsSync(registryPath)) {
     throw new Error("Missing registry: assets/physical-security-tool-registry.js");
@@ -235,6 +254,7 @@ function audit() {
     const roleOk = !!tool.role;
     const kbOk = !!tool.kbKey;
     const graphicsOrderOk = graphicsScriptOrderOk(html, rendererKeys);
+    const shell = shellOptInStatus(html);
 
     const issues = [];
     if (!pathOk) issues.push("missing index/script path");
@@ -244,6 +264,7 @@ function audit() {
     if (missingRendererRefs.length) issues.push("missing renderer refs: " + missingRendererRefs.join(", "));
     if (badRendererContracts.length) issues.push("bad renderer contracts: " + badRendererContracts.join(", "));
     if (!graphicsOrderOk) issues.push("graphics script order issue");
+    if (!shell.orderOk) issues.push("tool shell opt-in script order issue");
 
     rows.push({
       slug,
@@ -256,14 +277,20 @@ function audit() {
       pathOk: yesNo(pathOk),
       kbKey: tool.kbKey || "-",
       graphicsOrderOk: yesNo(graphicsOrderOk),
+      toolShellOptIn: yesNo(shell.optIn),
+      shellRegistry: yesNo(shell.registryLoaded),
+      shellHelper: yesNo(shell.shellLoaded),
+      shellOrderOk: yesNo(shell.orderOk),
       status: issues.length ? "watch" : "ok",
       issues: issues.join("; ") || "-"
     });
   }
 
   const watch = rows.filter((row) => row.status !== "ok");
+  const optIns = rows.filter((row) => row.toolShellOptIn === "yes");
 
   console.log("\nPhysical Security Registry-Driven Shell Audit\n");
+  console.log("Audit version: physical-security-shell-audit-002-shell-opt-in");
   console.log("Registry version:", registry.version);
   console.log("Category:", registry.category);
   console.log("Tools in registry:", registry.listTools().length);
@@ -276,7 +303,15 @@ function audit() {
   console.log(`- Pipeline order tools: ${registry.pipelineOrder.length}`);
   console.log(`- Optional validation tools: ${registry.optionalValidations.length}`);
   console.log(`- Clean registry-driven tools: ${rows.length - watch.length}/${rows.length}`);
+  console.log(`- Tool Shell opt-in tools: ${optIns.length}/${rows.length}`);
   console.log(`- Watch issues: ${watch.length}`);
+
+  if (optIns.length) {
+    console.log("\nTool Shell opt-ins:");
+    for (const row of optIns) {
+      console.log(`- ${row.slug}: registry=${row.shellRegistry}, helper=${row.shellHelper}, order=${row.shellOrderOk}`);
+    }
+  }
 
   if (watch.length) {
     console.log("\nWatch items:");
