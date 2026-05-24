@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-031-scene-chip-status-layout";
+  const VERSION = "physical-security-graphics-033-scene-chip-row-only-lift";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -970,7 +970,7 @@
     const effectiveChipW = 132;
     const chipRowW = areaChipW + lumensChipW + ufChipW + effectiveChipW + (chipGap * 3);
     const chipStartX = stage.x + ((stage.width - chipRowW) / 2);
-    const chipRowY = 458;
+    const chipRowY = 444;
 
     const fixtureY = planY + planH - 8;
     const fixtureXs = [
