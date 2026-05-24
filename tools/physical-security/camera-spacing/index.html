@@ -1345,6 +1345,13 @@
   </style>
 
 
+
+  <style data-camera-spacing-hide-technical-results-001>
+    body[data-tool="camera-spacing"] .spacing-technical-results-card {
+      display: none !important;
+    }
+  </style>
+
 </head>
 
 <body data-suppress-default-export-interpretation="true"
@@ -1472,9 +1479,9 @@
           <button id="reset" class="btn" type="button">Reset</button>
         </div>
 
-        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+        <div class="card spacing-technical-results-card" aria-hidden="true" style="margin-top: 14px; background: rgba(0,0,0,.14);">
           <h3 class="h3" style="margin-top: 0;">Results</h3>
-          <div id="results" class="results-grid" aria-live="polite">
+          <div id="results" class="results-grid spacing-technical-results" aria-live="polite" aria-hidden="true">
             <div class="muted">Enter valid values and press Calculate.</div>
           </div>
           <div id="analysis-copy" style="display:none;"></div>
