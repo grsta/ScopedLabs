@@ -33,7 +33,7 @@ const rows = tools.map((tool) => {
   const html = read(file);
   const srcs = scripts(html);
 
-  const rowMatch = html.match(/<div\s+id=["']([^"']*(?:FlowActions|flowActions|Actions)[^"']*)["'][^>]*>/i);
+  const rowMatch = html.match(/<div\\s+id=["\']([^"\']*(?:FlowActions|flowActions|Actions|nav-row)[^"\']*)["\'][^>]*>/i);
   const helperCallMatch = html.match(/applyBackContinueShell\?\.\(\{\s*rowId:\s*"([^"]+)"/);
 
   const hasBack = /Back to Physical Security/i.test(html);
