@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-022-pipeline-label-title-cleanup
+ * Version: scopedlabs-category-modernizer-025-cta-export-unlock-apply
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -1114,6 +1114,129 @@ const CacheBustModule = {
   }
 };
 
+const CtaStandardModule = {
+  id: "cta-standard",
+  version: "cta-standard-module-003-export-unlock-apply",
+  description: "Audits CTA labels and safely standardizes export/unlock CTA copy.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    function cleanText(value) {
+      return String(value || "")
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&rarr;/gi, "?")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function getAttr(attrs, name) {
+      const rx = new RegExp("\\b" + name + "\\s*=\\s*([\"'])(.*?)\\1", "i");
+      const m = String(attrs || "").match(rx);
+      return m ? m[2] : "";
+    }
+
+    let patched = html;
+    const findings = [];
+    const actions = [];
+
+    const ctaRx = /<(button|a)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+    let match;
+
+    while ((match = ctaRx.exec(html))) {
+      const tag = match[1].toLowerCase();
+      const attrs = match[2] || "";
+      const text = cleanText(match[3]);
+      const id = getAttr(attrs, "id") || "-";
+      const cls = getAttr(attrs, "class") || "-";
+
+      const looksLikeCta =
+        /btn|button|cta|continue|export|snapshot|guide|kb|back|print|copy|calc|reset/i.test(attrs) ||
+        /continue|back|export|snapshot|guide|knowledge|print|copy|save|open|calculate|check|estimate|reset|unlock|return|explore/i.test(text);
+
+      if (!looksLikeCta || !text) continue;
+
+      if (id === "calc") {
+        findings.push("calc=" + text);
+      }
+
+      if (id === "exportReport") {
+        if (text === "Open Export Report") {
+          findings.push("exportReport: Open Export Report -> Open Report");
+        } else {
+          findings.push("exportReport=" + text);
+        }
+      }
+
+      if (id === "saveSnapshot") {
+        findings.push("saveSnapshot=" + text);
+      }
+
+      if (id === "continue") {
+        findings.push("continue=" + text);
+      }
+
+      if (/^Unlock Pro$/i.test(text)) {
+        findings.push("unlock: Unlock Pro -> Unlock Pro for Physical Security");
+      }
+
+      if (/Back to Physical Security/i.test(text)) {
+        findings.push("back=Back to Physical Security");
+      }
+
+      if (/Open KB Guide|Knowledge Base|Guide/i.test(text) && cls.includes("nav-tab")) {
+        findings.push("guide/nav=" + text);
+      }
+    }
+
+    patched = patched.replace(
+      /(<button\b(?=[^>]*\bid\s*=\s*["']exportReport["'])[^>]*>)\s*Open Export Report\s*(<\/button>)/gi,
+      function(match, open, close) {
+        actions.push("standardize-export-report-label");
+        return open + "Open Report" + close;
+      }
+    );
+
+    patched = patched.replace(
+      /(<a\b(?=[^>]*\bclass\s*=\s*["'][^"']*\bbtn-primary\b[^"']*["'])[^>]*>)\s*Unlock Pro\s*(<\/a>)/gi,
+      function(match, open, close) {
+        actions.push("standardize-unlock-label");
+        return open + "Unlock Pro for Physical Security" + close;
+      }
+    );
+
+    const hasPatch = patched !== html;
+
+    if (apply && hasPatch) {
+      write(indexFile, patched);
+    }
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: "SAFE",
+      action: hasPatch
+        ? (apply ? "applied:" + [...new Set(actions)].join("+") : [...new Set(actions)].join("+"))
+        : "noop",
+      rowId: "-",
+      detail: findings.length ? findings.join("; ") : "no CTA findings"
+    };
+  }
+};
+
 
 const DiagnosticsModule = {
   id: "diagnostics",
@@ -1260,7 +1383,8 @@ const BackContinueModule = {
   }
 };
 
-const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule, DiagnosticsModule];
+const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule,CtaStandardModule,
+   DiagnosticsModule];
 
 const args = process.argv.slice(2);
 const summaryOnly = args.includes("--summary-only");
@@ -1304,7 +1428,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-022-pipeline-label-title-cleanup");
+console.log("Version: scopedlabs-category-modernizer-025-cta-export-unlock-apply");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
