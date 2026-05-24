@@ -751,6 +751,37 @@ function hideVisibleFlowContext() {
     els.pixelVisual.setAttribute("data-export-section", "true");
     els.pixelVisual.setAttribute("data-export-title", "Pixel Density Detail Geometry");
     els.pixelVisual.setAttribute("data-export-compact-svg", "true");
+
+    // data-scopedlabs-pixel-export-notes-001
+    const pixelExportHandoff =
+      "Carry the delivered pixel density of " + fmtPpf(data.ppf) +
+      " against the target of " + fmtPpf(data.tppf) +
+      " into Lens Selection. Lens Selection should preserve this detail requirement while validating focal length, HFOV, target width, and working distance.";
+
+    const pixelExportNotes = [
+      ["Engineering interpretation", data.interpretation],
+      ["Dominant constraint", data.dominantConstraint],
+      ["Recommended action", data.guidance],
+      ["Lens Selection handoff", pixelExportHandoff]
+    ];
+
+    const pixelDensityExportNotesTable =
+      '<table style="width:100%;border-collapse:collapse;margin:12px 0 0 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          pixelExportNotes
+            .filter((row) => row && row[0] && row[1])
+            .map((row) =>
+              '<tr>' +
+                '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapeHtml(row[0]) + '</td>' +
+                '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' + escapeHtml(row[1]) + '</td>' +
+              '</tr>'
+            ).join("") +
+        '</tbody>' +
+      '</table>';
     els.pixelVisual.innerHTML =
       '<div class="pixel-density-visual-head">' +
         '<div>' +
@@ -769,6 +800,7 @@ function hideVisibleFlowContext() {
           '<tr><td>Scene width</td><td>' + escapeHtml(fmtFt(data.sceneW)) + '</td></tr>' +
           '<tr><td>Target width</td><td>' + escapeHtml(fmtFt(data.tw)) + '</td></tr>' +
         '</tbody></table>' +
+        pixelDensityExportNotesTable +
       '</div>';
   }
 
