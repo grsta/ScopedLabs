@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-030-scene-proportional-streetlight";
+  const VERSION = "physical-security-graphics-031-scene-chip-status-layout";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -928,8 +928,8 @@
     }
 
     const svgW = 800;
-    const svgH = 500;
-    const stage = { x: 34, y: 170, width: 732, height: 286 };
+    const svgH = 526;
+    const stage = { x: 34, y: 170, width: 732, height: 314 };
 
     const statusLabel = status.includes("risk") ? "RISK" : status.includes("watch") ? "WATCH" : "HEALTHY";
     const statusColor = statusLabel === "RISK"
@@ -962,6 +962,15 @@
     const planY = 235;
     const planW = 520;
     const planH = 142;
+
+    const chipGap = 14;
+    const areaChipW = 132;
+    const lumensChipW = 126;
+    const ufChipW = 136;
+    const effectiveChipW = 132;
+    const chipRowW = areaChipW + lumensChipW + ufChipW + effectiveChipW + (chipGap * 3);
+    const chipStartX = stage.x + ((stage.width - chipRowW) / 2);
+    const chipRowY = 458;
 
     const fixtureY = planY + planH - 8;
     const fixtureXs = [
@@ -1031,7 +1040,7 @@
 
         '<text x="54" y="194" fill="rgba(125,255,158,.78)" font-size="10.4" font-weight="950" letter-spacing=".11em">TOP-DOWN MAINTAINED-LIGHT PLAN</text>' +
         '<text x="54" y="214" fill="rgba(226,232,240,.56)" font-size="9.5" font-weight="720">Conceptual fixture falloff visualization, not a fixture photometric simulation.</text>' +
-        CAD.statusPill(708, 188, statusLabel, {
+        CAD.statusPill(674, 190, statusLabel, {
           width: 66,
           height: 22,
           color: statusColor,
@@ -1053,7 +1062,7 @@
         '<text x="' + (planX + 18) + '" y="' + (planY + 43) + '" fill="rgba(226,232,240,.64)" font-size="10" font-weight="760">Brighter overlap areas show stronger conceptual fixture contribution</text>' +
         '<text x="' + (planX + planW - 18) + '" y="' + (planY + 24) + '" text-anchor="end" fill="' + statusColor + '" font-size="11" font-weight="950">' + esc(fmt(targetFc, 1) + " fc target") + '</text>' +
 
-        CAD.dimensionLine(planX, planY + planH + 28, planX + planW, planY + planH + 28, "Area width: " + fmtFt(areaWidth, 0), {
+        CAD.dimensionLine(planX, planY + planH + 24, planX + planW, planY + planH + 24, "Area width: " + fmtFt(areaWidth, 0), {
           color: colors.axis,
           labelFill: "rgba(226,232,240,.72)",
           tick: 7
@@ -1064,22 +1073,22 @@
           tick: 7
         }) +
 
-        CAD.metricChip(54, 430, "AREA", fmt(areaSqFt, 0) + " sq ft", {
+        CAD.metricChip(chipStartX, chipRowY, "AREA", fmt(areaSqFt, 0) + " sq ft", {
           accent: "rgba(125,255,158,.82)",
           valueFill: "rgba(248,250,252,.88)",
           width: 132
         }) +
-        CAD.metricChip(202, 430, "LUMENS", fmt(lumens, 0), {
+        CAD.metricChip(chipStartX + areaChipW + chipGap, chipRowY, "LUMENS", fmt(lumens, 0), {
           accent: statusColor,
           valueFill: statusColor,
           width: 126
         }) +
-        CAD.metricChip(344, 430, "UF / LLF", fmtPct(ufPct, 0) + " / " + fmtPct(llfPct, 0), {
+        CAD.metricChip(chipStartX + areaChipW + chipGap + lumensChipW + chipGap, chipRowY, "UF / LLF", fmtPct(ufPct, 0) + " / " + fmtPct(llfPct, 0), {
           accent: "rgba(255,226,128,.86)",
           valueFill: "rgba(255,239,176,.92)",
           width: 136
         }) +
-        CAD.metricChip(496, 430, "EFFECTIVE", fmtPct(effectiveFactor * 100, 0), {
+        CAD.metricChip(chipStartX + areaChipW + chipGap + lumensChipW + chipGap + ufChipW + chipGap, chipRowY, "EFFECTIVE", fmtPct(effectiveFactor * 100, 0), {
           accent: statusColor,
           valueFill: statusColor,
           width: 132
