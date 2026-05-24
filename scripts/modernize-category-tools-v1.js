@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-025-cta-export-unlock-apply
+ * Version: scopedlabs-category-modernizer-028-card-title-apply
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -1237,6 +1237,98 @@ const CtaStandardModule = {
   }
 };
 
+const CardTitleStandardModule = {
+  id: "card-title-standard",
+  version: "card-title-standard-module-003-apply",
+  description: "Safely standardizes Physical Security card and section titles.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    function cleanText(value) {
+      return String(value || "")
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    const replacements = {
+      "scene-illumination": [
+        ["h2", "This tool starts the Physical Security Design Flow", "Starting the Physical Security Design Flow"]
+      ],
+      "mounting-height": [
+        ["h2", "This tool continues the Physical Security Design Flow", "Continuing the Physical Security Design Flow"]
+      ],
+      "field-of-view": [
+        ["h2", "This tool continues the Physical Security Design Flow", "Continuing the Physical Security Design Flow"]
+      ],
+      "face-recognition-range": [
+        ["h2", "This tool continues the Physical Security Design Flow", "Continuing the Physical Security Design Flow"]
+      ],
+      "pixel-density": [
+        ["h2", "This tool continues the Physical Security Design Flow", "Continuing the Physical Security Design Flow"]
+      ],
+      "license-plate-range": [
+        ["h2", "This tool completes the Physical Security design flow", "Completing the Physical Security Design Flow"],
+        ["h2", "Inputs", "Planning Inputs"]
+      ],
+      "camera-coverage-area": [
+        ["h3", "Export & Snapshot", "Export Report"]
+      ]
+    };
+
+    let patched = html;
+    const planned = [];
+    const actions = [];
+
+    for (const [tag, from, to] of replacements[tool] || []) {
+      const rx = new RegExp("<" + tag + "\\b([^>]*)>[\\s\\S]*?<\\/" + tag + ">", "gi");
+
+      patched = patched.replace(rx, function(match, attrs) {
+        const text = cleanText(match);
+
+        if (text !== from) {
+          return match;
+        }
+
+        planned.push(tag + ": " + from + " -> " + to);
+        actions.push("standardize-card-title");
+        return "<" + tag + attrs + ">" + to + "</" + tag + ">";
+      });
+    }
+
+    const hasPatch = patched !== html;
+
+    if (apply && hasPatch) {
+      write(indexFile, patched);
+    }
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: "SAFE",
+      action: hasPatch
+        ? (apply ? "applied:" + [...new Set(actions)].join("+") : [...new Set(actions)].join("+"))
+        : "noop",
+      rowId: "-",
+      detail: planned.length ? planned.join("; ") : "card titles look standard"
+    };
+  }
+};
+
 
 const DiagnosticsModule = {
   id: "diagnostics",
@@ -1384,7 +1476,8 @@ const BackContinueModule = {
 };
 
 const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule,CtaStandardModule,
-   DiagnosticsModule];
+   
+  CardTitleStandardModule,DiagnosticsModule];
 
 const args = process.argv.slice(2);
 const summaryOnly = args.includes("--summary-only");
@@ -1428,7 +1521,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-025-cta-export-unlock-apply");
+console.log("Version: scopedlabs-category-modernizer-028-card-title-apply");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
