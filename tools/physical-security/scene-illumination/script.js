@@ -858,6 +858,26 @@ function hideVisibleFlowContext() {
     document.querySelectorAll('[data-scene-structured-export="true"]').forEach((node) => node.remove());
   }
 
+
+  // data-scopedlabs-scene-export-visual-001
+  function sceneIlluminationExportVisualSvg(data) {
+    if (!data || !data.ok) return "";
+
+    const gfx = window.ScopedLabsGraphics;
+    if (!gfx || typeof gfx.render !== "function" || typeof sceneIlluminationGraphicsModel !== "function") {
+      return "";
+    }
+
+    const svg = gfx.render("scene-illumination-lighting-plan", sceneIlluminationGraphicsModel(data));
+    if (typeof svg !== "string" || !svg.includes("<svg")) return "";
+
+    return "" +
+      '<div data-scene-export-visual="true" style="break-inside:avoid;margin:0 0 12px 0;">' +
+        svg +
+      '</div>';
+  }
+
+
   function sceneStructuredExportTables(data) {
     if (!data || !data.ok) return "";
 
@@ -903,8 +923,11 @@ function hideVisibleFlowContext() {
       ? window.ScopedLabsAssistantExport.renderNotesTable(notes)
       : sceneFallbackNotesTable(notes);
 
+    const visualHtml = sceneIlluminationExportVisualSvg(data);
+
     return "" +
       '<div class="scene-export-structured-tables" data-scene-structured-export="true" data-export-section data-export-suppress-title="true" style="position:absolute;left:-10000px;top:auto;width:820px;max-height:1px;overflow:hidden;opacity:0;pointer-events:none;">' +
+        visualHtml +
         metricHtml +
         notesHtml +
       '</div>';
