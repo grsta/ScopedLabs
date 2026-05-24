@@ -225,97 +225,9 @@
     }
   </style>
 
-
-  <style data-physical-security-assistant-live-summary-001>
-    body[data-tool="scene-illumination"] .assistant-live-summary {
-      display: grid;
-      gap: 12px;
-      margin: 14px 0 0;
-      padding: 16px;
-      border-radius: 16px;
-      border: 1px solid rgba(125,255,152,.18);
-      background:
-        radial-gradient(circle at 12% 0%, rgba(125,255,152,.075), transparent 34%),
-        rgba(255,255,255,.028);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.055);
-    }
-
-    body[data-tool="scene-illumination"] .assistant-live-summary-head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    body[data-tool="scene-illumination"] .assistant-live-summary-title {
-      margin: 0;
-      color: rgba(255,255,255,.94);
-      font-size: 1.02rem;
-      line-height: 1.25;
-      font-weight: 900;
-    }
-
-    body[data-tool="scene-illumination"] .assistant-live-summary-copy {
-      margin: 6px 0 0;
-      color: rgba(226,232,240,.76);
-      line-height: 1.55;
-    }
-
-    body[data-tool="scene-illumination"] .assistant-live-summary-pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 28px;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(125,255,152,.25);
-      background: rgba(125,255,152,.08);
-      color: rgba(172,255,190,.96);
-      font-size: .72rem;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    body[data-tool="scene-illumination"] .assistant-live-summary-grid {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    body[data-tool="scene-illumination"] .assistant-live-summary-item {
-      padding: 12px;
-      border-radius: 13px;
-      border: 1px solid rgba(148,163,184,.16);
-      background: rgba(15,23,42,.24);
-    }
-
-    body[data-tool="scene-illumination"] .assistant-live-summary-label {
-      display: block;
-      margin-bottom: 5px;
-      color: rgba(148,163,184,.82);
-      font-size: .72rem;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    body[data-tool="scene-illumination"] .assistant-live-summary-value {
-      color: rgba(226,232,240,.86);
-      line-height: 1.45;
-      font-size: .92rem;
-    }
-
-    body[data-tool="scene-illumination"] .assistant-technical-results-card,
+  <style data-physical-security-hide-technical-results-001>
     body[data-tool="scene-illumination"] .assistant-technical-results {
       display: none !important;
-    }
-
-    @media (max-width: 860px) {
-      body[data-tool="scene-illumination"] .assistant-live-summary-grid {
-        grid-template-columns: 1fr;
-      }
     }
   </style>
 
@@ -498,15 +410,6 @@
         <div class="card assistant-results-card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
           <h3 class="h3" style="margin-top: 0;">Scene Illumination Assistant</h3>
           <p class="muted" style="margin-top: -4px;">Review the lighting baseline, planning factor pressure, and recommended correction path before carrying the scene into mounting-height decisions.</p>
-          <div id="assistantLiveSummary" class="assistant-live-summary" data-assistant-live-summary aria-live="polite">
-            <div class="assistant-live-summary-head">
-              <div>
-                <h4 class="assistant-live-summary-title">Ready to review lighting assumptions.</h4>
-                <p class="assistant-live-summary-copy">Run the lighting estimate to generate the assistant recommendation, design pressure, correction path, and mounting-height handoff.</p>
-              </div>
-              <span class="assistant-live-summary-pill">Ready</span>
-            </div>
-          </div>
 
           <div id="results" class="results-grid assistant-technical-results" aria-live="polite" aria-hidden="true">
             <div class="muted">Enter values and press Estimate Lighting.</div>
@@ -607,7 +510,7 @@
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-004-back-continue-proof"></script>
 
-  <script src="./script.js?v=physical-security-scene-assistant-live-summary-001"></script>
+  <script src="./script.js?v=physical-security-scene-hide-results-only-001"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "sceneFlowActions" });
   </script>

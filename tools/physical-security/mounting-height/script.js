@@ -1008,91 +1008,8 @@ function hideVisibleFlowContext() {
 
     mountingExportRoot().appendChild(node);
   }
-
-
-
-  
-  // data-physical-security-assistant-live-summary-001
-  function assistantLiveSummaryEl() {
-    return document.getElementById("assistantLiveSummary");
-  }
-
-  function escapeAssistantSummaryHtml(value) {
-    return String(value == null ? "" : value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function formatAssistantStatus(value) {
-    const text = String(value || "Ready").trim();
-    if (!text) return "Ready";
-    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-  }
-
-  function renderAssistantLiveSummary(data) {
-    const el = assistantLiveSummaryEl();
-    if (!el || !data || !data.ok) return;
-
-    const status = formatAssistantStatus(data.status);
-    const summary = data.interpretation || "Review the calculated output before carrying this step forward.";
-    const constraint = data.dominantConstraint || "No dominant constraint was identified from the current model.";
-    const action = data.guidance || "Continue through the design flow once the assumptions match the intended scenario.";
-
-    el.hidden = false;
-    el.removeAttribute("hidden");
-    el.setAttribute("aria-hidden", "false");
-
-    el.innerHTML =
-      '<div class="assistant-live-summary-head">' +
-        '<div>' +
-          '<h4 class="assistant-live-summary-title">Assistant recommendation ready.</h4>' +
-          '<p class="assistant-live-summary-copy">' + escapeAssistantSummaryHtml(summary) + '</p>' +
-        '</div>' +
-        '<span class="assistant-live-summary-pill">' + escapeAssistantSummaryHtml(status) + '</span>' +
-      '</div>' +
-      '<div class="assistant-live-summary-grid">' +
-        '<div class="assistant-live-summary-item">' +
-          '<span class="assistant-live-summary-label">Primary reason</span>' +
-          '<div class="assistant-live-summary-value">' + escapeAssistantSummaryHtml(constraint) + '</div>' +
-        '</div>' +
-        '<div class="assistant-live-summary-item">' +
-          '<span class="assistant-live-summary-label">Recommended action</span>' +
-          '<div class="assistant-live-summary-value">' + escapeAssistantSummaryHtml(action) + '</div>' +
-        '</div>' +
-        '<div class="assistant-live-summary-item">' +
-          '<span class="assistant-live-summary-label">Next step</span>' +
-          '<div class="assistant-live-summary-value">Carry the validated assumptions into the next Physical Security design step.</div>' +
-        '</div>' +
-      '</div>';
-  }
-
-  function renderAssistantLiveSummaryError(message) {
-    const el = assistantLiveSummaryEl();
-    if (!el) return;
-
-    el.hidden = false;
-    el.removeAttribute("hidden");
-    el.setAttribute("aria-hidden", "false");
-
-    el.innerHTML =
-      '<div class="assistant-live-summary-head">' +
-        '<div>' +
-          '<h4 class="assistant-live-summary-title">Input review needed.</h4>' +
-          '<p class="assistant-live-summary-copy">' + escapeAssistantSummaryHtml(message || "Check the inputs above, then run the calculation again.") + '</p>' +
-        '</div>' +
-        '<span class="assistant-live-summary-pill">Watch</span>' +
-      '</div>';
-  }
-
-
-
-
-
   function renderError(message) {
-    renderAssistantLiveSummaryError(message);
-    clearMountingStructuredExport();
+clearMountingStructuredExport();
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
@@ -1166,9 +1083,6 @@ function hideVisibleFlowContext() {
         chartMax: 100
       }
     });
-
-    
-    renderAssistantLiveSummary(data);
 renderMountingStructuredExport(data);
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
