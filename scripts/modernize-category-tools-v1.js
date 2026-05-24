@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-020-label-header-cleanup-crumbs-safe
+ * Version: scopedlabs-category-modernizer-021-canonical-title-cleanup
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -483,8 +483,8 @@ const BadgeCleanupModule = {
 
 const LabelStandardModule = {
   id: "label-standard",
-  version: "label-standard-module-004-crumbs-safe-header-cleanup",
-  description: "Safely removes old crumbs rows and standardizes obvious page title suffixes.",
+  version: "label-standard-module-005-canonical-title-cleanup",
+  description: "Safely removes crumbs rows and standardizes active page H1/title labels to registry titles.",
   run(tool, indexFile, html) {
     if (config.protectedTools.has(tool)) {
       return {
@@ -508,28 +508,36 @@ const LabelStandardModule = {
         .trim();
     }
 
-    const titleTargets = {
-      "scene-illumination": {
-        from: "Scene Illumination Estimator",
-        to: "Scene Illumination"
-      },
-      "camera-spacing": {
-        from: "Camera Spacing Planner",
-        to: "Camera Spacing"
-      },
-      "pixel-density": {
-        from: "Pixel Density Calculator",
-        to: "Pixel Density"
-      }
+    const canonical = {
+      "area-planner": "Area / Zone Planner",
+      "scene-illumination": "Scene Illumination",
+      "mounting-height": "Mounting Height",
+      "field-of-view": "Field of View",
+      "camera-coverage-area": "Camera Coverage Area",
+      "camera-spacing": "Camera Spacing",
+      "blind-spot-check": "Blind Spot Check",
+      "pixel-density": "Pixel Density",
+      "face-recognition-range": "Face Recognition Range",
+      "license-plate-range": "License Plate Capture Range"
+    };
+
+    const h1Aliases = {
+      "scene-illumination": ["Scene Illumination Estimator"],
+      "camera-coverage-area": ["Coverage Area"],
+      "camera-spacing": ["Camera Spacing Planner"],
+      "pixel-density": ["Pixel Density Calculator"]
     };
 
     let patched = html;
     const actions = [];
 
+    const expected = canonical[tool] || "";
+    const aliases = h1Aliases[tool] || [];
+
     const h1Before = cleanText((html.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/i) || [""])[0]);
     const titleBefore = cleanText((html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i) || ["", ""])[1]);
 
-    let breadcrumbRemoved = false;
+    let crumbsRemoved = false;
     const h1Index = patched.search(/<h1\b/i);
 
     if (h1Index >= 0) {
@@ -545,47 +553,56 @@ const LabelStandardModule = {
           return match;
         }
 
-        breadcrumbRemoved = true;
+        crumbsRemoved = true;
         return "\n";
       });
 
       patched = cleanedBeforeH1 + fromH1;
 
-      if (breadcrumbRemoved) {
+      if (crumbsRemoved) {
         actions.push("remove-crumbs-row");
       }
     }
 
-    const titleTarget = titleTargets[tool];
-
-    if (titleTarget) {
+    if (expected) {
       const h1Rx = /<h1\b([^>]*)>[\s\S]*?<\/h1>/i;
 
       patched = patched.replace(h1Rx, function(match, attrs) {
         const current = cleanText(match);
 
-        if (current !== titleTarget.from) {
+        if (current === expected) {
+          return match;
+        }
+
+        if (!aliases.includes(current)) {
           return match;
         }
 
         actions.push("standardize-h1");
-        return "<h1" + attrs + ">" + titleTarget.to + "</h1>";
+        return "<h1" + attrs + ">" + expected + "</h1>";
       });
 
       const titleRx = /<title\b([^>]*)>[\s\S]*?<\/title>/i;
 
       patched = patched.replace(titleRx, function(match, attrs) {
         const current = cleanText(match);
-        const fromPipe = titleTarget.from + " | ScopedLabs";
-        const fromBullet = titleTarget.from + " ? ScopedLabs";
-        const toPipe = titleTarget.to + " | ScopedLabs";
+        const accepted = new Set([
+          expected + " | ScopedLabs",
+          expected + " ? ScopedLabs",
+          ...aliases.map((alias) => alias + " | ScopedLabs"),
+          ...aliases.map((alias) => alias + " ? ScopedLabs")
+        ]);
 
-        if (current !== fromPipe && current !== fromBullet) {
+        if (current === expected + " | ScopedLabs") {
+          return match;
+        }
+
+        if (!accepted.has(current)) {
           return match;
         }
 
         actions.push("standardize-title");
-        return "<title" + attrs + ">" + toPipe + "</title>";
+        return "<title" + attrs + ">" + expected + " | ScopedLabs</title>";
       });
     }
 
@@ -599,7 +616,7 @@ const LabelStandardModule = {
     }
 
     const detail = [
-      "crumbs=" + (breadcrumbRemoved ? "planned-remove" : "none"),
+      "crumbs=" + (crumbsRemoved ? "planned-remove" : "none"),
       "h1=" + h1Before + (h1Before !== h1After ? " -> " + h1After : ""),
       "title=" + titleBefore + (titleBefore !== titleAfter ? " -> " + titleAfter : "")
     ].join("; ");
@@ -1282,7 +1299,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-017-hero-tier-badge-cleanup");
+console.log("Version: scopedlabs-category-modernizer-021-canonical-title-cleanup");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
