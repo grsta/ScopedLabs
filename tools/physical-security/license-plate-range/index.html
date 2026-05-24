@@ -138,6 +138,31 @@
     }
   </style>
 
+
+  <style data-license-plate-guided-presets-001>
+    body[data-tool="license-plate-range"] .plate-guided-preset {
+      width: 100%;
+      margin-top: 8px;
+      padding: 9px 11px;
+      border-radius: 11px;
+      border: 1px solid rgba(120, 255, 120, 0.22);
+      background: rgba(0, 0, 0, 0.22);
+      color: rgba(248, 250, 252, 0.90);
+      font-weight: 750;
+      outline: none;
+    }
+
+    body[data-tool="license-plate-range"] .plate-guided-preset:focus {
+      border-color: rgba(120, 255, 120, 0.52);
+      box-shadow: 0 0 0 3px rgba(120, 255, 120, 0.10);
+    }
+
+    body[data-tool="license-plate-range"] .plate-guided-preset option {
+      background: #07120b;
+      color: #f8fafc;
+    }
+  </style>
+
 </head>
 
 <body
@@ -230,6 +255,14 @@
               <label for="res">Horizontal Resolution (px)</label>
             </div>
             <input id="res" type="number" min="1" step="1" value="3840" />
+            <select id="resPreset" class="plate-guided-preset" aria-label="Horizontal resolution preset">
+              <option value="custom">Custom / imported value</option>
+              <option value="1920">1920 px — 1080p / 2MP</option>
+              <option value="2688">2688 px — 4MP class</option>
+              <option value="3072">3072 px — 6MP class</option>
+              <option value="3840">3840 px — 4K / 8MP</option>
+              <option value="4000">4000 px — 12MP class</option>
+            </select>
           </div>
 
           <div class="field">
@@ -237,6 +270,14 @@
               <label for="hfov">Horizontal FOV (deg)</label>
             </div>
             <input id="hfov" type="number" min="1" max="179" step="0.1" value="50" />
+            <select id="hfovPreset" class="plate-guided-preset" aria-label="Horizontal field of view preset">
+              <option value="custom">Custom / imported value</option>
+              <option value="12">12° — Tight LPR lane</option>
+              <option value="20">20° — Narrow driveway / gate</option>
+              <option value="30">30° — Balanced plate capture</option>
+              <option value="45">45° — Wider entry view</option>
+              <option value="60">60° — Overview only / weak LPR</option>
+            </select>
           </div>
 
           <div class="field">
@@ -244,6 +285,14 @@
               <label for="ppp">Pixels per Plate Target</label>
             </div>
             <input id="ppp" type="number" min="1" step="1" value="130" />
+            <select id="pppPreset" class="plate-guided-preset" aria-label="Target pixels per plate preset">
+              <option value="custom">Custom / imported value</option>
+              <option value="80">Low Confidence — 80 px/plate</option>
+              <option value="100">Basic Readability — 100 px/plate</option>
+              <option value="130">Readable — 130 px/plate</option>
+              <option value="160">High Certainty — 160 px/plate</option>
+              <option value="200">Strict Capture — 200 px/plate</option>
+            </select>
           </div>
 
           <div class="field">
@@ -251,6 +300,12 @@
               <label for="pw">Plate Width (ft)</label>
             </div>
             <input id="pw" type="number" min="0.01" step="0.01" value="1.0" />
+            <select id="pwPreset" class="plate-guided-preset" aria-label="Plate width preset">
+              <option value="custom">Custom / imported value</option>
+              <option value="1.00">US plate width — 1.00 ft</option>
+              <option value="1.08">Wide plate assumption — 1.08 ft</option>
+              <option value="0.92">Compact plate assumption — 0.92 ft</option>
+            </select>
           </div>
 
           <div class="field">
@@ -378,7 +433,7 @@
   <script src="/assets/physical-security-graphics.js?v=physical-security-graphics-039-license-plate-renderer"></script>
   <script src="/assets/scopedlabs-assistant-export.js?v=scopedlabs-assistant-export-001"></script>
 
-  <script src="./script.js?v=physical-security-license-plate-live-visual-001"></script>
+  <script src="./script.js?v=physical-security-license-plate-guided-presets-001"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "licensePlateFlowActions" });
   </script>

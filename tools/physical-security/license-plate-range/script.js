@@ -26,9 +26,13 @@
 
   const els = {
     res: $("res"),
+    resPreset: $("resPreset"),
     hfov: $("hfov"),
+    hfovPreset: $("hfovPreset"),
     ppp: $("ppp"),
+    pppPreset: $("pppPreset"),
     pw: $("pw"),
+    pwPreset: $("pwPreset"),
     dist: $("dist"),
     calc: $("calc"),
     reset: $("reset"),
@@ -476,6 +480,102 @@ function hideVisibleFlowContext() {
     renderFlowNote();
   }
 
+
+  // data-scopedlabs-license-plate-guided-presets-001
+  const PLATE_GUIDED_PRESETS = {
+    res: [1920, 2688, 3072, 3840, 4000],
+    hfov: [12, 20, 30, 45, 60],
+    ppp: [80, 100, 130, 160, 200],
+    pw: [1.00, 1.08, 0.92]
+  };
+
+  function presetSelectForPlateField(field) {
+    if (field === "res") return els.resPreset;
+    if (field === "hfov") return els.hfovPreset;
+    if (field === "ppp") return els.pppPreset;
+    if (field === "pw") return els.pwPreset;
+    return null;
+  }
+
+  function inputForPlatePresetField(field) {
+    if (field === "res") return els.res;
+    if (field === "hfov") return els.hfov;
+    if (field === "ppp") return els.ppp;
+    if (field === "pw") return els.pw;
+    return null;
+  }
+
+  function platePresetTolerance(field) {
+    if (field === "pw") return 0.005;
+    if (field === "hfov") return 0.05;
+    return 0.5;
+  }
+
+  function syncPlatePresetSelect(field) {
+    const select = presetSelectForPlateField(field);
+    const input = inputForPlatePresetField(field);
+    const presets = PLATE_GUIDED_PRESETS[field];
+
+    if (!select || !input || !Array.isArray(presets)) return;
+
+    const current = Number(input.value);
+    if (!Number.isFinite(current)) {
+      select.value = "custom";
+      return;
+    }
+
+    const match = presets.find((value) => Math.abs(Number(value) - current) <= platePresetTolerance(field));
+    select.value = match == null ? "custom" : String(match);
+  }
+
+  function syncAllPlatePresetSelects() {
+    ["res", "hfov", "ppp", "pw"].forEach(syncPlatePresetSelect);
+  }
+
+  function applyPlateGuidedPreset(field) {
+    const select = presetSelectForPlateField(field);
+    const input = inputForPlatePresetField(field);
+    if (!select || !input) return;
+
+    const value = String(select.value || "custom");
+    if (value === "custom") {
+      input.focus();
+      return;
+    }
+
+    const number = Number(value);
+    if (!Number.isFinite(number)) return;
+
+    if (field === "res") input.value = String(Math.round(number));
+    else if (field === "pw") input.value = number.toFixed(2);
+    else input.value = String(number);
+
+    markFlowInputOverride(field);
+    syncPlatePresetSelect(field);
+    renderFlowNote();
+    invalidate({ clearFlow: true });
+    refreshManualOverrideBanner();
+  }
+
+  function bindPlateGuidedPresets() {
+    ["res", "hfov", "ppp", "pw"].forEach((field) => {
+      const select = presetSelectForPlateField(field);
+      const input = inputForPlatePresetField(field);
+
+      if (select) {
+        select.addEventListener("change", () => applyPlateGuidedPreset(field));
+      }
+
+      if (input) {
+        input.addEventListener("input", () => syncPlatePresetSelect(field));
+        input.addEventListener("change", () => syncPlatePresetSelect(field));
+      }
+    });
+
+    syncAllPlatePresetSelects();
+  }
+
+
   function getInputs() {
     const res = num(els.res.value);
     const hfov = num(els.hfov.value);
@@ -895,6 +995,7 @@ renderPlateStructuredExport(data);
     plateInitialFlowImportApplied = false;
     resetFlowOverrideState();
     applyDefaults();
+    syncAllPlatePresetSelects();
     renderFlowNote();
     invalidate({ clearFlow: true });
   }
@@ -915,6 +1016,10 @@ renderPlateStructuredExport(data);
       el.addEventListener("change", handleEdit);
     });
 
+    bindPlateGuidedPresets();
+
+
+
     els.calc?.addEventListener("click", calc);
     els.reset?.addEventListener("click", reset);
   }
@@ -923,6 +1028,7 @@ renderPlateStructuredExport(data);
     plateInitialFlowImportApplied = false;
     applyDefaults();
     bind();
+    syncAllPlatePresetSelects();
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
