@@ -1139,7 +1139,7 @@ function hideVisibleFlowContext() {
       '</table>';
 
     const svg =
-      '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mounting geometry export visual" style="display:block;width:100%;height:auto;background:#ffffff;border:1px solid #d8dee6;border-radius:10px;">' +
+      '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mounting geometry export visual" style="display:block;width:100%;height:auto;background:#020617;border:1px solid rgba(125,255,152,.24);border-radius:10px;">' +
         '<defs>' +
           '<linearGradient id="mountingExportFovFill" x1="0" x2="1" y1="0" y2="1">' +
             '<stop offset="0%" stop-color="#16a34a" stop-opacity=".20"/>' +
@@ -1147,20 +1147,20 @@ function hideVisibleFlowContext() {
           '</linearGradient>' +
         '</defs>' +
 
-        '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#ffffff"/>' +
-        '<text x="30" y="34" fill="#111827" font-size="16" font-weight="900">Mounting Geometry Visual</text>' +
+        '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#020617"/>' +
+        '<text x="30" y="34" fill="#f8fafc" font-size="16" font-weight="900">Mounting Geometry Visual</text>' +
 
-        '<line x1="44" y1="' + fmt(gradeY, 2) + '" x2="760" y2="' + fmt(gradeY, 2) + '" stroke="#9ca3af" stroke-width="1"/>' +
-        '<text x="46" y="' + fmt(gradeY + 20, 2) + '" fill="#6b7280" font-size="11" font-weight="700">Grade / 0 ft reference</text>' +
+        '<line x1="44" y1="' + fmt(gradeY, 2) + '" x2="760" y2="' + fmt(gradeY, 2) + '" stroke="rgba(148,163,184,.50)" stroke-width="1"/>' +
+        '<text x="46" y="' + fmt(gradeY + 20, 2) + '" fill="#94a3b8" font-size="11" font-weight="700">Grade / 0 ft reference</text>' +
 
         '<polygon points="' + fmt(lensTipX, 2) + ',' + fmt(lensTipY, 2) + ' ' + targetX + ',' + fmt(topY, 2) + ' ' + targetX + ',' + fmt(bottomY, 2) + '" fill="url(#mountingExportFovFill)" stroke="#15803d" stroke-opacity=".55" stroke-width="1"/>' +
         '<line x1="' + fmt(lensTipX, 2) + '" y1="' + fmt(lensTipY, 2) + '" x2="' + targetX + '" y2="' + fmt(targetY, 2) + '" stroke="#15803d" stroke-width="2"/>' +
         '<line x1="' + fmt(lensTipX, 2) + '" y1="' + fmt(lensTipY, 2) + '" x2="' + targetX + '" y2="' + fmt(topY, 2) + '" stroke="#15803d" stroke-opacity=".45" stroke-width="1" stroke-dasharray="5 5"/>' +
         '<line x1="' + fmt(lensTipX, 2) + '" y1="' + fmt(lensTipY, 2) + '" x2="' + targetX + '" y2="' + fmt(bottomY, 2) + '" stroke="#15803d" stroke-opacity=".45" stroke-width="1" stroke-dasharray="5 5"/>' +
 
-        '<line x1="' + camX + '" y1="' + fmt(gradeY, 2) + '" x2="' + camX + '" y2="' + fmt(camY, 2) + '" stroke="#64748b" stroke-width="1.3"/>' +
+        '<line x1="' + camX + '" y1="' + fmt(gradeY, 2) + '" x2="' + camX + '" y2="' + fmt(camY, 2) + '" stroke="rgba(226,232,240,.46)" stroke-width="1.3"/>' +
         exportCameraSvg(camX, camY, cameraTilt) +
-        '<text x="' + (camX - 44) + '" y="' + fmt(camY - 26, 2) + '" fill="#111827" font-size="11.5" font-weight="800">Mount ' + escapeMountingExportHtml(fmtFt(h)) + '</text>' +
+        '<text x="' + (camX - 44) + '" y="' + fmt(camY - 26, 2) + '" fill="#f8fafc" font-size="11.5" font-weight="800">Mount ' + escapeMountingExportHtml(fmtFt(h)) + '</text>' +
 
         '<line x1="' + targetX + '" y1="' + fmt(gradeY, 2) + '" x2="' + targetX + '" y2="' + fmt(targetY, 2) + '" stroke="#d97706" stroke-width="2"/>' +
         '<circle cx="' + targetX + '" cy="' + fmt(targetY, 2) + '" r="5" fill="#d97706"/>' +
@@ -1168,10 +1168,10 @@ function hideVisibleFlowContext() {
 
         groundHitMarkup +
 
-        '<line x1="' + camX + '" y1="' + fmt(dimensionY, 2) + '" x2="' + targetX + '" y2="' + fmt(dimensionY, 2) + '" stroke="#9ca3af" stroke-width="1" stroke-dasharray="4 5"/>' +
-        '<line x1="' + camX + '" y1="' + fmt(dimensionY - 8, 2) + '" x2="' + camX + '" y2="' + fmt(dimensionY + 8, 2) + '" stroke="#9ca3af" stroke-width="1"/>' +
-        '<line x1="' + targetX + '" y1="' + fmt(dimensionY - 8, 2) + '" x2="' + targetX + '" y2="' + fmt(dimensionY + 8, 2) + '" stroke="#9ca3af" stroke-width="1"/>' +
-        '<text x="' + ((camX + targetX) / 2 - 52) + '" y="' + fmt(dimensionY + 18, 2) + '" fill="#374151" font-size="11.5" font-weight="800">Distance ' + escapeMountingExportHtml(fmtFt(dist)) + '</text>' +
+        '<line x1="' + camX + '" y1="' + fmt(dimensionY, 2) + '" x2="' + targetX + '" y2="' + fmt(dimensionY, 2) + '" stroke="rgba(148,163,184,.50)" stroke-width="1" stroke-dasharray="4 5"/>' +
+        '<line x1="' + camX + '" y1="' + fmt(dimensionY - 8, 2) + '" x2="' + camX + '" y2="' + fmt(dimensionY + 8, 2) + '" stroke="rgba(148,163,184,.50)" stroke-width="1"/>' +
+        '<line x1="' + targetX + '" y1="' + fmt(dimensionY - 8, 2) + '" x2="' + targetX + '" y2="' + fmt(dimensionY + 8, 2) + '" stroke="rgba(148,163,184,.50)" stroke-width="1"/>' +
+        '<text x="' + ((camX + targetX) / 2 - 52) + '" y="' + fmt(dimensionY + 18, 2) + '" fill="#dbeafe" font-size="11.5" font-weight="800">Distance ' + escapeMountingExportHtml(fmtFt(dist)) + '</text>' +
 
         '<line x1="' + (targetX + 32) + '" y1="' + fmt(topY, 2) + '" x2="' + (targetX + 32) + '" y2="' + fmt(bottomY, 2) + '" stroke="#2563eb" stroke-width="2"/>' +
         '<line x1="' + (targetX + 24) + '" y1="' + fmt(topY, 2) + '" x2="' + (targetX + 40) + '" y2="' + fmt(topY, 2) + '" stroke="#2563eb" stroke-width="2"/>' +
@@ -1180,7 +1180,7 @@ function hideVisibleFlowContext() {
         '<text x="' + (targetX + 48) + '" y="' + fmt(bottomY + 4, 2) + '" fill="#1d4ed8" font-size="11" font-weight="800">Bottom ' + escapeMountingExportHtml(fmtFt(bottomEdge)) + '</text>' +
 
         '<text x="310" y="86" fill="#15803d" font-size="12" font-weight="900">Down-tilt ' + escapeMountingExportHtml(fmtDeg(tilt)) + '</text>' +
-        '<text x="310" y="104" fill="#4b5563" font-size="11" font-weight="700">VFOV ' + escapeMountingExportHtml(fmtDeg(vfov)) + ' / vertical span ' + escapeMountingExportHtml(fmtFt(data.span)) + '</text>' +
+        '<text x="310" y="104" fill="#cbd5e1" font-size="11" font-weight="700">VFOV ' + escapeMountingExportHtml(fmtDeg(vfov)) + ' / vertical span ' + escapeMountingExportHtml(fmtFt(data.span)) + '</text>' +
       '</svg>';
 
     return "" +
