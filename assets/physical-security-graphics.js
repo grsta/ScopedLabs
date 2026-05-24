@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Physical Security Graphics Library
  * Category primitives layered on top of /assets/scopedlabs-graphics.js.
- * Version: physical-security-graphics-015-spacing-blindspot-contract
+ * Version: physical-security-graphics-016-report-visual-contract
  *
  * Rule: render visual models only. Engineering formulas stay in each tool.
  */
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-015-spacing-blindspot-contract";
+  const VERSION = "physical-security-graphics-016-report-visual-contract";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -422,7 +422,7 @@
     const requiredFill = ratio < 1 ? "rgba(255,190,120,.10)" : "rgba(226,232,240,.045)";
 
     return "" +
-      '<svg data-export-svg class="fov-geometry-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="fov-geometry-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + esc(m.ariaLabel || "Field of View CAD target-plane view") + '">' +
+      '<svg data-suppress-legacy-chart-export="true" data-report-renderer="fov-geometry-plan" data-report-visual-owner="physical-security-graphics" data-export-svg class="fov-geometry-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="fov-geometry-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + esc(m.ariaLabel || "Field of View CAD target-plane view") + '">' +
         CAD.defs("psFovTargetPlaneCad012", {
           arrowId,
           coneId,
@@ -631,7 +631,7 @@
     const subtitle = m.subtitle || "One raw FOV polygon is split into amber reserve bands and the green usable footprint.";
 
     return "" +
-      '<svg data-export-svg data-sl-engine="physical-security-graphics" data-sl-renderer="coverage-footprint-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 800 398" role="img" aria-label="' + esc(m.ariaLabel || "Coverage reserve plan view visualization") + '">' +
+      '<svg data-suppress-legacy-chart-export="true" data-report-renderer="coverage-footprint-plan" data-report-visual-owner="physical-security-graphics" data-export-svg data-sl-engine="physical-security-graphics" data-sl-renderer="coverage-footprint-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 800 398" role="img" aria-label="' + esc(m.ariaLabel || "Coverage reserve plan view visualization") + '">' +
         '<defs>' +
           '<linearGradient id="coveragePlanRawBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(84,212,116,.70)" /><stop offset="100%" stop-color="rgba(125,255,152,.86)" /></linearGradient>' +
           '<linearGradient id="coveragePlanUsableBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(104,240,138,.78)" /><stop offset="100%" stop-color="rgba(151,255,176,.92)" /></linearGradient>' +
@@ -775,7 +775,7 @@
     });
 
     return "" +
-      '<svg data-export-svg class="pixel-density-detail-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="pixel-density-detail-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 800 398" role="img" aria-label="' + esc(m.ariaLabel || "Pixel Density CAD detail validation view") + '">' +
+      '<svg data-suppress-legacy-chart-export="true" data-report-renderer="pixel-density-detail-plan" data-report-visual-owner="physical-security-graphics" data-export-svg class="pixel-density-detail-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="pixel-density-detail-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 800 398" role="img" aria-label="' + esc(m.ariaLabel || "Pixel Density CAD detail validation view") + '">' +
         '<defs>' +
           '<linearGradient id="psPixelDetailDeliveredBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(84,212,116,.70)" /><stop offset="100%" stop-color="rgba(125,255,152,.90)" /></linearGradient>' +
           '<linearGradient id="psPixelDetailTargetBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.60)" /><stop offset="100%" stop-color="rgba(255,226,128,.88)" /></linearGradient>' +
@@ -857,8 +857,28 @@
       output = output.replace(/<svg\b/, '<svg data-sl-version="' + esc(VERSION) + '"');
     }
 
-    if (!/data-sl-renderer="[^"]*"/.test(output)) {
+    if (/data-sl-renderer="[^"]*"/.test(output)) {
+      output = output.replace(/data-sl-renderer="[^"]*"/, 'data-sl-renderer="' + esc(rendererName) + '"');
+    } else {
       output = output.replace(/<svg\b/, '<svg data-sl-renderer="' + esc(rendererName) + '"');
+    }
+
+    if (/data-report-visual-owner="[^"]*"/.test(output)) {
+      output = output.replace(/data-report-visual-owner="[^"]*"/, 'data-report-visual-owner="physical-security-graphics"');
+    } else {
+      output = output.replace(/<svg\b/, '<svg data-report-visual-owner="physical-security-graphics"');
+    }
+
+    if (/data-report-renderer="[^"]*"/.test(output)) {
+      output = output.replace(/data-report-renderer="[^"]*"/, 'data-report-renderer="' + esc(rendererName) + '"');
+    } else {
+      output = output.replace(/<svg\b/, '<svg data-report-renderer="' + esc(rendererName) + '"');
+    }
+
+    if (/data-suppress-legacy-chart-export="[^"]*"/.test(output)) {
+      output = output.replace(/data-suppress-legacy-chart-export="[^"]*"/, 'data-suppress-legacy-chart-export="true"');
+    } else {
+      output = output.replace(/<svg\b/, '<svg data-suppress-legacy-chart-export="true"');
     }
 
     return output;
