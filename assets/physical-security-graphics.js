@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-039-license-plate-renderer";
+  const VERSION = "physical-security-graphics-040-license-plate-green-status-layout";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -1225,11 +1225,11 @@
     return "" +
       '<svg data-suppress-legacy-chart-export="true" data-report-renderer="license-plate-range-plan" data-report-visual-owner="physical-security-graphics" data-export-svg class="license-plate-range-svg sl-ps-gfx-svg" data-sl-engine="physical-security-graphics" data-sl-renderer="license-plate-range-plan" data-sl-category="physical-security" data-sl-version="' + esc(VERSION) + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" role="img" aria-label="' + esc(m.ariaLabel || "License Plate range validation visual") + '">' +
         '<defs>' +
-          '<linearGradient id="psPlateEnvelope" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,224,.16)" /><stop offset="100%" stop-color="rgba(125,255,224,.035)" /></linearGradient>' +
+          '<linearGradient id="psPlateEnvelope" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,158,.16)" /><stop offset="100%" stop-color="rgba(125,255,158,.035)" /></linearGradient>' +
           '<linearGradient id="psPlateBeyond" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,143,136,.10)" /><stop offset="100%" stop-color="rgba(255,143,136,.03)" /></linearGradient>' +
           '<linearGradient id="psPlatePppBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="' + targetColor + '" stop-opacity=".54" /><stop offset="100%" stop-color="' + targetColor + '" stop-opacity=".92" /></linearGradient>' +
           '<filter id="psPlateClarityBlur"><feGaussianBlur stdDeviation="' + fmt(blur, 2) + '" /></filter>' +
-          '<pattern id="psPlatePixelPattern" width="9" height="9" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="rgba(2,6,23,.42)" /><rect x="1" y="1" width="3" height="3" fill="rgba(125,255,224,.18)" /><rect x="5" y="5" width="3" height="3" fill="rgba(248,250,252,.08)" /></pattern>' +
+          '<pattern id="psPlatePixelPattern" width="9" height="9" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="rgba(2,6,23,.42)" /><rect x="1" y="1" width="3" height="3" fill="rgba(125,255,158,.18)" /><rect x="5" y="5" width="3" height="3" fill="rgba(248,250,252,.08)" /></pattern>' +
         '</defs>' +
 
         '<text x="52" y="34" fill="rgba(248,250,252,.92)" font-size="18" font-weight="950">License plate capture range validation</text>' +
@@ -1237,34 +1237,34 @@
 
         CAD.stage(stage.x, stage.y, stage.width, stage.height, { rx: 20 }) +
         cadGrid(stage) +
-        CAD.statusPill(672, 112, statusLabel, {
-          width: 72,
-          height: 22,
+        CAD.statusPill(690, 148, statusLabel, {
+          width: 64,
+          height: 20,
           color: statusColor,
           textFill: statusColor,
           size: 9.2
         }) +
 
-        '<text x="54" y="122" fill="rgba(125,255,224,.82)" font-size="10.4" font-weight="950" letter-spacing=".11em">PLATE CAPTURE ENVELOPE / READABILITY</text>' +
+        '<text x="54" y="122" fill="rgba(125,255,158,.82)" font-size="10.4" font-weight="950" letter-spacing=".11em">PLATE CAPTURE ENVELOPE / READABILITY</text>' +
         '<text x="54" y="144" fill="rgba(226,232,240,.58)" font-size="9.8" font-weight="720">Camera geometry, plate-width assumption, and pixels-per-plate target.</text>' +
 
         cameraCadIcon(cameraX, cameraY, {
           scale: 0.52,
-          color: "rgba(125,255,224,.90)",
-          accent: "rgba(125,255,224,.78)",
+          color: "rgba(125,255,158,.90)",
+          accent: "rgba(125,255,158,.78)",
           symbol: "license-plate-camera"
         }) +
 
-        '<path d="M ' + fmt(cameraLensTipX(cameraX), 1) + ' ' + fmt(cameraY, 1) + ' L ' + fmt(maxX, 1) + ' ' + fmt(laneTop, 1) + ' L ' + fmt(maxX, 1) + ' ' + fmt(laneBottom, 1) + ' Z" fill="rgba(125,255,224,.04)" stroke="rgba(125,255,224,.23)" stroke-width=".9" />' +
+        '<path d="M ' + fmt(cameraLensTipX(cameraX), 1) + ' ' + fmt(cameraY, 1) + ' L ' + fmt(maxX, 1) + ' ' + fmt(laneTop, 1) + ' L ' + fmt(maxX, 1) + ' ' + fmt(laneBottom, 1) + ' Z" fill="rgba(125,255,158,.04)" stroke="rgba(125,255,158,.23)" stroke-width=".9" />' +
 
-        '<rect x="' + fmt(trackX1, 1) + '" y="' + fmt(trackY - 44, 1) + '" width="' + fmt(Math.max(4, maxX - trackX1), 1) + '" height="88" rx="18" fill="url(#psPlateEnvelope)" stroke="rgba(125,255,224,.34)" stroke-width="1" />' +
+        '<rect x="' + fmt(trackX1, 1) + '" y="' + fmt(trackY - 44, 1) + '" width="' + fmt(Math.max(4, maxX - trackX1), 1) + '" height="88" rx="18" fill="url(#psPlateEnvelope)" stroke="rgba(125,255,158,.34)" stroke-width="1" />' +
         (actualDist > maxDist
           ? '<rect x="' + fmt(maxX, 1) + '" y="' + fmt(trackY - 44, 1) + '" width="' + fmt(Math.max(4, actualX - maxX), 1) + '" height="88" rx="12" fill="url(#psPlateBeyond)" stroke="rgba(255,143,136,.34)" stroke-width="1" />'
           : "") +
 
         CAD.dimensionLine(trackX1, 330, maxX, 330, "Modeled envelope: " + fmtFt(maxDist, 1), {
-          color: "rgba(125,255,224,.58)",
-          labelFill: "rgba(125,255,224,.84)",
+          color: "rgba(125,255,158,.58)",
+          labelFill: "rgba(125,255,158,.84)",
           tick: 7
         }) +
 
@@ -1274,8 +1274,8 @@
           tick: 7
         }) +
 
-        '<line x1="' + fmt(maxX, 1) + '" y1="' + fmt(trackY - 66, 1) + '" x2="' + fmt(maxX, 1) + '" y2="' + fmt(trackY + 66, 1) + '" stroke="rgba(125,255,224,.70)" stroke-width="1.15" stroke-dasharray="5 6" />' +
-        '<text x="' + fmt(maxX, 1) + '" y="' + fmt(trackY - 76, 1) + '" text-anchor="middle" fill="rgba(125,255,224,.84)" font-size="9" font-weight="900">MAX</text>' +
+        '<line x1="' + fmt(maxX, 1) + '" y1="' + fmt(trackY - 66, 1) + '" x2="' + fmt(maxX, 1) + '" y2="' + fmt(trackY + 66, 1) + '" stroke="rgba(125,255,158,.70)" stroke-width="1.15" stroke-dasharray="5 6" />' +
+        '<text x="' + fmt(maxX, 1) + '" y="' + fmt(trackY - 76, 1) + '" text-anchor="middle" fill="rgba(125,255,158,.84)" font-size="9" font-weight="900">MAX</text>' +
 
         '<line x1="' + fmt(actualX, 1) + '" y1="' + fmt(laneTop - 12, 1) + '" x2="' + fmt(actualX, 1) + '" y2="' + fmt(laneBottom + 12, 1) + '" stroke="' + targetColor + '" stroke-width="1.15" stroke-dasharray="6 7" opacity=".72" />' +
 
@@ -1297,8 +1297,8 @@
         '<text x="684" y="122" text-anchor="end" fill="' + targetColor + '" font-size="9.4" font-weight="950">' + esc(fmt(deliveredPpp, 0) + " / " + fmt(targetPpp, 0) + " px") + '</text>' +
 
         CAD.metricChip(72, 386, "MAX RANGE", fmtFt(maxDist, 1), {
-          accent: "rgba(125,255,224,.82)",
-          valueFill: "rgba(125,255,224,.92)",
+          accent: "rgba(125,255,158,.82)",
+          valueFill: "rgba(125,255,158,.92)",
           width: 146
         }) +
         CAD.metricChip(236, 386, "ACTUAL", fmtFt(actualDist, 1), {
