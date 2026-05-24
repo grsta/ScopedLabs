@@ -793,6 +793,37 @@ function hideVisibleFlowContext() {
     els.fovGeometry.setAttribute("data-export-title", "\u00A0\u00A0Field of View Geometry");
     els.fovGeometry.setAttribute("data-export-compact-svg", "true");
 
+    // data-scopedlabs-fov-export-notes-001
+    const fovExportHandoff =
+      "Carry the calculated scene width of " + fmtFtShort(data.sceneWidth) +
+      " and target distance of " + fmtFtShort(data.dist) +
+      " into Coverage Area. Coverage Area will apply usable coverage reserve to convert this raw lens footprint into practical coverage width before Camera Spacing.";
+
+    const fovExportNotes = [
+      ["Engineering interpretation", data.interpretation],
+      ["Dominant constraint", data.dominantConstraint],
+      ["Recommended action", data.guidance],
+      ["Coverage Area handoff", fovExportHandoff]
+    ];
+
+    const fovExportNotesTable =
+      '<table style="width:100%;border-collapse:collapse;margin:12px 0 0 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          fovExportNotes
+            .filter((row) => row && row[0] && row[1])
+            .map((row) =>
+              '<tr>' +
+                '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapeFovHtml(row[0]) + '</td>' +
+                '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' + escapeFovHtml(row[1]) + '</td>' +
+              '</tr>'
+            ).join("") +
+        '</tbody>' +
+      '</table>';
+
     els.fovGeometry.innerHTML =
       '<div class="fov-geometry-head">' +
         '<div>' +
@@ -818,6 +849,7 @@ function hideVisibleFlowContext() {
           '<tr><td>Horizontal FOV</td><td>' + escapeFovHtml(fmtDegText(data.hfov)) + '</td></tr>' +
           '<tr><td>Mount height context</td><td>' + escapeFovHtml(fmtFtShort(data.h)) + '</td></tr>' +
         '</tbody></table>' +
+        fovExportNotesTable +
         exportSvg +
       '</div>';
   }
