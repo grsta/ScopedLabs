@@ -1149,7 +1149,6 @@ function hideVisibleFlowContext() {
 
         '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#ffffff"/>' +
         '<text x="30" y="34" fill="#111827" font-size="16" font-weight="900">Mounting Geometry Visual</text>' +
-        '<text x="30" y="54" fill="#4b5563" font-size="11.5" font-weight="700">Tilted camera, VFOV cone, target point, grade intercept, and pressure summary.</text>' +
 
         '<line x1="44" y1="' + fmt(gradeY, 2) + '" x2="760" y2="' + fmt(gradeY, 2) + '" stroke="#9ca3af" stroke-width="1"/>' +
         '<text x="46" y="' + fmt(gradeY + 20, 2) + '" fill="#6b7280" font-size="11" font-weight="700">Grade / 0 ft reference</text>' +
@@ -1184,9 +1183,32 @@ function hideVisibleFlowContext() {
         '<text x="310" y="104" fill="#4b5563" font-size="11" font-weight="700">VFOV ' + escapeMountingExportHtml(fmtDeg(vfov)) + ' / vertical span ' + escapeMountingExportHtml(fmtFt(data.span)) + '</text>' +
       '</svg>';
 
+    const printSvg = svg;
+    const screenSvg = svg
+      .replace('background:#ffffff;border:1px solid #d8dee6;', 'background:#020617;border:1px solid rgba(125,255,152,.24);')
+      .replace('<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#ffffff"/>', '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#020617"/>')
+      .replace(/fill="#111827"/g, 'fill="#f8fafc"')
+      .replace(/fill="#4b5563"/g, 'fill="#cbd5e1"')
+      .replace(/fill="#374151"/g, 'fill="#dbeafe"')
+      .replace(/fill="#6b7280"/g, 'fill="#94a3b8"')
+      .replace(/stroke="#9ca3af"/g, 'stroke="rgba(148,163,184,.50)"')
+      .replace(/stroke="#64748b"/g, 'stroke="rgba(226,232,240,.46)"')
+      .replace(/fill="#0f172a"/g, 'fill="#0f172a"');
+
     return "" +
       '<div data-mounting-export-visual="true" data-export-svg style="break-inside:avoid;margin:0 0 12px 0;">' +
-        svg +
+        '<style>' +
+          '@media screen {' +
+            '[data-mounting-export-visual] .mounting-export-print-visual { display:none !important; }' +
+            '[data-mounting-export-visual] .mounting-export-screen-visual { display:block !important; }' +
+          '}' +
+          '@media print {' +
+            '[data-mounting-export-visual] .mounting-export-screen-visual { display:none !important; }' +
+            '[data-mounting-export-visual] .mounting-export-print-visual { display:block !important; }' +
+          '}' +
+        '</style>' +
+        '<div class="mounting-export-screen-visual">' + screenSvg + '</div>' +
+        '<div class="mounting-export-print-visual">' + printSvg + '</div>' +
         pressureHtml +
       '</div>';
   }
