@@ -1011,7 +1011,7 @@ function hideVisibleFlowContext() {
     mountingExportRoot().appendChild(node);
   }
   
-  // data-mounting-live-visual-004
+  // data-mounting-live-visual-005
   function mountingLiveVisualEl() {
     return document.getElementById("mountingLiveVisual");
   }
@@ -1116,6 +1116,8 @@ function hideVisibleFlowContext() {
     const lensTipY = camY + Math.sin(tiltRad) * lensReach;
     const labelTilt = Number.isFinite(data.tilt) ? fmtDeg(data.tilt) : "—";
     const dimensionY = Math.min(svgH - 24, Math.max(gradeY, bottomY) + 42);
+    const lowerRayAngleDeg = clampMountingVisual(Number(data.tilt) + (Number(data.vfov) / 2), 0.1, 89.5);
+    const lowerRayGroundDistanceFt = h / Math.tan(deg2rad(lowerRayAngleDeg));
 
     let groundHitMarkup = "";
     const lowerDenom = bottomY - lensTipY;
@@ -1128,13 +1130,19 @@ function hideVisibleFlowContext() {
 
     if (lowerRayHitsGrade) {
       const hitT = (gradeY - lensTipY) / lowerDenom;
-      const hitX = lensTipX + (targetX - lensTipX) * hitT;
+      const hitXFromRay = lensTipX + (targetX - lensTipX) * hitT;
+      const hitXFromDistance = camX + ((targetX - camX) * (lowerRayGroundDistanceFt / dist));
+      const hitX = Number.isFinite(hitXFromDistance) ? hitXFromDistance : hitXFromRay;
+      const hitLabel = Number.isFinite(lowerRayGroundDistanceFt)
+        ? "~" + fmtFt(lowerRayGroundDistanceFt, 0) + " from camera"
+        : "grade intercept";
 
-      if (Number.isFinite(hitX) && hitX > lensTipX && hitX < targetX) {
+      if (Number.isFinite(hitX) && hitX > camX && hitX < targetX) {
         groundHitMarkup =
           '<circle cx="' + fmt(hitX, 2) + '" cy="' + fmt(gradeY, 2) + '" r="4" fill="rgba(245,197,66,.96)" />' +
           '<line x1="' + fmt(hitX, 2) + '" y1="' + fmt(gradeY - 12, 2) + '" x2="' + fmt(hitX, 2) + '" y2="' + fmt(gradeY + 12, 2) + '" stroke="rgba(245,197,66,.72)" stroke-width="1" />' +
-          '<text x="' + fmt(hitX + 10, 2) + '" y="' + fmt(gradeY - 10, 2) + '" fill="rgba(255,226,128,.94)" font-size="11" font-weight="900">Lower ray hits grade</text>';
+          '<text x="' + fmt(hitX + 10, 2) + '" y="' + fmt(gradeY - 12, 2) + '" fill="rgba(255,226,128,.94)" font-size="11" font-weight="900">Lower ray hits grade</text>' +
+          '<text x="' + fmt(hitX + 10, 2) + '" y="' + fmt(gradeY + 5, 2) + '" fill="rgba(255,226,128,.86)" font-size="10.5" font-weight="800">' + escapeMountingVisualHtml(hitLabel) + '</text>';
       }
     }
 
