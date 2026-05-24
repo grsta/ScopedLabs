@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-009-kb-card-registry-aware
+ * Version: scopedlabs-category-modernizer-011-script-order-kb-safe
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card", "script-order"]
 };
 
 function read(file) {
@@ -794,6 +794,100 @@ const KbCardModule = {
   }
 };
 
+
+const ScriptOrderModule = {
+  id: "script-order",
+  version: "script-order-module-002-kb-safe-audit-only",
+  description: "Audits shared engine script order without forcing KB/help.js before local scripts.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const srcs = scripts(html);
+
+    function idx(needle) {
+      return scriptIndex(srcs, needle);
+    }
+
+    function src(needle) {
+      const found = srcs.find((item) => item.includes(needle));
+      return found || "-";
+    }
+
+    function before(leftNeedle, rightNeedle, label) {
+      const left = idx(leftNeedle);
+      const right = idx(rightNeedle);
+
+      if (left < 0 || right < 0) return;
+      if (left > right) issues.push(label + " order reversed");
+    }
+
+    const issues = [];
+
+    const localIndex = idx("./script.js");
+    const hasLocal = localIndex >= 0;
+    const hasExportButtons = hasId(html, "exportReport") || hasId(html, "saveSnapshot") || hasId(html, "exportStatus");
+    const hasGraphics = src("scopedlabs-graphics.js") !== "-" || src(category + "-graphics.js") !== "-";
+    const hasHelp = src("/assets/help.js") !== "-";
+
+    if (!hasLocal) {
+      issues.push("missing local ./script.js");
+    }
+
+    before("/assets/tool-flow.js", "./script.js", "tool-flow before local script");
+    before("/assets/catalog.js", "./script.js", "catalog before local script");
+    before("/assets/pipelines.js", "./script.js", "pipelines before local script");
+    before("/assets/pipeline.js", "./script.js", "pipeline before local script");
+    before(category + "-tool-registry.js", "scopedlabs-tool-shell.js", "registry before Tool Shell");
+    before("scopedlabs-tool-shell.js", "./script.js", "Tool Shell before local script");
+
+    if (hasExportButtons) {
+      before("/assets/export.js", "./script.js", "export before local script");
+    }
+
+    if (hasGraphics) {
+      before("scopedlabs-graphics.js", category + "-graphics.js", "shared graphics before category graphics");
+      before("scopedlabs-graphics.js", "./script.js", "shared graphics before local script");
+      before(category + "-graphics.js", "./script.js", "category graphics before local script");
+    }
+
+    const detailParts = [
+      "toolFlow=" + src("/assets/tool-flow.js"),
+      "catalog=" + src("/assets/catalog.js"),
+      "pipelines=" + src("/assets/pipelines.js"),
+      "pipeline=" + src("/assets/pipeline.js"),
+      "registry=" + src(category + "-tool-registry.js"),
+      "toolShell=" + src("scopedlabs-tool-shell.js"),
+      "export=" + src("/assets/export.js"),
+      "help=" + src("/assets/help.js"),
+      "helpOrder=not-required",
+      "helpConnected=" + (hasHelp ? "yes" : "no"),
+      "sharedGraphics=" + src("scopedlabs-graphics.js"),
+      "categoryGraphics=" + src(category + "-graphics.js"),
+      "localScript=" + src("./script.js")
+    ];
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail: issues.length ? issues.join("; ") + " | " + detailParts.join("; ") : detailParts.join("; ")
+    };
+  }
+};
+
 const BackContinueModule = {
   id: "back-continue",
   version: "back-continue-module-001",
@@ -829,7 +923,7 @@ const BackContinueModule = {
   }
 };
 
-const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule];
+const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule];
 
 if (!fs.existsSync(categoryRoot)) {
   console.error("Missing category folder: " + path.relative(root, categoryRoot));
@@ -853,7 +947,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-009-kb-card-registry-aware");
+console.log("Version: scopedlabs-category-modernizer-011-script-order-kb-safe");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + modules.map((m) => m.id + "@" + m.version).join(", "));
