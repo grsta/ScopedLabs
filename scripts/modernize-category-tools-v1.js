@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-002-tool-shell-module
+ * Version: scopedlabs-category-modernizer-003-badge-cleanup-module
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup"]
 };
 
 function read(file) {
@@ -394,6 +394,47 @@ const ToolShellModule = {
   }
 };
 
+const BadgeCleanupModule = {
+  id: "badge-cleanup",
+  version: "badge-cleanup-module-001-audit-only",
+  description: "Inventories decorative/legacy badge patterns for future safe cleanup.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const pillMatches = Array.from(html.matchAll(/<[^>]+class=["'][^"']*\bpill\b[^"']*["'][^>]*>([\s\S]*?)<\/[^>]+>/gi))
+      .map((m) => m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+
+    const legacyBadges = pillMatches.filter((text) =>
+      /Pro Tier|Free Tier|Design Flow|Documentation|Knowledge Base|Part of a Design Flow/i.test(text)
+    );
+
+    const detail = legacyBadges.length
+      ? "badge inventory: " + legacyBadges.join(" | ")
+      : "no legacy/decorative badges detected";
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail
+    };
+  }
+};
+
 const BackContinueModule = {
   id: "back-continue",
   version: "back-continue-module-001",
@@ -429,7 +470,7 @@ const BackContinueModule = {
   }
 };
 
-const modules = [ToolShellModule, BackContinueModule];
+const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule];
 
 if (!fs.existsSync(categoryRoot)) {
   console.error("Missing category folder: " + path.relative(root, categoryRoot));
@@ -453,7 +494,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-002-tool-shell-module");
+console.log("Version: scopedlabs-category-modernizer-003-badge-cleanup-module");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + modules.map((m) => m.id + "@" + m.version).join(", "));
