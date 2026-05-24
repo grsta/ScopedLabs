@@ -2586,3 +2586,49 @@ body {
 }
 
 
+
+
+/* === ScopedLabs Physical Security action button shape normalization v027 === */
+body[data-tool="area-planner"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="scene-illumination"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="mounting-height"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="field-of-view"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="camera-coverage-area"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="camera-spacing"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="blind-spot-check"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="pixel-density"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="face-recognition-range"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="license-plate-range"] .btn:not(.nav-tab):not(.pill):not(.pill-link) {
+  border-radius: 10px !important;
+  min-height: 38px;
+  min-width: 124px;
+  justify-content: center;
+  letter-spacing: 0.01em;
+}
+
+body[data-tool="area-planner"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="scene-illumination"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="mounting-height"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="field-of-view"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="camera-coverage-area"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="camera-spacing"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="blind-spot-check"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="pixel-density"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="face-recognition-range"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="license-plate-range"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link) {
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+body[data-tool="area-planner"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover,
+body[data-tool="scene-illumination"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover,
+body[data-tool="mounting-height"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover,
+body[data-tool="field-of-view"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover,
+body[data-tool="camera-coverage-area"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover,
+body[data-tool="camera-spacing"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover,
+body[data-tool="blind-spot-check"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover,
+body[data-tool="pixel-density"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover,
+body[data-tool="face-recognition-range"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover,
+body[data-tool="license-plate-range"] .btn:not(.nav-tab):not(.pill):not(.pill-link):hover {
+  border-color: rgba(118, 255, 151, 0.38) !important;
+}
