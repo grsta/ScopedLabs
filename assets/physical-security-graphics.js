@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-037-face-cad-target-marker";
+  const VERSION = "physical-security-graphics-038-face-status-pill-layout";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -1020,9 +1020,9 @@
 
         CAD.stage(stage.x, stage.y, stage.width, stage.height, { rx: 20 }) +
         cadGrid(stage) +
-        CAD.statusPill(672, 112, statusLabel, {
-          width: 72,
-          height: 22,
+        CAD.statusPill(690, 148, statusLabel, {
+          width: 64,
+          height: 20,
           color: statusColor,
           textFill: statusColor,
           size: 9.2
