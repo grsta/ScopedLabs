@@ -1,6 +1,6 @@
 /*
  * ScopedLabs Tool Shell
- * Version: scopedlabs-tool-shell-003-manual-diagnostics
+ * Version: scopedlabs-tool-shell-004-back-continue-proof
  *
  * Shared helper foundation for future Tool Shell V1 extraction.
  * This file is not loaded by live pages yet.
@@ -14,7 +14,7 @@
 (function attachScopedLabsToolShell(root) {
   "use strict";
 
-  const VERSION = "scopedlabs-tool-shell-003-manual-diagnostics";
+  const VERSION = "scopedlabs-tool-shell-004-back-continue-proof";
 
   function toArray(value) {
     return Array.prototype.slice.call(value || []);
@@ -153,6 +153,44 @@
     ];
   }
 
+  function applyBackContinueShell(options) {
+    const opts = options || {};
+    const rootEl = opts.scope || document;
+    const row = opts.rowId ? document.getElementById(opts.rowId) : null;
+    const targetScope = row || rootEl;
+    const state = getBackContinueState(targetScope);
+    const targetRow = row || (state.nextStepRow ? state.nextStepRow.parentElement : null);
+
+    if (targetRow) {
+      targetRow.dataset.slShellBackContinue = "true";
+      targetRow.dataset.slShellVersion = VERSION;
+      targetRow.classList.add("sl-shell-back-continue-row");
+    }
+
+    if (state.backLink) {
+      state.backLink.dataset.slShellAction = "back";
+      state.backLink.classList.add("sl-shell-action", "sl-shell-action-back");
+    }
+
+    if (state.nextStepRow) {
+      state.nextStepRow.dataset.slShellSlot = "continue";
+      state.nextStepRow.classList.add("sl-shell-continue-slot");
+    }
+
+    if (state.continueButton) {
+      state.continueButton.dataset.slShellAction = "continue";
+      state.continueButton.classList.add("sl-shell-action", "sl-shell-action-continue");
+    }
+
+    return {
+      ok: state.ok,
+      row: targetRow,
+      backLink: state.backLink,
+      continueButton: state.continueButton,
+      nextStepRow: state.nextStepRow
+    };
+  }
+
   function buildDiagnosticResult() {
     const page = describePage();
     const tool = page.tool || null;
@@ -239,6 +277,7 @@
     markRequiredIdDiagnostics,
     getBackContinueState,
     addShellButtonClasses,
+    applyBackContinueShell,
     buildDiagnosticResult,
     runDiagnostics,
     describePage
