@@ -312,7 +312,7 @@
       card.style.margin = "22px 0 0";
     }
 
-    var openGuideLabel = useCleanKnowledgeCard ? "Open KB Guide" : "Open guide";
+    var openGuideLabel = useCleanKnowledgeCard ? "Open KB Guide" : "Open KB Guide";
     var closeGuideLabel = useCleanKnowledgeCard ? "Close KB Guide" : "Close guide";
     var eyebrowHtml = useCleanKnowledgeCard
       ? ""
