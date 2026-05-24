@@ -1183,32 +1183,9 @@ function hideVisibleFlowContext() {
         '<text x="310" y="104" fill="#4b5563" font-size="11" font-weight="700">VFOV ' + escapeMountingExportHtml(fmtDeg(vfov)) + ' / vertical span ' + escapeMountingExportHtml(fmtFt(data.span)) + '</text>' +
       '</svg>';
 
-    const printSvg = svg;
-    const screenSvg = svg
-      .replace('background:#ffffff;border:1px solid #d8dee6;', 'background:#020617;border:1px solid rgba(125,255,152,.24);')
-      .replace('<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#ffffff"/>', '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#020617"/>')
-      .replace(/fill="#111827"/g, 'fill="#f8fafc"')
-      .replace(/fill="#4b5563"/g, 'fill="#cbd5e1"')
-      .replace(/fill="#374151"/g, 'fill="#dbeafe"')
-      .replace(/fill="#6b7280"/g, 'fill="#94a3b8"')
-      .replace(/stroke="#9ca3af"/g, 'stroke="rgba(148,163,184,.50)"')
-      .replace(/stroke="#64748b"/g, 'stroke="rgba(226,232,240,.46)"')
-      .replace(/fill="#0f172a"/g, 'fill="#0f172a"');
-
     return "" +
       '<div data-mounting-export-visual="true" data-export-svg style="break-inside:avoid;margin:0 0 12px 0;">' +
-        '<style>' +
-          '@media screen {' +
-            '[data-mounting-export-visual] .mounting-export-print-visual { display:none !important; }' +
-            '[data-mounting-export-visual] .mounting-export-screen-visual { display:block !important; }' +
-          '}' +
-          '@media print {' +
-            '[data-mounting-export-visual] .mounting-export-screen-visual { display:none !important; }' +
-            '[data-mounting-export-visual] .mounting-export-print-visual { display:block !important; }' +
-          '}' +
-        '</style>' +
-        '<div class="mounting-export-screen-visual">' + screenSvg + '</div>' +
-        '<div class="mounting-export-print-visual">' + printSvg + '</div>' +
+        svg +
         pressureHtml +
       '</div>';
   }
