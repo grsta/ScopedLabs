@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-018-scene-illumination-labels";
+  const VERSION = "physical-security-graphics-019-scene-light-gradient-plan";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -903,7 +903,7 @@
     return brandSharedPhysicalSecuritySvg(svg, rendererName);
   }
 
-  // data-physical-security-scene-illumination-renderer-001
+  // data-physical-security-scene-illumination-renderer-002
   function renderSceneIlluminationLightingPlanSvg(model) {
     const m = model && typeof model === "object" ? model : {};
 
@@ -928,8 +928,8 @@
     }
 
     const svgW = 800;
-    const svgH = 452;
-    const stage = { x: 34, y: 164, width: 732, height: 252 };
+    const svgH = 500;
+    const stage = { x: 34, y: 170, width: 732, height: 286 };
 
     const statusLabel = status.includes("risk") ? "RISK" : status.includes("watch") ? "WATCH" : "HEALTHY";
     const statusColor = statusLabel === "RISK"
@@ -939,16 +939,16 @@
         : "rgba(125,255,158,.90)";
 
     const statusSoft = statusLabel === "RISK"
-      ? "rgba(255,143,136,.10)"
+      ? "rgba(255,143,136,.12)"
       : statusLabel === "WATCH"
-        ? "rgba(255,211,79,.10)"
-        : "rgba(125,255,158,.10)";
+        ? "rgba(255,211,79,.12)"
+        : "rgba(125,255,158,.12)";
 
     const barX = 292;
     const barW = 280;
     const labelX = 52;
     const valueX = 740;
-    const row1Y = 70;
+    const row1Y = 78;
     const rowGap = 32;
     const barH = 10;
 
@@ -958,18 +958,17 @@
     const lumensPerSqFtMax = Math.max(lumenDensity, 12);
     const loadBarW = Math.max(8, Math.min(barW, barW * (lumenDensity / lumensPerSqFtMax)));
 
-    const planX = 126;
-    const planY = 224;
-    const planW = 480;
-    const planH = 150;
-    const fixtureY = planY - 46;
-    const fixtureXs = [planX + 72, planX + planW / 2, planX + planW - 72];
+    const planX = 112;
+    const planY = 235;
+    const planW = 520;
+    const planH = 142;
 
-    const lightFill = statusLabel === "RISK"
-      ? "url(#psSceneIlluminationRiskFill)"
-      : statusLabel === "WATCH"
-        ? "url(#psSceneIlluminationWatchFill)"
-        : "url(#psSceneIlluminationHealthyFill)";
+    const fixtureY = planY + 44;
+    const fixtureXs = [
+      planX + planW * 0.22,
+      planX + planW * 0.50,
+      planX + planW * 0.78
+    ];
 
     function barRow(y, label, value, width, fill, stroke) {
       return "" +
@@ -982,11 +981,13 @@
     function fixture(x, y, index) {
       return "" +
         '<g data-ps-graphic-part="lighting-fixture">' +
-          '<circle cx="' + fmt(x, 1) + '" cy="' + fmt(y, 1) + '" r="10" fill="rgba(255,226,128,.10)" stroke="rgba(255,226,128,.75)" stroke-width="1.15" />' +
-          '<circle cx="' + fmt(x, 1) + '" cy="' + fmt(y, 1) + '" r="3" fill="rgba(255,226,128,.92)" />' +
-          '<path d="M ' + fmt(x - 66, 1) + ' ' + fmt(planY + 4, 1) + ' Q ' + fmt(x, 1) + ' ' + fmt(y + 54, 1) + ' ' + fmt(x + 66, 1) + ' ' + fmt(planY + 4, 1) + '" fill="rgba(255,226,128,.075)" stroke="rgba(255,226,128,.26)" stroke-width=".85" />' +
-          '<line x1="' + fmt(x, 1) + '" y1="' + fmt(y + 12, 1) + '" x2="' + fmt(x, 1) + '" y2="' + fmt(planY + 20, 1) + '" stroke="rgba(255,226,128,.20)" stroke-width=".75" stroke-dasharray="4 6" />' +
-          '<text x="' + fmt(x, 1) + '" y="' + fmt(y - 22, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.84)" font-size="8.6" font-weight="950">FIXTURE L' + index + '</text>' +
+          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(y + 16, 1) + '" rx="128" ry="68" fill="url(#psSceneLightHaloOuter)" opacity=".88" />' +
+          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(y + 12, 1) + '" rx="82" ry="44" fill="url(#psSceneLightHaloMid)" opacity=".88" />' +
+          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(y + 8, 1) + '" rx="42" ry="24" fill="url(#psSceneLightHaloCore)" opacity=".92" />' +
+          '<circle cx="' + fmt(x, 1) + '" cy="' + fmt(y, 1) + '" r="12" fill="rgba(255,226,128,.10)" stroke="rgba(255,226,128,.78)" stroke-width="1.2" />' +
+          '<circle cx="' + fmt(x, 1) + '" cy="' + fmt(y, 1) + '" r="3.4" fill="rgba(255,239,176,.96)" />' +
+          '<line x1="' + fmt(x, 1) + '" y1="' + fmt(y + 13, 1) + '" x2="' + fmt(x, 1) + '" y2="' + fmt(y + 76, 1) + '" stroke="rgba(255,226,128,.22)" stroke-width=".8" stroke-dasharray="4 6" />' +
+          '<text x="' + fmt(x, 1) + '" y="' + fmt(y - 20, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.86)" font-size="8.6" font-weight="950">FIXTURE L' + index + '</text>' +
         '</g>';
     }
 
@@ -996,10 +997,11 @@
           '<linearGradient id="psSceneIlluminationTargetBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,211,79,.62)" /><stop offset="100%" stop-color="rgba(255,226,128,.90)" /></linearGradient>' +
           '<linearGradient id="psSceneIlluminationFactorBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(125,255,158,.54)" /><stop offset="100%" stop-color="rgba(125,255,158,.88)" /></linearGradient>' +
           '<linearGradient id="psSceneIlluminationLoadBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="' + statusColor + '" stop-opacity=".62" /><stop offset="100%" stop-color="' + statusColor + '" stop-opacity=".92" /></linearGradient>' +
-          '<linearGradient id="psSceneIlluminationHealthyFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(125,255,158,.20)" /><stop offset="100%" stop-color="rgba(125,255,158,.055)" /></linearGradient>' +
-          '<linearGradient id="psSceneIlluminationWatchFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(255,211,79,.22)" /><stop offset="100%" stop-color="rgba(255,211,79,.055)" /></linearGradient>' +
-          '<linearGradient id="psSceneIlluminationRiskFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(255,143,136,.20)" /><stop offset="100%" stop-color="rgba(255,143,136,.055)" /></linearGradient>' +
+          '<radialGradient id="psSceneLightHaloCore" cx="50%" cy="42%" r="60%"><stop offset="0%" stop-color="rgba(255,239,176,.54)" /><stop offset="45%" stop-color="rgba(125,255,158,.28)" /><stop offset="100%" stop-color="rgba(125,255,158,0)" /></radialGradient>' +
+          '<radialGradient id="psSceneLightHaloMid" cx="50%" cy="42%" r="68%"><stop offset="0%" stop-color="rgba(125,255,158,.22)" /><stop offset="60%" stop-color="rgba(125,255,158,.10)" /><stop offset="100%" stop-color="rgba(125,255,158,0)" /></radialGradient>' +
+          '<radialGradient id="psSceneLightHaloOuter" cx="50%" cy="42%" r="72%"><stop offset="0%" stop-color="rgba(255,211,79,.16)" /><stop offset="58%" stop-color="rgba(125,255,158,.07)" /><stop offset="100%" stop-color="rgba(255,143,136,0)" /></radialGradient>' +
           '<pattern id="psSceneIlluminationGrid" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M 22 0 L 0 0 0 22" fill="none" stroke="rgba(226,232,240,.075)" stroke-width=".7" /></pattern>' +
+          '<clipPath id="psSceneLightingAreaClip"><rect x="' + planX + '" y="' + planY + '" width="' + planW + '" height="' + planH + '" rx="16" /></clipPath>' +
         '</defs>' +
 
         '<text x="52" y="26" fill="rgba(248,250,252,.92)" font-size="18" font-weight="900">Scene lighting baseline</text>' +
@@ -1012,8 +1014,9 @@
         CAD.stage(stage.x, stage.y, stage.width, stage.height, { rx: 20 }) +
         cadGrid(stage) +
 
-        '<text x="54" y="188" fill="rgba(125,255,158,.78)" font-size="10.4" font-weight="950" letter-spacing=".11em">LIGHTING AREA / MAINTAINED OUTPUT</text>' +
-        CAD.statusPill(708, 178, statusLabel, {
+        '<text x="54" y="194" fill="rgba(125,255,158,.78)" font-size="10.4" font-weight="950" letter-spacing=".11em">TOP-DOWN MAINTAINED-LIGHT PLAN</text>' +
+        '<text x="54" y="214" fill="rgba(226,232,240,.56)" font-size="9.5" font-weight="720">Conceptual fixture falloff visualization, not a fixture photometric simulation.</text>' +
+        CAD.statusPill(708, 188, statusLabel, {
           width: 66,
           height: 22,
           color: statusColor,
@@ -1021,43 +1024,47 @@
           size: 9.1
         }) +
 
-        '<rect x="' + planX + '" y="' + planY + '" width="' + planW + '" height="' + planH + '" rx="16" fill="' + lightFill + '" stroke="' + statusColor + '" stroke-opacity=".46" stroke-width="1.15" />' +
-        '<rect x="' + planX + '" y="' + planY + '" width="' + planW + '" height="' + planH + '" rx="16" fill="url(#psSceneIlluminationGrid)" opacity=".70" />' +
-        '<text x="' + (planX + 18) + '" y="' + (planY + 24) + '" fill="rgba(248,250,252,.86)" font-size="11" font-weight="950">MAINTAINED LIGHT ZONE</text>' +
-        '<text x="' + (planX + 18) + '" y="' + (planY + 43) + '" fill="rgba(226,232,240,.62)" font-size="10" font-weight="760">Area receiving usable light after utilization and light-loss assumptions</text>' +
+        '<rect x="' + planX + '" y="' + planY + '" width="' + planW + '" height="' + planH + '" rx="16" fill="rgba(125,255,158,.025)" stroke="' + statusColor + '" stroke-opacity=".48" stroke-width="1.15" />' +
+        '<g clip-path="url(#psSceneLightingAreaClip)">' +
+          '<rect x="' + planX + '" y="' + planY + '" width="' + planW + '" height="' + planH + '" rx="16" fill="url(#psSceneIlluminationGrid)" opacity=".72" />' +
+          fixture(fixtureXs[0], fixtureY, 1) +
+          fixture(fixtureXs[1], fixtureY, 2) +
+          fixture(fixtureXs[2], fixtureY, 3) +
+          '<rect x="' + planX + '" y="' + planY + '" width="' + planW + '" height="' + planH + '" rx="16" fill="' + statusSoft + '" opacity=".62" />' +
+        '</g>' +
+        '<rect x="' + planX + '" y="' + planY + '" width="' + planW + '" height="' + planH + '" rx="16" fill="none" stroke="' + statusColor + '" stroke-opacity=".55" stroke-width="1.1" />' +
+
+        '<text x="' + (planX + 18) + '" y="' + (planY + 24) + '" fill="rgba(248,250,252,.88)" font-size="11" font-weight="950">MAINTAINED LIGHT ZONE</text>' +
+        '<text x="' + (planX + 18) + '" y="' + (planY + 43) + '" fill="rgba(226,232,240,.64)" font-size="10" font-weight="760">Brighter overlap areas show stronger conceptual fixture contribution</text>' +
         '<text x="' + (planX + planW - 18) + '" y="' + (planY + planH - 18) + '" text-anchor="end" fill="' + statusColor + '" font-size="11" font-weight="950">' + esc(fmt(targetFc, 1) + " fc target") + '</text>' +
 
-        fixture(fixtureXs[0], fixtureY, 1) +
-        fixture(fixtureXs[1], fixtureY, 2) +
-        fixture(fixtureXs[2], fixtureY, 3) +
-
-        CAD.dimensionLine(planX, planY + planH + 24, planX + planW, planY + planH + 24, "Area width: " + fmtFt(areaWidth, 0), {
+        CAD.dimensionLine(planX, planY + planH + 28, planX + planW, planY + planH + 28, "Area width: " + fmtFt(areaWidth, 0), {
           color: colors.axis,
           labelFill: "rgba(226,232,240,.72)",
           tick: 7
         }) +
-        CAD.dimensionLine(planX + planW + 34, planY, planX + planW + 34, planY + planH, "Depth: " + fmtFt(areaDepth, 0), {
+        CAD.dimensionLine(planX + planW + 36, planY, planX + planW + 36, planY + planH, "Depth: " + fmtFt(areaDepth, 0), {
           color: colors.axis,
           labelFill: "rgba(226,232,240,.72)",
           tick: 7
         }) +
 
-        CAD.metricChip(54, 384, "AREA", fmt(areaSqFt, 0) + " sq ft", {
+        CAD.metricChip(54, 430, "AREA", fmt(areaSqFt, 0) + " sq ft", {
           accent: "rgba(125,255,158,.82)",
           valueFill: "rgba(248,250,252,.88)",
           width: 132
         }) +
-        CAD.metricChip(202, 384, "LUMENS", fmt(lumens, 0), {
+        CAD.metricChip(202, 430, "LUMENS", fmt(lumens, 0), {
           accent: statusColor,
           valueFill: statusColor,
           width: 126
         }) +
-        CAD.metricChip(344, 384, "UF / LLF", fmtPct(ufPct, 0) + " / " + fmtPct(llfPct, 0), {
+        CAD.metricChip(344, 430, "UF / LLF", fmtPct(ufPct, 0) + " / " + fmtPct(llfPct, 0), {
           accent: "rgba(255,226,128,.86)",
           valueFill: "rgba(255,239,176,.92)",
           width: 136
         }) +
-        CAD.metricChip(496, 384, "EFFECTIVE", fmtPct(effectiveFactor * 100, 0), {
+        CAD.metricChip(496, 430, "EFFECTIVE", fmtPct(effectiveFactor * 100, 0), {
           accent: statusColor,
           valueFill: statusColor,
           width: 132
