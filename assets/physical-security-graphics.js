@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-020-light-fixture-primitive";
+  const VERSION = "physical-security-graphics-021-use-light-fixture-primitive";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -984,10 +984,17 @@
           '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(y + 16, 1) + '" rx="128" ry="68" fill="url(#psSceneLightHaloOuter)" opacity=".88" />' +
           '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(y + 12, 1) + '" rx="82" ry="44" fill="url(#psSceneLightHaloMid)" opacity=".88" />' +
           '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(y + 8, 1) + '" rx="42" ry="24" fill="url(#psSceneLightHaloCore)" opacity=".92" />' +
-          '<circle cx="' + fmt(x, 1) + '" cy="' + fmt(y, 1) + '" r="12" fill="rgba(255,226,128,.10)" stroke="rgba(255,226,128,.78)" stroke-width="1.2" />' +
-          '<circle cx="' + fmt(x, 1) + '" cy="' + fmt(y, 1) + '" r="3.4" fill="rgba(255,239,176,.96)" />' +
-          '<line x1="' + fmt(x, 1) + '" y1="' + fmt(y + 13, 1) + '" x2="' + fmt(x, 1) + '" y2="' + fmt(y + 76, 1) + '" stroke="rgba(255,226,128,.22)" stroke-width=".8" stroke-dasharray="4 6" />' +
-          '<text x="' + fmt(x, 1) + '" y="' + fmt(y - 20, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.86)" font-size="8.6" font-weight="950">FIXTURE L' + index + '</text>' +
+          '<line x1="' + fmt(x, 1) + '" y1="' + fmt(y + 17, 1) + '" x2="' + fmt(x, 1) + '" y2="' + fmt(y + 76, 1) + '" stroke="rgba(255,226,128,.18)" stroke-width=".8" stroke-dasharray="4 6" />' +
+          lightingFixturePlanMarker(x, y, {
+            label: "L" + index,
+            labelY: y - 25,
+            scale: 0.54,
+            rotation: 0,
+            color: "rgba(255,226,128,.90)",
+            stroke: "rgba(255,226,128,.90)",
+            accent: "rgba(255,239,176,.82)",
+            symbol: "scene-illumination-light-fixture"
+          }) +
         '</g>';
     }
 
