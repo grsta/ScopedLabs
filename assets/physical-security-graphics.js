@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-021-use-light-fixture-primitive";
+  const VERSION = "physical-security-graphics-022-scene-bottom-fixtures";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -963,7 +963,7 @@
     const planW = 520;
     const planH = 142;
 
-    const fixtureY = planY + 44;
+    const fixtureY = planY + planH - 30;
     const fixtureXs = [
       planX + planW * 0.22,
       planX + planW * 0.50,
@@ -979,22 +979,21 @@
     }
 
     function fixture(x, y, index) {
+      const glowY = y - 26;
+
       return "" +
         '<g data-ps-graphic-part="lighting-fixture">' +
-          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(y + 16, 1) + '" rx="128" ry="68" fill="url(#psSceneLightHaloOuter)" opacity=".88" />' +
-          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(y + 12, 1) + '" rx="82" ry="44" fill="url(#psSceneLightHaloMid)" opacity=".88" />' +
-          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(y + 8, 1) + '" rx="42" ry="24" fill="url(#psSceneLightHaloCore)" opacity=".92" />' +
-          '<line x1="' + fmt(x, 1) + '" y1="' + fmt(y + 17, 1) + '" x2="' + fmt(x, 1) + '" y2="' + fmt(y + 76, 1) + '" stroke="rgba(255,226,128,.18)" stroke-width=".8" stroke-dasharray="4 6" />' +
-          lightingFixturePlanMarker(x, y, {
-            label: "L" + index,
-            labelY: y - 25,
-            scale: 0.54,
-            rotation: 0,
-            color: "rgba(255,226,128,.90)",
-            stroke: "rgba(255,226,128,.90)",
-            accent: "rgba(255,239,176,.82)",
-            symbol: "scene-illumination-light-fixture"
+          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(glowY - 6, 1) + '" rx="126" ry="60" fill="url(#psSceneLightHaloOuter)" opacity=".76" />' +
+          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(glowY - 12, 1) + '" rx="78" ry="38" fill="url(#psSceneLightHaloMid)" opacity=".86" />' +
+          '<ellipse cx="' + fmt(x, 1) + '" cy="' + fmt(glowY - 16, 1) + '" rx="38" ry="19" fill="url(#psSceneLightHaloCore)" opacity=".96" />' +
+          '<line x1="' + fmt(x, 1) + '" y1="' + fmt(y - 16, 1) + '" x2="' + fmt(x, 1) + '" y2="' + fmt(planY + 24, 1) + '" stroke="rgba(255,226,128,.18)" stroke-width=".8" stroke-dasharray="4 6" />' +
+          streetLightFixtureCadIcon(x, y, {
+            scale: 0.86,
+            rotation: -90,
+            stroke: "rgba(255,226,128,.92)",
+            accent: "rgba(255,239,176,.88)"
           }) +
+          '<text x="' + fmt(x, 1) + '" y="' + fmt(y + 28, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.86)" font-size="8.4" font-weight="950">L' + index + '</text>' +
         '</g>';
     }
 
@@ -1043,7 +1042,7 @@
 
         '<text x="' + (planX + 18) + '" y="' + (planY + 24) + '" fill="rgba(248,250,252,.88)" font-size="11" font-weight="950">MAINTAINED LIGHT ZONE</text>' +
         '<text x="' + (planX + 18) + '" y="' + (planY + 43) + '" fill="rgba(226,232,240,.64)" font-size="10" font-weight="760">Brighter overlap areas show stronger conceptual fixture contribution</text>' +
-        '<text x="' + (planX + planW - 18) + '" y="' + (planY + planH - 18) + '" text-anchor="end" fill="' + statusColor + '" font-size="11" font-weight="950">' + esc(fmt(targetFc, 1) + " fc target") + '</text>' +
+        '<text x="' + (planX + planW - 18) + '" y="' + (planY + 24) + '" text-anchor="end" fill="' + statusColor + '" font-size="11" font-weight="950">' + esc(fmt(targetFc, 1) + " fc target") + '</text>' +
 
         CAD.dimensionLine(planX, planY + planH + 28, planX + planW, planY + planH + 28, "Area width: " + fmtFt(areaWidth, 0), {
           color: colors.axis,
