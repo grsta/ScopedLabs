@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-005-export-shell-module
+ * Version: scopedlabs-category-modernizer-006-export-shell-role-aware
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -503,8 +503,8 @@ const LabelStandardModule = {
 
 const ExportShellModule = {
   id: "export-shell",
-  version: "export-shell-module-001-audit-only",
-  description: "Inventories export/snapshot/report wiring without modifying page files.",
+  version: "export-shell-module-002-role-aware-audit-only",
+  description: "Inventories export/snapshot/report wiring with role-aware accepted alternatives.",
   run(tool, indexFile, html) {
     if (config.protectedTools.has(tool)) {
       return {
@@ -527,6 +527,12 @@ const ExportShellModule = {
     const hasSaveSnapshot = hasId(html, "saveSnapshot");
     const hasExportStatus = hasId(html, "exportStatus");
 
+    const isAreaPlanner = tool === "area-planner";
+    const hasAreaSummaryExport =
+      hasId(html, "areaSummary") &&
+      hasId(html, "printAreaSummary") &&
+      hasId(html, "copyAreaSummaryJson");
+
     const reportFields = [
       "reportTitle",
       "projectName",
@@ -545,6 +551,28 @@ const ExportShellModule = {
       html.includes("Custom Notes");
 
     const issues = [];
+
+    if (isAreaPlanner && hasAreaSummaryExport) {
+      const detailParts = [
+        "role=area-planner",
+        "exportPattern=area-summary-print-copy",
+        "areaSummary=present",
+        "printAreaSummary=present",
+        "copyAreaSummaryJson=present",
+        "normalExportCard=not-required",
+        "assistantExport=" + assistantExportScript
+      ];
+
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SAFE",
+        action: "noop",
+        rowId: "-",
+        detail: detailParts.join("; ")
+      };
+    }
 
     if (exportScript === "-") issues.push("missing export.js");
     if (!hasExportConfig) issues.push("missing export config");
@@ -635,7 +663,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-005-export-shell-module");
+console.log("Version: scopedlabs-category-modernizer-006-export-shell-role-aware");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + modules.map((m) => m.id + "@" + m.version).join(", "));
