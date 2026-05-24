@@ -379,21 +379,23 @@ function hideVisibleFlowContext() {
 
   function renderFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS.spacing);
+
     if (!raw) {
-      renderAreaOnlyFlowContext();
+      hideVisibleFlowContext();
       return;
     }
 
     let parsed = null;
+
     try {
       parsed = JSON.parse(raw);
     } catch {
-      renderAreaOnlyFlowContext();
+      hideVisibleFlowContext();
       return;
     }
 
     if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      renderAreaOnlyFlowContext();
+      hideVisibleFlowContext();
       return;
     }
 
@@ -419,15 +421,28 @@ function hideVisibleFlowContext() {
       if (Number.isFinite(overlap) && overlap >= 0 && overlap <= 95) els.overlap.value = String(Number(overlap.toFixed(1)));
     }
 
+    const parts = [];
+
+    if (Number.isFinite(w) && w > 0) parts.push(`Area width: <strong>${fmtFt(w)}</strong>`);
+    if (Number.isFinite(cams) && cams > 0) parts.push(`Camera count: <strong>${Math.round(cams)}</strong>`);
+    if (Number.isFinite(spacing) && spacing > 0) parts.push(`Actual spacing: <strong>${fmtFt(spacing)}</strong>`);
+    if (Number.isFinite(dist) && dist > 0) parts.push(`Distance: <strong>${fmtFt(dist)}</strong>`);
+    if (Number.isFinite(hfov) && hfov > 0) parts.push(`HFOV: <strong>${fmt(hfov, 1)}&deg;</strong>`);
+    if (Number.isFinite(overlap) && overlap >= 0) parts.push(`Overlap target: <strong>${fmtPct(overlap, 1)}</strong>`);
+
     const overrideNote = renderManualOverrideNote();
 
-    if (!overrideNote) {
+    if (!parts.length && !overrideNote) {
       hideVisibleFlowContext();
       return;
     }
 
     visibleFlowContextEl().hidden = false;
-    visibleFlowContextEl().innerHTML = overrideNote;
+    visibleFlowContextEl().innerHTML = `
+      <strong>Imported Assumptions</strong><br>
+      ${parts.join(" | ")}
+      ${overrideNote}
+    `;
   }
 
   function invalidate({ clearFlow = true } = {}) {
