@@ -355,6 +355,41 @@ body[data-tool="blind-spot-check"] .sl-help-card .btn:hover {
 }
 </style>
 
+
+<style data-scopedlabs-blindspot-secondary-button-tone-v002>
+/* Blind Spot only: keep primary workflow buttons green, make support actions dark. */
+body[data-tool="blind-spot-check"] #reset.btn,
+body[data-tool="blind-spot-check"] a.btn:not(#continue),
+body[data-tool="blind-spot-check"] #exportReport.btn,
+body[data-tool="blind-spot-check"] #saveSnapshot.btn,
+body[data-tool="blind-spot-check"] .sl-help-card .btn {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.022)) !important;
+  color: rgba(235, 245, 238, 0.94) !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+}
+
+body[data-tool="blind-spot-check"] #reset.btn:hover,
+body[data-tool="blind-spot-check"] a.btn:not(#continue):hover,
+body[data-tool="blind-spot-check"] #exportReport.btn:not(:disabled):hover,
+body[data-tool="blind-spot-check"] #saveSnapshot.btn:not(:disabled):hover,
+body[data-tool="blind-spot-check"] .sl-help-card .btn:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(120, 255, 150, 0.34) !important;
+  background: linear-gradient(180deg, rgba(83,255,61,0.085), rgba(255,255,255,0.032)) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.22) !important;
+}
+
+body[data-tool="blind-spot-check"] #calc.btn,
+body[data-tool="blind-spot-check"] #continue.btn {
+  border-color: rgba(118, 255, 151, 0.36) !important;
+  background: linear-gradient(180deg, rgba(42, 116, 55, 0.50), rgba(16, 68, 30, 0.62)) !important;
+  color: rgba(246, 255, 249, 0.98) !important;
+  border-radius: 10px !important;
+}
+</style>
+
 </head>
 
 <body
