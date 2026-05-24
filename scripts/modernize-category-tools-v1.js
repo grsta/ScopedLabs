@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-007-graphics-contract-module
+ * Version: scopedlabs-category-modernizer-009-kb-card-registry-aware
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card"]
 };
 
 function read(file) {
@@ -722,6 +722,78 @@ const GraphicsContractModule = {
   }
 };
 
+
+const KbCardModule = {
+  id: "kb-card",
+  version: "kb-card-module-002-registry-aware-audit-only",
+  description: "Audits Knowledge Base/help wiring using page signals plus category registry keys.",
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const srcs = scripts(html);
+    const helpScript = srcs.find((src) => src.includes("/assets/help.js")) || "-";
+    const expectedKbKey = category + "/" + tool;
+
+    const registryPath = path.join(root, "assets", category + "-tool-registry.js");
+    const registryText = fs.existsSync(registryPath) ? fs.readFileSync(registryPath, "utf8") : "";
+
+    const hasExpectedKbKeyInPage = html.includes(expectedKbKey);
+    const hasExpectedKbKeyInRegistry = registryText.includes(expectedKbKey);
+    const hasExpectedKbKey = hasExpectedKbKeyInPage || hasExpectedKbKeyInRegistry;
+
+    const hasKbText = /Knowledge Base|KB Guide|Open KB Guide|Guide/i.test(html);
+    const hasKbCardSignal =
+      html.includes("data-help") ||
+      html.includes("help-card") ||
+      html.includes("kb-card") ||
+      html.includes("Open KB Guide") ||
+      html.includes("Knowledge Base");
+
+    const hasOldKbPill =
+      /<[^>]+class=["'][^"']*\bpill\b[^"']*["'][^>]*>\s*Knowledge Base\s*<\/[^>]+>/i.test(html);
+
+    const registryManagedKb = helpScript !== "-" && hasExpectedKbKeyInRegistry;
+    const acceptedKbSignal = hasKbCardSignal || registryManagedKb;
+
+    const issues = [];
+
+    if (helpScript === "-") issues.push("missing help.js");
+    if (!hasExpectedKbKey) issues.push("missing expected KB key " + expectedKbKey);
+    if (!acceptedKbSignal) issues.push("missing KB card/trigger signal");
+
+    const detailParts = [
+      "helpScript=" + helpScript,
+      "expectedKbKey=" + expectedKbKey,
+      "kbKeyPage=" + (hasExpectedKbKeyInPage ? "present" : "missing"),
+      "kbKeyRegistry=" + (hasExpectedKbKeyInRegistry ? "present" : "missing"),
+      "kbMode=" + (registryManagedKb ? "registry-managed" : "page-managed-or-missing"),
+      "kbText=" + (hasKbText ? "present" : "missing"),
+      "kbCardSignal=" + (hasKbCardSignal ? "present" : registryManagedKb ? "registry-managed" : "missing"),
+      "oldKbPill=" + (hasOldKbPill ? "present" : "not-detected")
+    ];
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail: issues.length ? issues.join("; ") + " | " + detailParts.join("; ") : detailParts.join("; ")
+    };
+  }
+};
+
 const BackContinueModule = {
   id: "back-continue",
   version: "back-continue-module-001",
@@ -757,7 +829,7 @@ const BackContinueModule = {
   }
 };
 
-const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule];
+const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule];
 
 if (!fs.existsSync(categoryRoot)) {
   console.error("Missing category folder: " + path.relative(root, categoryRoot));
@@ -781,7 +853,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-007-graphics-contract-module");
+console.log("Version: scopedlabs-category-modernizer-009-kb-card-registry-aware");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + modules.map((m) => m.id + "@" + m.version).join(", "));
