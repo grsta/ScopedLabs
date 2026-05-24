@@ -1,6 +1,6 @@
 /*
  * ScopedLabs Tool Shell
- * Version: scopedlabs-tool-shell-002-role-aware-required-ids
+ * Version: scopedlabs-tool-shell-003-manual-diagnostics
  *
  * Shared helper foundation for future Tool Shell V1 extraction.
  * This file is not loaded by live pages yet.
@@ -14,7 +14,7 @@
 (function attachScopedLabsToolShell(root) {
   "use strict";
 
-  const VERSION = "scopedlabs-tool-shell-002-role-aware-required-ids";
+  const VERSION = "scopedlabs-tool-shell-003-manual-diagnostics";
 
   function toArray(value) {
     return Array.prototype.slice.call(value || []);
@@ -153,6 +153,65 @@
     ];
   }
 
+  function buildDiagnosticResult() {
+    const page = describePage();
+    const tool = page.tool || null;
+
+    const checks = {
+      registryLoaded: !!getRegistryForCategory(page.category),
+      toolRecordFound: !!tool,
+      requiredIdsOk: !!(page.requiredIds && page.requiredIds.ok),
+      backContinueOk: !!(page.backContinue && page.backContinue.ok)
+    };
+
+    const issues = [];
+
+    if (!checks.registryLoaded) {
+      issues.push("registry-not-loaded");
+    }
+
+    if (!checks.toolRecordFound) {
+      issues.push("tool-record-not-found");
+    }
+
+    if (!checks.requiredIdsOk) {
+      const missing = page.requiredIds && page.requiredIds.missing ? page.requiredIds.missing : [];
+      issues.push("missing-required-ids:" + missing.join(","));
+    }
+
+    if (!checks.backContinueOk) {
+      issues.push("back-continue-not-ready");
+    }
+
+    return {
+      shellVersion: VERSION,
+      category: page.category,
+      slug: page.slug,
+      role: tool ? tool.role : "",
+      title: tool ? tool.title : "",
+      checks,
+      issues,
+      ok: issues.length === 0,
+      page
+    };
+  }
+
+  function runDiagnostics(options) {
+    const opts = options || {};
+    const result = buildDiagnosticResult();
+
+    if (!opts.silent && root.console) {
+      const label = "[ScopedLabsToolShell] " + result.slug + " diagnostics";
+      if (result.ok && typeof root.console.info === "function") {
+        root.console.info(label, "PASS", result);
+      } else if (!result.ok && typeof root.console.warn === "function") {
+        root.console.warn(label, "WATCH", result);
+      }
+    }
+
+    return result;
+  }
+
   function describePage() {
     const tool = getCurrentToolRecord();
     const requiredIds = requiredIdsForTool(tool);
@@ -180,6 +239,8 @@
     markRequiredIdDiagnostics,
     getBackContinueState,
     addShellButtonClasses,
+    buildDiagnosticResult,
+    runDiagnostics,
     describePage
   });
 
