@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-017-hero-tier-badge-cleanup
+ * Version: scopedlabs-category-modernizer-019-label-header-cleanup-regex-fix
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -483,8 +483,8 @@ const BadgeCleanupModule = {
 
 const LabelStandardModule = {
   id: "label-standard",
-  version: "label-standard-module-001-audit-only",
-  description: "Inventories page labels, headings, calculator wording, and standard section labels.",
+  version: "label-standard-module-003-header-cleanup-regex-fix",
+  description: "Removes old header breadcrumb rows and standardizes obvious title suffixes.",
   run(tool, indexFile, html) {
     if (config.protectedTools.has(tool)) {
       return {
@@ -500,47 +500,117 @@ const LabelStandardModule = {
 
     function cleanText(value) {
       return String(value || "")
-        .replace(/<[^>]+>/g, "")
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
         .replace(/\s+/g, " ")
         .trim();
     }
 
-    function firstMatchText(pattern) {
-      const match = html.match(pattern);
-      return match ? cleanText(match[1]) : "-";
+    const titleTargets = {
+      "scene-illumination": {
+        from: "Scene Illumination Estimator",
+        to: "Scene Illumination"
+      },
+      "camera-spacing": {
+        from: "Camera Spacing Planner",
+        to: "Camera Spacing"
+      },
+      "pixel-density": {
+        from: "Pixel Density Calculator",
+        to: "Pixel Density"
+      }
+    };
+
+    let patched = html;
+    const actions = [];
+
+    const h1Before = cleanText((html.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/i) || [""])[0]);
+    const titleBefore = cleanText((html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i) || ["", ""])[1]);
+
+    const h1Index = patched.search(/<h1\b/i);
+    let breadcrumbRemoved = false;
+
+    if (h1Index >= 0) {
+      const beforeH1 = patched.slice(0, h1Index);
+      const fromH1 = patched.slice(h1Index);
+
+      const divRx = /<div\b[^>]*>[\s\S]*?<\/div>/gi;
+      let cleanedBeforeH1 = beforeH1.replace(divRx, function(match) {
+        const text = cleanText(match);
+
+        if (/^Tools\s*\/\s*Physical Security\s*\/\s*.+$/i.test(text)) {
+          breadcrumbRemoved = true;
+          return "\n";
+        }
+
+        return match;
+      });
+
+      patched = cleanedBeforeH1 + fromH1;
+
+      if (breadcrumbRemoved) {
+        actions.push("remove-header-breadcrumb");
+      }
     }
 
-    const pageTitle = firstMatchText(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
-    const h1 = firstMatchText(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i);
-    const h2s = Array.from(html.matchAll(/<h2\b[^>]*>([\s\S]*?)<\/h2>/gi)).map((m) => cleanText(m[1]));
-    const h3s = Array.from(html.matchAll(/<h3\b[^>]*>([\s\S]*?)<\/h3>/gi)).map((m) => cleanText(m[1]));
+    const titleTarget = titleTargets[tool];
 
-    const calculatorRefs = (html.match(/\bCalculator\b/gi) || []).length;
-    const hasPlanningInputs = /Planning Inputs|Active Area Setup|Inputs/i.test(html);
-    const hasResultsLabel = /\bResults\b/i.test(h2s.concat(h3s).join(" | "));
-    const hasExportLabel = /Documentation & Export|Export & Snapshot|Export Report|Open Export Report/i.test(html);
-    const hasBestFor = /Best for:/i.test(html);
-    const hasSubhead = /class=["'][^"']*\bsubhead\b/i.test(html);
+    if (titleTarget) {
+      const h1Rx = /<h1\b([^>]*)>[\s\S]*?<\/h1>/i;
+      patched = patched.replace(h1Rx, function(match, attrs) {
+        const current = cleanText(match);
 
-    const detailParts = [
-      "title=" + pageTitle,
-      "h1=" + h1,
-      "calculatorRefs=" + calculatorRefs,
-      "planningLabel=" + (hasPlanningInputs ? "present" : "missing"),
-      "resultsLabel=" + (hasResultsLabel ? "present" : "missing"),
-      "exportLabel=" + (hasExportLabel ? "present" : "missing"),
-      "bestFor=" + (hasBestFor ? "present" : "missing"),
-      "subhead=" + (hasSubhead ? "present" : "missing")
-    ];
+        if (current !== titleTarget.from) {
+          return match;
+        }
+
+        actions.push("standardize-h1");
+        return "<h1" + attrs + ">" + titleTarget.to + "</h1>";
+      });
+
+      const titleRx = /<title\b([^>]*)>[\s\S]*?<\/title>/i;
+      patched = patched.replace(titleRx, function(match, attrs) {
+        const current = cleanText(match);
+        const fromPipe = titleTarget.from + " | ScopedLabs";
+        const fromBullet = titleTarget.from + " ? ScopedLabs";
+        const toPipe = titleTarget.to + " | ScopedLabs";
+
+        if (current !== fromPipe && current !== fromBullet) {
+          return match;
+        }
+
+        actions.push("standardize-title");
+        return "<title" + attrs + ">" + toPipe + "</title>";
+      });
+    }
+
+    const h1After = cleanText((patched.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/i) || [""])[0]);
+    const titleAfter = cleanText((patched.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i) || ["", ""])[1]);
+
+    const hasPatch = patched !== html;
+
+    if (apply && hasPatch) {
+      write(indexFile, patched);
+    }
+
+    const detail = [
+      "breadcrumb=" + (breadcrumbRemoved ? "planned-remove" : "none"),
+      "h1=" + h1Before + (h1Before !== h1After ? " -> " + h1After : ""),
+      "title=" + titleBefore + (titleBefore !== titleAfter ? " -> " + titleAfter : "")
+    ].join("; ");
 
     return {
       module: this.id,
       version: this.version,
       tool,
       classification: "SAFE",
-      action: "noop",
+      action: hasPatch
+        ? (apply ? "applied:" + actions.join("+") : actions.join("+"))
+        : "noop",
       rowId: "-",
-      detail: detailParts.join("; ")
+      detail
     };
   }
 };
@@ -1209,7 +1279,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-017-hero-tier-badge-cleanup");
+console.log("Version: scopedlabs-category-modernizer-019-label-header-cleanup-regex-fix");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
