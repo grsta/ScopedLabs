@@ -1,6 +1,6 @@
 /*
  * ScopedLabs Tool Shell
- * Version: scopedlabs-tool-shell-001-foundation
+ * Version: scopedlabs-tool-shell-002-role-aware-required-ids
  *
  * Shared helper foundation for future Tool Shell V1 extraction.
  * This file is not loaded by live pages yet.
@@ -14,7 +14,7 @@
 (function attachScopedLabsToolShell(root) {
   "use strict";
 
-  const VERSION = "scopedlabs-tool-shell-001-foundation";
+  const VERSION = "scopedlabs-tool-shell-002-role-aware-required-ids";
 
   function toArray(value) {
     return Array.prototype.slice.call(value || []);
@@ -132,8 +132,30 @@
     return state;
   }
 
+  function requiredIdsForTool(tool) {
+    const role = tool && tool.role;
+
+    if (role === "pipeline-entry") {
+      return [
+        "pipeline",
+        "toolCard",
+        "continue",
+        "next-step-row"
+      ];
+    }
+
+    return [
+      "pipeline",
+      "toolCard",
+      "results",
+      "continue",
+      "next-step-row"
+    ];
+  }
+
   function describePage() {
     const tool = getCurrentToolRecord();
+    const requiredIds = requiredIdsForTool(tool);
 
     return {
       shellVersion: VERSION,
@@ -141,13 +163,8 @@
       tier: getPageTier(),
       slug: getCurrentToolSlug(),
       tool,
-      requiredIds: markRequiredIdDiagnostics([
-        "pipeline",
-        "toolCard",
-        "results",
-        "continue",
-        "next-step-row"
-      ]),
+      requiredIdList: requiredIds.slice(),
+      requiredIds: markRequiredIdDiagnostics(requiredIds),
       backContinue: getBackContinueState(document)
     };
   }
@@ -159,6 +176,7 @@
     getCurrentToolSlug,
     getRegistryForCategory,
     getCurrentToolRecord,
+    requiredIdsForTool,
     markRequiredIdDiagnostics,
     getBackContinueState,
     addShellButtonClasses,
