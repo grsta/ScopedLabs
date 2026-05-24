@@ -1015,9 +1015,187 @@ function hideVisibleFlowContext() {
     document.querySelectorAll('[data-mounting-structured-export="true"]').forEach((node) => node.remove());
   }
 
+
+  // data-scopedlabs-mounting-export-visual-001
+  function mountingExportVisualSvg(data) {
+    if (!data || !data.ok) return "";
+
+    const h = Number(data.h);
+    const th = Number(data.th);
+    const dist = Number(data.dist);
+    const topEdge = Number(data.topEdgeHeight);
+    const bottomEdge = Number(data.bottomEdgeHeight);
+    const tilt = Number(data.tilt);
+    const vfov = Number(data.vfov);
+
+    if (![h, th, dist, topEdge, bottomEdge, tilt, vfov].every(Number.isFinite)) return "";
+
+    function clampExportNumber(value, min, max) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return min;
+      return Math.min(max, Math.max(min, number));
+    }
+
+    function pressureColor(value) {
+      const score = Number(value);
+      if (!Number.isFinite(score)) return "#64748b";
+      if (score > 45) return "#dc2626";
+      if (score > 20) return "#d97706";
+      return "#15803d";
+    }
+
+    function pressureLabel(value) {
+      const score = Number(value);
+      if (!Number.isFinite(score)) return "Review";
+      if (score > 45) return "Risk";
+      if (score > 20) return "Watch";
+      return "Healthy";
+    }
+
+    function exportCameraSvg(x, y, rotationDeg) {
+      const rotation = Number.isFinite(Number(rotationDeg)) ? Number(rotationDeg) : 0;
+
+      return "" +
+        '<g transform="translate(' + fmt(x, 2) + ' ' + fmt(y, 2) + ') rotate(' + fmt(rotation, 2) + ') scale(0.46)" data-export-graphic-part="camera-marker">' +
+          '<rect x="-22" y="-13" width="44" height="26" rx="4" fill="#0f172a" stroke="#15803d" stroke-width="1.8" />' +
+          '<path d="M 22 -8 L 42 -14 L 42 14 L 22 8 Z" fill="#0f172a" stroke="#15803d" stroke-width="1.8" stroke-linejoin="round" />' +
+          '<line x1="42" y1="-12" x2="42" y2="12" stroke="#15803d" stroke-width="1.8" stroke-linecap="round" />' +
+          '<line x1="-13" y1="-13" x2="-13" y2="13" stroke="#16a34a" stroke-opacity=".42" stroke-width="1" />' +
+          '<circle cx="-5" cy="0" r="4" fill="none" stroke="#16a34a" stroke-opacity=".56" stroke-width="1.2" />' +
+          '<circle cx="-30" cy="0" r="5" fill="#020617" stroke="#15803d" stroke-width="1.8" />' +
+          '<line x1="-25" y1="0" x2="-22" y2="0" stroke="#15803d" stroke-width="1.8" stroke-linecap="round" />' +
+        '</g>';
+    }
+
+    const svgW = 820;
+    const svgH = 350;
+    const floorY = 260;
+    const camX = 112;
+    const targetX = 660;
+
+    const minH = Math.min(0, bottomEdge, th);
+    const maxH = Math.max(8, h, th, topEdge);
+    const rangeH = Math.max(8, maxH - minH);
+
+    function yFor(height) {
+      return floorY - ((height - minH) / rangeH) * 185;
+    }
+
+    const camY = yFor(h);
+    const targetY = yFor(th);
+    const topY = yFor(topEdge);
+    const bottomY = yFor(bottomEdge);
+    const gradeY = yFor(0);
+    const cameraTilt = clampExportNumber(tilt, -75, 75);
+    const tiltRad = deg2rad(cameraTilt);
+    const lensReach = 21;
+    const lensTipX = camX + Math.cos(tiltRad) * lensReach;
+    const lensTipY = camY + Math.sin(tiltRad) * lensReach;
+    const dimensionY = Math.min(svgH - 28, Math.max(gradeY, bottomY) + 44);
+
+    const lowerRayAngleDeg = clampExportNumber(tilt + (vfov / 2), 0.1, 89.5);
+    const lowerRayGroundDistanceFt = h / Math.tan(deg2rad(lowerRayAngleDeg));
+
+    let groundHitMarkup = "";
+    if (bottomEdge < 0 && Number.isFinite(lowerRayGroundDistanceFt) && lowerRayGroundDistanceFt > 0 && lowerRayGroundDistanceFt < dist) {
+      const hitX = camX + ((targetX - camX) * (lowerRayGroundDistanceFt / dist));
+      if (Number.isFinite(hitX) && hitX > camX && hitX < targetX) {
+        groundHitMarkup =
+          '<circle cx="' + fmt(hitX, 2) + '" cy="' + fmt(gradeY, 2) + '" r="4" fill="#d97706" />' +
+          '<line x1="' + fmt(hitX, 2) + '" y1="' + fmt(gradeY - 12, 2) + '" x2="' + fmt(hitX, 2) + '" y2="' + fmt(gradeY + 12, 2) + '" stroke="#d97706" stroke-width="1" />' +
+          '<text x="' + fmt(hitX + 10, 2) + '" y="' + fmt(gradeY - 12, 2) + '" fill="#92400e" font-size="11" font-weight="800">Lower ray hits grade</text>' +
+          '<text x="' + fmt(hitX + 10, 2) + '" y="' + fmt(gradeY + 5, 2) + '" fill="#92400e" font-size="10.5" font-weight="700">~' + escapeMountingExportHtml(fmtFt(lowerRayGroundDistanceFt, 0)) + ' from camera</text>';
+      }
+    }
+
+    const subjectScore = clampExportNumber(data.subjectAngleMetric, 0, 100);
+    const mountScore = clampExportNumber(data.mountPressureMetric, 0, 100);
+    const framingScore = clampExportNumber(data.framingPressureMetric, 0, 100);
+
+    const pressureRows = [
+      ["Subject Angle Fit", subjectScore, fmtDeg(tilt) + " actual / 12-35° preferred"],
+      ["Mount Height Balance", mountScore, fmtFt(h) + " mount / " + (data.mountFitText || "review")],
+      ["Vertical Framing Fit", framingScore, fmtFt(topEdge) + " to " + fmtFt(bottomEdge)]
+    ];
+
+    const pressureHtml =
+      '<table style="width:100%;border-collapse:collapse;margin:10px 0 0 0;font-size:12px;break-inside:avoid;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 9px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;">Pressure Metric</th>' +
+          '<th style="padding:7px 9px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;">Status</th>' +
+          '<th style="padding:7px 9px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;">Score</th>' +
+          '<th style="padding:7px 9px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;">Detail</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          pressureRows.map((row) =>
+            '<tr>' +
+              '<td style="padding:7px 9px;border:1px solid #d8dee6;color:#111827;font-weight:800;">' + escapeMountingExportHtml(row[0]) + '</td>' +
+              '<td style="padding:7px 9px;border:1px solid #d8dee6;color:' + pressureColor(row[1]) + ';font-weight:900;">' + pressureLabel(row[1]) + '</td>' +
+              '<td style="padding:7px 9px;border:1px solid #d8dee6;color:#111827;font-weight:800;">' + row[1].toFixed(0) + '/100</td>' +
+              '<td style="padding:7px 9px;border:1px solid #d8dee6;color:#374151;">' + escapeMountingExportHtml(row[2]) + '</td>' +
+            '</tr>'
+          ).join("") +
+        '</tbody>' +
+      '</table>';
+
+    const svg =
+      '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mounting geometry export visual" style="display:block;width:100%;height:auto;background:#ffffff;border:1px solid #d8dee6;border-radius:10px;">' +
+        '<defs>' +
+          '<linearGradient id="mountingExportFovFill" x1="0" x2="1" y1="0" y2="1">' +
+            '<stop offset="0%" stop-color="#16a34a" stop-opacity=".20"/>' +
+            '<stop offset="100%" stop-color="#16a34a" stop-opacity=".04"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+
+        '<rect x="0" y="0" width="' + svgW + '" height="' + svgH + '" fill="#ffffff"/>' +
+        '<text x="30" y="34" fill="#111827" font-size="16" font-weight="900">Mounting Geometry Visual</text>' +
+        '<text x="30" y="54" fill="#4b5563" font-size="11.5" font-weight="700">Tilted camera, VFOV cone, target point, grade intercept, and pressure summary.</text>' +
+
+        '<line x1="44" y1="' + fmt(gradeY, 2) + '" x2="760" y2="' + fmt(gradeY, 2) + '" stroke="#9ca3af" stroke-width="1"/>' +
+        '<text x="46" y="' + fmt(gradeY + 20, 2) + '" fill="#6b7280" font-size="11" font-weight="700">Grade / 0 ft reference</text>' +
+
+        '<polygon points="' + fmt(lensTipX, 2) + ',' + fmt(lensTipY, 2) + ' ' + targetX + ',' + fmt(topY, 2) + ' ' + targetX + ',' + fmt(bottomY, 2) + '" fill="url(#mountingExportFovFill)" stroke="#15803d" stroke-opacity=".55" stroke-width="1"/>' +
+        '<line x1="' + fmt(lensTipX, 2) + '" y1="' + fmt(lensTipY, 2) + '" x2="' + targetX + '" y2="' + fmt(targetY, 2) + '" stroke="#15803d" stroke-width="2"/>' +
+        '<line x1="' + fmt(lensTipX, 2) + '" y1="' + fmt(lensTipY, 2) + '" x2="' + targetX + '" y2="' + fmt(topY, 2) + '" stroke="#15803d" stroke-opacity=".45" stroke-width="1" stroke-dasharray="5 5"/>' +
+        '<line x1="' + fmt(lensTipX, 2) + '" y1="' + fmt(lensTipY, 2) + '" x2="' + targetX + '" y2="' + fmt(bottomY, 2) + '" stroke="#15803d" stroke-opacity=".45" stroke-width="1" stroke-dasharray="5 5"/>' +
+
+        '<line x1="' + camX + '" y1="' + fmt(gradeY, 2) + '" x2="' + camX + '" y2="' + fmt(camY, 2) + '" stroke="#64748b" stroke-width="1.3"/>' +
+        exportCameraSvg(camX, camY, cameraTilt) +
+        '<text x="' + (camX - 44) + '" y="' + fmt(camY - 26, 2) + '" fill="#111827" font-size="11.5" font-weight="800">Mount ' + escapeMountingExportHtml(fmtFt(h)) + '</text>' +
+
+        '<line x1="' + targetX + '" y1="' + fmt(gradeY, 2) + '" x2="' + targetX + '" y2="' + fmt(targetY, 2) + '" stroke="#d97706" stroke-width="2"/>' +
+        '<circle cx="' + targetX + '" cy="' + fmt(targetY, 2) + '" r="5" fill="#d97706"/>' +
+        '<text x="' + (targetX - 18) + '" y="' + fmt(targetY - 16, 2) + '" fill="#92400e" font-size="11.5" font-weight="800">Target ' + escapeMountingExportHtml(fmtFt(th)) + '</text>' +
+
+        groundHitMarkup +
+
+        '<line x1="' + camX + '" y1="' + fmt(dimensionY, 2) + '" x2="' + targetX + '" y2="' + fmt(dimensionY, 2) + '" stroke="#9ca3af" stroke-width="1" stroke-dasharray="4 5"/>' +
+        '<line x1="' + camX + '" y1="' + fmt(dimensionY - 8, 2) + '" x2="' + camX + '" y2="' + fmt(dimensionY + 8, 2) + '" stroke="#9ca3af" stroke-width="1"/>' +
+        '<line x1="' + targetX + '" y1="' + fmt(dimensionY - 8, 2) + '" x2="' + targetX + '" y2="' + fmt(dimensionY + 8, 2) + '" stroke="#9ca3af" stroke-width="1"/>' +
+        '<text x="' + ((camX + targetX) / 2 - 52) + '" y="' + fmt(dimensionY + 18, 2) + '" fill="#374151" font-size="11.5" font-weight="800">Distance ' + escapeMountingExportHtml(fmtFt(dist)) + '</text>' +
+
+        '<line x1="' + (targetX + 32) + '" y1="' + fmt(topY, 2) + '" x2="' + (targetX + 32) + '" y2="' + fmt(bottomY, 2) + '" stroke="#2563eb" stroke-width="2"/>' +
+        '<line x1="' + (targetX + 24) + '" y1="' + fmt(topY, 2) + '" x2="' + (targetX + 40) + '" y2="' + fmt(topY, 2) + '" stroke="#2563eb" stroke-width="2"/>' +
+        '<line x1="' + (targetX + 24) + '" y1="' + fmt(bottomY, 2) + '" x2="' + (targetX + 40) + '" y2="' + fmt(bottomY, 2) + '" stroke="#2563eb" stroke-width="2"/>' +
+        '<text x="' + (targetX + 48) + '" y="' + fmt(topY + 4, 2) + '" fill="#1d4ed8" font-size="11" font-weight="800">Top ' + escapeMountingExportHtml(fmtFt(topEdge)) + '</text>' +
+        '<text x="' + (targetX + 48) + '" y="' + fmt(bottomY + 4, 2) + '" fill="#1d4ed8" font-size="11" font-weight="800">Bottom ' + escapeMountingExportHtml(fmtFt(bottomEdge)) + '</text>' +
+
+        '<text x="310" y="86" fill="#15803d" font-size="12" font-weight="900">Down-tilt ' + escapeMountingExportHtml(fmtDeg(tilt)) + '</text>' +
+        '<text x="310" y="104" fill="#4b5563" font-size="11" font-weight="700">VFOV ' + escapeMountingExportHtml(fmtDeg(vfov)) + ' / vertical span ' + escapeMountingExportHtml(fmtFt(data.span)) + '</text>' +
+      '</svg>';
+
+    return "" +
+      '<div data-mounting-export-visual="true" data-export-svg style="break-inside:avoid;margin:0 0 12px 0;">' +
+        svg +
+        pressureHtml +
+      '</div>';
+  }
+
+
   function mountingStructuredExportTables(data) {
     if (!data || !data.ok) return "";
 
+    const visualHtml = mountingExportVisualSvg(data);
     const sourceMode = data.sourceMode === "manual-override" ? "manual override" : "area planner carry-over";
     const vfovSource = data.vfovSourceMode === "manual-override" ? "manual assumption" : "guided profile";
 
@@ -1062,6 +1240,7 @@ function hideVisibleFlowContext() {
 
     return "" +
       '<div class="mounting-export-structured-tables" data-mounting-structured-export="true" data-export-section data-export-suppress-title="true" style="position:absolute;left:-10000px;top:auto;width:820px;max-height:1px;overflow:hidden;opacity:0;pointer-events:none;">' +
+        visualHtml +
         metricHtml +
         notesHtml +
       '</div>';
