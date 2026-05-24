@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-graphics-027-scene-topview-round-pole-halo";
+  const VERSION = "physical-security-graphics-028-scene-fixture-alignment";
   const CATEGORY = "physical-security";
   const gfx = window.ScopedLabsGraphics;
 
@@ -963,7 +963,7 @@
     const planW = 520;
     const planH = 142;
 
-    const fixtureY = planY + planH - 12;
+    const fixtureY = planY + planH - 6;
     const fixtureXs = [
       planX + planW * 0.22,
       planX + planW * 0.50,
@@ -979,23 +979,29 @@
     }
 
     function fixture(x, y, index) {
-      const haloY = planY + Math.max(44, planH * 0.46);
-      const headX = x + 33;
-      const headY = y - 32;
+      const haloCx = x;
+      const haloCy = planY + Math.max(56, planH * 0.47);
+      const iconScale = 1.28;
+      const iconHeadOffsetX = 33 * iconScale;
+      const iconOriginX = haloCx - iconHeadOffsetX;
+      const iconBaseY = planY + planH - 5;
 
       return "" +
         '<g data-ps-graphic-part="lighting-fixture">' +
-          '<ellipse cx="' + fmt(headX, 1) + '" cy="' + fmt(haloY, 1) + '" rx="128" ry="64" fill="url(#psSceneLightHaloOuter)" opacity=".74" />' +
-          '<ellipse cx="' + fmt(headX, 1) + '" cy="' + fmt(haloY + 2, 1) + '" rx="82" ry="42" fill="url(#psSceneLightHaloMid)" opacity=".84" />' +
-          '<ellipse cx="' + fmt(headX, 1) + '" cy="' + fmt(haloY + 4, 1) + '" rx="42" ry="22" fill="url(#psSceneLightHaloCore)" opacity=".92" />' +
-          '<line x1="' + fmt(headX, 1) + '" y1="' + fmt(headY, 1) + '" x2="' + fmt(headX, 1) + '" y2="' + fmt(haloY + 28, 1) + '" stroke="rgba(255,226,128,.13)" stroke-width=".65" stroke-dasharray="4 7" />' +
-          streetLightFixtureCadIcon(x, y, {
-            scale: 0.82,
+          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy, 1) + '" rx="128" ry="64" fill="url(#psSceneLightHaloOuter)" opacity=".74" />' +
+          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 2, 1) + '" rx="82" ry="42" fill="url(#psSceneLightHaloMid)" opacity=".84" />' +
+          '<ellipse cx="' + fmt(haloCx, 1) + '" cy="' + fmt(haloCy + 4, 1) + '" rx="42" ry="22" fill="url(#psSceneLightHaloCore)" opacity=".92" />' +
+
+          '<line x1="' + fmt(haloCx, 1) + '" y1="' + fmt(haloCy + 20, 1) + '" x2="' + fmt(haloCx, 1) + '" y2="' + fmt(iconBaseY - 18, 1) + '" stroke="rgba(255,226,128,.16)" stroke-width=".7" stroke-dasharray="4 7" />' +
+
+          streetLightFixtureCadIcon(iconOriginX, iconBaseY, {
+            scale: iconScale,
             direction: "up",
             stroke: "rgba(255,226,128,.92)",
-            accent: "rgba(255,239,176,.88)"
+            accent: "rgba(255,239,176,.90)"
           }) +
-          '<text x="' + fmt(x, 1) + '" y="' + fmt(y + 18, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.84)" font-size="8.2" font-weight="950">L' + index + '</text>' +
+
+          '<text x="' + fmt(haloCx, 1) + '" y="' + fmt(iconBaseY + 20, 1) + '" text-anchor="middle" fill="rgba(255,239,176,.84)" font-size="8.2" font-weight="950">L' + index + '</text>' +
         '</g>';
     }
 
