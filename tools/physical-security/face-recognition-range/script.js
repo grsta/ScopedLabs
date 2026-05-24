@@ -23,8 +23,11 @@
 
   const els = {
     res: $("res"),
+    resPreset: $("resPreset"),
     hfov: $("hfov"),
+    hfovPreset: $("hfovPreset"),
     ppf: $("ppf"),
+    ppfPreset: $("ppfPreset"),
     fw: $("fw"),
     dist: $("dist"),
     calc: $("calc"),
@@ -450,6 +453,94 @@ function hideVisibleFlowContext() {
     renderFlowNote();
   }
 
+
+  // data-scopedlabs-face-guided-presets-001
+  const FACE_GUIDED_PRESETS = {
+    res: [1920, 2688, 3072, 3840, 4000],
+    hfov: [25, 45, 60, 75, 90],
+    ppf: [120, 180, 250, 300]
+  };
+
+  function presetSelectForField(field) {
+    if (field === "res") return els.resPreset;
+    if (field === "hfov") return els.hfovPreset;
+    if (field === "ppf") return els.ppfPreset;
+    return null;
+  }
+
+  function inputForPresetField(field) {
+    if (field === "res") return els.res;
+    if (field === "hfov") return els.hfov;
+    if (field === "ppf") return els.ppf;
+    return null;
+  }
+
+  function presetTolerance(field) {
+    return field === "hfov" ? 0.05 : 0.5;
+  }
+
+  function syncFacePresetSelect(field) {
+    const select = presetSelectForField(field);
+    const input = inputForPresetField(field);
+    const presets = FACE_GUIDED_PRESETS[field];
+
+    if (!select || !input || !Array.isArray(presets)) return;
+
+    const current = Number(input.value);
+    if (!Number.isFinite(current)) {
+      select.value = "custom";
+      return;
+    }
+
+    const match = presets.find((value) => Math.abs(Number(value) - current) <= presetTolerance(field));
+    select.value = match == null ? "custom" : String(match);
+  }
+
+  function syncAllFacePresetSelects() {
+    ["res", "hfov", "ppf"].forEach(syncFacePresetSelect);
+  }
+
+  function applyFaceGuidedPreset(field) {
+    const select = presetSelectForField(field);
+    const input = inputForPresetField(field);
+    if (!select || !input) return;
+
+    const value = String(select.value || "custom");
+    if (value === "custom") {
+      input.focus();
+      return;
+    }
+
+    const number = Number(value);
+    if (!Number.isFinite(number)) return;
+
+    input.value = field === "hfov" ? String(number) : String(Math.round(number));
+
+    markFlowInputOverride(field);
+    syncFacePresetSelect(field);
+    renderFlowNote();
+    invalidate({ clearFlow: true });
+  }
+
+  function bindFaceGuidedPresets() {
+    ["res", "hfov", "ppf"].forEach((field) => {
+      const select = presetSelectForField(field);
+      const input = inputForPresetField(field);
+
+      if (select) {
+        select.addEventListener("change", () => applyFaceGuidedPreset(field));
+      }
+
+      if (input) {
+        input.addEventListener("input", () => syncFacePresetSelect(field));
+        input.addEventListener("change", () => syncFacePresetSelect(field));
+      }
+    });
+
+    syncAllFacePresetSelects();
+  }
+
+
   function getInputs() {
     const res = num(els.res.value);
     const hfov = num(els.hfov.value);
@@ -831,6 +922,7 @@ renderFaceStructuredExport(data);
     faceInitialFlowImportApplied = false;
     resetFlowOverrideState();
     applyDefaults();
+    syncAllFacePresetSelects();
     renderFlowNote();
     invalidate({ clearFlow: true });
   }
@@ -851,6 +943,10 @@ renderFaceStructuredExport(data);
       });
     });
 
+    bindFaceGuidedPresets();
+
+
+
     els.calc?.addEventListener("click", calc);
     els.reset?.addEventListener("click", reset);
   }
@@ -859,6 +955,7 @@ renderFaceStructuredExport(data);
     faceInitialFlowImportApplied = false;
     applyDefaults();
     bind();
+    syncAllFacePresetSelects();
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
