@@ -380,32 +380,25 @@ function hideVisibleFlowContext() {
   function renderFlowNote() {
     const raw = sessionStorage.getItem(FLOW_KEYS.spacing);
 
-    if (!raw) {
-      hideVisibleFlowContext();
-      return;
-    }
-
     let parsed = null;
 
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      hideVisibleFlowContext();
-      return;
+    if (raw) {
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = null;
+      }
     }
 
-    if (!parsed || parsed.category !== CATEGORY || parsed.step !== PREVIOUS_STEP) {
-      hideVisibleFlowContext();
-      return;
-    }
+    const hasSpacingFlow = parsed && parsed.category === CATEGORY && parsed.step === PREVIOUS_STEP;
+    const prev = hasSpacingFlow ? (parsed.data || {}) : {};
 
-    const prev = parsed.data || {};
-    const w = num(prev.len ?? prev.protectedLengthFt ?? prev.w);
-    const cams = num(prev.cams);
-    const dist = num(prev.dist);
-    const hfov = num(prev.hfov);
-    const spacing = num(prev.spacing ?? prev.actualSpacing);
-    const overlap = num(prev.ovPct ?? prev.overlapTargetPct ?? prev.overlapPct);
+    const w = hasSpacingFlow ? num(prev.len ?? prev.protectedLengthFt ?? prev.w) : num(els.w?.value);
+    const cams = hasSpacingFlow ? num(prev.cams) : num(els.cams?.value);
+    const dist = hasSpacingFlow ? num(prev.dist) : num(els.dist?.value);
+    const hfov = hasSpacingFlow ? num(prev.hfov) : num(els.hfov?.value);
+    const spacing = hasSpacingFlow ? num(prev.spacing ?? prev.actualSpacing) : NaN;
+    const overlap = hasSpacingFlow ? num(prev.ovPct ?? prev.overlapTargetPct ?? prev.overlapPct) : num(els.overlap?.value);
 
     captureImportedFlowValue("w", w);
     captureImportedFlowValue("cams", cams);
@@ -413,7 +406,7 @@ function hideVisibleFlowContext() {
     captureImportedFlowValue("hfov", hfov);
     captureImportedFlowValue("overlap", overlap);
 
-    if (canApplyFlowInputs()) {
+    if (hasSpacingFlow && canApplyFlowInputs()) {
       if (Number.isFinite(w) && w > 0) els.w.value = String(Number(w.toFixed(1)));
       if (Number.isFinite(cams) && cams > 0) els.cams.value = String(Math.round(cams));
       if (Number.isFinite(dist) && dist > 0) els.dist.value = String(Number(dist.toFixed(1)));
@@ -439,7 +432,7 @@ function hideVisibleFlowContext() {
 
     visibleFlowContextEl().hidden = false;
     visibleFlowContextEl().innerHTML = `
-      <strong>Imported Assumptions</strong><br>
+      <strong>${hasSpacingFlow ? "Imported Assumptions" : "Current Planning Inputs"}</strong><br>
       ${parts.join(" | ")}
       ${overrideNote}
     `;
