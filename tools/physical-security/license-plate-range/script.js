@@ -867,6 +867,26 @@ function hideVisibleFlowContext() {
     document.querySelectorAll('[data-plate-structured-export="true"]').forEach((node) => node.remove());
   }
 
+
+  // data-scopedlabs-license-plate-export-visual-001
+  function licensePlateExportVisualSvg(data) {
+    if (!data || !data.ok) return "";
+
+    const gfx = window.ScopedLabsGraphics;
+    if (!gfx || typeof gfx.render !== "function" || typeof licensePlateGraphicsModel !== "function") {
+      return "";
+    }
+
+    const svg = gfx.render("license-plate-range-plan", licensePlateGraphicsModel(data));
+    if (typeof svg !== "string" || !svg.includes("<svg")) return "";
+
+    return "" +
+      '<div data-license-plate-export-visual="true" style="break-inside:avoid;margin:0 0 12px 0;">' +
+        svg +
+      '</div>';
+  }
+
+
   function plateStructuredExportTables(data) {
     if (!data || !data.ok) return "";
 
@@ -902,9 +922,14 @@ function hideVisibleFlowContext() {
       ? window.ScopedLabsAssistantExport.renderNotesTable(notes)
       : plateFallbackNotesTable(notes);
 
+    const visualHtml = licensePlateExportVisualSvg(data);
+
     return "" +
       '<div class="plate-export-structured-tables" data-plate-structured-export="true" data-export-section data-export-suppress-title="true" style="position:absolute;left:-10000px;top:auto;width:820px;max-height:1px;overflow:hidden;opacity:0;pointer-events:none;">' +
+        visualHtml +
+
         metricHtml +
+
         notesHtml +
       '</div>';
   }
