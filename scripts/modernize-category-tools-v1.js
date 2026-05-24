@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-011-script-order-kb-safe
+ * Version: scopedlabs-category-modernizer-012-runner-ux
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -925,6 +925,26 @@ const BackContinueModule = {
 
 const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule];
 
+const args = process.argv.slice(2);
+const summaryOnly = args.includes("--summary-only");
+const moduleArgIndex = args.indexOf("--module");
+const requestedModuleId = moduleArgIndex >= 0 ? String(args[moduleArgIndex + 1] || "").trim() : "";
+const activeModules = requestedModuleId
+  ? modules.filter((module) => module.id === requestedModuleId)
+  : modules;
+
+if (moduleArgIndex >= 0 && !requestedModuleId) {
+  console.error("Missing module id after --module.");
+  console.error("Available modules: " + modules.map((module) => module.id).join(", "));
+  process.exit(1);
+}
+
+if (requestedModuleId && !activeModules.length) {
+  console.error("Unknown module: " + requestedModuleId);
+  console.error("Available modules: " + modules.map((module) => module.id).join(", "));
+  process.exit(1);
+}
+
 if (!fs.existsSync(categoryRoot)) {
   console.error("Missing category folder: " + path.relative(root, categoryRoot));
   process.exit(1);
@@ -941,20 +961,26 @@ for (const tool of tools) {
   const indexFile = path.join(categoryRoot, tool, "index.html");
   const html = read(indexFile);
 
-  for (const module of modules) {
+  for (const module of activeModules) {
     rows.push(module.run(tool, indexFile, html));
   }
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-011-script-order-kb-safe");
+console.log("Version: scopedlabs-category-modernizer-012-runner-ux");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
-console.log("Modules: " + modules.map((m) => m.id + "@" + m.version).join(", "));
+console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
 console.log("Protected tools: " + (Array.from(config.protectedTools).join(", ") || "-"));
+console.log("Module filter: " + (requestedModuleId || "all"));
+console.log("Output: " + (summaryOnly ? "summary-only" : "full-table"));
 console.log("");
 
-console.table(rows);
+if (summaryOnly) {
+  console.log("\nDetailed result table skipped (--summary-only).");
+} else {
+  console.table(rows);
+}
 
 const counts = rows.reduce((acc, row) => {
   acc[row.classification] = (acc[row.classification] || 0) + 1;
