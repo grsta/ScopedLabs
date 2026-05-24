@@ -725,7 +725,133 @@ function hideVisibleFlowContext() {
     updateActiveAreaFromScene(data);
   }
 
+  
+  // data-scopedlabs-scene-structured-export-001
+  function sceneExportRoot() {
+    return els.toolCard || document.getElementById("toolCard") || document.querySelector("main .container") || document.body;
+  }
+
+  function escapeSceneExportHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function sceneFallbackExportTable(title, rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : []).filter((row) => row && row[0] && row[1] != null);
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<h2 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:20px 0 8px;color:#111827;">' + escapeSceneExportHtml(title) + '</h2>' +
+      '<table style="width:100%;border-collapse:collapse;margin:0 0 12px 0;break-inside:avoid;font-size:12.5px;">' +
+        '<tbody>' +
+          cleanRows.map((row) =>
+            '<tr>' +
+              '<td style="width:42%;padding:8px 10px;border-bottom:1px solid #d8dee6;color:#4b5563;vertical-align:top;">' + escapeSceneExportHtml(row[0]) + '</td>' +
+              '<td style="padding:8px 10px;border-bottom:1px solid #d8dee6;color:#111827;font-weight:700;text-align:left;vertical-align:top;">' + escapeSceneExportHtml(row[1]) + '</td>' +
+            '</tr>'
+          ).join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function sceneFallbackNotesTable(rows) {
+    const cleanRows = (Array.isArray(rows) ? rows : []).filter((row) => row && row[0] && row[1]);
+    if (!cleanRows.length) return "";
+
+    return "" +
+      '<table style="width:100%;border-collapse:collapse;margin:12px 0 0 0;break-inside:avoid;font-size:12.5px;">' +
+        '<thead><tr>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Section</th>' +
+          '<th style="padding:7px 10px;border:1px solid #d8dee6;background:#f7faf8;text-align:left;color:#111827;font-size:11px;letter-spacing:.06em;text-transform:uppercase;">Detail</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          cleanRows.map((row) =>
+            '<tr>' +
+              '<td style="width:30%;padding:9px 10px;border:1px solid #d8dee6;background:#f7faf8;color:#111827;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:top;">' + escapeSceneExportHtml(row[0]) + '</td>' +
+              '<td style="padding:9px 10px;border:1px solid #d8dee6;color:#111827;line-height:1.55;vertical-align:top;">' + escapeSceneExportHtml(row[1]) + '</td>' +
+            '</tr>'
+          ).join("") +
+        '</tbody>' +
+      '</table>';
+  }
+
+  function clearSceneStructuredExport() {
+    document.querySelectorAll('[data-scene-structured-export="true"]').forEach((node) => node.remove());
+  }
+
+  function sceneStructuredExportTables(data) {
+    if (!data || !data.ok) return "";
+
+    const sourceMode = data.footcandleSourceMode === "manual-override" || data.effectiveSourceMode === "manual-override"
+      ? "manual assumption"
+      : "guided presets";
+
+    const metrics = [
+      ["Area", fmtSqFt(data.area)],
+      ["Lighting goal", data.lightingGoalLabel],
+      ["Target illumination", fmtFc(data.fc)],
+      ["Effective planning factor", fmtFactor(data.effectiveFactor)],
+      ["Estimated lumens required", fmtLumens(data.lumens)],
+      ["Lighting area width", fmtFt(data.w)],
+      ["Lighting area depth", fmtFt(data.d)],
+      ["Recommended range", data.targetFootcandleRange ? lightingGoalRangeText(data.targetFootcandleRange) : "Custom target"],
+      ["Footcandle source", data.footcandleSourceMode === "manual-override" ? "Manual assumption" : "Preset typical"],
+      ["Fixture / layout efficiency", data.utilizationPresetLabel],
+      ["Maintenance / environment", data.lightLossPresetLabel],
+      ["Utilization factor", fmtPct(data.ufPct)],
+      ["Light loss factor", fmtPct(data.llfPct)],
+      ["Lighting factor source", data.effectiveSourceMode === "manual-override" ? "Manual assumption" : "Guided presets"],
+      ["Lighting condition", data.lightingClass],
+      ["Lumen density", fmt(data.lumenDensity, 2) + " lm/sq ft"],
+      ["Assistant status", data.status],
+      ["Source mode", sourceMode]
+    ];
+
+    const handoff = "Carry this lighting baseline into Mounting Height and downstream visibility checks. Exposure stress, blur, and color loss become more likely in real conditions when the lighting condition is weak.";
+
+    const notes = [
+      ["Engineering interpretation", data.interpretation],
+      ["Dominant constraint", data.dominantConstraint],
+      ["Recommended action", data.guidance],
+      ["Mounting Height handoff", handoff]
+    ];
+
+    const metricHtml = window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderMetricTable === "function"
+      ? window.ScopedLabsAssistantExport.renderMetricTable("Scene Illumination Design Summary", metrics)
+      : sceneFallbackExportTable("Scene Illumination Design Summary", metrics);
+
+    const notesHtml = window.ScopedLabsAssistantExport && typeof window.ScopedLabsAssistantExport.renderNotesTable === "function"
+      ? window.ScopedLabsAssistantExport.renderNotesTable(notes)
+      : sceneFallbackNotesTable(notes);
+
+    return "" +
+      '<div class="scene-export-structured-tables" data-scene-structured-export="true" data-export-section data-export-suppress-title="true" style="position:absolute;left:-10000px;top:auto;width:820px;max-height:1px;overflow:hidden;opacity:0;pointer-events:none;">' +
+        metricHtml +
+        notesHtml +
+      '</div>';
+  }
+
+  function renderSceneStructuredExport(data) {
+    clearSceneStructuredExport();
+
+    const html = sceneStructuredExportTables(data);
+    if (!html) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html;
+    const node = wrapper.firstElementChild;
+    if (!node) return;
+
+    sceneExportRoot().appendChild(node);
+  }
+
+
+
   function renderError(message) {
+    clearSceneStructuredExport();
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
@@ -803,6 +929,7 @@ function hideVisibleFlowContext() {
       }
     });
 
+    renderSceneStructuredExport(data);
     writeFlow(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
     forceSceneContinueVisible();
