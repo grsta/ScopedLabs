@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-015-diagnostics-visible-text-safe
+ * Version: scopedlabs-category-modernizer-016-badge-cleanup-apply-plan
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -396,8 +396,8 @@ const ToolShellModule = {
 
 const BadgeCleanupModule = {
   id: "badge-cleanup",
-  version: "badge-cleanup-module-001-audit-only",
-  description: "Inventories decorative/legacy badge patterns for future safe cleanup.",
+  version: "badge-cleanup-module-002-duplicate-tier-apply",
+  description: "Inventories badges and safely removes duplicate tier pills only.",
   run(tool, indexFile, html) {
     if (config.protectedTools.has(tool)) {
       return {
@@ -411,24 +411,78 @@ const BadgeCleanupModule = {
       };
     }
 
-    const pillMatches = Array.from(html.matchAll(/<[^>]+class=["'][^"']*\bpill\b[^"']*["'][^>]*>([\s\S]*?)<\/[^>]+>/gi))
-      .map((m) => m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim())
-      .filter(Boolean);
+    function cleanText(value) {
+      return String(value || "")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
 
-    const legacyBadges = pillMatches.filter((text) =>
-      /Pro Tier|Free Tier|Design Flow|Documentation|Knowledge Base|Part of a Design Flow/i.test(text)
-    );
+    function tierKey(text) {
+      if (/^Pro Tier$/i.test(text)) return "Pro Tier";
+      if (/^Free Tier$/i.test(text)) return "Free Tier";
+      return "";
+    }
 
-    const detail = legacyBadges.length
+    const pillRx = /<([a-z][\w:-]*)\b([^>]*\bclass=(['"])[^'"]*\bpill\b[^'"]*\3[^>]*)>([\s\S]*?)<\/\1>/gi;
+    const pillMatches = [];
+    let match;
+
+    while ((match = pillRx.exec(html))) {
+      pillMatches.push({
+        full: match[0],
+        index: match.index,
+        text: cleanText(match[4])
+      });
+    }
+
+    const legacyBadges = pillMatches
+      .map((item) => item.text)
+      .filter((text) => /^(Pro Tier|Free Tier|Part of a Design Flow|Documentation & Export|Knowledge Base)$/i.test(text));
+
+    const seenTier = Object.create(null);
+    const duplicateTierPills = [];
+
+    for (const item of pillMatches) {
+      const key = tierKey(item.text);
+      if (!key) continue;
+
+      seenTier[key] = (seenTier[key] || 0) + 1;
+      if (seenTier[key] > 1) {
+        duplicateTierPills.push({ ...item, key });
+      }
+    }
+
+    let patched = html;
+    if (duplicateTierPills.length) {
+      for (const item of duplicateTierPills.slice().sort((a, b) => b.index - a.index)) {
+        patched = patched.slice(0, item.index) + patched.slice(item.index + item.full.length);
+      }
+    }
+
+    const duplicateSummary = duplicateTierPills.length
+      ? "; duplicate tier pills planned: " + duplicateTierPills.map((item) => item.key).join(" | ")
+      : "; duplicate tier pills planned: none";
+
+    const detail = (legacyBadges.length
       ? "badge inventory: " + legacyBadges.join(" | ")
-      : "no legacy/decorative badges detected";
+      : "no legacy/decorative badges detected") + duplicateSummary;
+
+    const hasPatch = duplicateTierPills.length > 0 && patched !== html;
+
+    if (apply && hasPatch) {
+      write(indexFile, patched);
+    }
 
     return {
       module: this.id,
       version: this.version,
       tool,
       classification: "SAFE",
-      action: "noop",
+      action: hasPatch
+        ? (apply ? "applied:remove-duplicate-tier-pills" : "remove-duplicate-tier-pills")
+        : "noop",
       rowId: "-",
       detail
     };
@@ -1164,7 +1218,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-015-diagnostics-visible-text-safe");
+console.log("Version: scopedlabs-category-modernizer-016-badge-cleanup-apply-plan");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
