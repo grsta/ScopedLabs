@@ -2674,3 +2674,54 @@ body[data-tool="camera-coverage-area"] #continue.coverage-action-btn {
   background: linear-gradient(180deg, rgba(25, 129, 56, 0.96), rgba(10, 91, 40, 0.94)) !important;
   color: rgba(246, 255, 249, 0.98) !important;
 }
+
+
+/* === ScopedLabs Coverage Area action button tone v029 === */
+/* Coverage Area only: soften primary action tone and keep secondary actions dark. */
+body[data-tool="camera-coverage-area"] #calc.coverage-action-btn,
+body[data-tool="camera-coverage-area"] #continue.coverage-action-btn {
+  border-radius: 10px !important;
+  border-color: rgba(118, 255, 151, 0.34) !important;
+  background: linear-gradient(180deg, rgba(42, 116, 55, 0.50), rgba(16, 68, 30, 0.62)) !important;
+  color: rgba(246, 255, 249, 0.98) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 0 0 1px rgba(83,255,61,.055) !important;
+  transition: transform .12s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease !important;
+}
+
+body[data-tool="camera-coverage-area"] #calc.coverage-action-btn:hover,
+body[data-tool="camera-coverage-area"] #continue.coverage-action-btn:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(176, 255, 196, 0.58) !important;
+  background: linear-gradient(180deg, rgba(56, 142, 70, 0.66), rgba(21, 86, 37, 0.72)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 10px 24px rgba(0,0,0,.28), 0 0 0 1px rgba(118,255,151,.10) !important;
+}
+
+body[data-tool="camera-coverage-area"] #reset.coverage-action-btn,
+body[data-tool="camera-coverage-area"] a.coverage-action-btn:not(#continue),
+body[data-tool="camera-coverage-area"] #exportReport.coverage-action-btn,
+body[data-tool="camera-coverage-area"] #saveSnapshot.coverage-action-btn {
+  border-radius: 10px !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.022)) !important;
+  color: rgba(235, 245, 238, 0.94) !important;
+  box-shadow: none !important;
+  transition: transform .12s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease !important;
+}
+
+body[data-tool="camera-coverage-area"] #reset.coverage-action-btn:hover,
+body[data-tool="camera-coverage-area"] a.coverage-action-btn:not(#continue):hover,
+body[data-tool="camera-coverage-area"] #exportReport.coverage-action-btn:not(:disabled):hover,
+body[data-tool="camera-coverage-area"] #saveSnapshot.coverage-action-btn:not(:disabled):hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(120, 255, 150, 0.34) !important;
+  background: linear-gradient(180deg, rgba(83,255,61,0.085), rgba(255,255,255,0.032)) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.22) !important;
+}
+
+body[data-tool="camera-coverage-area"] #exportReport.coverage-action-btn:disabled,
+body[data-tool="camera-coverage-area"] #saveSnapshot.coverage-action-btn:disabled {
+  opacity: 0.56 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  filter: saturate(0.82) !important;
+}
