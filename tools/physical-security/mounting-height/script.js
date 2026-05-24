@@ -1011,7 +1011,7 @@ function hideVisibleFlowContext() {
     mountingExportRoot().appendChild(node);
   }
   
-  // data-mounting-live-visual-002
+  // data-mounting-live-visual-003
   function mountingLiveVisualEl() {
     return document.getElementById("mountingLiveVisual");
   }
@@ -1035,6 +1035,13 @@ function hideVisibleFlowContext() {
     if (!Number.isFinite(score)) return "";
     if (score > 45) return "risk";
     if (score > 20) return "watch";
+    return "";
+  }
+
+  function mountingStatusClass(value) {
+    const text = String(value || "").toLowerCase();
+    if (text.includes("risk")) return "risk";
+    if (text.includes("watch")) return "watch";
     return "";
   }
 
@@ -1182,7 +1189,7 @@ function hideVisibleFlowContext() {
             '<h4 class="mounting-live-visual-title">Mounting geometry and assumption pressure</h4>' +
             '<p class="mounting-live-visual-copy">Side-view geometry shows the camera height, target point, down-tilt, and vertical field of view at the target plane.</p>' +
           '</div>' +
-          '<span class="mounting-live-visual-pill">' + escapeMountingVisualHtml(data.status || "Review") + '</span>' +
+          '<span class="mounting-live-visual-pill ' + mountingStatusClass(data.status) + '">' + escapeMountingVisualHtml(data.status || "Review") + '</span>' +
         '</div>' +
         '<div class="mounting-cad-stage">' + svg + '</div>' +
         '<div class="mounting-pressure-grid">' + pressureHtml + '</div>' +
