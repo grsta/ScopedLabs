@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-032-source-integrity-audit
+ * Version: scopedlabs-category-modernizer-033-user-guidance-audit
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -2143,9 +2143,172 @@ const BackContinueModule = {
   }
 };
 
+
+function hasAnyUserGuidanceSignal(text, patterns) {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+function userGuidanceRoleForTool(tool) {
+  if (tool === "area-planner") return "pipeline-entry";
+  if (tool === "face-recognition-range" || tool === "license-plate-range") return "optional-validation";
+  return "pipeline-step";
+}
+
+function planUserGuidanceContract(tool, indexFile, html) {
+  const scriptFile = path.join(path.dirname(indexFile), "script.js");
+  const js = read(scriptFile);
+  const all = String(html || "") + "\n" + String(js || "");
+  const role = userGuidanceRoleForTool(tool);
+
+  if (config.protectedTools.has(tool)) {
+    return {
+      classification: "SKIP",
+      action: "none",
+      rowId: "-",
+      detail: "protected/gold-standard"
+    };
+  }
+
+  if (!html && !js) {
+    return {
+      classification: "FAIL",
+      action: "none",
+      rowId: "-",
+      detail: "missing index.html and script.js"
+    };
+  }
+
+  const signals = {
+    assistantText: hasAnyUserGuidanceSignal(all, [
+      /assistant/i,
+      /design assistant/i,
+      /guidance/i,
+      /recommend/i
+    ]),
+    primaryRecommendation: hasAnyUserGuidanceSignal(all, [
+      /primary recommendation/i,
+      /recommended action/i,
+      /best next step/i,
+      /recommendation/i,
+      /recommended/i
+    ]),
+    whyLanguage: hasAnyUserGuidanceSignal(all, [
+      /why/i,
+      /because/i,
+      /reason/i,
+      /matters/i
+    ]),
+    expectedResult: hasAnyUserGuidanceSignal(all, [
+      /expected result/i,
+      /expected corrected/i,
+      /expected outcome/i,
+      /should improve/i,
+      /will improve/i,
+      /moves.*into/i,
+      /moves.*back/i,
+      /corrected result/i
+    ]),
+    secondaryOptions: hasAnyUserGuidanceSignal(all, [
+      /secondary/i,
+      /other option/i,
+      /alternative/i,
+      /also/i,
+      /another option/i
+    ]),
+    sourceContext: hasAnyUserGuidanceSignal(all, [
+      /source integrity/i,
+      /manual override/i,
+      /pipeline/i,
+      /active area/i,
+      /carried/i,
+      /carry/i,
+      /imported/i,
+      /planning context/i
+    ]),
+    reportSummarySignal: hasAnyUserGuidanceSignal(all, [
+      /report summary/i,
+      /export/i,
+      /documentation/i,
+      /summary/i
+    ]),
+    areaSetupSignal: hasAnyUserGuidanceSignal(all, [
+      /area\s*\/\s*zone/i,
+      /area planner/i,
+      /active area/i,
+      /area setup/i,
+      /site area/i,
+      /zone planner/i,
+      /area name/i,
+      /camera count/i
+    ]),
+    resultAnchor: hasId(html, "results"),
+    shellOptIn: /scopedlabs-tool-shell\.js/.test(html || "")
+  };
+
+  const missing = [];
+
+  function requireSignal(value, label) {
+    if (!value) missing.push(label);
+  }
+
+  requireSignal(signals.assistantText, "assistant/guidance text");
+  requireSignal(signals.sourceContext, "source/pipeline context");
+  requireSignal(signals.reportSummarySignal, "report/export summary signal");
+  requireSignal(signals.shellOptIn, "Tool Shell opt-in");
+
+  if (role === "pipeline-entry") {
+    requireSignal(signals.areaSetupSignal, "area/zone setup guidance");
+  } else {
+    requireSignal(signals.primaryRecommendation, "primary recommendation");
+    requireSignal(signals.whyLanguage, "why/reason language");
+    requireSignal(signals.expectedResult, "expected corrected result");
+    requireSignal(signals.secondaryOptions, "secondary options");
+    requireSignal(signals.resultAnchor, "#results anchor");
+  }
+
+  const classification = missing.length ? "WATCH" : "SAFE";
+
+  return {
+    classification,
+    action: "noop",
+    rowId: "-",
+    detail:
+      "role=" + role +
+      "; assistant=" + (signals.assistantText ? "yes" : "no") +
+      "; primary=" + (role === "pipeline-entry" ? "n/a" : (signals.primaryRecommendation ? "yes" : "no")) +
+      "; why=" + (role === "pipeline-entry" ? "n/a" : (signals.whyLanguage ? "yes" : "no")) +
+      "; expected=" + (role === "pipeline-entry" ? "n/a" : (signals.expectedResult ? "yes" : "no")) +
+      "; secondary=" + (role === "pipeline-entry" ? "n/a" : (signals.secondaryOptions ? "yes" : "no")) +
+      "; source=" + (signals.sourceContext ? "yes" : "no") +
+      "; report=" + (signals.reportSummarySignal ? "yes" : "no") +
+      "; results=" + (role === "pipeline-entry" ? "n/a" : (signals.resultAnchor ? "yes" : "no")) +
+      "; shell=" + (signals.shellOptIn ? "yes" : "no") +
+      "; missing=" + (missing.length ? missing.join(", ") : "-")
+  };
+}
+
+const UserGuidanceModule = {
+  id: "user-guidance",
+  version: "user-guidance-module-001-audit-only",
+  run(tool, indexFile, html) {
+    const plan = planUserGuidanceContract(tool, indexFile, html);
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: plan.classification,
+      action: plan.action,
+      rowId: plan.rowId,
+      detail: plan.detail
+    };
+  }
+};
+
+
 const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule,CtaStandardModule,
    
-  CardTitleStandardModule, SourceIntegrityModule, ExportVisualsModule, InputPresetModule, AssistantShellModule, DiagnosticsModule];
+  CardTitleStandardModule, SourceIntegrityModule, ExportVisualsModule, InputPresetModule, AssistantShellModule, UserGuidanceModule, DiagnosticsModule];
 
 const args = process.argv.slice(2);
 const summaryOnly = args.includes("--summary-only");
@@ -2189,7 +2352,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-032-source-integrity-audit");
+console.log("Version: scopedlabs-category-modernizer-033-user-guidance-audit");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
