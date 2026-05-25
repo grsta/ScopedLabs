@@ -1,6 +1,6 @@
 /*
  * ScopedLabs Tool Shell
- * Version: scopedlabs-tool-shell-005-assistant-shell-diagnostics
+ * Version: scopedlabs-tool-shell-006-run-diagnostics-assistant-option
  *
  * Shared helper foundation for future Tool Shell V1 extraction.
  * Loaded by opted-in tool pages as the safe Tool Shell runtime foundation.
@@ -14,7 +14,7 @@
 (function attachScopedLabsToolShell(root) {
   "use strict";
 
-  const VERSION = "scopedlabs-tool-shell-005-assistant-shell-diagnostics";
+  const VERSION = "scopedlabs-tool-shell-006-run-diagnostics-assistant-option";
 
   function toArray(value) {
     return Array.prototype.slice.call(value || []);
@@ -444,6 +444,21 @@
   function runDiagnostics(options) {
     const opts = options || {};
     const result = buildDiagnosticResult();
+
+    if (opts.includeAssistantShell && typeof describeAssistantShell === "function") {
+      const assistantShell = describeAssistantShell({
+        slug: result.slug
+      });
+
+      result.assistantShell = assistantShell;
+
+      if (assistantShell && assistantShell.ok === false) {
+        result.ok = false;
+        result.issues = (Array.isArray(result.issues) ? result.issues : []).concat(
+          (Array.isArray(assistantShell.issues) ? assistantShell.issues : []).map((issue) => "assistant-shell: " + issue)
+        );
+      }
+    }
 
     if (!opts.silent && root.console) {
       const label = "[ScopedLabsToolShell] " + result.slug + " diagnostics";
