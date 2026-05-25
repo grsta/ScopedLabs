@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-030-input-presets-audit
+ * Version: scopedlabs-category-modernizer-031-export-visuals-audit
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -1332,6 +1332,170 @@ const CardTitleStandardModule = {
 
 
 
+
+const ExportVisualsModule = {
+  id: "export-visuals",
+  version: "export-visuals-module-001-audit-only",
+  description: "Audits assistant/CAD-owned report visuals, export SVG signals, visual ownership, and legacy chart suppression without modifying page files.",
+  expectations: {
+    "area-planner": {
+      mode: "not-required"
+    },
+    "scene-illumination": {
+      mode: "required",
+      renderer: "scene-illumination-lighting-plan",
+      exportSignals: ["ExportVisualSvg", "scene-illumination-lighting-plan"]
+    },
+    "mounting-height": {
+      mode: "standard"
+    },
+    "field-of-view": {
+      mode: "renderer-required",
+      renderer: "fov-geometry-plan"
+    },
+    "camera-coverage-area": {
+      mode: "renderer-required",
+      renderer: "coverage-footprint-plan"
+    },
+    "camera-spacing": {
+      mode: "observe-only",
+      renderer: "camera-layout-iso"
+    },
+    "blind-spot-check": {
+      mode: "observe-only",
+      renderer: "camera-layout-iso"
+    },
+    "pixel-density": {
+      mode: "renderer-required",
+      renderer: "pixel-density-detail-plan"
+    },
+    "face-recognition-range": {
+      mode: "required",
+      renderer: "face-recognition-range-plan",
+      exportSignals: ["faceRecognitionExportVisualSvg", "face-recognition-range-plan"]
+    },
+    "license-plate-range": {
+      mode: "required",
+      renderer: "license-plate-range-plan",
+      exportSignals: ["licensePlateExportVisualSvg", "license-plate-range-plan"]
+    }
+  },
+  readOptional(filePath) {
+    return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
+  },
+  rendererRegistered(graphicsText, renderer) {
+    if (!renderer) return true;
+    return graphicsText.includes('registerRenderer("' + renderer + '"') ||
+      graphicsText.includes("registerRenderer('" + renderer + "'");
+  },
+  rendererSvgBlock(graphicsText, renderer) {
+    if (!renderer) return "";
+
+    const marker = 'data-report-renderer="' + renderer + '"';
+    const pos = graphicsText.indexOf(marker);
+    if (pos < 0) return "";
+
+    const start = Math.max(0, graphicsText.lastIndexOf("<svg", pos));
+    const end = graphicsText.indexOf("</svg>", pos);
+
+    if (start < 0 || end < 0) return "";
+    return graphicsText.slice(start, end + 6);
+  },
+  hasAll(source, signals) {
+    return !Array.isArray(signals) || !signals.length || signals.every((signal) => source.includes(signal));
+  },
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const expectation = this.expectations[tool] || { mode: "standard" };
+    const scriptFile = path.join(path.dirname(indexFile), "script.js");
+    const scriptText = this.readOptional(scriptFile);
+    const graphicsFile = path.join(process.cwd(), "assets", category + "-graphics.js");
+    const graphicsText = this.readOptional(graphicsFile);
+    const combined = html + "\n" + scriptText;
+    const svgBlock = this.rendererSvgBlock(graphicsText, expectation.renderer);
+    const issues = [];
+
+    const registered = expectation.renderer ? this.rendererRegistered(graphicsText, expectation.renderer) : false;
+    const referenced = expectation.renderer ? combined.includes(expectation.renderer) : false;
+    const rendererStatus = expectation.renderer
+      ? (registered || referenced ? "present" : "missing")
+      : "-";
+
+    const exportSvg =
+      svgBlock.includes("data-export-svg") ||
+      combined.includes("data-export-svg") ||
+      combined.includes("data-export-section");
+
+    const visualOwner =
+      svgBlock.includes("data-report-visual-owner") ||
+      combined.includes("data-report-visual-owner") ||
+      combined.includes("data-report-renderer");
+
+    const suppressLegacy =
+      svgBlock.includes("data-suppress-legacy-chart-export") ||
+      combined.includes("data-suppress-legacy-chart-export") ||
+      combined.includes("suppressLegacyChartExport");
+
+    const exportHook = this.hasAll(combined, expectation.exportSignals || [])
+      ? "present"
+      : expectation.exportSignals && expectation.exportSignals.length
+        ? "missing"
+        : "-";
+
+    if ((expectation.mode === "required" || expectation.mode === "renderer-required") && expectation.renderer && !registered && !referenced) {
+      issues.push("renderer missing: " + expectation.renderer);
+    }
+
+    if (expectation.mode === "required" && exportHook === "missing") {
+      issues.push("export visual hook missing");
+    }
+
+    if ((expectation.mode === "required" || expectation.mode === "renderer-required") && !exportSvg) {
+      issues.push("export SVG/section signal missing");
+    }
+
+    if ((expectation.mode === "required" || expectation.mode === "renderer-required") && !visualOwner) {
+      issues.push("report visual owner/renderer signal missing");
+    }
+
+    if ((expectation.mode === "required" || expectation.mode === "renderer-required") && !suppressLegacy) {
+      issues.push("legacy chart suppression signal missing");
+    }
+
+    const detail = [
+      "mode=" + expectation.mode,
+      "renderer=" + rendererStatus,
+      "exportSvg=" + (exportSvg ? "present" : "-"),
+      "visualOwner=" + (visualOwner ? "present" : "-"),
+      "suppressLegacy=" + (suppressLegacy ? "present" : "-"),
+      "exportHook=" + exportHook,
+      "issues=" + (issues.length ? issues.join("|") : "-")
+    ].join("; ");
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail
+    };
+  }
+};
+
+
 const InputPresetModule = {
   id: "input-presets",
   version: "input-presets-module-001-audit-only",
@@ -1826,7 +1990,7 @@ const BackContinueModule = {
 
 const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule,CtaStandardModule,
    
-  CardTitleStandardModule, InputPresetModule, AssistantShellModule, DiagnosticsModule];
+  CardTitleStandardModule, ExportVisualsModule, InputPresetModule, AssistantShellModule, DiagnosticsModule];
 
 const args = process.argv.slice(2);
 const summaryOnly = args.includes("--summary-only");
@@ -1870,7 +2034,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-030-input-presets-audit");
+console.log("Version: scopedlabs-category-modernizer-031-export-visuals-audit");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
