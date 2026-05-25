@@ -1,6 +1,6 @@
 /*
  * ScopedLabs Tool Shell
- * Version: scopedlabs-tool-shell-006-run-diagnostics-assistant-option
+ * Version: scopedlabs-tool-shell-007-actionable-diagnostics
  *
  * Shared helper foundation for future Tool Shell V1 extraction.
  * Loaded by opted-in tool pages as the safe Tool Shell runtime foundation.
@@ -14,7 +14,7 @@
 (function attachScopedLabsToolShell(root) {
   "use strict";
 
-  const VERSION = "scopedlabs-tool-shell-006-run-diagnostics-assistant-option";
+  const VERSION = "scopedlabs-tool-shell-007-actionable-diagnostics";
 
   function toArray(value) {
     return Array.prototype.slice.call(value || []);
@@ -192,6 +192,99 @@
   }
 
 
+
+  // data-scopedlabs-tool-shell-actionable-diagnostics-001
+  let lastDiagnosticsResult = null;
+
+  const DIAGNOSTIC_GUIDE = Object.freeze({
+    "SL-SHELL-DOCUMENT-UNAVAILABLE": {
+      severity: "fail",
+      suggestedFix: "Run diagnostics after the document has loaded."
+    },
+    "SL-SHELL-REQUIRED-ID-MISSING": {
+      severity: "watch",
+      suggestedFix: "Restore the required page ID. Do not rename pipeline/export/auth anchors without updating the registry and audits."
+    },
+    "SL-ASSISTANT-TEXT-MISSING": {
+      severity: "watch",
+      suggestedFix: "Restore assistant/help text or update the assistant-shell expectation if this page intentionally has no assistant content."
+    },
+    "SL-ASSISTANT-RESULTS-ANCHOR-MISSING": {
+      severity: "watch",
+      suggestedFix: "Restore #results so analyzer/export/report behavior has a stable output anchor."
+    },
+    "SL-ASSISTANT-ANALYSIS-ANCHOR-MISSING": {
+      severity: "watch",
+      suggestedFix: "Restore #analysis-copy or #analysis so assistant interpretation can be detected safely."
+    },
+    "SL-ASSISTANT-LIVE-VISUAL-MISSING": {
+      severity: "watch",
+      suggestedFix: "Restore the expected live visual mount or update the assistant shell expectation."
+    },
+    "SL-ASSISTANT-GUIDED-PRESET-MISSING": {
+      severity: "watch",
+      suggestedFix: "Restore the expected guided preset select element, or update the input preset/assistant expectation."
+    },
+    "SL-ASSISTANT-DUPLICATE-STATUS": {
+      severity: "watch",
+      suggestedFix: "Keep one visible Assistant Status chip. Remove duplicated presentation text without removing underlying analyzer/source status data."
+    }
+  });
+
+  function toolFileHint(slug, fileName) {
+    const cleanSlug = slug || getCurrentToolSlug() || "unknown-tool";
+    return "tools/" + (getPageCategory() || "physical-security") + "/" + cleanSlug + "/" + (fileName || "index.html");
+  }
+
+  function makeDiagnosticIssue(code, message, detail) {
+    const guide = DIAGNOSTIC_GUIDE[code] || {};
+    const info = detail && typeof detail === "object" ? detail : {};
+
+    return {
+      code,
+      severity: info.severity || guide.severity || "watch",
+      message: message || code,
+      tool: info.tool || getCurrentToolSlug(),
+      category: info.category || getPageCategory(),
+      fileHint: info.fileHint || toolFileHint(info.tool || getCurrentToolSlug(), info.fileName || "index.html"),
+      expected: info.expected || "",
+      actual: info.actual || "",
+      module: info.module || "tool-shell-runtime",
+      suggestedFix: info.suggestedFix || guide.suggestedFix || "Review the matching audit module and restore the expected shell signal.",
+      safeAutoFix: info.safeAutoFix === true
+    };
+  }
+
+  function issueMessages(issueDetails) {
+    return (Array.isArray(issueDetails) ? issueDetails : []).map((issue) => {
+      return issue && issue.message ? issue.message : String(issue || "");
+    });
+  }
+
+  function cloneDiagnosticResult(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (error) {
+      return value;
+    }
+  }
+
+  function rememberDiagnostics(result) {
+    lastDiagnosticsResult = cloneDiagnosticResult(result);
+    return result;
+  }
+
+  function getLastDiagnostics() {
+    return cloneDiagnosticResult(lastDiagnosticsResult);
+  }
+
+  function getDiagnosticGuide() {
+    return DIAGNOSTIC_GUIDE;
+  }
+
+
   // data-scopedlabs-tool-shell-assistant-diagnostics-001
   const ASSISTANT_SHELL_EXPECTATIONS = {
     "area-planner": {
@@ -283,14 +376,24 @@
     const doc = opts.document || root.document;
 
     if (!doc || !doc.body) {
-      return {
+      const issueDetails = [
+        makeDiagnosticIssue("SL-SHELL-DOCUMENT-UNAVAILABLE", "document unavailable", {
+          tool: getCurrentToolSlug(),
+          fileHint: toolFileHint(getCurrentToolSlug(), "index.html"),
+          expected: "document.body",
+          actual: "missing"
+        })
+      ];
+
+      return rememberDiagnostics({
         shellVersion: VERSION,
         ok: false,
-        issues: ["document unavailable"],
+        issues: issueMessages(issueDetails),
+        issueDetails,
         signals: {},
         expected: {},
         counts: {}
-      };
+      });
     }
 
     const page = describePage();
@@ -344,34 +447,68 @@
     };
 
     const issues = [];
+    const issueDetails = [];
+
+    function addAssistantIssue(code, message, detail) {
+      const issue = makeDiagnosticIssue(code, message, Object.assign({
+        tool: slug,
+        category: page.category,
+        fileHint: toolFileHint(slug, "index.html"),
+        module: "assistant-shell-runtime"
+      }, detail || {}));
+
+      issueDetails.push(issue);
+      issues.push(issue.message);
+    }
 
     if (expectation.mode !== "not-required" && !signals.assistantText) {
-      issues.push("assistant text not detected");
+      addAssistantIssue("SL-ASSISTANT-TEXT-MISSING", "assistant text not detected", {
+        expected: "assistant text",
+        actual: "missing"
+      });
     }
 
     if (expectation.mode !== "not-required" && !signals.resultsAnchor) {
-      issues.push("#results anchor missing");
+      addAssistantIssue("SL-ASSISTANT-RESULTS-ANCHOR-MISSING", "#results anchor missing", {
+        expected: "#results",
+        actual: "missing"
+      });
     }
 
     if (expectation.mode !== "not-required" && !signals.analysisAnchor) {
-      issues.push("analysis anchor missing");
+      addAssistantIssue("SL-ASSISTANT-ANALYSIS-ANCHOR-MISSING", "analysis anchor missing", {
+        expected: "#analysis-copy or #analysis",
+        actual: "missing"
+      });
     }
 
     if (expectation.liveVisualRequired && !signals.liveVisual) {
-      issues.push("live visual mount missing");
+      addAssistantIssue("SL-ASSISTANT-LIVE-VISUAL-MISSING", "live visual mount missing", {
+        expected: liveVisualIds.join(",") || "live visual mount",
+        actual: "missing"
+      });
     }
 
     const missingPresets = shellMissingIds(doc, presetIds);
     if (presetIds.length && missingPresets.length) {
-      issues.push("guided presets missing: " + missingPresets.join(","));
+      addAssistantIssue("SL-ASSISTANT-GUIDED-PRESET-MISSING", "guided presets missing: " + missingPresets.join(","), {
+        expected: presetIds.join(","),
+        actual: "missing: " + missingPresets.join(",")
+      });
     }
 
     if (signals.duplicateAssistantStatus) {
-      issues.push("possible duplicate Assistant Status text");
+      addAssistantIssue("SL-ASSISTANT-DUPLICATE-STATUS", "possible duplicate Assistant Status text", {
+        expected: "one visible Assistant Status text",
+        actual: String(assistantStatusCount)
+      });
     }
 
     if (missingRequiredIds.length) {
-      issues.push("required IDs missing: " + missingRequiredIds.join(","));
+      addAssistantIssue("SL-SHELL-REQUIRED-ID-MISSING", "required IDs missing: " + missingRequiredIds.join(","), {
+        expected: requiredIds.join(","),
+        actual: "missing: " + missingRequiredIds.join(",")
+      });
     }
 
     return {
@@ -469,7 +606,7 @@
       }
     }
 
-    return result;
+    return rememberDiagnostics(result);
   }
 
   function describePage() {
@@ -503,6 +640,8 @@
     buildDiagnosticResult,
     runDiagnostics,
     describeAssistantShell,
+    getLastDiagnostics,
+    getDiagnosticGuide,
     describePage
   });
 
