@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-028-card-title-apply
+ * Version: scopedlabs-category-modernizer-029-assistant-shell-audit
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card", "script-order", "cache-bust", "diagnostics"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card", "script-order", "cache-bust", "assistant-shell", "diagnostics"]
 };
 
 function read(file) {
@@ -1330,6 +1330,199 @@ const CardTitleStandardModule = {
 };
 
 
+
+const AssistantShellModule = {
+  id: "assistant-shell",
+  version: "assistant-shell-module-001-audit-only",
+  description: "Audits assistant shell readiness, live visuals, guided presets, renderer contracts, and export visual signals without modifying page files.",
+  expectations: {
+    "area-planner": {
+      mode: "not-required"
+    },
+    "scene-illumination": {
+      mode: "specialist-visual",
+      renderer: "scene-illumination-lighting-plan",
+      liveSignals: ["LiveVisual", "scene-illumination-lighting-plan"],
+      exportSignals: ["ExportVisualSvg", "scene-illumination-lighting-plan"]
+    },
+    "mounting-height": {
+      mode: "standard"
+    },
+    "field-of-view": {
+      mode: "graphics-renderer",
+      renderer: "fov-geometry-plan"
+    },
+    "camera-coverage-area": {
+      mode: "graphics-renderer",
+      renderer: "coverage-footprint-plan"
+    },
+    "camera-spacing": {
+      mode: "graphics-renderer",
+      renderer: "camera-layout-iso"
+    },
+    "blind-spot-check": {
+      mode: "graphics-renderer",
+      renderer: "camera-layout-iso"
+    },
+    "pixel-density": {
+      mode: "graphics-renderer",
+      renderer: "pixel-density-detail-plan"
+    },
+    "face-recognition-range": {
+      mode: "specialist-visual",
+      renderer: "face-recognition-range-plan",
+      liveVisualIds: ["faceRecognitionLiveVisual"],
+      presetIds: ["resPreset", "hfovPreset", "ppfPreset"],
+      exportSignals: ["faceRecognitionExportVisualSvg", "face-recognition-range-plan"]
+    },
+    "license-plate-range": {
+      mode: "specialist-visual",
+      renderer: "license-plate-range-plan",
+      liveVisualIds: ["licensePlateLiveVisual"],
+      presetIds: ["resPreset", "hfovPreset", "pppPreset", "pwPreset"],
+      exportSignals: ["licensePlateExportVisualSvg", "license-plate-range-plan"]
+    }
+  },
+  readOptional(filePath) {
+    return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
+  },
+  hasId(source, id) {
+    return source.includes('id="' + id + '"') || source.includes("id='" + id + "'");
+  },
+  hasAll(source, signals) {
+    return !Array.isArray(signals) || !signals.length || signals.every((signal) => source.includes(signal));
+  },
+  hasAny(source, signals) {
+    return !Array.isArray(signals) || !signals.length || signals.some((signal) => source.includes(signal));
+  },
+  rendererRegistered(graphicsText, renderer) {
+    if (!renderer) return true;
+    return graphicsText.includes('registerRenderer("' + renderer + '"') ||
+      graphicsText.includes("registerRenderer('" + renderer + "'");
+  },
+  countVisibleAssistantStatus(html) {
+    const matches = html.match(/Assistant Status/gi) || [];
+    return matches.length;
+  },
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const expectation = this.expectations[tool] || { mode: "standard" };
+    const scriptFile = path.join(path.dirname(indexFile), "script.js");
+    const scriptText = this.readOptional(scriptFile);
+    const graphicsFile = path.join(process.cwd(), "assets", category + "-graphics.js");
+    const graphicsText = this.readOptional(graphicsFile);
+    const combined = html + "\n" + scriptText;
+    const issues = [];
+
+    const assistantText = combined.toLowerCase().includes("assistant");
+    const hasResults = this.hasId(html, "results");
+    const hasAnalysis = this.hasId(html, "analysis-copy") || this.hasId(html, "analysis");
+    const hasToolShell = html.includes("scopedlabs-tool-shell.js");
+    const hasRegistry = html.includes(category + "-tool-registry.js");
+
+    if (expectation.mode !== "not-required" && !assistantText) {
+      issues.push("assistant text not detected");
+    }
+
+    if (expectation.mode !== "not-required" && !hasResults) {
+      issues.push("#results missing");
+    }
+
+    if (expectation.mode !== "not-required" && !hasAnalysis) {
+      issues.push("analysis container missing");
+    }
+
+    if (!hasToolShell) {
+      issues.push("Tool Shell helper not loaded");
+    }
+
+    if (!hasRegistry) {
+      issues.push("category registry not loaded");
+    }
+
+    let rendererStatus = "-";
+    if (expectation.renderer) {
+      const registered = this.rendererRegistered(graphicsText, expectation.renderer);
+      const referenced = combined.includes(expectation.renderer);
+      rendererStatus = registered || referenced ? "present" : "missing";
+
+      if (!registered && !referenced) {
+        issues.push("renderer missing: " + expectation.renderer);
+      }
+    }
+
+    let liveStatus = "-";
+    if (Array.isArray(expectation.liveVisualIds) && expectation.liveVisualIds.length) {
+      const missing = expectation.liveVisualIds.filter((id) => !this.hasId(html, id) && !combined.includes(id));
+      liveStatus = missing.length ? "missing:" + missing.join(",") : "present";
+      if (missing.length) {
+        issues.push("live visual missing: " + missing.join(","));
+      }
+    } else if (Array.isArray(expectation.liveSignals) && expectation.liveSignals.length) {
+      liveStatus = this.hasAny(combined, expectation.liveSignals) ? "present" : "missing";
+      if (liveStatus === "missing") {
+        issues.push("live visual signal missing");
+      }
+    }
+
+    let presetStatus = "-";
+    if (Array.isArray(expectation.presetIds) && expectation.presetIds.length) {
+      const missing = expectation.presetIds.filter((id) => !this.hasId(html, id) && !combined.includes(id));
+      presetStatus = missing.length ? "missing:" + missing.join(",") : "present";
+      if (missing.length) {
+        issues.push("guided preset missing: " + missing.join(","));
+      }
+    }
+
+    let exportStatus = "-";
+    if (Array.isArray(expectation.exportSignals) && expectation.exportSignals.length) {
+      exportStatus = this.hasAll(combined, expectation.exportSignals) ? "present" : "missing";
+      if (exportStatus === "missing") {
+        issues.push("export visual signal missing");
+      }
+    }
+
+    const visibleStatusCount = this.countVisibleAssistantStatus(html);
+    const duplicateStatus = visibleStatusCount > 1 ? "possible duplicate visible Assistant Status: " + visibleStatusCount : "ok";
+    if (visibleStatusCount > 1) {
+      issues.push("possible duplicate visible Assistant Status text");
+    }
+
+    const detail = [
+      "mode=" + expectation.mode,
+      "assistantText=" + (assistantText ? "yes" : "no"),
+      "renderer=" + rendererStatus,
+      "liveVisual=" + liveStatus,
+      "presets=" + presetStatus,
+      "exportVisual=" + exportStatus,
+      "duplicateStatus=" + duplicateStatus,
+      "issues=" + (issues.length ? issues.join("|") : "-")
+    ].join("; ");
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail
+    };
+  }
+};
+
+
 const DiagnosticsModule = {
   id: "diagnostics",
   version: "diagnostics-module-002-visible-text-safe-audit-only",
@@ -1477,7 +1670,7 @@ const BackContinueModule = {
 
 const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule,CtaStandardModule,
    
-  CardTitleStandardModule,DiagnosticsModule];
+  CardTitleStandardModule, AssistantShellModule, DiagnosticsModule];
 
 const args = process.argv.slice(2);
 const summaryOnly = args.includes("--summary-only");
@@ -1521,7 +1714,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-028-card-title-apply");
+console.log("Version: scopedlabs-category-modernizer-029-assistant-shell-audit");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
