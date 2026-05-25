@@ -24,6 +24,19 @@
   const chartRef = { current: null };
   const chartWrapRef = { current: null };
 
+  // data-license-plate-user-guidance-adapter-001
+  let latestLicensePlateGuidance = null;
+
+  function cloneLicensePlateGuidance(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
   const els = {
     res: $("res"),
     resPreset: $("resPreset"),
@@ -779,6 +792,243 @@ function hideVisibleFlowContext() {
 
 
 
+
+  // data-license-plate-user-guidance-adapter-001
+  function licensePlateGuidanceStatus(data) {
+    if (!data) return "unknown";
+
+    const status = String(data.status || "").toLowerCase();
+    const delivered = Number(data.deliveredPpp);
+    const target = Number(data.ppp);
+    const margin = Number(data.marginFt);
+    const utilization = Number(data.utilizationPct);
+
+    if (status.includes("risk") || margin < 0 || (Number.isFinite(delivered) && Number.isFinite(target) && delivered < target)) {
+      return "risk";
+    }
+
+    if (status.includes("watch") || utilization >= 75) {
+      return "watch";
+    }
+
+    if (status.includes("healthy")) {
+      return "healthy";
+    }
+
+    return "unknown";
+  }
+
+  function licensePlateSourceMode(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    return manualOverrideMeta.length ? "manual-override" : "pipeline";
+  }
+
+  function licensePlateExpectedResult(data) {
+    const delivered = Number(data.deliveredPpp);
+    const target = Number(data.ppp);
+    const margin = Number(data.marginFt);
+    const maxDist = Number(data.maxDist);
+    const actualDist = Number(data.dist);
+
+    const parts = [];
+
+    if (Number.isFinite(delivered) && Number.isFinite(target)) {
+      parts.push(fmtPx(delivered, 1) + " delivered pixels/plate vs " + fmtPx(target, 0) + " target");
+    }
+
+    if (Number.isFinite(margin)) {
+      parts.push(margin >= 0 ? fmtFt(margin) + " range margin" : fmtFt(Math.abs(margin)) + " shortfall");
+    }
+
+    if (Number.isFinite(maxDist) && Number.isFinite(actualDist)) {
+      parts.push(fmtFt(actualDist) + " actual distance vs " + fmtFt(maxDist) + " modeled max");
+    }
+
+    return parts.filter(Boolean).join(" | ") || "Review delivered plate detail against the target requirement.";
+  }
+
+  function licensePlatePrimaryRecommendation(data) {
+    const status = licensePlateGuidanceStatus(data);
+    const delivered = Number(data.deliveredPpp);
+    const target = Number(data.ppp);
+    const margin = Number(data.marginFt);
+    const expectedResult = licensePlateExpectedResult(data);
+
+    if (status === "healthy") {
+      return {
+        action: "Keep Current License Plate Baseline",
+        reason: "Delivered pixels per plate and working distance are inside the current capture target.",
+        expectedResult,
+        confidence: "No correction required",
+        nextStep: "Use this result as the license plate validation branch for the active area."
+      };
+    }
+
+    if (status === "watch") {
+      return {
+        action: "Preserve the baseline, but keep margin visible",
+        reason: "The plate capture plan is close enough to continue, but the distance or utilization margin should be reviewed before treating it as final.",
+        expectedResult,
+        confidence: "Watch margin",
+        nextStep: "Confirm field distance, angle, illumination, and plate width assumptions."
+      };
+    }
+
+    if (Number.isFinite(delivered) && Number.isFinite(target) && delivered < target) {
+      return {
+        action: "Increase delivered plate detail",
+        reason: "Delivered pixels per plate are below the target needed for the selected license plate readability goal.",
+        expectedResult,
+        confidence: "Detail shortfall",
+        nextStep: "Reduce HFOV, increase horizontal resolution, or move the camera closer before using this as final."
+      };
+    }
+
+    if (Number.isFinite(margin) && margin < 0) {
+      return {
+        action: "Reduce working distance or tighten the optical setup",
+        reason: "The actual working distance is beyond the modeled max capture distance for the current plate target.",
+        expectedResult,
+        confidence: "Range shortfall",
+        nextStep: "Move the camera closer, reduce HFOV, or increase resolution."
+      };
+    }
+
+    return {
+      action: "Review License Plate Capture Assumptions",
+      reason: "The current result needs review before being treated as a final license plate capture branch.",
+      expectedResult,
+      confidence: "Review required",
+      nextStep: "Confirm plate width, target pixels per plate, distance, resolution, and HFOV."
+    };
+  }
+
+  function licensePlateSecondaryOptions(data) {
+    const delivered = Number(data.deliveredPpp);
+    const target = Number(data.ppp);
+    const margin = Number(data.marginFt);
+
+    const options = [
+      {
+        label: "Reduce HFOV",
+        intent: "Concentrate more horizontal pixels across the plate at the same distance.",
+        expectedResult: "Delivered pixels per plate should increase if lens selection can support the tighter view.",
+        tradeoff: "Narrower view may reduce surrounding scene context.",
+        canApply: true
+      },
+      {
+        label: "Increase horizontal resolution",
+        intent: "Raise the pixel budget available across the same field of view.",
+        expectedResult: "Delivered pixels per plate should move closer to or above the target.",
+        tradeoff: "May increase camera cost, bandwidth, and storage requirements.",
+        canApply: true
+      },
+      {
+        label: "Move camera closer",
+        intent: "Reduce target distance so the plate occupies more of the image.",
+        expectedResult: "Range margin should improve and delivered plate detail should increase.",
+        tradeoff: "Mounting location and angle may become more constrained.",
+        canApply: true
+      },
+      {
+        label: "Review target pixels per plate",
+        intent: "Use only when the capture goal or evidence standard has changed.",
+        expectedResult: "A lower target can improve pass/fail margin, but may reduce evidentiary confidence.",
+        tradeoff: "Do not lower the target simply to make a weak design pass.",
+        canApply: true
+      }
+    ];
+
+    if (Number.isFinite(delivered) && Number.isFinite(target) && delivered >= target && Number.isFinite(margin) && margin >= 0) {
+      return options.slice(0, 2);
+    }
+
+    return options;
+  }
+
+  function buildLicensePlateUserGuidance(data) {
+    const helper = window.ScopedLabsUserAssistantGuidance;
+    const mode = licensePlateSourceMode(data);
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const primary = licensePlatePrimaryRecommendation(data);
+    const sourceLabel = helper && typeof helper.sourceLabelForMode === "function"
+      ? helper.sourceLabelForMode(mode)
+      : (mode === "manual-override" ? "Manual override" : "Clean pipeline");
+    const sourceMessage = helper && typeof helper.sourceMessageForMode === "function"
+      ? helper.sourceMessageForMode(mode)
+      : "Use this result only when the assumptions match the intended design path.";
+
+    const input = {
+      status: licensePlateGuidanceStatus(data),
+      mode,
+      primaryRecommendation: primary,
+      secondaryOptions: licensePlateSecondaryOptions(data),
+      sourceIntegrity: {
+        label: sourceLabel,
+        mode,
+        affectedFields: manualOverrideMeta.map((item) => item.field || item.label || "field"),
+        message: sourceMessage
+      },
+      reportSummary: [
+        primary.action,
+        primary.reason,
+        "Expected result: " + primary.expectedResult
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "",
+        message: "Use this license plate validation only when the working distance, HFOV, resolution, plate width, and target pixels-per-plate assumptions match the real capture lane."
+      }
+    };
+
+    if (helper && typeof helper.createGuidance === "function") {
+      return helper.createGuidance(input);
+    }
+
+    return Object.assign({
+      version: "license-plate-user-guidance-adapter-001-fallback"
+    }, input);
+  }
+
+  function updateLicensePlateUserGuidance(data) {
+    try {
+      latestLicensePlateGuidance = buildLicensePlateUserGuidance(data);
+      return latestLicensePlateGuidance;
+    } catch (error) {
+      latestLicensePlateGuidance = {
+        version: "license-plate-user-guidance-adapter-001-error",
+        status: "unknown",
+        mode: "unknown",
+        error: error && error.message ? error.message : String(error || "Unknown guidance adapter error")
+      };
+
+      return latestLicensePlateGuidance;
+    }
+  }
+
+  function getLastLicensePlateGuidance() {
+    return cloneLicensePlateGuidance(latestLicensePlateGuidance);
+  }
+
+  function explainLastLicensePlateGuidance() {
+    if (!latestLicensePlateGuidance) {
+      return {
+        ok: false,
+        summary: "No License Plate guidance has been generated yet.",
+        nextStep: "Run a License Plate calculation first."
+      };
+    }
+
+    const helper = window.ScopedLabsUserAssistantGuidance;
+
+    if (helper && typeof helper.explainGuidance === "function") {
+      return helper.explainGuidance(latestLicensePlateGuidance);
+    }
+
+    return cloneLicensePlateGuidance(latestLicensePlateGuidance);
+  }
+
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
 
@@ -1007,6 +1257,7 @@ renderLicensePlateLiveVisual(data);
 
 renderPlateStructuredExport(data);
     writeFlow(data);
+    updateLicensePlateUserGuidance(data);
     showComplete();
   }
 
@@ -1057,6 +1308,12 @@ renderPlateStructuredExport(data);
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
+
+  window.ScopedLabsLicensePlateGuidance = Object.freeze({
+    version: "license-plate-user-guidance-adapter-001",
+    getLastGuidance: getLastLicensePlateGuidance,
+    explainLastGuidance: explainLastLicensePlateGuidance
+  });
 
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
