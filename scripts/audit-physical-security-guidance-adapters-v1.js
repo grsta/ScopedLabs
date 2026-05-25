@@ -4,13 +4,18 @@ const { spawnSync } = require("child_process");
 
 const root = process.cwd();
 
-const auditVersion = "physical-security-guidance-adapters-suite-001";
+const auditVersion = "physical-security-guidance-adapters-suite-002-blind-spot";
 
 const audits = [
   {
     tool: "camera-spacing",
     label: "Camera Spacing",
     file: path.join(root, "scripts", "audit-camera-spacing-guidance-adapter-v1.js")
+  },
+  {
+    tool: "blind-spot-check",
+    label: "Blind Spot",
+    file: path.join(root, "scripts", "audit-blind-spot-guidance-adapter-v1.js")
   },
   {
     tool: "license-plate-range",
