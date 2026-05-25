@@ -25,6 +25,19 @@
 
   const $ = (id) => document.getElementById(id);
 
+  // data-blind-spot-user-guidance-adapter-001
+  let latestBlindSpotGuidance = null;
+
+  function cloneBlindSpotGuidance(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
   const els = {
     w: $("w"),
     d: $("d"),
@@ -815,6 +828,278 @@ function hideVisibleFlowContext() {
     });
   }
 
+
+
+
+  // data-blind-spot-user-guidance-adapter-001
+  function blindSpotGuidanceStatus(data) {
+    if (!data) return "unknown";
+
+    const status = String(data.status || "").toLowerCase();
+    const coverageClass = String(data.coverageClass || "").toUpperCase();
+    const gapFt = Number(data.gapFt);
+    const gapPct = Number(data.gapPct);
+    const overlapShortfall = Number(data.targetOverlapShortfallFt);
+
+    if (
+      status.includes("risk") ||
+      coverageClass === "BLIND SPOTS" ||
+      (Number.isFinite(gapFt) && gapFt > 0 && Number.isFinite(gapPct) && gapPct > 10)
+    ) {
+      return "risk";
+    }
+
+    if (
+      status.includes("watch") ||
+      coverageClass === "MINOR GAPS" ||
+      (Number.isFinite(gapFt) && gapFt > 0) ||
+      (Number.isFinite(overlapShortfall) && overlapShortfall > 0)
+    ) {
+      return "watch";
+    }
+
+    if (coverageClass === "FULL COVERAGE" || (Number.isFinite(gapFt) && gapFt <= 0)) {
+      return "healthy";
+    }
+
+    return "unknown";
+  }
+
+  function blindSpotSourceMode(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    return manualOverrideMeta.length ? "manual-override" : "pipeline";
+  }
+
+  function blindSpotNeededCameraCount(data) {
+    try {
+      if (typeof blindSpotRequiredCameraCount === "function") {
+        const needed = Number(blindSpotRequiredCameraCount(data));
+        if (Number.isFinite(needed) && needed > 0) return Math.ceil(needed);
+      }
+    } catch {}
+
+    const span = Number(data && data.w);
+    const effective = Number(data && (data.effectiveCoverageFt || data.coveragePerCameraFt));
+
+    if (Number.isFinite(span) && span > 0 && Number.isFinite(effective) && effective > 0) {
+      return Math.max(1, Math.ceil(span / effective));
+    }
+
+    return Math.max(1, Math.round(Number(data && data.cams) || 1));
+  }
+
+  function blindSpotExpectedResult(data) {
+    const coverageClass = String(data.coverageClass || "Coverage review");
+    const gapFt = Number(data.gapFt);
+    const gapPct = Number(data.gapPct);
+    const span = Number(data.w);
+    const covered = Number(data.totalCoverageFt);
+    const cams = Math.max(1, Math.round(Number(data.cams) || 1));
+    const actualSpacing = Number(data.actualSpacingFt);
+    const neededCams = blindSpotNeededCameraCount(data);
+    const expectedSpacing = Number.isFinite(span) && span > 0 && neededCams > 0 ? span / neededCams : NaN;
+
+    const parts = [coverageClass];
+
+    if (Number.isFinite(gapFt)) {
+      parts.push(gapFt <= 0 ? "0.0 ft modeled gap" : fmtFt(gapFt) + " modeled gap");
+    }
+
+    if (Number.isFinite(gapPct) && gapFt > 0) {
+      parts.push(fmtPct(gapPct) + " uncovered span");
+    }
+
+    if (Number.isFinite(covered) && Number.isFinite(span)) {
+      parts.push(fmtFt(covered) + " covered over " + fmtFt(span) + " span");
+    }
+
+    parts.push(cams + " camera" + (cams === 1 ? "" : "s"));
+
+    if (Number.isFinite(actualSpacing)) {
+      parts.push(fmtFt(actualSpacing) + " actual spacing");
+    }
+
+    if (neededCams > cams && Number.isFinite(expectedSpacing)) {
+      parts.push("corrected target: about " + neededCams + " cameras at " + fmtFt(expectedSpacing) + " spacing");
+    }
+
+    return parts.filter(Boolean).join(" | ");
+  }
+
+  function blindSpotPrimaryRecommendation(data) {
+    const status = blindSpotGuidanceStatus(data);
+    const coverageClass = String(data.coverageClass || "").toUpperCase();
+    const gapFt = Number(data.gapFt);
+    const gapPct = Number(data.gapPct);
+    const cams = Math.max(1, Math.round(Number(data.cams) || 1));
+    const neededCams = blindSpotNeededCameraCount(data);
+    const expectedResult = blindSpotExpectedResult(data);
+
+    if (status === "healthy") {
+      return {
+        action: "Keep Current Blind Spot Baseline",
+        reason: "The modeled camera layout covers the protected span without a remaining blind-spot gap.",
+        expectedResult,
+        confidence: "No correction required",
+        nextStep: "Carry this coverage validation into Pixel Density."
+      };
+    }
+
+    if (coverageClass === "BLIND SPOTS" || (Number.isFinite(gapFt) && gapFt > 0 && Number.isFinite(gapPct) && gapPct > 10)) {
+      return {
+        action: neededCams > cams ? "Add cameras or reduce spacing" : "Reduce actual spacing",
+        reason: "The modeled layout leaves uncovered span that should be corrected before carrying the design into Pixel Density.",
+        expectedResult,
+        confidence: "Coverage gap",
+        nextStep: neededCams > cams
+          ? "Increase camera count or tighten center spacing until the modeled gap reaches 0.0 ft."
+          : "Reduce spacing, widen usable footprint, or split the protected span into a smaller zone."
+      };
+    }
+
+    if (Number.isFinite(gapFt) && gapFt > 0) {
+      return {
+        action: "Validate minor coverage gaps",
+        reason: "The layout is close, but a small uncovered segment remains in the modeled protected span.",
+        expectedResult,
+        confidence: "Minor gap",
+        nextStep: "Slightly reduce spacing, increase camera count, widen the footprint, or confirm the gap is outside the required protection zone."
+      };
+    }
+
+    return {
+      action: "Review Blind Spot Assumptions",
+      reason: "The current blind-spot result needs review before being treated as the final coverage validation branch.",
+      expectedResult,
+      confidence: "Review required",
+      nextStep: "Confirm span width, camera count, working distance, HFOV, and overlap assumptions."
+    };
+  }
+
+  function blindSpotSecondaryOptions(data) {
+    const gapFt = Number(data.gapFt);
+    const cams = Math.max(1, Math.round(Number(data.cams) || 1));
+    const neededCams = blindSpotNeededCameraCount(data);
+
+    const options = [
+      {
+        label: "Add cameras",
+        intent: "Reduce the protected span assigned to each camera.",
+        expectedResult: "Modeled blind-spot gaps should shrink or clear when camera count and spacing are corrected.",
+        tradeoff: "Adds hardware, mounting, cabling, and storage load.",
+        canApply: neededCams > cams || Number.isFinite(gapFt) && gapFt > 0
+      },
+      {
+        label: "Reduce spacing",
+        intent: "Move camera centers closer together so adjacent footprints overlap properly.",
+        expectedResult: "Gap length should move toward 0.0 ft.",
+        tradeoff: "May increase overlap and reduce total span per camera.",
+        canApply: true
+      },
+      {
+        label: "Widen effective footprint",
+        intent: "Use HFOV, distance, or lens/framing assumptions that cover more of the protected span.",
+        expectedResult: "Effective coverage per camera should increase.",
+        tradeoff: "Wider views can reduce pixel density and may affect downstream Lens Selection.",
+        canApply: true
+      },
+      {
+        label: "Split the area",
+        intent: "Break a wide protected span into smaller zones when one layout creates weak coverage.",
+        expectedResult: "Each zone can be validated with its own spacing and detail assumptions.",
+        tradeoff: "Adds planning complexity but improves engineering clarity.",
+        canApply: true
+      }
+    ];
+
+    if (Number.isFinite(gapFt) && gapFt <= 0) {
+      return options.slice(1, 3);
+    }
+
+    return options;
+  }
+
+  function buildBlindSpotUserGuidance(data) {
+    const helper = window.ScopedLabsUserAssistantGuidance;
+    const mode = blindSpotSourceMode(data);
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const primary = blindSpotPrimaryRecommendation(data);
+    const sourceLabel = helper && typeof helper.sourceLabelForMode === "function"
+      ? helper.sourceLabelForMode(mode)
+      : (mode === "manual-override" ? "Manual override" : "Clean pipeline");
+    const sourceMessage = helper && typeof helper.sourceMessageForMode === "function"
+      ? helper.sourceMessageForMode(mode)
+      : "Use this result only when the assumptions match the intended design path.";
+
+    const input = {
+      status: blindSpotGuidanceStatus(data),
+      mode,
+      primaryRecommendation: primary,
+      secondaryOptions: blindSpotSecondaryOptions(data),
+      sourceIntegrity: {
+        label: sourceLabel,
+        mode,
+        affectedFields: manualOverrideMeta.map((item) => item.field || item.label || "field"),
+        message: sourceMessage
+      },
+      reportSummary: [
+        primary.action,
+        primary.reason,
+        "Expected result: " + primary.expectedResult
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "pixel-density",
+        message: "Carry this blind-spot validation into Pixel Density only when camera count, spacing, HFOV, working distance, overlap, and protected span assumptions match the intended area."
+      }
+    };
+
+    if (helper && typeof helper.createGuidance === "function") {
+      return helper.createGuidance(input);
+    }
+
+    return Object.assign({
+      version: "blind-spot-user-guidance-adapter-001-fallback"
+    }, input);
+  }
+
+  function updateBlindSpotUserGuidance(data) {
+    try {
+      latestBlindSpotGuidance = buildBlindSpotUserGuidance(data);
+      return latestBlindSpotGuidance;
+    } catch (error) {
+      latestBlindSpotGuidance = {
+        version: "blind-spot-user-guidance-adapter-001-error",
+        status: "unknown",
+        mode: "unknown",
+        error: error && error.message ? error.message : String(error || "Unknown guidance adapter error")
+      };
+
+      return latestBlindSpotGuidance;
+    }
+  }
+
+  function getLastBlindSpotGuidance() {
+    return cloneBlindSpotGuidance(latestBlindSpotGuidance);
+  }
+
+  function explainLastBlindSpotGuidance() {
+    if (!latestBlindSpotGuidance) {
+      return {
+        ok: false,
+        summary: "No Blind Spot guidance has been generated yet.",
+        nextStep: "Run a Blind Spot calculation first."
+      };
+    }
+
+    const helper = window.ScopedLabsUserAssistantGuidance;
+
+    if (helper && typeof helper.explainGuidance === "function") {
+      return helper.explainGuidance(latestBlindSpotGuidance);
+    }
+
+    return cloneBlindSpotGuidance(latestBlindSpotGuidance);
+  }
 
 
   function writeFlow(data) {
@@ -1716,6 +2001,7 @@ ScopedLabsAnalyzer.renderOutput({
     }
     renderBlindSpotAssistant(data);
     writeFlow(data);
+    updateBlindSpotUserGuidance(data);
 
     updateActiveAreaFromBlindSpot(data, getManualOverrideMetadata(data));
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
@@ -1769,6 +2055,12 @@ ScopedLabsAnalyzer.renderOutput({
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
+
+  window.ScopedLabsBlindSpotGuidance = Object.freeze({
+    version: "blind-spot-user-guidance-adapter-001",
+    getLastGuidance: getLastBlindSpotGuidance,
+    explainLastGuidance: explainLastBlindSpotGuidance
+  });
 
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
