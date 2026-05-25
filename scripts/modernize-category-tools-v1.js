@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-031-export-visuals-audit
+ * Version: scopedlabs-category-modernizer-032-source-integrity-audit
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -1333,6 +1333,161 @@ const CardTitleStandardModule = {
 
 
 
+
+const SourceIntegrityModule = {
+  id: "source-integrity",
+  version: "source-integrity-module-001-audit-only",
+  description: "Audits pipeline carry-over, active area state, flow-note anchors, manual override metadata, and source integrity signals without modifying page files.",
+  expectations: {
+    "area-planner": {
+      mode: "area-entry"
+    },
+    "scene-illumination": {
+      mode: "pipeline"
+    },
+    "mounting-height": {
+      mode: "pipeline"
+    },
+    "field-of-view": {
+      mode: "pipeline"
+    },
+    "camera-coverage-area": {
+      mode: "pipeline"
+    },
+    "camera-spacing": {
+      mode: "pipeline"
+    },
+    "blind-spot-check": {
+      mode: "pipeline"
+    },
+    "pixel-density": {
+      mode: "pipeline"
+    },
+    "face-recognition-range": {
+      mode: "manual-override-required"
+    },
+    "license-plate-range": {
+      mode: "manual-override-required"
+    }
+  },
+  readOptional(filePath) {
+    return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
+  },
+  hasId(source, id) {
+    return source.includes('id="' + id + '"') || source.includes("id='" + id + "'");
+  },
+  hasAny(source, signals) {
+    return (Array.isArray(signals) ? signals : []).some((signal) => source.includes(signal));
+  },
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const expectation = this.expectations[tool] || { mode: "pipeline" };
+    const scriptFile = path.join(path.dirname(indexFile), "script.js");
+    const scriptText = this.readOptional(scriptFile);
+    const combined = html + "\n" + scriptText;
+    const issues = [];
+
+    const flowAnchor = this.hasId(html, "flow-note") || combined.includes("flow-note");
+    const resultsAnchor = this.hasId(html, "results");
+    const areaState = html.includes("physical-security-area-state.js") || combined.includes("ScopedLabsPhysicalSecurityAreaState");
+    const pipelineSignal = combined.includes("scopedlabs:pipeline") || combined.includes("FLOW_KEYS");
+    const pipelineWrite = this.hasAny(combined, ["writeFlow", "ScopedLabsAnalyzer.writeFlow", "pipeline:last-result"]);
+    const renderFlow = this.hasAny(combined, ["renderFlowNote", "refreshManualOverrideBanner", "flowNote"]);
+    const clearFlow = this.hasAny(combined, ["clearFlow: true", "clearFlow", "invalidate({"]);
+    const activeAreaSignal = this.hasAny(combined, ["getActiveArea", "updateActiveAreaResult", "activeArea", "Active Area"]);
+    const planningContext = this.hasAny(combined, ["Imported Assumptions", "Area Context", "Planning Context", "manual override", "manual-override"]);
+    const manualOverride = this.hasAny(combined, ["manualFlowOverrides", "manual-override", "markFlowInputOverride", "getManualOverrideMetadata"]);
+    const sourceMode = this.hasAny(combined, ["sourceMode", "manualOverride", "ManualOverrides", "manualOverrides"]);
+
+    if (expectation.mode === "area-entry") {
+      if (!areaState) {
+        issues.push("area state signal missing");
+      }
+
+      if (!activeAreaSignal) {
+        issues.push("active area signal missing");
+      }
+    }
+
+    if (expectation.mode === "pipeline" || expectation.mode === "manual-override-required") {
+      if (!flowAnchor) {
+        issues.push("#flow-note anchor missing");
+      }
+
+      if (!resultsAnchor) {
+        issues.push("#results anchor missing");
+      }
+
+      if (!areaState) {
+        issues.push("area state signal missing");
+      }
+
+      if (!pipelineSignal) {
+        issues.push("pipeline storage signal missing");
+      }
+
+      if (!pipelineWrite) {
+        issues.push("pipeline write signal missing");
+      }
+
+      if (!renderFlow) {
+        issues.push("flow-note render/refresh signal missing");
+      }
+
+      if (!clearFlow) {
+        issues.push("input invalidation/clearFlow signal missing");
+      }
+    }
+
+    if (expectation.mode === "manual-override-required") {
+      if (!manualOverride) {
+        issues.push("manual override signal missing");
+      }
+
+      if (!sourceMode) {
+        issues.push("source mode/manual override metadata signal missing");
+      }
+
+      if (!planningContext) {
+        issues.push("imported/planning context signal missing");
+      }
+    }
+
+    const detail = [
+      "mode=" + expectation.mode,
+      "flowAnchor=" + (flowAnchor ? "present" : "-"),
+      "areaState=" + (areaState ? "present" : "-"),
+      "pipelineWrite=" + (pipelineWrite ? "present" : "-"),
+      "clearFlow=" + (clearFlow ? "present" : "-"),
+      "manualOverride=" + (manualOverride ? "present" : "-"),
+      "planningContext=" + (planningContext ? "present" : "-"),
+      "issues=" + (issues.length ? issues.join("|") : "-")
+    ].join("; ");
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail
+    };
+  }
+};
+
+
 const ExportVisualsModule = {
   id: "export-visuals",
   version: "export-visuals-module-001-audit-only",
@@ -1990,7 +2145,7 @@ const BackContinueModule = {
 
 const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule,CtaStandardModule,
    
-  CardTitleStandardModule, ExportVisualsModule, InputPresetModule, AssistantShellModule, DiagnosticsModule];
+  CardTitleStandardModule, SourceIntegrityModule, ExportVisualsModule, InputPresetModule, AssistantShellModule, DiagnosticsModule];
 
 const args = process.argv.slice(2);
 const summaryOnly = args.includes("--summary-only");
@@ -2034,7 +2189,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-031-export-visuals-audit");
+console.log("Version: scopedlabs-category-modernizer-032-source-integrity-audit");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
