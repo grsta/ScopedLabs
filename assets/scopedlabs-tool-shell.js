@@ -1,6 +1,6 @@
 /*
  * ScopedLabs Tool Shell
- * Version: scopedlabs-tool-shell-007-actionable-diagnostics
+ * Version: scopedlabs-tool-shell-008-diagnostics-summary
  *
  * Shared helper foundation for future Tool Shell V1 extraction.
  * Loaded by opted-in tool pages as the safe Tool Shell runtime foundation.
@@ -14,7 +14,7 @@
 (function attachScopedLabsToolShell(root) {
   "use strict";
 
-  const VERSION = "scopedlabs-tool-shell-007-actionable-diagnostics";
+  const VERSION = "scopedlabs-tool-shell-008-diagnostics-summary";
 
   function toArray(value) {
     return Array.prototype.slice.call(value || []);
@@ -275,6 +275,127 @@
     lastDiagnosticsResult = cloneDiagnosticResult(result);
     return result;
   }
+
+
+  // data-scopedlabs-tool-shell-diagnostics-summary-001
+  function normalizeDiagnosticIssue(issue, source) {
+    if (!issue || typeof issue !== "object") {
+      return {
+        code: "SL-DIAGNOSTIC-UNSTRUCTURED-ISSUE",
+        severity: "watch",
+        message: String(issue || "Unstructured diagnostic issue"),
+        tool: getCurrentToolSlug(),
+        category: getPageCategory(),
+        fileHint: toolFileHint(getCurrentToolSlug(), "index.html"),
+        expected: "",
+        actual: "",
+        module: source || "tool-shell-runtime",
+        suggestedFix: "Review the raw diagnostics output and convert this issue into a structured diagnostic.",
+        safeAutoFix: false
+      };
+    }
+
+    return {
+      code: issue.code || "SL-DIAGNOSTIC-UNSTRUCTURED-ISSUE",
+      severity: issue.severity || "watch",
+      message: issue.message || issue.code || "Diagnostic issue",
+      tool: issue.tool || getCurrentToolSlug(),
+      category: issue.category || getPageCategory(),
+      fileHint: issue.fileHint || toolFileHint(issue.tool || getCurrentToolSlug(), "index.html"),
+      expected: issue.expected || "",
+      actual: issue.actual || "",
+      module: issue.module || source || "tool-shell-runtime",
+      suggestedFix: issue.suggestedFix || "Review the matching audit module and restore the expected shell signal.",
+      safeAutoFix: issue.safeAutoFix === true
+    };
+  }
+
+  function collectDiagnosticIssues(result) {
+    const current = result && typeof result === "object" ? result : getLastDiagnostics();
+    const collected = [];
+
+    if (!current || typeof current !== "object") {
+      return collected;
+    }
+
+    if (Array.isArray(current.issueDetails)) {
+      current.issueDetails.forEach((issue) => {
+        collected.push(normalizeDiagnosticIssue(issue, "tool-shell-runtime"));
+      });
+    }
+
+    if (current.assistantShell && Array.isArray(current.assistantShell.issueDetails)) {
+      current.assistantShell.issueDetails.forEach((issue) => {
+        collected.push(normalizeDiagnosticIssue(issue, "assistant-shell-runtime"));
+      });
+    }
+
+    const knownMessages = new Set(collected.map((issue) => issue.message));
+
+    if (Array.isArray(current.issues)) {
+      current.issues.forEach((message) => {
+        if (!knownMessages.has(message)) {
+          const normalized = normalizeDiagnosticIssue(message, "tool-shell-runtime");
+          collected.push(normalized);
+          knownMessages.add(normalized.message);
+        }
+      });
+    }
+
+    if (current.assistantShell && Array.isArray(current.assistantShell.issues)) {
+      current.assistantShell.issues.forEach((message) => {
+        if (!knownMessages.has(message)) {
+          const normalized = normalizeDiagnosticIssue(message, "assistant-shell-runtime");
+          collected.push(normalized);
+          knownMessages.add(normalized.message);
+        }
+      });
+    }
+
+    return collected;
+  }
+
+  function explainDiagnostics(result) {
+    const current = result && typeof result === "object" ? result : getLastDiagnostics();
+
+    if (!current || typeof current !== "object") {
+      return {
+        ok: false,
+        summary: "No diagnostics have been run yet.",
+        shellVersion: VERSION,
+        category: getPageCategory(),
+        tool: getCurrentToolSlug(),
+        issueCount: 0,
+        issues: [],
+        nextStep: "Run ScopedLabsToolShell.runDiagnostics({ includeAssistantShell: true, silent: true }) first."
+      };
+    }
+
+    const issues = collectDiagnosticIssues(current);
+    const issueCount = issues.length;
+    const ok = current.ok !== false && (!current.assistantShell || current.assistantShell.ok !== false) && issueCount === 0;
+
+    return {
+      ok,
+      summary: ok
+        ? "No Tool Shell issues detected."
+        : issueCount + " Tool Shell diagnostic issue" + (issueCount === 1 ? "" : "s") + " need review.",
+      shellVersion: current.shellVersion || VERSION,
+      category: current.category || getPageCategory(),
+      tool: current.slug || current.tool || getCurrentToolSlug(),
+      role: current.role || "",
+      issueCount,
+      issues,
+      nextStep: ok
+        ? "No action needed."
+        : "Start with the first issue. Use fileHint and suggestedFix before making any page changes."
+    };
+  }
+
+  function explainLastDiagnostics() {
+    return explainDiagnostics(getLastDiagnostics());
+  }
+
 
   function getLastDiagnostics() {
     return cloneDiagnosticResult(lastDiagnosticsResult);
@@ -642,6 +763,8 @@
     describeAssistantShell,
     getLastDiagnostics,
     getDiagnosticGuide,
+    explainDiagnostics,
+    explainLastDiagnostics,
     describePage
   });
 
