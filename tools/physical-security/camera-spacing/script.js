@@ -3577,6 +3577,7 @@ function renderSpacingExportSection(data) {
 
     writeFlow(data);
     renderSpacingAssistant(data);
+    updateCameraSpacingUserGuidance(data);
     renderSpacingExportSection(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
