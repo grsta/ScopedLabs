@@ -21,6 +21,19 @@
 
   const $ = (id) => document.getElementById(id);
 
+  // data-face-recognition-user-guidance-adapter-001
+  let latestFaceRecognitionGuidance = null;
+
+  function cloneFaceRecognitionGuidance(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
   const els = {
     res: $("res"),
     resPreset: $("resPreset"),
@@ -730,6 +743,254 @@ function hideVisibleFlowContext() {
   }
 
 
+
+  // data-face-recognition-user-guidance-adapter-001
+  function faceRecognitionGuidanceStatus(data) {
+    if (!data) return "unknown";
+
+    const status = String(data.status || "").toLowerCase();
+    const delivered = Number(data.deliveredPpf);
+    const target = Number(data.ppf);
+    const margin = Number(data.marginFt);
+    const utilization = Number(data.utilizationPct);
+
+    if (status.includes("risk") || margin < 0 || (Number.isFinite(delivered) && Number.isFinite(target) && delivered < target)) {
+      return "risk";
+    }
+
+    if (status.includes("watch") || utilization >= 75) {
+      return "watch";
+    }
+
+    if (status.includes("healthy")) {
+      return "healthy";
+    }
+
+    return "unknown";
+  }
+
+  function faceRecognitionSourceMode(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    return manualOverrideMeta.length ? "manual-override" : "pipeline";
+  }
+
+  function faceRecognitionExpectedResult(data) {
+    const delivered = Number(data.deliveredPpf);
+    const target = Number(data.ppf);
+    const margin = Number(data.marginFt);
+    const maxDist = Number(data.maxDist);
+    const actualDist = Number(data.dist);
+
+    const parts = [];
+
+    if (Number.isFinite(delivered) && Number.isFinite(target)) {
+      parts.push(fmtPx(delivered, 1) + " delivered pixels/face vs " + fmtPx(target, 0) + " target");
+    }
+
+    if (Number.isFinite(margin)) {
+      parts.push(margin >= 0 ? fmtFt(margin) + " range margin" : fmtFt(Math.abs(margin)) + " shortfall");
+    }
+
+    if (Number.isFinite(maxDist) && Number.isFinite(actualDist)) {
+      parts.push(fmtFt(actualDist) + " actual distance vs " + fmtFt(maxDist) + " modeled max");
+    }
+
+    return parts.filter(Boolean).join(" | ") || "Review delivered facial detail against the target requirement.";
+  }
+
+  function faceRecognitionPrimaryRecommendation(data) {
+    const status = faceRecognitionGuidanceStatus(data);
+    const delivered = Number(data.deliveredPpf);
+    const target = Number(data.ppf);
+    const margin = Number(data.marginFt);
+    const utilization = Number(data.utilizationPct);
+    const expectedResult = faceRecognitionExpectedResult(data);
+
+    if (status === "healthy") {
+      return {
+        action: "Keep Current Face Recognition Baseline",
+        reason: "Delivered pixels per face and working distance are inside the current facial-detail target.",
+        expectedResult,
+        confidence: "No correction required",
+        nextStep: "Use this result as the face recognition validation branch for the active area."
+      };
+    }
+
+    if (Number.isFinite(delivered) && Number.isFinite(target) && delivered < target) {
+      return {
+        action: "Increase delivered facial detail",
+        reason: "Delivered pixels per face are below the selected recognition target.",
+        expectedResult,
+        confidence: "Detail shortfall",
+        nextStep: "Reduce HFOV, increase horizontal resolution, move the camera closer, or lower the recognition target only if the design intent changes."
+      };
+    }
+
+    if (Number.isFinite(margin) && margin < 0) {
+      return {
+        action: "Reduce working distance or tighten the optical setup",
+        reason: "The actual working distance is beyond the modeled face recognition envelope.",
+        expectedResult,
+        confidence: "Range shortfall",
+        nextStep: "Move the camera closer, reduce HFOV, increase resolution, or review the required pixels-per-face target."
+      };
+    }
+
+    if (Number.isFinite(utilization) && utilization >= 95) {
+      return {
+        action: "Treat Face Recognition as At Limit",
+        reason: "The target distance is right at the edge of the modeled recognition envelope, so lighting, compression, angle, or motion can push the result below target.",
+        expectedResult,
+        confidence: "At limit",
+        nextStep: "Validate real mounting angle, scene lighting, and shutter/compression assumptions before treating this as final."
+      };
+    }
+
+    if (status === "watch") {
+      return {
+        action: "Preserve the baseline, but keep margin visible",
+        reason: "The face recognition plan is workable, but recognition margin is not generous.",
+        expectedResult,
+        confidence: "Watch margin",
+        nextStep: "Confirm field distance, lighting, subject motion, and face-width assumptions."
+      };
+    }
+
+    return {
+      action: "Review Face Recognition Assumptions",
+      reason: "The current result needs review before being treated as a final face recognition branch.",
+      expectedResult,
+      confidence: "Review required",
+      nextStep: "Confirm face width, target pixels per face, distance, resolution, and HFOV."
+    };
+  }
+
+  function faceRecognitionSecondaryOptions(data) {
+    const delivered = Number(data.deliveredPpf);
+    const target = Number(data.ppf);
+    const margin = Number(data.marginFt);
+
+    const options = [
+      {
+        label: "Reduce HFOV",
+        intent: "Concentrate more horizontal pixels across the face at the same distance.",
+        expectedResult: "Delivered pixels per face should increase if lens selection can support the tighter view.",
+        tradeoff: "Narrower view may reduce surrounding scene context.",
+        canApply: true
+      },
+      {
+        label: "Increase horizontal resolution",
+        intent: "Raise the pixel budget available across the same field of view.",
+        expectedResult: "Delivered pixels per face should move closer to or above the target.",
+        tradeoff: "May increase camera cost, bandwidth, and storage requirements.",
+        canApply: true
+      },
+      {
+        label: "Move camera closer",
+        intent: "Reduce target distance so the face occupies more of the image.",
+        expectedResult: "Range margin should improve and delivered facial detail should increase.",
+        tradeoff: "Mounting location and viewing angle may become more constrained.",
+        canApply: true
+      },
+      {
+        label: "Review target pixels per face",
+        intent: "Use only when the recognition goal has changed.",
+        expectedResult: "A lower target can improve pass/fail margin, but may reduce identification confidence.",
+        tradeoff: "Do not lower the target simply to make a weak design pass.",
+        canApply: true
+      }
+    ];
+
+    if (Number.isFinite(delivered) && Number.isFinite(target) && delivered >= target && Number.isFinite(margin) && margin >= 0) {
+      return options.slice(0, 2);
+    }
+
+    return options;
+  }
+
+  function buildFaceRecognitionUserGuidance(data) {
+    const helper = window.ScopedLabsUserAssistantGuidance;
+    const mode = faceRecognitionSourceMode(data);
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const primary = faceRecognitionPrimaryRecommendation(data);
+    const sourceLabel = helper && typeof helper.sourceLabelForMode === "function"
+      ? helper.sourceLabelForMode(mode)
+      : (mode === "manual-override" ? "Manual override" : "Clean pipeline");
+    const sourceMessage = helper && typeof helper.sourceMessageForMode === "function"
+      ? helper.sourceMessageForMode(mode)
+      : "Use this result only when the assumptions match the intended design path.";
+
+    const input = {
+      status: faceRecognitionGuidanceStatus(data),
+      mode,
+      primaryRecommendation: primary,
+      secondaryOptions: faceRecognitionSecondaryOptions(data),
+      sourceIntegrity: {
+        label: sourceLabel,
+        mode,
+        affectedFields: manualOverrideMeta.map((item) => item.field || item.label || "field"),
+        message: sourceMessage
+      },
+      reportSummary: [
+        primary.action,
+        primary.reason,
+        "Expected result: " + primary.expectedResult
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "license-plate-range",
+        message: "Use this face recognition validation only when the working distance, HFOV, resolution, face width, and target pixels-per-face assumptions match the real recognition area."
+      }
+    };
+
+    if (helper && typeof helper.createGuidance === "function") {
+      return helper.createGuidance(input);
+    }
+
+    return Object.assign({
+      version: "face-recognition-user-guidance-adapter-001-fallback"
+    }, input);
+  }
+
+  function updateFaceRecognitionUserGuidance(data) {
+    try {
+      latestFaceRecognitionGuidance = buildFaceRecognitionUserGuidance(data);
+      return latestFaceRecognitionGuidance;
+    } catch (error) {
+      latestFaceRecognitionGuidance = {
+        version: "face-recognition-user-guidance-adapter-001-error",
+        status: "unknown",
+        mode: "unknown",
+        error: error && error.message ? error.message : String(error || "Unknown guidance adapter error")
+      };
+
+      return latestFaceRecognitionGuidance;
+    }
+  }
+
+  function getLastFaceRecognitionGuidance() {
+    return cloneFaceRecognitionGuidance(latestFaceRecognitionGuidance);
+  }
+
+  function explainLastFaceRecognitionGuidance() {
+    if (!latestFaceRecognitionGuidance) {
+      return {
+        ok: false,
+        summary: "No Face Recognition guidance has been generated yet.",
+        nextStep: "Run a Face Recognition calculation first."
+      };
+    }
+
+    const helper = window.ScopedLabsUserAssistantGuidance;
+
+    if (helper && typeof helper.explainGuidance === "function") {
+      return helper.explainGuidance(latestFaceRecognitionGuidance);
+    }
+
+    return cloneFaceRecognitionGuidance(latestFaceRecognitionGuidance);
+  }
+
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
 
@@ -934,6 +1195,7 @@ renderFaceRecognitionLiveVisual(data);
 
 renderFaceStructuredExport(data);
     writeFlow(data);
+    updateFaceRecognitionUserGuidance(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
@@ -984,6 +1246,12 @@ renderFaceStructuredExport(data);
     renderFlowNote();
     invalidate({ clearFlow: false });
   }
+
+  window.ScopedLabsFaceRecognitionGuidance = Object.freeze({
+    version: "face-recognition-user-guidance-adapter-001",
+    getLastGuidance: getLastFaceRecognitionGuidance,
+    explainLastGuidance: explainLastFaceRecognitionGuidance
+  });
 
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
