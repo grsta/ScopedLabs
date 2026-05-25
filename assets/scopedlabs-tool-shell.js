@@ -1,9 +1,9 @@
 /*
  * ScopedLabs Tool Shell
- * Version: scopedlabs-tool-shell-004-back-continue-proof
+ * Version: scopedlabs-tool-shell-005-assistant-shell-diagnostics
  *
  * Shared helper foundation for future Tool Shell V1 extraction.
- * This file is not loaded by live pages yet.
+ * Loaded by opted-in tool pages as the safe Tool Shell runtime foundation.
  *
  * Core rule:
  * - Preserve existing IDs, auth/gating, checkout, pipeline, export, snapshot, and KB behavior.
@@ -14,7 +14,7 @@
 (function attachScopedLabsToolShell(root) {
   "use strict";
 
-  const VERSION = "scopedlabs-tool-shell-004-back-continue-proof";
+  const VERSION = "scopedlabs-tool-shell-005-assistant-shell-diagnostics";
 
   function toArray(value) {
     return Array.prototype.slice.call(value || []);
@@ -191,6 +191,213 @@
     };
   }
 
+
+  // data-scopedlabs-tool-shell-assistant-diagnostics-001
+  const ASSISTANT_SHELL_EXPECTATIONS = {
+    "area-planner": {
+      mode: "not-required"
+    },
+    "scene-illumination": {
+      mode: "specialist-visual",
+      liveVisualRequired: true,
+      liveVisualIds: ["sceneIlluminationLiveVisual", "sceneLiveVisual", "illuminationLiveVisual"],
+      renderer: "scene-illumination-lighting-plan"
+    },
+    "mounting-height": {
+      mode: "standard"
+    },
+    "field-of-view": {
+      mode: "graphics-renderer",
+      renderer: "fov-geometry-plan"
+    },
+    "camera-coverage-area": {
+      mode: "graphics-renderer",
+      renderer: "coverage-footprint-plan"
+    },
+    "camera-spacing": {
+      mode: "graphics-renderer",
+      renderer: "camera-layout-iso"
+    },
+    "blind-spot-check": {
+      mode: "graphics-renderer",
+      renderer: "camera-layout-iso"
+    },
+    "pixel-density": {
+      mode: "graphics-renderer",
+      renderer: "pixel-density-detail-plan"
+    },
+    "face-recognition-range": {
+      mode: "specialist-visual",
+      liveVisualRequired: true,
+      liveVisualIds: ["faceRecognitionLiveVisual"],
+      presetIds: ["resPreset", "hfovPreset", "ppfPreset"],
+      renderer: "face-recognition-range-plan"
+    },
+    "license-plate-range": {
+      mode: "specialist-visual",
+      liveVisualRequired: true,
+      liveVisualIds: ["licensePlateLiveVisual"],
+      presetIds: ["resPreset", "hfovPreset", "pppPreset", "pwPreset"],
+      renderer: "license-plate-range-plan"
+    }
+  };
+
+  function shellSafeQuery(doc, selector) {
+    try {
+      return !!(doc && typeof doc.querySelector === "function" && doc.querySelector(selector));
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function shellHasId(doc, id) {
+    return !!(doc && id && typeof doc.getElementById === "function" && doc.getElementById(id));
+  }
+
+  function shellHasAnyId(doc, ids) {
+    return (Array.isArray(ids) ? ids : []).some((id) => shellHasId(doc, id));
+  }
+
+  function shellMissingIds(doc, ids) {
+    return (Array.isArray(ids) ? ids : []).filter((id) => !shellHasId(doc, id));
+  }
+
+  function shellTextCount(text, phrase) {
+    const haystack = String(text || "");
+    const needle = String(phrase || "");
+    if (!needle) return 0;
+
+    let count = 0;
+    let index = haystack.toLowerCase().indexOf(needle.toLowerCase());
+
+    while (index !== -1) {
+      count += 1;
+      index = haystack.toLowerCase().indexOf(needle.toLowerCase(), index + needle.length);
+    }
+
+    return count;
+  }
+
+  function describeAssistantShell(options) {
+    const opts = options || {};
+    const doc = opts.document || root.document;
+
+    if (!doc || !doc.body) {
+      return {
+        shellVersion: VERSION,
+        ok: false,
+        issues: ["document unavailable"],
+        signals: {},
+        expected: {},
+        counts: {}
+      };
+    }
+
+    const page = describePage();
+    const slug = opts.slug || page.slug || getCurrentToolSlug();
+    const expectation = ASSISTANT_SHELL_EXPECTATIONS[slug] || { mode: "standard" };
+    const bodyText = String(doc.body.textContent || "");
+
+    const requiredIds = requiredIdsForTool(page.tool || null);
+    const missingRequiredIds = requiredIds.filter((id) => !shellHasId(doc, id));
+
+    const assistantStatusCount = shellTextCount(bodyText, "Assistant Status");
+    const liveVisualIds = expectation.liveVisualIds || [];
+    const presetIds = expectation.presetIds || [];
+
+    const liveVisualPresent = liveVisualIds.length
+      ? shellHasAnyId(doc, liveVisualIds)
+      : shellSafeQuery(doc, '[id*="LiveVisual"], [id*="liveVisual"], [data-assistant-visual], [data-report-renderer]');
+
+    const presetsPresent = presetIds.length
+      ? shellMissingIds(doc, presetIds).length === 0
+      : shellSafeQuery(doc, 'select[id$="Preset"], .face-guided-preset, .plate-guided-preset');
+
+    const rendererSignal = expectation.renderer
+      ? bodyText.includes(expectation.renderer) ||
+        shellSafeQuery(doc, '[data-sl-renderer="' + expectation.renderer + '"], [data-report-renderer="' + expectation.renderer + '"]')
+      : false;
+
+    const exportVisualSignal =
+      shellSafeQuery(doc, "[data-export-svg], [data-export-section], [data-report-renderer], [data-suppress-legacy-chart-export]") ||
+      !!root.ScopedLabsAssistantExport;
+
+    const sourceIntegritySignal =
+      shellHasId(doc, "flow-note") ||
+      !!root.ScopedLabsPhysicalSecurityAreaState ||
+      bodyText.indexOf("Imported Assumptions") !== -1 ||
+      bodyText.indexOf("Area Context") !== -1 ||
+      bodyText.indexOf("Planning Context") !== -1;
+
+    const signals = {
+      assistantText: /assistant/i.test(bodyText),
+      resultsAnchor: shellHasId(doc, "results"),
+      analysisAnchor: shellHasId(doc, "analysis-copy") || shellHasId(doc, "analysis"),
+      flowAnchor: shellHasId(doc, "flow-note"),
+      liveVisual: liveVisualPresent,
+      renderer: rendererSignal,
+      exportVisual: exportVisualSignal,
+      presets: presetsPresent,
+      sourceIntegrity: sourceIntegritySignal,
+      duplicateAssistantStatus: assistantStatusCount > 1,
+      requiredIdsPresent: missingRequiredIds.length === 0
+    };
+
+    const issues = [];
+
+    if (expectation.mode !== "not-required" && !signals.assistantText) {
+      issues.push("assistant text not detected");
+    }
+
+    if (expectation.mode !== "not-required" && !signals.resultsAnchor) {
+      issues.push("#results anchor missing");
+    }
+
+    if (expectation.mode !== "not-required" && !signals.analysisAnchor) {
+      issues.push("analysis anchor missing");
+    }
+
+    if (expectation.liveVisualRequired && !signals.liveVisual) {
+      issues.push("live visual mount missing");
+    }
+
+    const missingPresets = shellMissingIds(doc, presetIds);
+    if (presetIds.length && missingPresets.length) {
+      issues.push("guided presets missing: " + missingPresets.join(","));
+    }
+
+    if (signals.duplicateAssistantStatus) {
+      issues.push("possible duplicate Assistant Status text");
+    }
+
+    if (missingRequiredIds.length) {
+      issues.push("required IDs missing: " + missingRequiredIds.join(","));
+    }
+
+    return {
+      shellVersion: VERSION,
+      category: page.category,
+      tier: page.tier,
+      slug,
+      role: page.tool ? page.tool.role : "",
+      mode: expectation.mode,
+      ok: issues.length === 0,
+      issues,
+      signals,
+      expected: {
+        renderer: expectation.renderer || "",
+        liveVisualIds,
+        presetIds,
+        requiredIds
+      },
+      counts: {
+        assistantStatus: assistantStatusCount,
+        missingRequiredIds: missingRequiredIds.length
+      }
+    };
+  }
+
+
   function buildDiagnosticResult() {
     const page = describePage();
     const tool = page.tool || null;
@@ -280,6 +487,7 @@
     applyBackContinueShell,
     buildDiagnosticResult,
     runDiagnostics,
+    describeAssistantShell,
     describePage
   });
 
