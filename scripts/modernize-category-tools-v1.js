@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ScopedLabs Category Modernizer V1
- * Version: scopedlabs-category-modernizer-029-assistant-shell-audit
+ * Version: scopedlabs-category-modernizer-030-input-presets-audit
  *
  * Modular category standardizer.
  * Default mode is dry-run. Use --apply to write safe patches.
@@ -40,7 +40,7 @@ const config = {
       ? ["lens-selection"]
       : []
   ),
-  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card", "script-order", "cache-bust", "assistant-shell", "diagnostics"]
+  modules: ["tool-shell", "back-continue", "badge-cleanup", "label-standard", "export-shell", "graphics-contract", "kb-card", "script-order", "cache-bust", "input-presets", "assistant-shell", "diagnostics"]
 };
 
 function read(file) {
@@ -1331,6 +1331,162 @@ const CardTitleStandardModule = {
 
 
 
+
+const InputPresetModule = {
+  id: "input-presets",
+  version: "input-presets-module-001-audit-only",
+  description: "Audits guided input preset dropdowns and confirms numeric inputs remain the source of truth.",
+  expectations: {
+    "area-planner": {
+      mode: "not-required"
+    },
+    "scene-illumination": {
+      mode: "not-required"
+    },
+    "mounting-height": {
+      mode: "not-required"
+    },
+    "field-of-view": {
+      mode: "not-required"
+    },
+    "camera-coverage-area": {
+      mode: "not-required"
+    },
+    "camera-spacing": {
+      mode: "not-required"
+    },
+    "blind-spot-check": {
+      mode: "not-required"
+    },
+    "pixel-density": {
+      mode: "observe-only",
+      note: "Pixel Density presets are observed but not enforced by this first audit module."
+    },
+    "face-recognition-range": {
+      mode: "required",
+      presetIds: ["resPreset", "hfovPreset", "ppfPreset"],
+      sourceInputIds: ["res", "hfov", "ppf", "fw", "dist"],
+      scriptSignals: ["FACE_GUIDED_PRESETS", "bindFaceGuidedPresets", "applyFaceGuidedPreset", "syncAllFacePresetSelects"],
+      overrideSignals: ["markFlowInputOverride"]
+    },
+    "license-plate-range": {
+      mode: "required",
+      presetIds: ["resPreset", "hfovPreset", "pppPreset", "pwPreset"],
+      sourceInputIds: ["res", "hfov", "ppp", "pw", "dist"],
+      scriptSignals: ["PLATE_GUIDED_PRESETS", "bindPlateGuidedPresets", "applyPlateGuidedPreset", "syncAllPlatePresetSelects"],
+      overrideSignals: ["markFlowInputOverride"]
+    }
+  },
+  readOptional(filePath) {
+    return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
+  },
+  hasId(source, id) {
+    return source.includes('id="' + id + '"') || source.includes("id='" + id + "'");
+  },
+  missingIds(source, combined, ids) {
+    return (Array.isArray(ids) ? ids : []).filter((id) => {
+      return !this.hasId(source, id) && !combined.includes(id) && !combined.includes('$("#' + id + '")') && !combined.includes('$("' + id + '")');
+    });
+  },
+  missingSignals(combined, signals) {
+    return (Array.isArray(signals) ? signals : []).filter((signal) => !combined.includes(signal));
+  },
+  run(tool, indexFile, html) {
+    if (config.protectedTools.has(tool)) {
+      return {
+        module: this.id,
+        version: this.version,
+        tool,
+        classification: "SKIP",
+        action: "none",
+        rowId: "-",
+        detail: "protected/gold-standard"
+      };
+    }
+
+    const expectation = this.expectations[tool] || { mode: "not-required" };
+    const scriptFile = path.join(path.dirname(indexFile), "script.js");
+    const scriptText = this.readOptional(scriptFile);
+    const combined = html + "\n" + scriptText;
+    const issues = [];
+
+    const presetIds = expectation.presetIds || [];
+    const sourceInputIds = expectation.sourceInputIds || [];
+    const scriptSignals = expectation.scriptSignals || [];
+    const overrideSignals = expectation.overrideSignals || [];
+
+    const missingPresets = this.missingIds(html, combined, presetIds);
+    const missingInputs = this.missingIds(html, combined, sourceInputIds);
+    const missingScriptSignals = this.missingSignals(combined, scriptSignals);
+    const missingOverrideSignals = this.missingSignals(combined, overrideSignals);
+
+    if (expectation.mode === "required") {
+      if (missingPresets.length) {
+        issues.push("missing preset ids: " + missingPresets.join(","));
+      }
+
+      if (missingInputs.length) {
+        issues.push("missing source input ids: " + missingInputs.join(","));
+      }
+
+      if (missingScriptSignals.length) {
+        issues.push("missing preset script signals: " + missingScriptSignals.join(","));
+      }
+
+      if (missingOverrideSignals.length) {
+        issues.push("missing override safety signals: " + missingOverrideSignals.join(","));
+      }
+    }
+
+    const anyPresetSignal =
+      combined.includes("Preset") ||
+      combined.includes("GUIDED_PRESETS") ||
+      combined.includes("guided-preset");
+
+    const presetStatus = presetIds.length
+      ? (missingPresets.length ? "missing:" + missingPresets.join(",") : "present")
+      : (anyPresetSignal ? "observed" : "-");
+
+    const inputStatus = sourceInputIds.length
+      ? (missingInputs.length ? "missing:" + missingInputs.join(",") : "present")
+      : "-";
+
+    const scriptStatus = scriptSignals.length
+      ? (missingScriptSignals.length ? "missing:" + missingScriptSignals.join(",") : "present")
+      : (anyPresetSignal ? "observed" : "-");
+
+    const overrideStatus = overrideSignals.length
+      ? (missingOverrideSignals.length ? "missing:" + missingOverrideSignals.join(",") : "present")
+      : "-";
+
+    const numericSourceTruth = sourceInputIds.length
+      ? (missingInputs.length ? "no" : "yes")
+      : "-";
+
+    const detail = [
+      "mode=" + expectation.mode,
+      "presets=" + presetStatus,
+      "sourceInputs=" + inputStatus,
+      "scriptBinding=" + scriptStatus,
+      "overrideSafe=" + overrideStatus,
+      "numericSourceTruth=" + numericSourceTruth,
+      "note=" + (expectation.note || "-"),
+      "issues=" + (issues.length ? issues.join("|") : "-")
+    ].join("; ");
+
+    return {
+      module: this.id,
+      version: this.version,
+      tool,
+      classification: issues.length ? "WATCH" : "SAFE",
+      action: "noop",
+      rowId: "-",
+      detail
+    };
+  }
+};
+
+
 const AssistantShellModule = {
   id: "assistant-shell",
   version: "assistant-shell-module-001-audit-only",
@@ -1670,7 +1826,7 @@ const BackContinueModule = {
 
 const modules = [ToolShellModule, BackContinueModule, BadgeCleanupModule, LabelStandardModule, ExportShellModule, GraphicsContractModule, KbCardModule, ScriptOrderModule, CacheBustModule,CtaStandardModule,
    
-  CardTitleStandardModule, AssistantShellModule, DiagnosticsModule];
+  CardTitleStandardModule, InputPresetModule, AssistantShellModule, DiagnosticsModule];
 
 const args = process.argv.slice(2);
 const summaryOnly = args.includes("--summary-only");
@@ -1714,7 +1870,7 @@ for (const tool of tools) {
 }
 
 console.log("\nScopedLabs Category Modernizer V1\n");
-console.log("Version: scopedlabs-category-modernizer-029-assistant-shell-audit");
+console.log("Version: scopedlabs-category-modernizer-030-input-presets-audit");
 console.log("Category: " + category);
 console.log("Mode: " + (apply ? "APPLY" : "DRY RUN"));
 console.log("Modules: " + activeModules.map((m) => m.id + "@" + m.version).join(", "));
