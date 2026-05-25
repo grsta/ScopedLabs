@@ -1,6 +1,6 @@
 /*
  * ScopedLabs Tool Shell
- * Version: scopedlabs-tool-shell-008-diagnostics-summary
+ * Version: scopedlabs-tool-shell-009-print-diagnostics
  *
  * Shared helper foundation for future Tool Shell V1 extraction.
  * Loaded by opted-in tool pages as the safe Tool Shell runtime foundation.
@@ -14,7 +14,7 @@
 (function attachScopedLabsToolShell(root) {
   "use strict";
 
-  const VERSION = "scopedlabs-tool-shell-008-diagnostics-summary";
+  const VERSION = "scopedlabs-tool-shell-009-print-diagnostics";
 
   function toArray(value) {
     return Array.prototype.slice.call(value || []);
@@ -392,6 +392,72 @@
     };
   }
 
+
+  // data-scopedlabs-tool-shell-print-diagnostics-001
+  function printDiagnostics(result, options) {
+    const opts = Object.assign({
+      runIfMissing: true,
+      includeAssistantShell: true,
+      collapsed: false
+    }, options || {});
+
+    let current = result && typeof result === "object" ? result : getLastDiagnostics();
+
+    if ((!current || typeof current !== "object") && opts.runIfMissing && typeof runDiagnostics === "function") {
+      current = runDiagnostics({
+        includeAssistantShell: opts.includeAssistantShell !== false,
+        silent: true
+      });
+    }
+
+    const explained = explainDiagnostics(current);
+    const title = "ScopedLabs Tool Shell Diagnostics";
+    const status = explained.ok ? "OK" : "REVIEW";
+
+    if (typeof console !== "undefined") {
+      const openGroup = opts.collapsed && typeof console.groupCollapsed === "function"
+        ? console.groupCollapsed
+        : console.group;
+
+      if (typeof openGroup === "function") {
+        openGroup.call(console, title + " - " + status);
+      } else if (typeof console.log === "function") {
+        console.log(title + " - " + status);
+      }
+
+      if (typeof console.log === "function") {
+        console.log("Status:", status);
+        console.log("Version:", explained.shellVersion || VERSION);
+        console.log("Tool:", explained.tool || getCurrentToolSlug() || "-");
+        console.log("Category:", explained.category || getPageCategory() || "-");
+        console.log("Summary:", explained.summary);
+        console.log("Next step:", explained.nextStep);
+      }
+
+      if (explained.issueCount > 0 && typeof console.table === "function") {
+        console.table(explained.issues.map((issue) => ({
+          code: issue.code,
+          severity: issue.severity,
+          tool: issue.tool,
+          fileHint: issue.fileHint,
+          expected: issue.expected,
+          actual: issue.actual,
+          suggestedFix: issue.suggestedFix,
+          safeAutoFix: issue.safeAutoFix
+        })));
+      } else if (explained.issueCount > 0 && typeof console.log === "function") {
+        console.log("Issues:", explained.issues);
+      }
+
+      if (typeof console.groupEnd === "function") {
+        console.groupEnd();
+      }
+    }
+
+    return explained;
+  }
+
+
   function explainLastDiagnostics() {
     return explainDiagnostics(getLastDiagnostics());
   }
@@ -765,6 +831,7 @@
     getDiagnosticGuide,
     explainDiagnostics,
     explainLastDiagnostics,
+    printDiagnostics,
     describePage
   });
 
