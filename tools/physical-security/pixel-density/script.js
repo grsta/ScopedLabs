@@ -22,6 +22,19 @@
 
   const $ = (id) => document.getElementById(id);
 
+  // data-pixel-density-user-guidance-adapter-001
+  let latestPixelDensityGuidance = null;
+
+  function clonePixelDensityGuidance(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
   const els = {
     res: $("res"),
     resPreset: $("resPreset"),
@@ -664,6 +677,241 @@ function hideVisibleFlowContext() {
 
   
 
+
+  // data-pixel-density-user-guidance-adapter-001
+  function pixelDensityGuidanceStatus(data) {
+    if (!data) return "unknown";
+
+    const status = String(data.status || "").toLowerCase();
+    const delivered = Number(data.ppf);
+    const target = Number(data.tppf);
+    const utilization = Number(data.utilizationPct);
+
+    if (delivered < target) {
+      return "risk";
+    }
+
+    if (status.includes("risk") || status.includes("watch") || utilization >= 75) {
+      return "watch";
+    }
+
+    if (status.includes("healthy")) {
+      return "healthy";
+    }
+
+    return "unknown";
+  }
+
+  function pixelDensitySourceMode(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    return manualOverrideMeta.length ? "manual-override" : "pipeline";
+  }
+
+  function pixelDensityExpectedResult(data) {
+    const delivered = Number(data.ppf);
+    const target = Number(data.tppf);
+    const dist = Number(data.dist);
+    const distForTarget = Number(data.distForTppf);
+    const pixelsOnTarget = Number(data.pixelsOnTarget);
+
+    const parts = [];
+
+    if (Number.isFinite(delivered) && Number.isFinite(target)) {
+      parts.push(fmtPpf(delivered) + " delivered vs " + fmtPpf(target) + " target");
+    }
+
+    if (Number.isFinite(dist) && Number.isFinite(distForTarget)) {
+      parts.push(fmtFt(dist) + " working distance vs " + fmtFt(distForTarget) + " target-distance envelope");
+    }
+
+    if (Number.isFinite(pixelsOnTarget)) {
+      parts.push(fmtPx(pixelsOnTarget, 0) + " pixels on target");
+    }
+
+    return parts.filter(Boolean).join(" | ") || "Review delivered pixel density against the target detail requirement.";
+  }
+
+  function pixelDensityPrimaryRecommendation(data) {
+    const status = pixelDensityGuidanceStatus(data);
+    const delivered = Number(data.ppf);
+    const target = Number(data.tppf);
+    const utilization = Number(data.utilizationPct);
+    const expectedResult = pixelDensityExpectedResult(data);
+
+    if (status === "healthy") {
+      return {
+        action: "Keep Current Pixel Density Baseline",
+        reason: "Delivered pixel density is above the selected target detail requirement with usable working-distance margin.",
+        expectedResult,
+        confidence: "No correction required",
+        nextStep: "Carry this detail requirement into Lens Selection."
+      };
+    }
+
+    if (Number.isFinite(delivered) && Number.isFinite(target) && delivered < target) {
+      return {
+        action: "Increase delivered pixel density",
+        reason: "The current geometry is not delivering enough pixels per foot for the selected target detail requirement.",
+        expectedResult,
+        confidence: "PPF shortfall",
+        nextStep: "Reduce HFOV, increase horizontal resolution, move the camera closer, or lower the target PPF only if the design intent changes."
+      };
+    }
+
+    if (Number.isFinite(utilization) && utilization >= 95) {
+      return {
+        action: "Treat Pixel Density as At Limit",
+        reason: "The design is operating at the edge of the modeled detail envelope, so lighting, compression, motion, or angle can push usable detail below target.",
+        expectedResult,
+        confidence: "At limit",
+        nextStep: "Validate the field distance and lens selection before treating this as final."
+      };
+    }
+
+    if (status === "watch") {
+      return {
+        action: "Preserve the baseline, but keep detail margin visible",
+        reason: "Delivered detail is workable, but the design does not have much headroom against the target density requirement.",
+        expectedResult,
+        confidence: "Watch margin",
+        nextStep: "Carry the result into Lens Selection and verify the selected focal length does not erode the intended detail target."
+      };
+    }
+
+    return {
+      action: "Review Pixel Density Assumptions",
+      reason: "The current result needs review before being treated as the final detail-quality branch.",
+      expectedResult,
+      confidence: "Review required",
+      nextStep: "Confirm working distance, HFOV, horizontal resolution, target PPF, and target width assumptions."
+    };
+  }
+
+  function pixelDensitySecondaryOptions(data) {
+    const delivered = Number(data.ppf);
+    const target = Number(data.tppf);
+
+    const options = [
+      {
+        label: "Reduce HFOV",
+        intent: "Concentrate more horizontal pixels across less scene width.",
+        expectedResult: "Delivered PPF should increase at the same working distance.",
+        tradeoff: "Narrower view may reduce surrounding coverage context.",
+        canApply: true
+      },
+      {
+        label: "Increase horizontal resolution",
+        intent: "Raise the pixel budget available across the same scene width.",
+        expectedResult: "Delivered PPF and pixels on target should increase.",
+        tradeoff: "May increase camera cost, bandwidth, and storage requirements.",
+        canApply: true
+      },
+      {
+        label: "Move camera closer",
+        intent: "Reduce scene width at the target distance.",
+        expectedResult: "Delivered PPF should increase and detail utilization should improve.",
+        tradeoff: "Mounting location and coverage geometry may become more constrained.",
+        canApply: true
+      },
+      {
+        label: "Review target PPF",
+        intent: "Use only when the required detail goal changes.",
+        expectedResult: "A lower target can improve margin, but may reduce recognition or identification confidence.",
+        tradeoff: "Do not lower the target simply to make a weak design pass.",
+        canApply: true
+      }
+    ];
+
+    if (Number.isFinite(delivered) && Number.isFinite(target) && delivered >= target) {
+      return options.slice(0, 2);
+    }
+
+    return options;
+  }
+
+  function buildPixelDensityUserGuidance(data) {
+    const helper = window.ScopedLabsUserAssistantGuidance;
+    const mode = pixelDensitySourceMode(data);
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const primary = pixelDensityPrimaryRecommendation(data);
+    const sourceLabel = helper && typeof helper.sourceLabelForMode === "function"
+      ? helper.sourceLabelForMode(mode)
+      : (mode === "manual-override" ? "Manual override" : "Clean pipeline");
+    const sourceMessage = helper && typeof helper.sourceMessageForMode === "function"
+      ? helper.sourceMessageForMode(mode)
+      : "Use this result only when the assumptions match the intended design path.";
+
+    const input = {
+      status: pixelDensityGuidanceStatus(data),
+      mode,
+      primaryRecommendation: primary,
+      secondaryOptions: pixelDensitySecondaryOptions(data),
+      sourceIntegrity: {
+        label: sourceLabel,
+        mode,
+        affectedFields: manualOverrideMeta.map((item) => item.field || item.label || "field"),
+        message: sourceMessage
+      },
+      reportSummary: [
+        primary.action,
+        primary.reason,
+        "Expected result: " + primary.expectedResult
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "lens-selection",
+        message: "Carry this pixel-density result into Lens Selection only when the working distance, HFOV, horizontal resolution, target PPF, and target width assumptions match the intended area."
+      }
+    };
+
+    if (helper && typeof helper.createGuidance === "function") {
+      return helper.createGuidance(input);
+    }
+
+    return Object.assign({
+      version: "pixel-density-user-guidance-adapter-001-fallback"
+    }, input);
+  }
+
+  function updatePixelDensityUserGuidance(data) {
+    try {
+      latestPixelDensityGuidance = buildPixelDensityUserGuidance(data);
+      return latestPixelDensityGuidance;
+    } catch (error) {
+      latestPixelDensityGuidance = {
+        version: "pixel-density-user-guidance-adapter-001-error",
+        status: "unknown",
+        mode: "unknown",
+        error: error && error.message ? error.message : String(error || "Unknown guidance adapter error")
+      };
+
+      return latestPixelDensityGuidance;
+    }
+  }
+
+  function getLastPixelDensityGuidance() {
+    return clonePixelDensityGuidance(latestPixelDensityGuidance);
+  }
+
+  function explainLastPixelDensityGuidance() {
+    if (!latestPixelDensityGuidance) {
+      return {
+        ok: false,
+        summary: "No Pixel Density guidance has been generated yet.",
+        nextStep: "Run a Pixel Density calculation first."
+      };
+    }
+
+    const helper = window.ScopedLabsUserAssistantGuidance;
+
+    if (helper && typeof helper.explainGuidance === "function") {
+      return helper.explainGuidance(latestPixelDensityGuidance);
+    }
+
+    return clonePixelDensityGuidance(latestPixelDensityGuidance);
+  }
+
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
 
@@ -862,6 +1110,7 @@ function hideVisibleFlowContext() {
 
     renderPixelDensityVisual(data);
     writeFlow(data);
+    updatePixelDensityUserGuidance(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
@@ -934,6 +1183,12 @@ function hideVisibleFlowContext() {
     syncTargetPpfPresetFromInput();
     invalidate({ clearFlow: false });
   }
+
+  window.ScopedLabsPixelDensityGuidance = Object.freeze({
+    version: "pixel-density-user-guidance-adapter-001",
+    getLastGuidance: getLastPixelDensityGuidance,
+    explainLastGuidance: explainLastPixelDensityGuidance
+  });
 
   window.addEventListener("DOMContentLoaded", init);
 })();
