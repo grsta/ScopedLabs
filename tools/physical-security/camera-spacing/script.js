@@ -160,6 +160,19 @@ function hideVisibleFlowContext() {
   let activeAssistantScenario = null;
   let latestAssistantScenarios = [];
 
+  // data-camera-spacing-user-guidance-adapter-001
+  let latestUserGuidance = null;
+
+  function cloneUserGuidance(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
   function cleanOverrideNumber(value) {
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
@@ -1251,6 +1264,7 @@ function escapeHtml(value) {
           customAssistantNotice = scenario.disabledReason || scenario.note || "That custom target is not viable with the current geometry.";
           hideSpacingAssistantPlaceholder();
           renderSpacingAssistant(data);
+    updateCameraSpacingUserGuidance(data);
           return;
         }
 
@@ -3377,6 +3391,123 @@ function renderSpacingExportSection(data) {
 
   
 
+
+  // data-camera-spacing-user-guidance-adapter-001
+  function cameraSpacingGuidanceStatus(data) {
+    if (!data) return "unknown";
+
+    const status = String(data.status || "").toLowerCase();
+
+    if (status.includes("risk") || data.spacingClass === "Wide Spacing") return "risk";
+    if (status.includes("watch") || data.spacingClass === "Tight Spacing" || Number(data.ovPct) >= 25) return "watch";
+    if (status.includes("healthy")) return "healthy";
+
+    return "unknown";
+  }
+
+  function buildCameraSpacingUserGuidance(data, scenarios) {
+    const helper = window.ScopedLabsUserAssistantGuidance;
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const sourceMode = sourceModeForCurrentResult(manualOverrideMeta);
+    const primary = factorySpacingPrimaryRecommendation(data, scenarios);
+    const sourceLabel = spacingSourceLabel(sourceMode);
+
+    const secondaryOptions = (Array.isArray(scenarios) ? scenarios : [])
+      .filter((scenario) => scenario && scenario.canApply && scenario.id !== primary.scenarioId)
+      .slice(0, 4)
+      .map((scenario) => ({
+        label: scenario.label || "Spacing branch",
+        intent: scenario.intent || scenario.note || "Review this spacing branch against the current design priority.",
+        expectedResult: factorySpacingResultSummary(scenario),
+        tradeoff: scenario.note || "Review camera count, overlap, and downstream blind-spot impact before applying.",
+        canApply: scenario.canApply !== false
+      }));
+
+    const sourceMessage = helper && typeof helper.sourceMessageForMode === "function"
+      ? helper.sourceMessageForMode(sourceMode)
+      : "Use this result only when the assumptions match the intended design path.";
+
+    const input = {
+      status: cameraSpacingGuidanceStatus(data),
+      mode: sourceMode,
+      primaryRecommendation: {
+        action: primary.action || spacingRecommendedAction(data),
+        reason: primary.reason || spacingProblemLabel(data),
+        expectedResult: primary.expectedResult || factorySpacingResultSummary(data),
+        confidence: primary.confidence || "Camera Spacing guidance",
+        nextStep: primary.nextStep || "Blind Spot Check"
+      },
+      secondaryOptions,
+      sourceIntegrity: {
+        label: sourceLabel,
+        mode: sourceMode,
+        affectedFields: manualOverrideMeta.map((item) => item.field || item.label || "field"),
+        message: sourceMessage
+      },
+      reportSummary: [
+        primary.action || spacingRecommendedAction(data),
+        primary.reason || spacingProblemLabel(data),
+        primary.expectedResult ? "Expected result: " + primary.expectedResult : ""
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "blind-spot-check",
+        message: "Use this spacing result in Blind Spot Check after confirming the spacing branch matches the intended design path."
+      }
+    };
+
+    if (helper && typeof helper.createGuidance === "function") {
+      return helper.createGuidance(input);
+    }
+
+    return Object.assign({
+      version: "camera-spacing-user-guidance-adapter-001-fallback"
+    }, input);
+  }
+
+  function updateCameraSpacingUserGuidance(data) {
+    try {
+      const scenarios = Array.isArray(latestAssistantScenarios) && latestAssistantScenarios.length
+        ? latestAssistantScenarios
+        : buildAssistantScenarios(data);
+
+      latestUserGuidance = buildCameraSpacingUserGuidance(data, scenarios);
+      return latestUserGuidance;
+    } catch (error) {
+      latestUserGuidance = {
+        version: "camera-spacing-user-guidance-adapter-001-error",
+        status: "unknown",
+        mode: "unknown",
+        error: error && error.message ? error.message : String(error || "Unknown guidance adapter error")
+      };
+
+      return latestUserGuidance;
+    }
+  }
+
+  function getLastCameraSpacingUserGuidance() {
+    return cloneUserGuidance(latestUserGuidance);
+  }
+
+  function explainLastCameraSpacingUserGuidance() {
+    if (!latestUserGuidance) {
+      return {
+        ok: false,
+        summary: "No Camera Spacing guidance has been generated yet.",
+        nextStep: "Run a Camera Spacing calculation first."
+      };
+    }
+
+    const helper = window.ScopedLabsUserAssistantGuidance;
+
+    if (helper && typeof helper.explainGuidance === "function") {
+      return helper.explainGuidance(latestUserGuidance);
+    }
+
+    return cloneUserGuidance(latestUserGuidance);
+  }
+
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
     const assistantScenarioMeta = assistantScenarioMetadata();
@@ -3505,6 +3636,12 @@ function renderSpacingExportSection(data) {
     showSpacingAssistantPlaceholder();
     invalidate({ clearFlow: false });
   }
+
+  window.ScopedLabsCameraSpacingGuidance = Object.freeze({
+    version: "camera-spacing-user-guidance-adapter-001",
+    getLastGuidance: getLastCameraSpacingUserGuidance,
+    explainLastGuidance: explainLastCameraSpacingUserGuidance
+  });
 
   window.addEventListener("DOMContentLoaded", () => {
     const year = document.querySelector("[data-year]");
