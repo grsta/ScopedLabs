@@ -510,3 +510,65 @@ Do not chase one-off fixes when a shared engine, audit, or contract can safely p
 Move slowly enough that auth, checkout, pipeline, export, snapshot, Knowledge Base, and report behavior stay intact.
 
 Move steadily enough that the site keeps getting closer to a real professional planning toolkit.
+
+---
+
+## SCOPEDLABS-PHYSICAL-SECURITY-GUARDRAIL-PROOF-0526
+
+### Camera Spacing guardrail proof
+
+Camera Spacing visible Physical Security category guidance proof is working.
+
+The local Camera Spacing Design Assistant remains the validator. The Physical Security master/category guidance now behaves like a quiet guardrail supervisor instead of a duplicate assistant.
+
+### Proven behavior
+
+- Healthy/current-tool-only guidance stays hidden.
+- Watch/Risk/out-of-guardrail guidance appears.
+- The category card no longer duplicates normal healthy local assistant advice.
+- The category card appears when validated guidance crosses guardrail expectations.
+- Manual render proved the renderer itself was good.
+- Scenario/preset CTA path issue was identified and understood.
+- Stale memory mismatch was identified as the likely cause when local assistant showed Healthy but master still showed Risk.
+
+### Architecture lesson
+
+Do not list every CTA across the category long-term.
+
+The correct reusable model is:
+
+```text
+Raw input/value changes
+→ clear stale master/category guidance
+
+Validated tool assistant guidance changes
+→ save normalized guidance memory
+→ re-check category value gate
+→ show master card only if it adds guardrail/pipeline value
+```
+
+The master should not care whether the result came from Calculate, Apply, preset/scenario CTA, imported pipeline value, or manual input changes.
+
+It should only care whether validated normalized guidance changed and whether that guidance is Healthy, Watch, Risk, stale, or conflicting with pipeline assumptions.
+
+### Current proof lane
+
+- Camera Spacing is the only visible proof page.
+- Area Planner remains skipped.
+- Lens Selection remains protected and untouched.
+- Only Camera Spacing is currently saving visible proof memory, so Generated 1 / 9 is expected.
+
+### Next step
+
+Do not roll visible cards across the category yet.
+
+Next build should be a reusable guidance-change/event bridge so tools can emit validated guidance updates, and the category memory/master guidance can decide whether to show.
+
+Preferred next lane:
+
+1. Freeze/commit current Camera Spacing proof.
+2. Keep this checkpoint in the repo handoff doc.
+3. Build reusable guidance-change watcher/event bridge.
+4. Prove it on Camera Spacing.
+5. Then wire upstream non-visible memory saving, likely Camera Coverage Area → Camera Spacing.
+
