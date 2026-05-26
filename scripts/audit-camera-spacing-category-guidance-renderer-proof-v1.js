@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-003-render-hook";
+const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-005-apply-trigger";
 
 const indexFile = path.join(root, "tools", "physical-security", "camera-spacing", "index.html");
 const scriptFile = path.join(root, "tools", "physical-security", "camera-spacing", "script.js");
@@ -94,7 +94,7 @@ const rows = [
   },
   {
     id: "local-script-cache",
-    status: html.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-003") ? "SAFE" : "WATCH",
+    status: html.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-005-apply-trigger") ? "SAFE" : "WATCH",
     detail: "Camera Spacing local script cache was bumped"
   },
   {
@@ -105,7 +105,7 @@ const rows = [
   {
     id: "helper-block",
     status:
-      js.includes("physical-security-category-guidance-renderer-proof-003") &&
+      js.includes("physical-security-category-guidance-renderer-proof-005") &&
       js.includes("function renderPhysicalSecurityCategoryGuidance") &&
       js.includes("function clearPhysicalSecurityCategoryGuidance") &&
       js.includes("function queuePhysicalSecurityCategoryGuidanceRender") &&
@@ -122,9 +122,9 @@ const rows = [
   {
     id: "fallback-calculate-trigger",
     status:
-      js.includes('label.includes("calculate")') &&
+      js.includes('label.includes("calculate") || label.includes("apply")') &&
       js.includes("bindPhysicalSecurityCategoryGuidanceRenderTriggers") ? "SAFE" : "WATCH",
-    detail: "fallback Calculate click trigger exists"
+    detail: "fallback Calculate/Apply click trigger exists"
   },
   {
     id: "generated-count-gate",

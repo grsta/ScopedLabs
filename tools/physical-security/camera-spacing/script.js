@@ -3553,7 +3553,7 @@ function renderSpacingExportSection(data) {
   }
 
 
-  // physical-security-category-guidance-renderer-proof-003
+  // physical-security-category-guidance-renderer-proof-005
   function clearPhysicalSecurityCategoryGuidance() {
     const mount = document.getElementById("physical-security-category-guidance-mount");
     if (!mount) return;
@@ -3652,7 +3652,7 @@ function renderPhysicalSecurityCategoryGuidance() {
         ? String(trigger.textContent || trigger.value || "").trim().toLowerCase()
         : "";
 
-      if (label.includes("calculate")) {
+      if (label.includes("calculate") || label.includes("apply")) {
         queuePhysicalSecurityCategoryGuidanceRender();
       }
     }, true);
@@ -3663,7 +3663,7 @@ function renderPhysicalSecurityCategoryGuidance() {
   }
 
   window.ScopedLabsCameraSpacingCategoryGuidanceProof = {
-    version: "camera-spacing-category-guidance-renderer-proof-003",
+    version: "camera-spacing-category-guidance-renderer-proof-005",
     render: renderPhysicalSecurityCategoryGuidance,
     queue: queuePhysicalSecurityCategoryGuidanceRender,
     clear: clearPhysicalSecurityCategoryGuidance
