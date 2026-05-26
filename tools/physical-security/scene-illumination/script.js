@@ -758,6 +758,310 @@ function hideVisibleFlowContext() {
 
   
 
+
+  // data-scene-illumination-guidance-factory-adapter-001
+  let sceneIlluminationGuidanceAdapter = null;
+
+  function cloneSceneIlluminationGuidance(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
+  function sceneIlluminationManualSourceFields(data) {
+    const fields = [];
+
+    if (String(data.footcandleSourceMode || "").toLowerCase() === "manual-override") {
+      fields.push("Target illumination");
+    }
+
+    if (String(data.effectiveSourceMode || "").toLowerCase() === "manual-override") {
+      fields.push("Effective planning factor");
+    }
+
+    if (String(data.utilizationSourceMode || "").toLowerCase() === "manual-override") {
+      fields.push("Utilization factor");
+    }
+
+    if (String(data.lightLossSourceMode || "").toLowerCase() === "manual-override") {
+      fields.push("Light loss factor");
+    }
+
+    return fields;
+  }
+
+  function sceneIlluminationSourceMode(data) {
+    return sceneIlluminationManualSourceFields(data).length ? "manual-override" : "pipeline";
+  }
+
+  function sceneIlluminationGuidanceStatus(data) {
+    const status = String(data && data.status || "").toLowerCase();
+    const factorPressure = Number(data && data.factorPressureMetric);
+    const targetDemand = Number(data && data.targetDemandMetric);
+    const outputLoad = Number(data && data.outputLoadMetric);
+    const effectiveFactor = Number(data && data.effectiveFactor);
+
+    if (status.includes("risk")) return "risk";
+    if (Number.isFinite(factorPressure) && factorPressure > 70) return "risk";
+    if (Number.isFinite(targetDemand) && targetDemand > 70) return "risk";
+    if (Number.isFinite(outputLoad) && outputLoad > 70) return "risk";
+
+    if (status.includes("watch")) return "watch";
+    if (data && data.footcandleOutsideRange) return "watch";
+    if (Number.isFinite(effectiveFactor) && effectiveFactor < 0.45) return "watch";
+    if (Number.isFinite(factorPressure) && factorPressure > 45) return "watch";
+    if (Number.isFinite(targetDemand) && targetDemand > 45) return "watch";
+    if (Number.isFinite(outputLoad) && outputLoad > 45) return "watch";
+
+    if (status.includes("healthy")) return "healthy";
+
+    return "unknown";
+  }
+
+  function sceneIlluminationExpectedResult(data) {
+    const parts = [];
+
+    if (data.lightingGoalLabel) parts.push(data.lightingGoalLabel);
+    if (Number.isFinite(Number(data.area))) parts.push(fmtSqFt(data.area) + " lighting area");
+    if (Number.isFinite(Number(data.fc))) parts.push(fmtFc(data.fc) + " target");
+    if (Number.isFinite(Number(data.effectiveFactor))) parts.push(fmtFactor(data.effectiveFactor) + " effective factor");
+    if (Number.isFinite(Number(data.lumens))) parts.push(fmtLumens(data.lumens) + " estimated");
+    if (Number.isFinite(Number(data.lumenDensity))) parts.push(fmt(data.lumenDensity, 2) + " lm/sq ft");
+    if (data.lightingClass) parts.push(data.lightingClass);
+
+    return parts.filter(Boolean).join(" | ");
+  }
+
+  function sceneIlluminationPrimaryRecommendation(data) {
+    const status = sceneIlluminationGuidanceStatus(data);
+    const expectedResult = sceneIlluminationExpectedResult(data);
+    const affectedFields = sceneIlluminationManualSourceFields(data);
+
+    if (status === "healthy") {
+      return {
+        action: "Keep Current Scene Illumination Baseline",
+        reason: "The lighting target, planning factor, and output load fit the selected scene goal well enough for the next planning step.",
+        expectedResult,
+        confidence: affectedFields.length ? "Manual lighting assumptions present" : "Preset lighting assumptions",
+        nextStep: "Carry this lighting baseline into Mounting Height."
+      };
+    }
+
+    if (status === "risk") {
+      return {
+        action: "Correct Scene Illumination Assumptions",
+        reason: "The scene lighting assumptions are producing a high-pressure lumen requirement or target mismatch before mounting geometry is evaluated.",
+        expectedResult,
+        confidence: "Lighting assumption risk",
+        nextStep: "Review the lighting goal, footcandle target, utilization factor, light loss factor, or split the scene before continuing."
+      };
+    }
+
+    if (status === "watch") {
+      return {
+        action: "Validate Lighting Assumptions Before Mounting Height",
+        reason: "The lighting baseline is usable, but one or more target, efficiency, or output-load assumptions should be confirmed before it is carried forward.",
+        expectedResult,
+        confidence: affectedFields.length ? "Manual lighting assumptions present" : "Lighting watch item",
+        nextStep: "Confirm the target range and effective planning factor before continuing to Mounting Height."
+      };
+    }
+
+    return {
+      action: "Review Scene Illumination Assumptions",
+      reason: "The current scene illumination result needs review before it is carried into mounting geometry.",
+      expectedResult,
+      confidence: "Review required",
+      nextStep: "Confirm area dimensions, lighting goal, target footcandles, utilization factor, and light loss factor."
+    };
+  }
+
+  function sceneIlluminationSecondaryOptions(data) {
+    const status = sceneIlluminationGuidanceStatus(data);
+
+    const options = [
+      {
+        label: "Use guided lighting presets",
+        intent: "Return the target and planning factors to expected preset values.",
+        expectedResult: "Source integrity should move toward a clean pipeline baseline.",
+        tradeoff: "Preset values may not capture every site-specific lighting condition.",
+        canApply: sceneIlluminationManualSourceFields(data).length > 0
+      },
+      {
+        label: "Adjust target footcandles",
+        intent: "Bring the lighting target back into the recommended range for the selected goal.",
+        expectedResult: "Target range fit should improve.",
+        tradeoff: "Lowering the target may reduce scene visibility if the goal was intentionally aggressive.",
+        canApply: status === "watch" || status === "risk" || !!data.footcandleOutsideRange
+      },
+      {
+        label: "Improve planning factor",
+        intent: "Use better fixture/layout efficiency or maintenance assumptions.",
+        expectedResult: "Effective planning factor should increase and lumen demand should drop.",
+        tradeoff: "May require better fixtures, layout changes, or cleaner environmental assumptions.",
+        canApply: status === "watch" || status === "risk"
+      },
+      {
+        label: "Split the lighting area",
+        intent: "Break a high-demand area into smaller lighting zones.",
+        expectedResult: "Each zone can carry a clearer lighting baseline into Mounting Height.",
+        tradeoff: "Adds planning complexity but improves assumption control.",
+        canApply: status === "watch" || status === "risk"
+      },
+      {
+        label: "Continue to Mounting Height",
+        intent: "Carry the lighting baseline into camera mounting geometry.",
+        expectedResult: "Mounting Height can evaluate geometry using the selected scene assumptions.",
+        tradeoff: "Only continue when the lighting target and planning factors are intentional.",
+        canApply: status === "healthy" || status === "watch"
+      }
+    ];
+
+    return options.filter((option) => option.canApply !== false);
+  }
+
+  function buildSceneIlluminationGuidanceInput(data) {
+    const mode = sceneIlluminationSourceMode(data);
+    const affectedFields = sceneIlluminationManualSourceFields(data);
+    const primary = sceneIlluminationPrimaryRecommendation(data);
+    const helper = window.ScopedLabsUserAssistantGuidance;
+
+    const sourceLabel = helper && typeof helper.sourceLabelForMode === "function"
+      ? helper.sourceLabelForMode(mode)
+      : (mode === "manual-override" ? "Manual override" : "Clean pipeline");
+
+    const sourceMessage = helper && typeof helper.sourceMessageForMode === "function"
+      ? helper.sourceMessageForMode(mode)
+      : "Use this result only when the assumptions match the intended design branch.";
+
+    return {
+      status: sceneIlluminationGuidanceStatus(data),
+      mode,
+      primaryRecommendation: primary,
+      secondaryOptions: sceneIlluminationSecondaryOptions(data),
+      sourceIntegrity: {
+        label: sourceLabel,
+        mode,
+        affectedFields,
+        message: sourceMessage
+      },
+      reportSummary: [
+        primary.action,
+        primary.reason,
+        "Expected result: " + primary.expectedResult
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "mounting-height",
+        message: "Carry this lighting baseline into Mounting Height only when the scene dimensions, lighting goal, target footcandles, utilization factor, and light-loss assumptions match the intended protected area."
+      }
+    };
+  }
+
+  function getSceneIlluminationGuidanceAdapter() {
+    if (sceneIlluminationGuidanceAdapter) return sceneIlluminationGuidanceAdapter;
+
+    const factory = window.ScopedLabsUserGuidanceAdapterFactory;
+
+    if (factory && typeof factory.createAdapter === "function") {
+      sceneIlluminationGuidanceAdapter = factory.createAdapter({
+        toolKey: "scene-illumination",
+        globalName: "ScopedLabsSceneIlluminationGuidance",
+        version: "scene-illumination-guidance-adapter-001-factory",
+        nextTool: "mounting-height",
+        carryForwardMessage: "Carry this lighting baseline into Mounting Height only when scene and lighting assumptions match the intended protected area.",
+        buildGuidance: buildSceneIlluminationGuidanceInput
+      });
+
+      return sceneIlluminationGuidanceAdapter;
+    }
+
+    let latestGuidance = null;
+
+    sceneIlluminationGuidanceAdapter = {
+      version: "scene-illumination-guidance-adapter-001-fallback",
+      update(data) {
+        latestGuidance = Object.assign({
+          version: "scene-illumination-guidance-adapter-001-fallback"
+        }, buildSceneIlluminationGuidanceInput(data));
+        return cloneSceneIlluminationGuidance(latestGuidance);
+      },
+      getLastGuidance() {
+        return cloneSceneIlluminationGuidance(latestGuidance);
+      },
+      explainLastGuidance() {
+        if (!latestGuidance) {
+          return {
+            ok: false,
+            summary: "No Scene Illumination guidance has been generated yet.",
+            nextStep: "Run a Scene Illumination calculation first."
+          };
+        }
+
+        return {
+          ok: true,
+          status: latestGuidance.status,
+          mode: latestGuidance.mode,
+          action: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.action,
+          reason: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.reason,
+          expected: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.expectedResult,
+          guidance: cloneSceneIlluminationGuidance(latestGuidance)
+        };
+      },
+      attachGlobal() {
+        window.ScopedLabsSceneIlluminationGuidance = Object.freeze({
+          version: this.version,
+          toolKey: "scene-illumination",
+          getLastGuidance: this.getLastGuidance,
+          explainLastGuidance: this.explainLastGuidance,
+          updateFromData: this.update
+        });
+        return window.ScopedLabsSceneIlluminationGuidance;
+      }
+    };
+
+    return sceneIlluminationGuidanceAdapter;
+  }
+
+  function updateSceneIlluminationUserGuidance(data) {
+    const adapter = getSceneIlluminationGuidanceAdapter();
+    return adapter.update(data);
+  }
+
+  function getLastSceneIlluminationGuidance() {
+    const adapter = getSceneIlluminationGuidanceAdapter();
+    return adapter.getLastGuidance();
+  }
+
+  function explainLastSceneIlluminationGuidance() {
+    const adapter = getSceneIlluminationGuidanceAdapter();
+    return adapter.explainLastGuidance();
+  }
+
+  function attachSceneIlluminationGuidanceGlobal() {
+    const adapter = getSceneIlluminationGuidanceAdapter();
+
+    if (adapter && typeof adapter.attachGlobal === "function") {
+      return adapter.attachGlobal();
+    }
+
+    window.ScopedLabsSceneIlluminationGuidance = Object.freeze({
+      version: "scene-illumination-guidance-adapter-001-factory",
+      toolKey: "scene-illumination",
+      getLastGuidance: getLastSceneIlluminationGuidance,
+      explainLastGuidance: explainLastSceneIlluminationGuidance
+    });
+
+    return window.ScopedLabsSceneIlluminationGuidance;
+  }
+
+  attachSceneIlluminationGuidanceGlobal();
+
+
   function writeFlow(data) {
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.scene, {
       category: CATEGORY,
@@ -1028,6 +1332,7 @@ clearSceneStructuredExport();
 renderSceneIlluminationLiveVisual(data);
 renderSceneStructuredExport(data);
     writeFlow(data);
+    updateSceneIlluminationUserGuidance(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
     forceSceneContinueVisible();
 
