@@ -26,8 +26,12 @@
       slug: "mounting-height",
       role: "pipeline-step",
       protected: false,
-      proofStatus: "pending",
-      guidanceCandidate: true
+      proofStatus: "proven",
+      guidanceCandidate: true,
+      globalName: "ScopedLabsMountingHeightGuidance",
+      nextTool: "field-of-view",
+      factoryGenerated: true,
+      sourceMode: "mounting-source-fields"
     },
     "field-of-view": {
       slug: "field-of-view",

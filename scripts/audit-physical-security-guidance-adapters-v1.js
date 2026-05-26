@@ -4,13 +4,18 @@ const { spawnSync } = require("child_process");
 
 const root = process.cwd();
 
-const auditVersion = "physical-security-guidance-adapters-suite-005-scene-illumination";
+const auditVersion = "physical-security-guidance-adapters-suite-006-mounting-height";
 
 const audits = [
   {
     tool: "scene-illumination",
     label: "Scene Illumination",
     file: path.join(root, "scripts", "audit-scene-illumination-guidance-adapter-v1.js")
+  },
+  {
+    tool: "mounting-height",
+    label: "Mounting Height",
+    file: path.join(root, "scripts", "audit-mounting-height-guidance-adapter-v1.js")
   },
   {
     tool: "field-of-view",
