@@ -4,9 +4,14 @@ const { spawnSync } = require("child_process");
 
 const root = process.cwd();
 
-const auditVersion = "physical-security-guidance-adapters-suite-002-blind-spot";
+const auditVersion = "physical-security-guidance-adapters-suite-003-field-of-view";
 
 const audits = [
+  {
+    tool: "field-of-view",
+    label: "Field of View",
+    file: path.join(root, "scripts", "audit-field-of-view-guidance-adapter-v1.js")
+  },
   {
     tool: "camera-spacing",
     label: "Camera Spacing",

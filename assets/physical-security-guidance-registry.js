@@ -29,8 +29,11 @@
       slug: "field-of-view",
       role: "pipeline-step",
       protected: false,
-      proofStatus: "pending",
-      guidanceCandidate: true
+      proofStatus: "proven",
+      guidanceCandidate: true,
+      globalName: "ScopedLabsFieldOfViewGuidance",
+      nextTool: "camera-coverage-area",
+      factoryGenerated: true
     },
     "camera-coverage-area": {
       slug: "camera-coverage-area",
