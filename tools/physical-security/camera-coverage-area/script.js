@@ -823,7 +823,51 @@
   attachCameraCoverageAreaGuidanceGlobal();
 
 
-  function writeFlow(data) {
+  
+  function getCameraCoverageAreaBridgeGuidance() {
+    const guidanceApi = window.ScopedLabsCameraCoverageAreaGuidance;
+
+    if (guidanceApi && typeof guidanceApi.getLastGuidance === "function") {
+      return guidanceApi.getLastGuidance();
+    }
+
+    return null;
+  }
+
+  function publishCameraCoverageAreaGuidanceEvent(source) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = getCameraCoverageAreaBridgeGuidance();
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
+      return false;
+    }
+
+    return !!bridge.publishIfChanged({
+      category: "physical-security",
+      tool: "camera-coverage-area",
+      guidance,
+      source: source || "camera-coverage-area-guidance-update"
+    });
+  }
+
+  function clearCameraCoverageAreaGuidanceEventMemory() {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (bridge && typeof bridge.clearTool === "function") {
+      bridge.clearTool("camera-coverage-area");
+      return true;
+    }
+
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+
+    if (memory && typeof memory.clearToolGuidance === "function") {
+      return memory.clearToolGuidance("camera-coverage-area");
+    }
+
+    return false;
+  }
+
+function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.area, {
       category: CATEGORY,
@@ -1145,7 +1189,8 @@
     renderCoverageAssistant(data);
     writeFlow(data);
     updateCameraCoverageAreaUserGuidance(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+        publishCameraCoverageAreaGuidanceEvent("camera-coverage-area-guidance-update");
+ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
     forceCoverageContinueVisible();
   }
 
@@ -1177,8 +1222,16 @@
         refreshManualOverrideBanner();
       };
 
-      el.addEventListener("input", handleEdit);
-      el.addEventListener("change", handleEdit);
+      el.addEventListener("input", function (event) {
+        clearCameraCoverageAreaGuidanceEventMemory();
+        handleEdit(event);
+      });
+
+
+      el.addEventListener("change", function (event) {
+        clearCameraCoverageAreaGuidanceEventMemory();
+        handleEdit(event);
+      });
     });
       
 
