@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-guidance-001-web-ready-master";
+  const VERSION = "physical-security-category-guidance-002-memory-aware-master";
   const CATEGORY = "physical-security";
 
   const fallbackOrder = [
@@ -69,6 +69,10 @@
     return window.ScopedLabsPhysicalSecurityGuidanceRegistry || null;
   }
 
+  function getGuidanceMemory() {
+    return window.ScopedLabsPhysicalSecurityGuidanceMemory || null;
+  }
+
   function getPipelineOrder() {
     const knowledge = getKnowledge();
 
@@ -120,6 +124,22 @@
     return guidance.primaryRecommendation || guidance.recommendation || {};
   }
 
+  function memoryBackedGuidanceFor(slug) {
+    const memory = getGuidanceMemory();
+
+    if (!memory || typeof memory.getToolGuidance !== "function") {
+      return null;
+    }
+
+    const record = memory.getToolGuidance(slug);
+
+    if (!record || !record.guidance) {
+      return null;
+    }
+
+    return record;
+  }
+
   function toolKnowledgeFor(slug) {
     const knowledge = getKnowledge();
 
@@ -149,13 +169,26 @@
         const webPolicy = toolWebPolicyFor(entry.slug);
 
         let guidance = null;
+        let guidanceSource = "none";
+        let memoryRecord = null;
         let error = "";
 
         if (api && typeof api.getLastGuidance === "function") {
           try {
             guidance = api.getLastGuidance();
+            if (guidance) {
+              guidanceSource = "live";
+            }
           } catch (err) {
             error = err && err.message ? err.message : String(err || "Guidance read failed");
+          }
+        }
+
+        if (!guidance) {
+          memoryRecord = memoryBackedGuidanceFor(entry.slug);
+          if (memoryRecord && memoryRecord.guidance) {
+            guidance = memoryRecord.guidance;
+            guidanceSource = "memory";
           }
         }
 
@@ -167,6 +200,8 @@
           role: entry.role || (knowledge && knowledge.role) || "",
           globalName: entry.globalName,
           generated: !!guidance,
+          guidanceSource,
+          memoryRecord: memoryRecord ? clone(memoryRecord) : null,
           status: guidance ? normalizeStatus(guidance.status) : "unknown",
           mode: guidance && guidance.mode ? guidance.mode : "unknown",
           action: primary.action || "",
@@ -417,6 +452,50 @@
     };
   }
 
+
+  function shouldShowVisibleCategoryGuidance(currentSlug, input) {
+    const explanation = input && input.guidance ? input : explainCategoryGuidance(createCategoryGuidance(collectToolGuidance()));
+    const counts = explanation.counts || {};
+    const priorityTool = explanation.priorityTool || null;
+    const sourceTopics = explanation.sourceTopics || {};
+    const generated = Number(counts.generated || 0);
+    const risk = Number(counts.risk || 0);
+    const watch = Number(counts.watch || 0);
+    const prioritySlug = priorityTool && priorityTool.slug ? priorityTool.slug : "";
+
+    const reasons = [];
+
+    if (generated >= 2) {
+      reasons.push("multiple-tools-generated");
+    }
+
+    if (risk > 0) {
+      reasons.push("risk-present");
+    }
+
+    if (watch > 1) {
+      reasons.push("multiple-watch-items");
+    }
+
+    if (prioritySlug && currentSlug && prioritySlug !== currentSlug) {
+      reasons.push("priority-tool-is-not-current-tool");
+    }
+
+    if (generated > 0 && currentSlug && sourceTopics && Object.keys(sourceTopics).length > 1) {
+      reasons.push("cross-topic-context");
+    }
+
+    return {
+      show: reasons.length > 0,
+      reasons,
+      currentSlug: currentSlug || "",
+      generated,
+      risk,
+      watch,
+      prioritySlug
+    };
+  }
+
   window.ScopedLabsPhysicalSecurityCategoryGuidance = Object.freeze({
     version: VERSION,
     category: CATEGORY,
@@ -425,6 +504,7 @@
     createCategoryGuidance,
     explainCategoryGuidance,
     explainCurrentGuidance,
+    shouldShowVisibleCategoryGuidance,
     classifyExternalSource
   });
 })();

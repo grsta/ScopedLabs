@@ -1265,6 +1265,7 @@ function escapeHtml(value) {
           hideSpacingAssistantPlaceholder();
           renderSpacingAssistant(data);
     updateCameraSpacingUserGuidance(data);
+    savePhysicalSecurityCameraSpacingGuidanceMemory();
     queuePhysicalSecurityCategoryGuidanceRender();
 
           return;
@@ -3573,7 +3574,30 @@ function renderSpacingExportSection(data) {
     });
   }
 
-  function renderPhysicalSecurityCategoryGuidance() {
+  
+  function savePhysicalSecurityCameraSpacingGuidanceMemory() {
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+    const adapter = window.ScopedLabsCameraSpacingGuidance;
+
+    if (!memory || !adapter || typeof memory.saveToolGuidance !== "function" || typeof adapter.getLastGuidance !== "function") {
+      return false;
+    }
+
+    const guidance = adapter.getLastGuidance();
+
+    if (!guidance) {
+      return false;
+    }
+
+    const result = memory.saveToolGuidance("camera-spacing", guidance, {
+      source: "camera-spacing",
+      savedBy: "camera-spacing-render-success"
+    });
+
+    return !!(result && result.ok);
+  }
+
+function renderPhysicalSecurityCategoryGuidance() {
     const mount = document.getElementById("physical-security-category-guidance-mount");
     const renderer = window.ScopedLabsPhysicalSecurityCategoryGuidanceRenderer;
     const categoryGuidance = window.ScopedLabsPhysicalSecurityCategoryGuidance;
@@ -3587,6 +3611,15 @@ function renderSpacingExportSection(data) {
       : null;
 
     if (!explanation || !explanation.ok || !explanation.counts || Number(explanation.counts.generated || 0) <= 0) {
+      return false;
+    }
+
+    const gate = categoryGuidance.shouldShowVisibleCategoryGuidance
+      ? categoryGuidance.shouldShowVisibleCategoryGuidance("camera-spacing", explanation)
+      : { show: true, reasons: ["legacy-renderer"] };
+
+    if (!gate.show) {
+      clearPhysicalSecurityCategoryGuidance();
       return false;
     }
 
