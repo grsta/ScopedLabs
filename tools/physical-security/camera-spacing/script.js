@@ -3553,7 +3553,7 @@ function renderSpacingExportSection(data) {
   }
 
 
-  // physical-security-category-guidance-renderer-proof-005
+  // physical-security-category-guidance-renderer-proof-006
   function clearPhysicalSecurityCategoryGuidance() {
     const mount = document.getElementById("physical-security-category-guidance-mount");
     if (!mount) return;
@@ -3575,6 +3575,16 @@ function renderSpacingExportSection(data) {
   }
 
   
+  function clearPhysicalSecurityCameraSpacingGuidanceMemory() {
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+
+    if (!memory || typeof memory.clearToolGuidance !== "function") {
+      return false;
+    }
+
+    return memory.clearToolGuidance("camera-spacing");
+  }
+
   function savePhysicalSecurityCameraSpacingGuidanceMemory() {
     const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
     const adapter = window.ScopedLabsCameraSpacingGuidance;
@@ -3606,6 +3616,8 @@ function renderPhysicalSecurityCategoryGuidance() {
       return false;
     }
 
+    savePhysicalSecurityCameraSpacingGuidanceMemory();
+
     const explanation = typeof categoryGuidance.explainCurrentGuidance === "function"
       ? categoryGuidance.explainCurrentGuidance()
       : null;
@@ -3619,7 +3631,8 @@ function renderPhysicalSecurityCategoryGuidance() {
       : { show: true, reasons: ["legacy-renderer"] };
 
     if (!gate.show) {
-      clearPhysicalSecurityCategoryGuidance();
+      clearPhysicalSecurityCameraSpacingGuidanceMemory();
+    clearPhysicalSecurityCategoryGuidance();
       return false;
     }
 
@@ -3663,7 +3676,7 @@ function renderPhysicalSecurityCategoryGuidance() {
   }
 
   window.ScopedLabsCameraSpacingCategoryGuidanceProof = {
-    version: "camera-spacing-category-guidance-renderer-proof-005",
+    version: "camera-spacing-category-guidance-renderer-proof-006",
     render: renderPhysicalSecurityCategoryGuidance,
     queue: queuePhysicalSecurityCategoryGuidanceRender,
     clear: clearPhysicalSecurityCategoryGuidance

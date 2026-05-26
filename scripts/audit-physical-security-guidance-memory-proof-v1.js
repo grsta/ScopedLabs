@@ -102,7 +102,7 @@ const rows = [
   },
   {
     id: "camera-spacing-local-cache",
-    status: cameraHtml.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-004-memory-gated") ? "SAFE" : "WATCH",
+    status: cameraHtml.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-006") ? "SAFE" : "WATCH",
     detail: "Camera Spacing local script cache bumped"
   },
   {
@@ -120,6 +120,20 @@ const rows = [
       cameraJs.includes("if (!gate.show)") &&
       cameraJs.includes("clearPhysicalSecurityCategoryGuidance();") ? "SAFE" : "WATCH",
     detail: "visible category card is gated to avoid duplicate local assistant output"
+  },
+  {
+    id: "camera-spacing-memory-clear-sync",
+    status:
+      cameraJs.includes("function clearPhysicalSecurityCameraSpacingGuidanceMemory") &&
+      cameraJs.includes('memory.clearToolGuidance("camera-spacing")') ? "SAFE" : "WATCH",
+    detail: "Camera Spacing can clear stale category memory"
+  },
+  {
+    id: "camera-spacing-save-before-render",
+    status:
+      cameraJs.includes("savePhysicalSecurityCameraSpacingGuidanceMemory();\\n\\n    const explanation") ||
+      cameraJs.includes("savePhysicalSecurityCameraSpacingGuidanceMemory();\n\n    const explanation") ? "SAFE" : "WATCH",
+    detail: "Camera Spacing refreshes memory before category guidance renders"
   },
   {
     id: "renderer-order",
