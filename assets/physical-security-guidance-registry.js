@@ -39,8 +39,12 @@
       slug: "camera-coverage-area",
       role: "pipeline-step",
       protected: false,
-      proofStatus: "pending",
-      guidanceCandidate: true
+      proofStatus: "proven",
+      guidanceCandidate: true,
+      globalName: "ScopedLabsCameraCoverageAreaGuidance",
+      nextTool: "camera-spacing",
+      factoryGenerated: true,
+      preservesExistingVisibleAssistant: true
     },
     "camera-spacing": {
       slug: "camera-spacing",
