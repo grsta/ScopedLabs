@@ -1265,6 +1265,7 @@ function escapeHtml(value) {
           hideSpacingAssistantPlaceholder();
           renderSpacingAssistant(data);
     updateCameraSpacingUserGuidance(data);
+    renderPhysicalSecurityCategoryGuidance(data);
           return;
         }
 
@@ -3549,7 +3550,50 @@ function renderSpacingExportSection(data) {
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
-  function renderSuccess(data) {
+  
+  // physical-security-category-guidance-renderer-proof-002
+  function clearPhysicalSecurityCategoryGuidance() {
+    const mount = document.getElementById("physical-security-category-guidance-mount");
+    if (!mount) return;
+
+    mount.hidden = true;
+    mount.innerHTML = "";
+  }
+
+  function bindPhysicalSecurityCategoryGuidanceClearHandlers() {
+    const mount = document.getElementById("physical-security-category-guidance-mount");
+    if (!mount || mount.dataset.slPsCategoryGuidanceClearBound === "true") return;
+
+    mount.dataset.slPsCategoryGuidanceClearBound = "true";
+
+    document.querySelectorAll("input, select, textarea").forEach((control) => {
+      control.addEventListener("input", clearPhysicalSecurityCategoryGuidance, { passive: true });
+      control.addEventListener("change", clearPhysicalSecurityCategoryGuidance, { passive: true });
+    });
+  }
+
+  function renderPhysicalSecurityCategoryGuidance() {
+    const mount = document.getElementById("physical-security-category-guidance-mount");
+    const renderer = window.ScopedLabsPhysicalSecurityCategoryGuidanceRenderer;
+    const categoryGuidance = window.ScopedLabsPhysicalSecurityCategoryGuidance;
+
+    if (!mount || !renderer || !categoryGuidance || typeof renderer.mount !== "function") {
+      return;
+    }
+
+    const explanation = typeof categoryGuidance.explainCurrentGuidance === "function"
+      ? categoryGuidance.explainCurrentGuidance()
+      : null;
+
+    const result = renderer.mount(mount, explanation, {
+      title: "Physical Security Design Guidance"
+    });
+
+    mount.hidden = !(result && result.ok);
+    bindPhysicalSecurityCategoryGuidanceClearHandlers();
+  }
+
+function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: els.analysis,
