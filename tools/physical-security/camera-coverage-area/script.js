@@ -535,6 +535,294 @@
 
   
 
+
+  // data-camera-coverage-area-guidance-factory-adapter-001
+  let cameraCoverageAreaGuidanceAdapter = null;
+
+  function cloneCameraCoverageAreaGuidance(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
+  function cameraCoverageAreaSourceMode(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    return manualOverrideMeta.length ? "manual-override" : "pipeline";
+  }
+
+  function cameraCoverageAreaGuidanceStatus(data) {
+    const status = String(data && data.status || "").toLowerCase();
+    const reserveLossPct = Number(data && data.reserveLossPct);
+    const areaRetentionPct = Number(data && data.areaRetentionPct);
+
+    if (status.includes("risk")) return "risk";
+    if (Number.isFinite(reserveLossPct) && reserveLossPct >= 35) return "risk";
+    if (Number.isFinite(areaRetentionPct) && areaRetentionPct < 65) return "risk";
+
+    if (status.includes("watch")) return "watch";
+    if (Number.isFinite(reserveLossPct) && reserveLossPct >= 20) return "watch";
+    if (Number.isFinite(areaRetentionPct) && areaRetentionPct < 80) return "watch";
+
+    if (Number.isFinite(reserveLossPct) && reserveLossPct < 20) return "healthy";
+
+    return "unknown";
+  }
+
+  function cameraCoverageAreaExpectedResult(data) {
+    const parts = [];
+
+    if (Number.isFinite(Number(data.effWidth)) && Number.isFinite(Number(data.effHeight))) {
+      parts.push(fmtFt(data.effWidth) + " x " + fmtFt(data.effHeight) + " effective footprint");
+    }
+
+    if (Number.isFinite(Number(data.effArea))) {
+      parts.push(fmtSqFt(data.effArea) + " usable area");
+    }
+
+    if (Number.isFinite(Number(data.widthRetentionPct))) {
+      parts.push(fmtPct(data.widthRetentionPct, 1) + " width retention");
+    }
+
+    if (Number.isFinite(Number(data.areaRetentionPct))) {
+      parts.push(fmtPct(data.areaRetentionPct, 1) + " area retention");
+    }
+
+    if (Number.isFinite(Number(data.reserveLossPct))) {
+      parts.push(fmtPct(data.reserveLossPct, 1) + " reserve loss");
+    }
+
+    if (data.overlapClass) parts.push(data.overlapClass);
+    if (data.efficiencyClass) parts.push(data.efficiencyClass);
+
+    return parts.filter(Boolean).join(" | ");
+  }
+
+  function cameraCoverageAreaPrimaryRecommendation(data) {
+    const status = cameraCoverageAreaGuidanceStatus(data);
+    const reserveLossPct = Number(data.reserveLossPct);
+    const widthRetentionPct = Number(data.widthRetentionPct);
+    const expectedResult = cameraCoverageAreaExpectedResult(data);
+
+    if (status === "healthy") {
+      return {
+        action: "Keep Current Coverage Area Baseline",
+        reason: "The usable coverage footprint remains efficient after reserve, giving Camera Spacing a clean effective width to carry forward.",
+        expectedResult,
+        confidence: "Usable footprint preserved",
+        nextStep: "Carry the effective width into Camera Spacing, not the raw lens footprint."
+      };
+    }
+
+    if (status === "risk") {
+      return {
+        action: "Reduce Coverage Reserve Pressure",
+        reason: "The reserve setting is removing too much usable footprint, which can inflate the camera count required in the spacing step.",
+        expectedResult,
+        confidence: "High reserve pressure",
+        nextStep: "Lower the usable coverage reserve, revisit Field of View, or split the area before carrying this into Camera Spacing."
+      };
+    }
+
+    if (status === "watch") {
+      return {
+        action: "Validate Coverage Reserve Before Spacing",
+        reason: "The usable footprint is still workable, but reserve loss is high enough to affect the next spacing calculation.",
+        expectedResult,
+        confidence: Number.isFinite(reserveLossPct) ? "Reserve loss " + fmtPct(reserveLossPct, 1) : "Reserve watch",
+        nextStep: Number.isFinite(widthRetentionPct)
+          ? "Confirm that " + fmtPct(widthRetentionPct, 1) + " retained width is the intended spacing input."
+          : "Confirm the effective width before continuing to Camera Spacing."
+      };
+    }
+
+    return {
+      action: "Review Coverage Area Assumptions",
+      reason: "The current coverage-area result needs review before it is carried into Camera Spacing.",
+      expectedResult,
+      confidence: "Review required",
+      nextStep: "Confirm HFOV, VFOV, distance, and reserve assumptions."
+    };
+  }
+
+  function cameraCoverageAreaSecondaryOptions(data) {
+    const status = cameraCoverageAreaGuidanceStatus(data);
+
+    const options = [
+      {
+        label: "Reduce usable reserve",
+        intent: "Recover effective width when the reserve setting is compressing the usable footprint.",
+        expectedResult: "Effective width and usable area should increase before Camera Spacing.",
+        tradeoff: "Lower reserve may reduce overlap margin between adjacent camera footprints.",
+        canApply: status === "watch" || status === "risk"
+      },
+      {
+        label: "Revisit Field of View",
+        intent: "Adjust lens footprint assumptions before reserve is applied.",
+        expectedResult: "A cleaner raw footprint gives Coverage Area and Camera Spacing a better handoff.",
+        tradeoff: "Changing FOV may affect pixel density and lens selection later.",
+        canApply: true
+      },
+      {
+        label: "Split the area",
+        intent: "Break a wide or inefficient protected span into smaller planning zones.",
+        expectedResult: "Each zone can carry a more realistic effective width into spacing.",
+        tradeoff: "Adds planning complexity but improves design clarity.",
+        canApply: status === "watch" || status === "risk"
+      },
+      {
+        label: "Continue to Camera Spacing",
+        intent: "Use the effective width as the spacing input.",
+        expectedResult: "Spacing will be based on usable coverage rather than raw lens footprint.",
+        tradeoff: "Only carry forward when the reserve assumption is intentional.",
+        canApply: status === "healthy" || status === "watch"
+      }
+    ];
+
+    return options.filter((option) => option.canApply !== false);
+  }
+
+  function buildCameraCoverageAreaGuidanceInput(data) {
+    const mode = cameraCoverageAreaSourceMode(data);
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const primary = cameraCoverageAreaPrimaryRecommendation(data);
+    const helper = window.ScopedLabsUserAssistantGuidance;
+
+    const sourceLabel = helper && typeof helper.sourceLabelForMode === "function"
+      ? helper.sourceLabelForMode(mode)
+      : (mode === "manual-override" ? "Manual override" : "Clean pipeline");
+
+    const sourceMessage = helper && typeof helper.sourceMessageForMode === "function"
+      ? helper.sourceMessageForMode(mode)
+      : "Use this result only when the assumptions match the intended design branch.";
+
+    return {
+      status: cameraCoverageAreaGuidanceStatus(data),
+      mode,
+      primaryRecommendation: primary,
+      secondaryOptions: cameraCoverageAreaSecondaryOptions(data),
+      sourceIntegrity: {
+        label: sourceLabel,
+        mode,
+        affectedFields: manualOverrideMeta.map((item) => item.field || item.label || "field"),
+        message: sourceMessage
+      },
+      reportSummary: [
+        primary.action,
+        primary.reason,
+        "Expected result: " + primary.expectedResult
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "camera-spacing",
+        message: "Carry the effective coverage width into Camera Spacing. Do not use the raw lens footprint unless the reserve assumption is intentionally bypassed."
+      }
+    };
+  }
+
+  function getCameraCoverageAreaGuidanceAdapter() {
+    if (cameraCoverageAreaGuidanceAdapter) return cameraCoverageAreaGuidanceAdapter;
+
+    const factory = window.ScopedLabsUserGuidanceAdapterFactory;
+
+    if (factory && typeof factory.createAdapter === "function") {
+      cameraCoverageAreaGuidanceAdapter = factory.createAdapter({
+        toolKey: "camera-coverage-area",
+        globalName: "ScopedLabsCameraCoverageAreaGuidance",
+        version: "camera-coverage-area-guidance-adapter-001-factory",
+        nextTool: "camera-spacing",
+        carryForwardMessage: "Carry the effective coverage width into Camera Spacing, not the raw lens footprint.",
+        buildGuidance: buildCameraCoverageAreaGuidanceInput
+      });
+
+      return cameraCoverageAreaGuidanceAdapter;
+    }
+
+    let latestGuidance = null;
+
+    cameraCoverageAreaGuidanceAdapter = {
+      version: "camera-coverage-area-guidance-adapter-001-fallback",
+      update(data) {
+        latestGuidance = Object.assign({
+          version: "camera-coverage-area-guidance-adapter-001-fallback"
+        }, buildCameraCoverageAreaGuidanceInput(data));
+        return cloneCameraCoverageAreaGuidance(latestGuidance);
+      },
+      getLastGuidance() {
+        return cloneCameraCoverageAreaGuidance(latestGuidance);
+      },
+      explainLastGuidance() {
+        if (!latestGuidance) {
+          return {
+            ok: false,
+            summary: "No Camera Coverage Area guidance has been generated yet.",
+            nextStep: "Run a Camera Coverage Area calculation first."
+          };
+        }
+
+        return {
+          ok: true,
+          status: latestGuidance.status,
+          mode: latestGuidance.mode,
+          action: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.action,
+          reason: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.reason,
+          expected: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.expectedResult,
+          guidance: cloneCameraCoverageAreaGuidance(latestGuidance)
+        };
+      },
+      attachGlobal() {
+        window.ScopedLabsCameraCoverageAreaGuidance = Object.freeze({
+          version: this.version,
+          toolKey: "camera-coverage-area",
+          getLastGuidance: this.getLastGuidance,
+          explainLastGuidance: this.explainLastGuidance,
+          updateFromData: this.update
+        });
+        return window.ScopedLabsCameraCoverageAreaGuidance;
+      }
+    };
+
+    return cameraCoverageAreaGuidanceAdapter;
+  }
+
+  function updateCameraCoverageAreaUserGuidance(data) {
+    const adapter = getCameraCoverageAreaGuidanceAdapter();
+    return adapter.update(data);
+  }
+
+  function getLastCameraCoverageAreaGuidance() {
+    const adapter = getCameraCoverageAreaGuidanceAdapter();
+    return adapter.getLastGuidance();
+  }
+
+  function explainLastCameraCoverageAreaGuidance() {
+    const adapter = getCameraCoverageAreaGuidanceAdapter();
+    return adapter.explainLastGuidance();
+  }
+
+  function attachCameraCoverageAreaGuidanceGlobal() {
+    const adapter = getCameraCoverageAreaGuidanceAdapter();
+
+    if (adapter && typeof adapter.attachGlobal === "function") {
+      return adapter.attachGlobal();
+    }
+
+    window.ScopedLabsCameraCoverageAreaGuidance = Object.freeze({
+      version: "camera-coverage-area-guidance-adapter-001-factory",
+      toolKey: "camera-coverage-area",
+      getLastGuidance: getLastCameraCoverageAreaGuidance,
+      explainLastGuidance: explainLastCameraCoverageAreaGuidance
+    });
+
+    return window.ScopedLabsCameraCoverageAreaGuidance;
+  }
+
+  attachCameraCoverageAreaGuidanceGlobal();
+
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.area, {
@@ -856,6 +1144,7 @@
 
     renderCoverageAssistant(data);
     writeFlow(data);
+    updateCameraCoverageAreaUserGuidance(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
     forceCoverageContinueVisible();
   }
