@@ -15,8 +15,12 @@
       slug: "scene-illumination",
       role: "pipeline-step",
       protected: false,
-      proofStatus: "pending",
-      guidanceCandidate: true
+      proofStatus: "proven",
+      guidanceCandidate: true,
+      globalName: "ScopedLabsSceneIlluminationGuidance",
+      nextTool: "mounting-height",
+      factoryGenerated: true,
+      sourceMode: "lighting-source-fields"
     },
     "mounting-height": {
       slug: "mounting-height",

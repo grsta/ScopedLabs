@@ -4,9 +4,14 @@ const { spawnSync } = require("child_process");
 
 const root = process.cwd();
 
-const auditVersion = "physical-security-guidance-adapters-suite-004-camera-coverage-area";
+const auditVersion = "physical-security-guidance-adapters-suite-005-scene-illumination";
 
 const audits = [
+  {
+    tool: "scene-illumination",
+    label: "Scene Illumination",
+    file: path.join(root, "scripts", "audit-scene-illumination-guidance-adapter-v1.js")
+  },
   {
     tool: "field-of-view",
     label: "Field of View",
