@@ -623,6 +623,276 @@ function hideVisibleFlowContext() {
 
   
 
+
+  // data-field-of-view-guidance-factory-adapter-001
+  let fieldOfViewGuidanceAdapter = null;
+
+  function cloneFieldOfViewGuidance(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
+  function fieldOfViewSourceMode(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    return manualOverrideMeta.length ? "manual-override" : "pipeline";
+  }
+
+  function fieldOfViewGuidanceStatus(data) {
+    const status = String(data && data.status || "").toLowerCase();
+    const fitClass = String(data && data.fitClass || "").toLowerCase();
+
+    if (fitClass === "too narrow") return "risk";
+    if (fitClass === "too wide") return status.includes("risk") ? "watch" : "watch";
+    if (status.includes("risk") || status.includes("watch")) return "watch";
+    if (fitClass === "good fit") return "healthy";
+
+    return "unknown";
+  }
+
+  function fieldOfViewExpectedResult(data) {
+    const parts = [];
+
+    if (data.fitClass) parts.push(data.fitClass);
+    if (Number.isFinite(Number(data.sceneWidth))) parts.push(fmtFt(data.sceneWidth) + " scene width at " + fmtFt(data.dist));
+    if (Number.isFinite(Number(data.scene))) parts.push(fmtFt(data.scene) + " target scene");
+    if (Number.isFinite(Number(data.coverageRatio)) && Number(data.scene) > 0) parts.push(fmtRatio(data.coverageRatio) + " coverage ratio");
+    if (Number.isFinite(Number(data.hfov))) parts.push(fmtDeg(data.hfov) + " HFOV");
+    if (Number.isFinite(Number(data.halfWidth))) parts.push(fmtFt(data.halfWidth) + " each side of centerline");
+
+    return parts.filter(Boolean).join(" | ");
+  }
+
+  function fieldOfViewPrimaryRecommendation(data) {
+    const fitClass = String(data.fitClass || "");
+    const normalizedFit = fitClass.toLowerCase();
+    const expectedResult = fieldOfViewExpectedResult(data);
+
+    if (normalizedFit === "too narrow") {
+      return {
+        action: "Widen Field of View Before Coverage Area",
+        reason: "The modeled lens footprint is narrower than the target scene width, so downstream coverage planning may inherit a width gap.",
+        expectedResult,
+        confidence: "Width shortfall",
+        nextStep: "Use a wider HFOV, move the camera closer, split the scene, or plan additional cameras before carrying this into Coverage Area."
+      };
+    }
+
+    if (normalizedFit === "too wide") {
+      return {
+        action: "Validate Detail Before Carry Forward",
+        reason: "The view covers the requested scene width, but it may spread detail across more scene than needed.",
+        expectedResult,
+        confidence: "Broad footprint",
+        nextStep: "Continue to Coverage Area only if this wide footprint is intentional for the protected scene."
+      };
+    }
+
+    if (normalizedFit === "good fit") {
+      return {
+        action: "Keep Current Field of View Baseline",
+        reason: "The modeled horizontal field of view aligns with the requested scene width well enough for the next planning step.",
+        expectedResult,
+        confidence: "Balanced footprint",
+        nextStep: "Carry this lens footprint into Coverage Area."
+      };
+    }
+
+    return {
+      action: "Review Field of View Assumptions",
+      reason: "The current field-of-view result needs review before it is carried into the next planning step.",
+      expectedResult,
+      confidence: "Review required",
+      nextStep: "Confirm distance, HFOV, target scene width, and mount-height assumptions."
+    };
+  }
+
+  function fieldOfViewSecondaryOptions(data) {
+    const fitClass = String(data.fitClass || "").toLowerCase();
+
+    const options = [
+      {
+        label: "Use a wider HFOV",
+        intent: "Increase horizontal scene width when the view is too narrow.",
+        expectedResult: "Scene width should move closer to or above the target scene width.",
+        tradeoff: "A wider view can reduce downstream pixel density.",
+        canApply: fitClass === "too narrow"
+      },
+      {
+        label: "Move the camera closer",
+        intent: "Increase usable scene coverage without changing lens assumptions.",
+        expectedResult: "The same HFOV covers more of the required scene width relative to the target.",
+        tradeoff: "May affect mounting, obstruction, and placement constraints.",
+        canApply: fitClass === "too narrow"
+      },
+      {
+        label: "Use a narrower HFOV",
+        intent: "Preserve detail when the current view is much wider than needed.",
+        expectedResult: "Coverage ratio should move closer to the target scene width.",
+        tradeoff: "May require more cameras for wide areas.",
+        canApply: fitClass === "too wide"
+      },
+      {
+        label: "Split the scene",
+        intent: "Break a wide protected area into smaller planning zones.",
+        expectedResult: "Each zone can keep a cleaner field-of-view and downstream detail target.",
+        tradeoff: "Adds planning complexity but improves assumption clarity.",
+        canApply: true
+      },
+      {
+        label: "Continue to Coverage Area",
+        intent: "Translate this lens footprint into usable scene coverage.",
+        expectedResult: "Coverage Area will apply reserve assumptions to the field-of-view footprint.",
+        tradeoff: "Only carry forward when the FOV assumptions match the intended design branch.",
+        canApply: fitClass === "good fit" || fitClass === "too wide"
+      }
+    ];
+
+    return options.filter((option) => option.canApply !== false);
+  }
+
+  function buildFieldOfViewGuidanceInput(data) {
+    const mode = fieldOfViewSourceMode(data);
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const primary = fieldOfViewPrimaryRecommendation(data);
+    const helper = window.ScopedLabsUserAssistantGuidance;
+
+    const sourceLabel = helper && typeof helper.sourceLabelForMode === "function"
+      ? helper.sourceLabelForMode(mode)
+      : (mode === "manual-override" ? "Manual override" : "Clean pipeline");
+
+    const sourceMessage = helper && typeof helper.sourceMessageForMode === "function"
+      ? helper.sourceMessageForMode(mode)
+      : "Use this result only when the assumptions match the intended design branch.";
+
+    return {
+      status: fieldOfViewGuidanceStatus(data),
+      mode,
+      primaryRecommendation: primary,
+      secondaryOptions: fieldOfViewSecondaryOptions(data),
+      sourceIntegrity: {
+        label: sourceLabel,
+        mode,
+        affectedFields: manualOverrideMeta.map((item) => item.field || item.label || "field"),
+        message: sourceMessage
+      },
+      reportSummary: [
+        primary.action,
+        primary.reason,
+        "Expected result: " + primary.expectedResult
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "camera-coverage-area",
+        message: "Carry this field-of-view footprint into Coverage Area only when distance, HFOV, target scene width, and mount-height assumptions match the intended protected scene."
+      }
+    };
+  }
+
+  function getFieldOfViewGuidanceAdapter() {
+    if (fieldOfViewGuidanceAdapter) return fieldOfViewGuidanceAdapter;
+
+    const factory = window.ScopedLabsUserGuidanceAdapterFactory;
+
+    if (factory && typeof factory.createAdapter === "function") {
+      fieldOfViewGuidanceAdapter = factory.createAdapter({
+        toolKey: "field-of-view",
+        globalName: "ScopedLabsFieldOfViewGuidance",
+        version: "field-of-view-guidance-adapter-001-factory",
+        nextTool: "camera-coverage-area",
+        carryForwardMessage: "Carry this field-of-view footprint into Coverage Area only when assumptions match the intended protected scene.",
+        buildGuidance: buildFieldOfViewGuidanceInput
+      });
+
+      return fieldOfViewGuidanceAdapter;
+    }
+
+    let latestGuidance = null;
+
+    fieldOfViewGuidanceAdapter = {
+      version: "field-of-view-guidance-adapter-001-fallback",
+      update(data) {
+        latestGuidance = Object.assign({
+          version: "field-of-view-guidance-adapter-001-fallback"
+        }, buildFieldOfViewGuidanceInput(data));
+        return cloneFieldOfViewGuidance(latestGuidance);
+      },
+      getLastGuidance() {
+        return cloneFieldOfViewGuidance(latestGuidance);
+      },
+      explainLastGuidance() {
+        if (!latestGuidance) {
+          return {
+            ok: false,
+            summary: "No Field of View guidance has been generated yet.",
+            nextStep: "Run a Field of View calculation first."
+          };
+        }
+
+        return {
+          ok: true,
+          status: latestGuidance.status,
+          mode: latestGuidance.mode,
+          action: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.action,
+          reason: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.reason,
+          expected: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.expectedResult,
+          guidance: cloneFieldOfViewGuidance(latestGuidance)
+        };
+      },
+      attachGlobal() {
+        window.ScopedLabsFieldOfViewGuidance = Object.freeze({
+          version: this.version,
+          toolKey: "field-of-view",
+          getLastGuidance: this.getLastGuidance,
+          explainLastGuidance: this.explainLastGuidance,
+          updateFromData: this.update
+        });
+        return window.ScopedLabsFieldOfViewGuidance;
+      }
+    };
+
+    return fieldOfViewGuidanceAdapter;
+  }
+
+  function updateFieldOfViewUserGuidance(data) {
+    const adapter = getFieldOfViewGuidanceAdapter();
+    return adapter.update(data);
+  }
+
+  function getLastFieldOfViewGuidance() {
+    const adapter = getFieldOfViewGuidanceAdapter();
+    return adapter.getLastGuidance();
+  }
+
+  function explainLastFieldOfViewGuidance() {
+    const adapter = getFieldOfViewGuidanceAdapter();
+    return adapter.explainLastGuidance();
+  }
+
+  function attachFieldOfViewGuidanceGlobal() {
+    const adapter = getFieldOfViewGuidanceAdapter();
+
+    if (adapter && typeof adapter.attachGlobal === "function") {
+      return adapter.attachGlobal();
+    }
+
+    window.ScopedLabsFieldOfViewGuidance = Object.freeze({
+      version: "field-of-view-guidance-adapter-001-factory",
+      toolKey: "field-of-view",
+      getLastGuidance: getLastFieldOfViewGuidance,
+      explainLastGuidance: explainLastFieldOfViewGuidance
+    });
+
+    return window.ScopedLabsFieldOfViewGuidance;
+  }
+
+  attachFieldOfViewGuidanceGlobal();
+
+
   function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
     data.sourceMode = manualOverrideMeta.length ? "manual-override" : "pipeline";
@@ -889,6 +1159,7 @@ ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     });
 renderFovGeometryDiagram(data);
     writeFlow(data);
+    updateFieldOfViewUserGuidance(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
 
     if (typeof forceFovContinueVisible === "function") {
