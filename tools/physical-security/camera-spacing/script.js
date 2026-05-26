@@ -3553,7 +3553,7 @@ function renderSpacingExportSection(data) {
   }
 
 
-  // physical-security-category-guidance-renderer-proof-006
+  // physical-security-category-guidance-renderer-proof-007
   function clearPhysicalSecurityCategoryGuidance() {
     const mount = document.getElementById("physical-security-category-guidance-mount");
     if (!mount) return;
@@ -3652,7 +3652,57 @@ function renderPhysicalSecurityCategoryGuidance() {
     });
   }
 
-  function bindPhysicalSecurityCategoryGuidanceRenderTriggers() {
+  
+  function isPhysicalSecurityCategoryGuidanceRenderTrigger(label, trigger) {
+    const value = String(label || "").trim().toLowerCase();
+
+    if (!value) return false;
+
+    const blockedLabels = [
+      "back to physical security",
+      "continue",
+      "blind spot check",
+      "open report",
+      "save snapshot",
+      "report details",
+      "reset"
+    ];
+
+    if (blockedLabels.some((blocked) => value.includes(blocked))) {
+      return false;
+    }
+
+    const directTriggers = [
+      "calculate",
+      "apply"
+    ];
+
+    if (directTriggers.some((triggerText) => value.includes(triggerText))) {
+      return true;
+    }
+
+    const scenarioTriggers = [
+      "custom design",
+      "add 1 camera",
+      "add 2 cameras",
+      "balanced layout",
+      "efficiency check",
+      "wider hfov check",
+      "wide hfov check"
+    ];
+
+    if (scenarioTriggers.some((triggerText) => value.includes(triggerText))) {
+      return true;
+    }
+
+    const assistantZone = trigger && trigger.closest
+      ? trigger.closest(".design-assistant, .assistant-card, .scenario-comparison, .correction-controls, [data-assistant], [data-scenario], [data-correction]")
+      : null;
+
+    return !!assistantZone && scenarioTriggers.some((triggerText) => value.includes(triggerText));
+  }
+
+function bindPhysicalSecurityCategoryGuidanceRenderTriggers() {
     if (window.__slCameraSpacingCategoryGuidanceRenderBound) return;
     window.__slCameraSpacingCategoryGuidanceRenderBound = true;
 
@@ -3665,7 +3715,7 @@ function renderPhysicalSecurityCategoryGuidance() {
         ? String(trigger.textContent || trigger.value || "").trim().toLowerCase()
         : "";
 
-      if (label.includes("calculate") || label.includes("apply")) {
+      if (isPhysicalSecurityCategoryGuidanceRenderTrigger(label, trigger)) {
         queuePhysicalSecurityCategoryGuidanceRender();
       }
     }, true);
@@ -3676,7 +3726,7 @@ function renderPhysicalSecurityCategoryGuidance() {
   }
 
   window.ScopedLabsCameraSpacingCategoryGuidanceProof = {
-    version: "camera-spacing-category-guidance-renderer-proof-006",
+    version: "camera-spacing-category-guidance-renderer-proof-007",
     render: renderPhysicalSecurityCategoryGuidance,
     queue: queuePhysicalSecurityCategoryGuidanceRender,
     clear: clearPhysicalSecurityCategoryGuidance

@@ -102,7 +102,7 @@ const rows = [
   },
   {
     id: "camera-spacing-local-cache",
-    status: cameraHtml.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-006") ? "SAFE" : "WATCH",
+    status: cameraHtml.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-007") ? "SAFE" : "WATCH",
     detail: "Camera Spacing local script cache bumped"
   },
   {

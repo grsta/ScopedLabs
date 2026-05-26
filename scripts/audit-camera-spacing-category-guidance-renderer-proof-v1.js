@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-005-apply-trigger";
+const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-007-scenario-trigger";
 
 const indexFile = path.join(root, "tools", "physical-security", "camera-spacing", "index.html");
 const scriptFile = path.join(root, "tools", "physical-security", "camera-spacing", "script.js");
@@ -40,6 +40,7 @@ const areaHtml = read(areaPlannerFile);
 const lensHtml = read(lensSelectionFile);
 const srcs = scriptSrcs(html);
 
+const memoryIndex = indexOfBase(srcs, "/assets/physical-security-guidance-memory.js");
 const categoryGuidanceIndex = indexOfBase(srcs, "/assets/physical-security-category-guidance.js");
 const rendererIndex = indexOfBase(srcs, "/assets/physical-security-category-guidance-renderer.js");
 const localIndex = indexOfBase(srcs, "./script.js");
@@ -68,14 +69,16 @@ const rows = [
     detail: "Camera Spacing loads renderer script"
   },
   {
-    id: "renderer-script-order",
+    id: "script-order",
     status:
+      memoryIndex >= 0 &&
       categoryGuidanceIndex >= 0 &&
       rendererIndex >= 0 &&
       localIndex >= 0 &&
+      memoryIndex < categoryGuidanceIndex &&
       categoryGuidanceIndex < rendererIndex &&
       rendererIndex < localIndex ? "SAFE" : "WATCH",
-    detail: JSON.stringify({ categoryGuidanceIndex, rendererIndex, localIndex })
+    detail: JSON.stringify({ memoryIndex, categoryGuidanceIndex, rendererIndex, localIndex })
   },
   {
     id: "renderer-script-singleton",
@@ -94,18 +97,13 @@ const rows = [
   },
   {
     id: "local-script-cache",
-    status: html.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-005-apply-trigger") ? "SAFE" : "WATCH",
+    status: html.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-007-scenario-trigger") ? "SAFE" : "WATCH",
     detail: "Camera Spacing local script cache was bumped"
-  },
-  {
-    id: "camera-spacing-js",
-    status: fs.existsSync(scriptFile) ? "SAFE" : "FAIL",
-    detail: "Camera Spacing script exists"
   },
   {
     id: "helper-block",
     status:
-      js.includes("physical-security-category-guidance-renderer-proof-005") &&
+      js.includes("physical-security-category-guidance-renderer-proof-007") &&
       js.includes("function renderPhysicalSecurityCategoryGuidance") &&
       js.includes("function clearPhysicalSecurityCategoryGuidance") &&
       js.includes("function queuePhysicalSecurityCategoryGuidanceRender") &&
@@ -113,23 +111,49 @@ const rows = [
     detail: "explicit render/queue/clear helpers and debug bridge exist"
   },
   {
-    id: "direct-render-hook",
+    id: "scenario-trigger-helper",
     status:
-      js.includes("updateCameraSpacingUserGuidance(data);") &&
+      js.includes("function isPhysicalSecurityCategoryGuidanceRenderTrigger") &&
+      js.includes("custom design") &&
+      js.includes("add 1 camera") &&
+      js.includes("add 2 cameras") &&
+      js.includes("balanced layout") &&
+      js.includes("efficiency check") &&
+      js.includes("wider hfov check") ? "SAFE" : "WATCH",
+    detail: "assistant scenario CTA labels trigger category memory/render checks"
+  },
+  {
+    id: "blocked-button-labels",
+    status:
+      js.includes("back to physical security") &&
+      js.includes("open report") &&
+      js.includes("save snapshot") &&
+      js.includes("reset") ? "SAFE" : "WATCH",
+    detail: "non-result buttons are excluded from category render triggers"
+  },
+  {
+    id: "trigger-condition",
+    status:
+      js.includes("isPhysicalSecurityCategoryGuidanceRenderTrigger(label, trigger)") &&
       js.includes("queuePhysicalSecurityCategoryGuidanceRender();") ? "SAFE" : "WATCH",
-    detail: "renderer queues after Camera Spacing guidance updates"
+    detail: "click listener uses scenario-aware trigger condition"
   },
   {
-    id: "fallback-calculate-trigger",
+    id: "memory-sync",
     status:
-      js.includes('label.includes("calculate") || label.includes("apply")') &&
-      js.includes("bindPhysicalSecurityCategoryGuidanceRenderTriggers") ? "SAFE" : "WATCH",
-    detail: "fallback Calculate/Apply click trigger exists"
+      js.includes("function savePhysicalSecurityCameraSpacingGuidanceMemory") &&
+      js.includes("function clearPhysicalSecurityCameraSpacingGuidanceMemory") &&
+      js.includes('memory.saveToolGuidance("camera-spacing"') &&
+      js.includes('memory.clearToolGuidance("camera-spacing"') ? "SAFE" : "WATCH",
+    detail: "Camera Spacing can save and clear category guidance memory"
   },
   {
-    id: "generated-count-gate",
-    status: js.includes("Number(explanation.counts.generated || 0) <= 0") ? "SAFE" : "WATCH",
-    detail: "renderer will not show before generated guidance exists"
+    id: "value-gate",
+    status:
+      js.includes('shouldShowVisibleCategoryGuidance("camera-spacing"') &&
+      js.includes("if (!gate.show)") &&
+      js.includes("clearPhysicalSecurityCategoryGuidance();") ? "SAFE" : "WATCH",
+    detail: "visible category card remains value-gated"
   },
   {
     id: "input-change-clear-handler",
