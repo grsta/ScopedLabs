@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "camera-spacing-guidance-adapter-audit-001";
+const auditVersion = "camera-spacing-guidance-adapter-audit-007-html-cache-proof";
 const helperFile = path.join(root, "assets", "user-assistant-guidance.js");
 const htmlFile = path.join(root, "tools", "physical-security", "camera-spacing", "index.html");
 const jsFile = path.join(root, "tools", "physical-security", "camera-spacing", "script.js");
@@ -63,8 +63,10 @@ const checks = [
   },
   {
     id: "local-cache-bust",
-    ok: /script\.js\?v=physical-security-spacing-user-guidance-adapter-\d+/i.test(html),
-    detail: "Camera Spacing local script cache is on user-guidance adapter version"
+    ok:
+      html.includes('src="./script.js?v=physical-security-camera-spacing-user-guidance-adapter-') ||
+      html.includes('src="./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-'),
+    detail: "Camera Spacing local script cache is on a current guidance/proof version"
   },
   {
     id: "adapter-state",

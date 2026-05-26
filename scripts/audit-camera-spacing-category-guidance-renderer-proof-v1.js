@@ -3,12 +3,13 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-007-scenario-trigger";
+const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-008-event-bridge";
 
 const indexFile = path.join(root, "tools", "physical-security", "camera-spacing", "index.html");
 const scriptFile = path.join(root, "tools", "physical-security", "camera-spacing", "script.js");
 const cssFile = path.join(root, "assets", "physical-security-category-guidance-renderer.css");
 const rendererFile = path.join(root, "assets", "physical-security-category-guidance-renderer.js");
+const bridgeFile = path.join(root, "assets", "physical-security-guidance-event-bridge.js");
 const areaPlannerFile = path.join(root, "tools", "physical-security", "area-planner", "index.html");
 const lensSelectionFile = path.join(root, "tools", "physical-security", "lens-selection", "index.html");
 
@@ -36,12 +37,14 @@ const html = read(indexFile);
 const js = read(scriptFile);
 const css = read(cssFile);
 const renderer = read(rendererFile);
+const bridge = read(bridgeFile);
 const areaHtml = read(areaPlannerFile);
 const lensHtml = read(lensSelectionFile);
 const srcs = scriptSrcs(html);
 
 const memoryIndex = indexOfBase(srcs, "/assets/physical-security-guidance-memory.js");
 const categoryGuidanceIndex = indexOfBase(srcs, "/assets/physical-security-category-guidance.js");
+const bridgeIndex = indexOfBase(srcs, "/assets/physical-security-guidance-event-bridge.js");
 const rendererIndex = indexOfBase(srcs, "/assets/physical-security-category-guidance-renderer.js");
 const localIndex = indexOfBase(srcs, "./script.js");
 const mountIndex = html.indexOf('id="physical-security-category-guidance-mount"');
@@ -69,21 +72,33 @@ const rows = [
     detail: "Camera Spacing loads renderer script"
   },
   {
+    id: "bridge-script-loaded",
+    status: html.includes("/assets/physical-security-guidance-event-bridge.js?v=physical-security-guidance-event-bridge-001-foundation") ? "SAFE" : "WATCH",
+    detail: "Camera Spacing loads guidance event bridge"
+  },
+  {
     id: "script-order",
     status:
       memoryIndex >= 0 &&
       categoryGuidanceIndex >= 0 &&
+      bridgeIndex >= 0 &&
       rendererIndex >= 0 &&
       localIndex >= 0 &&
       memoryIndex < categoryGuidanceIndex &&
-      categoryGuidanceIndex < rendererIndex &&
+      categoryGuidanceIndex < bridgeIndex &&
+      bridgeIndex < rendererIndex &&
       rendererIndex < localIndex ? "SAFE" : "WATCH",
-    detail: JSON.stringify({ memoryIndex, categoryGuidanceIndex, rendererIndex, localIndex })
+    detail: JSON.stringify({ memoryIndex, categoryGuidanceIndex, bridgeIndex, rendererIndex, localIndex })
   },
   {
     id: "renderer-script-singleton",
     status: countBase(srcs, "/assets/physical-security-category-guidance-renderer.js") === 1 ? "SAFE" : "WATCH",
     detail: "renderer script appears once"
+  },
+  {
+    id: "bridge-script-singleton",
+    status: countBase(srcs, "/assets/physical-security-guidance-event-bridge.js") === 1 ? "SAFE" : "WATCH",
+    detail: "event bridge script appears once"
   },
   {
     id: "mount-target",
@@ -97,13 +112,13 @@ const rows = [
   },
   {
     id: "local-script-cache",
-    status: html.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-007-scenario-trigger") ? "SAFE" : "WATCH",
+    status: html.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-008-event-bridge") ? "SAFE" : "WATCH",
     detail: "Camera Spacing local script cache was bumped"
   },
   {
     id: "helper-block",
     status:
-      js.includes("physical-security-category-guidance-renderer-proof-007") &&
+      js.includes("physical-security-category-guidance-renderer-proof-008") &&
       js.includes("function renderPhysicalSecurityCategoryGuidance") &&
       js.includes("function clearPhysicalSecurityCategoryGuidance") &&
       js.includes("function queuePhysicalSecurityCategoryGuidanceRender") &&
@@ -111,32 +126,45 @@ const rows = [
     detail: "explicit render/queue/clear helpers and debug bridge exist"
   },
   {
-    id: "scenario-trigger-helper",
+    id: "event-bridge-publisher",
     status:
-      js.includes("function isPhysicalSecurityCategoryGuidanceRenderTrigger") &&
-      js.includes("custom design") &&
-      js.includes("add 1 camera") &&
-      js.includes("add 2 cameras") &&
-      js.includes("balanced layout") &&
-      js.includes("efficiency check") &&
-      js.includes("wider hfov check") ? "SAFE" : "WATCH",
-    detail: "assistant scenario CTA labels trigger category memory/render checks"
+      js.includes("function publishPhysicalSecurityCameraSpacingGuidance") &&
+      js.includes("ScopedLabsPhysicalSecurityGuidanceEventBridge") &&
+      js.includes("publishIfChanged") &&
+      js.includes('tool: "camera-spacing"') ? "SAFE" : "WATCH",
+    detail: "Camera Spacing publishes validated guidance through event bridge"
   },
   {
-    id: "blocked-button-labels",
+    id: "event-bridge-sampler",
     status:
-      js.includes("back to physical security") &&
-      js.includes("open report") &&
-      js.includes("save snapshot") &&
-      js.includes("reset") ? "SAFE" : "WATCH",
-    detail: "non-result buttons are excluded from category render triggers"
+      js.includes("function samplePhysicalSecurityCameraSpacingGuidance") &&
+      js.includes("createSampler") &&
+      js.includes("camera-spacing-ui-guidance-sample") ? "SAFE" : "WATCH",
+    detail: "Camera Spacing samples guidance changes without CTA label lists"
   },
   {
-    id: "trigger-condition",
+    id: "no-active-cta-label-trigger",
     status:
-      js.includes("isPhysicalSecurityCategoryGuidanceRenderTrigger(label, trigger)") &&
-      js.includes("queuePhysicalSecurityCategoryGuidanceRender();") ? "SAFE" : "WATCH",
-    detail: "click listener uses scenario-aware trigger condition"
+      !js.includes("isPhysicalSecurityCategoryGuidanceRenderTrigger(label, trigger)") &&
+      !js.includes("custom design") &&
+      !js.includes("wider hfov check") ? "SAFE" : "WATCH",
+    detail: "Camera Spacing no longer relies on named assistant CTA labels"
+  },
+  {
+    id: "guidance-update-publish-hook",
+    status:
+      js.includes('publishPhysicalSecurityCameraSpacingGuidance("camera-spacing-guidance-update")') &&
+      js.includes("physicalSecurityCameraSpacingGuidanceDirty = false") ? "SAFE" : "WATCH",
+    detail: "validated assistant guidance changes publish through bridge"
+  },
+  {
+    id: "raw-value-dirty-handler",
+    status:
+      js.includes("function handlePhysicalSecurityCameraSpacingRawValueChange") &&
+      js.includes("markPhysicalSecurityCameraSpacingGuidanceInputDirty") &&
+      js.includes('addEventListener("input", handlePhysicalSecurityCameraSpacingRawValueChange') &&
+      js.includes('addEventListener("change", handlePhysicalSecurityCameraSpacingRawValueChange') ? "SAFE" : "WATCH",
+    detail: "raw input/change clears stale master guidance before validated guidance republishes"
   },
   {
     id: "memory-sync",
@@ -156,21 +184,14 @@ const rows = [
     detail: "visible category card remains value-gated"
   },
   {
-    id: "input-change-clear-handler",
-    status:
-      js.includes('addEventListener("input", clearPhysicalSecurityCategoryGuidance') &&
-      js.includes('addEventListener("change", clearPhysicalSecurityCategoryGuidance') ? "SAFE" : "WATCH",
-    detail: "visible category guidance clears on input/change"
-  },
-  {
     id: "area-planner-untouched",
-    status: !areaHtml.includes("/assets/physical-security-category-guidance-renderer.js") ? "SAFE" : "WATCH",
-    detail: "Area Planner does not load visible renderer"
+    status: !areaHtml.includes("/assets/physical-security-guidance-event-bridge.js") && !areaHtml.includes("/assets/physical-security-category-guidance-renderer.js") ? "SAFE" : "WATCH",
+    detail: "Area Planner does not load visible renderer or bridge"
   },
   {
     id: "lens-selection-protected",
-    status: !lensHtml.includes("/assets/physical-security-category-guidance-renderer.js") ? "SAFE" : "WATCH",
-    detail: "Lens Selection does not load visible renderer"
+    status: !lensHtml.includes("/assets/physical-security-guidance-event-bridge.js") && !lensHtml.includes("/assets/physical-security-category-guidance-renderer.js") ? "SAFE" : "WATCH",
+    detail: "Lens Selection does not load visible renderer or bridge"
   },
   {
     id: "renderer-asset",
@@ -181,8 +202,16 @@ const rows = [
     detail: "shared renderer asset exists"
   },
   {
+    id: "bridge-asset",
+    status:
+      fs.existsSync(bridgeFile) &&
+      bridge.includes("physical-security-guidance-event-bridge-001-foundation") &&
+      bridge.includes("ScopedLabsPhysicalSecurityGuidanceEventBridge") ? "SAFE" : "WATCH",
+    detail: "shared event bridge asset exists"
+  },
+  {
     id: "no-runtime-fetch-added",
-    status: !/fetch\s*\(/.test(js + "\n" + renderer + "\n" + css) ? "SAFE" : "WATCH",
+    status: !/fetch\s*\(/.test(js + "\n" + renderer + "\n" + bridge + "\n" + css) ? "SAFE" : "WATCH",
     detail: "proof wiring does not add runtime fetch"
   }
 ];

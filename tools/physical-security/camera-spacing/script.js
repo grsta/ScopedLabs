@@ -3475,7 +3475,10 @@ function renderSpacingExportSection(data) {
         : buildAssistantScenarios(data);
 
       latestUserGuidance = buildCameraSpacingUserGuidance(data, scenarios);
-      return latestUserGuidance;
+      
+    physicalSecurityCameraSpacingGuidanceDirty = false;
+    publishPhysicalSecurityCameraSpacingGuidance("camera-spacing-guidance-update");
+return latestUserGuidance;
     } catch (error) {
       latestUserGuidance = {
         version: "camera-spacing-user-guidance-adapter-001-error",
@@ -3553,7 +3556,7 @@ function renderSpacingExportSection(data) {
   }
 
 
-  // physical-security-category-guidance-renderer-proof-007
+  // physical-security-category-guidance-renderer-proof-008
   function clearPhysicalSecurityCategoryGuidance() {
     const mount = document.getElementById("physical-security-category-guidance-mount");
     if (!mount) return;
@@ -3569,13 +3572,14 @@ function renderSpacingExportSection(data) {
     mount.dataset.slPsCategoryGuidanceClearBound = "true";
 
     document.querySelectorAll("input, select, textarea").forEach((control) => {
-      control.addEventListener("input", clearPhysicalSecurityCategoryGuidance, { passive: true });
-      control.addEventListener("change", clearPhysicalSecurityCategoryGuidance, { passive: true });
+      control.addEventListener("input", handlePhysicalSecurityCameraSpacingRawValueChange, { passive: true });
+      control.addEventListener("change", handlePhysicalSecurityCameraSpacingRawValueChange, { passive: true });
     });
   }
 
   
   function clearPhysicalSecurityCameraSpacingGuidanceMemory() {
+    physicalSecurityCameraSpacingGuidanceDirty = true;
     const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
 
     if (!memory || typeof memory.clearToolGuidance !== "function") {
@@ -3652,54 +3656,98 @@ function renderPhysicalSecurityCategoryGuidance() {
     });
   }
 
-  
-  function isPhysicalSecurityCategoryGuidanceRenderTrigger(label, trigger) {
-    const value = String(label || "").trim().toLowerCase();
 
-    if (!value) return false;
+  let physicalSecurityCameraSpacingGuidanceSampler = null;
+  let physicalSecurityCameraSpacingGuidanceDirty = false;
 
-    const blockedLabels = [
-      "back to physical security",
-      "continue",
-      "blind spot check",
-      "open report",
-      "save snapshot",
-      "report details",
-      "reset"
-    ];
+  function getPhysicalSecurityCameraSpacingBridgeGuidance() {
+    if (physicalSecurityCameraSpacingGuidanceDirty) {
+      return null;
+    }
 
-    if (blockedLabels.some((blocked) => value.includes(blocked))) {
+    const guidanceApi = window.ScopedLabsCameraSpacingGuidance;
+
+    if (guidanceApi && typeof guidanceApi.getLastGuidance === "function") {
+      return guidanceApi.getLastGuidance();
+    }
+
+    if (typeof latestUserGuidance !== "undefined") {
+      return latestUserGuidance;
+    }
+
+    return null;
+  }
+
+  function getPhysicalSecurityCameraSpacingGuidanceSampler() {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (!bridge || typeof bridge.createSampler !== "function") {
+      return null;
+    }
+
+    if (!physicalSecurityCameraSpacingGuidanceSampler) {
+      physicalSecurityCameraSpacingGuidanceSampler = bridge.createSampler({
+        category: "physical-security",
+        tool: "camera-spacing",
+        source: "camera-spacing-guidance-event-bridge",
+        getGuidance: getPhysicalSecurityCameraSpacingBridgeGuidance,
+        onPublished: function () {
+          queuePhysicalSecurityCategoryGuidanceRender();
+        }
+      });
+    }
+
+    return physicalSecurityCameraSpacingGuidanceSampler;
+  }
+
+  function publishPhysicalSecurityCameraSpacingGuidance(source) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = getPhysicalSecurityCameraSpacingBridgeGuidance();
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
       return false;
     }
 
-    const directTriggers = [
-      "calculate",
-      "apply"
-    ];
+    const published = bridge.publishIfChanged({
+      category: "physical-security",
+      tool: "camera-spacing",
+      guidance,
+      source: source || "camera-spacing-guidance-update"
+    });
 
-    if (directTriggers.some((triggerText) => value.includes(triggerText))) {
+    if (published) {
+      queuePhysicalSecurityCategoryGuidanceRender();
+    }
+
+    return !!published;
+  }
+
+  function samplePhysicalSecurityCameraSpacingGuidance(source) {
+    const sampler = getPhysicalSecurityCameraSpacingGuidanceSampler();
+
+    if (sampler && typeof sampler.sample === "function") {
+      return sampler.sample(source || "camera-spacing-guidance-sample");
+    }
+
+    return publishPhysicalSecurityCameraSpacingGuidance(source || "camera-spacing-guidance-sample");
+  }
+
+  function markPhysicalSecurityCameraSpacingGuidanceInputDirty() {
+    physicalSecurityCameraSpacingGuidanceDirty = true;
+
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (bridge && typeof bridge.clearTool === "function") {
+      bridge.clearTool("camera-spacing");
       return true;
     }
 
-    const scenarioTriggers = [
-      "custom design",
-      "add 1 camera",
-      "add 2 cameras",
-      "balanced layout",
-      "efficiency check",
-      "wider hfov check",
-      "wide hfov check"
-    ];
+    return clearPhysicalSecurityCameraSpacingGuidanceMemory();
+  }
 
-    if (scenarioTriggers.some((triggerText) => value.includes(triggerText))) {
-      return true;
-    }
-
-    const assistantZone = trigger && trigger.closest
-      ? trigger.closest(".design-assistant, .assistant-card, .scenario-comparison, .correction-controls, [data-assistant], [data-scenario], [data-correction]")
-      : null;
-
-    return !!assistantZone && scenarioTriggers.some((triggerText) => value.includes(triggerText));
+  function handlePhysicalSecurityCameraSpacingRawValueChange() {
+    markPhysicalSecurityCameraSpacingGuidanceInputDirty();
+    clearPhysicalSecurityCategoryGuidance();
   }
 
 function bindPhysicalSecurityCategoryGuidanceRenderTriggers() {
@@ -3715,8 +3763,8 @@ function bindPhysicalSecurityCategoryGuidanceRenderTriggers() {
         ? String(trigger.textContent || trigger.value || "").trim().toLowerCase()
         : "";
 
-      if (isPhysicalSecurityCategoryGuidanceRenderTrigger(label, trigger)) {
-        queuePhysicalSecurityCategoryGuidanceRender();
+      if (trigger) {
+        samplePhysicalSecurityCameraSpacingGuidance("camera-spacing-ui-guidance-sample");
       }
     }, true);
 
@@ -3726,7 +3774,7 @@ function bindPhysicalSecurityCategoryGuidanceRenderTriggers() {
   }
 
   window.ScopedLabsCameraSpacingCategoryGuidanceProof = {
-    version: "camera-spacing-category-guidance-renderer-proof-007",
+    version: "camera-spacing-category-guidance-renderer-proof-008-event-bridge",
     render: renderPhysicalSecurityCategoryGuidance,
     queue: queuePhysicalSecurityCategoryGuidanceRender,
     clear: clearPhysicalSecurityCategoryGuidance
