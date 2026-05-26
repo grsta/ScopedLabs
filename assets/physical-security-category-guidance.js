@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-guidance-002-memory-aware-master";
+  const VERSION = "physical-security-category-guidance-003-deduped-visible-gate";
   const CATEGORY = "physical-security";
 
   const fallbackOrder = [
@@ -457,7 +457,6 @@
     const explanation = input && input.guidance ? input : explainCategoryGuidance(createCategoryGuidance(collectToolGuidance()));
     const counts = explanation.counts || {};
     const priorityTool = explanation.priorityTool || null;
-    const sourceTopics = explanation.sourceTopics || {};
     const generated = Number(counts.generated || 0);
     const risk = Number(counts.risk || 0);
     const watch = Number(counts.watch || 0);
@@ -481,10 +480,6 @@
       reasons.push("priority-tool-is-not-current-tool");
     }
 
-    if (generated > 0 && currentSlug && sourceTopics && Object.keys(sourceTopics).length > 1) {
-      reasons.push("cross-topic-context");
-    }
-
     return {
       show: reasons.length > 0,
       reasons,
@@ -492,7 +487,8 @@
       generated,
       risk,
       watch,
-      prioritySlug
+      prioritySlug,
+      rule: "dedupe-local-assistant-output"
     };
   }
 

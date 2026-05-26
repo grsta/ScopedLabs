@@ -65,7 +65,7 @@ const rows = [
   },
   {
     id: "category-guidance-memory-aware-version",
-    status: categoryGuidance.includes("physical-security-category-guidance-002-memory-aware-master") ? "SAFE" : "WATCH",
+    status: categoryGuidance.includes("physical-security-category-guidance-003-deduped-visible-gate") ? "SAFE" : "WATCH",
     detail: "category guidance version bumped to memory-aware master"
   },
   {
@@ -82,7 +82,8 @@ const rows = [
     status:
       categoryGuidance.includes("function shouldShowVisibleCategoryGuidance") &&
       categoryGuidance.includes("multiple-tools-generated") &&
-      categoryGuidance.includes("priority-tool-is-not-current-tool") ? "SAFE" : "WATCH",
+      categoryGuidance.includes("priority-tool-is-not-current-tool") &&
+      categoryGuidance.includes("dedupe-local-assistant-output") ? "SAFE" : "WATCH",
     detail: "category guidance exposes visible value gate"
   },
   {
@@ -96,7 +97,7 @@ const rows = [
   },
   {
     id: "camera-spacing-memory-aware-category-guidance",
-    status: cameraHtml.includes("/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-002-memory-aware-master") ? "SAFE" : "WATCH",
+    status: cameraHtml.includes("/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate") ? "SAFE" : "WATCH",
     detail: "Camera Spacing loads memory-aware category guidance"
   },
   {
