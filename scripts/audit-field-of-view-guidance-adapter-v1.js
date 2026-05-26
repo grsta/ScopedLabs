@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "field-of-view-guidance-adapter-audit-001";
+const auditVersion = "field-of-view-guidance-adapter-audit-002-event-bridge-cache-proof";
 const helperFile = path.join(root, "assets", "user-assistant-guidance.js");
 const factoryFile = path.join(root, "assets", "user-guidance-adapter-factory.js");
 const htmlFile = path.join(root, "tools", "physical-security", "field-of-view", "index.html");
@@ -42,7 +42,13 @@ const checks = [
   { id: "helper-include", ok: helperIndex >= 0, detail: "Field of View loads user-assistant-guidance.js" },
   { id: "factory-include", ok: factoryIndex >= 0, detail: "Field of View loads user-guidance-adapter-factory.js" },
   { id: "script-order", ok: helperIndex >= 0 && factoryIndex >= 0 && localIndex >= 0 && helperIndex < factoryIndex && factoryIndex < localIndex, detail: "helper loads before factory, and factory loads before local script" },
-  { id: "local-cache-bust", ok: /script\.js\?v=physical-security-fov-guidance-factory-adapter-\d+/i.test(html), detail: "Field of View local script cache is on factory adapter version" },
+  {
+    id: "local-cache-bust",
+    ok:
+      html.includes("./script.js?v=physical-security-fov-guidance-factory-adapter-") ||
+      html.includes("./script.js?v=physical-security-fov-guidance-event-bridge-"),
+    detail: "Field of View local script cache is on factory adapter or event bridge proof version"
+  },
   { id: "factory-adapter-builder", ok: js.includes("function buildFieldOfViewGuidanceInput(data)"), detail: "factory guidance input builder exists" },
   { id: "factory-create-adapter", ok: js.includes("ScopedLabsUserGuidanceAdapterFactory") && js.includes("factory.createAdapter"), detail: "Field of View adapter uses the shared adapter factory" },
   { id: "adapter-update", ok: js.includes("function updateFieldOfViewUserGuidance(data)"), detail: "Field of View adapter update function exists" },

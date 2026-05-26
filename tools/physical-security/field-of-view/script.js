@@ -893,7 +893,51 @@ function hideVisibleFlowContext() {
   attachFieldOfViewGuidanceGlobal();
 
 
-  function writeFlow(data) {
+  
+  function getFieldOfViewBridgeGuidance() {
+    const guidanceApi = window.ScopedLabsFieldOfViewGuidance;
+
+    if (guidanceApi && typeof guidanceApi.getLastGuidance === "function") {
+      return guidanceApi.getLastGuidance();
+    }
+
+    return null;
+  }
+
+  function publishFieldOfViewGuidanceEvent(source) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = getFieldOfViewBridgeGuidance();
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
+      return false;
+    }
+
+    return !!bridge.publishIfChanged({
+      category: "physical-security",
+      tool: "field-of-view",
+      guidance,
+      source: source || "field-of-view-guidance-update"
+    });
+  }
+
+  function clearFieldOfViewGuidanceEventMemory() {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (bridge && typeof bridge.clearTool === "function") {
+      bridge.clearTool("field-of-view");
+      return true;
+    }
+
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+
+    if (memory && typeof memory.clearToolGuidance === "function") {
+      return memory.clearToolGuidance("field-of-view");
+    }
+
+    return false;
+  }
+
+function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
     data.sourceMode = manualOverrideMeta.length ? "manual-override" : "pipeline";
     data.manualOverrides = manualOverrideMeta;
@@ -1160,7 +1204,8 @@ ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
 renderFovGeometryDiagram(data);
     writeFlow(data);
     updateFieldOfViewUserGuidance(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+        publishFieldOfViewGuidanceEvent("field-of-view-guidance-update");
+ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
 
     if (typeof forceFovContinueVisible === "function") {
       forceFovContinueVisible();
@@ -1189,11 +1234,13 @@ renderFovGeometryDiagram(data);
       const el = $(id);
       if (!el) return;
       el.addEventListener("input", () => {
+        clearFieldOfViewGuidanceEventMemory();
         markFlowInputOverride(id);
         renderFlowNote();
         invalidate({ clearFlow: true });
       });
       el.addEventListener("change", () => {
+        clearFieldOfViewGuidanceEventMemory();
         markFlowInputOverride(id);
         renderFlowNote();
         invalidate({ clearFlow: true });
