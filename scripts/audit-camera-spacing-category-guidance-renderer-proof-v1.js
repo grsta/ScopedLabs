@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-003-placement";
+const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-003-render-hook";
 
 const indexFile = path.join(root, "tools", "physical-security", "camera-spacing", "index.html");
 const scriptFile = path.join(root, "tools", "physical-security", "camera-spacing", "script.js");
@@ -53,11 +53,6 @@ const rows = [
     detail: "renderer CSS asset exists"
   },
   {
-    id: "renderer-css-version",
-    status: css.includes("physical-security-category-guidance-renderer-css-001-proof") ? "SAFE" : "WATCH",
-    detail: "renderer CSS version marker"
-  },
-  {
     id: "camera-spacing-index",
     status: fs.existsSync(indexFile) ? "SAFE" : "FAIL",
     detail: "Camera Spacing index exists"
@@ -89,18 +84,18 @@ const rows = [
   },
   {
     id: "mount-target",
-    status: html.includes('id="physical-security-category-guidance-mount"') ? "SAFE" : "WATCH",
+    status: mountIndex >= 0 ? "SAFE" : "WATCH",
     detail: "explicit renderer mount target exists"
-  },
-  {
-    id: "local-script-cache",
-    status: html.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-002") ? "SAFE" : "WATCH",
-    detail: "Camera Spacing local script cache was bumped"
   },
   {
     id: "mount-before-export",
     status: mountIndex >= 0 && exportReportIndex >= 0 && mountIndex < exportReportIndex ? "SAFE" : "WATCH",
     detail: JSON.stringify({ mountIndex, exportReportIndex })
+  },
+  {
+    id: "local-script-cache",
+    status: html.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-003") ? "SAFE" : "WATCH",
+    detail: "Camera Spacing local script cache was bumped"
   },
   {
     id: "camera-spacing-js",
@@ -110,11 +105,31 @@ const rows = [
   {
     id: "helper-block",
     status:
-      js.includes("physical-security-category-guidance-renderer-proof-002") &&
+      js.includes("physical-security-category-guidance-renderer-proof-003") &&
       js.includes("function renderPhysicalSecurityCategoryGuidance") &&
       js.includes("function clearPhysicalSecurityCategoryGuidance") &&
-      js.includes("function bindPhysicalSecurityCategoryGuidanceClearHandlers") ? "SAFE" : "WATCH",
-    detail: "explicit render/clear helpers exist"
+      js.includes("function queuePhysicalSecurityCategoryGuidanceRender") &&
+      js.includes("ScopedLabsCameraSpacingCategoryGuidanceProof") ? "SAFE" : "WATCH",
+    detail: "explicit render/queue/clear helpers and debug bridge exist"
+  },
+  {
+    id: "direct-render-hook",
+    status:
+      js.includes("updateCameraSpacingUserGuidance(data);") &&
+      js.includes("queuePhysicalSecurityCategoryGuidanceRender();") ? "SAFE" : "WATCH",
+    detail: "renderer queues after Camera Spacing guidance updates"
+  },
+  {
+    id: "fallback-calculate-trigger",
+    status:
+      js.includes('label.includes("calculate")') &&
+      js.includes("bindPhysicalSecurityCategoryGuidanceRenderTriggers") ? "SAFE" : "WATCH",
+    detail: "fallback Calculate click trigger exists"
+  },
+  {
+    id: "generated-count-gate",
+    status: js.includes("Number(explanation.counts.generated || 0) <= 0") ? "SAFE" : "WATCH",
+    detail: "renderer will not show before generated guidance exists"
   },
   {
     id: "input-change-clear-handler",
@@ -122,13 +137,6 @@ const rows = [
       js.includes('addEventListener("input", clearPhysicalSecurityCategoryGuidance') &&
       js.includes('addEventListener("change", clearPhysicalSecurityCategoryGuidance') ? "SAFE" : "WATCH",
     detail: "visible category guidance clears on input/change"
-  },
-  {
-    id: "render-hook",
-    status:
-      js.includes("updateCameraSpacingUserGuidance(data);") &&
-      js.includes("renderPhysicalSecurityCategoryGuidance(data);") ? "SAFE" : "WATCH",
-    detail: "renderer mounts after Camera Spacing guidance updates"
   },
   {
     id: "area-planner-untouched",

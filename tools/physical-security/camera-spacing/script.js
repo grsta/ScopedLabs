@@ -1265,7 +1265,8 @@ function escapeHtml(value) {
           hideSpacingAssistantPlaceholder();
           renderSpacingAssistant(data);
     updateCameraSpacingUserGuidance(data);
-    renderPhysicalSecurityCategoryGuidance(data);
+    queuePhysicalSecurityCategoryGuidanceRender();
+
           return;
         }
 
@@ -3550,8 +3551,8 @@ function renderSpacingExportSection(data) {
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
 
-  
-  // physical-security-category-guidance-renderer-proof-002
+
+  // physical-security-category-guidance-renderer-proof-003
   function clearPhysicalSecurityCategoryGuidance() {
     const mount = document.getElementById("physical-security-category-guidance-mount");
     if (!mount) return;
@@ -3578,12 +3579,16 @@ function renderSpacingExportSection(data) {
     const categoryGuidance = window.ScopedLabsPhysicalSecurityCategoryGuidance;
 
     if (!mount || !renderer || !categoryGuidance || typeof renderer.mount !== "function") {
-      return;
+      return false;
     }
 
     const explanation = typeof categoryGuidance.explainCurrentGuidance === "function"
       ? categoryGuidance.explainCurrentGuidance()
       : null;
+
+    if (!explanation || !explanation.ok || !explanation.counts || Number(explanation.counts.generated || 0) <= 0) {
+      return false;
+    }
 
     const result = renderer.mount(mount, explanation, {
       title: "Physical Security Design Guidance"
@@ -3591,7 +3596,47 @@ function renderSpacingExportSection(data) {
 
     mount.hidden = !(result && result.ok);
     bindPhysicalSecurityCategoryGuidanceClearHandlers();
+
+    return !!(result && result.ok);
   }
+
+  function queuePhysicalSecurityCategoryGuidanceRender() {
+    [0, 120, 350, 700].forEach((delay) => {
+      window.setTimeout(renderPhysicalSecurityCategoryGuidance, delay);
+    });
+  }
+
+  function bindPhysicalSecurityCategoryGuidanceRenderTriggers() {
+    if (window.__slCameraSpacingCategoryGuidanceRenderBound) return;
+    window.__slCameraSpacingCategoryGuidanceRenderBound = true;
+
+    document.addEventListener("click", (event) => {
+      const trigger = event.target && event.target.closest
+        ? event.target.closest("button, input[type='button'], input[type='submit']")
+        : null;
+
+      const label = trigger
+        ? String(trigger.textContent || trigger.value || "").trim().toLowerCase()
+        : "";
+
+      if (label.includes("calculate")) {
+        queuePhysicalSecurityCategoryGuidanceRender();
+      }
+    }, true);
+
+    document.addEventListener("submit", () => {
+      queuePhysicalSecurityCategoryGuidanceRender();
+    }, true);
+  }
+
+  window.ScopedLabsCameraSpacingCategoryGuidanceProof = {
+    version: "camera-spacing-category-guidance-renderer-proof-003",
+    render: renderPhysicalSecurityCategoryGuidance,
+    queue: queuePhysicalSecurityCategoryGuidanceRender,
+    clear: clearPhysicalSecurityCategoryGuidance
+  };
+
+  bindPhysicalSecurityCategoryGuidanceRenderTriggers();
 
 function renderSuccess(data) {
     ScopedLabsAnalyzer.renderOutput({
