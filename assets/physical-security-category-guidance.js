@@ -1,10 +1,11 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-guidance-001-foundation";
+  const VERSION = "physical-security-category-guidance-001-web-ready-master";
   const CATEGORY = "physical-security";
 
-  const PIPELINE_ORDER = [
+  const fallbackOrder = [
+    "area-planner",
     "scene-illumination",
     "mounting-height",
     "field-of-view",
@@ -17,20 +18,6 @@
     "license-plate-range"
   ];
 
-  const FALLBACK_REGISTRY = [
-    { slug: "area-planner", label: "Area Planner", role: "pipeline-entry", guidanceCandidate: false },
-    { slug: "scene-illumination", label: "Scene Illumination", globalName: "ScopedLabsSceneIlluminationGuidance", proofStatus: "proven" },
-    { slug: "mounting-height", label: "Mounting Height", globalName: "ScopedLabsMountingHeightGuidance", proofStatus: "proven" },
-    { slug: "field-of-view", label: "Field of View", globalName: "ScopedLabsFieldOfViewGuidance", proofStatus: "proven" },
-    { slug: "camera-coverage-area", label: "Camera Coverage Area", globalName: "ScopedLabsCameraCoverageAreaGuidance", proofStatus: "proven" },
-    { slug: "camera-spacing", label: "Camera Spacing", globalName: "ScopedLabsCameraSpacingGuidance", proofStatus: "proven" },
-    { slug: "blind-spot-check", label: "Blind Spot Check", globalName: "ScopedLabsBlindSpotGuidance", proofStatus: "proven" },
-    { slug: "pixel-density", label: "Pixel Density", globalName: "ScopedLabsPixelDensityGuidance", proofStatus: "proven" },
-    { slug: "lens-selection", label: "Lens Selection", role: "protected", protected: true, proofStatus: "protected", guidanceCandidate: false },
-    { slug: "face-recognition-range", label: "Face Recognition Range", globalName: "ScopedLabsFaceRecognitionGuidance", proofStatus: "proven" },
-    { slug: "license-plate-range", label: "License Plate Capture Range", globalName: "ScopedLabsLicensePlateGuidance", proofStatus: "proven" }
-  ];
-
   function clone(value) {
     if (value == null) return value;
 
@@ -39,17 +26,6 @@
     } catch {
       return value;
     }
-  }
-
-  function orderIndex(slug) {
-    const index = PIPELINE_ORDER.indexOf(slug);
-    return index >= 0 ? index : 999;
-  }
-
-  function sortByPipelineOrder(items) {
-    return clone(items || []).sort((a, b) => {
-      return orderIndex(a.slug) - orderIndex(b.slug);
-    });
   }
 
   function normalizeStatus(status) {
@@ -63,12 +39,12 @@
   }
 
   function statusRank(status) {
-    const key = normalizeStatus(status);
+    const normalized = normalizeStatus(status);
 
-    if (key === "risk") return 4;
-    if (key === "watch") return 3;
-    if (key === "unknown") return 2;
-    if (key === "healthy") return 1;
+    if (normalized === "risk") return 4;
+    if (normalized === "watch") return 3;
+    if (normalized === "unknown") return 2;
+    if (normalized === "healthy") return 1;
 
     return 0;
   }
@@ -81,14 +57,62 @@
       .join(" ");
   }
 
-  function getRegistryEntries() {
-    const registry = window.ScopedLabsPhysicalSecurityGuidanceRegistry;
+  function getKnowledge() {
+    return window.ScopedLabsPhysicalSecurityCategoryKnowledge || null;
+  }
+
+  function getSourcePolicy() {
+    return window.ScopedLabsPhysicalSecuritySourcePolicy || null;
+  }
+
+  function getRegistry() {
+    return window.ScopedLabsPhysicalSecurityGuidanceRegistry || null;
+  }
+
+  function getPipelineOrder() {
+    const knowledge = getKnowledge();
+
+    if (knowledge && Array.isArray(knowledge.pipelineOrder)) {
+      return clone(knowledge.pipelineOrder);
+    }
+
+    return clone(fallbackOrder);
+  }
+
+  function orderIndex(slug) {
+    const order = getPipelineOrder();
+    const index = order.indexOf(slug);
+    return index >= 0 ? index : 999;
+  }
+
+  function sortByPipelineOrder(items) {
+    return clone(items || []).sort((a, b) => {
+      return orderIndex(a.slug) - orderIndex(b.slug);
+    });
+  }
+
+  function registryEntries() {
+    const registry = getRegistry();
 
     if (registry && typeof registry.listAll === "function") {
       return registry.listAll();
     }
 
-    return clone(FALLBACK_REGISTRY);
+    const knowledge = getKnowledge();
+
+    if (knowledge && typeof knowledge.listTools === "function") {
+      return knowledge.listTools().map((tool) => ({
+        slug: tool.slug || "",
+        label: tool.label || "",
+        role: tool.role || "",
+        protected: !!tool.protected,
+        guidanceCandidate: tool.adapterStatus === "proven",
+        proofStatus: tool.adapterStatus === "proven" ? "proven" : tool.adapterStatus || "",
+        globalName: tool.globalName || ""
+      }));
+    }
+
+    return [];
   }
 
   function primaryRecommendationFor(guidance) {
@@ -96,11 +120,34 @@
     return guidance.primaryRecommendation || guidance.recommendation || {};
   }
 
+  function toolKnowledgeFor(slug) {
+    const knowledge = getKnowledge();
+
+    if (knowledge && typeof knowledge.getTool === "function") {
+      return knowledge.getTool(slug);
+    }
+
+    return null;
+  }
+
+  function toolWebPolicyFor(slug) {
+    const knowledge = getKnowledge();
+
+    if (knowledge && typeof knowledge.getToolWebPolicy === "function") {
+      return knowledge.getToolWebPolicy(slug);
+    }
+
+    return null;
+  }
+
   function collectToolGuidance() {
-    const entries = getRegistryEntries()
+    const entries = registryEntries()
       .filter((entry) => entry && entry.globalName && entry.proofStatus === "proven")
       .map((entry) => {
         const api = window[entry.globalName];
+        const knowledge = toolKnowledgeFor(entry.slug);
+        const webPolicy = toolWebPolicyFor(entry.slug);
+
         let guidance = null;
         let error = "";
 
@@ -116,7 +163,8 @@
 
         return {
           slug: entry.slug,
-          label: entry.label || labelFromSlug(entry.slug),
+          label: entry.label || (knowledge && knowledge.label) || labelFromSlug(entry.slug),
+          role: entry.role || (knowledge && knowledge.role) || "",
           globalName: entry.globalName,
           generated: !!guidance,
           status: guidance ? normalizeStatus(guidance.status) : "unknown",
@@ -127,6 +175,8 @@
           nextStep: primary.nextStep || "",
           reportSummary: guidance && guidance.reportSummary ? guidance.reportSummary : "",
           sourceIntegrity: guidance && guidance.sourceIntegrity ? clone(guidance.sourceIntegrity) : null,
+          toolKnowledge: clone(knowledge),
+          webPolicy: clone(webPolicy),
           error,
           guidance: clone(guidance)
         };
@@ -195,7 +245,7 @@
 
   function categoryReason(summary) {
     if (!summary || summary.status === "unknown") {
-      return "No generated tool guidance is available yet. Run a Physical Security calculation before creating a category-level summary.";
+      return "No generated Physical Security tool guidance is available yet. Run one or more tool calculations before creating a category-level summary.";
     }
 
     if (summary.status === "risk") {
@@ -208,7 +258,7 @@
       return label + " is currently the first watch item that should be confirmed before the design is treated as clean.";
     }
 
-    return "Generated Physical Security tool guidance is currently healthy across the available tool results.";
+    return "Generated Physical Security guidance is currently healthy across the available tool results.";
   }
 
   function categoryNextStep(summary) {
@@ -231,11 +281,45 @@
     return "Continue to the next Physical Security planning step or produce the final category summary.";
   }
 
+  function knowledgeStatus() {
+    const knowledge = getKnowledge();
+    const sourcePolicy = getSourcePolicy();
+
+    return {
+      knowledgeLoaded: !!knowledge,
+      knowledgeVersion: knowledge && knowledge.version ? knowledge.version : "",
+      sourcePolicyLoaded: !!sourcePolicy,
+      sourcePolicyVersion: sourcePolicy && sourcePolicy.version ? sourcePolicy.version : "",
+      runtimeFetchAllowed: false,
+      externalSourceRule: knowledge && knowledge.externalSourceRules && knowledge.externalSourceRules.coreRule
+        ? knowledge.externalSourceRules.coreRule
+        : "External sources may inform guidance language, but cannot override ScopedLabs math, pipeline carry-over, audits, or protected tool behavior."
+    };
+  }
+
+  function sourceTopicCoverage(items) {
+    const topics = {};
+    (items || []).forEach((item) => {
+      const webPolicy = item.webPolicy || {};
+      (webPolicy.webTopics || []).forEach((topic) => {
+        if (!topics[topic]) {
+          topics[topic] = [];
+        }
+        topics[topic].push(item.slug);
+      });
+    });
+
+    return topics;
+  }
+
   function createCategoryGuidance(items, options) {
-    const summary = summarizeGuidanceItems(items || []);
+    const toolItems = sortByPipelineOrder(items || []);
+    const summary = summarizeGuidanceItems(toolItems);
     const action = categoryAction(summary);
     const reason = categoryReason(summary);
     const nextStep = categoryNextStep(summary);
+    const knowledge = knowledgeStatus();
+
     const expectedResult = [
       summary.generatedCount + " generated tool guidance result" + (summary.generatedCount === 1 ? "" : "s"),
       summary.riskCount + " risk",
@@ -253,7 +337,7 @@
         action,
         reason,
         expectedResult,
-        confidence: summary.generatedCount ? "Generated from tool guidance adapters" : "No generated guidance yet",
+        confidence: summary.generatedCount ? "Generated from normalized tool guidance adapters" : "No generated guidance yet",
         nextStep
       },
       reportSummary: [
@@ -274,7 +358,9 @@
       watches: summary.watches,
       healthy: summary.healthy,
       unknown: summary.unknown,
-      tools: sortByPipelineOrder(items || [])
+      sourceTopics: sourceTopicCoverage(toolItems),
+      knowledge,
+      tools: toolItems
     };
   }
 
@@ -300,6 +386,8 @@
       nextStep: primary.nextStep || "",
       counts: clone(categoryGuidance.counts || {}),
       priorityTool: clone(categoryGuidance.priorityTool || null),
+      knowledge: clone(categoryGuidance.knowledge || {}),
+      sourceTopics: clone(categoryGuidance.sourceTopics || {}),
       reportSummary: categoryGuidance.reportSummary || "",
       guidance: clone(categoryGuidance)
     };
@@ -309,6 +397,26 @@
     return explainCategoryGuidance(createCategoryGuidance(collectToolGuidance()));
   }
 
+  function classifyExternalSource(candidate) {
+    const knowledge = getKnowledge();
+
+    if (knowledge && typeof knowledge.classifyExternalSource === "function") {
+      return knowledge.classifyExternalSource(candidate || {});
+    }
+
+    const sourcePolicy = getSourcePolicy();
+
+    if (sourcePolicy && typeof sourcePolicy.classifySourceCandidate === "function") {
+      return sourcePolicy.classifySourceCandidate(candidate || {});
+    }
+
+    return {
+      allowed: false,
+      reason: "Physical Security source policy is not loaded.",
+      mayUseAtRuntime: false
+    };
+  }
+
   window.ScopedLabsPhysicalSecurityCategoryGuidance = Object.freeze({
     version: VERSION,
     category: CATEGORY,
@@ -316,6 +424,7 @@
     summarizeGuidanceItems,
     createCategoryGuidance,
     explainCategoryGuidance,
-    explainCurrentGuidance
+    explainCurrentGuidance,
+    classifyExternalSource
   });
 })();
