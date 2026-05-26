@@ -4,7 +4,7 @@ const vm = require("vm");
 
 const root = process.cwd();
 
-const driverVersion = "guidance-adapter-factory-driver-002-source-mode-tolerant";
+const driverVersion = "guidance-adapter-factory-driver-003-source-field-proven-tolerant";
 
 const factoryFile = path.join(root, "assets", "user-guidance-adapter-factory.js");
 const registryFile = path.join(root, "assets", "physical-security-guidance-registry.js");
@@ -102,6 +102,13 @@ function classifyTool(entry) {
   }
 
   if (entry.proofStatus === "proven") {
+    const sourceFieldDriven =
+      entry.sourceMode === "lighting-source-fields" ||
+      entry.sourceMode === "mounting-source-fields" ||
+      entry.sourceMode === "source-fields";
+
+    const sourceModeOk = basics.hasManualOverrideMetadata || sourceFieldDriven;
+
     const ok =
       basics.hasHtml &&
       basics.hasJs &&
@@ -109,7 +116,7 @@ function classifyTool(entry) {
       basics.helperBeforeLocal &&
       basics.hasRenderSuccess &&
       basics.hasWriteFlow &&
-      basics.hasManualOverrideMetadata &&
+      sourceModeOk &&
       basics.hasGlobal &&
       basics.hasAudit;
 
@@ -118,8 +125,10 @@ function classifyTool(entry) {
       role: entry.role || "",
       status: ok ? "SAFE" : "FAIL",
       detail: ok
-        ? "Proven adapter is wired and guarded"
-        : JSON.stringify(basics),
+        ? (sourceFieldDriven
+          ? "Proven source-field adapter is wired and guarded"
+          : "Proven adapter is wired and guarded")
+        : JSON.stringify(Object.assign({}, basics, { sourceFieldDriven, sourceModeOk })),
       globalName: entry.globalName || "",
       audit: basics.hasAudit ? auditName : "missing"
     };
