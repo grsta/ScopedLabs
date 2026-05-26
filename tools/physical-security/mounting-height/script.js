@@ -920,6 +920,342 @@ function hideVisibleFlowContext() {
 
   
 
+
+  // data-mounting-height-guidance-factory-adapter-001
+  let mountingHeightGuidanceAdapter = null;
+
+  function cloneMountingHeightGuidance(value) {
+    if (!value || typeof value !== "object") return value;
+
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+
+  function mountingHeightManualSourceFields(data) {
+    const fields = [];
+    const sourceMode = String(data && data.sourceMode || "").toLowerCase();
+    const vfovSourceMode = String(data && data.vfovSourceMode || "").toLowerCase();
+
+    if (sourceMode === "manual-override") {
+      fields.push("Target distance");
+    }
+
+    if (vfovSourceMode === "manual-override" || data && data.vfovManualOverride) {
+      fields.push("Vertical FOV");
+    }
+
+    if (Array.isArray(data && data.manualOverrides)) {
+      data.manualOverrides.forEach((item) => {
+        if (!item) return;
+        if (typeof item === "string") fields.push(item);
+        else if (item.label) fields.push(item.label);
+        else if (item.field) fields.push(item.field);
+      });
+    }
+
+    try {
+      if (typeof mountingManualOverrides === "function") {
+        const manual = mountingManualOverrides(data);
+        if (Array.isArray(manual)) {
+          manual.forEach((item) => {
+            if (!item) return;
+            if (typeof item === "string") fields.push(item);
+            else if (item.label) fields.push(item.label);
+            else if (item.field) fields.push(item.field);
+          });
+        }
+      }
+    } catch {}
+
+    return Array.from(new Set(fields.filter(Boolean)));
+  }
+
+  function mountingHeightSourceMode(data) {
+    const fields = mountingHeightManualSourceFields(data);
+    if (fields.length) return "manual-override";
+
+    try {
+      if (typeof mountingSourceMode === "function") {
+        const mode = mountingSourceMode(data);
+        if (mode) return mode;
+      }
+    } catch {}
+
+    return "pipeline";
+  }
+
+  function mountingHeightGuidanceStatus(data) {
+    const status = String(data && data.status || "").toLowerCase();
+    const tilt = Number(data && data.tilt);
+    const subjectMetric = Number(data && data.subjectAngleMetric);
+    const mountMetric = Number(data && data.mountPressureMetric);
+    const framingMetric = Number(data && data.framingPressureMetric);
+
+    if (status.includes("risk")) return "risk";
+    if (Number.isFinite(tilt) && (tilt < 8 || tilt >= 45)) return "risk";
+    if (Number.isFinite(subjectMetric) && subjectMetric > 70) return "risk";
+    if (Number.isFinite(mountMetric) && mountMetric > 70) return "risk";
+    if (Number.isFinite(framingMetric) && framingMetric > 70) return "risk";
+
+    if (status.includes("watch")) return "watch";
+    if (Number.isFinite(tilt) && (tilt < 12 || tilt >= 35)) return "watch";
+    if (Number.isFinite(subjectMetric) && subjectMetric > 45) return "watch";
+    if (Number.isFinite(mountMetric) && mountMetric > 45) return "watch";
+    if (Number.isFinite(framingMetric) && framingMetric > 45) return "watch";
+
+    if (status.includes("healthy")) return "healthy";
+
+    return "unknown";
+  }
+
+  function mountingHeightExpectedResult(data) {
+    const parts = [];
+
+    if (Number.isFinite(Number(data.drop))) parts.push(fmtFt(data.drop) + " vertical drop");
+    if (Number.isFinite(Number(data.tilt))) parts.push(fmtDeg(data.tilt) + " suggested down-tilt");
+    if (data.subjectFitText) parts.push(data.subjectFitText);
+    if (Number.isFinite(Number(data.span))) parts.push(fmtFt(data.span) + " vertical span");
+    if (Number.isFinite(Number(data.h))) parts.push(fmtFt(data.h) + " mount height");
+    if (Number.isFinite(Number(data.dist))) parts.push(fmtFt(data.dist) + " target distance");
+    if (Number.isFinite(Number(data.vfov))) parts.push(fmtDeg(data.vfov) + " VFOV");
+    if (data.mountContextLabel) parts.push(data.mountContextLabel);
+
+    return parts.filter(Boolean).join(" | ");
+  }
+
+  function mountingHeightPrimaryRecommendation(data) {
+    const status = mountingHeightGuidanceStatus(data);
+    const tilt = Number(data.tilt);
+    const expectedResult = mountingHeightExpectedResult(data);
+    const affectedFields = mountingHeightManualSourceFields(data);
+
+    if (status === "healthy") {
+      return {
+        action: "Keep Current Mounting Height Baseline",
+        reason: "Mount height, target distance, subject angle, and vertical framing remain workable for the next field-of-view step.",
+        expectedResult,
+        confidence: affectedFields.length ? "Manual mounting assumptions present" : "Clean mounting baseline",
+        nextStep: "Carry this mounting geometry into Field of View."
+      };
+    }
+
+    if (status === "risk") {
+      return {
+        action: "Correct Mounting Geometry Before Field of View",
+        reason: "The mounting geometry is outside the safe working band for subject angle, mount height balance, or vertical framing.",
+        expectedResult,
+        confidence: "Mounting geometry risk",
+        nextStep: Number.isFinite(tilt) && tilt < 8
+          ? "Raise the camera, reduce target distance, or choose a closer target zone before continuing."
+          : "Adjust mount height, target distance, or VFOV before carrying this into Field of View."
+      };
+    }
+
+    if (status === "watch") {
+      return {
+        action: "Validate Mounting Geometry Before Field of View",
+        reason: "The mounting geometry is usable, but one or more subject angle, height balance, or vertical framing assumptions should be confirmed.",
+        expectedResult,
+        confidence: affectedFields.length ? "Manual mounting assumptions present" : "Mounting watch item",
+        nextStep: "Confirm mount context, target distance, target height, and VFOV profile before continuing to Field of View."
+      };
+    }
+
+    return {
+      action: "Review Mounting Height Assumptions",
+      reason: "The current mounting-height result needs review before it is carried into field-of-view planning.",
+      expectedResult,
+      confidence: "Review required",
+      nextStep: "Confirm mount height, target distance, target height, context, and vertical FOV assumptions."
+    };
+  }
+
+  function mountingHeightSecondaryOptions(data) {
+    const status = mountingHeightGuidanceStatus(data);
+    const tilt = Number(data && data.tilt);
+
+    const options = [
+      {
+        label: "Raise camera or move closer",
+        intent: "Improve shallow subject angle when the camera is too flat to the target.",
+        expectedResult: "Suggested down-tilt should move toward the preferred subject-angle band.",
+        tradeoff: "May change mounting feasibility or coverage geometry.",
+        canApply: Number.isFinite(tilt) && tilt < 12
+      },
+      {
+        label: "Lower camera or increase standoff",
+        intent: "Reduce excessive top-down angle.",
+        expectedResult: "Subject angle should move back toward a practical detail range.",
+        tradeoff: "May reduce tamper resistance or change the protected view.",
+        canApply: Number.isFinite(tilt) && tilt >= 35
+      },
+      {
+        label: "Adjust VFOV profile",
+        intent: "Improve vertical framing at the selected distance.",
+        expectedResult: "Top and bottom edge framing should better match the target zone.",
+        tradeoff: "Changing VFOV can affect downstream field-of-view and detail assumptions.",
+        canApply: status === "watch" || status === "risk"
+      },
+      {
+        label: "Use carried area values",
+        intent: "Return target distance and context to the planned area baseline.",
+        expectedResult: "Source integrity should move toward a clean pipeline baseline.",
+        tradeoff: "Field constraints may still require manual distance assumptions.",
+        canApply: mountingHeightManualSourceFields(data).length > 0
+      },
+      {
+        label: "Continue to Field of View",
+        intent: "Carry the mounting geometry into horizontal scene-width planning.",
+        expectedResult: "Field of View can translate this mounting setup into usable scene width.",
+        tradeoff: "Only continue when height, distance, target height, and VFOV assumptions are intentional.",
+        canApply: status === "healthy" || status === "watch"
+      }
+    ];
+
+    return options.filter((option) => option.canApply !== false);
+  }
+
+  function buildMountingHeightGuidanceInput(data) {
+    const mode = mountingHeightSourceMode(data);
+    const affectedFields = mountingHeightManualSourceFields(data);
+    const primary = mountingHeightPrimaryRecommendation(data);
+    const helper = window.ScopedLabsUserAssistantGuidance;
+
+    const sourceLabel = helper && typeof helper.sourceLabelForMode === "function"
+      ? helper.sourceLabelForMode(mode)
+      : (mode === "manual-override" ? "Manual override" : "Clean pipeline");
+
+    const sourceMessage = helper && typeof helper.sourceMessageForMode === "function"
+      ? helper.sourceMessageForMode(mode)
+      : "Use this result only when the assumptions match the intended design branch.";
+
+    return {
+      status: mountingHeightGuidanceStatus(data),
+      mode,
+      primaryRecommendation: primary,
+      secondaryOptions: mountingHeightSecondaryOptions(data),
+      sourceIntegrity: {
+        label: sourceLabel,
+        mode,
+        affectedFields,
+        message: sourceMessage
+      },
+      reportSummary: [
+        primary.action,
+        primary.reason,
+        "Expected result: " + primary.expectedResult
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "field-of-view",
+        message: "Carry this mounting geometry into Field of View only when mount height, target distance, target height, mount context, and VFOV assumptions match the intended protected area."
+      }
+    };
+  }
+
+  function getMountingHeightGuidanceAdapter() {
+    if (mountingHeightGuidanceAdapter) return mountingHeightGuidanceAdapter;
+
+    const factory = window.ScopedLabsUserGuidanceAdapterFactory;
+
+    if (factory && typeof factory.createAdapter === "function") {
+      mountingHeightGuidanceAdapter = factory.createAdapter({
+        toolKey: "mounting-height",
+        globalName: "ScopedLabsMountingHeightGuidance",
+        version: "mounting-height-guidance-adapter-001-factory",
+        nextTool: "field-of-view",
+        carryForwardMessage: "Carry this mounting geometry into Field of View only when assumptions match the intended protected area.",
+        buildGuidance: buildMountingHeightGuidanceInput
+      });
+
+      return mountingHeightGuidanceAdapter;
+    }
+
+    let latestGuidance = null;
+
+    mountingHeightGuidanceAdapter = {
+      version: "mounting-height-guidance-adapter-001-fallback",
+      update(data) {
+        latestGuidance = Object.assign({
+          version: "mounting-height-guidance-adapter-001-fallback"
+        }, buildMountingHeightGuidanceInput(data));
+        return cloneMountingHeightGuidance(latestGuidance);
+      },
+      getLastGuidance() {
+        return cloneMountingHeightGuidance(latestGuidance);
+      },
+      explainLastGuidance() {
+        if (!latestGuidance) {
+          return {
+            ok: false,
+            summary: "No Mounting Height guidance has been generated yet.",
+            nextStep: "Run a Mounting Height calculation first."
+          };
+        }
+
+        return {
+          ok: true,
+          status: latestGuidance.status,
+          mode: latestGuidance.mode,
+          action: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.action,
+          reason: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.reason,
+          expected: latestGuidance.primaryRecommendation && latestGuidance.primaryRecommendation.expectedResult,
+          guidance: cloneMountingHeightGuidance(latestGuidance)
+        };
+      },
+      attachGlobal() {
+        window.ScopedLabsMountingHeightGuidance = Object.freeze({
+          version: this.version,
+          toolKey: "mounting-height",
+          getLastGuidance: this.getLastGuidance,
+          explainLastGuidance: this.explainLastGuidance,
+          updateFromData: this.update
+        });
+        return window.ScopedLabsMountingHeightGuidance;
+      }
+    };
+
+    return mountingHeightGuidanceAdapter;
+  }
+
+  function updateMountingHeightUserGuidance(data) {
+    const adapter = getMountingHeightGuidanceAdapter();
+    return adapter.update(data);
+  }
+
+  function getLastMountingHeightGuidance() {
+    const adapter = getMountingHeightGuidanceAdapter();
+    return adapter.getLastGuidance();
+  }
+
+  function explainLastMountingHeightGuidance() {
+    const adapter = getMountingHeightGuidanceAdapter();
+    return adapter.explainLastGuidance();
+  }
+
+  function attachMountingHeightGuidanceGlobal() {
+    const adapter = getMountingHeightGuidanceAdapter();
+
+    if (adapter && typeof adapter.attachGlobal === "function") {
+      return adapter.attachGlobal();
+    }
+
+    window.ScopedLabsMountingHeightGuidance = Object.freeze({
+      version: "mounting-height-guidance-adapter-001-factory",
+      toolKey: "mounting-height",
+      getLastGuidance: getLastMountingHeightGuidance,
+      explainLastGuidance: explainLastMountingHeightGuidance
+    });
+
+    return window.ScopedLabsMountingHeightGuidance;
+  }
+
+  attachMountingHeightGuidanceGlobal();
+
+
   function writeFlow(data) {
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.mount, {
       category: CATEGORY,
@@ -1569,6 +1905,7 @@ clearMountingStructuredExport();
     renderMountingLiveVisual(data);
 renderMountingStructuredExport(data);
     writeFlow(data);
+    updateMountingHeightUserGuidance(data);
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
     forceMountingContinueVisible();
 
