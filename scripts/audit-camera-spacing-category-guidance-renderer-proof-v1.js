@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-002";
+const auditVersion = "camera-spacing-category-guidance-renderer-proof-audit-003-placement";
 
 const indexFile = path.join(root, "tools", "physical-security", "camera-spacing", "index.html");
 const scriptFile = path.join(root, "tools", "physical-security", "camera-spacing", "script.js");
@@ -43,6 +43,8 @@ const srcs = scriptSrcs(html);
 const categoryGuidanceIndex = indexOfBase(srcs, "/assets/physical-security-category-guidance.js");
 const rendererIndex = indexOfBase(srcs, "/assets/physical-security-category-guidance-renderer.js");
 const localIndex = indexOfBase(srcs, "./script.js");
+const mountIndex = html.indexOf('id="physical-security-category-guidance-mount"');
+const exportReportIndex = html.indexOf("Export Report");
 
 const rows = [
   {
@@ -94,6 +96,11 @@ const rows = [
     id: "local-script-cache",
     status: html.includes("./script.js?v=physical-security-camera-spacing-category-guidance-renderer-proof-002") ? "SAFE" : "WATCH",
     detail: "Camera Spacing local script cache was bumped"
+  },
+  {
+    id: "mount-before-export",
+    status: mountIndex >= 0 && exportReportIndex >= 0 && mountIndex < exportReportIndex ? "SAFE" : "WATCH",
+    detail: JSON.stringify({ mountIndex, exportReportIndex })
   },
   {
     id: "camera-spacing-js",
