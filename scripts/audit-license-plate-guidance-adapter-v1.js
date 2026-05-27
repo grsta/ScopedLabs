@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "license-plate-guidance-adapter-audit-001";
+const auditVersion = "license-plate-guidance-adapter-audit-002-event-bridge-cache-proof";
 const helperFile = path.join(root, "assets", "user-assistant-guidance.js");
 const htmlFile = path.join(root, "tools", "physical-security", "license-plate-range", "index.html");
 const jsFile = path.join(root, "tools", "physical-security", "license-plate-range", "script.js");
@@ -63,8 +63,10 @@ const checks = [
   },
   {
     id: "local-cache-bust",
-    ok: /script\.js\?v=physical-security-license-plate-user-guidance-adapter-\d+/i.test(html),
-    detail: "License Plate local script cache is on user-guidance adapter version"
+    ok:
+      html.includes("./script.js?v=physical-security-license-plate-user-guidance-adapter-") ||
+      html.includes("./script.js?v=physical-security-license-plate-guidance-event-bridge-"),
+    detail: "License Plate local script cache is on user-guidance adapter or event bridge proof version"
   },
   {
     id: "adapter-state",

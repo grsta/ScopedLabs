@@ -576,12 +576,21 @@ function hideVisibleFlowContext() {
       const input = inputForPlatePresetField(field);
 
       if (select) {
-        select.addEventListener("change", () => applyPlateGuidedPreset(field));
+        select.addEventListener("change", () => {
+          clearLicensePlateGuidanceEventMemory();
+          applyPlateGuidedPreset(field);
+        });
       }
 
       if (input) {
-        input.addEventListener("input", () => syncPlatePresetSelect(field));
-        input.addEventListener("change", () => syncPlatePresetSelect(field));
+        input.addEventListener("input", () => {
+          clearLicensePlateGuidanceEventMemory();
+          syncPlatePresetSelect(field);
+        });
+        input.addEventListener("change", () => {
+          clearLicensePlateGuidanceEventMemory();
+          syncPlatePresetSelect(field);
+        });
       }
     });
 
@@ -1029,7 +1038,51 @@ function hideVisibleFlowContext() {
   }
 
 
-  function writeFlow(data) {
+  
+  function getLicensePlateBridgeGuidance() {
+    const guidanceApi = window.ScopedLabsLicensePlateGuidance;
+
+    if (guidanceApi && typeof guidanceApi.getLastGuidance === "function") {
+      return guidanceApi.getLastGuidance();
+    }
+
+    return null;
+  }
+
+  function publishLicensePlateGuidanceEvent(source) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = getLicensePlateBridgeGuidance();
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
+      return false;
+    }
+
+    return !!bridge.publishIfChanged({
+      category: "physical-security",
+      tool: "license-plate-range",
+      guidance,
+      source: source || "license-plate-guidance-update"
+    });
+  }
+
+  function clearLicensePlateGuidanceEventMemory() {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (bridge && typeof bridge.clearTool === "function") {
+      bridge.clearTool("license-plate-range");
+      return true;
+    }
+
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+
+    if (memory && typeof memory.clearToolGuidance === "function") {
+      return memory.clearToolGuidance("license-plate-range");
+    }
+
+    return false;
+  }
+
+function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.plate, {
@@ -1258,7 +1311,8 @@ renderLicensePlateLiveVisual(data);
 renderPlateStructuredExport(data);
     writeFlow(data);
     updateLicensePlateUserGuidance(data);
-    showComplete();
+        publishLicensePlateGuidanceEvent("license-plate-guidance-update");
+showComplete();
   }
 
   function calc() {
@@ -1282,6 +1336,7 @@ renderPlateStructuredExport(data);
       if (!el) return;
 
       const handleEdit = () => {
+        clearLicensePlateGuidanceEventMemory();
         markFlowInputOverride(id);
         invalidate({ clearFlow: true });
         renderFlowNote();
