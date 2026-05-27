@@ -43,15 +43,16 @@ console.log("");
 console.log("Audit version:", VERSION);
 
 add("summary-asset-exists", exists(assetRel) ? "SAFE" : "FAIL", exists(assetRel) ? "summary helper asset exists" : "summary helper asset missing");
-add("summary-version", asset.includes("physical-security-report-summary-004-export-table") ? "SAFE" : "FAIL", "summary helper version marker");
+add("summary-version", asset.includes("physical-security-report-summary-005-export-table-call") ? "SAFE" : "FAIL", "summary helper version marker");
 add("summary-global", asset.includes("ScopedLabsPhysicalSecurityReportSummary") ? "SAFE" : "FAIL", "summary helper exposes expected global");
 add("summary-build-api", asset.includes("buildSummary") && asset.includes("renderExportHtml") && asset.includes("renderReportText") ? "SAFE" : "FAIL", "summary helper exposes report APIs");
 add("summary-no-runtime-fetch", asset.includes("fetch(") ? "FAIL" : "SAFE", asset.includes("fetch(") ? "summary helper contains runtime fetch" : "summary helper does not add runtime fetch");
 add("summary-export-readable-table", asset.includes("data-sl-physical-security-report-summary-table") && asset.includes("Physical Security Category Summary") ? "SAFE" : "FAIL", "summary helper renders an export.js-readable table");
+add("summary-render-table-call", asset.includes("renderExportTableHtml(summary),") ? "SAFE" : "FAIL", "summary export table is actually inserted into renderExportHtml output");
 
 add("export-engine-untouched-seam", exportJs.includes('extraSectionSelector: "[data-export-section]"') ? "SAFE" : "FAIL", "shared export engine still uses export-only section seam");
 
-add("camera-spacing-loads-summary-helper", cameraIndex.includes("physical-security-report-summary.js?v=physical-security-report-summary-004-export-table") ? "SAFE" : "FAIL", "Camera Spacing loads report summary helper");
+add("camera-spacing-loads-summary-helper", cameraIndex.includes("physical-security-report-summary.js?v=physical-security-report-summary-005-export-table-call") ? "SAFE" : "FAIL", "Camera Spacing loads report summary helper");
 add("camera-spacing-summary-helper-singleton", count(cameraIndex, "physical-security-report-summary.js") === 1 ? "SAFE" : "FAIL", "Camera Spacing summary helper script count=" + count(cameraIndex, "physical-security-report-summary.js"));
 add("camera-spacing-existing-export-section", cameraIndex.includes('id="spacingExportSection"') && cameraIndex.includes("data-export-section") ? "SAFE" : "FAIL", "Camera Spacing keeps existing export-only section");
 add("summary-inline-slot-api", asset.includes("physicalSecurityReportSummaryExportSlot") && asset.includes("findOrCreateExportSlot") ? "SAFE" : "FAIL", "summary helper injects into existing exported spacingExportSection");

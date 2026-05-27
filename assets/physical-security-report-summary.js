@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-004-export-table";
+  const VERSION = "physical-security-report-summary-005-export-table-call";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -302,6 +302,7 @@
 
     return [
       '<section class="export-extra-section physical-security-report-summary" data-sl-report-summary-version="' + escapeHtml(VERSION) + '">',
+      renderExportTableHtml(summary),
       "<h3>Physical Security Category Summary</h3>",
       "<p><strong>Status:</strong> " + escapeHtml(statusLabel(summary.status)) + " | <strong>Generated:</strong> " + escapeHtml(counts.generated) + " of " + escapeHtml(counts.tracked) + " | <strong>Healthy:</strong> " + escapeHtml(counts.healthy) + " | <strong>Watch:</strong> " + escapeHtml(counts.watch) + " | <strong>Risk:</strong> " + escapeHtml(counts.risk) + "</p>",
       priority ? "<p><strong>Priority item:</strong> " + escapeHtml(priority.label) + " ? " + escapeHtml(priority.action || priority.reason || "Review before finalizing the design.") + "</p>" : "",
