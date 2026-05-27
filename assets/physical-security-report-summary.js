@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-005-export-table-call";
+  const VERSION = "physical-security-report-summary-006-watch-risk-section-highlight";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -254,7 +254,7 @@
     const counts = summary.counts;
     const priority = summary.priorityTool || null;
 
-    const rows = [
+    const summaryRows = [
       ["Status", statusLabel(summary.status)],
       ["Generated", String(counts.generated || 0) + " of " + String(counts.tracked || 0)],
       ["Healthy / Watch / Risk", String(counts.healthy || 0) + " / " + String(counts.watch || 0) + " / " + String(counts.risk || 0)],
@@ -271,18 +271,32 @@
         return [tool.label || tool.slug || "Physical Security Tool", statusLabel(normalizeStatus(tool.status)) + " ? " + detail];
       });
 
-    const allRows = rows.concat(detailRows.length ? [["Watch/Risk detail", ""]] : [], detailRows);
-
-    return [
+    const summaryTable = [
       '<table data-sl-physical-security-report-summary-table="true">',
       '<thead><tr><th>Physical Security Category Summary</th><th>Detail</th></tr></thead>',
       '<tbody>',
-      allRows.map((row) => {
+      summaryRows.map((row) => {
         return '<tr><td>' + escapeHtml(row[0]) + '</td><td>' + escapeHtml(row[1]) + '</td></tr>';
       }).join(""),
       '</tbody>',
       '</table>'
     ].join("");
+
+    const detailTable = detailRows.length
+      ? [
+          '<div style="margin-top:12px;"></div>',
+          '<table data-sl-physical-security-report-summary-detail-table="true">',
+          '<thead><tr><th>Watch / Risk Detail</th><th>Detail</th></tr></thead>',
+          '<tbody>',
+          detailRows.map((row) => {
+            return '<tr><td>' + escapeHtml(row[0]) + '</td><td>' + escapeHtml(row[1]) + '</td></tr>';
+          }).join(""),
+          '</tbody>',
+          '</table>'
+        ].join("")
+      : "";
+
+    return summaryTable + detailTable;
   }
 
   function renderExportHtml(summary) {
