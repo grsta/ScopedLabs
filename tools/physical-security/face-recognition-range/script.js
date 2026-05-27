@@ -541,12 +541,21 @@ function hideVisibleFlowContext() {
       const input = inputForPresetField(field);
 
       if (select) {
-        select.addEventListener("change", () => applyFaceGuidedPreset(field));
+        select.addEventListener("change", () => {
+          clearFaceRecognitionGuidanceEventMemory();
+          applyFaceGuidedPreset(field);
+        });
       }
 
       if (input) {
-        input.addEventListener("input", () => syncFacePresetSelect(field));
-        input.addEventListener("change", () => syncFacePresetSelect(field));
+        input.addEventListener("input", () => {
+          clearFaceRecognitionGuidanceEventMemory();
+          syncFacePresetSelect(field);
+        });
+        input.addEventListener("change", () => {
+          clearFaceRecognitionGuidanceEventMemory();
+          syncFacePresetSelect(field);
+        });
       }
     });
 
@@ -991,7 +1000,51 @@ function hideVisibleFlowContext() {
   }
 
 
-  function writeFlow(data) {
+  
+  function getFaceRecognitionBridgeGuidance() {
+    const guidanceApi = window.ScopedLabsFaceRecognitionGuidance;
+
+    if (guidanceApi && typeof guidanceApi.getLastGuidance === "function") {
+      return guidanceApi.getLastGuidance();
+    }
+
+    return null;
+  }
+
+  function publishFaceRecognitionGuidanceEvent(source) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = getFaceRecognitionBridgeGuidance();
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
+      return false;
+    }
+
+    return !!bridge.publishIfChanged({
+      category: "physical-security",
+      tool: "face-recognition-range",
+      guidance,
+      source: source || "face-recognition-guidance-update"
+    });
+  }
+
+  function clearFaceRecognitionGuidanceEventMemory() {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (bridge && typeof bridge.clearTool === "function") {
+      bridge.clearTool("face-recognition-range");
+      return true;
+    }
+
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+
+    if (memory && typeof memory.clearToolGuidance === "function") {
+      return memory.clearToolGuidance("face-recognition-range");
+    }
+
+    return false;
+  }
+
+function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.face, {
@@ -1196,7 +1249,8 @@ renderFaceRecognitionLiveVisual(data);
 renderFaceStructuredExport(data);
     writeFlow(data);
     updateFaceRecognitionUserGuidance(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+        publishFaceRecognitionGuidanceEvent("face-recognition-guidance-update");
+ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function calc() {
@@ -1219,11 +1273,13 @@ renderFaceStructuredExport(data);
       const el = $(id);
       if (!el) return;
       el.addEventListener("input", () => {
+        clearFaceRecognitionGuidanceEventMemory();
         markFlowInputOverride(id);
         renderFlowNote();
         invalidate({ clearFlow: true });
       });
       el.addEventListener("change", () => {
+        clearFaceRecognitionGuidanceEventMemory();
         markFlowInputOverride(id);
         renderFlowNote();
         invalidate({ clearFlow: true });

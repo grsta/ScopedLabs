@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "face-recognition-guidance-adapter-audit-001";
+const auditVersion = "face-recognition-guidance-adapter-audit-002-event-bridge-cache-proof";
 const helperFile = path.join(root, "assets", "user-assistant-guidance.js");
 const htmlFile = path.join(root, "tools", "physical-security", "face-recognition-range", "index.html");
 const jsFile = path.join(root, "tools", "physical-security", "face-recognition-range", "script.js");
@@ -63,8 +63,11 @@ const checks = [
   },
   {
     id: "local-cache-bust",
-    ok: /script\.js\?v=physical-security-face-user-guidance-adapter-\d+/i.test(html),
-    detail: "Face Recognition local script cache is on user-guidance adapter version"
+    ok:
+      html.includes("./script.js?v=face-recognition-user-guidance-adapter-") ||
+      html.includes("./script.js?v=physical-security-face-user-guidance-adapter-") ||
+      html.includes("./script.js?v=physical-security-face-guidance-event-bridge-"),
+    detail: "Face Recognition local script cache is on user-guidance adapter or event bridge proof version"
   },
   {
     id: "adapter-state",
