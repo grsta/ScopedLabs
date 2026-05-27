@@ -1,9 +1,10 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-002-export-section";
+  const VERSION = "physical-security-report-summary-003-inline-export-slot";
   const CATEGORY = "physical-security";
-  const EXPORT_MOUNT_ID = "physicalSecurityReportSummaryExportSection";
+  const EXPORT_MOUNT_ID = "spacingExportSection";
+  const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
 
   const TOOL_ORDER = [
     "scene-illumination",
@@ -294,26 +295,44 @@
     ].filter(Boolean).join("\n");
   }
 
+  function findOrCreateExportSlot(mount) {
+    let slot = document.getElementById(EXPORT_SLOT_ID);
+
+    if (slot && slot.parentElement !== mount) {
+      slot.remove();
+      slot = null;
+    }
+
+    if (!slot) {
+      slot = document.createElement("div");
+      slot.id = EXPORT_SLOT_ID;
+      slot.setAttribute("data-sl-physical-security-report-summary-slot", "true");
+      mount.insertBefore(slot, mount.firstChild);
+    }
+
+    return slot;
+  }
+
   function refreshExportSection() {
     const mount = document.getElementById(EXPORT_MOUNT_ID);
     if (!mount) return false;
 
     const summary = buildSummary();
     const html = renderExportHtml(summary);
+    const existingSlot = document.getElementById(EXPORT_SLOT_ID);
 
     if (!html) {
-      mount.innerHTML = "";
-      mount.removeAttribute("data-export-section");
-      mount.setAttribute("hidden", "");
-      mount.setAttribute("aria-hidden", "true");
+      if (existingSlot) existingSlot.remove();
       return false;
     }
 
-    mount.innerHTML = html;
+    const slot = findOrCreateExportSlot(mount);
+    slot.innerHTML = html;
+
     mount.setAttribute("data-export-section", "");
     mount.setAttribute("data-export-suppress-title", "true");
     mount.setAttribute("aria-hidden", "true");
-    mount.removeAttribute("hidden");
+
     return true;
   }
 

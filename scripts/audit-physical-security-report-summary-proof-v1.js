@@ -43,18 +43,17 @@ console.log("");
 console.log("Audit version:", VERSION);
 
 add("summary-asset-exists", exists(assetRel) ? "SAFE" : "FAIL", exists(assetRel) ? "summary helper asset exists" : "summary helper asset missing");
-add("summary-version", asset.includes("physical-security-report-summary-002-export-section") ? "SAFE" : "FAIL", "summary helper version marker");
+add("summary-version", asset.includes("physical-security-report-summary-003-inline-export-slot") ? "SAFE" : "FAIL", "summary helper version marker");
 add("summary-global", asset.includes("ScopedLabsPhysicalSecurityReportSummary") ? "SAFE" : "FAIL", "summary helper exposes expected global");
 add("summary-build-api", asset.includes("buildSummary") && asset.includes("renderExportHtml") && asset.includes("renderReportText") ? "SAFE" : "FAIL", "summary helper exposes report APIs");
 add("summary-no-runtime-fetch", asset.includes("fetch(") ? "FAIL" : "SAFE", asset.includes("fetch(") ? "summary helper contains runtime fetch" : "summary helper does not add runtime fetch");
 
 add("export-engine-untouched-seam", exportJs.includes('extraSectionSelector: "[data-export-section]"') ? "SAFE" : "FAIL", "shared export engine still uses export-only section seam");
 
-add("camera-spacing-loads-summary-helper", cameraIndex.includes("physical-security-report-summary.js?v=physical-security-report-summary-002-export-section") ? "SAFE" : "FAIL", "Camera Spacing loads report summary helper");
+add("camera-spacing-loads-summary-helper", cameraIndex.includes("physical-security-report-summary.js?v=physical-security-report-summary-003-inline-export-slot") ? "SAFE" : "FAIL", "Camera Spacing loads report summary helper");
 add("camera-spacing-summary-helper-singleton", count(cameraIndex, "physical-security-report-summary.js") === 1 ? "SAFE" : "FAIL", "Camera Spacing summary helper script count=" + count(cameraIndex, "physical-security-report-summary.js"));
-add("camera-spacing-export-mount", cameraIndex.includes('id="physicalSecurityReportSummaryExportSection"') ? "SAFE" : "FAIL", "Camera Spacing has export-only summary mount");
-add("camera-spacing-export-mount-not-visible-section", cameraIndex.includes('id="physicalSecurityReportSummaryExportSection"') && cameraIndex.includes("left:-10000px") ? "SAFE" : "WATCH", "summary mount is offscreen/non-visible");
-add("summary-populated-section-export-visible", asset.includes('mount.removeAttribute("hidden")') ? "SAFE" : "FAIL", "populated summary section removes hidden attribute so export engine can collect it");
+add("camera-spacing-existing-export-section", cameraIndex.includes('id="spacingExportSection"') && cameraIndex.includes("data-export-section") ? "SAFE" : "FAIL", "Camera Spacing keeps existing export-only section");
+add("summary-inline-slot-api", asset.includes("physicalSecurityReportSummaryExportSlot") && asset.includes("findOrCreateExportSlot") ? "SAFE" : "FAIL", "summary helper injects into existing exported spacingExportSection");
 
 add("camera-spacing-existing-visible-renderer-preserved", cameraIndex.includes("physical-security-category-guidance-renderer.js") && cameraIndex.includes("physical-security-category-guidance-renderer.css") ? "SAFE" : "FAIL", "Camera Spacing visible renderer proof remains loaded");
 add("area-planner-not-wired", areaIndex.includes("physical-security-report-summary.js") ? "FAIL" : "SAFE", "Area Planner does not load report summary helper");
