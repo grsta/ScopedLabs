@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-003-inline-export-slot";
+  const VERSION = "physical-security-report-summary-004-export-table";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -246,6 +246,43 @@
     if (status === "watch") return "Watch";
     if (status === "healthy") return "Healthy";
     return "Unknown";
+  }
+
+  function renderExportTableHtml(summary) {
+    if (!summary || !summary.counts || !summary.counts.generated) return "";
+
+    const counts = summary.counts;
+    const priority = summary.priorityTool || null;
+
+    const rows = [
+      ["Status", statusLabel(summary.status)],
+      ["Generated", String(counts.generated || 0) + " of " + String(counts.tracked || 0)],
+      ["Healthy / Watch / Risk", String(counts.healthy || 0) + " / " + String(counts.watch || 0) + " / " + String(counts.risk || 0)],
+      priority ? ["Priority item", (priority.label || priority.slug || "Physical Security Tool") + " ? " + (priority.action || priority.reason || "Review before finalizing the design.")] : null,
+      summary.reason ? ["Category interpretation", summary.reason] : null,
+      summary.nextStep ? ["Recommended next step", summary.nextStep] : null
+    ].filter(Boolean);
+
+    const detailRows = (summary.tools || [])
+      .filter((tool) => normalizeStatus(tool.status) === "risk" || normalizeStatus(tool.status) === "watch")
+      .slice(0, 6)
+      .map((tool) => {
+        const detail = tool.reportSummary || tool.action || tool.reason || tool.nextStep || "Review this tool result before finalizing the category.";
+        return [tool.label || tool.slug || "Physical Security Tool", statusLabel(normalizeStatus(tool.status)) + " ? " + detail];
+      });
+
+    const allRows = rows.concat(detailRows.length ? [["Watch/Risk detail", ""]] : [], detailRows);
+
+    return [
+      '<table data-sl-physical-security-report-summary-table="true">',
+      '<thead><tr><th>Physical Security Category Summary</th><th>Detail</th></tr></thead>',
+      '<tbody>',
+      allRows.map((row) => {
+        return '<tr><td>' + escapeHtml(row[0]) + '</td><td>' + escapeHtml(row[1]) + '</td></tr>';
+      }).join(""),
+      '</tbody>',
+      '</table>'
+    ].join("");
   }
 
   function renderExportHtml(summary) {
