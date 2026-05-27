@@ -912,7 +912,51 @@ function hideVisibleFlowContext() {
   }
 
 
-  function writeFlow(data) {
+  
+  function getPixelDensityBridgeGuidance() {
+    const guidanceApi = window.ScopedLabsPixelDensityGuidance;
+
+    if (guidanceApi && typeof guidanceApi.getLastGuidance === "function") {
+      return guidanceApi.getLastGuidance();
+    }
+
+    return null;
+  }
+
+  function publishPixelDensityGuidanceEvent(source) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = getPixelDensityBridgeGuidance();
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
+      return false;
+    }
+
+    return !!bridge.publishIfChanged({
+      category: "physical-security",
+      tool: "pixel-density",
+      guidance,
+      source: source || "pixel-density-guidance-update"
+    });
+  }
+
+  function clearPixelDensityGuidanceEventMemory() {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (bridge && typeof bridge.clearTool === "function") {
+      bridge.clearTool("pixel-density");
+      return true;
+    }
+
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+
+    if (memory && typeof memory.clearToolGuidance === "function") {
+      return memory.clearToolGuidance("pixel-density");
+    }
+
+    return false;
+  }
+
+function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
 
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.pixel, {
@@ -1111,7 +1155,8 @@ function hideVisibleFlowContext() {
     renderPixelDensityVisual(data);
     writeFlow(data);
     updatePixelDensityUserGuidance(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+        publishPixelDensityGuidanceEvent("pixel-density-guidance-update");
+ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
   function calc() {
@@ -1133,12 +1178,14 @@ function hideVisibleFlowContext() {
       const el = $(id);
       if (!el) return;
       el.addEventListener("input", () => {
+        clearPixelDensityGuidanceEventMemory();
         if (id === "res") syncResolutionPresetFromInput();
         if (id === "tppf") syncTargetPpfPresetFromInput();
         markFlowInputOverride(id);
         invalidate({ clearFlow: true });
       });
       el.addEventListener("change", () => {
+        clearPixelDensityGuidanceEventMemory();
         if (id === "res") syncResolutionPresetFromInput();
         if (id === "tppf") syncTargetPpfPresetFromInput();
         markFlowInputOverride(id);
@@ -1147,6 +1194,7 @@ function hideVisibleFlowContext() {
     });
 
     els.resPreset?.addEventListener("change", () => {
+      clearPixelDensityGuidanceEventMemory();
       applyResolutionPreset();
       updateResolutionPresetUi();
       markFlowInputOverride("res");
@@ -1154,6 +1202,7 @@ function hideVisibleFlowContext() {
     });
 
     els.tppfPreset?.addEventListener("change", () => {
+      clearPixelDensityGuidanceEventMemory();
       applyTargetPpfPreset();
       updateTargetPpfPresetUi();
       markFlowInputOverride("tppf");
