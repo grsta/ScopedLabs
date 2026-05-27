@@ -1256,7 +1256,51 @@ function hideVisibleFlowContext() {
   attachMountingHeightGuidanceGlobal();
 
 
-  function writeFlow(data) {
+  
+  function getMountingHeightBridgeGuidance() {
+    const guidanceApi = window.ScopedLabsMountingHeightGuidance;
+
+    if (guidanceApi && typeof guidanceApi.getLastGuidance === "function") {
+      return guidanceApi.getLastGuidance();
+    }
+
+    return null;
+  }
+
+  function publishMountingHeightGuidanceEvent(source) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = getMountingHeightBridgeGuidance();
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
+      return false;
+    }
+
+    return !!bridge.publishIfChanged({
+      category: "physical-security",
+      tool: "mounting-height",
+      guidance,
+      source: source || "mounting-height-guidance-update"
+    });
+  }
+
+  function clearMountingHeightGuidanceEventMemory() {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (bridge && typeof bridge.clearTool === "function") {
+      bridge.clearTool("mounting-height");
+      return true;
+    }
+
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+
+    if (memory && typeof memory.clearToolGuidance === "function") {
+      return memory.clearToolGuidance("mounting-height");
+    }
+
+    return false;
+  }
+
+function writeFlow(data) {
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.mount, {
       category: CATEGORY,
       step: STEP,
@@ -1906,7 +1950,8 @@ clearMountingStructuredExport();
 renderMountingStructuredExport(data);
     writeFlow(data);
     updateMountingHeightUserGuidance(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+        publishMountingHeightGuidanceEvent("mounting-height-guidance-update");
+ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
     forceMountingContinueVisible();
 
     if (els.continueWrap) {
@@ -1937,6 +1982,7 @@ renderMountingStructuredExport(data);
   function bind() {
     if (els.mountContext) {
       els.mountContext.addEventListener("change", () => {
+        clearMountingHeightGuidanceEventMemory();
         renderMountContextGuidance();
         invalidate({ clearFlow: true });
       });
@@ -1949,6 +1995,7 @@ renderMountingStructuredExport(data);
 
     if (els.vfovProfile) {
       els.vfovProfile.addEventListener("change", () => {
+        clearMountingHeightGuidanceEventMemory();
         applyVfovProfileToInput({ force: true });
         renderVfovProfileGuidance();
         invalidate({ clearFlow: true });
@@ -1965,11 +2012,13 @@ renderMountingStructuredExport(data);
       if (!el) return;
 
       el.addEventListener("input", () => {
+        clearMountingHeightGuidanceEventMemory();
         renderMountingOverrideNotice();
         invalidate({ clearFlow: true });
       });
 
       el.addEventListener("change", () => {
+        clearMountingHeightGuidanceEventMemory();
         renderMountingOverrideNotice();
         invalidate({ clearFlow: true });
       });
