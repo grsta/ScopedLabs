@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-001";
+  const VERSION = "physical-security-report-summary-002-export-section";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "physicalSecurityReportSummaryExportSection";
 
@@ -313,7 +313,7 @@
     mount.setAttribute("data-export-section", "");
     mount.setAttribute("data-export-suppress-title", "true");
     mount.setAttribute("aria-hidden", "true");
-    mount.setAttribute("hidden", "");
+    mount.removeAttribute("hidden");
     return true;
   }
 
