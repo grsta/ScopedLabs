@@ -1102,7 +1102,51 @@ function hideVisibleFlowContext() {
   }
 
 
-  function writeFlow(data) {
+  
+  function getBlindSpotBridgeGuidance() {
+    const guidanceApi = window.ScopedLabsBlindSpotGuidance;
+
+    if (guidanceApi && typeof guidanceApi.getLastGuidance === "function") {
+      return guidanceApi.getLastGuidance();
+    }
+
+    return null;
+  }
+
+  function publishBlindSpotGuidanceEvent(source) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = getBlindSpotBridgeGuidance();
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
+      return false;
+    }
+
+    return !!bridge.publishIfChanged({
+      category: "physical-security",
+      tool: "blind-spot-check",
+      guidance,
+      source: source || "blind-spot-guidance-update"
+    });
+  }
+
+  function clearBlindSpotGuidanceEventMemory() {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (bridge && typeof bridge.clearTool === "function") {
+      bridge.clearTool("blind-spot-check");
+      return true;
+    }
+
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+
+    if (memory && typeof memory.clearToolGuidance === "function") {
+      return memory.clearToolGuidance("blind-spot-check");
+    }
+
+    return false;
+  }
+
+function writeFlow(data) {
     const manualOverrideMeta = getManualOverrideMetadata(data);
     const sourceMode = manualOverrideMeta.length ? "manual-override" : "pipeline";
 
@@ -2003,7 +2047,8 @@ ScopedLabsAnalyzer.renderOutput({
     writeFlow(data);
     updateBlindSpotUserGuidance(data);
 
-    updateActiveAreaFromBlindSpot(data, getManualOverrideMetadata(data));
+        publishBlindSpotGuidanceEvent("blind-spot-guidance-update");
+updateActiveAreaFromBlindSpot(data, getManualOverrideMetadata(data));
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
@@ -2025,11 +2070,13 @@ ScopedLabsAnalyzer.renderOutput({
       const el = $(id);
       if (!el) return;
       el.addEventListener("input", () => {
+        clearBlindSpotGuidanceEventMemory();
         markFlowInputOverride(id);
         renderFlowNote();
         invalidate({ clearFlow: true });
       });
       el.addEventListener("change", () => {
+        clearBlindSpotGuidanceEventMemory();
         markFlowInputOverride(id);
         renderFlowNote();
         invalidate({ clearFlow: true });

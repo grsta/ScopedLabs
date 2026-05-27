@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "blind-spot-guidance-adapter-audit-001";
+const auditVersion = "blind-spot-guidance-adapter-audit-002-event-bridge-cache-proof";
 const helperFile = path.join(root, "assets", "user-assistant-guidance.js");
 const htmlFile = path.join(root, "tools", "physical-security", "blind-spot-check", "index.html");
 const jsFile = path.join(root, "tools", "physical-security", "blind-spot-check", "script.js");
@@ -63,8 +63,10 @@ const checks = [
   },
   {
     id: "local-cache-bust",
-    ok: /script\.js\?v=blindspot-user-guidance-adapter-\d+/i.test(html),
-    detail: "Blind Spot local script cache is on user-guidance adapter version"
+    ok:
+      html.includes("./script.js?v=blindspot-user-guidance-adapter-") ||
+      html.includes("./script.js?v=blindspot-guidance-event-bridge-"),
+    detail: "Blind Spot local script cache is on user-guidance adapter or event bridge proof version"
   },
   {
     id: "adapter-state",
