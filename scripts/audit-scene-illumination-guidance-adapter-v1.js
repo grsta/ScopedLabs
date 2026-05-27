@@ -3,7 +3,7 @@ const path = require("path");
 
 const root = process.cwd();
 
-const auditVersion = "scene-illumination-guidance-adapter-audit-001";
+const auditVersion = "scene-illumination-guidance-adapter-audit-002-event-bridge-cache-proof";
 const helperFile = path.join(root, "assets", "user-assistant-guidance.js");
 const factoryFile = path.join(root, "assets", "user-guidance-adapter-factory.js");
 const htmlFile = path.join(root, "tools", "physical-security", "scene-illumination", "index.html");
@@ -42,7 +42,13 @@ const checks = [
   { id: "helper-include", ok: helperIndex >= 0, detail: "Scene Illumination loads user-assistant-guidance.js" },
   { id: "factory-include", ok: factoryIndex >= 0, detail: "Scene Illumination loads user-guidance-adapter-factory.js" },
   { id: "script-order", ok: helperIndex >= 0 && factoryIndex >= 0 && localIndex >= 0 && helperIndex < factoryIndex && factoryIndex < localIndex, detail: "helper loads before factory, and factory loads before local script" },
-  { id: "local-cache-bust", ok: /script\.js\?v=physical-security-scene-guidance-factory-adapter-\d+/i.test(html), detail: "Scene Illumination local script cache is on factory adapter version" },
+  {
+    id: "local-cache-bust",
+    ok:
+      html.includes("./script.js?v=physical-security-scene-guidance-factory-adapter-") ||
+      html.includes("./script.js?v=physical-security-scene-guidance-event-bridge-"),
+    detail: "Scene Illumination local script cache is on factory adapter or event bridge proof version"
+  },
   { id: "no-manual-metadata-function-required", ok: !js.includes("function getManualOverrideMetadata(data)"), detail: "Scene Illumination remains source-field-driven, not manual-metadata-driven" },
   { id: "source-fields-used", ok: js.includes("function sceneIlluminationManualSourceFields(data)") && js.includes("footcandleSourceMode") && js.includes("effectiveSourceMode"), detail: "adapter derives source integrity from lighting source-mode fields" },
   { id: "factory-adapter-builder", ok: js.includes("function buildSceneIlluminationGuidanceInput(data)"), detail: "factory guidance input builder exists" },

@@ -1062,7 +1062,51 @@ function hideVisibleFlowContext() {
   attachSceneIlluminationGuidanceGlobal();
 
 
-  function writeFlow(data) {
+  
+  function getSceneIlluminationBridgeGuidance() {
+    const guidanceApi = window.ScopedLabsSceneIlluminationGuidance;
+
+    if (guidanceApi && typeof guidanceApi.getLastGuidance === "function") {
+      return guidanceApi.getLastGuidance();
+    }
+
+    return null;
+  }
+
+  function publishSceneIlluminationGuidanceEvent(source) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = getSceneIlluminationBridgeGuidance();
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
+      return false;
+    }
+
+    return !!bridge.publishIfChanged({
+      category: "physical-security",
+      tool: "scene-illumination",
+      guidance,
+      source: source || "scene-illumination-guidance-update"
+    });
+  }
+
+  function clearSceneIlluminationGuidanceEventMemory() {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+
+    if (bridge && typeof bridge.clearTool === "function") {
+      bridge.clearTool("scene-illumination");
+      return true;
+    }
+
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+
+    if (memory && typeof memory.clearToolGuidance === "function") {
+      return memory.clearToolGuidance("scene-illumination");
+    }
+
+    return false;
+  }
+
+function writeFlow(data) {
     ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.scene, {
       category: CATEGORY,
       step: STEP,
@@ -1333,7 +1377,8 @@ renderSceneIlluminationLiveVisual(data);
 renderSceneStructuredExport(data);
     writeFlow(data);
     updateSceneIlluminationUserGuidance(data);
-    ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+        publishSceneIlluminationGuidanceEvent("scene-illumination-guidance-update");
+ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
     forceSceneContinueVisible();
 
     if (els.continueWrap) {
@@ -1361,6 +1406,7 @@ renderSceneStructuredExport(data);
   function bind() {
     if (els.lightingGoal) {
       els.lightingGoal.addEventListener("change", () => {
+        clearSceneIlluminationGuidanceEventMemory();
         const preset = lightingGoalPreset(els.lightingGoal.value);
         if (preset.id !== "custom" && Number.isFinite(preset.typical)) {
           els.fc.value = String(preset.typical);
@@ -1372,6 +1418,7 @@ renderSceneStructuredExport(data);
 
     if (els.ufPreset) {
       els.ufPreset.addEventListener("change", () => {
+        clearSceneIlluminationGuidanceEventMemory();
         const preset = utilizationPreset(els.ufPreset.value);
         if (preset.id !== "custom" && Number.isFinite(preset.value)) {
           els.uf.value = String(preset.value);
@@ -1383,6 +1430,7 @@ renderSceneStructuredExport(data);
 
     if (els.llfPreset) {
       els.llfPreset.addEventListener("change", () => {
+        clearSceneIlluminationGuidanceEventMemory();
         const preset = lightLossPreset(els.llfPreset.value);
         if (preset.id !== "custom" && Number.isFinite(preset.value)) {
           els.llf.value = String(preset.value);
@@ -1397,12 +1445,14 @@ renderSceneStructuredExport(data);
       if (!el) return;
 
       el.addEventListener("input", () => {
+        clearSceneIlluminationGuidanceEventMemory();
         renderLightingGoalGuidance();
         renderFactorGuidance();
         invalidate({ clearFlow: true });
       });
 
       el.addEventListener("change", () => {
+        clearSceneIlluminationGuidanceEventMemory();
         renderLightingGoalGuidance();
         renderFactorGuidance();
         invalidate({ clearFlow: true });
