@@ -947,8 +947,8 @@ function hideVisibleFlowContext() {
       ].filter(Boolean).join(" "),
       carryForward: {
         allowed: true,
-        nextTool: "license-plate-range",
-        message: "Use this face recognition validation only when the working distance, HFOV, resolution, face width, and target pixels-per-face assumptions match the real recognition area."
+        nextTool: "area-planner",
+        message: "Use this face recognition validation as an optional specialty result for the active area, then return to Area Planner to review the area or choose another branch."
       }
     };
 
@@ -1171,7 +1171,7 @@ function writeFlow(data) {
       ["Validation type", "Optional face recognition validation"]
     ];
 
-    const handoff = "Use this result as a specialist validation branch for recognition areas only. If the same entrance, corridor, or approach zone also needs vehicle detail, continue to License Plate and validate that lane separately.";
+    const handoff = "Use this result as a specialist validation branch for recognition areas only. Return to Area Planner to review the area summary. If the same site also needs a vehicle-detail zone, create or select a License Plate zone and validate that branch separately.";
 
     const notes = [
       ["Engineering interpretation", data.interpretation],

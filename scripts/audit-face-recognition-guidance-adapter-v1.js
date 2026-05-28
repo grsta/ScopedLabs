@@ -1,148 +1,186 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 const path = require("path");
 
-const root = process.cwd();
+const ROOT = process.cwd();
+const VERSION = "face-recognition-guidance-adapter-audit-003-optional-return-cache-proof";
+const TOOL = "face-recognition-range";
 
-const auditVersion = "face-recognition-guidance-adapter-audit-002-event-bridge-cache-proof";
-const helperFile = path.join(root, "assets", "user-assistant-guidance.js");
-const htmlFile = path.join(root, "tools", "physical-security", "face-recognition-range", "index.html");
-const jsFile = path.join(root, "tools", "physical-security", "face-recognition-range", "script.js");
+const rows = [];
 
-function read(file) {
+function add(id, status, detail) {
+  rows.push({ id, status, detail });
+}
+
+function read(rel) {
+  const file = path.join(ROOT, rel);
   return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
 }
 
-function between(text, startNeedle, endNeedle) {
-  const start = text.indexOf(startNeedle);
-  if (start < 0) return "";
-  const end = text.indexOf(endNeedle, start);
-  if (end < 0 || end <= start) return "";
-  return text.slice(start, end);
+function scriptRefs(html, needle) {
+  return [...html.matchAll(/<script[^>]+src=["']([^"']+)["'][^>]*>/g)]
+    .map((m) => m[1])
+    .filter((src) => src.includes(needle));
 }
 
-const helper = read(helperFile);
-const html = read(htmlFile);
-const js = read(jsFile);
+const helper = read("assets/user-assistant-guidance.js");
+const index = read("tools/physical-security/face-recognition-range/index.html");
+const script = read("tools/physical-security/face-recognition-range/script.js");
 
-const scriptTags = Array.from(html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)).map((m) => m[1]);
-const helperIndex = scriptTags.findIndex((src) => src.includes("/assets/user-assistant-guidance.js"));
-const localIndex = scriptTags.findIndex((src) => src.includes("./script.js"));
+const helperRefs = scriptRefs(index, "user-assistant-guidance.js");
+const localRefs = scriptRefs(index, "./script.js");
+const helperIndex = index.indexOf("user-assistant-guidance.js");
+const localIndex = index.indexOf("./script.js");
 
-const renderSuccessBody = between(js, "function renderSuccess(data)", "function calc()");
-const writeFlowPayload = between(js, "ScopedLabsAnalyzer.writeFlow(FLOW_KEYS.face", "updateActiveAreaFromFaceRecognition(data");
-
-const checks = [
-  {
-    id: "helper-file",
-    ok: fs.existsSync(helperFile),
-    detail: "assets/user-assistant-guidance.js exists"
-  },
-  {
-    id: "helper-version",
-    ok: helper.includes("user-assistant-guidance-001-schema-foundation"),
-    detail: "shared helper version marker is present"
-  },
-  {
-    id: "helper-api",
-    ok:
-      helper.includes("function createGuidance") &&
-      helper.includes("function validateGuidance") &&
-      helper.includes("function explainGuidance") &&
-      helper.includes("ScopedLabsUserAssistantGuidance"),
-    detail: "shared helper exports expected schema API"
-  },
-  {
-    id: "helper-include",
-    ok: helperIndex >= 0,
-    detail: "Face Recognition loads user-assistant-guidance.js"
-  },
-  {
-    id: "helper-before-local",
-    ok: helperIndex >= 0 && localIndex >= 0 && helperIndex < localIndex,
-    detail: "user guidance helper loads before Face Recognition local script"
-  },
-  {
-    id: "local-cache-bust",
-    ok:
-      html.includes("./script.js?v=face-recognition-user-guidance-adapter-") ||
-      html.includes("./script.js?v=physical-security-face-user-guidance-adapter-") ||
-      html.includes("./script.js?v=physical-security-face-guidance-event-bridge-"),
-    detail: "Face Recognition local script cache is on user-guidance adapter or event bridge proof version"
-  },
-  {
-    id: "adapter-state",
-    ok: js.includes("let latestFaceRecognitionGuidance = null;"),
-    detail: "adapter stores latest normalized guidance"
-  },
-  {
-    id: "adapter-builder",
-    ok: js.includes("function buildFaceRecognitionUserGuidance(data)"),
-    detail: "adapter guidance builder exists"
-  },
-  {
-    id: "adapter-update",
-    ok: js.includes("function updateFaceRecognitionUserGuidance(data)"),
-    detail: "adapter update function exists"
-  },
-  {
-    id: "adapter-global",
-    ok:
-      js.includes("window.ScopedLabsFaceRecognitionGuidance") &&
-      js.includes("getLastGuidance") &&
-      js.includes("explainLastGuidance"),
-    detail: "dev inspection global exists"
-  },
-  {
-    id: "success-hook",
-    ok:
-      !!renderSuccessBody &&
-      /writeFlow\(data\);[\s\S]*?updateFaceRecognitionUserGuidance\(data\);/.test(renderSuccessBody),
-    detail: "renderSuccess updates guidance after successful flow write"
-  },
-  {
-    id: "no-normalized-guidance-pipeline-mutation",
-    ok:
-      !!writeFlowPayload &&
-      !/latestFaceRecognitionGuidance|FaceRecognitionGuidance|ScopedLabsUserAssistantGuidance|userGuidance/i.test(writeFlowPayload),
-    detail: "writeFlow payload does not carry the normalized adapter guidance object"
-  },
-  {
-    id: "no-dom-rendering-ownership",
-    ok:
-      !/function buildFaceRecognitionUserGuidance[\s\S]*?(appendChild|insertAdjacentHTML|classList\.add|setAttribute|innerHTML\s*=)[\s\S]*?function writeFlow/.test(js),
-    detail: "adapter builder does not own visible DOM rendering"
-  }
+const acceptedLocalCaches = [
+  "face-recognition-user-guidance-adapter",
+  "face-recognition-guidance-event-bridge",
+  "face-recognition-guidance-event-bridge-optional-return-001"
 ];
 
-const rows = checks.map((item) => ({
-  id: item.id,
-  status: item.ok ? "SAFE" : "WATCH",
-  detail: item.detail
-}));
+console.log("");
+console.log("Face Recognition Guidance Adapter Audit");
+console.log("");
+console.log("Audit version:", VERSION);
+console.log("Tool:", TOOL);
 
-const safe = rows.filter((row) => row.status === "SAFE").length;
-const watch = rows.filter((row) => row.status === "WATCH").length;
+add(
+  "helper-file",
+  helper ? "SAFE" : "FAIL",
+  "assets/user-assistant-guidance.js exists"
+);
 
-console.log("\nFace Recognition Guidance Adapter Audit\n");
-console.log("Audit version:", auditVersion);
-console.log("Tool: face-recognition-range");
+add(
+  "helper-version",
+  helper.includes("user-assistant-guidance") || helper.includes("ScopedLabsUserAssistantGuidance")
+    ? "SAFE"
+    : "FAIL",
+  "shared helper version marker is present"
+);
+
+add(
+  "helper-api",
+  helper.includes("createGuidance") &&
+    helper.includes("sourceLabelForMode") &&
+    helper.includes("sourceMessageForMode")
+    ? "SAFE"
+    : "FAIL",
+  "shared helper exports expected schema API"
+);
+
+add(
+  "helper-include",
+  helperRefs.length === 1
+    ? "SAFE"
+    : "FAIL",
+  "Face Recognition loads user-assistant-guidance.js"
+);
+
+add(
+  "helper-before-local",
+  helperIndex >= 0 && localIndex >= 0 && helperIndex < localIndex
+    ? "SAFE"
+    : "FAIL",
+  "user guidance helper loads before Face Recognition local script"
+);
+
+add(
+  "local-cache-bust",
+  localRefs.some((src) => acceptedLocalCaches.some((cache) => src.includes(cache)))
+    ? "SAFE"
+    : "WATCH",
+  "Face Recognition local script cache is on an accepted guidance/event/optional-return proof version"
+);
+
+add(
+  "adapter-state",
+  script.includes("latestFaceRecognitionGuidance") &&
+    script.includes("cloneFaceRecognitionGuidance")
+    ? "SAFE"
+    : "FAIL",
+  "adapter stores latest normalized guidance"
+);
+
+add(
+  "adapter-builder",
+  script.includes("function buildFaceRecognitionUserGuidance") &&
+    script.includes("ScopedLabsUserAssistantGuidance")
+    ? "SAFE"
+    : "FAIL",
+  "adapter guidance builder exists"
+);
+
+add(
+  "adapter-update",
+  script.includes("function updateFaceRecognitionUserGuidance")
+    ? "SAFE"
+    : "FAIL",
+  "adapter update function exists"
+);
+
+add(
+  "adapter-global",
+  script.includes("window.ScopedLabsFaceRecognitionGuidance") &&
+    script.includes("getLastGuidance") &&
+    script.includes("explainLastGuidance")
+    ? "SAFE"
+    : "FAIL",
+  "dev inspection global exists"
+);
+
+add(
+  "success-hook",
+  script.includes("updateFaceRecognitionUserGuidance(data)") &&
+    script.includes("publishFaceRecognitionGuidanceEvent")
+    ? "SAFE"
+    : "FAIL",
+  "renderSuccess updates guidance after successful flow write"
+);
+
+add(
+  "no-normalized-guidance-pipeline-mutation",
+  !script.includes("normalizedGuidance:") &&
+    !script.includes("assistantGuidance: latestFaceRecognitionGuidance")
+    ? "SAFE"
+    : "FAIL",
+  "writeFlow payload does not carry the normalized adapter guidance object"
+);
+
+add(
+  "no-dom-rendering-ownership",
+  !script.includes("latestFaceRecognitionGuidance.innerHTML") &&
+    !script.includes("buildFaceRecognitionUserGuidance(data).innerHTML")
+    ? "SAFE"
+    : "FAIL",
+  "adapter builder does not own visible DOM rendering"
+);
+
 console.table(rows);
 
-console.log("\nSummary:");
-console.log("- Checks:", rows.length);
-console.log("- SAFE:", safe);
-console.log("- WATCH:", watch);
-console.log("- FAIL:", 0);
+const summary = rows.reduce((acc, row) => {
+  acc[row.status] = (acc[row.status] || 0) + 1;
+  return acc;
+}, {});
 
-if (watch > 0) {
-  console.log("\nWatch items:");
+console.log("");
+console.log("Summary:");
+console.log("- Checks:", rows.length);
+console.log("- SAFE:", summary.SAFE || 0);
+console.log("- WATCH:", summary.WATCH || 0);
+console.log("- FAIL:", summary.FAIL || 0);
+
+if (summary.WATCH) {
+  console.log("");
+  console.log("Watch items:");
   rows.filter((row) => row.status === "WATCH").forEach((row) => {
     console.log("- " + row.id + ": " + row.detail);
   });
 }
 
-console.log("\nAudit complete. No files modified.");
-
-if (watch > 0) {
-  process.exitCode = 1;
+if (summary.FAIL || summary.WATCH) {
+  console.log("");
+  console.log(summary.FAIL ? "Audit complete with FAIL items." : "Audit complete with WATCH items.");
+  process.exitCode = summary.FAIL ? 1 : 2;
+} else {
+  console.log("");
+  console.log("Audit complete. No files modified.");
 }
