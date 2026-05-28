@@ -37,6 +37,8 @@ add("pipeline-metadata-optional", count(pipelines, 'flowGroup: "optional-special
 add("pipeline-renderer-group-support", pipeline.includes("function flowGroupFor(step)") && pipeline.includes("Optional specialty zones") ? "SAFE" : "FAIL", "shared pipeline renderer supports grouped flow rows");
 add("pipeline-renderer-backward-compatible", pipeline.includes("if (hasFlowGroups)") && pipeline.includes("} else {") && pipeline.includes('row.setAttribute("aria-label", "Pipeline steps")') ? "SAFE" : "FAIL", "shared pipeline renderer keeps flat fallback for other categories");
 add("pipeline-renderer-no-fetch", pipeline.includes("fetch(") ? "FAIL" : "SAFE", "pipeline renderer adds no runtime fetch");
+add("pipeline-separator-ascii", pipeline.includes('arrow.textContent = "->";') && !pipeline.includes('arrow.textContent = "?";') ? "SAFE" : "FAIL", "shared pipeline uses ASCII arrow separators");
+add("optional-branch-progress-isolated", pipeline.includes('currentGroup !== "optional-specialty-zone"') ? "SAFE" : "FAIL", "optional specialty zone pages do not mark the core pipeline as completed by flat index");
 
 add("category-preview-foundation", category.includes("Foundation") && category.includes("Area / Zone Planner") ? "SAFE" : "FAIL", "category preview shows foundation lane");
 add("category-preview-core", category.includes("Core area pipeline") && category.includes("Lens Selection") ? "SAFE" : "FAIL", "category preview shows core pipeline ending at Lens Selection");

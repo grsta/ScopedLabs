@@ -69,8 +69,17 @@
 
   function appendStepAnchor(row, step) {
     const index = Number(step.__slIndex || 0);
-    const isPast = index < currentIndex;
+    const currentStepData = indexedSteps[currentIndex] || {};
+    const currentGroup = hasFlowGroups ? flowGroupFor(currentStepData) : "";
+    const stepGroup = hasFlowGroups ? flowGroupFor(step) : "";
     const isCurrent = index === currentIndex;
+    const isPast = hasFlowGroups
+      ? (
+          stepGroup === currentGroup &&
+          index < currentIndex &&
+          currentGroup !== "optional-specialty-zone"
+        )
+      : index < currentIndex;
 
     const a = document.createElement("a");
     a.href = step.href;
@@ -107,7 +116,7 @@
         const arrow = document.createElement("span");
         arrow.className = "sl-pipeline-sep";
         arrow.setAttribute("aria-hidden", "true");
-        arrow.textContent = "?";
+        arrow.textContent = "->";
         row.appendChild(arrow);
       }
     });
@@ -196,7 +205,7 @@
         const arrow = document.createElement("span");
         arrow.className = "sl-pipeline-sep";
         arrow.setAttribute("aria-hidden", "true");
-        arrow.textContent = "?";
+        arrow.textContent = "->";
         row.appendChild(arrow);
       }
     });
