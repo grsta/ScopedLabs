@@ -204,21 +204,91 @@
     });
   }
 
+  function hasAuthReturnUrl() {
+    const search = new URLSearchParams(location.search || "");
+    const hash = new URLSearchParams(String(location.hash || "").replace(/^#/, ""));
+
+    return (
+      search.has("code") ||
+      search.has("token_hash") ||
+      search.has("type") ||
+      search.has("error") ||
+      hash.has("access_token") ||
+      hash.has("refresh_token") ||
+      hash.has("type") ||
+      hash.has("error")
+    );
+  }
+
+  async function restoreSessionFromAuthUrl() {
+    if (!hasAuthReturnUrl()) return false;
+
+    const search = new URLSearchParams(location.search || "");
+    const code = search.get("code");
+
+    if (code && typeof sb.auth.exchangeCodeForSession === "function") {
+      try {
+        const { data, error } = await sb.auth.exchangeCodeForSession(code);
+
+        if (error) {
+          console.warn("[auth.js] exchangeCodeForSession error:", error);
+        }
+
+        if (data && data.session) {
+          window.SL_AUTH.__session = data.session;
+          return true;
+        }
+      } catch (error) {
+        console.warn("[auth.js] exchangeCodeForSession failed:", error);
+      }
+    }
+
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      try {
+        const { data } = await sb.auth.getSession();
+        if (data && data.session) {
+          window.SL_AUTH.__session = data.session;
+          return true;
+        }
+      } catch {}
+
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+
+    return false;
+  }
+
   async function cleanupAuthHashIfPresent() {
     const hash = location.hash || "";
-    if (!hash) return;
+    const search = new URLSearchParams(location.search || "");
+    const authQueryKeys = ["code", "token_hash", "type", "error", "error_code", "error_description"];
+    const hasAuthQuery = authQueryKeys.some((key) => search.has(key));
 
+    if (!hash && !hasAuthQuery) return;
     if (hash === "#checkout" || hash === "#categories") return;
 
     try {
+      const { data } = await sb.auth.getSession();
+
+      if (!data || !data.session) {
+        return;
+      }
+
       const u = new URL(location.href);
-      u.hash = "";
+
+      if (hash && hash !== "#checkout" && hash !== "#categories") {
+        u.hash = "";
+      }
+
+      authQueryKeys.forEach((key) => u.searchParams.delete(key));
+
       history.replaceState({}, "", u.toString());
     } catch {}
   }
 
   (async () => {
     try {
+      await restoreSessionFromAuthUrl();
       await refreshUi();
       await cleanupAuthHashIfPresent();
 
