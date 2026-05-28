@@ -39,6 +39,7 @@ add("pipeline-renderer-backward-compatible", pipeline.includes("if (hasFlowGroup
 add("pipeline-renderer-no-fetch", pipeline.includes("fetch(") ? "FAIL" : "SAFE", "pipeline renderer adds no runtime fetch");
 add("pipeline-separator-unicode-arrow", pipeline.includes('arrow.textContent = "\\\\u2192";') && !pipeline.includes('arrow.textContent = "->";') ? "SAFE" : "FAIL", "shared pipeline uses Unicode-escaped arrow separators");
 add("optional-branch-progress-isolated", pipeline.includes('currentGroup !== "optional-specialty-zone"') ? "SAFE" : "FAIL", "optional specialty zone pages do not mark the core pipeline as completed by flat index");
+add("pipeline-descriptions-include-individual-tool", pipeline.includes("select an individual core tool") && pipeline.includes("select an individual specialty tool") ? "SAFE" : "FAIL", "core and optional descriptions explain direct tool selection");
 add("pipeline-separator-ascii", pipeline.includes('arrow.textContent = "->";') && !pipeline.includes('arrow.textContent = "?";') ? "SAFE" : "FAIL", "shared pipeline uses ASCII arrow separators");
 add("optional-branch-progress-isolated", pipeline.includes('currentGroup !== "optional-specialty-zone"') ? "SAFE" : "FAIL", "optional specialty zone pages do not mark the core pipeline as completed by flat index");
 

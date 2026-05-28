@@ -179,7 +179,7 @@
     appendGroupedFlow(
       groupsWrap,
       "Core area pipeline",
-      "Run this path for normal camera coverage areas.",
+      "Run this path for normal camera coverage areas, or select an individual core tool.",
       indexedSteps.filter((step) => flowGroupFor(step) === "core"),
       "Physical Security core area pipeline steps"
     );
@@ -187,7 +187,7 @@
     appendGroupedFlow(
       groupsWrap,
       "Optional specialty zones",
-      "Use these only when a specific area needs identity or vehicle capture validation.",
+      "Use these only when a specific area needs identity or vehicle capture validation, or select an individual specialty tool.",
       indexedSteps.filter((step) => flowGroupFor(step) === "optional-specialty-zone"),
       "Physical Security optional specialty zone checks"
     );
