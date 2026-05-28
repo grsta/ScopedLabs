@@ -31,6 +31,37 @@
 
   let editingAreaId = null;
 
+  function scrollAreaPlannerTarget(target, options = {}) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (!el || typeof el.scrollIntoView !== "function") return;
+
+    const focusTarget = options.focusId ? document.getElementById(options.focusId) : null;
+    const block = options.block || "center";
+
+    window.requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "smooth", block, inline: "nearest" });
+
+      if (focusTarget && typeof focusTarget.focus === "function") {
+        window.setTimeout(() => {
+          try {
+            focusTarget.focus({ preventScroll: true });
+          } catch {
+            focusTarget.focus();
+          }
+        }, 180);
+      }
+    });
+  }
+
+  function scrollToAreaEditForm() {
+    scrollAreaPlannerTarget("toolCard", { block: "start", focusId: "areaName" });
+  }
+
+  function scrollToAreaContinue() {
+    scrollAreaPlannerTarget("areaPlannerFlowActions", { block: "center" });
+  }
+
+
   const AREA_ROUTE_INTENTS = Object.freeze({
     CORE: "core-coverage",
     FACE: "face-recognition-zone",
@@ -1165,6 +1196,7 @@
         loadAreaToForm(nextActive);
         status("Active area set to " + (nextActive?.name || "selected area") + ".");
         render();
+        scrollToAreaContinue();
       });
     });
 
@@ -1176,6 +1208,7 @@
           loadAreaToForm(target);
           status("Editing " + target.name + ".");
           render();
+        scrollToAreaEditForm();
         }
       });
     });
