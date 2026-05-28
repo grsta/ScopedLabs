@@ -116,7 +116,7 @@
         const arrow = document.createElement("span");
         arrow.className = "sl-pipeline-sep";
         arrow.setAttribute("aria-hidden", "true");
-        arrow.textContent = "->";
+        arrow.textContent = "\u2192";
         row.appendChild(arrow);
       }
     });
@@ -205,7 +205,7 @@
         const arrow = document.createElement("span");
         arrow.className = "sl-pipeline-sep";
         arrow.setAttribute("aria-hidden", "true");
-        arrow.textContent = "->";
+        arrow.textContent = "\u2192";
         row.appendChild(arrow);
       }
     });
