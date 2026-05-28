@@ -439,6 +439,15 @@
           </div>
 
           <div class="field">
+            <div class="label-row"><label for="routeIntent">Planning Path</label></div>
+            <select id="routeIntent">
+              <option value="core-coverage" selected>Core Coverage Area - start at Scene Illumination</option>
+              <option value="face-recognition-zone">Face Recognition Zone - open Face Recognition Range</option>
+              <option value="license-plate-zone">License Plate Zone - open License Plate Range</option>
+            </select>
+          </div>
+
+          <div class="field">
             <div class="label-row"><label for="protectedLengthFt">Protected Length / Scene Width (ft)</label></div>
             <input id="protectedLengthFt" type="number" min="1" step="1" placeholder="Example: 100" />
           </div>
@@ -543,7 +552,7 @@
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=physical-security-area-planner-buttons-004"></script>
+  <script src="./script.js?v=physical-security-area-planner-route-intent-001"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "areaPlannerFlowActions" });
   </script>

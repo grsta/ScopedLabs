@@ -9,6 +9,7 @@
   const els = {
     areaName: $("areaName"),
     areaType: $("areaType"),
+    routeIntent: $("routeIntent"),
     protectedLengthFt: $("protectedLengthFt"),
     distanceToTargetPlaneFt: $("distanceToTargetPlaneFt"),
     assumedHfovDeg: $("assumedHfovDeg"),
@@ -29,6 +30,73 @@
   };
 
   let editingAreaId = null;
+
+  const AREA_ROUTE_INTENTS = Object.freeze({
+    CORE: "core-coverage",
+    FACE: "face-recognition-zone",
+    PLATE: "license-plate-zone"
+  });
+
+  function normalizeRouteIntent(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+
+    if (normalized === AREA_ROUTE_INTENTS.FACE || normalized === "face" || normalized === "face-recognition") {
+      return AREA_ROUTE_INTENTS.FACE;
+    }
+
+    if (normalized === AREA_ROUTE_INTENTS.PLATE || normalized === "plate" || normalized === "license-plate") {
+      return AREA_ROUTE_INTENTS.PLATE;
+    }
+
+    return AREA_ROUTE_INTENTS.CORE;
+  }
+
+  function routeIntentLabel(value) {
+    const intent = normalizeRouteIntent(value);
+
+    if (intent === AREA_ROUTE_INTENTS.FACE) return "Face Recognition Zone";
+    if (intent === AREA_ROUTE_INTENTS.PLATE) return "License Plate Zone";
+
+    return "Core Coverage Area";
+  }
+
+  function routeIntentContinueLabel(value) {
+    const intent = normalizeRouteIntent(value);
+
+    if (intent === AREA_ROUTE_INTENTS.FACE) return "Face Recognition Range";
+    if (intent === AREA_ROUTE_INTENTS.PLATE) return "License Plate Range";
+
+    return "Scene Illumination";
+  }
+
+  function routeIntentUrl(value) {
+    const intent = normalizeRouteIntent(value);
+
+    if (intent === AREA_ROUTE_INTENTS.FACE) return "/tools/physical-security/face-recognition-range/";
+    if (intent === AREA_ROUTE_INTENTS.PLATE) return "/tools/physical-security/license-plate-range/";
+
+    return NEXT_URL;
+  }
+
+  function getActiveAreaFromLedger(ledger) {
+    if (!ledger || !Array.isArray(ledger.areas) || !ledger.activeAreaId) return null;
+    return ledger.areas.find((area) => area && area.id === ledger.activeAreaId) || null;
+  }
+
+  function getActiveAreaRouteUrl() {
+    const api = state();
+    const ledger = api && typeof api.readLedger === "function" ? api.readLedger() : null;
+    const activeArea = getActiveAreaFromLedger(ledger);
+    return routeIntentUrl(activeArea && activeArea.routeIntent);
+  }
+
+  function updateContinueButton(ledger) {
+    if (!els.continueBtn) return;
+
+    const activeArea = getActiveAreaFromLedger(ledger);
+    els.continueBtn.textContent = "Continue \u2192 " + routeIntentContinueLabel(activeArea && activeArea.routeIntent);
+  }
+
 
   function state() {
     return window.ScopedLabsPhysicalSecurityAreaState;
@@ -111,6 +179,7 @@
     els.areaName.value = "";
     els.areaName.placeholder = nextName || "Example: Front Door";
     els.areaType.value = "General Coverage";
+    if (els.routeIntent) els.routeIntent.value = AREA_ROUTE_INTENTS.CORE;
     els.protectedLengthFt.value = "";
     els.protectedLengthFt.placeholder = "Example: 100";
     els.distanceToTargetPlaneFt.value = "";
@@ -159,6 +228,7 @@
     els.areaName.placeholder = "Example: " + nextName;
 
     els.areaType.value = "General Coverage";
+    if (els.routeIntent) els.routeIntent.value = AREA_ROUTE_INTENTS.CORE;
 
     els.protectedLengthFt.value = "";
     els.protectedLengthFt.placeholder = "Example: 100";
@@ -207,6 +277,7 @@
     editingAreaId = area.id;
     els.areaName.value = area.name || "";
     els.areaType.value = area.areaType || "General Coverage";
+    if (els.routeIntent) els.routeIntent.value = normalizeRouteIntent(area.routeIntent);
     els.protectedLengthFt.value = area.protectedLengthFt ? String(area.protectedLengthFt) : "";
     els.distanceToTargetPlaneFt.value = area.distanceToTargetPlaneFt ? String(area.distanceToTargetPlaneFt) : "";
     els.assumedHfovDeg.value = area.assumedHfovDeg ? String(area.assumedHfovDeg) : "";
@@ -222,6 +293,8 @@
       id,
       name,
       areaType: els.areaType.value || "General Coverage",
+      routeIntent: normalizeRouteIntent(els.routeIntent && els.routeIntent.value),
+      routeIntentLabel: routeIntentLabel(els.routeIntent && els.routeIntent.value),
       protectedLengthFt: formNumber(els.protectedLengthFt.value),
       distanceToTargetPlaneFt: formNumber(els.distanceToTargetPlaneFt.value),
       assumedHfovDeg: formNumber(els.assumedHfovDeg.value),
@@ -1041,6 +1114,7 @@
     }
 
     renderAreaSummary(ledger);
+    updateContinueButton(ledger);
 
     if (!els.areaList) return;
 
@@ -1064,6 +1138,7 @@
         '<article class="area-card' + activeClass + '">' +
           '<div class="pill-row">' +
             '<span class="pill">' + (area.id === ledger.activeAreaId ? 'Active Area' : 'Area') + '</span>' +
+            '<span class="pill">' + escapeHtml(routeIntentLabel(area.routeIntent)) + '</span>' +
             '<span class="pill">' + escapeHtml(formatAreaWorkflowStatus(area.status)) + '</span>' +
           '</div>' +
           '<h3 class="h3">' + escapeHtml(area.name) + '</h3>' +
@@ -1188,12 +1263,12 @@
 
     if (shouldSaveForm) {
       if (!saveArea()) return;
-      window.location.href = NEXT_URL;
+      window.location.href = getActiveAreaRouteUrl();
       return;
     }
 
     if (hasSavedPlanningArea()) {
-      window.location.href = NEXT_URL;
+      window.location.href = getActiveAreaRouteUrl();
       return;
     }
 
