@@ -415,7 +415,7 @@ function hideVisibleFlowContext() {
 
     const classification = prev.classification || areaValues.area?.faceRecognitionClass || "";
     const hfov = num(prev.hfov ?? areaValues.hfov);
-    const dist = num(prev.actualDist ?? prev.dist ?? areaValues.dist);
+    const dist = num(areaValues.dist ?? prev.actualDist ?? prev.dist);
     const res = num(prev.res ?? areaValues.res);
     const ppp = num(areaValues.ppp);
     const pw = num(areaValues.pw);
@@ -454,7 +454,7 @@ function hideVisibleFlowContext() {
     visibleFlowContextEl().hidden = false;
     visibleFlowContextEl().innerHTML =
       (areaContext ? areaContext + "<br><br>" : "") +
-      (parts.length ? "<strong>Imported Assumptions</strong><br>Face / area results detected ? " + parts.join(", ") + "." : "") +
+      (parts.length ? "<strong>Imported Assumptions</strong><br>Face / area results detected \u2192 " + parts.join(", ") + "." : "") +
       "<br><br>This final step checks whether the same active-area optic can support readable license plate capture." +
       renderManualOverrideNote();
   }
