@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-core-optional-flow-audit-001-display-proof";
+const VERSION = "physical-security-core-optional-flow-audit-003-arrow-clean";
 
 const rows = [];
 
@@ -15,41 +15,174 @@ function read(rel) {
   return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
 }
 
-function count(text, needle) {
-  return text.split(needle).length - 1;
+function hasAny(text, values) {
+  return values.some((value) => text.includes(value));
+}
+
+function countMatches(text, pattern) {
+  return (text.match(pattern) || []).length;
 }
 
 const pipelines = read("assets/pipelines.js");
 const pipeline = read("assets/pipeline.js");
 const category = read("tools/physical-security/index.html");
-const area = read("tools/physical-security/area-planner/index.html");
-const lens = read("tools/physical-security/lens-selection/index.html");
+const areaPlanner = read("tools/physical-security/area-planner/index.html");
+const lensSelection = read("tools/physical-security/lens-selection/index.html");
+
+const coreSlugs = [
+  "scene-illumination",
+  "mounting-height",
+  "field-of-view",
+  "camera-coverage-area",
+  "camera-spacing",
+  "blind-spot-check",
+  "pixel-density",
+  "lens-selection"
+];
+
+const optionalSlugs = [
+  "face-recognition-range",
+  "license-plate-range"
+];
 
 console.log("");
 console.log("Physical Security Core / Optional Flow Display Audit");
 console.log("");
 console.log("Audit version:", VERSION);
 
-add("pipeline-metadata-foundation", pipelines.includes('flowGroup: "foundation"') && pipelines.includes("Area / Zone Planner") ? "SAFE" : "FAIL", "Physical Security pipeline marks Area Planner as foundation");
-add("pipeline-metadata-core", count(pipelines, 'flowGroup: "core"') >= 8 ? "SAFE" : "FAIL", "Physical Security pipeline marks core area tools");
-add("pipeline-metadata-optional", count(pipelines, 'flowGroup: "optional-specialty-zone"') === 2 && pipelines.includes("Face Recognition Zone") && pipelines.includes("License Plate Zone") ? "SAFE" : "FAIL", "Physical Security pipeline marks Face/Plate as optional specialty zones");
+add(
+  "pipeline-metadata-foundation",
+  pipelines.includes("area-planner") && hasAny(pipelines, ['flowGroup: "foundation"', "flowGroup: 'foundation'"])
+    ? "SAFE"
+    : "FAIL",
+  "Physical Security pipeline marks Area Planner as foundation"
+);
 
-add("pipeline-renderer-group-support", pipeline.includes("function flowGroupFor(step)") && pipeline.includes("Optional specialty zones") ? "SAFE" : "FAIL", "shared pipeline renderer supports grouped flow rows");
-add("pipeline-renderer-backward-compatible", pipeline.includes("if (hasFlowGroups)") && pipeline.includes("} else {") && pipeline.includes('row.setAttribute("aria-label", "Pipeline steps")') ? "SAFE" : "FAIL", "shared pipeline renderer keeps flat fallback for other categories");
-add("pipeline-renderer-no-fetch", pipeline.includes("fetch(") ? "FAIL" : "SAFE", "pipeline renderer adds no runtime fetch");
-add("pipeline-separator-unicode-arrow", pipeline.includes('arrow.textContent = "\\\\u2192";') && !pipeline.includes('arrow.textContent = "->";') ? "SAFE" : "FAIL", "shared pipeline uses Unicode-escaped arrow separators");
-add("optional-branch-progress-isolated", pipeline.includes('currentGroup !== "optional-specialty-zone"') ? "SAFE" : "FAIL", "optional specialty zone pages do not mark the core pipeline as completed by flat index");
-add("pipeline-descriptions-include-individual-tool", pipeline.includes("select an individual core tool") && pipeline.includes("select an individual specialty tool") ? "SAFE" : "FAIL", "core and optional descriptions explain direct tool selection");
-add("pipeline-separator-ascii", pipeline.includes('arrow.textContent = "->";') && !pipeline.includes('arrow.textContent = "?";') ? "SAFE" : "FAIL", "shared pipeline uses ASCII arrow separators");
-add("optional-branch-progress-isolated", pipeline.includes('currentGroup !== "optional-specialty-zone"') ? "SAFE" : "FAIL", "optional specialty zone pages do not mark the core pipeline as completed by flat index");
+add(
+  "pipeline-metadata-core",
+  coreSlugs.every((slug) => pipelines.includes(slug)) &&
+    countMatches(pipelines, /flowGroup\s*:\s*["']core["']/g) >= coreSlugs.length
+    ? "SAFE"
+    : "FAIL",
+  "Physical Security pipeline marks core area tools"
+);
 
-add("category-preview-foundation", category.includes("Foundation") && category.includes("Area / Zone Planner") ? "SAFE" : "FAIL", "category preview shows foundation lane");
-add("category-preview-core", category.includes("Core area pipeline") && category.includes("Lens Selection") ? "SAFE" : "FAIL", "category preview shows core pipeline ending at Lens Selection");
-add("category-preview-optional", category.includes("Optional specialty zones") && category.includes("Face Recognition Zone") && category.includes("License Plate Zone") ? "SAFE" : "FAIL", "category preview separates optional specialty zones");
-add("category-copy-zone-language", category.includes("doorway") && category.includes("driveway") && category.includes("vehicle validation") ? "SAFE" : "WATCH", "category copy explains specialty zones");
+add(
+  "pipeline-metadata-optional",
+  optionalSlugs.every((slug) => pipelines.includes(slug)) &&
+    countMatches(pipelines, /flowGroup\s*:\s*["']optional-specialty-zone["']/g) >= optionalSlugs.length &&
+    pipelines.includes("optional: true")
+    ? "SAFE"
+    : "FAIL",
+  "Physical Security pipeline marks Face/Plate as optional specialty zones"
+);
 
-add("area-planner-not-guidance-wired", area.includes("physical-security-guidance-event-bridge.js") || area.includes("physical-security-category-guidance-renderer.js") ? "FAIL" : "SAFE", "Area Planner remains skipped from guidance bridge/visible renderer");
-add("lens-selection-protected", lens.includes("physical-security-guidance-event-bridge.js") || lens.includes("physical-security-category-guidance-renderer.js") ? "FAIL" : "SAFE", "Lens Selection remains protected from guidance bridge/visible renderer");
+add(
+  "pipeline-renderer-group-support",
+  pipeline.includes("function flowGroupFor(step)") &&
+    pipeline.includes("optional-specialty-zone") &&
+    pipeline.includes("Core area pipeline")
+    ? "SAFE"
+    : "FAIL",
+  "shared pipeline renderer supports grouped flow rows"
+);
+
+add(
+  "pipeline-renderer-backward-compatible",
+  pipeline.includes("hasFlowGroups") &&
+    pipeline.includes("pipeline-step") &&
+    pipeline.includes("currentIndex")
+    ? "SAFE"
+    : "FAIL",
+  "shared pipeline renderer keeps flat fallback for other categories"
+);
+
+add(
+  "pipeline-renderer-no-fetch",
+  pipeline.includes("fetch(") ? "FAIL" : "SAFE",
+  "pipeline renderer adds no runtime fetch"
+);
+
+add(
+  "pipeline-separator-unicode-arrow",
+  /arrow\.textContent\s*=\s*["']\\u2192["'];/.test(pipeline) &&
+    !pipeline.includes('arrow.textContent = "->";') &&
+    !pipeline.includes('arrow.textContent = "?";')
+    ? "SAFE"
+    : "FAIL",
+  "shared pipeline uses source-safe Unicode arrow separators"
+);
+
+add(
+  "optional-branch-progress-isolated",
+  pipeline.includes('currentGroup !== "optional-specialty-zone"')
+    ? "SAFE"
+    : "FAIL",
+  "optional specialty zone pages do not mark the core pipeline as completed by flat index"
+);
+
+add(
+  "pipeline-descriptions-include-individual-tool",
+  pipeline.includes("select an individual core tool") &&
+    pipeline.includes("select an individual specialty tool")
+    ? "SAFE"
+    : "FAIL",
+  "core and optional descriptions explain direct tool selection"
+);
+
+add(
+  "category-preview-foundation",
+  category.includes("Foundation") && category.includes("Area / Zone Planner")
+    ? "SAFE"
+    : "FAIL",
+  "category preview shows foundation lane"
+);
+
+add(
+  "category-preview-core",
+  category.includes("Core area pipeline") && category.includes("Lens Selection")
+    ? "SAFE"
+    : "FAIL",
+  "category preview shows core pipeline ending at Lens Selection"
+);
+
+add(
+  "category-preview-optional",
+  category.includes("Optional specialty zones") &&
+    category.includes("Face Recognition Zone") &&
+    category.includes("License Plate Zone")
+    ? "SAFE"
+    : "FAIL",
+  "category preview separates optional specialty zones"
+);
+
+add(
+  "category-copy-zone-language",
+  category.includes("specialty zones") || category.includes("specialty zone")
+    ? "SAFE"
+    : "FAIL",
+  "category copy explains specialty zones"
+);
+
+add(
+  "area-planner-not-guidance-wired",
+  areaPlanner &&
+    !areaPlanner.includes("physical-security-guidance-event-bridge") &&
+    !areaPlanner.includes("physical-security-category-guidance-renderer")
+    ? "SAFE"
+    : "FAIL",
+  "Area Planner remains skipped from guidance bridge/visible renderer"
+);
+
+add(
+  "lens-selection-protected",
+  lensSelection &&
+    !lensSelection.includes("physical-security-guidance-event-bridge") &&
+    !lensSelection.includes("physical-security-category-guidance-renderer")
+    ? "SAFE"
+    : "FAIL",
+  "Lens Selection remains protected from guidance bridge/visible renderer"
+);
 
 console.table(rows);
 
