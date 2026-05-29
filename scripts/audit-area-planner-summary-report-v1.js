@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "area-planner-summary-report-audit-002-summary-ui-cache";
+const VERSION = "area-planner-summary-report-audit-006-no-item-context-reference";
 
 const rows = [];
 
@@ -26,7 +26,7 @@ console.log("Audit version:", VERSION);
 
 add(
   "summary-cache-bumped",
-  index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-007")
+  index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-010")
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped for summary/report polish"
@@ -95,6 +95,14 @@ add(
     ? "SAFE"
     : "FAIL",
   "Printable report separates grouped area/zone sections"
+);
+
+add(
+  "print-report-no-undefined-item-context",
+  !/\bitemContext\b/.test(script)
+    ? "SAFE"
+    : "FAIL",
+  "Printable report does not reference undefined itemContext"
 );
 
 add(

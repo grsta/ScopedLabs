@@ -938,6 +938,15 @@
   }
 
 
+  function areaContextText(item) {
+    if (!item) return "";
+    return [
+      item.areaTypeLabel,
+      item.routeIntentLabel,
+      item.cameraCountText
+    ].filter(Boolean).join(" | ");
+  }
+
   function buildAreaSummaryReportHtml(model) {
     const overallStatus = worstStatus(model.areas.map((item) => item.overallStatus));
     const statusClass = areaReportStatusClass(overallStatus);
