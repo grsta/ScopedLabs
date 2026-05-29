@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-037-iso-camera-cad-marker-aim
+ * Version: scopedlabs-graphics-038-iso-overlap-side-guides
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-037-iso-camera-cad-marker-aim";
+  const VERSION = "scopedlabs-graphics-038-iso-overlap-side-guides";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -779,7 +779,7 @@
     const targetOverlapPct = clamp(num(m.targetOverlapPct, 0), 0, 100);
     const actualOverlapPct = clamp(num(m.actualOverlapPct, 0), 0, 100);
     const actualSpacingFt = Math.max(0, num(m.actualSpacingFt, 0));
-    const depthLabel = m.depthLabel || "Coverage depth (visual)";
+    const depthLabel = m.depthLabel || "Coverage depth (axis)";
 
     const cameras = m.cameras;
     const coverageSegments = m.coverageSegments;
@@ -1021,7 +1021,7 @@
     const targetOverlapPct = clamp(num(m.targetOverlapPct, 0), 0, 100);
     const actualOverlapPct = clamp(num(m.actualOverlapPct, 0), 0, 100);
     const actualSpacingFt = Math.max(0, num(m.actualSpacingFt, 0));
-    const depthLabel = m.depthLabel || "Coverage depth (visual)";
+    const depthLabel = m.depthLabel || "Coverage depth (axis)";
 
     const cameras = m.cameras;
     const coverageSegments = m.coverageSegments;
@@ -1198,7 +1198,10 @@
         ? '<text x="' + (frontRight.x - 10) + '" y="' + (frontLeft.y - 12) + '" text-anchor="end" fill="rgba(255,188,166,.98)" font-size="12" font-weight="950">' + escapeHtml(fmtFt(uncoveredFt)) + ' uncovered</text>'
         : '<text x="' + (frontRight.x - 10) + '" y="' + (frontLeft.y - 12) + '" text-anchor="end" fill="rgba(125,255,152,.96)" font-size="12" font-weight="950">No modeled gap</text>');
 
-    const frustumSvg = cameras.slice(0, 8).map((camera, index) => {
+    const renderedCameras = cameras.slice(0, 8);
+    const renderedCameraCount = renderedCameras.length;
+
+    const frustumSvg = renderedCameras.map((camera, index) => {
       const centerFt = num(camera.centerFt, spanFt / 2);
       const startFt = num(camera.footprintStartFt, centerFt);
       const endFt = num(camera.footprintEndFt, centerFt);
@@ -1226,6 +1229,26 @@
       const lensTipX = headX + Math.cos(aimAngleRad) * (42 * iconScale);
       const lensTipY = headY + Math.sin(aimAngleRad) * (42 * iconScale);
 
+      const hasModeledOverlap = renderedCameraCount > 1 && (
+        overlapSegments.length > 0 ||
+        totalOverlapFt > 0.001 ||
+        actualOverlapPct > 0.001
+      );
+
+      const showLeftOverlapGuide = hasModeledOverlap && index > 0;
+      const showRightOverlapGuide = hasModeledOverlap && index < (renderedCameraCount - 1);
+
+      const leftOverlapPoint = backPoint(startFt);
+      const rightOverlapPoint = backPoint(endFt);
+
+      const overlapGuideSvg = ''
+        + (showLeftOverlapGuide
+          ? '<line data-sl-visual-part="iso-camera-overlap-guide-left" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + leftOverlapPoint.x.toFixed(1) + '" y2="' + leftOverlapPoint.y.toFixed(1) + '" stroke="rgba(255,211,79,.82)" stroke-width="1.2" stroke-dasharray="4 4" stroke-linecap="round" />'
+          : '')
+        + (showRightOverlapGuide
+          ? '<line data-sl-visual-part="iso-camera-overlap-guide-right" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + rightOverlapPoint.x.toFixed(1) + '" y2="' + rightOverlapPoint.y.toFixed(1) + '" stroke="rgba(255,211,79,.82)" stroke-width="1.2" stroke-dasharray="4 4" stroke-linecap="round" />'
+          : '');
+
       const depthLineTopY = headY + (16 * iconScale);
       const depthLineBottomY = floorAnchor.y;
       const labelY = headY - (18 * iconScale) - 6;
@@ -1237,6 +1260,7 @@
         + ' L ' + fe.x.toFixed(1) + ' ' + fe.y.toFixed(1)
         + ' L ' + fs.x.toFixed(1) + ' ' + fs.y.toFixed(1)
         + ' Z" fill="rgba(82,201,112,.035)" stroke="rgba(125,255,152,.34)" stroke-width="1.0" />'
+        + overlapGuideSvg
         + '<line data-sl-visual-part="iso-camera-depth-line" x1="' + floorAnchor.x.toFixed(1) + '" y1="' + depthLineTopY.toFixed(1) + '" x2="' + floorAnchor.x.toFixed(1) + '" y2="' + depthLineBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.30)" stroke-width="1" stroke-dasharray="4 5" />'
         + '<circle data-sl-visual-part="iso-camera-floor-dot" cx="' + floorAnchor.x.toFixed(1) + '" cy="' + floorAnchor.y.toFixed(1) + '" r="2.0" fill="rgba(226,232,240,.74)" />'
         + '<line data-sl-visual-part="iso-camera-aim-line" x1="' + lensTipX.toFixed(1) + '" y1="' + lensTipY.toFixed(1) + '" x2="' + targetX.toFixed(1) + '" y2="' + targetY.toFixed(1) + '" stroke="rgba(125,255,152,.50)" stroke-width="1.0" stroke-dasharray="3 4" />'
