@@ -1211,10 +1211,26 @@
     return lines.join("\n");
   }
 
+  function setCopySummaryButtonFeedback(label, isError) {
+    if (!els.copySummaryJson) return;
+
+    const original = els.copySummaryJson.dataset.originalLabel || "Copy Client Summary";
+    els.copySummaryJson.dataset.originalLabel = original;
+    els.copySummaryJson.textContent = label;
+    els.copySummaryJson.disabled = true;
+
+    window.clearTimeout(els.copySummaryJson._feedbackTimer);
+    els.copySummaryJson._feedbackTimer = window.setTimeout(() => {
+      els.copySummaryJson.textContent = original;
+      els.copySummaryJson.disabled = false;
+    }, isError ? 2400 : 1600);
+  }
+
   function copyAreaSummaryJson() {
     const model = window.ScopedLabsPhysicalSecurityAreaSummary || physicalSecuritySummaryModel(state()?.readLedger() || { areas: [] });
 
     if (!model || !model.areas.length) {
+      setCopySummaryButtonFeedback("Nothing to copy", true);
       status("Add at least one planning area before copying the area summary.");
       return;
     }
@@ -1223,8 +1239,14 @@
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text)
-        .then(() => status("Client-ready area summary copied."))
-        .catch(() => status("Could not copy automatically. Select and copy from the printed summary instead."));
+        .then(() => {
+          setCopySummaryButtonFeedback("Copied ?", false);
+          status("Client-ready area summary copied.");
+        })
+        .catch(() => {
+          setCopySummaryButtonFeedback("Copy failed", true);
+          status("Could not copy automatically. Select and copy from the printed summary instead.");
+        });
       return;
     }
 
