@@ -1113,7 +1113,7 @@ function escapeHtml(value) {
     const reserveCheck = singleCamera
       ? "Not applicable - one camera"
       : highOverlap
-        ? "High overlap - valid but inefficient"
+        ? "High overlap - valid but camera-heavy"
         : data.spacingClass === "Tight Spacing"
           ? "Conservative - camera-heavy"
           : data.ovPct >= 25
@@ -1199,7 +1199,7 @@ function escapeHtml(value) {
       },
       checks: [
         { kicker: "Coverage check", title: coverageCheck, copy: highOverlap ? "Spacing stays inside the usable footprint, but the layout is doing that by carrying a lot of shared coverage." : "Does spacing stay inside the effective usable footprint?" },
-        { kicker: singleCamera ? "Single-camera check" : "Overlap check", title: reserveCheck, copy: singleCamera ? "Camera-to-camera overlap is not applicable without an adjacent camera." : highOverlap ? "The overlap target is helping continuity, but it is also making the branch camera-heavy. Keep it only if that redundancy is intentional." : "Is the camera-to-camera overlap target helping continuity without over-compressing layout?" },
+        { kicker: singleCamera ? "Single-camera check" : "Overlap check", title: reserveCheck, copy: singleCamera ? "Camera-to-camera overlap is not applicable without an adjacent camera." : highOverlap ? "The overlap target is helping continuity, but it is also making the branch camera-heavy. Keep it only if that redundancy is intentional; otherwise reconsider camera count or overlap target." : "Is the camera-to-camera overlap target helping continuity without over-compressing layout?" },
         { kicker: "Design path", title: designPath, copy: highOverlap ? "Continue to Blind Spot validation if the redundancy is intentional, or test fewer cameras / lower overlap if efficiency matters." : "Use this to decide whether to correct now or validate downstream." }
       ],
       targets: {
