@@ -1832,7 +1832,7 @@ function assistantStatusClass(data) {
       targetOverlapPct: singleCamera ? 0 : requestedOverlapPct,
       actualOverlapPct,
       actualSpacingFt: singleCamera ? 0 : spacingFt,
-      depthLabel: "Coverage depth (visual)",
+      depthLabel: "Coverage depth (axis)",
       cameras,
       coverageSegments,
       overlapSegments,
