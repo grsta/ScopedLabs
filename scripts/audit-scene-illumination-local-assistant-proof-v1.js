@@ -2,6 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
+const VERSION = "scene-illumination-local-assistant-proof-001";
+const MOUNT_ID = "sceneIlluminationLocalAssistantMount";
 
 function read(rel) {
   const abs = path.join(ROOT, rel);
@@ -47,60 +49,50 @@ add(checks, "scene-script-exists", sceneScript ? "SAFE" : "FAIL", sceneScript ? 
   );
 });
 
-const candidateMountIds = [
-  "sceneIlluminationAssistantMount",
-  "localAssistantMount",
-  "designAssistant",
-  "assistant",
-  "results",
-  "next-step-row",
-  "flow-note",
-  "toolCard"
-];
-
-const presentMountSignals = candidateMountIds.filter(function (id) {
-  return has(index, 'id="' + id + '"') || has(index, "id='" + id + "'");
-});
+add(
+  checks,
+  "visible-mount-present",
+  has(index, 'id="' + MOUNT_ID + '"') || has(index, "id='" + MOUNT_ID + "'") ? "SAFE" : "FAIL",
+  "Scene Illumination has dedicated local assistant mount"
+);
 
 add(
   checks,
-  "mount-anchor-inventory",
-  presentMountSignals.length ? "SAFE" : "WATCH",
-  presentMountSignals.length
-    ? "Potential mount/anchor IDs found: " + presentMountSignals.join(", ")
-    : "No obvious mount anchor found; proof script should add a dedicated hidden mount"
+  "local-script-cache-bumped",
+  has(index, "./script.js?v=" + VERSION) ? "SAFE" : "FAIL",
+  "Scene Illumination local script cache points to " + VERSION
 );
 
-const updateSignals = [
-  "calculate",
-  'addEventListener("submit"',
-  "addEventListener('submit'",
-  "update",
+[
+  "ScopedLabsSceneIlluminationLocalAssistantProof",
+  "ScopedLabsPhysicalSecurityLocalAssistant",
+  "ScopedLabsPhysicalSecurityToolAssistantAdapters",
+  "scopedlabs:physical-security-guidance-updated",
+  "sceneIlluminationLocalAssistantProof",
+  "buildModel",
   "render",
-  "results",
-  "scopedlabs:physical-security-guidance-updated"
-].filter(function (signal) {
-  return has(sceneScript, signal);
+  "clear"
+].forEach(function (signal) {
+  add(
+    checks,
+    "proof-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/-$/, ""),
+    has(combined, signal) ? "SAFE" : "FAIL",
+    has(combined, signal) ? "Detected proof signal: " + signal : "Missing proof signal: " + signal
+  );
 });
 
 add(
   checks,
-  "calculation-render-signal-inventory",
-  updateSignals.length ? "SAFE" : "WATCH",
-  updateSignals.length
-    ? "Scene script has calculation/render signals: " + updateSignals.join(", ")
-    : "No calculation/render signals detected"
+  "category-renderer-still-not-on-scene",
+  !has(index, "physical-security-category-guidance-renderer.js") ? "SAFE" : "FAIL",
+  "Scene Illumination does not load visible category/master renderer"
 );
 
 add(
   checks,
-  "local-assistant-not-visible-yet",
-  !has(combined, "sceneIlluminationLocalAssistantMount") && !has(combined, "Scene Illumination Assistant")
-    ? "SAFE"
-    : "WATCH",
-  !has(combined, "sceneIlluminationLocalAssistantMount") && !has(combined, "Scene Illumination Assistant")
-    ? "No existing visible Scene Illumination local assistant proof detected"
-    : "Existing Scene Illumination assistant proof signals detected"
+  "report-summary-still-not-on-scene",
+  !has(index, "physical-security-report-summary.js") ? "SAFE" : "FAIL",
+  "Scene Illumination does not load category report summary helper"
 );
 
 const areaPlanner = read(areaPlannerRel);
@@ -110,25 +102,28 @@ const lens = read(lensRel);
   "physical-security-local-assistant.js",
   "physical-security-tool-assistant-adapters.js",
   "physical-security-category-guidance-renderer.js",
-  "physical-security-report-summary.js"
+  "physical-security-report-summary.js",
+  MOUNT_ID,
+  "ScopedLabsSceneIlluminationLocalAssistantProof"
 ].forEach(function (asset) {
   add(
     checks,
     "area-planner-guard-" + asset.replace(/[^a-z0-9]+/gi, "-").replace(/-$/, ""),
     !has(areaPlanner, asset) ? "SAFE" : "FAIL",
-    !has(areaPlanner, asset) ? "Area Planner remains free of " + asset : "Area Planner contains protected asset " + asset
+    !has(areaPlanner, asset) ? "Area Planner remains free of " + asset : "Area Planner contains protected proof signal " + asset
   );
 
   add(
     checks,
     "lens-selection-guard-" + asset.replace(/[^a-z0-9]+/gi, "-").replace(/-$/, ""),
     !has(lens, asset) ? "SAFE" : "FAIL",
-    !has(lens, asset) ? "Lens Selection remains free of " + asset : "Lens Selection contains protected asset " + asset
+    !has(lens, asset) ? "Lens Selection remains free of " + asset : "Lens Selection contains protected proof signal " + asset
   );
 });
 
 console.log("");
-console.log("Scene Illumination Local Assistant Proof Preflight");
+console.log("Scene Illumination Local Assistant Proof Audit");
+console.log("Audit version:", VERSION);
 console.table(checks);
 
 const failCount = checks.filter(function (check) { return check.status === "FAIL"; }).length;
@@ -146,5 +141,5 @@ if (failCount) {
   process.exitCode = 1;
 } else {
   console.log("");
-  console.log("Preflight complete. No files modified.");
+  console.log("Audit complete.");
 }
