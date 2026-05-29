@@ -22,6 +22,7 @@
     areaStatus: $("areaStatus"),
     areaCountPill: $("areaCountPill"),
     areaSummary: $("areaSummary"),
+    areaCountFlowLabel: $("areaCountFlowLabel"),
     printSummary: $("printAreaSummary"),
     copySummaryJson: $("copyAreaSummaryJson"),
     continueBtn: $("continue"),
@@ -125,7 +126,7 @@
     if (!els.continueBtn) return;
 
     const activeArea = getActiveAreaFromLedger(ledger);
-    els.continueBtn.textContent = "Continue \u2192 " + routeIntentContinueLabel(activeArea && activeArea.routeIntent);
+    els.continueBtn.textContent = "Continue ? " + routeIntentContinueLabel(activeArea && activeArea.routeIntent);
   }
 
 
@@ -1248,9 +1249,9 @@
         '<article class="area-card' + activeClass + '">' +
           '<div class="area-flow-line" aria-label="Area workflow state">' +
             '<span>' + escapeHtml(area.id === ledger.activeAreaId ? 'Active Area' : 'Area') + '</span>' +
-            '<span class="area-flow-arrow">\\u2192</span>' +
+            '<span class="area-flow-arrow">?</span>' +
             '<span>' + escapeHtml(routeIntentLabel(area.routeIntent)) + '</span>' +
-            '<span class="area-flow-arrow">\\u2192</span>' +
+            '<span class="area-flow-arrow">?</span>' +
             '<span>' + escapeHtml(formatAreaWorkflowStatus(area.status)) + '</span>' +
           '</div>' +
           '<h3 class="h3">' + escapeHtml(area.name) + '</h3>' +

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "area-planner-summary-ui-polish-audit-004-parse-guard";
+const VERSION = "area-planner-summary-ui-polish-audit-006-ledger-existing-count-id";
 
 const rows = [];
 
@@ -26,7 +26,7 @@ console.log("Audit version:", VERSION);
 
 add(
   "summary-ui-cache-bumped",
-  (index.includes("physical-security-area-planner-summary-ui-002") || index.includes("physical-security-area-planner-summary-ui-002"))
+  ((index.includes("physical-security-area-planner-summary-ui-004") || index.includes("physical-security-area-planner-summary-ui-004")) || (index.includes("physical-security-area-planner-summary-ui-004") || index.includes("physical-security-area-planner-summary-ui-004")))
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped for summary UI polish"
@@ -39,6 +39,16 @@ add(
     ? "SAFE"
     : "FAIL",
   "Top Pro/Pipeline and Area Summary pill rows are removed"
+);
+
+add(
+  "ledger-header-flow-row",
+  index.includes('area-flow-line area-flow-line--ledger') &&
+    index.includes('id="areaCountPill"') &&
+    !/<span id=["']areaCountPill["'] class=["']pill["']/.test(index)
+    ? "SAFE"
+    : "FAIL",
+  "Area Ledger header uses flow-row styling instead of pills"
 );
 
 add(
@@ -55,6 +65,16 @@ add(
     ? "SAFE"
     : "FAIL",
   "Area Summary heading uses the larger shared card heading style"
+);
+
+add(
+  "flow-arrows-render-clean",
+  !script.includes('\\u2192') &&
+    !script.includes('\u2192') &&
+    script.includes('?')
+    ? "SAFE"
+    : "FAIL",
+  "Area flow rows use real arrow characters instead of literal unicode escape text"
 );
 
 add(

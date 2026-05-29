@@ -61,7 +61,7 @@
       color: rgba(203,213,225,.62);
       font-size: .62rem;
       letter-spacing: .12em;
-      text-transform: uppercase;
+      
       margin-bottom: 4px;
     }
 
@@ -195,6 +195,11 @@
       letter-spacing: .02em;
       text-transform: uppercase;
       margin-bottom: 8px;
+    }
+
+    .area-flow-line--ledger {
+      margin-bottom: 14px;
+      font-size: .9rem;
     }
 
     .area-flow-arrow {
@@ -412,6 +417,22 @@
     body[data-tool="area-planner"] #physicalSecurityAreaBanner {
       display: none !important;
     }
+  
+    /* Area Planner flow label polish */
+    .area-flow-line {
+      text-transform: none;
+    }
+
+    .area-flow-line--ledger {
+      margin-bottom: 14px;
+      font-size: .9rem;
+    }
+
+    .area-flow-line--ledger #areaCountPill {
+      color: rgba(190,255,205,.82);
+      font-weight: 900;
+      white-space: nowrap;
+    }
   </style>
 </head>
 
@@ -541,9 +562,10 @@
         <div id="areaStatus" class="muted" style="margin-top: 12px;"></div>
 
         <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.12);">
-          <div class="pill-row">
-            <span class="pill">Area Ledger</span>
-            <span id="areaCountPill" class="pill">0 areas</span>
+          <div class="area-flow-line area-flow-line--ledger" aria-label="Area ledger summary">
+            <span>Area Ledger</span>
+            <span class="area-flow-arrow">?</span>
+            <span id="areaCountPill">0 areas</span>
           </div>
           <h2 class="h2 area-section-title" style="margin-top: 10px;">Planning Areas</h2>
           <p class="muted" style="margin-bottom: 0;">
@@ -601,7 +623,7 @@
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=physical-security-area-planner-summary-ui-002"></script>
+  <script src="./script.js?v=physical-security-area-planner-summary-ui-004"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "areaPlannerFlowActions" });
   </script>
