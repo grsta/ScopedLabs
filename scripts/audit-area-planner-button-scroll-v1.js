@@ -72,7 +72,7 @@ add(
 
 add(
   "cache-bumped",
-  (index.includes("physical-security-area-planner-button-scroll-002") || index.includes("physical-security-area-planner-summary-ui-014") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-014"))
+  (index.includes("physical-security-area-planner-button-scroll-002") || index.includes("physical-security-area-planner-summary-ui-015") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-015"))
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped"

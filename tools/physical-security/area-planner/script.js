@@ -1240,7 +1240,7 @@
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text)
         .then(() => {
-          setCopySummaryButtonFeedback("Copied ?", false);
+          setCopySummaryButtonFeedback("Copied!", false);
           status("Client-ready area summary copied.");
         })
         .catch(() => {
