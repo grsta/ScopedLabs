@@ -814,8 +814,7 @@
     const note = areaRouteGroupNote(group);
     const itemCountText = items.length + " " + (items.length === 1 ? "item" : "items");
 
-    const itemCountText = items.length + " " + (items.length === 1 ? "item" : "items");
-      const rows = items.length ? items.map((item) => {
+    const rows = items.length ? items.map((item) => {
       const area = item.area || {};
       const cameraText = area.cameraCount
         ? area.cameraCount + " planned"

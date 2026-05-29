@@ -408,7 +408,11 @@
       margin-top: 0 !important;
       display: flex;
     }
-</style>
+
+    body[data-tool="area-planner"] #physicalSecurityAreaBanner {
+      display: none !important;
+    }
+  </style>
 </head>
 
 <body
@@ -454,8 +458,7 @@
         </p>
       </section>
 <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row"><span class="pill pill--pro">Pro Tier</span></div>
-        <h2 class="h2">&#128274; Locked</h2>
+<h2 class="h2">&#128274; Locked</h2>
         <p class="muted">This setup step is included with Pro access for Physical Security.</p>
         <div class="actions">
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
@@ -598,7 +601,7 @@
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=physical-security-area-planner-summary-ui-001"></script>
+  <script src="./script.js?v=physical-security-area-planner-summary-ui-002"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "areaPlannerFlowActions" });
   </script>

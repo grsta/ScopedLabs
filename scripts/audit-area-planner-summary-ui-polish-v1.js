@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "area-planner-summary-ui-polish-audit-001";
+const VERSION = "area-planner-summary-ui-polish-audit-004-parse-guard";
 
 const rows = [];
 
@@ -26,7 +26,7 @@ console.log("Audit version:", VERSION);
 
 add(
   "summary-ui-cache-bumped",
-  index.includes("physical-security-area-planner-summary-ui-001")
+  (index.includes("physical-security-area-planner-summary-ui-002") || index.includes("physical-security-area-planner-summary-ui-002"))
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped for summary UI polish"
@@ -97,6 +97,30 @@ add(
     ? "SAFE"
     : "FAIL",
   "Printable report uses readable group count text"
+);
+
+let syntaxSafe = true;
+try {
+  new Function(script);
+} catch {
+  syntaxSafe = false;
+}
+
+add(
+  "area-planner-script-syntax-safe",
+  syntaxSafe
+    ? "SAFE"
+    : "FAIL",
+  "Area Planner script parses successfully"
+);
+
+add(
+  "area-planner-hides-downstream-banner",
+  index.includes('body[data-tool="area-planner"] #physicalSecurityAreaBanner') &&
+    index.includes("display: none !important")
+    ? "SAFE"
+    : "FAIL",
+  "Area Planner hides the downstream active-area banner on the control-center page"
 );
 
 add(

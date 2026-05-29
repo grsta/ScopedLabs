@@ -26,7 +26,7 @@ console.log("Audit version:", VERSION);
 
 add(
   "summary-cache-bumped",
-  index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-001")
+  index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-002")
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped for summary/report polish"
