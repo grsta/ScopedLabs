@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-041-iso-neighbor-overlap-rays
+ * Version: scopedlabs-graphics-042-hide-single-camera-frustum-fill
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-041-iso-neighbor-overlap-rays";
+  const VERSION = "scopedlabs-graphics-042-hide-single-camera-frustum-fill";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1254,13 +1254,17 @@
             + '<line data-sl-visual-part="iso-camera-overlap-ray-right-front" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + fe.x.toFixed(1) + '" y2="' + fe.y.toFixed(1) + '" stroke="' + overlapStroke + '" stroke-width="' + overlapWidth + '" stroke-dasharray="' + overlapDash + '" stroke-linecap="round" />'
           : '');
 
+      const cameraFrustumFill = visibleCameraCount > 1
+        ? '<path data-sl-visual-part="iso-camera-frustum-fill" d="M ' + mount.x.toFixed(1) + ' ' + mount.y.toFixed(1)
+          + ' L ' + bs.x.toFixed(1) + ' ' + bs.y.toFixed(1)
+          + ' L ' + be.x.toFixed(1) + ' ' + be.y.toFixed(1)
+          + ' L ' + fe.x.toFixed(1) + ' ' + fe.y.toFixed(1)
+          + ' L ' + fs.x.toFixed(1) + ' ' + fs.y.toFixed(1)
+          + ' Z" fill="rgba(82,201,112,.030)" stroke="none" />'
+        : '';
+
       return ''
-        + '<path data-sl-visual-part="iso-camera-frustum-fill" d="M ' + mount.x.toFixed(1) + ' ' + mount.y.toFixed(1)
-        + ' L ' + bs.x.toFixed(1) + ' ' + bs.y.toFixed(1)
-        + ' L ' + be.x.toFixed(1) + ' ' + be.y.toFixed(1)
-        + ' L ' + fe.x.toFixed(1) + ' ' + fe.y.toFixed(1)
-        + ' L ' + fs.x.toFixed(1) + ' ' + fs.y.toFixed(1)
-        + ' Z" fill="rgba(82,201,112,.035)" stroke="none" />'
+        + cameraFrustumFill
         + overlapRays
         + '<line data-sl-visual-part="iso-camera-depth-line" x1="' + floorAnchor.x.toFixed(1) + '" y1="' + depthLineTopY.toFixed(1) + '" x2="' + floorAnchor.x.toFixed(1) + '" y2="' + depthLineBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.30)" stroke-width="1" stroke-dasharray="4 5" />'
         + '<circle data-sl-visual-part="iso-camera-floor-dot" cx="' + floorAnchor.x.toFixed(1) + '" cy="' + floorAnchor.y.toFixed(1) + '" r="2.0" fill="rgba(226,232,240,.74)" />'
