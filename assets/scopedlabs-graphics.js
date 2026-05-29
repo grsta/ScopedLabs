@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-042-hide-single-camera-frustum-fill
+ * Version: scopedlabs-graphics-044-axis-label-cache-bust
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-042-hide-single-camera-frustum-fill";
+  const VERSION = "scopedlabs-graphics-044-axis-label-cache-bust";
   const ENGINE = "graphics";
   const renderers = {};
 
