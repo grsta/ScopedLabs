@@ -684,8 +684,97 @@
     };
   }
 
+
+  function areaRouteGroup(area) {
+    const intent = normalizeRouteIntent(area && area.routeIntent);
+
+    if (intent === AREA_ROUTE_INTENTS.FACE) return "face";
+    if (intent === AREA_ROUTE_INTENTS.PLATE) return "plate";
+
+    return "core";
+  }
+
+  function areaRouteGroupLabel(group) {
+    if (group === "face") return "Face Recognition Zones";
+    if (group === "plate") return "License Plate Zones";
+
+    return "Core Coverage Areas";
+  }
+
+  function areaRouteGroupNote(group) {
+    if (group === "face") {
+      return "Optional specialty zones where the design must hold face-recognition detail.";
+    }
+
+    if (group === "plate") {
+      return "Optional specialty zones where the design must hold readable license-plate detail.";
+    }
+
+    return "Normal camera coverage areas that follow the core Physical Security planning path.";
+  }
+
+  function areaKeyResult(item) {
+    if (!item || !Array.isArray(item.rows)) return "No downstream result recorded yet.";
+
+    const completedRows = item.rows.filter((row) => row && row.complete);
+    if (!completedRows.length) return "No downstream result recorded yet.";
+
+    const group = areaRouteGroup(item.area);
+    const priorities = group === "plate"
+      ? ["License Plate", "Face Recognition", "Lens", "Pixel Density", "Camera Spacing", "Coverage"]
+      : group === "face"
+        ? ["Face Recognition", "Lens", "Pixel Density", "Camera Spacing", "Coverage"]
+        : ["Lens", "Pixel Density", "Blind Spot", "Camera Spacing", "Coverage", "Field of View", "Mounting", "Lighting"];
+
+    const priorityRow = priorities
+      .map((label) => completedRows.find((row) => row.label === label || String(row.label || "").includes(label)))
+      .find(Boolean);
+
+    const row = priorityRow || completedRows[completedRows.length - 1];
+    const detail = row.detail || row.status || "Recorded";
+
+    return row.label + ": " + detail;
+  }
+
+  function areaCompletedChecksText(item) {
+    if (!item) return "0 / 0";
+    return item.completed + " / " + item.total;
+  }
+
+  function areaShortNextAction(item) {
+    if (!item || !Array.isArray(item.nextActions) || !item.nextActions.length) {
+      return "Review the area assumptions and continue the appropriate planning path.";
+    }
+
+    return item.nextActions[0];
+  }
+
+  function groupedAreaItems(areas) {
+    return {
+      core: areas.filter((item) => item.routeGroup === "core"),
+      face: areas.filter((item) => item.routeGroup === "face"),
+      plate: areas.filter((item) => item.routeGroup === "plate")
+    };
+  }
+
   function physicalSecuritySummaryModel(ledger) {
-    const areas = (ledger?.areas || []).map(areaSummaryModel);
+    const activeAreaId = ledger && ledger.activeAreaId ? ledger.activeAreaId : null;
+    const areas = (ledger?.areas || []).map((area) => {
+      const item = areaSummaryModel(area);
+      const routeGroup = areaRouteGroup(item.area);
+
+      return {
+        ...item,
+        active: !!(activeAreaId && item.area && item.area.id === activeAreaId),
+        routeGroup,
+        routeLabel: areaRouteGroupLabel(routeGroup),
+        keyResult: areaKeyResult(item),
+        completedChecksText: areaCompletedChecksText(item),
+        shortNextAction: areaShortNextAction(item)
+      };
+    });
+
+    const groupedAreas = groupedAreaItems(areas);
     const totalCameras = areas.reduce((sum, item) => sum + (Number(item.area.cameraCount || item.area.targetCameraCount || 0) || 0), 0);
     const completeAreas = areas.filter((item) => item.completionPct === 100).length;
     const attentionAreas = areas.filter((item) => item.overallStatus === "RISK" || item.overallStatus === "WATCH" || item.area.spacingRevalidationRequired).length;
@@ -693,11 +782,18 @@
 
     return {
       generatedAt: new Date().toISOString(),
+      activeAreaId,
       areaCount: areas.length,
       totalCameras,
       completeAreas,
       attentionAreas,
       integrityStates,
+      groupCounts: {
+        core: groupedAreas.core.length,
+        face: groupedAreas.face.length,
+        plate: groupedAreas.plate.length
+      },
+      groupedAreas,
       areas
     };
   }
@@ -711,6 +807,53 @@
       '</div>';
   }
 
+
+  function areaSummaryGroupHtml(model, group) {
+    const items = (model.groupedAreas && model.groupedAreas[group]) || [];
+    const label = areaRouteGroupLabel(group);
+    const note = areaRouteGroupNote(group);
+
+    const rows = items.length ? items.map((item) => {
+      const area = item.area || {};
+      const cameraText = area.cameraCount
+        ? area.cameraCount + " planned"
+        : area.targetCameraCount
+          ? area.targetCameraCount + " target"
+          : "not set";
+
+      return '' +
+        '<tr>' +
+          '<td>' +
+            '<strong>' + escapeHtml(area.name || "Area") + '</strong>' +
+            '<div class="area-summary-note">' + escapeHtml(area.areaType || "Area") + ' | ' + escapeHtml(routeIntentLabel(area.routeIntent)) + ' | Cameras ' + escapeHtml(cameraText) + '</div>' +
+          '</td>' +
+          '<td>' + escapeHtml(item.active ? "Active Area" : "Stored Area") + '</td>' +
+          '<td>' + escapeHtml(item.overallStatus) + '</td>' +
+          '<td>' + escapeHtml(item.completedChecksText) + '</td>' +
+          '<td>' + escapeHtml(item.keyResult) + '</td>' +
+          '<td>' + escapeHtml(item.shortNextAction) + '</td>' +
+        '</tr>';
+    }).join("") : '' +
+        '<tr>' +
+          '<td colspan="6">No ' + escapeHtml(label.toLowerCase()) + ' have been defined yet.</td>' +
+        '</tr>';
+
+    return '' +
+      '<section class="area-summary-group" data-area-summary-group="' + escapeHtml(group) + '">' +
+        '<div class="area-summary-zone-head">' +
+          '<div>' +
+            '<span class="area-summary-label">' + escapeHtml(label) + '</span>' +
+            '<div class="area-summary-note">' + escapeHtml(note) + '</div>' +
+          '</div>' +
+          '<span class="pill">' + escapeHtml(String(items.length)) + '</span>' +
+        '</div>' +
+        '<table class="area-summary-table area-summary-table--planner">' +
+          '<thead><tr><th>Area / Zone</th><th>Selected</th><th>Status</th><th>Checks</th><th>Key Saved Result</th><th>Next Action</th></tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+      '</section>';
+  }
+
   function areaSummaryHtml(model) {
     if (!model || !model.areas.length) {
       return '<div class="area-summary-warn">No areas have been created yet. Add an area before generating the summary.</div>';
@@ -718,48 +861,20 @@
 
     const rollup = '' +
       '<div class="area-summary-rollup">' +
-        metricHtml("Areas", String(model.areaCount), "Defined planning zones.") +
+        metricHtml("Areas", String(model.areaCount), "Defined planning areas and specialty zones.") +
+        metricHtml("Core Areas", String(model.groupCounts.core), "Normal coverage areas.") +
+        metricHtml("Face Zones", String(model.groupCounts.face), "Optional face-recognition zones.") +
+        metricHtml("Plate Zones", String(model.groupCounts.plate), "Optional license-plate zones.") +
         metricHtml("Planned Cameras", String(model.totalCameras), "Sum of planned or target camera counts.") +
-        metricHtml("Complete Areas", model.completeAreas + " / " + model.areaCount, "Areas with all tracked tool rows recorded.") +
-        metricHtml("Needs Attention", String(model.attentionAreas), "Watch/Risk/revalidation areas.") +
+        metricHtml("Needs Attention", String(model.attentionAreas), "Watch, Risk, or revalidation areas.") +
       '</div>';
 
-    const zones = model.areas.map((item) => {
-      const area = item.area;
-      const cameraText = area.cameraCount ? area.cameraCount + " planned" : (area.targetCameraCount ? area.targetCameraCount + " target" : "not set");
-      const rows = item.rows.map((row) => {
-        return '' +
-          '<tr>' +
-            '<td>' + escapeHtml(row.label) + '</td>' +
-            '<td>' + escapeHtml(row.complete ? normalizeStatus(row.status) : "PENDING") + '</td>' +
-            '<td>' + escapeHtml(row.detail || "") + '</td>' +
-          '</tr>';
-      }).join("");
-
-      return '' +
-        '<article class="area-summary-zone">' +
-          '<div class="area-summary-zone-head">' +
-            '<div>' +
-              '<span class="area-summary-label">' + escapeHtml(area.areaType || "Area") + '</span>' +
-              '<h4>' + escapeHtml(area.name || "Area") + '</h4>' +
-              '<div class="area-summary-note">Length ' + escapeHtml(fmtFt(area.protectedLengthFt)) + ' | Distance ' + escapeHtml(fmtFt(area.distanceToTargetPlaneFt)) + ' | HFOV ' + escapeHtml(fmtDeg(area.assumedHfovDeg)) + ' | Cameras ' + escapeHtml(cameraText) + '</div>' +
-            '</div>' +
-            '<div class="pill-row">' +
-              '<span class="pill">' + escapeHtml(item.overallStatus) + '</span>' +
-              '<span class="pill">' + escapeHtml(item.completionPct + "% complete") + '</span>' +
-              '<span class="pill">' + escapeHtml(item.integrity.label) + '</span>' +
-            '</div>' +
-          '</div>' +
-          '<table class="area-summary-table">' +
-            '<thead><tr><th>Check</th><th>Status</th><th>Result</th></tr></thead>' +
-            '<tbody>' + rows + '</tbody>' +
-          '</table>' +
-          '<div class="area-summary-warn"><strong>Next action:</strong> ' + escapeHtml(item.nextActions.join(" ")) + '</div>' +
-          '<div class="area-summary-note"><strong>Source integrity:</strong> ' + escapeHtml(item.integrity.notes.join(" ")) + '</div>' +
-        '</article>';
-    }).join("");
-
-    return rollup + '<div class="area-summary-zones">' + zones + '</div>';
+    return rollup +
+      '<div class="area-summary-zones">' +
+        areaSummaryGroupHtml(model, "core") +
+        areaSummaryGroupHtml(model, "face") +
+        areaSummaryGroupHtml(model, "plate") +
+      '</div>';
   }
 
   function renderAreaSummary(ledger) {
@@ -820,41 +935,66 @@
     return "The Physical Security area summary is incomplete. Run the remaining pipeline checks before treating this as a final design report.";
   }
 
+
   function buildAreaSummaryReportHtml(model) {
     const overallStatus = worstStatus(model.areas.map((item) => item.overallStatus));
     const statusClass = areaReportStatusClass(overallStatus);
     const generated = areaReportGeneratedAt(model.generatedAt);
     const reportId = areaReportId();
 
-    const areaBlocks = model.areas.map((item) => {
-      const area = item.area;
-      const cameraText = area.cameraCount
-        ? area.cameraCount + " planned"
-        : area.targetCameraCount
-          ? area.targetCameraCount + " target"
-          : "not set";
+    const reportGroups = [
+      { key: "core", label: areaRouteGroupLabel("core"), note: areaRouteGroupNote("core") },
+      { key: "face", label: areaRouteGroupLabel("face"), note: areaRouteGroupNote("face") },
+      { key: "plate", label: areaRouteGroupLabel("plate"), note: areaRouteGroupNote("plate") }
+    ];
 
-      return '' +
-        '<section class="section area-section">' +
-          '<div class="area-head">' +
-            '<div>' +
-              '<h2>' + escapeHtml(area.name || "Area") + '</h2>' +
+    const areaBlocks = reportGroups.map((group) => {
+      const items = (model.groupedAreas && model.groupedAreas[group.key]) || [];
+      const rows = items.length ? items.map((item) => {
+        const area = item.area || {};
+        const cameraText = area.cameraCount
+          ? area.cameraCount + " planned"
+          : area.targetCameraCount
+            ? area.targetCameraCount + " target"
+            : "not set";
+
+        return '' +
+          '<tr>' +
+            '<td>' +
+              '<strong>' + escapeHtml(area.name || "Area") + '</strong>' +
               '<div class="area-meta-line">' +
                 escapeHtml(area.areaType || "Area") +
+                ' | ' + escapeHtml(routeIntentLabel(area.routeIntent)) +
                 ' | Length ' + escapeHtml(fmtFt(area.protectedLengthFt)) +
                 ' | Distance ' + escapeHtml(fmtFt(area.distanceToTargetPlaneFt)) +
                 ' | HFOV ' + escapeHtml(fmtDeg(area.assumedHfovDeg)) +
                 ' | Cameras ' + escapeHtml(cameraText) +
               '</div>' +
+            '</td>' +
+            '<td>' + (item.active ? '<span class="mini-status healthy">Active Area</span>' : '<span class="mini-status pending">Stored Area</span>') + '</td>' +
+            '<td><span class="mini-status ' + areaReportStatusClass(item.overallStatus) + '">' + escapeHtml(item.overallStatus) + '</span></td>' +
+            '<td>' + escapeHtml(item.completedChecksText) + '</td>' +
+            '<td>' + escapeHtml(item.keyResult) + '</td>' +
+            '<td>' + escapeHtml(item.shortNextAction) + '</td>' +
+          '</tr>';
+      }).join("") : '' +
+          '<tr>' +
+            '<td colspan="6">No ' + escapeHtml(group.label.toLowerCase()) + ' have been defined yet.</td>' +
+          '</tr>';
+
+      return '' +
+        '<section class="section area-section zone-group" data-area-report-group="' + escapeHtml(group.key) + '">' +
+          '<div class="area-head">' +
+            '<div>' +
+              '<h2>' + escapeHtml(group.label) + '</h2>' +
+              '<div class="area-meta-line">' + escapeHtml(group.note) + '</div>' +
             '</div>' +
-            '<div class="status-pill ' + areaReportStatusClass(item.overallStatus) + '">' + escapeHtml(item.overallStatus) + '</div>' +
+            '<div class="status-pill pending">' + escapeHtml(String(items.length)) + '</div>' +
           '</div>' +
-          '<table>' +
-            '<thead><tr><th>Check</th><th>Status</th><th>Result</th></tr></thead>' +
-            '<tbody>' + areaReportRows(item.rows) + '</tbody>' +
+          '<table class="compact-area-table">' +
+            '<thead><tr><th>Area / Zone</th><th>Selected</th><th>Status</th><th>Checks</th><th>Key Saved Result</th><th>Next Action</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
           '</table>' +
-          '<div class="body-copy next-action"><strong>Next action:</strong> ' + escapeHtml(item.nextActions.join(" ")) + '</div>' +
-          '<div class="body-copy source-note"><strong>Source integrity:</strong> ' + escapeHtml(item.integrity.label) + '. ' + escapeHtml(item.integrity.notes.join(" ")) + '</div>' +
         '</section>';
     }).join("");
 
@@ -890,70 +1030,23 @@
 '      font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;' +
 '    }' +
 '    .page{' +
-'      max-width:980px;' +
+'      max-width:1080px;' +
 '      margin:0 auto;' +
 '      background:#fff;' +
 '      border:1px solid var(--line);' +
 '      box-shadow:0 18px 48px rgba(22,33,26,.12);' +
 '    }' +
-'    .toolbar{' +
-'      display:flex;' +
-'      justify-content:flex-end;' +
-'      gap:10px;' +
-'      padding:16px 20px;' +
-'      border-bottom:1px solid var(--line);' +
-'      background:#fff;' +
-'      position:sticky;' +
-'      top:0;' +
-'      z-index:2;' +
-'    }' +
-'    .toolbar button{' +
-'      border:1px solid var(--line);' +
-'      background:#fff;' +
-'      color:#132018;' +
-'      border-radius:999px;' +
-'      padding:9px 14px;' +
-'      font-weight:800;' +
-'      cursor:pointer;' +
-'    }' +
+'    .toolbar{display:flex;justify-content:flex-end;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:2}' +
+'    .toolbar button{border:1px solid var(--line);background:#fff;color:#132018;border-radius:999px;padding:9px 14px;font-weight:800;cursor:pointer}' +
 '    .report{padding:32px}' +
 '    .brand-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}' +
-'    .brand-mark{' +
-'      width:24px;' +
-'      height:24px;' +
-'      border-radius:6px;' +
-'      display:inline-grid;' +
-'      place-items:center;' +
-'      background:#0b150f;' +
-'      color:#7dff9e;' +
-'      font-weight:950;' +
-'    }' +
+'    .brand-mark{width:24px;height:24px;border-radius:6px;display:inline-grid;place-items:center;background:#0b150f;color:#7dff9e;font-weight:950}' +
 '    .brand-name{font-size:1.15rem;font-weight:900;letter-spacing:.02em}' +
 '    .tagline{color:var(--muted);font-size:.95rem;margin-bottom:18px}' +
-'    .report-head{' +
-'      display:flex;' +
-'      justify-content:space-between;' +
-'      gap:18px;' +
-'      align-items:flex-start;' +
-'      border-top:1px solid var(--line);' +
-'      border-bottom:1px solid var(--line);' +
-'      padding:18px 0;' +
-'      margin-bottom:22px;' +
-'    }' +
+'    .report-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0;margin-bottom:22px}' +
 '    .report-title{font-size:1.7rem;line-height:1.15;margin:0 0 6px}' +
 '    .report-meta{color:var(--muted);font-size:.95rem;line-height:1.6}' +
-'    .status-pill,' +
-'    .mini-status{' +
-'      display:inline-flex;' +
-'      align-items:center;' +
-'      justify-content:center;' +
-'      border-radius:999px;' +
-'      font-weight:900;' +
-'      letter-spacing:.06em;' +
-'      text-transform:uppercase;' +
-'      border:1px solid transparent;' +
-'      white-space:nowrap;' +
-'    }' +
+'    .status-pill,.mini-status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;border:1px solid transparent;white-space:nowrap}' +
 '    .status-pill{padding:8px 12px;font-size:.82rem}' +
 '    .mini-status{padding:5px 8px;font-size:.72rem}' +
 '    .healthy{color:var(--accent);background:var(--accent-soft);border-color:#c9ead7}' +
@@ -962,44 +1055,26 @@
 '    .pending{color:#4b5563;background:#f3f4f6;border-color:#d1d5db}' +
 '    .section{margin-top:24px}' +
 '    .section h2{margin:0 0 10px;font-size:1rem;letter-spacing:.02em;text-transform:uppercase}' +
-'    .summary,.body-copy{' +
-'      border:1px solid var(--line);' +
-'      background:#fafcfb;' +
-'      border-radius:14px;' +
-'      padding:16px 18px;' +
-'      line-height:1.65;' +
-'    }' +
-'    .rollup-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}' +
-'    .metric{' +
-'      border:1px solid var(--line);' +
-'      background:#fafcfb;' +
-'      border-radius:14px;' +
-'      padding:14px;' +
-'    }' +
+'    .summary,.body-copy{border:1px solid var(--line);background:#fafcfb;border-radius:14px;padding:16px 18px;line-height:1.65}' +
+'    .rollup-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}' +
+'    .metric{border:1px solid var(--line);background:#fafcfb;border-radius:14px;padding:14px}' +
 '    .metric-label{display:block;color:var(--muted);font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}' +
 '    .metric-value{display:block;color:#111;font-size:1.25rem;font-weight:950}' +
 '    .metric-note{color:var(--muted);font-size:.85rem;margin-top:7px;line-height:1.45}' +
 '    .area-section{break-inside:avoid;page-break-inside:avoid}' +
 '    .area-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:12px}' +
 '    .area-head h2{text-transform:none;font-size:1.12rem;margin:0 0 4px}' +
-'    .area-meta-line{color:var(--muted);font-size:.92rem;line-height:1.5}' +
-'    table{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:.92rem}' +
-'    th,td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}' +
-'    th{background:#f7faf8;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}' +
+'    .area-meta-line{color:var(--muted);font-size:.88rem;line-height:1.5;margin-top:4px}' +
+'    table{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:.88rem}' +
+'    th,td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}' +
+'    th{background:#f7faf8;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}' +
 '    tr:last-child td{border-bottom:none}' +
-'    td:first-child{width:28%;color:var(--muted);font-weight:800}' +
+'    .compact-area-table td:first-child{width:25%;color:var(--ink);font-weight:700}' +
 '    .next-action{margin-top:12px;background:#fffdf2;border-color:#eadb9a}' +
 '    .source-note{margin-top:10px}' +
 '    .foot{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;line-height:1.7}' +
-'    @media (max-width:760px){body{padding:14px}.report{padding:20px}.report-head,.area-head{flex-direction:column}.rollup-grid{grid-template-columns:1fr 1fr}}' +
-'    @media print{' +
-'      @page{margin:.55in}' +
-'      body{background:#fff;padding:0}' +
-'      .page{max-width:none;border:none;box-shadow:none}' +
-'      .toolbar{display:none !important}' +
-'      .report{padding:0}' +
-'      .area-section{break-inside:avoid;page-break-inside:avoid}' +
-'    }' +
+'    @media (max-width:900px){body{padding:14px}.report{padding:20px}.report-head,.area-head{flex-direction:column}.rollup-grid{grid-template-columns:1fr 1fr}}' +
+'    @media print{@page{margin:.55in}body{background:#fff;padding:0}.page{max-width:none;border:none;box-shadow:none}.toolbar{display:none !important}.report{padding:0}.area-section{break-inside:avoid;page-break-inside:avoid}.rollup-grid{grid-template-columns:repeat(3,1fr)}}' +
 '  </style>' +
 '</head>' +
 '<body>' +
@@ -1030,9 +1105,11 @@
 '      <section class="section">' +
 '        <h2>Site Rollup</h2>' +
 '        <div class="rollup-grid">' +
-'          <div class="metric"><span class="metric-label">Areas</span><span class="metric-value">' + escapeHtml(String(model.areaCount)) + '</span><div class="metric-note">Defined planning zones.</div></div>' +
+'          <div class="metric"><span class="metric-label">Areas</span><span class="metric-value">' + escapeHtml(String(model.areaCount)) + '</span><div class="metric-note">Defined planning areas and specialty zones.</div></div>' +
+'          <div class="metric"><span class="metric-label">Core Areas</span><span class="metric-value">' + escapeHtml(String(model.groupCounts.core)) + '</span><div class="metric-note">Normal coverage areas.</div></div>' +
+'          <div class="metric"><span class="metric-label">Face Zones</span><span class="metric-value">' + escapeHtml(String(model.groupCounts.face)) + '</span><div class="metric-note">Optional face detail zones.</div></div>' +
+'          <div class="metric"><span class="metric-label">Plate Zones</span><span class="metric-value">' + escapeHtml(String(model.groupCounts.plate)) + '</span><div class="metric-note">Optional plate detail zones.</div></div>' +
 '          <div class="metric"><span class="metric-label">Planned Cameras</span><span class="metric-value">' + escapeHtml(String(model.totalCameras)) + '</span><div class="metric-note">Sum of planned or target camera counts.</div></div>' +
-'          <div class="metric"><span class="metric-label">Complete Areas</span><span class="metric-value">' + escapeHtml(model.completeAreas + " / " + model.areaCount) + '</span><div class="metric-note">Areas with all tracked rows recorded.</div></div>' +
 '          <div class="metric"><span class="metric-label">Needs Attention</span><span class="metric-value">' + escapeHtml(String(model.attentionAreas)) + '</span><div class="metric-note">Watch, Risk, or revalidation areas.</div></div>' +
 '        </div>' +
 '      </section>' +

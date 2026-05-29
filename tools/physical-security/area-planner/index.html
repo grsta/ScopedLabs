@@ -176,6 +176,17 @@
       line-height: 1.45;
     }
 
+    .area-summary-group {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .area-summary-table--planner td:first-child {
+      min-width: 190px;
+    }
+
+
     @media (max-width: 900px) {
       .area-summary-rollup {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -506,9 +517,9 @@
             <span class="pill pill--pro">Area Summary</span>
             <span class="pill">Pipeline Rollup</span>
           </div>
-          <h3 class="h3" style="margin-top: 10px;">Physical Security area summary</h3>
+          <h3 class="h3" style="margin-top: 10px;">Physical Security area and zone summary</h3>
           <p class="muted" style="margin-bottom: 0;">
-            This rollup summarizes each area with its camera count, geometry, lens/detail validation, status, source integrity, and next action notes. It is the first area-based report view for the Physical Security pipeline.
+            This rollup separates core coverage areas from optional Face Recognition and License Plate zones, then summarizes active status, completed checks, key saved results, and next action notes.
           </p>
           <div id="areaSummary"></div>
           <div class="btn-row" style="margin-top: 14px;">
@@ -552,7 +563,7 @@
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=physical-security-area-planner-button-scroll-002"></script>
+  <script src="./script.js?v=physical-security-area-planner-summary-report-001"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "areaPlannerFlowActions" });
   </script>

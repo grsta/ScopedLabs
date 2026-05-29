@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "area-planner-button-scroll-audit-002-section-boundary";
+const VERSION = "area-planner-button-scroll-audit-003-summary-report-cache";
 
 const rows = [];
 
@@ -72,7 +72,7 @@ add(
 
 add(
   "cache-bumped",
-  index.includes("physical-security-area-planner-button-scroll-002")
+  (index.includes("physical-security-area-planner-button-scroll-002") || index.includes("physical-security-area-planner-summary-report-001"))
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped"
