@@ -20,19 +20,41 @@ const existingFoundationAssets = [
 const proposedAssistantAssets = [
   {
     rel: "assets/physical-security-ui-kit.js",
-    label: "shared UI kit"
+    label: "shared UI kit",
+    apiSignals: [
+      "ScopedLabsPhysicalSecurityUiKit",
+      "flowLabel",
+      "setButtonFeedback"
+    ]
   },
   {
     rel: "assets/physical-security-graphics-library.js",
-    label: "shared graphics/icon library"
+    label: "shared graphics/icon library",
+    apiSignals: [
+      "ScopedLabsPhysicalSecurityGraphicsLibrary",
+      "getIcon",
+      "listIcons"
+    ]
   },
   {
     rel: "assets/physical-security-local-assistant.js",
-    label: "shared local assistant renderer/engine"
+    label: "shared local assistant renderer/engine",
+    apiSignals: [
+      "ScopedLabsPhysicalSecurityLocalAssistant",
+      "buildModel",
+      "renderHtml",
+      "mount",
+      "clear"
+    ]
   },
   {
     rel: "assets/physical-security-tool-assistant-adapters.js",
-    label: "tool assistant adapter map"
+    label: "tool assistant adapter map",
+    apiSignals: [
+      "ScopedLabsPhysicalSecurityToolAssistantAdapters",
+      "getAdapter",
+      "listAdapters"
+    ]
   }
 ];
 
@@ -172,14 +194,30 @@ add(
 );
 
 proposedAssistantAssets.forEach((asset) => {
+  const text = read(asset.rel);
+  const apiOk = exists(asset.rel) &&
+    (!asset.apiSignals || asset.apiSignals.every((signal) => text.includes(signal)));
+
   add(
     "proposed-module-" + path.basename(asset.rel, ".js"),
-    exists(asset.rel) ? "SAFE" : "WATCH",
+    apiOk ? "SAFE" : "WATCH",
     exists(asset.rel)
-      ? asset.label + " exists"
+      ? apiOk
+        ? asset.label + " exists and exposes expected dormant API"
+        : asset.label + " exists but expected API signals were not all detected"
       : asset.label + " does not exist yet; expected before full assistant rollout"
   );
 });
+
+add(
+  "proposed-module-apis",
+  proposedAssistantAssets.every((asset) => {
+    const text = read(asset.rel);
+    return exists(asset.rel) &&
+      (!asset.apiSignals || asset.apiSignals.every((signal) => text.includes(signal)));
+  }) ? "SAFE" : "WATCH",
+  "Dormant assistant/UI/library modules expose expected API names"
+);
 
 const inspected = eligibleTools.map(inspectTool);
 
