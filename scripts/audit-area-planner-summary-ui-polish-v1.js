@@ -26,7 +26,7 @@ console.log("Audit version:", VERSION);
 
 add(
   "summary-ui-cache-bumped",
-  ((index.includes("physical-security-area-planner-summary-ui-012") || index.includes("physical-security-area-planner-summary-ui-012")) || (index.includes("physical-security-area-planner-summary-ui-012") || index.includes("physical-security-area-planner-summary-ui-012")))
+  ((index.includes("physical-security-area-planner-summary-ui-013") || index.includes("physical-security-area-planner-summary-ui-013")) || (index.includes("physical-security-area-planner-summary-ui-013") || index.includes("physical-security-area-planner-summary-ui-013")))
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped for summary UI polish"

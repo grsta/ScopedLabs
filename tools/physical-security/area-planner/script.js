@@ -1171,18 +1171,64 @@
     status(opened ? "Area summary report opened in a new tab." : "Popup blocked or area summary report could not open.");
   }
 
+  function areaSummaryClipboardText(model) {
+    const lines = [];
+    const groups = [
+      { key: "core", label: "Core Coverage Areas" },
+      { key: "face", label: "Face Recognition Zones" },
+      { key: "plate", label: "License Plate Zones" }
+    ];
+
+    lines.push("Physical Security Area Summary");
+    lines.push("Generated: " + areaReportGeneratedAt(model.generatedAt));
+    lines.push("Overall status: " + worstStatus(model.areas.map((item) => item.overallStatus)));
+    lines.push("Areas / zones: " + model.areaCount);
+    lines.push("Planned cameras: " + model.totalCameras);
+    lines.push("");
+
+    groups.forEach((group) => {
+      const items = (model.groupedAreas && model.groupedAreas[group.key]) || [];
+      if (!items.length) return;
+
+      lines.push(group.label);
+
+      items.forEach((item) => {
+        const area = item.area || {};
+        const selected = item.active ? "Active Area" : "Stored Area";
+
+        lines.push("- " + (area.name || "Area") + " (" + selected + "): " + item.overallStatus);
+        lines.push("  Type: " + (area.areaType || "Area") + " | " + routeIntentLabel(area.routeIntent));
+        lines.push("  Checks: " + item.completedChecksText);
+        lines.push("  Key result: " + item.keyResult);
+        lines.push("  Next action: " + item.shortNextAction);
+      });
+
+      lines.push("");
+    });
+
+    lines.push("ScopedLabs tools are planning aids only and do not replace formal engineering review, code compliance review, manufacturer validation, or project-specific professional judgment.");
+
+    return lines.join("\n");
+  }
+
   function copyAreaSummaryJson() {
     const model = window.ScopedLabsPhysicalSecurityAreaSummary || physicalSecuritySummaryModel(state()?.readLedger() || { areas: [] });
-    const text = JSON.stringify(model, null, 2);
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text)
-        .then(() => status("Area summary data copied."))
-        .catch(() => status("Could not copy automatically. Use browser dev tools to read window.ScopedLabsPhysicalSecurityAreaSummary."));
+    if (!model || !model.areas.length) {
+      status("Add at least one planning area before copying the area summary.");
       return;
     }
 
-    status("Copy unavailable. Use window.ScopedLabsPhysicalSecurityAreaSummary in the browser console.");
+    const text = areaSummaryClipboardText(model);
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => status("Client-ready area summary copied."))
+        .catch(() => status("Could not copy automatically. Select and copy from the printed summary instead."));
+      return;
+    }
+
+    status("Copy unavailable. Open the printable summary and copy from there.");
   }
 
   function isLegacyStarterArea(area) {
