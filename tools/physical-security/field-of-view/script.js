@@ -1270,3 +1270,207 @@ ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
 
   window.addEventListener("DOMContentLoaded", init);
 })();
+
+
+/* ScopedLabs Field of View Local Assistant Proof
+   Version: field-of-view-local-assistant-proof-001
+   Purpose: visible local assistant proof for Field of View only.
+   Notes:
+   - Uses the shared Physical Security local assistant module.
+   - Listens for validated Physical Security guidance events.
+   - Clears stale local assistant output on raw input/change.
+   - Does not touch Area Planner, Lens Selection, category renderer, export, auth, checkout, KB, or pipeline behavior.
+*/
+(function fieldOfViewLocalAssistantProof() {
+  "use strict";
+
+  const VERSION = "field-of-view-local-assistant-proof-001";
+  const TOOL_SLUG = "field-of-view";
+  const TOOL_TEXT = "field of view";
+  const MOUNT_ID = "fieldOfViewLocalAssistantMount";
+
+  function getMount() {
+    return document.getElementById(MOUNT_ID);
+  }
+
+  function localAssistantApi() {
+    return window.ScopedLabsPhysicalSecurityLocalAssistant || null;
+  }
+
+  function adapterApi() {
+    return window.ScopedLabsPhysicalSecurityToolAssistantAdapters || null;
+  }
+
+  function asText(value) {
+    return String(value == null ? "" : value).trim();
+  }
+
+  function compactList(value) {
+    if (Array.isArray(value)) {
+      return value.map(asText).filter(Boolean);
+    }
+
+    if (typeof value === "string" && value.trim()) {
+      return value.split(/\n|;|\|/).map(asText).filter(Boolean);
+    }
+
+    return [];
+  }
+
+  function pickRecord(detail) {
+    const data = detail || {};
+    return data.guidance || data.record || data.model || data.data || data.payload || data;
+  }
+
+  function eventBelongsToTool(detail) {
+    const data = detail || {};
+    const record = pickRecord(data) || {};
+
+    const haystack = [
+      data.tool,
+      data.slug,
+      data.toolSlug,
+      data.source,
+      data.id,
+      record.tool,
+      record.slug,
+      record.toolSlug,
+      record.source,
+      record.id
+    ].map(asText).join(" ").toLowerCase();
+
+    return haystack.includes(TOOL_SLUG) || haystack.includes(TOOL_TEXT);
+  }
+
+  function readStatus(record) {
+    const raw = asText(
+      record.status ||
+      record.severity ||
+      record.level ||
+      record.state ||
+      record.classification
+    ).toUpperCase();
+
+    if (raw.includes("RISK")) return "RISK";
+    if (raw.includes("WATCH") || raw.includes("WARN")) return "WATCH";
+    if (raw.includes("HEALTHY") || raw.includes("SAFE") || raw.includes("OK")) return "HEALTHY";
+
+    return "WATCH";
+  }
+
+  function readSummary(record) {
+    return asText(
+      record.summary ||
+      record.headline ||
+      record.message ||
+      record.detail ||
+      record.description ||
+      record.primaryText
+    ) || "Field of view has been evaluated. Review lens angle, target width, and distance assumptions before carrying this area into camera coverage planning.";
+  }
+
+  function readAssumptions(record) {
+    return compactList(
+      record.assumptions ||
+      record.assumptionList ||
+      record.inputs ||
+      record.inputSummary ||
+      record.context
+    );
+  }
+
+  function readActions(record) {
+    const actions = compactList(
+      record.actions ||
+      record.recommendedActions ||
+      record.recommendations ||
+      record.nextSteps ||
+      record.requiredActions
+    );
+
+    const singleAction = asText(record.action || record.requiredAction || record.nextStep);
+    if (singleAction && !actions.includes(singleAction)) {
+      actions.push(singleAction);
+    }
+
+    if (!actions.length) {
+      actions.push("Confirm the horizontal field-of-view assumption before continuing into coverage-area and spacing checks.");
+    }
+
+    return actions;
+  }
+
+  function buildModel(recordInput) {
+    const record = recordInput || {};
+    const adapters = adapterApi();
+    const adapter = adapters && typeof adapters.getAdapter === "function"
+      ? adapters.getAdapter(TOOL_SLUG)
+      : null;
+
+    return {
+      tool: TOOL_SLUG,
+      title: adapter && adapter.title ? adapter.title : "Field of View Assistant",
+      status: readStatus(record),
+      summary: readSummary(record),
+      assumptions: readAssumptions(record),
+      actions: readActions(record),
+      iconKey: adapter && adapter.iconKey ? adapter.iconKey : "coverageArea",
+      visible: true
+    };
+  }
+
+  function render(recordInput) {
+    const mount = getMount();
+    const assistant = localAssistantApi();
+
+    if (!mount || !assistant || typeof assistant.mount !== "function") {
+      return false;
+    }
+
+    return assistant.mount(mount, buildModel(recordInput));
+  }
+
+  function clear() {
+    const mount = getMount();
+    const assistant = localAssistantApi();
+
+    if (!mount) return false;
+
+    if (assistant && typeof assistant.clear === "function") {
+      return assistant.clear(mount);
+    }
+
+    mount.innerHTML = "";
+    mount.hidden = true;
+    return true;
+  }
+
+  document.addEventListener("scopedlabs:physical-security-guidance-updated", function (event) {
+    const detail = event && event.detail ? event.detail : {};
+
+    if (!eventBelongsToTool(detail)) {
+      return;
+    }
+
+    render(pickRecord(detail));
+  });
+
+  ["input", "change"].forEach(function (eventName) {
+    document.addEventListener(eventName, function (event) {
+      const target = event && event.target ? event.target : null;
+
+      if (target && target.closest && target.closest("#" + MOUNT_ID)) {
+        return;
+      }
+
+      clear();
+    }, true);
+  });
+
+  window.ScopedLabsFieldOfViewLocalAssistantProof = Object.freeze({
+    version: VERSION,
+    buildModel: buildModel,
+    render: render,
+    clear: clear
+  });
+})();
