@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-038-iso-overlap-side-guides
+ * Version: scopedlabs-graphics-039-iso-overlap-front-edge-fix
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-038-iso-overlap-side-guides";
+  const VERSION = "scopedlabs-graphics-039-iso-overlap-front-edge-fix";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1238,15 +1238,30 @@
       const showLeftOverlapGuide = hasModeledOverlap && index > 0;
       const showRightOverlapGuide = hasModeledOverlap && index < (renderedCameraCount - 1);
 
-      const leftOverlapPoint = backPoint(startFt);
-      const rightOverlapPoint = backPoint(endFt);
+      const leftFrontPoint = frontPoint(startFt);
+      const rightFrontPoint = frontPoint(endFt);
+      const leftBackPoint = backPoint(startFt);
+
+      const eraseStroke = 'rgba(6,10,8,.98)';
+      const eraseWidth = '2.8';
+      const dashStroke = 'rgba(255,211,79,.92)';
+      const dashWidth = '1.35';
+      const dashPattern = '4 4';
 
       const overlapGuideSvg = ''
-        + (showLeftOverlapGuide
-          ? '<line data-sl-visual-part="iso-camera-overlap-guide-left" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + leftOverlapPoint.x.toFixed(1) + '" y2="' + leftOverlapPoint.y.toFixed(1) + '" stroke="rgba(255,211,79,.82)" stroke-width="1.2" stroke-dasharray="4 4" stroke-linecap="round" />'
+        + ((hasModeledOverlap && index === 0)
+          ? '<line data-sl-visual-part="iso-camera-mask-left-back" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + leftBackPoint.x.toFixed(1) + '" y2="' + leftBackPoint.y.toFixed(1) + '" stroke="' + eraseStroke + '" stroke-width="' + eraseWidth + '" stroke-linecap="round" />'
+          : '')
+        + ((hasModeledOverlap && index === 0)
+          ? '<line data-sl-visual-part="iso-camera-mask-front-left" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + leftFrontPoint.x.toFixed(1) + '" y2="' + leftFrontPoint.y.toFixed(1) + '" stroke="' + eraseStroke + '" stroke-width="' + eraseWidth + '" stroke-linecap="round" />'
           : '')
         + (showRightOverlapGuide
-          ? '<line data-sl-visual-part="iso-camera-overlap-guide-right" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + rightOverlapPoint.x.toFixed(1) + '" y2="' + rightOverlapPoint.y.toFixed(1) + '" stroke="rgba(255,211,79,.82)" stroke-width="1.2" stroke-dasharray="4 4" stroke-linecap="round" />'
+          ? '<line data-sl-visual-part="iso-camera-mask-front-right" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + rightFrontPoint.x.toFixed(1) + '" y2="' + rightFrontPoint.y.toFixed(1) + '" stroke="' + eraseStroke + '" stroke-width="' + eraseWidth + '" stroke-linecap="round" />'
+            + '<line data-sl-visual-part="iso-camera-overlap-guide-right" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + rightFrontPoint.x.toFixed(1) + '" y2="' + rightFrontPoint.y.toFixed(1) + '" stroke="' + dashStroke + '" stroke-width="' + dashWidth + '" stroke-dasharray="' + dashPattern + '" stroke-linecap="round" />'
+          : '')
+        + (showLeftOverlapGuide
+          ? '<line data-sl-visual-part="iso-camera-mask-front-left-overlap" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + leftFrontPoint.x.toFixed(1) + '" y2="' + leftFrontPoint.y.toFixed(1) + '" stroke="' + eraseStroke + '" stroke-width="' + eraseWidth + '" stroke-linecap="round" />'
+            + '<line data-sl-visual-part="iso-camera-overlap-guide-left" x1="' + mount.x.toFixed(1) + '" y1="' + mount.y.toFixed(1) + '" x2="' + leftFrontPoint.x.toFixed(1) + '" y2="' + leftFrontPoint.y.toFixed(1) + '" stroke="' + dashStroke + '" stroke-width="' + dashWidth + '" stroke-dasharray="' + dashPattern + '" stroke-linecap="round" />'
           : '');
 
       const depthLineTopY = headY + (16 * iconScale);
