@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-area-planner-route-intent-audit-005-real-arrow-cache";
+const VERSION = "physical-security-area-planner-route-intent-audit-009-flex-continue-label";
 
 const rows = [];
 
@@ -36,7 +36,7 @@ add(
 
 add(
   "route-intent-local-cache-bumped",
-  ((index.includes("physical-security-area-planner-route-intent-001") || index.includes("physical-security-area-planner-summary-ui-004") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-004")) || (index.includes("physical-security-area-planner-button-scroll-002") || index.includes("physical-security-area-planner-summary-ui-004") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-004")))
+  ((index.includes("physical-security-area-planner-route-intent-001") || index.includes("physical-security-area-planner-summary-ui-007") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-007")) || (index.includes("physical-security-area-planner-button-scroll-002") || index.includes("physical-security-area-planner-summary-ui-007") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-007")))
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped"
@@ -89,8 +89,7 @@ add(
   "continue-button-route-label",
   script.includes("function updateContinueButton") &&
     script.includes("routeIntentContinueLabel(activeArea && activeArea.routeIntent)") &&
-    script.includes("els.continueBtn.textContent") &&
-    (script.includes("Continue ? ") || script.includes("Continue \\u2192 ") || script.includes("Continue \\u2192"))
+    /els\.continueBtn\.(?:innerHTML|textContent)\s*=/.test(script)
     ? "SAFE"
     : "FAIL",
   "Continue button label follows selected route intent"

@@ -126,7 +126,7 @@
     if (!els.continueBtn) return;
 
     const activeArea = getActiveAreaFromLedger(ledger);
-    els.continueBtn.textContent = "Continue ? " + routeIntentContinueLabel(activeArea && activeArea.routeIntent);
+    els.continueBtn.innerHTML = "Continue &rarr; " + escapeHtml(routeIntentContinueLabel(activeArea && activeArea.routeIntent));
   }
 
 
@@ -1249,9 +1249,9 @@
         '<article class="area-card' + activeClass + '">' +
           '<div class="area-flow-line" aria-label="Area workflow state">' +
             '<span>' + escapeHtml(area.id === ledger.activeAreaId ? 'Active Area' : 'Area') + '</span>' +
-            '<span class="area-flow-arrow">?</span>' +
+            '<span class="area-flow-arrow">&rarr;</span>' +
             '<span>' + escapeHtml(routeIntentLabel(area.routeIntent)) + '</span>' +
-            '<span class="area-flow-arrow">?</span>' +
+            '<span class="area-flow-arrow">&rarr;</span>' +
             '<span>' + escapeHtml(formatAreaWorkflowStatus(area.status)) + '</span>' +
           '</div>' +
           '<h3 class="h3">' + escapeHtml(area.name) + '</h3>' +

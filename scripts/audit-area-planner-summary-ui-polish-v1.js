@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "area-planner-summary-ui-polish-audit-006-ledger-existing-count-id";
+const VERSION = "area-planner-summary-ui-polish-audit-009-entity-arrow-safe";
 
 const rows = [];
 
@@ -26,7 +26,7 @@ console.log("Audit version:", VERSION);
 
 add(
   "summary-ui-cache-bumped",
-  ((index.includes("physical-security-area-planner-summary-ui-004") || index.includes("physical-security-area-planner-summary-ui-004")) || (index.includes("physical-security-area-planner-summary-ui-004") || index.includes("physical-security-area-planner-summary-ui-004")))
+  ((index.includes("physical-security-area-planner-summary-ui-007") || index.includes("physical-security-area-planner-summary-ui-007")) || (index.includes("physical-security-area-planner-summary-ui-007") || index.includes("physical-security-area-planner-summary-ui-007")))
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped for summary UI polish"
