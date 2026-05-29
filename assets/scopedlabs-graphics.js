@@ -1,14 +1,14 @@
 /*!
  * ScopedLabs Graphics Engine
  * V8-grade foundation for report-safe SVG renderers.
- * Version: scopedlabs-graphics-034-delegate-coverage-category-renderer
+ * Version: scopedlabs-graphics-036-iso-camera-cad-marker
  *
  * Rule: this engine renders visual models. It does not own engineering formulas.
  */
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-graphics-034-delegate-coverage-category-renderer";
+  const VERSION = "scopedlabs-graphics-036-iso-camera-cad-marker";
   const ENGINE = "graphics";
   const renderers = {};
 
@@ -1214,27 +1214,19 @@
 
       const floorAnchor = backPoint(centerFt);
 
-      const bracketTipX = headX - 8.4;
-      const bracketTipY = headY + 4.8;
-      const bracketBaseX = headX - 1.2;
-      const bracketBaseY = headY + 1.1;
-
-      const bodyLeft = headX - 5.1;
-      const bodyRight = headX + 2.9;
-      const bodyTop = headY - 2.9;
-      const bodyBottom = headY + 2.1;
-
-      const depthLineTopY = bodyBottom + 1.1;
-      const depthLineBottomY = floorAnchor.y;
-
-      const noseX = bodyRight + 2.1;
-      const noseY = headY - 0.2;
-
-      const lensCx = bodyRight + 0.8;
-      const lensCy = headY - 0.2;
+      const iconScale = 0.28;
+      const iconStroke = "rgba(125,255,152,.92)";
+      const iconFill = "rgba(15,23,42,.92)";
+      const iconAccent = "rgba(125,255,152,.78)";
+      const lensTipX = headX + (42 * iconScale);
+      const lensTipY = headY;
 
       const targetX = lerp(fs.x, fe.x, 0.5);
       const targetY = lerp(fs.y, fe.y, 0.5);
+
+      const depthLineTopY = headY + (16 * iconScale);
+      const depthLineBottomY = floorAnchor.y;
+      const labelY = headY - (18 * iconScale) - 6;
 
       return ''
         + '<path data-sl-visual-part="iso-camera-frustum" d="M ' + mount.x.toFixed(1) + ' ' + mount.y.toFixed(1)
@@ -1245,20 +1237,18 @@
         + ' Z" fill="rgba(82,201,112,.035)" stroke="rgba(125,255,152,.34)" stroke-width="1.0" />'
         + '<line data-sl-visual-part="iso-camera-depth-line" x1="' + floorAnchor.x.toFixed(1) + '" y1="' + depthLineTopY.toFixed(1) + '" x2="' + floorAnchor.x.toFixed(1) + '" y2="' + depthLineBottomY.toFixed(1) + '" stroke="rgba(226,232,240,.30)" stroke-width="1" stroke-dasharray="4 5" />'
         + '<circle data-sl-visual-part="iso-camera-floor-dot" cx="' + floorAnchor.x.toFixed(1) + '" cy="' + floorAnchor.y.toFixed(1) + '" r="2.0" fill="rgba(226,232,240,.74)" />'
-        + '<line data-sl-visual-part="iso-camera-bracket" x1="' + bracketBaseX.toFixed(1) + '" y1="' + bracketBaseY.toFixed(1) + '" x2="' + bracketTipX.toFixed(1) + '" y2="' + bracketTipY.toFixed(1) + '" stroke="rgba(226,232,240,.56)" stroke-width="1.15" />'
-        + '<circle data-sl-visual-part="iso-camera-wall-mount" cx="' + bracketTipX.toFixed(1) + '" cy="' + bracketTipY.toFixed(1) + '" r="1.25" fill="rgba(226,232,240,.68)" />'
-        + '<circle data-sl-visual-part="iso-camera-joint" cx="' + bracketBaseX.toFixed(1) + '" cy="' + bracketBaseY.toFixed(1) + '" r="1.3" fill="rgba(226,232,240,.76)" />'
-        + '<path data-sl-visual-part="iso-camera-body" d="M ' + bodyLeft.toFixed(1) + ' ' + bodyTop.toFixed(1)
-        + ' L ' + bodyRight.toFixed(1) + ' ' + bodyTop.toFixed(1)
-        + ' L ' + noseX.toFixed(1) + ' ' + noseY.toFixed(1)
-        + ' L ' + bodyRight.toFixed(1) + ' ' + bodyBottom.toFixed(1)
-        + ' L ' + bodyLeft.toFixed(1) + ' ' + bodyBottom.toFixed(1)
-        + ' Z" fill="rgba(10,18,14,.98)" stroke="rgba(226,232,240,.70)" stroke-width="1.05" />'
-        + '<line data-sl-visual-part="iso-camera-body-line" x1="' + (bodyLeft + 1.0).toFixed(1) + '" y1="' + bodyTop.toFixed(1) + '" x2="' + (bodyRight - 0.8).toFixed(1) + '" y2="' + bodyTop.toFixed(1) + '" stroke="rgba(226,232,240,.18)" stroke-width="0.9" />'
-        + '<line data-sl-visual-part="iso-camera-aim-line" x1="' + lensCx.toFixed(1) + '" y1="' + lensCy.toFixed(1) + '" x2="' + targetX.toFixed(1) + '" y2="' + targetY.toFixed(1) + '" stroke="rgba(125,255,152,.58)" stroke-width="1.0" stroke-dasharray="3 4" />'
-        + '<circle data-sl-visual-part="iso-camera-lens" cx="' + lensCx.toFixed(1) + '" cy="' + lensCy.toFixed(1) + '" r="1.25" fill="rgba(125,255,152,.90)" />'
-        + '<circle data-sl-visual-part="iso-camera-lens-core" cx="' + lensCx.toFixed(1) + '" cy="' + lensCy.toFixed(1) + '" r="0.55" fill="rgba(8,18,12,.96)" />'
-        + '<text x="' + headX.toFixed(1) + '" y="' + (bodyTop - 7).toFixed(1) + '" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="10.5" font-weight="850">' + escapeHtml(camera.label || ("Cam " + (index + 1))) + '</text>';
+        + '<line data-sl-visual-part="iso-camera-aim-line" x1="' + lensTipX.toFixed(1) + '" y1="' + lensTipY.toFixed(1) + '" x2="' + targetX.toFixed(1) + '" y2="' + targetY.toFixed(1) + '" stroke="rgba(125,255,152,.50)" stroke-width="1.0" stroke-dasharray="3 4" />'
+        + '<g transform="translate(' + headX.toFixed(1) + ' ' + headY.toFixed(1) + ') scale(' + fmt(iconScale, 3) + ')" class="sl-cad-camera" data-sl-visual-part="iso-camera-cad-marker" data-graphics-symbol="camera-cad-small">'
+        + '<rect x="-22" y="-13" width="44" height="26" rx="4" fill="' + iconFill + '" stroke="' + iconStroke + '" stroke-width="1.7" />'
+        + '<path d="M 22 -8 L 42 -14 L 42 14 L 22 8 Z" fill="rgba(15,23,42,.96)" stroke="' + iconStroke + '" stroke-width="1.7" stroke-linejoin="round" />'
+        + '<line x1="42" y1="-12" x2="42" y2="12" stroke="' + iconAccent + '" stroke-width="1.7" stroke-linecap="round" />'
+        + '<line x1="-13" y1="-13" x2="-13" y2="13" stroke="rgba(125,255,158,.38)" stroke-width=".9" />'
+        + '<circle cx="-5" cy="0" r="4" fill="none" stroke="rgba(125,255,158,.55)" stroke-width="1.2" />'
+        + '<circle cx="-30" cy="0" r="5" fill="rgba(2,6,23,.95)" stroke="' + iconStroke + '" stroke-width="1.7" />'
+        + '<line x1="-25" y1="0" x2="-22" y2="0" stroke="' + iconStroke + '" stroke-width="1.7" stroke-linecap="round" />'
+        + '<line x1="44" y1="0" x2="70" y2="0" stroke="' + iconAccent + '" stroke-width="1.2" stroke-dasharray="4 5" stroke-linecap="round" />'
+        + '</g>'
+        + '<text x="' + headX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" fill="rgba(226,232,240,.74)" font-size="10.5" font-weight="850">' + escapeHtml(camera.label || ("Cam " + (index + 1))) + '</text>';
     }).join("");
 
     const cameraNote = cameras.length > 8
