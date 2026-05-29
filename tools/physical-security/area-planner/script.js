@@ -961,6 +961,7 @@
 
     const areaBlocks = reportGroups.map((group) => {
       const items = (model.groupedAreas && model.groupedAreas[group.key]) || [];
+      const itemCountText = items.length + " " + (items.length === 1 ? "item" : "items");
       const rows = items.length ? items.map((item) => {
         const area = item.area || {};
         const cameraText = area.cameraCount

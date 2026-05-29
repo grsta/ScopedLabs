@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "area-planner-summary-report-audit-006-no-item-context-reference";
+const VERSION = "area-planner-summary-report-audit-007-report-group-count-defined";
 
 const rows = [];
 
@@ -26,7 +26,7 @@ console.log("Audit version:", VERSION);
 
 add(
   "summary-cache-bumped",
-  index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-010")
+  index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-012")
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped for summary/report polish"
