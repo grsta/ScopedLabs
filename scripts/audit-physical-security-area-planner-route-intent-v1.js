@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-area-planner-route-intent-audit-003-summary-report-cache";
+const VERSION = "physical-security-area-planner-route-intent-audit-004-summary-ui-cache";
 
 const rows = [];
 
@@ -36,7 +36,7 @@ add(
 
 add(
   "route-intent-local-cache-bumped",
-  ((index.includes("physical-security-area-planner-route-intent-001") || index.includes("physical-security-area-planner-summary-report-001")) || (index.includes("physical-security-area-planner-button-scroll-002") || index.includes("physical-security-area-planner-summary-report-001")))
+  ((index.includes("physical-security-area-planner-route-intent-001") || index.includes("physical-security-area-planner-summary-ui-001") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-001")) || (index.includes("physical-security-area-planner-button-scroll-002") || index.includes("physical-security-area-planner-summary-ui-001") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-001")))
     ? "SAFE"
     : "FAIL",
   "Area Planner local script cache is bumped"

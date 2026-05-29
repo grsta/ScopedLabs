@@ -176,6 +176,50 @@
       line-height: 1.45;
     }
 
+    .area-section-title {
+      margin-top: 10px;
+      margin-bottom: 8px;
+      font-size: clamp(1.38rem, 2.2vw, 1.72rem);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .area-flow-line {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      color: rgba(226,232,240,.82);
+      font-size: .82rem;
+      font-weight: 850;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .area-flow-arrow {
+      color: rgba(125,255,158,.74);
+      font-weight: 950;
+    }
+
+    .area-summary-group-title {
+      margin: 0 0 4px;
+      color: #fff;
+      font-size: clamp(1.16rem, 1.65vw, 1.34rem);
+      line-height: 1.18;
+      letter-spacing: -0.01em;
+    }
+
+    .area-summary-count {
+      color: rgba(190,255,205,.82);
+      font-size: .82rem;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+
     .area-summary-group {
       display: grid;
       gap: 10px;
@@ -399,12 +443,7 @@
     <div class="container">
       
 
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-        <span class="pill">Pipeline Setup</span>
-      </div>
-
-      <h1 style="margin-top: 10px;">Area / Zone Planner</h1>
+<h1 style="margin-top: 10px;">Area / Zone Planner</h1>
 
       <div id="pipeline"></div>
 
@@ -503,7 +542,7 @@
             <span class="pill">Area Ledger</span>
             <span id="areaCountPill" class="pill">0 areas</span>
           </div>
-          <h3 class="h3" style="margin-top: 10px;">Planning areas</h3>
+          <h2 class="h2 area-section-title" style="margin-top: 10px;">Planning Areas</h2>
           <p class="muted" style="margin-bottom: 0;">
             Downstream results should be treated as area-specific. The final Physical Security report can later roll these up into a site-level camera and lens summary.
           </p>
@@ -513,11 +552,7 @@
 
 
         <section id="areaSummaryCard" class="card area-summary-card" style="margin-top: 14px;" data-export-section="Physical Security Area Summary">
-          <div class="pill-row">
-            <span class="pill pill--pro">Area Summary</span>
-            <span class="pill">Pipeline Rollup</span>
-          </div>
-          <h3 class="h3" style="margin-top: 10px;">Physical Security area and zone summary</h3>
+          <h2 class="h2 area-section-title" style="margin-top: 10px;">Physical Security area and zone summary</h2>
           <p class="muted" style="margin-bottom: 0;">
             This rollup separates core coverage areas from optional Face Recognition and License Plate zones, then summarizes active status, completed checks, key saved results, and next action notes.
           </p>
@@ -563,7 +598,7 @@
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
-  <script src="./script.js?v=physical-security-area-planner-summary-report-001"></script>
+  <script src="./script.js?v=physical-security-area-planner-summary-ui-001"></script>
   <script>
     window.ScopedLabsToolShell?.applyBackContinueShell?.({ rowId: "areaPlannerFlowActions" });
   </script>

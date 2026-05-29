@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "area-planner-summary-report-audit-002-summary-ui-cache";
+const VERSION = "area-planner-summary-ui-polish-audit-001";
 
 const rows = [];
 
@@ -20,85 +20,87 @@ const script = read("tools/physical-security/area-planner/script.js");
 const lensIndex = read("tools/physical-security/lens-selection/index.html");
 
 console.log("");
-console.log("Area Planner Summary Report Audit");
+console.log("Area Planner Summary UI Polish Audit");
 console.log("");
 console.log("Audit version:", VERSION);
 
 add(
-  "summary-cache-bumped",
-  index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-001")
+  "summary-ui-cache-bumped",
+  index.includes("physical-security-area-planner-summary-ui-001")
     ? "SAFE"
     : "FAIL",
-  "Area Planner local script cache is bumped for summary/report polish"
+  "Area Planner local script cache is bumped for summary UI polish"
 );
 
 add(
-  "summary-copy-updated",
-  index.includes("Physical Security area and zone summary") &&
-    index.includes("separates core coverage areas from optional Face Recognition and License Plate zones")
+  "top-pills-removed",
+  !/<div class=["']pill-row["'][\s\S]*?Pro Tier[\s\S]*?Pipeline Setup[\s\S]*?<\/div>/.test(index) &&
+    !/<div class=["']pill-row["'][\s\S]*?Area Summary[\s\S]*?Pipeline Rollup[\s\S]*?<\/div>/.test(index)
     ? "SAFE"
     : "FAIL",
-  "Area Summary card copy reflects core/specialty zone planner behavior"
+  "Top Pro/Pipeline and Area Summary pill rows are removed"
 );
 
 add(
-  "route-group-helpers",
-  script.includes("function areaRouteGroup") &&
-    script.includes("function areaRouteGroupLabel") &&
-    script.includes("function areaRouteGroupNote")
+  "planning-heading-uniform",
+  index.includes('<h2 class="h2 area-section-title" style="margin-top: 10px;">Planning Areas</h2>')
     ? "SAFE"
     : "FAIL",
-  "Area Planner has route group helpers"
+  "Planning Areas heading uses the larger shared card heading style"
 );
 
 add(
-  "summary-model-grouped",
-  script.includes("groupCounts") &&
-    script.includes("groupedAreas") &&
-    script.includes("activeAreaId") &&
-    script.includes("keyResult")
+  "summary-heading-uniform",
+  index.includes('<h2 class="h2 area-section-title" style="margin-top: 10px;">Physical Security area and zone summary</h2>')
     ? "SAFE"
     : "FAIL",
-  "Summary model stores grouped areas, active area, and key saved results"
+  "Area Summary heading uses the larger shared card heading style"
 );
 
 add(
-  "in-page-summary-groups",
-  script.includes("data-area-summary-group") &&
+  "area-card-pill-flow-replaced",
+  script.includes("area-flow-line") &&
+    script.includes("area-flow-arrow") &&
+    script.includes("routeIntentLabel(area.routeIntent)") &&
+    !script.includes("'<div class=\"pill-row\">' +\n            '<span class=\"pill\">' + (area.id === ledger.activeAreaId")
+    ? "SAFE"
+    : "FAIL",
+  "Area cards use arrow flow text instead of status pills"
+);
+
+add(
+  "summary-group-headings-larger",
+  index.includes(".area-summary-group-title") &&
+    script.includes("area-summary-group-title") &&
     script.includes("Core Coverage Areas") &&
     script.includes("Face Recognition Zones") &&
     script.includes("License Plate Zones")
     ? "SAFE"
     : "FAIL",
-  "In-page summary separates core, face, and plate groups"
+  "Summary group headings are larger and grouped by planner path"
 );
 
 add(
-  "in-page-compact-columns",
-  script.includes("Area / Zone") &&
-    script.includes("Selected") &&
-    script.includes("Checks") &&
-    script.includes("Key Saved Result") &&
-    script.includes("Next Action")
+  "summary-count-readable",
+  script.includes("itemCountText") &&
+    script.includes("area-summary-count") &&
+    script.includes("items.length === 1 ? \"item\" : \"items\"")
     ? "SAFE"
     : "FAIL",
-  "In-page summary uses compact planner columns"
+  "Summary group counts read as item/items instead of bare numbers"
 );
 
 add(
-  "print-report-groups",
-  script.includes("data-area-report-group") &&
-    script.includes("compact-area-table") &&
-    script.includes("model.groupCounts.core") &&
-    script.includes("model.groupCounts.face") &&
-    script.includes("model.groupCounts.plate")
+  "print-report-count-readable",
+  script.includes("group-count") &&
+    script.includes("compact-area-table")
     ? "SAFE"
     : "FAIL",
-  "Printable report separates grouped area/zone sections"
+  "Printable report uses readable group count text"
 );
 
 add(
-  "print-copy-actions-preserved",
+  "summary-report-behavior-preserved",
   script.includes("function printAreaSummary") &&
     script.includes("function copyAreaSummaryJson") &&
     script.includes("openAreaSummaryReportWindow")

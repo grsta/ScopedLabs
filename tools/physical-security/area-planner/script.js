@@ -812,8 +812,10 @@
     const items = (model.groupedAreas && model.groupedAreas[group]) || [];
     const label = areaRouteGroupLabel(group);
     const note = areaRouteGroupNote(group);
+    const itemCountText = items.length + " " + (items.length === 1 ? "item" : "items");
 
-    const rows = items.length ? items.map((item) => {
+    const itemCountText = items.length + " " + (items.length === 1 ? "item" : "items");
+      const rows = items.length ? items.map((item) => {
       const area = item.area || {};
       const cameraText = area.cameraCount
         ? area.cameraCount + " planned"
@@ -842,10 +844,10 @@
       '<section class="area-summary-group" data-area-summary-group="' + escapeHtml(group) + '">' +
         '<div class="area-summary-zone-head">' +
           '<div>' +
-            '<span class="area-summary-label">' + escapeHtml(label) + '</span>' +
+            '<h4 class="area-summary-group-title">' + escapeHtml(label) + '</h4>' +
             '<div class="area-summary-note">' + escapeHtml(note) + '</div>' +
           '</div>' +
-          '<span class="pill">' + escapeHtml(String(items.length)) + '</span>' +
+          '<span class="area-summary-count">' + escapeHtml(itemCountText) + '</span>' +
         '</div>' +
         '<table class="area-summary-table area-summary-table--planner">' +
           '<thead><tr><th>Area / Zone</th><th>Selected</th><th>Status</th><th>Checks</th><th>Key Saved Result</th><th>Next Action</th></tr></thead>' +
@@ -989,7 +991,7 @@
               '<h2>' + escapeHtml(group.label) + '</h2>' +
               '<div class="area-meta-line">' + escapeHtml(group.note) + '</div>' +
             '</div>' +
-            '<div class="status-pill pending">' + escapeHtml(String(items.length)) + '</div>' +
+            '<div class="group-count">' + escapeHtml(itemCountText) + '</div>' +
           '</div>' +
           '<table class="compact-area-table">' +
             '<thead><tr><th>Area / Zone</th><th>Selected</th><th>Status</th><th>Checks</th><th>Key Saved Result</th><th>Next Action</th></tr></thead>' +
@@ -1047,6 +1049,7 @@
 '    .report-title{font-size:1.7rem;line-height:1.15;margin:0 0 6px}' +
 '    .report-meta{color:var(--muted);font-size:.95rem;line-height:1.6}' +
 '    .status-pill,.mini-status{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;border:1px solid transparent;white-space:nowrap}' +
+'    .group-count{color:var(--accent);font-size:.82rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}' +
 '    .status-pill{padding:8px 12px;font-size:.82rem}' +
 '    .mini-status{padding:5px 8px;font-size:.72rem}' +
 '    .healthy{color:var(--accent);background:var(--accent-soft);border-color:#c9ead7}' +
@@ -1244,10 +1247,12 @@
 
       return '' +
         '<article class="area-card' + activeClass + '">' +
-          '<div class="pill-row">' +
-            '<span class="pill">' + (area.id === ledger.activeAreaId ? 'Active Area' : 'Area') + '</span>' +
-            '<span class="pill">' + escapeHtml(routeIntentLabel(area.routeIntent)) + '</span>' +
-            '<span class="pill">' + escapeHtml(formatAreaWorkflowStatus(area.status)) + '</span>' +
+          '<div class="area-flow-line" aria-label="Area workflow state">' +
+            '<span>' + escapeHtml(area.id === ledger.activeAreaId ? 'Active Area' : 'Area') + '</span>' +
+            '<span class="area-flow-arrow">\\u2192</span>' +
+            '<span>' + escapeHtml(routeIntentLabel(area.routeIntent)) + '</span>' +
+            '<span class="area-flow-arrow">\\u2192</span>' +
+            '<span>' + escapeHtml(formatAreaWorkflowStatus(area.status)) + '</span>' +
           '</div>' +
           '<h3 class="h3">' + escapeHtml(area.name) + '</h3>' +
           '<p class="muted" style="margin-bottom:0;">' + escapeHtml(area.areaType) + ' | ' + escapeHtml(area.detailGoal) + '</p>' +

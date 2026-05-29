@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-area-planner-foundation-audit-003-area-zone-summary";
+const VERSION = "physical-security-area-planner-foundation-audit-004-summary-ui-copy";
 
 const rows = [];
 
@@ -81,7 +81,7 @@ add(
 add(
   "area-summary-ui",
   index.includes("areaSummaryCard") &&
-    (index.includes("Physical Security area summary") || index.includes("Physical Security area and zone summary")) &&
+    ((index.includes("Physical Security area summary") || index.includes("Physical Security area and zone summary")) || index.includes("Physical Security area and zone summary")) &&
     index.includes("printAreaSummary") &&
     index.includes("copyAreaSummaryJson")
     ? "SAFE"
