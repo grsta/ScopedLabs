@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-page-polish-003";
+  const VERSION = "physical-security-summary-area-rollup-first-004";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -165,14 +165,87 @@
     return parts.length ? parts.join(" | ") : "No detailed result saved yet.";
   }
 
+  function firstAreaValue(area, keys) {
+    const source = area && typeof area === "object" ? area : {};
+    for (const key of keys) {
+      const value = source[key];
+      if (value === 0) return value;
+      if (value === false) return value;
+      if (value != null && String(value).trim() !== "") return value;
+    }
+    return "";
+  }
+
+  function areaToolDefinitions(group) {
+    if (group === "face") {
+      return [
+        {
+          label: "Face Recognition",
+          statusKeys: ["faceRecognitionStatus", "faceStatus", "overallStatus"],
+          detailKeys: ["faceRecognitionSummary", "faceSummary", "faceRecognitionMaxDistanceFt", "distanceToTargetPlaneFt"]
+        }
+      ];
+    }
+
+    if (group === "plate") {
+      return [
+        {
+          label: "License Plate",
+          statusKeys: ["licensePlateStatus", "plateStatus", "overallStatus"],
+          detailKeys: ["licensePlateSummary", "plateSummary", "licensePlateMaxDistanceFt", "distanceToTargetPlaneFt"]
+        }
+      ];
+    }
+
+    return [
+      { label: "Scene Illumination", statusKeys: ["sceneIlluminationStatus", "illuminationStatus", "lightingStatus"], detailKeys: ["sceneIlluminationSummary", "illuminationSummary", "lightingSummary"] },
+      { label: "Mounting Height", statusKeys: ["mountingHeightStatus", "heightStatus"], detailKeys: ["mountingHeightSummary", "mountingHeightFt"] },
+      { label: "Field of View", statusKeys: ["fieldOfViewStatus", "fovStatus"], detailKeys: ["fieldOfViewSummary", "fovSummary", "assumedHfovDeg"] },
+      { label: "Camera Coverage Area", statusKeys: ["cameraCoverageAreaStatus", "coverageStatus"], detailKeys: ["cameraCoverageAreaSummary", "coverageSummary", "distanceToTargetPlaneFt", "protectedLengthFt"] },
+      { label: "Camera Spacing", statusKeys: ["cameraSpacingStatus", "spacingStatus"], detailKeys: ["cameraSpacingSummary", "spacingSummary", "cameraCount", "spacingFt"] },
+      { label: "Blind Spot Check", statusKeys: ["blindSpotStatus", "blindSpotCheckStatus"], detailKeys: ["blindSpotSummary", "blindSpotCheckSummary"] },
+      { label: "Pixel Density", statusKeys: ["pixelDensityStatus", "densityStatus"], detailKeys: ["pixelDensitySummary", "densitySummary", "pixelDensityPpf"] },
+      { label: "Lens Selection", statusKeys: ["lensSelectionStatus", "lensStatus"], detailKeys: ["lensSelectionSummary", "lensSummary", "selectedLensMm"] }
+    ];
+  }
+
+  function areaToolDetail(area, definition) {
+    const value = firstAreaValue(area, definition.detailKeys || []);
+    if (value || value === 0 || value === false) return String(value);
+    return "No area-specific result saved for this step yet.";
+  }
+
+  function areaToolRows(area) {
+    const group = routeGroup(area);
+    return areaToolDefinitions(group).map((definition) => {
+      const statusValue = firstAreaValue(area, definition.statusKeys || []);
+      const status = normalizeStatus(statusValue || "unknown");
+      return {
+        label: definition.label,
+        status,
+        detail: areaToolDetail(area, definition)
+      };
+    });
+  }
+
+  function renderAreaToolTable(area) {
+    const rows = areaToolRows(area);
+    const body = rows.map((row) => {
+      return '<tr><td>' + escapeHtml(row.label) + '</td><td><span class="summary-status ' + escapeHtml(row.status) + '">' + escapeHtml(statusLabel(row.status)) + '</span></td><td>' + escapeHtml(row.detail) + '</td></tr>';
+    }).join("");
+
+    return '<table class="summary-table summary-area-tool-table" data-sl-summary-area-tool-table="true"><thead><tr><th>Tool / Area Step</th><th>Status</th><th>Area / Zone Detail</th></tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
   function renderAreaSection(title, areas, activeId) {
     const rows = areas.length
-      ? areas.map((area) => {
+      ? areas.map((area, index) => {
           const group = routeGroup(area);
           const active = activeId && area.id === activeId ? " | Active" : "";
-          const status = normalizeStatus(area.overallStatus || area.lensStatus || area.spacingStatus || area.faceRecognitionStatus || area.licensePlateStatus || "unknown");
+          const status = normalizeStatus(area.overallStatus || area.lensStatus || area.spacingStatus || area.faceRecognitionStatus || area.licensePlateStatus || area.status || "unknown");
+          const label = title.replace(/s$/, "");
 
-          return '<div class="summary-row" style="margin-top:10px;"><h3>' + escapeHtml(area.name || "Unnamed Area") + '</h3><p class="muted" style="margin:4px 0;">' + escapeHtml(routeLabel(group) + active) + '</p><p><span class="summary-status ' + escapeHtml(status) + '">' + escapeHtml(statusLabel(status)) + '</span></p><p class="muted" style="margin-bottom:0;">' + escapeHtml(areaDetail(area)) + '</p></div>';
+          return '<div class="summary-row summary-area-rollup-card" data-sl-summary-area-rollup-card="true"><h3>' + escapeHtml(label + ' ' + String(index + 1) + ': ' + (area.name || 'Unnamed Area')) + '</h3><p class="summary-area-rollup-meta">' + escapeHtml(routeLabel(group) + active + ' | ' + areaDetail(area)) + '</p><p><span class="summary-status ' + escapeHtml(status) + '">' + escapeHtml(statusLabel(status)) + '</span></p>' + renderAreaToolTable(area) + '</div>';
         }).join("")
       : '<div class="summary-row" style="margin-top:10px;"><p class="muted" style="margin:0;">No ' + escapeHtml(title.toLowerCase()) + ' recorded yet.</p></div>';
 
@@ -391,11 +464,11 @@
     const scopeMount = byId("physicalSecurityScopeMount");
     if (scopeMount) {
       scopeMount.innerHTML =
-        renderRows("Core Pipeline Tool Guidance", model.coreRows) +
-        renderRows("Optional Specialty Branch Guidance", model.specialtyRows) +
         renderAreaSection("Core Coverage Areas", model.groups.core, model.groups.activeAreaId) +
         renderAreaSection("Face Recognition Zones", model.groups.face, model.groups.activeAreaId) +
-        renderAreaSection("License Plate Zones", model.groups.plate, model.groups.activeAreaId);
+        renderAreaSection("License Plate Zones", model.groups.plate, model.groups.activeAreaId) +
+        renderRows("Core Pipeline Tool Guidance", model.coreRows) +
+        renderRows("Optional Specialty Branch Guidance", model.specialtyRows);
     }
 
     renderMasterAssistant(model);
