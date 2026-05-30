@@ -74,6 +74,7 @@
   }
 
   let prev = null;
+  let latestLensSelectionGuidance = null;
 
   function num(value, fallback = NaN) {
     return ScopedLabsAnalyzer.safeNumber(value, fallback);
@@ -541,6 +542,7 @@
 
   function invalidate({ clearFlow = true } = {}) {
     if (clearFlow) clearDownstream();
+    if (clearFlow) clearLensSelectionGuidanceEventMemory();
 
     clearDiagnosticPanel();
 
@@ -768,6 +770,214 @@
   }
 
 
+
+  function normalizeLensSelectionGuidanceStatus(status) {
+    const value = String(status || "").toLowerCase();
+
+    if (value.includes("risk")) return "risk";
+    if (value.includes("watch") || value.includes("warn")) return "watch";
+    if (value.includes("healthy") || value.includes("safe") || value.includes("ok")) return "healthy";
+
+    return "watch";
+  }
+
+  function lensSelectionSourceMode(data) {
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    return manualOverrideMeta.length ? "manual-override" : "pipeline";
+  }
+
+  function lensSelectionExpectedResult(data) {
+    const parts = [];
+
+    if (Number.isFinite(Number(data.adjustedFocal))) {
+      parts.push("selected lens " + fmtMm(Number(data.adjustedFocal)));
+    }
+
+    if (Number.isFinite(Number(data.calculatedTargetFocal))) {
+      parts.push("calculated target " + fmtMm(Number(data.calculatedTargetFocal)));
+    }
+
+    if (Number.isFinite(Number(data.lensGapPct))) {
+      parts.push("selection gap " + fmt(Number(data.lensGapPct), 1) + "%");
+    }
+
+    if (Number.isFinite(Number(data.ppf)) && Number(data.ppf) > 0) {
+      parts.push("upstream detail " + fmtPpf(Number(data.ppf)));
+    }
+
+    return parts.join(" | ") || "Review selected lens against calculated target and manufacturer field-of-view data.";
+  }
+
+  function lensSelectionPrimaryRecommendation(data) {
+    const status = normalizeLensSelectionGuidanceStatus(data.status);
+    const expectedResult = lensSelectionExpectedResult(data);
+
+    if (status === "healthy") {
+      return {
+        action: "Carry Lens Selection to Summary",
+        reason: "The selected lens is inside the preferred planning band for the current target width, distance, sensor width, and upstream detail context.",
+        expectedResult,
+        confidence: "Ready for category rollup",
+        nextStep: "Open Physical Security Summary and review the complete area or zone rollup."
+      };
+    }
+
+    if (status === "risk") {
+      return {
+        action: "Revise Lens Selection Before Summary",
+        reason: data.dominantConstraint || "Lens selection is under high planning pressure for the current assumptions.",
+        expectedResult,
+        confidence: "High planning pressure",
+        nextStep: "Evaluate a different focal length, shorter distance, smaller target width, camera split, or validated specialty zone before treating the design as final."
+      };
+    }
+
+    return {
+      action: "Review Lens Selection Margin",
+      reason: data.dominantConstraint || "Lens selection is workable but has assumptions that should be checked before final rollup.",
+      expectedResult,
+      confidence: "Review recommended",
+      nextStep: "Confirm the selected focal length against manufacturer field-of-view data, then continue to Physical Security Summary."
+    };
+  }
+
+  function lensSelectionSecondaryOptions(data) {
+    return [
+      {
+        label: "Check manufacturer FOV chart",
+        intent: "Confirm the modeled focal length against published camera and lens data.",
+        expectedResult: "The final lens selection should match actual horizontal field of view and target width.",
+        tradeoff: "Published values may shift the real-world scene width from the planning estimate.",
+        canApply: true
+      },
+      {
+        label: "Adjust target width or camera count",
+        intent: "Reduce lens pressure when one view is being asked to cover too much detail.",
+        expectedResult: "Focal demand and selection gap should move closer to the preferred band.",
+        tradeoff: "May require additional camera zones or a narrower planning scope.",
+        canApply: true
+      },
+      {
+        label: "Use optional specialty zone",
+        intent: "Move face or plate requirements into their dedicated optional branch when the area needs specialty validation.",
+        expectedResult: "The core lens result stays clean while Face Recognition or License Plate Capture validates the specialty zone.",
+        tradeoff: "Specialty branches add a separate zone result to the final Summary.",
+        canApply: true
+      }
+    ];
+  }
+
+  function buildLensSelectionGuidance(data) {
+    if (!data || data.ok === false) return null;
+
+    const mode = lensSelectionSourceMode(data);
+    const manualOverrideMeta = getManualOverrideMetadata(data);
+    const primary = lensSelectionPrimaryRecommendation(data);
+    const status = normalizeLensSelectionGuidanceStatus(data.status);
+
+    latestLensSelectionGuidance = {
+      ok: true,
+      status,
+      mode,
+      primaryRecommendation: primary,
+      secondaryOptions: lensSelectionSecondaryOptions(data),
+      sourceIntegrity: {
+        label: mode === "manual-override" ? "Manual override" : "Clean pipeline",
+        mode,
+        affectedFields: manualOverrideMeta.map((item) => item.field || item.label || "field"),
+        message: mode === "manual-override"
+          ? "Lens result includes local changes from the carried pipeline baseline."
+          : "Lens result follows the carried Physical Security pipeline assumptions."
+      },
+      reportSummary: [
+        primary.action,
+        primary.reason,
+        "Expected result: " + primary.expectedResult
+      ].filter(Boolean).join(" "),
+      carryForward: {
+        allowed: true,
+        nextTool: "physical-security-summary",
+        message: "Carry this Lens Selection result into Physical Security Summary when distance, target width, sensor width, selected lens, and upstream pixel-density assumptions match the intended area."
+      },
+      values: {
+        selectedLensMm: Number.isFinite(Number(data.adjustedFocal)) ? Number(Number(data.adjustedFocal).toFixed(2)) : null,
+        calculatedTargetLensMm: Number.isFinite(Number(data.calculatedTargetFocal)) ? Number(Number(data.calculatedTargetFocal).toFixed(2)) : null,
+        distanceFt: Number.isFinite(Number(data.dist)) ? Number(Number(data.dist).toFixed(2)) : null,
+        targetWidthFt: Number.isFinite(Number(data.tw)) ? Number(Number(data.tw).toFixed(2)) : null,
+        sensorWidthMm: Number.isFinite(Number(data.sw)) ? Number(Number(data.sw).toFixed(2)) : null,
+        pixelDensityPpf: Number.isFinite(Number(data.ppf)) ? Number(Number(data.ppf).toFixed(2)) : null,
+        lensGapPct: Number.isFinite(Number(data.lensGapPct)) ? Number(Number(data.lensGapPct).toFixed(2)) : null,
+        lensClass: data.lensClass || ""
+      }
+    };
+
+    return latestLensSelectionGuidance;
+  }
+
+  function buildLensSelectionGuidanceFromAssistantPayload(payload, fallbackData) {
+    const flow = payload && payload.flowOutputs ? payload.flowOutputs : {};
+    const assumptions = payload && payload.assumptions ? payload.assumptions : {};
+    const fallback = fallbackData || {};
+
+    return buildLensSelectionGuidance({
+      ok: true,
+      status: payload && payload.status ? payload.status : fallback.status,
+      adjustedFocal: flow.selectedLensMm || flow.adjustedFocalMm || assumptions.selectedLensMm || fallback.adjustedFocal || fallback.selectedLensMm,
+      selectedLens: flow.selectedLensMm || assumptions.selectedLensMm || fallback.selectedLensMm,
+      calculatedTargetFocal: flow.calculatedLensMm || flow.baseFocalMm || fallback.calculatedTargetFocal || fallback.calculatedLensMm,
+      dist: flow.distanceFt || assumptions.distanceFt || fallback.dist || fallback.distanceFt,
+      tw: flow.targetWidthFt || flow.requiredSceneWidthFt || assumptions.requiredSceneWidthFt || assumptions.sceneWidthFt || fallback.tw || fallback.targetWidthFt,
+      sw: flow.sensorWidthMm || assumptions.sensorWidthMm || fallback.sw || fallback.sensorWidthMm,
+      ppf: flow.pixelDensityPpf || flow.availablePpf || assumptions.availablePpf || fallback.ppf || fallback.pixelDensityPpf,
+      lensGapPct: flow.lensGapPct || fallback.lensGapPct,
+      lensClass: flow.lensClass || fallback.lensClass,
+      dominantConstraint: payload && payload.dominantConstraint ? payload.dominantConstraint : fallback.dominantConstraint,
+      guidance: payload && payload.guidance ? payload.guidance : fallback.guidance
+    });
+  }
+
+  function getLastLensSelectionGuidance() {
+    return latestLensSelectionGuidance;
+  }
+
+  function publishLensSelectionGuidanceEvent(source, guidanceOverride) {
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    const guidance = guidanceOverride || latestLensSelectionGuidance;
+
+    if (!bridge || typeof bridge.publishIfChanged !== "function" || !guidance) {
+      return false;
+    }
+
+    return !!bridge.publishIfChanged({
+      category: CATEGORY,
+      tool: STEP,
+      guidance,
+      source: source || "lens-selection-guidance-update"
+    });
+  }
+
+  function clearLensSelectionGuidanceEventMemory() {
+    latestLensSelectionGuidance = null;
+
+    const bridge = window.ScopedLabsPhysicalSecurityGuidanceEventBridge;
+    if (bridge && typeof bridge.clearTool === "function") {
+      return bridge.clearTool(STEP);
+    }
+
+    const memory = window.ScopedLabsPhysicalSecurityGuidanceMemory;
+    if (memory && typeof memory.clearToolGuidance === "function") {
+      return memory.clearToolGuidance(STEP);
+    }
+
+    return false;
+  }
+
+  window.ScopedLabsLensSelectionGuidance = Object.freeze({
+    getLastGuidance: getLastLensSelectionGuidance,
+    publish: publishLensSelectionGuidanceEvent,
+    clear: clearLensSelectionGuidanceEventMemory
+  });
+
   function clearDiagnosticPanel() {
     if (window.ScopedLabsDiagnostic && els.diagnostic) {
       window.ScopedLabsDiagnostic.clear(els.diagnostic);
@@ -937,7 +1147,7 @@
     const whatThisSupports = [
       "Comparing whether the current scene geometry is reasonable for one camera view.",
       "Identifying when lens demand is being pushed by distance, scene width, sensor size, or detail target.",
-      "Carrying structured focal-length assumptions into downstream physical-security planning steps."
+      "Carrying structured focal-length assumptions into the Physical Security Summary and future site-level coordination."
     ];
 
     const whatThisDoesNotProve = [
@@ -952,7 +1162,7 @@
       rendererProfile: "diagnostic-gauge-v1",
       category: CATEGORY,
       toolSlug: STEP,
-      toolLabel: "Lens Selection Helper",
+      toolLabel: "Lens Selection",
       status,
       objective: "Evaluate whether the selected lens fits the scene geometry and upstream detail requirements.",
       method: "Uses distance to target, required scene width, selected lens, camera format, and pixel-density context to evaluate lens fit and planning pressure.",
@@ -1084,7 +1294,7 @@
       savedAt: new Date().toISOString(),
       category: CATEGORY,
       step: STEP,
-      tool: "Lens Selection Helper",
+      tool: "Lens Selection",
       selectedScenario: "Live Lens Selection",
       selectedLensMm: Number(data.adjustedFocal.toFixed(2)),
       calculatedLensMm: Number((data.calculatedTargetFocal || data.baseFocal).toFixed(2)),
@@ -1383,6 +1593,8 @@
     if (openReportV2) openReportV2.disabled = false;
 
     writeFlow(data);
+    buildLensSelectionGuidance(data);
+    publishLensSelectionGuidanceEvent("lens-selection-guidance-update");
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
   }
 
@@ -1534,6 +1746,7 @@
     window.ScopedLabsLensPipelineCarryForward = carryPayload;
 
     updateActiveAreaFromLens(carryData, "lens-design-assistant", carryPayload);
+    publishLensSelectionGuidanceEvent("lens-design-assistant-selected-scenario", buildLensSelectionGuidanceFromAssistantPayload(assistantPayload, carryData));
 
     return true;
   }

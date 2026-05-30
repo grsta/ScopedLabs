@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lens Selection Helper • ScopedLabs</title>
+  <title>Lens Selection | ScopedLabs</title>
   <meta
     name="description"
     content="Determine focal length and lens class based on scene geometry and validated pixel-density requirements."
@@ -429,18 +429,18 @@
         <span class="pill pill--pro">Pro Tier</span>
       </div>
 
-      <h1 style="margin-top: 10px;">Lens Selection Helper</h1>
+      <h1 style="margin-top: 10px;">Lens Selection</h1>
 
       <div id="pipeline"></div>
 
       <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
         <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
-        <h2 class="h3" style="margin-top: 0;">This tool continues the Physical Security design flow</h2>
+        <h2 class="h3" style="margin-top: 0;">This tool completes the core Physical Security design flow</h2>
         <p class="muted" style="margin-bottom: 0;">
-          Use this step to convert the validated pixel-density requirement into a practical focal-length choice that still supports the intended scene width.
+          Use this final core step to convert the validated pixel-density requirement into a practical focal-length choice, then send the completed core design to Physical Security Summary.
         </p>
         <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
-          This is where subject-detail goals stop being abstract and turn into a real optic decision that either preserves the required framing or forces a tighter view.
+          Face Recognition and License Plate checks are optional specialty zones launched from Area Planner; they are no longer forced after Lens Selection.
         </p>
       </section>
 <div id="flow-note" class="flow-note" hidden></div>
@@ -457,7 +457,7 @@
         <ul class="muted">
           <li>Required lens target from scene geometry, selected lens, and camera format</li>
           <li>Adjustment pressure from the upstream pixel-density requirement</li>
-          <li>Practical lens class selection before final recognition-range validation</li>
+          <li>Practical lens class selection before final Physical Security Summary rollup</li>
         </ul>
 
         
@@ -571,7 +571,7 @@
         <div class="export-grid">
           <label class="field">
             <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Lens Selection Helper Assessment" />
+            <input id="reportTitle" type="text" placeholder="Lens Selection Assessment" />
           </label>
 
           <label class="field">
@@ -631,11 +631,11 @@
     window.ScopedLabsExportConfig = {
       "categoryLabel": "Physical Security",
       "categorySlug": "physical-security",
-      "toolLabel": "Lens Selection Helper",
+      "toolLabel": "Lens Selection",
       "toolSlug": "lens-selection",
       "reportPrefix": "SL-PS-LS",
       "assumptions": [
-            "This report reflects the visible Lens Selection Helper inputs and outputs at the time the export was generated.",
+            "This report reflects the visible Lens Selection inputs and outputs at the time the export was generated.",
             "The calculation output is intended for planning, comparison, and documentation support.",
             "Final design decisions should be verified against project requirements, manufacturer documentation, site-specific conditions, and applicable standards."
       ],
@@ -647,11 +647,22 @@
   <script src="/assets/diagnostic.js?v=diagnostic-002"></script>
 
   <script src="/assets/lens-design-assistant.js?v=lens-design-assistant-018"></script>
-    <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
+    <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout"></script>
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
-  <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-004-back-continue-proof"></script>
-  <script src="./script.js?v=physical-security-lens-summary-route-005"></script>
-  <script defer src="/assets/help.js?v=help-026"></script>
+  <script src="/assets/scopedlabs-tool-shell.js?v=scopedlabs-tool-shell-009-print-diagnostics"></script>
+  <script src="/assets/user-assistant-guidance.js?v=user-assistant-guidance-001-schema-foundation"></script>
+  <script src="/assets/physical-security-source-policy.js?v=physical-security-source-policy-001-web-intake-gate"></script>
+  <script src="/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-001-web-ready"></script>
+  <script src="/assets/physical-security-guidance-registry.js?v=physical-security-guidance-registry-001-foundation"></script>
+  <script src="/assets/physical-security-guidance-memory.js?v=physical-security-guidance-memory-001-session-foundation"></script>
+  <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate"></script>
+  <script src="/assets/physical-security-guidance-event-bridge.js?v=physical-security-guidance-event-bridge-001-foundation"></script>
+  <script src="/assets/physical-security-ui-kit.js?v=physical-security-dormant-assistant-modules-001"></script>
+  <script src="/assets/physical-security-graphics-library.js?v=physical-security-dormant-assistant-modules-001"></script>
+  <script src="/assets/physical-security-local-assistant.js?v=physical-security-dormant-assistant-modules-001"></script>
+  <script src="/assets/physical-security-tool-assistant-adapters.js?v=physical-security-dormant-assistant-modules-001"></script>
+  <script src="./script.js?v=physical-security-lens-module-alignment-007"></script>
+  <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>
 

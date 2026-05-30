@@ -54,6 +54,12 @@
       iconKey: "person",
       visibleDefault: false
     },
+    "lens-selection": {
+      slug: "lens-selection",
+      title: "Lens Selection Assistant",
+      iconKey: "camera",
+      visibleDefault: false
+    },
     "face-recognition-range": {
       slug: "face-recognition-range",
       title: "Face Recognition Assistant",

@@ -179,7 +179,7 @@
       kbKey: "physical-security/lens-selection",
       shellRequirementSet: ROLE.PIPELINE_STEP,
       rendererKeys: Object.freeze([]),
-      notes: "Lens Selection remains the assistant visual/interaction gold standard and should not be migrated until a factory can reproduce it 1:1."
+      notes: "Lens Selection is now open for controlled Physical Security Summary alignment updates while preserving math, export, snapshot, auth, KB, and assistant behavior."
     }),
 
     "face-recognition-range": Object.freeze({
