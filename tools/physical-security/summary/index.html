@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Physical Security Summary | ScopedLabs</title>
+  <meta name="description" content="Review Physical Security core coverage, optional specialty zones, category guidance, and report-ready summary context." />
+  <meta name="robots" content="noindex,follow" />
+
+  <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-030-phys-card-shell" />
+  <link rel="stylesheet" href="/assets/physical-security-category-guidance-renderer.css?v=physical-security-category-guidance-renderer-css-001-proof" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
+    window.SL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlibnpqdHVlY2lyemFqcmFkZGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODYwNjEsImV4cCI6MjA4NjE2MjA2MX0.502bvCMrfbdJV9yXcHgjJx_t6eVcTVc0AlqxIbb9AAM";
+  </script>
+  <script defer src="/assets/auth.js?v=auth-magiclink-session-restore-0527"></script>
+  <script defer src="/assets/app.js?v=physical-security-summary-proof-001"></script>
+
+  <style>
+    .summary-hero {
+      margin-top: 18px;
+      border-color: rgba(125,255,152,.20);
+      background: radial-gradient(circle at 18% 0%, rgba(125,255,152,.075), transparent 34%), linear-gradient(180deg, rgba(5,14,11,.96), rgba(2,7,5,.98));
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 14px;
+    }
+
+    .summary-panel,
+    .summary-row {
+      border: 1px solid rgba(226,232,240,.12);
+      background: rgba(0,0,0,.14);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .summary-panel h3,
+    .summary-row h3 {
+      margin-top: 0;
+    }
+
+    .summary-kpi {
+      font-size: 1.65rem;
+      font-weight: 950;
+      color: rgba(248,250,252,.94);
+      line-height: 1.1;
+    }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      border: 1px solid rgba(226,232,240,.12);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .summary-table th {
+      color: rgba(125,255,152,.88);
+      background: rgba(125,255,152,.06);
+      font-size: .78rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .summary-status {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(226,232,240,.18);
+      color: rgba(226,232,240,.78);
+      white-space: nowrap;
+    }
+
+    .summary-status.healthy {
+      border-color: rgba(125,255,152,.34);
+      color: rgba(155,255,180,.96);
+      background: rgba(125,255,152,.08);
+    }
+
+    .summary-status.watch {
+      border-color: rgba(255,211,79,.42);
+      color: rgba(255,230,150,.98);
+      background: rgba(255,211,79,.10);
+    }
+
+    .summary-status.risk {
+      border-color: rgba(255,138,102,.46);
+      color: rgba(255,188,166,.98);
+      background: rgba(255,138,102,.10);
+    }
+
+    .summary-payload {
+      white-space: pre-wrap;
+      font-size: .78rem;
+      line-height: 1.45;
+      max-height: 240px;
+      overflow: auto;
+      border: 1px solid rgba(226,232,240,.12);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(0,0,0,.18);
+      color: rgba(226,232,240,.72);
+    }
+
+    @media (max-width: 900px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body
+  data-protected="true"
+  data-tier="pro"
+  data-category="physical-security"
+  data-tool="physical-security-summary"
+  data-step="physical-security-summary"
+>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="ScopedLabs Home">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <span class="brand-icon-wrap" aria-hidden="true">
+        <img
+          class="brand-icon"
+          src="/assets/favicon/favicon-32x32.png?v=1"
+          alt=""
+          width="32"
+          height="32"
+        />
+      </span>
+      <span class="brand-name">ScopedLabs</span>
+    </a>
+
+                                          <nav class="nav site-nav nav-tabs" aria-label="Primary">
+        <a class="nav-tab" href="/">Home</a>
+        <a class="nav-tab is-active" href="/tools/" aria-current="page">Tools</a>
+        <a class="nav-tab" href="/guides/">Guides</a>
+        <a class="nav-tab" href="/about/">About</a>
+        <a class="nav-tab" href="/contact/">Contact</a>
+        <a class="nav-tab" href="/account/">Account</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <div class="crumbs">
+        <a href="/tools/">Tools</a>
+        <span class="sep">/</span>
+        <a href="/tools/physical-security/">Physical Security</a>
+        <span class="sep">/</span>
+        <span>Summary</span>
+      </div>
+
+      <div class="pill-row" style="margin-top: 6px;">
+        <span class="pill pill--pro">Pro Tier</span>
+        <span class="pill">Category Summary</span>
+      </div>
+
+      <h1 style="margin-top: 10px;">Physical Security Summary</h1>
+
+      <section class="card summary-hero">
+        <div class="pill-row">
+          <span class="pill">Final Category Rollup</span>
+          <span class="pill">Cross-Category Ready</span>
+        </div>
+        <h2 class="h2" style="margin-top: 12px;">Core pipeline, specialty zones, and master guidance</h2>
+        <p class="muted" style="margin-bottom: 0;">
+          This page is the future Physical Security master assistant and final report host. It rolls up the core camera coverage path plus optional Face Recognition and License Plate specialty zones without forcing those branches into the required core pipeline.
+        </p>
+      </section>
+
+      <section class="card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill">Master Assistant</span>
+        </div>
+        <div id="physicalSecuritySummaryMasterMount" class="sl-category-guidance-mount" style="margin-top: 12px;"></div>
+      </section>
+
+      <section class="card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill">Summary Results</span>
+        </div>
+        <h2 class="h2" style="margin-top: 12px;">Physical Security Rollup</h2>
+        <div id="results" class="summary-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill">Core Coverage Areas</span>
+          <span class="pill">Specialty Zones</span>
+        </div>
+        <h2 class="h2" style="margin-top: 12px;">Area and Zone Rollup</h2>
+        <p class="muted">
+          Core coverage areas stay on the normal camera design path. Face Recognition and License Plate zones remain separate optional branches, but still attach to this category summary.
+        </p>
+        <div id="physicalSecurityScopeMount"></div>
+      </section>
+
+      <section
+        id="summaryExportSection"
+        class="card"
+        style="margin-top: 18px;"
+        data-export-section
+        data-export-title="Physical Security Category Summary"
+      >
+        <div class="pill-row">
+          <span class="pill">Final Report</span>
+        </div>
+
+        <h2 class="h2" style="margin-top: 12px;">Export Physical Security Summary</h2>
+        <p class="muted">
+          Add optional report context and open a report-ready summary for the current Physical Security planning session.
+        </p>
+
+        <div class="form-grid export-grid">
+          <label class="field">
+            <span class="label">Report Title</span>
+            <input id="reportTitle" type="text" placeholder="Physical Security Summary" />
+          </label>
+          <label class="field">
+            <span class="label">Project Name</span>
+            <input id="projectName" type="text" placeholder="Project Name" />
+          </label>
+          <label class="field">
+            <span class="label">Client Name</span>
+            <input id="clientName" type="text" placeholder="Client / Site Name" />
+          </label>
+          <label class="field">
+            <span class="label">Prepared By</span>
+            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
+          </label>
+          <label class="field full">
+            <span class="label">Custom Notes</span>
+            <textarea id="customNotes" placeholder="Optional notes, assumptions, site conditions, device profile references, or cross-category dependencies."></textarea>
+          </label>
+        </div>
+
+        <div id="physicalSecurityReportMount" style="margin-top: 14px;"></div>
+
+        <h3 class="h3" style="margin-top: 18px;">Future Site Assistant Payload</h3>
+        <p class="muted export-text">
+          This category summary is structured so a future Gold-tier Site Summary can coordinate Physical Security with Network, Power, Storage, Access Control, equipment profiles, site assumptions, and unresolved risk items.
+        </p>
+        <pre id="physicalSecurityCrossCategoryPayload" class="summary-payload" data-export-text>{}</pre>
+
+        <div class="btn-row" style="margin-top: 14px;">
+          <button id="exportReport" class="btn btn-primary" type="button">Open Export Report</button>
+          <button id="saveSnapshot" class="btn" type="button">Save Snapshot</button>
+        </div>
+        <div id="exportStatus" class="export-status"></div>
+      </section>
+
+      <section class="card" style="margin-top: 18px;">
+        <div class="pill-row">
+          <span class="pill">Next Actions</span>
+        </div>
+        <h2 class="h2" style="margin-top: 12px;">Continue Planning</h2>
+        <div class="btn-row">
+          <a class="btn" href="/tools/physical-security/area-planner/">Return to Area Planner</a>
+          <a class="btn" href="/tools/physical-security/lens-selection/">Review Lens Selection</a>
+          <a class="btn btn-primary" href="/tools/physical-security/">Back to Physical Security</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+        <div class="muted">© <span data-year></span> ScopedLabs</div>
+              <div class="footer-links">
+      <a href="/tools/">Tools</a>
+      <a href="/upgrade/">Upgrade</a>
+      <a href="/about/">About</a>
+      <a href="/contact/">Contact</a>
+      <a href="/changelog/">Changelog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/disclaimer/">Disclaimer</a>
+    </div>
+</footer>
+
+  <script src="/assets/tool-flow.js?v=physical-security-summary-proof-001"></script>
+  <script src="/assets/catalog.js?v=physical-security-summary-proof-001"></script>
+  <script src="/assets/pipelines.js?v=physical-security-summary-proof-001"></script>
+  <script src="/assets/pipeline-state.js?v=physical-security-summary-proof-001"></script>
+  <script src="/assets/pipeline.js?v=physical-security-summary-proof-001"></script>
+  <script data-scopedlabs-export-config>
+    window.ScopedLabsExportConfig = {
+      categoryLabel: "Physical Security",
+      categorySlug: "physical-security",
+      toolLabel: "Physical Security Summary",
+      toolSlug: "physical-security-summary",
+      reportPrefix: "SL-PS-SUM",
+      assumptions: [
+        "This report reflects the current Physical Security summary, guidance memory, area/zone context, and visible report fields at the time the export was generated.",
+        "Core coverage areas and optional specialty zones may be at different completion states.",
+        "Future cross-category coordination should verify Network, Power, Storage, Access Control, equipment profile, and site-condition dependencies before final design decisions."
+      ],
+      disclaimer: "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
+    };
+  </script>
+  <script src="/assets/export.js?v=shared-export-016-suppress-extra-title"></script>
+  <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-015"></script>
+  <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
+  <script src="/assets/physical-security-guidance-memory.js?v=physical-security-guidance-memory-001-session-foundation"></script>
+  <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate"></script>
+  <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-001-foundation"></script>
+  <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-007-watch-risk-columns"></script>
+  <script src="./script.js?v=physical-security-summary-proof-001"></script>
+  <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
+</body>
+</html>
