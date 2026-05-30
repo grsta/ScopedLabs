@@ -75,6 +75,37 @@
       text-transform: uppercase;
     }
 
+
+    /* physical-security-summary-report-status-text-005 */
+    .physical-security-report-status {
+      display: inline;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      font-weight: 850;
+      letter-spacing: 0;
+      text-transform: none;
+      white-space: normal;
+    }
+
+    .physical-security-report-status.healthy {
+      color: rgba(125,255,152,.96);
+    }
+
+    .physical-security-report-status.watch {
+      color: rgba(255,218,106,.98);
+    }
+
+    .physical-security-report-status.risk {
+      color: rgba(255,154,118,.98);
+    }
+
+    .physical-security-report-status.unknown,
+    .physical-security-report-status.pending {
+      color: rgba(203,213,225,.72);
+    }
     /* physical-security-summary-status-text-polish-004 */
     .summary-status {
       display: inline;
@@ -514,7 +545,7 @@
   <script src="/assets/physical-security-guidance-memory.js?v=physical-security-guidance-memory-001-session-foundation"></script>
   <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate"></script>
   <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-002-summary-master-polish"></script>
-  <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-008-table-polish"></script>
+  <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-009-status-text"></script>
   <script src="./script.js?v=physical-security-summary-page-polish-003"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-report-table-polish-audit-002-source-aware";
+const VERSION = "physical-security-summary-report-table-polish-audit-003-status-text";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -23,10 +23,11 @@ safe("report-summary-exists", exists("assets/physical-security-report-summary.js
 safe("final-report-pill-removed", !index.includes("<span class=\"pill\">Final Report</span>"), "Final Report pill removed");
 safe("export-card-remains", index.includes("summary-export-card") && index.includes("Final Report Export") && index.includes("summaryReportDetails"), "export card remains");
 safe("export-controls-remain", index.includes("id=\"exportReport\"") && index.includes("id=\"saveSnapshot\"") && index.includes("id=\"physicalSecurityReportMount\""), "export controls and report mount remain");
-safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-008-table-polish"), "report summary cache bumped");
-safe("report-version-bumped", report.includes("physical-security-report-summary-008-table-polish"), "report summary asset version bumped");
+safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-009-status-text"), "report summary cache bumped");
+safe("report-version-bumped", report.includes("physical-security-report-summary-009-status-text"), "report summary asset version bumped");
 safe("category-summary-table-class", report.includes("class=\"summary-table physical-security-category-summary-table\""), "category summary uses summary-table class");
 safe("watch-risk-table-class", report.includes("class=\"summary-table physical-security-watch-risk-table\""), "watch/risk detail uses summary-table class");
+safe("report-status-text", report.includes("function renderReportStatusText(status)") && report.includes("physical-security-report-status"), "report summary status values render as colored text");
 safe("category-summary-header-clean", report.includes("<thead><tr><th>Summary Item</th><th>Detail</th></tr></thead>"), "category summary table header is clean");
 safe("duplicate-summary-block-removed", !report.includes("<h3>Physical Security Category Summary</h3>") && !report.includes("<h4>Watch/Risk Detail</h4><ul>"), "duplicate text/list summary block removed");
 safe("question-artifact-output-removed", !report.includes(".join(\" ? \")") && !report.includes("\" ? \" +") && !report.includes("+ \" ? \""), "visible question-mark separator artifact removed from output construction");

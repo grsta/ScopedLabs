@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-008-table-polish";
+  const VERSION = "physical-security-report-summary-009-status-text";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -248,6 +248,19 @@
     return "Unknown";
   }
 
+  function reportStatusClass(status) {
+    const normalized = normalizeStatus(status);
+    if (normalized === "risk") return "risk";
+    if (normalized === "watch") return "watch";
+    if (normalized === "healthy") return "healthy";
+    return "unknown";
+  }
+
+  function renderReportStatusText(status) {
+    const className = reportStatusClass(status);
+    return '<span class="physical-security-report-status ' + className + '">' + escapeHtml(statusLabel(className)) + '</span>';
+  }
+
   function renderExportTableHtml(summary) {
     if (!summary || !summary.counts || !summary.counts.generated) return "";
 
@@ -255,7 +268,7 @@
     const priority = summary.priorityTool || null;
 
     const summaryRows = [
-      ["Status", statusLabel(summary.status)],
+      ["Status", renderReportStatusText(summary.status), true],
       ["Generated", String(counts.generated || 0) + " of " + String(counts.tracked || 0)],
       ["Healthy / Watch / Risk", String(counts.healthy || 0) + " / " + String(counts.watch || 0) + " / " + String(counts.risk || 0)],
       priority ? ["Priority item", priority.label || priority.slug || "Physical Security Tool"] : null,
@@ -268,7 +281,7 @@
       .filter((tool) => normalizeStatus(tool.status) === "risk" || normalizeStatus(tool.status) === "watch")
       .slice(0, 6)
       .map((tool) => {
-        const status = statusLabel(normalizeStatus(tool.status));
+        const status = renderReportStatusText(tool.status);
         const action = tool.action || "Review this tool result before finalizing the category.";
         const detail = tool.reason || tool.reportSummary || tool.nextStep || tool.expectedResult || "Confirm this condition before carrying the design forward.";
         const nextStep = tool.nextStep && tool.nextStep !== detail ? " Next step: " + tool.nextStep : "";
@@ -286,7 +299,7 @@
       '<thead><tr><th>Summary Item</th><th>Detail</th></tr></thead>',
       '<tbody>',
       summaryRows.map((row) => {
-        return '<tr><td>' + escapeHtml(row[0]) + '</td><td>' + escapeHtml(row[1]) + '</td></tr>';
+        return '<tr><td>' + escapeHtml(row[0]) + '</td><td>' + (row[2] ? row[1] : escapeHtml(row[1])) + '</td></tr>';
       }).join(""),
       '</tbody>',
       '</table>'
@@ -299,7 +312,7 @@
           '<thead><tr><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th></tr></thead>',
           '<tbody>',
           detailRows.map((row) => {
-            return '<tr>' + row.map((cell) => '<td>' + escapeHtml(cell) + '</td>').join("") + '</tr>';
+            return '<tr>' + row.map((cell, index) => '<td>' + (index === 1 ? cell : escapeHtml(cell)) + '</td>').join("") + '</tr>';
           }).join(""),
           '</tbody>',
           '</table>'
