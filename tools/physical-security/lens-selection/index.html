@@ -600,35 +600,17 @@
           Add optional project context and generate a clean documentation view that can be printed or saved as a PDF for client or internal use.
         </p>
 
-        <div class="export-grid">
-          <label class="field">
-            <span class="label">Report Title</span>
-            <input id="reportTitle" type="text" placeholder="Lens Selection Assessment" />
-          </label>
-
-          <label class="field">
-            <span class="label">Project Name</span>
-            <input id="projectName" type="text" placeholder="Project Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Client Name</span>
-            <input id="clientName" type="text" placeholder="Client / Site Name" />
-          </label>
-
-          <label class="field">
-            <span class="label">Prepared By</span>
-            <input id="preparedBy" type="text" placeholder="ScopedLabs Pro User" />
-          </label>
-
-          <label class="field full">
-            <span class="label">Custom Notes</span>
-            <textarea id="customNotes" placeholder="Optional notes, assumptions, workload details, or design caveats to include in the report."></textarea>
-          </label>
-        </div>
+        <div
+          id="reportMetadataMount"
+          data-report-metadata
+          data-report-title="Report details"
+          data-report-copy="Optional metadata can be included in the generated report. Leave blank to use the default report naming."
+          data-report-fields="reportTitle,projectName,clientName,preparedBy,customNotes"
+          data-collapsed="true"
+        ></div>
 
         <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Export Report</button>
+          <button id="exportReport" class="btn btn-primary" type="button" disabled>Open Report</button>
           <button id="saveSnapshot" class="btn" type="button" disabled>Save Snapshot</button>
         </div>
 
@@ -674,6 +656,7 @@
 };
   </script>
 
+  <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-002-title-defaults"></script>
   <script src="/assets/export.js?v=shared-export-014-print-safe-compact-svg"></script>
   <script src="/assets/diagnostic.js?v=diagnostic-002"></script>
 
@@ -693,7 +676,7 @@
   <script src="/assets/physical-security-graphics-library.js?v=physical-security-dormant-assistant-modules-001"></script>
   <script src="/assets/physical-security-local-assistant.js?v=physical-security-dormant-assistant-modules-001"></script>
   <script src="/assets/physical-security-tool-assistant-adapters.js?v=physical-security-dormant-assistant-modules-001"></script>
-  <script src="./script.js?v=physical-security-lens-report-polish-009-duplicate-export-cleanup"></script>
+  <script src="./script.js?v=physical-security-lens-report-polish-010-collapsible-export"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>

@@ -60,7 +60,7 @@ add("lens-index-exists", exists(lensIndexRel) ? "SAFE" : "FAIL", lensIndexRel + 
 add("lens-script-exists", exists(lensScriptRel) ? "SAFE" : "FAIL", lensScriptRel + " exists");
 add("export-js-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " exists");
 
-["id=\"lensReportSummaryExport\"", "data-export-title=\"Lens Selection Engineering Summary\"", "/assets/export.js?v=shared-export-014-print-safe-compact-svg", "./script.js?v=physical-security-lens-report-polish-009-duplicate-export-cleanup", "id=\"lensDesignAssistant\"", "Continue → Physical Security Summary"].forEach((signal) => requireSignal("lens-index", lensIndex, signal));
+["id=\"lensReportSummaryExport\"", "data-export-title=\"Lens Selection Engineering Summary\"", "/assets/export.js?v=shared-export-014-print-safe-compact-svg", "./script.js?v=physical-security-lens-report-polish-010-collapsible-export", "id=\"lensDesignAssistant\"", "Continue → Physical Security Summary"].forEach((signal) => requireSignal("lens-index", lensIndex, signal));
 
 ["reportSummary: $(\"lensReportSummaryExport\")", "function renderLensReportSummary(data)", "Lens Selection Result Summary", "Engineering Notes and Handoff", "Physical Security Summary handoff", "Optional branch note", "renderLensReportSummary(data);", "clearLensReportSummary();"].forEach((signal) => requireSignal("lens-script", lensScript, signal));
 
