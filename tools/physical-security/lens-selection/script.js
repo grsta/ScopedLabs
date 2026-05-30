@@ -76,6 +76,7 @@
 
   let prev = null;
   let latestLensSelectionGuidance = null;
+  let lensSummaryCtaComplete = false;
 
   function num(value, fallback = NaN) {
     return ScopedLabsAnalyzer.safeNumber(value, fallback);
@@ -546,6 +547,7 @@
     if (clearFlow) clearLensSelectionGuidanceEventMemory();
 
     clearDiagnosticPanel();
+    lensSummaryCtaComplete = false;
 
     ScopedLabsAnalyzer.invalidate({
       resultsEl: els.results,
@@ -1625,7 +1627,11 @@
   function showSummaryContinueButton(options) {
     if (!els.continueWrap || !els.continueBtn) return;
 
-    const isComplete = !!(options && options.complete);
+    if (options && Object.prototype.hasOwnProperty.call(options, "complete")) {
+      lensSummaryCtaComplete = !!options.complete;
+    }
+
+    const isComplete = lensSummaryCtaComplete;
 
     els.continueWrap.hidden = false;
     els.continueWrap.style.display = "flex";
@@ -1653,6 +1659,7 @@
   }
 
   function renderError(message) {
+    lensSummaryCtaComplete = false;
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
     showSummaryContinueButton();
@@ -1661,6 +1668,9 @@
   }
 
   function renderSuccess(data) {
+    lensSummaryCtaComplete = true;
+    showSummaryContinueButton({ complete: true });
+
     ScopedLabsAnalyzer.renderOutput({
       resultsEl: els.results,
       analysisEl: null,

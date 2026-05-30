@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-lens-summary-continue-audit-003-state-aware";
+const VERSION = "physical-security-lens-summary-continue-audit-004-persistent-state";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -26,11 +26,12 @@ safe("initial-open-state", index.includes("data-summary-cta-state=\"open\"") && 
 safe("complete-label-preserved", index.includes("data-summary-cta-complete-label=\"Continue → Physical Security Summary\"") || script.includes("Continue → Physical Security Summary"), "complete Continue label is preserved");
 safe("summary-url", script.includes("const NEXT_URL = \"/tools/physical-security/summary/\";"), "Summary NEXT_URL remains");
 safe("summary-navigation", script.includes("window.location.href = NEXT_URL;"), "CTA navigates to Summary");
-safe("state-aware-helper", script.includes("function showSummaryContinueButton(options)") && script.includes("const isComplete = !!(options && options.complete);"), "state-aware Summary CTA helper exists");
+safe("persistent-complete-state", script.includes("let lensSummaryCtaComplete = false;") && script.includes("const isComplete = lensSummaryCtaComplete;"), "persistent Summary CTA completion state exists");
+safe("complete-option-updates-state", script.includes("Object.prototype.hasOwnProperty.call(options, \"complete\")") && script.includes("lensSummaryCtaComplete = !!options.complete;"), "complete option updates persistent state");
 safe("visible-source-route", index.includes("data-summary-cta-source=\"static-final-route\"") && index.includes("data-lens-summary-cta-source-001"), "source-level Summary CTA route remains visible");
 safe("primary-complete-state", script.includes("classList.toggle(\"btn-primary\", isComplete)") && script.includes("showSummaryContinueButton({ complete: true });"), "successful calculation promotes CTA to primary Continue");
 safe("secondary-open-state", script.includes("classList.toggle(\"btn-secondary\", !isComplete)") && script.includes("Open Physical Security Summary"), "open state keeps CTA secondary");
-safe("cache-bumped", index.includes("./script.js?v=physical-security-lens-summary-cta-state-014"), "Lens script cache is current");
+safe("cache-bumped", index.includes("./script.js?v=physical-security-lens-summary-cta-state-015"), "Lens script cache is current");
 safe("assistant-ready-remains", index.includes("Lens Design Assistant ready"), "assistant ready card remains");
 safe("export-remains", index.includes("id=\"reportMetadataMount\"") && index.includes("id=\"exportReport\""), "collapsible export remains");
 

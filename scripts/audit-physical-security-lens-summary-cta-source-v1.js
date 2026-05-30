@@ -31,7 +31,7 @@ safe("summary-click-save", script.includes("event.preventDefault") && script.inc
 safe("summary-url", script.includes("const NEXT_URL = \"/tools/physical-security/summary/\";"), "Summary NEXT_URL remains");
 safe("invalidate-restores-summary", script.includes("ScopedLabsAnalyzer.invalidate({") && script.includes("showSummaryContinueButton();\n\n    prev = null;"), "invalidate restores Summary CTA after analyzer invalidation");
 safe("render-error-keeps-summary", script.includes("function renderError(message)") && script.includes("showSummaryContinueButton();\n    clearDesignAssistant();"), "renderError keeps final Summary CTA available");
-safe("cache-bumped", index.includes("./script.js?v=physical-security-lens-summary-cta-state-014"), "Lens script cache bumped");
+safe("cache-bumped", index.includes("./script.js?v=physical-security-lens-summary-cta-state-015"), "Lens script cache bumped");
 safe("assistant-ready-remains", index.includes("Lens Design Assistant ready"), "assistant ready card remains");
 safe("export-remains", index.includes("id=\"reportMetadataMount\"") && index.includes("id=\"exportReport\""), "collapsible export remains");
 
