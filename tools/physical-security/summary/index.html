@@ -79,78 +79,156 @@
 
 
 
-    /* physical-security-summary-area-selector-rail-008 */
+
+    /* physical-security-summary-area-selector-rail-polish-009 */
     .summary-area-selector-wrap {
       margin: 12px 0 14px;
-      padding: 12px;
-      border: 1px solid rgba(125,255,152,.16);
-      border-radius: 16px;
-      background: rgba(0,0,0,.16);
+      padding: 10px 12px;
+      border: 1px solid rgba(125,255,152,.18);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(8,24,18,.72), rgba(2,6,23,.24));
     }
 
     .summary-area-selector-rail {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       margin: 0;
       padding: 0;
     }
 
     .summary-area-selector-step {
       appearance: none;
-      border: 1px solid rgba(226,232,240,.16);
-      background: rgba(15,23,42,.36);
-      color: rgba(226,232,240,.84);
-      border-radius: 999px;
-      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      border: 1px solid rgba(226,232,240,.14);
+      background: linear-gradient(180deg, rgba(15,23,42,.54), rgba(2,6,23,.36));
+      color: rgba(226,232,240,.78);
+      border-radius: 10px;
+      padding: 7px 10px;
       font: inherit;
-      font-weight: 850;
+      font-size: .82rem;
+      font-weight: 650;
+      letter-spacing: .01em;
       cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
       transition: border-color .16s ease, box-shadow .16s ease, background .16s ease, transform .16s ease;
     }
 
     .summary-area-selector-step:hover,
     .summary-area-selector-step:focus-visible {
-      border-color: rgba(125,255,152,.52);
-      box-shadow: 0 0 0 3px rgba(125,255,152,.10);
+      border-color: rgba(125,255,152,.48);
+      box-shadow: 0 0 0 3px rgba(125,255,152,.08), inset 0 1px 0 rgba(255,255,255,.05);
       outline: none;
       transform: translateY(-1px);
     }
 
     .summary-area-selector-step.active {
-      border-color: rgba(125,255,152,.72);
-      background: rgba(125,255,152,.10);
-      color: rgba(248,250,252,.96);
-      box-shadow: 0 0 0 1px rgba(125,255,152,.18) inset;
+      border-color: rgba(125,255,152,.62);
+      background: linear-gradient(180deg, rgba(26,55,39,.72), rgba(7,20,14,.62));
+      color: rgba(248,250,252,.95);
+      box-shadow: 0 0 0 1px rgba(125,255,152,.14) inset, 0 0 18px rgba(125,255,152,.07);
     }
 
-    .summary-area-selector-step.risk { border-color: rgba(255,154,118,.42); }
-    .summary-area-selector-step.watch { border-color: rgba(255,218,106,.42); }
-    .summary-area-selector-step.healthy { border-color: rgba(125,255,152,.36); }
+    .summary-area-selector-led,
+    .summary-area-current-led {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      background: rgba(148,163,184,.58);
+      box-shadow: none;
+    }
+
+    .summary-area-selector-step.risk .summary-area-selector-led,
+    .summary-area-current-led.risk {
+      background: rgba(255,154,118,.96);
+      box-shadow: 0 0 11px rgba(255,154,118,.44);
+    }
+
+    .summary-area-selector-step.watch .summary-area-selector-led,
+    .summary-area-current-led.watch {
+      background: rgba(255,218,106,.98);
+      box-shadow: 0 0 11px rgba(255,218,106,.36);
+    }
+
+    .summary-area-selector-step.healthy .summary-area-selector-led,
+    .summary-area-current-led.healthy {
+      background: rgba(125,255,152,.96);
+      box-shadow: 0 0 11px rgba(125,255,152,.46);
+    }
+
+    .summary-area-selector-step.pending .summary-area-selector-led,
+    .summary-area-selector-step.unknown .summary-area-selector-led,
+    .summary-area-current-led.pending,
+    .summary-area-current-led.unknown {
+      background: rgba(148,163,184,.62);
+      box-shadow: 0 0 9px rgba(148,163,184,.16);
+    }
+
+    .summary-area-selector-step:not(.active) .summary-area-selector-led {
+      opacity: .48;
+      box-shadow: none;
+    }
+
+    .summary-area-selector-label {
+      color: inherit;
+      font-weight: 650;
+      line-height: 1.15;
+    }
+
+    .summary-area-selector-step.active .summary-area-selector-label {
+      color: rgba(248,250,252,.96);
+      font-weight: 760;
+    }
 
     .summary-area-selector-status {
       display: inline-block;
-      margin-left: 6px;
-      color: rgba(203,213,225,.76);
-      font-size: .82rem;
-      font-weight: 850;
+      margin-left: 2px;
+      color: rgba(203,213,225,.68);
+      font-size: .72rem;
+      font-weight: 650;
+      line-height: 1;
     }
 
+    .summary-area-selector-step.risk .summary-area-selector-status { color: rgba(255,154,118,.92); }
+    .summary-area-selector-step.watch .summary-area-selector-status { color: rgba(255,218,106,.94); }
+    .summary-area-selector-step.healthy .summary-area-selector-status { color: rgba(125,255,152,.90); }
+
     .summary-area-selector-arrow {
-      color: rgba(125,255,152,.55);
-      font-weight: 950;
+      color: rgba(125,255,152,.42);
+      font-size: .82rem;
+      font-weight: 800;
+      line-height: 1;
     }
 
     .summary-area-selector-current {
+      display: flex;
+      align-items: center;
+      gap: 7px;
       margin: 10px 0 0;
-      color: rgba(226,232,240,.78);
-      line-height: 1.5;
+      color: rgba(226,232,240,.74);
+      font-size: .84rem;
+      line-height: 1.45;
     }
 
     .summary-area-selector-current strong {
-      color: rgba(248,250,252,.96);
+      color: rgba(248,250,252,.95);
+      font-weight: 720;
     }
+
+    .summary-area-selector-current-status {
+      color: rgba(203,213,225,.70);
+      font-size: .75rem;
+      font-weight: 650;
+    }
+
+    .summary-area-selector-current-status.risk { color: rgba(255,154,118,.92); }
+    .summary-area-selector-current-status.watch { color: rgba(255,218,106,.94); }
+    .summary-area-selector-current-status.healthy { color: rgba(125,255,152,.90); }
     /* physical-security-summary-area-rollup-first-007 */
     .summary-area-rollup-card {
       margin-top: 12px;
@@ -664,7 +742,7 @@
   <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate"></script>
   <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-002-summary-master-polish"></script>
   <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-010-watch-risk-note"></script>
-  <script src="./script.js?v=physical-security-summary-area-selector-rail-005"></script>
+  <script src="./script.js?v=physical-security-summary-area-selector-rail-polish-006"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>

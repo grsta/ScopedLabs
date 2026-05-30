@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-area-selector-rail-005";
+  const VERSION = "physical-security-summary-area-selector-rail-polish-006";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -323,18 +323,22 @@
     return scopes[0];
   }
 
+
   function renderAreaSelectorRail(scopes, selected) {
     if (!Array.isArray(scopes) || scopes.length <= 1 || !selected) return "";
 
+    const selectedStatus = normalizeStatus(selected.status);
     const steps = scopes.map((scope, index) => {
-      const active = scope.id === selected.id ? " active" : "";
+      const isActive = scope.id === selected.id;
+      const active = isActive ? " active" : "";
+      const currentAttr = isActive ? ' aria-current="step"' : "";
       const status = normalizeStatus(scope.status);
       const arrow = index < scopes.length - 1 ? '<span class="summary-area-selector-arrow" aria-hidden="true">→</span>' : "";
 
-      return '<button type="button" class="summary-area-selector-step ' + escapeHtml(status + active) + '" data-sl-summary-scope-select="' + escapeHtml(scope.id) + '">' + escapeHtml(scope.label) + '<span class="summary-area-selector-status">' + escapeHtml(statusLabel(status)) + '</span></button>' + arrow;
+      return '<button type="button" class="summary-area-selector-step ' + escapeHtml(status + active) + '" data-sl-summary-scope-select="' + escapeHtml(scope.id) + '"' + currentAttr + '><span class="summary-area-selector-led" aria-hidden="true"></span><span class="summary-area-selector-label">' + escapeHtml(scope.label) + '</span><span class="summary-area-selector-status">' + escapeHtml(statusLabel(status)) + '</span></button>' + arrow;
     }).join("");
 
-    return '<div class="summary-area-selector-wrap" data-sl-summary-area-selector-rail="true"><div class="summary-area-selector-rail" role="list" aria-label="Area and zone selector">' + steps + '</div><p class="summary-area-selector-current">Currently viewing: <strong>' + escapeHtml(selected.label) + '</strong></p></div>';
+    return '<div class="summary-area-selector-wrap" data-sl-summary-area-selector-rail="true"><div class="summary-area-selector-rail" role="list" aria-label="Area and zone selector">' + steps + '</div><p class="summary-area-selector-current"><span class="summary-area-current-led ' + escapeHtml(selectedStatus) + '" aria-hidden="true"></span>Currently viewing: <strong>' + escapeHtml(selected.label) + '</strong><span class="summary-area-selector-current-status ' + escapeHtml(selectedStatus) + '">' + escapeHtml(statusLabel(selectedStatus)) + '</span></p></div>';
   }
 
   function renderSelectedAreaScope(scope, activeAreaId) {

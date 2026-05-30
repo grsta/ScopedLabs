@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-008-area-selector-rail";
+const VERSION = "physical-security-summary-proof-audit-009-area-selector-rail-polish";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -52,7 +52,7 @@ add("lens-script-exists", exists(lensScriptRel) ? "SAFE" : "FAIL", lensScriptRel
   "/assets/physical-security-category-guidance-renderer.js",
   "/assets/physical-security-report-summary.js",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
-  "./script.js?v=physical-security-summary-area-selector-rail-005"
+  "./script.js?v=physical-security-summary-area-selector-rail-polish-006"
 ].forEach((signal) => {
   add("index-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), index.includes(signal) ? "SAFE" : "FAIL", index.includes(signal) ? "index contains " + signal : "index missing " + signal);
 });
