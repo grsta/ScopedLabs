@@ -991,8 +991,6 @@
     window.ScopedLabsExportData = null;
     window.ScopedLabsReportV2Data = null;
 
-    const reportV2Btn = document.getElementById("openReportV2");
-    if (reportV2Btn) reportV2Btn.disabled = true;
     clearDesignAssistant();
     clearLensReportSummary();
   }
@@ -1490,7 +1488,7 @@
     const hasBaseline = hasLensPipelineBaseline();
 
     const copy = hasBaseline
-      ? '<strong>Custom Design Mode Active:</strong> You are editing outside the carried pipeline baseline. The selected Design Assistant scenario will be treated as an assisted what-if branch for Report V2 and downstream handoff.'
+      ? '<strong>Custom Design Mode Active:</strong> You are editing outside the carried pipeline baseline. The selected Design Assistant scenario will be treated as an assisted what-if branch for the Lens export report and Physical Security Summary handoff.'
       : '<strong>Standalone Design Mode Active:</strong> This assisted scenario was created without upstream pipeline values. Results are valid as a single validation scenario, not a full guided pipeline run.';
 
     assistant.insertAdjacentHTML(
@@ -1659,9 +1657,6 @@
       invalidate();
     });
     els.sw?.addEventListener("input", () => invalidate());
-
-    const openReportV2 = document.getElementById("openReportV2");
-    if (openReportV2) openReportV2.disabled = false;
 
     writeFlow(data);
     buildLensSelectionGuidance(data);
@@ -1887,19 +1882,6 @@
 
     els.calc?.addEventListener("click", calc);
     els.reset?.addEventListener("click", reset);
-    const openReportV2 = document.getElementById("openReportV2");
-    if (openReportV2) {
-      openReportV2.addEventListener("click", () => {
-        const reportPayload = window.ScopedLabsLensDesignAssistantReportData || window.ScopedLabsReportV2Data;
-        if (!reportPayload) return;
-
-        window.ScopedLabsReportV2Data = reportPayload;
-        localStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(reportPayload, null, 2));
-        sessionStorage.setItem(REPORT_V2_STORAGE_KEY, JSON.stringify(reportPayload, null, 2));
-        window.open("/prototypes/lens-report-v2/?source=live-lens-assistant&rev=assistant-notes-017", "_blank", "noopener");
-      });
-    }
-
     els.continueBtn?.addEventListener("click", () => {
       saveAssistantScenarioForPipeline();
       window.location.href = NEXT_URL;

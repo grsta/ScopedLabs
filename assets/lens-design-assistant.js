@@ -617,50 +617,18 @@
     }
   }
 
-  function savedAssistantReportFields(target) {
-    if (!target) return {};
-
-    try {
-      return JSON.parse(target.getAttribute("data-slda-report-fields") || "{}") || {};
-    } catch (error) {
-      return {};
-    }
-  }
-
-  function readAssistantReportFields(target) {
-    const saved = savedAssistantReportFields(target);
-
-    if (!target) {
-      return {
-        reportTitle: saved.reportTitle || "Lens Selection Diagnostic Report",
-        projectName: saved.projectName || "",
-        clientName: saved.clientName || "",
-        preparedBy: saved.preparedBy || "",
-        customNotes: saved.customNotes || ""
-      };
-    }
-
-    function fieldValue(name, fallback) {
-      const el = target.querySelector('[data-slda-report-input="' + name + '"]');
-      if (el && typeof el.value === "string") return el.value.trim();
-      return fallback || "";
-    }
-
+  function readAssistantReportFields() {
     return {
-      reportTitle: fieldValue("reportTitle", saved.reportTitle || "Lens Selection Diagnostic Report"),
-      projectName: fieldValue("projectName", saved.projectName),
-      clientName: fieldValue("clientName", saved.clientName),
-      preparedBy: fieldValue("preparedBy", saved.preparedBy),
-      customNotes: fieldValue("customNotes", saved.customNotes)
+      reportTitle: "Lens Selection Assessment",
+      projectName: "",
+      clientName: "",
+      preparedBy: "",
+      customNotes: ""
     };
   }
 
-  function saveAssistantReportFields(target) {
-    if (!target) return readAssistantReportFields(target);
-
-    const fields = readAssistantReportFields(target);
-    target.setAttribute("data-slda-report-fields", JSON.stringify(fields));
-    return fields;
+  function saveAssistantReportFields() {
+    return readAssistantReportFields();
   }
 
   function assistantScenarioReportPayload(active, rawData, target) {
@@ -676,7 +644,7 @@
       savedAt: new Date().toISOString(),
       category: "physical-security",
       step: "lens-selection",
-      tool: "Lens Selection Helper",
+      tool: "Lens Selection",
       selectedScenario: active.label || "Custom Design",
       reportFields: reportFields,
       customNotes: reportFields.customNotes || "",
@@ -873,28 +841,6 @@
           <div class="slda-recommendation">${designText(active)}</div>
         </div>
 
-        <div class="slda-panel">
-          <div class="slda-section-head">
-            <div>
-              <div class="slda-kicker">Pipeline / Report Carry-Forward</div>
-              <h3 class="slda-title">Use the selected scenario in the next sanity check</h3>
-              <p class="slda-copy">The live tool still keeps the old export path. Report V2 can document the selected lens, calculated target, assumptions, and remaining validation checks.</p>
-            </div>
-            <div class="slda-chip">Live Shadow Path</div>
-          </div>
-          <div class="slda-report-grid">
-            <div class="slda-field"><label>Report title</label><input data-slda-report-input="reportTitle" type="text" value="${esc((reportFields && reportFields.reportTitle) || "Lens Selection Diagnostic Report")}"></div>
-            <div class="slda-field"><label>Project name</label><input data-slda-report-input="projectName" type="text" value="${esc((reportFields && reportFields.projectName) || "")}" placeholder="Optional"></div>
-            <div class="slda-field"><label>Client name</label><input data-slda-report-input="clientName" type="text" value="${esc((reportFields && reportFields.clientName) || "")}" placeholder="Optional"></div>
-            <div class="slda-field"><label>Prepared by</label><input data-slda-report-input="preparedBy" type="text" value="${esc((reportFields && reportFields.preparedBy) || "")}" placeholder="Optional"></div>
-            <div class="slda-field slda-wide"><label>Custom notes</label><textarea data-slda-report-input="customNotes" placeholder="Add project-specific notes for Report V2...">${esc((reportFields && reportFields.customNotes) || "")}</textarea></div>
-          </div>
-
-          <div class="slda-carry">
-            <button type="button" data-slda-open-report>Open Report V2</button>
-            <span class="slda-copy">Continue uses the existing pipeline button below. Old Export Report remains available in the Documentation & Export card.</span>
-          </div>
-        </div>
       </div>
     `;
   }
@@ -963,17 +909,7 @@
       });
     });
 
-    target.querySelectorAll("[data-slda-report-input]").forEach(input => {
-      input.addEventListener("input", () => {
-        saveAssistantReportFields(target);
-      });
 
-      input.addEventListener("change", () => {
-        saveAssistantReportFields(target);
-      });
-    });
-
-    const reportBtn = target.querySelector("[data-slda-open-report]");
     if (reportBtn) {
       reportBtn.addEventListener("click", event => {
         event.preventDefault();

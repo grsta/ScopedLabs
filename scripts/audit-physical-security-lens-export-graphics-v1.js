@@ -60,7 +60,7 @@ add("lens-index-exists", exists(lensIndexRel) ? "SAFE" : "FAIL", lensIndexRel + 
 add("lens-assistant-exists", exists(lensAssistantRel) ? "SAFE" : "FAIL", lensAssistantRel + " exists");
 add("export-js-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " exists");
 
-["/assets/scopedlabs-graphics.js?v=scopedlabs-graphics-044-axis-label-cache-bust", "/assets/lens-design-assistant.js?v=lens-design-assistant-019-report-graphics-export", "id=\"lensDesignAssistant\"", "Continue → Physical Security Summary"].forEach((signal) => requireSignal("lens-index", lensIndex, signal));
+["/assets/scopedlabs-graphics.js?v=scopedlabs-graphics-044-axis-label-cache-bust", "/assets/lens-design-assistant.js?v=lens-design-assistant-020-duplicate-export-cleanup", "id=\"lensDesignAssistant\"", "Continue → Physical Security Summary"].forEach((signal) => requireSignal("lens-index", lensIndex, signal));
 
 ["function lensCadCameraMarker(x, y, index)", "data-graphics-symbol=\"camera-cad-lens-selection\"", "cams.push(lensCadCameraMarker(camX, camY, idx + 1));", "target.setAttribute(\"data-export-section\", \"true\");", "target.setAttribute(\"data-export-title\", \"Lens Selection Design Assistant Graphics\");", "target.setAttribute(\"data-export-compact-svg\", \"true\");", "data-export-svg data-sl-renderer=\"lens-selection-fov-plan\"", "data-export-svg data-sl-renderer=\"lens-selection-scenario-pressure\""].forEach((signal) => requireSignal("lens-assistant", assistant, signal));
 
