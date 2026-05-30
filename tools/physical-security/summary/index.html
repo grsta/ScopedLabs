@@ -75,35 +75,46 @@
       text-transform: uppercase;
     }
 
+    /* physical-security-summary-status-text-polish-004 */
     .summary-status {
-      display: inline-block;
-      border-radius: 999px;
-      padding: 4px 8px;
-      font-size: .68rem;
-      font-weight: 950;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      border: 1px solid rgba(226,232,240,.18);
-      color: rgba(226,232,240,.78);
-      white-space: nowrap;
+      display: inline;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      font-size: .92rem;
+      font-weight: 850;
+      letter-spacing: 0;
+      text-transform: none;
+      line-height: 1.35;
+      color: rgba(226,232,240,.76);
+      white-space: normal;
     }
 
     .summary-status.healthy {
-      border-color: rgba(125,255,152,.34);
-      color: rgba(155,255,180,.96);
-      background: rgba(125,255,152,.08);
+      color: rgba(125,255,152,.96);
+      background: transparent;
+      border-color: transparent;
     }
 
     .summary-status.watch {
-      border-color: rgba(255,211,79,.42);
-      color: rgba(255,230,150,.98);
-      background: rgba(255,211,79,.10);
+      color: rgba(255,218,106,.98);
+      background: transparent;
+      border-color: transparent;
     }
 
     .summary-status.risk {
-      border-color: rgba(255,138,102,.46);
-      color: rgba(255,188,166,.98);
-      background: rgba(255,138,102,.10);
+      color: rgba(255,154,118,.98);
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .summary-status.unknown,
+    .summary-status.pending {
+      color: rgba(203,213,225,.72);
+      background: transparent;
+      border-color: transparent;
     }
 
     .summary-payload {
