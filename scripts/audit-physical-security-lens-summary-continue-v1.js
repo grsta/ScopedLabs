@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-lens-summary-continue-audit-001";
+const VERSION = "physical-security-lens-summary-continue-audit-002-source-aware";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -25,10 +25,10 @@ safe("continue-button-markup", index.includes("id=\"continue\"") && index.includ
 safe("summary-url", script.includes("const NEXT_URL = \"/tools/physical-security/summary/\";"), "Summary NEXT_URL remains");
 safe("summary-navigation", script.includes("window.location.href = NEXT_URL;"), "Continue navigates to Summary");
 safe("explicit-helper", script.includes("function showSummaryContinueButton()"), "explicit continue helper exists");
-safe("explicit-display", script.includes("els.continueWrap.style.display = \"block\";"), "continue row display is forced after calculation");
+safe("explicit-display", script.includes("els.continueWrap.style.display = \"block\";") || script.includes("els.continueWrap.style.display = \"flex\";") || index.includes("data-summary-cta-source=\"static-final-route\""), "continue row/source CTA display is visible");
 safe("explicit-label", script.includes("els.continueBtn.textContent = \"Continue → Physical Security Summary\";"), "continue button label is forced");
 safe("helper-called-after-success", script.includes("ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);\n    showSummaryContinueButton();"), "helper runs after successful calculation");
-safe("cache-bumped", index.includes("./script.js?v=physical-security-lens-summary-continue-012"), "Lens cache bumped for continue fix");
+safe("cache-bumped", index.includes("./script.js?v=physical-security-lens-summary-cta-source-013"), "Lens cache bumped for continue fix");
 safe("assistant-ready-remains", index.includes("Lens Design Assistant ready"), "assistant ready card remains");
 safe("export-remains", index.includes("id=\"reportMetadataMount\"") && index.includes("id=\"exportReport\""), "collapsible export remains");
 

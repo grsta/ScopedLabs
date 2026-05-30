@@ -33,7 +33,7 @@ safe("no-old-clear-hide", !script.includes("assistant.hidden = true;\n    assist
 safe("real-assistant-render-remains", script.includes("ScopedLabsLensDesignAssistant.render(assistant, data);"), "real post-calculation assistant render remains");
 safe("summary-route-remains", script.includes("const NEXT_URL = \"/tools/physical-security/summary/\";") && index.includes("Continue → Physical Security Summary"), "Summary route remains");
 safe("export-remains", index.includes("id=\"reportMetadataMount\"") && index.includes("button id=\"exportReport\"") && index.includes("button id=\"saveSnapshot\""), "collapsible export controls remain");
-safe("lens-cache", index.includes("./script.js?v=physical-security-lens-summary-continue-012"), "Lens cache bumped for final UI polish");
+safe("lens-cache", index.includes("./script.js?v=physical-security-lens-summary-cta-source-013"), "Lens cache bumped for final UI polish");
 
 console.log("");
 console.log("Physical Security Lens Final UI Polish Audit");

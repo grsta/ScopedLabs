@@ -561,6 +561,8 @@
       emptyMessage: "Enter values and press Evaluate Lens."
     });
 
+    showSummaryContinueButton();
+
     prev = null;
     renderFlowNote();
   }
@@ -1624,7 +1626,7 @@
     if (!els.continueWrap || !els.continueBtn) return;
 
     els.continueWrap.hidden = false;
-    els.continueWrap.style.display = "block";
+    els.continueWrap.style.display = "flex";
     els.continueBtn.hidden = false;
     els.continueBtn.disabled = false;
     els.continueBtn.textContent = "Continue → Physical Security Summary";
@@ -1648,7 +1650,7 @@
   function renderError(message) {
     ScopedLabsAnalyzer.clearChart(chartRef, chartWrapRef);
     ScopedLabsAnalyzer.clearAnalysisBlock(els.analysis);
-    ScopedLabsAnalyzer.hideContinue(els.continueWrap, els.continueBtn);
+    showSummaryContinueButton();
     clearDesignAssistant();
     els.results.innerHTML = `<div class="muted">${message}</div>`;
   }
@@ -1920,7 +1922,8 @@
 
     els.calc?.addEventListener("click", calc);
     els.reset?.addEventListener("click", reset);
-    els.continueBtn?.addEventListener("click", () => {
+    els.continueBtn?.addEventListener("click", (event) => {
+      if (event && typeof event.preventDefault === "function") event.preventDefault();
       saveAssistantScenarioForPipeline();
       window.location.href = NEXT_URL;
     });
