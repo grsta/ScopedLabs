@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-002-banner-optout";
+const VERSION = "physical-security-summary-proof-audit-003-lens-summary-route";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -22,13 +22,20 @@ function add(id, status, detail) {
 const indexRel = "tools/physical-security/summary/index.html";
 const scriptRel = "tools/physical-security/summary/script.js";
 const areaStateRel = "assets/physical-security-area-state.js";
+const lensIndexRel = "tools/physical-security/lens-selection/index.html";
+const lensScriptRel = "tools/physical-security/lens-selection/script.js";
+
 const index = read(indexRel);
 const script = read(scriptRel);
 const areaState = read(areaStateRel);
+const lensIndex = read(lensIndexRel);
+const lensScript = read(lensScriptRel);
 
 add("summary-index-exists", exists(indexRel) ? "SAFE" : "FAIL", indexRel + " exists");
 add("summary-script-exists", exists(scriptRel) ? "SAFE" : "FAIL", scriptRel + " exists");
 add("area-state-source-exists", exists(areaStateRel) ? "SAFE" : "FAIL", areaStateRel + " exists");
+add("lens-index-exists", exists(lensIndexRel) ? "SAFE" : "FAIL", lensIndexRel + " exists");
+add("lens-script-exists", exists(lensScriptRel) ? "SAFE" : "FAIL", lensScriptRel + " exists");
 
 [
   "Physical Security Summary",
@@ -88,11 +95,32 @@ add(
     : "renderAreaBanner does not remove stale banner before opt-out"
 );
 
-const lens = read("tools/physical-security/lens-selection/index.html");
+[
+  "Continue → Physical Security Summary",
+  "./script.js?v=physical-security-lens-summary-route-005"
+].forEach((signal) => {
+  add("lens-index-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), lensIndex.includes(signal) ? "SAFE" : "FAIL", lensIndex.includes(signal) ? "lens index contains " + signal : "lens index missing " + signal);
+});
+
+[
+  "const NEXT_URL = \"/tools/physical-security/summary/\";",
+  "window.location.href = NEXT_URL;",
+  "optional Face Recognition or License Plate zones from Area Planner"
+].forEach((signal) => {
+  add("lens-script-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), lensScript.includes(signal) ? "SAFE" : "FAIL", lensScript.includes(signal) ? "lens script contains " + signal : "lens script missing " + signal);
+});
+
+add(
+  "lens-no-forced-face-route",
+  !lensScript.includes("const NEXT_URL = \"/tools/physical-security/face-recognition-range/\";") && !lensIndex.includes("Continue → Face Recognition") ? "SAFE" : "FAIL",
+  !lensScript.includes("const NEXT_URL = \"/tools/physical-security/face-recognition-range/\";") && !lensIndex.includes("Continue → Face Recognition")
+    ? "Lens Continue routes to Summary instead of forced Face Recognition"
+    : "Lens still contains forced Face Recognition route or label"
+);
+
 const area = read("tools/physical-security/area-planner/index.html");
 const spacing = read("tools/physical-security/camera-spacing/index.html");
 
-add("phase1-lens-routing-unchanged", !lens.includes("/tools/physical-security/summary/") ? "SAFE" : "WATCH", !lens.includes("/tools/physical-security/summary/") ? "Phase 1 does not change Lens routing" : "Lens already references Summary");
 add("phase1-area-planner-unchanged", !area.includes("physical-security-summary") ? "SAFE" : "WATCH", !area.includes("physical-security-summary") ? "Phase 1 does not change Area Planner behavior" : "Area Planner already references Summary");
 add("phase1-camera-spacing-master-proof-remains", spacing.includes("physical-security-category-guidance-renderer.js") ? "SAFE" : "WATCH", spacing.includes("physical-security-category-guidance-renderer.js") ? "Camera Spacing master proof host remains for Phase 1" : "Camera Spacing master proof host not found");
 

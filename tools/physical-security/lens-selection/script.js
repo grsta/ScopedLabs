@@ -20,7 +20,7 @@
   const LANE = "v1";
   const STEP = "lens-selection";
   const PREVIOUS_STEP = "pixel-density";
-  const NEXT_URL = "/tools/physical-security/face-recognition-range/";
+  const NEXT_URL = "/tools/physical-security/summary/";
 
   const chartRef = { current: null };
   const chartWrapRef = { current: null };
@@ -916,7 +916,7 @@
     const followUpChecks = [
       "Validate the selected focal length against the manufacturer actual field-of-view chart.",
       "Confirm mounting location, camera angle, and alignment tolerance before final selection.",
-      "Continue to Face Recognition Range if identification detail is required.",
+      "Continue to Physical Security Summary for final category rollup. Use optional Face Recognition or License Plate zones from Area Planner when specialty detail is required.",
       "Re-run this tool if the distance, target width, sensor size, or upstream pixel-density target changes."
     ];
 
