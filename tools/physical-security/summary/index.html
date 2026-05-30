@@ -78,6 +78,79 @@
 
 
 
+
+    /* physical-security-summary-area-selector-rail-008 */
+    .summary-area-selector-wrap {
+      margin: 12px 0 14px;
+      padding: 12px;
+      border: 1px solid rgba(125,255,152,.16);
+      border-radius: 16px;
+      background: rgba(0,0,0,.16);
+    }
+
+    .summary-area-selector-rail {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .summary-area-selector-step {
+      appearance: none;
+      border: 1px solid rgba(226,232,240,.16);
+      background: rgba(15,23,42,.36);
+      color: rgba(226,232,240,.84);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      font-weight: 850;
+      cursor: pointer;
+      transition: border-color .16s ease, box-shadow .16s ease, background .16s ease, transform .16s ease;
+    }
+
+    .summary-area-selector-step:hover,
+    .summary-area-selector-step:focus-visible {
+      border-color: rgba(125,255,152,.52);
+      box-shadow: 0 0 0 3px rgba(125,255,152,.10);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .summary-area-selector-step.active {
+      border-color: rgba(125,255,152,.72);
+      background: rgba(125,255,152,.10);
+      color: rgba(248,250,252,.96);
+      box-shadow: 0 0 0 1px rgba(125,255,152,.18) inset;
+    }
+
+    .summary-area-selector-step.risk { border-color: rgba(255,154,118,.42); }
+    .summary-area-selector-step.watch { border-color: rgba(255,218,106,.42); }
+    .summary-area-selector-step.healthy { border-color: rgba(125,255,152,.36); }
+
+    .summary-area-selector-status {
+      display: inline-block;
+      margin-left: 6px;
+      color: rgba(203,213,225,.76);
+      font-size: .82rem;
+      font-weight: 850;
+    }
+
+    .summary-area-selector-arrow {
+      color: rgba(125,255,152,.55);
+      font-weight: 950;
+    }
+
+    .summary-area-selector-current {
+      margin: 10px 0 0;
+      color: rgba(226,232,240,.78);
+      line-height: 1.5;
+    }
+
+    .summary-area-selector-current strong {
+      color: rgba(248,250,252,.96);
+    }
     /* physical-security-summary-area-rollup-first-007 */
     .summary-area-rollup-card {
       margin-top: 12px;
@@ -591,7 +664,7 @@
   <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate"></script>
   <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-002-summary-master-polish"></script>
   <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-010-watch-risk-note"></script>
-  <script src="./script.js?v=physical-security-summary-area-rollup-first-004"></script>
+  <script src="./script.js?v=physical-security-summary-area-selector-rail-005"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>

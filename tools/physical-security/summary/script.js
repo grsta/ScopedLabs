@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-area-rollup-first-004";
+  const VERSION = "physical-security-summary-area-selector-rail-005";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -18,6 +18,8 @@
     ["face-recognition-range", "Face Recognition"],
     ["license-plate-range", "License Plate"]
   ];
+
+  let selectedScopeId = "";
 
   function byId(id) {
     return document.getElementById(id);
@@ -252,6 +254,120 @@
     return '<h3 class="h3" style="margin-top:18px;">' + escapeHtml(title) + '</h3>' + rows;
   }
 
+  function scopeStatus(area) {
+    return normalizeStatus(area && (area.overallStatus || area.lensStatus || area.spacingStatus || area.faceRecognitionStatus || area.licensePlateStatus || area.status || "unknown"));
+  }
+
+  function scopeId(area, group, index) {
+    const raw = area && area.id ? String(area.id) : group + "-" + String(index + 1);
+    return group + "::" + raw;
+  }
+
+  function scopeNumberLabel(group, index) {
+    if (group === "face") return "Face Zone " + String(index + 1);
+    if (group === "plate") return "Plate Zone " + String(index + 1);
+    return "Area " + String(index + 1);
+  }
+
+  function scopeSequence(groups) {
+    const list = [];
+    const source = groups || { core: [], face: [], plate: [], activeAreaId: "" };
+
+    [["core", source.core || []], ["face", source.face || []], ["plate", source.plate || []]].forEach(([group, areas]) => {
+      areas.forEach((area, index) => {
+        const numberLabel = scopeNumberLabel(group, index);
+        const name = area && area.name ? String(area.name) : "Unnamed Area";
+
+        list.push({
+          id: scopeId(area, group, index),
+          rawId: area && area.id ? String(area.id) : "",
+          group,
+          index,
+          area,
+          numberLabel,
+          label: numberLabel + ": " + name,
+          route: routeLabel(group),
+          status: scopeStatus(area)
+        });
+      });
+    });
+
+    return list;
+  }
+
+  function selectedScope(scopes, activeAreaId) {
+    if (!Array.isArray(scopes) || !scopes.length) return null;
+
+    const saved = selectedScopeId ? scopes.find((scope) => scope.id === selectedScopeId) : null;
+    if (saved) return saved;
+
+    const active = activeAreaId ? scopes.find((scope) => scope.rawId && scope.rawId === activeAreaId) : null;
+    if (active) {
+      selectedScopeId = active.id;
+      return active;
+    }
+
+    const risk = scopes.find((scope) => normalizeStatus(scope.status) === "risk");
+    if (risk) {
+      selectedScopeId = risk.id;
+      return risk;
+    }
+
+    const watch = scopes.find((scope) => normalizeStatus(scope.status) === "watch");
+    if (watch) {
+      selectedScopeId = watch.id;
+      return watch;
+    }
+
+    selectedScopeId = scopes[0].id;
+    return scopes[0];
+  }
+
+  function renderAreaSelectorRail(scopes, selected) {
+    if (!Array.isArray(scopes) || scopes.length <= 1 || !selected) return "";
+
+    const steps = scopes.map((scope, index) => {
+      const active = scope.id === selected.id ? " active" : "";
+      const status = normalizeStatus(scope.status);
+      const arrow = index < scopes.length - 1 ? '<span class="summary-area-selector-arrow" aria-hidden="true">→</span>' : "";
+
+      return '<button type="button" class="summary-area-selector-step ' + escapeHtml(status + active) + '" data-sl-summary-scope-select="' + escapeHtml(scope.id) + '">' + escapeHtml(scope.label) + '<span class="summary-area-selector-status">' + escapeHtml(statusLabel(status)) + '</span></button>' + arrow;
+    }).join("");
+
+    return '<div class="summary-area-selector-wrap" data-sl-summary-area-selector-rail="true"><div class="summary-area-selector-rail" role="list" aria-label="Area and zone selector">' + steps + '</div><p class="summary-area-selector-current">Currently viewing: <strong>' + escapeHtml(selected.label) + '</strong></p></div>';
+  }
+
+  function renderSelectedAreaScope(scope, activeAreaId) {
+    if (!scope) {
+      return '<div class="summary-row" style="margin-top:10px;"><p class="muted" style="margin:0;">No areas or zones recorded yet.</p></div>';
+    }
+
+    const active = scope.rawId && activeAreaId && scope.rawId === activeAreaId ? " | Active" : "";
+    const area = scope.area || {};
+    const status = normalizeStatus(scope.status);
+
+    return '<div class="summary-row summary-area-rollup-card" data-sl-summary-area-rollup-card="true"><h3>Currently viewing: ' + escapeHtml(scope.label) + '</h3><p class="summary-area-rollup-meta">' + escapeHtml(scope.route + active + ' | ' + areaDetail(area)) + '</p><p><span class="summary-status ' + escapeHtml(status) + '">' + escapeHtml(statusLabel(status)) + '</span></p>' + renderAreaToolTable(area) + '</div>';
+  }
+
+  function renderAreaRollup(groups) {
+    const source = groups || { activeAreaId: "" };
+    const scopes = scopeSequence(source);
+    const selected = selectedScope(scopes, source.activeAreaId || "");
+
+    return '<h3 class="h3" style="margin-top:18px;">Area / Zone Rollup</h3>' + renderAreaSelectorRail(scopes, selected) + renderSelectedAreaScope(selected, source.activeAreaId || "");
+  }
+
+  function bindAreaSelector(mount) {
+    if (!mount) return;
+
+    mount.querySelectorAll("[data-sl-summary-scope-select]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedScopeId = button.getAttribute("data-sl-summary-scope-select") || "";
+        render();
+      });
+    });
+  }
+
   function buildModel() {
     const records = readGuidanceRecords();
     const recordsBySlug = recordBySlug(records);
@@ -464,11 +580,10 @@
     const scopeMount = byId("physicalSecurityScopeMount");
     if (scopeMount) {
       scopeMount.innerHTML =
-        renderAreaSection("Core Coverage Areas", model.groups.core, model.groups.activeAreaId) +
-        renderAreaSection("Face Recognition Zones", model.groups.face, model.groups.activeAreaId) +
-        renderAreaSection("License Plate Zones", model.groups.plate, model.groups.activeAreaId) +
-        renderRows("Core Pipeline Tool Guidance", model.coreRows) +
-        renderRows("Optional Specialty Branch Guidance", model.specialtyRows);
+        renderAreaRollup(model.groups) +
+        renderRows("Core Pipeline Summary Across Areas", model.coreRows) +
+        renderRows("Optional Specialty Branch Summary Across Zones", model.specialtyRows);
+      bindAreaSelector(scopeMount);
     }
 
     renderMasterAssistant(model);
