@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-area-selector-rail-audit-003-flow-style";
+const VERSION = "physical-security-summary-area-selector-rail-audit-004-green-led";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -27,17 +27,17 @@ function safe(id, ok, detail) { add(id, ok ? "SAFE" : "FAIL", detail); }
 
 const index = read("tools/physical-security/summary/index.html");
 const script = read("tools/physical-security/summary/script.js");
-const styleBlock = between(index, "physical-security-summary-area-selector-flow-010", "physical-security-summary-area-rollup-first-007");
+const styleBlock = between(index, "physical-security-summary-area-selector-green-led-011", "physical-security-summary-area-rollup-first-007");
 
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("summary-script-exists", exists("tools/physical-security/summary/script.js"), "Summary script exists");
-safe("script-cache-bumped", index.includes("./script.js?v=physical-security-summary-area-selector-flow-007"), "Summary script cache bumped");
-safe("script-version-bumped", script.includes('const VERSION = "physical-security-summary-area-selector-flow-007";'), "Summary script version bumped");
-safe("flow-style-marker", index.includes("physical-security-summary-area-selector-flow-010"), "selector flow CSS marker exists");
+safe("script-cache-bumped", index.includes("./script.js?v=physical-security-summary-area-selector-green-led-008"), "Summary script cache bumped");
+safe("script-version-bumped", script.includes('const VERSION = "physical-security-summary-area-selector-green-led-008";'), "Summary script version bumped");
+safe("green-led-style-marker", index.includes("physical-security-summary-area-selector-green-led-011"), "selector green LED CSS marker exists");
 safe("no-button-box-style", styleBlock.includes("border: 0;") && styleBlock.includes("background: transparent;") && styleBlock.includes("box-shadow: none;"), "selector is visually flow text, not boxed buttons");
 safe("no-pill-or-chip-shape", !styleBlock.includes("border-radius: 999px") && !styleBlock.includes("linear-gradient") && !styleBlock.includes("border-radius: 10px"), "selector no longer uses pill/chip/nav-button blocks");
 safe("flow-row-style", styleBlock.includes(".summary-area-selector-rail") && styleBlock.includes(".summary-area-selector-arrow") && styleBlock.includes("gap: 6px 8px"), "selector uses flow-row layout");
-safe("status-led-style", styleBlock.includes(".summary-area-selector-led") && styleBlock.includes(".summary-area-current-led") && styleBlock.includes("box-shadow: 0 0 10px"), "status LED styling exists");
+safe("green-selected-led-style", styleBlock.includes(".summary-area-selector-step.active .summary-area-selector-led") && styleBlock.includes(".summary-area-current-led.risk") && styleBlock.includes("rgba(125,255,152,.96)"), "selected/current LEDs stay green regardless of status");
 safe("text-size-clean", styleBlock.includes("font-size: .88rem") && styleBlock.includes("font-weight: 520"), "selector text is smaller and lighter");
 safe("active-current-aria", script.includes('aria-current="step"') && script.includes("const isActive = scope.id === selected.id"), "active selector has current-step signal");
 safe("led-rendered-in-step", script.includes("summary-area-selector-led") && script.includes("summary-area-selector-label") && script.includes("summary-area-selector-status"), "selector step renders LED, label, and status text");

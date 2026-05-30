@@ -81,7 +81,8 @@
 
 
 
-    /* physical-security-summary-area-selector-flow-010 */
+
+    /* physical-security-summary-area-selector-green-led-011 */
     .summary-area-selector-wrap {
       margin: 10px 0 14px;
       padding: 0;
@@ -136,39 +137,26 @@
       height: 7px;
       border-radius: 50%;
       flex: 0 0 auto;
-      background: rgba(148,163,184,.58);
+      background: rgba(148,163,184,.56);
       box-shadow: none;
     }
 
-    .summary-area-selector-step.risk .summary-area-selector-led,
-    .summary-area-current-led.risk {
-      background: rgba(255,154,118,.96);
-      box-shadow: 0 0 10px rgba(255,154,118,.42);
-    }
-
-    .summary-area-selector-step.watch .summary-area-selector-led,
-    .summary-area-current-led.watch {
-      background: rgba(255,218,106,.98);
-      box-shadow: 0 0 10px rgba(255,218,106,.34);
-    }
-
-    .summary-area-selector-step.healthy .summary-area-selector-led,
-    .summary-area-current-led.healthy {
-      background: rgba(125,255,152,.96);
-      box-shadow: 0 0 10px rgba(125,255,152,.44);
-    }
-
-    .summary-area-selector-step.pending .summary-area-selector-led,
-    .summary-area-selector-step.unknown .summary-area-selector-led,
+    .summary-area-selector-step.active .summary-area-selector-led,
+    .summary-area-current-led,
+    .summary-area-current-led.risk,
+    .summary-area-current-led.watch,
+    .summary-area-current-led.healthy,
     .summary-area-current-led.pending,
     .summary-area-current-led.unknown {
-      background: rgba(148,163,184,.62);
-      box-shadow: 0 0 8px rgba(148,163,184,.14);
+      background: rgba(125,255,152,.96);
+      box-shadow: 0 0 10px rgba(125,255,152,.44);
+      opacity: 1;
     }
 
     .summary-area-selector-step:not(.active) .summary-area-selector-led {
-      opacity: .64;
+      background: rgba(148,163,184,.56);
       box-shadow: none;
+      opacity: .64;
     }
 
     .summary-area-selector-label {
@@ -732,7 +720,7 @@
   <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate"></script>
   <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-002-summary-master-polish"></script>
   <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-010-watch-risk-note"></script>
-  <script src="./script.js?v=physical-security-summary-area-selector-flow-007"></script>
+  <script src="./script.js?v=physical-security-summary-area-selector-green-led-008"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>

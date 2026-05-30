@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-area-rollup-first-audit-004-selector-flow";
+const VERSION = "physical-security-summary-area-rollup-first-audit-005-green-led";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -22,11 +22,11 @@ const orderBlock = script.slice(script.indexOf("scopeMount.innerHTML ="), script
 
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("summary-script-exists", exists("tools/physical-security/summary/script.js"), "Summary script exists");
-safe("script-cache-bumped", index.includes("./script.js?v=physical-security-summary-area-selector-flow-007"), "Summary script cache bumped");
-safe("script-version-bumped", script.includes("const VERSION = \"physical-security-summary-area-selector-flow-007\";"), "Summary script version bumped");
+safe("script-cache-bumped", index.includes("./script.js?v=physical-security-summary-area-selector-green-led-008"), "Summary script cache bumped");
+safe("script-version-bumped", script.includes("const VERSION = \"physical-security-summary-area-selector-green-led-008\";"), "Summary script version bumped");
 safe("area-rollup-style", index.includes("physical-security-summary-area-rollup-first-007") && index.includes(".summary-area-tool-table"), "area rollup table styles exist");
 safe("area-first-order", orderBlock.indexOf("renderAreaRollup(model.groups)") >= 0 && orderBlock.indexOf("renderAreaRollup(model.groups)") < orderBlock.indexOf("renderRows(\"Core Pipeline Summary Across Areas\""), "area/zone rollup renders before core pipeline summary");
-safe("selector-rail-style", index.includes("physical-security-summary-area-selector-flow-010") && index.includes(".summary-area-selector-rail") && index.includes(".summary-area-selector-step.active"), "selector rail styles exist");
+safe("selector-rail-style", index.includes("physical-security-summary-area-selector-green-led-011") && index.includes(".summary-area-selector-rail") && index.includes(".summary-area-selector-step.active"), "selector rail styles exist");
 safe("aggregate-table-renamed", script.includes("Core Pipeline Summary Across Areas") && script.includes("Optional Specialty Branch Summary Across Zones"), "lower guidance tables are aggregate summaries");
 safe("grouped-area-card", script.includes("data-sl-summary-area-rollup-card") && script.includes("summary-area-rollup-card"), "each area renders as a grouped card");
 safe("area-tool-table", script.includes("function renderAreaToolTable(area)") && script.includes("data-sl-summary-area-tool-table"), "each area renders its own tool status table");
