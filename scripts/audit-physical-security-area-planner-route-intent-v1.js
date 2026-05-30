@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-area-planner-route-intent-audit-012-report-group-count-defined";
+const VERSION = "physical-security-area-planner-route-intent-audit-013-summary-link-cache";
 
 const rows = [];
 
@@ -36,9 +36,7 @@ add(
 
 add(
   "route-intent-local-cache-bumped",
-  ((index.includes("physical-security-area-planner-route-intent-001") || index.includes("physical-security-area-planner-summary-ui-015") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-015")) || (index.includes("physical-security-area-planner-button-scroll-002") || index.includes("physical-security-area-planner-summary-ui-015") || index.includes("physical-security-area-planner-summary-report-001") || index.includes("physical-security-area-planner-summary-ui-015")))
-    ? "SAFE"
-    : "FAIL",
+  index.includes("script.js?v=physical-security-area-planner-summary-link-017") || index.includes("physical-security-area-planner-summary-link-017"),
   "Area Planner local script cache is bumped"
 );
 
