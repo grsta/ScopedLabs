@@ -143,6 +143,7 @@
       .trim() || "btn";
   }
 
+
   function ensureSummaryButton() {
     const existing = $("openPhysicalSecuritySummary");
     if (existing) {
@@ -150,7 +151,7 @@
       return existing;
     }
 
-    const parent = document.getElementById("areaPlannerFlowActions") || els.continueBtn?.parentElement;
+    const parent = els.continueBtn?.parentElement || document.getElementById("areaPlannerFlowActions");
     if (!parent) return null;
 
     const button = document.createElement("button");
@@ -160,8 +161,8 @@
     button.setAttribute("data-sl-area-planner-summary-link", "true");
     button.textContent = "Open Physical Security Summary";
 
-    if (els.continueBtn && els.continueBtn.nextSibling) {
-      parent.insertBefore(button, els.continueBtn.nextSibling);
+    if (els.continueBtn && els.continueBtn.parentElement === parent) {
+      els.continueBtn.insertAdjacentElement("afterend", button);
     } else {
       parent.appendChild(button);
     }

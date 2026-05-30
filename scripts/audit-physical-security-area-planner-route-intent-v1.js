@@ -36,7 +36,7 @@ add(
 
 add(
   "route-intent-local-cache-bumped",
-  index.includes("script.js?v=physical-security-area-planner-summary-link-017") || index.includes("physical-security-area-planner-summary-link-017"),
+  index.includes("script.js?v=physical-security-area-planner-summary-link-018-safe-insert") || index.includes("physical-security-area-planner-summary-link-018-safe-insert"),
   "Area Planner local script cache is bumped"
 );
 

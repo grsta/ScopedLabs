@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-area-planner-summary-link-audit-002";
+const VERSION = "physical-security-area-planner-summary-link-audit-003-safe-insert";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -22,12 +22,13 @@ const script = read("tools/physical-security/area-planner/script.js");
 
 safe("area-planner-index-exists", exists("tools/physical-security/area-planner/index.html"), "Area Planner index exists");
 safe("area-planner-script-exists", exists("tools/physical-security/area-planner/script.js"), "Area Planner script exists");
-safe("script-cache-bumped", index.includes("script.js?v=physical-security-area-planner-summary-link-017"), "Area Planner script cache bumped");
+safe("script-cache-bumped", index.includes("script.js?v=physical-security-area-planner-summary-link-018-safe-insert"), "Area Planner script cache bumped");
 safe("summary-url-constant", script.includes('const SUMMARY_URL = "/tools/physical-security/summary/";'), "Summary URL constant exists");
 safe("summary-button-reference", script.includes('summaryBtn: $("openPhysicalSecuritySummary")'), "Summary button element reference exists");
 safe("summary-button-source", script.includes("function ensureSummaryButton()") && script.includes("data-sl-area-planner-summary-link") && script.includes("Open Physical Security Summary"), "Summary button is created source-side");
 safe("summary-click-handler", script.includes("function openSummary()") && script.includes("window.location.href = SUMMARY_URL;"), "Summary click handler routes to Summary");
 safe("incomplete-area-does-not-block", script.includes("validateAreaForm())") && !script.includes("fix highlighted inputs before opening the Summary"), "incomplete draft does not block opening Summary");
+safe("summary-safe-insert", script.includes('insertAdjacentElement("afterend", button)') && script.includes("els.continueBtn.parentElement === parent") && !script.includes("parent.insertBefore(button, els.continueBtn.nextSibling)"), "Summary button inserts safely without parent mismatch");
 safe("summary-bound", script.includes("ensureSummaryButton();") && script.includes('els.summaryBtn?.addEventListener("click", openSummary);'), "Summary button is bound");
 safe("continue-route-preserved", script.includes("function continueFlow()") && script.includes("window.location.href = getActiveAreaRouteUrl();"), "existing Continue flow still routes by active area intent");
 safe("core-route-preserved", script.includes("return NEXT_URL;") && script.includes('"/tools/physical-security/scene-illumination/"'), "Core route remains Scene Illumination");
