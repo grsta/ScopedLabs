@@ -1620,6 +1620,17 @@
       lensReportTable("Lens Selection Result Summary", lensReportMetricRows(data)) +
       lensReportTable("Engineering Notes and Handoff", lensReportNotesRows(data));
   }
+  function showSummaryContinueButton() {
+    if (!els.continueWrap || !els.continueBtn) return;
+
+    els.continueWrap.hidden = false;
+    els.continueWrap.style.display = "block";
+    els.continueBtn.hidden = false;
+    els.continueBtn.disabled = false;
+    els.continueBtn.textContent = "Continue → Physical Security Summary";
+    els.continueBtn.setAttribute("aria-label", "Continue to Physical Security Summary");
+  }
+
   function renderLensDesignAssistant(data) {
     const assistant = ensureDesignAssistantEl();
     if (!assistant || !data) return;
@@ -1688,6 +1699,7 @@
     buildLensSelectionGuidance(data);
     publishLensSelectionGuidanceEvent("lens-selection-guidance-update");
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
+    showSummaryContinueButton();
   }
 
   function calc() {
