@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-003-lens-summary-route";
+const VERSION = "physical-security-summary-proof-audit-004-master-unpark";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -97,7 +97,7 @@ add(
 
 [
   "Continue → Physical Security Summary",
-  "./script.js?v=physical-security-lens-summary-route-005"
+  "./script.js?v=physical-security-lens-summary-cta-state-015"
 ].forEach((signal) => {
   add("lens-index-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), lensIndex.includes(signal) ? "SAFE" : "FAIL", lensIndex.includes(signal) ? "lens index contains " + signal : "lens index missing " + signal);
 });
@@ -122,7 +122,8 @@ const area = read("tools/physical-security/area-planner/index.html");
 const spacing = read("tools/physical-security/camera-spacing/index.html");
 
 add("phase1-area-planner-unchanged", !area.includes("physical-security-summary") ? "SAFE" : "WATCH", !area.includes("physical-security-summary") ? "Phase 1 does not change Area Planner behavior" : "Area Planner already references Summary");
-add("phase1-camera-spacing-master-proof-remains", spacing.includes("physical-security-category-guidance-renderer.js") ? "SAFE" : "WATCH", spacing.includes("physical-security-category-guidance-renderer.js") ? "Camera Spacing master proof host remains for Phase 1" : "Camera Spacing master proof host not found");
+add("summary-permanent-master-host", index.includes("physicalSecuritySummaryMasterMount") && index.includes("/assets/physical-security-category-guidance-renderer.js") ? "SAFE" : "FAIL", index.includes("physicalSecuritySummaryMasterMount") && index.includes("/assets/physical-security-category-guidance-renderer.js") ? "Summary owns the permanent Physical Security master host" : "Summary is missing the permanent master host wiring");
+add("camera-spacing-master-unparked", !spacing.includes("physical-security-category-guidance-renderer.js") && !spacing.includes("physical-security-category-guidance-mount") ? "SAFE" : "FAIL", !spacing.includes("physical-security-category-guidance-renderer.js") && !spacing.includes("physical-security-category-guidance-mount") ? "Camera Spacing no longer hosts the full master renderer" : "Camera Spacing still contains full master renderer wiring");
 
 console.log("");
 console.log("Physical Security Summary Proof Audit");
