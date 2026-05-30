@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-page-polish-audit-006-scope-pill-source-cleanup";
+const VERSION = "physical-security-summary-page-polish-audit-007-report-table-polish";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -29,7 +29,7 @@ safe("hero-polished", index.includes("summary-page-hero") && index.includes("Mas
 safe("master-card-remains", index.includes("summary-master-card") && index.includes("physicalSecuritySummaryMasterMount") && index.includes("physicalSecuritySummaryMasterContext"), "master card remains intact");
 safe("results-card-polished", index.includes("summary-results-card") && index.includes("Physical Security Rollup") && index.includes("Quick status snapshot from tool guidance memory and current Area Planner scopes.") && !index.includes("<span class=\"pill\">Readiness Snapshot</span>"), "results card has clean heading/copy with no readiness pill");
 safe("scope-card-polished", index.includes("summary-scope-card") && index.includes("Area, Zone, and Tool Guidance Rollup") && !index.includes("<span class=\"pill\">Core Coverage Areas</span>") && !index.includes("<span class=\"pill\">Specialty Zones</span>"), "scope card has clean heading with no top pills");
-safe("export-card-polished", index.includes("summary-export-card") && index.includes("Final Report Export") && index.includes("summaryReportDetails") && index.includes("Report metadata"), "export card remains polished");
+safe("export-card-polished", index.includes("summary-export-card") && index.includes("Final Report Export") && index.includes("summaryReportDetails") && index.includes("Report metadata") && !index.includes("<span class=\"pill\">Final Report</span>"), "export card remains polished with no Final Report pill");
 safe("export-ids-preserved", index.includes("id=\"reportTitle\"") && index.includes("id=\"projectName\"") && index.includes("id=\"exportReport\"") && index.includes("id=\"saveSnapshot\""), "export field/control IDs remain");
 safe("export-label-standard", index.includes(">Open Report</button>") && !index.includes(">Open Export Report</button>"), "export button label remains standardized");
 safe("hidden-payload-remains", index.includes("physicalSecurityCrossCategoryPayload") && index.includes("hidden aria-hidden=\"true\""), "hidden future Site Assistant payload remains");

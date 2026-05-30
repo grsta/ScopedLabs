@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-007-watch-risk-columns";
+  const VERSION = "physical-security-report-summary-008-table-polish";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -282,8 +282,8 @@
       });
 
     const summaryTable = [
-      '<table data-sl-physical-security-report-summary-table="true">',
-      '<thead><tr><th>Physical Security Category Summary</th><th>Detail</th></tr></thead>',
+      '<table class="summary-table physical-security-category-summary-table" data-sl-physical-security-report-summary-table="true">',
+      '<thead><tr><th>Summary Item</th><th>Detail</th></tr></thead>',
       '<tbody>',
       summaryRows.map((row) => {
         return '<tr><td>' + escapeHtml(row[0]) + '</td><td>' + escapeHtml(row[1]) + '</td></tr>';
@@ -295,7 +295,7 @@
     const detailTable = detailRows.length
       ? [
           '<div style="margin-top:12px;"></div>',
-          '<table data-sl-physical-security-report-summary-detail-table="true">',
+          '<table class="summary-table physical-security-watch-risk-table" data-sl-physical-security-report-summary-detail-table="true">',
           '<thead><tr><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th></tr></thead>',
           '<tbody>',
           detailRows.map((row) => {
@@ -312,27 +312,9 @@
   function renderExportHtml(summary) {
     if (!summary || !summary.counts || !summary.counts.generated) return "";
 
-    const priority = summary.priorityTool;
-    const counts = summary.counts;
-
-    const toolRows = summary.tools
-      .filter((tool) => normalizeStatus(tool.status) === "risk" || normalizeStatus(tool.status) === "watch")
-      .slice(0, 6)
-      .map((tool) => {
-        const detail = tool.reportSummary || tool.action || tool.reason || tool.nextStep || "Review this tool result before finalizing the category.";
-        return "<li><strong>" + escapeHtml(tool.label) + ":</strong> " + escapeHtml(statusLabel(normalizeStatus(tool.status))) + " ? " + escapeHtml(detail) + "</li>";
-      })
-      .join("");
-
     return [
       '<section class="export-extra-section physical-security-report-summary" data-sl-report-summary-version="' + escapeHtml(VERSION) + '">',
       renderExportTableHtml(summary),
-      "<h3>Physical Security Category Summary</h3>",
-      "<p><strong>Status:</strong> " + escapeHtml(statusLabel(summary.status)) + " | <strong>Generated:</strong> " + escapeHtml(counts.generated) + " of " + escapeHtml(counts.tracked) + " | <strong>Healthy:</strong> " + escapeHtml(counts.healthy) + " | <strong>Watch:</strong> " + escapeHtml(counts.watch) + " | <strong>Risk:</strong> " + escapeHtml(counts.risk) + "</p>",
-      priority ? "<p><strong>Priority item:</strong> " + escapeHtml(priority.label) + " ? " + escapeHtml(priority.action || priority.reason || "Review before finalizing the design.") + "</p>" : "",
-      summary.reason ? "<p><strong>Category interpretation:</strong> " + escapeHtml(summary.reason) + "</p>" : "",
-      summary.nextStep ? "<p><strong>Recommended next step:</strong> " + escapeHtml(summary.nextStep) + "</p>" : "",
-      toolRows ? "<h4>Watch/Risk Detail</h4><ul>" + toolRows + "</ul>" : "",
       "<p><small>This category summary is generated from the current Physical Security guidance memory stack and is intended as a planning aid. Verify final designs against site conditions, manufacturer data, and project requirements.</small></p>",
       "</section>"
     ].join("");
@@ -351,7 +333,7 @@
       "Status: " + statusLabel(summary.status),
       "Generated: " + counts.generated + " of " + counts.tracked,
       "Healthy: " + counts.healthy + ", Watch: " + counts.watch + ", Risk: " + counts.risk,
-      priority ? "Priority item: " + priority.label + " ? " + (priority.action || priority.reason || "Review before finalizing the design.") : "",
+      priority ? "Priority item: " + priority.label + " - " + (priority.action || priority.reason || "Review before finalizing the design.") : "",
       summary.reason ? "Category interpretation: " + summary.reason : "",
       summary.nextStep ? "Recommended next step: " + summary.nextStep : ""
     ].filter(Boolean).join("\n");
