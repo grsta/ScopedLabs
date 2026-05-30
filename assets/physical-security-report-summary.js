@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-009-status-text";
+  const VERSION = "physical-security-report-summary-010-watch-risk-note";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -305,6 +305,10 @@
       '</table>'
     ].join("");
 
+    const detailIntro = detailRows.length
+      ? '<p class="physical-security-watch-risk-note"><strong>Watch/Risk detail only:</strong> The table below lists items that need review or correction. Healthy and pending tools stay in the page rollup above.</p>'
+      : "";
+
     const detailTable = detailRows.length
       ? [
           '<div style="margin-top:12px;"></div>',
@@ -319,7 +323,7 @@
         ].join("")
       : "";
 
-    return summaryTable + detailTable;
+    return summaryTable + detailIntro + detailTable;
   }
 
   function renderExportHtml(summary) {
