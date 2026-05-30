@@ -20,7 +20,11 @@
     snapshotSaveEndpoint: "/api/snapshots/save",
     snapshotApiMode: "remote-first",
     siteKey: "scopedlabs",
-    enableOnProPages: true
+    enableOnProPages: true,
+    alwaysExportReady: false,
+    invalidateOnInput: true,
+    readyStatusMessage: "",
+    emptyExportOutputs: []
   };
 
   const state = {
@@ -299,7 +303,28 @@
       .filter((item) => item.label && item.value);
   }
 
+  function getFallbackOutputRows() {
+    const configured = state.options.emptyExportOutputs;
+
+    if (typeof state.options.emptyExportOutputRows === "function") {
+      try {
+        const rows = state.options.emptyExportOutputRows();
+        if (Array.isArray(rows) && rows.length) return rows.filter((row) => row && row.label && row.value);
+      } catch {}
+    }
+
+    if (Array.isArray(configured) && configured.length) {
+      return configured.filter((row) => row && row.label && row.value);
+    }
+
+    return [
+      { label: "Report Type", value: state.options.toolLabel || "ScopedLabs Report" },
+      { label: "Report Readiness", value: "Ready without calculator step" }
+    ];
+  }
+
   function hasUsableResults() {
+    if (state.options.alwaysExportReady === true) return true;
     return getResultRows().length > 0;
   }
 
@@ -850,7 +875,11 @@
   }
 
   function buildPayload() {
-    const outputs = getResultRows();
+    let outputs = getResultRows();
+
+    if (!outputs.length && state.options.alwaysExportReady === true) {
+      outputs = getFallbackOutputRows();
+    }
 
     if (!outputs.length) return null;
 
@@ -1605,7 +1634,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       return;
     }
 
-    setStatus("Calculation ready. Open Export Report or Save Snapshot.");
+    setStatus(state.options.readyStatusMessage || "Calculation ready. Open Export Report or Save Snapshot.");
   }
 
   function invalidate(message = "Inputs changed. Run the calculator again to refresh export.") {
@@ -1686,7 +1715,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       });
     }
 
-    if (inputContainer) {
+    if (inputContainer && state.options.invalidateOnInput !== false) {
       inputContainer.addEventListener("input", () => invalidate());
       inputContainer.addEventListener("change", () => invalidate());
     }

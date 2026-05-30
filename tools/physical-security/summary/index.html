@@ -531,6 +531,14 @@
       toolLabel: "Physical Security Summary",
       toolSlug: "physical-security-summary",
       reportPrefix: "SL-PS-SUM",
+      alwaysAllowExport: true,
+      alwaysExportReady: true,
+      invalidateOnInput: false,
+      readyStatusMessage: "Summary report ready. Open Report or Save Snapshot.",
+      emptyExportOutputs: [
+        { label: "Report Type", value: "Physical Security category summary" },
+        { label: "Report Readiness", value: "Ready without calculator step" }
+      ],
       assumptions: [
         "This report reflects the current Physical Security summary, guidance memory, area/zone context, and visible report fields at the time the export was generated.",
         "Core coverage areas and optional specialty zones may be at different completion states.",
@@ -539,7 +547,7 @@
       disclaimer: "ScopedLabs outputs are planning aids only and do not replace formal engineering review, code compliance review, site-specific validation, manufacturer documentation, or platform-specific design validation."
     };
   </script>
-  <script src="/assets/export.js?v=shared-export-016-suppress-extra-title"></script>
+  <script src="/assets/export.js?v=shared-export-017-summary-always-ready"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout"></script>
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/physical-security-guidance-memory.js?v=physical-security-guidance-memory-001-session-foundation"></script>
