@@ -22,8 +22,8 @@ safe("lens-index-exists", exists("tools/physical-security/lens-selection/index.h
 safe("lens-script-exists", exists("tools/physical-security/lens-selection/script.js"), "Lens script exists");
 safe("summary-cta-style", index.includes("data-lens-summary-cta-source-001"), "source-level Summary CTA style exists");
 safe("summary-cta-row-visible", index.includes("id=\"next-step-row\" class=\"lens-summary-cta-row\""), "Summary CTA row is source-level visible");
-safe("summary-cta-anchor", index.includes("<a id=\"continue\" class=\"btn btn-primary\" href=\"/tools/physical-security/summary/\""), "Summary CTA is an anchor route");
-safe("summary-cta-label", index.includes("Continue → Physical Security Summary"), "Summary CTA label remains");
+safe("summary-cta-anchor", (index.includes("<a id=\"continue\" class=\"btn btn-secondary\" href=\"/tools/physical-security/summary/\"") || index.includes("<a id=\"continue\" class=\"btn btn-primary\" href=\"/tools/physical-security/summary/\"")), "Summary CTA is an anchor route with neutral initial state");
+safe("summary-cta-label", (index.includes("Continue → Physical Security Summary") || index.includes("Open Physical Security Summary") || script.includes("Continue → Physical Security Summary")), "Summary CTA label remains");
 safe("old-hidden-wrapper-removed", !index.includes("<div id=\"next-step-row\" style=\"display:none;\">"), "old hidden wrapper removed");
 safe("old-button-removed", !index.includes("<button id=\"continue\" class=\"btn btn-primary\" type=\"button\">"), "old JS-only button removed");
 safe("summary-helper-flex", script.includes("els.continueWrap.style.display = \"flex\";"), "helper uses flex display");
@@ -31,7 +31,7 @@ safe("summary-click-save", script.includes("event.preventDefault") && script.inc
 safe("summary-url", script.includes("const NEXT_URL = \"/tools/physical-security/summary/\";"), "Summary NEXT_URL remains");
 safe("invalidate-restores-summary", script.includes("ScopedLabsAnalyzer.invalidate({") && script.includes("showSummaryContinueButton();\n\n    prev = null;"), "invalidate restores Summary CTA after analyzer invalidation");
 safe("render-error-keeps-summary", script.includes("function renderError(message)") && script.includes("showSummaryContinueButton();\n    clearDesignAssistant();"), "renderError keeps final Summary CTA available");
-safe("cache-bumped", index.includes("./script.js?v=physical-security-lens-summary-cta-source-013"), "Lens script cache bumped");
+safe("cache-bumped", index.includes("./script.js?v=physical-security-lens-summary-cta-state-014"), "Lens script cache bumped");
 safe("assistant-ready-remains", index.includes("Lens Design Assistant ready"), "assistant ready card remains");
 safe("export-remains", index.includes("id=\"reportMetadataMount\"") && index.includes("id=\"exportReport\""), "collapsible export remains");
 

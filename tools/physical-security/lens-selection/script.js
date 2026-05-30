@@ -1622,15 +1622,20 @@
       lensReportTable("Lens Selection Result Summary", lensReportMetricRows(data)) +
       lensReportTable("Engineering Notes and Handoff", lensReportNotesRows(data));
   }
-  function showSummaryContinueButton() {
+  function showSummaryContinueButton(options) {
     if (!els.continueWrap || !els.continueBtn) return;
+
+    const isComplete = !!(options && options.complete);
 
     els.continueWrap.hidden = false;
     els.continueWrap.style.display = "flex";
     els.continueBtn.hidden = false;
     els.continueBtn.disabled = false;
-    els.continueBtn.textContent = "Continue → Physical Security Summary";
-    els.continueBtn.setAttribute("aria-label", "Continue to Physical Security Summary");
+    els.continueBtn.classList.toggle("btn-primary", isComplete);
+    els.continueBtn.classList.toggle("btn-secondary", !isComplete);
+    els.continueBtn.dataset.summaryCtaState = isComplete ? "complete" : "open";
+    els.continueBtn.textContent = isComplete ? "Continue → Physical Security Summary" : "Open Physical Security Summary";
+    els.continueBtn.setAttribute("aria-label", isComplete ? "Continue to Physical Security Summary" : "Open Physical Security Summary");
   }
 
   function renderLensDesignAssistant(data) {
@@ -1701,7 +1706,7 @@
     buildLensSelectionGuidance(data);
     publishLensSelectionGuidanceEvent("lens-selection-guidance-update");
     ScopedLabsAnalyzer.showContinue(els.continueWrap, els.continueBtn);
-    showSummaryContinueButton();
+    showSummaryContinueButton({ complete: true });
   }
 
   function calc() {

@@ -31,9 +31,9 @@ safe("assistant-waiting-script", script.includes("function renderLensDesignAssis
 safe("clear-design-assistant-waits", script.includes("function clearDesignAssistant()") && script.includes("renderLensDesignAssistantWaitingState();"), "clearDesignAssistant restores waiting card instead of hiding assistant");
 safe("no-old-clear-hide", !script.includes("assistant.hidden = true;\n    assistant.innerHTML = \"\";"), "old hide-empty assistant clear behavior removed");
 safe("real-assistant-render-remains", script.includes("ScopedLabsLensDesignAssistant.render(assistant, data);"), "real post-calculation assistant render remains");
-safe("summary-route-remains", script.includes("const NEXT_URL = \"/tools/physical-security/summary/\";") && index.includes("Continue → Physical Security Summary"), "Summary route remains");
+safe("summary-route-remains", script.includes("const NEXT_URL = \"/tools/physical-security/summary/\";") && (index.includes("Continue → Physical Security Summary") || index.includes("Open Physical Security Summary") || script.includes("Continue → Physical Security Summary")), "Summary route remains");
 safe("export-remains", index.includes("id=\"reportMetadataMount\"") && index.includes("button id=\"exportReport\"") && index.includes("button id=\"saveSnapshot\""), "collapsible export controls remain");
-safe("lens-cache", index.includes("./script.js?v=physical-security-lens-summary-cta-source-013"), "Lens cache bumped for final UI polish");
+safe("lens-cache", index.includes("./script.js?v=physical-security-lens-summary-cta-state-014"), "Lens cache bumped for final UI polish");
 
 console.log("");
 console.log("Physical Security Lens Final UI Polish Audit");

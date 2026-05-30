@@ -93,7 +93,7 @@ add("tool-registry-exists", exists(registryRel) ? "SAFE" : "FAIL", registryRel +
   "/assets/physical-security-graphics-library.js?v=physical-security-dormant-assistant-modules-001",
   "/assets/physical-security-local-assistant.js?v=physical-security-dormant-assistant-modules-001",
   "/assets/physical-security-tool-assistant-adapters.js?v=physical-security-dormant-assistant-modules-001",
-  "./script.js?v=physical-security-lens-summary-cta-source-013",
+  "./script.js?v=physical-security-lens-summary-cta-state-014",
   "/assets/help.js?v=help-034-lens-clean-kb-card"
 ].forEach((signal) => requireSignal("lens-index", lensIndex, signal));
 
