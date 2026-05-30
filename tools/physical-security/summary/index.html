@@ -120,6 +120,78 @@
     }
 
 
+
+    /* physical-security-summary-page-polish-003 */
+    .summary-page-heading {
+      margin-top: 12px;
+      max-width: 860px;
+    }
+
+    .summary-page-heading h1 {
+      margin: 0;
+    }
+
+    .summary-page-heading p {
+      margin: 10px 0 0;
+      max-width: 760px;
+      line-height: 1.55;
+    }
+
+    .summary-page-hero {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-page-hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 18px 18px auto;
+      width: 140px;
+      height: 140px;
+      border: 1px solid rgba(125,255,152,.08);
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    .summary-hero-actions {
+      margin-top: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .summary-section-copy {
+      max-width: 760px;
+      line-height: 1.55;
+      margin-top: -2px;
+    }
+
+    .summary-results-card .summary-grid {
+      margin-top: 12px;
+    }
+
+    .summary-report-details {
+      border: 1px solid rgba(226,232,240,.12);
+      border-radius: 14px;
+      background: rgba(0,0,0,.14);
+      padding: 0;
+      margin-top: 12px;
+    }
+
+    .summary-report-details summary {
+      cursor: pointer;
+      color: rgba(248,250,252,.94);
+      font-weight: 850;
+      padding: 12px 14px;
+    }
+
+    .summary-report-details .export-grid {
+      padding: 0 14px 14px;
+      margin-top: 0;
+    }
+
+    .summary-next-actions .btn-primary {
+      min-width: 180px;
+    }
     /* physical-security-summary-master-polish-002 */
     .summary-master-card {
       border-color: rgba(125,255,152,.22);
@@ -243,30 +315,25 @@
 
   <main class="page">
     <div class="container">
-      <div class="crumbs">
-        <a href="/tools/">Tools</a>
-        <span class="sep">/</span>
-        <a href="/tools/physical-security/">Physical Security</a>
-        <span class="sep">/</span>
-        <span>Summary</span>
+      <div class="summary-page-heading">
+        <h1>Physical Security Summary</h1>
+        <p class="muted">Final category rollup, master assistant review, and report-ready Physical Security handoff.</p>
       </div>
 
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-        <span class="pill">Category Summary</span>
-      </div>
-
-      <h1 style="margin-top: 10px;">Physical Security Summary</h1>
-
-      <section class="card summary-hero">
+      <section class="card summary-hero summary-page-hero">
         <div class="pill-row">
           <span class="pill">Final Category Rollup</span>
           <span class="pill">Cross-Category Ready</span>
         </div>
-        <h2 class="h2" style="margin-top: 12px;">Core pipeline, specialty zones, and master guidance</h2>
+        <h2 class="h2" style="margin-top: 12px;">Master rollup for the Physical Security design</h2>
         <p class="muted" style="margin-bottom: 0;">
           This page is the Physical Security master assistant and final report host. It rolls up the core camera coverage path plus optional Face Recognition and License Plate specialty zones without forcing those branches into the required core pipeline.
         </p>
+        <div class="summary-hero-actions btn-row">
+          <a class="btn btn-primary" href="#physicalSecuritySummaryMasterMount">Review Master Assistant</a>
+          <a class="btn" href="#summaryExportSection">Open Report Section</a>
+          <a class="btn" href="/tools/physical-security/area-planner/">Area Planner</a>
+        </div>
       </section>
 
       <section class="card summary-master-card" style="margin-top: 18px;">
@@ -282,20 +349,21 @@
         <div id="physicalSecuritySummaryMasterContext" class="summary-master-context" aria-live="polite"></div>
       </section>
 
-      <section class="card" style="margin-top: 18px;">
+      <section class="card summary-results-card" style="margin-top: 18px;">
         <div class="pill-row">
-          <span class="pill">Summary Results</span>
+          <span class="pill">Readiness Snapshot</span>
         </div>
         <h2 class="h2" style="margin-top: 12px;">Physical Security Rollup</h2>
+        <p class="muted summary-section-copy">Quick status snapshot from tool guidance memory and current Area Planner scopes.</p>
         <div id="results" class="summary-grid" aria-live="polite"></div>
       </section>
 
-      <section class="card" style="margin-top: 18px;">
+      <section class="card summary-scope-card" style="margin-top: 18px;">
         <div class="pill-row">
           <span class="pill">Core Coverage Areas</span>
           <span class="pill">Specialty Zones</span>
         </div>
-        <h2 class="h2" style="margin-top: 12px;">Area and Zone Rollup</h2>
+        <h2 class="h2" style="margin-top: 12px;">Area, Zone, and Tool Guidance Rollup</h2>
         <p class="muted">
           Core coverage areas stay on the normal camera design path. Face Recognition and License Plate zones remain separate optional branches, but still attach to this category summary.
         </p>
@@ -304,7 +372,7 @@
 
       <section
         id="summaryExportSection"
-        class="card"
+        class="card summary-export-card"
         style="margin-top: 18px;"
         data-export-section
         data-export-title="Physical Security Category Summary"
@@ -313,12 +381,14 @@
           <span class="pill">Final Report</span>
         </div>
 
-        <h2 class="h2" style="margin-top: 12px;">Export Physical Security Summary</h2>
-        <p class="muted">
+        <h2 class="h2" style="margin-top: 12px;">Final Report Export</h2>
+        <p class="muted summary-section-copy">
           Add optional report context and open a report-ready summary for the current Physical Security planning session.
         </p>
 
-        <div class="form-grid export-grid">
+        <details id="summaryReportDetails" class="summary-report-details">
+          <summary>Report metadata</summary>
+          <div class="form-grid export-grid">
           <label class="field">
             <span class="label">Report Title</span>
             <input id="reportTitle" type="text" placeholder="Physical Security Summary" />
@@ -339,27 +409,29 @@
             <span class="label">Custom Notes</span>
             <textarea id="customNotes" placeholder="Optional notes, assumptions, site conditions, device profile references, or cross-category dependencies."></textarea>
           </label>
-        </div>
+          </div>
+        </details>
 
         <div id="physicalSecurityReportMount" style="margin-top: 14px;"></div>
         <pre id="physicalSecurityCrossCategoryPayload" class="summary-payload" hidden aria-hidden="true">{}</pre>
 
         <div class="btn-row" style="margin-top: 14px;">
-          <button id="exportReport" class="btn btn-primary" type="button">Open Export Report</button>
+          <button id="exportReport" class="btn btn-primary" type="button">Open Report</button>
           <button id="saveSnapshot" class="btn" type="button">Save Snapshot</button>
         </div>
         <div id="exportStatus" class="export-status"></div>
       </section>
 
-      <section class="card" style="margin-top: 18px;">
+      <section class="card summary-next-card" style="margin-top: 18px;">
         <div class="pill-row">
           <span class="pill">Next Actions</span>
         </div>
         <h2 class="h2" style="margin-top: 12px;">Continue Planning</h2>
-        <div class="btn-row">
-          <a class="btn" href="/tools/physical-security/area-planner/">Return to Area Planner</a>
+        <p class="muted summary-section-copy">Return to the planning control center, review the final core Lens step, or go back to the Physical Security category.</p>
+        <div class="btn-row summary-next-actions">
+          <a class="btn btn-primary" href="/tools/physical-security/area-planner/">Return to Area Planner</a>
           <a class="btn" href="/tools/physical-security/lens-selection/">Review Lens Selection</a>
-          <a class="btn btn-primary" href="/tools/physical-security/">Back to Physical Security</a>
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
         </div>
       </section>
     </div>
@@ -406,7 +478,7 @@
   <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate"></script>
   <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-002-summary-master-polish"></script>
   <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-007-watch-risk-columns"></script>
-  <script src="./script.js?v=physical-security-summary-master-polish-002"></script>
+  <script src="./script.js?v=physical-security-summary-page-polish-003"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>

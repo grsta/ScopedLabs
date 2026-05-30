@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-master-polish-002";
+  const VERSION = "physical-security-summary-page-polish-003";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -383,9 +383,9 @@
     const results = byId("results");
     if (results) {
       results.innerHTML =
-        kpi("Overall Status", statusLabel(model.status), "Generated guidance and area/zone context from this session.") +
-        kpi("Guidance Records", String(model.counts.generated), model.counts.healthy + " healthy | " + model.counts.watch + " watch | " + model.counts.risk + " risk") +
-        kpi("Planning Scopes", String(model.groups.total), model.groups.core.length + " core | " + model.groups.face.length + " face | " + model.groups.plate.length + " plate");
+        kpi("Category Status", statusLabel(model.status), "Overall readiness from guidance memory and current scope context.") +
+        kpi("Tool Guidance", String(model.counts.generated), model.counts.healthy + " healthy | " + model.counts.watch + " watch | " + model.counts.risk + " risk") +
+        kpi("Areas / Zones", String(model.groups.total), model.groups.core.length + " core | " + model.groups.face.length + " face | " + model.groups.plate.length + " plate");
     }
 
     const scopeMount = byId("physicalSecurityScopeMount");

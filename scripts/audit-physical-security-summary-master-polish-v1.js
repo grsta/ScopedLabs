@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-master-polish-audit-001";
+const VERSION = "physical-security-summary-master-polish-audit-002-page-polish";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -29,7 +29,7 @@ safe("master-card-header", index.includes("summary-master-card") && index.includ
 safe("master-context-mount", index.includes("physicalSecuritySummaryMasterContext") && script.includes("function renderMasterContext(model, explanation)"), "master context mount and renderer exist");
 safe("master-context-cards", index.includes("summary-master-context-grid") && script.includes("masterReadiness(model)") && script.includes("masterPriorityQueue(model, explanation"), "master context cards are wired");
 safe("master-action-list", index.includes("summary-master-action-list") && script.includes("summary-master-action-item"), "master action queue is wired");
-safe("summary-version-cache", script.includes("physical-security-summary-master-polish-002") && index.includes("./script.js?v=physical-security-summary-master-polish-002"), "Summary script version/cache bumped");
+safe("summary-version-cache", script.includes("physical-security-summary-page-polish-003") && index.includes("./script.js?v=physical-security-summary-page-polish-003"), "Summary script version/cache bumped");
 safe("renderer-version-cache", renderer.includes("physical-security-category-guidance-renderer-002-summary-master-polish") && index.includes("/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-002-summary-master-polish"), "renderer version/cache bumped");
 safe("renderer-css-version-cache", css.includes("physical-security-category-guidance-renderer-css-002-summary-master-polish") && index.includes("/assets/physical-security-category-guidance-renderer.css?v=physical-security-category-guidance-renderer-css-002-summary-master-polish"), "renderer CSS version/cache bumped");
 safe("renderer-kicker-subtitle", renderer.includes("const kicker = opts.kicker") && renderer.includes("sl-ps-category-guidance__subtitle") && css.includes(".sl-ps-category-guidance__subtitle"), "renderer supports summary master kicker/subtitle");
