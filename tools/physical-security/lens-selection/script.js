@@ -38,6 +38,7 @@
     analysis: $("analysis-copy"),
     diagnostic: $("diagnostic-panel"),
     designAssistant: $("lensDesignAssistant"),
+    reportSummary: $("lensReportSummaryExport"),
     flowNote: $("flow-note"),
     continueWrap: $("next-step-row"),
     continueBtn: $("continue"),
@@ -993,6 +994,7 @@
     const reportV2Btn = document.getElementById("openReportV2");
     if (reportV2Btn) reportV2Btn.disabled = true;
     clearDesignAssistant();
+    clearLensReportSummary();
   }
 
   function getDiagnosticDriver(data) {
@@ -1526,6 +1528,74 @@
     });
   }
 
+
+  function clearLensReportSummary() {
+    const target = els.reportSummary || document.getElementById("lensReportSummaryExport");
+    if (!target) return;
+    target.innerHTML = "";
+  }
+
+  function lensReportMetricRows(data) {
+    return [
+      ["Status", data.status || "Review"],
+      ["Selected / Available Lens", fmtMm(data.adjustedFocal)],
+      ["Calculated Target Lens", fmtMm(data.calculatedTargetFocal || data.baseFocal)],
+      ["Selected Lens Class", data.lensClass || "Review"],
+      ["Distance to Target", fmtFt(data.dist)],
+      ["Target Scene Width", fmtFt(data.tw)],
+      ["Camera Format", data.cameraFormatLabel ? data.cameraFormatLabel + " (" + fmtMm(data.sw, 2) + ")" : fmtMm(data.sw, 2)],
+      ["Upstream Pixel Density", data.ppf > 0 ? fmtPpf(data.ppf) : "No prior PPF"],
+      ["Selection Gap", fmt(data.adjustmentPct, 1) + "%"],
+      ["Width per mm of Focal Length", data.widthPerMm > 0 ? fmt(data.widthPerMm, 2) + " ft/mm" : "N/A"]
+    ];
+  }
+
+  function lensReportNotesRows(data) {
+    const guidance = buildLensSelectionGuidance(data);
+    const primary = guidance && guidance.primaryRecommendation ? guidance.primaryRecommendation : null;
+
+    return [
+      ["Engineering interpretation", data.interpretation || "Review the selected lens against the target scene width, distance, camera format, and upstream detail requirement."],
+      ["Dominant constraint", data.dominantConstraint || "No single dominant constraint detected."],
+      ["Recommended action", data.guidance || (primary ? primary.nextStep : "Continue to Physical Security Summary after validating manufacturer field-of-view data.")],
+      ["Physical Security Summary handoff", "Carry the selected lens, target width, distance, camera format, upstream pixel-density context, and Lens Selection status into Physical Security Summary as the final core optical result."],
+      ["Optional branch note", "Face Recognition and License Plate Capture remain optional specialty zones from Area Planner. Use them when a doorway, lane, or plate zone needs separate validation."],
+      ["Verification note", "Verify the final lens choice against manufacturer field-of-view charts, site-specific mounting conditions, lighting, compression, motion blur, and project requirements before procurement or installation."]
+    ];
+  }
+
+  function lensReportTable(title, rows) {
+    const body = rows
+      .filter((row) => row && row[0] && row[1])
+      .map((row) =>
+        "<tr>" +
+          "<td>" + escapeHtml(row[0]) + "</td>" +
+          "<td>" + escapeHtml(row[1]) + "</td>" +
+        "</tr>"
+      )
+      .join("");
+
+    return "" +
+      "<table>" +
+        "<thead><tr><th colspan=\"2\">" + escapeHtml(title) + "</th></tr></thead>" +
+        "<tbody>" + body + "</tbody>" +
+      "</table>";
+  }
+
+  function renderLensReportSummary(data) {
+    const target = els.reportSummary || document.getElementById("lensReportSummaryExport");
+    if (!target || !data || !data.ok) return;
+
+    target.setAttribute("data-export-section", "true");
+    target.setAttribute("data-export-title", "Lens Selection Engineering Summary");
+
+    const intro = "Lens Selection converts the validated Physical Security area assumptions into a practical focal-length decision before final category rollup. This report section summarizes the optical result, planning constraints, carry-forward context, and required verification steps.";
+
+    target.innerHTML = "" +
+      "<p data-export-text>" + escapeHtml(intro) + "</p>" +
+      lensReportTable("Lens Selection Result Summary", lensReportMetricRows(data)) +
+      lensReportTable("Engineering Notes and Handoff", lensReportNotesRows(data));
+  }
   function renderLensDesignAssistant(data) {
     const assistant = ensureDesignAssistantEl();
     if (!assistant || !data) return;
@@ -1580,6 +1650,7 @@
     }
 
     prepareDiagnosticData(data);
+    renderLensReportSummary(data);
     renderLensDesignAssistant(data);
 
     els.selectedLens?.addEventListener("change", () => invalidate());
