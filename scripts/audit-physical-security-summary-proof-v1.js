@@ -36,6 +36,7 @@ add("area-state-source-exists", exists(areaStateRel) ? "SAFE" : "FAIL", areaStat
   "physicalSecurityScopeMount",
   "physicalSecurityReportMount",
   "physicalSecurityCrossCategoryPayload",
+  "hidden aria-hidden=\"true\"",
   "summaryExportSection",
   "data-export-section",
   "data-active-area-banner=\"off\"",
