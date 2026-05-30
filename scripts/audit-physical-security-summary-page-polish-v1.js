@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-page-polish-audit-002-flow-row";
+const VERSION = "physical-security-summary-page-polish-audit-004-readiness-pill-source-cleanup";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
