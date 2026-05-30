@@ -378,6 +378,38 @@
       margin-bottom: 12px;
     }
   </style>
+
+  <style data-lens-selection-ui-cleanup-001>
+    body[data-tool="lens-selection"] .lens-ui-pills,
+    body[data-tool="lens-selection"] .lens-flow-note {
+      display: none !important;
+    }
+
+    body[data-tool="lens-selection"] .lens-technical-results-card {
+      position: absolute !important;
+      left: -10000px !important;
+      top: auto !important;
+      width: 800px !important;
+      max-height: 1px !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    body[data-tool="lens-selection"] #lensFlowActions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    body[data-tool="lens-selection"] #next-step-row {
+      margin-top: 0 !important;
+    }
+  </style>
+
 </head>
 
 <body
@@ -425,16 +457,11 @@
         <span>Lens Selection</span>
       </div>
 
-      <div class="pill-row" style="margin-top: 6px;">
-        <span class="pill pill--pro">Pro Tier</span>
-      </div>
-
       <h1 style="margin-top: 10px;">Lens Selection</h1>
 
       <div id="pipeline"></div>
 
       <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <div class="pill pill--pro" style="margin-bottom: 10px; width: fit-content;">Part of a Design Flow</div>
         <h2 class="h3" style="margin-top: 0;">This tool completes the core Physical Security design flow</h2>
         <p class="muted" style="margin-bottom: 0;">
           Use this final core step to convert the validated pixel-density requirement into a practical focal-length choice, then send the completed core design to Physical Security Summary.
@@ -443,13 +470,9 @@
           Face Recognition and License Plate checks are optional specialty zones launched from Area Planner; they are no longer forced after Lens Selection.
         </p>
       </section>
-<div id="flow-note" class="flow-note" hidden></div>
+<div id="flow-note" class="flow-note lens-flow-note" hidden aria-hidden="true"></div>
 
       <section id="lockedCard" class="card tool-card" style="margin-top: 18px;">
-        <div class="pill-row">
-          <span class="pill pill--pro">Pro Tier</span>
-        </div>
-
         <h2 class="h2">🔒 Locked</h2>
         <p class="muted">This tool is included with Pro access for this category.</p>
 
@@ -470,7 +493,10 @@
       </section>
 
       <section id="toolCard" class="card tool-card" style="display:none; margin-top: 18px;">
-        <h2 class="card-title" style="margin-top: 0;">Inputs</h2>
+        <h2 class="card-title" style="margin-top: 0;">Planning Inputs</h2>
+        <p class="muted" style="margin-top: -4px;">
+          Choose the target distance, scene width, available lens, and camera format before validating the final core optical selection.
+        </p>
 
         <div class="form-grid" style="margin-top: 14px;">
           <div class="field">
@@ -532,9 +558,9 @@
           <button id="reset" class="btn" type="button">Reset</button>
         </div>
 
-        <div class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-          <h3 class="h3" style="margin-top: 0;">Calculation Summary</h3>
-          <div id="results" class="results-grid" aria-live="polite">
+        <div class="card lens-technical-results-card" aria-hidden="true" style="margin-top: 14px; background: rgba(0,0,0,.14);">
+          <h3 class="h3" style="margin-top: 0;">Technical Calculation Snapshot</h3>
+          <div id="results" class="results-grid lens-technical-results" aria-live="polite" aria-hidden="true">
             <div class="muted">Enter values and press Evaluate Lens.</div>
           </div>
           <div id="analysis-copy" style="display:none;"></div>
@@ -546,22 +572,19 @@
 
 
 
-        <div class="btn-row" style="margin-top: 14px;">
-          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
-        </div>
-
         <section id="lensDesignAssistant" class="lens-design-assistant" hidden></section>
 
-        <div id="next-step-row" class="btn-row" style="margin-top: 12px; display:none;">
-          <button id="continue" class="btn btn-primary" type="button">
-            Continue → Physical Security Summary
-          </button>
+        <div id="lensFlowActions">
+          <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
+
+          <div id="next-step-row" style="display:none;">
+            <button id="continue" class="btn btn-primary" type="button">
+              Continue → Physical Security Summary
+            </button>
+          </div>
         </div>
       
 <section class="card" style="margin-top: 14px; background: rgba(0,0,0,.14);">
-        <div class="pill-row">
-          <span class="pill pill--pro">Documentation & Export</span>
-        </div>
 
         <h3 class="h3" style="margin-top: 10px;">Export Report</h3>
         <p class="muted" style="margin-bottom: 0;">
