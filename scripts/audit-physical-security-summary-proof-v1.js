@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-001";
+const VERSION = "physical-security-summary-proof-audit-002-banner-optout";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -21,11 +21,14 @@ function add(id, status, detail) {
 
 const indexRel = "tools/physical-security/summary/index.html";
 const scriptRel = "tools/physical-security/summary/script.js";
+const areaStateRel = "assets/physical-security-area-state.js";
 const index = read(indexRel);
 const script = read(scriptRel);
+const areaState = read(areaStateRel);
 
 add("summary-index-exists", exists(indexRel) ? "SAFE" : "FAIL", indexRel + " exists");
 add("summary-script-exists", exists(scriptRel) ? "SAFE" : "FAIL", scriptRel + " exists");
+add("area-state-source-exists", exists(areaStateRel) ? "SAFE" : "FAIL", areaStateRel + " exists");
 
 [
   "Physical Security Summary",
@@ -35,10 +38,12 @@ add("summary-script-exists", exists(scriptRel) ? "SAFE" : "FAIL", scriptRel + " 
   "physicalSecurityCrossCategoryPayload",
   "summaryExportSection",
   "data-export-section",
+  "data-active-area-banner=\"off\"",
   "/assets/physical-security-guidance-memory.js",
   "/assets/physical-security-category-guidance.js",
   "/assets/physical-security-category-guidance-renderer.js",
   "/assets/physical-security-report-summary.js",
+  "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
   "./script.js?v=physical-security-summary-proof-001"
 ].forEach((signal) => {
   add("index-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), index.includes(signal) ? "SAFE" : "FAIL", index.includes(signal) ? "index contains " + signal : "index missing " + signal);
@@ -61,6 +66,26 @@ add("summary-script-exists", exists(scriptRel) ? "SAFE" : "FAIL", scriptRel + " 
 ].forEach((signal) => {
   add("script-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), script.includes(signal) ? "SAFE" : "FAIL", script.includes(signal) ? "script contains " + signal : "script missing " + signal);
 });
+
+[
+  "function shouldSkipAreaBanner()",
+  "dataset.activeAreaBanner",
+  "physical-security-summary",
+  "/tools/physical-security/summary/",
+  "area-planner",
+  "/tools/physical-security/area-planner/",
+  "if (shouldSkipAreaBanner()) return;"
+].forEach((signal) => {
+  add("area-state-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), areaState.includes(signal) ? "SAFE" : "FAIL", areaState.includes(signal) ? "area-state contains " + signal : "area-state missing " + signal);
+});
+
+add(
+  "area-state-removes-existing-before-optout",
+  /const existing = document\.getElementById\("physicalSecurityAreaBanner"\);[\s\S]*?if \(existing\) existing\.remove\(\);[\s\S]*?if \(shouldSkipAreaBanner\(\)\) return;/.test(areaState) ? "SAFE" : "FAIL",
+  /const existing = document\.getElementById\("physicalSecurityAreaBanner"\);[\s\S]*?if \(existing\) existing\.remove\(\);[\s\S]*?if \(shouldSkipAreaBanner\(\)\) return;/.test(areaState)
+    ? "renderAreaBanner removes stale banner before honoring opt-out"
+    : "renderAreaBanner does not remove stale banner before opt-out"
+);
 
 const lens = read("tools/physical-security/lens-selection/index.html");
 const area = read("tools/physical-security/area-planner/index.html");

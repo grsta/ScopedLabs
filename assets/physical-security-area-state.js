@@ -228,9 +228,28 @@
       '</div>';
   }
 
+  function shouldSkipAreaBanner() {
+    const body = document.body || document.querySelector("body");
+    const dataset = body && body.dataset ? body.dataset : {};
+    const activeAreaBanner = String(dataset.activeAreaBanner || "").trim().toLowerCase();
+    const tool = String(dataset.tool || "").trim().toLowerCase();
+    const step = String(dataset.step || "").trim().toLowerCase();
+    const pathname = String((window.location && window.location.pathname) || "").toLowerCase();
+
+    if (activeAreaBanner === "off" || activeAreaBanner === "false" || activeAreaBanner === "disabled") return true;
+    if (tool === "physical-security-summary" || step === "physical-security-summary") return true;
+    if (pathname.includes("/tools/physical-security/summary/")) return true;
+    if (tool === "area-planner" || step === "area-planner") return true;
+    if (pathname.includes("/tools/physical-security/area-planner/")) return true;
+
+    return false;
+  }
+
   function renderAreaBanner() {
     const existing = document.getElementById("physicalSecurityAreaBanner");
     if (existing) existing.remove();
+
+    if (shouldSkipAreaBanner()) return;
 
     const ledger = readLedger();
     const area = getActiveArea();
