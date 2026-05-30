@@ -466,6 +466,22 @@
     return (v > 0 ? "+" : "") + fmt(v, 1) + " ft";
   }
 
+
+  function lensCadCameraMarker(x, y, index) {
+    const tx = Number(x).toFixed(1);
+    const ty = Number(y).toFixed(1);
+    const label = String(index || "");
+
+    return '' +
+      '<g transform="translate(' + tx + ' ' + ty + ') scale(0.44)" class="slda-cad-camera" data-graphics-symbol="camera-cad-lens-selection">' +
+        '<circle cx="-32" cy="0" r="5.2" fill="rgba(2,6,23,.96)" stroke="rgba(125,255,152,.92)" stroke-width="1.8" />' +
+        '<line x1="-27" y1="0" x2="-22" y2="0" stroke="rgba(125,255,152,.88)" stroke-width="1.8" stroke-linecap="round" />' +
+        '<rect x="-22" y="-13" width="44" height="26" rx="4" fill="rgba(15,23,42,.96)" stroke="rgba(125,255,152,.92)" stroke-width="1.8" />' +
+        '<path d="M 22 -8 L 43 -14 L 43 14 L 22 8 Z" fill="rgba(15,23,42,.98)" stroke="rgba(125,255,152,.92)" stroke-width="1.8" stroke-linejoin="round" />' +
+        '<line x1="44" y1="0" x2="70" y2="0" stroke="rgba(125,255,152,.74)" stroke-width="1.2" stroke-dasharray="4 5" stroke-linecap="round" />' +
+        '<text x="0" y="4" text-anchor="middle" fill="rgba(248,250,252,.92)" font-size="11" font-weight="950">' + label + '</text>' +
+      '</g>';
+  }
   function renderFov(d) {
     const width = 920, height = 390, camX = 112, targetX = 785, centerY = 180, axisY = 328;
     const visualWidthFt = Math.max(d.sceneWidthFt, d.framedWidthFt, d.requiredWidthPerCamera, d.sceneWidthFt * 1.12, 1);
@@ -513,7 +529,7 @@
 
       lines.push(`<line x1="${camX}" y1="${camY.toFixed(1)}" x2="${targetX}" y2="${(camY - halfTarget).toFixed(1)}" stroke="rgba(226,232,240,.32)" stroke-width="1" /><line x1="${camX}" y1="${camY.toFixed(1)}" x2="${targetX}" y2="${(camY + halfTarget).toFixed(1)}" stroke="rgba(226,232,240,.32)" stroke-width="1" />`);
       centers.push(`<line x1="${camX}" y1="${camY.toFixed(1)}" x2="${targetX}" y2="${camY.toFixed(1)}" stroke="rgba(226,232,240,.20)" stroke-dasharray="5 7" />`);
-      cams.push(`<circle cx="${camX}" cy="${camY.toFixed(1)}" r="10" fill="rgba(125,255,152,.13)" stroke="rgba(125,255,152,.78)" stroke-width="2" /><text x="${camX - 3}" y="${(camY + 4).toFixed(1)}" text-anchor="middle" fill="rgba(248,250,252,.90)" font-size="9" font-weight="950">${idx + 1}</text>`);
+      cams.push(lensCadCameraMarker(camX, camY, idx + 1));
       rail.push(`<rect x="22" y="${(camY - 12).toFixed(1)}" width="64" height="24" rx="7" fill="rgba(2,6,12,.76)" stroke="rgba(125,255,152,.24)" /><text x="54" y="${(camY + 4).toFixed(1)}" text-anchor="middle" fill="rgba(248,250,252,.84)" font-size="10" font-weight="900">Cam ${idx + 1}</text>`);
     });
 
@@ -527,7 +543,7 @@
       return `<line x1="${x.toFixed(1)}" y1="${axisY - 7}" x2="${x.toFixed(1)}" y2="${axisY + 7}" stroke="rgba(226,232,240,.35)" /><text x="${x.toFixed(1)}" y="${axisY + 22}" text-anchor="middle" fill="rgba(226,232,240,.70)" font-size="9" font-weight="800">${fmt(dist, 0)} ft</text><text x="${x.toFixed(1)}" y="${axisY + 36}" text-anchor="middle" fill="rgba(226,232,240,.45)" font-size="8" font-weight="700">${meters(dist)}</text>`;
     }).join("");
 
-    return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Field of view coverage visualization">
+    return `<svg data-export-svg data-sl-renderer="lens-selection-fov-plan" viewBox="0 0 ${width} ${height}" role="img" aria-label="Field of view coverage visualization">
       <rect width="${width}" height="${height}" fill="rgba(2,6,12,.18)" />
       <text x="22" y="28" fill="rgba(125,255,152,.92)" font-size="11" font-weight="950" letter-spacing="1.5">FOV / COVERAGE LAYOUT</text>
       <text x="22" y="49" fill="rgba(248,250,252,.82)" font-size="13" font-weight="900">${d.coverageCount} camera${d.coverageCount === 1 ? "" : "s"} | ${fmt(d.lensMm, 1)} mm lens | ${fmt(d.distanceFt, 0)} ft / ${meters(d.distanceFt)} distance | ${ppf(d.availablePpf)}</text>
@@ -571,7 +587,7 @@
     const path = scenarios.map((s, i) => `${i ? "L" : "M"} ${x(i).toFixed(1)} ${y(chartPressure(s)).toFixed(1)}`).join(" ");
     const points = scenarios.map((s, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(chartPressure(s)).toFixed(1)}" r="${s.key === activeKey ? 8 : 6}" fill="${color(s.status)}" stroke="#fff" stroke-width="2" /><text x="${x(i).toFixed(1)}" y="${(y(chartPressure(s)) - 14).toFixed(1)}" text-anchor="middle" fill="${color(s.status)}" font-size="11" font-weight="950">${chartPressure(s)}</text><text x="${x(i).toFixed(1)}" y="236" text-anchor="middle" fill="rgba(226,232,240,.72)" font-size="10" font-weight="850">${esc(s.label)}</text>`).join("");
 
-    return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Scenario pressure comparison">
+    return `<svg data-export-svg data-sl-renderer="lens-selection-scenario-pressure" viewBox="0 0 ${width} ${height}" role="img" aria-label="Scenario pressure comparison">
       <rect width="${width}" height="${height}" fill="rgba(2,6,12,.18)" />
       <rect x="${left}" y="${y(25)}" width="${right - left}" height="${y(0) - y(25)}" fill="rgba(125,255,152,.10)" />
       <rect x="${left}" y="${y(60)}" width="${right - left}" height="${y(25) - y(60)}" fill="rgba(255,211,79,.075)" />
@@ -886,6 +902,9 @@
   function render(target, rawData) {
     injectStyles();
     if (!target || !rawData) return;
+    target.setAttribute("data-export-section", "true");
+    target.setAttribute("data-export-title", "Lens Selection Design Assistant Graphics");
+    target.setAttribute("data-export-compact-svg", "true");
 
     const base = baseFromLive(rawData);
     const customBase = readCustomSaved(target, base);
