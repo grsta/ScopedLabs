@@ -2782,3 +2782,62 @@ body[data-category="physical-security"]:not([data-tool="lens-selection"]) #locke
   line-height: 1.2 !important;
   font-weight: 700 !important;
 }
+
+/* physical-security-button-polish-001
+   Shared Physical Security CTA polish:
+   - rectangular CTA buttons for modernized tool pages
+   - disabled export/snapshot buttons visibly greyed out
+   - disabled export/snapshot buttons show not-allowed cursor on hover
+*/
+body[data-category="physical-security"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-category="physical-security"] button.btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="lens-selection"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="lens-selection"] button:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="pixel-density"] .btn:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="pixel-density"] button:not(.nav-tab):not(.pill):not(.pill-link) {
+  border-radius: 10px !important;
+  min-height: 38px;
+  min-width: 124px;
+  justify-content: center;
+  letter-spacing: 0.01em;
+  font-weight: 650 !important;
+}
+
+body[data-category="physical-security"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-category="physical-security"] button.btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="lens-selection"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="lens-selection"] button.btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="pixel-density"] .btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link),
+body[data-tool="pixel-density"] button.btn.btn-primary:not(.nav-tab):not(.pill):not(.pill-link) {
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+body[data-category="physical-security"] #exportReport:disabled,
+body[data-category="physical-security"] #saveSnapshot:disabled,
+body[data-tool="lens-selection"] #exportReport:disabled,
+body[data-tool="lens-selection"] #saveSnapshot:disabled,
+body[data-tool="pixel-density"] #exportReport:disabled,
+body[data-tool="pixel-density"] #saveSnapshot:disabled {
+  opacity: 0.52 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  filter: grayscale(0.35) saturate(0.62) !important;
+  color: rgba(226, 232, 240, 0.62) !important;
+  border-color: rgba(148, 163, 184, 0.24) !important;
+  background: rgba(148, 163, 184, 0.08) !important;
+  box-shadow: none !important;
+}
+
+body[data-category="physical-security"] #exportReport:disabled:hover,
+body[data-category="physical-security"] #saveSnapshot:disabled:hover,
+body[data-tool="lens-selection"] #exportReport:disabled:hover,
+body[data-tool="lens-selection"] #saveSnapshot:disabled:hover,
+body[data-tool="pixel-density"] #exportReport:disabled:hover,
+body[data-tool="pixel-density"] #saveSnapshot:disabled:hover {
+  cursor: not-allowed !important;
+  transform: none !important;
+  border-color: rgba(148, 163, 184, 0.24) !important;
+  background: rgba(148, 163, 184, 0.08) !important;
+  box-shadow: none !important;
+}
