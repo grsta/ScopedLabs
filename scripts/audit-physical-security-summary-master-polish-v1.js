@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-master-polish-audit-002-page-polish";
+const VERSION = "physical-security-summary-master-polish-audit-003-master-pill-cleanup";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -25,7 +25,7 @@ const spacingScript = read("tools/physical-security/camera-spacing/script.js");
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("summary-script-exists", exists("tools/physical-security/summary/script.js"), "Summary script exists");
 safe("summary-current-master-copy", index.includes("This page is the Physical Security master assistant and final report host."), "hero copy says Summary is the current master host");
-safe("master-card-header", index.includes("summary-master-card") && index.includes("Physical Security Master Assistant") && index.includes("Category Brain"), "master card has intentional header");
+safe("master-card-header", index.includes("summary-master-card") && index.includes("Physical Security Master Assistant") && !index.includes("<span class=\"pill\">Category Brain</span>"), "master card has clean intentional header with no top pills");
 safe("master-context-mount", index.includes("physicalSecuritySummaryMasterContext") && script.includes("function renderMasterContext(model, explanation)"), "master context mount and renderer exist");
 safe("master-context-cards", index.includes("summary-master-context-grid") && script.includes("masterReadiness(model)") && script.includes("masterPriorityQueue(model, explanation"), "master context cards are wired");
 safe("master-action-list", index.includes("summary-master-action-list") && script.includes("summary-master-action-item"), "master action queue is wired");
