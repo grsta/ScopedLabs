@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-area-selector-green-led-008";
+  const VERSION = "physical-security-summary-selected-scope-guidance-009";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -341,6 +341,7 @@
     return '<div class="summary-area-selector-wrap" data-sl-summary-area-selector-rail="true"><div class="summary-area-selector-rail" role="list" aria-label="Area and zone selector">' + steps + '</div><p class="summary-area-selector-current"><span class="summary-area-current-led ' + escapeHtml(selectedStatus) + '" aria-hidden="true"></span>Currently viewing: <strong>' + escapeHtml(selected.label) + '</strong><span class="summary-area-selector-current-status ' + escapeHtml(selectedStatus) + '">' + escapeHtml(statusLabel(selectedStatus)) + '</span></p></div>';
   }
 
+
   function renderSelectedAreaScope(scope, activeAreaId) {
     if (!scope) {
       return '<div class="summary-row" style="margin-top:10px;"><p class="muted" style="margin:0;">No areas or zones recorded yet.</p></div>';
@@ -350,7 +351,7 @@
     const area = scope.area || {};
     const status = normalizeStatus(scope.status);
 
-    return '<div class="summary-row summary-area-rollup-card" data-sl-summary-area-rollup-card="true"><h3>Currently viewing: ' + escapeHtml(scope.label) + '</h3><p class="summary-area-rollup-meta">' + escapeHtml(scope.route + active + ' | ' + areaDetail(area)) + '</p><p><span class="summary-status ' + escapeHtml(status) + '">' + escapeHtml(statusLabel(status)) + '</span></p>' + renderAreaToolTable(area) + '</div>';
+    return '<div class="summary-row summary-area-rollup-card" data-sl-summary-area-rollup-card="true"><h3>Currently viewing: ' + escapeHtml(scope.label) + '</h3><p class="summary-area-rollup-meta">' + escapeHtml(scope.route + active + ' | ' + areaDetail(area)) + '</p><p><span class="summary-status ' + escapeHtml(status) + '">' + escapeHtml(statusLabel(status)) + '</span></p></div>';
   }
 
   function renderAreaRollup(groups) {
@@ -359,6 +360,29 @@
     const selected = selectedScope(scopes, source.activeAreaId || "");
 
     return '<h3 class="h3" style="margin-top:18px;">Area / Zone Rollup</h3>' + renderAreaSelectorRail(scopes, selected) + renderSelectedAreaScope(selected, source.activeAreaId || "");
+  }
+
+
+  function currentSelectedScope(groups) {
+    const source = groups || { activeAreaId: "" };
+    const scopes = scopeSequence(source);
+    return selectedScope(scopes, source.activeAreaId || "");
+  }
+
+  function selectedGuidanceTitle(scope) {
+    if (!scope) return "Selected Area Guidance";
+    if (scope.group === "face" || scope.group === "plate") return "Specialty Branch Guidance for Selected Zone";
+    return "Core Pipeline Guidance for Selected Area";
+  }
+
+  function renderSelectedScopeGuidance(groups) {
+    const selected = currentSelectedScope(groups);
+
+    if (!selected) {
+      return '<h3 class="h3" style="margin-top:18px;">Selected Area Guidance</h3><div class="summary-row" style="margin-top:10px;"><p class="muted" style="margin:0;">No selected area or zone guidance is available yet.</p></div>';
+    }
+
+    return '<h3 class="h3" style="margin-top:18px;">' + escapeHtml(selectedGuidanceTitle(selected)) + '</h3>' + renderAreaToolTable(selected.area || {});
   }
 
   function bindAreaSelector(mount) {
@@ -585,8 +609,7 @@
     if (scopeMount) {
       scopeMount.innerHTML =
         renderAreaRollup(model.groups) +
-        renderRows("Core Pipeline Summary Across Areas", model.coreRows) +
-        renderRows("Optional Specialty Branch Summary Across Zones", model.specialtyRows);
+        renderSelectedScopeGuidance(model.groups);
       bindAreaSelector(scopeMount);
     }
 

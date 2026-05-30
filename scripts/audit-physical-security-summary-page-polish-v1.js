@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-page-polish-audit-008-green-led";
+const VERSION = "physical-security-summary-page-polish-audit-009-selected-scope-guidance";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -33,7 +33,7 @@ safe("export-card-polished", index.includes("summary-export-card") && index.incl
 safe("export-ids-preserved", index.includes("id=\"reportTitle\"") && index.includes("id=\"projectName\"") && index.includes("id=\"exportReport\"") && index.includes("id=\"saveSnapshot\""), "export field/control IDs remain");
 safe("export-label-standard", index.includes(">Open Report</button>") && !index.includes(">Open Export Report</button>"), "export button label remains standardized");
 safe("hidden-payload-remains", index.includes("physicalSecurityCrossCategoryPayload") && index.includes("hidden aria-hidden=\"true\""), "hidden future Site Assistant payload remains");
-safe("script-version-remains", index.includes("./script.js?v=physical-security-summary-area-selector-green-led-008") && script.includes("physical-security-summary-area-selector-green-led-008"), "Summary script version/cache remains current");
+safe("script-version-remains", index.includes("./script.js?v=physical-security-summary-selected-scope-guidance-009") && script.includes("physical-security-summary-selected-scope-guidance-009"), "Summary script version/cache remains current");
 
 console.log("");
 console.log("Physical Security Summary Page Polish Audit");
