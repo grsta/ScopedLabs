@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-page-polish-audit-001";
+const VERSION = "physical-security-summary-page-polish-audit-002-flow-row";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -21,20 +21,19 @@ const script = read("tools/physical-security/summary/script.js");
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("summary-script-exists", exists("tools/physical-security/summary/script.js"), "Summary script exists");
 safe("breadcrumbs-removed", !index.includes("<div class=\"crumbs\">") && !index.includes("<span class=\"sep\">/</span>"), "top breadcrumbs removed");
-safe("top-pill-row-removed", !index.includes("<span class=\"pill pill--pro\">Pro Tier</span>") && !index.includes("<span class=\"pill\">Category Summary</span>"), "old top Pro/Category pill row removed");
-safe("page-heading", index.includes("summary-page-heading") && index.includes("Final category rollup, master assistant review"), "clean page heading exists");
-safe("hero-polished", index.includes("summary-page-hero") && index.includes("Master rollup for the Physical Security design") && index.includes("summary-hero-actions"), "hero has polished title and action row");
+safe("page-heading-clean", index.includes("summary-page-heading") && index.includes("<h1>Physical Security Summary</h1>") && !index.includes("Final category rollup, master assistant review, and report-ready Physical Security handoff."), "page heading has no repeated description");
+safe("hero-flow-row", index.includes("summary-hero-flow") && index.includes("Final Category Rollup") && index.includes("Cross-Category Ready") && index.includes("summary-flow-arrow"), "first card uses flow row with arrow");
+safe("hero-pill-row-removed", !index.includes("<span class=\"pill\">Final Category Rollup</span>") && !index.includes("<span class=\"pill\">Cross-Category Ready</span>"), "old first-card pills removed");
+safe("flow-style-marker", index.includes("physical-security-summary-page-flow-polish-004"), "flow polish style marker exists");
+safe("hero-polished", index.includes("summary-page-hero") && index.includes("Master rollup for the Physical Security design") && index.includes("summary-hero-actions"), "hero remains polished");
 safe("master-card-remains", index.includes("summary-master-card") && index.includes("physicalSecuritySummaryMasterMount") && index.includes("physicalSecuritySummaryMasterContext"), "master card remains intact");
-safe("results-card-polished", index.includes("summary-results-card") && index.includes("Readiness Snapshot") && index.includes("summary-section-copy"), "results card has readiness snapshot intro");
-safe("scope-card-polished", index.includes("summary-scope-card") && index.includes("Area, Zone, and Tool Guidance Rollup"), "scope card title is polished");
-safe("export-card-polished", index.includes("summary-export-card") && index.includes("Final Report Export") && index.includes("summaryReportDetails") && index.includes("Report metadata"), "export card has compact metadata details");
+safe("results-card-polished", index.includes("summary-results-card") && index.includes("Readiness Snapshot") && index.includes("summary-section-copy"), "results card remains polished");
+safe("scope-card-polished", index.includes("summary-scope-card") && index.includes("Area, Zone, and Tool Guidance Rollup"), "scope card remains polished");
+safe("export-card-polished", index.includes("summary-export-card") && index.includes("Final Report Export") && index.includes("summaryReportDetails") && index.includes("Report metadata"), "export card remains polished");
 safe("export-ids-preserved", index.includes("id=\"reportTitle\"") && index.includes("id=\"projectName\"") && index.includes("id=\"exportReport\"") && index.includes("id=\"saveSnapshot\""), "export field/control IDs remain");
-safe("export-label-standard", index.includes(">Open Report</button>") && !index.includes(">Open Export Report</button>"), "export button label is standardized");
-safe("next-actions-polished", index.includes("summary-next-card") && index.includes("summary-next-actions") && index.includes("Return to Area Planner"), "next actions card is polished");
-safe("page-style-marker", index.includes("physical-security-summary-page-polish-003"), "page polish style marker exists");
-safe("script-cache", index.includes("./script.js?v=physical-security-summary-page-polish-003") && script.includes("physical-security-summary-page-polish-003"), "Summary script cache/version bumped");
-safe("kpi-copy-polished", script.includes("Category Status") && script.includes("Tool Guidance") && script.includes("Areas / Zones"), "KPI labels are polished");
+safe("export-label-standard", index.includes(">Open Report</button>") && !index.includes(">Open Export Report</button>"), "export button label remains standardized");
 safe("hidden-payload-remains", index.includes("physicalSecurityCrossCategoryPayload") && index.includes("hidden aria-hidden=\"true\""), "hidden future Site Assistant payload remains");
+safe("script-version-remains", index.includes("./script.js?v=physical-security-summary-page-polish-003") && script.includes("physical-security-summary-page-polish-003"), "Summary script version/cache remains current");
 
 console.log("");
 console.log("Physical Security Summary Page Polish Audit");

@@ -121,6 +121,46 @@
 
 
 
+
+    /* physical-security-summary-page-flow-polish-004 */
+    .summary-page-heading {
+      margin-bottom: 18px;
+    }
+
+    .summary-hero-flow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-bottom: 13px;
+      color: rgba(226,232,240,.78);
+    }
+
+    .summary-flow-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: rgba(226,232,240,.82);
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .summary-flow-step::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #7dff98;
+      box-shadow: 0 0 12px rgba(125,255,152,.55);
+    }
+
+    .summary-flow-arrow {
+      color: rgba(125,255,152,.52);
+      font-weight: 950;
+      line-height: 1;
+    }
     /* physical-security-summary-page-polish-003 */
     .summary-page-heading {
       margin-top: 12px;
@@ -317,13 +357,13 @@
     <div class="container">
       <div class="summary-page-heading">
         <h1>Physical Security Summary</h1>
-        <p class="muted">Final category rollup, master assistant review, and report-ready Physical Security handoff.</p>
-      </div>
+              </div>
 
       <section class="card summary-hero summary-page-hero">
-        <div class="pill-row">
-          <span class="pill">Final Category Rollup</span>
-          <span class="pill">Cross-Category Ready</span>
+                <div class="summary-hero-flow" aria-label="Physical Security Summary flow">
+          <span class="summary-flow-step">Final Category Rollup</span>
+          <span class="summary-flow-arrow" aria-hidden="true">→</span>
+          <span class="summary-flow-step">Cross-Category Ready</span>
         </div>
         <h2 class="h2" style="margin-top: 12px;">Master rollup for the Physical Security design</h2>
         <p class="muted" style="margin-bottom: 0;">
