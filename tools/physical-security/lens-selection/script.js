@@ -1427,11 +1427,37 @@
     return section;
   }
 
-  function clearDesignAssistant() {
+  function lensDesignAssistantWaitingHtml() {
+    return [
+      '<div class="lens-assistant-waiting" data-lens-assistant-ready-state>',
+      '  <div class="lens-assistant-waiting-head">',
+      '    <div>',
+      '      <div class="lens-assistant-kicker">Design Assistant</div>',
+      '      <h3 class="lens-assistant-title">Lens Design Assistant ready</h3>',
+      '      <p class="lens-assistant-copy">Enter or confirm the planning inputs, then evaluate the lens selection to generate scenario guidance, export graphics, and Summary handoff context.</p>',
+      '    </div>',
+      '    <div class="lens-assistant-ready-chip">Waiting for calculation</div>',
+      '  </div>',
+      '  <div class="lens-assistant-waiting-grid">',
+      '    <div class="lens-assistant-waiting-card"><strong>Geometry check</strong><span>Distance, target width, and camera format drive the calculated focal-length target.</span></div>',
+      '    <div class="lens-assistant-waiting-card"><strong>Lens pressure</strong><span>The assistant compares the selected lens against the target and upstream detail requirement.</span></div>',
+      '    <div class="lens-assistant-waiting-card"><strong>Summary handoff</strong><span>Validated guidance publishes silently to the Physical Security Summary after calculation.</span></div>',
+      '  </div>',
+      '</div>'
+    ].join('');
+  }
+
+  function renderLensDesignAssistantWaitingState() {
     const assistant = ensureDesignAssistantEl();
     if (!assistant) return;
-    assistant.hidden = true;
-    assistant.innerHTML = "";
+
+    assistant.hidden = false;
+    assistant.removeAttribute('hidden');
+    assistant.innerHTML = lensDesignAssistantWaitingHtml();
+  }
+
+  function clearDesignAssistant() {
+    renderLensDesignAssistantWaitingState();
   }
 
   function hasLensPipelineBaseline() {

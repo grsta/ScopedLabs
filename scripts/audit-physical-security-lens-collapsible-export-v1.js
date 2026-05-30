@@ -27,7 +27,7 @@ safe(rows, "metadata-fields", index.includes("data-report-fields=\"reportTitle,p
 safe(rows, "export-button-remains", index.includes("button id=\"exportReport\"") && index.includes(">Open Report</button>"), "normal Open Report button remains");
 safe(rows, "snapshot-remains", index.includes("button id=\"saveSnapshot\""), "snapshot button remains");
 safe(rows, "engineering-summary-remains", index.includes("id=\"lensReportSummaryExport\"") && script.includes("renderLensReportSummary(data);"), "hidden Lens Engineering Summary remains");
-safe(rows, "lens-cache", index.includes("./script.js?v=physical-security-lens-report-polish-010-collapsible-export"), "Lens cache bumped for collapsible export");
+safe(rows, "lens-cache", index.includes("./script.js?v=physical-security-lens-final-ui-polish-011"), "Lens cache bumped for collapsible export");
 safe(rows, "no-old-export-grid", !index.includes("class=\"export-grid\""), "old always-open export grid removed");
 safe(rows, "no-old-visible-inputs", !index.includes("<input id=\"reportTitle\"") && !index.includes("<input id=\"projectName\"") && !index.includes("<input id=\"clientName\"") && !index.includes("<input id=\"preparedBy\"") && !index.includes("<textarea id=\"customNotes\""), "old always-visible metadata inputs removed");
 safe(rows, "no-old-export-label", !index.includes("Open Export Report"), "old Open Export Report label removed");

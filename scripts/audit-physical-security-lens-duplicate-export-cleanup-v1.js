@@ -26,7 +26,7 @@ safe(rows, "lens-assistant-exists", exists("assets/lens-design-assistant.js"), "
 safe(rows, "normal-export-remains", index.includes("button id=\"exportReport\""), "normal export button remains");
 safe(rows, "snapshot-remains", index.includes("button id=\"saveSnapshot\""), "snapshot button remains");
 safe(rows, "summary-route-remains", index.includes("Continue → Physical Security Summary") && script.includes("const NEXT_URL = \"/tools/physical-security/summary/\";"), "summary route remains");
-safe(rows, "lens-script-cache", index.includes("./script.js?v=physical-security-lens-report-polish-010-collapsible-export"), "lens script cache updated");
+safe(rows, "lens-script-cache", index.includes("./script.js?v=physical-security-lens-final-ui-polish-011"), "lens script cache updated");
 safe(rows, "assistant-cache", index.includes("/assets/lens-design-assistant.js?v=lens-design-assistant-020-duplicate-export-cleanup"), "assistant cache updated");
 safe(rows, "engineering-summary-remains", index.includes("id=\"lensReportSummaryExport\"") && script.includes("renderLensReportSummary(data);"), "engineering summary remains");
 safe(rows, "assistant-export-remains", assistant.includes("data-export-section") && assistant.includes("data-export-svg"), "assistant export visuals remain");

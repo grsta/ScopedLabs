@@ -410,6 +410,98 @@
     }
   </style>
 
+
+  <style data-lens-final-ui-polish-001>
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-waiting {
+      display: grid;
+      gap: 14px;
+    }
+
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-waiting-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+    }
+
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-kicker {
+      color: #7dff98;
+      font-size: 0.66rem;
+      font-weight: 950;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-title {
+      margin: 6px 0 0;
+      color: rgba(255,255,255,.94);
+      font-size: 1.14rem;
+      font-weight: 900;
+      line-height: 1.18;
+    }
+
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-copy {
+      margin: 7px 0 0;
+      color: rgba(226,232,240,.72);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-ready-chip {
+      border: 1px solid rgba(125,255,152,.24);
+      background: rgba(125,255,152,.08);
+      color: #7dff98;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 0.62rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-waiting-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-waiting-card {
+      border: 1px solid rgba(148,163,184,.13);
+      border-radius: 12px;
+      background: rgba(255,255,255,.025);
+      padding: 11px;
+      min-width: 0;
+    }
+
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-waiting-card strong {
+      display: block;
+      color: rgba(255,255,255,.92);
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+    }
+
+    body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-waiting-card span {
+      display: block;
+      color: rgba(203,213,225,.68);
+      font-size: 0.78rem;
+      line-height: 1.42;
+    }
+
+    @media (max-width: 900px) {
+      body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-waiting-head,
+      body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-waiting-grid {
+        grid-template-columns: 1fr;
+      }
+
+      body[data-tool="lens-selection"] #lensDesignAssistant .lens-assistant-waiting-head {
+        display: grid;
+      }
+    }
+  </style>
+
 </head>
 
 <body
@@ -449,24 +541,16 @@
   <main class="page">
     <div class="container">
 
-      <div class="crumbs">
-        <a href="/tools/">Tools</a>
-        <span class="sep">/</span>
-        <a href="/tools/physical-security/">Physical Security</a>
-        <span class="sep">/</span>
-        <span>Lens Selection</span>
-      </div>
-
       <h1 style="margin-top: 10px;">Lens Selection</h1>
 
       <div id="pipeline"></div>
 
-      <section class="card" style="margin-top: 18px; border-color: rgba(120,255,120,0.18);">
-        <h2 class="h3" style="margin-top: 0;">This tool completes the core Physical Security design flow</h2>
-        <p class="muted" style="margin-bottom: 0;">
+      <section class="card" style="margin-top: 22px; border-color: rgba(120,255,120,0.18);">
+        <h2 class="h3" style="margin-top: 0; color: rgba(255,255,255,.94); font-size: 1.24rem; line-height: 1.2; font-weight: 700;">This tool completes the core Physical Security design flow</h2>
+        <p class="muted" style="margin-bottom: 0; color: rgba(226,232,240,.74); line-height: 1.55;">
           Use this final core step to convert the validated pixel-density requirement into a practical focal-length choice, then send the completed core design to Physical Security Summary.
         </p>
-        <p class="muted" style="margin-top: 12px; margin-bottom: 0;">
+        <p class="muted" style="margin-top: 12px; margin-bottom: 0; color: rgba(226,232,240,.74); line-height: 1.55;">
           Face Recognition and License Plate checks are optional specialty zones launched from Area Planner; they are no longer forced after Lens Selection.
         </p>
       </section>
@@ -581,7 +665,23 @@
           style="position:absolute; left:-10000px; top:auto; width:820px; max-height:1px; overflow:hidden; opacity:0; pointer-events:none;"
         ></section>
 
-        <section id="lensDesignAssistant" class="lens-design-assistant" hidden></section>
+        <section id="lensDesignAssistant" class="lens-design-assistant">
+          <div class="lens-assistant-waiting" data-lens-assistant-ready-state>
+            <div class="lens-assistant-waiting-head">
+              <div>
+                <div class="lens-assistant-kicker">Design Assistant</div>
+                <h3 class="lens-assistant-title">Lens Design Assistant ready</h3>
+                <p class="lens-assistant-copy">Enter or confirm the planning inputs, then evaluate the lens selection to generate scenario guidance, export graphics, and Summary handoff context.</p>
+              </div>
+              <div class="lens-assistant-ready-chip">Waiting for calculation</div>
+            </div>
+            <div class="lens-assistant-waiting-grid">
+              <div class="lens-assistant-waiting-card"><strong>Geometry check</strong><span>Distance, target width, and camera format drive the calculated focal-length target.</span></div>
+              <div class="lens-assistant-waiting-card"><strong>Lens pressure</strong><span>The assistant compares the selected lens against the target and upstream detail requirement.</span></div>
+              <div class="lens-assistant-waiting-card"><strong>Summary handoff</strong><span>Validated guidance publishes silently to the Physical Security Summary after calculation.</span></div>
+            </div>
+          </div>
+        </section>
 
         <div id="lensFlowActions">
           <a class="btn" href="/tools/physical-security/">Back to Physical Security</a>
@@ -676,7 +776,7 @@
   <script src="/assets/physical-security-graphics-library.js?v=physical-security-dormant-assistant-modules-001"></script>
   <script src="/assets/physical-security-local-assistant.js?v=physical-security-dormant-assistant-modules-001"></script>
   <script src="/assets/physical-security-tool-assistant-adapters.js?v=physical-security-dormant-assistant-modules-001"></script>
-  <script src="./script.js?v=physical-security-lens-report-polish-010-collapsible-export"></script>
+  <script src="./script.js?v=physical-security-lens-final-ui-polish-011"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>
