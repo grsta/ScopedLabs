@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-area-selector-rail-polish-006";
+  const VERSION = "physical-security-summary-area-selector-flow-007";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],

@@ -80,21 +80,22 @@
 
 
 
-    /* physical-security-summary-area-selector-rail-polish-009 */
+
+    /* physical-security-summary-area-selector-flow-010 */
     .summary-area-selector-wrap {
-      margin: 12px 0 14px;
-      padding: 10px 12px;
-      border: 1px solid rgba(125,255,152,.18);
-      border-radius: 14px;
-      background: linear-gradient(180deg, rgba(8,24,18,.72), rgba(2,6,23,.24));
+      margin: 10px 0 14px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }
 
     .summary-area-selector-rail {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 7px;
-      margin: 0;
+      gap: 6px 8px;
+      margin: 0 0 8px;
       padding: 0;
     }
 
@@ -102,35 +103,31 @@
       appearance: none;
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      min-height: 34px;
-      border: 1px solid rgba(226,232,240,.14);
-      background: linear-gradient(180deg, rgba(15,23,42,.54), rgba(2,6,23,.36));
-      color: rgba(226,232,240,.78);
-      border-radius: 10px;
-      padding: 7px 10px;
+      gap: 6px;
+      border: 0;
+      background: transparent;
+      color: rgba(226,232,240,.76);
+      border-radius: 0;
+      padding: 0;
       font: inherit;
-      font-size: .82rem;
-      font-weight: 650;
-      letter-spacing: .01em;
+      font-size: .88rem;
+      font-weight: 520;
+      letter-spacing: 0;
       cursor: pointer;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
-      transition: border-color .16s ease, box-shadow .16s ease, background .16s ease, transform .16s ease;
+      box-shadow: none;
+      line-height: 1.35;
     }
 
     .summary-area-selector-step:hover,
     .summary-area-selector-step:focus-visible {
-      border-color: rgba(125,255,152,.48);
-      box-shadow: 0 0 0 3px rgba(125,255,152,.08), inset 0 1px 0 rgba(255,255,255,.05);
+      color: rgba(248,250,252,.96);
       outline: none;
-      transform: translateY(-1px);
+      text-decoration: none;
     }
 
     .summary-area-selector-step.active {
-      border-color: rgba(125,255,152,.62);
-      background: linear-gradient(180deg, rgba(26,55,39,.72), rgba(7,20,14,.62));
-      color: rgba(248,250,252,.95);
-      box-shadow: 0 0 0 1px rgba(125,255,152,.14) inset, 0 0 18px rgba(125,255,152,.07);
+      color: rgba(248,250,252,.96);
+      font-weight: 650;
     }
 
     .summary-area-selector-led,
@@ -146,19 +143,19 @@
     .summary-area-selector-step.risk .summary-area-selector-led,
     .summary-area-current-led.risk {
       background: rgba(255,154,118,.96);
-      box-shadow: 0 0 11px rgba(255,154,118,.44);
+      box-shadow: 0 0 10px rgba(255,154,118,.42);
     }
 
     .summary-area-selector-step.watch .summary-area-selector-led,
     .summary-area-current-led.watch {
       background: rgba(255,218,106,.98);
-      box-shadow: 0 0 11px rgba(255,218,106,.36);
+      box-shadow: 0 0 10px rgba(255,218,106,.34);
     }
 
     .summary-area-selector-step.healthy .summary-area-selector-led,
     .summary-area-current-led.healthy {
       background: rgba(125,255,152,.96);
-      box-shadow: 0 0 11px rgba(125,255,152,.46);
+      box-shadow: 0 0 10px rgba(125,255,152,.44);
     }
 
     .summary-area-selector-step.pending .summary-area-selector-led,
@@ -166,42 +163,35 @@
     .summary-area-current-led.pending,
     .summary-area-current-led.unknown {
       background: rgba(148,163,184,.62);
-      box-shadow: 0 0 9px rgba(148,163,184,.16);
+      box-shadow: 0 0 8px rgba(148,163,184,.14);
     }
 
     .summary-area-selector-step:not(.active) .summary-area-selector-led {
-      opacity: .48;
+      opacity: .64;
       box-shadow: none;
     }
 
     .summary-area-selector-label {
       color: inherit;
-      font-weight: 650;
-      line-height: 1.15;
-    }
-
-    .summary-area-selector-step.active .summary-area-selector-label {
-      color: rgba(248,250,252,.96);
-      font-weight: 760;
+      font-weight: inherit;
     }
 
     .summary-area-selector-status {
-      display: inline-block;
+      display: inline;
       margin-left: 2px;
-      color: rgba(203,213,225,.68);
-      font-size: .72rem;
-      font-weight: 650;
-      line-height: 1;
+      font-size: .82rem;
+      font-weight: 600;
+      color: rgba(203,213,225,.66);
     }
 
-    .summary-area-selector-step.risk .summary-area-selector-status { color: rgba(255,154,118,.92); }
-    .summary-area-selector-step.watch .summary-area-selector-status { color: rgba(255,218,106,.94); }
-    .summary-area-selector-step.healthy .summary-area-selector-status { color: rgba(125,255,152,.90); }
+    .summary-area-selector-step.risk .summary-area-selector-status { color: rgba(255,154,118,.90); }
+    .summary-area-selector-step.watch .summary-area-selector-status { color: rgba(255,218,106,.92); }
+    .summary-area-selector-step.healthy .summary-area-selector-status { color: rgba(125,255,152,.88); }
 
     .summary-area-selector-arrow {
-      color: rgba(125,255,152,.42);
+      color: rgba(125,255,152,.32);
       font-size: .82rem;
-      font-weight: 800;
+      font-weight: 700;
       line-height: 1;
     }
 
@@ -209,26 +199,26 @@
       display: flex;
       align-items: center;
       gap: 7px;
-      margin: 10px 0 0;
+      margin: 6px 0 0;
       color: rgba(226,232,240,.74);
-      font-size: .84rem;
+      font-size: .88rem;
       line-height: 1.45;
     }
 
     .summary-area-selector-current strong {
-      color: rgba(248,250,252,.95);
-      font-weight: 720;
-    }
-
-    .summary-area-selector-current-status {
-      color: rgba(203,213,225,.70);
-      font-size: .75rem;
+      color: rgba(248,250,252,.96);
       font-weight: 650;
     }
 
-    .summary-area-selector-current-status.risk { color: rgba(255,154,118,.92); }
-    .summary-area-selector-current-status.watch { color: rgba(255,218,106,.94); }
-    .summary-area-selector-current-status.healthy { color: rgba(125,255,152,.90); }
+    .summary-area-selector-current-status {
+      color: rgba(203,213,225,.68);
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    .summary-area-selector-current-status.risk { color: rgba(255,154,118,.90); }
+    .summary-area-selector-current-status.watch { color: rgba(255,218,106,.92); }
+    .summary-area-selector-current-status.healthy { color: rgba(125,255,152,.88); }
     /* physical-security-summary-area-rollup-first-007 */
     .summary-area-rollup-card {
       margin-top: 12px;
@@ -742,7 +732,7 @@
   <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate"></script>
   <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-002-summary-master-polish"></script>
   <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-010-watch-risk-note"></script>
-  <script src="./script.js?v=physical-security-summary-area-selector-rail-polish-006"></script>
+  <script src="./script.js?v=physical-security-summary-area-selector-flow-007"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>
