@@ -1,4 +1,4 @@
-/* physical-security-category-guidance-renderer-css-001-proof */
+/* physical-security-category-guidance-renderer-css-002-summary-master-polish */
 
 .sl-category-guidance-mount[hidden] {
   display: none !important;
@@ -55,6 +55,13 @@
   color: #ffffff;
   font-size: 1.05rem;
   margin-bottom: 8px;
+}
+
+.sl-ps-category-guidance__subtitle {
+  color: #c8d7d0;
+  line-height: 1.5;
+  margin: 8px 0 0;
+  max-width: 720px;
 }
 
 .sl-ps-category-guidance p,

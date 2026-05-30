@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-proof-001";
+  const VERSION = "physical-security-summary-master-polish-002";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -238,7 +238,110 @@
     };
   }
 
-  function renderMasterAssistant() {
+  function statusRank(value) {
+    const status = normalizeStatus(value);
+    if (status === "risk") return 0;
+    if (status === "watch") return 1;
+    if (status === "unknown") return 2;
+    return 3;
+  }
+
+  function masterReadiness(model) {
+    const counts = model.counts || {};
+    const corePending = (model.coreRows || []).filter((row) => !row.generated || normalizeStatus(row.status) === "unknown").length;
+
+    if (counts.risk > 0) {
+      return {
+        label: "Risk-first review",
+        detail: "Resolve the highest-priority Physical Security risk before treating this category as report-ready."
+      };
+    }
+
+    if (counts.watch > 0) {
+      return {
+        label: "Watch-list validation",
+        detail: "Confirm watch assumptions before locking the Physical Security summary into a final report."
+      };
+    }
+
+    if (corePending > 0) {
+      return {
+        label: "Core pipeline incomplete",
+        detail: String(corePending) + " core tool" + (corePending === 1 ? " is" : "s are") + " still missing generated guidance."
+      };
+    }
+
+    return {
+      label: "Report-ready review",
+      detail: "Generated core guidance is healthy across the available Physical Security tool results."
+    };
+  }
+
+  function masterPriorityQueue(model, explanation) {
+    const queue = [];
+    const rows = (model.allRows || []).slice().sort((a, b) => statusRank(a.status) - statusRank(b.status));
+    const priorityTool = explanation && explanation.priorityTool ? explanation.priorityTool : null;
+    const prioritySlug = priorityTool && priorityTool.slug ? priorityTool.slug : "";
+
+    if (priorityTool) {
+      queue.push({
+        label: "Top priority",
+        detail: (priorityTool.label || prioritySlug || "Priority tool") + (priorityTool.nextStep ? ": " + priorityTool.nextStep : " should be reviewed first.")
+      });
+    }
+
+    rows.filter((row) => row.generated && (normalizeStatus(row.status) === "risk" || normalizeStatus(row.status) === "watch"))
+      .slice(0, 3)
+      .forEach((row) => {
+        if (prioritySlug && row.slug === prioritySlug) return;
+        queue.push({
+          label: statusLabel(row.status) + " item",
+          detail: row.label + ": " + row.detail
+        });
+      });
+
+    const missingCore = (model.coreRows || []).filter((row) => !row.generated || normalizeStatus(row.status) === "unknown");
+    if (missingCore.length) {
+      queue.push({
+        label: "Core completion",
+        detail: "Still missing: " + missingCore.map((row) => row.label).join(", ") + "."
+      });
+    }
+
+    if (!queue.length) {
+      queue.push({
+        label: "Ready for report",
+        detail: "No category-level risk or watch priority is currently blocking the Physical Security summary."
+      });
+    }
+
+    return queue.slice(0, 4);
+  }
+
+  function renderMasterContext(model, explanation) {
+    const mount = byId("physicalSecuritySummaryMasterContext");
+    if (!mount) return;
+
+    const readiness = masterReadiness(model);
+    const queue = masterPriorityQueue(model, explanation || {});
+    const groups = model.groups || { total: 0, core: [], face: [], plate: [] };
+    const counts = model.counts || { generated: 0, healthy: 0, watch: 0, risk: 0 };
+
+    const queueHtml = queue.map((item) => {
+      return '<div class="summary-master-action-item"><span>' + escapeHtml(item.label) + '</span><p>' + escapeHtml(item.detail) + '</p></div>';
+    }).join("");
+
+    mount.innerHTML = [
+      '<div class="summary-master-context-grid">',
+      '<div class="summary-master-context-card"><strong>' + escapeHtml(readiness.label) + '</strong><p>' + escapeHtml(readiness.detail) + '</p></div>',
+      '<div class="summary-master-context-card"><strong>Area / zone rollup</strong><p>' + escapeHtml(String(groups.total) + ' scope' + (groups.total === 1 ? '' : 's') + ' | ' + groups.core.length + ' core | ' + groups.face.length + ' face | ' + groups.plate.length + ' plate') + '</p></div>',
+      '<div class="summary-master-context-card"><strong>Guidance stack</strong><p>' + escapeHtml(String(counts.generated) + ' generated | ' + counts.healthy + ' healthy | ' + counts.watch + ' watch | ' + counts.risk + ' risk') + '</p></div>',
+      '</div>',
+      '<div class="summary-master-action-list">' + queueHtml + '</div>'
+    ].join("");
+  }
+
+  function renderMasterAssistant(model) {
     const mount = byId("physicalSecuritySummaryMasterMount");
     const categoryApi = window.ScopedLabsPhysicalSecurityCategoryGuidance;
     const renderer = window.ScopedLabsPhysicalSecurityCategoryGuidanceRenderer;
@@ -246,11 +349,18 @@
     if (!mount) return;
 
     if (categoryApi && typeof categoryApi.explainCurrentGuidance === "function" && renderer && typeof renderer.mount === "function") {
-      renderer.mount(mount, categoryApi.explainCurrentGuidance(), { title: "Physical Security Master Assistant" });
+      const explanation = categoryApi.explainCurrentGuidance();
+      renderer.mount(mount, explanation, {
+        title: "Physical Security Master Assistant",
+        kicker: "Category Master",
+        subtitle: "Coordinates local tool guidance, optional specialty zones, report readiness, and future Site Assistant handoff context."
+      });
+      renderMasterContext(model || buildModel(), explanation);
       return;
     }
 
     mount.innerHTML = '<p class="muted">Physical Security category guidance is not loaded yet.</p>';
+    renderMasterContext(model || buildModel(), null);
   }
 
   function renderReportSummary(model) {
@@ -288,7 +398,7 @@
         renderAreaSection("License Plate Zones", model.groups.plate, model.groups.activeAreaId);
     }
 
-    renderMasterAssistant();
+    renderMasterAssistant(model);
     renderReportSummary(model);
 
     const payloadEl = byId("physicalSecurityCrossCategoryPayload");

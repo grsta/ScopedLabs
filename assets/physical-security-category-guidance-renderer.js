@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-guidance-renderer-001-foundation";
+  const VERSION = "physical-security-category-guidance-renderer-002-summary-master-polish";
   const CATEGORY = "physical-security";
 
   function clone(value) {
@@ -182,13 +182,16 @@
     const model = input && input.version === VERSION ? input : createRenderModel(input);
     const opts = options || {};
     const title = opts.title || "Physical Security Category Guidance";
+    const kicker = opts.kicker || "Category Guidance";
+    const subtitle = opts.subtitle || "";
 
     return [
       '<section class="sl-ps-category-guidance ' + escapeHtml(model.statusClass) + '" data-sl-category-guidance-version="' + escapeHtml(VERSION) + '">',
       '<div class="sl-ps-category-guidance__header">',
       '<div>',
-      '<span class="sl-ps-category-guidance__kicker">Category Guidance</span>',
+      '<span class="sl-ps-category-guidance__kicker">' + escapeHtml(kicker) + '</span>',
       '<h2>' + escapeHtml(title) + '</h2>',
+      subtitle ? '<p class="sl-ps-category-guidance__subtitle">' + escapeHtml(subtitle) + '</p>' : "",
       '</div>',
       '<span class="sl-ps-category-guidance__status">' + escapeHtml(model.statusLabel) + '</span>',
       '</div>',

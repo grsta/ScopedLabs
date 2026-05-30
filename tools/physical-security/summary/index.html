@@ -8,7 +8,7 @@
   <meta name="robots" content="noindex,follow" />
 
   <link rel="stylesheet" href="/assets/style.css?v=nav-tabs-030-phys-card-shell" />
-  <link rel="stylesheet" href="/assets/physical-security-category-guidance-renderer.css?v=physical-security-category-guidance-renderer-css-001-proof" />
+  <link rel="stylesheet" href="/assets/physical-security-category-guidance-renderer.css?v=physical-security-category-guidance-renderer-css-002-summary-master-polish" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SL_SUPABASE_URL = "https://ybnzjtuecirzajraddft.supabase.co";
@@ -119,6 +119,85 @@
       color: rgba(226,232,240,.72);
     }
 
+
+    /* physical-security-summary-master-polish-002 */
+    .summary-master-card {
+      border-color: rgba(125,255,152,.22);
+      background: radial-gradient(circle at 14% 0%, rgba(125,255,152,.07), transparent 34%), rgba(2,7,5,.96);
+    }
+
+    .summary-master-copy {
+      max-width: 780px;
+      margin-bottom: 0;
+      line-height: 1.55;
+    }
+
+    .summary-master-context {
+      margin-top: 14px;
+    }
+
+    .summary-master-context-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .summary-master-context-card {
+      border: 1px solid rgba(226,232,240,.12);
+      border-radius: 14px;
+      background: rgba(0,0,0,.16);
+      padding: 13px;
+    }
+
+    .summary-master-context-card strong {
+      display: block;
+      color: rgba(248,250,252,.94);
+      font-size: .92rem;
+      margin-bottom: 6px;
+    }
+
+    .summary-master-context-card p {
+      color: rgba(226,232,240,.72);
+      line-height: 1.48;
+      margin: 0;
+      font-size: .86rem;
+    }
+
+    .summary-master-action-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .summary-master-action-item {
+      border: 1px solid rgba(226,232,240,.10);
+      border-radius: 12px;
+      background: rgba(255,255,255,.025);
+      padding: 10px 11px;
+    }
+
+    .summary-master-action-item span {
+      display: block;
+      color: rgba(125,255,152,.82);
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .summary-master-action-item p {
+      margin: 0;
+      color: rgba(226,232,240,.74);
+      line-height: 1.45;
+      font-size: .84rem;
+    }
+
+    @media (max-width: 900px) {
+      .summary-master-context-grid {
+        grid-template-columns: 1fr;
+      }
+    }
     @media (max-width: 900px) {
       .summary-grid {
         grid-template-columns: 1fr;
@@ -186,15 +265,21 @@
         </div>
         <h2 class="h2" style="margin-top: 12px;">Core pipeline, specialty zones, and master guidance</h2>
         <p class="muted" style="margin-bottom: 0;">
-          This page is the future Physical Security master assistant and final report host. It rolls up the core camera coverage path plus optional Face Recognition and License Plate specialty zones without forcing those branches into the required core pipeline.
+          This page is the Physical Security master assistant and final report host. It rolls up the core camera coverage path plus optional Face Recognition and License Plate specialty zones without forcing those branches into the required core pipeline.
         </p>
       </section>
 
-      <section class="card" style="margin-top: 18px;">
+      <section class="card summary-master-card" style="margin-top: 18px;">
         <div class="pill-row">
           <span class="pill">Master Assistant</span>
+          <span class="pill">Category Brain</span>
         </div>
+        <h2 class="h2" style="margin-top: 12px;">Physical Security Master Assistant</h2>
+        <p class="muted summary-master-copy">
+          This master assistant reads the local tool assistant guidance, area/zone records, and optional branch results to prioritize the Physical Security design before export.
+        </p>
         <div id="physicalSecuritySummaryMasterMount" class="sl-category-guidance-mount" style="margin-top: 12px;"></div>
+        <div id="physicalSecuritySummaryMasterContext" class="summary-master-context" aria-live="polite"></div>
       </section>
 
       <section class="card" style="margin-top: 18px;">
@@ -319,9 +404,9 @@
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/physical-security-guidance-memory.js?v=physical-security-guidance-memory-001-session-foundation"></script>
   <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-003-deduped-visible-gate"></script>
-  <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-001-foundation"></script>
+  <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-002-summary-master-polish"></script>
   <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-007-watch-risk-columns"></script>
-  <script src="./script.js?v=physical-security-summary-proof-001"></script>
+  <script src="./script.js?v=physical-security-summary-master-polish-002"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 </body>
 </html>
