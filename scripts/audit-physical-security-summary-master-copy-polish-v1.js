@@ -53,7 +53,7 @@ check("summary-index-renderer-cache", "summary index", index, [
 ]);
 
 check("proof-audit-renderer-cache", "summary proof audit", proof, [
-  "physical-security-summary-proof-audit-024-master-copy-polish",
+  "physical-security-summary-proof-audit-025-dori-master-wording",
   "/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-003-draft-next-action-copy"
 ]);
 
