@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-022-area-ledger-fallback";
+  const VERSION = "physical-security-report-summary-023-single-report-render";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "physicalSecurityReportMount";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -1156,24 +1156,27 @@
   }
 
 
+
   function refreshExportSection() {
     const mount = document.getElementById(EXPORT_MOUNT_ID);
     if (!mount) return false;
 
     const summary = buildSummary();
     const html = renderExportHtml(summary);
-    const existingSlot = document.getElementById(EXPORT_SLOT_ID);
 
     mount.hidden = false;
     mount.removeAttribute("aria-hidden");
 
     if (!html) {
-      if (existingSlot) existingSlot.remove();
+      mount.innerHTML = "";
       return false;
     }
 
-    const slot = findOrCreateExportSlot(mount);
-    slot.innerHTML = html;
+    // Single-render rule:
+    // Summary script and this report helper both target the same mount.
+    // Replace the mount contents instead of inserting a nested report slot,
+    // otherwise export capture reads the Physical Security report body twice.
+    mount.innerHTML = html;
 
     return true;
   }

@@ -3,7 +3,7 @@ const path = require("path");
 
 const ROOT = process.cwd();
 const VERSION = "physical-security-summary-detail-labels-audit-002-action-next-steps";
-const REPORT_VERSION = "physical-security-report-summary-022-area-ledger-fallback";
+const REPORT_VERSION = "physical-security-report-summary-023-single-report-render";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
