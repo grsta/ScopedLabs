@@ -1,7 +1,12 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-report-metadata-001";
+  const VERSION = "scopedlabs-report-metadata-003-shared-carryover-page-notes";
+  const SHARED_STORAGE_KEY = "scopedlabs:report-metadata:shared:v1";
+  const PAGE_STORAGE_PREFIX = "scopedlabs:report-metadata:page:";
+  const SHARED_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy"];
+  const PAGE_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy", "customNotes"];
+  const PAGE_ONLY_FIELDS = ["customNotes"];
 
   const FIELD_DEFS = {
     reportTitle: { id: "reportTitle", label: "Report Title", type: "text", placeholder: "Camera Spacing Planner Assessment" },
@@ -25,6 +30,130 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  function storageAvailable() {
+    try {
+      const testKey = "scopedlabs:report-metadata:test";
+      window.localStorage.setItem(testKey, "1");
+      window.localStorage.removeItem(testKey);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function pageStorageKey() {
+    const pagePath = String(window.location?.pathname || "").replace(/\/+$/, "/") || "/";
+    return PAGE_STORAGE_PREFIX + pagePath;
+  }
+
+  function safeParse(value) {
+    if (!value) return {};
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function loadStored(key) {
+    if (!storageAvailable()) return {};
+    try {
+      return safeParse(window.localStorage.getItem(key));
+    } catch {
+      return {};
+    }
+  }
+
+  function saveStored(key, value) {
+    if (!storageAvailable()) return;
+    try {
+      window.localStorage.setItem(key, JSON.stringify({ ...value, updatedAt: new Date().toISOString() }));
+    } catch {
+      // Keep export usable even when browser storage is blocked.
+    }
+  }
+
+  function getControl(root, field) {
+    const def = FIELD_DEFS[field];
+    return def?.id ? root.querySelector("#" + def.id) : null;
+  }
+
+  function currentValues(root = document) {
+    const values = {};
+    PAGE_FIELDS.forEach((field) => {
+      values[field] = String(getControl(root, field)?.value || "").trim();
+    });
+    return values;
+  }
+
+  function saveCurrent(root = document) {
+    const values = currentValues(root);
+    const pageData = { ...loadStored(pageStorageKey()), sourcePath: window.location?.pathname || "" };
+    const sharedData = { ...loadStored(SHARED_STORAGE_KEY), sourcePath: window.location?.pathname || "" };
+
+    PAGE_FIELDS.forEach((field) => {
+      pageData[field] = values[field] || "";
+    });
+
+    SHARED_FIELDS.forEach((field) => {
+      sharedData[field] = values[field] || "";
+    });
+
+    saveStored(pageStorageKey(), pageData);
+    saveStored(SHARED_STORAGE_KEY, sharedData);
+
+    document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-saved", {
+      detail: {
+        version: VERSION,
+        values,
+        sharedFields: SHARED_FIELDS.slice(),
+        pageOnlyFields: PAGE_ONLY_FIELDS.slice()
+      }
+    }));
+  }
+
+  function hydrateControls(root = document) {
+    const pageData = loadStored(pageStorageKey());
+    const sharedData = loadStored(SHARED_STORAGE_KEY);
+    let hydrated = false;
+
+    PAGE_FIELDS.forEach((field) => {
+      const control = getControl(root, field);
+      if (!control) return;
+      if (String(control.value || "").trim()) return;
+
+      const pageValue = pageData[field] || "";
+      const sharedValue = SHARED_FIELDS.includes(field) ? sharedData[field] || "" : "";
+      const value = pageValue || sharedValue || "";
+
+      if (!value) return;
+
+      control.value = value;
+      hydrated = true;
+    });
+
+    if (hydrated) {
+      document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-hydrated", {
+        detail: {
+          version: VERSION,
+          sharedFields: SHARED_FIELDS.slice(),
+          pageOnlyFields: PAGE_ONLY_FIELDS.slice()
+        }
+      }));
+    }
+  }
+
+  function bindPersistence(root = document) {
+    PAGE_FIELDS.forEach((field) => {
+      const control = getControl(root, field);
+      if (!control || control.dataset.scopedlabsReportMetadataPersistBound === "true") return;
+      control.dataset.scopedlabsReportMetadataPersistBound = "true";
+      control.addEventListener("input", () => saveCurrent(root));
+      control.addEventListener("change", () => saveCurrent(root));
+    });
   }
 
   function injectStyles() {
@@ -105,8 +234,17 @@
     mount.appendChild(details);
     mount.dataset.reportMetadataReady = "true";
 
+    hydrateControls(document);
+    bindPersistence(document);
+
     document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-ready", {
-      detail: { version: VERSION, mount, fields }
+      detail: {
+        version: VERSION,
+        mount,
+        fields,
+        sharedFields: SHARED_FIELDS.slice(),
+        pageOnlyFields: PAGE_ONLY_FIELDS.slice()
+      }
     }));
 
     return details;
@@ -118,24 +256,26 @@
       if (mount.dataset.reportMetadataReady === "true") return;
       renderMount(mount);
     });
+
+    hydrateControls(root);
+    bindPersistence(root);
   }
 
   function read(root = document) {
-    return {
-      reportTitle: root.querySelector("#reportTitle")?.value?.trim() || "",
-      projectName: root.querySelector("#projectName")?.value?.trim() || "",
-      clientName: root.querySelector("#clientName")?.value?.trim() || "",
-      preparedBy: root.querySelector("#preparedBy")?.value?.trim() || "",
-      customNotes: root.querySelector("#customNotes")?.value?.trim() || ""
-    };
+    return currentValues(root);
   }
 
   window.ScopedLabsReportMetadata = {
     version: VERSION,
     fields: FIELD_DEFS,
+    sharedFields: SHARED_FIELDS.slice(),
+    pageOnlyFields: PAGE_ONLY_FIELDS.slice(),
+    sharedStorageKey: SHARED_STORAGE_KEY,
     init,
     render: renderMount,
-    read
+    read,
+    hydrate: hydrateControls,
+    save: saveCurrent
   };
 
   if (document.readyState === "loading") {
@@ -201,4 +341,3 @@
     run();
   }
 })();
-

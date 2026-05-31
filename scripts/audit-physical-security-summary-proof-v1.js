@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-013-report-metadata-carryover";
+const VERSION = "physical-security-summary-proof-audit-014-report-metadata-shared-page-notes";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -24,6 +24,7 @@ const scriptRel = "tools/physical-security/summary/script.js";
 const areaStateRel = "assets/physical-security-area-state.js";
 const lensIndexRel = "tools/physical-security/lens-selection/index.html";
 const lensScriptRel = "tools/physical-security/lens-selection/script.js";
+const metadataRel = "assets/scopedlabs-report-metadata.js";
 const exportRel = "assets/export.js";
 
 const index = read(indexRel);
@@ -31,6 +32,7 @@ const script = read(scriptRel);
 const areaState = read(areaStateRel);
 const lensIndex = read(lensIndexRel);
 const lensScript = read(lensScriptRel);
+const metadata = read(metadataRel);
 const exportJs = read(exportRel);
 
 add("summary-index-exists", exists(indexRel) ? "SAFE" : "FAIL", indexRel + " exists");
@@ -38,6 +40,8 @@ add("summary-script-exists", exists(scriptRel) ? "SAFE" : "FAIL", scriptRel + " 
 add("area-state-source-exists", exists(areaStateRel) ? "SAFE" : "FAIL", areaStateRel + " exists");
 add("lens-index-exists", exists(lensIndexRel) ? "SAFE" : "FAIL", lensIndexRel + " exists");
 add("lens-script-exists", exists(lensScriptRel) ? "SAFE" : "FAIL", lensScriptRel + " exists");
+add("report-metadata-source-exists", exists(metadataRel) ? "SAFE" : "FAIL", metadataRel + " exists");
+add("export-source-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " exists");
 add("summary-export-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " exists");
 
 [
@@ -55,6 +59,8 @@ add("summary-export-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " 
   "/assets/physical-security-category-guidance-renderer.js",
   "/assets/physical-security-report-summary.js",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
+  "/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-003-shared-carryover-page-notes",
+  "/assets/export.js?v=shared-export-020-summary-metadata-carryover",
   "/assets/export.js?v=shared-export-020-summary-metadata-carryover",
   "./script.js?v=physical-security-summary-selected-rollup-carryover-values-011"
 ].forEach((signal) => {
@@ -137,6 +143,37 @@ add("camera-spacing-master-unparked", !spacing.includes("physical-security-categ
 ].forEach((signal) => {
   add("export-metadata-carryover-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), exportJs.includes(signal) ? "SAFE" : "FAIL", exportJs.includes(signal) ? "export.js contains " + signal : "export.js missing " + signal);
 });
+
+// physical-security-summary-report-metadata-shared-page-notes-audit-014
+[
+  "scopedlabs-report-metadata-003-shared-carryover-page-notes",
+  "const SHARED_STORAGE_KEY = \"scopedlabs:report-metadata:shared:v1\";",
+  "const PAGE_STORAGE_PREFIX = \"scopedlabs:report-metadata:page:\";",
+  "const SHARED_FIELDS = [\"reportTitle\", \"projectName\", \"clientName\", \"preparedBy\"];",
+  "const PAGE_ONLY_FIELDS = [\"customNotes\"];",
+  "function hydrateControls(root = document)",
+  "function bindPersistence(root = document)",
+  "scopedlabs:report-metadata-saved"
+].forEach((signal) => {
+  add("metadata-source-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), metadata.includes(signal) ? "SAFE" : "FAIL", metadata.includes(signal) ? "metadata source contains " + signal : "metadata source missing " + signal);
+});
+
+add(
+  "metadata-notes-page-only",
+  metadata.includes("const PAGE_ONLY_FIELDS = [\"customNotes\"];") && metadata.includes("const SHARED_FIELDS = [\"reportTitle\", \"projectName\", \"clientName\", \"preparedBy\"];") ? "SAFE" : "FAIL",
+  metadata.includes("const PAGE_ONLY_FIELDS = [\"customNotes\"];") && metadata.includes("const SHARED_FIELDS = [\"reportTitle\", \"projectName\", \"clientName\", \"preparedBy\"];")
+    ? "Custom Notes are page/tool-specific while report title/project/client/prepared-by are shared"
+    : "Metadata field persistence split is not correct"
+);
+
+[
+  "const suppressedProjectDetailsBlock = suppressStandardSections && projectDetails",
+  "<h2>Report Metadata</h2>",
+  "${suppressedProjectDetailsBlock}"
+].forEach((signal) => {
+  add("export-metadata-carryover-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), exportJs.includes(signal) ? "SAFE" : "FAIL", exportJs.includes(signal) ? "export.js contains " + signal : "export.js missing " + signal);
+});
+
 console.log("");
 console.log("Physical Security Summary Proof Audit");
 console.log("Audit version:", VERSION);
