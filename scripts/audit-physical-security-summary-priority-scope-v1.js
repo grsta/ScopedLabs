@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-priority-scope-audit-001";
-const REPORT_VERSION = "physical-security-report-summary-012-priority-scope";
+const VERSION = "physical-security-summary-priority-scope-audit-002-scoped-counts";
+const REPORT_VERSION = "physical-security-report-summary-013-scoped-counts";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -32,7 +32,7 @@ safe("priority-action-scoped", report.includes('["Priority action", scopedPriori
 safe("scoped-detail-before-summary", report.indexOf("const scopedDetailRows = buildScopedActionRows();") < report.indexOf("const summaryRows = ["), "scoped rows are available before summary rows are built");
 safe("watch-risk-scope-column-remains", report.includes("<th>Scope / Area</th><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th>"), "Watch/Risk table keeps scope column");
 safe("area-zone-sections-remain", report.includes("function renderAreaZoneSectionsHtml()") && report.includes("physical-security-area-zone-report"), "area/zone report sections remain");
-safe("status-text-remains", report.includes("renderReportStatusText(summary.status)") && report.includes("renderReportStatusText(row.status)"), "colored status text remains");
+safe("status-text-remains", report.includes("renderReportStatusText(summaryStatus)") && report.includes("renderReportStatusText(row.status)"), "colored status text remains");
 
 console.log("");
 console.log("Physical Security Summary Priority Scope Audit");

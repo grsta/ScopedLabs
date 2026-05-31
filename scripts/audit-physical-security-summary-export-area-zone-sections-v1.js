@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-export-area-zone-sections-audit-002-priority-scope";
-const REPORT_VERSION = "physical-security-report-summary-012-priority-scope";
+const VERSION = "physical-security-summary-export-area-zone-sections-audit-003-scoped-counts";
+const REPORT_VERSION = "physical-security-report-summary-013-scoped-counts";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -29,9 +29,10 @@ safe("area-zone-style", index.includes("physical-security-summary-export-area-zo
 safe("live-page-selected-only", script.includes("renderSelectedScopeGuidance(model.groups)") && !script.includes("Core Pipeline Summary Across Areas"), "live Summary remains selected-area focused");
 safe("report-reads-area-ledger", report.includes("function readAreaLedger()") && report.includes("ScopedLabsPhysicalSecurityAreaState"), "report summary reads area ledger");
 safe("report-renders-area-zones", report.includes("function renderAreaZoneSectionsHtml()") && report.includes("Core Coverage Areas") && report.includes("Optional Specialty Zones"), "report renders all area/zone sections");
+safe("scoped-counts", report.includes("function buildScopedReportCounts()") && report.includes("Healthy / Watch / Risk / Pending") && report.includes("statusIsGenerated(status)"), "summary counts derive from exact scoped area/zone rows");
 safe("core-tool-table", report.includes("physical-security-area-zone-tool-table") && report.includes("Tool / Area Step"), "each area/zone gets its own tool table");
 safe("watch-risk-scope-column", report.includes("<th>Scope / Area</th><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th>"), "watch/risk action table includes scope/area column");
-safe("watch-risk-area-source", report.includes("function buildScopedActionRows()") && report.includes("scopeTitle(area, group, index)") && report.includes("buildGlobalActionRows(summary)"), "watch/risk action rows prefer scoped area/zone context");
+safe("watch-risk-area-source", report.includes("function buildScopedActionRows()") && report.includes("buildScopedReportRows()") && report.includes("Review \" + row.tool + \" for \" + row.scope"), "watch/risk action rows use exact scoped area/zone context");
 safe("return-includes-area-zones", report.includes("return summaryTable + detailIntro + detailTable + areaZoneSections;"), "final export appends area/zone sections");
 safe("metadata-not-started", !index.includes("scopedlabs-report-metadata-003-shared-carryover") && !report.includes("scopedlabs:report-metadata"), "metadata carryover is not part of this lane");
 safe("export-remains", index.includes("id=\"exportReport\"") && index.includes("id=\"saveSnapshot\"") && index.includes("physicalSecurityReportMount"), "export controls remain");

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-012-priority-scope";
+  const VERSION = "physical-security-report-summary-013-scoped-counts";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -39,12 +39,16 @@
       .replace(/'/g, "&#039;");
   }
 
+
   function normalizeStatus(value) {
     const text = String(value || "").toLowerCase();
+
     if (text.includes("risk") || text.includes("fail") || text.includes("critical")) return "risk";
     if (text.includes("watch") || text.includes("warn") || text.includes("review")) return "watch";
     if (text.includes("healthy") || text.includes("safe") || text.includes("pass") || text.includes("ok")) return "healthy";
-    return "unknown";
+    if (text.includes("pending") || text.includes("incomplete") || text.includes("not started") || text.includes("not saved") || text.includes("unknown")) return "pending";
+
+    return "pending";
   }
 
   function statusRank(status) {
@@ -241,19 +245,23 @@
     return buildFromCategoryExplanation(getCategoryExplanation()) || buildFromMemory();
   }
 
+
   function statusLabel(status) {
     if (status === "risk") return "Risk";
     if (status === "watch") return "Watch";
     if (status === "healthy") return "Healthy";
-    return "Unknown";
+    if (status === "pending") return "Pending";
+    return "Pending";
   }
+
 
   function reportStatusClass(status) {
     const normalized = normalizeStatus(status);
     if (normalized === "risk") return "risk";
     if (normalized === "watch") return "watch";
     if (normalized === "healthy") return "healthy";
-    return "unknown";
+    if (normalized === "pending") return "pending";
+    return "pending";
   }
 
   function renderReportStatusText(status) {
@@ -365,17 +373,109 @@
     return "No area-specific result saved for this step yet.";
   }
 
+
   function areaToolRows(area) {
     const group = routeGroup(area);
     return areaToolDefinitions(group).map((definition) => {
       const statusValue = firstAreaValue(area, definition.statusKeys || []);
-      const status = normalizeStatus(statusValue || "unknown");
+      const hasStatus = statusValue || statusValue === 0 || statusValue === false;
+      const status = normalizeStatus(hasStatus ? statusValue : "pending");
+
       return {
         label: definition.label,
         status,
         detail: areaToolDetail(area, definition)
       };
     });
+  }
+
+
+  function statusIsGenerated(status) {
+    const normalized = normalizeStatus(status);
+    return normalized === "healthy" || normalized === "watch" || normalized === "risk";
+  }
+
+  function areaGroups() {
+    const ledger = readAreaLedger();
+    const areas = Array.isArray(ledger.areas) ? ledger.areas : [];
+
+    return [
+      ["core", areas.filter((area) => routeGroup(area) === "core")],
+      ["face", areas.filter((area) => routeGroup(area) === "face")],
+      ["plate", areas.filter((area) => routeGroup(area) === "plate")]
+    ];
+  }
+
+  function buildScopedReportRows() {
+    const rows = [];
+
+    areaGroups().forEach(([group, groupAreas]) => {
+      groupAreas.forEach((area, index) => {
+        const scope = scopeTitle(area, group, index);
+
+        areaToolRows(area).forEach((row) => {
+          const status = normalizeStatus(row.status);
+
+          rows.push({
+            scope,
+            group,
+            area,
+            tool: row.label,
+            status,
+            detail: row.detail || "No area-specific result saved for this step yet.",
+            generated: statusIsGenerated(status)
+          });
+        });
+      });
+    });
+
+    return rows;
+  }
+
+  function buildScopedReportCounts() {
+    const rows = buildScopedReportRows();
+    if (!rows.length) return null;
+
+    const counts = {
+      tracked: rows.length,
+      generated: 0,
+      healthy: 0,
+      watch: 0,
+      risk: 0,
+      pending: 0
+    };
+
+    rows.forEach((row) => {
+      const status = normalizeStatus(row.status);
+
+      if (status === "risk") {
+        counts.risk += 1;
+        counts.generated += 1;
+        return;
+      }
+
+      if (status === "watch") {
+        counts.watch += 1;
+        counts.generated += 1;
+        return;
+      }
+
+      if (status === "healthy") {
+        counts.healthy += 1;
+        counts.generated += 1;
+        return;
+      }
+
+      counts.pending += 1;
+    });
+
+    if (counts.risk) counts.status = "risk";
+    else if (counts.watch) counts.status = "watch";
+    else if (counts.pending) counts.status = "pending";
+    else if (counts.healthy) counts.status = "healthy";
+    else counts.status = "pending";
+
+    return counts;
   }
 
   function renderAreaZoneToolTable(area) {
@@ -415,29 +515,19 @@
       '</div>';
   }
 
+
   function buildScopedActionRows() {
-    const ledger = readAreaLedger();
-    const areas = Array.isArray(ledger.areas) ? ledger.areas : [];
-    const rows = [];
-
-    [["core", areas.filter((area) => routeGroup(area) === "core")], ["face", areas.filter((area) => routeGroup(area) === "face")], ["plate", areas.filter((area) => routeGroup(area) === "plate")]].forEach(([group, groupAreas]) => {
-      groupAreas.forEach((area, index) => {
-        const scope = scopeTitle(area, group, index);
-        areaToolRows(area)
-          .filter((row) => normalizeStatus(row.status) === "risk" || normalizeStatus(row.status) === "watch")
-          .forEach((row) => {
-            rows.push([
-              scope,
-              row.label,
-              renderReportStatusText(row.status),
-              "Review this area or zone result before finalizing the report.",
-              row.detail || "Confirm this condition before carrying the design forward."
-            ]);
-          });
+    return buildScopedReportRows()
+      .filter((row) => normalizeStatus(row.status) === "risk" || normalizeStatus(row.status) === "watch")
+      .map((row) => {
+        return [
+          row.scope,
+          row.tool,
+          renderReportStatusText(row.status),
+          "Review " + row.tool + " for " + row.scope + " before finalizing the report.",
+          row.detail || "Confirm this condition before carrying the design forward."
+        ];
       });
-    });
-
-    return rows;
   }
 
   function buildGlobalActionRows(summary) {
@@ -477,20 +567,31 @@
     };
   }
 
+
   function renderExportTableHtml(summary) {
     if (!summary || !summary.counts || !summary.counts.generated) return "";
 
     const counts = summary.counts;
     const priority = summary.priorityTool || null;
 
+    const scopedCounts = buildScopedReportCounts();
     const scopedDetailRows = buildScopedActionRows();
     const detailRows = (scopedDetailRows.length ? scopedDetailRows : buildGlobalActionRows(summary)).slice(0, 14);
     const scopedPriorityItem = scopedPriority(detailRows);
 
+    const summaryStatus = scopedCounts ? scopedCounts.status : summary.status;
+    const generatedText = scopedCounts
+      ? String(scopedCounts.generated || 0) + " of " + String(scopedCounts.tracked || 0)
+      : String(counts.generated || 0) + " of " + String(counts.tracked || 0);
+
+    const countText = scopedCounts
+      ? String(scopedCounts.healthy || 0) + " / " + String(scopedCounts.watch || 0) + " / " + String(scopedCounts.risk || 0) + " / " + String(scopedCounts.pending || 0)
+      : String(counts.healthy || 0) + " / " + String(counts.watch || 0) + " / " + String(counts.risk || 0) + " / 0";
+
     const summaryRows = [
-      ["Status", renderReportStatusText(summary.status), true],
-      ["Generated", String(counts.generated || 0) + " of " + String(counts.tracked || 0)],
-      ["Healthy / Watch / Risk", String(counts.healthy || 0) + " / " + String(counts.watch || 0) + " / " + String(counts.risk || 0)],
+      ["Status", renderReportStatusText(summaryStatus), true],
+      ["Generated", generatedText],
+      ["Healthy / Watch / Risk / Pending", countText],
       scopedPriorityItem ? ["Priority scope", scopedPriorityItem.scope] : null,
       scopedPriorityItem ? ["Priority item", scopedPriorityItem.tool] : priority ? ["Priority item", priority.label || priority.slug || "Physical Security Tool"] : null,
       scopedPriorityItem ? ["Priority action", scopedPriorityItem.action] : priority ? ["Priority action", priority.action || priority.reason || "Review before finalizing the design."] : null,

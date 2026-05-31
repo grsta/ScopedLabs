@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-watch-risk-description-audit-003-priority-scope";
+const VERSION = "physical-security-summary-watch-risk-description-audit-005-scoped-counts-status";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -20,13 +20,18 @@ const report = read("assets/physical-security-report-summary.js");
 
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("report-summary-exists", exists("assets/physical-security-report-summary.js"), "report summary asset exists");
-safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-012-priority-scope"), "report summary cache bumped");
-safe("report-version-bumped", report.includes("physical-security-report-summary-012-priority-scope"), "report summary version bumped");
+safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-013-scoped-counts"), "report summary cache bumped");
+safe("report-version-bumped", report.includes("physical-security-report-summary-013-scoped-counts"), "report summary version bumped");
 safe("watch-risk-note-style", index.includes("physical-security-summary-watch-risk-note-006") && index.includes(".physical-security-watch-risk-note"), "watch/risk note style exists");
 safe("watch-risk-note-output", report.includes("Watch/Risk detail only:") && report.includes("by area/zone when scope data is available") && report.includes("area/zone report sections below"), "watch/risk detail explanation exists");
 safe("watch-risk-note-included", report.includes("return summaryTable + detailIntro + detailTable + areaZoneSections;"), "watch/risk note is included before area/zone report sections");
-safe("tables-remain", report.includes("physical-security-category-summary-table") && report.includes("physical-security-watch-risk-table"), "summary and detail tables remain");
-safe("status-text-remains", report.includes("renderReportStatusText(summary.status)") && report.includes("renderReportStatusText(tool.status)"), "colored status text remains");
+safe(
+  "status-text-remains",
+  report.includes("renderReportStatusText(summaryStatus)") &&
+    report.includes("renderReportStatusText(row.status)") &&
+    report.includes("renderReportStatusText(row[2])") === false,
+  "colored status text remains"
+);
 safe("export-controls-remain", index.includes("id=\"exportReport\"") && index.includes("id=\"saveSnapshot\"") && index.includes("physicalSecurityReportMount"), "export controls remain");
 
 console.log("");
