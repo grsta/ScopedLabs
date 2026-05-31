@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-012-selected-scope-guidance";
+const VERSION = "physical-security-summary-proof-audit-013-report-metadata-carryover";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -24,18 +24,21 @@ const scriptRel = "tools/physical-security/summary/script.js";
 const areaStateRel = "assets/physical-security-area-state.js";
 const lensIndexRel = "tools/physical-security/lens-selection/index.html";
 const lensScriptRel = "tools/physical-security/lens-selection/script.js";
+const exportRel = "assets/export.js";
 
 const index = read(indexRel);
 const script = read(scriptRel);
 const areaState = read(areaStateRel);
 const lensIndex = read(lensIndexRel);
 const lensScript = read(lensScriptRel);
+const exportJs = read(exportRel);
 
 add("summary-index-exists", exists(indexRel) ? "SAFE" : "FAIL", indexRel + " exists");
 add("summary-script-exists", exists(scriptRel) ? "SAFE" : "FAIL", scriptRel + " exists");
 add("area-state-source-exists", exists(areaStateRel) ? "SAFE" : "FAIL", areaStateRel + " exists");
 add("lens-index-exists", exists(lensIndexRel) ? "SAFE" : "FAIL", lensIndexRel + " exists");
 add("lens-script-exists", exists(lensScriptRel) ? "SAFE" : "FAIL", lensScriptRel + " exists");
+add("summary-export-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " exists");
 
 [
   "Physical Security Summary",
@@ -52,6 +55,7 @@ add("lens-script-exists", exists(lensScriptRel) ? "SAFE" : "FAIL", lensScriptRel
   "/assets/physical-security-category-guidance-renderer.js",
   "/assets/physical-security-report-summary.js",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
+  "/assets/export.js?v=shared-export-020-summary-metadata-carryover",
   "./script.js?v=physical-security-summary-selected-rollup-carryover-values-011"
 ].forEach((signal) => {
   add("index-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), index.includes(signal) ? "SAFE" : "FAIL", index.includes(signal) ? "index contains " + signal : "index missing " + signal);
@@ -125,6 +129,14 @@ add("phase1-area-planner-unchanged", !area.includes("physical-security-summary")
 add("summary-permanent-master-host", index.includes("physicalSecuritySummaryMasterMount") && index.includes("/assets/physical-security-category-guidance-renderer.js") ? "SAFE" : "FAIL", index.includes("physicalSecuritySummaryMasterMount") && index.includes("/assets/physical-security-category-guidance-renderer.js") ? "Summary owns the permanent Physical Security master host" : "Summary is missing the permanent master host wiring");
 add("camera-spacing-master-unparked", !spacing.includes("physical-security-category-guidance-renderer.js") && !spacing.includes("physical-security-category-guidance-mount") ? "SAFE" : "FAIL", !spacing.includes("physical-security-category-guidance-renderer.js") && !spacing.includes("physical-security-category-guidance-mount") ? "Camera Spacing no longer hosts the full master renderer" : "Camera Spacing still contains full master renderer wiring");
 
+
+[
+  "const suppressedProjectDetailsBlock = suppressStandardSections && projectDetails",
+  "<h2>Report Metadata</h2>",
+  "${suppressedProjectDetailsBlock}"
+].forEach((signal) => {
+  add("export-metadata-carryover-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), exportJs.includes(signal) ? "SAFE" : "FAIL", exportJs.includes(signal) ? "export.js contains " + signal : "export.js missing " + signal);
+});
 console.log("");
 console.log("Physical Security Summary Proof Audit");
 console.log("Audit version:", VERSION);

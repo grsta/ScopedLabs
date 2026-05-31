@@ -1213,6 +1213,14 @@ if (shouldSuppressDefaultInterpretationBlock()) {
     const suppressHeaderStatusPill = state.options.suppressHeaderStatusPill === true;
     const headerStatusPillBlock = suppressHeaderStatusPill ? "" : '<div class="status-pill ' + statusClass + '">' + escapeHtml(payload.status || "") + '</div>';
 
+    const suppressedProjectDetailsBlock = suppressStandardSections && projectDetails
+      ? `
+        <section class="section">
+          <h2>Report Metadata</h2>
+          <div class="summary"><div class="project-details">${projectDetails}</div></div>
+        </section>
+      `
+      : "";
     const standardSummaryBlock = suppressStandardSections ? "" : `
       <section class="section">
         <h2>Executive Summary</h2>
@@ -1569,6 +1577,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
         ${headerStatusPillBlock}
       </div>
 
+      ${suppressedProjectDetailsBlock}
       ${standardSummaryBlock}
       ${standardInputsOutputsBlock}
       ${extraSectionsBlock}
