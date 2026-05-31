@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-area-planner-reset-confirm-clear-audit-001";
-const CACHE = "physical-security-area-planner-reset-confirm-clear-020";
+const VERSION = "physical-security-area-planner-reset-confirm-clear-audit-002-newline-confirm";
+const CACHE = "physical-security-area-planner-reset-confirm-clear-021";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -29,11 +29,12 @@ function has(id, sourceName, source, signal) {
 }
 
 has("index-cache", "Area Planner index", index, "./script.js?v=" + CACHE);
-has("index-marker", "Area Planner index", index, "physical-security-area-planner-reset-confirm-clear-020");
+has("index-marker", "Area Planner index", index, "physical-security-area-planner-reset-confirm-clear-021");
 has("reset-button-present", "Area Planner index", index, 'id="resetAreas"');
 
 has("confirm-helper", "Area Planner script", script, "function confirmResetAreaPlan()");
 has("confirm-title", "Area Planner script", script, "Reset Area Plan?");
+has("confirm-real-newlines", "Area Planner script", script, "String.fromCharCode(10, 10)");
 has("confirm-destructive-copy", "Area Planner script", script, "delete all saved Physical Security areas/zones");
 has("confirm-summary-copy", "Area Planner script", script, "clear the current Physical Security pipeline memory used by the Summary page");
 has("confirm-snapshot-safety", "Area Planner script", script, "This does not delete saved account snapshots.");

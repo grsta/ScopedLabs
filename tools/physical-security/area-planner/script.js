@@ -1427,7 +1427,7 @@
       "This will delete all saved Physical Security areas/zones and clear the current Physical Security pipeline memory used by the Summary page, including area guidance, tool guidance, and tool-specific notes.",
       "This does not delete saved account snapshots.",
       "Continue?"
-    ].join("\\n\\n"));
+    ].join(String.fromCharCode(10, 10)));
   }
 
   function storageKeys(storage) {
