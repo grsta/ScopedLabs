@@ -643,6 +643,14 @@
 
   
 
+  
+    /* physical-security-summary-hide-security-rollup-card-031
+       Hide only the duplicate visible Physical Security Rollup card.
+       Do not hide Area / Zone and Tool Guidance Rollup, report sections, export, or hidden payloads. */
+    body[data-tool="physical-security-summary"] [data-sl-hide-security-rollup-card="true"] {
+      display: none !important;
+    }
+
   </style>
 </head>
 
