@@ -25,7 +25,8 @@
     invalidateOnInput: true,
     readyStatusMessage: "",
     emptyExportOutputs: [],
-    suppressStandardReportSections: false
+    suppressStandardReportSections: false,
+    suppressHeaderStatusPill: false
   };
 
   const state = {
@@ -1209,6 +1210,8 @@ if (shouldSuppressDefaultInterpretationBlock()) {
 
     const statusClass = String(payload.status || "").toLowerCase();
     const suppressStandardSections = state.options.suppressStandardReportSections === true;
+    const suppressHeaderStatusPill = state.options.suppressHeaderStatusPill === true;
+    const headerStatusPillBlock = suppressHeaderStatusPill ? "" : '<div class="status-pill ' + statusClass + '">' + escapeHtml(payload.status || "") + '</div>';
 
     const standardSummaryBlock = suppressStandardSections ? "" : `
       <section class="section">
@@ -1563,7 +1566,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
             <div><strong>Report ID:</strong> ${escapeHtml(payload.reportId || "")}</div>
           </div>
         </div>
-        <div class="status-pill ${statusClass}">${escapeHtml(payload.status || "")}</div>
+        ${headerStatusPillBlock}
       </div>
 
       ${standardSummaryBlock}
