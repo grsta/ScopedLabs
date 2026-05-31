@@ -281,8 +281,8 @@
       "text-align:left",
       "vertical-align:top",
       "white-space:normal",
-      "overflow-wrap:anywhere",
-      "word-break:break-word",
+      "overflow-wrap:break-word",
+      "word-break:normal",
       "line-height:1.45",
       isHeader ? "font-weight:850" : ""
     ].filter(Boolean).join(";");
@@ -303,7 +303,7 @@
 
     return (
       titleHtml +
-      '<table class="sl-snapshot-table sl-snapshot-extra-table' + (model.isToolNotes ? ' sl-snapshot-tool-notes-table' : '') + '" style="margin-top:10px; table-layout:fixed; width:100%;">' +
+      '<table class="sl-snapshot-table sl-snapshot-extra-table' + (model.isToolNotes ? ' sl-snapshot-tool-notes-table' : '') + '" style="margin-top:10px; table-layout:auto; width:100%; min-width:720px;">' +
         colgroup +
         '<thead><tr>' + model.headers.map(function (header) {
           return '<th style="' + snapshotExtraCellStyle(true) + '">' + escapeHtml(header) + '</th>';

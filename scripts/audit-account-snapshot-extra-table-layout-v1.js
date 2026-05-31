@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "account-snapshot-extra-table-layout-audit-001";
+const VERSION = "account-snapshot-extra-table-layout-audit-002-readable";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -30,11 +30,12 @@ function add(name, status, detail) {
   "function renderSnapshotExtraTable(table, sectionTitle)",
   "sl-snapshot-extra-table",
   "sl-snapshot-tool-notes-table",
-  "table-layout:fixed; width:100%",
+  "table-layout:auto; width:100%; min-width:720px",
   "<colgroup><col style=\"width:34%;\"><col style=\"width:22%;\"><col style=\"width:44%;\"></colgroup>",
   "headers = [headers[0] || \"Area / Zone\", \"Tool\", headers[1] || \"Tool-Specific Notes\"];",
   "return renderSnapshotExtraTable(table, section.title || \"\");",
-  "overflow-wrap:anywhere",
+  "overflow-wrap:break-word",
+  "word-break:normal",
   "data-label=\""
 ].forEach((signal) => {
   add(
@@ -44,12 +45,24 @@ function add(name, status, detail) {
   );
 });
 
+[
+  "overflow-wrap:anywhere",
+  "word-break:break-word",
+  "table-layout:fixed; width:100%"
+].forEach((signal) => {
+  add(
+    "account-snapshot-no-crush-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""),
+    !accountJs.includes(signal) ? "SAFE" : "FAIL",
+    !accountJs.includes(signal) ? "account.js no longer contains " + signal : "account.js still contains " + signal
+  );
+});
+
 if (accountIndex) {
   add(
     "account-index-cache-bust",
-    accountIndex.includes("/assets/account.js?v=account-snapshot-extra-table-layout-001") ? "SAFE" : "WATCH",
-    accountIndex.includes("/assets/account.js?v=account-snapshot-extra-table-layout-001")
-      ? "account/index.html references the snapshot table layout account.js cache"
+    accountIndex.includes("/assets/account.js?v=account-snapshot-extra-table-layout-002-readable") ? "SAFE" : "WATCH",
+    accountIndex.includes("/assets/account.js?v=account-snapshot-extra-table-layout-002-readable")
+      ? "account/index.html references readable snapshot table layout cache"
       : "account/index.html did not expose an account.js cache token to update"
   );
 } else {
