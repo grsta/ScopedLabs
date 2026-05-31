@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-017-tool-notes-area-context";
+const VERSION = "physical-security-summary-proof-audit-018-print-header-fix";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -63,8 +63,8 @@ add("summary-export-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " 
   "/assets/physical-security-report-summary.js",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
   "/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes",
-  "/assets/export.js?v=shared-export-020-summary-metadata-carryover",
-  "/assets/export.js?v=shared-export-020-summary-metadata-carryover",
+  "/assets/export.js?v=shared-export-021-extra-table-title-rows",
+  "/assets/export.js?v=shared-export-021-extra-table-title-rows",
   "./script.js?v=physical-security-summary-tool-notes-area-context-013"
 ].forEach((signal) => {
   add("index-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), index.includes(signal) ? "SAFE" : "FAIL", index.includes(signal) ? "index contains " + signal : "index missing " + signal);

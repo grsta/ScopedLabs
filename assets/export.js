@@ -710,24 +710,62 @@
 }
 
 
+  function cleanExtraTableText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function directTableRowCells(row) {
+    return Array.from(row?.children || []).map((cell) => ({
+      text: cleanExtraTableText(cell.textContent),
+      colSpan: Number(cell.getAttribute("colspan") || cell.colSpan || 1)
+    }));
+  }
+
   function readExtraTable(table) {
     if (!table) return null;
 
-    const headerCells = Array.from(
-      table.querySelectorAll("thead tr:first-child th, thead tr:first-child td")
-    ).map((cell) => String(cell.textContent || "").replace(/\s+/g, " ").trim());
+    const headerRows = Array.from(table.querySelectorAll(":scope > thead > tr"));
+    let tableTitle =
+      cleanExtraTableText(table.dataset?.exportTableTitle || table.getAttribute("data-export-table-title") || "");
+    let effectiveHeaderRow = headerRows[0] || null;
 
-    let bodyRows = Array.from(table.querySelectorAll("tbody tr")).map((row) => {
-      return Array.from(row.children).map((cell) => {
-        return String(cell.textContent || "").replace(/\s+/g, " ").trim();
-      });
+    if (headerRows.length > 1) {
+      const firstHeaderCells = directTableRowCells(headerRows[0]);
+      const firstHeaderLooksLikeTitle =
+        firstHeaderCells.length === 1 &&
+        firstHeaderCells[0].text &&
+        firstHeaderCells[0].colSpan > 1;
+
+      if (firstHeaderLooksLikeTitle) {
+        tableTitle = tableTitle || firstHeaderCells[0].text;
+        effectiveHeaderRow =
+          headerRows.slice(1).find((row) => directTableRowCells(row).length > 1) ||
+          headerRows[headerRows.length - 1];
+      }
+    } else if (headerRows.length === 1) {
+      const firstHeaderCells = directTableRowCells(headerRows[0]);
+      const onlyHeaderLooksLikeTitle =
+        firstHeaderCells.length === 1 &&
+        firstHeaderCells[0].text &&
+        firstHeaderCells[0].colSpan > 1;
+
+      if (onlyHeaderLooksLikeTitle) {
+        tableTitle = tableTitle || firstHeaderCells[0].text;
+        effectiveHeaderRow = null;
+      }
+    }
+
+    const headerCells = effectiveHeaderRow
+      ? directTableRowCells(effectiveHeaderRow).map((cell) => cell.text).filter(Boolean)
+      : [];
+
+    let bodyRows = Array.from(table.querySelectorAll(":scope > tbody > tr")).map((row) => {
+      return directTableRowCells(row).map((cell) => cell.text);
     });
 
     if (!bodyRows.length) {
-      const allRows = Array.from(table.querySelectorAll("tr")).map((row) => {
-        return Array.from(row.children).map((cell) => {
-          return String(cell.textContent || "").replace(/\s+/g, " ").trim();
-        });
+      const allRows = Array.from(table.querySelectorAll(":scope > tr")).map((row) => {
+        return directTableRowCells(row).map((cell) => cell.text);
       });
 
       bodyRows = headerCells.length ? allRows.slice(1) : allRows;
@@ -738,7 +776,8 @@
     if (!rows.length) return null;
 
     return {
-      headers: headerCells.filter(Boolean),
+      title: tableTitle,
+      headers: headerCells,
       rows
     };
   }
@@ -845,7 +884,12 @@
           </tr>
         `).join("");
 
+        const tableTitleBlock = table.title
+          ? `<h3 class="extra-table-title">${escapeHtml(table.title)}</h3>`
+          : "";
+
         return `
+          ${tableTitleBlock}
           <table>
             <thead><tr>${headerHtml}</tr></thead>
             <tbody>${rowHtml}</tbody>
@@ -1384,6 +1428,13 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       font-size:1rem;
       letter-spacing:.02em;
       text-transform:uppercase;
+    }
+    .extra-table-title{
+      margin:18px 0 8px;
+      font-size:.88rem;
+      letter-spacing:.045em;
+      text-transform:uppercase;
+      color:var(--ink);
     }
     .summary,
     .body-copy{
