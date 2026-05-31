@@ -207,25 +207,111 @@
       .replace(/javascript:/gi, "");
   }
 
-  function renderSnapshotExtraTable(table) {
-    const headers = Array.isArray(table?.headers) && table.headers.length
-      ? table.headers
-      : ((Array.isArray(table?.rows) ? table.rows[0] : []) || []).map(function (_, index) {
-          return "Column " + (index + 1);
-        });
+  function cleanSnapshotTableText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
 
-    const rows = Array.isArray(table?.rows) ? table.rows : [];
+  function normalizeSnapshotExtraTable(table, sectionTitle) {
+    const rawRows = Array.isArray(table?.rows) ? table.rows : [];
+    const rows = rawRows
+      .filter(function (row) { return Array.isArray(row); })
+      .map(function (row) { return row.map(cleanSnapshotTableText); })
+      .filter(function (row) { return row.some(Boolean); });
 
-    if (!rows.length) return "";
+    const rawHeaders = Array.isArray(table?.headers) ? table.headers : [];
+    let headers = rawHeaders.map(cleanSnapshotTableText).filter(Boolean);
+
+    const title = cleanSnapshotTableText(table?.title || table?.tableTitle || sectionTitle || "");
+    const normalizedTitle = title.toLowerCase();
+    const looksLikePhysicalSecurityToolNotes =
+      normalizedTitle.includes("physical security tool notes") ||
+      headers.join(" ").toLowerCase().includes("tool-specific notes") ||
+      rows.some(function (row) {
+        return row.length >= 3 &&
+          /area|zone/i.test(String(row[0] || "")) === false &&
+          String(row[1] || "").trim() &&
+          String(row[2] || "").trim();
+      });
+
+    const maxCells = Math.max(
+      headers.length,
+      rows.reduce(function (max, row) { return Math.max(max, row.length); }, 0)
+    );
+
+    if (!headers.length && maxCells) {
+      headers = Array.from({ length: maxCells }, function (_, index) {
+        return "Column " + (index + 1);
+      });
+    }
+
+    if (looksLikePhysicalSecurityToolNotes && maxCells === 3) {
+      const headerText = headers.join("|").toLowerCase();
+      const missingToolHeader =
+        headers.length === 2 &&
+        headerText.includes("area") &&
+        headerText.includes("tool-specific notes");
+
+      if (missingToolHeader) {
+        headers = [headers[0] || "Area / Zone", "Tool", headers[1] || "Tool-Specific Notes"];
+      } else if (headers.length < 3) {
+        headers = ["Area / Zone", "Tool", "Tool-Specific Notes"];
+      }
+    }
+
+    while (headers.length < maxCells) {
+      headers.push("Column " + (headers.length + 1));
+    }
+
+    const normalizedRows = rows.map(function (row) {
+      const next = row.slice(0, headers.length);
+      while (next.length < headers.length) next.push("");
+      return next;
+    });
+
+    return {
+      title,
+      headers,
+      rows: normalizedRows,
+      isToolNotes: looksLikePhysicalSecurityToolNotes && headers.length >= 3
+    };
+  }
+
+  function snapshotExtraCellStyle(isHeader) {
+    return [
+      "text-align:left",
+      "vertical-align:top",
+      "white-space:normal",
+      "overflow-wrap:anywhere",
+      "word-break:break-word",
+      "line-height:1.45",
+      isHeader ? "font-weight:850" : ""
+    ].filter(Boolean).join(";");
+  }
+
+  function renderSnapshotExtraTable(table, sectionTitle) {
+    const model = normalizeSnapshotExtraTable(table, sectionTitle);
+
+    if (!model.rows.length) return "";
+
+    const colgroup = model.isToolNotes
+      ? '<colgroup><col style="width:34%;"><col style="width:22%;"><col style="width:44%;"></colgroup>'
+      : "";
+
+    const titleHtml = model.title && table?.title
+      ? '<h5 style="margin:12px 0 6px;">' + escapeHtml(model.title) + '</h5>'
+      : "";
 
     return (
-      '<table class="sl-snapshot-table" style="margin-top:10px;">' +
-        '<thead><tr>' + headers.map(function (header) {
-          return '<th>' + escapeHtml(header) + '</th>';
+      titleHtml +
+      '<table class="sl-snapshot-table sl-snapshot-extra-table' + (model.isToolNotes ? ' sl-snapshot-tool-notes-table' : '') + '" style="margin-top:10px; table-layout:fixed; width:100%;">' +
+        colgroup +
+        '<thead><tr>' + model.headers.map(function (header) {
+          return '<th style="' + snapshotExtraCellStyle(true) + '">' + escapeHtml(header) + '</th>';
         }).join("") + '</tr></thead>' +
-        '<tbody>' + rows.map(function (row) {
-          return '<tr>' + row.map(function (cell) {
-            return '<td>' + escapeHtml(cell) + '</td>';
+        '<tbody>' + model.rows.map(function (row) {
+          return '<tr>' + row.map(function (cell, index) {
+            const header = model.headers[index] || "";
+            return '<td data-label="' + escapeHtml(header) + '" style="' + snapshotExtraCellStyle(false) + '">' + escapeHtml(cell) + '</td>';
           }).join("") + '</tr>';
         }).join("") + '</tbody>' +
       '</table>'
@@ -247,7 +333,9 @@
         : "";
 
       const tableHtml = Array.isArray(section.tables)
-        ? section.tables.map(renderSnapshotExtraTable).join("")
+        ? section.tables.map(function (table) {
+            return renderSnapshotExtraTable(table, section.title || "");
+          }).join("")
         : "";
 
       const textHtml = section.text
