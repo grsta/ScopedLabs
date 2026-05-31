@@ -1419,11 +1419,115 @@
     status("Enter assumptions for the new area, then save it.");
   }
 
+  function confirmResetAreaPlan() {
+    if (typeof window === "undefined" || typeof window.confirm !== "function") return true;
+
+    return window.confirm([
+      "Reset Area Plan?",
+      "This will delete all saved Physical Security areas/zones and clear the current Physical Security pipeline memory used by the Summary page, including area guidance, tool guidance, and tool-specific notes.",
+      "This does not delete saved account snapshots.",
+      "Continue?"
+    ].join("\\n\\n"));
+  }
+
+  function storageKeys(storage) {
+    const keys = [];
+    if (!storage) return keys;
+
+    try {
+      for (let index = 0; index < storage.length; index += 1) {
+        const key = storage.key(index);
+        if (key) keys.push(key);
+      }
+    } catch {}
+
+    return keys;
+  }
+
+  function removeStorageKey(storage, key) {
+    if (!storage || !key) return false;
+
+    try {
+      storage.removeItem(key);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function removePhysicalSecurityReportPageMetadata(storage) {
+    const prefix = "scopedlabs:report-metadata:page:";
+    let removed = 0;
+
+    storageKeys(storage).forEach((key) => {
+      if (!key.startsWith(prefix)) return;
+
+      let sourcePath = key.slice(prefix.length).split("#area:")[0];
+
+      try {
+        const raw = storage.getItem(key);
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (parsed && parsed.sourcePath) sourcePath = parsed.sourcePath;
+      } catch {}
+
+      if (String(sourcePath || "").toLowerCase().includes("/tools/physical-security/")) {
+        if (removeStorageKey(storage, key)) removed += 1;
+      }
+    });
+
+    return removed;
+  }
+
+  function clearPhysicalSecurityPlanningMemory() {
+    const stores = [window.sessionStorage, window.localStorage].filter(Boolean);
+    const pipelinePrefix = "scopedlabs:pipeline:physical-security:";
+    const guidanceMemoryKey = "scopedlabs:physical-security:guidance-memory:v1";
+
+    let removed = 0;
+
+    stores.forEach((storage) => {
+      storageKeys(storage).forEach((key) => {
+        if (key.startsWith(pipelinePrefix) || key === guidanceMemoryKey) {
+          if (removeStorageKey(storage, key)) removed += 1;
+        }
+      });
+
+      removed += removePhysicalSecurityReportPageMetadata(storage);
+    });
+
+    try {
+      window.ScopedLabsPhysicalSecurityGuidanceMemory?.clearAll?.();
+    } catch {}
+
+    try {
+      window.dispatchEvent(new CustomEvent("scopedlabs:physical-security-guidance-cleared", {
+        detail: {
+          category: CATEGORY,
+          source: "area-planner-reset"
+        }
+      }));
+    } catch {}
+
+    try {
+      window.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-saved", {
+        detail: {
+          category: CATEGORY,
+          source: "area-planner-reset",
+          cleared: true
+        }
+      }));
+    } catch {}
+
+    return removed;
+  }
+
   function resetAreas() {
-    sessionStorage.removeItem("scopedlabs:pipeline:physical-security:areas");
-    localStorage.removeItem("scopedlabs:pipeline:physical-security:areas");
-    sessionStorage.removeItem("scopedlabs:pipeline:physical-security:active-area");
-    localStorage.removeItem("scopedlabs:pipeline:physical-security:active-area");
+    if (!confirmResetAreaPlan()) {
+      status("Area plan reset canceled.");
+      return;
+    }
+
+    clearPhysicalSecurityPlanningMemory();
 
     editingAreaId = null;
     const api = state();
@@ -1437,7 +1541,7 @@
     }
 
     clearAreaForm("Front Door");
-    status("Area plan reset. Enter the first area above, then save it.");
+    status("Area plan reset. Physical Security areas, guidance memory, and Summary tool notes were cleared. Enter the first area above, then save it.");
     render();
   }
 
