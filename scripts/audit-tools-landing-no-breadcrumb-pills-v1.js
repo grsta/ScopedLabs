@@ -2,9 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "tools-landing-cta-centered-audit-002-no-pills-sync";
+const VERSION = "tools-landing-no-breadcrumb-pills-audit-001";
 const STYLE_CACHE = "tools-landing-cleanup-028-no-pills";
-const CENTERED_MARKER = "tools-landing-cta-centered-027";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -15,7 +14,9 @@ function read(rel) {
 const index = read("tools/index.html");
 const style = read("assets/style.css");
 const cleanupAuditPath = path.join(ROOT, "scripts/audit-tools-landing-cleanup-v1.js");
+const centeredAuditPath = path.join(ROOT, "scripts/audit-tools-landing-cta-centered-v1.js");
 const cleanupAudit = fs.existsSync(cleanupAuditPath) ? fs.readFileSync(cleanupAuditPath, "utf8") : "";
+const centeredAudit = fs.existsSync(centeredAuditPath) ? fs.readFileSync(centeredAuditPath, "utf8") : "";
 
 const rows = [];
 
@@ -29,39 +30,34 @@ function has(id, sourceName, source, signal) {
 }
 
 has("index-style-cache", "Tools index", index, "/assets/style.css?v=" + STYLE_CACHE);
-has("index-no-pills-marker", "Tools index", index, "tools-landing-no-breadcrumb-pills-028");
-has("style-centered-marker", "style.css", style, CENTERED_MARKER);
-has("style-centered", "style.css", style, "justify-content: center;");
-has("style-text-align", "style.css", style, "text-align: center;");
-has("style-width-full", "style.css", style, "width: 100%;");
-has("style-hide-crumbs", "style.css", style, ".page-tools .crumbs");
-has("style-hide-card-top", "style.css", style, ".page-tools .category-grid > a.card .card-top");
+has("index-marker", "Tools index", index, "tools-landing-no-breadcrumb-pills-028");
+has("style-marker", "style.css", style, "tools-landing-no-breadcrumb-pills-028");
+has("hide-crumbs", "style.css", style, ".page-tools .crumbs");
+has("hide-card-top", "style.css", style, ".page-tools .category-grid > a.card .card-top");
+has("display-none", "style.css", style, "display: none;");
+has("page-head-tightened", "style.css", style, "padding-top: 10px;");
+has("h2-reset", "style.css", style, ".page-tools .category-grid > a.card .h2");
+
+const cardCount = (index.match(/<a class="card" href="\/tools\//g) || []).length;
+add(
+  "category-card-count-preserved",
+  cardCount === 10 ? "SAFE" : "FAIL",
+  "Found " + cardCount + " category card links"
+);
 
 const ctaCount = (index.match(/<span class="category-card-cta">Open category<\/span>/g) || []).length;
 add(
-  "centered-cta-count",
+  "category-cta-count-preserved",
   ctaCount === 10 ? "SAFE" : "FAIL",
   "Found " + ctaCount + " centered Open category CTAs"
 );
 
-add(
-  "no-cta-inner-symbol-span",
-  !index.includes('category-card-cta">Open category <span aria-hidden="true"') ? "SAFE" : "FAIL",
-  !index.includes('category-card-cta">Open category <span aria-hidden="true"')
-    ? "CTA has no symbol span"
-    : "CTA still has a symbol span"
-);
-
-add(
-  "no-question-artifact",
-  !index.includes("Open category ?") ? "SAFE" : "FAIL",
-  !index.includes("Open category ?")
-    ? "CTA label has no question mark artifact"
-    : "CTA label still has question mark artifact"
-);
-
 if (cleanupAudit) {
   has("cleanup-audit-cache", "Tools cleanup audit", cleanupAudit, STYLE_CACHE);
+}
+
+if (centeredAudit) {
+  has("centered-audit-cache", "Tools centered CTA audit", centeredAudit, STYLE_CACHE);
 }
 
 const counts = rows.reduce((acc, row) => {
@@ -70,7 +66,7 @@ const counts = rows.reduce((acc, row) => {
 }, {});
 
 console.log("");
-console.log("Tools Landing CTA Centered Audit");
+console.log("Tools Landing No Breadcrumb/Pills Audit");
 console.log("Version:", VERSION);
 console.table(rows);
 console.log("");

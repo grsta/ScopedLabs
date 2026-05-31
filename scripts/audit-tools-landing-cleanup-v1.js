@@ -3,7 +3,7 @@ const path = require("path");
 
 const ROOT = process.cwd();
 const VERSION = "tools-landing-cleanup-audit-001";
-const STYLE_CACHE = "tools-landing-cta-centered-027";
+const STYLE_CACHE = "tools-landing-cleanup-028-no-pills";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -26,7 +26,7 @@ function has(id, sourceName, source, signal) {
 }
 
 has("index-style-cache", "Tools index", index, "/assets/style.css?v=" + STYLE_CACHE);
-has("index-marker", "Tools index", index, "tools-landing-cta-centered-027");
+has("index-marker", "Tools index", index, "tools-landing-cleanup-028-no-pills");
 has("style-marker", "style.css", style, "Tools landing cleanup 026");
 has("style-page-scope", "style.css", style, ".page-tools main.container");
 has("style-card-scope", "style.css", style, ".page-tools .category-grid > a.card");

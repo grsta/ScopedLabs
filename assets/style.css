@@ -2969,3 +2969,18 @@ body[data-tool="pixel-density"] #saveSnapshot:disabled:hover {
 .page-tools .category-card-cta span {
   display: none;
 }
+
+
+/* tools-landing-no-breadcrumb-pills-028 */
+.page-tools .crumbs,
+.page-tools .category-grid > a.card .card-top {
+  display: none;
+}
+
+.page-tools .page-head {
+  padding-top: 10px;
+}
+
+.page-tools .category-grid > a.card .h2 {
+  margin-top: 0;
+}
