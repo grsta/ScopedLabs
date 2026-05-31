@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-tool-notes-actions-015";
+  const VERSION = "physical-security-summary-tool-notes-menu-016";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -847,15 +847,22 @@
     const body = rows.map((row) => {
       const deleteLabel = (row.scopeLabel || "Area / zone not saved") + " / " + row.label;
       const deleteDisabled = row.storageKey ? "" : " disabled aria-disabled=\"true\"";
+      const actions = '<details class="summary-note-actions" data-export-ignore="true">' +
+        '<summary aria-label="Open note actions for ' + escapeHtml(deleteLabel) + '">?</summary>' +
+        '<div class="summary-note-menu" role="menu">' +
+          '<a href="' + escapeHtml(row.href) + '" role="menuitem">Open Tool</a>' +
+          '<button type="button" role="menuitem" data-tool-note-delete-key="' + escapeHtml(row.storageKey) + '" data-tool-note-delete-label="' + escapeHtml(deleteLabel) + '"' + deleteDisabled + '>Delete Note</button>' +
+        '</div>' +
+      '</details>';
+
       return '<tr>' +
-        '<td>' + escapeHtml(row.scopeLabel) + '</td>' +
+        '<td><span class="note-scope-cell"><span>' + escapeHtml(row.scopeLabel) + '</span>' + actions + '</span></td>' +
         '<td><a href="' + escapeHtml(row.href) + '">' + escapeHtml(row.label) + '</a></td>' +
         '<td>' + escapeHtml(row.note) + '</td>' +
-        '<td data-export-ignore="true"><a class="btn secondary" href="' + escapeHtml(row.href) + '">Open Tool</a> <button type="button" class="btn secondary" data-tool-note-delete-key="' + escapeHtml(row.storageKey) + '" data-tool-note-delete-label="' + escapeHtml(deleteLabel) + '"' + deleteDisabled + '>Delete Note</button></td>' +
       '</tr>';
     }).join("");
 
-    mount.innerHTML = '<table class="summary-table summary-tool-notes-table" data-sl-summary-tool-notes-table="true"><thead><tr><th>Area / Zone</th><th>Tool</th><th>Tool-Specific Notes</th><th data-export-ignore="true">Actions</th></tr></thead><tbody>' + body + '</tbody></table>';
+    mount.innerHTML = '<table class="summary-table summary-tool-notes-table" data-sl-summary-tool-notes-table="true"><thead><tr><th>Area / Zone</th><th>Tool</th><th>Tool-Specific Notes</th></tr></thead><tbody>' + body + '</tbody></table>';
   }
 
 

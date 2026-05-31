@@ -714,12 +714,18 @@
     return String(value || "").replace(/\s+/g, " ").trim();
   }
 
-  // shared-export-022-ignore-table-actions
+  // shared-export-023-ignore-table-action-children
+  function exportableTableCellText(cell) {
+    const clone = cell.cloneNode(true);
+    clone.querySelectorAll('[data-export-ignore="true"]').forEach((item) => item.remove());
+    return cleanExtraTableText(clone.textContent);
+  }
+
   function directTableRowCells(row) {
     return Array.from(row?.children || [])
       .filter((cell) => cell.dataset?.exportIgnore !== "true" && cell.getAttribute("data-export-ignore") !== "true")
       .map((cell) => ({
-        text: cleanExtraTableText(cell.textContent),
+        text: exportableTableCellText(cell),
         colSpan: Number(cell.getAttribute("colspan") || cell.colSpan || 1)
       }));
   }

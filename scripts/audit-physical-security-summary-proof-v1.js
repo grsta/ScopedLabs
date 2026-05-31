@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-027-tool-notes-actions";
+const VERSION = "physical-security-summary-proof-audit-028-tool-notes-menu";
 
 function exists(rel) {
   return fs.existsSync(path.join(ROOT, rel));
@@ -79,8 +79,8 @@ addSignals("index-signal", "index", index, [
   "/assets/physical-security-report-summary.js?v=physical-security-report-summary-029-area-step-table-title",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
   "/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes",
-  "/assets/export.js?v=shared-export-022-ignore-table-actions",
-  "./script.js?v=physical-security-summary-tool-notes-actions-015"
+  "/assets/export.js?v=shared-export-023-ignore-table-action-children",
+  "./script.js?v=physical-security-summary-tool-notes-menu-016"
 ]);
 
 addSignals("script-signal", "script", script, [

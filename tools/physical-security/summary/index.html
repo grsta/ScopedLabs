@@ -645,7 +645,83 @@
 
   
 
-  </style>
+    .summary-tool-notes-table .note-scope-cell {
+    align-items: center;
+    display: flex;
+    gap: .75rem;
+    justify-content: space-between;
+  }
+
+  .summary-note-actions {
+    flex: 0 0 auto;
+    position: relative;
+  }
+
+  .summary-note-actions summary {
+    align-items: center;
+    border: 1px solid rgba(140, 255, 170, .24);
+    border-radius: .45rem;
+    color: var(--muted, #c9d6cf);
+    cursor: pointer;
+    display: inline-flex;
+    font-weight: 900;
+    height: 1.65rem;
+    justify-content: center;
+    line-height: 1;
+    list-style: none;
+    width: 1.65rem;
+  }
+
+  .summary-note-actions summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .summary-note-actions[open] summary {
+    background: rgba(80, 220, 120, .12);
+    border-color: rgba(140, 255, 170, .42);
+    color: var(--accent, #8cffaa);
+  }
+
+  .summary-note-menu {
+    background: rgba(5, 18, 12, .98);
+    border: 1px solid rgba(140, 255, 170, .22);
+    border-radius: .65rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .38);
+    display: grid;
+    gap: .25rem;
+    min-width: 9rem;
+    padding: .35rem;
+    position: absolute;
+    right: 0;
+    top: calc(100% + .35rem);
+    z-index: 20;
+  }
+
+  .summary-note-menu a,
+  .summary-note-menu button {
+    background: transparent;
+    border: 0;
+    border-radius: .45rem;
+    color: inherit;
+    cursor: pointer;
+    display: block;
+    font: inherit;
+    padding: .45rem .55rem;
+    text-align: left;
+    text-decoration: none;
+    width: 100%;
+  }
+
+  .summary-note-menu a:hover,
+  .summary-note-menu button:hover {
+    background: rgba(80, 220, 120, .12);
+  }
+
+  .summary-note-menu button[disabled] {
+    cursor: not-allowed;
+    opacity: .55;
+  }
+</style>
 </head>
 
 <body
@@ -850,7 +926,7 @@
     };
   </script>
   <script src="/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes"></script>
-  <script src="/assets/export.js?v=shared-export-022-ignore-table-actions"></script>
+  <script src="/assets/export.js?v=shared-export-023-ignore-table-action-children"></script>
   <script src="/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout"></script>
   <script src="/assets/physical-security-tool-registry.js?v=physical-security-tool-registry-001-shell-v1"></script>
   <script src="/assets/physical-security-guidance-memory.js?v=physical-security-guidance-memory-001-session-foundation"></script>
@@ -859,7 +935,7 @@
   <script src="/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-007-deduped-source-detail"></script>
   <script src="/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-003-draft-next-action-copy"></script>
   <script src="/assets/physical-security-report-summary.js?v=physical-security-report-summary-029-area-step-table-title"></script>
-  <script src="./script.js?v=physical-security-summary-tool-notes-actions-015"></script>
+  <script src="./script.js?v=physical-security-summary-tool-notes-menu-016"></script>
   <script defer src="/assets/help.js?v=help-027-kb-guide-cta"></script>
 
   <!-- physical-security-summary-continue-actions-cleanup-029 -->
@@ -875,5 +951,6 @@
   <!-- physical-security-summary-dori-master-wording-041 -->
   <!-- physical-security-summary-dori-dedupe-042 -->
   <!-- physical-security-summary-tool-notes-actions-043 -->
+  <!-- physical-security-summary-tool-notes-menu-044 -->
 </body>
 </html>
