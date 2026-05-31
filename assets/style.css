@@ -2841,3 +2841,119 @@ body[data-tool="pixel-density"] #saveSnapshot:disabled:hover {
   background: rgba(148, 163, 184, 0.08) !important;
   box-shadow: none !important;
 }
+
+
+/* =========================
+   Tools landing cleanup 026
+   ========================= */
+.page-tools main.container {
+  padding-top: 34px;
+  padding-bottom: 58px;
+}
+
+.page-tools .crumbs {
+  padding-top: 6px;
+}
+
+.page-tools .page-head {
+  padding: 18px 0 20px;
+}
+
+.page-tools .page-head .h1 {
+  margin-bottom: 8px;
+}
+
+.page-tools .page-head .subhead {
+  max-width: 62ch;
+}
+
+.page-tools .category-grid {
+  gap: 1rem;
+  padding: 16px 0 12px;
+}
+
+.page-tools .category-grid > a.card {
+  min-height: 174px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(83,255,61,.13);
+  background:
+    linear-gradient(180deg, rgba(83,255,61,.035), rgba(0,0,0,.12)),
+    linear-gradient(180deg, rgba(255,255,255,.025), rgba(0,0,0,.10));
+}
+
+.page-tools .category-grid > a.card::after {
+  content: "";
+  position: absolute;
+  inset: auto 18px 0 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(83,255,61,.32), transparent);
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+
+.page-tools .category-grid > a.card:hover,
+.page-tools .category-grid > a.card:focus-visible {
+  border-color: rgba(83,255,61,.34);
+  box-shadow: 0 24px 62px rgba(0,0,0,.62), 0 0 0 1px rgba(83,255,61,.07);
+  transform: translateY(-2px);
+}
+
+.page-tools .category-grid > a.card:hover::after,
+.page-tools .category-grid > a.card:focus-visible::after {
+  opacity: 1;
+}
+
+.page-tools .category-grid > a.card .card-top {
+  margin-bottom: 10px;
+}
+
+.page-tools .category-grid > a.card .h2 {
+  margin-bottom: 10px;
+}
+
+.page-tools .category-grid > a.card .muted {
+  margin-top: 0;
+  max-width: 31ch;
+}
+
+.page-tools .category-card-cta {
+  align-items: center;
+  color: rgba(140,255,170,.88);
+  display: inline-flex;
+  font-size: .86rem;
+  font-weight: 750;
+  gap: .35rem;
+  letter-spacing: .01em;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.page-tools .category-card-cta span {
+  transform: translateY(-1px);
+}
+
+.page-tools .site-footer {
+  padding-top: 30px;
+}
+
+@media (max-width: 900px) {
+  .page-tools main.container {
+    padding-top: 26px;
+  }
+
+  .page-tools .category-grid > a.card {
+    min-height: 168px;
+  }
+}
+
+@media (max-width: 620px) {
+  .page-tools .category-grid {
+    gap: .85rem;
+  }
+
+  .page-tools .category-grid > a.card .muted {
+    max-width: none;
+  }
+}
