@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-knowledge-002-owned-category-master";
+  const VERSION = "physical-security-category-knowledge-003-dori-master-wording";
   const CATEGORY = "physical-security";
 
   const pipelineOrder = [
@@ -302,11 +302,11 @@
       reportImpact: "FOV is the raw footprint foundation for coverage area and lens planning."
     },
     "camera-coverage-area": {
-      correctionFocus: "Review raw footprint, reserve, effective width, effective height, and usable coverage.",
-      riskMeaning: "Usable coverage after reserve may not support the intended area.",
-      watchMeaning: "Reserve/effective coverage assumptions should be checked before spacing.",
-      correctionQuestions: ["Is the reserve appropriate?", "Is effective width being used downstream instead of raw width?", "Does the usable footprint match the area?"],
-      reportImpact: "Coverage Area feeds Camera Spacing and can change camera count expectations."
+      correctionFocus: "Rework the usable footprint before spacing by checking DORI detection feasibility, reserve, target distance, FOV/lens assumptions, and whether the area should be split.",
+      riskMeaning: "The usable coverage footprint may fail DORI/pixel-density feasibility, meaning the area can calculate mathematically but still be impractical as a healthy camera coverage baseline.",
+      watchMeaning: "Reserve, effective coverage, and DORI detection feasibility should be checked before spacing.",
+      correctionQuestions: ["Does the usable width require more horizontal pixels than a normal detection baseline can provide?", "Is the reserve appropriate?", "Is effective width being used downstream instead of raw width?", "Should this be split into smaller areas or treated as an overview/specialty zone?"],
+      reportImpact: "Coverage Area feeds Camera Spacing and can change camera count, pixel-density confidence, and final report readiness."
     },
     "camera-spacing": {
       correctionFocus: "Review camera count, actual spacing, overlap target, and protected span coverage.",

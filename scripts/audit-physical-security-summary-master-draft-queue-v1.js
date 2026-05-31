@@ -32,7 +32,7 @@ function check(prefix, sourceName, source, signals) {
 }
 
 check("category-draft-queue", "category guidance", category, [
-  "physical-security-category-guidance-005-master-draft-queue",
+  "physical-security-category-guidance-006-source-specific-corrections",
   "const generatedCount = Number((source.counts && source.counts.generated) || 0);",
   "if (!riskWatch.length && !generatedCount && missingCoreRows.length)",
   "type: \"start-core-pipeline\"",
@@ -46,13 +46,13 @@ check("category-draft-queue", "category guidance", category, [
 ]);
 
 check("summary-index-draft-queue", "summary index", index, [
-  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-005-master-draft-queue",
+  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-006-source-specific-corrections",
   "physical-security-summary-master-draft-queue-039"
 ]);
 
 check("proof-audit-draft-queue", "summary proof audit", proof, [
-  "physical-security-summary-proof-audit-024-master-copy-polish",
-  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-005-master-draft-queue",
+  "physical-security-summary-proof-audit-025-dori-master-wording",
+  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-006-source-specific-corrections",
 ]);
 
 add(

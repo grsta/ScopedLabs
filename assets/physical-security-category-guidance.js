@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-guidance-005-master-draft-queue";
+  const VERSION = "physical-security-category-guidance-006-source-specific-corrections";
   const CATEGORY = "physical-security";
 
   const fallbackOrder = [
@@ -377,6 +377,26 @@
     };
   }
 
+  function correctionTextValue(value) {
+    return String(value || "").trim();
+  }
+
+  function correctionDetailFor(item, profile) {
+    return correctionTextValue(item && item.reason)
+      || correctionTextValue(item && item.nextStep)
+      || correctionTextValue(item && item.detail)
+      || correctionTextValue(profile && profile.meaning)
+      || "Review the source tool guidance.";
+  }
+
+  function correctionFocusFor(item, profile) {
+    return correctionTextValue(item && item.nextStep)
+      || correctionTextValue(profile && profile.correctionFocus)
+      || correctionTextValue(item && item.reason)
+      || "Review the source Physical Security tool.";
+  }
+
+
   function reportReadinessRules() {
     const knowledge = getKnowledge();
 
@@ -483,8 +503,8 @@
         slug: item.slug || "",
         toolLabel: item.label || profile.label || labelFromSlug(item.slug),
         label: status === "risk" ? "Correct Risk at source tool" : "Validate Watch at source tool",
-        detail: profile.meaning || item.nextStep || item.detail || item.reason || "Review the source tool guidance.",
-        correctionFocus: profile.correctionFocus || "Review the source Physical Security tool.",
+        detail: correctionDetailFor(item, profile),
+        correctionFocus: correctionFocusFor(item, profile),
         correctionQuestions: clone(profile.correctionQuestions || []),
         reportImpact: profile.reportImpact || "Review before final handoff.",
         route: profile.route || (item.slug ? "/tools/physical-security/" + item.slug + "/" : "/tools/physical-security/summary/")

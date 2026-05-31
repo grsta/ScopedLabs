@@ -35,7 +35,7 @@ function check(prefix, sourceName, source, signals) {
 }
 
 check("knowledge-owned-category", "category knowledge", knowledge, [
-  "physical-security-category-knowledge-002-owned-category-master",
+  "physical-security-category-knowledge-003-dori-master-wording",
   "const masterAssistantProfile =",
   "const reportReadinessRules =",
   "const areaZoneModel =",
@@ -58,7 +58,7 @@ check("source-policy-master", "source policy", policy, [
 ]);
 
 check("category-guidance-master", "category guidance", guidance, [
-  "physical-security-category-guidance-005-master-draft-queue",
+  "physical-security-category-guidance-006-source-specific-corrections",
   "function explainSummaryMasterGuidance(context)",
   "function buildSummaryMasterReview(categoryGuidance, context)",
   "function correctionQueue(categoryGuidance, context)",
@@ -72,8 +72,8 @@ check("category-guidance-master", "category guidance", guidance, [
 
 check("summary-index-loads", "summary index", index, [
   "/assets/physical-security-source-policy.js?v=physical-security-source-policy-002-master-knowledge-guardrails",
-  "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-002-owned-category-master",
-  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-005-master-draft-queue",
+  "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-003-dori-master-wording",
+  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-006-source-specific-corrections",
   "./script.js?v=physical-security-summary-owned-category-master-014",
   "physical-security-summary-owned-category-master-038"
 ]);
@@ -89,9 +89,9 @@ check("summary-script-master", "summary script", script, [
 ]);
 
 check("proof-audit", "summary proof audit", proof, [
-  "physical-security-summary-proof-audit-024-master-copy-polish",
+  "physical-security-summary-proof-audit-025-dori-master-wording",
   "/assets/physical-security-source-policy.js?v=physical-security-source-policy-002-master-knowledge-guardrails",
-  "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-002-owned-category-master",
+  "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-003-dori-master-wording",
   "function buildSummaryMasterExplanation(model)",
   "masterAssistant: summaryMasterPayload(masterExplanation)"
 ]);
