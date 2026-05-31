@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-priority-interpretation-audit-005-area-detail-contract";
-const REPORT_VERSION = "physical-security-report-summary-020-area-detail-contract";
+const VERSION = "physical-security-summary-priority-interpretation-audit-005-action-next-steps";
+const REPORT_VERSION = "physical-security-report-summary-021-action-next-steps";
 
 function read(rel) {
   const file = path.join(ROOT, rel);

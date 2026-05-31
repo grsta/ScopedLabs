@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-scoped-tool-links-audit-004-area-detail-contract";
-const REPORT_VERSION = "physical-security-report-summary-020-area-detail-contract";
+const VERSION = "physical-security-summary-scoped-tool-links-audit-004-action-next-steps";
+const REPORT_VERSION = "physical-security-report-summary-021-action-next-steps";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -31,7 +31,7 @@ safe("link-style", index.includes("physical-security-summary-scoped-tool-links-0
 safe("tool-urls", report.includes('url: "/tools/physical-security/scene-illumination/"') && report.includes('url: "/tools/physical-security/lens-selection/"') && report.includes('url: "/tools/physical-security/face-recognition-range/"') && report.includes('url: "/tools/physical-security/license-plate-range/"'), "tool definitions include target URLs");
 safe("scoped-row-data", report.includes("toolUrl: row.url ||") && report.includes("areaId: area && area.id ? String(area.id)"), "scoped rows carry area ID and tool URL");
 safe("link-renderer", report.includes("function renderScopedToolLink(row)") && report.includes("data-sl-physical-security-scoped-tool-link") && report.includes("data-area-id") && report.includes("data-tool-url"), "Watch/Risk tool cell link renderer exists");
-safe("action-rows-linked", report.includes("renderScopedToolLink(row)") && report.includes("Review \" + row.tool + \" for \" + row.scope"), "Watch/Risk action rows use linked tool name");
+safe("action-rows-linked", report.includes("function buildScopedActionRows()") && report.includes("renderScopedToolLink(row)") && report.includes("scopedRequiredAction(row)") && report.includes("scopedActionNextStep(row)"), "Watch/Risk action rows use linked tool name and action next-step helpers");
 safe("detail-table-allows-tool-link", report.includes("index === 1") && report.includes("data-sl-physical-security-scoped-tool-link") && report.includes("index === 2"), "detail table allows tool link HTML and status HTML only");
 safe("click-handler", report.includes("function bindScopedToolLinks()") && report.includes("event.target.closest(\"[data-sl-physical-security-scoped-tool-link]\")") && report.includes("window.location.href = href;"), "click handler routes to scoped tool");
 safe("active-area-setter", report.includes("function setActiveAreaFromScopedToolLink(areaId)") && report.includes("api.setActiveArea(id)") && report.includes("api.writeLedger(ledger)"), "click handler sets active area before routing");

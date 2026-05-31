@@ -3,7 +3,7 @@ const path = require("path");
 
 const ROOT = process.cwd();
 const VERSION = "physical-security-area-detail-save-contract-audit-001";
-const REPORT_VERSION = "physical-security-report-summary-020-area-detail-contract";
+const REPORT_VERSION = "physical-security-report-summary-021-action-next-steps";
 const SCENE_SCRIPT_VERSION = "scene-illumination-area-detail-save-contract-002";
 
 function read(rel) {

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-020-area-detail-contract";
+  const VERSION = "physical-security-report-summary-021-action-next-steps";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -759,6 +759,190 @@
 
 
 
+
+  /* physical-security-summary-action-next-steps-021
+     Watch/Risk rows now describe the next user action.
+     Raw saved engineering values stay in the Area / Zone Detail tables. */
+  function scopedToolKey(row) {
+    const text = String(row && row.tool ? row.tool : "").toLowerCase();
+
+    if (text.includes("scene illumination")) return "scene";
+    if (text.includes("field of view")) return "fov";
+    if (text.includes("lens selection")) return "lens";
+    if (text.includes("mounting height")) return "mounting";
+    if (text.includes("camera coverage")) return "coverage";
+    if (text.includes("camera spacing")) return "spacing";
+    if (text.includes("blind spot")) return "blind";
+    if (text.includes("pixel density")) return "pixel";
+    if (text.includes("face recognition")) return "face";
+    if (text.includes("license plate")) return "plate";
+
+    return "generic";
+  }
+
+  function scopedActionValue(row, keys) {
+    return firstAreaValue(row && row.area ? row.area : {}, keys || []);
+  }
+
+  function hasScopedValue(value) {
+    return value === 0 || value === false || (value != null && String(value).trim() !== "");
+  }
+
+  function actionFact(label, value, formatter) {
+    if (!hasScopedValue(value)) return "";
+    const formatted = typeof formatter === "function" ? formatter(value) : cleanDetailValue(value);
+    if (!formatted) return "";
+    return label + " " + formatted;
+  }
+
+  function joinActionFacts(parts) {
+    const clean = (parts || []).filter(Boolean);
+    return clean.length ? " Current values: " + clean.join(", ") + "." : "";
+  }
+
+  function scopedRequiredAction(row) {
+    const scope = row && row.scope ? row.scope : "this area";
+    const key = scopedToolKey(row);
+    const status = normalizeStatus(row && row.status);
+
+    if (key === "scene") {
+      return (status === "risk" ? "Improve" : "Validate") + " lighting for " + scope + " before finalizing the report.";
+    }
+
+    if (key === "fov") {
+      return "Correct Field of View for " + scope + " before finalizing the report.";
+    }
+
+    if (key === "lens") {
+      return "Select or correct the lens choice for " + scope + " before finalizing the report.";
+    }
+
+    if (key === "mounting") {
+      return "Validate mounting height for " + scope + " before finalizing the report.";
+    }
+
+    if (key === "coverage") {
+      return "Validate camera coverage geometry for " + scope + " before finalizing the report.";
+    }
+
+    if (key === "spacing") {
+      return "Correct camera count or spacing for " + scope + " before finalizing the report.";
+    }
+
+    if (key === "blind") {
+      return "Resolve blind spot coverage for " + scope + " before finalizing the report.";
+    }
+
+    if (key === "pixel") {
+      return "Correct pixel density for " + scope + " before finalizing the report.";
+    }
+
+    if (key === "face") {
+      return "Validate face recognition range for " + scope + " before finalizing the report.";
+    }
+
+    if (key === "plate") {
+      return "Validate license plate capture range for " + scope + " before finalizing the report.";
+    }
+
+    return "Review " + (row && row.tool ? row.tool : "this tool") + " for " + scope + " before finalizing the report.";
+  }
+
+  function scopedActionNextStep(row) {
+    const key = scopedToolKey(row);
+    const status = normalizeStatus(row && row.status);
+
+    if (key === "scene") {
+      const target = scopedActionValue(row, ["targetIlluminationFc", "targetFc", "fc"]);
+      const lumens = scopedActionValue(row, ["estimatedLumensRequired", "requiredLumens", "lumens"]);
+      const area = scopedActionValue(row, ["sceneAreaSqFt", "lightingAreaSqFt", "areaSqFt", "area"]);
+      const factor = scopedActionValue(row, ["effectiveLightingFactor", "effectiveFactor"]);
+      const lightingClass = scopedActionValue(row, ["lightingClass"]);
+
+      const action = status === "risk"
+        ? "Increase or redesign lighting before finalizing this area."
+        : "Validate that the lighting plan can support the camera design before finalizing this area.";
+
+      return action + joinActionFacts([
+        actionFact("target", target, formatFootcandles),
+        actionFact("estimated light", lumens, formatLumensValue),
+        actionFact("area", area, (value) => cleanDetailValue(value) + " sq ft"),
+        actionFact("planning factor", factor),
+        actionFact("lighting class", lightingClass)
+      ]);
+    }
+
+    if (key === "fov") {
+      const hfov = scopedActionValue(row, ["assumedHfovDeg", "horizontalFieldOfViewDeg", "hfovDeg"]);
+      return "Narrow the field of view, select a better-matched lens, or split the area so coverage stays usable before finalizing." +
+        joinActionFacts([actionFact("HFOV", hfov, formatDegrees)]);
+    }
+
+    if (key === "lens") {
+      const lens = scopedActionValue(row, ["selectedLensMm", "lensMm", "selectedLens"]);
+      const numericLens = Number(String(lens).replace(/[^0-9.]/g, ""));
+
+      if (hasScopedValue(lens) && Number.isFinite(numericLens) && numericLens <= 0) {
+        return "Select a valid lens before finalizing this area; the saved lens value is incomplete or invalid." +
+          joinActionFacts([actionFact("saved lens", lens, formatMillimeters)]);
+      }
+
+      return "Confirm the selected lens supports the required field of view and target distance before finalizing." +
+        joinActionFacts([actionFact("selected lens", lens, formatMillimeters)]);
+    }
+
+    if (key === "mounting") {
+      const height = scopedActionValue(row, ["mountingHeightFt", "heightFt"]);
+      return "Confirm the mounting height supports the desired viewing angle, serviceability, and tamper resistance before finalizing." +
+        joinActionFacts([actionFact("mounting height", height, formatFeet)]);
+    }
+
+    if (key === "coverage") {
+      const distance = scopedActionValue(row, ["distanceToTargetPlaneFt", "targetDistanceFt"]);
+      const span = scopedActionValue(row, ["protectedLengthFt", "protectedSpanFt"]);
+      return "Adjust distance, span, or coverage reserve so the camera footprint matches the protected area before finalizing." +
+        joinActionFacts([
+          actionFact("distance", distance, formatFeet),
+          actionFact("span", span, formatFeet)
+        ]);
+    }
+
+    if (key === "spacing") {
+      const count = scopedActionValue(row, ["cameraCount", "cameras"]);
+      const spacing = scopedActionValue(row, ["spacingFt", "actualSpacingFt"]);
+      return "Correct camera count, spacing, or overlap so the area is covered without gaps or excessive overlap before finalizing." +
+        joinActionFacts([
+          actionFact("camera count", count, formatCameraCount),
+          actionFact("spacing", spacing, formatFeet)
+        ]);
+    }
+
+    if (key === "blind") {
+      return "Resolve remaining blind spot exposure or document why the uncovered area is acceptable before finalizing this scope.";
+    }
+
+    if (key === "pixel") {
+      const ppf = scopedActionValue(row, ["pixelDensityPpf", "densityPpf", "ppf"]);
+      return "Increase pixel density by reducing distance, narrowing the view, raising resolution, or lowering the target requirement before finalizing." +
+        joinActionFacts([actionFact("pixel density", ppf, formatPpf)]);
+    }
+
+    if (key === "face") {
+      const distance = scopedActionValue(row, ["faceRecognitionMaxDistanceFt", "faceMaxDistanceFt", "distanceToTargetPlaneFt"]);
+      return "Confirm the face recognition zone is within reliable capture distance, or move the camera closer / narrow the view before finalizing." +
+        joinActionFacts([actionFact("max distance", distance, formatFeet)]);
+    }
+
+    if (key === "plate") {
+      const distance = scopedActionValue(row, ["licensePlateMaxDistanceFt", "plateMaxDistanceFt", "distanceToTargetPlaneFt"]);
+      return "Confirm the plate capture zone is within reliable capture distance, or move the camera closer / narrow the view before finalizing." +
+        joinActionFacts([actionFact("max distance", distance, formatFeet)]);
+    }
+
+    return "Correct or validate this scoped Watch/Risk result before finalizing. The saved engineering values are listed in the Area / Zone Detail section below.";
+  }
+
+
   function buildScopedActionRows() {
     return buildScopedReportRows()
       .filter((row) => normalizeStatus(row.status) === "risk" || normalizeStatus(row.status) === "watch")
@@ -767,8 +951,8 @@
           row.scope,
           renderScopedToolLink(row),
           renderReportStatusText(row.status),
-          "Review " + row.tool + " for " + row.scope + " before finalizing the report.",
-          row.detail || "Confirm this condition before carrying the design forward."
+          scopedRequiredAction(row),
+          scopedActionNextStep(row)
         ];
       });
   }

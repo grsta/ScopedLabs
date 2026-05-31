@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-scoped-counts-audit-008-area-detail-contract";
-const REPORT_VERSION = "physical-security-report-summary-020-area-detail-contract";
+const VERSION = "physical-security-summary-scoped-counts-audit-008-action-next-steps";
+const REPORT_VERSION = "physical-security-report-summary-021-action-next-steps";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -33,7 +33,7 @@ safe("summary-uses-scoped-status", report.includes("const summaryStatus = scoped
 safe("summary-uses-scoped-generated", report.includes("const generatedText = scopedCounts") && report.includes("scopedCounts.generated") && report.includes("scopedCounts.tracked"), "generated row uses scoped counts when available");
 safe("summary-uses-pending-count", report.includes("Healthy / Watch / Risk / Pending") && report.includes("scopedCounts.pending"), "summary count row includes pending");
 safe("fallback-category-counts", report.includes("String(counts.generated || 0) + \" of \" + String(counts.tracked || 0)") && report.includes("String(counts.risk || 0) + \" / 0\""), "category counts remain fallback only");
-safe("watch-risk-action-scoped", report.includes("renderScopedToolLink(row)") && report.includes("Review \" + row.tool + \" for \" + row.scope + \" before finalizing the report."), "watch/risk required action identifies exact scope and linked tool");
+safe("watch-risk-action-scoped", report.includes("function buildScopedActionRows()") && report.includes("buildScopedReportRows()") && report.includes("row.scope") && report.includes("renderScopedToolLink(row)") && report.includes("scopedRequiredAction(row)") && report.includes("scopedActionNextStep(row)"), "watch/risk required action identifies exact scope, linked tool, and action next step");
 safe("priority-scope-remains", report.includes('["Top priority scope", scopedPriorityItem.scope]') && report.includes("function scopedPriority(detailRows)"), "priority scope remains");
 safe("area-zone-sections-remain", report.includes("function renderAreaZoneSectionsHtml()") && report.includes("physical-security-area-zone-report"), "area/zone sections remain");
 
