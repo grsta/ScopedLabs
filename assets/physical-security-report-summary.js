@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-028-area-step-header-cell";
+  const VERSION = "physical-security-report-summary-029-area-step-table-title";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "physicalSecurityReportMount";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -857,13 +857,13 @@
   function renderAreaZoneToolTable(area, scopeLabel) {
     const rows = areaToolRows(area);
     const scopeText = String(scopeLabel || "Selected area / zone").trim();
-    const firstHeader = '<span class="physical-security-area-zone-tool-heading">Tool / Area Step Results - ' + escapeHtml(scopeText) + '</span><span>Tool / Area Step</span>';
+    const tableTitle = "Tool / Area Step Results - " + scopeText;
 
     const body = rows.map((row) => {
       return '<tr><td>' + escapeHtml(row.label) + '</td><td>' + renderReportStatusText(row.status) + '</td><td>' + escapeHtml(row.detail) + '</td></tr>';
     }).join("");
 
-    return '<table class="summary-table physical-security-area-zone-tool-table" data-sl-physical-security-area-zone-tool-table="true" data-sl-area-zone-scope="' + escapeHtml(scopeText) + '"><thead><tr><th>' + firstHeader + '</th><th>Status</th><th>Area / Zone Detail</th></tr></thead><tbody>' + body + '</tbody></table>';
+    return '<table class="summary-table physical-security-area-zone-tool-table" data-sl-physical-security-area-zone-tool-table="true" data-sl-area-zone-scope="' + escapeHtml(scopeText) + '" data-export-table-title="' + escapeHtml(tableTitle) + '"><thead><tr><th>Tool / Area Step</th><th>Status</th><th>Area / Zone Detail</th></tr></thead><tbody>' + body + '</tbody></table>';
   }
 
 
