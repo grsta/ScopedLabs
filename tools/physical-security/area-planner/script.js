@@ -3,7 +3,6 @@
 
   const CATEGORY = "physical-security";
   const NEXT_URL = "/tools/physical-security/scene-illumination/";
-  const SUMMARY_URL = "/tools/physical-security/summary/";
 
   const $ = (id) => document.getElementById(id);
 
@@ -27,7 +26,7 @@
     printSummary: $("printAreaSummary"),
     copySummaryJson: $("copyAreaSummaryJson"),
     continueBtn: $("continue"),
-    summaryBtn: $("openPhysicalSecuritySummary"),
+    summaryBtn: null,
     lockedCard: $("lockedCard"),
     toolCard: $("toolCard")
   };
@@ -132,43 +131,13 @@
   }
 
 
-  function summaryButtonClass() {
-    const base = String(els.continueBtn?.getAttribute("class") || "btn").trim();
-
-    return (base || "btn")
-      .replace(/\bbtn-primary\b/g, "btn-secondary")
-      .replace(/\bprimary-btn\b/g, "secondary-btn")
-      .replace(/\bprimary\b/g, "secondary")
-      .replace(/\bsuccess\b/g, "secondary")
-      .trim() || "btn";
-  }
-
-
-  function ensureSummaryButton() {
+  function removeLegacySummaryButton() {
     const existing = $("openPhysicalSecuritySummary");
-    if (existing) {
-      els.summaryBtn = existing;
-      return existing;
+    if (existing && existing.parentElement) {
+      existing.parentElement.removeChild(existing);
     }
 
-    const parent = els.continueBtn?.parentElement || document.getElementById("areaPlannerFlowActions");
-    if (!parent) return null;
-
-    const button = document.createElement("button");
-    button.type = "button";
-    button.id = "openPhysicalSecuritySummary";
-    button.className = summaryButtonClass();
-    button.setAttribute("data-sl-area-planner-summary-link", "true");
-    button.textContent = "Open Physical Security Summary";
-
-    if (els.continueBtn && els.continueBtn.parentElement === parent) {
-      els.continueBtn.insertAdjacentElement("afterend", button);
-    } else {
-      parent.appendChild(button);
-    }
-
-    els.summaryBtn = button;
-    return button;
+    els.summaryBtn = null;
   }
 
 
@@ -1511,23 +1480,13 @@
   }
 
 
-  function openSummary() {
-    if ((editingAreaId || areaFormHasUserInput()) && validateAreaForm()) {
-      saveArea();
-    }
-
-    window.location.href = SUMMARY_URL;
-  }
-
-
   function bind() {
-    ensureSummaryButton();
+    removeLegacySummaryButton();
 
     els.saveArea?.addEventListener("click", saveArea);
     els.newArea?.addEventListener("click", newArea);
     els.resetAreas?.addEventListener("click", resetAreas);
     els.continueBtn?.addEventListener("click", continueFlow);
-    els.summaryBtn?.addEventListener("click", openSummary);
     els.printSummary?.addEventListener("click", printAreaSummary);
     els.copySummaryJson?.addEventListener("click", copyAreaSummaryJson);
   }
