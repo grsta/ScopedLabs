@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-priority-scope-audit-004-top-priority-text";
+const VERSION = "physical-security-summary-top-priority-wording-audit-002-top-priority-text";
 const REPORT_VERSION = "physical-security-report-summary-015-top-priority-text";
 
 function read(rel) {
@@ -25,17 +25,16 @@ safe("summary-index-exists", exists("tools/physical-security/summary/index.html"
 safe("report-summary-exists", exists("assets/physical-security-report-summary.js"), "report summary asset exists");
 safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=" + REPORT_VERSION), "report summary cache bumped");
 safe("report-version-bumped", report.includes('const VERSION = "' + REPORT_VERSION + '";'), "report summary version bumped");
-safe("scoped-priority-helper", report.includes("function scopedPriority(detailRows)") && report.includes("firstRisk"), "scoped priority helper exists");
-safe("priority-scope-row", report.includes('["Top priority scope", scopedPriorityItem.scope]'), "Category Summary includes priority scope row");
-safe("priority-item-scoped", report.includes('["Top priority item", scopedPriorityItem.tool]'), "Category Summary uses scoped priority item when available");
-safe("priority-action-scoped", report.includes('["Top priority action", scopedPriorityItem.action]'), "Category Summary uses scoped priority action when available");
-safe("scoped-detail-before-summary", report.indexOf("const scopedDetailRows = buildScopedActionRows();") < report.indexOf("const summaryRows = ["), "scoped rows are available before summary rows are built");
-safe("watch-risk-scope-column-remains", report.includes("<th>Scope / Area</th><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th>"), "Watch/Risk table keeps scope column");
-safe("area-zone-sections-remain", report.includes("function renderAreaZoneSectionsHtml()") && report.includes("physical-security-area-zone-report"), "area/zone report sections remain");
-safe("status-text-remains", report.includes("renderReportStatusText(summaryStatus)") && report.includes("renderReportStatusText(row.status)"), "colored status text remains");
+safe("top-priority-scope-label", report.includes('["Top priority scope", scopedPriorityItem.scope]'), "summary uses Top priority scope wording");
+safe("top-priority-item-label", report.includes('["Top priority item", scopedPriorityItem.tool]'), "summary uses Top priority item wording");
+safe("top-priority-action-label", report.includes('["Top priority action", scopedPriorityItem.action]'), "summary uses Top priority action wording");
+safe("priority-note", report.includes("Top priority is the first/highest scoped Watch/Risk issue") && report.includes("See the Watch/Risk detail table for all scoped issues."), "summary explains top priority is not the full issue list");
+safe("watch-risk-table-remains", report.includes("<th>Scope / Area</th><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th>"), "watch/risk detail table remains complete scoped issue list");
+safe("scoped-counts-remain", report.includes("function buildScopedReportCounts()") && report.includes("Healthy / Watch / Risk / Pending"), "scoped counts remain");
+safe("old-labels-removed", !report.includes('["Priority scope",') && !report.includes('["Priority item", scopedPriorityItem.tool]') && !report.includes('["Priority action", scopedPriorityItem.action]'), "old priority labels removed");
 
 console.log("");
-console.log("Physical Security Summary Priority Scope Audit");
+console.log("Physical Security Summary Top Priority Wording Audit");
 console.log("Audit version:", VERSION);
 console.table(rows);
 

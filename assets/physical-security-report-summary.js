@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-013-scoped-counts";
+  const VERSION = "physical-security-report-summary-015-top-priority-text";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -592,10 +592,11 @@
       ["Status", renderReportStatusText(summaryStatus), true],
       ["Generated", generatedText],
       ["Healthy / Watch / Risk / Pending", countText],
-      scopedPriorityItem ? ["Priority scope", scopedPriorityItem.scope] : null,
-      scopedPriorityItem ? ["Priority item", scopedPriorityItem.tool] : priority ? ["Priority item", priority.label || priority.slug || "Physical Security Tool"] : null,
-      scopedPriorityItem ? ["Priority action", scopedPriorityItem.action] : priority ? ["Priority action", priority.action || priority.reason || "Review before finalizing the design."] : null,
+      scopedPriorityItem ? ["Top priority scope", scopedPriorityItem.scope] : null,
+      scopedPriorityItem ? ["Top priority item", scopedPriorityItem.tool] : priority ? ["Top priority item", priority.label || priority.slug || "Physical Security Tool"] : null,
+      scopedPriorityItem ? ["Top priority action", scopedPriorityItem.action] : priority ? ["Top priority action", priority.action || priority.reason || "Review before finalizing the design."] : null,
       summary.reason ? ["Category interpretation", summary.reason] : null,
+      scopedPriorityItem ? ["Priority note", "Top priority is the first/highest scoped Watch/Risk issue. See the Watch/Risk detail table for all scoped issues."] : null,
       summary.nextStep ? ["Recommended next step", summary.nextStep] : null
     ].filter(Boolean);
 
@@ -657,7 +658,7 @@
       "Status: " + statusLabel(summary.status),
       "Generated: " + counts.generated + " of " + counts.tracked,
       "Healthy: " + counts.healthy + ", Watch: " + counts.watch + ", Risk: " + counts.risk,
-      priority ? "Priority item: " + priority.label + " - " + (priority.action || priority.reason || "Review before finalizing the design.") : "",
+      priority ? "Top priority item: " + priority.label + " - " + (priority.action || priority.reason || "Review before finalizing the design.") : "",
       summary.reason ? "Category interpretation: " + summary.reason : "",
       summary.nextStep ? "Recommended next step: " + summary.nextStep : ""
     ].filter(Boolean).join("\n");

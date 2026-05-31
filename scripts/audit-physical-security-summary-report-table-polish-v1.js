@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-report-table-polish-audit-007-scoped-counts";
+const VERSION = "physical-security-summary-report-table-polish-audit-009-top-priority-text";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -23,8 +23,8 @@ safe("report-summary-exists", exists("assets/physical-security-report-summary.js
 safe("final-report-pill-removed", !index.includes("<span class=\"pill\">Final Report</span>"), "Final Report pill removed");
 safe("export-card-remains", index.includes("summary-export-card") && index.includes("Final Report Export") && index.includes("summaryReportDetails"), "export card remains");
 safe("export-controls-remain", index.includes("id=\"exportReport\"") && index.includes("id=\"saveSnapshot\"") && index.includes("id=\"physicalSecurityReportMount\""), "export controls and report mount remain");
-safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-013-scoped-counts"), "report summary cache bumped");
-safe("report-version-bumped", report.includes("physical-security-report-summary-013-scoped-counts"), "report summary asset version bumped");
+safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-015-top-priority-text"), "report summary cache bumped");
+safe("report-version-bumped", report.includes("physical-security-report-summary-015-top-priority-text"), "report summary asset version bumped");
 safe("category-summary-table-class", report.includes("class=\"summary-table physical-security-category-summary-table\""), "category summary uses summary-table class");
 safe("watch-risk-table-class", report.includes("class=\"summary-table physical-security-watch-risk-table\""), "watch/risk detail uses summary-table class");
 safe("report-status-text", report.includes("function renderReportStatusText(status)") && report.includes("physical-security-report-status"), "report summary status values render as colored text");
@@ -33,7 +33,7 @@ safe("watch-risk-scope-column", report.includes("<th>Scope / Area</th><th>Tool</
 safe("area-zone-report-sections", report.includes("function renderAreaZoneSectionsHtml()") && report.includes("Core Coverage Areas") && report.includes("Optional Specialty Zones") && report.includes("physical-security-area-zone-report"), "final report includes expanded area/zone sections");
 safe("duplicate-summary-block-removed", !report.includes("<h3>Physical Security Category Summary</h3>") && !report.includes("<h4>Watch/Risk Detail</h4><ul>"), "duplicate text/list summary block removed");
 safe("question-artifact-output-removed", !report.includes(".join(\" ? \")") && !report.includes("\" ? \" +") && !report.includes("+ \" ? \""), "visible question-mark separator artifact removed from output construction");
-safe("report-text-clean", report.includes("Priority item: \" + priority.label + \" - \""), "plain text report uses dash separator");
+safe("report-text-clean", report.includes("Top priority item: \" + priority.label + \" - \""), "plain text report uses dash separator");
 safe("hidden-payload-remains", index.includes("physicalSecurityCrossCategoryPayload") && index.includes("hidden aria-hidden=\"true\""), "hidden future Site Assistant payload remains");
 
 console.log("");
