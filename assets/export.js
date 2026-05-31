@@ -24,7 +24,8 @@
     alwaysExportReady: false,
     invalidateOnInput: true,
     readyStatusMessage: "",
-    emptyExportOutputs: []
+    emptyExportOutputs: [],
+    suppressStandardReportSections: false
   };
 
   const state = {
@@ -1145,6 +1146,7 @@ if (shouldSuppressDefaultInterpretationBlock()) {
     }
   }
 
+
   function buildReportHTML(payload) {
     const inputRows = (payload.inputs || []).map((item) => `
       <tr>
@@ -1206,37 +1208,77 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       const additionalAnalysisBlock = "";
 
     const statusClass = String(payload.status || "").toLowerCase();
+    const suppressStandardSections = state.options.suppressStandardReportSections === true;
+
+    const standardSummaryBlock = suppressStandardSections ? "" : `
+      <section class="section">
+        <h2>Executive Summary</h2>
+        <div class="summary">
+          ${escapeHtml(payload.summary || "")}
+          <div class="project-details">${projectDetails}</div>
+        </div>
+      </section>
+    `;
+
+    const standardInputsOutputsBlock = suppressStandardSections ? "" : `
+      <section class="section">
+        <div class="grid">
+          <div>
+            <h2>Inputs</h2>
+            <table>
+              <thead><tr><th>Input</th><th>Value</th></tr></thead>
+              <tbody>${inputRows}</tbody>
+            </table>
+          </div>
+          <div>
+            <h2>Calculated Outputs</h2>
+            <table>
+              <thead><tr><th>Output</th><th>Value</th></tr></thead>
+              <tbody>${outputRows}</tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    `;
 
     return `<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>${escapeHtml(payload.meta?.reportTitle || payload.tool || "ScopedLabs Report")} • ${escapeHtml(state.options.siteName)}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
+<meta charset="utf-8">
+<title>${escapeHtml(payload.meta?.reportTitle || payload.tool || "ScopedLabs Report")}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
     :root{
-      --ink:#101715;
-      --muted:#52615c;
-      --line:#d7e2db;
+      --ink:#111827;
+      --muted:#4b5563;
+      --line:#dce6df;
       --soft:#f5f8f6;
-      --accent:#1d8f55;
-      --accent-soft:#eaf7f0;
-      --watch:#a66d00;
-      --watch-soft:#fff6df;
+      --accent:#0a7a3f;
+      --accent-soft:#e9f8ef;
+      --watch:#9a6700;
+      --watch-soft:#fff7df;
       --risk:#b42318;
       --risk-soft:#fff0ee;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:#eef2ef;color:var(--ink);font-family:Inter, Arial, sans-serif}
-    body{padding:28px}
+    body{
+      margin:0;
+      background:#eef3f0;
+      color:var(--ink);
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      line-height:1.45;
+    }
     .page{
       max-width:980px;
       margin:0 auto;
       background:#fff;
-      border:1px solid var(--line);
-      box-shadow:0 18px 50px rgba(0,0,0,.08);
+      min-height:100vh;
+      box-shadow:0 24px 80px rgba(15,23,42,.12);
     }
     .toolbar{
+      position:sticky;
+      top:0;
+      z-index:5;
       display:flex;
       justify-content:flex-end;
       gap:10px;
@@ -1413,40 +1455,20 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       display:block;
       margin:0 auto;
     }
-    .extra-svg-wrap--compact{
-      width:100%;
-      max-width:10.25in;
-      margin:0 auto;
-      padding:8px 10px;
-      box-sizing:border-box;
-      break-inside:avoid;
-      page-break-inside:avoid;
-    }
-    .extra-svg-wrap--compact svg{
-      width:100% !important;
-      max-width:100% !important;
-      height:auto !important;
-      max-height:5.15in;
-      display:block !important;
-      margin:0 auto !important;
-      object-fit:contain;
-    }
     .foot{
-      margin-top:26px;
-      padding-top:16px;
-      border-top:1px solid var(--line);
+      margin-top:28px;
       color:var(--muted);
-      font-size:.9rem;
-      line-height:1.7;
+      font-size:.85rem;
+      border-top:1px solid var(--line);
+      padding-top:12px;
     }
-    @media (max-width:760px){
-      body{padding:14px}
-      .report{padding:20px}
-      .report-head{flex-direction:column}
+    @media(max-width:760px){
       .grid{grid-template-columns:1fr}
+      .report-head{flex-direction:column}
+      .report{padding:22px 18px}
     }
     @media print{
-      body{background:#fff;padding:0}
+      body{background:#fff}
       .page{max-width:none;border:none;box-shadow:none}
       .toolbar{display:none !important}
       .report{padding:.18in .28in .24in}
@@ -1544,33 +1566,8 @@ if (shouldSuppressDefaultInterpretationBlock()) {
         <div class="status-pill ${statusClass}">${escapeHtml(payload.status || "")}</div>
       </div>
 
-      <section class="section">
-        <h2>Executive Summary</h2>
-        <div class="summary">
-          ${escapeHtml(payload.summary || "")}
-          <div class="project-details">${projectDetails}</div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="grid">
-          <div>
-            <h2>Inputs</h2>
-            <table>
-              <thead><tr><th>Input</th><th>Value</th></tr></thead>
-              <tbody>${inputRows}</tbody>
-            </table>
-          </div>
-          <div>
-            <h2>Calculated Outputs</h2>
-            <table>
-              <thead><tr><th>Output</th><th>Value</th></tr></thead>
-              <tbody>${outputRows}</tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
+      ${standardSummaryBlock}
+      ${standardInputsOutputsBlock}
       ${extraSectionsBlock}
       ${interpretationBlock}
       ${additionalAnalysisBlock}
