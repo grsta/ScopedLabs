@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-area-step-caption-audit-001";
+const VERSION = "physical-security-summary-area-step-header-row-audit-001";
 const REPORT_VERSION = "physical-security-report-summary-027-area-step-header-row";
 
 function read(rel) {
@@ -50,8 +50,9 @@ safe("summary-index-exists", exists("tools/physical-security/summary/index.html"
 safe("report-summary-exists", exists("assets/physical-security-report-summary.js"), "Report summary asset exists");
 safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=" + REPORT_VERSION), "Report summary cache bumped");
 safe("report-version-bumped", report.includes('const VERSION = "' + REPORT_VERSION + '";'), "Report summary version bumped");
-safe("caption-inside-table", table.includes("<caption") && table.includes("Tool / Area Step Results - ") && table.indexOf("<caption") < table.indexOf("<thead>"), "area/zone heading is a table caption before the header");
-safe("caption-class-preserved", table.includes("physical-security-area-zone-tool-heading"), "caption keeps live-page hide class");
+safe("heading-inside-thead", table.includes("headingRow") && table.includes("<thead>") && table.includes("headingRow + '<tr><th>Tool / Area Step"), "area heading is inside table header before column labels");
+safe("heading-class-preserved", table.includes('class="physical-security-area-zone-tool-heading"'), "heading keeps live-hide class");
+safe("heading-colspan", table.includes('colspan="3"') && table.includes("Tool / Area Step Results - "), "heading spans the full table width");
 safe("scope-data-preserved", table.includes("data-sl-area-zone-scope"), "table scope data attribute remains");
 safe("group-passes-title", group.includes("renderAreaZoneToolTable(area, titleText)"), "group passes area title into table");
 safe("live-hide-css-preserved", index.includes('body[data-tool="physical-security-summary"] .physical-security-area-zone-tool-heading') && index.includes("display: none !important"), "live Summary still hides heading inline");
@@ -61,7 +62,7 @@ safe("dedupe-preserved", index.includes("suppressStandardReportSections: true"),
 safe("carryover-preserved", report.includes("function reportAreaToolDetailCandidate(") && report.includes("positiveLens") && report.includes("Selected lens input:"), "report carryover values remain");
 
 console.log("");
-console.log("Physical Security Summary Area Step Caption Audit");
+console.log("Physical Security Summary Area Step Header Row Audit");
 console.log("Audit version:", VERSION);
 console.table(rows);
 
