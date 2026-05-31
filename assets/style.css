@@ -2957,3 +2957,15 @@ body[data-tool="pixel-density"] #saveSnapshot:disabled:hover {
     max-width: none;
   }
 }
+
+
+/* tools-landing-cta-centered-027 */
+.page-tools .category-card-cta {
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+}
+
+.page-tools .category-card-cta span {
+  display: none;
+}
