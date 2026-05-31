@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-014-report-metadata-shared-page-notes";
+const VERSION = "physical-security-summary-proof-audit-016-tool-notes-rollup";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -52,6 +52,9 @@ add("summary-export-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " 
   "physicalSecurityCrossCategoryPayload",
   "hidden aria-hidden=\"true\"",
   "summaryExportSection",
+  "physicalSecurityToolNotesSection",
+  "physicalSecurityToolNotesMount",
+  "data-export-title=\"Physical Security Tool Notes\"",
   "data-export-section",
   "data-active-area-banner=\"off\"",
   "/assets/physical-security-guidance-memory.js",
@@ -62,7 +65,7 @@ add("summary-export-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " 
   "/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-003-shared-carryover-page-notes",
   "/assets/export.js?v=shared-export-020-summary-metadata-carryover",
   "/assets/export.js?v=shared-export-020-summary-metadata-carryover",
-  "./script.js?v=physical-security-summary-selected-rollup-carryover-values-011"
+  "./script.js?v=physical-security-summary-tool-notes-rollup-012"
 ].forEach((signal) => {
   add("index-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), index.includes(signal) ? "SAFE" : "FAIL", index.includes(signal) ? "index contains " + signal : "index missing " + signal);
 });
