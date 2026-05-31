@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-master-owned-category-knowledge-audit-004-copy-proof-sync";
+const VERSION = "physical-security-master-owned-category-knowledge-audit-005-dedupe-sync";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -58,7 +58,7 @@ check("source-policy-master", "source policy", policy, [
 ]);
 
 check("category-guidance-master", "category guidance", guidance, [
-  "physical-security-category-guidance-006-source-specific-corrections",
+  "physical-security-category-guidance-007-deduped-source-detail",
   "function explainSummaryMasterGuidance(context)",
   "function buildSummaryMasterReview(categoryGuidance, context)",
   "function correctionQueue(categoryGuidance, context)",
@@ -73,7 +73,7 @@ check("category-guidance-master", "category guidance", guidance, [
 check("summary-index-loads", "summary index", index, [
   "/assets/physical-security-source-policy.js?v=physical-security-source-policy-002-master-knowledge-guardrails",
   "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-003-dori-master-wording",
-  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-006-source-specific-corrections",
+  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-007-deduped-source-detail",
   "./script.js?v=physical-security-summary-owned-category-master-014",
   "physical-security-summary-owned-category-master-038"
 ]);
@@ -89,7 +89,7 @@ check("summary-script-master", "summary script", script, [
 ]);
 
 check("proof-audit", "summary proof audit", proof, [
-  "physical-security-summary-proof-audit-025-dori-master-wording",
+  "physical-security-summary-proof-audit-026-deduped-source-detail",
   "/assets/physical-security-source-policy.js?v=physical-security-source-policy-002-master-knowledge-guardrails",
   "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-003-dori-master-wording",
   "function buildSummaryMasterExplanation(model)",

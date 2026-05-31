@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-025-dori-master-wording";
+const VERSION = "physical-security-summary-proof-audit-026-deduped-source-detail";
 
 function exists(rel) {
   return fs.existsSync(path.join(ROOT, rel));
@@ -74,7 +74,7 @@ addSignals("index-signal", "index", index, [
   "/assets/physical-security-guidance-memory.js",
   "/assets/physical-security-source-policy.js?v=physical-security-source-policy-002-master-knowledge-guardrails",
   "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-003-dori-master-wording",
-  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-006-source-specific-corrections",
+  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-007-deduped-source-detail",
   "/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-003-draft-next-action-copy",
   "/assets/physical-security-report-summary.js?v=physical-security-report-summary-029-area-step-table-title",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",

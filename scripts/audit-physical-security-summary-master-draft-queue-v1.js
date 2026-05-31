@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-master-draft-queue-audit-003-copy-proof-sync";
+const VERSION = "physical-security-summary-master-draft-queue-audit-004-dedupe-sync";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -32,7 +32,7 @@ function check(prefix, sourceName, source, signals) {
 }
 
 check("category-draft-queue", "category guidance", category, [
-  "physical-security-category-guidance-006-source-specific-corrections",
+  "physical-security-category-guidance-007-deduped-source-detail",
   "const generatedCount = Number((source.counts && source.counts.generated) || 0);",
   "if (!riskWatch.length && !generatedCount && missingCoreRows.length)",
   "type: \"start-core-pipeline\"",
@@ -42,17 +42,17 @@ check("category-draft-queue", "category guidance", category, [
   "Open \" + toolLabel + \" to begin generating saved guidance for this Summary.",
   "Summary remains a planning draft until core Physical Security guidance is generated.",
   "const readyStatus = !generatedCount ? \"unknown\" : (status === \"unknown\" && missingCore.length ? \"watch\" : status);",
-  "explanation.nextStep = priority\n      ? (priority.detail || priority.correctionFocus || explanation.nextStep)"
+  "explanation.nextStep = priority\n      ? (priority.correctionFocus || priority.detail || explanation.nextStep)"
 ]);
 
 check("summary-index-draft-queue", "summary index", index, [
-  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-006-source-specific-corrections",
+  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-007-deduped-source-detail",
   "physical-security-summary-master-draft-queue-039"
 ]);
 
 check("proof-audit-draft-queue", "summary proof audit", proof, [
-  "physical-security-summary-proof-audit-025-dori-master-wording",
-  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-006-source-specific-corrections",
+  "physical-security-summary-proof-audit-026-deduped-source-detail",
+  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-007-deduped-source-detail",
 ]);
 
 add(

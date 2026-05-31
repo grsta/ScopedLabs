@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-master-copy-polish-audit-001";
+const VERSION = "physical-security-summary-master-copy-polish-audit-002-dedupe-sync";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -53,7 +53,7 @@ check("summary-index-renderer-cache", "summary index", index, [
 ]);
 
 check("proof-audit-renderer-cache", "summary proof audit", proof, [
-  "physical-security-summary-proof-audit-025-dori-master-wording",
+  "physical-security-summary-proof-audit-026-deduped-source-detail",
   "/assets/physical-security-category-guidance-renderer.js?v=physical-security-category-guidance-renderer-003-draft-next-action-copy"
 ]);
 

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-dori-wording-audit-001";
+const VERSION = "physical-security-summary-dori-wording-audit-002-dedupe-sync";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -29,7 +29,7 @@ function has(id, sourceName, source, signal) {
   add(id, ok ? "SAFE" : "FAIL", ok ? sourceName + " contains " + signal : sourceName + " missing " + signal);
 }
 
-has("guidance-version", "category guidance", guidance, "physical-security-category-guidance-006-source-specific-corrections");
+has("guidance-version", "category guidance", guidance, "physical-security-category-guidance-007-deduped-source-detail");
 has("guidance-detail-helper", "category guidance", guidance, "function correctionDetailFor(item, profile)");
 has("guidance-focus-helper", "category guidance", guidance, "function correctionFocusFor(item, profile)");
 has("guidance-prefers-item-reason", "category guidance", guidance, "correctionTextValue(item && item.reason)");
@@ -52,12 +52,12 @@ has("knowledge-dori-correction-focus", "category knowledge", knowledge, "Rework 
 has("knowledge-dori-question", "category knowledge", knowledge, "Does the usable width require more horizontal pixels than a normal detection baseline can provide?");
 has("knowledge-dori-impact", "category knowledge", knowledge, "pixel-density confidence");
 
-has("summary-index-guidance-cache", "Summary index", summaryIndex, "physical-security-category-guidance-006-source-specific-corrections");
+has("summary-index-guidance-cache", "Summary index", summaryIndex, "physical-security-category-guidance-007-deduped-source-detail");
 has("summary-index-knowledge-cache", "Summary index", summaryIndex, "physical-security-category-knowledge-003-dori-master-wording");
 has("summary-index-marker", "Summary index", summaryIndex, "physical-security-summary-dori-master-wording-041");
 
-has("proof-audit-version", "Summary proof audit", proofAudit, "physical-security-summary-proof-audit-025-dori-master-wording");
-has("proof-audit-guidance-cache", "Summary proof audit", proofAudit, "physical-security-category-guidance-006-source-specific-corrections");
+has("proof-audit-version", "Summary proof audit", proofAudit, "physical-security-summary-proof-audit-026-deduped-source-detail");
+has("proof-audit-guidance-cache", "Summary proof audit", proofAudit, "physical-security-category-guidance-007-deduped-source-detail");
 has("proof-audit-knowledge-cache", "Summary proof audit", proofAudit, "physical-security-category-knowledge-003-dori-master-wording");
 
 if (coverageScript) {

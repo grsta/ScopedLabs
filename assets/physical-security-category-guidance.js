@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-guidance-006-source-specific-corrections";
+  const VERSION = "physical-security-category-guidance-007-deduped-source-detail";
   const CATEGORY = "physical-security";
 
   const fallbackOrder = [
@@ -568,6 +568,34 @@
     return queue.slice(0, 8);
   }
 
+  function readinessDetailFor(priority, status) {
+    const normalized = normalizeStatus(status);
+    const toolLabel = priority && priority.toolLabel ? priority.toolLabel : "Physical Security Summary";
+    const type = priority && priority.type ? String(priority.type) : "";
+
+    if (!priority || priority.status === "healthy") {
+      return "Use the built report for category-level review and cross-category handoff.";
+    }
+
+    if (type === "risk-correction" || normalized === "risk") {
+      return toolLabel + " is blocking report readiness and needs correction at the source tool.";
+    }
+
+    if (type === "watch-validation" || normalized === "watch") {
+      return toolLabel + " needs validation before the category summary is treated as clean.";
+    }
+
+    if (type === "missing-core-step") {
+      return "Complete the missing core step: " + toolLabel + ".";
+    }
+
+    if (type === "start-core-pipeline") {
+      return priority.detail || "Start the core Physical Security pipeline.";
+    }
+
+    return priority.detail || "Review the source Physical Security tool.";
+  }
+
   function buildSummaryMasterReview(categoryGuidance, context) {
     const counts = categoryGuidance && categoryGuidance.counts ? categoryGuidance.counts : {};
     const missingCore = missingCoreFromContext(context || {});
@@ -591,9 +619,7 @@
       readiness: {
         status: readyStatus,
         label: reportPostureFor(readyStatus, missingCore.length),
-        detail: queue[0] && queue[0].status !== "healthy"
-          ? queue[0].detail
-          : "Use the built report for category-level review and cross-category handoff."
+        detail: readinessDetailFor(queue[0], readyStatus)
       },
       reportPosture: reportPostureFor(readyStatus, missingCore.length),
       correctionQueue: queue,
@@ -632,7 +658,7 @@
       String(master.toolNoteCount || 0) + " tool note(s)"
     ].join(" | ");
     explanation.nextStep = priority
-      ? (priority.detail || priority.correctionFocus || explanation.nextStep)
+      ? (priority.correctionFocus || priority.detail || explanation.nextStep)
       : explanation.nextStep;
     explanation.reportSummary = master.reportPosture + ". " + explanation.reason;
     explanation.summaryMaster = clone(master);
@@ -642,7 +668,7 @@
         slug: priority.slug || "summary",
         label: priority.toolLabel || priority.label || "Physical Security Summary",
         action: priority.label || "Review Summary master guidance",
-        reason: priority.detail || "",
+        reason: priority.reportImpact || priority.detail || "",
         nextStep: priority.correctionFocus || priority.detail || "Review the Summary master guidance."
       };
     }
