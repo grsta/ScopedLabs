@@ -1,9 +1,9 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-021-action-next-steps";
+  const VERSION = "physical-security-report-summary-022-area-ledger-fallback";
   const CATEGORY = "physical-security";
-  const EXPORT_MOUNT_ID = "spacingExportSection";
+  const EXPORT_MOUNT_ID = "physicalSecurityReportMount";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
 
   const TOOL_ORDER = [
@@ -254,8 +254,51 @@
     };
   }
 
+
+  /* physical-security-report-summary-022-area-ledger-fallback
+     Build a report summary from scoped area/zone rows when category guidance memory is empty. */
+  function buildFromScopedReport() {
+    const scopedCounts = buildScopedReportCounts();
+
+    if (!scopedCounts || !scopedCounts.generated) return null;
+
+    const detailRows = buildScopedActionRows();
+    const priority = scopedPriority(detailRows);
+    const status = scopedCounts.status || (scopedCounts.risk ? "risk" : scopedCounts.watch ? "watch" : "healthy");
+
+    return {
+      version: VERSION,
+      category: CATEGORY,
+      status,
+      counts: {
+        generated: scopedCounts.generated || 0,
+        tracked: scopedCounts.tracked || 0,
+        healthy: scopedCounts.healthy || 0,
+        watch: scopedCounts.watch || 0,
+        risk: scopedCounts.risk || 0,
+        unknown: scopedCounts.pending || 0,
+        pending: scopedCounts.pending || 0
+      },
+      priorityTool: priority ? {
+        key: "scoped-area-priority",
+        label: priority.tool || priority.scope || "Scoped area result",
+        status,
+        action: priority.action || "Review scoped area and zone results before finalizing the report.",
+        reason: priority.detail || "The report includes area/zone detail from the active Physical Security planning ledger.",
+        nextStep: priority.detail || "Review the Area / Zone Report Sections below."
+      } : null,
+      tools: [],
+      action: status === "risk" ? "Resolve Physical Security risk items before finalizing the design." :
+        status === "watch" ? "Validate Physical Security watch items before treating the design as clean." :
+        "Review the Physical Security area and zone report sections.",
+      reason: "The Physical Security report is generated from the area/zone planning ledger because scoped area results are available.",
+      nextStep: "Review Watch/Risk items and the Area / Zone Report Sections before finalizing."
+    };
+  }
+
+
   function buildSummary() {
-    return buildFromCategoryExplanation(getCategoryExplanation()) || buildFromMemory();
+    return buildFromCategoryExplanation(getCategoryExplanation()) || buildFromMemory() || buildFromScopedReport();
   }
 
 
@@ -1062,13 +1105,15 @@
     return summaryTable + detailIntro + detailTable + areaZoneSections;
   }
 
+
   function renderExportHtml(summary) {
-    if (!summary || !summary.counts || !summary.counts.generated) return "";
+    const resolvedSummary = summary || buildFromScopedReport();
+    if (!resolvedSummary || !resolvedSummary.counts || !resolvedSummary.counts.generated) return "";
 
     return [
       '<section class="export-extra-section physical-security-report-summary" data-sl-report-summary-version="' + escapeHtml(VERSION) + '">',
-      renderExportTableHtml(summary),
-      "<p><small>This category summary is generated from the current Physical Security guidance memory stack and is intended as a planning aid. Verify final designs against site conditions, manufacturer data, and project requirements.</small></p>",
+      renderExportTableHtml(resolvedSummary),
+      "<p><small>This category summary is generated from the current Physical Security guidance memory stack and/or area-zone planning ledger, and is intended as a planning aid. Verify final designs against site conditions, manufacturer data, and project requirements.</small></p>",
       "</section>"
     ].join("");
   }
@@ -1110,6 +1155,7 @@
     return slot;
   }
 
+
   function refreshExportSection() {
     const mount = document.getElementById(EXPORT_MOUNT_ID);
     if (!mount) return false;
@@ -1118,6 +1164,9 @@
     const html = renderExportHtml(summary);
     const existingSlot = document.getElementById(EXPORT_SLOT_ID);
 
+    mount.hidden = false;
+    mount.removeAttribute("aria-hidden");
+
     if (!html) {
       if (existingSlot) existingSlot.remove();
       return false;
@@ -1125,10 +1174,6 @@
 
     const slot = findOrCreateExportSlot(mount);
     slot.innerHTML = html;
-
-    mount.setAttribute("data-export-section", "");
-    mount.setAttribute("data-export-suppress-title", "true");
-    mount.setAttribute("aria-hidden", "true");
 
     return true;
   }
