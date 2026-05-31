@@ -14,6 +14,27 @@ function exists(rel) {
   return fs.existsSync(path.join(ROOT, rel));
 }
 
+function functionBlock(text, name) {
+  const needle = "function " + name + "(";
+  const at = text.indexOf(needle);
+  if (at < 0) return "";
+
+  const braceStart = text.indexOf("{", at);
+  if (braceStart < 0) return "";
+
+  let depth = 0;
+  for (let i = braceStart; i < text.length; i += 1) {
+    const ch = text[i];
+    if (ch === "{") depth += 1;
+    if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) return text.slice(at, i + 1);
+    }
+  }
+
+  return "";
+}
+
 const rows = [];
 function safe(id, ok, detail) {
   rows.push({ id, status: ok ? "SAFE" : "FAIL", detail });
@@ -21,13 +42,14 @@ function safe(id, ok, detail) {
 
 const index = read("tools/physical-security/summary/index.html");
 const report = read("assets/physical-security-report-summary.js");
+const refreshExportSection = functionBlock(report, "refreshExportSection");
 
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("marker-present", index.includes(MARKER), "live-only heading hide marker exists");
 safe("live-heading-hidden", index.includes('body[data-tool="physical-security-summary"] .physical-security-area-zone-tool-heading') && index.includes("display: none !important"), "live Summary hides repeated area-step heading only");
 safe("report-heading-preserved", report.includes("Tool / Area Step Results - ") && report.includes("physical-security-area-zone-tool-heading"), "Print / Save report heading remains in report generator");
 safe("report-body-preserved", report.includes("Area / Zone Report Sections") && report.includes("Core Coverage Areas") && report.includes("Watch/Risk detail only"), "Physical Security report body remains");
-safe("single-render-preserved", report.includes("mount.innerHTML = html;") && !report.includes("insertBefore(slot"), "single report render remains");
+safe("single-render-preserved", refreshExportSection.includes("mount.innerHTML = html;") && !refreshExportSection.includes("findOrCreateExportSlot(mount)") && !refreshExportSection.includes("insertBefore(slot"), "single report render remains");
 safe("dedupe-preserved", index.includes("suppressStandardReportSections: true"), "generic wrapper dedupe remains");
 
 console.log("");

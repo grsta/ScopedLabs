@@ -55,7 +55,7 @@ safe("default-false", exportJs.includes("suppressStandardReportSections: false")
 safe("build-report-option", buildReportHTML.includes("const suppressStandardSections = state.options.suppressStandardReportSections === true"), "buildReportHTML reads suppression option");
 safe("executive-summary-conditional", buildReportHTML.includes("const standardSummaryBlock = suppressStandardSections ?") && buildReportHTML.includes("<h2>Executive Summary</h2>"), "Executive Summary is conditional");
 safe("inputs-outputs-conditional", buildReportHTML.includes("const standardInputsOutputsBlock = suppressStandardSections ?") && buildReportHTML.includes("<h2>Inputs</h2>") && buildReportHTML.includes("<h2>Calculated Outputs</h2>"), "Inputs/Calculated Outputs are conditional");
-safe("physical-report-body-preserved", buildReportHTML.includes("${extraSectionsBlock}") && index.includes("physical-security-report-summary-025-area-step-headings"), "Physical Security report body remains exported through extra sections");
+safe("physical-report-body-preserved", buildReportHTML.includes("${extraSectionsBlock}") && index.includes("physical-security-report-summary-026-area-step-caption"), "Physical Security report body remains exported through extra sections");
 safe("assumptions-disclaimer-remain", buildReportHTML.includes("<h2>Assumptions</h2>") && buildReportHTML.includes("<h2>Disclaimer</h2>"), "Assumptions and disclaimer remain");
 safe("other-pages-safe-default", !exportJs.includes("suppressStandardReportSections: true"), "shared default does not suppress standard sections globally");
 
