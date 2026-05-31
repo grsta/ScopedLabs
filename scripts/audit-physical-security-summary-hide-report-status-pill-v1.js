@@ -3,7 +3,7 @@ const path = require("path");
 
 const ROOT = process.cwd();
 const VERSION = "physical-security-summary-hide-report-status-pill-audit-001";
-const EXPORT_VERSION = "shared-export-024-report-text-wrap";
+const EXPORT_VERSION = "shared-export-025-tool-notes-column-widths";
 
 function read(rel) {
   const file = path.join(ROOT, rel);

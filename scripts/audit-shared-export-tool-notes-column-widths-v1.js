@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "shared-export-report-text-wrap-audit-001";
+const VERSION = "shared-export-tool-notes-column-widths-audit-001";
 const EXPORT_CACHE = "shared-export-025-tool-notes-column-widths";
 
 function read(rel) {
@@ -13,14 +13,12 @@ function read(rel) {
 
 function walk(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
-
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === ".git" || entry.name === "node_modules" || entry.name === "dist" || entry.name === ".next") continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(full, out);
     else out.push(full);
   }
-
   return out;
 }
 
@@ -41,14 +39,15 @@ function has(id, sourceName, source, signal) {
   add(id, ok ? "SAFE" : "FAIL", ok ? sourceName + " contains " + signal : sourceName + " missing " + signal);
 }
 
-has("export-wrap-marker", "export.js", exportJs, "shared-export-025-tool-notes-column-widths");
-has("body-copy-wrap", "export.js", exportJs, ".body-copy,");
-has("overflow-anywhere", "export.js", exportJs, "overflow-wrap:anywhere;");
-has("word-break", "export.js", exportJs, "word-break:break-word;");
-has("body-copy-white-space", "export.js", exportJs, "white-space:normal;");
-has("table-fixed", "export.js", exportJs, "table-layout:fixed;");
-has("custom-notes-block", "export.js", exportJs, "<h2>Custom Notes</h2>");
-has("custom-notes-body-copy", "export.js", exportJs, 'class="body-copy"');
+has("export-cache-marker", "export.js", exportJs, "shared-export-025-tool-notes-column-widths");
+has("extra-table-class", "export.js", exportJs, "extra-export-table");
+has("tool-notes-table-class", "export.js", exportJs, "extra-export-table--physical-security-tool-notes");
+has("tool-notes-title-detection", "export.js", exportJs, "/physical security tool notes/i");
+has("first-column-width", "export.js", exportJs, "width:18%;");
+has("third-column-width", "export.js", exportJs, "width:64%;");
+has("third-column-max-width", "export.js", exportJs, "max-width:0;");
+has("third-column-wrap", "export.js", exportJs, "overflow-wrap:anywhere;");
+has("third-column-word-break", "export.js", exportJs, "word-break:break-word;");
 
 add(
   "export-ref-files-found",
@@ -77,7 +76,7 @@ const counts = rows.reduce((acc, row) => {
 }, {});
 
 console.log("");
-console.log("Shared Export Report Text Wrap Audit");
+console.log("Shared Export Tool Notes Column Widths Audit");
 console.log("Version:", VERSION);
 console.table(rows);
 console.log("");

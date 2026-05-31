@@ -21,7 +21,7 @@ function add(name, status, detail) {
 }
 
 [
-  "/assets/export.js?v=shared-export-024-report-text-wrap",
+  "/assets/export.js?v=shared-export-025-tool-notes-column-widths",
   "physical-security-summary-print-header-fix-036"
 ].forEach((signal) => {
   add(
@@ -49,8 +49,8 @@ function add(name, status, detail) {
 
 add(
   "proof-audit-export-cache-current",
-  proofAudit.includes("/assets/export.js?v=shared-export-024-report-text-wrap") ? "SAFE" : "FAIL",
-  proofAudit.includes("/assets/export.js?v=shared-export-024-report-text-wrap")
+  proofAudit.includes("/assets/export.js?v=shared-export-025-tool-notes-column-widths") ? "SAFE" : "FAIL",
+  proofAudit.includes("/assets/export.js?v=shared-export-025-tool-notes-column-widths")
     ? "summary proof audit expects current export cache"
     : "summary proof audit still expects old export cache"
 );

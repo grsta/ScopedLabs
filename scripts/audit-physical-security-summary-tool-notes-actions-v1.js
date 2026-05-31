@@ -4,7 +4,7 @@ const path = require("path");
 const ROOT = process.cwd();
 const VERSION = "physical-security-summary-tool-notes-actions-audit-004-menu-current";
 const SUMMARY_CACHE = "physical-security-summary-tool-notes-menu-016";
-const EXPORT_CACHE = "shared-export-024-report-text-wrap";
+const EXPORT_CACHE = "shared-export-025-tool-notes-column-widths";
 const PROOF_VERSION = "physical-security-summary-proof-audit-028-tool-notes-menu";
 const ROLLUP_VERSION = "physical-security-summary-tool-notes-area-context-audit-004-menu";
 

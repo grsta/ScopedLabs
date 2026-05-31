@@ -897,9 +897,13 @@
           ? `<h3 class="extra-table-title">${escapeHtml(table.title)}</h3>`
           : "";
 
+        const tableClass = /physical security tool notes/i.test(String(section.title || table.title || ""))
+          ? "extra-export-table extra-export-table--physical-security-tool-notes"
+          : "extra-export-table";
+
         return `
           ${tableTitleBlock}
-          <table>
+          <table class="${tableClass}">
             <thead><tr>${headerHtml}</tr></thead>
             <tbody>${rowHtml}</tbody>
           </table>
@@ -1480,6 +1484,22 @@ if (shouldSuppressDefaultInterpretationBlock()) {
     }
     table{
       table-layout:fixed;
+    }
+    /* shared-export-025-tool-notes-column-widths */
+    table.extra-export-table--physical-security-tool-notes th:nth-child(1),
+    table.extra-export-table--physical-security-tool-notes td:nth-child(1){
+      width:18%;
+    }
+    table.extra-export-table--physical-security-tool-notes th:nth-child(2),
+    table.extra-export-table--physical-security-tool-notes td:nth-child(2){
+      width:18%;
+    }
+    table.extra-export-table--physical-security-tool-notes th:nth-child(3),
+    table.extra-export-table--physical-security-tool-notes td:nth-child(3){
+      width:64%;
+      max-width:0;
+      overflow-wrap:anywhere;
+      word-break:break-word;
     }
     .grid{
       display:grid;

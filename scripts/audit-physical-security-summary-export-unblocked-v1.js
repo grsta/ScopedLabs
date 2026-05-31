@@ -20,7 +20,7 @@ const exportJs = read("assets/export.js");
 
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("export-engine-exists", exists("assets/export.js"), "shared export engine exists");
-safe("summary-export-cache", index.includes("/assets/export.js?v=shared-export-024-report-text-wrap"), "Summary uses bumped export engine cache");
+safe("summary-export-cache", index.includes("/assets/export.js?v=shared-export-025-tool-notes-column-widths"), "Summary uses bumped export engine cache");
 safe("summary-always-allow", index.includes("alwaysAllowExport: true"), "Summary allows report export without category unlock gate");
 safe("summary-always-ready", index.includes("alwaysExportReady: true"), "Summary is report-ready without calculator results");
 safe("summary-no-input-invalidate", index.includes("invalidateOnInput: false"), "Summary report metadata does not disable export buttons");
