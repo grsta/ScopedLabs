@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-owned-category-master-014";
+  const VERSION = "physical-security-summary-tool-notes-actions-015";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -694,6 +694,65 @@
     return index === -1 ? 999 : index;
   }
 
+  function toolNoteUrl(slug) {
+    return "/tools/physical-security/" + encodeURIComponent(String(slug || "")) + "/";
+  }
+
+  function readStorageObject(key) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function writeStorageObject(key, value) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify({ ...value, updatedAt: new Date().toISOString() }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function deleteToolNote(storageKey) {
+    const key = String(storageKey || "").trim();
+    if (!key) return false;
+
+    const data = readStorageObject(key);
+    if (!data || typeof data !== "object") return false;
+
+    data.customNotes = "";
+
+    const saved = writeStorageObject(key, data);
+    if (saved) render();
+
+    return saved;
+  }
+
+  function bindToolNotesActions() {
+    const mount = byId("physicalSecurityToolNotesMount");
+    if (!mount || mount.dataset.toolNotesActionsBound === "true") return;
+
+    mount.dataset.toolNotesActionsBound = "true";
+
+    mount.addEventListener("click", (event) => {
+      const deleteButton = event.target.closest("[data-tool-note-delete-key]");
+      if (!deleteButton) return;
+
+      event.preventDefault();
+
+      const storageKey = String(deleteButton.getAttribute("data-tool-note-delete-key") || "").trim();
+      const label = String(deleteButton.getAttribute("data-tool-note-delete-label") || "this tool note").trim();
+      const confirmed = window.confirm("Delete the saved note for " + label + "? This only removes the note, not the saved area, calculation, guidance, report data, or snapshot.");
+
+      if (!confirmed) return;
+
+      deleteToolNote(storageKey);
+    });
+  }
+
   function readSavedToolNotePages() {
     const prefix = "scopedlabs:report-metadata:page:";
     const pages = [];
@@ -760,6 +819,9 @@
         areaName: String(page.areaName || "").trim(),
         areaType: String(page.areaType || "").trim(),
         scopeLabel,
+        storageKey: page.storageKey || "",
+        sourcePath: page.path || page.keyPath || "",
+        href: toolNoteUrl(slug),
         updatedAt: page.updatedAt || ""
       });
     });
@@ -783,10 +845,17 @@
     }
 
     const body = rows.map((row) => {
-      return '<tr><td>' + escapeHtml(row.scopeLabel) + '</td><td>' + escapeHtml(row.label) + '</td><td>' + escapeHtml(row.note) + '</td></tr>';
+      const deleteLabel = (row.scopeLabel || "Area / zone not saved") + " / " + row.label;
+      const deleteDisabled = row.storageKey ? "" : " disabled aria-disabled=\"true\"";
+      return '<tr>' +
+        '<td>' + escapeHtml(row.scopeLabel) + '</td>' +
+        '<td><a href="' + escapeHtml(row.href) + '">' + escapeHtml(row.label) + '</a></td>' +
+        '<td>' + escapeHtml(row.note) + '</td>' +
+        '<td data-export-ignore="true"><a class="btn secondary" href="' + escapeHtml(row.href) + '">Open Tool</a> <button type="button" class="btn secondary" data-tool-note-delete-key="' + escapeHtml(row.storageKey) + '" data-tool-note-delete-label="' + escapeHtml(deleteLabel) + '"' + deleteDisabled + '>Delete Note</button></td>' +
+      '</tr>';
     }).join("");
 
-    mount.innerHTML = '<table class="summary-table summary-tool-notes-table" data-sl-summary-tool-notes-table="true"><thead><tr><th>Area / Zone</th><th>Tool</th><th>Tool-Specific Notes</th></tr></thead><tbody>' + body + '</tbody></table>';
+    mount.innerHTML = '<table class="summary-table summary-tool-notes-table" data-sl-summary-tool-notes-table="true"><thead><tr><th>Area / Zone</th><th>Tool</th><th>Tool-Specific Notes</th><th data-export-ignore="true">Actions</th></tr></thead><tbody>' + body + '</tbody></table>';
   }
 
 
@@ -857,6 +926,7 @@
         areaType: row.areaType || "",
         scopeLabel: row.scopeLabel || "",
         note: row.note,
+        href: row.href || "",
         updatedAt: row.updatedAt || ""
       })),
       scopeTypes: ["core-coverage", "face-recognition-zone", "license-plate-zone"],
@@ -1070,6 +1140,7 @@
     renderMasterAssistant(model);
     renderReportSummary(model);
     renderToolNotes();
+    bindToolNotesActions();
 
     const payloadEl = byId("physicalSecurityCrossCategoryPayload");
     const currentPayload = payload(model);

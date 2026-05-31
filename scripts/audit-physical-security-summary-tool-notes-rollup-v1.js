@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-tool-notes-area-context-audit-002";
+const VERSION = "physical-security-summary-tool-notes-area-context-audit-003-actions";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -42,7 +42,7 @@ function add(name, status, detail) {
   'physicalSecurityToolNotesMount',
   'data-export-section',
   'data-export-title="Physical Security Tool Notes"',
-  './script.js?v=physical-security-summary-owned-category-master-014',
+  './script.js?v=physical-security-summary-tool-notes-actions-015',
   '/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes'
 ].forEach((signal) => {
   add(
@@ -53,7 +53,7 @@ function add(name, status, detail) {
 });
 
 [
-  'physical-security-summary-owned-category-master-014',
+  'physical-security-summary-tool-notes-actions-015',
   'const TOOL_NOTE_TOOLS = CORE_TOOLS.concat(SPECIALTY_TOOLS);',
   'function readSavedToolNotePages()',
   'function toolNoteScopeLabel(page)',

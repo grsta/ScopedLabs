@@ -714,11 +714,14 @@
     return String(value || "").replace(/\s+/g, " ").trim();
   }
 
+  // shared-export-022-ignore-table-actions
   function directTableRowCells(row) {
-    return Array.from(row?.children || []).map((cell) => ({
-      text: cleanExtraTableText(cell.textContent),
-      colSpan: Number(cell.getAttribute("colspan") || cell.colSpan || 1)
-    }));
+    return Array.from(row?.children || [])
+      .filter((cell) => cell.dataset?.exportIgnore !== "true" && cell.getAttribute("data-export-ignore") !== "true")
+      .map((cell) => ({
+        text: cleanExtraTableText(cell.textContent),
+        colSpan: Number(cell.getAttribute("colspan") || cell.colSpan || 1)
+      }));
   }
 
   function readExtraTable(table) {
