@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-tool-notes-rollup-012";
+  const VERSION = "physical-security-summary-tool-notes-area-context-013";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -707,10 +707,13 @@
         const data = raw ? JSON.parse(raw) : {};
         if (!data || typeof data !== "object") continue;
 
+        const keyPath = key.slice(prefix.length).split("#area:")[0];
+
         pages.push({
           ...data,
           storageKey: key,
-          path: data.sourcePath || key.slice(prefix.length)
+          path: data.sourcePath || keyPath,
+          keyPath
         });
       }
     } catch {
@@ -720,28 +723,52 @@
     return pages;
   }
 
+  function toolNoteScopeLabel(page) {
+    const areaName = String(page.areaName || "").trim();
+    const areaType = String(page.areaType || "").trim();
+    const scopeLabel = String(page.scopeLabel || "").trim();
+
+    if (scopeLabel) return scopeLabel;
+    if (areaName) return areaName + (areaType ? " (" + areaType + ")" : "");
+    if (areaType) return areaType;
+
+    return "Area / zone not saved";
+  }
+
   function toolNoteRows() {
-    const bySlug = new Map();
+    const byScopeAndTool = new Map();
 
     readSavedToolNotePages().forEach((page) => {
-      const slug = toolNoteSlugFromPath(page.path || "");
+      const slug = toolNoteSlugFromPath(page.path || page.keyPath || "");
       const note = String(page.customNotes || "").trim();
 
       if (!slug || slug === "summary" || !note) return;
       if (!TOOL_NOTE_TOOLS.some((item) => item[0] === slug)) return;
 
-      const existing = bySlug.get(slug);
+      const scopeLabel = toolNoteScopeLabel(page);
+      const areaId = String(page.areaId || "").trim();
+      const rowKey = (areaId || scopeLabel || "unassigned") + "::" + slug;
+      const existing = byScopeAndTool.get(rowKey);
+
       if (existing && String(existing.updatedAt || "") > String(page.updatedAt || "")) return;
 
-      bySlug.set(slug, {
+      byScopeAndTool.set(rowKey, {
         slug,
         label: toolNoteLabel(slug),
         note,
+        areaId,
+        areaName: String(page.areaName || "").trim(),
+        areaType: String(page.areaType || "").trim(),
+        scopeLabel,
         updatedAt: page.updatedAt || ""
       });
     });
 
-    return Array.from(bySlug.values()).sort((a, b) => toolNoteOrder(a.slug) - toolNoteOrder(b.slug));
+    return Array.from(byScopeAndTool.values()).sort((a, b) => {
+      const scopeCompare = String(a.scopeLabel || "").localeCompare(String(b.scopeLabel || ""));
+      if (scopeCompare) return scopeCompare;
+      return toolNoteOrder(a.slug) - toolNoteOrder(b.slug);
+    });
   }
 
   function renderToolNotes() {
@@ -751,15 +778,15 @@
     const rows = toolNoteRows();
 
     if (!rows.length) {
-      mount.innerHTML = '<p class="muted export-text" data-export-text>No tool-specific notes have been saved yet. Notes entered on individual Physical Security tools stay separated by tool and appear here when available.</p>';
+      mount.innerHTML = '<p class="muted export-text" data-export-text>No tool-specific notes have been saved yet. Notes entered on individual Physical Security tools stay separated by area/zone and source tool, then appear here when available.</p>';
       return;
     }
 
     const body = rows.map((row) => {
-      return '<tr><td>' + escapeHtml(row.label) + '</td><td>' + escapeHtml(row.note) + '</td></tr>';
+      return '<tr><td>' + escapeHtml(row.scopeLabel) + '</td><td>' + escapeHtml(row.label) + '</td><td>' + escapeHtml(row.note) + '</td></tr>';
     }).join("");
 
-    mount.innerHTML = '<table class="summary-table summary-tool-notes-table" data-sl-summary-tool-notes-table="true"><thead><tr><th>Tool</th><th>Tool-Specific Notes</th></tr></thead><tbody>' + body + '</tbody></table>';
+    mount.innerHTML = '<table class="summary-table summary-tool-notes-table" data-sl-summary-tool-notes-table="true"><thead><tr><th>Area / Zone</th><th>Tool</th><th>Tool-Specific Notes</th></tr></thead><tbody>' + body + '</tbody></table>';
   }
 
   function payload(model) {
@@ -772,6 +799,10 @@
       toolNotes: toolNoteRows().map((row) => ({
         slug: row.slug,
         label: row.label,
+        areaId: row.areaId || "",
+        areaName: row.areaName || "",
+        areaType: row.areaType || "",
+        scopeLabel: row.scopeLabel || "",
         note: row.note,
         updatedAt: row.updatedAt || ""
       })),

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-016-tool-notes-rollup";
+const VERSION = "physical-security-summary-proof-audit-017-tool-notes-area-context";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -62,10 +62,10 @@ add("summary-export-exists", exists(exportRel) ? "SAFE" : "FAIL", exportRel + " 
   "/assets/physical-security-category-guidance-renderer.js",
   "/assets/physical-security-report-summary.js",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
-  "/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-003-shared-carryover-page-notes",
+  "/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes",
   "/assets/export.js?v=shared-export-020-summary-metadata-carryover",
   "/assets/export.js?v=shared-export-020-summary-metadata-carryover",
-  "./script.js?v=physical-security-summary-tool-notes-rollup-012"
+  "./script.js?v=physical-security-summary-tool-notes-area-context-013"
 ].forEach((signal) => {
   add("index-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), index.includes(signal) ? "SAFE" : "FAIL", index.includes(signal) ? "index contains " + signal : "index missing " + signal);
 });
@@ -149,12 +149,15 @@ add("camera-spacing-master-unparked", !spacing.includes("physical-security-categ
 
 // physical-security-summary-report-metadata-shared-page-notes-audit-014
 [
-  "scopedlabs-report-metadata-003-shared-carryover-page-notes",
+  "scopedlabs-report-metadata-004-area-context-notes",
   "const SHARED_STORAGE_KEY = \"scopedlabs:report-metadata:shared:v1\";",
   "const PAGE_STORAGE_PREFIX = \"scopedlabs:report-metadata:page:\";",
   "const SHARED_FIELDS = [\"reportTitle\", \"projectName\", \"clientName\", \"preparedBy\"];",
   "const PAGE_ONLY_FIELDS = [\"customNotes\"];",
   "function hydrateControls(root = document)",
+  "function currentAreaContext()",
+  "function pageStorageKey()",
+  "scopeLabel",
   "function bindPersistence(root = document)",
   "scopedlabs:report-metadata-saved"
 ].forEach((signal) => {

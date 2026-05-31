@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-tool-notes-rollup-audit-001";
+const VERSION = "physical-security-summary-tool-notes-area-context-audit-002";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -21,24 +21,29 @@ function add(name, status, detail) {
 }
 
 [
-  "scopedlabs-report-metadata-003-shared-carryover-page-notes",
-  "const SHARED_FIELDS = [\"reportTitle\", \"projectName\", \"clientName\", \"preparedBy\"];",
-  "const PAGE_ONLY_FIELDS = [\"customNotes\"];",
-  "scopedlabs:report-metadata:page:"
+  'scopedlabs-report-metadata-004-area-context-notes',
+  'const SHARED_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy"];',
+  'const PAGE_ONLY_FIELDS = ["customNotes"];',
+  'function currentAreaContext()',
+  'function pageStorageKey()',
+  '#area:',
+  'areaScoped: true',
+  'scopeLabel'
 ].forEach((signal) => {
   add(
-    "metadata-foundation-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""),
+    "metadata-area-context-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""),
     metadata.includes(signal) ? "SAFE" : "FAIL",
     metadata.includes(signal) ? "metadata source contains " + signal : "metadata source missing " + signal
   );
 });
 
 [
-  "physicalSecurityToolNotesSection",
-  "physicalSecurityToolNotesMount",
-  "data-export-section",
-  "data-export-title=\"Physical Security Tool Notes\"",
-  "./script.js?v=physical-security-summary-tool-notes-rollup-012"
+  'physicalSecurityToolNotesSection',
+  'physicalSecurityToolNotesMount',
+  'data-export-section',
+  'data-export-title="Physical Security Tool Notes"',
+  './script.js?v=physical-security-summary-tool-notes-area-context-013',
+  '/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes'
 ].forEach((signal) => {
   add(
     "summary-index-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""),
@@ -48,14 +53,16 @@ function add(name, status, detail) {
 });
 
 [
-  "physical-security-summary-tool-notes-rollup-012",
-  "const TOOL_NOTE_TOOLS = CORE_TOOLS.concat(SPECIALTY_TOOLS);",
-  "function readSavedToolNotePages()",
-  "function toolNoteRows()",
-  "function renderToolNotes()",
-  "summary-tool-notes-table",
-  "toolNotes: toolNoteRows().map",
-  "window.addEventListener(\"scopedlabs:report-metadata-saved\", render);"
+  'physical-security-summary-tool-notes-area-context-013',
+  'const TOOL_NOTE_TOOLS = CORE_TOOLS.concat(SPECIALTY_TOOLS);',
+  'function readSavedToolNotePages()',
+  'function toolNoteScopeLabel(page)',
+  'function toolNoteRows()',
+  'function renderToolNotes()',
+  '<th>Area / Zone</th><th>Tool</th><th>Tool-Specific Notes</th>',
+  'const rowKey = (areaId || scopeLabel || "unassigned") + "::" + slug;',
+  'scopeLabel: row.scopeLabel || ""',
+  'window.addEventListener("scopedlabs:report-metadata-saved", render);'
 ].forEach((signal) => {
   add(
     "summary-script-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""),
@@ -70,7 +77,7 @@ const counts = rows.reduce((acc, row) => {
 }, {});
 
 console.log("");
-console.log("Physical Security Summary Tool Notes Rollup Audit");
+console.log("Physical Security Summary Tool Notes Area Context Audit");
 console.log("Version:", VERSION);
 rows.forEach((row) => console.log(row.status + ": " + row.name + " - " + row.detail));
 console.log("");

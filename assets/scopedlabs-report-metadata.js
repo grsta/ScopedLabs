@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "scopedlabs-report-metadata-003-shared-carryover-page-notes";
+  const VERSION = "scopedlabs-report-metadata-004-area-context-notes";
   const SHARED_STORAGE_KEY = "scopedlabs:report-metadata:shared:v1";
   const PAGE_STORAGE_PREFIX = "scopedlabs:report-metadata:page:";
   const SHARED_FIELDS = ["reportTitle", "projectName", "clientName", "preparedBy"];
@@ -43,9 +43,18 @@
     }
   }
 
-  function pageStorageKey() {
-    const pagePath = String(window.location?.pathname || "").replace(/\/+$/, "/") || "/";
-    return PAGE_STORAGE_PREFIX + pagePath;
+  function normalizedPagePath() {
+    return String(window.location?.pathname || "").replace(/\/+$/, "/") || "/";
+  }
+
+  function physicalSecurityToolSlug(pagePath = normalizedPagePath()) {
+    const match = String(pagePath || "").match(/\/tools\/physical-security\/([^/]+)\//i);
+    return match ? match[1] : "";
+  }
+
+  function shouldScopeNotesToActiveArea(pagePath = normalizedPagePath()) {
+    const slug = physicalSecurityToolSlug(pagePath);
+    return !!slug && slug !== "summary" && slug !== "area-planner";
   }
 
   function safeParse(value) {
@@ -56,6 +65,84 @@
     } catch {
       return {};
     }
+  }
+
+  function readBrowserStore(key) {
+    try {
+      return safeParse(window.sessionStorage.getItem(key)) || safeParse(window.localStorage.getItem(key));
+    } catch {
+      return {};
+    }
+  }
+
+  function readBrowserText(key) {
+    try {
+      return window.sessionStorage.getItem(key) || window.localStorage.getItem(key) || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function normalizeAreaContext(area) {
+    if (!area || typeof area !== "object") return null;
+
+    const areaId = String(area.id || area.areaId || "").trim();
+    const areaName = String(area.name || area.areaName || "").trim();
+    const areaType = String(area.areaType || area.type || "").trim();
+
+    if (!areaId && !areaName) return null;
+
+    const scopeLabel = areaName
+      ? areaName + (areaType ? " (" + areaType + ")" : "")
+      : areaId;
+
+    return {
+      areaId,
+      areaName: areaName || areaId || "Area / Zone",
+      areaType: areaType || "Area / Zone",
+      scopeLabel,
+      areaScoped: true
+    };
+  }
+
+  function currentAreaContext() {
+    if (!shouldScopeNotesToActiveArea()) return null;
+
+    try {
+      const api = window.ScopedLabsPhysicalSecurityAreaState;
+      if (api && typeof api.getActiveArea === "function") {
+        const active = normalizeAreaContext(api.getActiveArea());
+        if (active) return active;
+      }
+    } catch {
+      // Fall back to persisted area ledger below.
+    }
+
+    const ledger = readBrowserStore("scopedlabs:pipeline:physical-security:areas");
+    const areas = Array.isArray(ledger.areas) ? ledger.areas : [];
+    const activeId =
+      String(ledger.activeAreaId || "").trim() ||
+      String(readBrowserText("scopedlabs:pipeline:physical-security:active-area") || "").trim();
+
+    const active =
+      areas.find((area) => String(area && area.id) === activeId) ||
+      areas[0] ||
+      null;
+
+    return normalizeAreaContext(active);
+  }
+
+  function legacyPageStorageKey() {
+    return PAGE_STORAGE_PREFIX + normalizedPagePath();
+  }
+
+  function pageStorageKey() {
+    const legacyKey = legacyPageStorageKey();
+    const scope = currentAreaContext();
+
+    if (!scope || !scope.areaId) return legacyKey;
+
+    return legacyKey + "#area:" + encodeURIComponent(scope.areaId);
   }
 
   function loadStored(key) {
@@ -76,6 +163,18 @@
     }
   }
 
+  function loadPageData() {
+    const scopedKey = pageStorageKey();
+    const legacyKey = legacyPageStorageKey();
+
+    return {
+      scopedKey,
+      legacyKey,
+      scoped: loadStored(scopedKey),
+      legacy: scopedKey === legacyKey ? {} : loadStored(legacyKey)
+    };
+  }
+
   function getControl(root, field) {
     const def = FIELD_DEFS[field];
     return def?.id ? root.querySelector("#" + def.id) : null;
@@ -91,8 +190,21 @@
 
   function saveCurrent(root = document) {
     const values = currentValues(root);
-    const pageData = { ...loadStored(pageStorageKey()), sourcePath: window.location?.pathname || "" };
-    const sharedData = { ...loadStored(SHARED_STORAGE_KEY), sourcePath: window.location?.pathname || "" };
+    const scope = currentAreaContext();
+    const key = pageStorageKey();
+    const pageData = {
+      ...loadStored(key),
+      sourcePath: normalizedPagePath(),
+      areaScoped: !!scope
+    };
+    const sharedData = { ...loadStored(SHARED_STORAGE_KEY), sourcePath: normalizedPagePath() };
+
+    if (scope) {
+      pageData.areaId = scope.areaId || "";
+      pageData.areaName = scope.areaName || "";
+      pageData.areaType = scope.areaType || "";
+      pageData.scopeLabel = scope.scopeLabel || "";
+    }
 
     PAGE_FIELDS.forEach((field) => {
       pageData[field] = values[field] || "";
@@ -102,13 +214,14 @@
       sharedData[field] = values[field] || "";
     });
 
-    saveStored(pageStorageKey(), pageData);
+    saveStored(key, pageData);
     saveStored(SHARED_STORAGE_KEY, sharedData);
 
     document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-saved", {
       detail: {
         version: VERSION,
         values,
+        scope,
         sharedFields: SHARED_FIELDS.slice(),
         pageOnlyFields: PAGE_ONLY_FIELDS.slice()
       }
@@ -116,7 +229,7 @@
   }
 
   function hydrateControls(root = document) {
-    const pageData = loadStored(pageStorageKey());
+    const pageData = loadPageData();
     const sharedData = loadStored(SHARED_STORAGE_KEY);
     let hydrated = false;
 
@@ -125,9 +238,10 @@
       if (!control) return;
       if (String(control.value || "").trim()) return;
 
-      const pageValue = pageData[field] || "";
+      const scopedValue = pageData.scoped[field] || "";
+      const legacyValue = pageData.legacy[field] || "";
       const sharedValue = SHARED_FIELDS.includes(field) ? sharedData[field] || "" : "";
-      const value = pageValue || sharedValue || "";
+      const value = scopedValue || legacyValue || sharedValue || "";
 
       if (!value) return;
 
@@ -139,6 +253,7 @@
       document.dispatchEvent(new CustomEvent("scopedlabs:report-metadata-hydrated", {
         detail: {
           version: VERSION,
+          scope: currentAreaContext(),
           sharedFields: SHARED_FIELDS.slice(),
           pageOnlyFields: PAGE_ONLY_FIELDS.slice()
         }
@@ -242,6 +357,7 @@
         version: VERSION,
         mount,
         fields,
+        scope: currentAreaContext(),
         sharedFields: SHARED_FIELDS.slice(),
         pageOnlyFields: PAGE_ONLY_FIELDS.slice()
       }
@@ -271,6 +387,10 @@
     sharedFields: SHARED_FIELDS.slice(),
     pageOnlyFields: PAGE_ONLY_FIELDS.slice(),
     sharedStorageKey: SHARED_STORAGE_KEY,
+    pageStoragePrefix: PAGE_STORAGE_PREFIX,
+    currentAreaContext,
+    pageStorageKey,
+    legacyPageStorageKey,
     init,
     render: renderMount,
     read,
