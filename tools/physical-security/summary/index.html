@@ -763,6 +763,45 @@
   .summary-note-actions[open] .summary-note-menu button {
     white-space: nowrap;
   }
+
+  /* physical-security-summary-tool-notes-menu-overlay-047 */
+  #physicalSecurityToolNotesSection,
+  #physicalSecurityToolNotesMount,
+  .summary-tool-notes-table,
+  .summary-tool-notes-table tbody,
+  .summary-tool-notes-table tr,
+  .summary-tool-notes-table td {
+    overflow: visible;
+  }
+
+  .summary-tool-notes-table .note-scope-cell {
+    align-items: center;
+  }
+
+  .summary-note-actions {
+    position: relative;
+    z-index: 30;
+  }
+
+  .summary-note-actions[open] {
+    align-self: center;
+    z-index: 5000;
+  }
+
+  .summary-note-actions[open] .summary-note-menu {
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .48);
+    margin-top: 0;
+    min-width: 8.5rem;
+    position: absolute;
+    right: 0;
+    top: calc(100% + .35rem);
+    z-index: 5001;
+  }
+
+  .summary-note-actions[open] .summary-note-menu a,
+  .summary-note-actions[open] .summary-note-menu button {
+    white-space: nowrap;
+  }
 </style>
 </head>
 
@@ -996,5 +1035,6 @@
   <!-- physical-security-summary-tool-notes-menu-044 -->
   <!-- physical-security-summary-tool-notes-menu-glyph-045 -->
   <!-- physical-security-summary-tool-notes-menu-flow-046 -->
+  <!-- physical-security-summary-tool-notes-menu-overlay-047 -->
 </body>
 </html>
