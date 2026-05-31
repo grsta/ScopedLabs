@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-area-planner-reset-confirm-clear-audit-003-report-metadata";
-const CACHE = "physical-security-area-planner-reset-confirm-clear-022-report-metadata";
+const VERSION = "physical-security-area-planner-reset-confirm-clear-audit-004-saved-reports";
+const CACHE = "physical-security-area-planner-reset-confirm-clear-023-saved-reports";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -29,14 +29,13 @@ function has(id, sourceName, source, signal) {
 }
 
 has("index-cache", "Area Planner index", index, "./script.js?v=" + CACHE);
-has("index-marker", "Area Planner index", index, "physical-security-area-planner-reset-report-metadata-022");
+has("index-marker", "Area Planner index", index, "physical-security-area-planner-reset-saved-reports-023");
 has("reset-button-present", "Area Planner index", index, 'id="resetAreas"');
 
-has("script-cache", "Area Planner script", script, 'const VERSION = "' + CACHE + '";');
 has("confirm-helper", "Area Planner script", script, "function confirmResetAreaPlan()");
 has("confirm-title", "Area Planner script", script, "Reset Area Plan?");
 has("confirm-real-newlines", "Area Planner script", script, "String.fromCharCode(10, 10)");
-has("confirm-report-metadata-copy", "Area Planner script", script, "report metadata, and custom notes");
+has("confirm-saved-reports-copy", "Area Planner script", script, "saved report records, report metadata, and custom notes");
 has("confirm-snapshot-safety", "Area Planner script", script, "This does not delete saved account snapshots.");
 has("confirm-cancel-guard", "Area Planner script", script, "if (!confirmResetAreaPlan())");
 
@@ -44,7 +43,9 @@ has("clear-memory-helper", "Area Planner script", script, "function clearPhysica
 has("pipeline-prefix-clear", "Area Planner script", script, 'const pipelinePrefix = "scopedlabs:pipeline:physical-security:";');
 has("guidance-memory-clear", "Area Planner script", script, 'const guidanceMemoryKey = "scopedlabs:physical-security:guidance-memory:v1";');
 has("shared-report-metadata-key", "Area Planner script", script, 'const sharedReportMetadataKey = "scopedlabs:report-metadata:shared:v1";');
+has("saved-physical-security-reports-prefix", "Area Planner script", script, 'const savedPhysicalSecurityReportsPrefix = "scopedlabs:reports:physical-security:";');
 has("shared-report-metadata-clear-condition", "Area Planner script", script, "key === sharedReportMetadataKey");
+has("saved-reports-clear-condition", "Area Planner script", script, "key.startsWith(savedPhysicalSecurityReportsPrefix)");
 has("report-page-prefix", "Area Planner script", script, 'const prefix = "scopedlabs:report-metadata:page:";');
 has("physical-security-page-filter", "Area Planner script", script, '/tools/physical-security/');
 has("tool-notes-cleared", "Area Planner script", script, "removePhysicalSecurityReportPageMetadata(storage)");
@@ -53,7 +54,7 @@ has("guidance-clear-event", "Area Planner script", script, "scopedlabs:physical-
 has("metadata-event", "Area Planner script", script, "scopedlabs:report-metadata-saved");
 
 has("ledger-empty-write", "Area Planner script", script, "areas: []");
-has("reset-status-expanded", "Area Planner script", script, "report metadata were cleared");
+has("reset-status-expanded", "Area Planner script", script, "saved report records, and report metadata were cleared");
 has("reset-binding-preserved", "Area Planner script", script, 'els.resetAreas?.addEventListener("click", resetAreas);');
 
 add(
@@ -66,7 +67,7 @@ add(
 
 if (summaryLinkAudit) {
   has("summary-link-audit-cache", "Area Planner summary-link audit", summaryLinkAudit, CACHE);
-  has("summary-link-audit-version", "Area Planner summary-link audit", "physical-security-area-planner-summary-button-retired-audit-003-reset-report-metadata");
+  has("summary-link-audit-version", "Area Planner summary-link audit", summaryLinkAudit, "physical-security-area-planner-summary-button-retired-audit-004-reset-saved-reports");
 }
 
 const counts = rows.reduce((acc, row) => {

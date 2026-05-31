@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-area-planner-summary-button-retired-audit-003-reset-report-metadata";
+const VERSION = "physical-security-area-planner-summary-button-retired-audit-004-reset-saved-reports";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -29,8 +29,8 @@ const pipelines = read("assets/pipelines.js");
 
 safe("area-planner-index-exists", exists("tools/physical-security/area-planner/index.html"), "Area Planner index exists");
 safe("area-planner-script-exists", exists("tools/physical-security/area-planner/script.js"), "Area Planner script exists");
-safe("script-cache-bumped", index.includes("script.js?v=physical-security-area-planner-reset-confirm-clear-022-report-metadata"), "Area Planner script cache bumped");
-safe("retirement-marker", index.includes("physical-security-area-planner-reset-confirm-clear-022-report-metadata"), "Area Planner retirement marker exists");
+safe("script-cache-bumped", index.includes("script.js?v=physical-security-area-planner-reset-confirm-clear-023-saved-reports"), "Area Planner script cache bumped");
+safe("retirement-marker", index.includes("physical-security-area-planner-reset-confirm-clear-023-saved-reports"), "Area Planner retirement marker exists");
 
 safe("summary-in-pipeline-nav", pipelines.includes('id: "physical-security-summary"') && pipelines.includes('href: "/tools/physical-security/summary/"'), "Summary is available through Physical Security pipeline nav");
 safe("legacy-summary-button-removed", !script.includes("Open Physical Security Summary"), "Area Planner no longer creates visible Open Summary button text");
