@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-master-owned-category-knowledge-audit-001";
+const VERSION = "physical-security-master-owned-category-knowledge-audit-003-draft-proof-sync";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -58,10 +58,13 @@ check("source-policy-master", "source policy", policy, [
 ]);
 
 check("category-guidance-master", "category guidance", guidance, [
-  "physical-security-category-guidance-004-owned-category-master",
+  "physical-security-category-guidance-005-master-draft-queue",
   "function explainSummaryMasterGuidance(context)",
   "function buildSummaryMasterReview(categoryGuidance, context)",
   "function correctionQueue(categoryGuidance, context)",
+  "type: \"start-core-pipeline\"",
+  "Start core pipeline",
+  "Summary remains a planning draft until core Physical Security guidance is generated.",
   "ownedCategoryKnowledge: getKnowledgeSnapshot()",
   "source tool math remains authoritative",
   "explainSummaryMasterGuidance,"
@@ -70,7 +73,7 @@ check("category-guidance-master", "category guidance", guidance, [
 check("summary-index-loads", "summary index", index, [
   "/assets/physical-security-source-policy.js?v=physical-security-source-policy-002-master-knowledge-guardrails",
   "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-002-owned-category-master",
-  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-004-owned-category-master",
+  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-005-master-draft-queue",
   "./script.js?v=physical-security-summary-owned-category-master-014",
   "physical-security-summary-owned-category-master-038"
 ]);
@@ -86,7 +89,7 @@ check("summary-script-master", "summary script", script, [
 ]);
 
 check("proof-audit", "summary proof audit", proof, [
-  "physical-security-summary-proof-audit-022-owned-category-master",
+  "physical-security-summary-proof-audit-023-master-draft-queue",
   "/assets/physical-security-source-policy.js?v=physical-security-source-policy-002-master-knowledge-guardrails",
   "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-002-owned-category-master",
   "function buildSummaryMasterExplanation(model)",

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-guidance-004-owned-category-master";
+  const VERSION = "physical-security-category-guidance-005-master-draft-queue";
   const CATEGORY = "physical-security";
 
   const fallbackOrder = [
@@ -491,21 +491,44 @@
       });
     });
 
-    missingCoreFromContext(context).slice(0, 6).forEach((row) => {
+    const missingCoreRows = missingCoreFromContext(context);
+    const generatedCount = Number((source.counts && source.counts.generated) || 0);
+
+    if (!riskWatch.length && !generatedCount && missingCoreRows.length) {
+      const row = missingCoreRows[0];
       const profile = correctionProfileFor(row.slug, "unknown");
+      const toolLabel = row.label || profile.label || labelFromSlug(row.slug);
+      const route = row.slug ? "/tools/physical-security/" + row.slug + "/" : "/tools/physical-security/summary/";
+
       queue.push({
-        type: "missing-core-step",
-        status: "watch",
+        type: "start-core-pipeline",
+        status: "unknown",
         slug: row.slug || "",
-        toolLabel: row.label || profile.label || labelFromSlug(row.slug),
-        label: "Complete missing core step",
-        detail: (row.label || profile.label || labelFromSlug(row.slug)) + " has not produced saved guidance for this Summary yet.",
-        correctionFocus: profile.correctionFocus || "Run or refresh this source tool.",
+        toolLabel,
+        label: "Start core pipeline",
+        detail: "Start with " + toolLabel + ". Open " + toolLabel + " to begin generating saved guidance for this Summary.",
+        correctionFocus: "Begin at the first missing core Physical Security tool and proceed through the pipeline before treating this Summary as report-ready.",
         correctionQuestions: clone(profile.correctionQuestions || []),
-        reportImpact: profile.reportImpact || "Missing core guidance keeps the report in draft/review posture.",
-        route: row.slug ? "/tools/physical-security/" + row.slug + "/" : "/tools/physical-security/summary/"
+        reportImpact: "Summary remains a planning draft until core Physical Security guidance is generated.",
+        route
       });
-    });
+    } else {
+      missingCoreRows.slice(0, 6).forEach((row) => {
+        const profile = correctionProfileFor(row.slug, "unknown");
+        queue.push({
+          type: "missing-core-step",
+          status: "watch",
+          slug: row.slug || "",
+          toolLabel: row.label || profile.label || labelFromSlug(row.slug),
+          label: "Complete missing core step",
+          detail: (row.label || profile.label || labelFromSlug(row.slug)) + " has not produced saved guidance for this Summary yet.",
+          correctionFocus: profile.correctionFocus || "Run or refresh this source tool.",
+          correctionQuestions: clone(profile.correctionQuestions || []),
+          reportImpact: profile.reportImpact || "Missing core guidance keeps the report in draft/review posture.",
+          route: row.slug ? "/tools/physical-security/" + row.slug + "/" : "/tools/physical-security/summary/"
+        });
+      });
+    }
 
     if (!queue.length) {
       queue.push({
@@ -529,7 +552,8 @@
     const counts = categoryGuidance && categoryGuidance.counts ? categoryGuidance.counts : {};
     const missingCore = missingCoreFromContext(context || {});
     const status = normalizeStatus(categoryGuidance && categoryGuidance.status);
-    const readyStatus = status === "unknown" && missingCore.length ? "watch" : status;
+    const generatedCount = Number(counts.generated || 0);
+    const readyStatus = !generatedCount ? "unknown" : (status === "unknown" && missingCore.length ? "watch" : status);
     const queue = correctionQueue(categoryGuidance, context || {});
     const metadata = reportMetadataFromContext(context || {});
     const scopes = summaryContextScopes(context || {});
@@ -587,8 +611,8 @@
       String(master.scopeCounts.total || 0) + " area/zone scope(s)",
       String(master.toolNoteCount || 0) + " tool note(s)"
     ].join(" | ");
-    explanation.nextStep = priority && priority.route
-      ? (priority.label || "Review priority item") + ": " + priority.route
+    explanation.nextStep = priority
+      ? (priority.detail || priority.correctionFocus || explanation.nextStep)
       : explanation.nextStep;
     explanation.reportSummary = master.reportPosture + ". " + explanation.reason;
     explanation.summaryMaster = clone(master);
