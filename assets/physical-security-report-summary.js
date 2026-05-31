@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-018-scoped-link-summary-text";
+  const VERSION = "physical-security-report-summary-019-detail-labels";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -381,10 +381,124 @@
     ];
   }
 
+
   function areaToolDetail(area, definition) {
-    const value = firstAreaValue(area, definition.detailKeys || []);
-    if (value || value === 0 || value === false) return String(value);
+    const source = area && typeof area === "object" ? area : {};
+    const keys = Array.isArray(definition.detailKeys) ? definition.detailKeys : [];
+
+    for (const key of keys) {
+      const value = source[key];
+      if (value === 0 || value === false || (value != null && String(value).trim() !== "")) {
+        return formatAreaToolDetailValue(definition, key, value);
+      }
+    }
+
     return "No area-specific result saved for this step yet.";
+  }
+
+  function cleanDetailValue(value) {
+    return String(value ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  function formatFeet(value) {
+    const text = cleanDetailValue(value);
+    if (!text) return text;
+    return /\b(ft|feet)\b/i.test(text) ? text : text + " ft";
+  }
+
+  function formatDegrees(value) {
+    const text = cleanDetailValue(value);
+    if (!text) return text;
+    return /(°|\bdeg\b|\bdegree)/i.test(text) ? text : text + "°";
+  }
+
+  function formatMillimeters(value) {
+    const text = cleanDetailValue(value);
+    if (!text) return text;
+    return /(\bmm\b|\blens\b)/i.test(text) ? text : text + " mm lens";
+  }
+
+  function formatPpf(value) {
+    const text = cleanDetailValue(value);
+    if (!text) return text;
+    return /\b(ppf|pixels? per foot)\b/i.test(text) ? text : text + " PPF";
+  }
+
+  function formatCameraCount(value) {
+    const text = cleanDetailValue(value);
+    const count = Number(text);
+    if (Number.isFinite(count)) return text + " camera" + (count === 1 ? "" : "s");
+    return text;
+  }
+
+  function formatAreaToolDetailValue(definition, key, value) {
+    const text = cleanDetailValue(value);
+    const normalizedKey = String(key || "").toLowerCase();
+    const label = String(definition && definition.label ? definition.label : "Tool detail").trim();
+
+    if (!text) return "No area-specific result saved for this step yet.";
+
+    if (/summary|reason|note|description|interpretation/i.test(normalizedKey)) {
+      return text;
+    }
+
+    if (normalizedKey === "assumedhfovdeg") {
+      return "Horizontal field of view (HFOV): " + formatDegrees(text);
+    }
+
+    if (normalizedKey === "selectedlensmm") {
+      return "Selected lens: " + formatMillimeters(text);
+    }
+
+    if (normalizedKey === "pixeldensityppf") {
+      return "Pixel density: " + formatPpf(text);
+    }
+
+    if (normalizedKey === "mountingheightft") {
+      return "Mounting height: " + formatFeet(text);
+    }
+
+    if (normalizedKey === "distancetotargetplaneft") {
+      return "Distance to target plane: " + formatFeet(text);
+    }
+
+    if (normalizedKey === "protectedlengthft") {
+      return "Protected span / scene width: " + formatFeet(text);
+    }
+
+    if (normalizedKey === "spacingft") {
+      return "Camera spacing: " + formatFeet(text);
+    }
+
+    if (normalizedKey === "cameracount") {
+      return "Camera count: " + formatCameraCount(text);
+    }
+
+    if (normalizedKey === "facerecognitionmaxdistanceft") {
+      return "Face recognition max distance: " + formatFeet(text);
+    }
+
+    if (normalizedKey === "licenseplatemaxdistanceft") {
+      return "License plate max distance: " + formatFeet(text);
+    }
+
+    if (/ft$|feet$/.test(normalizedKey)) {
+      return label + ": " + formatFeet(text);
+    }
+
+    if (/deg$|degree/.test(normalizedKey)) {
+      return label + ": " + formatDegrees(text);
+    }
+
+    if (/mm$/.test(normalizedKey)) {
+      return label + ": " + formatMillimeters(text);
+    }
+
+    if (/ppf$/.test(normalizedKey)) {
+      return label + ": " + formatPpf(text);
+    }
+
+    return label + ": " + text;
   }
 
 
