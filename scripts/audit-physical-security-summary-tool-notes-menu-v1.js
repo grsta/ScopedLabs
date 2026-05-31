@@ -4,7 +4,7 @@ const path = require("path");
 const ROOT = process.cwd();
 const VERSION = "physical-security-summary-tool-notes-menu-audit-001";
 const SUMMARY_SCRIPT_CACHE = "physical-security-summary-tool-notes-menu-016";
-const EXPORT_CACHE = "shared-export-023-ignore-table-action-children";
+const EXPORT_CACHE = "shared-export-024-report-text-wrap";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -56,7 +56,7 @@ add(
 );
 
 [
-  "shared-export-023-ignore-table-action-children",
+  "shared-export-024-report-text-wrap",
   "function exportableTableCellText(cell)",
   "clone.querySelectorAll('[data-export-ignore=\"true\"]').forEach((item) => item.remove());",
   "text: exportableTableCellText(cell)"

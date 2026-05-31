@@ -1460,6 +1460,27 @@ if (shouldSuppressDefaultInterpretationBlock()) {
       color:var(--muted);
       font-size:.95rem;
     }
+    /* shared-export-024-report-text-wrap */
+    .summary,
+    .body-copy,
+    .project-details,
+    .report-meta,
+    .foot,
+    .extra-table-title,
+    th,
+    td,
+    li,
+    p{
+      max-width:100%;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+    .body-copy{
+      white-space:normal;
+    }
+    table{
+      table-layout:fixed;
+    }
     .grid{
       display:grid;
       grid-template-columns:repeat(2,minmax(0,1fr));

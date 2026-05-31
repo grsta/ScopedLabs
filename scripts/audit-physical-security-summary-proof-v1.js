@@ -79,7 +79,7 @@ addSignals("index-signal", "index", index, [
   "/assets/physical-security-report-summary.js?v=physical-security-report-summary-029-area-step-table-title",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
   "/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes",
-  "/assets/export.js?v=shared-export-023-ignore-table-action-children",
+  "/assets/export.js?v=shared-export-024-report-text-wrap",
   "./script.js?v=physical-security-summary-tool-notes-menu-016"
 ]);
 
