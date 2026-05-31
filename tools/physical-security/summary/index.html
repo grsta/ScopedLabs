@@ -631,6 +631,14 @@
         grid-template-columns: 1fr;
       }
     }
+  
+    /* physical-security-summary-report-export-only-live-hide-026
+       Keep the full Physical Security report body available for export,
+       but do not display it again on the live Summary page. */
+    #summaryExportSection #physicalSecurityReportMount {
+      display: none !important;
+    }
+
   </style>
 </head>
 
