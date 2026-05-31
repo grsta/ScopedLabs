@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-010-watch-risk-note";
+  const VERSION = "physical-security-report-summary-011-area-zone-sections";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -261,6 +261,205 @@
     return '<span class="physical-security-report-status ' + className + '">' + escapeHtml(statusLabel(className)) + '</span>';
   }
 
+  function getAreaStateApi() {
+    return window.ScopedLabsPhysicalSecurityAreaState || null;
+  }
+
+  function readAreaLedger() {
+    const api = getAreaStateApi();
+    const empty = { areas: [], activeAreaId: "" };
+    if (!api) return empty;
+
+    const methods = ["readLedger", "getLedger", "explainAreaState", "readState"];
+    for (const method of methods) {
+      if (typeof api[method] !== "function") continue;
+      try {
+        const value = api[method]();
+        if (Array.isArray(value)) return { areas: value, activeAreaId: "" };
+        if (value && Array.isArray(value.areas)) return value;
+        if (value && value.ledger && Array.isArray(value.ledger.areas)) return value.ledger;
+      } catch {}
+    }
+
+    return empty;
+  }
+
+  function routeGroup(area) {
+    const value = String((area && (area.routeIntent || area.scopeType || area.areaType)) || "").toLowerCase();
+    if (value.includes("face")) return "face";
+    if (value.includes("plate") || value.includes("license")) return "plate";
+    return "core";
+  }
+
+  function routeLabel(group) {
+    if (group === "face") return "Face Recognition Zone";
+    if (group === "plate") return "License Plate Zone";
+    return "Core Coverage Area";
+  }
+
+  function scopeNumberLabel(group, index) {
+    if (group === "face") return "Face Zone " + String(index + 1);
+    if (group === "plate") return "Plate Zone " + String(index + 1);
+    return "Area " + String(index + 1);
+  }
+
+  function scopeStatus(area) {
+    return normalizeStatus(area && (area.overallStatus || area.lensStatus || area.spacingStatus || area.faceRecognitionStatus || area.licensePlateStatus || area.status || "unknown"));
+  }
+
+  function scopeTitle(area, group, index) {
+    const name = area && area.name ? String(area.name) : "Unnamed Area";
+    return scopeNumberLabel(group, index) + ": " + name;
+  }
+
+  function areaDetail(area) {
+    const parts = [];
+    if (area && area.protectedLengthFt) parts.push("span " + area.protectedLengthFt + " ft");
+    if (area && area.distanceToTargetPlaneFt) parts.push("distance " + area.distanceToTargetPlaneFt + " ft");
+    if (area && area.cameraCount) parts.push(area.cameraCount + " camera" + (Number(area.cameraCount) === 1 ? "" : "s"));
+    if (area && area.selectedLensMm) parts.push(area.selectedLensMm + " mm lens");
+    if (area && area.faceRecognitionMaxDistanceFt) parts.push("face max " + area.faceRecognitionMaxDistanceFt + " ft");
+    if (area && area.licensePlateMaxDistanceFt) parts.push("plate max " + area.licensePlateMaxDistanceFt + " ft");
+    return parts.length ? parts.join(" | ") : "No detailed result saved yet.";
+  }
+
+  function firstAreaValue(area, keys) {
+    const source = area && typeof area === "object" ? area : {};
+    for (const key of keys) {
+      const value = source[key];
+      if (value === 0) return value;
+      if (value === false) return value;
+      if (value != null && String(value).trim() !== "") return value;
+    }
+    return "";
+  }
+
+  function areaToolDefinitions(group) {
+    if (group === "face") {
+      return [
+        { label: "Face Recognition", statusKeys: ["faceRecognitionStatus", "faceStatus", "overallStatus"], detailKeys: ["faceRecognitionSummary", "faceSummary", "faceRecognitionMaxDistanceFt", "distanceToTargetPlaneFt"] }
+      ];
+    }
+
+    if (group === "plate") {
+      return [
+        { label: "License Plate", statusKeys: ["licensePlateStatus", "plateStatus", "overallStatus"], detailKeys: ["licensePlateSummary", "plateSummary", "licensePlateMaxDistanceFt", "distanceToTargetPlaneFt"] }
+      ];
+    }
+
+    return [
+      { label: "Scene Illumination", statusKeys: ["sceneIlluminationStatus", "illuminationStatus", "lightingStatus"], detailKeys: ["sceneIlluminationSummary", "illuminationSummary", "lightingSummary"] },
+      { label: "Mounting Height", statusKeys: ["mountingHeightStatus", "heightStatus"], detailKeys: ["mountingHeightSummary", "mountingHeightFt"] },
+      { label: "Field of View", statusKeys: ["fieldOfViewStatus", "fovStatus"], detailKeys: ["fieldOfViewSummary", "fovSummary", "assumedHfovDeg"] },
+      { label: "Camera Coverage Area", statusKeys: ["cameraCoverageAreaStatus", "coverageStatus"], detailKeys: ["cameraCoverageAreaSummary", "coverageSummary", "distanceToTargetPlaneFt", "protectedLengthFt"] },
+      { label: "Camera Spacing", statusKeys: ["cameraSpacingStatus", "spacingStatus"], detailKeys: ["cameraSpacingSummary", "spacingSummary", "cameraCount", "spacingFt"] },
+      { label: "Blind Spot Check", statusKeys: ["blindSpotStatus", "blindSpotCheckStatus"], detailKeys: ["blindSpotSummary", "blindSpotCheckSummary"] },
+      { label: "Pixel Density", statusKeys: ["pixelDensityStatus", "densityStatus"], detailKeys: ["pixelDensitySummary", "densitySummary", "pixelDensityPpf"] },
+      { label: "Lens Selection", statusKeys: ["lensSelectionStatus", "lensStatus"], detailKeys: ["lensSelectionSummary", "lensSummary", "selectedLensMm"] }
+    ];
+  }
+
+  function areaToolDetail(area, definition) {
+    const value = firstAreaValue(area, definition.detailKeys || []);
+    if (value || value === 0 || value === false) return String(value);
+    return "No area-specific result saved for this step yet.";
+  }
+
+  function areaToolRows(area) {
+    const group = routeGroup(area);
+    return areaToolDefinitions(group).map((definition) => {
+      const statusValue = firstAreaValue(area, definition.statusKeys || []);
+      const status = normalizeStatus(statusValue || "unknown");
+      return {
+        label: definition.label,
+        status,
+        detail: areaToolDetail(area, definition)
+      };
+    });
+  }
+
+  function renderAreaZoneToolTable(area) {
+    const rows = areaToolRows(area);
+    const body = rows.map((row) => {
+      return '<tr><td>' + escapeHtml(row.label) + '</td><td>' + renderReportStatusText(row.status) + '</td><td>' + escapeHtml(row.detail) + '</td></tr>';
+    }).join("");
+
+    return '<table class="summary-table physical-security-area-zone-tool-table" data-sl-physical-security-area-zone-tool-table="true"><thead><tr><th>Tool / Area Step</th><th>Status</th><th>Area / Zone Detail</th></tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
+  function renderAreaZoneGroup(title, areas, group) {
+    if (!areas.length) return '<h3>' + escapeHtml(title) + '</h3><p class="physical-security-area-zone-empty">No ' + escapeHtml(title.toLowerCase()) + ' recorded yet.</p>';
+
+    const cards = areas.map((area, index) => {
+      const status = scopeStatus(area);
+      return '<div class="physical-security-area-zone-card" data-sl-physical-security-area-zone-card="true"><h4>' + escapeHtml(scopeTitle(area, group, index)) + '</h4><p class="physical-security-area-zone-meta">' + escapeHtml(routeLabel(group) + ' | ' + areaDetail(area)) + '</p><p>' + renderReportStatusText(status) + '</p>' + renderAreaZoneToolTable(area) + '</div>';
+    }).join("");
+
+    return '<h3>' + escapeHtml(title) + '</h3>' + cards;
+  }
+
+  function renderAreaZoneSectionsHtml() {
+    const ledger = readAreaLedger();
+    const areas = Array.isArray(ledger.areas) ? ledger.areas : [];
+    if (!areas.length) return "";
+
+    const core = areas.filter((area) => routeGroup(area) === "core");
+    const face = areas.filter((area) => routeGroup(area) === "face");
+    const plate = areas.filter((area) => routeGroup(area) === "plate");
+
+    return '<div class="physical-security-area-zone-report" data-sl-physical-security-area-zone-report="true"><h3>Area / Zone Report Sections</h3>' +
+      renderAreaZoneGroup("Core Coverage Areas", core, "core") +
+      '<h3>Optional Specialty Zones</h3>' +
+      renderAreaZoneGroup("Face Recognition Zones", face, "face") +
+      renderAreaZoneGroup("License Plate Zones", plate, "plate") +
+      '</div>';
+  }
+
+  function buildScopedActionRows() {
+    const ledger = readAreaLedger();
+    const areas = Array.isArray(ledger.areas) ? ledger.areas : [];
+    const rows = [];
+
+    [["core", areas.filter((area) => routeGroup(area) === "core")], ["face", areas.filter((area) => routeGroup(area) === "face")], ["plate", areas.filter((area) => routeGroup(area) === "plate")]].forEach(([group, groupAreas]) => {
+      groupAreas.forEach((area, index) => {
+        const scope = scopeTitle(area, group, index);
+        areaToolRows(area)
+          .filter((row) => normalizeStatus(row.status) === "risk" || normalizeStatus(row.status) === "watch")
+          .forEach((row) => {
+            rows.push([
+              scope,
+              row.label,
+              renderReportStatusText(row.status),
+              "Review this area or zone result before finalizing the report.",
+              row.detail || "Confirm this condition before carrying the design forward."
+            ]);
+          });
+      });
+    });
+
+    return rows;
+  }
+
+  function buildGlobalActionRows(summary) {
+    return (summary.tools || [])
+      .filter((tool) => normalizeStatus(tool.status) === "risk" || normalizeStatus(tool.status) === "watch")
+      .slice(0, 8)
+      .map((tool) => {
+        const status = renderReportStatusText(tool.status);
+        const action = tool.action || "Review this tool result before finalizing the category.";
+        const detail = tool.reason || tool.reportSummary || tool.nextStep || tool.expectedResult || "Confirm this condition before carrying the design forward.";
+        const nextStep = tool.nextStep && tool.nextStep !== detail ? " Next step: " + tool.nextStep : "";
+
+        return [
+          "Category-wide",
+          tool.label || tool.slug || "Physical Security Tool",
+          status,
+          action,
+          detail + nextStep
+        ];
+      });
+  }
+
   function renderExportTableHtml(summary) {
     if (!summary || !summary.counts || !summary.counts.generated) return "";
 
@@ -277,22 +476,8 @@
       summary.nextStep ? ["Recommended next step", summary.nextStep] : null
     ].filter(Boolean);
 
-    const detailRows = (summary.tools || [])
-      .filter((tool) => normalizeStatus(tool.status) === "risk" || normalizeStatus(tool.status) === "watch")
-      .slice(0, 6)
-      .map((tool) => {
-        const status = renderReportStatusText(tool.status);
-        const action = tool.action || "Review this tool result before finalizing the category.";
-        const detail = tool.reason || tool.reportSummary || tool.nextStep || tool.expectedResult || "Confirm this condition before carrying the design forward.";
-        const nextStep = tool.nextStep && tool.nextStep !== detail ? " Next step: " + tool.nextStep : "";
-
-        return [
-          tool.label || tool.slug || "Physical Security Tool",
-          status,
-          action,
-          detail + nextStep
-        ];
-      });
+    const scopedDetailRows = buildScopedActionRows();
+    const detailRows = (scopedDetailRows.length ? scopedDetailRows : buildGlobalActionRows(summary)).slice(0, 14);
 
     const summaryTable = [
       '<table class="summary-table physical-security-category-summary-table" data-sl-physical-security-report-summary-table="true">',
@@ -306,24 +491,26 @@
     ].join("");
 
     const detailIntro = detailRows.length
-      ? '<p class="physical-security-watch-risk-note"><strong>Watch/Risk detail only:</strong> The table below lists items that need review or correction. Healthy and pending tools stay in the page rollup above.</p>'
+      ? '<p class="physical-security-watch-risk-note"><strong>Watch/Risk detail only:</strong> The table below lists items that need review or correction by area/zone when scope data is available. Healthy and pending tools stay in the area/zone report sections below.</p>'
       : "";
 
     const detailTable = detailRows.length
       ? [
           '<div style="margin-top:12px;"></div>',
           '<table class="summary-table physical-security-watch-risk-table" data-sl-physical-security-report-summary-detail-table="true">',
-          '<thead><tr><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th></tr></thead>',
+          '<thead><tr><th>Scope / Area</th><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th></tr></thead>',
           '<tbody>',
           detailRows.map((row) => {
-            return '<tr>' + row.map((cell, index) => '<td>' + (index === 1 ? cell : escapeHtml(cell)) + '</td>').join("") + '</tr>';
+            return '<tr>' + row.map((cell, index) => '<td>' + (index === 2 ? cell : escapeHtml(cell)) + '</td>').join("") + '</tr>';
           }).join(""),
           '</tbody>',
           '</table>'
         ].join("")
       : "";
 
-    return summaryTable + detailIntro + detailTable;
+    const areaZoneSections = renderAreaZoneSectionsHtml();
+
+    return summaryTable + detailIntro + detailTable + areaZoneSections;
   }
 
   function renderExportHtml(summary) {

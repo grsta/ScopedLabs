@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-report-status-text-audit-002-watch-risk-note";
+const VERSION = "physical-security-summary-report-status-text-audit-003-area-zone-sections";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -29,13 +29,13 @@ const statusStyle = between(index, "    /* physical-security-summary-report-stat
 
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("report-summary-exists", exists("assets/physical-security-report-summary.js"), "report summary asset exists");
-safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-010-watch-risk-note"), "report summary cache bumped");
-safe("report-version-bumped", report.includes("physical-security-report-summary-010-watch-risk-note"), "report summary version bumped");
+safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-011-area-zone-sections"), "report summary cache bumped");
+safe("report-version-bumped", report.includes("physical-security-report-summary-011-area-zone-sections"), "report summary version bumped");
 safe("report-status-style", statusStyle.includes(".physical-security-report-status") && statusStyle.includes("background: transparent;") && statusStyle.includes("text-transform: none;"), "report status text style exists");
 safe("report-status-colors", statusStyle.includes(".physical-security-report-status.healthy") && statusStyle.includes(".physical-security-report-status.watch") && statusStyle.includes(".physical-security-report-status.risk") && statusStyle.includes(".physical-security-report-status.unknown"), "report status colors exist");
 safe("report-status-helper", report.includes("function renderReportStatusText(status)") && report.includes("function reportStatusClass(status)"), "report status helper exists");
 safe("category-status-row-colored", report.includes("[\"Status\", renderReportStatusText(summary.status), true]"), "category summary status row uses colored text");
-safe("detail-status-cell-colored", report.includes("const status = renderReportStatusText(tool.status);") && report.includes("index === 1 ? cell : escapeHtml(cell)"), "watch/risk detail status column uses colored text");
+safe("detail-status-cell-colored", report.includes("const status = renderReportStatusText(tool.status);") && report.includes("index === 2 ? cell : escapeHtml(cell)"), "watch/risk detail status column uses colored text");
 safe("no-pill-class-introduced", !report.includes("pill") && !statusStyle.includes("border-radius: 999px;"), "report status patch does not introduce pill styling");
 safe("summary-tables-remain", report.includes("physical-security-category-summary-table") && report.includes("physical-security-watch-risk-table"), "report tables remain");
 safe("export-remains", index.includes("summaryExportSection") && index.includes("id=\"exportReport\"") && index.includes("id=\"saveSnapshot\""), "export/report controls remain");
