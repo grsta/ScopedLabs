@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-017-scoped-tool-links";
+  const VERSION = "physical-security-report-summary-018-scoped-link-summary-text";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -37,6 +37,19 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+
+  function plainReportText(value) {
+    return String(value ?? "")
+      .replace(/<[^>]*>/g, "")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
 
@@ -614,6 +627,7 @@
   }
 
 
+
   function scopedPriority(detailRows) {
     if (!Array.isArray(detailRows) || !detailRows.length) return null;
 
@@ -623,10 +637,10 @@
     if (!row) return null;
 
     return {
-      scope: row[0] || "Area / Zone",
-      tool: row[1] || "Physical Security Tool",
-      action: row[3] || "Review this area or zone result before finalizing the report.",
-      detail: row[4] || ""
+      scope: plainReportText(row[0] || "Area / Zone"),
+      tool: plainReportText(row[1] || "Physical Security Tool"),
+      action: plainReportText(row[3] || "Review this area or zone result before finalizing the report."),
+      detail: plainReportText(row[4] || "")
     };
   }
 

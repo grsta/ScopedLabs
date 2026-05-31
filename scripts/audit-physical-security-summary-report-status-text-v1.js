@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-report-status-text-audit-009-scoped-tool-links";
+const VERSION = "physical-security-summary-report-status-text-audit-010-summary-text";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -29,8 +29,8 @@ const statusStyle = between(index, "    /* physical-security-summary-report-stat
 
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("report-summary-exists", exists("assets/physical-security-report-summary.js"), "report summary asset exists");
-safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-017-scoped-tool-links"), "report summary cache bumped");
-safe("report-version-bumped", report.includes("physical-security-report-summary-017-scoped-tool-links"), "report summary version bumped");
+safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-018-scoped-link-summary-text"), "report summary cache bumped");
+safe("report-version-bumped", report.includes("physical-security-report-summary-018-scoped-link-summary-text"), "report summary version bumped");
 safe("report-status-style", statusStyle.includes(".physical-security-report-status") && statusStyle.includes("background: transparent;") && statusStyle.includes("text-transform: none;"), "report status text style exists");
 safe("report-status-colors", statusStyle.includes(".physical-security-report-status.healthy") && statusStyle.includes(".physical-security-report-status.watch") && statusStyle.includes(".physical-security-report-status.risk") && statusStyle.includes(".physical-security-report-status.unknown"), "report status colors exist");
 safe("report-status-helper", report.includes("function renderReportStatusText(status)") && report.includes("function reportStatusClass(status)"), "report status helper exists");
