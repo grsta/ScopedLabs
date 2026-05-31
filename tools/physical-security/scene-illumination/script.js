@@ -719,6 +719,37 @@ function hideVisibleFlowContext() {
   }
 
 
+
+  function sceneIlluminationAreaDetail(data) {
+    const parts = [];
+
+    if (data && data.lightingGoalLabel) parts.push("Goal: " + data.lightingGoalLabel);
+    if (data && Number.isFinite(Number(data.area))) parts.push("Lighting area: " + fmtSqFt(data.area));
+    if (data && Number.isFinite(Number(data.fc))) parts.push("Target illumination: " + fmtFc(data.fc));
+    if (data && Number.isFinite(Number(data.lumens))) parts.push("Estimated required light: " + fmtLumens(data.lumens));
+    if (data && Number.isFinite(Number(data.effectiveFactor))) parts.push("Effective planning factor: " + fmtFactor(data.effectiveFactor));
+    if (data && data.lightingClass) parts.push("Lighting class: " + data.lightingClass);
+
+    return parts.length ? parts.join(" | ") : "Scene illumination result saved for this area.";
+  }
+
+  function sceneIlluminationAreaRecommendation(data) {
+    try {
+      const recommendation = sceneIlluminationPrimaryRecommendation(data);
+      return recommendation && typeof recommendation === "object" ? recommendation : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function sceneIlluminationAreaAction(data) {
+    return sceneIlluminationAreaRecommendation(data).action || "Review Scene Illumination Assumptions";
+  }
+
+  function sceneIlluminationAreaNextStep(data) {
+    return sceneIlluminationAreaRecommendation(data).nextStep || data?.guidance || "Review scene illumination assumptions before carrying this area forward.";
+  }
+
   function updateActiveAreaFromScene(data) {
     const api = window.ScopedLabsPhysicalSecurityAreaState;
     if (!api || typeof api.updateActiveAreaResult !== "function") return;
@@ -750,6 +781,12 @@ function hideVisibleFlowContext() {
       lumenDensity: data.lumenDensity,
       lightingClass: data.lightingClass,
       lightingStatus: data.status,
+      sceneIlluminationStatus: sceneIlluminationGuidanceStatus(data),
+      sceneIlluminationSummary: sceneIlluminationAreaDetail(data),
+      sceneIlluminationDetail: sceneIlluminationAreaDetail(data),
+      sceneIlluminationAction: sceneIlluminationAreaAction(data),
+      sceneIlluminationNextStep: sceneIlluminationAreaNextStep(data),
+      lightingSummary: sceneIlluminationAreaDetail(data),
       lightingInterpretation: data.interpretation,
       lightingGuidance: data.guidance,
       lightingUpdatedAt: new Date().toISOString()

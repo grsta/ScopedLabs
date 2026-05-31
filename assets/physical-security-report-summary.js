@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-019-detail-labels";
+  const VERSION = "physical-security-report-summary-020-area-detail-contract";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -356,6 +356,7 @@
   }
 
 
+
   function areaToolDefinitions(group) {
     if (group === "face") {
       return [
@@ -370,7 +371,7 @@
     }
 
     return [
-      { label: "Scene Illumination", url: "/tools/physical-security/scene-illumination/", statusKeys: ["sceneIlluminationStatus", "illuminationStatus", "lightingStatus"], detailKeys: ["sceneIlluminationSummary", "illuminationSummary", "lightingSummary"] },
+      { label: "Scene Illumination", url: "/tools/physical-security/scene-illumination/", statusKeys: ["sceneIlluminationStatus", "illuminationStatus", "lightingStatus"], detailKeys: ["sceneIlluminationSummary", "sceneIlluminationDetail", "lightingSummary", "lightingInterpretation", "lightingGuidance", "estimatedLumensRequired", "targetIlluminationFc", "lightingClass"] },
       { label: "Mounting Height", url: "/tools/physical-security/mounting-height/", statusKeys: ["mountingHeightStatus", "heightStatus"], detailKeys: ["mountingHeightSummary", "mountingHeightFt"] },
       { label: "Field of View", url: "/tools/physical-security/field-of-view/", statusKeys: ["fieldOfViewStatus", "fovStatus"], detailKeys: ["fieldOfViewSummary", "fovSummary", "assumedHfovDeg"] },
       { label: "Camera Coverage Area", url: "/tools/physical-security/camera-coverage-area/", statusKeys: ["cameraCoverageAreaStatus", "coverageStatus"], detailKeys: ["cameraCoverageAreaSummary", "coverageSummary", "distanceToTargetPlaneFt", "protectedLengthFt"] },
@@ -382,7 +383,8 @@
   }
 
 
-  function areaToolDetail(area, definition) {
+
+  function areaToolDetail(area, definition, status) {
     const source = area && typeof area === "object" ? area : {};
     const keys = Array.isArray(definition.detailKeys) ? definition.detailKeys : [];
 
@@ -391,6 +393,10 @@
       if (value === 0 || value === false || (value != null && String(value).trim() !== "")) {
         return formatAreaToolDetailValue(definition, key, value);
       }
+    }
+
+    if (statusIsGenerated(status)) {
+      return generatedAreaDetailFallback(definition, status);
     }
 
     return "No area-specific result saved for this step yet.";
@@ -431,6 +437,33 @@
     return text;
   }
 
+
+  function formatLumensValue(value) {
+    const text = cleanDetailValue(value);
+    if (!text) return text;
+    if (/\b(lm|lumen|lumens)\b/i.test(text)) return text;
+
+    const numeric = Number(String(text).replace(/,/g, ""));
+    if (Number.isFinite(numeric)) {
+      return Math.round(numeric).toLocaleString() + " lumens";
+    }
+
+    return text + " lumens";
+  }
+
+  function formatFootcandles(value) {
+    const text = cleanDetailValue(value);
+    if (!text) return text;
+    return /\b(fc|footcandle|footcandles)\b/i.test(text) ? text : text + " fc";
+  }
+
+  function generatedAreaDetailFallback(definition, status) {
+    const label = String(definition && definition.label ? definition.label : "Tool").trim();
+    const statusText = statusLabel(normalizeStatus(status));
+
+    return label + " status is saved as " + statusText + ", but no detailed metric was stored for this area yet. Recalculate this tool to refresh the area-specific report detail.";
+  }
+
   function formatAreaToolDetailValue(definition, key, value) {
     const text = cleanDetailValue(value);
     const normalizedKey = String(key || "").toLowerCase();
@@ -460,6 +493,26 @@
 
     if (normalizedKey === "distancetotargetplaneft") {
       return "Distance to target plane: " + formatFeet(text);
+    }
+
+    if (normalizedKey === "targetilluminationfc") {
+      return "Target illumination: " + formatFootcandles(text);
+    }
+
+    if (normalizedKey === "estimatedlumensrequired") {
+      return "Estimated required light: " + formatLumensValue(text);
+    }
+
+    if (normalizedKey === "sceneareasqft") {
+      return "Lighting area: " + text + " sq ft";
+    }
+
+    if (normalizedKey === "effectivelightingfactor") {
+      return "Effective planning factor: " + text;
+    }
+
+    if (normalizedKey === "lightingclass") {
+      return "Lighting class: " + text;
     }
 
     if (normalizedKey === "protectedlengthft") {
@@ -514,7 +567,7 @@
         label: definition.label,
         url: definition.url || "",
         status,
-        detail: areaToolDetail(area, definition)
+        detail: areaToolDetail(area, definition, status)
       };
     });
   }
