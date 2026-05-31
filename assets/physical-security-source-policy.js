@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-source-policy-001-web-intake-gate";
+  const VERSION = "physical-security-source-policy-002-master-knowledge-guardrails";
   const CATEGORY = "physical-security";
 
   const allowedTopics = {
@@ -124,6 +124,28 @@
     ]
   };
 
+  const masterAssistantSourceRules = {
+    runtimeFetchAllowed: false,
+    approvedKnowledgePath: "Curated or cached source summaries only",
+    allowedToInfluence: [
+      "guidance wording",
+      "procedure/method explanation",
+      "non-destructive correction suggestions",
+      "report-readiness narrative",
+      "source-integrity warnings"
+    ],
+    forbiddenToInfluence: [
+      "calculator formulas",
+      "tool thresholds",
+      "pipeline carry-over values",
+      "protected Lens Selection behavior",
+      "audit pass/fail logic",
+      "vendor recommendations or shopping decisions"
+    ],
+    summaryRule: "Current-method or web-derived information can make the master assistant smarter about procedures, but it cannot change ScopedLabs calculations."
+  };
+
+
   function clone(value) {
     if (value == null) return value;
     try {
@@ -206,12 +228,17 @@
     return clone(sourceUseRules);
   }
 
+  function getMasterAssistantSourceRules() {
+    return clone(masterAssistantSourceRules);
+  }
+
   window.ScopedLabsPhysicalSecuritySourcePolicy = Object.freeze({
     version: VERSION,
     category: CATEGORY,
     getAllowedTopics,
     getBlockedTopics,
     getSourceUseRules,
+    getMasterAssistantSourceRules,
     classifyText,
     classifySourceCandidate
   });

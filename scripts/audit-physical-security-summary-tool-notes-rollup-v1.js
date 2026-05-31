@@ -42,7 +42,7 @@ function add(name, status, detail) {
   'physicalSecurityToolNotesMount',
   'data-export-section',
   'data-export-title="Physical Security Tool Notes"',
-  './script.js?v=physical-security-summary-tool-notes-area-context-013',
+  './script.js?v=physical-security-summary-owned-category-master-014',
   '/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes'
 ].forEach((signal) => {
   add(
@@ -53,7 +53,7 @@ function add(name, status, detail) {
 });
 
 [
-  'physical-security-summary-tool-notes-area-context-013',
+  'physical-security-summary-owned-category-master-014',
   'const TOOL_NOTE_TOOLS = CORE_TOOLS.concat(SPECIALTY_TOOLS);',
   'function readSavedToolNotePages()',
   'function toolNoteScopeLabel(page)',

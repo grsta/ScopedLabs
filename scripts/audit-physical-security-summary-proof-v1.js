@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-proof-audit-021-lens-summary-text-safe";
+const VERSION = "physical-security-summary-proof-audit-022-owned-category-master";
 
 function exists(rel) {
   return fs.existsSync(path.join(ROOT, rel));
@@ -72,13 +72,15 @@ addSignals("index-signal", "index", index, [
   "data-export-section",
   "data-active-area-banner=\"off\"",
   "/assets/physical-security-guidance-memory.js",
-  "/assets/physical-security-category-guidance.js",
+  "/assets/physical-security-source-policy.js?v=physical-security-source-policy-002-master-knowledge-guardrails",
+  "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-002-owned-category-master",
+  "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-004-owned-category-master",
   "/assets/physical-security-category-guidance-renderer.js",
   "/assets/physical-security-report-summary.js?v=physical-security-report-summary-029-area-step-table-title",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
   "/assets/scopedlabs-report-metadata.js?v=scopedlabs-report-metadata-004-area-context-notes",
   "/assets/export.js?v=shared-export-021-extra-table-title-rows",
-  "./script.js?v=physical-security-summary-tool-notes-area-context-013"
+  "./script.js?v=physical-security-summary-owned-category-master-014"
 ]);
 
 addSignals("script-signal", "script", script, [
@@ -94,6 +96,9 @@ addSignals("script-signal", "script", script, [
   "access-control-doors",
   "ScopedLabsPhysicalSecurityGuidanceMemory",
   "ScopedLabsPhysicalSecurityCategoryGuidanceRenderer",
+  "function buildSummaryMasterExplanation(model)",
+  "masterAssistant: summaryMasterPayload(masterExplanation)",
+  "Owned category knowledge",
   "ScopedLabsPhysicalSecurityReportSummary",
   "const TOOL_NOTE_TOOLS = CORE_TOOLS.concat(SPECIALTY_TOOLS);",
   "function toolNoteScopeLabel(page)",

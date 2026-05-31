@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-knowledge-001-web-ready";
+  const VERSION = "physical-security-category-knowledge-002-owned-category-master";
   const CATEGORY = "physical-security";
 
   const pipelineOrder = [
@@ -176,6 +176,189 @@
     coreRule: "External sources may inform guidance language, but cannot override ScopedLabs math, pipeline carry-over, audits, or protected tool behavior."
   };
 
+  const masterAssistantProfile = {
+    label: "Physical Security Master Assistant",
+    ownedCategory: CATEGORY,
+    role: "Category review board for Physical Security summary reports",
+    mission: "Collect local Physical Security tool assistant outcomes, area/zone context, report metadata, and tool notes; then guide the user through Risk, Watch, and missing-core corrections before final handoff.",
+    visibility: "Summary page only",
+    inputSources: [
+      "Validated local tool assistant guidance",
+      "Guidance memory records",
+      "Area Planner area/zone ledger",
+      "Summary report metadata",
+      "Area-scoped tool notes",
+      "Report/export readiness state",
+      "Curated Physical Security source summaries when available"
+    ],
+    outputResponsibilities: [
+      "Prioritize Risk before Watch",
+      "Identify missing core pipeline steps",
+      "Explain why each issue matters",
+      "Route the user back to the source tool or source area/zone",
+      "Flag optional Face Recognition and License Plate zones as specialty branches",
+      "Prepare structured handoff context for the future Site Assistant"
+    ],
+    nonAuthorityGuardrails: [
+      "Does not change tool formulas",
+      "Does not change thresholds produced by tools",
+      "Does not change pipeline carry-over values",
+      "Does not rewrite protected/gold tool behavior",
+      "Does not auto-fetch web content in the browser runtime",
+      "Does not insert uncited web-derived claims into client reports",
+      "Risk/Watch corrections must be made by returning to the source tool or source area/zone"
+    ],
+    priorityOrder: [
+      "risk-correction",
+      "watch-validation",
+      "missing-core-step",
+      "specialty-branch-review",
+      "report-metadata-check",
+      "cross-category-handoff"
+    ]
+  };
+
+  const reportReadinessRules = {
+    risk: {
+      label: "Draft - correction required",
+      guidance: "A Physical Security Risk means the report may exist, but it should remain draft until the source tool/area outcome is corrected or intentionally accepted after review."
+    },
+    watch: {
+      label: "Needs review - validate assumptions",
+      guidance: "A Watch means the report can support review, but the assumption should be checked before final client or site handoff."
+    },
+    missing: {
+      label: "Planning draft - core guidance incomplete",
+      guidance: "Missing core guidance means the category summary cannot represent a complete Physical Security design yet."
+    },
+    healthy: {
+      label: "Ready for category-level review",
+      guidance: "Healthy guidance means no current Risk or Watch item is blocking the category summary, but normal engineering review still applies."
+    }
+  };
+
+  const areaZoneModel = {
+    coreCoverageAreas: "Normal Physical Security coverage scopes that should move through the core pipeline and roll up to Summary.",
+    faceRecognitionZones: "Optional specialty branch zones for face detail validation; they attach to Summary but do not become required core steps.",
+    licensePlateZones: "Optional specialty branch zones for plate detail validation; they attach to Summary but do not become required core steps.",
+    repeatableScopes: "A project may contain multiple core areas, multiple face zones, and multiple license plate zones.",
+    routingRule: "The master assistant should name the affected area/zone whenever the saved context is available."
+  };
+
+  const crossCategoryDependencies = [
+    {
+      key: "network-poe",
+      label: "Network / PoE",
+      carryForward: ["camera count", "camera locations", "PoE device assumptions", "uplink context", "network closet dependency"],
+      guidance: "Carry camera count, camera locations, and specialty zone assumptions into switch port, PoE budget, uplink, and network closet planning."
+    },
+    {
+      key: "power-runtime",
+      label: "Power / Runtime",
+      carryForward: ["camera load", "PoE switch load", "lighting assumptions", "recording equipment dependency"],
+      guidance: "Carry camera, lighting, and PoE switch assumptions into UPS/runtime planning."
+    },
+    {
+      key: "storage-retention",
+      label: "Storage / Retention",
+      carryForward: ["resolution", "pixel density", "camera count", "face/plate zones", "recording detail assumptions"],
+      guidance: "Carry resolution, pixel density, camera count, specialty zones, and retention assumptions into storage planning."
+    },
+    {
+      key: "access-control-doors",
+      label: "Access Control",
+      carryForward: ["entry zones", "doorway context", "face capture zones", "event correlation needs"],
+      guidance: "Coordinate doorway camera placement, face capture zones, and event context with access-control planning."
+    }
+  ];
+
+  const toolCorrectionProfiles = {
+    "area-planner": {
+      correctionFocus: "Confirm area/zone type, dimensions, name, and routing intent before trusting downstream guidance.",
+      riskMeaning: "Area context is missing or mismatched, so downstream tool results may belong to the wrong scope.",
+      watchMeaning: "Area context exists but should be confirmed before final reporting.",
+      correctionQuestions: ["Is the active area/zone the intended scope?", "Is the zone type core, face, or license plate?", "Are width/depth and labels client-readable?"],
+      reportImpact: "Area/zone labels drive Summary grouping and future Site Assistant handoff."
+    },
+    "scene-illumination": {
+      correctionFocus: "Validate maintained illumination assumptions before relying on camera performance guidance.",
+      riskMeaning: "Lighting assumptions may not support the intended camera view or detail target.",
+      watchMeaning: "Lighting should be confirmed because it affects image quality and downstream review confidence.",
+      correctionQuestions: ["Is target illumination appropriate for the scene?", "Are utilization and light-loss assumptions realistic?", "Is additional lighting needed before camera geometry is trusted?"],
+      reportImpact: "Lighting uncertainty affects mounting, FOV, pixel density, and specialty capture confidence."
+    },
+    "mounting-height": {
+      correctionFocus: "Correct camera height, target distance, vertical angle, and target framing assumptions.",
+      riskMeaning: "Mount geometry may create an unusable angle or framing condition.",
+      watchMeaning: "Mount geometry is plausible but should be verified against site constraints.",
+      correctionQuestions: ["Is the mount height physically possible?", "Is the target distance correct?", "Does the view angle fit the intended subject/detail?"],
+      reportImpact: "Mounting issues can invalidate FOV, coverage, face, and plate assumptions."
+    },
+    "field-of-view": {
+      correctionFocus: "Validate the horizontal scene width and field-of-view fit before applying coverage reserve.",
+      riskMeaning: "The lens/view geometry may not cover the target width at the selected distance.",
+      watchMeaning: "The view fit should be confirmed before spacing and lens selection are finalized.",
+      correctionQuestions: ["Is target distance correct?", "Is the target scene width correct?", "Does HFOV match the intended lens/profile?"],
+      reportImpact: "FOV is the raw footprint foundation for coverage area and lens planning."
+    },
+    "camera-coverage-area": {
+      correctionFocus: "Review raw footprint, reserve, effective width, effective height, and usable coverage.",
+      riskMeaning: "Usable coverage after reserve may not support the intended area.",
+      watchMeaning: "Reserve/effective coverage assumptions should be checked before spacing.",
+      correctionQuestions: ["Is the reserve appropriate?", "Is effective width being used downstream instead of raw width?", "Does the usable footprint match the area?"],
+      reportImpact: "Coverage Area feeds Camera Spacing and can change camera count expectations."
+    },
+    "camera-spacing": {
+      correctionFocus: "Review camera count, actual spacing, overlap target, and protected span coverage.",
+      riskMeaning: "Camera layout may leave insufficient coverage continuity or an inefficient/camera-heavy design.",
+      watchMeaning: "Spacing should be validated before blind spot and pixel density conclusions are trusted.",
+      correctionQuestions: ["Is effective width from Coverage Area being used?", "Is overlap target intentional?", "Is camera count reasonable for the span?"],
+      reportImpact: "Spacing affects blind spot validation, PoE port count, storage assumptions, and budget coordination."
+    },
+    "blind-spot-check": {
+      correctionFocus: "Validate modeled gaps, intervals, camera positions, and coverage continuity.",
+      riskMeaning: "The spacing/layout may leave modeled blind spots that should be corrected before detail planning.",
+      watchMeaning: "Continuity should be verified before treating the layout as clean.",
+      correctionQuestions: ["Are modeled gaps acceptable?", "Do intervals match the intended area?", "Should the area be split into additional zones?"],
+      reportImpact: "Blind spot findings can require area split, spacing changes, or camera count changes."
+    },
+    "pixel-density": {
+      correctionFocus: "Validate pixels-per-foot/detail target against scene width and resolution assumptions.",
+      riskMeaning: "Detail capture may not meet the selected target at the current scene width/resolution.",
+      watchMeaning: "Detail assumptions should be confirmed before Lens Selection or specialty validation.",
+      correctionQuestions: ["Is the selected detail target correct?", "Is horizontal resolution correct?", "Is scene width tied to the intended camera view?"],
+      reportImpact: "Pixel density affects identification/detail claims and storage handoff assumptions."
+    },
+    "lens-selection": {
+      correctionFocus: "Review final optics/lens planning context while preserving protected Lens Selection behavior.",
+      riskMeaning: "Final lens planning may not support the intended FOV/detail outcome.",
+      watchMeaning: "Lens assumptions should be confirmed before final report handoff.",
+      correctionQuestions: ["Does the selected lens support required FOV?", "Does sensor/lens context match the Pixel Density assumption?", "Are specialty zones intentionally separate?"],
+      reportImpact: "Lens Selection is the final core optics checkpoint before Summary."
+    },
+    "face-recognition-range": {
+      correctionFocus: "Validate optional face detail zone assumptions separately from the core pipeline.",
+      riskMeaning: "The face zone may not support the intended face detail threshold.",
+      watchMeaning: "Face capture assumptions should be confirmed if this specialty zone is included in the report.",
+      correctionQuestions: ["Is this truly a face-recognition zone?", "Is distance correct?", "Is pixels-per-face target intentional?"],
+      reportImpact: "Face zones can affect camera placement, storage, privacy/compliance review, and access-control coordination."
+    },
+    "license-plate-range": {
+      correctionFocus: "Validate optional plate capture zone assumptions separately from the core pipeline.",
+      riskMeaning: "The plate zone may not support the intended plate detail threshold.",
+      watchMeaning: "Plate capture assumptions should be confirmed if this specialty zone is included in the report.",
+      correctionQuestions: ["Is this truly a license plate zone?", "Is capture distance correct?", "Is pixels-per-plate target intentional?", "Are angle/lighting/site constraints noted?"],
+      reportImpact: "Plate zones can affect lens choice, lighting, storage, and network/storage handoff."
+    }
+  };
+
+  const siteAssistantHandoffModel = {
+    payloadRole: "Physical Security category summary feed",
+    shouldInclude: ["category status", "risk/watch counts", "priority correction", "area/zone scopes", "tool notes", "cross-category dependencies", "report readiness"],
+    shouldNotInclude: ["new calculations", "modified tool thresholds", "uncurated web claims", "vendor recommendations"]
+  };
+
+
   function clone(value) {
     if (value == null) return value;
     try {
@@ -189,12 +372,92 @@
     return window.ScopedLabsPhysicalSecuritySourcePolicy || null;
   }
 
+
+  function getMasterAssistantProfile() {
+    return clone(masterAssistantProfile);
+  }
+
+  function getReportReadinessRules() {
+    return clone(reportReadinessRules);
+  }
+
+  function getAreaZoneModel() {
+    return clone(areaZoneModel);
+  }
+
+  function getCrossCategoryDependencies() {
+    return clone(crossCategoryDependencies);
+  }
+
+  function getSiteAssistantHandoffModel() {
+    return clone(siteAssistantHandoffModel);
+  }
+
+  function getToolCorrectionProfile(slug) {
+    const base = toolKnowledge[slug] || null;
+    const correction = toolCorrectionProfiles[slug] || null;
+
+    if (!base && !correction) return null;
+
+    return Object.assign({ slug }, clone(base || {}), clone(correction || {}));
+  }
+
+  function listToolCorrectionProfiles() {
+    return pipelineOrder
+      .filter((slug) => toolKnowledge[slug] || toolCorrectionProfiles[slug])
+      .map((slug) => getToolCorrectionProfile(slug));
+  }
+
+  function explainCorrection(slug, status) {
+    const profile = getToolCorrectionProfile(slug);
+    const normalized = String(status || "").toLowerCase();
+
+    if (!profile) {
+      return {
+        slug,
+        label: slug || "Unknown tool",
+        status: normalized || "unknown",
+        correctionFocus: "Review the source Physical Security tool.",
+        meaning: "No owned-category correction profile is available for this tool.",
+        correctionQuestions: [],
+        reportImpact: "Review before final category handoff."
+      };
+    }
+
+    return {
+      slug,
+      label: profile.label || slug,
+      status: normalized || "unknown",
+      correctionFocus: profile.correctionFocus || profile.masterGuidance || "Review the source Physical Security tool.",
+      meaning: normalized === "risk" ? (profile.riskMeaning || profile.correctionFocus || "Correct this Risk at the source tool.") : normalized === "watch" ? (profile.watchMeaning || profile.correctionFocus || "Validate this Watch at the source tool.") : profile.correctionFocus || "Review this tool result.",
+      correctionQuestions: clone(profile.correctionQuestions || []),
+      reportImpact: profile.reportImpact || "Review before final category handoff.",
+      route: "/tools/physical-security/" + slug + "/"
+    };
+  }
+
+  function buildOwnedCategoryKnowledgeSnapshot() {
+    return {
+      version: VERSION,
+      category: CATEGORY,
+      masterAssistantProfile: clone(masterAssistantProfile),
+      pipelineOrder: clone(pipelineOrder),
+      tools: listToolCorrectionProfiles(),
+      handoffs: listHandoffs(),
+      areaZoneModel: clone(areaZoneModel),
+      reportReadinessRules: clone(reportReadinessRules),
+      crossCategoryDependencies: clone(crossCategoryDependencies),
+      siteAssistantHandoffModel: clone(siteAssistantHandoffModel),
+      externalSourceRules: clone(externalSourceRules)
+    };
+  }
+
   function getTool(slug) {
     return clone(toolKnowledge[slug] || null);
   }
 
   function listTools() {
-    return pipelineOrder.filter((slug) => toolKnowledge[slug]).map((slug) => clone(toolKnowledge[slug]));
+    return pipelineOrder.filter((slug) => toolKnowledge[slug]).map((slug) => Object.assign({ slug }, clone(toolKnowledge[slug])));
   }
 
   function getHandoff(from, to) {
@@ -264,6 +527,15 @@
     category: CATEGORY,
     pipelineOrder: clone(pipelineOrder),
     externalSourceRules: clone(externalSourceRules),
+    getMasterAssistantProfile,
+    getReportReadinessRules,
+    getAreaZoneModel,
+    getCrossCategoryDependencies,
+    getSiteAssistantHandoffModel,
+    getToolCorrectionProfile,
+    listToolCorrectionProfiles,
+    explainCorrection,
+    buildOwnedCategoryKnowledgeSnapshot,
     getTool,
     listTools,
     getHandoff,

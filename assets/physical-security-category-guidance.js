@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-guidance-003-deduped-visible-gate";
+  const VERSION = "physical-security-category-guidance-004-owned-category-master";
   const CATEGORY = "physical-security";
 
   const fallbackOrder = [
@@ -347,6 +347,270 @@
     return topics;
   }
 
+
+  function getKnowledgeSnapshot() {
+    const knowledge = getKnowledge();
+
+    if (knowledge && typeof knowledge.buildOwnedCategoryKnowledgeSnapshot === "function") {
+      return knowledge.buildOwnedCategoryKnowledgeSnapshot();
+    }
+
+    return null;
+  }
+
+  function correctionProfileFor(slug, status) {
+    const knowledge = getKnowledge();
+
+    if (knowledge && typeof knowledge.explainCorrection === "function") {
+      return knowledge.explainCorrection(slug, status);
+    }
+
+    return {
+      slug,
+      label: labelFromSlug(slug),
+      status: normalizeStatus(status),
+      correctionFocus: "Review the source Physical Security tool.",
+      meaning: "Review this result before final category handoff.",
+      correctionQuestions: [],
+      reportImpact: "Review before final category handoff.",
+      route: slug ? "/tools/physical-security/" + slug + "/" : "/tools/physical-security/summary/"
+    };
+  }
+
+  function reportReadinessRules() {
+    const knowledge = getKnowledge();
+
+    if (knowledge && typeof knowledge.getReportReadinessRules === "function") {
+      return knowledge.getReportReadinessRules();
+    }
+
+    return {};
+  }
+
+  function crossCategoryDependencies() {
+    const knowledge = getKnowledge();
+
+    if (knowledge && typeof knowledge.getCrossCategoryDependencies === "function") {
+      return knowledge.getCrossCategoryDependencies();
+    }
+
+    return [];
+  }
+
+  function areaZoneModel() {
+    const knowledge = getKnowledge();
+
+    if (knowledge && typeof knowledge.getAreaZoneModel === "function") {
+      return knowledge.getAreaZoneModel();
+    }
+
+    return {};
+  }
+
+  function summaryContextRows(context) {
+    const model = context && context.model ? context.model : {};
+    return Array.isArray(model.allRows) ? model.allRows : [];
+  }
+
+  function summaryContextCoreRows(context) {
+    const model = context && context.model ? context.model : {};
+    return Array.isArray(model.coreRows) ? model.coreRows : [];
+  }
+
+  function summaryContextScopes(context) {
+    const groups = context && context.model && context.model.groups ? context.model.groups : {};
+    return {
+      total: Number(groups.total || 0),
+      core: Array.isArray(groups.core) ? groups.core.length : 0,
+      face: Array.isArray(groups.face) ? groups.face.length : 0,
+      plate: Array.isArray(groups.plate) ? groups.plate.length : 0,
+      activeAreaId: groups.activeAreaId || ""
+    };
+  }
+
+  function missingCoreFromContext(context) {
+    return summaryContextCoreRows(context).filter((row) => !row.generated || normalizeStatus(row.status) === "unknown");
+  }
+
+  function reportMetadataFromContext(context) {
+    const metadata = context && context.reportMetadata ? context.reportMetadata : {};
+    return {
+      reportTitle: metadata.reportTitle || "",
+      projectName: metadata.projectName || "",
+      clientName: metadata.clientName || "",
+      preparedBy: metadata.preparedBy || "",
+      complete: !!(metadata.reportTitle && metadata.projectName && metadata.clientName && metadata.preparedBy)
+    };
+  }
+
+  function reportPostureFor(status, missingCount) {
+    const rules = reportReadinessRules();
+    const normalized = normalizeStatus(status);
+
+    if (normalized === "risk" && rules.risk) return rules.risk.label;
+    if (normalized === "watch" && rules.watch) return rules.watch.label;
+    if (missingCount && rules.missing) return rules.missing.label;
+    if (normalized === "healthy" && rules.healthy) return rules.healthy.label;
+
+    if (normalized === "risk") return "Draft - correction required";
+    if (normalized === "watch") return "Needs review - validate assumptions";
+    if (normalized === "healthy") return "Ready for category-level review";
+    return "Planning draft - guidance incomplete";
+  }
+
+  function correctionQueue(categoryGuidance, context) {
+    const queue = [];
+    const source = categoryGuidance || {};
+    const riskWatch = [];
+
+    (source.risks || []).forEach((item) => riskWatch.push(item));
+    (source.watches || []).forEach((item) => riskWatch.push(item));
+
+    if (!riskWatch.length) {
+      summaryContextRows(context).forEach((row) => {
+        if (!row.generated) return;
+        const status = normalizeStatus(row.status);
+        if (status === "risk" || status === "watch") riskWatch.push(row);
+      });
+    }
+
+    riskWatch.slice(0, 6).forEach((item) => {
+      const status = normalizeStatus(item.status);
+      const profile = correctionProfileFor(item.slug, status);
+      queue.push({
+        type: status === "risk" ? "risk-correction" : "watch-validation",
+        status,
+        slug: item.slug || "",
+        toolLabel: item.label || profile.label || labelFromSlug(item.slug),
+        label: status === "risk" ? "Correct Risk at source tool" : "Validate Watch at source tool",
+        detail: profile.meaning || item.nextStep || item.detail || item.reason || "Review the source tool guidance.",
+        correctionFocus: profile.correctionFocus || "Review the source Physical Security tool.",
+        correctionQuestions: clone(profile.correctionQuestions || []),
+        reportImpact: profile.reportImpact || "Review before final handoff.",
+        route: profile.route || (item.slug ? "/tools/physical-security/" + item.slug + "/" : "/tools/physical-security/summary/")
+      });
+    });
+
+    missingCoreFromContext(context).slice(0, 6).forEach((row) => {
+      const profile = correctionProfileFor(row.slug, "unknown");
+      queue.push({
+        type: "missing-core-step",
+        status: "watch",
+        slug: row.slug || "",
+        toolLabel: row.label || profile.label || labelFromSlug(row.slug),
+        label: "Complete missing core step",
+        detail: (row.label || profile.label || labelFromSlug(row.slug)) + " has not produced saved guidance for this Summary yet.",
+        correctionFocus: profile.correctionFocus || "Run or refresh this source tool.",
+        correctionQuestions: clone(profile.correctionQuestions || []),
+        reportImpact: profile.reportImpact || "Missing core guidance keeps the report in draft/review posture.",
+        route: row.slug ? "/tools/physical-security/" + row.slug + "/" : "/tools/physical-security/summary/"
+      });
+    });
+
+    if (!queue.length) {
+      queue.push({
+        type: "ready-review",
+        status: "healthy",
+        slug: "summary",
+        toolLabel: "Physical Security Summary",
+        label: "Ready for category review",
+        detail: "No current Risk or Watch item is blocking the Physical Security category summary.",
+        correctionFocus: "Review final report narrative and handoff assumptions.",
+        correctionQuestions: ["Are report metadata fields complete?", "Are area/zone names client-readable?", "Are cross-category dependencies ready for the next category?"],
+        reportImpact: "Ready for category-level review and future Site Assistant handoff.",
+        route: "/tools/physical-security/summary/"
+      });
+    }
+
+    return queue.slice(0, 8);
+  }
+
+  function buildSummaryMasterReview(categoryGuidance, context) {
+    const counts = categoryGuidance && categoryGuidance.counts ? categoryGuidance.counts : {};
+    const missingCore = missingCoreFromContext(context || {});
+    const status = normalizeStatus(categoryGuidance && categoryGuidance.status);
+    const readyStatus = status === "unknown" && missingCore.length ? "watch" : status;
+    const queue = correctionQueue(categoryGuidance, context || {});
+    const metadata = reportMetadataFromContext(context || {});
+    const scopes = summaryContextScopes(context || {});
+    const deps = crossCategoryDependencies().map((dependency) => ({
+      key: dependency.key || "",
+      label: dependency.label || "Dependency",
+      status: Number(counts.generated || 0) ? "watch" : "unknown",
+      detail: dependency.guidance || "Carry this Physical Security dependency into the appropriate category summary."
+    }));
+
+    return {
+      version: VERSION,
+      mode: "summary-master-review",
+      category: CATEGORY,
+      readiness: {
+        status: readyStatus,
+        label: reportPostureFor(readyStatus, missingCore.length),
+        detail: queue[0] && queue[0].status !== "healthy"
+          ? queue[0].detail
+          : "Use the built report for category-level review and cross-category handoff."
+      },
+      reportPosture: reportPostureFor(readyStatus, missingCore.length),
+      correctionQueue: queue,
+      priorityCorrection: queue[0] || null,
+      missingCore,
+      areaZoneModel: areaZoneModel(),
+      scopeCounts: scopes,
+      toolNoteCount: Array.isArray(context && context.toolNotes) ? context.toolNotes.length : 0,
+      reportMetadata: metadata,
+      crossCategoryHandoff: deps,
+      ownedCategoryKnowledge: getKnowledgeSnapshot(),
+      sourcePolicy: knowledgeStatus(),
+      guardrails: [
+        "Guidance only: source tool math remains authoritative.",
+        "Current-method/source knowledge may improve language and procedure context only.",
+        "Risk/Watch corrections must be made by returning to the source tool or source area/zone."
+      ]
+    };
+  }
+
+  function explainSummaryMasterGuidance(context) {
+    const categoryGuidance = createCategoryGuidance(collectToolGuidance(), { mode: "summary-master-review" });
+    const explanation = explainCategoryGuidance(categoryGuidance);
+    const master = buildSummaryMasterReview(categoryGuidance, context || {});
+    const priority = master.priorityCorrection || null;
+
+    explanation.mode = "summary-master-review";
+    explanation.status = master.readiness.status || explanation.status;
+    explanation.action = master.readiness.label || explanation.action;
+    explanation.reason = master.readiness.detail || explanation.reason;
+    explanation.expected = [
+      String((categoryGuidance.counts && categoryGuidance.counts.generated) || 0) + " generated tool guidance result(s)",
+      String((categoryGuidance.counts && categoryGuidance.counts.risk) || 0) + " risk",
+      String((categoryGuidance.counts && categoryGuidance.counts.watch) || 0) + " watch",
+      String(master.scopeCounts.total || 0) + " area/zone scope(s)",
+      String(master.toolNoteCount || 0) + " tool note(s)"
+    ].join(" | ");
+    explanation.nextStep = priority && priority.route
+      ? (priority.label || "Review priority item") + ": " + priority.route
+      : explanation.nextStep;
+    explanation.reportSummary = master.reportPosture + ". " + explanation.reason;
+    explanation.summaryMaster = clone(master);
+
+    if (priority) {
+      explanation.priorityTool = {
+        slug: priority.slug || "summary",
+        label: priority.toolLabel || priority.label || "Physical Security Summary",
+        action: priority.label || "Review Summary master guidance",
+        reason: priority.detail || "",
+        nextStep: priority.correctionFocus || priority.detail || "Review the Summary master guidance."
+      };
+    }
+
+    if (explanation.guidance) {
+      explanation.guidance.mode = "summary-master-review";
+      explanation.guidance.summaryMaster = clone(master);
+    }
+
+    return explanation;
+  }
+
   function createCategoryGuidance(items, options) {
     const toolItems = sortByPipelineOrder(items || []);
     const summary = summarizeGuidanceItems(toolItems);
@@ -500,6 +764,7 @@
     createCategoryGuidance,
     explainCategoryGuidance,
     explainCurrentGuidance,
+    explainSummaryMasterGuidance,
     shouldShowVisibleCategoryGuidance,
     classifyExternalSource
   });

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-tool-notes-area-context-013";
+  const VERSION = "physical-security-summary-owned-category-master-014";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -789,13 +789,66 @@
     mount.innerHTML = '<table class="summary-table summary-tool-notes-table" data-sl-summary-tool-notes-table="true"><thead><tr><th>Area / Zone</th><th>Tool</th><th>Tool-Specific Notes</th></tr></thead><tbody>' + body + '</tbody></table>';
   }
 
+
+  function currentReportMetadataSnapshot() {
+    return {
+      reportTitle: byId("reportTitle") ? byId("reportTitle").value : "",
+      projectName: byId("projectName") ? byId("projectName").value : "",
+      clientName: byId("clientName") ? byId("clientName").value : "",
+      preparedBy: byId("preparedBy") ? byId("preparedBy").value : ""
+    };
+  }
+
+  function buildSummaryMasterExplanation(model) {
+    const categoryApi = window.ScopedLabsPhysicalSecurityCategoryGuidance;
+
+    if (categoryApi && typeof categoryApi.explainSummaryMasterGuidance === "function") {
+      try {
+        return categoryApi.explainSummaryMasterGuidance({
+          model: model || buildModel(),
+          toolNotes: toolNoteRows(),
+          reportMetadata: currentReportMetadataSnapshot()
+        });
+      } catch {}
+    }
+
+    if (categoryApi && typeof categoryApi.explainCurrentGuidance === "function") {
+      try { return categoryApi.explainCurrentGuidance(); } catch {}
+    }
+
+    return null;
+  }
+
+  function summaryMasterPayload(explanation) {
+    const master = explanation && explanation.summaryMaster ? explanation.summaryMaster : null;
+    if (!master) return null;
+
+    return {
+      version: master.version || "",
+      mode: master.mode || "summary-master-review",
+      status: master.readiness && master.readiness.status ? master.readiness.status : "unknown",
+      reportPosture: master.reportPosture || "",
+      priorityCorrection: master.priorityCorrection || null,
+      correctionQueue: master.correctionQueue || [],
+      missingCore: master.missingCore || [],
+      scopeCounts: master.scopeCounts || {},
+      toolNoteCount: master.toolNoteCount || 0,
+      crossCategoryHandoff: master.crossCategoryHandoff || [],
+      guardrails: master.guardrails || [],
+      ownedCategoryKnowledgeVersion: master.ownedCategoryKnowledge && master.ownedCategoryKnowledge.version ? master.ownedCategoryKnowledge.version : ""
+    };
+  }
+
   function payload(model) {
+    const masterExplanation = buildSummaryMasterExplanation(model);
+
     return {
       schema: "scopedlabs.category-summary.v1",
       category: "physical-security",
       summaryPageVersion: VERSION,
       crossCategoryReady: true,
       generatedAt: new Date().toISOString(),
+      masterAssistant: summaryMasterPayload(masterExplanation),
       toolNotes: toolNoteRows().map((row) => ({
         slug: row.slug,
         label: row.label,
@@ -843,7 +896,16 @@
     return 3;
   }
 
-  function masterReadiness(model) {
+  function masterReadiness(model, explanation) {
+    const master = explanation && explanation.summaryMaster ? explanation.summaryMaster : null;
+
+    if (master && master.readiness) {
+      return {
+        label: master.readiness.label || "Master review",
+        detail: master.readiness.detail || "Review Physical Security summary guidance."
+      };
+    }
+
     const counts = model.counts || {};
     const corePending = (model.coreRows || []).filter((row) => !row.generated || normalizeStatus(row.status) === "unknown").length;
 
@@ -875,6 +937,15 @@
   }
 
   function masterPriorityQueue(model, explanation) {
+    const master = explanation && explanation.summaryMaster ? explanation.summaryMaster : null;
+
+    if (master && Array.isArray(master.correctionQueue) && master.correctionQueue.length) {
+      return master.correctionQueue.slice(0, 5).map((item) => ({
+        label: item.label || "Master guidance",
+        detail: [item.toolLabel, item.detail, item.reportImpact].filter(Boolean).join(" - ")
+      }));
+    }
+
     const queue = [];
     const rows = (model.allRows || []).slice().sort((a, b) => statusRank(a.status) - statusRank(b.status));
     const priorityTool = explanation && explanation.priorityTool ? explanation.priorityTool : null;
@@ -919,7 +990,8 @@
     const mount = byId("physicalSecuritySummaryMasterContext");
     if (!mount) return;
 
-    const readiness = masterReadiness(model);
+    const master = explanation && explanation.summaryMaster ? explanation.summaryMaster : null;
+    const readiness = masterReadiness(model, explanation || {});
     const queue = masterPriorityQueue(model, explanation || {});
     const groups = model.groups || { total: 0, core: [], face: [], plate: [] };
     const counts = model.counts || { generated: 0, healthy: 0, watch: 0, risk: 0 };
@@ -933,6 +1005,8 @@
       '<div class="summary-master-context-card"><strong>' + escapeHtml(readiness.label) + '</strong><p>' + escapeHtml(readiness.detail) + '</p></div>',
       '<div class="summary-master-context-card"><strong>Area / zone rollup</strong><p>' + escapeHtml(String(groups.total) + ' scope' + (groups.total === 1 ? '' : 's') + ' | ' + groups.core.length + ' core | ' + groups.face.length + ' face | ' + groups.plate.length + ' plate') + '</p></div>',
       '<div class="summary-master-context-card"><strong>Guidance stack</strong><p>' + escapeHtml(String(counts.generated) + ' generated | ' + counts.healthy + ' healthy | ' + counts.watch + ' watch | ' + counts.risk + ' risk') + '</p></div>',
+      master && master.reportPosture ? '<div class="summary-master-context-card"><strong>Report posture</strong><p>' + escapeHtml(master.reportPosture) + '</p></div>' : '',
+      master && master.ownedCategoryKnowledge ? '<div class="summary-master-context-card"><strong>Owned category knowledge</strong><p>' + escapeHtml((master.ownedCategoryKnowledge.tools || []).length + ' tool profiles | ' + ((master.ownedCategoryKnowledge.crossCategoryDependencies || []).length) + ' cross-category dependencies') + '</p></div>' : '',
       '</div>',
       '<div class="summary-master-action-list">' + queueHtml + '</div>'
     ].join("");
@@ -945,8 +1019,8 @@
 
     if (!mount) return;
 
-    if (categoryApi && typeof categoryApi.explainCurrentGuidance === "function" && renderer && typeof renderer.mount === "function") {
-      const explanation = categoryApi.explainCurrentGuidance();
+    if (categoryApi && (typeof categoryApi.explainSummaryMasterGuidance === "function" || typeof categoryApi.explainCurrentGuidance === "function") && renderer && typeof renderer.mount === "function") {
+      const explanation = buildSummaryMasterExplanation(model || buildModel());
       renderer.mount(mount, explanation, {
         title: "Physical Security Master Assistant",
         kicker: "Category Master",
