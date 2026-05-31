@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-016-priority-interpretation";
+  const VERSION = "physical-security-report-summary-017-scoped-tool-links";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -342,28 +342,29 @@
     return "";
   }
 
+
   function areaToolDefinitions(group) {
     if (group === "face") {
       return [
-        { label: "Face Recognition", statusKeys: ["faceRecognitionStatus", "faceStatus", "overallStatus"], detailKeys: ["faceRecognitionSummary", "faceSummary", "faceRecognitionMaxDistanceFt", "distanceToTargetPlaneFt"] }
+        { label: "Face Recognition", url: "/tools/physical-security/face-recognition-range/", statusKeys: ["faceRecognitionStatus", "faceStatus", "overallStatus"], detailKeys: ["faceRecognitionSummary", "faceSummary", "faceRecognitionMaxDistanceFt", "distanceToTargetPlaneFt"] }
       ];
     }
 
     if (group === "plate") {
       return [
-        { label: "License Plate", statusKeys: ["licensePlateStatus", "plateStatus", "overallStatus"], detailKeys: ["licensePlateSummary", "plateSummary", "licensePlateMaxDistanceFt", "distanceToTargetPlaneFt"] }
+        { label: "License Plate", url: "/tools/physical-security/license-plate-range/", statusKeys: ["licensePlateStatus", "plateStatus", "overallStatus"], detailKeys: ["licensePlateSummary", "plateSummary", "licensePlateMaxDistanceFt", "distanceToTargetPlaneFt"] }
       ];
     }
 
     return [
-      { label: "Scene Illumination", statusKeys: ["sceneIlluminationStatus", "illuminationStatus", "lightingStatus"], detailKeys: ["sceneIlluminationSummary", "illuminationSummary", "lightingSummary"] },
-      { label: "Mounting Height", statusKeys: ["mountingHeightStatus", "heightStatus"], detailKeys: ["mountingHeightSummary", "mountingHeightFt"] },
-      { label: "Field of View", statusKeys: ["fieldOfViewStatus", "fovStatus"], detailKeys: ["fieldOfViewSummary", "fovSummary", "assumedHfovDeg"] },
-      { label: "Camera Coverage Area", statusKeys: ["cameraCoverageAreaStatus", "coverageStatus"], detailKeys: ["cameraCoverageAreaSummary", "coverageSummary", "distanceToTargetPlaneFt", "protectedLengthFt"] },
-      { label: "Camera Spacing", statusKeys: ["cameraSpacingStatus", "spacingStatus"], detailKeys: ["cameraSpacingSummary", "spacingSummary", "cameraCount", "spacingFt"] },
-      { label: "Blind Spot Check", statusKeys: ["blindSpotStatus", "blindSpotCheckStatus"], detailKeys: ["blindSpotSummary", "blindSpotCheckSummary"] },
-      { label: "Pixel Density", statusKeys: ["pixelDensityStatus", "densityStatus"], detailKeys: ["pixelDensitySummary", "densitySummary", "pixelDensityPpf"] },
-      { label: "Lens Selection", statusKeys: ["lensSelectionStatus", "lensStatus"], detailKeys: ["lensSelectionSummary", "lensSummary", "selectedLensMm"] }
+      { label: "Scene Illumination", url: "/tools/physical-security/scene-illumination/", statusKeys: ["sceneIlluminationStatus", "illuminationStatus", "lightingStatus"], detailKeys: ["sceneIlluminationSummary", "illuminationSummary", "lightingSummary"] },
+      { label: "Mounting Height", url: "/tools/physical-security/mounting-height/", statusKeys: ["mountingHeightStatus", "heightStatus"], detailKeys: ["mountingHeightSummary", "mountingHeightFt"] },
+      { label: "Field of View", url: "/tools/physical-security/field-of-view/", statusKeys: ["fieldOfViewStatus", "fovStatus"], detailKeys: ["fieldOfViewSummary", "fovSummary", "assumedHfovDeg"] },
+      { label: "Camera Coverage Area", url: "/tools/physical-security/camera-coverage-area/", statusKeys: ["cameraCoverageAreaStatus", "coverageStatus"], detailKeys: ["cameraCoverageAreaSummary", "coverageSummary", "distanceToTargetPlaneFt", "protectedLengthFt"] },
+      { label: "Camera Spacing", url: "/tools/physical-security/camera-spacing/", statusKeys: ["cameraSpacingStatus", "spacingStatus"], detailKeys: ["cameraSpacingSummary", "spacingSummary", "cameraCount", "spacingFt"] },
+      { label: "Blind Spot Check", url: "/tools/physical-security/blind-spot-check/", statusKeys: ["blindSpotStatus", "blindSpotCheckStatus"], detailKeys: ["blindSpotSummary", "blindSpotCheckSummary"] },
+      { label: "Pixel Density", url: "/tools/physical-security/pixel-density/", statusKeys: ["pixelDensityStatus", "densityStatus"], detailKeys: ["pixelDensitySummary", "densitySummary", "pixelDensityPpf"] },
+      { label: "Lens Selection", url: "/tools/physical-security/lens-selection/", statusKeys: ["lensSelectionStatus", "lensStatus"], detailKeys: ["lensSelectionSummary", "lensSummary", "selectedLensMm"] }
     ];
   }
 
@@ -372,6 +373,7 @@
     if (value || value === 0 || value === false) return String(value);
     return "No area-specific result saved for this step yet.";
   }
+
 
 
   function areaToolRows(area) {
@@ -383,6 +385,7 @@
 
       return {
         label: definition.label,
+        url: definition.url || "",
         status,
         detail: areaToolDetail(area, definition)
       };
@@ -421,6 +424,8 @@
             group,
             area,
             tool: row.label,
+            toolUrl: row.url || "",
+            areaId: area && area.id ? String(area.id) : "",
             status,
             detail: row.detail || "No area-specific result saved for this step yet.",
             generated: statusIsGenerated(status)
@@ -430,6 +435,63 @@
     });
 
     return rows;
+  }
+
+
+  function renderScopedToolLink(row) {
+    const label = row && row.tool ? String(row.tool) : "Physical Security Tool";
+    const href = row && row.toolUrl ? String(row.toolUrl) : "";
+    const areaId = row && row.areaId ? String(row.areaId) : "";
+
+    if (!href || !areaId) return escapeHtml(label);
+
+    return '<a class="physical-security-scoped-tool-link" href="' + escapeHtml(href) + '" data-sl-physical-security-scoped-tool-link="true" data-area-id="' + escapeHtml(areaId) + '" data-tool-url="' + escapeHtml(href) + '">' + escapeHtml(label) + '</a>';
+  }
+
+  function setActiveAreaFromScopedToolLink(areaId) {
+    const id = String(areaId || "").trim();
+    if (!id) return false;
+
+    const api = getAreaStateApi();
+    if (api && typeof api.setActiveArea === "function") {
+      try {
+        api.setActiveArea(id);
+        return true;
+      } catch {}
+    }
+
+    const ledger = readAreaLedger();
+    if (!ledger || !Array.isArray(ledger.areas) || !ledger.areas.some((area) => area && area.id === id)) return false;
+
+    ledger.activeAreaId = id;
+    if (api && typeof api.writeLedger === "function") {
+      try {
+        api.writeLedger(ledger);
+        return true;
+      } catch {}
+    }
+
+    return false;
+  }
+
+  function bindScopedToolLinks() {
+    if (document.documentElement.dataset.physicalSecurityScopedToolLinksBound === "true") return;
+    document.documentElement.dataset.physicalSecurityScopedToolLinksBound = "true";
+
+    document.addEventListener("click", function (event) {
+      const link = event.target && event.target.closest ? event.target.closest("[data-sl-physical-security-scoped-tool-link]") : null;
+      if (!link) return;
+
+      const areaId = link.getAttribute("data-area-id") || "";
+      const href = link.getAttribute("data-tool-url") || link.getAttribute("href") || "";
+
+      setActiveAreaFromScopedToolLink(areaId);
+
+      if (href && href !== "#") {
+        event.preventDefault();
+        window.location.href = href;
+      }
+    }, true);
   }
 
   function buildScopedReportCounts() {
@@ -516,13 +578,14 @@
   }
 
 
+
   function buildScopedActionRows() {
     return buildScopedReportRows()
       .filter((row) => normalizeStatus(row.status) === "risk" || normalizeStatus(row.status) === "watch")
       .map((row) => {
         return [
           row.scope,
-          row.tool,
+          renderScopedToolLink(row),
           renderReportStatusText(row.status),
           "Review " + row.tool + " for " + row.scope + " before finalizing the report.",
           row.detail || "Confirm this condition before carrying the design forward."
@@ -622,7 +685,7 @@
           '<thead><tr><th>Scope / Area</th><th>Tool</th><th>Status</th><th>Required Action</th><th>Detail / Next Step</th></tr></thead>',
           '<tbody>',
           detailRows.map((row) => {
-            return '<tr>' + row.map((cell, index) => '<td>' + (index === 2 ? cell : escapeHtml(cell)) + '</td>').join("") + '</tr>';
+            return '<tr>' + row.map((cell, index) => '<td>' + ((index === 1 && String(cell).includes('data-sl-physical-security-scoped-tool-link')) || index === 2 ? cell : escapeHtml(cell)) + '</td>').join("") + '</tr>';
           }).join(""),
           '</tbody>',
           '</table>'
@@ -716,6 +779,7 @@
   }
 
   function init() {
+    bindScopedToolLinks();
     refreshExportSection();
     attachExportRefresh();
   }

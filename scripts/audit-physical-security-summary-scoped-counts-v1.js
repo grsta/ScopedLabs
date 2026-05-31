@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-scoped-counts-audit-004-priority-interpretation";
-const REPORT_VERSION = "physical-security-report-summary-016-priority-interpretation";
+const VERSION = "physical-security-summary-scoped-counts-audit-005-scoped-tool-links";
+const REPORT_VERSION = "physical-security-report-summary-017-scoped-tool-links";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -33,7 +33,7 @@ safe("summary-uses-scoped-status", report.includes("const summaryStatus = scoped
 safe("summary-uses-scoped-generated", report.includes("const generatedText = scopedCounts") && report.includes("scopedCounts.generated") && report.includes("scopedCounts.tracked"), "generated row uses scoped counts when available");
 safe("summary-uses-pending-count", report.includes("Healthy / Watch / Risk / Pending") && report.includes("scopedCounts.pending"), "summary count row includes pending");
 safe("fallback-category-counts", report.includes("String(counts.generated || 0) + \" of \" + String(counts.tracked || 0)") && report.includes("String(counts.risk || 0) + \" / 0\""), "category counts remain fallback only");
-safe("watch-risk-action-scoped", report.includes("Review \" + row.tool + \" for \" + row.scope + \" before finalizing the report."), "watch/risk required action identifies exact scope");
+safe("watch-risk-action-scoped", report.includes("renderScopedToolLink(row)") && report.includes("Review \" + row.tool + \" for \" + row.scope + \" before finalizing the report."), "watch/risk required action identifies exact scope and linked tool");
 safe("priority-scope-remains", report.includes('["Top priority scope", scopedPriorityItem.scope]') && report.includes("function scopedPriority(detailRows)"), "priority scope remains");
 safe("area-zone-sections-remain", report.includes("function renderAreaZoneSectionsHtml()") && report.includes("physical-security-area-zone-report"), "area/zone sections remain");
 
