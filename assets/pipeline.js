@@ -218,6 +218,11 @@
     explicitAnchor.innerHTML = "";
     explicitAnchor.appendChild(wrap);
   } else {
-    h1.insertAdjacentElement("afterend", wrap);
+    const headingWrapper = h1.closest(".summary-page-heading");
+    if (headingWrapper && headingWrapper.parentElement) {
+      headingWrapper.insertAdjacentElement("afterend", wrap);
+    } else {
+      h1.insertAdjacentElement("afterend", wrap);
+    }
   }
 })();
