@@ -644,12 +644,6 @@
   
 
   
-    /* physical-security-summary-hide-security-rollup-card-031
-       Hide only the duplicate visible Physical Security Rollup card.
-       Do not hide Area / Zone and Tool Guidance Rollup, report sections, export, or hidden payloads. */
-    body[data-tool="physical-security-summary"] [data-sl-hide-security-rollup-card="true"] {
-      display: none !important;
-    }
 
   </style>
 </head>
@@ -721,7 +715,7 @@
         <div id="physicalSecuritySummaryMasterContext" class="summary-master-context" aria-live="polite"></div>
       </section>
 
-      <section class="card summary-results-card" style="margin-top: 18px;">
+      <section class="card summary-results-card" style="margin-top: 18px;" hidden aria-hidden="true" data-sl-hidden-security-rollup-section="true" data-sl-hide-marker="physical-security-summary-hide-exact-rollup-section-032">
                 <h2 class="h2" style="margin-top: 12px;">Physical Security Rollup</h2>
         <p class="muted summary-section-copy">Quick status snapshot from tool guidance memory and current Area Planner scopes.</p>
         <div id="results" class="summary-grid" aria-live="polite"></div>
