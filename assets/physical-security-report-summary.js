@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-015-top-priority-text";
+  const VERSION = "physical-security-report-summary-016-priority-interpretation";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -595,9 +595,9 @@
       scopedPriorityItem ? ["Top priority scope", scopedPriorityItem.scope] : null,
       scopedPriorityItem ? ["Top priority item", scopedPriorityItem.tool] : priority ? ["Top priority item", priority.label || priority.slug || "Physical Security Tool"] : null,
       scopedPriorityItem ? ["Top priority action", scopedPriorityItem.action] : priority ? ["Top priority action", priority.action || priority.reason || "Review before finalizing the design."] : null,
-      summary.reason ? ["Category interpretation", summary.reason] : null,
+      scopedPriorityItem ? ["Top priority interpretation", scopedPriorityItem.tool + " for " + scopedPriorityItem.scope + ": " + (scopedPriorityItem.detail || "Review this scoped Watch/Risk item before finalizing the report.")] : summary.reason ? ["Category master note", summary.reason] : null,
       scopedPriorityItem ? ["Priority note", "Top priority is the first/highest scoped Watch/Risk issue. See the Watch/Risk detail table for all scoped issues."] : null,
-      summary.nextStep ? ["Recommended next step", summary.nextStep] : null
+      scopedPriorityItem ? ["Report next step", "Review the Watch/Risk detail table and correct scoped issues before finalizing the report."] : summary.nextStep ? ["Recommended next step", summary.nextStep] : null
     ].filter(Boolean);
 
     const summaryTable = [
