@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-selected-scope-guidance-009";
+  const VERSION = "physical-security-summary-selected-rollup-detail-labels-010";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -178,6 +178,7 @@
     return "";
   }
 
+
   function areaToolDefinitions(group) {
     if (group === "face") {
       return [
@@ -200,7 +201,7 @@
     }
 
     return [
-      { label: "Scene Illumination", statusKeys: ["sceneIlluminationStatus", "illuminationStatus", "lightingStatus"], detailKeys: ["sceneIlluminationSummary", "illuminationSummary", "lightingSummary"] },
+      { label: "Scene Illumination", statusKeys: ["sceneIlluminationStatus", "illuminationStatus", "lightingStatus"], detailKeys: ["sceneIlluminationSummary", "sceneIlluminationDetail", "lightingSummary", "lightingInterpretation", "lightingGuidance", "estimatedLumensRequired", "targetIlluminationFc", "lightingClass"] },
       { label: "Mounting Height", statusKeys: ["mountingHeightStatus", "heightStatus"], detailKeys: ["mountingHeightSummary", "mountingHeightFt"] },
       { label: "Field of View", statusKeys: ["fieldOfViewStatus", "fovStatus"], detailKeys: ["fieldOfViewSummary", "fovSummary", "assumedHfovDeg"] },
       { label: "Camera Coverage Area", statusKeys: ["cameraCoverageAreaStatus", "coverageStatus"], detailKeys: ["cameraCoverageAreaSummary", "coverageSummary", "distanceToTargetPlaneFt", "protectedLengthFt"] },
@@ -211,21 +212,194 @@
     ];
   }
 
-  function areaToolDetail(area, definition) {
-    const value = firstAreaValue(area, definition.detailKeys || []);
-    if (value || value === 0 || value === false) return String(value);
+
+
+  /* physical-security-summary-selected-rollup-detail-labels-helper-010
+     Live selected-area rollup labels saved engineering values instead of showing raw numbers. */
+  function cleanAreaDetailValue(value) {
+    return String(value ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  function formatAreaFeet(value) {
+    const text = cleanAreaDetailValue(value);
+    if (!text) return text;
+    return /\b(ft|feet)\b/i.test(text) ? text : text + " ft";
+  }
+
+  function formatAreaDegrees(value) {
+    const text = cleanAreaDetailValue(value);
+    if (!text) return text;
+    return /(°|\bdeg\b|\bdegree)/i.test(text) ? text : text + "°";
+  }
+
+  function formatAreaMillimeters(value) {
+    const text = cleanAreaDetailValue(value);
+    if (!text) return text;
+    return /(\bmm\b|\blens\b)/i.test(text) ? text : text + " mm lens";
+  }
+
+  function formatAreaPpf(value) {
+    const text = cleanAreaDetailValue(value);
+    if (!text) return text;
+    return /\b(ppf|pixels? per foot)\b/i.test(text) ? text : text + " PPF";
+  }
+
+  function formatAreaCameraCount(value) {
+    const text = cleanAreaDetailValue(value);
+    const count = Number(text);
+    if (Number.isFinite(count)) return text + " camera" + (count === 1 ? "" : "s");
+    return text;
+  }
+
+  function formatAreaLumens(value) {
+    const text = cleanAreaDetailValue(value);
+    if (!text) return text;
+    if (/\b(lm|lumen|lumens)\b/i.test(text)) return text;
+
+    const numeric = Number(String(text).replace(/,/g, ""));
+    if (Number.isFinite(numeric)) {
+      return Math.round(numeric).toLocaleString() + " lumens";
+    }
+
+    return text + " lumens";
+  }
+
+  function formatAreaFootcandles(value) {
+    const text = cleanAreaDetailValue(value);
+    if (!text) return text;
+    return /\b(fc|footcandle|footcandles)\b/i.test(text) ? text : text + " fc";
+  }
+
+  function generatedSelectedAreaDetailFallback(definition, status) {
+    const label = String(definition && definition.label ? definition.label : "Tool").trim();
+    const statusText = statusLabel(normalizeStatus(status));
+
+    return label + " status is saved as " + statusText + ", but no detailed metric was stored for this area yet.";
+  }
+
+  function formatSelectedAreaToolDetail(definition, key, value) {
+    const text = cleanAreaDetailValue(value);
+    const normalizedKey = String(key || "").toLowerCase();
+    const label = String(definition && definition.label ? definition.label : "Tool detail").trim();
+
+    if (!text) return "No area-specific result saved for this step yet.";
+
+    if (/summary|reason|note|description|interpretation/i.test(normalizedKey)) {
+      return text;
+    }
+
+    if (normalizedKey === "assumedhfovdeg") {
+      return "Horizontal field of view (HFOV): " + formatAreaDegrees(text);
+    }
+
+    if (normalizedKey === "selectedlensmm") {
+      const numeric = Number(String(text).replace(/[^0-9.]/g, ""));
+      const suffix = Number.isFinite(numeric) && numeric <= 0 ? " (invalid / not selected)" : "";
+      return "Selected lens: " + formatAreaMillimeters(text) + suffix;
+    }
+
+    if (normalizedKey === "pixeldensityppf") {
+      return "Pixel density: " + formatAreaPpf(text);
+    }
+
+    if (normalizedKey === "mountingheightft") {
+      return "Mounting height: " + formatAreaFeet(text);
+    }
+
+    if (normalizedKey === "distancetotargetplaneft") {
+      return "Distance to target plane: " + formatAreaFeet(text);
+    }
+
+    if (normalizedKey === "targetilluminationfc") {
+      return "Target illumination: " + formatAreaFootcandles(text);
+    }
+
+    if (normalizedKey === "estimatedlumensrequired") {
+      return "Estimated required light: " + formatAreaLumens(text);
+    }
+
+    if (normalizedKey === "sceneareasqft") {
+      return "Lighting area: " + text + " sq ft";
+    }
+
+    if (normalizedKey === "effectivelightingfactor") {
+      return "Effective planning factor: " + text;
+    }
+
+    if (normalizedKey === "lightingclass") {
+      return "Lighting class: " + text;
+    }
+
+    if (normalizedKey === "protectedlengthft") {
+      return "Protected span / scene width: " + formatAreaFeet(text);
+    }
+
+    if (normalizedKey === "spacingft") {
+      return "Camera spacing: " + formatAreaFeet(text);
+    }
+
+    if (normalizedKey === "cameracount") {
+      return "Camera count: " + formatAreaCameraCount(text);
+    }
+
+    if (normalizedKey === "facerecognitionmaxdistanceft") {
+      return "Face recognition max distance: " + formatAreaFeet(text);
+    }
+
+    if (normalizedKey === "licenseplatemaxdistanceft") {
+      return "License plate max distance: " + formatAreaFeet(text);
+    }
+
+    if (/ft$|feet$/.test(normalizedKey)) {
+      return label + ": " + formatAreaFeet(text);
+    }
+
+    if (/deg$|degree/.test(normalizedKey)) {
+      return label + ": " + formatAreaDegrees(text);
+    }
+
+    if (/mm$/.test(normalizedKey)) {
+      return label + ": " + formatAreaMillimeters(text);
+    }
+
+    if (/ppf$/.test(normalizedKey)) {
+      return label + ": " + formatAreaPpf(text);
+    }
+
+    return label + ": " + text;
+  }
+
+  function areaToolDetail(area, definition, status) {
+    const source = area && typeof area === "object" ? area : {};
+    const keys = Array.isArray(definition.detailKeys) ? definition.detailKeys : [];
+
+    for (const key of keys) {
+      const value = source[key];
+      if (value === 0 || value === false || (value != null && String(value).trim() !== "")) {
+        return formatSelectedAreaToolDetail(definition, key, value);
+      }
+    }
+
+    const normalized = normalizeStatus(status);
+    if (normalized === "healthy" || normalized === "watch" || normalized === "risk") {
+      return generatedSelectedAreaDetailFallback(definition, status);
+    }
+
     return "No area-specific result saved for this step yet.";
   }
+
 
   function areaToolRows(area) {
     const group = routeGroup(area);
     return areaToolDefinitions(group).map((definition) => {
       const statusValue = firstAreaValue(area, definition.statusKeys || []);
-      const status = normalizeStatus(statusValue || "unknown");
+      const hasStatus = statusValue || statusValue === 0 || statusValue === false;
+      const status = normalizeStatus(hasStatus ? statusValue : "pending");
+
       return {
         label: definition.label,
         status,
-        detail: areaToolDetail(area, definition)
+        detail: areaToolDetail(area, definition, status)
       };
     });
   }

@@ -22,8 +22,8 @@ const orderBlock = script.slice(script.indexOf("scopeMount.innerHTML ="), script
 
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("summary-script-exists", exists("tools/physical-security/summary/script.js"), "Summary script exists");
-safe("script-cache-bumped", index.includes("./script.js?v=physical-security-summary-selected-scope-guidance-009"), "Summary script cache bumped");
-safe("script-version-bumped", script.includes("const VERSION = \"physical-security-summary-selected-scope-guidance-009\";"), "Summary script version bumped");
+safe("script-cache-bumped", index.includes("./script.js?v=physical-security-summary-selected-rollup-detail-labels-010"), "Summary script cache bumped");
+safe("script-version-bumped", script.includes("const VERSION = \"physical-security-summary-selected-rollup-detail-labels-010\";"), "Summary script version bumped");
 safe("area-rollup-style", index.includes("physical-security-summary-area-rollup-first-007") && index.includes(".summary-area-tool-table"), "area rollup table styles exist");
 safe("selected-scope-order", orderBlock.indexOf("renderAreaRollup(model.groups)") >= 0 && orderBlock.indexOf("renderAreaRollup(model.groups)") < orderBlock.indexOf("renderSelectedScopeGuidance(model.groups)"), "area/zone rollup renders before selected-scope guidance");
 safe("selector-rail-style", index.includes("physical-security-summary-area-selector-green-led-011") && index.includes(".summary-area-selector-rail") && index.includes(".summary-area-selector-step.active"), "selector rail styles exist");
