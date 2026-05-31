@@ -1424,7 +1424,7 @@
 
     return window.confirm([
       "Reset Area Plan?",
-      "This will delete all saved Physical Security areas/zones and clear the current Physical Security pipeline memory used by the Summary page, including area guidance, tool guidance, and tool-specific notes.",
+      "This will delete all saved Physical Security areas/zones and clear the current Physical Security pipeline memory used by the Summary page, including area guidance, tool guidance, tool-specific notes, report metadata, and custom notes.",
       "This does not delete saved account snapshots.",
       "Continue?"
     ].join(String.fromCharCode(10, 10)));
@@ -1482,12 +1482,13 @@
     const stores = [window.sessionStorage, window.localStorage].filter(Boolean);
     const pipelinePrefix = "scopedlabs:pipeline:physical-security:";
     const guidanceMemoryKey = "scopedlabs:physical-security:guidance-memory:v1";
+    const sharedReportMetadataKey = "scopedlabs:report-metadata:shared:v1";
 
     let removed = 0;
 
     stores.forEach((storage) => {
       storageKeys(storage).forEach((key) => {
-        if (key.startsWith(pipelinePrefix) || key === guidanceMemoryKey) {
+        if (key.startsWith(pipelinePrefix) || key === guidanceMemoryKey || key === sharedReportMetadataKey) {
           if (removeStorageKey(storage, key)) removed += 1;
         }
       });
@@ -1541,7 +1542,7 @@
     }
 
     clearAreaForm("Front Door");
-    status("Area plan reset. Physical Security areas, guidance memory, and Summary tool notes were cleared. Enter the first area above, then save it.");
+    status("Area plan reset. Physical Security areas, guidance memory, Summary tool notes, and report metadata were cleared. Enter the first area above, then save it.");
     render();
   }
 
