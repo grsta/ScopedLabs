@@ -161,6 +161,7 @@
             { id: "blind-spot-check", label: "Blind Spot Check", href: "/tools/physical-security/blind-spot-check/", flowGroup: "core" },
             { id: "pixel-density", label: "Pixel Density", href: "/tools/physical-security/pixel-density/", flowGroup: "core" },
             { id: "lens-selection", label: "Lens Selection", href: "/tools/physical-security/lens-selection/", flowGroup: "core" },
+            { id: "physical-security-summary", label: "Summary", href: "/tools/physical-security/summary/", flowGroup: "core" },
             { id: "face-recognition-range", label: "Face Recognition Zone", href: "/tools/physical-security/face-recognition-range/", flowGroup: "optional-specialty-zone", optional: true },
             { id: "license-plate-range", label: "License Plate Zone", href: "/tools/physical-security/license-plate-range/", flowGroup: "optional-specialty-zone", optional: true }
           ]
