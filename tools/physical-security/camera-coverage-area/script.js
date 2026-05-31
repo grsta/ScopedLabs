@@ -144,6 +144,114 @@
     return "Very little reserve is being held back. The layout is efficient, but the next spacing step will have less tolerance for edge gaps or mounting variation.";
   }
 
+
+  // camera-coverage-area-dori-feasibility-risk-002
+  const DORI_DETECTION_PX_PER_M = 25;
+  const DORI_OBSERVATION_PX_PER_M = 63;
+  const DORI_RECOGNITION_PX_PER_M = 125;
+  const DORI_IDENTIFICATION_PX_PER_M = 250;
+  const FEET_PER_METER = 3.280839895;
+  const DORI_COMMON_4K_HORIZONTAL_PX = 3840;
+  const DORI_UPPER_SANITY_HORIZONTAL_PX = 7680;
+
+  function doriPxPerFt(pxPerMeter) {
+    return Number(pxPerMeter) / FEET_PER_METER;
+  }
+
+  function normalizeCoverageAssistantStatus(value) {
+    const text = String(value || "").toLowerCase();
+
+    if (text.includes("risk")) return "risk";
+    if (text.includes("watch")) return "watch";
+    if (text.includes("healthy")) return "healthy";
+
+    return "unknown";
+  }
+
+  function coverageStatusRank(value) {
+    const status = normalizeCoverageAssistantStatus(value);
+
+    if (status === "risk") return 0;
+    if (status === "watch") return 1;
+    if (status === "healthy") return 2;
+
+    return 3;
+  }
+
+  function worstCoverageStatus() {
+    const statuses = Array.from(arguments).map(normalizeCoverageAssistantStatus);
+    return statuses.sort((a, b) => coverageStatusRank(a) - coverageStatusRank(b))[0] || "unknown";
+  }
+
+  function formatRequiredPixels(value) {
+    if (!Number.isFinite(value)) return "?";
+    return Math.round(value).toLocaleString() + " horizontal pixels";
+  }
+
+  function coverageDoriFeasibilityCheck(data) {
+    const effWidth = Number(data && data.effWidth);
+    const rawWidth = Number(data && data.width);
+    const planningWidth = Number.isFinite(effWidth) && effWidth > 0 ? effWidth : rawWidth;
+    const detectionPxPerFt = doriPxPerFt(DORI_DETECTION_PX_PER_M);
+    const observationPxPerFt = doriPxPerFt(DORI_OBSERVATION_PX_PER_M);
+    const recognitionPxPerFt = doriPxPerFt(DORI_RECOGNITION_PX_PER_M);
+    const identificationPxPerFt = doriPxPerFt(DORI_IDENTIFICATION_PX_PER_M);
+
+    if (!Number.isFinite(planningWidth) || planningWidth <= 0) {
+      return {
+        status: "unknown",
+        label: "DORI feasibility unavailable",
+        reason: "Usable footprint width is not available for pixel-density feasibility checking.",
+        action: "Confirm FOV, distance, and reserve assumptions before continuing.",
+        planningWidth,
+        detectionPxPerFt,
+        requiredDetectionHorizontalPx: NaN,
+        requiredObservationHorizontalPx: NaN,
+        requiredRecognitionHorizontalPx: NaN,
+        requiredIdentificationHorizontalPx: NaN,
+        pxPerFtAt4K: NaN,
+        pxPerFtAt8K: NaN
+      };
+    }
+
+    const requiredDetectionHorizontalPx = planningWidth * detectionPxPerFt;
+    const requiredObservationHorizontalPx = planningWidth * observationPxPerFt;
+    const requiredRecognitionHorizontalPx = planningWidth * recognitionPxPerFt;
+    const requiredIdentificationHorizontalPx = planningWidth * identificationPxPerFt;
+    const pxPerFtAt4K = DORI_COMMON_4K_HORIZONTAL_PX / planningWidth;
+    const pxPerFtAt8K = DORI_UPPER_SANITY_HORIZONTAL_PX / planningWidth;
+    const maxDetectionWidthAt4K = DORI_COMMON_4K_HORIZONTAL_PX / detectionPxPerFt;
+    const maxDetectionWidthAt8K = DORI_UPPER_SANITY_HORIZONTAL_PX / detectionPxPerFt;
+    const widthLabel = fmtFt(planningWidth);
+
+    if (requiredDetectionHorizontalPx > DORI_UPPER_SANITY_HORIZONTAL_PX) {
+      return {
+        status: "risk",
+        label: "DORI detection infeasible",
+        reason: "The usable footprint width of " + widthLabel + " would require about " + formatRequiredPixels(requiredDetectionHorizontalPx) + " just to meet a detection-level pixel-density baseline across the scene.",
+        action: "Split the area, reduce target distance, narrow the FOV/lens assumption, or treat this as an overview/specialty planning zone before continuing to Camera Spacing.",
+        planningWidth, detectionPxPerFt, requiredDetectionHorizontalPx, requiredObservationHorizontalPx, requiredRecognitionHorizontalPx, requiredIdentificationHorizontalPx, pxPerFtAt4K, pxPerFtAt8K, maxDetectionWidthAt4K, maxDetectionWidthAt8K
+      };
+    }
+
+    if (requiredDetectionHorizontalPx > DORI_COMMON_4K_HORIZONTAL_PX) {
+      return {
+        status: "watch",
+        label: "DORI detection needs review",
+        reason: "The usable footprint width of " + widthLabel + " is wider than a normal 4K detection-level planning baseline of about " + fmtFt(maxDetectionWidthAt4K) + ".",
+        action: "Confirm that this is only an overview/spacing baseline, or split/narrow the area before relying on it for detail capture.",
+        planningWidth, detectionPxPerFt, requiredDetectionHorizontalPx, requiredObservationHorizontalPx, requiredRecognitionHorizontalPx, requiredIdentificationHorizontalPx, pxPerFtAt4K, pxPerFtAt8K, maxDetectionWidthAt4K, maxDetectionWidthAt8K
+      };
+    }
+
+    return {
+      status: "healthy",
+      label: "DORI detection feasible",
+      reason: "The usable footprint width remains within a 4K detection-level pixel-density planning baseline.",
+      action: "Carry the usable width into Camera Spacing after reviewing the footprint.",
+      planningWidth, detectionPxPerFt, requiredDetectionHorizontalPx, requiredObservationHorizontalPx, requiredRecognitionHorizontalPx, requiredIdentificationHorizontalPx, pxPerFtAt4K, pxPerFtAt8K, maxDetectionWidthAt4K, maxDetectionWidthAt8K
+    };
+  }
   function clearDownstream() {
     [
       FLOW_KEYS.spacing,
@@ -464,11 +572,28 @@
       watchMax: 35
     });
 
+    const doriCheck = coverageDoriFeasibilityCheck({
+      width,
+      effWidth,
+      height,
+      effHeight,
+      area,
+      effArea,
+      dist: input.dist,
+      hfov: input.hfov,
+      vfov: input.vfov
+    });
+    const resolvedStatus = worstCoverageStatus(statusPack.status, doriCheck.status);
+
     const interpretationCore = overlapInterpretation(overlapClass);
     const guidanceCore = reserveGuidance(widthRetentionPct);
 
     let dominantConstraint = "";
-    if (reserveLossPct >= 35) {
+    if (doriCheck.status === "risk") {
+      dominantConstraint = doriCheck.reason;
+    } else if (doriCheck.status === "watch") {
+      dominantConstraint = doriCheck.reason;
+    } else if (reserveLossPct >= 35) {
       dominantConstraint = "Reserve pressure is the dominant limiter. Too much of the lens footprint is being held back, which can reduce spacing efficiency and increase the camera count needed for continuous coverage.";
     } else if (reserveLossPct >= 20) {
       dominantConstraint = "Coverage efficiency is the main watch item. The reserve strategy is still workable, but it is starting to compress usable width enough to matter in the spacing step.";
@@ -478,7 +603,9 @@
 
     const interpretation = `At ${fmtFt(input.dist)}, the imported FOV creates a raw footprint of about ${fmtFt(width)} by ${fmtFt(height)}, or ${fmtSqFt(area)} of scene area. After applying a ${fmtPct(input.ovPct)} usable coverage reserve, the width carried forward becomes ${fmtFt(effWidth)} while vertical coverage remains ${fmtFt(effHeight)}, leaving about ${fmtSqFt(effArea)} of usable coverage. ${interpretationCore}`;
 
-    const guidance = `${guidanceCore} Continue to Camera Spacing next and use the carried usable width as the spacing input, not the raw lens footprint.`;
+    const guidance = doriCheck.status === "risk"
+      ? doriCheck.action + " Do not carry this result into Camera Spacing as a healthy baseline until corrected."
+      : `${guidanceCore} Continue to Camera Spacing next and use the carried usable width as the spacing input, not the raw lens footprint.`;
 
     return {
       ok: true,
@@ -495,7 +622,22 @@
       reserveLossPct,
       overlapClass,
       efficiencyClass,
-      status: statusPack.status,
+      status: resolvedStatus,
+      analyzerStatus: statusPack.status,
+      doriStatus: doriCheck.status,
+      doriLabel: doriCheck.label,
+      doriReason: doriCheck.reason,
+      doriAction: doriCheck.action,
+      doriPlanningWidthFt: doriCheck.planningWidth,
+      doriDetectionPxPerFt: doriCheck.detectionPxPerFt,
+      doriRequiredDetectionHorizontalPx: doriCheck.requiredDetectionHorizontalPx,
+      doriRequiredObservationHorizontalPx: doriCheck.requiredObservationHorizontalPx,
+      doriRequiredRecognitionHorizontalPx: doriCheck.requiredRecognitionHorizontalPx,
+      doriRequiredIdentificationHorizontalPx: doriCheck.requiredIdentificationHorizontalPx,
+      doriPxPerFtAt4K: doriCheck.pxPerFtAt4K,
+      doriPxPerFtAt8K: doriCheck.pxPerFtAt8K,
+      doriMaxDetectionWidthAt4K: doriCheck.maxDetectionWidthAt4K,
+      doriMaxDetectionWidthAt8K: doriCheck.maxDetectionWidthAt8K,
       interpretation,
       dominantConstraint,
       guidance
@@ -556,14 +698,18 @@
 
   function cameraCoverageAreaGuidanceStatus(data) {
     const status = String(data && data.status || "").toLowerCase();
+    const doriStatus = String(data && data.doriStatus || "").toLowerCase();
     const reserveLossPct = Number(data && data.reserveLossPct);
     const areaRetentionPct = Number(data && data.areaRetentionPct);
+    const requiredDetectionHorizontalPx = Number(data && data.doriRequiredDetectionHorizontalPx);
 
-    if (status.includes("risk")) return "risk";
+    if (status.includes("risk") || doriStatus.includes("risk")) return "risk";
+    if (Number.isFinite(requiredDetectionHorizontalPx) && requiredDetectionHorizontalPx > DORI_UPPER_SANITY_HORIZONTAL_PX) return "risk";
     if (Number.isFinite(reserveLossPct) && reserveLossPct >= 35) return "risk";
     if (Number.isFinite(areaRetentionPct) && areaRetentionPct < 65) return "risk";
 
-    if (status.includes("watch")) return "watch";
+    if (status.includes("watch") || doriStatus.includes("watch")) return "watch";
+    if (Number.isFinite(requiredDetectionHorizontalPx) && requiredDetectionHorizontalPx > DORI_COMMON_4K_HORIZONTAL_PX) return "watch";
     if (Number.isFinite(reserveLossPct) && reserveLossPct >= 20) return "watch";
     if (Number.isFinite(areaRetentionPct) && areaRetentionPct < 80) return "watch";
 
@@ -595,6 +741,10 @@
       parts.push(fmtPct(data.reserveLossPct, 1) + " reserve loss");
     }
 
+    if (Number.isFinite(Number(data.doriRequiredDetectionHorizontalPx))) {
+      parts.push("DORI detection requires " + formatRequiredPixels(Number(data.doriRequiredDetectionHorizontalPx)));
+    }
+
     if (data.overlapClass) parts.push(data.overlapClass);
     if (data.efficiencyClass) parts.push(data.efficiencyClass);
 
@@ -618,6 +768,18 @@
     }
 
     if (status === "risk") {
+      const doriRisk = String(data.doriStatus || "").toLowerCase() === "risk";
+
+      if (doriRisk) {
+        return {
+          action: "Rework Coverage Geometry Before Spacing",
+          reason: data.doriReason || "The usable footprint is too wide to meet even a detection-level pixel-density baseline with normal camera resolutions.",
+          expectedResult,
+          confidence: data.doriLabel || "DORI feasibility risk",
+          nextStep: data.doriAction || "Split the area, reduce target distance, revise FOV/lens assumptions, or treat this as an overview/specialty planning zone."
+        };
+      }
+
       return {
         action: "Reduce Coverage Reserve Pressure",
         reason: "The reserve setting is removing too much usable footprint, which can inflate the camera count required in the spacing step.",
@@ -920,6 +1082,8 @@ function writeFlow(data) {
   }
 
   function coverageAssistantTitle(data) {
+    if (String(data.doriStatus || "").toLowerCase() === "risk") return "Coverage geometry fails DORI detection feasibility.";
+    if (String(data.doriStatus || "").toLowerCase() === "watch") return "Coverage geometry needs DORI feasibility review.";
     if (data.reserveLossPct >= 35) return "Usable coverage is under heavy reserve pressure.";
     if (data.reserveLossPct >= 20) return "Usable coverage is workable, but reserve is shaping the spacing step.";
     return "Usable coverage is ready for spacing validation.";
@@ -1036,6 +1200,8 @@ function writeFlow(data) {
       ["Width retention", fmtPct(data.widthRetentionPct, 1)],
       ["Area retention", fmtPct(data.areaRetentionPct, 1)],
       ["Coverage efficiency", data.efficiencyClass],
+      ["DORI feasibility", data.doriLabel || data.doriStatus || "Not flagged"],
+      ["DORI detection pixels required", Number.isFinite(data.doriRequiredDetectionHorizontalPx) ? formatRequiredPixels(data.doriRequiredDetectionHorizontalPx) : "?"],
       ["Assistant status", data.status],
       ["Source mode", sourceMode]
     ];
@@ -1097,6 +1263,14 @@ function writeFlow(data) {
   }
 
   function coverageAssistantSummary(data) {
+    if (String(data.doriStatus || "").toLowerCase() === "risk") {
+      return data.doriReason || "The usable footprint is too wide to meet even a detection-level pixel-density baseline with normal camera resolutions.";
+    }
+
+    if (String(data.doriStatus || "").toLowerCase() === "watch") {
+      return data.doriReason || "Coverage geometry should be validated against DORI pixel-density feasibility before spacing.";
+    }
+
     if (data.reserveLossPct >= 35) {
       return "Reserve is consuming enough width that spacing efficiency should be checked carefully before carrying this forward.";
     }
