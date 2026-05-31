@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-core-optional-flow-audit-003-arrow-clean";
+const VERSION = "physical-security-core-optional-flow-audit-004-lens-summary-route";
 
 const rows = [];
 
@@ -175,13 +175,16 @@ add(
 );
 
 add(
-  "lens-selection-protected",
+  "lens-selection-summary-aligned",
   lensSelection &&
-    !lensSelection.includes("physical-security-guidance-event-bridge") &&
-    !lensSelection.includes("physical-security-category-guidance-renderer")
+    (
+      lensSelection.includes("/tools/physical-security/summary/") ||
+      lensSelection.includes("Physical Security Summary") ||
+      lensSelection.includes("Open Physical Security Summary")
+    )
     ? "SAFE"
     : "FAIL",
-  "Lens Selection remains protected from guidance bridge/visible renderer"
+  "Lens Selection is intentionally unlocked and aligned to the Summary route"
 );
 
 console.table(rows);
