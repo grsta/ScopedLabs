@@ -52,7 +52,7 @@ add("lens-script-exists", exists(lensScriptRel) ? "SAFE" : "FAIL", lensScriptRel
   "/assets/physical-security-category-guidance-renderer.js",
   "/assets/physical-security-report-summary.js",
   "/assets/physical-security-area-state.js?v=physical-security-area-state-016-summary-banner-optout",
-  "./script.js?v=physical-security-summary-selected-rollup-detail-labels-010"
+  "./script.js?v=physical-security-summary-selected-rollup-carryover-values-011"
 ].forEach((signal) => {
   add("index-signal-" + signal.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), index.includes(signal) ? "SAFE" : "FAIL", index.includes(signal) ? "index contains " + signal : "index missing " + signal);
 });

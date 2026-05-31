@@ -31,8 +31,8 @@ const styleBlock = between(index, "physical-security-summary-area-selector-green
 
 safe("summary-index-exists", exists("tools/physical-security/summary/index.html"), "Summary index exists");
 safe("summary-script-exists", exists("tools/physical-security/summary/script.js"), "Summary script exists");
-safe("script-cache-bumped", index.includes("./script.js?v=physical-security-summary-selected-rollup-detail-labels-010"), "Summary script cache bumped");
-safe("script-version-bumped", script.includes('const VERSION = "physical-security-summary-selected-rollup-detail-labels-010";'), "Summary script version bumped");
+safe("script-cache-bumped", index.includes("./script.js?v=physical-security-summary-selected-rollup-carryover-values-011"), "Summary script cache bumped");
+safe("script-version-bumped", script.includes('const VERSION = "physical-security-summary-selected-rollup-carryover-values-011";'), "Summary script version bumped");
 safe("green-led-style-marker", index.includes("physical-security-summary-area-selector-green-led-011"), "selector green LED CSS marker exists");
 safe("no-button-box-style", styleBlock.includes("border: 0;") && styleBlock.includes("background: transparent;") && styleBlock.includes("box-shadow: none;"), "selector is visually flow text, not boxed buttons");
 safe("no-pill-or-chip-shape", !styleBlock.includes("border-radius: 999px") && !styleBlock.includes("linear-gradient") && !styleBlock.includes("border-radius: 10px"), "selector no longer uses pill/chip/nav-button blocks");

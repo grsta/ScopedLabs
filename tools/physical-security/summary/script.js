@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-selected-rollup-detail-labels-010";
+  const VERSION = "physical-security-summary-selected-rollup-carryover-values-011";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -179,6 +179,7 @@
   }
 
 
+
   function areaToolDefinitions(group) {
     if (group === "face") {
       return [
@@ -205,10 +206,10 @@
       { label: "Mounting Height", statusKeys: ["mountingHeightStatus", "heightStatus"], detailKeys: ["mountingHeightSummary", "mountingHeightFt"] },
       { label: "Field of View", statusKeys: ["fieldOfViewStatus", "fovStatus"], detailKeys: ["fieldOfViewSummary", "fovSummary", "assumedHfovDeg"] },
       { label: "Camera Coverage Area", statusKeys: ["cameraCoverageAreaStatus", "coverageStatus"], detailKeys: ["cameraCoverageAreaSummary", "coverageSummary", "distanceToTargetPlaneFt", "protectedLengthFt"] },
-      { label: "Camera Spacing", statusKeys: ["cameraSpacingStatus", "spacingStatus"], detailKeys: ["cameraSpacingSummary", "spacingSummary", "cameraCount", "spacingFt"] },
+      { label: "Camera Spacing", statusKeys: ["cameraSpacingStatus", "spacingStatus"], detailKeys: ["cameraCount", "targetCameraCount", "plannedCameraCount", "lensCameraCount", "spacingCameraCount", "coverageCount", "spacingFt", "actualSpacingFt", "cameraSpacingSummary", "spacingSummary", "cameraSpacingDetail"] },
       { label: "Blind Spot Check", statusKeys: ["blindSpotStatus", "blindSpotCheckStatus"], detailKeys: ["blindSpotSummary", "blindSpotCheckSummary"] },
       { label: "Pixel Density", statusKeys: ["pixelDensityStatus", "densityStatus"], detailKeys: ["pixelDensitySummary", "densitySummary", "pixelDensityPpf"] },
-      { label: "Lens Selection", statusKeys: ["lensSelectionStatus", "lensStatus"], detailKeys: ["lensSelectionSummary", "lensSummary", "selectedLensMm"] }
+      { label: "Lens Selection", statusKeys: ["lensSelectionStatus", "lensStatus"], detailKeys: ["selectedLensMm", "adjustedFocalMm", "lensSelectedMm", "lensInputSelectedMm", "lensDraftSelectedMm", "selectedLens", "lensMm", "lensClass", "lensSelectionClass", "lensSelectionSummary", "lensSummary"] }
     ];
   }
 
@@ -292,10 +293,15 @@
       return "Horizontal field of view (HFOV): " + formatAreaDegrees(text);
     }
 
-    if (normalizedKey === "selectedlensmm") {
+    if (normalizedKey === "selectedlensmm" || normalizedKey === "adjustedfocalmm" || normalizedKey === "lensselectedmm" || normalizedKey === "lensinputselectedmm" || normalizedKey === "lensdraftselectedmm" || normalizedKey === "selectedlens" || normalizedKey === "lensmm") {
       const numeric = Number(String(text).replace(/[^0-9.]/g, ""));
+      const prefix = normalizedKey === "lensinputselectedmm" || normalizedKey === "lensdraftselectedmm" ? "Selected lens input: " : "Selected lens: ";
       const suffix = Number.isFinite(numeric) && numeric <= 0 ? " (invalid / not selected)" : "";
-      return "Selected lens: " + formatAreaMillimeters(text) + suffix;
+      return prefix + formatAreaMillimeters(text) + suffix;
+    }
+
+    if (normalizedKey === "lensclass" || normalizedKey === "lensselectionclass") {
+      return "Lens class: " + text;
     }
 
     if (normalizedKey === "pixeldensityppf") {
@@ -334,12 +340,13 @@
       return "Protected span / scene width: " + formatAreaFeet(text);
     }
 
-    if (normalizedKey === "spacingft") {
+    if (normalizedKey === "spacingft" || normalizedKey === "actualspacingft") {
       return "Camera spacing: " + formatAreaFeet(text);
     }
 
-    if (normalizedKey === "cameracount") {
-      return "Camera count: " + formatAreaCameraCount(text);
+    if (normalizedKey === "cameracount" || normalizedKey === "lenscameracount" || normalizedKey === "spacingcameracount" || normalizedKey === "targetcameracount" || normalizedKey === "plannedcameracount" || normalizedKey === "coveragecount") {
+      const prefix = normalizedKey === "targetcameracount" || normalizedKey === "plannedcameracount" ? "Planned camera count: " : "Camera count: ";
+      return prefix + formatAreaCameraCount(text);
     }
 
     if (normalizedKey === "facerecognitionmaxdistanceft") {
@@ -369,15 +376,85 @@
     return label + ": " + text;
   }
 
-  function areaToolDetail(area, definition, status) {
-    const source = area && typeof area === "object" ? area : {};
+
+  /* physical-security-summary-selected-rollup-carryover-values-011
+     Summary-only display resolver: prefer real positive carryover values over stale saved zeros. */
+  function selectedRollupNumericValue(value) {
+    const text = String(value ?? "").replace(/[^0-9.-]/g, "").trim();
+    if (!text) return null;
+    const number = Number(text);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function selectedRollupIsPositive(value) {
+    const number = selectedRollupNumericValue(value);
+    return Number.isFinite(number) && number > 0;
+  }
+
+  function selectedRollupValueByKeys(source, keys, options = {}) {
+    const area = source && typeof source === "object" ? source : {};
+    const positiveOnly = !!options.positiveOnly;
+
+    for (const key of keys || []) {
+      const value = area[key];
+      if (value === undefined || value === null) continue;
+      const text = String(value).trim();
+      if (!text && value !== 0 && value !== false) continue;
+      if (positiveOnly && !selectedRollupIsPositive(value)) continue;
+      return { key, value };
+    }
+
+    return null;
+  }
+
+  function selectedAreaToolDetailCandidate(source, definition) {
+    const area = source && typeof source === "object" ? source : {};
+    const label = String(definition && definition.label ? definition.label : "").toLowerCase();
     const keys = Array.isArray(definition.detailKeys) ? definition.detailKeys : [];
 
+    if (label.includes("camera spacing")) {
+      const positiveCamera = selectedRollupValueByKeys(area, ["cameraCount", "targetCameraCount", "plannedCameraCount", "lensCameraCount", "spacingCameraCount", "coverageCount"], { positiveOnly: true });
+      if (positiveCamera) return positiveCamera;
+
+      const positiveSpacing = selectedRollupValueByKeys(area, ["spacingFt", "actualSpacingFt"], { positiveOnly: true });
+      if (positiveSpacing) return positiveSpacing;
+
+      const summary = selectedRollupValueByKeys(area, ["cameraSpacingSummary", "spacingSummary", "cameraSpacingDetail"]);
+      if (summary) return summary;
+
+      return selectedRollupValueByKeys(area, ["cameraCount", "targetCameraCount", "plannedCameraCount", "lensCameraCount", "spacingCameraCount"]);
+    }
+
+    if (label.includes("lens selection")) {
+      const positiveLens = selectedRollupValueByKeys(area, ["selectedLensMm", "adjustedFocalMm", "lensSelectedMm", "lensInputSelectedMm", "lensDraftSelectedMm", "selectedLens", "lensMm"], { positiveOnly: true });
+      if (positiveLens) return positiveLens;
+
+      const lensClass = selectedRollupValueByKeys(area, ["lensClass", "lensSelectionClass"]);
+      if (lensClass) return lensClass;
+
+      const summary = selectedRollupValueByKeys(area, ["lensSelectionSummary", "lensSummary"]);
+      if (summary) return summary;
+
+      return selectedRollupValueByKeys(area, ["selectedLensMm", "adjustedFocalMm", "lensInputSelectedMm", "lensDraftSelectedMm", "selectedLens"]);
+    }
+
     for (const key of keys) {
-      const value = source[key];
+      const value = area[key];
       if (value === 0 || value === false || (value != null && String(value).trim() !== "")) {
-        return formatSelectedAreaToolDetail(definition, key, value);
+        return { key, value };
       }
+    }
+
+    return null;
+  }
+
+
+  function areaToolDetail(area, definition, status) {
+    const source = area && typeof area === "object" ? area : {};
+    const candidate = selectedAreaToolDetailCandidate(source, definition);
+
+    if (candidate) {
+      return formatSelectedAreaToolDetail(definition, candidate.key, candidate.value);
     }
 
     const normalized = normalizeStatus(status);
