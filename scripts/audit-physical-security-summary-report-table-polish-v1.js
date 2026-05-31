@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-report-table-polish-audit-005-area-zone-sections";
+const VERSION = "physical-security-summary-report-table-polish-audit-006-priority-scope";
 
 function read(rel) {
   const file = path.join(ROOT, rel);
@@ -23,8 +23,8 @@ safe("report-summary-exists", exists("assets/physical-security-report-summary.js
 safe("final-report-pill-removed", !index.includes("<span class=\"pill\">Final Report</span>"), "Final Report pill removed");
 safe("export-card-remains", index.includes("summary-export-card") && index.includes("Final Report Export") && index.includes("summaryReportDetails"), "export card remains");
 safe("export-controls-remain", index.includes("id=\"exportReport\"") && index.includes("id=\"saveSnapshot\"") && index.includes("id=\"physicalSecurityReportMount\""), "export controls and report mount remain");
-safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-011-area-zone-sections"), "report summary cache bumped");
-safe("report-version-bumped", report.includes("physical-security-report-summary-011-area-zone-sections"), "report summary asset version bumped");
+safe("report-cache-bumped", index.includes("/assets/physical-security-report-summary.js?v=physical-security-report-summary-012-priority-scope"), "report summary cache bumped");
+safe("report-version-bumped", report.includes("physical-security-report-summary-012-priority-scope"), "report summary asset version bumped");
 safe("category-summary-table-class", report.includes("class=\"summary-table physical-security-category-summary-table\""), "category summary uses summary-table class");
 safe("watch-risk-table-class", report.includes("class=\"summary-table physical-security-watch-risk-table\""), "watch/risk detail uses summary-table class");
 safe("report-status-text", report.includes("function renderReportStatusText(status)") && report.includes("physical-security-report-status"), "report summary status values render as colored text");

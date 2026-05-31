@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-report-summary-011-area-zone-sections";
+  const VERSION = "physical-security-report-summary-012-priority-scope";
   const CATEGORY = "physical-security";
   const EXPORT_MOUNT_ID = "spacingExportSection";
   const EXPORT_SLOT_ID = "physicalSecurityReportSummaryExportSlot";
@@ -460,24 +460,43 @@
       });
   }
 
+
+  function scopedPriority(detailRows) {
+    if (!Array.isArray(detailRows) || !detailRows.length) return null;
+
+    const firstRisk = detailRows.find((row) => String(row[2] || "").toLowerCase().includes("risk"));
+    const row = firstRisk || detailRows[0];
+
+    if (!row) return null;
+
+    return {
+      scope: row[0] || "Area / Zone",
+      tool: row[1] || "Physical Security Tool",
+      action: row[3] || "Review this area or zone result before finalizing the report.",
+      detail: row[4] || ""
+    };
+  }
+
   function renderExportTableHtml(summary) {
     if (!summary || !summary.counts || !summary.counts.generated) return "";
 
     const counts = summary.counts;
     const priority = summary.priorityTool || null;
 
+    const scopedDetailRows = buildScopedActionRows();
+    const detailRows = (scopedDetailRows.length ? scopedDetailRows : buildGlobalActionRows(summary)).slice(0, 14);
+    const scopedPriorityItem = scopedPriority(detailRows);
+
     const summaryRows = [
       ["Status", renderReportStatusText(summary.status), true],
       ["Generated", String(counts.generated || 0) + " of " + String(counts.tracked || 0)],
       ["Healthy / Watch / Risk", String(counts.healthy || 0) + " / " + String(counts.watch || 0) + " / " + String(counts.risk || 0)],
-      priority ? ["Priority item", priority.label || priority.slug || "Physical Security Tool"] : null,
-      priority ? ["Priority action", priority.action || priority.reason || "Review before finalizing the design."] : null,
+      scopedPriorityItem ? ["Priority scope", scopedPriorityItem.scope] : null,
+      scopedPriorityItem ? ["Priority item", scopedPriorityItem.tool] : priority ? ["Priority item", priority.label || priority.slug || "Physical Security Tool"] : null,
+      scopedPriorityItem ? ["Priority action", scopedPriorityItem.action] : priority ? ["Priority action", priority.action || priority.reason || "Review before finalizing the design."] : null,
       summary.reason ? ["Category interpretation", summary.reason] : null,
       summary.nextStep ? ["Recommended next step", summary.nextStep] : null
     ].filter(Boolean);
-
-    const scopedDetailRows = buildScopedActionRows();
-    const detailRows = (scopedDetailRows.length ? scopedDetailRows : buildGlobalActionRows(summary)).slice(0, 14);
 
     const summaryTable = [
       '<table class="summary-table physical-security-category-summary-table" data-sl-physical-security-report-summary-table="true">',
