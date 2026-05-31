@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-category-guidance-renderer-002-summary-master-polish";
+  const VERSION = "physical-security-category-guidance-renderer-003-draft-next-action-copy";
   const CATEGORY = "physical-security";
 
   function clone(value) {
@@ -127,6 +127,7 @@
         externalSourceRule: knowledge.externalSourceRule || ""
       },
       sourceTopics: clone(explanation.sourceTopics || {}),
+      summaryMaster: clone(explanation.summaryMaster || null),
       raw: clone(explanation)
     };
   }
@@ -140,11 +141,26 @@
     ].join("");
   }
 
+  function priorityLabel(model) {
+    const master = model && model.summaryMaster ? model.summaryMaster : null;
+    const priority = master && master.priorityCorrection ? master.priorityCorrection : null;
+    const type = priority && priority.type ? String(priority.type) : "";
+    const status = model ? normalizeStatus(model.status) : "unknown";
+
+    if (type === "start-core-pipeline" || (status === "unknown" && priority && priority.label === "Start core pipeline")) {
+      return "Next Action";
+    }
+
+    return "Priority Tool";
+  }
+
   function renderPriority(model) {
+    const label = priorityLabel(model);
+
     if (!model.priorityTool) {
       return [
         '<div class="sl-ps-category-guidance__priority">',
-        '<span class="sl-ps-category-guidance__priority-label">Priority Tool</span>',
+        '<span class="sl-ps-category-guidance__priority-label">' + escapeHtml(label) + '</span>',
         '<strong>None yet</strong>',
         '<p>Run one or more Physical Security tools to generate category-level priority guidance.</p>',
         '</div>'
@@ -153,7 +169,7 @@
 
     return [
       '<div class="sl-ps-category-guidance__priority">',
-      '<span class="sl-ps-category-guidance__priority-label">Priority Tool</span>',
+      '<span class="sl-ps-category-guidance__priority-label">' + escapeHtml(label) + '</span>',
       '<strong>' + escapeHtml(model.priorityTool.label || model.priorityTool.slug) + '</strong>',
       model.priorityTool.action ? '<p>' + escapeHtml(model.priorityTool.action) + '</p>' : "",
       '</div>'

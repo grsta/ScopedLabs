@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-summary-master-draft-queue-audit-002-proof-sync";
+const VERSION = "physical-security-summary-master-draft-queue-audit-003-copy-proof-sync";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -51,7 +51,7 @@ check("summary-index-draft-queue", "summary index", index, [
 ]);
 
 check("proof-audit-draft-queue", "summary proof audit", proof, [
-  "physical-security-summary-proof-audit-023-master-draft-queue",
+  "physical-security-summary-proof-audit-024-master-copy-polish",
   "/assets/physical-security-category-guidance.js?v=physical-security-category-guidance-005-master-draft-queue",
 ]);
 

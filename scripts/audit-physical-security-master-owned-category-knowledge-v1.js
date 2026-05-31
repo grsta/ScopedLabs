@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "physical-security-master-owned-category-knowledge-audit-003-draft-proof-sync";
+const VERSION = "physical-security-master-owned-category-knowledge-audit-004-copy-proof-sync";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -89,7 +89,7 @@ check("summary-script-master", "summary script", script, [
 ]);
 
 check("proof-audit", "summary proof audit", proof, [
-  "physical-security-summary-proof-audit-023-master-draft-queue",
+  "physical-security-summary-proof-audit-024-master-copy-polish",
   "/assets/physical-security-source-policy.js?v=physical-security-source-policy-002-master-knowledge-guardrails",
   "/assets/physical-security-category-knowledge.js?v=physical-security-category-knowledge-002-owned-category-master",
   "function buildSummaryMasterExplanation(model)",
