@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "physical-security-summary-selected-rollup-carryover-values-011";
+  const VERSION = "physical-security-summary-tool-notes-rollup-012";
 
   const CORE_TOOLS = [
     ["scene-illumination", "Scene Illumination"],
@@ -18,6 +18,8 @@
     ["face-recognition-range", "Face Recognition"],
     ["license-plate-range", "License Plate"]
   ];
+
+  const TOOL_NOTE_TOOLS = CORE_TOOLS.concat(SPECIALTY_TOOLS);
 
   let selectedScopeId = "";
 
@@ -670,6 +672,96 @@
     };
   }
 
+
+  function toolNoteSlugFromPath(pagePath) {
+    const match = String(pagePath || "").match(/\/tools\/physical-security\/([^/]+)\//i);
+    return match ? match[1] : "";
+  }
+
+  function toolNoteLabel(slug) {
+    const found = TOOL_NOTE_TOOLS.find((item) => item[0] === slug);
+    if (found) return found[1];
+
+    return String(slug || "")
+      .split("-")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  function toolNoteOrder(slug) {
+    const index = TOOL_NOTE_TOOLS.findIndex((item) => item[0] === slug);
+    return index === -1 ? 999 : index;
+  }
+
+  function readSavedToolNotePages() {
+    const prefix = "scopedlabs:report-metadata:page:";
+    const pages = [];
+
+    try {
+      for (let index = 0; index < window.localStorage.length; index += 1) {
+        const key = window.localStorage.key(index);
+        if (!key || !key.startsWith(prefix)) continue;
+
+        const raw = window.localStorage.getItem(key);
+        const data = raw ? JSON.parse(raw) : {};
+        if (!data || typeof data !== "object") continue;
+
+        pages.push({
+          ...data,
+          storageKey: key,
+          path: data.sourcePath || key.slice(prefix.length)
+        });
+      }
+    } catch {
+      return [];
+    }
+
+    return pages;
+  }
+
+  function toolNoteRows() {
+    const bySlug = new Map();
+
+    readSavedToolNotePages().forEach((page) => {
+      const slug = toolNoteSlugFromPath(page.path || "");
+      const note = String(page.customNotes || "").trim();
+
+      if (!slug || slug === "summary" || !note) return;
+      if (!TOOL_NOTE_TOOLS.some((item) => item[0] === slug)) return;
+
+      const existing = bySlug.get(slug);
+      if (existing && String(existing.updatedAt || "") > String(page.updatedAt || "")) return;
+
+      bySlug.set(slug, {
+        slug,
+        label: toolNoteLabel(slug),
+        note,
+        updatedAt: page.updatedAt || ""
+      });
+    });
+
+    return Array.from(bySlug.values()).sort((a, b) => toolNoteOrder(a.slug) - toolNoteOrder(b.slug));
+  }
+
+  function renderToolNotes() {
+    const mount = byId("physicalSecurityToolNotesMount");
+    if (!mount) return;
+
+    const rows = toolNoteRows();
+
+    if (!rows.length) {
+      mount.innerHTML = '<p class="muted export-text" data-export-text>No tool-specific notes have been saved yet. Notes entered on individual Physical Security tools stay separated by tool and appear here when available.</p>';
+      return;
+    }
+
+    const body = rows.map((row) => {
+      return '<tr><td>' + escapeHtml(row.label) + '</td><td>' + escapeHtml(row.note) + '</td></tr>';
+    }).join("");
+
+    mount.innerHTML = '<table class="summary-table summary-tool-notes-table" data-sl-summary-tool-notes-table="true"><thead><tr><th>Tool</th><th>Tool-Specific Notes</th></tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
   function payload(model) {
     return {
       schema: "scopedlabs.category-summary.v1",
@@ -677,6 +769,12 @@
       summaryPageVersion: VERSION,
       crossCategoryReady: true,
       generatedAt: new Date().toISOString(),
+      toolNotes: toolNoteRows().map((row) => ({
+        slug: row.slug,
+        label: row.label,
+        note: row.note,
+        updatedAt: row.updatedAt || ""
+      })),
       scopeTypes: ["core-coverage", "face-recognition-zone", "license-plate-zone"],
       futureSiteAssistantInputs: {
         areaZoneScopeIds: true,
@@ -866,6 +964,7 @@
 
     renderMasterAssistant(model);
     renderReportSummary(model);
+    renderToolNotes();
 
     const payloadEl = byId("physicalSecurityCrossCategoryPayload");
     const currentPayload = payload(model);
@@ -884,6 +983,7 @@
     window.addEventListener("storage", render);
     window.addEventListener("scopedlabs:physical-security-guidance-updated", render);
     window.addEventListener("scopedlabs:physical-security-guidance-cleared", render);
+    window.addEventListener("scopedlabs:report-metadata-saved", render);
   }
 
   window.ScopedLabsPhysicalSecuritySummaryPage = Object.freeze({
