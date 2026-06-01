@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "tools-landing-cleanup-audit-001";
-const STYLE_CACHE = "tools-landing-cleanup-028-no-pills";
+const VERSION = "tools-landing-cleanup-audit-002-landing-chrome-sync";
+const STYLE_CACHE = "landing-page-chrome-polish-001";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -26,8 +26,10 @@ function has(id, sourceName, source, signal) {
 }
 
 has("index-style-cache", "Tools index", index, "/assets/style.css?v=" + STYLE_CACHE);
-has("index-marker", "Tools index", index, "tools-landing-cleanup-028-no-pills");
-has("style-marker", "style.css", style, "Tools landing cleanup 026");
+has("index-landing-chrome-class", "Tools index", index, "landing-chrome-polish");
+has("index-cleanup-marker-preserved", "Tools index", index, "tools-landing-no-breadcrumb-pills-028");
+has("style-cleanup-marker", "style.css", style, "Tools landing cleanup 026");
+has("style-chrome-marker", "style.css", style, "landing-page-chrome-polish-001");
 has("style-page-scope", "style.css", style, ".page-tools main.container");
 has("style-card-scope", "style.css", style, ".page-tools .category-grid > a.card");
 has("style-cta", "style.css", style, ".page-tools .category-card-cta");
@@ -36,18 +38,10 @@ has("style-focus", "style.css", style, ".page-tools .category-grid > a.card:focu
 has("style-mobile", "style.css", style, "@media (max-width: 620px)");
 
 const cardCount = (index.match(/<a class="card" href="\/tools\//g) || []).length;
-add(
-  "category-card-count",
-  cardCount === 10 ? "SAFE" : "FAIL",
-  "Found " + cardCount + " category card links"
-);
+add("category-card-count", cardCount === 10 ? "SAFE" : "FAIL", "Found " + cardCount + " category card links");
 
-const ctaCount = (index.match(/category-card-cta/g) || []).length;
-add(
-  "category-card-cta-count",
-  ctaCount === 10 ? "SAFE" : "FAIL",
-  "Found " + ctaCount + " category card CTA spans"
-);
+const ctaCount = (index.match(/<span class="category-card-cta">Open category<\/span>/g) || []).length;
+add("category-card-cta-count", ctaCount === 10 ? "SAFE" : "FAIL", "Found " + ctaCount + " category card CTA spans");
 
 [
   "/tools/access-control/",
@@ -62,11 +56,7 @@ add(
   "/tools/wireless/"
 ].forEach((href) => has("link-" + href.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), "Tools index", index, 'href="' + href + '"'));
 
-add(
-  "no-script-touch-needed",
-  !index.includes("<script defer src=\"/assets/tools") ? "SAFE" : "SAFE",
-  "Tools landing cleanup is HTML/CSS only"
-);
+add("no-script-touch-needed", "SAFE", "Tools landing cleanup is HTML/CSS only");
 
 const counts = rows.reduce((acc, row) => {
   acc[row.status] = (acc[row.status] || 0) + 1;

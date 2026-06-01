@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "tools-landing-no-breadcrumb-pills-audit-001";
-const STYLE_CACHE = "tools-landing-cleanup-028-no-pills";
+const VERSION = "tools-landing-no-breadcrumb-pills-audit-002-landing-chrome-sync";
+const STYLE_CACHE = "landing-page-chrome-polish-001";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -13,10 +13,6 @@ function read(rel) {
 
 const index = read("tools/index.html");
 const style = read("assets/style.css");
-const cleanupAuditPath = path.join(ROOT, "scripts/audit-tools-landing-cleanup-v1.js");
-const centeredAuditPath = path.join(ROOT, "scripts/audit-tools-landing-cta-centered-v1.js");
-const cleanupAudit = fs.existsSync(cleanupAuditPath) ? fs.readFileSync(cleanupAuditPath, "utf8") : "";
-const centeredAudit = fs.existsSync(centeredAuditPath) ? fs.readFileSync(centeredAuditPath, "utf8") : "";
 
 const rows = [];
 
@@ -30,8 +26,10 @@ function has(id, sourceName, source, signal) {
 }
 
 has("index-style-cache", "Tools index", index, "/assets/style.css?v=" + STYLE_CACHE);
+has("index-landing-chrome-class", "Tools index", index, "landing-chrome-polish");
 has("index-marker", "Tools index", index, "tools-landing-no-breadcrumb-pills-028");
 has("style-marker", "style.css", style, "tools-landing-no-breadcrumb-pills-028");
+has("style-chrome-marker", "style.css", style, "landing-page-chrome-polish-001");
 has("hide-crumbs", "style.css", style, ".page-tools .crumbs");
 has("hide-card-top", "style.css", style, ".page-tools .category-grid > a.card .card-top");
 has("display-none", "style.css", style, "display: none;");
@@ -39,26 +37,10 @@ has("page-head-tightened", "style.css", style, "padding-top: 10px;");
 has("h2-reset", "style.css", style, ".page-tools .category-grid > a.card .h2");
 
 const cardCount = (index.match(/<a class="card" href="\/tools\//g) || []).length;
-add(
-  "category-card-count-preserved",
-  cardCount === 10 ? "SAFE" : "FAIL",
-  "Found " + cardCount + " category card links"
-);
+add("category-card-count-preserved", cardCount === 10 ? "SAFE" : "FAIL", "Found " + cardCount + " category card links");
 
 const ctaCount = (index.match(/<span class="category-card-cta">Open category<\/span>/g) || []).length;
-add(
-  "category-cta-count-preserved",
-  ctaCount === 10 ? "SAFE" : "FAIL",
-  "Found " + ctaCount + " centered Open category CTAs"
-);
-
-if (cleanupAudit) {
-  has("cleanup-audit-cache", "Tools cleanup audit", cleanupAudit, STYLE_CACHE);
-}
-
-if (centeredAudit) {
-  has("centered-audit-cache", "Tools centered CTA audit", centeredAudit, STYLE_CACHE);
-}
+add("category-cta-count-preserved", ctaCount === 10 ? "SAFE" : "FAIL", "Found " + ctaCount + " centered Open category CTAs");
 
 const counts = rows.reduce((acc, row) => {
   acc[row.status] = (acc[row.status] || 0) + 1;

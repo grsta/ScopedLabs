@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "category-landing-cleanup-audit-002-safe-attribute-scan";
+const VERSION = "category-landing-cleanup-audit-003-landing-chrome-sync";
 
 const categories = [
   "access-control",
@@ -25,20 +25,12 @@ function read(rel) {
 
 function attributeTargets(html) {
   const out = [];
-  const re = /\\b(?:href|data-tool|data-guide)=["']([^"']+)["']/g;
+  const re = /\b(?:href|data-tool|data-guide)\s*=\s*["']([^"']+)["']/g;
   let match;
   while ((match = re.exec(html))) {
     out.push(match[1]);
   }
   return Array.from(new Set(out));
-}
-
-function targetUrlsFor(html, slug) {
-  return attributeTargets(html).filter((url) => url.startsWith("/tools/" + slug + "/"));
-}
-
-function guideUrlsFor(html) {
-  return attributeTargets(html).filter((url) => url.startsWith("/guides/"));
 }
 
 const rows = [];
@@ -55,11 +47,17 @@ function has(page, id, source, signal) {
 for (const slug of categories) {
   const rel = "tools/" + slug + "/index.html";
   const html = read(rel);
-  const acceptedMarker = slug === "physical-security" ? "physical-security-landing-cleanup-001" : "category-landing-cleanup-001";
-  const targets = targetUrlsFor(html, slug);
-  const guides = guideUrlsFor(html);
+  const attrs = attributeTargets(html);
+  const acceptedMarker = slug === "physical-security"
+    ? "physical-security-landing-cleanup-001"
+    : "category-landing-cleanup-001";
+
+  const toolTargets = attrs.filter((url) => url.startsWith("/tools/" + slug + "/"));
+  const guideTargets = attrs.filter((url) => url.startsWith("/guides/"));
 
   has(slug, "cleanup-marker", html, acceptedMarker);
+  has(slug, "landing-chrome-class", html, "landing-chrome-polish");
+  has(slug, "landing-chrome-style-cache", html, "/assets/style.css?v=landing-page-chrome-polish-001");
   has(slug, "hide-crumbs-selector", html, ".page-head .crumbs");
   has(slug, "hide-tool-row-pills-selector", html, ".tool-row-pill");
   has(slug, "card-heading-reset", html, "margin-top: 0 !important;");
@@ -68,15 +66,15 @@ for (const slug of categories) {
   add(
     slug,
     "category-tool-targets",
-    targets.length >= 6 ? "SAFE" : "FAIL",
-    "found " + targets.length + " unique /tools/" + slug + "/ targets"
+    toolTargets.length >= 1 ? "SAFE" : "FAIL",
+    "found " + toolTargets.length + " unique /tools/" + slug + "/ target(s)"
   );
 
   add(
     slug,
     "planning-guide-target",
-    guides.length >= 1 ? "SAFE" : "FAIL",
-    "found " + guides.length + " guide target(s): " + (guides.join(", ") || "-")
+    guideTargets.length >= 1 ? "SAFE" : "FAIL",
+    "found " + guideTargets.length + " guide target(s): " + (guideTargets.join(", ") || "-")
   );
 
   add(

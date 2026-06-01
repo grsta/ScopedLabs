@@ -1271,7 +1271,7 @@ main h3.section-title {
   font-weight: 500;
   padding: 6px 12px;
   border-radius: 999px;
-  transition: 
+  transition:
     color 0.2s ease,
     box-shadow 0.2s ease,
     background 0.2s ease;
@@ -2983,4 +2983,40 @@ body[data-tool="pixel-density"] #saveSnapshot:disabled:hover {
 
 .page-tools .category-grid > a.card .h2 {
   margin-top: 0;
+}
+
+
+/* landing-page-chrome-polish-001
+   Landing/guide chrome only. Do not use this scope on calculators. */
+body.landing-chrome-polish .btn,
+body.landing-chrome-polish .btn-primary,
+body.landing-chrome-polish .btn.btn-primary,
+body.landing-chrome-polish .btn.primary,
+body.landing-chrome-polish .btn-ghost {
+  border-radius: 9px !important;
+  min-height: 40px;
+}
+
+body.landing-chrome-polish .hero-actions .btn,
+body.landing-chrome-polish .actions .btn,
+body.landing-chrome-polish .btn-row .btn,
+body.landing-chrome-polish a.btn {
+  padding: 10px 16px !important;
+}
+
+body.landing-chrome-polish .btn-primary,
+body.landing-chrome-polish .btn.primary {
+  box-shadow: none !important;
+}
+
+body.landing-chrome-polish .btn-primary:hover,
+body.landing-chrome-polish .btn.primary:hover,
+body.landing-chrome-polish .btn-ghost:hover {
+  transform: translateY(-1px);
+}
+
+body.landing-chrome-polish .hero-actions,
+body.landing-chrome-polish .actions,
+body.landing-chrome-polish .btn-row {
+  gap: 10px;
 }
