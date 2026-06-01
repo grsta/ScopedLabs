@@ -3667,3 +3667,18 @@ body.homepage-product-story .site-header::before,
 body.homepage-product-story .site-header::after {
   display: none !important;
 }
+
+
+/* homepage-product-story-019-remove-header-inset-line
+   Removes the homepage-only full-width header divider by killing the sticky header inset line.
+   Nav tabs, hero, proof card, and CAD graph remain untouched. */
+body.homepage-product-story .site-header {
+  border-bottom: 0 !important;
+  box-shadow: 0 12px 34px rgba(0,0,0,0.22) !important;
+}
+
+body.homepage-product-story .site-header::before,
+body.homepage-product-story .site-header::after {
+  content: none !important;
+  display: none !important;
+}
