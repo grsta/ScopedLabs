@@ -1,6 +1,6 @@
 # ScopedLabs Checkpoint - Physical Security Category Completion
 
-Date: 2026-05-31  
+Date: 2026-05-31
 Lane: Physical Security category closeout / reusable category-factory proof
 
 ## Completion state
@@ -31,6 +31,7 @@ The accepted long-term model is:
 - Summary reads area/zone context, local tool guidance, tool notes, and report readiness.
 - Summary acts as the category review board, final report/export host, and future Site Assistant feed.
 - Face Recognition and License Plate Capture remain optional specialty branches, not required core pipeline steps.
+- Future categories should reuse this same structure as the category-factory model.
 
 ## Completed category flow
 
@@ -55,11 +56,11 @@ Physical Security Summary is now the permanent category-level host for:
 - Tool Notes
 - Future cross-category payloads
 
-The master assistant does not change tool formulas or math. It reviews validated local outputs and helps the user correct category-level risks and watch items.
+The master assistant does not change tool formulas or math. It reviews validated local outputs and helps the user correct category-level risks, watch items, and incomplete planning steps.
 
 ## Guardrails
 
-- Do not create duplicate Physical Security master assistants on individual tools.
+- Do not create duplicate master assistants per tool.
 - Do not duplicate the category master brain asset.
 - Preserve deterministic tool math.
 - Preserve auth, checkout, export, snapshot, Knowledge Base, and pipeline behavior.
