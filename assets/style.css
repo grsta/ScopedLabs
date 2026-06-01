@@ -3646,3 +3646,11 @@ body.homepage-product-story .homepage-cad-proof-band .homepage-proof-head {
 body.homepage-product-story .homepage-cad-proof-band .section-subtitle {
   margin-bottom: 0;
 }
+
+
+/* homepage-product-story-017-proof-header-extra-spacing
+   Adds a little more breathing room below the proof intro text.
+   Graph and proof card layout remain untouched. */
+body.homepage-product-story .homepage-cad-proof-band .homepage-proof-head {
+  margin-bottom: 38px !important;
+}
