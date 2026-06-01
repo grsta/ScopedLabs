@@ -3582,3 +3582,14 @@ body.homepage-product-story .homepage-cad-coverage-panel svg {
   margin-left: auto;
   margin-right: auto;
 }
+
+
+/* homepage-product-story-012-match-proof-card-to-graph
+   Aligns the top proof card width to the visible CAD graph frame.
+   Graph/SVG internals remain untouched. */
+body.homepage-product-story .homepage-proof-card-feature {
+  max-width: 940px !important;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}

@@ -71,7 +71,7 @@ for (const rel of walkGuideIndexes("guides")) {
 
 const uniqueTargets = Array.from(new Set(targetFiles));
 const style = read("assets/style.css");
-const homepageStyleCache = "homepage-product-story-011-graph-inner-fit";
+const homepageStyleCache = "homepage-product-story-012-match-proof-card-to-graph";
 
 has("assets/style.css", "v2-style-marker", style, STYLE_CACHE);
 has("assets/style.css", "v2-body-scope", style, "body.landing-chrome-polish");
