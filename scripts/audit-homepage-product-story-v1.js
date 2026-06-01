@@ -3,7 +3,7 @@ const path = require("path");
 
 const ROOT = process.cwd();
 const VERSION = "homepage-product-story-audit-001";
-const STYLE_CACHE = "homepage-product-story-001";
+const STYLE_CACHE = "homepage-product-story-002-section-spacing";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -27,7 +27,7 @@ function has(id, sourceName, source, signal) {
 
 has("style-cache", "Homepage", index, "/assets/style.css?v=" + STYLE_CACHE);
 has("body-class", "Homepage", index, "homepage-product-story");
-has("main-marker", "Homepage", index, "homepage-product-story-001");
+has("main-marker", "Homepage", index, "homepage-product-story-002-section-spacing");
 has("hero-title", "Homepage", index, "Engineering planning tools for real infrastructure decisions.");
 has("primary-tools-cta", "Homepage", index, 'href="/tools/"');
 has("guides-cta", "Homepage", index, 'href="/guides/"');
@@ -47,7 +47,7 @@ has("footer-preserved", "Homepage", index, "site-footer");
   "/tools/wireless/"
 ].forEach((href) => has("category-" + href.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, ""), "Homepage", index, 'href="' + href + '"'));
 
-has("style-marker", "style.css", style, "homepage-product-story-001");
+has("style-marker", "style.css", style, "homepage-product-story-002-section-spacing");
 has("style-body-scope", "style.css", style, "body.homepage-product-story");
 has("style-hero-grid", "style.css", style, ".homepage-hero-grid");
 has("style-category-grid", "style.css", style, ".homepage-category-grid");

@@ -3301,3 +3301,14 @@ body.homepage-product-story .homepage-final-actions {
     min-height: 0;
   }
 }
+
+
+/* homepage-product-story-002-section-spacing
+   Homepage-only spacing trim below protected hero. */
+body.homepage-product-story .homepage-hero {
+  padding-bottom: 34px;
+}
+
+body.homepage-product-story .homepage-section-tight:first-of-type {
+  padding-top: 34px;
+}
