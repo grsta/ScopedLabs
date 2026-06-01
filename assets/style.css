@@ -3593,3 +3593,14 @@ body.homepage-product-story .homepage-proof-card-feature {
   margin-left: auto;
   margin-right: auto;
 }
+
+
+/* homepage-product-story-013-proof-card-graph-frame-match
+   Narrows only the top proof text card to visually match the CAD graph frame.
+   Graph/SVG internals remain untouched. */
+body.homepage-product-story .homepage-proof-card-feature {
+  max-width: 860px !important;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
