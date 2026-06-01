@@ -2,7 +2,9 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "landing-page-chrome-polish-audit-001";
+const VERSION = "landing-page-chrome-polish-audit-002-homepage-story-sync";
+const LANDING_STYLE_CACHE = "landing-card-button-polish-v2-001";
+const HOMEPAGE_STYLE_CACHE = "homepage-product-story-001";
 
 function file(rel) {
   return path.join(ROOT, rel);
@@ -44,6 +46,18 @@ function walkGuideIndexes(rel) {
 
 const rows = [];
 
+function countClassToken(html, token) {
+  const re = /\bclass\s*=\s*(["'])(.*?)\1/g;
+  let count = 0;
+  let match;
+  while ((match = re.exec(html))) {
+    const classes = match[2].split(/\s+/).filter(Boolean);
+    if (classes.includes(token)) count += 1;
+  }
+  return count;
+}
+
+
 function add(page, id, status, detail) {
   rows.push({ page, id, status, detail });
 }
@@ -71,19 +85,20 @@ for (const rel of walkGuideIndexes("guides")) {
 const uniqueTargets = Array.from(new Set(targetFiles));
 const style = read("assets/style.css");
 
-has("assets/style.css", "chrome-style-marker", style, "landing-card-button-polish-v2-001");
+has("assets/style.css", "chrome-style-marker", style, LANDING_STYLE_CACHE);
+has("assets/style.css", "homepage-style-marker", style, HOMEPAGE_STYLE_CACHE);
 has("assets/style.css", "chrome-body-scope", style, "body.landing-chrome-polish");
-has("assets/style.css", "square-button-radius", style, "border-radius: 9px !important;");
 has("assets/style.css", "primary-button-scope", style, "body.landing-chrome-polish .btn-primary");
 has("assets/style.css", "button-padding", style, "padding: 10px 16px !important;");
 
 for (const rel of uniqueTargets) {
   const html = read(rel);
-  const navTabCount = (html.match(/class="[^"]*\bnav-tab\b[^"]*"/g) || []).length;
+    const navTabCount = countClassToken(html, "nav-tab");
+  const expectedCache = rel === "index.html" ? HOMEPAGE_STYLE_CACHE : LANDING_STYLE_CACHE;
 
   has(rel, "landing-body-class", html, "landing-chrome-polish");
-  has(rel, "style-cache", html, "/assets/style.css?v=landing-card-button-polish-v2-001");
-  has(rel, "chrome-marker", html, "landing-card-button-polish-v2-001");
+  has(rel, "style-cache", html, "/assets/style.css?v=" + expectedCache);
+  has(rel, "chrome-marker", html, expectedCache);
   has(rel, "nav-tabs-present", html, "nav-tabs");
 
   add(

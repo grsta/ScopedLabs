@@ -71,6 +71,7 @@ for (const rel of walkGuideIndexes("guides")) {
 
 const uniqueTargets = Array.from(new Set(targetFiles));
 const style = read("assets/style.css");
+const homepageStyleCache = "homepage-product-story-001";
 
 has("assets/style.css", "v2-style-marker", style, STYLE_CACHE);
 has("assets/style.css", "v2-body-scope", style, "body.landing-chrome-polish");
@@ -83,8 +84,16 @@ for (const rel of uniqueTargets) {
   const html = read(rel);
 
   has(rel, "landing-body-class", html, "landing-chrome-polish");
-  has(rel, "style-cache", html, "/assets/style.css?v=" + STYLE_CACHE);
-  has(rel, "v2-marker", html, STYLE_CACHE);
+  if (rel === "index.html") {
+    has(rel, "style-cache", html, "/assets/style.css?v=" + homepageStyleCache);
+  } else {
+    has(rel, "style-cache", html, "/assets/style.css?v=" + STYLE_CACHE);
+  }
+  if (rel === "index.html") {
+    has(rel, "v2-marker", html, homepageStyleCache);
+  } else {
+    has(rel, "v2-marker", html, STYLE_CACHE);
+  }
   has(rel, "nav-tabs-present", html, "nav-tabs");
 }
 
