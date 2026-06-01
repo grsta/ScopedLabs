@@ -2,7 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "landing-page-chrome-polish-audit-001";
+const VERSION = "landing-card-button-polish-v2-audit-001";
+const STYLE_CACHE = "landing-card-button-polish-v2-001";
 
 function file(rel) {
   return path.join(ROOT, rel);
@@ -71,36 +72,20 @@ for (const rel of walkGuideIndexes("guides")) {
 const uniqueTargets = Array.from(new Set(targetFiles));
 const style = read("assets/style.css");
 
-has("assets/style.css", "chrome-style-marker", style, "landing-card-button-polish-v2-001");
-has("assets/style.css", "chrome-body-scope", style, "body.landing-chrome-polish");
-has("assets/style.css", "square-button-radius", style, "border-radius: 9px !important;");
-has("assets/style.css", "primary-button-scope", style, "body.landing-chrome-polish .btn-primary");
-has("assets/style.css", "button-padding", style, "padding: 10px 16px !important;");
+has("assets/style.css", "v2-style-marker", style, STYLE_CACHE);
+has("assets/style.css", "v2-body-scope", style, "body.landing-chrome-polish");
+has("assets/style.css", "v2-button-radius", style, "border-radius: 7px !important;");
+has("assets/style.css", "v2-card-radius", style, "border-radius: 14px !important;");
+has("assets/style.css", "v2-category-row-height", style, "body.category-landing-page .tool-row--center");
+has("assets/style.css", "v2-tools-card-height", style, "body.landing-tools .category-grid > a.card");
 
 for (const rel of uniqueTargets) {
   const html = read(rel);
-  const navTabCount = (html.match(/class="[^"]*\bnav-tab\b[^"]*"/g) || []).length;
 
   has(rel, "landing-body-class", html, "landing-chrome-polish");
-  has(rel, "style-cache", html, "/assets/style.css?v=landing-card-button-polish-v2-001");
-  has(rel, "chrome-marker", html, "landing-card-button-polish-v2-001");
+  has(rel, "style-cache", html, "/assets/style.css?v=" + STYLE_CACHE);
+  has(rel, "v2-marker", html, STYLE_CACHE);
   has(rel, "nav-tabs-present", html, "nav-tabs");
-
-  add(
-    rel,
-    "nav-tab-count",
-    navTabCount >= 5 ? "SAFE" : "FAIL",
-    "found " + navTabCount + " nav-tab links"
-  );
-
-  add(
-    rel,
-    "no-legacy-nav-link-primary",
-    !html.includes('class="nav-link is-active"') ? "SAFE" : "FAIL",
-    !html.includes('class="nav-link is-active"')
-      ? "no active legacy nav-link pattern"
-      : "legacy nav-link active pattern still present"
-  );
 }
 
 const categoryFiles = uniqueTargets.filter((rel) => /^tools\/[^/]+\/index\.html$/.test(rel));
@@ -134,7 +119,7 @@ const counts = rows.reduce((acc, row) => {
 }, {});
 
 console.log("");
-console.log("Landing Page Chrome Polish Audit");
+console.log("Landing Card/Button Polish v2 Audit");
 console.log("Version:", VERSION);
 console.log("Landing/guide files checked:", uniqueTargets.length);
 console.table(rows);

@@ -3020,3 +3020,69 @@ body.landing-chrome-polish .actions,
 body.landing-chrome-polish .btn-row {
   gap: 10px;
 }
+
+
+/* landing-card-button-polish-v2-001
+   Landing/guide pages only. Keeps calculators and tool engines untouched. */
+body.landing-chrome-polish .btn,
+body.landing-chrome-polish .btn-primary,
+body.landing-chrome-polish .btn.btn-primary,
+body.landing-chrome-polish .btn.primary,
+body.landing-chrome-polish .btn-ghost {
+  border-radius: 7px !important;
+  min-height: 40px;
+}
+
+body.landing-chrome-polish .hero-actions .btn,
+body.landing-chrome-polish .actions .btn,
+body.landing-chrome-polish .btn-row .btn,
+body.landing-chrome-polish a.btn {
+  padding: 10px 15px !important;
+}
+
+body.landing-chrome-polish .card,
+body.landing-chrome-polish .card-link,
+body.landing-chrome-polish main > section.card,
+body.landing-chrome-polish .category-grid > a.card,
+body.landing-chrome-polish .tool-row,
+body.landing-chrome-polish .tool-feature,
+body.landing-chrome-polish .note {
+  border-radius: 14px !important;
+}
+
+body.landing-chrome-polish .page-head {
+  padding-top: 12px;
+}
+
+body.landing-chrome-polish .category-grid,
+body.landing-chrome-polish .grid {
+  gap: 0.95rem;
+}
+
+body.landing-tools .category-grid > a.card,
+body.landing-guides .category-grid > a.card {
+  min-height: 164px;
+}
+
+body.category-landing-page .tool-row--center {
+  min-height: 96px;
+}
+
+body.landing-chrome-polish .category-card-cta {
+  border-radius: 6px;
+}
+
+body.landing-chrome-polish .btn-primary,
+body.landing-chrome-polish .btn.primary {
+  border-color: rgba(83,255,61,.34);
+}
+
+body.landing-chrome-polish .btn:hover,
+body.landing-chrome-polish .btn-primary:hover,
+body.landing-chrome-polish .btn.primary:hover,
+body.landing-chrome-polish .btn-ghost:hover,
+body.landing-chrome-polish .card-link:hover,
+body.landing-chrome-polish .category-grid > a.card:hover,
+body.landing-chrome-polish .tool-row:hover {
+  transform: translateY(-1px);
+}

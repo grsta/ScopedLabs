@@ -3,7 +3,7 @@ const path = require("path");
 
 const ROOT = process.cwd();
 const VERSION = "tools-landing-no-breadcrumb-pills-audit-002-landing-chrome-sync";
-const STYLE_CACHE = "landing-page-chrome-polish-001";
+const STYLE_CACHE = "landing-card-button-polish-v2-001";
 
 function read(rel) {
   const target = path.join(ROOT, rel);
@@ -29,7 +29,7 @@ has("index-style-cache", "Tools index", index, "/assets/style.css?v=" + STYLE_CA
 has("index-landing-chrome-class", "Tools index", index, "landing-chrome-polish");
 has("index-marker", "Tools index", index, "tools-landing-no-breadcrumb-pills-028");
 has("style-marker", "style.css", style, "tools-landing-no-breadcrumb-pills-028");
-has("style-chrome-marker", "style.css", style, "landing-page-chrome-polish-001");
+has("style-chrome-marker", "style.css", style, "landing-card-button-polish-v2-001");
 has("hide-crumbs", "style.css", style, ".page-tools .crumbs");
 has("hide-card-top", "style.css", style, ".page-tools .category-grid > a.card .card-top");
 has("display-none", "style.css", style, "display: none;");

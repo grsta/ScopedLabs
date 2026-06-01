@@ -3,7 +3,7 @@ const path = require("path");
 
 const ROOT = process.cwd();
 const VERSION = "tools-landing-cta-centered-audit-003-landing-chrome-sync";
-const STYLE_CACHE = "landing-page-chrome-polish-001";
+const STYLE_CACHE = "landing-card-button-polish-v2-001";
 
 function read(rel) {
   const target = path.join(ROOT, rel);

@@ -2,7 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const VERSION = "category-landing-cleanup-audit-003-landing-chrome-sync";
+const VERSION = "category-landing-cleanup-audit-004-card-button-v2-sync";
+const STYLE_CACHE = "landing-card-button-polish-v2-001";
 
 const categories = [
   "access-control",
@@ -25,7 +26,7 @@ function read(rel) {
 
 function attributeTargets(html) {
   const out = [];
-  const re = /\b(?:href|data-tool|data-guide)\s*=\s*["']([^"']+)["']/g;
+  const re = /(?:href|data-tool|data-guide)\s*=\s*["']([^"']+)["']/g;
   let match;
   while ((match = re.exec(html))) {
     out.push(match[1]);
@@ -57,7 +58,8 @@ for (const slug of categories) {
 
   has(slug, "cleanup-marker", html, acceptedMarker);
   has(slug, "landing-chrome-class", html, "landing-chrome-polish");
-  has(slug, "landing-chrome-style-cache", html, "/assets/style.css?v=landing-page-chrome-polish-001");
+  has(slug, "landing-card-button-v2-cache", html, "/assets/style.css?v=" + STYLE_CACHE);
+  has(slug, "landing-card-button-v2-marker", html, STYLE_CACHE);
   has(slug, "hide-crumbs-selector", html, ".page-head .crumbs");
   has(slug, "hide-tool-row-pills-selector", html, ".tool-row-pill");
   has(slug, "card-heading-reset", html, "margin-top: 0 !important;");
