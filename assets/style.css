@@ -3523,3 +3523,42 @@ body.homepage-product-story .homepage-cad-coverage-panel {
 body.homepage-product-story .homepage-cad-coverage-svg {
   width: 100%;
 }
+
+
+/* homepage-product-story-010-proof-width-and-graph-fit */
+body.homepage-product-story .homepage-proof-grid-cad {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+  align-items: stretch;
+}
+
+body.homepage-product-story .homepage-proof-card-feature,
+body.homepage-product-story .homepage-cad-coverage-panel {
+  width: 100%;
+  max-width: 980px;
+  margin-inline: auto;
+}
+
+body.homepage-product-story .homepage-proof-card-feature {
+  min-height: 0;
+}
+
+body.homepage-product-story .homepage-cad-coverage-panel {
+  padding: 20px 22px;
+}
+
+body.homepage-product-story .homepage-cad-coverage-svg,
+body.homepage-product-story .homepage-cad-coverage-panel svg {
+  display: block;
+  width: 92%;
+  max-width: 920px;
+  margin-inline: auto;
+  height: auto;
+}
+
+body.homepage-product-story .homepage-cad-coverage-panel .graph-caption,
+body.homepage-product-story .homepage-cad-coverage-panel .panel-subtitle {
+  max-width: 92%;
+  margin-inline: auto;
+}
